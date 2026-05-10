@@ -1,2 +1,2 @@
-# arven
+# Sentinel
 AI agent designed to assist with automation, productivity, and developer workflows.
