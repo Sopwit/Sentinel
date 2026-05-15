@@ -18,6 +18,7 @@ class DesktopShellViewModel final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString providerName READ providerName CONSTANT)
     Q_PROPERTY(QString providerStatus READ providerStatus CONSTANT)
+    Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
     Q_PROPERTY(QString currentModeName READ currentModeName NOTIFY currentModeChanged)
     Q_PROPERTY(QStringList availableModes READ availableModes CONSTANT)
     Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
@@ -34,6 +35,7 @@ public:
 
     QString providerName() const;
     QString providerStatus() const;
+    QString memoryStatus() const;
     QString currentModeName() const;
     QStringList availableModes() const;
     QString currentPage() const;

@@ -21,6 +21,11 @@ QString ApplicationController::providerStatus() const {
     return provider_ ? chatProviderStatusName(provider_->status()) : QStringLiteral("Unavailable");
 }
 
+QString ApplicationController::memoryStatus() const {
+    return memoryStore_ && memoryStore_->isAvailable() ? QStringLiteral("Available")
+                                                       : QStringLiteral("Unavailable");
+}
+
 const QList<ChatMessage>& ApplicationController::chatHistory() const {
     return chatSession_->messages();
 }

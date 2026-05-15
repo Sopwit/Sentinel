@@ -18,6 +18,9 @@ private slots:
     void keepsMultipleKeysIndependent();
     void exposesAllEntriesDeterministically();
     void persistsValuesAcrossInstances();
+    void initializesSchemaVersion();
+    void reportsAvailabilityForValidDatabase();
+    void safelyNoOpsForUnopenableDatabasePath();
     void createsParentDirectories();
 };
 
@@ -130,6 +133,38 @@ void SQLiteMemoryStoreTest::persistsValuesAcrossInstances() {
     QCOMPARE(reloaded.get(QStringLiteral("callsign")), QStringLiteral("Sentinel"));
     QCOMPARE(reloaded.get(QStringLiteral("mode")), QStringLiteral("Tactical"));
     QCOMPARE(reloaded.entries().size(), 2);
+}
+
+void SQLiteMemoryStoreTest::initializesSchemaVersion() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    SQLiteMemoryStore store(databasePath(dir));
+
+    QCOMPARE(store.schemaVersion(), 1);
+}
+
+void SQLiteMemoryStoreTest::reportsAvailabilityForValidDatabase() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    SQLiteMemoryStore store(databasePath(dir));
+
+    QVERIFY(store.isAvailable());
+    QVERIFY(store.lastError().isEmpty());
+}
+
+void SQLiteMemoryStoreTest::safelyNoOpsForUnopenableDatabasePath() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    SQLiteMemoryStore store(dir.path());
+
+    QVERIFY(!store.isAvailable());
+    QVERIFY(!store.lastError().isEmpty());
+
+    store.put(QStringLiteral("mode"), QStringLiteral("Tactical"));
+
+    QVERIFY(store.get(QStringLiteral("mode")).isEmpty());
+    QVERIFY(store.entries().isEmpty());
+    QCOMPARE(store.schemaVersion(), 0);
 }
 
 void SQLiteMemoryStoreTest::createsParentDirectories() {

@@ -52,6 +52,7 @@ class ApplicationControllerTest final : public QObject {
 private slots:
     void exposesProviderNameAndInitialSystemMessage();
     void exposesProviderStatus();
+    void exposesMemoryStatus();
     void sendsMessageThroughProvider();
     void ignoresBlankChatMessages();
     void handlesUnavailableProvider();
@@ -82,6 +83,12 @@ void ApplicationControllerTest::exposesProviderStatus() {
     const auto controller = makeController();
 
     QCOMPARE(controller->providerStatus(), QStringLiteral("Ready"));
+}
+
+void ApplicationControllerTest::exposesMemoryStatus() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->memoryStatus(), QStringLiteral("Available"));
 }
 
 void ApplicationControllerTest::sendsMessageThroughProvider() {
