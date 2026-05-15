@@ -8,8 +8,8 @@ ShellPanel {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 22
-        spacing: 14
+        anchors.margins: SentinelTheme.spaceXl
+        spacing: SentinelTheme.spaceMd
 
         SectionTitle {
             title: "Runtime Memory"
@@ -18,22 +18,22 @@ ShellPanel {
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 10
+            spacing: SentinelTheme.spaceSm
 
             TextField {
                 id: memoryKey
                 Layout.preferredWidth: 220
                 placeholderText: "key"
-                color: "#d9fff4"
-                placeholderTextColor: "#648c83"
+                color: SentinelTheme.textPrimary
+                placeholderTextColor: SentinelTheme.textPlaceholder
             }
 
             TextField {
                 id: memoryValue
                 Layout.fillWidth: true
                 placeholderText: "value"
-                color: "#d9fff4"
-                placeholderTextColor: "#648c83"
+                color: SentinelTheme.textPrimary
+                placeholderTextColor: SentinelTheme.textPlaceholder
             }
 
             Button {
@@ -51,7 +51,7 @@ ShellPanel {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 8
+            spacing: SentinelTheme.spaceSm
             model: memoryPage.viewModel.memoryEntries
 
             delegate: Rectangle {
@@ -59,17 +59,17 @@ ShellPanel {
                 required property string modelData
 
                 width: ListView.view.width
-                radius: 12
-                color: "#102326aa"
-                border.color: "#35f2c022"
+                radius: SentinelTheme.radiusSm
+                color: SentinelTheme.surfaceMuted
+                border.color: SentinelTheme.accentBorderSubtle
                 implicitHeight: memoryText.implicitHeight + 18
 
                 Text {
                     id: memoryText
                     anchors.fill: parent
-                    anchors.margins: 9
+                    anchors.margins: SentinelTheme.spaceSm
                     text: memoryDelegate.modelData
-                    color: "#d9fff4"
+                    color: SentinelTheme.textPrimary
                     wrapMode: Text.WordWrap
                 }
             }

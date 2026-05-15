@@ -27,6 +27,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/MemoryPage.qml
@@ -40,6 +41,7 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.q
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml PROPERTIES QT_RESOURCE_ALIAS ShellPanel.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml PROPERTIES QT_RESOURCE_ALIAS Sidebar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml PROPERTIES QT_RESOURCE_ALIAS StatusBar.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTheme.qml QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml PROPERTIES QT_RESOURCE_ALIAS ChatPanel.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml PROPERTIES QT_RESOURCE_ALIAS DashboardPage.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/MemoryPage.qml PROPERTIES QT_RESOURCE_ALIAS MemoryPage.qml)

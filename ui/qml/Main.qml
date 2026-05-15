@@ -10,35 +10,35 @@ ApplicationWindow {
     minimumHeight: 660
     visible: true
     title: "Sentinel Desktop Alpha"
-    color: "#071113"
+    color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
 
     background: Rectangle {
         gradient: Gradient {
             GradientStop {
                 position: 0.0
-                color: "#0b2428"
+                color: SentinelTheme.backgroundRaised
             }
             GradientStop {
                 position: 0.55
-                color: "#071113"
+                color: SentinelTheme.backgroundBase
             }
             GradientStop {
                 position: 1.0
-                color: "#03100f"
+                color: SentinelTheme.backgroundDeep
             }
         }
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 14
+        anchors.margins: SentinelTheme.spaceLg
+        spacing: SentinelTheme.spaceMd
 
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: 14
+            spacing: SentinelTheme.spaceMd
 
             Sidebar {
                 viewModel: root.viewModel
@@ -49,7 +49,7 @@ ApplicationWindow {
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: 14
+                spacing: SentinelTheme.spaceMd
 
                 HeaderBar {
                     viewModel: root.viewModel

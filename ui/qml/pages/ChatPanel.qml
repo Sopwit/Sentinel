@@ -8,8 +8,8 @@ ShellPanel {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 12
+        anchors.margins: SentinelTheme.spaceLg
+        spacing: SentinelTheme.spaceSm
 
         SectionTitle {
             title: "AI Bridge"
@@ -21,7 +21,7 @@ ShellPanel {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: 10
+            spacing: SentinelTheme.spaceSm
             model: chatPanel.viewModel.chatMessages
 
             delegate: Rectangle {
@@ -31,19 +31,19 @@ ShellPanel {
                 required property string content
 
                 width: ListView.view.width
-                radius: 14
-                color: messageDelegate.messageRole === "user" ? "#173331" : messageDelegate.messageStatus === "error" ? "#33191a" : "#102326"
-                border.color: messageDelegate.messageRole === "user" ? "#35f2c044" : messageDelegate.messageStatus === "error" ? "#d66b6b66" : "#7be8c733"
+                radius: SentinelTheme.radiusMd
+                color: messageDelegate.messageRole === "user" ? SentinelTheme.userMessageSurface : messageDelegate.messageStatus === "error" ? SentinelTheme.errorSurface : SentinelTheme.surface
+                border.color: messageDelegate.messageRole === "user" ? SentinelTheme.accentBorder : messageDelegate.messageStatus === "error" ? SentinelTheme.errorBorder : SentinelTheme.successBorder
                 implicitHeight: messageText.implicitHeight + 22
 
                 Text {
                     id: messageText
                     anchors.fill: parent
-                    anchors.margins: 11
+                    anchors.margins: SentinelTheme.spaceSm
                     text: (messageDelegate.messageRole === "user" ? "You" : "Sentinel") + ": " + messageDelegate.content
-                    color: "#d9fff4"
+                    color: SentinelTheme.textPrimary
                     wrapMode: Text.WordWrap
-                    font.pixelSize: 13
+                    font.pixelSize: SentinelTheme.fontBody
                 }
             }
         }
@@ -52,26 +52,26 @@ ShellPanel {
             Layout.fillWidth: true
             visible: messageList.count === 0
             text: "No chat history yet."
-            color: "#82aaa1"
+            color: SentinelTheme.textMuted
             horizontalAlignment: Text.AlignHCenter
         }
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: SentinelTheme.spaceSm
 
             TextField {
                 id: chatInput
                 Layout.fillWidth: true
                 placeholderText: "Send a local test prompt"
-                color: "#d9fff4"
-                placeholderTextColor: "#648c83"
+                color: SentinelTheme.textPrimary
+                placeholderTextColor: SentinelTheme.textPlaceholder
                 onAccepted: sendButton.clicked()
 
                 background: Rectangle {
-                    radius: 14
-                    color: "#081719"
-                    border.color: "#35f2c044"
+                    radius: SentinelTheme.radiusMd
+                    color: SentinelTheme.backgroundBase
+                    border.color: SentinelTheme.accentBorder
                 }
             }
 
@@ -103,7 +103,7 @@ ShellPanel {
 
         Label {
             text: "This clears the current transcript and persisted local chat history."
-            color: "#d9fff4"
+            color: SentinelTheme.textPrimary
             wrapMode: Text.WordWrap
             width: 320
         }

@@ -6,7 +6,7 @@ RowLayout {
     id: dashboardPage
     required property var viewModel
 
-    spacing: 14
+    spacing: SentinelTheme.spaceMd
 
     ShellPanel {
         Layout.fillWidth: true
@@ -14,8 +14,8 @@ RowLayout {
 
         ColumnLayout {
             anchors.fill: parent
-            anchors.margins: 20
-            spacing: 16
+            anchors.margins: SentinelTheme.spaceLg
+            spacing: SentinelTheme.spaceLg
 
             SectionTitle {
                 title: "Operations Dashboard"
@@ -44,17 +44,17 @@ RowLayout {
 
             ShellPanel {
                 Layout.fillWidth: true
-                color: "#0b2022cc"
+                color: SentinelTheme.panelStrong
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 16
-                    spacing: 10
+                    anchors.margins: SentinelTheme.spaceLg
+                    spacing: SentinelTheme.spaceSm
 
                     Label {
                         text: "Agent Runtime"
-                        color: "#35f2c0"
-                        font.pixelSize: 13
+                        color: SentinelTheme.accent
+                        font.pixelSize: SentinelTheme.fontBody
                         font.letterSpacing: 1.2
                     }
 
@@ -66,7 +66,7 @@ RowLayout {
 
                         Label {
                             text: "Pipeline"
-                            color: "#82aaa1"
+                            color: SentinelTheme.textMuted
                         }
 
                         Label {
@@ -74,13 +74,13 @@ RowLayout {
                             text: dashboardPage.viewModel.latestAgentPipelineStatus
                                   + " - "
                                   + dashboardPage.viewModel.latestAgentPipelineSummary
-                            color: "#d9fff4"
+                            color: SentinelTheme.textPrimary
                             wrapMode: Text.WordWrap
                         }
 
                         Label {
                             text: "Context"
-                            color: "#82aaa1"
+                            color: SentinelTheme.textMuted
                         }
 
                         Label {
@@ -88,13 +88,13 @@ RowLayout {
                             text: dashboardPage.viewModel.runtimeContextStatus
                                   + " - "
                                   + dashboardPage.viewModel.runtimeContextSummary
-                            color: "#d9fff4"
+                            color: SentinelTheme.textPrimary
                             wrapMode: Text.WordWrap
                         }
 
                         Label {
                             text: "Planned Tools"
-                            color: "#82aaa1"
+                            color: SentinelTheme.textMuted
                         }
 
                         Label {
@@ -102,13 +102,13 @@ RowLayout {
                             text: dashboardPage.viewModel.runtimeContextActiveToolIds.length > 0
                                   ? dashboardPage.viewModel.runtimeContextActiveToolIds.join(", ")
                                   : "None"
-                            color: "#d9fff4"
+                            color: SentinelTheme.textPrimary
                             wrapMode: Text.WordWrap
                         }
 
                         Label {
                             text: "Activity"
-                            color: "#82aaa1"
+                            color: SentinelTheme.textMuted
                         }
 
                         Label {
@@ -116,7 +116,7 @@ RowLayout {
                             text: dashboardPage.viewModel.agentActivityCount
                                   + " - "
                                   + dashboardPage.viewModel.latestAgentActivitySummary
-                            color: "#d9fff4"
+                            color: SentinelTheme.textPrimary
                             wrapMode: Text.WordWrap
                         }
                     }
@@ -126,17 +126,17 @@ RowLayout {
             ShellPanel {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                color: "#081719aa"
+                color: SentinelTheme.panelMuted
 
                 ColumnLayout {
                     anchors.fill: parent
-                    anchors.margins: 18
-                    spacing: 10
+                    anchors.margins: SentinelTheme.spaceLg
+                    spacing: SentinelTheme.spaceSm
 
                     Label {
                         text: "Current Posture"
-                        color: "#35f2c0"
-                        font.pixelSize: 13
+                        color: SentinelTheme.accent
+                        font.pixelSize: SentinelTheme.fontBody
                         font.letterSpacing: 1.2
                     }
 
@@ -144,7 +144,7 @@ RowLayout {
                         Layout.fillWidth: true
                         text: "Mode: " + dashboardPage.viewModel.currentModeName
                               + ". The app exposes only local echo-provider chat, runtime memory, settings, and lightweight plugin/integration contracts."
-                        color: "#d9fff4"
+                        color: SentinelTheme.textPrimary
                         font.pixelSize: 16
                         lineHeight: 1.25
                         wrapMode: Text.WordWrap

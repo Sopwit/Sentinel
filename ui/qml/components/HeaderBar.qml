@@ -12,24 +12,24 @@ ShellPanel {
 
     RowLayout {
         anchors.fill: parent
-        anchors.margins: 20
-        spacing: 18
+        anchors.margins: SentinelTheme.spaceLg
+        spacing: SentinelTheme.spaceLg
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 4
+            spacing: SentinelTheme.spaceXs
 
             Label {
                 text: headerBar.viewModel.currentModeName
-                color: "#d9fff4"
-                font.pixelSize: 27
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontHeader
                 font.bold: true
             }
 
             Label {
                 text: "Desktop shell bridge active. Local-first foundation, no network provider configured."
-                color: "#82aaa1"
-                font.pixelSize: 13
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontBody
             }
         }
 

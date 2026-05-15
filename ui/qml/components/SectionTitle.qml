@@ -6,20 +6,20 @@ ColumnLayout {
     property string title: ""
     property string subtitle: ""
 
-    spacing: 4
+    spacing: SentinelTheme.spaceXs
 
     Label {
         text: parent.title
-        color: "#d9fff4"
-        font.pixelSize: 22
+        color: SentinelTheme.textPrimary
+        font.pixelSize: SentinelTheme.fontTitle
         font.bold: true
     }
 
     Label {
         Layout.fillWidth: true
         text: parent.subtitle
-        color: "#82aaa1"
-        font.pixelSize: 13
+        color: SentinelTheme.textMuted
+        font.pixelSize: SentinelTheme.fontBody
         wrapMode: Text.WordWrap
     }
 }

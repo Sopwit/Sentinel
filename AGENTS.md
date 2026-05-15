@@ -10,11 +10,11 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 4.11 is complete.
+Phase 5.0 is complete.
 
-Most recent work: Phase 4.11, AI Orchestration Planning Checkpoint.
+Most recent work: Phase 5.0, UI/UX Planning and Design System Foundation.
 
-Current planning focus: Phase 5 readiness while keeping real tool execution
+Current planning focus: post-Phase 5.0 UI stabilization while keeping real tool execution
 non-operational.
 
 ## Stack
