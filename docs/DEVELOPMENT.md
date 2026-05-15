@@ -91,7 +91,9 @@ sudo dnf install clang-tools-extra
 
 # macOS (Homebrew)
 brew install llvm
-export PATH="$(brew --prefix llvm)/bin:$PATH"
+# one-shot usage (avoid mutating shell profile)
+PATH="$(brew --prefix llvm)/bin:$PATH" \
+  clang-tidy core/src/*.cpp apps/sentinel-desktop/*.cpp tests/core/*.cpp -p build/debug
 ```
 
 Treat clang-tidy output as advisory for now. CI currently enforces build, tests, and formatting only.
@@ -177,7 +179,7 @@ Sentinel currently has two memory backends:
 
 The desktop app wires `SQLiteMemoryStore` to Qt's `AppDataLocation` as `memory.sqlite3`. Keep settings in `JsonSettingsStore`; do not mix settings and app memory in the same file or table.
 
-SQLite stores only explicit key-value memory entries. Chat history remains in-memory until a separate persistence design is added.
+SQLite memory stores only explicit key-value memory entries. Chat history persistence is separate and handled by `SQLiteChatHistoryStore` through `IChatHistoryStore` (`chat_history.sqlite3` under `AppDataLocation`).
 
 `SQLiteMemoryStore` creates a schema metadata table and records schema version `1`. Future migrations should build on that metadata table, but no migration framework should be added until there is a real schema change.
 
