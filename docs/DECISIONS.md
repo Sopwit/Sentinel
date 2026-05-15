@@ -572,3 +572,52 @@ Boundary rules:
 - Changing routing mode updates route metadata only; it does not call providers, use API keys,
   access the network, download or execute models, execute tools, load plugins, or perform
   filesystem/system actions.
+
+## 34. Provider Catalog Is Metadata Only
+
+Decision: Add a provider/model catalog boundary before provider integration or model-management
+actions.
+
+Reason: The desktop app needs deterministic metadata for future provider/model UI and routing
+policy work without implying that providers are configured or executable.
+
+Boundary rules:
+
+- `IProviderCatalog` exposes read-only value metadata only.
+- `StaticProviderCatalog` may describe future providers/models, including Ollama Local, OpenAI
+  Cloud, and Anthropic Cloud placeholders.
+- Catalog entries may include provider id/name, local/cloud kind, availability, supported task
+  types, privacy level, and rough RAM/disk hints.
+- Catalog entries must not include credentials, API keys, secrets, endpoints, transport clients, or
+  executable provider objects.
+- Cloud catalog entries remain not configured until a later explicit provider phase.
+- `StaticModelRouter` may consume available catalog metadata but must not call providers, access the
+  network, download models, execute models, load plugins, or execute tools.
+- QML may show read-only text summaries only; no setup buttons, API key fields, download buttons,
+  or execution controls are part of this phase.
+
+## 35. Task Planner Is Metadata Only
+
+Decision: Add a high-level task planner and capability graph boundary as value metadata before any
+provider/model execution or tool execution work.
+
+Reason: Sentinel needs deterministic planning visibility over task type, routing mode, privacy, and
+provider/model capability metadata without granting runtime execution authority.
+
+Boundary rules:
+
+- `ITaskPlanner` creates `TaskPlan` metadata only.
+- `StaticTaskPlanner` is deterministic and local-safe.
+- Capability graph nodes and planned task steps are value data, not executable operations.
+- Task planning may consider task type, routing mode, provider/model catalog availability,
+  local/cloud suitability, privacy sensitivity, supported task metadata, and rough resource hints.
+- Sensitive/private tasks must prefer or require local metadata.
+- Unknown tasks must use a safe local metadata fallback when available.
+- Unavailable providers/models must not be selected for executable routes.
+- `IModelRouter` remains responsible for model/provider route metadata.
+- `IAgentRuntime` remains responsible for future tool/action orchestration metadata.
+- `IChatProvider` remains responsible for chat response generation.
+- Task planning must not call providers, access networks, use API keys, download or execute models,
+  execute tools, load plugins, mutate files, or perform system actions.
+- QML may show read-only status, summary, and counts only; no execution controls are part of this
+  phase.

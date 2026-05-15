@@ -41,6 +41,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::agentActivityChanged);
     connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
             &DesktopShellViewModel::modelRoutingChanged);
+    connect(&controller_, &core::ApplicationController::taskPlanChanged, this,
+            &DesktopShellViewModel::taskPlanChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::themeNameChanged, this,
@@ -154,6 +156,26 @@ QString DesktopShellViewModel::modelRoutingStatus() const {
 
 QString DesktopShellViewModel::selectedModelProviderSummary() const {
     return controller_.selectedModelProviderSummary();
+}
+
+QString DesktopShellViewModel::latestTaskPlanStatus() const {
+    return controller_.latestTaskPlanStatus();
+}
+
+QString DesktopShellViewModel::latestTaskPlanSummary() const {
+    return controller_.latestTaskPlanSummary();
+}
+
+int DesktopShellViewModel::plannedTaskStepCount() const {
+    return controller_.plannedTaskStepCount();
+}
+
+int DesktopShellViewModel::providerCatalogCount() const {
+    return controller_.providerCatalogCount();
+}
+
+QStringList DesktopShellViewModel::providerCatalogSummaries() const {
+    return controller_.providerCatalogSummaries();
 }
 
 int DesktopShellViewModel::availableToolCount() const {

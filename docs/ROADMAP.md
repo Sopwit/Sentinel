@@ -535,6 +535,45 @@ Still out of scope:
   model execution, model-management UI, real tool execution, plugin loading, filesystem/system
   actions, or broad UI redesign.
 
+### Phase 6.2: Provider Catalog Metadata Skeleton
+
+Completed. Added the first provider/model catalog boundary without provider integration.
+
+Delivered:
+
+- `IProviderCatalog`, provider/model catalog entry metadata, and deterministic
+  `StaticProviderCatalog`.
+- Available local metadata placeholder plus not-configured placeholders for Ollama Local,
+  OpenAI Cloud, and Anthropic Cloud.
+- Read-only controller/view-model and Settings page catalog summaries.
+- Router seeding from available catalog metadata while cloud placeholders remain unavailable and
+  non-routable.
+
+Still out of scope:
+
+- Provider setup, credentials/API keys, endpoints, networking, provider calls, model downloads,
+  model execution, model-management actions, real tool execution, plugin loading, filesystem/system
+  actions, or broad UI redesign.
+
+### Phase 6.3: Capability Graph and Task Planner Skeleton
+
+Completed. Added metadata-only capability graph and task planning boundaries.
+
+Delivered:
+
+- `CapabilityNode`, `CapabilityGraph`, `TaskPlan`, `PlannedTaskStep`, and `TaskPlanStatus`.
+- `ITaskPlanner` and deterministic `StaticTaskPlanner`.
+- Planner metadata over task type, routing mode, provider/model catalog availability, local/cloud
+  classification, privacy sensitivity, and resource hints.
+- Read-only controller/view-model and Settings page task plan status, summary, and step count.
+- Tests for deterministic planning, privacy-local behavior, cloud-unavailable fallback, unknown
+  fallback, unavailable cloud blocking, and step ordering.
+
+Still out of scope:
+
+- Provider setup, credentials/API keys, endpoints, networking, provider calls, model downloads,
+  model execution, tool execution, plugin loading, filesystem/system actions, or broad UI redesign.
+
 Later Phase 6 work may revisit permission prompts, auditability, sandboxing strategy, secret
 handling, and safe local automation constraints only after explicit approval.
 

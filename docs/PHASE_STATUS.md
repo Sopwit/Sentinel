@@ -833,3 +833,67 @@ Still out of scope:
 - API keys, networking, model downloads, or model execution.
 - Real tool execution, approval actions, sandbox runtime, plugin loading, filesystem/system
   actions, broad UI redesign, provider setup UI, or model-management UI.
+
+### Phase 6.2: Provider Catalog Metadata Skeleton
+
+Completed. Added a deterministic metadata-only catalog for current and future providers/models.
+
+Scope:
+
+- Added `IProviderCatalog` and value catalog entries for providers and models.
+- Added `StaticProviderCatalog` with Local Metadata Provider / Sentinel Local Placeholder as
+  available local metadata.
+- Added Ollama Local, OpenAI Cloud, and Anthropic Cloud placeholders as not configured.
+- Captured availability, local/cloud classification, supported task metadata, privacy labels, and
+  rough RAM/disk hints.
+- Seeded `StaticModelRouter` defaults from available catalog metadata only.
+- Exposed read-only provider catalog count and summaries through `ApplicationController` and
+  `DesktopShellViewModel`.
+- Added a minimal Settings page provider catalog section with text-only local/cloud/status
+  summaries.
+- Added tests for deterministic catalog entries, local/cloud classification, unavailable cloud
+  placeholders, local-only/cloud-placeholder route exclusion, and QML-safe exposure.
+
+Still out of scope:
+
+- Real provider integration.
+- Ollama/OpenAI/Anthropic calls.
+- API keys, endpoints, networking, model downloads, or model execution.
+- Provider setup UI, API key fields, download buttons, model-management actions, real tool
+  execution, approval actions, sandbox runtime, plugin loading, filesystem/system actions, or broad
+  UI redesign.
+
+### Phase 6.3: Capability Graph and Task Planner Skeleton
+
+Completed. Added deterministic high-level task planning metadata without adding provider/model/tool
+execution.
+
+Scope:
+
+- Added value-only task planning metadata:
+  - `CapabilityNode`
+  - `CapabilityGraph`
+  - `TaskPlan`
+  - `PlannedTaskStep`
+  - `TaskPlanStatus`
+- Added `ITaskPlanner` and deterministic `StaticTaskPlanner`.
+- Planner consumes task classification, routing mode, provider/model catalog availability,
+  local/cloud metadata, privacy sensitivity, and resource hints.
+- Sensitive/private tasks require local metadata.
+- Unknown tasks use a safe local metadata fallback.
+- Cloud-allowed planning falls back to local metadata while cloud catalog entries remain not
+  configured.
+- Unavailable providers/models are not selected for executable routes.
+- `ApplicationController` and `DesktopShellViewModel` expose read-only latest task plan status,
+  summary, and planned step count.
+- Settings page shows minimal read-only task planning status.
+- Tests cover deterministic planning, sensitive local planning, cloud-unavailable fallback, unknown
+  fallback, blocked unavailable cloud metadata, step ordering, and controller/view-model exposure.
+
+Still out of scope:
+
+- Real provider integration.
+- Ollama/OpenAI/Anthropic calls.
+- API keys, endpoints, networking, model downloads, or model execution.
+- Real tool execution, approval actions, sandbox runtime, plugin loading, filesystem/system
+  actions, provider setup UI, executable model-management actions, or broad UI redesign.

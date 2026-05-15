@@ -254,6 +254,39 @@ Phase 6.1 persists routing mode preference:
 - No provider setup, credentials, API keys, networking, model downloads, model execution, or tool
   execution are introduced.
 
+Phase 6.2 adds provider catalog metadata:
+
+- `ProviderCatalog.h` defines value-only provider/model catalog entries with availability,
+  local/cloud kind, supported task metadata, privacy level, and rough RAM/disk hints.
+- `IProviderCatalog` is the read-only catalog boundary.
+- `StaticProviderCatalog` provides deterministic placeholder metadata for Local Metadata Provider,
+  Sentinel Local Placeholder, Ollama Local, OpenAI Cloud, and Anthropic Cloud.
+- Cloud placeholders are marked not configured and are not exposed to the router as available
+  models.
+- `StaticModelRouter` seeds default routing from available catalog metadata only.
+- Controller and desktop view-model expose only read-only catalog counts and summary strings.
+- Settings UI shows text-only catalog metadata without setup buttons, API key fields, downloads,
+  networking, or execution controls.
+
+Phase 6.3 adds capability graph and task planner metadata:
+
+- `TaskPlanning.h` defines value-only task planning metadata: capability graph nodes, planned task
+  steps, task plan status, and task plan summaries.
+- `ITaskPlanner` owns the high-level planning boundary.
+- `StaticTaskPlanner` evaluates task classification, routing mode, provider catalog availability,
+  local/cloud suitability, privacy sensitivity, supported task metadata, and resource hints.
+- Sensitive or private tasks require local metadata.
+- Unknown tasks use a safe local metadata fallback.
+- Cloud placeholders remain not configured; cloud-allowed planning falls back to local metadata
+  when available or reports blocked metadata otherwise.
+- `IModelRouter` still chooses model/provider route metadata; `ITaskPlanner` only describes
+  high-level task plan metadata.
+- `IAgentRuntime` remains the tool/action orchestration boundary, and `IChatProvider` remains the
+  chat response generation boundary.
+- Controller and desktop view-model expose only task plan status, summary, and step count.
+- The task planner does not call providers, execute models, execute tools, access the network,
+  download models, load plugins, or perform filesystem/system actions.
+
 Phase 5.0 adds UI/UX planning and design-system foundation only:
 
 - `docs/UI_UX_PLAN.md` records the design direction and motion constraints.

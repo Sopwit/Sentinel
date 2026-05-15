@@ -1,5 +1,7 @@
 #include "sentinel/core/StaticModelRouter.h"
 
+#include "sentinel/core/StaticProviderCatalog.h"
+
 #include <algorithm>
 #include <utility>
 
@@ -7,58 +9,41 @@ namespace sentinel::core {
 
 namespace {
 
-ProviderDescriptor defaultProvider() {
-    return ProviderDescriptor{
-        QStringLiteral("local-placeholder"),
-        QStringLiteral("Local Metadata Provider"),
-        ProviderKind::Local,
-        ProviderCapabilityProfile{
-            true,
-            false,
-            true,
-            false,
-            true,
-            8192,
-            QStringLiteral("low"),
-            QStringLiteral("none"),
-            QStringLiteral("local-only"),
-            {
-                taskTypeName(TaskType::Chat),
-                taskTypeName(TaskType::Summarization),
-                taskTypeName(TaskType::Planning),
-                taskTypeName(TaskType::Unknown),
-            },
-        },
-    };
-}
-
-ModelDescriptor defaultModel() {
-    return ModelDescriptor{
-        QStringLiteral("sentinel-local-placeholder"),
-        QStringLiteral("Sentinel Local Placeholder"),
-        QStringLiteral("local-placeholder"),
-        true,
-        true,
-        8192,
-        QStringLiteral("metadata"),
-        QStringLiteral("low"),
-        {
-            taskTypeName(TaskType::Chat),
-            taskTypeName(TaskType::Summarization),
-            taskTypeName(TaskType::Planning),
-            taskTypeName(TaskType::Unknown),
-        },
-    };
-}
-
 bool routeRequiresLocalOnly(RoutingMode mode, const TaskClassification& task) {
     return mode == RoutingMode::LocalOnly || task.sensitive || task.type == TaskType::SensitiveData;
 }
 
+QList<ProviderDescriptor> availableProvidersFromCatalog(const IProviderCatalog& catalog) {
+    QList<ProviderDescriptor> providers;
+    for (const auto& entry : catalog.entries()) {
+        if (isCatalogEntryAvailable(entry.availability)) {
+            providers.append(entry.descriptor);
+        }
+    }
+    return providers;
+}
+
+QList<ModelDescriptor> availableModelsFromCatalog(const IProviderCatalog& catalog) {
+    QList<ModelDescriptor> models;
+    for (const auto& entry : catalog.entries()) {
+        if (!isCatalogEntryAvailable(entry.availability)) {
+            continue;
+        }
+        for (const auto& model : entry.models) {
+            if (isCatalogEntryAvailable(model.availability)) {
+                models.append(model.descriptor);
+            }
+        }
+    }
+    return models;
+}
+
 } // namespace
 
-StaticModelRouter::StaticModelRouter()
-    : StaticModelRouter(RoutingMode::LocalOnly, {defaultProvider()}, {defaultModel()}) {}
+StaticModelRouter::StaticModelRouter() : StaticModelRouter(StaticProviderCatalog{}) {}
+
+StaticModelRouter::StaticModelRouter(const IProviderCatalog& catalog)
+    : StaticModelRouter(RoutingMode::LocalOnly, catalog) {}
 
 StaticModelRouter::StaticModelRouter(RoutingMode routingMode, QList<ProviderDescriptor> providers,
                                      QList<ModelDescriptor> models)
@@ -72,6 +57,10 @@ StaticModelRouter::StaticModelRouter(RoutingMode routingMode, QList<ProviderDesc
                   return left.id < right.id;
               });
 }
+
+StaticModelRouter::StaticModelRouter(RoutingMode routingMode, const IProviderCatalog& catalog)
+    : StaticModelRouter(routingMode, availableProvidersFromCatalog(catalog),
+                        availableModelsFromCatalog(catalog)) {}
 
 RoutingMode StaticModelRouter::routingMode() const {
     return routingMode_;

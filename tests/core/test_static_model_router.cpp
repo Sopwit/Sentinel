@@ -1,4 +1,5 @@
 #include "sentinel/core/StaticModelRouter.h"
+#include "sentinel/core/StaticProviderCatalog.h"
 
 #include <QtTest>
 
@@ -12,6 +13,7 @@ using sentinel::core::RoutingMode;
 using sentinel::core::routingModeName;
 using sentinel::core::safeModelRouteSummary;
 using sentinel::core::StaticModelRouter;
+using sentinel::core::StaticProviderCatalog;
 using sentinel::core::TaskClassification;
 using sentinel::core::TaskType;
 using sentinel::core::taskTypeName;
@@ -25,6 +27,7 @@ private slots:
     void defaultRouterSelectsLocalPlaceholderDeterministically();
     void unknownTaskFallsBackToLocalPlaceholder();
     void localOnlyRoutingRejectsCloudOnlyModels();
+    void staticCatalogKeepsCloudPlaceholdersOutOfRoutes();
 };
 
 void StaticModelRouterTest::namesRoutingMetadata() {
@@ -127,6 +130,21 @@ void StaticModelRouterTest::localOnlyRoutingRejectsCloudOnlyModels() {
     const auto route = router.route(TaskClassification{TaskType::Chat});
 
     QCOMPARE(route.status, ModelRoutingStatus::NoAvailableModel);
+    QVERIFY(!route.networkRequired);
+    QVERIFY(!route.modelExecutionAllowed);
+}
+
+void StaticModelRouterTest::staticCatalogKeepsCloudPlaceholdersOutOfRoutes() {
+    const StaticProviderCatalog catalog;
+    StaticModelRouter router{RoutingMode::CloudAllowed, catalog};
+
+    const auto route = router.route(TaskClassification{TaskType::Chat});
+
+    QCOMPARE(route.status, ModelRoutingStatus::Routed);
+    QCOMPARE(route.routingMode, RoutingMode::CloudAllowed);
+    QCOMPARE(route.provider.kind, ProviderKind::Local);
+    QCOMPARE(route.provider.id, QStringLiteral("local-placeholder"));
+    QCOMPARE(route.model.id, QStringLiteral("sentinel-local-placeholder"));
     QVERIFY(!route.networkRequired);
     QVERIFY(!route.modelExecutionAllowed);
 }

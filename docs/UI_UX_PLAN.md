@@ -138,6 +138,17 @@ Future assistant visuals may include subtle status presence, listening/thinking 
 model/runtime readiness states. These visuals should consume metadata from view models and must not
 start provider calls, model execution, tool execution, or system actions.
 
+## Future Model Management UI
+
+Phase 6.2 adds text-only provider catalog visibility. Later model-management UI may organize
+installed, downloadable, recommended, local, and cloud models from catalog metadata, but setup,
+credentials, downloads, and execution must remain behind explicit future C++ boundaries rather than
+QML logic.
+
+Phase 6.3 adds text-only task planning visibility. Later planning UI may show capability graphs and
+task steps, but those views should remain read-only until a later explicit execution phase adds
+separate approval and execution controls.
+
 ## Current Separation
 
 Current Phase 5 work is presentation foundation only:
