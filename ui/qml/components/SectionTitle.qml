@@ -9,10 +9,12 @@ ColumnLayout {
     spacing: SentinelTheme.spaceXs
 
     Label {
+        Layout.fillWidth: true
         text: parent.title
         color: SentinelTheme.textPrimary
         font.pixelSize: SentinelTheme.fontTitle
         font.bold: true
+        wrapMode: Text.WordWrap
     }
 
     Label {

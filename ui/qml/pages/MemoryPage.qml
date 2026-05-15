@@ -1,70 +1,44 @@
 import QtQuick
-import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 ShellPanel {
     id: memoryPage
     required property var viewModel
+    readonly property bool compact: width < 720
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: SentinelTheme.spaceXl
-        spacing: SentinelTheme.spaceMd
+        anchors.margins: SentinelTheme.pageMargin(memoryPage.width)
+        spacing: SentinelTheme.contentSpacing(memoryPage.width)
 
         SectionTitle {
             title: "Runtime Memory"
             subtitle: "Local key-value memory with dedicated persistence. Settings and chat history remain separate."
         }
 
-        RowLayout {
+        GridLayout {
             Layout.fillWidth: true
-            spacing: SentinelTheme.spaceSm
+            columns: memoryPage.compact ? 1 : 3
+            columnSpacing: SentinelTheme.spaceSm
+            rowSpacing: SentinelTheme.spaceSm
 
-            TextField {
+            SentinelTextField {
                 id: memoryKey
-                Layout.preferredWidth: 220
+                Layout.fillWidth: true
+                Layout.preferredWidth: memoryPage.compact ? -1 : 220
                 placeholderText: "key"
-                color: SentinelTheme.textPrimary
-                placeholderTextColor: SentinelTheme.textPlaceholder
-
-                background: Rectangle {
-                    radius: SentinelTheme.radiusMd
-                    color: SentinelTheme.backgroundBase
-                    border.color: memoryKey.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
-
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: SentinelTheme.durationFast
-                            easing.type: SentinelTheme.easingStandard
-                        }
-                    }
-                }
             }
 
-            TextField {
+            SentinelTextField {
                 id: memoryValue
                 Layout.fillWidth: true
                 placeholderText: "value"
-                color: SentinelTheme.textPrimary
-                placeholderTextColor: SentinelTheme.textPlaceholder
-
-                background: Rectangle {
-                    radius: SentinelTheme.radiusMd
-                    color: SentinelTheme.backgroundBase
-                    border.color: memoryValue.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
-
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: SentinelTheme.durationFast
-                            easing.type: SentinelTheme.easingStandard
-                        }
-                    }
-                }
             }
 
             SentinelButton {
                 text: "Store"
                 enabled: memoryKey.text.trim().length > 0
+                Layout.fillWidth: memoryPage.compact
                 onClicked: {
                     memoryPage.viewModel.remember(memoryKey.text, memoryValue.text)
                     memoryKey.clear()

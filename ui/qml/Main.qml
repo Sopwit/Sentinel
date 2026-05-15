@@ -6,12 +6,14 @@ ApplicationWindow {
     id: root
     width: 1200
     height: 780
-    minimumWidth: 1000
+    minimumWidth: 760
     minimumHeight: 660
     visible: true
     title: "Sentinel Desktop Alpha"
     color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
+    readonly property bool compactLayout: root.width < SentinelTheme.breakpointCompact
+    readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
     readonly property int currentPageIndex: root.viewModel.currentPage === "Dashboard" ? 0
                                             : root.viewModel.currentPage === "Memory" ? 1 : 2
 
@@ -34,29 +36,31 @@ ApplicationWindow {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: SentinelTheme.spaceLg
-        spacing: SentinelTheme.spaceMd
+        anchors.margins: SentinelTheme.pageMargin(root.width)
+        spacing: SentinelTheme.contentSpacing(root.width)
 
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: SentinelTheme.spaceMd
+            spacing: SentinelTheme.contentSpacing(root.width)
 
             Sidebar {
                 viewModel: root.viewModel
-                Layout.preferredWidth: 244
+                compact: root.compactLayout
+                Layout.preferredWidth: root.compactLayout ? SentinelTheme.sidebarCompactWidth : SentinelTheme.sidebarNormalWidth
                 Layout.fillHeight: true
             }
 
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: SentinelTheme.spaceMd
+                spacing: SentinelTheme.contentSpacing(root.width)
 
                 HeaderBar {
                     viewModel: root.viewModel
+                    compact: root.compactLayout
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 96
+                    Layout.preferredHeight: root.compactLayout ? 118 : 96
                 }
 
                 StackLayout {

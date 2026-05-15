@@ -7,11 +7,12 @@ import QtQuick.Layouts
 ShellPanel {
     id: sidebar
     required property var viewModel
+    property bool compact: false
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: SentinelTheme.spaceLg
-        spacing: SentinelTheme.spaceLg
+        anchors.margins: sidebar.compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
+        spacing: sidebar.compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
 
         ColumnLayout {
             spacing: SentinelTheme.spaceXs
@@ -19,9 +20,9 @@ ShellPanel {
             Label {
                 text: "SENTINEL"
                 color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBrand
+                font.pixelSize: sidebar.compact ? SentinelTheme.fontTitle : SentinelTheme.fontBrand
                 font.bold: true
-                font.letterSpacing: 4
+                font.letterSpacing: sidebar.compact ? 2 : 4
             }
 
             Label {
@@ -29,6 +30,8 @@ ShellPanel {
                 color: SentinelTheme.accent
                 font.pixelSize: SentinelTheme.fontSmall
                 font.letterSpacing: 1.2
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
         }
 
@@ -59,6 +62,7 @@ ShellPanel {
                     font.pixelSize: SentinelTheme.fontControl
                     font.bold: navButton.highlighted || navButton.hovered || navButton.activeFocus
                     verticalAlignment: Text.AlignVCenter
+                    elide: Text.ElideRight
 
                     Behavior on color {
                         ColorAnimation {
@@ -109,18 +113,24 @@ ShellPanel {
                 text: sidebar.viewModel.providerName
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontControl
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
 
             Label {
                 text: "Status: " + sidebar.viewModel.providerStatus
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontSmall
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
 
             Label {
                 text: "Theme: " + sidebar.viewModel.themeName
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontSmall
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
         }
     }

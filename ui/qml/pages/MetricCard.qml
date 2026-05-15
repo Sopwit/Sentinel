@@ -16,7 +16,7 @@ Rectangle {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: SentinelTheme.spaceMd
+        anchors.margins: SentinelTheme.cardPadding
         spacing: SentinelTheme.spaceXs
 
         Label {

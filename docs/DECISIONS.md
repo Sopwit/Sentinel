@@ -448,3 +448,39 @@ Boundary rules:
   and continuous idle animation.
 - Motion must not trigger provider/model calls, tool execution, filesystem/system actions,
   networking, plugin loading, approval actions, or sandbox behavior.
+
+## 27. Adaptive Layout Before Advanced Visual Systems
+
+Decision: Add compact, normal, and wide layout behavior before building advanced assistant visuals.
+
+Reason: The desktop shell should remain readable on narrower Linux/KDE and macOS windows while
+preserving the current simple Qt/QML architecture.
+
+Boundary rules:
+
+- Responsive behavior is limited to QML presentation tokens, spacing, wrapping, sidebar width, and
+  page/card column choices.
+- Breakpoints should remain cheap width checks, not runtime services or device-specific platform
+  probes.
+- Narrow layouts should prefer wrapping and stable spacing over hiding core state.
+- Adaptive layout work must not add provider/model execution, networking, plugin loading,
+  filesystem/system actions, approval actions, sandbox behavior, particle systems, assistant-face
+  rendering, or custom rendering systems.
+
+## 28. Small Component Consistency Before Visual Expansion
+
+Decision: Normalize repeated QML presentation patterns with small shared components before adding
+larger visual systems.
+
+Reason: Consistent inputs, status rows, button sizing, and card padding reduce UI drift while
+preserving the existing view-model and runtime boundaries.
+
+Boundary rules:
+
+- Shared QML components may wrap presentation-only controls such as text fields and read-only info
+  rows.
+- These components must not own business logic, persistence, provider/model routing, approval,
+  execution, filesystem/system actions, networking, plugin loading, or platform behavior.
+- Visual QA guidance should cover current manual screen states and responsive widths.
+- Automated UI driving, assistant-face rendering, particle systems, heavy animation, and custom
+  rendering systems remain future work.

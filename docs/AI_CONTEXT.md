@@ -83,6 +83,11 @@ Future UI vision:
 - Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
   polish without heavy animation, assistant-face rendering, provider integration, or runtime
   behavior.
+- Phase 5.2 adds adaptive layout tokens and responsive shell/page behavior so the desktop UI
+  remains readable at compact, normal, and wide widths without adding execution or advanced visual
+  systems.
+- Phase 5.3 normalizes small QML component patterns and adds a manual visual QA checklist without
+  adding execution-related UI or advanced assistant visuals.
 - `IMemoryStore` isolates memory storage.
 - `IChatHistoryStore` isolates chat history storage.
 - `ISettingsStore` isolates settings storage.
@@ -94,12 +99,12 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, and Phase 5.1.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, and Phase 5.3.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
   with local runtime context/session, in-memory activity logging for pipeline metadata, and
   read-only dashboard visibility for that state.
-- Next: post-Phase 5.1 UI stabilization with continued local-safe constraints.
-- Recent: Phase 5.1, Motion and Interaction Foundation.
+- Next: post-Phase 5.3 UI stabilization with continued local-safe constraints.
+- Recent: Phase 5.3, Component Consistency and Visual QA Pass.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.
