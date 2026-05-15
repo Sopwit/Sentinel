@@ -1,6 +1,9 @@
 add_library(sentinel_core STATIC
     include/sentinel/core/AppMetadata.h
     include/sentinel/core/AppSettings.h
+    include/sentinel/core/AgentActivityLog.h
+    include/sentinel/core/AgentPipelineResult.h
+    include/sentinel/core/AgentRuntimeContext.h
     include/sentinel/core/ApplicationController.h
     include/sentinel/core/ChatMessage.h
     include/sentinel/core/ChatSession.h
@@ -9,6 +12,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/IChatProvider.h
     include/sentinel/core/IClock.h
     include/sentinel/core/IContextEngine.h
+    include/sentinel/core/IApprovalPolicy.h
+    include/sentinel/core/ISandboxPolicy.h
     include/sentinel/core/IIntegration.h
     include/sentinel/core/INotificationService.h
     include/sentinel/core/IMemoryStore.h
@@ -16,6 +21,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/IPlatformService.h
     include/sentinel/core/IPlugin.h
     include/sentinel/core/ISettingsStore.h
+    include/sentinel/core/IToolExecutor.h
     include/sentinel/core/IToolRegistry.h
     include/sentinel/core/ISystemIntegrationService.h
     include/sentinel/core/InMemoryToolRegistry.h
@@ -25,12 +31,21 @@ add_library(sentinel_core STATIC
     include/sentinel/core/LocalEchoProvider.h
     include/sentinel/core/ModeManager.h
     include/sentinel/core/NullAgentRuntime.h
+    include/sentinel/core/NullToolExecutor.h
     include/sentinel/core/SQLiteChatHistoryStore.h
     include/sentinel/core/SQLiteMemoryStore.h
     include/sentinel/core/StandardPathProvider.h
+    include/sentinel/core/StaticApprovalPolicy.h
+    include/sentinel/core/StaticSandboxPolicy.h
+    include/sentinel/core/ToolApproval.h
     include/sentinel/core/ToolDescriptor.h
+    include/sentinel/core/ToolExecution.h
+    include/sentinel/core/ToolInvocationPlan.h
+    include/sentinel/core/ToolSandbox.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
+    src/AgentActivityLog.cpp
+    src/AgentRuntimeContext.cpp
     src/ApplicationController.cpp
     src/ChatSession.cpp
     src/IClock.cpp
@@ -42,9 +57,12 @@ add_library(sentinel_core STATIC
     src/LocalEchoProvider.cpp
     src/ModeManager.cpp
     src/NullAgentRuntime.cpp
+    src/NullToolExecutor.cpp
     src/SQLiteChatHistoryStore.cpp
     src/SQLiteMemoryStore.cpp
     src/StandardPathProvider.cpp
+    src/StaticApprovalPolicy.cpp
+    src/StaticSandboxPolicy.cpp
 )
 
 target_include_directories(sentinel_core

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sentinel/core/ToolDescriptor.h"
+#include "sentinel/core/ToolInvocationPlan.h"
 
 #include <QList>
 #include <QString>
@@ -37,6 +38,7 @@ struct AgentCapabilityDescriptor {
 
 struct AgentRequest {
     QString prompt;
+    QString requestedToolId;
 };
 
 struct AgentResponse {
@@ -53,6 +55,7 @@ public:
     virtual AgentStatus status() const = 0;
     virtual QList<AgentCapabilityDescriptor> capabilities() const = 0;
     virtual QList<ToolDescriptor> availableTools() const = 0;
+    virtual ToolInvocationPlan plan(const AgentRequest& request) const = 0;
     virtual AgentResponse execute(const AgentRequest& request) = 0;
 };
 

@@ -144,7 +144,7 @@ Must remain out of scope until explicitly approved:
 
 ### Phase 4: Agent Core & Tool System
 
-Started with Phase 4.0 only.
+Started with Phase 4.0 and currently remains local-safe.
 
 ### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
 
@@ -209,3 +209,282 @@ Out of scope (unchanged):
 - Provider integrations.
 - Plugin loading.
 - Sandbox/permissions runtime.
+
+### Phase 4.2: Tool Invocation Planning Boundary
+
+Completed. Added metadata-only tool invocation planning without execution.
+
+Scope:
+
+- Added value-only structures for proposed tool invocation intent:
+  - `ToolInvocationPlan`
+  - `PlannedToolInvocation`
+  - `ToolInvocationArgument`
+  - `ToolInvocationPlanStatus`
+- `IAgentRuntime` can produce metadata-only invocation plans through `plan()`.
+- Invocation plans remain separate from `ToolDescriptor` registry metadata.
+- `NullAgentRuntime` produces deterministic fake plans from registered tool metadata.
+- Controller/view-model exposure is limited to latest plan status and summary strings.
+- Tests cover deterministic output, empty-tool state, unknown requested tool ids, metadata
+  preservation, and controller/view-model status exposure.
+
+Still out of scope:
+
+- Tool execution runtime.
+- Shell/process execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Permission prompts that approve real execution.
+- Sandbox runtime.
+
+Reference plan:
+
+- `docs/PHASE_4_2_PLAN.md`
+
+### Phase 4.3: Approval and Permission Metadata Skeleton
+
+Completed. Added approval/permission metadata evaluation for planned tool invocations without
+execution or sandboxing.
+
+Scope:
+
+- Added approval metadata abstractions:
+  - `ApprovalStatus`
+  - `ApprovalDecision`
+  - `PermissionDescriptor`
+  - `ToolApprovalRequest`
+- Added approval policy boundary:
+  - `IApprovalPolicy`
+  - `StaticApprovalPolicy`
+- Approval policy evaluates `ToolInvocationPlan` data only.
+- Low-risk metadata-only plans can be marked as not requiring approval.
+- Medium/high-risk planned invocations are represented as requiring approval.
+- Explicit approved/denied policy states are representable as metadata.
+- Controller/view-model exposure is limited to latest approval status and summary strings.
+- Tests cover safe plan behavior, risky plan approval requirements, approved/denied state
+  representation, empty plan behavior, deterministic ordering, and controller/view-model status
+  exposure.
+
+Still out of scope:
+
+- Tool execution runtime.
+- Shell/process execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Sandbox runtime.
+- Permission prompts that approve real execution.
+
+### Phase 4.4: Sandbox and Capability Boundary Skeleton
+
+Completed. Added sandbox/capability metadata evaluation for planned and approved tool invocations
+without execution or real sandbox enforcement.
+
+Scope:
+
+- Added sandbox/capability metadata abstractions:
+  - `CapabilityDescriptor`
+  - `SandboxStatus`
+  - `SandboxCapabilityDecision`
+  - `SandboxEvaluationResult`
+- Added sandbox policy boundary:
+  - `ISandboxPolicy`
+  - `StaticSandboxPolicy`
+- Sandbox policy evaluates `ToolInvocationPlan` and `ApprovalDecision` data only.
+- Low-risk metadata-only plans can be marked as allowed by metadata capability policy.
+- Unknown or high-risk capabilities are represented as denied unless future explicit support is
+  added.
+- Approval is an input to sandbox evaluation but does not grant runtime capability.
+- Controller/view-model exposure is limited to latest sandbox status and summary strings.
+- Tests cover metadata-only capability allowance, unknown capability denial, empty plan behavior,
+  approved-but-not-capable blocking, deterministic ordering, and controller/view-model status
+  exposure.
+
+Still out of scope:
+
+- Tool execution runtime.
+- Shell/process execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Real sandbox runtime or OS permission enforcement.
+- Privileged automation.
+
+### Phase 4.5: Execution Boundary Skeleton
+
+Completed. Added a deterministic placeholder execution boundary for planned, approved, and
+sandbox-allowed tool invocation metadata without real execution.
+
+Scope:
+
+- Added execution boundary abstractions:
+  - `ToolExecutionRequest`
+  - `ToolExecutionResult`
+  - `ToolExecutionStatus`
+  - `IToolExecutor`
+  - `NullToolExecutor`
+- `NullToolExecutor` returns placeholder-only deterministic results.
+- Controller flow now routes metadata through:
+  - planning
+  - approval
+  - sandbox capability evaluation
+  - placeholder execution boundary
+- Approved and sandbox-allowed plans can produce placeholder success.
+- Denied, unapproved, sandbox-blocked, empty, or unknown-tool plans remain blocked or safely
+  rejected at the placeholder boundary.
+- Controller/view-model exposure is limited to latest execution status and summary strings.
+- Tests cover placeholder success, blocked execution, empty plans, unknown tools, deterministic
+  results, and controller/view-model status exposure.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Real sandbox runtime or OS permission enforcement.
+- Privileged automation.
+
+### Phase 4.6: Agent Runtime Pipeline Stabilization
+
+Completed. Consolidated the metadata-only agent runtime pipeline result without expanding tool
+capabilities.
+
+Scope:
+
+- Added a value-based aggregate pipeline result for:
+  - planning status
+  - approval status
+  - sandbox status
+  - placeholder execution status
+  - deterministic summary text
+- Centralized safe stage and pipeline summaries for controller and view-model exposure.
+- Clarified `ApplicationController::runAgentRequest` routing through the full Phase 4 pipeline:
+  - registry
+  - planning
+  - approval
+  - sandbox capability metadata evaluation
+  - placeholder execution boundary
+- Added generic pipeline status/summary exposure to the desktop view model.
+- Added tests for successful placeholder routing, approval-blocked routing, sandbox-blocked routing,
+  empty-plan routing, unknown-tool routing, deterministic summary/status output, and view-model
+  status exposure.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Real sandbox runtime or OS permission enforcement.
+- Privileged automation.
+
+### Phase 4.7: Runtime Context and Tool Session Skeleton
+
+Completed. Added deterministic local runtime context/session ownership without adding execution or
+OS interaction.
+
+Scope:
+
+- Added runtime context/session abstractions:
+  - `AgentRuntimeContext`
+  - `RuntimeSession`
+  - `RuntimeSessionId`
+  - `RuntimeContextStatus`
+- Runtime context safely aggregates value metadata from the latest pipeline result:
+  - active planned tool ids
+  - approval metadata
+  - sandbox metadata
+  - placeholder execution metadata
+  - deterministic session id and revision
+- `ApplicationController` owns the runtime session and attaches each completed pipeline result.
+- Desktop view model exposes generic read-only runtime context status, summary, session id, and
+  active planned tool ids.
+- Tests cover deterministic context creation, pipeline result attachment, planned tool ordering,
+  reset behavior, controller exposure, and view-model exposure.
+
+Boundary clarification:
+
+- Runtime context is not execution.
+- Runtime context is not persistence.
+- Runtime context is not planning.
+- Runtime context is not approval policy.
+- Runtime context is not sandbox enforcement.
+- Runtime context is not plugin loading.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Runtime context persistence.
+- Real sandbox runtime or OS permission enforcement.
+- Privileged automation.
+
+### Phase 4.8: Agent Activity Log and Audit Trail Skeleton
+
+Completed. Added in-memory metadata-only activity logging for agent pipeline observability.
+
+Scope:
+
+- Added activity/audit metadata abstractions:
+  - `AgentActivityEntry`
+  - `AgentActivityType`
+  - `AgentActivityStatus`
+  - `AgentActivityLog`
+- Activity entries are value-based and deterministic.
+- Activity log is in-memory only and has deterministic sequence ordering.
+- `ApplicationController` appends metadata events for:
+  - request received
+  - plan created
+  - approval evaluated
+  - sandbox evaluated
+  - placeholder execution evaluated
+  - pipeline completed or blocked
+- Desktop view model exposes generic read-only activity count and latest summary.
+- Tests cover deterministic ordering, clear behavior, successful pipeline logging, blocked pipeline
+  logging, and controller/view-model exposure.
+
+Boundary clarification:
+
+- Activity logging is metadata only.
+- Activity logging is not persistence.
+- Activity logging is not execution.
+- Activity logging is not sandbox enforcement.
+- Activity logging is not provider integration.
+- Activity logging is not plugin loading.
+- Future durable audit, export, redaction, pruning, and security review are later-phase work.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Activity log persistence/export.
+- Real sandbox runtime or OS permission enforcement.
+- Privileged automation.

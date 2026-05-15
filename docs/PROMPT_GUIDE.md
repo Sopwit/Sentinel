@@ -107,6 +107,150 @@ After completion:
 Run build/tests and clang-format dry-run, then report limitations and out-of-scope items still enforced.
 ```
 
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
+docs/PHASE_4_2_PLAN.md first.
+
+Task:
+Audit or stabilize the completed Phase 4.2 tool invocation planning boundary.
+
+Scope:
+Core value types, IAgentRuntime planning shape, NullAgentRuntime deterministic planning behavior,
+controller/view-model metadata status exposure, focused tests, and docs.
+
+Do not:
+Implement tool execution, shell commands, filesystem/system mutation, platform automation,
+provider/network integrations, API key handling, plugin loading, or permission prompts that approve
+real execution.
+
+After completion:
+Run build/tests and report the remaining no-execution limitations.
+```
+
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
+docs/ARCHITECTURE.md first.
+
+Task:
+Audit or stabilize the completed Phase 4.3 approval and permission metadata skeleton.
+
+Scope:
+Approval metadata value types, IApprovalPolicy, StaticApprovalPolicy, controller/view-model
+approval status exposure, focused tests, and docs.
+
+Do not:
+Implement tool execution, shell/process launch, filesystem mutation, networking/API keys,
+provider integrations, plugin loading, sandbox runtime, or permission prompts that approve real
+execution.
+
+After completion:
+Run build/tests and clang-format dry-run, then report the remaining no-execution limitations.
+```
+
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
+docs/ARCHITECTURE.md first.
+
+Task:
+Audit or stabilize the completed Phase 4.5 execution boundary skeleton.
+
+Scope:
+Tool execution request/result/status value types, IToolExecutor, NullToolExecutor,
+controller/view-model execution status exposure, focused tests, and docs.
+
+Do not:
+Implement real tool execution, shell/process launch, subprocess execution, filesystem mutation,
+networking/API keys, provider integrations, plugin loading, real sandbox runtime, OS permission
+enforcement, or privileged automation.
+
+After completion:
+Run build/tests and clang-format dry-run, then report the remaining placeholder-only execution
+limitations.
+```
+
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
+docs/ARCHITECTURE.md first.
+
+Task:
+Audit or stabilize the completed Phase 4.6 agent runtime pipeline result model.
+
+Scope:
+AgentPipelineResult value state, ApplicationController pipeline routing, desktop view-model generic
+status exposure, focused tests, and docs.
+
+Do not:
+Implement real tool execution, shell/process launch, subprocess execution, filesystem mutation,
+networking/API keys, provider integrations, plugin loading, real sandbox runtime, OS permission
+enforcement, or privileged automation.
+
+After completion:
+Run build/tests and clang-format dry-run, then report the remaining placeholder-only execution
+limitations.
+```
+
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
+docs/ARCHITECTURE.md first.
+
+Task:
+Audit or stabilize the completed Phase 4.7 runtime context and tool session skeleton.
+
+Scope:
+AgentRuntimeContext/RuntimeSession value state, ApplicationController runtime context ownership,
+desktop view-model read-only exposure, focused tests, and docs.
+
+Do not:
+Implement real tool execution, shell/process launch, subprocess execution, filesystem mutation,
+networking/API keys, provider integrations, plugin loading, runtime context persistence, real
+sandbox runtime, OS permission enforcement, or privileged automation.
+
+After completion:
+Run build/tests and clang-format dry-run, then report the remaining placeholder-only execution
+limitations.
+```
+
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
+docs/ARCHITECTURE.md first.
+
+Task:
+Audit or stabilize the completed Phase 4.8 agent activity log and audit trail skeleton.
+
+Scope:
+AgentActivityLog value state, ApplicationController metadata event logging, desktop view-model
+read-only exposure, focused tests, and docs.
+
+Do not:
+Implement real tool execution, shell/process launch, subprocess execution, filesystem mutation,
+networking/API keys, provider integrations, plugin loading, activity log persistence/export, real
+sandbox runtime, OS permission enforcement, or privileged automation.
+
+After completion:
+Run build/tests and clang-format dry-run, then report the remaining in-memory metadata-only audit
+limitations.
+```
+
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
+docs/ARCHITECTURE.md first.
+
+Task:
+Audit or stabilize the completed Phase 4.4 sandbox and capability boundary skeleton.
+
+Scope:
+Sandbox/capability metadata value types, ISandboxPolicy, StaticSandboxPolicy,
+controller/view-model sandbox status exposure, focused tests, and docs.
+
+Do not:
+Implement tool execution, shell/process launch, filesystem mutation, networking/API keys,
+provider integrations, plugin loading, real sandbox runtime, OS permission enforcement, or
+privileged automation.
+
+After completion:
+Run build/tests and clang-format dry-run, then report the remaining no-execution limitations.
+```
+
 ## Anti-Pattern Prompts
 
 Avoid broad prompts:

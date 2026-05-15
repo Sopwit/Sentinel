@@ -59,6 +59,18 @@ Future UI vision:
 - `IChatProvider` isolates provider behavior.
 - `IAgentRuntime` isolates future agent orchestration behavior.
 - `IToolRegistry` isolates tool metadata registration and lookup behavior.
+- `ToolInvocationPlan` models proposed tool-use intent without execution.
+- `IApprovalPolicy` evaluates planned tool invocations as approval metadata without execution.
+- `ISandboxPolicy` evaluates planned and approved invocation metadata against capability boundaries
+  without execution.
+- `IToolExecutor` owns the future execution boundary but currently returns placeholder-only results
+  without executing tools.
+- `AgentPipelineResult` consolidates the metadata-only runtime pipeline result for planning,
+  approval, sandbox, and placeholder execution status exposure.
+- `AgentRuntimeContext` and `RuntimeSession` own local in-memory runtime context metadata derived
+  from the latest pipeline result without persistence or execution authority.
+- `AgentActivityLog` records in-memory metadata-only audit/activity events for the agent pipeline
+  without persistence, secrets, paths, or OS interaction.
 - `IMemoryStore` isolates memory storage.
 - `IChatHistoryStore` isolates chat history storage.
 - `ISettingsStore` isolates settings storage.
@@ -70,9 +82,11 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, and Phase 4.1.
-- Current: Desktop alpha with metadata-only agent/tool skeleton boundaries.
-- Next: Phase 4.2 planning with continued local-safe constraints.
-- Recent: Phase 4.1, Tool Descriptor and Registry Skeleton.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, and Phase 4.8.
+- Current: Desktop alpha with a stabilized metadata-only agent pipeline:
+  registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
+  with local runtime context/session and in-memory activity logging for pipeline metadata.
+- Next: post-Phase 4.8 stabilization with continued local-safe constraints.
+- Recent: Phase 4.8, Agent Activity Log and Audit Trail Skeleton.
 
-Current runtime still has no networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, or platform-specific service implementations.
+Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

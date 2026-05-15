@@ -31,6 +31,12 @@ private slots:
     void exposesInitialShellState();
     void exposesAgentStatusWithoutRuntime();
     void exposesAgentToolMetadata();
+    void exposesLatestToolPlanStatus();
+    void exposesLatestApprovalStatus();
+    void exposesLatestSandboxStatus();
+    void exposesLatestToolExecutionStatus();
+    void exposesRuntimeContextStatus();
+    void exposesAgentActivityStatus();
     void exposesChatHistoryStatus();
     void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
@@ -110,6 +116,27 @@ void DesktopShellViewModelTest::exposesAgentStatusWithoutRuntime() {
 
     QCOMPARE(fixture.viewModel.agentStatus(), QStringLiteral("Unavailable"));
     QCOMPARE(fixture.viewModel.lastAgentResponse(), QStringLiteral("No agent request yet."));
+    QCOMPARE(fixture.viewModel.latestToolPlanStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(fixture.viewModel.latestToolPlanSummary(), QStringLiteral("No tool plan yet."));
+    QCOMPARE(fixture.viewModel.latestApprovalStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(fixture.viewModel.latestApprovalSummary(),
+             QStringLiteral("No approval decision yet."));
+    QCOMPARE(fixture.viewModel.latestSandboxStatus(), QStringLiteral("Not Evaluated"));
+    QCOMPARE(fixture.viewModel.latestSandboxSummary(),
+             QStringLiteral("No sandbox evaluation yet."));
+    QCOMPARE(fixture.viewModel.latestToolExecutionStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(fixture.viewModel.latestToolExecutionSummary(),
+             QStringLiteral("No tool execution boundary result yet."));
+    QCOMPARE(fixture.viewModel.latestAgentPipelineStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(fixture.viewModel.latestAgentPipelineSummary(),
+             QStringLiteral("No agent pipeline result yet."));
+    QCOMPARE(fixture.viewModel.runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(fixture.viewModel.runtimeContextStatus(), QStringLiteral("Empty"));
+    QCOMPARE(fixture.viewModel.runtimeContextSummary(), QStringLiteral("No runtime context yet."));
+    QVERIFY(fixture.viewModel.runtimeContextActiveToolIds().isEmpty());
+    QCOMPARE(fixture.viewModel.agentActivityCount(), 0);
+    QCOMPARE(fixture.viewModel.latestAgentActivitySummary(),
+             QStringLiteral("No agent activity yet."));
     QCOMPARE(fixture.viewModel.availableToolCount(), 0);
     QVERIFY(fixture.viewModel.availableToolIds().isEmpty());
 }
@@ -124,6 +151,134 @@ void DesktopShellViewModelTest::exposesAgentToolMetadata() {
 
     QCOMPARE(viewModel.availableToolCount(), 1);
     QCOMPARE(viewModel.availableToolIds(), QStringList{QStringLiteral("local-plan-summary")});
+}
+
+void DesktopShellViewModelTest::exposesLatestToolPlanStatus() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy planSpy(&viewModel, &DesktopShellViewModel::toolPlanChanged);
+
+    QCOMPARE(viewModel.latestToolPlanStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(viewModel.latestToolPlanSummary(), QStringLiteral("No tool plan yet."));
+
+    QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft local plan")));
+    QCOMPARE(viewModel.latestToolPlanStatus(), QStringLiteral("Planned"));
+    QCOMPARE(viewModel.latestToolPlanSummary(),
+             QStringLiteral("Metadata-only tool plan prepared."));
+    QCOMPARE(planSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesLatestApprovalStatus() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy approvalSpy(&viewModel, &DesktopShellViewModel::approvalChanged);
+
+    QCOMPARE(viewModel.latestApprovalStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(viewModel.latestApprovalSummary(), QStringLiteral("No approval decision yet."));
+
+    QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft local plan")));
+    QCOMPARE(viewModel.latestApprovalStatus(), QStringLiteral("Not Required"));
+    QCOMPARE(viewModel.latestApprovalSummary(),
+             QStringLiteral("Planned tool invocations do not require approval."));
+    QCOMPARE(approvalSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesLatestSandboxStatus() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy sandboxSpy(&viewModel, &DesktopShellViewModel::sandboxChanged);
+
+    QCOMPARE(viewModel.latestSandboxStatus(), QStringLiteral("Not Evaluated"));
+    QCOMPARE(viewModel.latestSandboxSummary(), QStringLiteral("No sandbox evaluation yet."));
+
+    QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft local plan")));
+    QCOMPARE(viewModel.latestSandboxStatus(), QStringLiteral("Allowed"));
+    QCOMPARE(viewModel.latestSandboxSummary(),
+             QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
+    QCOMPARE(sandboxSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesLatestToolExecutionStatus() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy executionSpy(&viewModel, &DesktopShellViewModel::toolExecutionChanged);
+
+    QCOMPARE(viewModel.latestToolExecutionStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(viewModel.latestToolExecutionSummary(),
+             QStringLiteral("No tool execution boundary result yet."));
+    QCOMPARE(viewModel.latestAgentPipelineStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(viewModel.latestAgentPipelineSummary(),
+             QStringLiteral("No agent pipeline result yet."));
+
+    QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft local plan")));
+    QCOMPARE(viewModel.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(viewModel.latestToolExecutionSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(viewModel.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(viewModel.latestAgentPipelineSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(executionSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesRuntimeContextStatus() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy runtimeContextSpy(&viewModel, &DesktopShellViewModel::runtimeContextChanged);
+
+    QCOMPARE(viewModel.runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(viewModel.runtimeContextStatus(), QStringLiteral("Empty"));
+    QCOMPARE(viewModel.runtimeContextSummary(), QStringLiteral("No runtime context yet."));
+    QVERIFY(viewModel.runtimeContextActiveToolIds().isEmpty());
+
+    QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft local plan")));
+
+    QCOMPARE(viewModel.runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(viewModel.runtimeContextStatus(), QStringLiteral("Active"));
+    QCOMPARE(viewModel.runtimeContextSummary(),
+             QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+    QCOMPARE(viewModel.runtimeContextActiveToolIds(),
+             QStringList{QStringLiteral("local-plan-summary")});
+    QCOMPARE(runtimeContextSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesAgentActivityStatus() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy activitySpy(&viewModel, &DesktopShellViewModel::agentActivityChanged);
+
+    QCOMPARE(viewModel.agentActivityCount(), 0);
+    QCOMPARE(viewModel.latestAgentActivitySummary(), QStringLiteral("No agent activity yet."));
+
+    QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft local plan")));
+
+    QCOMPARE(viewModel.agentActivityCount(), 6);
+    QCOMPARE(viewModel.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
+    QCOMPARE(activitySpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::exposesChatHistoryStatus() {
@@ -196,6 +351,13 @@ void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
     DesktopShellViewModel viewModel{controller, modeManager, settings};
     QSignalSpy statusSpy(&viewModel, &DesktopShellViewModel::agentStatusChanged);
     QSignalSpy responseSpy(&viewModel, &DesktopShellViewModel::agentResponseChanged);
+    QSignalSpy planSpy(&viewModel, &DesktopShellViewModel::toolPlanChanged);
+    QSignalSpy approvalSpy(&viewModel, &DesktopShellViewModel::approvalChanged);
+    QSignalSpy sandboxSpy(&viewModel, &DesktopShellViewModel::sandboxChanged);
+    QSignalSpy toolExecutionSpy(&viewModel, &DesktopShellViewModel::toolExecutionChanged);
+    QSignalSpy pipelineSpy(&viewModel, &DesktopShellViewModel::agentPipelineChanged);
+    QSignalSpy runtimeContextSpy(&viewModel, &DesktopShellViewModel::runtimeContextChanged);
+    QSignalSpy activitySpy(&viewModel, &DesktopShellViewModel::agentActivityChanged);
 
     const auto ran = viewModel.runAgentRequest(QStringLiteral("draft local action"));
 
@@ -203,8 +365,38 @@ void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
     QCOMPARE(viewModel.agentStatus(), QStringLiteral("Ready"));
     QCOMPARE(viewModel.lastAgentResponse(),
              QStringLiteral("Local agent placeholder processed: draft local action"));
+    QCOMPARE(viewModel.latestToolPlanStatus(), QStringLiteral("Planned"));
+    QCOMPARE(viewModel.latestToolPlanSummary(),
+             QStringLiteral("Metadata-only tool plan prepared."));
+    QCOMPARE(viewModel.latestApprovalStatus(), QStringLiteral("Not Required"));
+    QCOMPARE(viewModel.latestApprovalSummary(),
+             QStringLiteral("Planned tool invocations do not require approval."));
+    QCOMPARE(viewModel.latestSandboxStatus(), QStringLiteral("Allowed"));
+    QCOMPARE(viewModel.latestSandboxSummary(),
+             QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
+    QCOMPARE(viewModel.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(viewModel.latestToolExecutionSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(viewModel.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(viewModel.latestAgentPipelineSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(viewModel.runtimeContextStatus(), QStringLiteral("Active"));
+    QCOMPARE(viewModel.runtimeContextSummary(),
+             QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+    QCOMPARE(viewModel.runtimeContextActiveToolIds(),
+             QStringList{QStringLiteral("local-plan-summary")});
+    QCOMPARE(viewModel.agentActivityCount(), 6);
+    QCOMPARE(viewModel.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
     QCOMPARE(statusSpy.count(), 1);
     QCOMPARE(responseSpy.count(), 1);
+    QCOMPARE(planSpy.count(), 1);
+    QCOMPARE(approvalSpy.count(), 1);
+    QCOMPARE(sandboxSpy.count(), 1);
+    QCOMPARE(toolExecutionSpy.count(), 1);
+    QCOMPARE(pipelineSpy.count(), 1);
+    QCOMPARE(runtimeContextSpy.count(), 1);
+    QCOMPARE(activitySpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::ignoresBlankChatActions() {
