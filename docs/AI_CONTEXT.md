@@ -29,15 +29,17 @@ Sentinel is a native desktop-first AI operating layer. The current product is a 
 - `DesktopShellViewModel` is the QML boundary.
 - `IChatProvider` isolates provider behavior.
 - `IMemoryStore` isolates memory storage.
+- `IChatHistoryStore` isolates chat history storage.
 - `ISettingsStore` isolates settings storage.
 - `SQLiteMemoryStore` persists explicit key-value memory entries.
+- `SQLiteChatHistoryStore` persists chat messages.
 - `JsonSettingsStore` persists application settings.
 - Tests cover core behavior and persistence boundaries.
 
 ## Current Phase State
 
-- Completed: Phase 3.1.
-- Current: Phase 3.1.5, AI Context & Agent Instruction Layer.
-- Not started: Phase 3.2.
+- Completed: Phase 3.2.
+- Recent: Phase 3.1.5, AI Context & Agent Instruction Layer.
+- Next phase: not started.
 
-Phase 3.1.5 is documentation and context infrastructure only. It must not change runtime behavior.
+Current runtime still has no networking, API keys, real provider integrations, plugin loading, or privileged automation.

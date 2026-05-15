@@ -8,11 +8,11 @@ Primary target: Fedora KDE Plasma.
 
 ## Current Phase
 
-Phase 3.1 is completed.
+Phase 3.2 is completed.
 
-Current work: Phase 3.1.5, AI Context & Agent Instruction Layer.
+Most recent work: Phase 3.2, Persistent Chat History Preparation.
 
-Phase 3.2 has not started.
+Next phase has not started.
 
 ## Stack
 
@@ -40,8 +40,10 @@ Phase 3.2 has not started.
   - `QStandardPaths::AppDataLocation + "/memory.sqlite3"`
 - Settings path:
   - `QStandardPaths::AppConfigLocation + "/settings.json"`
-- Chat history is not persisted yet.
-- Do not add Phase 3.2 persistence behavior during Phase 3.1.5.
+- Chat history path:
+  - `QStandardPaths::AppDataLocation + "/chat_history.sqlite3"`
+- Chat history persistence must stay separate from key-value memory.
+- Do not overload `IMemoryStore` for chat messages.
 
 ## Coding Rules
 
@@ -81,4 +83,4 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 
 ## Current Priority
 
-Create and maintain the Phase 3.1.5 AI context layer. This is documentation and context infrastructure only.
+Maintain the Phase 3.2 persistence boundaries. Do not start the next phase without an explicit task.

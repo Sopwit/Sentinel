@@ -6,6 +6,7 @@
 #include "sentinel/core/JsonSettingsStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/ModeManager.h"
+#include "sentinel/core/SQLiteChatHistoryStore.h"
 #include "sentinel/core/SQLiteMemoryStore.h"
 
 #include <QGuiApplication>
@@ -26,7 +27,10 @@ int main(int argc, char* argv[]) {
     sentinel::core::ApplicationController controller(
         std::make_unique<sentinel::core::LocalEchoProvider>(),
         std::make_unique<sentinel::core::SQLiteMemoryStore>(appDataDir +
-                                                            QStringLiteral("/memory.sqlite3")));
+                                                            QStringLiteral("/memory.sqlite3")),
+        nullptr,
+        std::make_unique<sentinel::core::SQLiteChatHistoryStore>(
+            appDataDir + QStringLiteral("/chat_history.sqlite3")));
     sentinel::core::ModeManager modeManager;
     const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     sentinel::core::AppSettings settings(std::make_unique<sentinel::core::JsonSettingsStore>(

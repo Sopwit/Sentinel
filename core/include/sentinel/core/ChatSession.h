@@ -17,6 +17,7 @@ public:
     ChatMessage appendSystemMessage(const QString& content, ChatMessageStatus status);
     ChatMessage appendUserMessage(const QString& content);
     ChatMessage appendAssistantMessage(const QString& content, ChatMessageStatus status);
+    void loadMessages(QList<ChatMessage> messages);
     void clear();
 
 private:

@@ -63,11 +63,26 @@ Decision: Settings and memory persistence use separate stores and separate files
 
 Reason: Settings are user/application configuration. Memory entries are runtime AI context data. Combining them would blur ownership and migration paths.
 
-## 9. Chat History Not Persisted Yet
+## 9. Chat History Persistence Boundary
 
-Decision: Chat history remains in-memory.
+Decision: Chat history persistence is hidden behind `IChatHistoryStore`.
 
-Reason: Persisting conversations needs a dedicated storage contract and schema. It must not be added implicitly through memory storage.
+Reason: Chat messages are ordered conversation records, not key-value memory. They need their own contract, schema, clear operation, and migration path.
+
+Storage decision:
+
+- Desktop chat history is stored at `QStandardPaths::AppDataLocation + "/chat_history.sqlite3"`.
+- SQLite is accessed through Qt SQL and `QSQLITE`.
+- Stored fields are `id`, `role`, `content`, `timestamp`, and `status`.
+- Rows load in ascending `id` order.
+- The schema metadata table stores `schema_version = 1`.
+
+Runtime behavior:
+
+- `ApplicationController` loads persisted messages when available.
+- New runtime messages are appended to the chat history store when available.
+- Clearing chat clears runtime and persistent chat history when available.
+- Runtime chat continues if chat persistence is unavailable.
 
 ## 10. AI Context Layer
 
