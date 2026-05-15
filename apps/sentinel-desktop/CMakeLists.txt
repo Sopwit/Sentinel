@@ -22,14 +22,23 @@ qt_add_executable(sentinel-desktop
 
 set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/Main.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/Atmosphere.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/ActiveAgentsPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStreamPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelDock.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelMetricCard.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/SignalField.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
@@ -39,14 +48,23 @@ set(SENTINEL_DESKTOP_QML_FILES
 )
 
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/Atmosphere.qml PROPERTIES QT_RESOURCE_ALIAS Atmosphere.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ActiveAgentsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ActiveAgentsPanel.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStreamPanel.qml PROPERTIES QT_RESOURCE_ALIAS CognitionStreamPanel.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS HeaderBar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml PROPERTIES QT_RESOURCE_ALIAS InfoRow.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml PROPERTIES QT_RESOURCE_ALIAS SectionTitle.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml PROPERTIES QT_RESOURCE_ALIAS SentinelButton.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelDock.qml PROPERTIES QT_RESOURCE_ALIAS SentinelDock.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelMetricCard.qml PROPERTIES QT_RESOURCE_ALIAS SentinelMetricCard.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qml PROPERTIES QT_RESOURCE_ALIAS SentinelOrb.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTelemetry.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTextField.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml PROPERTIES QT_RESOURCE_ALIAS ShellPanel.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SignalField.qml PROPERTIES QT_RESOURCE_ALIAS SignalField.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml PROPERTIES QT_RESOURCE_ALIAS Sidebar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml PROPERTIES QT_RESOURCE_ALIAS StatusBar.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml PROPERTIES QT_RESOURCE_ALIAS WorkspacePresence.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTheme.qml QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml PROPERTIES QT_RESOURCE_ALIAS ChatPanel.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml PROPERTIES QT_RESOURCE_ALIAS DashboardPage.qml)

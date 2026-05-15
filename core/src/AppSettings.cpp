@@ -1,5 +1,7 @@
 #include "sentinel/core/AppSettings.h"
 
+#include "sentinel/core/ModelRouting.h"
+
 namespace sentinel::core {
 
 AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent)
@@ -34,6 +36,27 @@ void AppSettings::setConfigurationProfile(const QString& configurationProfile) {
 
     store_->setValue(QString::fromLatin1(configurationProfileKey), normalized);
     emit configurationProfileChanged();
+}
+
+QString AppSettings::routingModeName() const {
+    const auto fallback = sentinel::core::routingModeName(RoutingMode::LocalOnly);
+    return store_ ? normalizedRoutingModeName(
+                        store_->value(QString::fromLatin1(routingModeKey), fallback))
+                  : fallback;
+}
+
+void AppSettings::setRoutingModeName(const QString& routingModeName) {
+    const auto normalized = normalizedRoutingModeName(routingModeName);
+    if (normalized == this->routingModeName() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(routingModeKey), normalized);
+    emit routingModeNameChanged();
+}
+
+QStringList AppSettings::availableRoutingModes() const {
+    return routingModeNames();
 }
 
 } // namespace sentinel::core

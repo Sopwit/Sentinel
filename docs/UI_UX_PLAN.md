@@ -4,14 +4,30 @@ Phase 5 establishes a small design-system and interaction foundation for Sentine
 not implement advanced motion, assistant visuals, model management, provider integration, or
 execution features.
 
+Phase 5.4 translates the useful UI direction from the `lovable-tasarim` design reference into
+native Qt/QML. For visual identity, `lovable-tasarim` is the source of truth. The
+React/Vite/Tailwind project remains a reference only and is not integrated into the production app.
+
+Phase 5.4.5 is a stabilization checkpoint. It should reduce obvious risk in the existing QML and
+docs without adding new product features, UI systems, runtime behavior, or web dependencies.
+
+Phase 5.5 reconstructs the visual shell around the `lovable-tasarim` identity more directly:
+cinematic AI operating environment, presence-first workspace, floating translucent surfaces,
+negative space, partial bracket grammar, cyan/teal glow hierarchy, and a bottom command dock.
+
 ## Direction
 
 - Native Qt/QML desktop experience optimized first for Linux/Fedora KDE Plasma.
 - Cross-platform-safe visual language that remains viable on Windows and macOS.
-- Quiet, operational assistant dashboard rather than a marketing-style interface.
-- Dense but readable information surfaces for chat, local memory, runtime metadata, and settings.
+- Cinematic operating environment rather than a developer dashboard or KDE-style utility shell.
+- Low-density but readable information surfaces for chat, local memory, runtime metadata, and
+  settings.
 - Local-first posture: UI should make unavailable networking/provider capability clear without
   implying hidden cloud behavior.
+- Workspace-oriented layout: ultra-thin left status rail, central Sentinel presence scene, floating
+  right interaction surface, bottom command dock, and compact top system status.
+- Cinematic AI operating environment: presence-first, negative-space driven, atmospheric,
+  translucent, and emotionally calmer than a developer dashboard.
 
 ## Design System Foundation
 
@@ -25,6 +41,8 @@ Token categories:
 - typography: stable pixel sizes for current desktop shell text
 - motion: standard durations and easing values for low-cost UI transitions
 - layout: compact and wide breakpoints, sidebar widths, and small spacing helpers
+- mode visuals: accent, panel color, glow scale, and status text helpers for Companion, Focus,
+  Mission, System, Minimal, and Tactical modes
 
 Guidelines:
 
@@ -32,6 +50,7 @@ Guidelines:
 - Prefer small shared components for repeated controls such as command buttons, text fields, and
   read-only status rows.
 - Keep component styling close to existing QML patterns.
+- Match `lovable-tasarim` composition before adding generic utility-app dashboard conventions.
 - Do not move business logic into QML.
 - Avoid broad visual rewrites during foundation work.
 
@@ -42,6 +61,15 @@ Guidelines:
 - `InfoRow` owns read-only label/value status row typography and compact stacking.
 - `MetricCard` and nested panels should use shared card padding.
 - Section headings should wrap cleanly and keep page subtitles muted.
+- `ShellPanel` owns glass-like panel borders and lightweight corner brackets.
+- `SentinelDock` owns bottom navigation and page switching through the existing view model.
+- `SentinelOrb` owns the lightweight central presence geometry.
+- `SentinelTelemetry` owns small floating readouts for safe view-model metadata.
+- `WorkspacePresence` composes the central ambient presence scene and reads only safe view-model
+  state.
+- `Atmosphere` owns the low-cost ambient shell background.
+- Mode-aware helpers in `SentinelTheme.qml` are presentation helpers only; they should not become
+  routing, provider, execution, or workflow logic.
 
 ## Adaptive Layout Guidelines
 
@@ -72,9 +100,29 @@ Motion should be quiet and functional:
 - Favor color, border-color, and opacity transitions.
 - Avoid translating large layouts during routine navigation.
 - Avoid heavy continuous animation on idle dashboards.
-- Do not implement particle effects or an assistant face yet.
+- Use only lightweight QML opacity, scale, and rotation animations for Phase 5.4 presence cues.
+- Do not implement advanced particle systems or an assistant face yet.
 - Preserve acceptable behavior on Fedora KDE Plasma, macOS, and lower-power devices.
 - Avoid blur-heavy layers, shader-heavy rendering, or custom OpenGL/Vulkan render paths.
+
+## Phase 5.4.5 Risk Notes
+
+- Keep `SentinelTheme.qml` focused on durable visual tokens and small presentation helpers.
+- Avoid adding additional always-running animations until visual QA confirms current workspace
+  motion remains cheap and readable.
+- Treat compact/normal/wide layout checks as required because automated visual driving is not yet
+  implemented.
+- Run `qmllint` when available; when unavailable, rely on QML cache compilation and startup smoke
+  checks as fallback verification.
+
+## Phase 5.5 Visual Identity Notes
+
+- `lovable-tasarim` is the visual source of truth for Phase 5.x composition and atmosphere.
+- The Dashboard/Core page should prioritize the central presence scene over metric-card density.
+- Navigation should feel dock-led and cinematic, with the left rail reduced to ambient identity and
+  local status.
+- Right-side interaction should read as a floating AI bridge surface, not an enterprise chat card.
+- Continuous motion remains limited to lightweight opacity, scale, and rotation animations.
 
 ## Interaction Guidelines
 

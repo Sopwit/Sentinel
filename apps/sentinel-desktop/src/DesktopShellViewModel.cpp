@@ -11,6 +11,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                                              core::AppSettings& settings, QObject* parent)
     : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings),
       chatMessages_(this) {
+    controller_.setRoutingModeByName(settings_.routingModeName());
     chatMessages_.setMessages(controller_.chatHistory());
     connect(&controller_, &core::ApplicationController::chatMessagesChanged, this, [this]() {
         chatMessages_.setMessages(controller_.chatHistory());
@@ -38,12 +39,16 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::runtimeContextChanged);
     connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
+    connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
+            &DesktopShellViewModel::modelRoutingChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::themeNameChanged, this,
             &DesktopShellViewModel::themeNameChanged);
     connect(&settings_, &core::AppSettings::configurationProfileChanged, this,
             &DesktopShellViewModel::configurationProfileChanged);
+    connect(&settings_, &core::AppSettings::routingModeNameChanged, this,
+            &DesktopShellViewModel::modelRoutingChanged);
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -124,6 +129,31 @@ int DesktopShellViewModel::agentActivityCount() const {
 
 QString DesktopShellViewModel::latestAgentActivitySummary() const {
     return controller_.latestAgentActivitySummary();
+}
+
+QString DesktopShellViewModel::currentRoutingMode() const {
+    return controller_.currentRoutingMode();
+}
+
+void DesktopShellViewModel::setRoutingModeByName(const QString& routingModeName) {
+    const auto before = controller_.currentRoutingMode();
+    settings_.setRoutingModeName(routingModeName);
+    controller_.setRoutingModeByName(settings_.routingModeName());
+    if (before == controller_.currentRoutingMode()) {
+        emit modelRoutingChanged();
+    }
+}
+
+QStringList DesktopShellViewModel::availableRoutingModes() const {
+    return settings_.availableRoutingModes();
+}
+
+QString DesktopShellViewModel::modelRoutingStatus() const {
+    return controller_.modelRoutingStatus();
+}
+
+QString DesktopShellViewModel::selectedModelProviderSummary() const {
+    return controller_.selectedModelProviderSummary();
 }
 
 int DesktopShellViewModel::availableToolCount() const {

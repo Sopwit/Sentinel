@@ -6,15 +6,50 @@ ShellPanel {
     id: chatPanel
     required property var viewModel
     property bool compact: width < 520
+    property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+
+    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.038)
+    border.color: SentinelTheme.withAlpha(modeAccent, 0.095)
+    bracketColor: SentinelTheme.withAlpha(modeAccent, 0.22)
+    bracketSize: 12
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: chatPanel.compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
-        spacing: SentinelTheme.spaceSm
+        anchors.margins: chatPanel.compact ? SentinelTheme.spaceMd : SentinelTheme.space2Xl
+        spacing: SentinelTheme.spaceLg
 
-        SectionTitle {
-            title: "AI Bridge"
-            subtitle: chatPanel.viewModel.providerName + " is " + chatPanel.viewModel.providerStatus + ". Chat history: " + chatPanel.viewModel.chatHistoryStatus + "."
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            Rectangle {
+                width: 6
+                height: 6
+                radius: 3
+                color: chatPanel.modeAccent
+                opacity: 0.9
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                spacing: SentinelTheme.spaceXs
+
+                Label {
+                    Layout.fillWidth: true
+                    text: "AI BRIDGE / LIVE SURFACE"
+                    color: chatPanel.modeAccent
+                    font.pixelSize: SentinelTheme.fontTiny
+                    font.letterSpacing: 2.6
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: chatPanel.viewModel.providerName + " / " + chatPanel.viewModel.providerStatus + " / " + chatPanel.viewModel.chatHistoryStatus
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    elide: Text.ElideRight
+                }
+            }
         }
 
         ListView {
@@ -22,7 +57,7 @@ ShellPanel {
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
-            spacing: SentinelTheme.spaceSm
+            spacing: SentinelTheme.spaceLg
             model: chatPanel.viewModel.chatMessages
 
             delegate: Rectangle {
@@ -32,19 +67,33 @@ ShellPanel {
                 required property string content
 
                 width: ListView.view.width
-                radius: SentinelTheme.radiusMd
-                color: messageDelegate.messageRole === "user" ? SentinelTheme.userMessageSurface : messageDelegate.messageStatus === "error" ? SentinelTheme.errorSurface : SentinelTheme.surface
-                border.color: messageDelegate.messageRole === "user" ? SentinelTheme.accentBorder : messageDelegate.messageStatus === "error" ? SentinelTheme.errorBorder : SentinelTheme.successBorder
-                implicitHeight: messageText.implicitHeight + 22
+                radius: SentinelTheme.radiusLg
+                color: messageDelegate.messageRole === "user" ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.075) : messageDelegate.messageStatus === "error" ? SentinelTheme.errorSurface : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.020)
+                border.color: messageDelegate.messageRole === "user" ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.16) : messageDelegate.messageStatus === "error" ? SentinelTheme.errorBorder : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.035)
+                implicitHeight: messageColumn.implicitHeight + 26
 
-                Text {
-                    id: messageText
+                ColumnLayout {
+                    id: messageColumn
                     anchors.fill: parent
-                    anchors.margins: SentinelTheme.spaceSm
-                    text: (messageDelegate.messageRole === "user" ? "You" : "Sentinel") + ": " + messageDelegate.content
-                    color: SentinelTheme.textPrimary
-                    wrapMode: Text.WordWrap
-                    font.pixelSize: SentinelTheme.fontBody
+                    anchors.margins: SentinelTheme.spaceMd
+                    spacing: SentinelTheme.spaceXs
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: messageDelegate.messageRole === "user" ? "YOU" : "SENTINEL"
+                        color: messageDelegate.messageRole === "user" ? chatPanel.modeAccent : SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.letterSpacing: 2.1
+                    }
+
+                    Text {
+                        Layout.fillWidth: true
+                        text: messageDelegate.content
+                        color: SentinelTheme.textPrimary
+                        wrapMode: Text.WordWrap
+                        font.pixelSize: SentinelTheme.fontBody
+                        lineHeight: 1.28
+                    }
                 }
             }
         }
@@ -60,14 +109,14 @@ ShellPanel {
         GridLayout {
             Layout.fillWidth: true
             columns: chatPanel.compact ? 2 : 3
-            columnSpacing: SentinelTheme.spaceSm
-            rowSpacing: SentinelTheme.spaceSm
+            columnSpacing: SentinelTheme.spaceMd
+            rowSpacing: SentinelTheme.spaceMd
 
             SentinelTextField {
                 id: chatInput
                 Layout.fillWidth: true
                 Layout.columnSpan: chatPanel.compact ? 2 : 1
-                placeholderText: "Send a local test prompt"
+                placeholderText: "Speak with Sentinel"
                 onAccepted: sendButton.clicked()
             }
 

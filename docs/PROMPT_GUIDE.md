@@ -276,6 +276,28 @@ Run build/tests and clang-format dry-run, then report Phase 5 readiness and rema
 ```
 
 ```text
+Read AGENTS.md, CLAUDE.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md,
+docs/PROMPT_GUIDE.md, docs/ROADMAP.md, docs/ARCHITECTURE.md, docs/PHASE_4_CHECKPOINT.md,
+docs/AI_ORCHESTRATION_PLAN.md, docs/UI_UX_PLAN.md, and docs/UI_QA_CHECKLIST.md first.
+
+Task:
+Run a Phase 5.4.5 architecture and UI risk audit after Workspace UX Integration.
+
+Scope:
+Core boundaries, desktop view-model boundary, persistence separation, provider/agent/tool
+separation, QML component structure, design-token usage, docs, and minor safe QML cleanup.
+
+Do not:
+Add product features, redesign the UI, start assistant-face/advanced particles/heavy motion,
+provider/model execution, real tools, approval controls, plugin loading, networking,
+filesystem/system actions, or web runtime integration.
+
+After completion:
+Run build/tests, clang-format dry-run, available QML linting, optional smoke startup, and report
+Phase 5.5 readiness.
+```
+
+```text
 Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
 docs/ARCHITECTURE.md first.
 

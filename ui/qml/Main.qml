@@ -12,37 +12,27 @@ ApplicationWindow {
     title: "Sentinel Desktop Alpha"
     color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
-    readonly property bool compactLayout: root.width < SentinelTheme.breakpointCompact
+    readonly property bool compactLayout: root.width < 900
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
     readonly property int currentPageIndex: root.viewModel.currentPage === "Dashboard" ? 0
                                             : root.viewModel.currentPage === "Memory" ? 1 : 2
 
-    background: Rectangle {
-        gradient: Gradient {
-            GradientStop {
-                position: 0.0
-                color: SentinelTheme.backgroundRaised
-            }
-            GradientStop {
-                position: 0.55
-                color: SentinelTheme.backgroundBase
-            }
-            GradientStop {
-                position: 1.0
-                color: SentinelTheme.backgroundDeep
-            }
-        }
+    background: Atmosphere {
+        modeName: root.viewModel.currentModeName
     }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: SentinelTheme.pageMargin(root.width)
-        spacing: SentinelTheme.contentSpacing(root.width)
+        anchors.leftMargin: SentinelTheme.pageMargin(root.width)
+        anchors.rightMargin: SentinelTheme.pageMargin(root.width)
+        anchors.topMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
+        anchors.bottomMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
+        spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
 
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: SentinelTheme.contentSpacing(root.width)
+            spacing: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.space2Xl
 
             Sidebar {
                 viewModel: root.viewModel
@@ -54,18 +44,19 @@ ApplicationWindow {
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: SentinelTheme.contentSpacing(root.width)
+                spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
 
                 HeaderBar {
                     viewModel: root.viewModel
                     compact: root.compactLayout
                     Layout.fillWidth: true
-                    Layout.preferredHeight: root.compactLayout ? 118 : 96
+                    Layout.preferredHeight: root.compactLayout ? 108 : 116
                 }
 
                 StackLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.bottomMargin: root.compactLayout ? 68 : 78
                     currentIndex: root.currentPageIndex
 
                     DashboardPage {
@@ -104,11 +95,15 @@ ApplicationWindow {
                 }
             }
         }
+    }
 
-        StatusBar {
-            viewModel: root.viewModel
-            Layout.fillWidth: true
-            Layout.preferredHeight: 46
-        }
+    SentinelDock {
+        viewModel: root.viewModel
+        compact: root.compactLayout
+        width: Math.min(root.width - SentinelTheme.space4Xl, root.compactLayout ? 320 : 390)
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
+        z: 20
     }
 }

@@ -9,6 +9,7 @@
 #include "sentinel/core/IChatHistoryStore.h"
 #include "sentinel/core/IChatProvider.h"
 #include "sentinel/core/IMemoryStore.h"
+#include "sentinel/core/IModelRouter.h"
 #include "sentinel/core/ISandboxPolicy.h"
 #include "sentinel/core/IToolExecutor.h"
 
@@ -47,6 +48,11 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(int agentActivityCount READ agentActivityCount NOTIFY agentActivityChanged)
     Q_PROPERTY(QString latestAgentActivitySummary READ latestAgentActivitySummary NOTIFY
                    agentActivityChanged)
+    Q_PROPERTY(QString currentRoutingMode READ currentRoutingMode WRITE setRoutingModeByName NOTIFY
+                   modelRoutingChanged)
+    Q_PROPERTY(QString modelRoutingStatus READ modelRoutingStatus NOTIFY modelRoutingChanged)
+    Q_PROPERTY(QString selectedModelProviderSummary READ selectedModelProviderSummary NOTIFY
+                   modelRoutingChanged)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -65,6 +71,7 @@ public:
                           std::unique_ptr<IApprovalPolicy> approvalPolicy = nullptr,
                           std::unique_ptr<ISandboxPolicy> sandboxPolicy = nullptr,
                           std::unique_ptr<IToolExecutor> toolExecutor = nullptr,
+                          std::unique_ptr<IModelRouter> modelRouter = nullptr,
                           QObject* parent = nullptr);
 
     QString providerName() const;
@@ -87,6 +94,10 @@ public:
     QStringList runtimeContextActiveToolIds() const;
     int agentActivityCount() const;
     QString latestAgentActivitySummary() const;
+    QString currentRoutingMode() const;
+    void setRoutingModeByName(const QString& routingModeName);
+    QString modelRoutingStatus() const;
+    QString selectedModelProviderSummary() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -116,6 +127,7 @@ signals:
     void agentPipelineChanged();
     void runtimeContextChanged();
     void agentActivityChanged();
+    void modelRoutingChanged();
 
 private:
     AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request) const;
@@ -128,6 +140,7 @@ private:
     std::unique_ptr<IApprovalPolicy> approvalPolicy_;
     std::unique_ptr<ISandboxPolicy> sandboxPolicy_;
     std::unique_ptr<IToolExecutor> toolExecutor_;
+    std::unique_ptr<IModelRouter> modelRouter_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

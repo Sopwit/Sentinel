@@ -8,129 +8,74 @@ ShellPanel {
     id: sidebar
     required property var viewModel
     property bool compact: false
+    property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+
+    color: "transparent"
+    border.color: "transparent"
+    radius: 0
+    showBrackets: false
+
+    Rectangle {
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.bottom: parent.bottom
+        width: 1
+        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+    }
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: sidebar.compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
-        spacing: sidebar.compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
+        anchors.leftMargin: SentinelTheme.spaceXs
+        anchors.rightMargin: SentinelTheme.spaceXs
+        anchors.topMargin: SentinelTheme.spaceSm
+        anchors.bottomMargin: SentinelTheme.spaceSm
+        spacing: SentinelTheme.spaceLg
 
-        ColumnLayout {
-            spacing: SentinelTheme.spaceXs
+        Rectangle {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: 34
+            Layout.preferredHeight: 34
+            radius: 17
+            color: SentinelTheme.withAlpha(sidebar.modeAccent, 0.10)
+            border.color: SentinelTheme.withAlpha(sidebar.modeAccent, 0.22)
 
             Label {
-                text: "SENTINEL"
-                color: SentinelTheme.textPrimary
-                font.pixelSize: sidebar.compact ? SentinelTheme.fontTitle : SentinelTheme.fontBrand
-                font.bold: true
-                font.letterSpacing: sidebar.compact ? 2 : 4
-            }
-
-            Label {
-                text: sidebar.viewModel.configurationProfile
-                color: SentinelTheme.accent
-                font.pixelSize: SentinelTheme.fontSmall
-                font.letterSpacing: 1.2
-                elide: Text.ElideRight
-                Layout.fillWidth: true
+                anchors.centerIn: parent
+                text: "S"
+                color: sidebar.modeAccent
+                font.pixelSize: SentinelTheme.fontControl
+                font.weight: Font.Light
             }
         }
 
         Rectangle {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 1
-            color: SentinelTheme.accentBorder
-        }
-
-        Repeater {
-            model: sidebar.viewModel.availablePages
-
-            Button {
-                id: navButton
-                required property string modelData
-
-                Layout.fillWidth: true
-                text: modelData
-                flat: true
-                highlighted: sidebar.viewModel.currentPage === navButton.modelData
-                hoverEnabled: true
-                focusPolicy: Qt.StrongFocus
-                onClicked: sidebar.viewModel.setCurrentPage(navButton.modelData)
-
-                contentItem: Text {
-                    text: navButton.text
-                    color: navButton.highlighted ? SentinelTheme.textOnAccent : SentinelTheme.textPrimary
-                    font.pixelSize: SentinelTheme.fontControl
-                    font.bold: navButton.highlighted || navButton.hovered || navButton.activeFocus
-                    verticalAlignment: Text.AlignVCenter
-                    elide: Text.ElideRight
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: SentinelTheme.durationFast
-                            easing.type: SentinelTheme.easingStandard
-                        }
-                    }
-                }
-
-                background: Rectangle {
-                    radius: SentinelTheme.radiusMd
-                    color: navButton.highlighted ? SentinelTheme.accent : navButton.hovered ? SentinelTheme.surfaceHover : SentinelTheme.surfaceSoft
-                    border.color: navButton.activeFocus ? SentinelTheme.focusBorder : navButton.highlighted || navButton.hovered ? SentinelTheme.accentBorder : SentinelTheme.accentBorderSubtle
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: SentinelTheme.durationFast
-                            easing.type: SentinelTheme.easingStandard
-                        }
-                    }
-
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: SentinelTheme.durationFast
-                            easing.type: SentinelTheme.easingStandard
-                        }
-                    }
-                }
-            }
-        }
-
-        Item {
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: 1
             Layout.fillHeight: true
+            color: SentinelTheme.withAlpha(sidebar.modeAccent, 0.075)
         }
 
         ColumnLayout {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceSm
 
+            Rectangle {
+                Layout.alignment: Qt.AlignHCenter
+                Layout.preferredWidth: 7
+                Layout.preferredHeight: 7
+                radius: 4
+                color: sidebar.modeAccent
+                opacity: 0.88
+            }
+
             Label {
-                text: "Provider"
-                color: SentinelTheme.textMuted
+                Layout.fillWidth: true
+                text: "LOCAL"
+                color: SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.74)
                 font.pixelSize: SentinelTheme.fontTiny
-                font.letterSpacing: 1.1
-            }
-
-            Label {
-                text: sidebar.viewModel.providerName
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontControl
+                font.letterSpacing: 1.6
+                horizontalAlignment: Text.AlignHCenter
                 elide: Text.ElideRight
-                Layout.fillWidth: true
-            }
-
-            Label {
-                text: "Status: " + sidebar.viewModel.providerStatus
-                color: SentinelTheme.textMuted
-                font.pixelSize: SentinelTheme.fontSmall
-                elide: Text.ElideRight
-                Layout.fillWidth: true
-            }
-
-            Label {
-                text: "Theme: " + sidebar.viewModel.themeName
-                color: SentinelTheme.textMuted
-                font.pixelSize: SentinelTheme.fontSmall
-                elide: Text.ElideRight
-                Layout.fillWidth: true
             }
         }
     }

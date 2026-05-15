@@ -39,6 +39,8 @@ private slots:
     void exposesLatestToolExecutionStatus();
     void exposesRuntimeContextStatus();
     void exposesAgentActivityStatus();
+    void exposesModelRoutingMetadata();
+    void updatesAndPersistsRoutingModeMetadata();
     void updatesVisibleAgentValuesForBlockedPipeline();
     void exposesOnlyQmlSafeAgentVisibilityProperties();
     void exposesChatHistoryStatus();
@@ -185,6 +187,33 @@ void DesktopShellViewModelTest::exposesAgentStatusWithoutRuntime() {
              QStringLiteral("No agent activity yet."));
     QCOMPARE(fixture.viewModel.availableToolCount(), 0);
     QVERIFY(fixture.viewModel.availableToolIds().isEmpty());
+}
+
+void DesktopShellViewModelTest::exposesModelRoutingMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.currentRoutingMode(), QStringLiteral("Local Only"));
+    QCOMPARE(fixture.viewModel.modelRoutingStatus(), QStringLiteral("Routed"));
+    QCOMPARE(fixture.viewModel.selectedModelProviderSummary(),
+             QStringLiteral("Local Only -> Local Metadata Provider / Sentinel Local Placeholder"));
+}
+
+void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::modelRoutingChanged);
+
+    fixture.viewModel.setRoutingModeByName(QStringLiteral("Quality"));
+
+    QCOMPARE(fixture.viewModel.currentRoutingMode(), QStringLiteral("Quality"));
+    QCOMPARE(fixture.viewModel.modelRoutingStatus(), QStringLiteral("Routed"));
+    QCOMPARE(fixture.viewModel.selectedModelProviderSummary(),
+             QStringLiteral("Quality -> Local Metadata Provider / Sentinel Local Placeholder"));
+    QCOMPARE(fixture.settings.routingModeName(), QStringLiteral("Quality"));
+    QVERIFY(spy.count() >= 1);
+
+    fixture.viewModel.setRoutingModeByName(QStringLiteral("unknown"));
+    QCOMPARE(fixture.viewModel.currentRoutingMode(), QStringLiteral("Local Only"));
+    QCOMPARE(fixture.settings.routingModeName(), QStringLiteral("Local Only"));
 }
 
 void DesktopShellViewModelTest::exposesAgentToolMetadata() {

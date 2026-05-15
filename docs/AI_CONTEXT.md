@@ -78,6 +78,15 @@ Future UI vision:
 - AI orchestration planning now documents future `ModelRouter`, `RoutingPolicy`, provider
   capability profiles, task classification, routing modes, privacy-aware routing, and model
   management UI metadata without implementing providers or model execution.
+- Phase 6.0 implements the first metadata-only model routing skeleton: model/provider descriptors,
+  provider capability profiles, task classification, routing modes, `IModelRouter`, and a
+  deterministic local-only `StaticModelRouter`. This remains separate from `IChatProvider` and
+  `IAgentRuntime` and performs no provider calls, model execution, downloads, networking, API key
+  handling, plugin loading, filesystem/system actions, or real tool execution.
+- Phase 6.1 persists the user routing mode preference through `AppSettings` and the existing
+  `JsonSettingsStore`. The default is privacy-safe `Local Only`; changing the setting only updates
+  metadata route selection and does not enable cloud calls, API keys, provider setup, downloads, or
+  execution.
 - Phase 5.0 adds UI/UX planning and a small QML design-token singleton without adding advanced
   motion, provider integration, model execution, or runtime behavior.
 - Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
@@ -88,6 +97,9 @@ Future UI vision:
   systems.
 - Phase 5.3 normalizes small QML component patterns and adds a manual visual QA checklist without
   adding execution-related UI or advanced assistant visuals.
+- Phase 5.4 translates the useful `lovable-tasarim` design-reference direction into native Qt/QML
+  with a left rail, central workspace presence, right chat panel, mode-aware visual tokens, and
+  lightweight ambient motion. React/Vite/Tailwind/Node/WebView remain outside the production app.
 - `IMemoryStore` isolates memory storage.
 - `IChatHistoryStore` isolates chat history storage.
 - `ISettingsStore` isolates settings storage.
@@ -99,12 +111,14 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, and Phase 5.3.
-- Current: Desktop alpha with a stabilized metadata-only agent pipeline:
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, and Phase 5.4.
+- Current: Desktop alpha with a stabilized metadata-only agent pipeline and metadata-only model
+  routing skeleton:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
   with local runtime context/session, in-memory activity logging for pipeline metadata, and
-  read-only dashboard visibility for that state.
-- Next: post-Phase 5.3 UI stabilization with continued local-safe constraints.
-- Recent: Phase 5.3, Component Consistency and Visual QA Pass.
+  read-only dashboard visibility for that state. Model/provider routing is descriptor-only and
+  currently resolves to a deterministic local placeholder.
+- Next: Phase 6.x stabilization and later explicitly approved provider/model work.
+- Recent: Phase 6.1, Routing Mode Settings and Persistence.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

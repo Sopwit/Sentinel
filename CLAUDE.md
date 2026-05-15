@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 5.3 is complete.
+Phase 6.1 is complete.
 
 Implemented foundation:
 
@@ -60,6 +60,10 @@ Recent implementation phase:
 - Phase 5.1, Motion and Interaction Foundation.
 - Phase 5.2, Adaptive Layout and Responsive Shell Foundation.
 - Phase 5.3, Component Consistency and Visual QA Pass.
+- Phase 5.4, Workspace UX Integration.
+- Phase 5.5, Visual Identity Reconstruction and QML runtime stabilization.
+- Phase 6.0, Functional Workspace and Model-Orchestration Skeleton.
+- Phase 6.1, Routing Mode Settings and Persistence.
 
 ## Constraints
 
@@ -73,6 +77,7 @@ Recent implementation phase:
 - Do not start full Phase 4 implementation.
 - Do not add real tool execution; Phase 4.2 plans, Phase 4.3 approval decisions, Phase 4.4
   sandbox capability decisions, and Phase 4.5 execution results are metadata/placeholder-only.
+- Do not add real provider/model execution; Phase 6.x model routing is metadata-only.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

@@ -43,6 +43,12 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(int agentActivityCount READ agentActivityCount NOTIFY agentActivityChanged)
     Q_PROPERTY(QString latestAgentActivitySummary READ latestAgentActivitySummary NOTIFY
                    agentActivityChanged)
+    Q_PROPERTY(QString currentRoutingMode READ currentRoutingMode WRITE setRoutingModeByName NOTIFY
+                   modelRoutingChanged)
+    Q_PROPERTY(QStringList availableRoutingModes READ availableRoutingModes CONSTANT)
+    Q_PROPERTY(QString modelRoutingStatus READ modelRoutingStatus NOTIFY modelRoutingChanged)
+    Q_PROPERTY(QString selectedModelProviderSummary READ selectedModelProviderSummary NOTIFY
+                   modelRoutingChanged)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -85,6 +91,11 @@ public:
     QStringList runtimeContextActiveToolIds() const;
     int agentActivityCount() const;
     QString latestAgentActivitySummary() const;
+    QString currentRoutingMode() const;
+    void setRoutingModeByName(const QString& routingModeName);
+    QStringList availableRoutingModes() const;
+    QString modelRoutingStatus() const;
+    QString selectedModelProviderSummary() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -127,6 +138,7 @@ signals:
     void agentPipelineChanged();
     void runtimeContextChanged();
     void agentActivityChanged();
+    void modelRoutingChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
