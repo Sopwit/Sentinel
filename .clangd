@@ -1,0 +1,10 @@
+CompileFlags:
+  CompilationDatabase: build/no-ccache
+Diagnostics:
+  ClangTidy:
+    Add: []
+    Remove:
+      - readability-magic-numbers
+      - readability-identifier-naming
+Index:
+  Background: Build

@@ -3,6 +3,9 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 ShellPanel {
+    id: settingsPage
+    required property var viewModel
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 22
@@ -26,9 +29,9 @@ ShellPanel {
 
             TextField {
                 Layout.fillWidth: true
-                text: shellViewModel.themeName
+                text: settingsPage.viewModel.themeName
                 color: "#d9fff4"
-                onEditingFinished: shellViewModel.setThemeName(text)
+                onEditingFinished: settingsPage.viewModel.setThemeName(text)
             }
 
             Label {
@@ -38,9 +41,9 @@ ShellPanel {
 
             TextField {
                 Layout.fillWidth: true
-                text: shellViewModel.configurationProfile
+                text: settingsPage.viewModel.configurationProfile
                 color: "#d9fff4"
-                onEditingFinished: shellViewModel.setConfigurationProfile(text)
+                onEditingFinished: settingsPage.viewModel.setConfigurationProfile(text)
             }
         }
 

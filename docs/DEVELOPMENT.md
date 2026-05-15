@@ -74,7 +74,9 @@ find apps core tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
 
 ## Static Analysis
 
-`.clang-tidy` is provided as an optional baseline. Run it after generating `compile_commands.json`:
+`.clang-tidy` is provided as an optional baseline. It intentionally avoids high-noise checks that do not fit Qt/QObject/QML-heavy code well, including broad identifier naming and magic-number checks. Qt APIs, QML dimensions, generated MOC code, and signal/slot naming patterns make those checks noisy before they are useful.
+
+Run clang-tidy after generating `compile_commands.json`:
 
 ```bash
 cmake --preset debug
@@ -82,6 +84,58 @@ clang-tidy core/src/*.cpp apps/sentinel-desktop/*.cpp tests/core/*.cpp -p build/
 ```
 
 Treat clang-tidy output as advisory for now. CI currently enforces build, tests, and formatting only.
+
+## IDE Problem Triage
+
+If CLion, VS Code, clangd, or Qt Creator shows hundreds or thousands of problems, first check whether it is indexing generated files. The canonical source folders are:
+
+- `apps/`
+- `core/`
+- `tests/`
+- `ui/`
+- `integrations/`
+- `plugins/`
+- `docs/`
+
+Exclude these generated or local-only folders from IDE indexing and static analysis:
+
+- `build/`
+- `build-*/`
+- `build-tests/`
+- `build-noccache/`
+- `cmake-build-*/`
+- `.cache/`
+- `.qt/`
+- Qt autogen folders such as `*_autogen/`
+- Qt qmlcache folders such as `.rcc/qmlcache/`
+
+For clangd, this repository includes `.clangd` pointing at `build/no-ccache`. Reconfigure that preset before relying on IDE diagnostics:
+
+```bash
+cmake --preset no-ccache
+```
+
+QML linting should run against the built QML module, not arbitrary generated qmlcache C++ files:
+
+```bash
+cmake --build --preset no-ccache
+qmllint -I build/no-ccache/apps/sentinel-desktop \
+  build/no-ccache/apps/sentinel-desktop/Sentinel/Desktop/*.qml
+```
+
+The remaining known QML lint warning is the root `shellViewModel` context property injected from C++. It is harmless at runtime and intentionally left until a typed QML singleton is worth adding.
+
+## Canonical Verification
+
+Before reporting source problems, run:
+
+```bash
+cmake --preset no-ccache
+cmake --build --preset no-ccache
+ctest --preset no-ccache
+find apps core tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
+  | xargs -0 clang-format --dry-run --Werror
+```
 
 ## CI Expectations
 

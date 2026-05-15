@@ -3,6 +3,9 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 ShellPanel {
+    id: statusBar
+    required property var viewModel
+
     radius: 16
 
     RowLayout {
@@ -18,7 +21,7 @@ ShellPanel {
         }
 
         Label {
-            text: "Mode: " + shellViewModel.currentModeName
+            text: "Mode: " + statusBar.viewModel.currentModeName
             color: "#82aaa1"
             font.pixelSize: 12
         }
@@ -28,7 +31,7 @@ ShellPanel {
         }
 
         Label {
-            text: "Provider: " + shellViewModel.providerName + " / " + shellViewModel.providerStatus
+            text: "Provider: " + statusBar.viewModel.providerName + " / " + statusBar.viewModel.providerStatus
             color: "#82aaa1"
             font.pixelSize: 12
         }

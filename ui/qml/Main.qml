@@ -11,6 +11,7 @@ ApplicationWindow {
     visible: true
     title: "Sentinel Desktop Alpha"
     color: "#071113"
+    property var viewModel: shellViewModel
 
     background: Rectangle {
         gradient: Gradient {
@@ -40,6 +41,7 @@ ApplicationWindow {
             spacing: 14
 
             Sidebar {
+                viewModel: root.viewModel
                 Layout.preferredWidth: 244
                 Layout.fillHeight: true
             }
@@ -50,6 +52,7 @@ ApplicationWindow {
                 spacing: 14
 
                 HeaderBar {
+                    viewModel: root.viewModel
                     Layout.fillWidth: true
                     Layout.preferredHeight: 96
                 }
@@ -57,17 +60,24 @@ ApplicationWindow {
                 StackLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    currentIndex: shellViewModel.currentPage === "Dashboard" ? 0
-                                  : shellViewModel.currentPage === "Memory" ? 1 : 2
+                    currentIndex: root.viewModel.currentPage === "Dashboard" ? 0
+                                  : root.viewModel.currentPage === "Memory" ? 1 : 2
 
-                    DashboardPage {}
-                    MemoryPage {}
-                    SettingsPage {}
+                    DashboardPage {
+                        viewModel: root.viewModel
+                    }
+                    MemoryPage {
+                        viewModel: root.viewModel
+                    }
+                    SettingsPage {
+                        viewModel: root.viewModel
+                    }
                 }
             }
         }
 
         StatusBar {
+            viewModel: root.viewModel
             Layout.fillWidth: true
             Layout.preferredHeight: 46
         }

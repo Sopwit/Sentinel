@@ -3,6 +3,9 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 RowLayout {
+    id: dashboardPage
+    required property var viewModel
+
     spacing: 14
 
     ShellPanel {
@@ -58,7 +61,7 @@ RowLayout {
 
                     Label {
                         Layout.fillWidth: true
-                        text: "Mode: " + shellViewModel.currentModeName
+                        text: "Mode: " + dashboardPage.viewModel.currentModeName
                               + ". The app exposes only local echo-provider chat, runtime memory, settings, and lightweight plugin/integration contracts."
                         color: "#d9fff4"
                         font.pixelSize: 16
@@ -75,6 +78,7 @@ RowLayout {
     }
 
     ChatPanel {
+        viewModel: dashboardPage.viewModel
         Layout.preferredWidth: 410
         Layout.fillHeight: true
     }
