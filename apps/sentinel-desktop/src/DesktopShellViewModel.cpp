@@ -240,7 +240,7 @@ QStringList DesktopShellViewModel::availablePages() const {
     return {
         QStringLiteral("Dashboard"),
         QStringLiteral("Memory"),
-        QStringLiteral("Settings"),
+        QStringLiteral("Agents"),
     };
 }
 
@@ -297,6 +297,7 @@ QString DesktopShellViewModel::normalizedPageOrDefault(const QString& page) {
     const QStringList pages{
         QStringLiteral("Dashboard"),
         QStringLiteral("Memory"),
+        QStringLiteral("Agents"),
         QStringLiteral("Settings"),
     };
     return pages.contains(trimmed) ? trimmed : QStringLiteral("Dashboard");
