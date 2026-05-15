@@ -33,6 +33,7 @@ ctest --test-dir build --output-on-failure
 - `AppSettings`: defaults, input normalization, duplicate updates, blank input handling, and configuration profile changes.
 - `JsonSettingsStore`: missing files, directory creation, and persistence across instances.
 - `DesktopShellViewModel`: QML-facing state exposure, `ChatMessageListModel` history, and forwarding for chat, mode, memory, and settings actions.
+- `DesktopShellViewModel` chat lifecycle: generic chat history status and startup-loaded messages exposed through `ChatMessageListModel`.
 
 ## Test Boundaries
 

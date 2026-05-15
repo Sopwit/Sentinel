@@ -47,6 +47,24 @@ Scope:
 
 Chat history persistence is separate from key-value memory storage.
 
+### Phase 3.3: Chat History UX and Lifecycle Controls
+
+Added minimal chat history lifecycle UX on top of the Phase 3.2 persistence boundary.
+
+Scope:
+
+- Generic chat history availability/status in the desktop view model.
+- Status bar and chat panel visibility for chat history state.
+- Clear-chat confirmation before clearing runtime and persistent history.
+- Startup-loaded messages exposed through `ChatMessageListModel`.
+- Tests for desktop view-model chat history status and restored messages.
+
+Current limitation:
+
+- Chat history is one local transcript.
+- No multi-conversation/thread support.
+- No encryption, export, or pruning.
+
 ## Upcoming
 
 ### Next Phase: Pending

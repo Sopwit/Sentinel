@@ -28,6 +28,7 @@ public:
     QString providerName() const;
     QString providerStatus() const;
     QString memoryStatus() const;
+    QString chatHistoryStatus() const;
     const QList<ChatMessage>& chatHistory() const;
     QStringList chatMessages() const;
     QStringList memoryEntries() const;

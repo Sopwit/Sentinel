@@ -83,6 +83,14 @@ Runtime behavior:
 - New runtime messages are appended to the chat history store when available.
 - Clearing chat clears runtime and persistent chat history when available.
 - Runtime chat continues if chat persistence is unavailable.
+- QML receives only generic chat history status, such as `Available` or `Runtime Only`.
+- The desktop UI confirms before clearing local chat history.
+
+Current limitation:
+
+- Chat history is a single local transcript.
+- Multi-conversation/thread support is intentionally not implemented yet.
+- Encryption, export, and pruning are intentionally not implemented yet.
 
 ## 10. AI Context Layer
 

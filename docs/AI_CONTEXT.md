@@ -34,12 +34,13 @@ Sentinel is a native desktop-first AI operating layer. The current product is a 
 - `SQLiteMemoryStore` persists explicit key-value memory entries.
 - `SQLiteChatHistoryStore` persists chat messages.
 - `JsonSettingsStore` persists application settings.
+- Desktop UI exposes generic chat history status without SQLite details.
 - Tests cover core behavior and persistence boundaries.
 
 ## Current Phase State
 
-- Completed: Phase 3.2.
+- Completed: Phase 3.3.
 - Recent: Phase 3.1.5, AI Context & Agent Instruction Layer.
 - Next phase: not started.
 
-Current runtime still has no networking, API keys, real provider integrations, plugin loading, or privileged automation.
+Current runtime still has no networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, or pruning.
