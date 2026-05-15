@@ -9,7 +9,7 @@ Sentinel Desktop Alpha is a modular monolith. The application is split into a na
 - `ui/qml`: desktop shell and presentation layer.
 - `integrations`: placeholder for future local and provider integrations.
 - `plugins`: placeholder for future plugin contracts and loading.
-- `tests`: placeholder for automated tests.
+- `tests`: Qt-based automated tests for core behavior and desktop view-model boundaries.
 
 ## Current Runtime Flow
 
@@ -24,7 +24,7 @@ QML handles layout and user input. C++ owns chat handling, provider calls, mode 
 - provider name
 - current mode and available modes
 - chat messages and send action
-- runtime memory entries and write action
+- memory entries and maintenance actions
 - theme/configuration placeholder settings
 
 Raw core objects are not exposed directly to QML.
@@ -56,7 +56,7 @@ These files bind to `shellViewModel`. They should not own business rules, provid
 
 `IMemoryStore` is intentionally storage-backend independent. It stores exact key/value pairs and returns entries through a small value-based contract. Application-level validation, such as rejecting blank keys, belongs in controllers or services rather than storage implementations.
 
-`InMemoryStore` remains the default lightweight development and test backend. `SQLiteMemoryStore` implements the same `IMemoryStore` contract for desktop persistence without requiring changes to `ApplicationController`.
+`InMemoryStore` remains the default lightweight test backend. `SQLiteMemoryStore` implements the same `IMemoryStore` contract for desktop persistence without requiring changes to `ApplicationController`.
 
 The desktop app stores memory below Qt's `AppDataLocation` as `memory.sqlite3`. Settings remain separate in `JsonSettingsStore` below Qt's `AppConfigLocation`.
 

@@ -63,8 +63,7 @@ QList<ChatMessage> SQLiteChatHistoryStore::loadMessages() const {
 
     setLastError({});
     while (query.next()) {
-        const auto timestamp =
-            QDateTime::fromString(query.value(3).toString(), Qt::ISODateWithMs);
+        const auto timestamp = QDateTime::fromString(query.value(3).toString(), Qt::ISODateWithMs);
         result.append(ChatMessage{
             query.value(0).toInt(),
             roleFromName(query.value(1).toString()),

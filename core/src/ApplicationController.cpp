@@ -11,14 +11,14 @@ ApplicationController::ApplicationController(std::unique_ptr<IChatProvider> prov
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
       chatHistoryStore_(std::move(chatHistoryStore)) {
-    const auto persistedMessages =
-        chatHistoryStore_ && chatHistoryStore_->isAvailable() ? chatHistoryStore_->loadMessages()
-                                                              : QList<ChatMessage>{};
+    const auto persistedMessages = chatHistoryStore_ && chatHistoryStore_->isAvailable()
+                                       ? chatHistoryStore_->loadMessages()
+                                       : QList<ChatMessage>{};
     if (!persistedMessages.isEmpty()) {
         chatSession_->loadMessages(persistedMessages);
     } else {
-        const auto message = chatSession_->appendSystemMessage(QStringLiteral("Sentinel Core online."),
-                                                               ChatMessageStatus::Received);
+        const auto message = chatSession_->appendSystemMessage(
+            QStringLiteral("Sentinel Core online."), ChatMessageStatus::Received);
         if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
             chatHistoryStore_->appendMessage(message);
         }
@@ -149,7 +149,7 @@ bool ApplicationController::clearChat() {
     }
 
     if (!persistentAvailable) {
-        setChatMaintenanceStatus(QStringLiteral("Runtime only"));
+        setChatMaintenanceStatus(QStringLiteral("Runtime Only"));
     } else if (persistentHealthy) {
         setChatMaintenanceStatus(QStringLiteral("Clear completed"));
     } else {

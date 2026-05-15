@@ -97,6 +97,49 @@ Candidate future interfaces:
 - `INotificationService`
 - `ISystemIntegrationService`
 
+### Phase 3.5: Pre-agent Architecture Audit and Release Checkpoint
+
+Completed. Stabilization checkpoint before Phase 4.
+
+Scope:
+
+- Full architecture consistency review across:
+  - core boundaries
+  - desktop/view-model boundaries
+  - persistence separation
+  - platform boundary separation
+  - QML exposure safety
+  - test coverage gaps
+  - documentation accuracy
+- Small safe fixes only:
+  - stale wording and status consistency
+  - documentation updates and phase references
+  - minor focused tests where obvious behavior needed coverage
+- Explicitly no Phase 4 runtime implementation.
+
+Known limitations (unchanged):
+
+- No networking or API key handling.
+- No real provider integrations.
+- No plugin loading.
+- No privileged automation.
+- No multi-conversation/thread chat model.
+- No encryption, export, or pruning.
+
+Phase 4 readiness criteria:
+
+- Core boundaries remain interface-driven and portable.
+- QML receives only generic status/action surfaces.
+- Settings, memory, and chat history remain separate persistence categories.
+- Path ownership remains behind `IPathProvider`.
+- Full test suite and formatting checks pass.
+
+Must remain out of scope until explicitly approved:
+
+- Agent core/tool runtime behavior.
+- Real external provider integration.
+- Platform-specific automation/integration implementation.
+
 ## Upcoming
 
 ### Phase 4: Agent Core & Tool System

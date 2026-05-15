@@ -34,6 +34,24 @@ Delivered in this phase:
 - Local storage maintenance controls for memory/chat with confirmation UX.
 - Explicit separation preserved across settings, memory, and chat history.
 
+## Phase 3.5: Pre-agent Architecture Audit and Release Checkpoint
+
+Completed. Stabilization checkpoint before starting Phase 4 implementation.
+
+Focus:
+
+- Architecture consistency audit across core, view-model, persistence, platform boundaries, and QML exposure safety.
+- Small safe fixes only (docs, naming, status wording, minor test gaps).
+- Verification gate for tests and formatting.
+- Explicit no-Phase-4-runtime rule.
+
+Readiness criteria for Phase 4:
+
+- Boundaries and persistence separation remain intact.
+- QML exposure remains generic and safe.
+- Verification commands and format checks pass.
+- Known limitations are documented and unchanged.
+
 Candidate interfaces:
 
 - `IPlatformService`

@@ -13,7 +13,7 @@ ShellPanel {
 
         SectionTitle {
             title: "Runtime Memory"
-            subtitle: "Development-only key-value store. SQLite storage is intentionally deferred."
+            subtitle: "Local key-value memory with dedicated persistence. Settings and chat history remain separate."
         }
 
         RowLayout {
