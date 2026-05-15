@@ -189,3 +189,16 @@ Out of scope during this checkpoint:
 - Real provider/network integration and API keys.
 - Plugin loading.
 - Privileged automation.
+
+## 13. Provider And Agent Runtime Separation
+
+Decision: Keep provider and agent runtime boundaries separate.
+
+Reason: Chat response generation and orchestration/tool planning are different concerns and should evolve independently without forcing cross-layer coupling.
+
+Boundary rules:
+
+- `IChatProvider` remains the chat generation contract.
+- `IAgentRuntime` is the orchestration/runtime boundary for future action flows.
+- Controllers and QML consume generic agent status/response surfaces, not runtime internals.
+- Phase 4.0 runtime is local deterministic skeleton only (`NullAgentRuntime`) with no networking/tool execution.

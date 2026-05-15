@@ -13,7 +13,9 @@ Sentinel Desktop Alpha is a modular monolith. The application is split into a na
 
 ## Current Runtime Flow
 
-`main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `SQLiteMemoryStore`, `SQLiteChatHistoryStore`, `ModeManager`, `AppSettings`, and `DesktopShellViewModel`, then exposes only the view model to QML.
+`main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `NullAgentRuntime`,
+`SQLiteMemoryStore`, `SQLiteChatHistoryStore`, `ModeManager`, `AppSettings`, and
+`DesktopShellViewModel`, then exposes only the view model to QML.
 
 QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, chat history persistence, and settings defaults.
 
@@ -46,6 +48,7 @@ These files bind to `shellViewModel`. They should not own business rules, provid
 ## Intentional Boundaries
 
 - Chat provider behavior is hidden behind `IChatProvider`.
+- Agent orchestration behavior is hidden behind `IAgentRuntime`.
 - Memory behavior is hidden behind `IMemoryStore`.
 - Chat history behavior is hidden behind `IChatHistoryStore`.
 - Future plugin behavior starts at `IPlugin`.
@@ -103,6 +106,21 @@ The desktop app stores settings below Qt's `AppConfigLocation`. Future settings 
 `LocalEchoProvider` is the only provider in the alpha. It performs no network calls, reads no API keys, and returns a stable local response for UI and tests.
 
 Future real providers should implement `IChatProvider` behind explicit configuration and status handling. Network transport, credentials, retries, streaming, and model selection are intentionally not part of Phase 2.2.
+
+## Agent Runtime Contract
+
+`IAgentRuntime` is a separate boundary from `IChatProvider`.
+
+- `IChatProvider` remains responsible for chat response generation.
+- `IAgentRuntime` is responsible for future orchestration/action runtime behavior.
+
+Phase 4.0 adds `NullAgentRuntime` as a deterministic local-only skeleton:
+
+- no networking
+- no tool execution
+- no system/file-modifying actions
+
+`ApplicationController` and `DesktopShellViewModel` expose only generic agent status and placeholder response text to QML.
 
 ## Chat Session Pipeline
 

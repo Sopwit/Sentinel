@@ -61,7 +61,25 @@ Candidate interfaces:
 
 ## Phase 4: Agent Core & Tool System
 
-Introduce agent planning, tool execution boundaries, provider integration strategy, and explicit user control. Not started.
+Started with Phase 4.0 minimal runtime boundary work.
+
+### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
+
+Completed.
+
+Delivered:
+
+- `IAgentRuntime` boundary and request/response/status abstractions.
+- Deterministic local `NullAgentRuntime` with no tool execution.
+- Minimal controller/view-model agent status/placeholder request wiring.
+
+Still out of scope:
+
+- Real tool execution.
+- Networking/API keys.
+- Real provider integration.
+- Plugin loading.
+- Privileged or OS-level automation.
 
 ## Phase 5: Advanced UI/UX & Motion System
 

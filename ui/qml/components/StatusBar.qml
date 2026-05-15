@@ -38,6 +38,12 @@ ShellPanel {
             font.pixelSize: 12
         }
 
+        Label {
+            text: "Agent: " + statusBar.viewModel.agentStatus
+            color: "#82aaa1"
+            font.pixelSize: 12
+        }
+
         Item {
             Layout.fillWidth: true
         }

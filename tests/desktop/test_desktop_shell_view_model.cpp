@@ -7,6 +7,7 @@
 #include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/ModeManager.h"
+#include "sentinel/core/NullAgentRuntime.h"
 
 #include <QSignalSpy>
 #include <QtTest>
@@ -28,10 +29,12 @@ class DesktopShellViewModelTest final : public QObject {
 
 private slots:
     void exposesInitialShellState();
+    void exposesAgentStatusWithoutRuntime();
     void exposesChatHistoryStatus();
     void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
+    void forwardsDeterministicAgentRequest();
     void ignoresBlankChatActions();
     void clearsMemoryActions();
     void clearsChatActions();
@@ -101,6 +104,13 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
                           QStringLiteral("Settings")}));
 }
 
+void DesktopShellViewModelTest::exposesAgentStatusWithoutRuntime() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.agentStatus(), QStringLiteral("Unavailable"));
+    QCOMPARE(fixture.viewModel.lastAgentResponse(), QStringLiteral("No agent request yet."));
+}
+
 void DesktopShellViewModelTest::exposesChatHistoryStatus() {
     ApplicationController controller{std::make_unique<LocalEchoProvider>(),
                                      std::make_unique<InMemoryStore>(), nullptr,
@@ -160,6 +170,26 @@ void DesktopShellViewModelTest::forwardsChatActions() {
     QCOMPARE(fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::StatusRole),
              QStringLiteral("received"));
     QCOMPARE(spy.count(), 1);
+}
+
+void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy statusSpy(&viewModel, &DesktopShellViewModel::agentStatusChanged);
+    QSignalSpy responseSpy(&viewModel, &DesktopShellViewModel::agentResponseChanged);
+
+    const auto ran = viewModel.runAgentRequest(QStringLiteral("draft local action"));
+
+    QVERIFY(ran);
+    QCOMPARE(viewModel.agentStatus(), QStringLiteral("Ready"));
+    QCOMPARE(viewModel.lastAgentResponse(),
+             QStringLiteral("Local agent placeholder processed: draft local action"));
+    QCOMPARE(statusSpy.count(), 1);
+    QCOMPARE(responseSpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::ignoresBlankChatActions() {

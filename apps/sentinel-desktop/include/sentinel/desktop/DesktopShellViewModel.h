@@ -18,6 +18,8 @@ class DesktopShellViewModel final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString providerName READ providerName CONSTANT)
     Q_PROPERTY(QString providerStatus READ providerStatus CONSTANT)
+    Q_PROPERTY(QString agentStatus READ agentStatus NOTIFY agentStatusChanged)
+    Q_PROPERTY(QString lastAgentResponse READ lastAgentResponse NOTIFY agentResponseChanged)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
     Q_PROPERTY(QString chatHistoryStatus READ chatHistoryStatus CONSTANT)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
@@ -40,6 +42,8 @@ public:
 
     QString providerName() const;
     QString providerStatus() const;
+    QString agentStatus() const;
+    QString lastAgentResponse() const;
     QString memoryStatus() const;
     QString chatHistoryStatus() const;
     QString memoryMaintenanceStatus() const;
@@ -57,6 +61,7 @@ public:
     void setConfigurationProfile(const QString& configurationProfile);
 
     Q_INVOKABLE bool sendMessage(const QString& message);
+    Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
     Q_INVOKABLE void setModeByName(const QString& modeName);
@@ -70,6 +75,8 @@ signals:
     void configurationProfileChanged();
     void currentPageChanged();
     void maintenanceStatusChanged();
+    void agentStatusChanged();
+    void agentResponseChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);

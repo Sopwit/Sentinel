@@ -144,4 +144,33 @@ Must remain out of scope until explicitly approved:
 
 ### Phase 4: Agent Core & Tool System
 
-Not started. Do not implement Phase 4 behavior without an explicit task.
+Started with Phase 4.0 only.
+
+### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
+
+Completed. Introduced minimal local-safe agent runtime boundaries.
+
+Scope:
+
+- Added `IAgentRuntime`, `AgentRequest`, `AgentResponse`, `AgentStatus`, and capability descriptors.
+- Added deterministic `NullAgentRuntime`:
+  - local-only
+  - no networking
+  - no tool execution
+  - no filesystem/system-modifying actions
+- Kept provider and agent concepts separate:
+  - `IChatProvider` remains chat-response oriented
+  - `IAgentRuntime` is reserved for future orchestration boundaries
+- Minimal controller/view-model surfaces:
+  - generic agent status
+  - deterministic placeholder agent request/response
+  - no raw runtime object exposure to QML
+
+Out of scope (unchanged):
+
+- Real tool execution.
+- OS/platform automation.
+- Networking/API keys.
+- Real provider integrations.
+- Plugin loading.
+- Sandbox/permission enforcement runtime.

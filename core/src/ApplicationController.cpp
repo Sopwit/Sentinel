@@ -6,8 +6,10 @@ ApplicationController::ApplicationController(std::unique_ptr<IChatProvider> prov
                                              std::unique_ptr<IMemoryStore> memoryStore,
                                              std::unique_ptr<ChatSession> chatSession,
                                              std::unique_ptr<IChatHistoryStore> chatHistoryStore,
+                                             std::unique_ptr<IAgentRuntime> agentRuntime,
                                              QObject* parent)
-    : QObject(parent), provider_(std::move(provider)), memoryStore_(std::move(memoryStore)),
+    : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
+      memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
       chatHistoryStore_(std::move(chatHistoryStore)) {
@@ -31,6 +33,14 @@ QString ApplicationController::providerName() const {
 
 QString ApplicationController::providerStatus() const {
     return provider_ ? chatProviderStatusName(provider_->status()) : QStringLiteral("Unavailable");
+}
+
+QString ApplicationController::agentStatus() const {
+    return agentRuntime_ ? agentStatusName(agentRuntime_->status()) : QStringLiteral("Unavailable");
+}
+
+QString ApplicationController::lastAgentResponse() const {
+    return lastAgentResponse_;
 }
 
 QString ApplicationController::memoryStatus() const {
@@ -112,6 +122,35 @@ bool ApplicationController::sendMessage(const QString& message) {
     }
     emit chatMessagesChanged();
     return reply.success;
+}
+
+bool ApplicationController::runAgentRequest(const QString& request) {
+    const auto trimmed = request.trimmed();
+    if (trimmed.isEmpty()) {
+        if (lastAgentResponse_ != QStringLiteral("Agent request was empty.")) {
+            lastAgentResponse_ = QStringLiteral("Agent request was empty.");
+            emit agentResponseChanged();
+        }
+        return false;
+    }
+
+    if (!agentRuntime_) {
+        if (lastAgentResponse_ != QStringLiteral("Agent runtime unavailable.")) {
+            lastAgentResponse_ = QStringLiteral("Agent runtime unavailable.");
+            emit agentResponseChanged();
+        }
+        return false;
+    }
+
+    const auto response = agentRuntime_->execute(AgentRequest{trimmed});
+    const auto nextMessage =
+        response.message.isEmpty() ? QStringLiteral("No agent response.") : response.message;
+    if (lastAgentResponse_ != nextMessage) {
+        lastAgentResponse_ = nextMessage;
+        emit agentResponseChanged();
+    }
+    emit agentStatusChanged();
+    return response.success;
 }
 
 bool ApplicationController::clearMemory() {
