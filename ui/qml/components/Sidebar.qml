@@ -10,24 +10,24 @@ ShellPanel {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 18
-        spacing: 18
+        anchors.margins: SentinelTheme.spaceLg
+        spacing: SentinelTheme.spaceLg
 
         ColumnLayout {
-            spacing: 3
+            spacing: SentinelTheme.spaceXs
 
             Label {
                 text: "SENTINEL"
-                color: "#d9fff4"
-                font.pixelSize: 24
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBrand
                 font.bold: true
                 font.letterSpacing: 4
             }
 
             Label {
                 text: sidebar.viewModel.configurationProfile
-                color: "#35f2c0"
-                font.pixelSize: 12
+                color: SentinelTheme.accent
+                font.pixelSize: SentinelTheme.fontSmall
                 font.letterSpacing: 1.2
             }
         }
@@ -35,7 +35,7 @@ ShellPanel {
         Rectangle {
             Layout.fillWidth: true
             Layout.preferredHeight: 1
-            color: "#35f2c044"
+            color: SentinelTheme.accentBorder
         }
 
         Repeater {
@@ -53,16 +53,16 @@ ShellPanel {
 
                 contentItem: Text {
                     text: navButton.text
-                    color: navButton.highlighted ? "#06110f" : "#d9fff4"
-                    font.pixelSize: 14
+                    color: navButton.highlighted ? SentinelTheme.textOnAccent : SentinelTheme.textPrimary
+                    font.pixelSize: SentinelTheme.fontControl
                     font.bold: navButton.highlighted
                     verticalAlignment: Text.AlignVCenter
                 }
 
                 background: Rectangle {
-                    radius: 14
-                    color: navButton.highlighted ? "#35f2c0" : "#10232688"
-                    border.color: navButton.highlighted ? "#35f2c0" : "#35f2c022"
+                    radius: SentinelTheme.radiusMd
+                    color: navButton.highlighted ? SentinelTheme.accent : SentinelTheme.surfaceSoft
+                    border.color: navButton.highlighted ? SentinelTheme.accent : SentinelTheme.accentBorderSubtle
                 }
             }
         }
@@ -73,31 +73,31 @@ ShellPanel {
 
         ColumnLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: SentinelTheme.spaceSm
 
             Label {
                 text: "Provider"
-                color: "#82aaa1"
-                font.pixelSize: 11
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 1.1
             }
 
             Label {
                 text: sidebar.viewModel.providerName
-                color: "#d9fff4"
-                font.pixelSize: 14
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontControl
             }
 
             Label {
                 text: "Status: " + sidebar.viewModel.providerStatus
-                color: "#82aaa1"
-                font.pixelSize: 12
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontSmall
             }
 
             Label {
                 text: "Theme: " + sidebar.viewModel.themeName
-                color: "#82aaa1"
-                font.pixelSize: 12
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontSmall
             }
         }
     }

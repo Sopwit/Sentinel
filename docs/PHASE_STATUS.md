@@ -578,3 +578,36 @@ Still out of scope:
 - Filesystem/system actions.
 - Real tool execution.
 - Runtime behavior changes.
+
+## Active UI Foundation
+
+### Phase 5: Advanced UI/UX & Motion System
+
+Started with Phase 5.0 design-system foundation only.
+
+### Phase 5.0: UI/UX Planning and Design System Foundation
+
+Completed. Added UI planning and a minimal QML design-token layer without changing runtime
+behavior.
+
+Scope:
+
+- Added `docs/UI_UX_PLAN.md`.
+- Documented Linux/Fedora KDE-friendly, cross-platform Qt/QML design direction.
+- Documented future motion and assistant visual guidelines without implementation.
+- Added `ui/qml/theme/SentinelTheme.qml` for palette, spacing, radius, and typography tokens.
+- Registered the theme singleton in the existing QML module.
+- Refactored existing QML styling to consume shared tokens where safe.
+
+Still out of scope:
+
+- Real tool execution.
+- Approval UX that triggers actions.
+- Sandbox runtime.
+- Networking/API keys.
+- Provider integrations.
+- Model downloads or model execution.
+- Plugin loading.
+- Filesystem/system actions.
+- Heavy animation or particle assistant visual implementation.
+- Broad QML rewrite.

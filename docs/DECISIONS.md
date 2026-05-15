@@ -415,3 +415,20 @@ Boundary rules:
 - This planning does not add provider integrations, networking, API keys, model downloads, model
   execution, plugin loading, filesystem/system actions, real tool execution, approval UX, or
   sandbox runtime.
+
+## 25. UI Design Tokens Before Advanced Motion
+
+Decision: Start Phase 5 with a small QML design-token singleton and concise UI/UX plan.
+
+Reason: The desktop shell needs shared palette, spacing, radius, and typography values before
+larger UI polish, motion, or assistant visual work.
+
+Boundary rules:
+
+- `SentinelTheme.qml` owns reusable presentation constants only.
+- QML may consume tokens for colors, spacing, radii, and text sizing, but must not gain business
+  logic, provider behavior, model management, downloads, execution, or platform actions.
+- Motion remains documented guidance only in Phase 5.0; no heavy animation or particle assistant
+  visuals are implemented.
+- UI changes must preserve current Dashboard, Chat, Memory, Settings, and runtime visibility
+  behavior.

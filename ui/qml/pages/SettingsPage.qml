@@ -8,8 +8,8 @@ ShellPanel {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 22
-        spacing: 14
+        anchors.margins: SentinelTheme.spaceXl
+        spacing: SentinelTheme.spaceMd
 
         SectionTitle {
             title: "Settings Foundation"
@@ -24,25 +24,25 @@ ShellPanel {
 
             Label {
                 text: "Theme"
-                color: "#82aaa1"
+                color: SentinelTheme.textMuted
             }
 
             TextField {
                 Layout.fillWidth: true
                 text: settingsPage.viewModel.themeName
-                color: "#d9fff4"
+                color: SentinelTheme.textPrimary
                 onEditingFinished: settingsPage.viewModel.setThemeName(text)
             }
 
             Label {
                 text: "Config Profile"
-                color: "#82aaa1"
+                color: SentinelTheme.textMuted
             }
 
             TextField {
                 Layout.fillWidth: true
                 text: settingsPage.viewModel.configurationProfile
-                color: "#d9fff4"
+                color: SentinelTheme.textPrimary
                 onEditingFinished: settingsPage.viewModel.setConfigurationProfile(text)
             }
         }
@@ -60,28 +60,28 @@ ShellPanel {
 
             Label {
                 text: "Memory Store"
-                color: "#82aaa1"
+                color: SentinelTheme.textMuted
             }
 
             Label {
                 text: settingsPage.viewModel.memoryStatus + " (" + settingsPage.viewModel.memoryMaintenanceStatus + ")"
-                color: "#d9fff4"
+                color: SentinelTheme.textPrimary
             }
 
             Label {
                 text: "Chat History"
-                color: "#82aaa1"
+                color: SentinelTheme.textMuted
             }
 
             Label {
                 text: settingsPage.viewModel.chatHistoryStatus + " (" + settingsPage.viewModel.chatMaintenanceStatus + ")"
-                color: "#d9fff4"
+                color: SentinelTheme.textPrimary
             }
         }
 
         RowLayout {
             Layout.fillWidth: true
-            spacing: 8
+            spacing: SentinelTheme.spaceSm
 
             Button {
                 text: "Clear Local Memory"
@@ -98,7 +98,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             text: "Future settings should remain local-first and pass through AppSettings rather than being implemented in QML."
-            color: "#82aaa1"
+            color: SentinelTheme.textMuted
             wrapMode: Text.WordWrap
         }
 
@@ -116,7 +116,7 @@ ShellPanel {
 
         Label {
             text: "This clears local memory entries only. Settings are kept."
-            color: "#d9fff4"
+            color: SentinelTheme.textPrimary
             wrapMode: Text.WordWrap
             width: 320
         }
@@ -133,7 +133,7 @@ ShellPanel {
 
         Label {
             text: "This clears local chat history. Settings are kept."
-            color: "#d9fff4"
+            color: SentinelTheme.textPrimary
             wrapMode: Text.WordWrap
             width: 320
         }

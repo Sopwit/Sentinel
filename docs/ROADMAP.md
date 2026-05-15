@@ -355,6 +355,24 @@ Still out of scope:
 
 Evolve the Qt Quick experience with responsive layouts, adaptive themes, assistant-like interaction, animated panels, dashboard cards, and reusable components.
 
+### Phase 5.0: UI/UX Planning and Design System Foundation
+
+Completed. Established design direction and shared QML presentation tokens.
+
+Delivered:
+
+- `docs/UI_UX_PLAN.md` for visual direction, design-system scope, and motion constraints.
+- `SentinelTheme.qml` QML singleton for palette, spacing, radius, and typography tokens.
+- Minimal QML token adoption while preserving current Dashboard, Chat, Memory, Settings, and
+  runtime visibility behavior.
+
+Still out of scope:
+
+- Heavy animation or particle assistant visuals.
+- Provider/model integrations or model management execution.
+- Real tool execution, approval actions, sandbox runtime, plugin loading, networking, or
+  filesystem/system actions.
+
 Readiness criteria:
 
 - Preserve Phase 4 no-execution boundaries.

@@ -10,25 +10,25 @@ Rectangle {
 
     Layout.fillWidth: true
     Layout.preferredHeight: 92
-    radius: 18
-    color: "#12292dcc"
-    border.color: "#35f2c02d"
+    radius: SentinelTheme.radiusXl
+    color: SentinelTheme.metricSurface
+    border.color: SentinelTheme.accentBorderSoft
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: 14
-        spacing: 5
+        anchors.margins: SentinelTheme.spaceMd
+        spacing: SentinelTheme.spaceXs
 
         Label {
             text: metricCard.label
-            color: "#82aaa1"
-            font.pixelSize: 12
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
         }
 
         Label {
             text: metricCard.value
-            color: "#d9fff4"
-            font.pixelSize: 18
+            color: SentinelTheme.textPrimary
+            font.pixelSize: SentinelTheme.fontCard
             font.bold: true
         }
     }

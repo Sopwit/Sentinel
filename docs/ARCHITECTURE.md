@@ -42,6 +42,7 @@ The desktop shell is split into small QML components:
 - `pages/DashboardPage.qml`: overview and chat panel host.
 - `pages/MemoryPage.qml`: runtime memory UI.
 - `pages/SettingsPage.qml`: settings placeholder UI.
+- `theme/SentinelTheme.qml`: presentation tokens for palette, spacing, radius, and typography.
 
 These files bind to `shellViewModel`. They should not own business rules, provider logic, persistence logic, or platform automation.
 
@@ -222,6 +223,15 @@ Phase 4.11 adds AI orchestration planning only:
   and UI model-management screens.
 - No provider integration, networking/API keys, model download, model execution, plugin loading,
   filesystem/system action, real tool execution, or runtime behavior change is added.
+
+Phase 5.0 adds UI/UX planning and design-system foundation only:
+
+- `docs/UI_UX_PLAN.md` records the design direction and motion constraints.
+- `SentinelTheme.qml` provides QML presentation tokens.
+- Existing QML components consume tokens where safe without changing view-model contracts or app
+  behavior.
+- Advanced motion, assistant visuals, provider/model management, networking, execution, plugin
+  loading, sandbox runtime, and filesystem/system actions remain unimplemented.
 
 `ApplicationController` and `DesktopShellViewModel` expose only generic agent status, placeholder
 response text, latest plan status/summary, latest approval status/summary, latest sandbox

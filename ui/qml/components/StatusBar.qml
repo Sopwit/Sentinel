@@ -6,48 +6,48 @@ ShellPanel {
     id: statusBar
     required property var viewModel
 
-    radius: 16
+    radius: SentinelTheme.radiusLg
 
     RowLayout {
         anchors.fill: parent
-        anchors.leftMargin: 16
-        anchors.rightMargin: 16
-        spacing: 14
+        anchors.leftMargin: SentinelTheme.spaceLg
+        anchors.rightMargin: SentinelTheme.spaceLg
+        spacing: SentinelTheme.spaceMd
 
         Label {
             text: "Status: Local Alpha"
-            color: "#d9fff4"
-            font.pixelSize: 12
+            color: SentinelTheme.textPrimary
+            font.pixelSize: SentinelTheme.fontSmall
         }
 
         Label {
             text: "Mode: " + statusBar.viewModel.currentModeName
-            color: "#82aaa1"
-            font.pixelSize: 12
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
         }
 
         Label {
             text: "Memory: " + statusBar.viewModel.memoryStatus
-            color: "#82aaa1"
-            font.pixelSize: 12
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
         }
 
         Label {
             text: "Chat: " + statusBar.viewModel.chatHistoryStatus
-            color: "#82aaa1"
-            font.pixelSize: 12
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
         }
 
         Label {
             text: "Agent: " + statusBar.viewModel.agentStatus
-            color: "#82aaa1"
-            font.pixelSize: 12
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
         }
 
         Label {
             text: "Tools: " + statusBar.viewModel.availableToolCount
-            color: "#82aaa1"
-            font.pixelSize: 12
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
         }
 
         Item {
@@ -56,8 +56,8 @@ ShellPanel {
 
         Label {
             text: "Provider: " + statusBar.viewModel.providerName + " / " + statusBar.viewModel.providerStatus
-            color: "#82aaa1"
-            font.pixelSize: 12
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
         }
     }
 }
