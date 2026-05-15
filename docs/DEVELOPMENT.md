@@ -92,3 +92,14 @@ Linux CI installs Qt, configures with the `tests` preset, builds with Ninja, run
 QML should bind to `DesktopShellViewModel`, not directly to core services. Keep business rules in C++ and expose only small `Q_PROPERTY` and `Q_INVOKABLE` surfaces needed by the UI.
 
 Settings placeholders should go through `AppSettings`. Storage placeholders should go through `IMemoryStore`. Do not add SQLite, provider networking, or platform automation in the desktop shell layer.
+
+## Linux Packaging Direction
+
+Fedora/KDE packaging should stay conventional:
+
+- Install the `sentinel-desktop` binary.
+- Install `packaging/linux/dev.sentinel.Sentinel.desktop.in` as a desktop entry after replacing placeholders if needed.
+- Install `resources/icons/dev.sentinel.Sentinel.svg` into the icon theme path.
+- Keep settings under Qt's `AppConfigLocation`.
+
+Do not add privileged services, autostart agents, or system automation until those phases are explicitly designed.

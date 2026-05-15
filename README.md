@@ -13,7 +13,7 @@ This first version includes:
 - `IMemoryStore` with runtime-only `InMemoryStore`.
 - `IPlugin` and `IContextEngine` interfaces.
 - `ApplicationController` and `ModeManager`.
-- `AppSettings` with runtime-only settings storage.
+- `AppSettings` with `ISettingsStore`, in-memory test storage, and lightweight JSON desktop storage.
 - `DesktopShellViewModel` as the QML boundary.
 - HUD-style dashboard, sidebar navigation, mode switcher, chat panel, settings placeholder, and memory placeholder.
 

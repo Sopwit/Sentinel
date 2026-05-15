@@ -17,6 +17,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString providerName READ providerName CONSTANT)
     Q_PROPERTY(QString currentModeName READ currentModeName NOTIFY currentModeChanged)
     Q_PROPERTY(QStringList availableModes READ availableModes CONSTANT)
+    Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
+    Q_PROPERTY(QStringList availablePages READ availablePages CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString themeName READ themeName WRITE setThemeName NOTIFY themeNameChanged)
@@ -30,6 +32,9 @@ public:
     QString providerName() const;
     QString currentModeName() const;
     QStringList availableModes() const;
+    QString currentPage() const;
+    void setCurrentPage(const QString& page);
+    QStringList availablePages() const;
     QStringList chatMessages() const;
     QStringList memoryEntries() const;
     QString themeName() const;
@@ -47,11 +52,15 @@ signals:
     void memoryEntriesChanged();
     void themeNameChanged();
     void configurationProfileChanged();
+    void currentPageChanged();
 
 private:
+    static QString normalizedPageOrDefault(const QString& page);
+
     core::ApplicationController& controller_;
     core::ModeManager& modeManager_;
     core::AppSettings& settings_;
+    QString currentPage_ = QStringLiteral("Dashboard");
 };
 
 } // namespace sentinel::desktop

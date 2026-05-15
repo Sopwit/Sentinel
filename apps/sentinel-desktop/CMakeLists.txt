@@ -20,12 +20,29 @@ qt_add_executable(sentinel-desktop
 
 set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/Main.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/MemoryPage.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/MetricCard.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/SettingsPage.qml
 )
 
-set_source_files_properties(${SENTINEL_DESKTOP_QML_FILES}
-    PROPERTIES
-        QT_RESOURCE_ALIAS Main.qml
-)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS HeaderBar.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml PROPERTIES QT_RESOURCE_ALIAS SectionTitle.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml PROPERTIES QT_RESOURCE_ALIAS ShellPanel.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml PROPERTIES QT_RESOURCE_ALIAS Sidebar.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml PROPERTIES QT_RESOURCE_ALIAS StatusBar.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml PROPERTIES QT_RESOURCE_ALIAS ChatPanel.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml PROPERTIES QT_RESOURCE_ALIAS DashboardPage.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/MemoryPage.qml PROPERTIES QT_RESOURCE_ALIAS MemoryPage.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/MetricCard.qml PROPERTIES QT_RESOURCE_ALIAS MetricCard.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/SettingsPage.qml PROPERTIES QT_RESOURCE_ALIAS SettingsPage.qml)
 
 qt_add_qml_module(sentinel-desktop
     URI Sentinel.Desktop
