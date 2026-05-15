@@ -3,6 +3,9 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 ShellPanel {
+    id: memoryPage
+    required property var viewModel
+
     ColumnLayout {
         anchors.fill: parent
         anchors.margins: 22
@@ -37,7 +40,7 @@ ShellPanel {
                 text: "Store"
                 enabled: memoryKey.text.trim().length > 0
                 onClicked: {
-                    shellViewModel.remember(memoryKey.text, memoryValue.text)
+                    memoryPage.viewModel.remember(memoryKey.text, memoryValue.text)
                     memoryKey.clear()
                     memoryValue.clear()
                 }
@@ -49,9 +52,12 @@ ShellPanel {
             Layout.fillHeight: true
             clip: true
             spacing: 8
-            model: shellViewModel.memoryEntries
+            model: memoryPage.viewModel.memoryEntries
 
             delegate: Rectangle {
+                id: memoryDelegate
+                required property string modelData
+
                 width: ListView.view.width
                 radius: 12
                 color: "#102326aa"
@@ -62,7 +68,7 @@ ShellPanel {
                     id: memoryText
                     anchors.fill: parent
                     anchors.margins: 9
-                    text: modelData
+                    text: memoryDelegate.modelData
                     color: "#d9fff4"
                     wrapMode: Text.WordWrap
                 }

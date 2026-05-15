@@ -3,8 +3,11 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 ShellPanel {
+    id: headerBar
+    required property var viewModel
+
     function modeIndex() {
-        return shellViewModel.availableModes.indexOf(shellViewModel.currentModeName)
+        return headerBar.viewModel.availableModes.indexOf(headerBar.viewModel.currentModeName)
     }
 
     RowLayout {
@@ -17,7 +20,7 @@ ShellPanel {
             spacing: 4
 
             Label {
-                text: shellViewModel.currentModeName
+                text: headerBar.viewModel.currentModeName
                 color: "#d9fff4"
                 font.pixelSize: 27
                 font.bold: true
@@ -32,9 +35,9 @@ ShellPanel {
 
         ComboBox {
             Layout.preferredWidth: 230
-            model: shellViewModel.availableModes
-            currentIndex: modeIndex()
-            onActivated: shellViewModel.setModeByName(currentText)
+            model: headerBar.viewModel.availableModes
+            currentIndex: headerBar.modeIndex()
+            onActivated: headerBar.viewModel.setModeByName(currentText)
         }
     }
 }

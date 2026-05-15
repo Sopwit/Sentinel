@@ -1,4 +1,12 @@
 build/
 build-*/
+cmake-build-*/
+.cache/
+.clangd/index/
+.idea/
+.vscode/
+.qt/
+CMakeUserPresets.json
+compile_commands.json
 .DS_Store
 *.user

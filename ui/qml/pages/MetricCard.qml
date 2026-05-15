@@ -3,6 +3,8 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 
 Rectangle {
+    id: metricCard
+
     property string label: ""
     property string value: ""
 
@@ -18,13 +20,13 @@ Rectangle {
         spacing: 5
 
         Label {
-            text: parent.parent.label
+            text: metricCard.label
             color: "#82aaa1"
             font.pixelSize: 12
         }
 
         Label {
-            text: parent.parent.value
+            text: metricCard.value
             color: "#d9fff4"
             font.pixelSize: 18
             font.bold: true
