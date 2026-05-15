@@ -2,9 +2,9 @@
 
 #include "sentinel/core/AppSettings.h"
 #include "sentinel/core/ApplicationController.h"
-#include "sentinel/core/FakeProvider.h"
 #include "sentinel/core/InMemorySettingsStore.h"
 #include "sentinel/core/InMemoryStore.h"
+#include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/ModeManager.h"
 
 #include <QSignalSpy>
@@ -14,9 +14,9 @@
 
 using sentinel::core::ApplicationController;
 using sentinel::core::AppSettings;
-using sentinel::core::FakeProvider;
 using sentinel::core::InMemorySettingsStore;
 using sentinel::core::InMemoryStore;
+using sentinel::core::LocalEchoProvider;
 using sentinel::core::ModeManager;
 using sentinel::desktop::DesktopShellViewModel;
 
@@ -26,6 +26,7 @@ class DesktopShellViewModelTest final : public QObject {
 private slots:
     void exposesInitialShellState();
     void forwardsChatActions();
+    void ignoresBlankChatActions();
     void forwardsModeChanges();
     void forwardsMemoryWrites();
     void forwardsSettingsChanges();
@@ -35,7 +36,7 @@ private slots:
 
 class ViewModelFixture {
 public:
-    ApplicationController controller{std::make_unique<FakeProvider>(),
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
                                      std::make_unique<InMemoryStore>()};
     ModeManager modeManager;
     AppSettings settings{std::make_unique<InMemorySettingsStore>()};
@@ -45,7 +46,8 @@ public:
 void DesktopShellViewModelTest::exposesInitialShellState() {
     ViewModelFixture fixture;
 
-    QCOMPARE(fixture.viewModel.providerName(), QStringLiteral("FakeProvider"));
+    QCOMPARE(fixture.viewModel.providerName(), QStringLiteral("LocalEchoProvider"));
+    QCOMPARE(fixture.viewModel.providerStatus(), QStringLiteral("Ready"));
     QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Companion Mode"));
     QVERIFY(fixture.viewModel.availableModes().contains(QStringLiteral("Tactical Mode")));
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Dark"));
@@ -60,12 +62,24 @@ void DesktopShellViewModelTest::forwardsChatActions() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::chatMessagesChanged);
 
-    fixture.viewModel.sendMessage(QStringLiteral("status"));
+    const auto sent = fixture.viewModel.sendMessage(QStringLiteral("status"));
 
+    QVERIFY(sent);
     QCOMPARE(fixture.viewModel.chatMessages().size(), 3);
     QCOMPARE(fixture.viewModel.chatMessages().last(),
-             QStringLiteral("Sentinel: Sentinel Core online. Provider bridge is active."));
+             QStringLiteral("Sentinel: Sentinel Core online. Local chat pipeline is active."));
     QCOMPARE(spy.count(), 1);
+}
+
+void DesktopShellViewModelTest::ignoresBlankChatActions() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::chatMessagesChanged);
+
+    const auto sent = fixture.viewModel.sendMessage(QStringLiteral("   "));
+
+    QVERIFY(!sent);
+    QCOMPARE(fixture.viewModel.chatMessages().size(), 1);
+    QCOMPARE(spy.count(), 0);
 }
 
 void DesktopShellViewModelTest::forwardsModeChanges() {

@@ -68,11 +68,11 @@ void InMemoryStoreTest::keepsMultipleKeysIndependent() {
     InMemoryStore store;
 
     store.put(QStringLiteral("mode"), QStringLiteral("Companion"));
-    store.put(QStringLiteral("provider"), QStringLiteral("FakeProvider"));
+    store.put(QStringLiteral("provider"), QStringLiteral("LocalEchoProvider"));
     store.put(QStringLiteral("mode"), QStringLiteral("Mission"));
 
     QCOMPARE(store.get(QStringLiteral("mode")), QStringLiteral("Mission"));
-    QCOMPARE(store.get(QStringLiteral("provider")), QStringLiteral("FakeProvider"));
+    QCOMPARE(store.get(QStringLiteral("provider")), QStringLiteral("LocalEchoProvider"));
     QCOMPARE(store.entries().size(), 2);
 }
 

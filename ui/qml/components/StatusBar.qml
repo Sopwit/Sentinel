@@ -28,7 +28,7 @@ ShellPanel {
         }
 
         Label {
-            text: "Provider: " + shellViewModel.providerName
+            text: "Provider: " + shellViewModel.providerName + " / " + shellViewModel.providerStatus
             color: "#82aaa1"
             font.pixelSize: 12
         }

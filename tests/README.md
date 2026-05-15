@@ -9,6 +9,7 @@ Current test targets:
 - `test_application_controller`
 - `test_app_settings`
 - `test_json_settings_store`
+- `test_local_echo_provider`
 - `test_desktop_shell_view_model`
 
 Run from the repository root:

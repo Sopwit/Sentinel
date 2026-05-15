@@ -13,7 +13,7 @@ Sentinel Desktop Alpha is a modular monolith. The application is split into a na
 
 ## Current Runtime Flow
 
-`main.cpp` creates `ApplicationController`, `FakeProvider`, `InMemoryStore`, `ModeManager`, `AppSettings`, and `DesktopShellViewModel`, then exposes only the view model to QML.
+`main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `InMemoryStore`, `ModeManager`, `AppSettings`, and `DesktopShellViewModel`, then exposes only the view model to QML.
 
 QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, and settings defaults.
 
@@ -45,7 +45,7 @@ These files bind to `shellViewModel`. They should not own business rules, provid
 
 ## Intentional Boundaries
 
-- Provider behavior is hidden behind `IProvider`.
+- Chat provider behavior is hidden behind `IChatProvider`.
 - Memory behavior is hidden behind `IMemoryStore`.
 - Future plugin behavior starts at `IPlugin`.
 - Context construction starts at `IContextEngine`.
@@ -66,6 +66,14 @@ The desktop app stores settings below Qt's `AppConfigLocation`. Future settings 
 ## Plugin And Integration Boundaries
 
 `IPlugin` describes future in-process plugin lifecycle boundaries. `IIntegration` describes future external or local integration metadata. Neither interface loads code, performs network calls, or talks to operating-system services in the alpha.
+
+## Provider Contract
+
+`IChatProvider` is the local chat pipeline boundary. Providers expose a name, a status, and a deterministic `sendMessage` result. `ApplicationController` owns blank-message validation, unavailable-provider handling, and chat transcript formatting.
+
+`LocalEchoProvider` is the only provider in the alpha. It performs no network calls, reads no API keys, and returns a stable local response for UI and tests.
+
+Future real providers should implement `IChatProvider` behind explicit configuration and status handling. Network transport, credentials, retries, streaming, and model selection are intentionally not part of Phase 2.2.
 
 ## Not Implemented Yet
 

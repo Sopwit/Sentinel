@@ -9,7 +9,7 @@ This first version includes:
 - CMake + Ninja project structure.
 - Qt 6 + QML desktop shell.
 - Modular C++ core library.
-- `IProvider` with a `FakeProvider`.
+- `IChatProvider` with a deterministic `LocalEchoProvider`.
 - `IMemoryStore` with runtime-only `InMemoryStore`.
 - `IPlugin` and `IContextEngine` interfaces.
 - `ApplicationController` and `ModeManager`.

@@ -81,6 +81,12 @@ ShellPanel {
             }
 
             Label {
+                text: "Status: " + shellViewModel.providerStatus
+                color: "#82aaa1"
+                font.pixelSize: 12
+            }
+
+            Label {
                 text: "Theme: " + shellViewModel.themeName
                 color: "#82aaa1"
                 font.pixelSize: 12

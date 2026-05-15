@@ -3,9 +3,9 @@
 #include "sentinel/core/AppMetadata.h"
 #include "sentinel/core/AppSettings.h"
 #include "sentinel/core/ApplicationController.h"
-#include "sentinel/core/FakeProvider.h"
 #include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/JsonSettingsStore.h"
+#include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/ModeManager.h"
 
 #include <QGuiApplication>
@@ -23,7 +23,7 @@ int main(int argc, char* argv[]) {
     QGuiApplication::setDesktopFileName(sentinel::core::AppMetadata::appId());
 
     sentinel::core::ApplicationController controller(
-        std::make_unique<sentinel::core::FakeProvider>(),
+        std::make_unique<sentinel::core::LocalEchoProvider>(),
         std::make_unique<sentinel::core::InMemoryStore>());
     sentinel::core::ModeManager modeManager;
     const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);

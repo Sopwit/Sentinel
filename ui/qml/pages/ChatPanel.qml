@@ -10,7 +10,7 @@ ShellPanel {
 
         SectionTitle {
             title: "AI Bridge"
-            subtitle: "FakeProvider only. No API calls or network access."
+            subtitle: shellViewModel.providerName + " is " + shellViewModel.providerStatus + ". No API calls or network access."
         }
 
         ListView {
