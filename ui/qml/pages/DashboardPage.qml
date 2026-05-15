@@ -80,6 +80,7 @@ GridLayout {
     }
 
     ActiveAgentsPanel {
+        viewModel: dashboardPage.viewModel
         Layout.fillWidth: true
         Layout.columnSpan: dashboardPage.wideLayout ? 5 : 1
     }

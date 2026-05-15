@@ -1,6 +1,7 @@
 #include "sentinel/core/ApplicationController.h"
 
 #include "sentinel/core/NullToolExecutor.h"
+#include "sentinel/core/StaticAgentRegistry.h"
 #include "sentinel/core/StaticApprovalPolicy.h"
 #include "sentinel/core/StaticModelRouter.h"
 #include "sentinel/core/StaticProviderCatalog.h"
@@ -40,7 +41,8 @@ ApplicationController::ApplicationController(
     std::unique_ptr<IAgentRuntime> agentRuntime, std::unique_ptr<IApprovalPolicy> approvalPolicy,
     std::unique_ptr<ISandboxPolicy> sandboxPolicy, std::unique_ptr<IToolExecutor> toolExecutor,
     std::unique_ptr<IModelRouter> modelRouter, std::unique_ptr<IProviderCatalog> providerCatalog,
-    std::unique_ptr<ITaskPlanner> taskPlanner, QObject* parent)
+    std::unique_ptr<ITaskPlanner> taskPlanner, std::unique_ptr<IAgentRegistry> agentRegistry,
+    QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -52,6 +54,8 @@ ApplicationController::ApplicationController(
       modelRouter_(modelRouter ? std::move(modelRouter)
                                : std::make_unique<StaticModelRouter>(*providerCatalog_)),
       taskPlanner_(taskPlanner ? std::move(taskPlanner) : std::make_unique<StaticTaskPlanner>()),
+      agentRegistry_(agentRegistry ? std::move(agentRegistry)
+                                   : std::make_unique<StaticAgentRegistry>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -197,6 +201,30 @@ QString ApplicationController::latestTaskPlanSummary() const {
 
 int ApplicationController::plannedTaskStepCount() const {
     return latestTaskPlan_.steps.size();
+}
+
+int ApplicationController::registeredAgentCount() const {
+    return agentRegistry_ ? agentRegistry_->agents().size() : 0;
+}
+
+QStringList ApplicationController::activeAgentSummaries() const {
+    QStringList summaries;
+    if (!agentRegistry_) {
+        return summaries;
+    }
+
+    for (const auto& agent : agentRegistry_->agents()) {
+        if (isAgentAvailable(agent.state)) {
+            summaries.append(agentDescriptorSummary(agent));
+        }
+    }
+    return summaries;
+}
+
+QString ApplicationController::currentAgentSummary() const {
+    return latestTaskPlan_.preferredAgentSummary.isEmpty()
+               ? QStringLiteral("No agent metadata selected.")
+               : latestTaskPlan_.preferredAgentSummary;
 }
 
 int ApplicationController::providerCatalogCount() const {
@@ -405,6 +433,8 @@ void ApplicationController::refreshLatestTaskPlan() {
             {},
             {},
             QStringLiteral("Task planner metadata is unavailable."),
+            {},
+            {},
             false,
             false,
         };
@@ -415,6 +445,7 @@ void ApplicationController::refreshLatestTaskPlan() {
         TaskClassification{TaskType::Unknown},
         modelRouter_ ? modelRouter_->routingMode() : RoutingMode::LocalOnly,
         providerCatalog_->entries(),
+        agentRegistry_ ? agentRegistry_->agents() : QList<AgentDescriptor>{},
     });
 }
 

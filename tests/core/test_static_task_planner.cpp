@@ -1,3 +1,4 @@
+#include "sentinel/core/StaticAgentRegistry.h"
 #include "sentinel/core/StaticProviderCatalog.h"
 #include "sentinel/core/StaticTaskPlanner.h"
 
@@ -10,6 +11,7 @@ using sentinel::core::ProviderCatalogEntry;
 using sentinel::core::ProviderDescriptor;
 using sentinel::core::ProviderKind;
 using sentinel::core::RoutingMode;
+using sentinel::core::StaticAgentRegistry;
 using sentinel::core::StaticProviderCatalog;
 using sentinel::core::StaticTaskPlanner;
 using sentinel::core::TaskClassification;
@@ -30,10 +32,15 @@ private slots:
     void unknownTaskUsesSafeLocalFallback();
     void unavailableCloudOnlyCatalogIsBlocked();
     void plannedStepsStayOrdered();
+    void assignsPreferredAgentMetadata();
 };
 
 static QList<ProviderCatalogEntry> defaultCatalogEntries() {
     return StaticProviderCatalog{}.entries();
+}
+
+static QList<sentinel::core::AgentDescriptor> defaultAgents() {
+    return StaticAgentRegistry{}.agents();
 }
 
 static ProviderCatalogEntry unavailableCloudOnlyEntry() {
@@ -168,6 +175,39 @@ void StaticTaskPlannerTest::plannedStepsStayOrdered() {
     QCOMPARE(plan.steps.at(0).id, QStringLiteral("step-1-capability-graph"));
     QCOMPARE(plan.steps.at(1).order, 2);
     QCOMPARE(plan.steps.at(1).id, QStringLiteral("step-2-sentinel-local-placeholder"));
+}
+
+void StaticTaskPlannerTest::assignsPreferredAgentMetadata() {
+    const StaticTaskPlanner planner;
+
+    const auto sensitivePlan = planner.plan(TaskPlanningRequest{
+        TaskClassification{TaskType::SensitiveData, true, QStringLiteral("private context")},
+        RoutingMode::CloudAllowed,
+        defaultCatalogEntries(),
+        defaultAgents(),
+    });
+    QCOMPARE(sensitivePlan.preferredAgentId, QStringLiteral("nyx"));
+    QCOMPARE(sensitivePlan.steps.last().agentId, QStringLiteral("nyx"));
+    QCOMPARE(sensitivePlan.steps.last().agentName, QStringLiteral("Nyx"));
+    QVERIFY(sensitivePlan.preferredAgentSummary.contains(QStringLiteral("Nyx")));
+
+    const auto planningPlan = planner.plan(TaskPlanningRequest{
+        TaskClassification{TaskType::Planning},
+        RoutingMode::LocalOnly,
+        defaultCatalogEntries(),
+        defaultAgents(),
+    });
+    QCOMPARE(planningPlan.preferredAgentId, QStringLiteral("orin"));
+    QCOMPARE(planningPlan.steps.last().agentName, QStringLiteral("Orin"));
+
+    const auto codingPlan = planner.plan(TaskPlanningRequest{
+        TaskClassification{TaskType::Coding},
+        RoutingMode::LocalOnly,
+        defaultCatalogEntries(),
+        defaultAgents(),
+    });
+    QCOMPARE(codingPlan.preferredAgentId, QStringLiteral("kaze"));
+    QVERIFY(codingPlan.steps.isEmpty());
 }
 
 QTEST_MAIN(StaticTaskPlannerTest)

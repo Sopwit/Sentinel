@@ -4,7 +4,8 @@ import QtQuick.Layouts
 
 ShellPanel {
     id: agents
-    implicitHeight: 220
+    required property var viewModel
+    implicitHeight: 320
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.032)
     border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.08)
     bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
@@ -16,27 +17,19 @@ ShellPanel {
         spacing: SentinelTheme.spaceMd
 
         Label {
-            text: "ACTIVE AGENTS"
+            text: "AGENT METADATA"
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontTiny
             font.letterSpacing: 2.4
         }
 
         Repeater {
-            model: 4
+            model: agents.viewModel.activeAgentSummaries
 
             RowLayout {
                 required property int index
-                readonly property string agentName: index === 0 ? "Atlas"
-                                                : index === 1 ? "Orin"
-                                                : index === 2 ? "Vela" : "Kaze"
-                readonly property string agentTask: index === 0 ? "Perimeter cognition scan"
-                                                : index === 1 ? "Synthesizing brief"
-                                                : index === 2 ? "Listening / ambient signals"
-                                                : "Indexing memory shards"
-                readonly property int agentLoad: index === 0 ? 62
-                                             : index === 1 ? 88
-                                             : index === 2 ? 24 : 47
+                required property string modelData
+                readonly property string agentName: modelData.split(" (")[0]
                 Layout.fillWidth: true
                 spacing: SentinelTheme.spaceMd
 
@@ -74,7 +67,7 @@ ShellPanel {
                         }
 
                         Label {
-                            text: agentLoad + "%"
+                            text: "metadata"
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontTiny
                         }
@@ -82,7 +75,7 @@ ShellPanel {
 
                     Label {
                         Layout.fillWidth: true
-                        text: agentTask
+                        text: modelData
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontTiny
                         elide: Text.ElideRight
@@ -95,7 +88,7 @@ ShellPanel {
                         color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
 
                         Rectangle {
-                            width: parent.width * agentLoad / 100
+                            width: parent.width
                             height: parent.height
                             radius: 1
                             color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.72)

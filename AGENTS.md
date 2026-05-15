@@ -10,9 +10,9 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 6.3 is complete.
+Phase 6.4 is complete.
 
-Most recent work: Phase 6.3, Capability Graph and Task Planner Skeleton.
+Most recent work: Phase 6.4, Agent System Skeleton.
 
 Current planning focus: Phase 6.x stabilization while keeping real provider/model/tool execution
 non-operational.
@@ -103,5 +103,5 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 Maintain provider/agent/tool/sandbox/execution-boundary separation and keep real tool execution
 out of scope until explicitly approved.
 
-Keep model/provider routing, catalog, and task planning metadata-only until an explicit later
-provider/model execution phase.
+Keep model/provider routing, catalog, task planning, and agent registry metadata-only until an
+explicit later provider/model/agent execution phase.

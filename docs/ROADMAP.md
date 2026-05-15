@@ -574,6 +574,28 @@ Still out of scope:
 - Provider setup, credentials/API keys, endpoints, networking, provider calls, model downloads,
   model execution, tool execution, plugin loading, filesystem/system actions, or broad UI redesign.
 
+### Phase 6.4: Agent System Skeleton
+
+Completed. Added static agent metadata and registry boundaries without autonomous behavior.
+
+Delivered:
+
+- `AgentDescriptor`, role/state/priority enums, capability profile metadata, and task affinity
+  metadata.
+- `IAgentRegistry` and deterministic `StaticAgentRegistry`.
+- Static descriptors for Atlas, Orin, Vela, Kaze, Nyx, and Sol.
+- Planner annotation with preferred agent metadata where task affinity is available.
+- Read-only controller/view-model and QML exposure for registered agent count, active agent
+  summaries, and current preferred agent summary.
+- Tests for registry determinism, unique ids, task mapping, planner interaction, and QML-safe
+  exposure.
+
+Still out of scope:
+
+- Real agent execution, autonomous loops, threads/background workers, provider integrations,
+  credentials/API keys, networking, downloads, model execution, tool execution, plugin loading,
+  filesystem/system actions, or broad UI redesign.
+
 Later Phase 6 work may revisit permission prompts, auditability, sandboxing strategy, secret
 handling, and safe local automation constraints only after explicit approval.
 

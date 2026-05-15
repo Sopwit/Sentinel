@@ -163,6 +163,7 @@ private slots:
     void exposesAgentStatusWithoutRuntime();
     void exposesModelRoutingMetadata();
     void exposesTaskPlanMetadata();
+    void exposesAgentRegistryMetadata();
     void exposesProviderCatalogMetadata();
     void updatesModelRoutingModeMetadata();
     void executesDeterministicAgentRequestWithRuntime();
@@ -265,6 +266,19 @@ void ApplicationControllerTest::exposesTaskPlanMetadata() {
     QCOMPARE(controller->latestTaskPlanSummary(),
              QStringLiteral("Unknown task uses safe local metadata fallback: Local Metadata "
                             "Provider / Sentinel Local Placeholder."));
+}
+
+void ApplicationControllerTest::exposesAgentRegistryMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->registeredAgentCount(), 6);
+    QCOMPARE(controller->activeAgentSummaries().size(), 6);
+    QVERIFY(controller->activeAgentSummaries().contains(
+        QStringLiteral("Atlas (Coordinator, Available, Local)")));
+    QVERIFY(controller->activeAgentSummaries().contains(
+        QStringLiteral("Vela (Researcher, Available, Cloud)")));
+    QCOMPARE(controller->currentAgentSummary(),
+             QStringLiteral("Atlas (Coordinator, Available, Local)"));
 }
 
 void ApplicationControllerTest::exposesProviderCatalogMetadata() {

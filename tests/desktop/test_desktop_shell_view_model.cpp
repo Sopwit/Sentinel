@@ -41,6 +41,7 @@ private slots:
     void exposesAgentActivityStatus();
     void exposesModelRoutingMetadata();
     void exposesTaskPlanMetadata();
+    void exposesAgentRegistryMetadata();
     void exposesProviderCatalogMetadata();
     void updatesAndPersistsRoutingModeMetadata();
     void updatesVisibleAgentValuesForBlockedPipeline();
@@ -208,6 +209,19 @@ void DesktopShellViewModelTest::exposesTaskPlanMetadata() {
     QCOMPARE(fixture.viewModel.latestTaskPlanSummary(),
              QStringLiteral("Unknown task uses safe local metadata fallback: Local Metadata "
                             "Provider / Sentinel Local Placeholder."));
+}
+
+void DesktopShellViewModelTest::exposesAgentRegistryMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.registeredAgentCount(), 6);
+    QCOMPARE(fixture.viewModel.activeAgentSummaries().size(), 6);
+    QVERIFY(fixture.viewModel.activeAgentSummaries().contains(
+        QStringLiteral("Atlas (Coordinator, Available, Local)")));
+    QVERIFY(fixture.viewModel.activeAgentSummaries().contains(
+        QStringLiteral("Nyx (Guardian, Available, Local)")));
+    QCOMPARE(fixture.viewModel.currentAgentSummary(),
+             QStringLiteral("Atlas (Coordinator, Available, Local)"));
 }
 
 void DesktopShellViewModelTest::exposesProviderCatalogMetadata() {
@@ -460,6 +474,9 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("latestTaskPlanStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("latestTaskPlanSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("plannedTaskStepCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("registeredAgentCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("activeAgentSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("currentAgentSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("providerCatalogCount"), QByteArrayLiteral("int")},
         {QStringLiteral("providerCatalogSummaries"), QByteArrayLiteral("QStringList")},
     };
@@ -480,6 +497,8 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("agentActivityEntries"),
         QStringLiteral("providerCatalog"),
         QStringLiteral("providerCatalogEntries"),
+        QStringLiteral("agentRegistry"),
+        QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),
         QStringLiteral("latestTaskPlan"),
         QStringLiteral("controller"),

@@ -897,3 +897,36 @@ Still out of scope:
 - API keys, endpoints, networking, model downloads, or model execution.
 - Real tool execution, approval actions, sandbox runtime, plugin loading, filesystem/system
   actions, provider setup UI, executable model-management actions, or broad UI redesign.
+
+### Phase 6.4: Agent System Skeleton
+
+Completed. Added deterministic static agent metadata without autonomous behavior or runtime
+execution.
+
+Scope:
+
+- Added value-only agent metadata:
+  - `AgentDescriptor`
+  - `AgentRole`
+  - `AgentState`
+  - `AgentPriority`
+  - `AgentCapabilityProfile`
+  - `AgentTaskAffinity`
+  - `AgentRuntimeSnapshot`
+- Added `IAgentRegistry` and deterministic `StaticAgentRegistry`.
+- Registry exposes Atlas, Orin, Vela, Kaze, Nyx, and Sol as static metadata only.
+- Agent metadata includes id, display name, role, capability summary, preferred task types,
+  local/cloud affinity, privacy affinity, state, and priority.
+- `StaticTaskPlanner` may annotate a plan with preferred agent metadata based on task affinity.
+- `IModelRouter`, `ITaskPlanner`, `IAgentRuntime`, and `IChatProvider` remain separate boundaries.
+- `ApplicationController` and `DesktopShellViewModel` expose read-only registered agent count,
+  active agent summaries, and current preferred agent summary.
+- Dashboard and Settings show text-only agent metadata without execution controls.
+- Tests cover registry determinism, unique ids, task affinities, planner metadata interaction, and
+  controller/view-model exposure.
+
+Still out of scope:
+
+- Real agent execution, autonomous loops, threads/background workers, provider integration,
+  Ollama/OpenAI/Anthropic calls, API keys, networking, downloads, model execution, tool execution,
+  memory writes, plugin loading, filesystem/system actions, or broad UI redesign.
