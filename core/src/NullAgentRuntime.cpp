@@ -2,6 +2,20 @@
 
 namespace sentinel::core {
 
+NullAgentRuntime::NullAgentRuntime() {
+    toolRegistry_.registerTool(ToolDescriptor{
+        QStringLiteral("local-plan-summary"),
+        QStringLiteral("Local Plan Summary"),
+        QStringLiteral("Metadata-only placeholder tool descriptor for local planning summaries."),
+        ToolRiskLevel::Low,
+        ToolExecutionMode::MetadataOnly,
+        {
+            ToolParameterDescriptor{QStringLiteral("topic"),
+                                    QStringLiteral("Short user topic for local summary."), true},
+        },
+    });
+}
+
 QString NullAgentRuntime::name() const {
     return QStringLiteral("NullAgentRuntime");
 }
@@ -18,6 +32,10 @@ QList<AgentCapabilityDescriptor> NullAgentRuntime::capabilities() const {
             true,
         },
     };
+}
+
+QList<ToolDescriptor> NullAgentRuntime::availableTools() const {
+    return toolRegistry_.listTools();
 }
 
 AgentResponse NullAgentRuntime::execute(const AgentRequest& request) {

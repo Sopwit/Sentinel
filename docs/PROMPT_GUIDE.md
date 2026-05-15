@@ -91,6 +91,22 @@ After completion:
 Run full tests plus clang-format dry-run and report remaining limitations.
 ```
 
+```text
+Read AGENTS.md, docs/PHASE_STATUS.md, and docs/DECISIONS.md first.
+
+Task:
+Implement Phase 4.1 tool descriptor and registry skeleton.
+
+Scope:
+Tool descriptor structs/enums, IToolRegistry, InMemoryToolRegistry, metadata-only runtime exposure, focused tests, and docs.
+
+Do not:
+Implement tool execution, shell commands, filesystem/system mutation, provider integrations, plugin loading, or privileged automation.
+
+After completion:
+Run build/tests and clang-format dry-run, then report limitations and out-of-scope items still enforced.
+```
+
 ## Anti-Pattern Prompts
 
 Avoid broad prompts:

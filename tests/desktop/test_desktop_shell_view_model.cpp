@@ -30,6 +30,7 @@ class DesktopShellViewModelTest final : public QObject {
 private slots:
     void exposesInitialShellState();
     void exposesAgentStatusWithoutRuntime();
+    void exposesAgentToolMetadata();
     void exposesChatHistoryStatus();
     void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
@@ -109,6 +110,20 @@ void DesktopShellViewModelTest::exposesAgentStatusWithoutRuntime() {
 
     QCOMPARE(fixture.viewModel.agentStatus(), QStringLiteral("Unavailable"));
     QCOMPARE(fixture.viewModel.lastAgentResponse(), QStringLiteral("No agent request yet."));
+    QCOMPARE(fixture.viewModel.availableToolCount(), 0);
+    QVERIFY(fixture.viewModel.availableToolIds().isEmpty());
+}
+
+void DesktopShellViewModelTest::exposesAgentToolMetadata() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+
+    QCOMPARE(viewModel.availableToolCount(), 1);
+    QCOMPARE(viewModel.availableToolIds(), QStringList{QStringLiteral("local-plan-summary")});
 }
 
 void DesktopShellViewModelTest::exposesChatHistoryStatus() {

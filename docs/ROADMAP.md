@@ -81,6 +81,25 @@ Still out of scope:
 - Plugin loading.
 - Privileged or OS-level automation.
 
+### Phase 4.1: Tool Descriptor and Registry Skeleton
+
+Completed.
+
+Delivered:
+
+- Tool metadata abstractions (`ToolDescriptor`, parameters, risk level, execution mode).
+- Tool metadata registry boundary (`IToolRegistry`, `InMemoryToolRegistry`).
+- Deterministic register/list/find semantics and duplicate-id handling.
+- Metadata-only runtime exposure of available tools.
+
+Still out of scope:
+
+- Tool execution runtime.
+- Filesystem/system mutation tools.
+- Shell command execution.
+- Platform automation.
+- Networking/API keys and provider integrations.
+
 ## Phase 5: Advanced UI/UX & Motion System
 
 Evolve the Qt Quick experience with responsive layouts, adaptive themes, assistant-like interaction, animated panels, dashboard cards, and reusable components.
