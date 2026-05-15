@@ -12,12 +12,12 @@ ShellPanel {
     readonly property int currentPageIndex: dock.viewModel.availablePages.indexOf(
                                                 dock.viewModel.currentPage)
 
-    function shortCode(pageName) {
+    function pageIcon(pageName) {
         if (pageName === "Dashboard")
-            return "CORE"
+            return "\u2302"
         if (pageName === "Memory")
-            return "MEM"
-        return "SYS"
+            return "\u25a6"
+        return "\u2699"
     }
 
     implicitWidth: compact ? 320 : 440
@@ -37,18 +37,18 @@ ShellPanel {
         spacing: SentinelTheme.spaceXs
 
         Rectangle {
-            Layout.preferredWidth: 30
-            Layout.preferredHeight: 30
+            Layout.preferredWidth: 28
+            Layout.preferredHeight: 28
             Layout.alignment: Qt.AlignVCenter
-            radius: 15
+            radius: 14
             color: SentinelTheme.withAlpha(dock.modeAccent, 0.12)
             border.color: SentinelTheme.withAlpha(dock.modeAccent, 0.24)
 
             Label {
                 anchors.centerIn: parent
-                text: "S"
+                text: "\u25c9"
                 color: dock.modeAccent
-                font.pixelSize: SentinelTheme.fontControl
+                font.pixelSize: SentinelTheme.fontSmall
                 font.weight: Font.Light
             }
         }
@@ -107,31 +107,13 @@ ShellPanel {
                         focusPolicy: Qt.StrongFocus
                         onClicked: dock.viewModel.currentPage = modelData
 
-                        contentItem: Column {
+                        contentItem: Text {
                             anchors.centerIn: parent
-                            spacing: 1
-
-                            Text {
-                                width: parent.width
-                                text: dock.shortCode(dockButton.modelData)
-                                color: dockButton.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontTiny
-                                font.letterSpacing: 1.7
-                                horizontalAlignment: Text.AlignHCenter
-                            }
-
-                            Text {
-                                width: parent.width
-                                text: dockButton.modelData === "Dashboard" ? "Presence"
-                                                                          : dockButton.modelData
-                                color: dockButton.active ? SentinelTheme.withAlpha(
-                                                               SentinelTheme.textPrimary, 0.92)
-                                                         : SentinelTheme.withAlpha(
-                                                               SentinelTheme.textMuted, 0.72)
-                                font.pixelSize: 9
-                                horizontalAlignment: Text.AlignHCenter
-                                elide: Text.ElideRight
-                            }
+                            text: dock.pageIcon(dockButton.modelData)
+                            color: dockButton.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                            font.pixelSize: 16
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
                         }
 
                         background: Rectangle {
@@ -147,14 +129,5 @@ ShellPanel {
             }
         }
 
-        Label {
-            visible: !dock.compact
-            text: dock.viewModel.currentModeName
-            color: SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.84)
-            font.pixelSize: SentinelTheme.fontTiny
-            font.letterSpacing: 1.2
-            elide: Text.ElideRight
-            Layout.maximumWidth: 110
-        }
     }
 }

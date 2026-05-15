@@ -71,23 +71,12 @@ ScrollView {
                 }
             }
 
-            SignalField {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.minimumHeight: 130
-            }
         }
 
         CognitionStreamPanel {
             viewModel: dashboardPage.viewModel
             Layout.fillWidth: true
-            Layout.columnSpan: dashboardPage.wideLayout ? 7 : 1
-        }
-
-        ActiveAgentsPanel {
-            viewModel: dashboardPage.viewModel
-            Layout.fillWidth: true
-            Layout.columnSpan: dashboardPage.wideLayout ? 5 : 1
+            Layout.columnSpan: dashboardPage.wideLayout ? 12 : 1
         }
     }
 }

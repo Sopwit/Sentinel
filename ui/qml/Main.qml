@@ -15,8 +15,18 @@ ApplicationWindow {
     property var viewModel: shellViewModel
     readonly property bool compactLayout: root.width < 1080
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
-    readonly property int currentPageIndex: root.viewModel.currentPage === "Dashboard" ? 0
-                                            : root.viewModel.currentPage === "Memory" ? 1 : 2
+
+    function currentPageIndex() {
+        if (root.viewModel.currentPage === "Dashboard")
+            return 0
+        if (root.viewModel.currentPage === "Memory")
+            return 1
+        if (root.viewModel.currentPage === "Agents")
+            return 2
+        if (root.viewModel.currentPage === "Settings")
+            return 3
+        return 0
+    }
 
     background: Atmosphere {
         modeName: root.viewModel.currentModeName
@@ -58,11 +68,11 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     clip: true
-                    currentIndex: root.currentPageIndex
+                    currentIndex: root.currentPageIndex()
 
                     DashboardPage {
                         viewModel: root.viewModel
-                        opacity: root.currentPageIndex === 0 ? 1.0 : 0.0
+                        opacity: root.currentPageIndex() === 0 ? 1.0 : 0.0
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -73,7 +83,18 @@ ApplicationWindow {
                     }
                     MemoryPage {
                         viewModel: root.viewModel
-                        opacity: root.currentPageIndex === 1 ? 1.0 : 0.0
+                        opacity: root.currentPageIndex() === 1 ? 1.0 : 0.0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: SentinelTheme.durationNormal
+                                easing.type: SentinelTheme.easingStandard
+                            }
+                        }
+                    }
+                    AgentsPage {
+                        viewModel: root.viewModel
+                        opacity: root.currentPageIndex() === 2 ? 1.0 : 0.0
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -84,7 +105,7 @@ ApplicationWindow {
                     }
                     SettingsPage {
                         viewModel: root.viewModel
-                        opacity: root.currentPageIndex === 2 ? 1.0 : 0.0
+                        opacity: root.currentPageIndex() === 3 ? 1.0 : 0.0
 
                         Behavior on opacity {
                             NumberAnimation {
@@ -117,6 +138,40 @@ ApplicationWindow {
             Layout.preferredWidth: Math.min(root.width - SentinelTheme.space4Xl,
                                             root.compactLayout ? 320 : 420)
             Layout.preferredHeight: compact ? 58 : 62
+        }
+    }
+
+    Button {
+        id: settingsFab
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: SentinelTheme.space2Xl
+        anchors.bottomMargin: SentinelTheme.space2Xl
+        width: 52
+        height: 52
+        focusPolicy: Qt.StrongFocus
+        hoverEnabled: true
+        text: "\u2699"
+        font.pixelSize: 22
+        onClicked: root.viewModel.currentPage = "Settings"
+
+        contentItem: Text {
+            text: settingsFab.text
+            color: SentinelTheme.textPrimary
+            font.pixelSize: settingsFab.font.pixelSize
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
+
+        background: Rectangle {
+            radius: width / 2
+            color: settingsFab.down ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.26)
+                                   : settingsFab.hovered
+                                     ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
+                                     : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.88)
+            border.color: settingsFab.activeFocus ? SentinelTheme.focusBorder
+                                                  : SentinelTheme.withAlpha(SentinelTheme.accent, 0.35)
+            border.width: 1
         }
     }
 }

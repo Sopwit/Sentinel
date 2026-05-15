@@ -159,7 +159,7 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(fixture.viewModel.availablePages(),
              QStringList({QStringLiteral("Dashboard"), QStringLiteral("Memory"),
-                          QStringLiteral("Settings")}));
+                          QStringLiteral("Agents")}));
 }
 
 void DesktopShellViewModelTest::exposesAgentStatusWithoutRuntime() {
@@ -741,6 +741,10 @@ void DesktopShellViewModelTest::tracksNavigationState() {
     fixture.viewModel.setCurrentPage(QStringLiteral("Settings"));
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Settings"));
     QCOMPARE(spy.count(), 2);
+
+    fixture.viewModel.setCurrentPage(QStringLiteral("Agents"));
+    QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Agents"));
+    QCOMPARE(spy.count(), 3);
 }
 
 void DesktopShellViewModelTest::ignoresRepeatedAndUnknownNavigationChanges() {
