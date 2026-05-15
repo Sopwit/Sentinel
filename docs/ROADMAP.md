@@ -61,7 +61,7 @@ Candidate interfaces:
 
 ## Phase 4: Agent Core & Tool System
 
-Started with Phase 4.0 minimal runtime boundary work.
+Completed through Phase 4.10 with metadata-only agent/tool boundaries and no real execution.
 
 ### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
 
@@ -280,9 +280,64 @@ Still out of scope:
 - Plugin loading.
 - Real sandbox runtime or OS permission enforcement.
 
+### Phase 4.9: Agent Pipeline UI Visibility
+
+Completed. Added simple read-only desktop visibility for the metadata-only pipeline.
+
+Delivered:
+
+- Dashboard status section for latest pipeline status/summary.
+- Runtime context status/summary and active planned tool id visibility.
+- Activity count and latest activity summary visibility.
+- Focused view-model tests for successful and blocked pipeline visibility.
+- QML boundary checks that keep agent visibility properties simple and read-only.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem mutation.
+- Execution or approval controls.
+- Activity log persistence/export.
+- Secret capture or API key handling.
+- Provider/network integrations.
+- Plugin loading.
+- Real sandbox runtime or OS permission enforcement.
+
+### Phase 4.10: Architecture Checkpoint and Cleanup
+
+Completed. Closed Phase 4 with an architecture consistency checkpoint before Phase 5.
+
+Delivered:
+
+- Phase 4 completed-scope and limitation checkpoint documentation.
+- Phase 5 readiness criteria.
+- Focused reset/fallback tests for existing metadata-only behavior.
+- Minor Dashboard label clarity.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Execution or approval controls.
+- Real sandbox runtime or OS permission enforcement.
+
 ## Phase 5: Advanced UI/UX & Motion System
 
 Evolve the Qt Quick experience with responsive layouts, adaptive themes, assistant-like interaction, animated panels, dashboard cards, and reusable components.
+
+Readiness criteria:
+
+- Preserve Phase 4 no-execution boundaries.
+- Keep QML behind view-models and avoid business logic in presentation code.
+- Treat agent/runtime visibility as read-only unless a later explicit phase changes it.
+- Keep full tests and formatting passing through UI changes.
 
 ## Phase 6: Security / Sandbox / Permissions
 

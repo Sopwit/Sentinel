@@ -10,11 +10,11 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 4.8 is complete.
+Phase 4.10 is complete.
 
-Most recent work: Phase 4.8, Agent Activity Log and Audit Trail Skeleton.
+Most recent work: Phase 4.10, Architecture Checkpoint and Cleanup.
 
-Current planning focus: post-Phase 4.8 stabilization while keeping real tool execution
+Current planning focus: Phase 5 readiness while keeping real tool execution
 non-operational.
 
 ## Stack

@@ -44,6 +44,87 @@ RowLayout {
 
             ShellPanel {
                 Layout.fillWidth: true
+                color: "#0b2022cc"
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: 16
+                    spacing: 10
+
+                    Label {
+                        text: "Agent Runtime"
+                        color: "#35f2c0"
+                        font.pixelSize: 13
+                        font.letterSpacing: 1.2
+                    }
+
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: 2
+                        columnSpacing: 14
+                        rowSpacing: 8
+
+                        Label {
+                            text: "Pipeline"
+                            color: "#82aaa1"
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: dashboardPage.viewModel.latestAgentPipelineStatus
+                                  + " - "
+                                  + dashboardPage.viewModel.latestAgentPipelineSummary
+                            color: "#d9fff4"
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Label {
+                            text: "Context"
+                            color: "#82aaa1"
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: dashboardPage.viewModel.runtimeContextStatus
+                                  + " - "
+                                  + dashboardPage.viewModel.runtimeContextSummary
+                            color: "#d9fff4"
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Label {
+                            text: "Planned Tools"
+                            color: "#82aaa1"
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: dashboardPage.viewModel.runtimeContextActiveToolIds.length > 0
+                                  ? dashboardPage.viewModel.runtimeContextActiveToolIds.join(", ")
+                                  : "None"
+                            color: "#d9fff4"
+                            wrapMode: Text.WordWrap
+                        }
+
+                        Label {
+                            text: "Activity"
+                            color: "#82aaa1"
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: dashboardPage.viewModel.agentActivityCount
+                                  + " - "
+                                  + dashboardPage.viewModel.latestAgentActivitySummary
+                            color: "#d9fff4"
+                            wrapMode: Text.WordWrap
+                        }
+                    }
+                }
+            }
+
+            ShellPanel {
+                Layout.fillWidth: true
                 Layout.fillHeight: true
                 color: "#081719aa"
 

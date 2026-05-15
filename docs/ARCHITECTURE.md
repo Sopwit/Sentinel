@@ -195,6 +195,23 @@ Phase 4.8 adds in-memory agent activity/audit metadata:
 - Future persistence/export/security work should sit behind an explicit audit/logging boundary and
   is not implemented in the desktop alpha.
 
+Phase 4.9 adds read-only desktop UI visibility for the metadata-only pipeline:
+
+- Dashboard displays latest pipeline status/summary, runtime context status/summary, active planned
+  tool ids, activity count, and latest activity summary.
+- The UI reads QML-safe `DesktopShellViewModel` properties only.
+- No execution buttons, approval controls, raw runtime objects, paths, secrets, provider
+  integrations, plugin loading, persistence, shell/process launch, filesystem mutation, networking,
+  OS automation, or real sandbox runtime are added.
+
+Phase 4.10 closes Phase 4 with an architecture checkpoint:
+
+- Provider/agent separation and registry/planning/approval/sandbox/execution boundaries remain
+  intact.
+- Runtime context and activity logging remain in-memory metadata ownership only.
+- Dashboard visibility remains read-only and QML-safe.
+- Phase 5 readiness is documented in `docs/PHASE_4_CHECKPOINT.md`.
+
 `ApplicationController` and `DesktopShellViewModel` expose only generic agent status, placeholder
 response text, latest plan status/summary, latest approval status/summary, latest sandbox
 status/summary, latest placeholder execution status/summary, and latest aggregate pipeline

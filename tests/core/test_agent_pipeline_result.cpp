@@ -7,6 +7,7 @@ class AgentPipelineResultTest final : public QObject {
 
 private slots:
     void exposesDefaultSafeStatusAndSummary();
+    void usesFallbacksForEmptySummaries();
     void exposesDeterministicStageSummaries();
 };
 
@@ -18,6 +19,25 @@ void AgentPipelineResultTest::exposesDefaultSafeStatusAndSummary() {
     QCOMPARE(result.sandboxStatus(), sentinel::core::SandboxStatus::NotEvaluated);
     QCOMPARE(result.executionStatus(), sentinel::core::ToolExecutionStatus::NotRequested);
     QCOMPARE(sentinel::core::agentPipelineStatusName(result), QStringLiteral("Not Requested"));
+    QCOMPARE(sentinel::core::safeAgentPipelineSummary(result),
+             QStringLiteral("No agent pipeline result yet."));
+    QCOMPARE(sentinel::core::safeToolPlanSummary(result.plan), QStringLiteral("No tool plan yet."));
+    QCOMPARE(sentinel::core::safeApprovalSummary(result.approval),
+             QStringLiteral("No approval decision yet."));
+    QCOMPARE(sentinel::core::safeSandboxSummary(result.sandbox),
+             QStringLiteral("No sandbox evaluation yet."));
+    QCOMPARE(sentinel::core::safeToolExecutionSummary(result.execution),
+             QStringLiteral("No tool execution boundary result yet."));
+}
+
+void AgentPipelineResultTest::usesFallbacksForEmptySummaries() {
+    sentinel::core::AgentPipelineResult result;
+    result.summary.clear();
+    result.plan.summary.clear();
+    result.approval.summary.clear();
+    result.sandbox.summary.clear();
+    result.execution.summary.clear();
+
     QCOMPARE(sentinel::core::safeAgentPipelineSummary(result),
              QStringLiteral("No agent pipeline result yet."));
     QCOMPARE(sentinel::core::safeToolPlanSummary(result.plan), QStringLiteral("No tool plan yet."));

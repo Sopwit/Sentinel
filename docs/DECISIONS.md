@@ -356,3 +356,41 @@ Boundary rules:
   enforce sandbox behavior, or perform tool execution.
 - Future durable audit, export, pruning, redaction, and security review features must be explicit
   later phases.
+
+## 22. Agent Pipeline UI Visibility Is Read-Only
+
+Decision: Expose the current metadata-only agent pipeline state in the desktop UI as read-only
+status text.
+
+Reason: Users need visibility into the pipeline, runtime context, active planned tool ids, and
+activity count before any future approval or execution UX exists.
+
+Boundary rules:
+
+- QML receives only simple view-model values such as strings, counts, and string lists.
+- Dashboard visibility may show latest pipeline status/summary, runtime context status/summary,
+  active planned tool ids, activity count, and latest activity summary.
+- The UI must not expose raw pipeline results, runtime context objects, activity entries, mutable
+  controller internals, paths, secrets, or platform details.
+- Phase 4.9 does not add execution buttons, approval controls, provider integration, networking,
+  plugin loading, activity persistence, shell/process launch, filesystem mutation, OS automation,
+  privileged automation, or real sandbox enforcement.
+
+## 23. Phase 4 Completion Checkpoint
+
+Decision: Close Phase 4 with an architecture checkpoint before starting Phase 5 UI/UX work.
+
+Reason: The agent/tool foundation now has multiple metadata-only boundaries. A checkpoint keeps
+the no-execution model explicit before UI polish begins.
+
+Boundary rules:
+
+- Provider, agent runtime, tool registry, planning, approval, sandbox metadata, placeholder
+  execution, runtime context, and activity logging remain separate responsibilities.
+- Phase 5 may improve presentation, but must not turn metadata-only state into real execution,
+  approval, sandbox enforcement, provider integration, plugin loading, networking, filesystem
+  mutation, shell/process launch, subprocess launch, or privileged automation.
+- QML remains a read-only consumer of agent/runtime state unless a later explicit phase changes
+  that boundary.
+- Checkpoint documentation should summarize completed scope, limitations, readiness criteria, and
+  explicit out-of-scope work.

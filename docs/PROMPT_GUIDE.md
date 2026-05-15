@@ -236,6 +236,50 @@ Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
 docs/ARCHITECTURE.md first.
 
 Task:
+Audit or stabilize the completed Phase 4.9 agent pipeline UI visibility layer.
+
+Scope:
+Dashboard read-only pipeline/runtime/activity visibility, DesktopShellViewModel QML-safe property
+exposure, focused tests, and docs.
+
+Do not:
+Implement real tool execution, shell/process launch, subprocess execution, filesystem mutation,
+networking/API keys, provider integrations, plugin loading, execution controls, approval controls,
+activity log persistence/export, real sandbox runtime, OS permission enforcement, or privileged
+automation.
+
+After completion:
+Run build/tests and clang-format dry-run, then report the remaining read-only/no-execution
+limitations.
+```
+
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md,
+docs/PROMPT_GUIDE.md, docs/ROADMAP.md, docs/ARCHITECTURE.md, and
+docs/PHASE_4_CHECKPOINT.md first.
+
+Task:
+Audit or stabilize the completed Phase 4.10 architecture checkpoint.
+
+Scope:
+Phase 4 architecture consistency, checkpoint docs, focused tests for existing metadata-only
+behavior, and minor wording cleanup.
+
+Do not:
+Add product features, real tool execution, shell/process launch, subprocess execution, filesystem
+mutation, networking/API keys, provider integrations, plugin loading, execution controls, approval
+controls, activity log persistence/export, real sandbox runtime, OS permission enforcement,
+privileged automation, or Phase 5 UI/UX implementation.
+
+After completion:
+Run build/tests and clang-format dry-run, then report Phase 5 readiness and remaining limitations.
+```
+
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, docs/PHASE_STATUS.md, docs/DECISIONS.md, and
+docs/ARCHITECTURE.md first.
+
+Task:
 Audit or stabilize the completed Phase 4.4 sandbox and capability boundary skeleton.
 
 Scope:
