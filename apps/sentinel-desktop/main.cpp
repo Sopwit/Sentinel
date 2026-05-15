@@ -11,9 +11,9 @@
 #include "sentinel/core/SQLiteMemoryStore.h"
 #include "sentinel/core/StandardPathProvider.h"
 
-#include <QGuiApplication>
 #include <QFont>
 #include <QFontDatabase>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
@@ -23,9 +23,9 @@ namespace {
 
 QString preferredUiFontFamily() {
     const QStringList availableFamilies = QFontDatabase::families();
-    const QStringList preferredFamilies = {QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans"),
-                                           QStringLiteral("Ubuntu"), QStringLiteral("Segoe UI"),
-                                           QStringLiteral("Helvetica Neue"), QStringLiteral("Arial")};
+    const QStringList preferredFamilies = {
+        QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans"),    QStringLiteral("Ubuntu"),
+        QStringLiteral("Segoe UI"),  QStringLiteral("Helvetica Neue"), QStringLiteral("Arial")};
 
     for (const QString& family : preferredFamilies) {
         if (availableFamilies.contains(family, Qt::CaseInsensitive)) {
@@ -51,7 +51,7 @@ void configureDefaultUiFont() {
     QGuiApplication::setFont(font);
 }
 
-}  // namespace
+} // namespace
 
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
