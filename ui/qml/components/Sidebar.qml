@@ -49,20 +49,43 @@ ShellPanel {
                 text: modelData
                 flat: true
                 highlighted: sidebar.viewModel.currentPage === navButton.modelData
+                hoverEnabled: true
+                focusPolicy: Qt.StrongFocus
                 onClicked: sidebar.viewModel.setCurrentPage(navButton.modelData)
 
                 contentItem: Text {
                     text: navButton.text
                     color: navButton.highlighted ? SentinelTheme.textOnAccent : SentinelTheme.textPrimary
                     font.pixelSize: SentinelTheme.fontControl
-                    font.bold: navButton.highlighted
+                    font.bold: navButton.highlighted || navButton.hovered || navButton.activeFocus
                     verticalAlignment: Text.AlignVCenter
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: SentinelTheme.durationFast
+                            easing.type: SentinelTheme.easingStandard
+                        }
+                    }
                 }
 
                 background: Rectangle {
                     radius: SentinelTheme.radiusMd
-                    color: navButton.highlighted ? SentinelTheme.accent : SentinelTheme.surfaceSoft
-                    border.color: navButton.highlighted ? SentinelTheme.accent : SentinelTheme.accentBorderSubtle
+                    color: navButton.highlighted ? SentinelTheme.accent : navButton.hovered ? SentinelTheme.surfaceHover : SentinelTheme.surfaceSoft
+                    border.color: navButton.activeFocus ? SentinelTheme.focusBorder : navButton.highlighted || navButton.hovered ? SentinelTheme.accentBorder : SentinelTheme.accentBorderSubtle
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: SentinelTheme.durationFast
+                            easing.type: SentinelTheme.easingStandard
+                        }
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: SentinelTheme.durationFast
+                            easing.type: SentinelTheme.easingStandard
+                        }
+                    }
                 }
             }
         }

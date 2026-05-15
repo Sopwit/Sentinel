@@ -43,6 +43,8 @@ The desktop shell is split into small QML components:
 - `pages/MemoryPage.qml`: runtime memory UI.
 - `pages/SettingsPage.qml`: settings placeholder UI.
 - `theme/SentinelTheme.qml`: presentation tokens for palette, spacing, radius, and typography.
+- `components/SentinelButton.qml`: lightweight command button styling with tokenized hover/focus
+  states.
 
 These files bind to `shellViewModel`. They should not own business rules, provider logic, persistence logic, or platform automation.
 
@@ -232,6 +234,15 @@ Phase 5.0 adds UI/UX planning and design-system foundation only:
   behavior.
 - Advanced motion, assistant visuals, provider/model management, networking, execution, plugin
   loading, sandbox runtime, and filesystem/system actions remain unimplemented.
+
+Phase 5.1 adds lightweight motion and interaction foundation:
+
+- `SentinelTheme.qml` includes motion duration and easing tokens.
+- Sidebar navigation, command buttons, text-field focus rings, and page opacity transitions use
+  subtle tokenized transitions.
+- No heavy animation, particle systems, assistant-face rendering, custom OpenGL/Vulkan rendering,
+  provider/model execution, networking, plugin loading, filesystem/system actions, or runtime
+  behavior changes are added.
 
 `ApplicationController` and `DesktopShellViewModel` expose only generic agent status, placeholder
 response text, latest plan status/summary, latest approval status/summary, latest sandbox

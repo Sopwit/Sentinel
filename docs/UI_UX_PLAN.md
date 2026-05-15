@@ -1,7 +1,8 @@
 # UI/UX Plan
 
-Phase 5.0 establishes a small design-system foundation for Sentinel Desktop. It does not implement
-advanced motion, assistant visuals, model management, provider integration, or execution features.
+Phase 5 establishes a small design-system and interaction foundation for Sentinel Desktop. It does
+not implement advanced motion, assistant visuals, model management, provider integration, or
+execution features.
 
 ## Direction
 
@@ -22,6 +23,7 @@ Token categories:
 - spacing: small fixed layout spacing values
 - radius: restrained panel and control rounding
 - typography: stable pixel sizes for current desktop shell text
+- motion: standard durations and easing values for low-cost UI transitions
 
 Guidelines:
 
@@ -32,13 +34,25 @@ Guidelines:
 
 ## Motion Guidelines
 
-Motion is future work. Phase 5.0 only records constraints:
+Motion should be quiet and functional:
 
-- Keep animation short, optional, and performance-friendly.
-- Favor small transitions for panel state, navigation, and assistant feedback.
+- Use `durationFast` for hover/focus feedback.
+- Use `durationNormal` for page/content state changes.
+- Reserve `durationSlow` for later, rare emphasis transitions.
+- Favor color, border-color, and opacity transitions.
+- Avoid translating large layouts during routine navigation.
 - Avoid heavy continuous animation on idle dashboards.
 - Do not implement particle effects or an assistant face yet.
 - Preserve acceptable behavior on Fedora KDE Plasma, macOS, and lower-power devices.
+- Avoid blur-heavy layers, shader-heavy rendering, or custom OpenGL/Vulkan render paths.
+
+## Interaction Guidelines
+
+- Hover states should clarify click targets without visual noise.
+- Focus states should be visible for keyboard users.
+- Selected navigation state should remain stronger than hover state.
+- Page transitions should be subtle and should not delay interaction.
+- Buttons should not imply execution capability when the underlying feature is metadata-only.
 
 ## Future Assistant Visuals
 
@@ -48,7 +62,7 @@ start provider calls, model execution, tool execution, or system actions.
 
 ## Current Separation
 
-Current Phase 5.0 work is presentation foundation only:
+Current Phase 5 work is presentation foundation only:
 
 - no provider integrations
 - no networking/API keys
@@ -58,3 +72,4 @@ Current Phase 5.0 work is presentation foundation only:
 - no approval UX that triggers actions
 - no sandbox runtime
 - no filesystem/system actions
+- no particle systems or assistant-face rendering

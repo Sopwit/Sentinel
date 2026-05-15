@@ -80,6 +80,9 @@ Future UI vision:
   management UI metadata without implementing providers or model execution.
 - Phase 5.0 adds UI/UX planning and a small QML design-token singleton without adding advanced
   motion, provider integration, model execution, or runtime behavior.
+- Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
+  polish without heavy animation, assistant-face rendering, provider integration, or runtime
+  behavior.
 - `IMemoryStore` isolates memory storage.
 - `IChatHistoryStore` isolates chat history storage.
 - `ISettingsStore` isolates settings storage.
@@ -91,12 +94,12 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, and Phase 5.0.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, and Phase 5.1.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
   with local runtime context/session, in-memory activity logging for pipeline metadata, and
   read-only dashboard visibility for that state.
-- Next: post-Phase 5.0 UI stabilization with continued local-safe constraints.
-- Recent: Phase 5.0, UI/UX Planning and Design System Foundation.
+- Next: post-Phase 5.1 UI stabilization with continued local-safe constraints.
+- Recent: Phase 5.1, Motion and Interaction Foundation.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

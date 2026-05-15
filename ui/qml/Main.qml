@@ -12,6 +12,8 @@ ApplicationWindow {
     title: "Sentinel Desktop Alpha"
     color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
+    readonly property int currentPageIndex: root.viewModel.currentPage === "Dashboard" ? 0
+                                            : root.viewModel.currentPage === "Memory" ? 1 : 2
 
     background: Rectangle {
         gradient: Gradient {
@@ -60,17 +62,40 @@ ApplicationWindow {
                 StackLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    currentIndex: root.viewModel.currentPage === "Dashboard" ? 0
-                                  : root.viewModel.currentPage === "Memory" ? 1 : 2
+                    currentIndex: root.currentPageIndex
 
                     DashboardPage {
                         viewModel: root.viewModel
+                        opacity: root.currentPageIndex === 0 ? 1.0 : 0.0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: SentinelTheme.durationNormal
+                                easing.type: SentinelTheme.easingStandard
+                            }
+                        }
                     }
                     MemoryPage {
                         viewModel: root.viewModel
+                        opacity: root.currentPageIndex === 1 ? 1.0 : 0.0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: SentinelTheme.durationNormal
+                                easing.type: SentinelTheme.easingStandard
+                            }
+                        }
                     }
                     SettingsPage {
                         viewModel: root.viewModel
+                        opacity: root.currentPageIndex === 2 ? 1.0 : 0.0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: SentinelTheme.durationNormal
+                                easing.type: SentinelTheme.easingStandard
+                            }
+                        }
                     }
                 }
             }

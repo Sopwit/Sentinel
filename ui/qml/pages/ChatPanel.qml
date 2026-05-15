@@ -71,11 +71,18 @@ ShellPanel {
                 background: Rectangle {
                     radius: SentinelTheme.radiusMd
                     color: SentinelTheme.backgroundBase
-                    border.color: SentinelTheme.accentBorder
+                    border.color: chatInput.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: SentinelTheme.durationFast
+                            easing.type: SentinelTheme.easingStandard
+                        }
+                    }
                 }
             }
 
-            Button {
+            SentinelButton {
                 id: sendButton
                 text: "Send"
                 enabled: chatInput.text.trim().length > 0
@@ -85,7 +92,7 @@ ShellPanel {
                 }
             }
 
-            Button {
+            SentinelButton {
                 id: clearButton
                 text: "Clear"
                 enabled: messageList.count > 1
