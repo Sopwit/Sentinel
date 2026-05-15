@@ -95,6 +95,20 @@ MemoryEntries SQLiteMemoryStore::entries() const {
     return result;
 }
 
+void SQLiteMemoryStore::clear() {
+    if (!database_.isOpen()) {
+        setLastError(QStringLiteral("SQLite memory database is not open."));
+        return;
+    }
+
+    QSqlQuery query(database_);
+    if (!query.exec(QStringLiteral("DELETE FROM memory_entries"))) {
+        setLastError(query.lastError().text());
+    } else {
+        setLastError({});
+    }
+}
+
 bool SQLiteMemoryStore::isAvailable() const {
     return database_.isOpen();
 }

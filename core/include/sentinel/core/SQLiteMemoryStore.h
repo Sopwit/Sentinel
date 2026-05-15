@@ -20,6 +20,7 @@ public:
     void put(QString key, QString value) override;
     QString get(const QString& key) const override;
     MemoryEntries entries() const override;
+    void clear() override;
     bool isAvailable() const override;
     QString lastError() const override;
 

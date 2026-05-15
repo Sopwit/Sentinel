@@ -16,7 +16,7 @@ Add settings persistence, SQLite key-value memory, dedicated chat history persis
 
 ## Phase 3.4: Cross-platform Architecture Readiness
 
-Prepare architecture for Linux, Windows, and macOS without implementing platform integrations yet.
+Completed. Prepared architecture for Linux, Windows, and macOS without implementing platform integrations yet.
 
 Focus:
 
@@ -25,6 +25,14 @@ Focus:
 - Future platform service interfaces.
 - Controlled dependency growth.
 - No Phase 4 implementation.
+
+Delivered in this phase:
+
+- Platform boundary interfaces (`IPathProvider`, `IPlatformService`, `INotificationService`,
+  `ISystemIntegrationService`).
+- Default Qt `QStandardPaths` path ownership through `StandardPathProvider`.
+- Local storage maintenance controls for memory/chat with confirmation UX.
+- Explicit separation preserved across settings, memory, and chat history.
 
 Candidate interfaces:
 

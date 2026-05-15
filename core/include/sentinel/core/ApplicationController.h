@@ -17,6 +17,8 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString providerStatus READ providerStatus CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
+    Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY maintenanceStatusChanged)
+    Q_PROPERTY(QString chatMaintenanceStatus READ chatMaintenanceStatus NOTIFY maintenanceStatusChanged)
 
 public:
     ApplicationController(std::unique_ptr<IChatProvider> provider,
@@ -29,23 +31,32 @@ public:
     QString providerStatus() const;
     QString memoryStatus() const;
     QString chatHistoryStatus() const;
+    QString memoryMaintenanceStatus() const;
+    QString chatMaintenanceStatus() const;
     const QList<ChatMessage>& chatHistory() const;
     QStringList chatMessages() const;
     QStringList memoryEntries() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
-    Q_INVOKABLE void clearChat();
+    Q_INVOKABLE bool clearMemory();
+    Q_INVOKABLE bool clearChat();
     Q_INVOKABLE void remember(const QString& key, const QString& value);
 
 signals:
     void chatMessagesChanged();
     void memoryEntriesChanged();
+    void maintenanceStatusChanged();
 
 private:
+    void setMemoryMaintenanceStatus(const QString& status);
+    void setChatMaintenanceStatus(const QString& status);
+
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
+    QString memoryMaintenanceStatus_ = QStringLiteral("Ready");
+    QString chatMaintenanceStatus_ = QStringLiteral("Ready");
 };
 
 } // namespace sentinel::core

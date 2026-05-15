@@ -68,9 +68,9 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, and Phase 3.2.
-- Current: Phase 3.3 is close to completion.
-- Planning: Phase 3.4, Cross-platform Architecture Readiness.
-- Recent: Phase 3.1.5, AI Context & Agent Instruction Layer.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, and Phase 3.4.
+- Current: Stable desktop alpha with cross-platform architecture boundaries and storage maintenance controls.
+- Next: Phase 4 planning only, no runtime provider/tool integration implementation.
+- Recent: Phase 3.4, Cross-platform Architecture Readiness and Storage Maintenance.
 
 Current runtime still has no networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, or platform-specific service layer.

@@ -9,9 +9,13 @@ add_library(sentinel_core STATIC
     include/sentinel/core/IClock.h
     include/sentinel/core/IContextEngine.h
     include/sentinel/core/IIntegration.h
+    include/sentinel/core/INotificationService.h
     include/sentinel/core/IMemoryStore.h
+    include/sentinel/core/IPathProvider.h
+    include/sentinel/core/IPlatformService.h
     include/sentinel/core/IPlugin.h
     include/sentinel/core/ISettingsStore.h
+    include/sentinel/core/ISystemIntegrationService.h
     include/sentinel/core/InMemoryStore.h
     include/sentinel/core/InMemorySettingsStore.h
     include/sentinel/core/JsonSettingsStore.h
@@ -19,6 +23,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ModeManager.h
     include/sentinel/core/SQLiteChatHistoryStore.h
     include/sentinel/core/SQLiteMemoryStore.h
+    include/sentinel/core/StandardPathProvider.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
     src/ApplicationController.cpp
@@ -32,6 +37,7 @@ add_library(sentinel_core STATIC
     src/ModeManager.cpp
     src/SQLiteChatHistoryStore.cpp
     src/SQLiteMemoryStore.cpp
+    src/StandardPathProvider.cpp
 )
 
 target_include_directories(sentinel_core

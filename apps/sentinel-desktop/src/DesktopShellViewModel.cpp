@@ -18,6 +18,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     });
     connect(&controller_, &core::ApplicationController::memoryEntriesChanged, this,
             &DesktopShellViewModel::memoryEntriesChanged);
+    connect(&controller_, &core::ApplicationController::maintenanceStatusChanged, this,
+            &DesktopShellViewModel::maintenanceStatusChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::themeNameChanged, this,
@@ -40,6 +42,14 @@ QString DesktopShellViewModel::memoryStatus() const {
 
 QString DesktopShellViewModel::chatHistoryStatus() const {
     return controller_.chatHistoryStatus();
+}
+
+QString DesktopShellViewModel::memoryMaintenanceStatus() const {
+    return controller_.memoryMaintenanceStatus();
+}
+
+QString DesktopShellViewModel::chatMaintenanceStatus() const {
+    return controller_.chatMaintenanceStatus();
 }
 
 QString DesktopShellViewModel::currentModeName() const {
@@ -100,8 +110,12 @@ bool DesktopShellViewModel::sendMessage(const QString& message) {
     return controller_.sendMessage(message);
 }
 
-void DesktopShellViewModel::clearChat() {
-    controller_.clearChat();
+bool DesktopShellViewModel::clearMemory() {
+    return controller_.clearMemory();
+}
+
+bool DesktopShellViewModel::clearChat() {
+    return controller_.clearChat();
 }
 
 void DesktopShellViewModel::setModeByName(const QString& modeName) {
