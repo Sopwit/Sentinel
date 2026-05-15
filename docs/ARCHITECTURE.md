@@ -212,6 +212,17 @@ Phase 4.10 closes Phase 4 with an architecture checkpoint:
 - Dashboard visibility remains read-only and QML-safe.
 - Phase 5 readiness is documented in `docs/PHASE_4_CHECKPOINT.md`.
 
+Phase 4.11 adds AI orchestration planning only:
+
+- Future `ModelRouter` and `RoutingPolicy` concepts are documented in
+  `docs/AI_ORCHESTRATION_PLAN.md`.
+- Future routing may use provider capability profiles, task classification, local/cloud fallback,
+  device-aware model selection, user routing modes, and privacy-aware policy.
+- This planning layer should remain separate from `IChatProvider`, `IAgentRuntime`, tool execution,
+  and UI model-management screens.
+- No provider integration, networking/API keys, model download, model execution, plugin loading,
+  filesystem/system action, real tool execution, or runtime behavior change is added.
+
 `ApplicationController` and `DesktopShellViewModel` expose only generic agent status, placeholder
 response text, latest plan status/summary, latest approval status/summary, latest sandbox
 status/summary, latest placeholder execution status/summary, and latest aggregate pipeline
