@@ -23,14 +23,21 @@ ShellPanel {
             font.letterSpacing: 2.4
         }
 
-        Repeater {
+        ListView {
+            id: agentList
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            clip: true
+            spacing: SentinelTheme.spaceMd
             model: agents.viewModel.activeAgentSummaries
 
-            RowLayout {
+            delegate: RowLayout {
+                id: agentRow
                 required property int index
                 required property string modelData
                 readonly property string agentName: modelData.split(" (")[0]
-                Layout.fillWidth: true
+                width: agentList.width
+                height: 48
                 spacing: SentinelTheme.spaceMd
 
                 Rectangle {
@@ -42,7 +49,7 @@ ShellPanel {
 
                     Label {
                         anchors.centerIn: parent
-                        text: agentName.charAt(0)
+                        text: agentRow.agentName.charAt(0)
                         color: SentinelTheme.accent
                         font.pixelSize: SentinelTheme.fontTiny
                         font.letterSpacing: 1.2
@@ -57,7 +64,7 @@ ShellPanel {
                         Layout.fillWidth: true
 
                         Label {
-                            text: agentName
+                            text: agentRow.agentName
                             color: SentinelTheme.textPrimary
                             font.pixelSize: SentinelTheme.fontSmall
                         }
@@ -75,7 +82,7 @@ ShellPanel {
 
                     Label {
                         Layout.fillWidth: true
-                        text: modelData
+                        text: agentRow.modelData
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontTiny
                         elide: Text.ElideRight

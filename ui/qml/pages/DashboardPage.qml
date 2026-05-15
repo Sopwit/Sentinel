@@ -1,6 +1,6 @@
 import QtQuick
-import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import Sentinel.Desktop
 
 GridLayout {
     id: dashboardPage

@@ -215,7 +215,7 @@ TaskPlan StaticTaskPlanner::plan(const TaskPlanningRequest& request) const {
                     .arg(candidate.provider.descriptor.name, candidate.model.descriptor.name);
         }
 
-        const QList<PlannedTaskStep> steps{graphStep(graph.nodes.size()),
+        const QList<PlannedTaskStep> steps{graphStep(static_cast<int>(graph.nodes.size())),
                                            stepFor(candidate, preferredAgent, 2, summary)};
         return TaskPlan{
             status,

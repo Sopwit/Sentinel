@@ -200,11 +200,11 @@ QString ApplicationController::latestTaskPlanSummary() const {
 }
 
 int ApplicationController::plannedTaskStepCount() const {
-    return latestTaskPlan_.steps.size();
+    return static_cast<int>(latestTaskPlan_.steps.size());
 }
 
 int ApplicationController::registeredAgentCount() const {
-    return agentRegistry_ ? agentRegistry_->agents().size() : 0;
+    return agentRegistry_ ? static_cast<int>(agentRegistry_->agents().size()) : 0;
 }
 
 QStringList ApplicationController::activeAgentSummaries() const {
@@ -228,7 +228,7 @@ QString ApplicationController::currentAgentSummary() const {
 }
 
 int ApplicationController::providerCatalogCount() const {
-    return providerCatalog_ ? providerCatalog_->entries().size() : 0;
+    return providerCatalog_ ? static_cast<int>(providerCatalog_->entries().size()) : 0;
 }
 
 QStringList ApplicationController::providerCatalogSummaries() const {
@@ -244,7 +244,7 @@ QStringList ApplicationController::providerCatalogSummaries() const {
 }
 
 int ApplicationController::availableToolCount() const {
-    return agentRuntime_ ? agentRuntime_->availableTools().size() : 0;
+    return agentRuntime_ ? static_cast<int>(agentRuntime_->availableTools().size()) : 0;
 }
 
 QStringList ApplicationController::availableToolIds() const {

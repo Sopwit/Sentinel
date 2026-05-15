@@ -1,5 +1,5 @@
 CompileFlags:
-  CompilationDatabase: build/no-ccache
+  CompilationDatabase: build/tests
 Diagnostics:
   ClangTidy:
     Add: []
