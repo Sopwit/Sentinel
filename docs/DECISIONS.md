@@ -621,3 +621,27 @@ Boundary rules:
   execute tools, load plugins, mutate files, or perform system actions.
 - QML may show read-only status, summary, and counts only; no execution controls are part of this
   phase.
+
+## 36. Agent Registry Is Metadata Only
+
+Decision: Add a static agent registry and agent descriptor model before any autonomous agent
+runtime behavior.
+
+Reason: Sentinel needs stable names, roles, capability summaries, and task affinities for future
+orchestration UI and planning without implying that autonomous agents can run.
+
+Boundary rules:
+
+- `IAgentRegistry` exposes read-only value metadata only.
+- `StaticAgentRegistry` returns deterministic static descriptors for Atlas, Orin, Vela, Kaze, Nyx,
+  and Sol.
+- Agent descriptors may include id, display name, role, capability summary, preferred task types,
+  local/cloud affinity, privacy affinity, state, and priority.
+- `StaticTaskPlanner` may select a preferred agent metadata label for a plan, but it must not
+  execute the agent.
+- `IAgentRuntime` remains the future execution/orchestration boundary.
+- No autonomous loops, threads, background workers, provider/model calls, networking, API keys,
+  downloads, tool execution, memory writes, plugin loading, filesystem/system actions, or dynamic
+  discovery are part of this phase.
+- QML may show read-only counts and summaries only; no execution controls or autonomous toggles are
+  part of this phase.

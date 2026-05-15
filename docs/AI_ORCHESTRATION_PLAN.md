@@ -3,8 +3,8 @@
 Phase 4.11 recorded future AI routing direction only. Phase 6.0 began implementing that direction
 as metadata-only architecture. Phase 6.1 persists the user routing mode preference. Phase 6.2 adds
 a provider/model catalog metadata boundary. Phase 6.3 adds capability graph and task planner
-metadata. These phases do not implement providers, networking, model execution, downloads, API
-keys, or tool execution.
+metadata. Phase 6.4 adds static agent registry metadata. These phases do not implement providers,
+networking, model execution, downloads, API keys, autonomous agents, or tool execution.
 
 ## Future Components
 
@@ -17,10 +17,13 @@ keys, or tool execution.
   long-context, tool-planning, and sensitive-data tasks.
 - Task planner: metadata planner that can assemble high-level task plan steps from task type,
   routing mode, provider/model catalog availability, privacy posture, and local/cloud suitability.
+- Agent registry: static descriptors for future orchestration roles, task affinities, privacy
+  posture, and local/cloud metadata affinity.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
-decides where a request should go, and the task planner only describes high-level metadata steps.
+decides where a request should go, the task planner only describes high-level metadata steps, and
+the agent registry only labels future role/capability metadata.
 
 ## Routing Inputs
 
@@ -62,7 +65,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 6.3 runtime remains metadata-only:
+Current Phase 6.4 runtime remains metadata-only:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -74,10 +77,12 @@ Current Phase 6.3 runtime remains metadata-only:
 - `ITaskPlanner` and `StaticTaskPlanner` create high-level task plan metadata only. They do not
   call providers, execute models, execute tools, download models, load plugins, access the network,
   or touch the filesystem/system.
+- `IAgentRegistry` and `StaticAgentRegistry` expose static agent descriptors only. Planner-selected
+  agents are labels for metadata visibility, not runtime workers.
 - `AppSettings` persists the routing mode through `JsonSettingsStore`; it does not store provider
   credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
 - `NullAgentRuntime` and `NullToolExecutor` still perform no real AI/model/tool execution.
 
-Provider integrations, cloud routing, credentials, model downloads, model execution, actionable
-model-management UI, and routing policy automation remain future work.
+Provider integrations, cloud routing, credentials, model downloads, model execution, autonomous
+agent runtime, actionable model-management UI, and routing policy automation remain future work.

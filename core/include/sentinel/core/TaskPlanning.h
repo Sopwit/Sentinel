@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sentinel/core/AgentMetadata.h"
 #include "sentinel/core/ProviderCatalog.h"
 
 #include <QList>
@@ -50,6 +51,8 @@ struct PlannedTaskStep {
     QString summary;
     QString providerId;
     QString modelId;
+    QString agentId;
+    QString agentName;
     ProviderKind providerKind = ProviderKind::Local;
     CatalogAvailability availability = CatalogAvailability::Unavailable;
     bool localOnly = true;
@@ -59,6 +62,7 @@ struct TaskPlanningRequest {
     TaskClassification task;
     RoutingMode routingMode = RoutingMode::LocalOnly;
     QList<ProviderCatalogEntry> catalogEntries;
+    QList<AgentDescriptor> agents;
 };
 
 struct TaskPlan {
@@ -68,6 +72,8 @@ struct TaskPlan {
     CapabilityGraph capabilityGraph;
     QList<PlannedTaskStep> steps;
     QString summary;
+    QString preferredAgentId;
+    QString preferredAgentSummary;
     bool networkRequired = false;
     bool modelExecutionAllowed = false;
 };

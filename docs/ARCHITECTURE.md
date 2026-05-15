@@ -287,6 +287,23 @@ Phase 6.3 adds capability graph and task planner metadata:
 - The task planner does not call providers, execute models, execute tools, access the network,
   download models, load plugins, or perform filesystem/system actions.
 
+Phase 6.4 adds agent registry metadata:
+
+- `AgentMetadata.h` defines value-only agent descriptors, roles, states, priorities, capability
+  profiles, task affinities, and runtime snapshot metadata.
+- `IAgentRegistry` is the read-only agent metadata boundary.
+- `StaticAgentRegistry` returns deterministic static descriptors for Atlas, Orin, Vela, Kaze, Nyx,
+  and Sol.
+- `StaticTaskPlanner` may annotate task plans with preferred agent metadata, but it does not
+  execute agents or start orchestration.
+- `IAgentRuntime` remains the future runtime/action orchestration boundary.
+- Controller and desktop view-model expose only registered agent count, active agent summary
+  strings, and the current preferred agent summary.
+- Dashboard and Settings show text-only agent metadata without execution controls.
+- The agent registry does not run autonomous loops, create threads/background workers, call
+  providers/models, execute tools, access memory stores, load plugins, access the network, or
+  perform filesystem/system actions.
+
 Phase 5.0 adds UI/UX planning and design-system foundation only:
 
 - `docs/UI_UX_PLAN.md` records the design direction and motion constraints.

@@ -4,6 +4,7 @@
 #include "sentinel/core/AgentPipelineResult.h"
 #include "sentinel/core/AgentRuntimeContext.h"
 #include "sentinel/core/ChatSession.h"
+#include "sentinel/core/IAgentRegistry.h"
 #include "sentinel/core/IAgentRuntime.h"
 #include "sentinel/core/IApprovalPolicy.h"
 #include "sentinel/core/IChatHistoryStore.h"
@@ -58,6 +59,9 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString latestTaskPlanStatus READ latestTaskPlanStatus NOTIFY taskPlanChanged)
     Q_PROPERTY(QString latestTaskPlanSummary READ latestTaskPlanSummary NOTIFY taskPlanChanged)
     Q_PROPERTY(int plannedTaskStepCount READ plannedTaskStepCount NOTIFY taskPlanChanged)
+    Q_PROPERTY(int registeredAgentCount READ registeredAgentCount CONSTANT)
+    Q_PROPERTY(QStringList activeAgentSummaries READ activeAgentSummaries CONSTANT)
+    Q_PROPERTY(QString currentAgentSummary READ currentAgentSummary NOTIFY taskPlanChanged)
     Q_PROPERTY(int providerCatalogCount READ providerCatalogCount CONSTANT)
     Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
@@ -81,6 +85,7 @@ public:
                           std::unique_ptr<IModelRouter> modelRouter = nullptr,
                           std::unique_ptr<IProviderCatalog> providerCatalog = nullptr,
                           std::unique_ptr<ITaskPlanner> taskPlanner = nullptr,
+                          std::unique_ptr<IAgentRegistry> agentRegistry = nullptr,
                           QObject* parent = nullptr);
 
     QString providerName() const;
@@ -110,6 +115,9 @@ public:
     QString latestTaskPlanStatus() const;
     QString latestTaskPlanSummary() const;
     int plannedTaskStepCount() const;
+    int registeredAgentCount() const;
+    QStringList activeAgentSummaries() const;
+    QString currentAgentSummary() const;
     int providerCatalogCount() const;
     QStringList providerCatalogSummaries() const;
     int availableToolCount() const;
@@ -159,6 +167,7 @@ private:
     std::unique_ptr<IProviderCatalog> providerCatalog_;
     std::unique_ptr<IModelRouter> modelRouter_;
     std::unique_ptr<ITaskPlanner> taskPlanner_;
+    std::unique_ptr<IAgentRegistry> agentRegistry_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

@@ -2,12 +2,14 @@ add_library(sentinel_core STATIC
     include/sentinel/core/AppMetadata.h
     include/sentinel/core/AppSettings.h
     include/sentinel/core/AgentActivityLog.h
+    include/sentinel/core/AgentMetadata.h
     include/sentinel/core/AgentPipelineResult.h
     include/sentinel/core/AgentRuntimeContext.h
     include/sentinel/core/ApplicationController.h
     include/sentinel/core/ChatMessage.h
     include/sentinel/core/ChatSession.h
     include/sentinel/core/IAgentRuntime.h
+    include/sentinel/core/IAgentRegistry.h
     include/sentinel/core/IChatHistoryStore.h
     include/sentinel/core/IChatProvider.h
     include/sentinel/core/IClock.h
@@ -41,6 +43,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/SQLiteMemoryStore.h
     include/sentinel/core/StandardPathProvider.h
     include/sentinel/core/StaticApprovalPolicy.h
+    include/sentinel/core/StaticAgentRegistry.h
     include/sentinel/core/StaticModelRouter.h
     include/sentinel/core/StaticProviderCatalog.h
     include/sentinel/core/StaticSandboxPolicy.h
@@ -71,6 +74,7 @@ add_library(sentinel_core STATIC
     src/SQLiteMemoryStore.cpp
     src/StandardPathProvider.cpp
     src/StaticApprovalPolicy.cpp
+    src/StaticAgentRegistry.cpp
     src/StaticModelRouter.cpp
     src/StaticProviderCatalog.cpp
     src/StaticSandboxPolicy.cpp

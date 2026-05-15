@@ -149,6 +149,10 @@ Phase 6.3 adds text-only task planning visibility. Later planning UI may show ca
 task steps, but those views should remain read-only until a later explicit execution phase adds
 separate approval and execution controls.
 
+Phase 6.4 adds text-only agent registry visibility. Agent panels may show static names, roles,
+state summaries, and preferred-agent metadata, but must not expose autonomous toggles, execution
+buttons, setup controls, tool controls, provider calls, or background-worker controls.
+
 ## Current Separation
 
 Current Phase 5 work is presentation foundation only:

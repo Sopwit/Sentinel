@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 6.3 is complete.
+Phase 6.4 is complete.
 
 Implemented foundation:
 
@@ -66,6 +66,7 @@ Recent implementation phase:
 - Phase 6.1, Routing Mode Settings and Persistence.
 - Phase 6.2, Provider Catalog Metadata Skeleton.
 - Phase 6.3, Capability Graph and Task Planner Skeleton.
+- Phase 6.4, Agent System Skeleton.
 
 ## Constraints
 
@@ -79,8 +80,8 @@ Recent implementation phase:
 - Do not start full Phase 4 implementation.
 - Do not add real tool execution; Phase 4.2 plans, Phase 4.3 approval decisions, Phase 4.4
   sandbox capability decisions, and Phase 4.5 execution results are metadata/placeholder-only.
-- Do not add real provider/model execution; Phase 6.x model routing, catalog data, and task
-  planning are metadata-only.
+- Do not add real provider/model/agent execution; Phase 6.x model routing, catalog data, task
+  planning, and agent registry metadata are metadata-only.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

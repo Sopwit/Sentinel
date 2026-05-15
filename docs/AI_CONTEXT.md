@@ -96,6 +96,11 @@ Future UI vision:
   builds deterministic high-level task plan metadata from task type, routing mode, provider catalog
   availability, local/cloud classification, privacy sensitivity, and resource hints without
   calling models, providers, networks, tools, plugins, or system services.
+- Phase 6.4 adds a metadata-only agent registry skeleton. `StaticAgentRegistry` exposes static
+  descriptors for Atlas, Orin, Vela, Kaze, Nyx, and Sol, and `StaticTaskPlanner` may annotate plans
+  with a preferred agent metadata match. No autonomous loops, background workers, provider calls,
+  model execution, tools, plugins, memory writes, networking, or filesystem/system actions are
+  enabled.
 - Phase 5.0 adds UI/UX planning and a small QML design-token singleton without adding advanced
   motion, provider integration, model execution, or runtime behavior.
 - Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
@@ -120,7 +125,7 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, and Phase 6.3.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, and Phase 6.4.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline and metadata-only model
   routing skeleton:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
@@ -128,6 +133,6 @@ Future UI vision:
   read-only dashboard visibility for that state. Model/provider routing is descriptor-only and
   currently resolves to a deterministic local placeholder.
 - Next: Phase 6.x stabilization and later explicitly approved provider/model work.
-- Recent: Phase 6.3, Capability Graph and Task Planner Skeleton.
+- Recent: Phase 6.4, Agent System Skeleton.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

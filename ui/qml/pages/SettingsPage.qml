@@ -103,6 +103,41 @@ ShellPanel {
                 Layout.columnSpan: settingsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Preferred Agent"
+                value: settingsPage.viewModel.currentAgentSummary
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+        }
+
+        SectionTitle {
+            title: "Agent Registry"
+            subtitle: "Read-only metadata for future orchestration. No autonomous execution, tools, provider calls, or background workers are enabled."
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Registered Agents"
+                value: settingsPage.viewModel.registeredAgentCount.toString()
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.activeAgentSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Agent"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
         }
 
         SectionTitle {

@@ -170,6 +170,18 @@ int DesktopShellViewModel::plannedTaskStepCount() const {
     return controller_.plannedTaskStepCount();
 }
 
+int DesktopShellViewModel::registeredAgentCount() const {
+    return controller_.registeredAgentCount();
+}
+
+QStringList DesktopShellViewModel::activeAgentSummaries() const {
+    return controller_.activeAgentSummaries();
+}
+
+QString DesktopShellViewModel::currentAgentSummary() const {
+    return controller_.currentAgentSummary();
+}
+
 int DesktopShellViewModel::providerCatalogCount() const {
     return controller_.providerCatalogCount();
 }

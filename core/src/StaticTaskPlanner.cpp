@@ -84,13 +84,66 @@ bool candidateIsLocal(const Candidate& candidate) {
            candidate.model.descriptor.localOnly;
 }
 
-PlannedTaskStep stepFor(const Candidate& candidate, int order, QString summary) {
+int priorityRank(AgentPriority priority) {
+    switch (priority) {
+    case AgentPriority::Critical:
+        return 4;
+    case AgentPriority::High:
+        return 3;
+    case AgentPriority::Normal:
+        return 2;
+    case AgentPriority::Low:
+        return 1;
+    }
+
+    return 0;
+}
+
+int affinityWeightFor(const AgentDescriptor& agent, TaskType taskType) {
+    int weight = 0;
+    for (const auto& affinity : agent.taskAffinities) {
+        if (affinity.taskType == taskType) {
+            weight = std::max(weight, affinity.weight);
+        }
+    }
+    return weight;
+}
+
+AgentDescriptor preferredAgentFor(const TaskPlanningRequest& request) {
+    AgentDescriptor preferred;
+    int preferredWeight = -1;
+    int preferredPriority = -1;
+
+    for (const auto& agent : request.agents) {
+        if (!isAgentAvailable(agent.state)) {
+            continue;
+        }
+
+        const auto weight = affinityWeightFor(agent, request.task.type);
+        const auto priority = priorityRank(agent.priority);
+        if (weight > preferredWeight ||
+            (weight == preferredWeight && priority > preferredPriority) ||
+            (weight == preferredWeight && priority == preferredPriority &&
+             (preferred.id.isEmpty() || agent.id < preferred.id))) {
+            preferred = agent;
+            preferredWeight = weight;
+            preferredPriority = priority;
+        }
+    }
+
+    return preferred;
+}
+
+PlannedTaskStep stepFor(const Candidate& candidate, const AgentDescriptor& preferredAgent,
+                        int order, QString summary) {
     return PlannedTaskStep{
         order,
         QStringLiteral("step-%1-%2").arg(order).arg(candidate.model.descriptor.id),
         std::move(summary),
         candidate.provider.descriptor.id,
         candidate.model.descriptor.id,
+        preferredAgent.id,
+        preferredAgent.displayName,
         candidate.provider.descriptor.kind,
         candidate.provider.availability,
         candidate.model.descriptor.localOnly,
@@ -104,13 +157,16 @@ PlannedTaskStep graphStep(int capabilityCount) {
         QStringLiteral("Evaluate %1 provider capability metadata node(s).").arg(capabilityCount),
         {},
         {},
+        {},
+        {},
         ProviderKind::Local,
         CatalogAvailability::Available,
         true,
     };
 }
 
-TaskPlan blockedPlan(const TaskPlanningRequest& request, CapabilityGraph graph, QString summary) {
+TaskPlan blockedPlan(const TaskPlanningRequest& request, CapabilityGraph graph, QString summary,
+                     const AgentDescriptor& preferredAgent) {
     return TaskPlan{
         TaskPlanStatus::Blocked,
         request.routingMode,
@@ -118,6 +174,8 @@ TaskPlan blockedPlan(const TaskPlanningRequest& request, CapabilityGraph graph, 
         std::move(graph),
         {},
         std::move(summary),
+        preferredAgent.id,
+        preferredAgent.id.isEmpty() ? QString() : agentDescriptorSummary(preferredAgent),
         false,
         false,
     };
@@ -127,9 +185,11 @@ TaskPlan blockedPlan(const TaskPlanningRequest& request, CapabilityGraph graph, 
 
 TaskPlan StaticTaskPlanner::plan(const TaskPlanningRequest& request) const {
     auto graph = buildCapabilityGraph(request.catalogEntries);
+    const auto preferredAgent = preferredAgentFor(request);
     if (request.catalogEntries.isEmpty()) {
         return blockedPlan(request, std::move(graph),
-                           QStringLiteral("No provider catalog metadata is available."));
+                           QStringLiteral("No provider catalog metadata is available."),
+                           preferredAgent);
     }
 
     const auto localRequired = taskRequiresLocalOnly(request);
@@ -156,9 +216,17 @@ TaskPlan StaticTaskPlanner::plan(const TaskPlanningRequest& request) const {
         }
 
         const QList<PlannedTaskStep> steps{graphStep(graph.nodes.size()),
-                                           stepFor(candidate, 2, summary)};
+                                           stepFor(candidate, preferredAgent, 2, summary)};
         return TaskPlan{
-            status, request.routingMode, request.task, std::move(graph), steps, summary, false,
+            status,
+            request.routingMode,
+            request.task,
+            std::move(graph),
+            steps,
+            summary,
+            preferredAgent.id,
+            preferredAgent.id.isEmpty() ? QString() : agentDescriptorSummary(preferredAgent),
+            false,
             false,
         };
     }
@@ -166,18 +234,21 @@ TaskPlan StaticTaskPlanner::plan(const TaskPlanningRequest& request) const {
     if (localRequired) {
         return blockedPlan(
             request, std::move(graph),
-            QStringLiteral("No available local metadata capability can satisfy this task."));
+            QStringLiteral("No available local metadata capability can satisfy this task."),
+            preferredAgent);
     }
 
     if (!routingAllowsCloud(request.routingMode)) {
         return blockedPlan(
             request, std::move(graph),
-            QStringLiteral("No available local metadata capability exists for this routing mode."));
+            QStringLiteral("No available local metadata capability exists for this routing mode."),
+            preferredAgent);
     }
 
     return blockedPlan(
         request, std::move(graph),
-        QStringLiteral("Cloud metadata candidates are unavailable or not configured."));
+        QStringLiteral("Cloud metadata candidates are unavailable or not configured."),
+        preferredAgent);
 }
 
 } // namespace sentinel::core

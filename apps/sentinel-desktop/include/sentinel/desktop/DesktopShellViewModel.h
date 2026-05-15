@@ -52,6 +52,9 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString latestTaskPlanStatus READ latestTaskPlanStatus NOTIFY taskPlanChanged)
     Q_PROPERTY(QString latestTaskPlanSummary READ latestTaskPlanSummary NOTIFY taskPlanChanged)
     Q_PROPERTY(int plannedTaskStepCount READ plannedTaskStepCount NOTIFY taskPlanChanged)
+    Q_PROPERTY(int registeredAgentCount READ registeredAgentCount CONSTANT)
+    Q_PROPERTY(QStringList activeAgentSummaries READ activeAgentSummaries CONSTANT)
+    Q_PROPERTY(QString currentAgentSummary READ currentAgentSummary NOTIFY taskPlanChanged)
     Q_PROPERTY(int providerCatalogCount READ providerCatalogCount CONSTANT)
     Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
@@ -104,6 +107,9 @@ public:
     QString latestTaskPlanStatus() const;
     QString latestTaskPlanSummary() const;
     int plannedTaskStepCount() const;
+    int registeredAgentCount() const;
+    QStringList activeAgentSummaries() const;
+    QString currentAgentSummary() const;
     int providerCatalogCount() const;
     QStringList providerCatalogSummaries() const;
     int availableToolCount() const;
