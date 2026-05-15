@@ -692,3 +692,144 @@ Still out of scope:
 - Filesystem/system actions.
 - Execution or approval controls.
 - Automated visual driving or screenshot QA.
+
+### Phase 5.4: Workspace UX Integration
+
+Completed. Translated the useful `lovable-tasarim` UI/UX direction into native Qt/QML while keeping
+React, Vite, Tailwind, Node tooling, and WebView integration out of the production app.
+
+Scope:
+
+- Added mode-aware graphite/glass/cyan visual tokens in `SentinelTheme.qml`.
+- Added ambient Qt/QML shell background and central `WorkspacePresence` component.
+- Refined the shell into a left status/navigation rail, central workspace/presence area, and right
+  chat/interaction panel.
+- Added lightweight QML breathing/orbit/opacity motion for workspace state cues.
+- Added mode-aware visual behavior for Companion, Focus, Mission, System, Minimal, and Tactical
+  modes.
+- Preserved existing view models, controllers, providers, memory stores, and execution boundaries.
+
+Follow-up visual migration:
+
+- Move the completed QML workspace closer to the `lovable-tasarim` visual identity source of truth.
+- Emphasize cinematic presence-first composition, softer translucent surfaces, reduced dashboard
+  density, larger central AI presence, thinner visual hierarchy, and more negative space.
+- Keep the implementation native Qt/QML and preserve all no-execution boundaries.
+
+Still out of scope:
+
+- React architecture or web runtime integration.
+- Real tool execution.
+- Approval actions or sandbox runtime.
+- Filesystem/system mutation or automation.
+- Provider/model execution, networking/API keys, voice pipeline, hardware integration, plugin
+  loading, advanced particle systems, assistant-face rendering, or Qt Quick 3D.
+
+### Phase 5.4.5: Architecture and UI Risk Audit
+
+Completed. This phase audited architecture and UI risk before Phase 5.5 without adding product
+features or runtime behavior.
+
+Scope:
+
+- Re-audit C++ core boundaries, desktop view-model exposure, persistence separation,
+  provider/agent separation, tool planning/approval/sandbox/execution boundaries, runtime context,
+  activity log scope, QML component structure, design-token usage, and the Phase 5.4 workspace UX
+  translation.
+- Fix only small safe issues such as stale docs, naming inconsistencies, duplicated simple QML
+  styling, fragile bindings, minor label clarity, and checklist gaps.
+- Keep `lovable-tasarim` as a design reference only.
+
+Known risks to monitor before Phase 5.5:
+
+- `SentinelTheme.qml` now owns more visual helpers; avoid turning mode-aware visual helpers into
+  product logic.
+- `WorkspacePresence` and `Atmosphere` add continuous lightweight animation; keep them cheap and
+  avoid advanced particle/assistant-face systems.
+- Compact/normal/wide manual QA is still important because automated screenshot driving is not in
+  place.
+- `qmllint` may be unavailable in some developer environments; build-time QML cache compilation
+  and startup smoke checks should remain fallback verification.
+
+Phase 5.5 readiness criteria:
+
+- Full tests, formatting, and available QML verification pass.
+- QML remains presentation-only behind `DesktopShellViewModel`.
+- No UI control implies real execution, approval, networking, provider/model execution, plugin
+  loading, filesystem/system actions, voice, hardware integration, WebView, React, Node, Tailwind,
+  Vite, assistant-face rendering, advanced particles, or Qt Quick 3D.
+
+### Phase 5.5: Visual Identity Reconstruction
+
+Completed. Reconstructed the Dashboard/Core visual shell to match `lovable-tasarim` more closely
+while preserving Sentinel's native Qt/QML and C++ architecture boundaries.
+
+Scope:
+
+- Moved the main workspace from a dashboard-panel composition toward a cinematic presence-first
+  scene.
+- Added an ultra-thin ambient left rail and bottom floating dock navigation.
+- Expanded QML visual primitives for a central orb, floating telemetry readouts, and dock-led
+  navigation.
+- De-emphasized rigid metric/status panels on the Dashboard/Core page.
+- Refined the right AI bridge surface to feel more translucent, spacious, and atmospheric.
+- Preserved `DesktopShellViewModel`, provider/agent separation, persistence boundaries, and the
+  Phase 4 no-execution architecture.
+
+Still out of scope:
+
+- React/Vite/Tailwind/Node/WebView integration.
+- Provider/model execution, networking/API keys, real tool execution, approval actions, sandbox
+  runtime, filesystem/system actions, plugin loading, voice, hardware integration, assistant-face
+  rendering, advanced particles, heavy custom rendering, or Qt Quick 3D.
+
+## Current Functional Architecture Work
+
+### Phase 6.0: Functional Workspace and Model-Orchestration Skeleton
+
+Completed. Added a metadata-only model/provider routing skeleton without adding provider
+integration or model execution.
+
+Scope:
+
+- Added value descriptors for provider capability profiles, providers, models, routing modes, task
+  classification, and route results.
+- Added `IModelRouter` as a separate routing boundary.
+- Added `StaticModelRouter` with deterministic local-only placeholder routing.
+- Added minimal `ApplicationController` and `DesktopShellViewModel` read-only exposure for routing
+  mode, routing status, and selected placeholder model/provider summary.
+- Added focused tests for descriptor preservation, local-only routing, unknown task fallback,
+  deterministic static routing, and controller/view-model exposure.
+
+Still out of scope:
+
+- Real provider integration.
+- Ollama/OpenAI/Anthropic calls.
+- API keys, networking, model downloads, or model execution.
+- Real tool execution, approval actions, sandbox runtime, plugin loading, filesystem/system
+  actions, broad UI redesign, or model-management UI.
+
+### Phase 6.1: Routing Mode Settings and Persistence
+
+Completed. Added a persisted routing mode preference while keeping model routing metadata-only.
+
+Scope:
+
+- Added routing mode preference to `AppSettings`.
+- Persisted routing mode through the existing `JsonSettingsStore`.
+- Kept the default privacy-safe: `Local Only`.
+- Normalized invalid/unknown routing mode values back to `Local Only`.
+- Added mutable metadata routing mode support to `IModelRouter`/`StaticModelRouter`.
+- Added `ApplicationController` and `DesktopShellViewModel` route metadata updates when routing
+  mode changes.
+- Added a minimal Settings page routing mode selector plus read-only route status/summary.
+- Added tests for defaults, persistence, invalid fallback, controller/view-model updates, and route
+  summary changes.
+
+Still out of scope:
+
+- Real provider integration.
+- Ollama/OpenAI/Anthropic calls.
+- API keys, networking, model downloads, or model execution.
+- Real tool execution, approval actions, sandbox runtime, plugin loading, filesystem/system
+  actions, broad UI redesign, provider setup UI, or model-management UI.

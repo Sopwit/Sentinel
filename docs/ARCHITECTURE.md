@@ -38,6 +38,8 @@ The desktop shell is split into small QML components:
 - `Main.qml`: application window and high-level layout.
 - `components/Sidebar.qml`: page navigation and provider/settings summary.
 - `components/HeaderBar.qml`: current mode and mode switcher.
+- `components/Atmosphere.qml`: low-cost ambient shell background.
+- `components/WorkspacePresence.qml`: central mode-aware workspace presence visualization.
 - `components/InfoRow.qml`: read-only label/value status row presentation.
 - `components/StatusBar.qml`: local alpha status footer.
 - `pages/DashboardPage.qml`: overview and chat panel host.
@@ -228,6 +230,30 @@ Phase 4.11 adds AI orchestration planning only:
 - No provider integration, networking/API keys, model download, model execution, plugin loading,
   filesystem/system action, real tool execution, or runtime behavior change is added.
 
+Phase 6.0 adds a metadata-only model routing skeleton:
+
+- `ModelRouting.h` defines `ModelDescriptor`, `ProviderDescriptor`,
+  `ProviderCapabilityProfile`, `RoutingMode`, `TaskType`, task classification, and route result
+  value data.
+- `IModelRouter` is the future model/provider selection boundary.
+- `StaticModelRouter` returns a deterministic local-only placeholder route.
+- `ApplicationController` owns the router and exposes only routing mode, routing status, and a
+  selected model/provider summary.
+- `DesktopShellViewModel` forwards those values as QML-safe read-only strings.
+- The router does not call providers, execute models, download models, use API keys, access the
+  network, execute tools, load plugins, or perform filesystem/system actions.
+
+Phase 6.1 persists routing mode preference:
+
+- `AppSettings` owns the routing mode preference and defaults it to `Local Only`.
+- `JsonSettingsStore` persists the setting in the existing settings JSON file.
+- `ApplicationController` updates `IModelRouter` routing mode metadata and emits route-summary
+  changes.
+- `DesktopShellViewModel` synchronizes settings and controller state for QML.
+- Settings UI exposes only a routing mode selector and read-only route metadata.
+- No provider setup, credentials, API keys, networking, model downloads, model execution, or tool
+  execution are introduced.
+
 Phase 5.0 adds UI/UX planning and design-system foundation only:
 
 - `docs/UI_UX_PLAN.md` records the design direction and motion constraints.
@@ -265,6 +291,24 @@ Phase 5.3 adds component consistency and visual QA foundation:
 - No runtime behavior, provider/model execution, networking, plugin loading, filesystem/system
   actions, approval controls, assistant-face rendering, particle systems, or custom rendering
   systems are added.
+
+Phase 5.4 adds workspace UX integration from the `lovable-tasarim` design reference:
+
+- The React/TypeScript/Tailwind reference remains outside the production architecture.
+- Qt/QML owns the translated left rail, central presence workspace, right chat panel, ambient
+  background, glass panel treatment, and lightweight motion.
+- Mode-aware visual helpers live in `SentinelTheme.qml` and are presentation-only.
+- QML continues to bind to `DesktopShellViewModel`; no raw core objects, provider changes, tool
+  execution paths, WebView, Node runtime, or web framework dependencies are introduced.
+
+Phase 5.4.5 audits the completed workspace integration before Phase 5.5:
+
+- Core, desktop view-model, persistence, provider/agent, planning, approval, sandbox, placeholder
+  execution, runtime context, and activity-log boundaries remain unchanged.
+- Small QML cleanup may reduce duplicated presentation styling or fragile bindings, but must not
+  redesign the shell or add product behavior.
+- Known UI risks are token growth, mode visual helpers becoming logic-heavy, compact layout
+  regressions, unavailable `qmllint` tooling, and manual-only visual QA coverage.
 
 `ApplicationController` and `DesktopShellViewModel` expose only generic agent status, placeholder
 response text, latest plan status/summary, latest approval status/summary, latest sandbox

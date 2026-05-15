@@ -2,6 +2,7 @@
 
 #include "sentinel/core/NullToolExecutor.h"
 #include "sentinel/core/StaticApprovalPolicy.h"
+#include "sentinel/core/StaticModelRouter.h"
 #include "sentinel/core/StaticSandboxPolicy.h"
 
 namespace sentinel::core {
@@ -36,13 +37,14 @@ ApplicationController::ApplicationController(
     std::unique_ptr<ChatSession> chatSession, std::unique_ptr<IChatHistoryStore> chatHistoryStore,
     std::unique_ptr<IAgentRuntime> agentRuntime, std::unique_ptr<IApprovalPolicy> approvalPolicy,
     std::unique_ptr<ISandboxPolicy> sandboxPolicy, std::unique_ptr<IToolExecutor> toolExecutor,
-    QObject* parent)
+    std::unique_ptr<IModelRouter> modelRouter, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
       sandboxPolicy_(sandboxPolicy ? std::move(sandboxPolicy)
                                    : std::make_unique<StaticSandboxPolicy>()),
       toolExecutor_(toolExecutor ? std::move(toolExecutor) : std::make_unique<NullToolExecutor>()),
+      modelRouter_(modelRouter ? std::move(modelRouter) : std::make_unique<StaticModelRouter>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -139,6 +141,40 @@ int ApplicationController::agentActivityCount() const {
 
 QString ApplicationController::latestAgentActivitySummary() const {
     return agentActivityLog_.latestSummary();
+}
+
+QString ApplicationController::currentRoutingMode() const {
+    return modelRouter_ ? routingModeName(modelRouter_->routingMode())
+                        : routingModeName(RoutingMode::LocalOnly);
+}
+
+void ApplicationController::setRoutingModeByName(const QString& routingModeName) {
+    if (!modelRouter_) {
+        return;
+    }
+
+    const auto nextMode = routingModeFromName(routingModeName);
+    if (nextMode == modelRouter_->routingMode()) {
+        return;
+    }
+
+    modelRouter_->setRoutingMode(nextMode);
+    emit modelRoutingChanged();
+}
+
+QString ApplicationController::modelRoutingStatus() const {
+    if (!modelRouter_) {
+        return modelRoutingStatusName(ModelRoutingStatus::Unavailable);
+    }
+    return modelRoutingStatusName(
+        modelRouter_->route(TaskClassification{TaskType::Unknown}).status);
+}
+
+QString ApplicationController::selectedModelProviderSummary() const {
+    if (!modelRouter_) {
+        return QStringLiteral("No model router available.");
+    }
+    return safeModelRouteSummary(modelRouter_->route(TaskClassification{TaskType::Unknown}));
 }
 
 int ApplicationController::availableToolCount() const {

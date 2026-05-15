@@ -6,8 +6,12 @@ ShellPanel {
     id: statusBar
     required property var viewModel
     property bool compact: width < 820
+    property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
 
     radius: SentinelTheme.radiusLg
+    color: "transparent"
+    border.color: "transparent"
+    showBrackets: false
 
     RowLayout {
         anchors.fill: parent
@@ -23,7 +27,7 @@ ShellPanel {
 
         Label {
             text: "Mode: " + statusBar.viewModel.currentModeName
-            color: SentinelTheme.textMuted
+            color: statusBar.modeAccent
             font.pixelSize: SentinelTheme.fontSmall
         }
 

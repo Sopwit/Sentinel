@@ -35,12 +35,14 @@ void JsonSettingsStoreTest::persistsValuesAcrossInstances() {
         JsonSettingsStore store(filePath);
         store.setValue(QStringLiteral("themeName"), QStringLiteral("Sentinel Light"));
         store.setValue(QStringLiteral("configurationProfile"), QStringLiteral("Phase 2.1"));
+        store.setValue(QStringLiteral("routingMode"), QStringLiteral("Balanced"));
     }
 
     JsonSettingsStore reloaded(filePath);
 
     QCOMPARE(reloaded.value(QStringLiteral("themeName")), QStringLiteral("Sentinel Light"));
     QCOMPARE(reloaded.value(QStringLiteral("configurationProfile")), QStringLiteral("Phase 2.1"));
+    QCOMPARE(reloaded.value(QStringLiteral("routingMode")), QStringLiteral("Balanced"));
 }
 
 void JsonSettingsStoreTest::createsParentDirectories() {

@@ -35,6 +35,7 @@ int main(int argc, char* argv[]) {
     sentinel::core::ModeManager modeManager;
     sentinel::core::AppSettings settings(
         std::make_unique<sentinel::core::JsonSettingsStore>(pathProvider.settingsFilePath()));
+    controller.setRoutingModeByName(settings.routingModeName());
     sentinel::desktop::DesktopShellViewModel shellViewModel(controller, modeManager, settings);
 
     QQmlApplicationEngine engine;

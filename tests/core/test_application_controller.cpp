@@ -161,6 +161,8 @@ private slots:
     void exposesProviderNameAndInitialSystemMessage();
     void exposesProviderStatus();
     void exposesAgentStatusWithoutRuntime();
+    void exposesModelRoutingMetadata();
+    void updatesModelRoutingModeMetadata();
     void executesDeterministicAgentRequestWithRuntime();
     void exposesAgentToolMetadata();
     void exposesLatestToolPlanStatusWithRuntime();
@@ -242,6 +244,32 @@ void ApplicationControllerTest::exposesAgentStatusWithoutRuntime() {
     QCOMPARE(controller->agentActivityCount(), 2);
     QCOMPARE(controller->latestAgentActivitySummary(),
              QStringLiteral("Agent pipeline blocked: runtime unavailable."));
+}
+
+void ApplicationControllerTest::exposesModelRoutingMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->currentRoutingMode(), QStringLiteral("Local Only"));
+    QCOMPARE(controller->modelRoutingStatus(), QStringLiteral("Routed"));
+    QCOMPARE(controller->selectedModelProviderSummary(),
+             QStringLiteral("Local Only -> Local Metadata Provider / Sentinel Local Placeholder"));
+}
+
+void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
+    const auto controller = makeController();
+    QSignalSpy spy(controller.get(), &ApplicationController::modelRoutingChanged);
+
+    controller->setRoutingModeByName(QStringLiteral("Balanced"));
+
+    QCOMPARE(controller->currentRoutingMode(), QStringLiteral("Balanced"));
+    QCOMPARE(controller->modelRoutingStatus(), QStringLiteral("Routed"));
+    QCOMPARE(controller->selectedModelProviderSummary(),
+             QStringLiteral("Balanced -> Local Metadata Provider / Sentinel Local Placeholder"));
+    QCOMPARE(spy.count(), 1);
+
+    controller->setRoutingModeByName(QStringLiteral("unknown"));
+    QCOMPARE(controller->currentRoutingMode(), QStringLiteral("Local Only"));
+    QCOMPARE(spy.count(), 2);
 }
 
 void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {

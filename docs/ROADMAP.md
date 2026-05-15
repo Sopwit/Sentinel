@@ -436,9 +436,107 @@ Readiness criteria:
 - Treat agent/runtime visibility as read-only unless a later explicit phase changes it.
 - Keep full tests and formatting passing through UI changes.
 
-## Phase 6: Security / Sandbox / Permissions
+### Phase 5.4: Workspace UX Integration
 
-Add real permission prompts, auditability, sandboxing strategy, secret handling, and safe local automation constraints.
+Completed. Used `lovable-tasarim` as a design reference only and translated its workspace direction
+into native Qt/QML.
+
+Delivered:
+
+- Left navigation/status rail, central Sentinel presence workspace, right chat panel, and compact
+  top status composition.
+- Centralized colors, spacing, radius, opacity, border, glow, and animation tokens.
+- Mode-aware visual treatment for Companion, Focus, Mission, System, Minimal, and Tactical modes.
+- Lightweight QML atmosphere and presence motion without web, heavy rendering, or runtime behavior
+  changes.
+
+Still out of scope:
+
+- React/Vite/Tailwind/Node/WebView integration.
+- Real tool execution, approval actions, sandbox runtime, automation, voice, hardware, provider
+  execution, networking/API keys, plugin loading, advanced particle systems, or Qt Quick 3D.
+
+### Phase 5.4.5: Architecture and UI Risk Audit
+
+Stabilization checkpoint before Phase 5.5.
+
+Focus:
+
+- Re-audit core/view-model/persistence/provider-agent/tool-boundary separation after the Phase 5.4
+  workspace changes.
+- Re-audit QML component structure, design-token usage, mode-aware visuals, responsive behavior,
+  and manual QA expectations.
+- Fix only small safe documentation, naming, duplicated styling, binding, or checklist issues.
+
+Still out of scope:
+
+- New product features, UI redesign, provider/model execution, real tools, approval controls,
+  sandbox runtime, automation, voice, hardware, plugin loading, networking/API keys, filesystem or
+  system actions, React/WebView/Node/Tailwind/Vite integration, assistant-face rendering, advanced
+  particles, heavy motion, or Qt Quick 3D.
+
+### Phase 5.5: Visual Identity Reconstruction
+
+Completed. Rebuilt the native QML shell around the `lovable-tasarim` visual source of truth.
+
+Delivered:
+
+- Presence-first Dashboard/Core composition with a larger central Sentinel orb scene.
+- Ultra-thin left rail, floating bottom dock navigation, and a softer right AI bridge surface.
+- Reusable QML primitives for the dock, orb, and floating telemetry readouts.
+- Expanded visual tokens for glass surfaces, ambient glow, spacing, and dock sizing.
+- Reduced utility-dashboard density by moving runtime/status information into small scene readouts.
+
+Still out of scope:
+
+- React/Vite/Tailwind/Node/WebView integration.
+- Provider/model execution, networking/API keys, real tool execution, approval actions, sandbox
+  runtime, automation, voice, hardware, plugin loading, filesystem/system actions, assistant-face
+  rendering, advanced particles, heavy custom rendering, or Qt Quick 3D.
+
+## Phase 6: Functional Workspace And Model Orchestration
+
+### Phase 6.0: Metadata-Only Model Routing Skeleton
+
+Completed. Added a local-safe model/provider routing architecture without execution.
+
+Delivered:
+
+- `ModelDescriptor`, `ProviderDescriptor`, `ProviderCapabilityProfile`, `RoutingMode`,
+  `TaskType`, task classification, and route result metadata.
+- `IModelRouter` boundary and deterministic `StaticModelRouter`.
+- Minimal controller/view-model read-only routing status and selected model/provider summary.
+- Tests for descriptor metadata, deterministic local routing, local-only behavior, unknown task
+  fallback, and QML-safe exposure.
+
+Still out of scope:
+
+- Provider integrations, Ollama/OpenAI/Anthropic calls, API keys, networking, model downloads,
+  model execution, model-management UI, real tool execution, plugin loading, filesystem/system
+  actions, or broad UI redesign.
+
+### Phase 6.1: Routing Mode Settings and Persistence
+
+Completed. Persisted routing mode preference as local settings metadata.
+
+Delivered:
+
+- `AppSettings` routing mode preference with `Local Only` default.
+- JSON-backed persistence through the existing settings store.
+- Mutable metadata routing mode in `StaticModelRouter`.
+- Controller/view-model route metadata refresh when routing mode changes.
+- Minimal Settings page selector for Auto, Fast, Balanced, Quality, Local Only, Cloud Allowed, and
+  Battery Saver.
+- Tests for defaults, persistence, invalid fallback, route summary updates, and QML-safe exposure.
+
+Still out of scope:
+
+- Provider setup, credentials/API keys, networking, Ollama/OpenAI/Anthropic calls, model downloads,
+  model execution, model-management UI, real tool execution, plugin loading, filesystem/system
+  actions, or broad UI redesign.
+
+Later Phase 6 work may revisit permission prompts, auditability, sandboxing strategy, secret
+handling, and safe local automation constraints only after explicit approval.
 
 ## Phase 7: Packaging / Ecosystem / Extensions
 

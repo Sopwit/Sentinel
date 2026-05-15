@@ -1,11 +1,12 @@
 # AI Orchestration Plan
 
-Phase 4.11 records future AI routing direction only. It does not implement providers, models,
-networking, model execution, downloads, or tool execution.
+Phase 4.11 recorded future AI routing direction only. Phase 6.0 began implementing that direction
+as metadata-only architecture. Phase 6.1 persists the user routing mode preference. These phases do
+not implement providers, networking, model execution, downloads, API keys, or tool execution.
 
 ## Future Components
 
-- `ModelRouter`: future coordinator that chooses a model/provider target for a request.
+- `ModelRouter`: metadata coordinator that chooses a future model/provider target for a request.
 - `RoutingPolicy`: future policy object that applies user mode, task type, privacy, provider
   capability, and device constraints.
 - Provider capability profiles: metadata describing local/cloud availability, latency class,
@@ -13,13 +14,14 @@ networking, model execution, downloads, or tool execution.
 - Task classification: metadata-only classification for chat, summarization, coding, planning,
   long-context, tool-planning, and sensitive-data tasks.
 
-These concepts should remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and
-UI model-management screens. Providers execute a chosen request later; the router decides where a
-request should go.
+These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
+model-management screens. Providers may execute a chosen request in a later phase; the router only
+decides where a request should go.
 
 ## Routing Inputs
 
 - User routing mode: Auto, Fast, Balanced, Quality, Local Only, Cloud Allowed, or Battery Saver.
+- The persisted default is Local Only to keep the desktop alpha privacy-safe.
 - Privacy posture: sensitive data should prefer local-only routing.
 - Cloud permission: cloud use must require explicit user permission.
 - Device state: battery, thermal/performance class, available RAM, disk availability, and local
@@ -56,12 +58,16 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 4 runtime remains unchanged:
+Current Phase 6.1 runtime remains metadata-only:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
+- `IModelRouter` only chooses provider/model descriptors for future execution.
+- `StaticModelRouter` returns a deterministic placeholder route based on the persisted routing mode.
+- `AppSettings` persists the routing mode through `JsonSettingsStore`; it does not store provider
+  credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
 - `NullAgentRuntime` and `NullToolExecutor` still perform no real AI/model/tool execution.
 
-`ModelRouter`, `RoutingPolicy`, provider capability profiles, model installation state, and model
-management UI are future architecture concepts only.
+Provider integrations, cloud routing, credentials, model downloads, model execution, model
+management UI, and routing policy automation remain future work.

@@ -484,3 +484,91 @@ Boundary rules:
 - Visual QA guidance should cover current manual screen states and responsive widths.
 - Automated UI driving, assistant-face rendering, particle systems, heavy animation, and custom
   rendering systems remain future work.
+
+## 29. Workspace UX Reference Translation Stays Native
+
+Decision: Treat `lovable-tasarim` as the visual identity source of truth while translating its
+workspace ideas into native Qt/QML components.
+
+Reason: Sentinel must remain a native Qt/C++ modular monolith while borrowing only stable UI/UX
+direction from the reference.
+
+Boundary rules:
+
+- Do not integrate React, Vite, Tailwind, Node, WebView, or web runtime dependencies.
+- Preserve the cinematic AI operating environment direction: presence-first composition,
+  translucent floating surfaces, soft glow hierarchy, thin-line geometry, and generous negative
+  space.
+- `SentinelTheme.qml` may own mode-aware visual helpers, but those helpers remain presentation-only.
+- `Atmosphere`, `WorkspacePresence`, `ShellPanel`, sidebar, header, dashboard, and chat panel
+  changes must bind to QML-safe view-model properties only.
+- Workspace UI must not add provider/model execution, real tools, approval controls, sandbox
+  runtime, plugin loading, networking, filesystem/system actions, voice, hardware integration,
+  assistant-face rendering, advanced particles, heavy motion, or Qt Quick 3D.
+
+## 30. Phase 5.4.5 Is A Stabilization Gate
+
+Decision: Insert an architecture and UI risk audit checkpoint after Phase 5.4 and before Phase 5.5.
+
+Reason: The workspace integration added more QML visual structure and mode-aware tokens; those
+changes need a boundary/readability/tooling audit before additional UI work.
+
+Boundary rules:
+
+- Fix only small safe issues: stale docs, naming inconsistencies, duplicated simple styling, minor
+  QML binding cleanup, component organization cleanup, label clarity, and checklist gaps.
+- Do not redesign the UI or add product features.
+- Verify with build, tests, formatting, available QML linting, and lightweight startup smoke checks.
+
+## 31. Phase 5.5 Reconstructs Visual Identity Natively
+
+Decision: Reconstruct the Phase 5.x shell around `lovable-tasarim` as the visual source of truth
+while keeping Sentinel native Qt/QML and C++.
+
+Reason: The technically correct Phase 5.4 workspace still read too much like a developer dashboard
+or utility application. Sentinel needs a presence-first cinematic operating environment before
+later assistant visual work.
+
+Boundary rules:
+
+- QML may add presentation primitives such as dock, orb, and telemetry surfaces.
+- Visual state must bind only to QML-safe view-model properties.
+- Do not add provider/model execution, real tools, networking, plugin loading, filesystem/system
+  actions, web runtime integration, assistant-face rendering, particle engines, Qt Quick 3D, or
+  custom rendering systems.
+
+## 32. Model Routing Starts As Metadata Only
+
+Decision: Add Phase 6.0 model/provider routing as value-based metadata and a deterministic static
+router before any provider or model execution work.
+
+Reason: Model/provider selection needs a testable architecture boundary that stays separate from
+chat generation, agent orchestration, and tool execution.
+
+Boundary rules:
+
+- `IModelRouter` selects `ProviderDescriptor` and `ModelDescriptor` metadata only.
+- `StaticModelRouter` is local-only and deterministic by default.
+- `IChatProvider` remains the response-generation boundary.
+- `IAgentRuntime` remains the agent/tool orchestration boundary.
+- Controller and desktop view-model exposure must stay QML-safe strings/status values.
+- No provider calls, networking, API keys, model downloads, model execution, real tool execution,
+  plugin loading, filesystem/system actions, or broad UI work are part of Phase 6.0.
+
+## 33. Routing Mode Preference Is Settings Metadata
+
+Decision: Persist the user routing mode preference through `AppSettings` and `JsonSettingsStore`.
+
+Reason: Routing mode affects future model/provider selection metadata and should survive app
+restarts, but it must stay separate from credentials, provider setup, networking, and execution.
+
+Boundary rules:
+
+- Default routing mode is `Local Only`.
+- Unknown routing mode values normalize back to `Local Only`.
+- Settings persistence remains JSON-backed through `ISettingsStore`; SQLite is not used for this.
+- QML may change the routing mode through `DesktopShellViewModel`, but routing logic remains in
+  C++.
+- Changing routing mode updates route metadata only; it does not call providers, use API keys,
+  access the network, download or execute models, execute tools, load plugins, or perform
+  filesystem/system actions.

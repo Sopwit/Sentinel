@@ -10,11 +10,11 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 5.3 is complete.
+Phase 6.1 is complete.
 
-Most recent work: Phase 5.3, Component Consistency and Visual QA Pass.
+Most recent work: Phase 6.1, Routing Mode Settings and Persistence.
 
-Current planning focus: post-Phase 5.3 UI stabilization while keeping real tool execution
+Current planning focus: Phase 6.x stabilization while keeping real provider/model/tool execution
 non-operational.
 
 ## Stack
@@ -102,3 +102,5 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 
 Maintain provider/agent/tool/sandbox/execution-boundary separation and keep real tool execution
 out of scope until explicitly approved.
+
+Keep model/provider routing metadata-only until an explicit later provider/model execution phase.

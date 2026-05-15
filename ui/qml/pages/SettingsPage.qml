@@ -49,6 +49,47 @@ ShellPanel {
         }
 
         SectionTitle {
+            title: "Routing Preference"
+            subtitle: "Metadata-only model routing preference. No provider calls, API keys, downloads, or model execution are enabled."
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: settingsPage.compact ? 1 : 2
+            columnSpacing: SentinelTheme.spaceSm
+            rowSpacing: SentinelTheme.spaceSm
+
+            Label {
+                text: "Routing Mode"
+                color: SentinelTheme.textMuted
+            }
+
+            ComboBox {
+                id: routingModeCombo
+                Layout.fillWidth: true
+                model: settingsPage.viewModel.availableRoutingModes
+                currentIndex: settingsPage.viewModel.availableRoutingModes.indexOf(settingsPage.viewModel.currentRoutingMode)
+                onActivated: settingsPage.viewModel.setRoutingModeByName(currentText)
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Route Status"
+                value: settingsPage.viewModel.modelRoutingStatus
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Selected Route"
+                value: settingsPage.viewModel.selectedModelProviderSummary
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+        }
+
+        SectionTitle {
             title: "Local Data Maintenance"
             subtitle: "Settings are stored separately and are not deleted by memory/chat clear actions."
         }
