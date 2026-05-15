@@ -13,10 +13,11 @@ ShellPanel {
 
         SectionTitle {
             title: "AI Bridge"
-            subtitle: chatPanel.viewModel.providerName + " is " + chatPanel.viewModel.providerStatus + ". No API calls or network access."
+            subtitle: chatPanel.viewModel.providerName + " is " + chatPanel.viewModel.providerStatus + ". Chat history: " + chatPanel.viewModel.chatHistoryStatus + "."
         }
 
         ListView {
+            id: messageList
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -45,6 +46,14 @@ ShellPanel {
                     font.pixelSize: 13
                 }
             }
+        }
+
+        Label {
+            Layout.fillWidth: true
+            visible: messageList.count === 0
+            text: "No chat history yet."
+            color: "#82aaa1"
+            horizontalAlignment: Text.AlignHCenter
         }
 
         RowLayout {
@@ -77,9 +86,28 @@ ShellPanel {
             }
 
             Button {
+                id: clearButton
                 text: "Clear"
-                onClicked: chatPanel.viewModel.clearChat()
+                enabled: messageList.count > 1
+                onClicked: clearChatDialog.open()
             }
         }
+    }
+
+    Dialog {
+        id: clearChatDialog
+        title: "Clear chat history?"
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        anchors.centerIn: parent
+
+        Label {
+            text: "This clears the current transcript and persisted local chat history."
+            color: "#d9fff4"
+            wrapMode: Text.WordWrap
+            width: 320
+        }
+
+        onAccepted: chatPanel.viewModel.clearChat()
     }
 }

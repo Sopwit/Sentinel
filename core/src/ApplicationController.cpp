@@ -38,6 +38,11 @@ QString ApplicationController::memoryStatus() const {
                                                        : QStringLiteral("Unavailable");
 }
 
+QString ApplicationController::chatHistoryStatus() const {
+    return chatHistoryStore_ && chatHistoryStore_->isAvailable() ? QStringLiteral("Available")
+                                                                 : QStringLiteral("Runtime Only");
+}
+
 const QList<ChatMessage>& ApplicationController::chatHistory() const {
     return chatSession_->messages();
 }

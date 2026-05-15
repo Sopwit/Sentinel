@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 3.2 is complete.
+Phase 3.3 is complete.
 
 Implemented foundation:
 
@@ -24,6 +24,7 @@ Implemented foundation:
 - SQLite persistence tests.
 - Persistence separation between settings and memory.
 - Persistence separation between memory and chat history.
+- Chat history status and clear-confirmation UX.
 - Documentation foundation.
 
 Recent stabilization phase:
@@ -33,11 +34,14 @@ Recent stabilization phase:
 Recent implementation phase:
 
 - Phase 3.2, Persistent Chat History Preparation.
+- Phase 3.3, Chat History UX and Lifecycle Controls.
 
 ## Constraints
 
 - Do not merge chat history into key-value memory.
 - Do not expose raw SQLite details to QML.
+- Do not add multi-conversation/thread support yet.
+- Do not add encryption, export, or pruning yet.
 - Do not add dependencies.
 - Do not start the next phase without an explicit task.
 - Do not introduce Electron or a Python backend.

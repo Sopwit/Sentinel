@@ -13,6 +13,7 @@ This first version includes:
 - Structured in-memory `ChatSession` with a QML-safe chat history model.
 - `IMemoryStore` with `InMemoryStore` for tests and `SQLiteMemoryStore` for desktop persistence.
 - `IChatHistoryStore` with `SQLiteChatHistoryStore` for desktop chat history persistence.
+- Generic chat history status and clear-confirmation UX.
 - Memory storage diagnostics and SQLite schema metadata preparation.
 - `IPlugin` and `IContextEngine` interfaces.
 - `ApplicationController` and `ModeManager`.
@@ -79,7 +80,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-Current tests cover `ModeManager`, memory stores, chat history storage, chat/session behavior, settings, providers, `ApplicationController`, and desktop view-model behavior. They do not launch the QML UI.
+Current tests cover `ModeManager`, memory stores, chat history storage, chat/session behavior, settings, providers, `ApplicationController`, and desktop view-model behavior including chat history status. They do not launch the QML UI.
 
 Preset-based test workflow:
 
@@ -105,5 +106,7 @@ Open the repository root in CLion. CLion should detect the top-level `CMakeLists
 - Runtime plugin loading.
 - Wearable support.
 - Advanced semantic memory.
+- Multi-conversation chat threads.
+- Chat history encryption, export, or pruning.
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for planned phases.

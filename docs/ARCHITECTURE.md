@@ -84,6 +84,8 @@ The desktop app stores chat history below Qt's `AppDataLocation` as `chat_histor
 
 If chat persistence is unavailable, `ApplicationController` continues with the in-memory `ChatSession`. Clearing chat clears the persistent chat table only when the store is available.
 
+The desktop shell exposes generic chat history status only. QML does not know the database path, schema, driver, or last SQLite error.
+
 ## Settings Contract
 
 `ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.
@@ -117,6 +119,8 @@ Chat history is owned by `ChatSession`, an in-memory session model with structur
 The desktop layer exposes history through `ChatMessageListModel`, a QML-safe `QAbstractListModel`. QML reads roles and never receives raw core objects.
 
 Chat history can be persisted through `IChatHistoryStore`. QML still reads `ChatMessageListModel` and does not write persistence data directly.
+
+The current UX treats chat history as one local transcript. The clear action resets the runtime transcript and clears persisted chat history after confirmation in QML.
 
 ## Not Implemented Yet
 

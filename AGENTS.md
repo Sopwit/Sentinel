@@ -8,9 +8,9 @@ Primary target: Fedora KDE Plasma.
 
 ## Current Phase
 
-Phase 3.2 is completed.
+Phase 3.3 is completed.
 
-Most recent work: Phase 3.2, Persistent Chat History Preparation.
+Most recent work: Phase 3.3, Chat History UX and Lifecycle Controls.
 
 Next phase has not started.
 
@@ -44,6 +44,7 @@ Next phase has not started.
   - `QStandardPaths::AppDataLocation + "/chat_history.sqlite3"`
 - Chat history persistence must stay separate from key-value memory.
 - Do not overload `IMemoryStore` for chat messages.
+- Chat history is currently one local transcript, not multi-conversation storage.
 
 ## Coding Rules
 
@@ -83,4 +84,4 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 
 ## Current Priority
 
-Maintain the Phase 3.2 persistence boundaries. Do not start the next phase without an explicit task.
+Maintain the Phase 3.3 lifecycle boundaries. Do not start the next phase without an explicit task.

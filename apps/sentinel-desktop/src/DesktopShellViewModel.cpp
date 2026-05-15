@@ -38,6 +38,10 @@ QString DesktopShellViewModel::memoryStatus() const {
     return controller_.memoryStatus();
 }
 
+QString DesktopShellViewModel::chatHistoryStatus() const {
+    return controller_.chatHistoryStatus();
+}
+
 QString DesktopShellViewModel::currentModeName() const {
     return modeManager_.currentModeName();
 }
