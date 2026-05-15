@@ -7,7 +7,7 @@ Item {
     property color accent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property real glowScale: SentinelTheme.modeGlowScale(viewModel.currentModeName)
     property bool compact: width < 360
-    readonly property real safeSize: Math.max(1, Math.min(width > 0 ? width : implicitWidth, height > 0 ? height : implicitHeight))
+    readonly property real safeSize: Math.max(1, Math.min(width, height))
 
     implicitWidth: compact ? 320 : 520
     implicitHeight: implicitWidth
@@ -147,7 +147,6 @@ Item {
         radius: width / 2
         color: SentinelTheme.withAlpha(orb.accent, 0.13 * orb.glowScale)
         border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-        scale: coreBreath.scale
 
         SequentialAnimation on scale {
             id: coreBreath

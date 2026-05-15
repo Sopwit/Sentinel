@@ -6,9 +6,11 @@
 #include <QList>
 #include <QString>
 
+#include <cstdint>
+
 namespace sentinel::core {
 
-enum class TaskPlanStatus {
+enum class TaskPlanStatus : std::uint8_t {
     NotRequested,
     Planned,
     FallbackPlanned,

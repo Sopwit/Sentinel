@@ -56,7 +56,7 @@ ApplicationWindow {
                 StackLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    Layout.bottomMargin: root.compactLayout ? 68 : 78
+                    clip: true
                     currentIndex: root.currentPageIndex
 
                     DashboardPage {
@@ -95,15 +95,13 @@ ApplicationWindow {
                 }
             }
         }
-    }
 
-    SentinelDock {
-        viewModel: root.viewModel
-        compact: root.compactLayout
-        width: Math.min(root.width - SentinelTheme.space4Xl, root.compactLayout ? 320 : 390)
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
-        z: 20
+        SentinelDock {
+            viewModel: root.viewModel
+            compact: root.compactLayout
+            Layout.alignment: Qt.AlignHCenter
+            Layout.preferredWidth: Math.min(root.width - SentinelTheme.space4Xl, root.compactLayout ? 320 : 390)
+            Layout.preferredHeight: implicitHeight
+        }
     }
 }

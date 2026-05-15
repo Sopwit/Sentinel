@@ -6,9 +6,11 @@
 #include <QString>
 #include <QStringList>
 
+#include <cstdint>
+
 namespace sentinel::core {
 
-enum class AgentRole {
+enum class AgentRole : std::uint8_t {
     Coordinator,
     Planner,
     Researcher,
@@ -17,13 +19,13 @@ enum class AgentRole {
     Companion,
 };
 
-enum class AgentState {
+enum class AgentState : std::uint8_t {
     Available,
     Standby,
     Unavailable,
 };
 
-enum class AgentPriority {
+enum class AgentPriority : std::uint8_t {
     Low,
     Normal,
     High,
