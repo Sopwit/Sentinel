@@ -5,10 +5,11 @@ import QtQuick.Layouts
 ShellPanel {
     id: chatPanel
     required property var viewModel
+    property bool compact: width < 520
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: SentinelTheme.spaceLg
+        anchors.margins: chatPanel.compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
         spacing: SentinelTheme.spaceSm
 
         SectionTitle {
@@ -56,36 +57,25 @@ ShellPanel {
             horizontalAlignment: Text.AlignHCenter
         }
 
-        RowLayout {
+        GridLayout {
             Layout.fillWidth: true
-            spacing: SentinelTheme.spaceSm
+            columns: chatPanel.compact ? 2 : 3
+            columnSpacing: SentinelTheme.spaceSm
+            rowSpacing: SentinelTheme.spaceSm
 
-            TextField {
+            SentinelTextField {
                 id: chatInput
                 Layout.fillWidth: true
+                Layout.columnSpan: chatPanel.compact ? 2 : 1
                 placeholderText: "Send a local test prompt"
-                color: SentinelTheme.textPrimary
-                placeholderTextColor: SentinelTheme.textPlaceholder
                 onAccepted: sendButton.clicked()
-
-                background: Rectangle {
-                    radius: SentinelTheme.radiusMd
-                    color: SentinelTheme.backgroundBase
-                    border.color: chatInput.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
-
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: SentinelTheme.durationFast
-                            easing.type: SentinelTheme.easingStandard
-                        }
-                    }
-                }
             }
 
             SentinelButton {
                 id: sendButton
                 text: "Send"
                 enabled: chatInput.text.trim().length > 0
+                Layout.fillWidth: chatPanel.compact
                 onClicked: {
                     chatPanel.viewModel.sendMessage(chatInput.text)
                     chatInput.clear()
@@ -96,6 +86,7 @@ ShellPanel {
                 id: clearButton
                 text: "Clear"
                 enabled: messageList.count > 1
+                Layout.fillWidth: chatPanel.compact
                 onClicked: clearChatDialog.open()
             }
         }

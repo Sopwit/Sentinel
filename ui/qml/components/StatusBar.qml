@@ -5,6 +5,7 @@ import QtQuick.Layouts
 ShellPanel {
     id: statusBar
     required property var viewModel
+    property bool compact: width < 820
 
     radius: SentinelTheme.radiusLg
 
@@ -36,18 +37,21 @@ ShellPanel {
             text: "Chat: " + statusBar.viewModel.chatHistoryStatus
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
+            visible: !statusBar.compact
         }
 
         Label {
             text: "Agent: " + statusBar.viewModel.agentStatus
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
+            visible: !statusBar.compact
         }
 
         Label {
             text: "Tools: " + statusBar.viewModel.availableToolCount
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
+            visible: !statusBar.compact
         }
 
         Item {
@@ -58,6 +62,8 @@ ShellPanel {
             text: "Provider: " + statusBar.viewModel.providerName + " / " + statusBar.viewModel.providerStatus
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
+            elide: Text.ElideRight
+            Layout.maximumWidth: statusBar.compact ? 180 : 320
         }
     }
 }

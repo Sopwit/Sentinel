@@ -392,6 +392,41 @@ Still out of scope:
 - Provider/model execution, networking/API keys, plugin loading, filesystem/system actions, real
   tool execution, approval actions, or sandbox runtime.
 
+### Phase 5.2: Adaptive Layout and Responsive Shell Foundation
+
+Completed. Added responsive layout behavior without changing runtime capabilities.
+
+Delivered:
+
+- Compact and wide breakpoint tokens in `SentinelTheme.qml`.
+- Adaptive shell margins, sidebar width, header/status behavior, and page spacing.
+- Dashboard/card/chat wrapping for narrower windows.
+- Memory and settings forms that stack at compact widths.
+- UI/UX guidance for practical Linux/KDE and macOS resizing behavior.
+
+Still out of scope:
+
+- Heavy animations, particle systems, assistant-face rendering, or custom rendering systems.
+- Provider/model execution, networking/API keys, plugin loading, filesystem/system actions, real
+  tool execution, approval actions, or sandbox runtime.
+
+### Phase 5.3: Component Consistency and Visual QA Pass
+
+Completed. Tightened presentation consistency and added manual visual QA guidance.
+
+Delivered:
+
+- Shared `SentinelTextField` and `InfoRow` QML components.
+- Consistent input/button sizing and card padding tokens.
+- Dashboard and settings read-only status rows aligned to the same component pattern.
+- `docs/UI_QA_CHECKLIST.md` with compact, normal, wide, Fedora KDE, and macOS check points.
+
+Still out of scope:
+
+- Heavy animations, particle systems, assistant-face rendering, or custom rendering systems.
+- Provider/model execution, networking/API keys, plugin loading, filesystem/system actions, real
+  tool execution, approval actions, sandbox runtime, or automated visual driving.
+
 Readiness criteria:
 
 - Preserve Phase 4 no-execution boundaries.

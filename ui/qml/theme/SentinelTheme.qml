@@ -36,6 +36,8 @@ QtObject {
     readonly property int spaceMd: 14
     readonly property int spaceLg: 18
     readonly property int spaceXl: 22
+    readonly property int controlHeight: 38
+    readonly property int cardPadding: 14
 
     readonly property int radiusSm: 12
     readonly property int radiusMd: 14
@@ -52,9 +54,22 @@ QtObject {
     readonly property int fontBrand: 24
     readonly property int fontHeader: 27
 
+    readonly property int breakpointCompact: 760
+    readonly property int breakpointWide: 1120
+    readonly property int sidebarCompactWidth: 168
+    readonly property int sidebarNormalWidth: 244
+
     readonly property int durationFast: 90
     readonly property int durationNormal: 140
     readonly property int durationSlow: 220
     readonly property int easingStandard: Easing.InOutQuad
     readonly property int easingEmphasized: Easing.OutCubic
+
+    function pageMargin(width) {
+        return width < breakpointCompact ? spaceMd : spaceLg
+    }
+
+    function contentSpacing(width) {
+        return width < breakpointCompact ? spaceSm : spaceMd
+    }
 }

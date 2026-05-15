@@ -38,6 +38,7 @@ The desktop shell is split into small QML components:
 - `Main.qml`: application window and high-level layout.
 - `components/Sidebar.qml`: page navigation and provider/settings summary.
 - `components/HeaderBar.qml`: current mode and mode switcher.
+- `components/InfoRow.qml`: read-only label/value status row presentation.
 - `components/StatusBar.qml`: local alpha status footer.
 - `pages/DashboardPage.qml`: overview and chat panel host.
 - `pages/MemoryPage.qml`: runtime memory UI.
@@ -45,6 +46,7 @@ The desktop shell is split into small QML components:
 - `theme/SentinelTheme.qml`: presentation tokens for palette, spacing, radius, and typography.
 - `components/SentinelButton.qml`: lightweight command button styling with tokenized hover/focus
   states.
+- `components/SentinelTextField.qml`: lightweight text-field styling with tokenized focus states.
 
 These files bind to `shellViewModel`. They should not own business rules, provider logic, persistence logic, or platform automation.
 
@@ -243,6 +245,26 @@ Phase 5.1 adds lightweight motion and interaction foundation:
 - No heavy animation, particle systems, assistant-face rendering, custom OpenGL/Vulkan rendering,
   provider/model execution, networking, plugin loading, filesystem/system actions, or runtime
   behavior changes are added.
+
+Phase 5.2 adds adaptive layout foundation:
+
+- `SentinelTheme.qml` includes compact/wide breakpoint and responsive spacing helpers.
+- `Main.qml` owns shell-level compact/wide state for presentation sizing only.
+- Sidebar, header, status, dashboard, chat, memory, and settings layouts wrap or elide content at
+  narrower widths while keeping view-model contracts unchanged.
+- No provider/model execution, networking, plugin loading, filesystem/system actions, approval
+  controls, sandbox behavior, assistant-face rendering, particle systems, or custom rendering
+  systems are added.
+
+Phase 5.3 adds component consistency and visual QA foundation:
+
+- `SentinelTextField.qml` and `InfoRow.qml` normalize repeated presentation-only patterns.
+- Button height, input height, card padding, section heading wrapping, dashboard status rows, and
+  settings status rows use shared component/token patterns.
+- `docs/UI_QA_CHECKLIST.md` records manual compact/normal/wide and platform visual checks.
+- No runtime behavior, provider/model execution, networking, plugin loading, filesystem/system
+  actions, approval controls, assistant-face rendering, particle systems, or custom rendering
+  systems are added.
 
 `ApplicationController` and `DesktopShellViewModel` expose only generic agent status, placeholder
 response text, latest plan status/summary, latest approval status/summary, latest sandbox

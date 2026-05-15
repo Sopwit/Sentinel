@@ -5,11 +5,12 @@ import QtQuick.Layouts
 ShellPanel {
     id: settingsPage
     required property var viewModel
+    readonly property bool compact: width < 720
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: SentinelTheme.spaceXl
-        spacing: SentinelTheme.spaceMd
+        anchors.margins: SentinelTheme.pageMargin(settingsPage.width)
+        spacing: SentinelTheme.contentSpacing(settingsPage.width)
 
         SectionTitle {
             title: "Settings Foundation"
@@ -18,34 +19,20 @@ ShellPanel {
 
         GridLayout {
             Layout.fillWidth: true
-            columns: 2
-            columnSpacing: 12
-            rowSpacing: 12
+            columns: settingsPage.compact ? 1 : 2
+            columnSpacing: SentinelTheme.spaceSm
+            rowSpacing: SentinelTheme.spaceSm
 
             Label {
                 text: "Theme"
                 color: SentinelTheme.textMuted
             }
 
-            TextField {
+            SentinelTextField {
                 id: themeField
                 Layout.fillWidth: true
                 text: settingsPage.viewModel.themeName
-                color: SentinelTheme.textPrimary
                 onEditingFinished: settingsPage.viewModel.setThemeName(text)
-
-                background: Rectangle {
-                    radius: SentinelTheme.radiusMd
-                    color: SentinelTheme.backgroundBase
-                    border.color: themeField.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
-
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: SentinelTheme.durationFast
-                            easing.type: SentinelTheme.easingStandard
-                        }
-                    }
-                }
             }
 
             Label {
@@ -53,25 +40,11 @@ ShellPanel {
                 color: SentinelTheme.textMuted
             }
 
-            TextField {
+            SentinelTextField {
                 id: profileField
                 Layout.fillWidth: true
                 text: settingsPage.viewModel.configurationProfile
-                color: SentinelTheme.textPrimary
                 onEditingFinished: settingsPage.viewModel.setConfigurationProfile(text)
-
-                background: Rectangle {
-                    radius: SentinelTheme.radiusMd
-                    color: SentinelTheme.backgroundBase
-                    border.color: profileField.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
-
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: SentinelTheme.durationFast
-                            easing.type: SentinelTheme.easingStandard
-                        }
-                    }
-                }
             }
         }
 
@@ -80,45 +53,39 @@ ShellPanel {
             subtitle: "Settings are stored separately and are not deleted by memory/chat clear actions."
         }
 
-        GridLayout {
+        ColumnLayout {
             Layout.fillWidth: true
-            columns: 2
-            columnSpacing: 12
-            rowSpacing: 8
+            spacing: SentinelTheme.spaceSm
 
-            Label {
-                text: "Memory Store"
-                color: SentinelTheme.textMuted
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Memory Store"
+                value: settingsPage.viewModel.memoryStatus + " (" + settingsPage.viewModel.memoryMaintenanceStatus + ")"
             }
 
-            Label {
-                text: settingsPage.viewModel.memoryStatus + " (" + settingsPage.viewModel.memoryMaintenanceStatus + ")"
-                color: SentinelTheme.textPrimary
-            }
-
-            Label {
-                text: "Chat History"
-                color: SentinelTheme.textMuted
-            }
-
-            Label {
-                text: settingsPage.viewModel.chatHistoryStatus + " (" + settingsPage.viewModel.chatMaintenanceStatus + ")"
-                color: SentinelTheme.textPrimary
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Chat History"
+                value: settingsPage.viewModel.chatHistoryStatus + " (" + settingsPage.viewModel.chatMaintenanceStatus + ")"
             }
         }
 
-        RowLayout {
+        GridLayout {
             Layout.fillWidth: true
-            spacing: SentinelTheme.spaceSm
+            columns: settingsPage.compact ? 1 : 2
+            columnSpacing: SentinelTheme.spaceSm
+            rowSpacing: SentinelTheme.spaceSm
 
             SentinelButton {
                 text: "Clear Local Memory"
                 enabled: settingsPage.viewModel.memoryStatus === "Available"
+                Layout.fillWidth: settingsPage.compact
                 onClicked: clearMemoryDialog.open()
             }
 
             SentinelButton {
                 text: "Clear Chat History"
+                Layout.fillWidth: settingsPage.compact
                 onClicked: clearChatDialog.open()
             }
         }

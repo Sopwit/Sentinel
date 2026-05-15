@@ -637,3 +637,58 @@ Still out of scope:
 - Plugin loading.
 - Filesystem/system actions.
 - Broad QML rewrite.
+
+### Phase 5.2: Adaptive Layout and Responsive Shell Foundation
+
+Completed. Added compact/normal/wide layout behavior while preserving the current QML/view-model
+boundaries.
+
+Scope:
+
+- Added layout breakpoint and responsive spacing tokens to `SentinelTheme.qml`.
+- Lowered the desktop shell minimum width for narrower resizable windows.
+- Added compact sidebar behavior with stable eliding labels.
+- Updated header/status surfaces to avoid crowding at compact widths.
+- Updated dashboard, chat, memory, and settings layouts to wrap with lightweight `GridLayout`
+  column changes.
+- Extended UI/UX docs with adaptive layout guidance for Linux/Fedora KDE and macOS.
+
+Still out of scope:
+
+- Heavy animations.
+- Particle systems.
+- Assistant-face rendering.
+- Custom OpenGL/Vulkan rendering systems.
+- Provider/model execution.
+- Networking/API keys.
+- Plugin loading.
+- Filesystem/system actions.
+- Execution-related UI or approval actions.
+- Broad QML rewrite.
+
+### Phase 5.3: Component Consistency and Visual QA Pass
+
+Completed. Normalized small visual patterns and documented manual QA expectations without changing
+runtime behavior.
+
+Scope:
+
+- Added `SentinelTextField.qml` for shared text-field styling and focus behavior.
+- Added `InfoRow.qml` for read-only label/value status rows.
+- Normalized command button and input heights through shared theme tokens.
+- Normalized section heading wrapping, metric card padding, dashboard status rows, settings status
+  rows, and compact input usage.
+- Added `docs/UI_QA_CHECKLIST.md` for compact/normal/wide manual screen checks and platform notes.
+
+Still out of scope:
+
+- Heavy animations.
+- Particle systems.
+- Assistant-face rendering.
+- Custom OpenGL/Vulkan rendering systems.
+- Provider/model execution.
+- Networking/API keys.
+- Plugin loading.
+- Filesystem/system actions.
+- Execution or approval controls.
+- Automated visual driving or screenshot QA.

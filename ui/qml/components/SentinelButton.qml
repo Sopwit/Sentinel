@@ -7,6 +7,7 @@ Button {
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
     opacity: enabled ? 1.0 : 0.48
+    implicitHeight: SentinelTheme.controlHeight
 
     contentItem: Text {
         text: control.text
