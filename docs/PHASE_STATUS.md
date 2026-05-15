@@ -583,7 +583,7 @@ Still out of scope:
 
 ### Phase 5: Advanced UI/UX & Motion System
 
-Started with Phase 5.0 design-system foundation only.
+Started with Phase 5.0 design-system foundation and remains lightweight/local-safe.
 
 ### Phase 5.0: UI/UX Planning and Design System Foundation
 
@@ -610,4 +610,30 @@ Still out of scope:
 - Plugin loading.
 - Filesystem/system actions.
 - Heavy animation or particle assistant visual implementation.
+- Broad QML rewrite.
+
+### Phase 5.1: Motion and Interaction Foundation
+
+Completed. Added lightweight motion tokens and subtle interaction polish without changing runtime
+behavior.
+
+Scope:
+
+- Added duration/easing motion tokens to `SentinelTheme.qml`.
+- Added lightweight hover/focus behavior for sidebar navigation.
+- Added `SentinelButton.qml` for tokenized command button hover/focus states.
+- Added focus-ring transitions for text fields.
+- Added low-cost page opacity transition hooks.
+- Extended UI/UX docs with motion philosophy and future assistant visual boundaries.
+
+Still out of scope:
+
+- Heavy animations.
+- Particle systems.
+- Assistant-face rendering.
+- Custom OpenGL/Vulkan rendering systems.
+- Provider/model execution.
+- Networking/API keys.
+- Plugin loading.
+- Filesystem/system actions.
 - Broad QML rewrite.

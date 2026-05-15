@@ -373,6 +373,25 @@ Still out of scope:
 - Real tool execution, approval actions, sandbox runtime, plugin loading, networking, or
   filesystem/system actions.
 
+### Phase 5.1: Motion and Interaction Foundation
+
+Completed. Added lightweight interaction motion without advanced visuals.
+
+Delivered:
+
+- Motion duration/easing tokens in `SentinelTheme.qml`.
+- Sidebar hover/focus polish.
+- Tokenized command button hover/focus styling.
+- Text-field focus-ring transitions.
+- Lightweight page opacity transition hooks.
+- Updated motion guidelines.
+
+Still out of scope:
+
+- Heavy animations, particle systems, assistant-face rendering, or custom rendering systems.
+- Provider/model execution, networking/API keys, plugin loading, filesystem/system actions, real
+  tool execution, approval actions, or sandbox runtime.
+
 Readiness criteria:
 
 - Preserve Phase 4 no-execution boundaries.

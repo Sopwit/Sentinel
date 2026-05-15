@@ -26,6 +26,19 @@ ShellPanel {
                 placeholderText: "key"
                 color: SentinelTheme.textPrimary
                 placeholderTextColor: SentinelTheme.textPlaceholder
+
+                background: Rectangle {
+                    radius: SentinelTheme.radiusMd
+                    color: SentinelTheme.backgroundBase
+                    border.color: memoryKey.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: SentinelTheme.durationFast
+                            easing.type: SentinelTheme.easingStandard
+                        }
+                    }
+                }
             }
 
             TextField {
@@ -34,9 +47,22 @@ ShellPanel {
                 placeholderText: "value"
                 color: SentinelTheme.textPrimary
                 placeholderTextColor: SentinelTheme.textPlaceholder
+
+                background: Rectangle {
+                    radius: SentinelTheme.radiusMd
+                    color: SentinelTheme.backgroundBase
+                    border.color: memoryValue.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: SentinelTheme.durationFast
+                            easing.type: SentinelTheme.easingStandard
+                        }
+                    }
+                }
             }
 
-            Button {
+            SentinelButton {
                 text: "Store"
                 enabled: memoryKey.text.trim().length > 0
                 onClicked: {

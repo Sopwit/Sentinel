@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 5.0 is complete.
+Phase 5.1 is complete.
 
 Implemented foundation:
 
@@ -57,6 +57,7 @@ Recent implementation phase:
 - Phase 4.10, Architecture Checkpoint and Cleanup.
 - Phase 4.11, AI Orchestration Planning Checkpoint.
 - Phase 5.0, UI/UX Planning and Design System Foundation.
+- Phase 5.1, Motion and Interaction Foundation.
 
 ## Constraints
 

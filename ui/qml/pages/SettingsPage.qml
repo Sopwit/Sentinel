@@ -28,10 +28,24 @@ ShellPanel {
             }
 
             TextField {
+                id: themeField
                 Layout.fillWidth: true
                 text: settingsPage.viewModel.themeName
                 color: SentinelTheme.textPrimary
                 onEditingFinished: settingsPage.viewModel.setThemeName(text)
+
+                background: Rectangle {
+                    radius: SentinelTheme.radiusMd
+                    color: SentinelTheme.backgroundBase
+                    border.color: themeField.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: SentinelTheme.durationFast
+                            easing.type: SentinelTheme.easingStandard
+                        }
+                    }
+                }
             }
 
             Label {
@@ -40,10 +54,24 @@ ShellPanel {
             }
 
             TextField {
+                id: profileField
                 Layout.fillWidth: true
                 text: settingsPage.viewModel.configurationProfile
                 color: SentinelTheme.textPrimary
                 onEditingFinished: settingsPage.viewModel.setConfigurationProfile(text)
+
+                background: Rectangle {
+                    radius: SentinelTheme.radiusMd
+                    color: SentinelTheme.backgroundBase
+                    border.color: profileField.activeFocus ? SentinelTheme.focusBorder : SentinelTheme.accentBorder
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: SentinelTheme.durationFast
+                            easing.type: SentinelTheme.easingStandard
+                        }
+                    }
+                }
             }
         }
 
@@ -83,13 +111,13 @@ ShellPanel {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceSm
 
-            Button {
+            SentinelButton {
                 text: "Clear Local Memory"
                 enabled: settingsPage.viewModel.memoryStatus === "Available"
                 onClicked: clearMemoryDialog.open()
             }
 
-            Button {
+            SentinelButton {
                 text: "Clear Chat History"
                 onClicked: clearChatDialog.open()
             }

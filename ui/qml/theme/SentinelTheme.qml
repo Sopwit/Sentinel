@@ -12,6 +12,7 @@ QtObject {
     readonly property color surface: "#102326"
     readonly property color surfaceSoft: "#10232688"
     readonly property color surfaceMuted: "#102326aa"
+    readonly property color surfaceHover: "#173331"
     readonly property color metricSurface: "#12292dcc"
     readonly property color userMessageSurface: "#173331"
     readonly property color errorSurface: "#33191a"
@@ -22,9 +23,11 @@ QtObject {
     readonly property color textOnAccent: "#06110f"
 
     readonly property color accent: "#35f2c0"
+    readonly property color accentHover: "#58f8cf"
     readonly property color accentBorder: "#35f2c044"
     readonly property color accentBorderSubtle: "#35f2c022"
     readonly property color accentBorderSoft: "#35f2c02d"
+    readonly property color focusBorder: "#7be8c7aa"
     readonly property color successBorder: "#7be8c733"
     readonly property color errorBorder: "#d66b6b66"
 
@@ -48,4 +51,10 @@ QtObject {
     readonly property int fontTitle: 22
     readonly property int fontBrand: 24
     readonly property int fontHeader: 27
+
+    readonly property int durationFast: 90
+    readonly property int durationNormal: 140
+    readonly property int durationSlow: 220
+    readonly property int easingStandard: Easing.InOutQuad
+    readonly property int easingEmphasized: Easing.OutCubic
 }

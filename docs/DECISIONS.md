@@ -432,3 +432,19 @@ Boundary rules:
   visuals are implemented.
 - UI changes must preserve current Dashboard, Chat, Memory, Settings, and runtime visibility
   behavior.
+
+## 26. Lightweight Motion Before Assistant Visuals
+
+Decision: Add only subtle interaction motion before any advanced assistant visual system.
+
+Reason: The shell needs consistent hover, focus, and page/content transition behavior, but the app
+must remain quiet and performant on Fedora KDE Plasma and macOS.
+
+Boundary rules:
+
+- Motion tokens are limited to standard durations and easing values in `SentinelTheme.qml`.
+- Interaction polish may use cheap color, opacity, and border-color transitions.
+- Avoid blur-heavy layers, particle systems, shader-heavy rendering, OpenGL/Vulkan custom renderers,
+  and continuous idle animation.
+- Motion must not trigger provider/model calls, tool execution, filesystem/system actions,
+  networking, plugin loading, approval actions, or sandbox behavior.
