@@ -174,3 +174,38 @@ Out of scope (unchanged):
 - Real provider integrations.
 - Plugin loading.
 - Sandbox/permission enforcement runtime.
+
+### Phase 4.1: Tool Descriptor and Registry Skeleton
+
+Completed. Added metadata-only tool modeling and registry boundaries.
+
+Scope:
+
+- Added tool descriptor abstractions:
+  - `ToolDescriptor`
+  - `ToolParameterDescriptor`
+  - `ToolRiskLevel`
+  - `ToolExecutionMode`
+- Added registry boundary:
+  - `IToolRegistry`
+  - `InMemoryToolRegistry`
+  - deterministic `register/list/find` behavior
+  - duplicate-id rejection
+- Connected runtime metadata only:
+  - `NullAgentRuntime` publishes `availableTools()` metadata
+  - no tool execution path
+- Minimal controller/view-model metadata exposure:
+  - available tool count
+  - available tool ids
+  - no mutable registry exposure in QML
+
+Out of scope (unchanged):
+
+- Any real tool execution.
+- Filesystem/system mutation.
+- Shell/process execution.
+- Platform automation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Sandbox/permissions runtime.

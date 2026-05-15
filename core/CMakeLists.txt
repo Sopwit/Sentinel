@@ -16,7 +16,9 @@ add_library(sentinel_core STATIC
     include/sentinel/core/IPlatformService.h
     include/sentinel/core/IPlugin.h
     include/sentinel/core/ISettingsStore.h
+    include/sentinel/core/IToolRegistry.h
     include/sentinel/core/ISystemIntegrationService.h
+    include/sentinel/core/InMemoryToolRegistry.h
     include/sentinel/core/InMemoryStore.h
     include/sentinel/core/InMemorySettingsStore.h
     include/sentinel/core/JsonSettingsStore.h
@@ -26,6 +28,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/SQLiteChatHistoryStore.h
     include/sentinel/core/SQLiteMemoryStore.h
     include/sentinel/core/StandardPathProvider.h
+    include/sentinel/core/ToolDescriptor.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
     src/ApplicationController.cpp
@@ -34,6 +37,7 @@ add_library(sentinel_core STATIC
     src/IContextEngine.cpp
     src/InMemoryStore.cpp
     src/InMemorySettingsStore.cpp
+    src/InMemoryToolRegistry.cpp
     src/JsonSettingsStore.cpp
     src/LocalEchoProvider.cpp
     src/ModeManager.cpp

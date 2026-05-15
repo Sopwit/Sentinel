@@ -58,6 +58,7 @@ Future UI vision:
 - `DesktopShellViewModel` is the QML boundary.
 - `IChatProvider` isolates provider behavior.
 - `IAgentRuntime` isolates future agent orchestration behavior.
+- `IToolRegistry` isolates tool metadata registration and lookup behavior.
 - `IMemoryStore` isolates memory storage.
 - `IChatHistoryStore` isolates chat history storage.
 - `ISettingsStore` isolates settings storage.
@@ -69,9 +70,9 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, and Phase 4.0.
-- Current: Desktop alpha with minimal local agent runtime skeleton and explicit provider/agent separation.
-- Next: Phase 4.1 planning with continued local-safe constraints.
-- Recent: Phase 4.0, Agent Core Planning and Minimal Runtime Skeleton.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, and Phase 4.1.
+- Current: Desktop alpha with metadata-only agent/tool skeleton boundaries.
+- Next: Phase 4.2 planning with continued local-safe constraints.
+- Recent: Phase 4.1, Tool Descriptor and Registry Skeleton.
 
 Current runtime still has no networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, or platform-specific service implementations.

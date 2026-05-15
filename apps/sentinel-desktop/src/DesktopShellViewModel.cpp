@@ -48,6 +48,14 @@ QString DesktopShellViewModel::lastAgentResponse() const {
     return controller_.lastAgentResponse();
 }
 
+int DesktopShellViewModel::availableToolCount() const {
+    return controller_.availableToolCount();
+}
+
+QStringList DesktopShellViewModel::availableToolIds() const {
+    return controller_.availableToolIds();
+}
+
 QString DesktopShellViewModel::memoryStatus() const {
     return controller_.memoryStatus();
 }

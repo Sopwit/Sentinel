@@ -120,6 +120,7 @@ private slots:
     void exposesProviderStatus();
     void exposesAgentStatusWithoutRuntime();
     void executesDeterministicAgentRequestWithRuntime();
+    void exposesAgentToolMetadata();
     void exposesMemoryStatus();
     void sendsMessageThroughProvider();
     void ignoresBlankChatMessages();
@@ -187,6 +188,19 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
              QStringLiteral("Local agent placeholder processed: check local plan"));
     QCOMPARE(statusSpy.count(), 1);
     QCOMPARE(responseSpy.count(), 1);
+}
+
+void ApplicationControllerTest::exposesAgentToolMetadata() {
+    const auto controllerWithoutRuntime = makeController();
+    QCOMPARE(controllerWithoutRuntime->availableToolCount(), 0);
+    QVERIFY(controllerWithoutRuntime->availableToolIds().isEmpty());
+
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+
+    QCOMPARE(controller.availableToolCount(), 1);
+    QCOMPARE(controller.availableToolIds(), QStringList{QStringLiteral("local-plan-summary")});
 }
 
 void ApplicationControllerTest::exposesMemoryStatus() {

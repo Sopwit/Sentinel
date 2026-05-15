@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sentinel/core/ToolDescriptor.h"
+
 #include <QList>
 #include <QString>
 
@@ -50,6 +52,7 @@ public:
     virtual QString name() const = 0;
     virtual AgentStatus status() const = 0;
     virtual QList<AgentCapabilityDescriptor> capabilities() const = 0;
+    virtual QList<ToolDescriptor> availableTools() const = 0;
     virtual AgentResponse execute(const AgentRequest& request) = 0;
 };
 

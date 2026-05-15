@@ -43,6 +43,22 @@ QString ApplicationController::lastAgentResponse() const {
     return lastAgentResponse_;
 }
 
+int ApplicationController::availableToolCount() const {
+    return agentRuntime_ ? agentRuntime_->availableTools().size() : 0;
+}
+
+QStringList ApplicationController::availableToolIds() const {
+    QStringList ids;
+    if (!agentRuntime_) {
+        return ids;
+    }
+
+    for (const auto& tool : agentRuntime_->availableTools()) {
+        ids.append(tool.id);
+    }
+    return ids;
+}
+
 QString ApplicationController::memoryStatus() const {
     return memoryStore_ && memoryStore_->isAvailable() ? QStringLiteral("Available")
                                                        : QStringLiteral("Unavailable");

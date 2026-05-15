@@ -202,3 +202,16 @@ Boundary rules:
 - `IAgentRuntime` is the orchestration/runtime boundary for future action flows.
 - Controllers and QML consume generic agent status/response surfaces, not runtime internals.
 - Phase 4.0 runtime is local deterministic skeleton only (`NullAgentRuntime`) with no networking/tool execution.
+
+## 14. Tool Descriptor And Registry Boundary
+
+Decision: Separate tool metadata registration from tool execution.
+
+Reason: The architecture needs a safe incremental path where tool identity, parameters, and risk metadata can be modeled and tested before any execution runtime is introduced.
+
+Boundary rules:
+
+- `ToolDescriptor` and related descriptor enums/structs model metadata only.
+- `IToolRegistry` owns deterministic tool metadata registration and lookup.
+- `InMemoryToolRegistry` is the default local deterministic registry implementation.
+- Agent runtime may expose tool metadata from the registry, but must not execute tools in Phase 4.1.

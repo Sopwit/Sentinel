@@ -20,6 +20,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString providerStatus READ providerStatus CONSTANT)
     Q_PROPERTY(QString agentStatus READ agentStatus NOTIFY agentStatusChanged)
     Q_PROPERTY(QString lastAgentResponse READ lastAgentResponse NOTIFY agentResponseChanged)
+    Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
+    Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
     Q_PROPERTY(QString chatHistoryStatus READ chatHistoryStatus CONSTANT)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
@@ -44,6 +46,8 @@ public:
     QString providerStatus() const;
     QString agentStatus() const;
     QString lastAgentResponse() const;
+    int availableToolCount() const;
+    QStringList availableToolIds() const;
     QString memoryStatus() const;
     QString chatHistoryStatus() const;
     QString memoryMaintenanceStatus() const;

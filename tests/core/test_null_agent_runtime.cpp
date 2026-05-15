@@ -13,6 +13,7 @@ class NullAgentRuntimeTest final : public QObject {
 private slots:
     void exposesDeterministicIdentityAndStatus();
     void exposesPlaceholderCapability();
+    void exposesMetadataTools();
     void handlesEmptyRequests();
     void returnsDeterministicLocalResponse();
 };
@@ -32,6 +33,15 @@ void NullAgentRuntimeTest::exposesPlaceholderCapability() {
     QCOMPARE(capabilities.size(), 1);
     QCOMPARE(capabilities.first().id, QStringLiteral("placeholder-local-response"));
     QVERIFY(capabilities.first().enabled);
+}
+
+void NullAgentRuntimeTest::exposesMetadataTools() {
+    NullAgentRuntime runtime;
+    const auto tools = runtime.availableTools();
+
+    QCOMPARE(tools.size(), 1);
+    QCOMPARE(tools.first().id, QStringLiteral("local-plan-summary"));
+    QCOMPARE(tools.first().executionMode, sentinel::core::ToolExecutionMode::MetadataOnly);
 }
 
 void NullAgentRuntimeTest::handlesEmptyRequests() {

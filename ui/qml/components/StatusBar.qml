@@ -44,6 +44,12 @@ ShellPanel {
             font.pixelSize: 12
         }
 
+        Label {
+            text: "Tools: " + statusBar.viewModel.availableToolCount
+            color: "#82aaa1"
+            font.pixelSize: 12
+        }
+
         Item {
             Layout.fillWidth: true
         }
