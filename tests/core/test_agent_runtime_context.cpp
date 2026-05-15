@@ -108,6 +108,8 @@ void AgentRuntimeContextTest::clearsContextWithoutChangingSessionId() {
     QCOMPARE(context.latestPipelineResult.executionStatus(),
              sentinel::core::ToolExecutionStatus::NotRequested);
     QCOMPARE(context.summary, QStringLiteral("Runtime context cleared."));
+    QCOMPARE(sentinel::core::safeAgentRuntimeContextSummary(context),
+             QStringLiteral("Runtime context cleared."));
 }
 
 QTEST_MAIN(AgentRuntimeContextTest)

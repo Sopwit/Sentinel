@@ -140,11 +140,11 @@ Must remain out of scope until explicitly approved:
 - Real external provider integration.
 - Platform-specific automation/integration implementation.
 
-## Upcoming
+## Completed Agent Foundation
 
 ### Phase 4: Agent Core & Tool System
 
-Started with Phase 4.0 and currently remains local-safe.
+Completed through Phase 4.10 and remains local-safe.
 
 ### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
 
@@ -488,3 +488,64 @@ Still out of scope:
 - Activity log persistence/export.
 - Real sandbox runtime or OS permission enforcement.
 - Privileged automation.
+
+### Phase 4.9: Agent Pipeline UI Visibility
+
+Completed. Added read-only QML visibility for the metadata-only agent pipeline.
+
+Scope:
+
+- Dashboard shows latest pipeline status and summary.
+- Dashboard shows runtime context status and summary.
+- Dashboard shows active planned tool ids when present.
+- Dashboard shows activity count and latest activity summary.
+- Desktop view-model remains the QML boundary and exposes simple read-only values only.
+- Tests cover visible pipeline values, activity values, successful request updates, blocked
+  pipeline updates, and QML-facing property safety.
+
+Boundary clarification:
+
+- UI visibility is read-only.
+- UI visibility is not execution.
+- UI visibility is not approval.
+- UI visibility is not persistence.
+- UI visibility is not provider integration.
+- UI visibility is not plugin loading.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem mutation.
+- Networking/API keys.
+- Provider integrations.
+- Plugin loading.
+- Execution buttons or approval controls.
+- Activity log persistence/export.
+- Real sandbox runtime or OS permission enforcement.
+- Privileged automation.
+
+### Phase 4.10: Architecture Checkpoint and Cleanup
+
+Completed. Stabilized Phase 4 architecture documentation and small consistency gaps before Phase 5.
+
+Scope:
+
+- Reviewed provider vs agent separation.
+- Reviewed registry, planning, approval, sandbox metadata, and placeholder execution separation.
+- Reviewed runtime context/session ownership.
+- Reviewed activity log scope.
+- Reviewed QML read-only exposure.
+- Added Phase 4 checkpoint documentation for completed scope, limitations, Phase 5 readiness, and
+  explicit out-of-scope work.
+- Added focused tests for summary fallback and reset behavior.
+- Clarified minor Dashboard labels without adding controls.
+
+Boundary clarification:
+
+- This checkpoint adds no product features.
+- This checkpoint does not start Phase 5 implementation.
+- Real execution, approval UX, sandbox runtime, provider integrations, plugin loading,
+  networking/API keys, filesystem/system actions, shell/process launch, subprocess launch, and
+  privileged automation remain out of scope.

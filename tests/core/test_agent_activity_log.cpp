@@ -48,6 +48,10 @@ void AgentActivityLogTest::clearsEntriesAndResetsSequence() {
                QStringLiteral("Agent request received."));
 
     log.clear();
+    QCOMPARE(log.count(), 0);
+    QVERIFY(log.entries().isEmpty());
+    QCOMPARE(log.latestSummary(), QStringLiteral("No agent activity yet."));
+
     const auto next = log.append(sentinel::core::AgentActivityType::PipelineCompleted,
                                  sentinel::core::AgentActivityStatus::Blocked,
                                  QStringLiteral("Agent pipeline finished: Blocked"));

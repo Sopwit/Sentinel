@@ -9,6 +9,8 @@
 #include "sentinel/core/ModeManager.h"
 #include "sentinel/core/NullAgentRuntime.h"
 
+#include <QHash>
+#include <QMetaProperty>
 #include <QSignalSpy>
 #include <QtTest>
 
@@ -37,6 +39,8 @@ private slots:
     void exposesLatestToolExecutionStatus();
     void exposesRuntimeContextStatus();
     void exposesAgentActivityStatus();
+    void updatesVisibleAgentValuesForBlockedPipeline();
+    void exposesOnlyQmlSafeAgentVisibilityProperties();
     void exposesChatHistoryStatus();
     void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
@@ -92,6 +96,48 @@ public:
 private:
     QList<sentinel::core::ChatMessage> messages_;
     bool available_ = true;
+};
+
+class FixedPlanRuntime final : public sentinel::core::IAgentRuntime {
+public:
+    FixedPlanRuntime(QList<sentinel::core::ToolDescriptor> tools,
+                     sentinel::core::ToolInvocationPlan plan)
+        : tools_(std::move(tools)), plan_(std::move(plan)) {}
+
+    QString name() const override {
+        return QStringLiteral("FixedPlanRuntime");
+    }
+
+    sentinel::core::AgentStatus status() const override {
+        return sentinel::core::AgentStatus::Ready;
+    }
+
+    QList<sentinel::core::AgentCapabilityDescriptor> capabilities() const override {
+        return {};
+    }
+
+    QList<sentinel::core::ToolDescriptor> availableTools() const override {
+        return tools_;
+    }
+
+    sentinel::core::ToolInvocationPlan
+    plan(const sentinel::core::AgentRequest& request) const override {
+        Q_UNUSED(request);
+        return plan_;
+    }
+
+    sentinel::core::AgentResponse execute(const sentinel::core::AgentRequest& request) override {
+        return {
+            true,
+            QStringLiteral("Fixed local agent placeholder processed: %1")
+                .arg(request.prompt.trimmed()),
+            sentinel::core::AgentStatus::Ready,
+        };
+    }
+
+private:
+    QList<sentinel::core::ToolDescriptor> tools_;
+    sentinel::core::ToolInvocationPlan plan_;
 };
 
 void DesktopShellViewModelTest::exposesInitialShellState() {
@@ -279,6 +325,104 @@ void DesktopShellViewModelTest::exposesAgentActivityStatus() {
     QCOMPARE(viewModel.latestAgentActivitySummary(),
              QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
     QCOMPARE(activitySpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::updatesVisibleAgentValuesForBlockedPipeline() {
+    const sentinel::core::ToolDescriptor tool{
+        QStringLiteral("blocked-tool"),
+        QStringLiteral("Blocked Tool"),
+        QStringLiteral("Metadata-only blocked capability."),
+        sentinel::core::ToolRiskLevel::Low,
+        sentinel::core::ToolExecutionMode::MetadataOnly,
+        {},
+    };
+    const sentinel::core::ToolInvocationPlan plan{
+        sentinel::core::ToolInvocationPlanStatus::Planned,
+        QStringLiteral("Metadata-only tool plan prepared."),
+        {
+            sentinel::core::PlannedToolInvocation{
+                tool.id,
+                tool.name,
+                QStringLiteral("Plan metadata."),
+                QStringLiteral("Metadata-only rationale."),
+                tool.riskLevel,
+                tool.executionMode,
+                {},
+                {
+                    sentinel::core::CapabilityDescriptor{
+                        QStringLiteral("tool.blocked.capability"),
+                        QStringLiteral("Blocked metadata capability."),
+                    },
+                },
+            },
+        },
+    };
+    ApplicationController controller{
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        std::make_unique<FixedPlanRuntime>(QList<sentinel::core::ToolDescriptor>{tool}, plan)};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy pipelineSpy(&viewModel, &DesktopShellViewModel::agentPipelineChanged);
+    QSignalSpy runtimeContextSpy(&viewModel, &DesktopShellViewModel::runtimeContextChanged);
+    QSignalSpy activitySpy(&viewModel, &DesktopShellViewModel::agentActivityChanged);
+
+    QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft blocked plan")));
+
+    QCOMPARE(viewModel.latestAgentPipelineStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(viewModel.latestAgentPipelineSummary(),
+             QStringLiteral("Execution boundary blocked by sandbox capability metadata."));
+    QCOMPARE(viewModel.runtimeContextStatus(), QStringLiteral("Active"));
+    QCOMPARE(viewModel.runtimeContextSummary(),
+             QStringLiteral("Runtime context captured pipeline result: Blocked"));
+    QCOMPARE(viewModel.runtimeContextActiveToolIds(), QStringList{QStringLiteral("blocked-tool")});
+    QCOMPARE(viewModel.agentActivityCount(), 6);
+    QCOMPARE(viewModel.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Blocked"));
+    QCOMPARE(pipelineSpy.count(), 1);
+    QCOMPARE(runtimeContextSpy.count(), 1);
+    QCOMPARE(activitySpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    const auto* metaObject = viewModel.metaObject();
+
+    const QHash<QString, QByteArray> expectedTypes{
+        {QStringLiteral("latestAgentPipelineStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("latestAgentPipelineSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeSessionId"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeContextStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeContextSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeContextActiveToolIds"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("agentActivityCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("latestAgentActivitySummary"), QByteArrayLiteral("QString")},
+    };
+
+    for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
+        const auto propertyIndex = metaObject->indexOfProperty(it.key().toUtf8().constData());
+        QVERIFY2(propertyIndex >= 0,
+                 qPrintable(QStringLiteral("Missing property %1").arg(it.key())));
+        const auto property = metaObject->property(propertyIndex);
+        QCOMPARE(QByteArray(property.typeName()), it.value());
+        QVERIFY(!property.isWritable());
+    }
+
+    const QStringList forbiddenProperties{
+        QStringLiteral("latestAgentPipelineResult"),
+        QStringLiteral("runtimeContext"),
+        QStringLiteral("agentActivityLog"),
+        QStringLiteral("agentActivityEntries"),
+        QStringLiteral("controller"),
+    };
+    for (const auto& propertyName : forbiddenProperties) {
+        QCOMPARE(metaObject->indexOfProperty(propertyName.toUtf8().constData()), -1);
+    }
 }
 
 void DesktopShellViewModelTest::exposesChatHistoryStatus() {
