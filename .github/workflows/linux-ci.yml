@@ -9,6 +9,8 @@ on:
 jobs:
   build-test:
     runs-on: ubuntu-24.04
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
     steps:
       - name: Checkout
@@ -17,7 +19,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev clang-format
+          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev clang-format fonts-noto-core
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
