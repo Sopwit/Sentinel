@@ -1,12 +1,35 @@
-build/
-build-*/
-cmake-build-*/
-.cache/
-.clangd/index/
-.idea/
-.vscode/
-.qt/
-CMakeUserPresets.json
-compile_commands.json
-.DS_Store
+# Build artifacts (CMake/Ninja)
+/build/
+/build-*/
+/build-tests/
+/build-noccache/
+/cmake-build-*/
+/CMakeUserPresets.json
+/compile_commands.json
+
+# Tool caches
+/.cache/
+/.clangd/index/
+/.qt/
+
+# IDE/editor state
+/.idea/
+/.vscode/
 *.user
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# UI design reference workspace (TS/React)
+/lovable-tasarim/node_modules/
+/lovable-tasarim/dist/
+/lovable-tasarim/.tanstack/
+/lovable-tasarim/.wrangler/
+/lovable-tasarim/.vite/
+/lovable-tasarim/.cache/
+/lovable-tasarim/coverage/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
