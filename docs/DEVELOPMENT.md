@@ -83,6 +83,17 @@ cmake --preset debug
 clang-tidy core/src/*.cpp apps/sentinel-desktop/*.cpp tests/core/*.cpp -p build/debug
 ```
 
+If `clang-tidy` is missing on your machine, install LLVM tooling first:
+
+```bash
+# Fedora
+sudo dnf install clang-tools-extra
+
+# macOS (Homebrew)
+brew install llvm
+export PATH="$(brew --prefix llvm)/bin:$PATH"
+```
+
 Treat clang-tidy output as advisory for now. CI currently enforces build, tests, and formatting only.
 
 ## IDE Problem Triage
@@ -124,6 +135,14 @@ qmllint -I build/no-ccache/apps/sentinel-desktop \
 ```
 
 The remaining known QML lint warning is the root `shellViewModel` context property injected from C++. It is harmless at runtime and intentionally left until a typed QML singleton is worth adding.
+
+### Headless/offscreen Qt font warning
+
+In minimal headless runs, Qt may print a `Sans Serif` alias population warning. This is a startup
+performance warning, not a functional QML runtime error.
+
+To reduce it in Linux CI/container environments, ensure font packages are installed (for example
+`fonts-noto-core` or `fonts-dejavu-core`) before launching Qt.
 
 ## Canonical Verification
 

@@ -12,13 +12,50 @@
 #include "sentinel/core/StandardPathProvider.h"
 
 #include <QGuiApplication>
+#include <QFont>
+#include <QFontDatabase>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
 #include <memory>
 
+namespace {
+
+QString preferredUiFontFamily() {
+    const QStringList availableFamilies = QFontDatabase::families();
+    const QStringList preferredFamilies = {QStringLiteral("Noto Sans"), QStringLiteral("DejaVu Sans"),
+                                           QStringLiteral("Ubuntu"), QStringLiteral("Segoe UI"),
+                                           QStringLiteral("Helvetica Neue"), QStringLiteral("Arial")};
+
+    for (const QString& family : preferredFamilies) {
+        if (availableFamilies.contains(family, Qt::CaseInsensitive)) {
+            return family;
+        }
+    }
+
+    return QString();
+}
+
+void configureDefaultUiFont() {
+    const QString family = preferredUiFontFamily();
+    if (family.isEmpty()) {
+        return;
+    }
+
+    QFont font = QGuiApplication::font();
+    if (font.family().compare(family, Qt::CaseInsensitive) == 0) {
+        return;
+    }
+
+    font.setFamily(family);
+    QGuiApplication::setFont(font);
+}
+
+}  // namespace
+
 int main(int argc, char* argv[]) {
     QGuiApplication app(argc, argv);
+    configureDefaultUiFont();
     QGuiApplication::setApplicationName(sentinel::core::AppMetadata::displayName());
     QGuiApplication::setOrganizationName(sentinel::core::AppMetadata::organizationName());
     QGuiApplication::setApplicationVersion(sentinel::core::AppMetadata::version());
