@@ -1,3 +1,19 @@
+add_library(sentinel_desktop_viewmodels STATIC
+    include/sentinel/desktop/DesktopShellViewModel.h
+    src/DesktopShellViewModel.cpp
+)
+
+target_include_directories(sentinel_desktop_viewmodels
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+target_link_libraries(sentinel_desktop_viewmodels
+    PUBLIC
+        sentinel_core
+        Qt6::Core
+)
+
 qt_add_executable(sentinel-desktop
     main.cpp
 )
@@ -20,6 +36,7 @@ qt_add_qml_module(sentinel-desktop
 
 target_link_libraries(sentinel-desktop
     PRIVATE
+        sentinel_desktop_viewmodels
         sentinel_core
         Qt6::Core
         Qt6::Gui

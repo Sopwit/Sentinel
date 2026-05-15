@@ -1,16 +1,22 @@
 add_library(sentinel_core STATIC
+    include/sentinel/core/AppSettings.h
     include/sentinel/core/ApplicationController.h
     include/sentinel/core/FakeProvider.h
     include/sentinel/core/IContextEngine.h
+    include/sentinel/core/IIntegration.h
     include/sentinel/core/IMemoryStore.h
     include/sentinel/core/IPlugin.h
     include/sentinel/core/IProvider.h
+    include/sentinel/core/ISettingsStore.h
     include/sentinel/core/InMemoryStore.h
+    include/sentinel/core/InMemorySettingsStore.h
     include/sentinel/core/ModeManager.h
+    src/AppSettings.cpp
     src/ApplicationController.cpp
     src/FakeProvider.cpp
     src/IContextEngine.cpp
     src/InMemoryStore.cpp
+    src/InMemorySettingsStore.cpp
     src/ModeManager.cpp
 )
 

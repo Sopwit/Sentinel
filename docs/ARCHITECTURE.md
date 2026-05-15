@@ -13,9 +13,21 @@ Sentinel Desktop Alpha is a modular monolith. The application is split into a na
 
 ## Current Runtime Flow
 
-`main.cpp` creates `ApplicationController`, `FakeProvider`, `InMemoryStore`, and `ModeManager`, then exposes only the controller and mode manager to QML.
+`main.cpp` creates `ApplicationController`, `FakeProvider`, `InMemoryStore`, `ModeManager`, `AppSettings`, and `DesktopShellViewModel`, then exposes only the view model to QML.
 
-QML handles layout and user input. C++ owns chat handling, provider calls, mode state, and memory state.
+QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, and settings defaults.
+
+## Desktop View Model
+
+`DesktopShellViewModel` is the QML boundary for the desktop app. It forwards safe operations to the core controller, mode manager, and settings object:
+
+- provider name
+- current mode and available modes
+- chat messages and send action
+- runtime memory entries and write action
+- theme/configuration placeholder settings
+
+Raw core objects are not exposed directly to QML.
 
 ## Intentional Boundaries
 
@@ -30,6 +42,16 @@ QML handles layout and user input. C++ owns chat handling, provider calls, mode 
 `IMemoryStore` is intentionally storage-backend independent. It stores exact key/value pairs and returns entries through a small value-based contract. Application-level validation, such as rejecting blank keys, belongs in controllers or services rather than storage implementations.
 
 `InMemoryStore` remains the default development and test backend. A future `SQLiteMemoryStore` should implement `IMemoryStore` without requiring changes to `ApplicationController`.
+
+## Settings Contract
+
+`ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation while `InMemorySettingsStore` provides the current runtime-only backend.
+
+Future persistent settings should implement `ISettingsStore` without changing QML or the desktop view model.
+
+## Plugin And Integration Boundaries
+
+`IPlugin` describes future in-process plugin lifecycle boundaries. `IIntegration` describes future external or local integration metadata. Neither interface loads code, performs network calls, or talks to operating-system services in the alpha.
 
 ## Not Implemented Yet
 

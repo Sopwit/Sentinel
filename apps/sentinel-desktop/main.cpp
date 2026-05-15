@@ -1,5 +1,9 @@
+#include "sentinel/desktop/DesktopShellViewModel.h"
+
+#include "sentinel/core/AppSettings.h"
 #include "sentinel/core/ApplicationController.h"
 #include "sentinel/core/FakeProvider.h"
+#include "sentinel/core/InMemorySettingsStore.h"
 #include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/ModeManager.h"
 
@@ -18,10 +22,11 @@ int main(int argc, char* argv[]) {
         std::make_unique<sentinel::core::FakeProvider>(),
         std::make_unique<sentinel::core::InMemoryStore>());
     sentinel::core::ModeManager modeManager;
+    sentinel::core::AppSettings settings(std::make_unique<sentinel::core::InMemorySettingsStore>());
+    sentinel::desktop::DesktopShellViewModel shellViewModel(controller, modeManager, settings);
 
     QQmlApplicationEngine engine;
-    engine.rootContext()->setContextProperty(QStringLiteral("appController"), &controller);
-    engine.rootContext()->setContextProperty(QStringLiteral("modeManager"), &modeManager);
+    engine.rootContext()->setContextProperty(QStringLiteral("shellViewModel"), &shellViewModel);
 
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
