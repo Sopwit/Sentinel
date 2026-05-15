@@ -20,6 +20,16 @@ ChatMessage ChatSession::appendAssistantMessage(const QString& content, ChatMess
     return append(ChatRole::Assistant, content, status);
 }
 
+void ChatSession::loadMessages(QList<ChatMessage> messages) {
+    int maxId = 0;
+    for (const auto& message : messages) {
+        maxId = std::max(maxId, message.id);
+    }
+
+    messages_ = std::move(messages);
+    nextId_ = maxId + 1;
+}
+
 void ChatSession::clear() {
     messages_.clear();
     nextId_ = 1;

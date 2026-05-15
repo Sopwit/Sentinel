@@ -18,8 +18,6 @@ Added SQLite-backed memory persistence through `SQLiteMemoryStore` while keeping
 
 Added `JsonSettingsStore`, kept settings and memory persistence separate, expanded SQLite persistence tests, and documented storage boundaries.
 
-## Current
-
 ### Phase 3.1.5: AI Context & Agent Instruction Layer
 
 Adds lightweight repository-local AI instructions and context documents for Codex, Claude, ChatGPT, and similar coding agents.
@@ -34,8 +32,23 @@ Scope:
 
 This phase must not change application logic, SQLite logic, QML architecture, build behavior, or dependencies.
 
+### Phase 3.2: Persistent Chat History Preparation
+
+Added a dedicated chat history persistence boundary and SQLite-backed implementation.
+
+Scope:
+
+- `IChatHistoryStore`.
+- `SQLiteChatHistoryStore`.
+- Separate chat history database.
+- Optional controller persistence loading and appending.
+- Runtime chat remains available if persistence is unavailable.
+- Tests for chat history storage and controller integration.
+
+Chat history persistence is separate from key-value memory storage.
+
 ## Upcoming
 
-### Phase 3.2: Pending
+### Next Phase: Pending
 
-Placeholder only. Do not implement Phase 3.2 behavior during Phase 3.1.5.
+Placeholder only. Do not implement future phase behavior without an explicit task.

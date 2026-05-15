@@ -13,9 +13,9 @@ Sentinel Desktop Alpha is a modular monolith. The application is split into a na
 
 ## Current Runtime Flow
 
-`main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `SQLiteMemoryStore`, `ModeManager`, `AppSettings`, and `DesktopShellViewModel`, then exposes only the view model to QML.
+`main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `SQLiteMemoryStore`, `SQLiteChatHistoryStore`, `ModeManager`, `AppSettings`, and `DesktopShellViewModel`, then exposes only the view model to QML.
 
-QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, and settings defaults.
+QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, chat history persistence, and settings defaults.
 
 ## Desktop View Model
 
@@ -47,6 +47,7 @@ These files bind to `shellViewModel`. They should not own business rules, provid
 
 - Chat provider behavior is hidden behind `IChatProvider`.
 - Memory behavior is hidden behind `IMemoryStore`.
+- Chat history behavior is hidden behind `IChatHistoryStore`.
 - Future plugin behavior starts at `IPlugin`.
 - Context construction starts at `IContextEngine`.
 - UI code does not call network APIs or own business rules.
@@ -59,11 +60,29 @@ These files bind to `shellViewModel`. They should not own business rules, provid
 
 The desktop app stores memory below Qt's `AppDataLocation` as `memory.sqlite3`. Settings remain separate in `JsonSettingsStore` below Qt's `AppConfigLocation`.
 
-SQLite stores only explicit key-value memory entries. Chat history remains in-memory and is not persisted yet.
+SQLite memory storage stores only explicit key-value memory entries. Chat history uses a separate store and database.
 
 `SQLiteMemoryStore` exposes generic availability and last-error diagnostics through `IMemoryStore`. The desktop shell only shows an Available/Unavailable memory status and does not expose SQLite-specific details to QML.
 
 The SQLite database includes a `memory_schema_metadata` table with `schema_version = 1`. This is migration preparation only; no migration framework exists yet.
+
+## Chat History Storage Contract
+
+`IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.
+
+`SQLiteChatHistoryStore` stores:
+
+- `id`
+- `role`
+- `content`
+- `timestamp`
+- `status`
+
+Rows load in ascending `id` order so the transcript remains deterministic across app launches.
+
+The desktop app stores chat history below Qt's `AppDataLocation` as `chat_history.sqlite3`. The database includes a `chat_history_schema_metadata` table with `schema_version = 1`.
+
+If chat persistence is unavailable, `ApplicationController` continues with the in-memory `ChatSession`. Clearing chat clears the persistent chat table only when the store is available.
 
 ## Settings Contract
 
@@ -97,7 +116,7 @@ Chat history is owned by `ChatSession`, an in-memory session model with structur
 
 The desktop layer exposes history through `ChatMessageListModel`, a QML-safe `QAbstractListModel`. QML reads roles and never receives raw core objects.
 
-Chat history is not persisted yet. Future persistence should be added behind a dedicated storage boundary, not by writing from QML.
+Chat history can be persisted through `IChatHistoryStore`. QML still reads `ChatMessageListModel` and does not write persistence data directly.
 
 ## Not Implemented Yet
 

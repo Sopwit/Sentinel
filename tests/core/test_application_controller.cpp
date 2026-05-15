@@ -1,4 +1,5 @@
 #include "sentinel/core/ApplicationController.h"
+#include "sentinel/core/IChatHistoryStore.h"
 #include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
 
@@ -10,6 +11,7 @@
 using sentinel::core::ApplicationController;
 using sentinel::core::ChatProviderReply;
 using sentinel::core::ChatProviderStatus;
+using sentinel::core::IChatHistoryStore;
 using sentinel::core::IChatProvider;
 using sentinel::core::InMemoryStore;
 using sentinel::core::LocalEchoProvider;
@@ -46,6 +48,42 @@ public:
     }
 };
 
+class RecordingChatHistoryStore final : public IChatHistoryStore {
+public:
+    explicit RecordingChatHistoryStore(QList<sentinel::core::ChatMessage> messages = {},
+                                       bool available = true)
+        : messages_(std::move(messages)), available_(available) {}
+
+    QList<sentinel::core::ChatMessage> loadMessages() const override {
+        return available_ ? messages_ : QList<sentinel::core::ChatMessage>{};
+    }
+
+    void appendMessage(const sentinel::core::ChatMessage& message) override {
+        if (available_) {
+            messages_.append(message);
+        }
+    }
+
+    void clear() override {
+        if (available_) {
+            wasCleared_ = true;
+            messages_.clear();
+        }
+    }
+
+    bool isAvailable() const override {
+        return available_;
+    }
+
+    QString lastError() const override {
+        return available_ ? QString() : QStringLiteral("unavailable");
+    }
+
+    QList<sentinel::core::ChatMessage> messages_;
+    bool available_ = true;
+    bool wasCleared_ = false;
+};
+
 class ApplicationControllerTest final : public QObject {
     Q_OBJECT
 
@@ -58,6 +96,10 @@ private slots:
     void handlesUnavailableProvider();
     void handlesProviderErrorReply();
     void clearsChatHistory();
+    void loadsPersistedChatHistoryAtStartup();
+    void appendsNewChatMessagesToHistoryStore();
+    void clearsPersistentChatHistoryWhenAvailable();
+    void keepsRuntimeChatWorkingWhenHistoryStoreUnavailable();
     void storesRuntimeMemoryEntries();
     void rejectsBlankMemoryKeys();
     void overwritesMemoryEntriesThroughStoreBackend();
@@ -163,6 +205,78 @@ void ApplicationControllerTest::clearsChatHistory() {
     QCOMPARE(controller->chatHistory().size(), 1);
     QCOMPARE(controller->chatHistory().first().id, 1);
     QCOMPARE(spy.count(), 2);
+}
+
+void ApplicationControllerTest::loadsPersistedChatHistoryAtStartup() {
+    auto store = std::make_unique<RecordingChatHistoryStore>(
+        QList<sentinel::core::ChatMessage>{
+            {4, sentinel::core::ChatRole::System, QStringLiteral("previous system"),
+             QDateTime::fromString(QStringLiteral("2026-05-15T12:00:00.000Z"),
+                                   Qt::ISODateWithMs),
+             sentinel::core::ChatMessageStatus::Received},
+            {5, sentinel::core::ChatRole::User, QStringLiteral("previous user"),
+             QDateTime::fromString(QStringLiteral("2026-05-15T12:01:00.000Z"),
+                                   Qt::ISODateWithMs),
+             sentinel::core::ChatMessageStatus::Sent},
+        });
+    const auto storePtr = store.get();
+
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr,
+                                     std::move(store));
+
+    QCOMPARE(controller.chatHistory().size(), 2);
+    QCOMPARE(controller.chatHistory().first().id, 4);
+    QCOMPARE(controller.chatMessages().first(), QStringLiteral("Sentinel: previous system"));
+    QCOMPARE(storePtr->messages_.size(), 2);
+}
+
+void ApplicationControllerTest::appendsNewChatMessagesToHistoryStore() {
+    auto store = std::make_unique<RecordingChatHistoryStore>();
+    const auto storePtr = store.get();
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr,
+                                     std::move(store));
+
+    const auto sent = controller.sendMessage(QStringLiteral("status"));
+
+    QVERIFY(sent);
+    QCOMPARE(storePtr->messages_.size(), 3);
+    QCOMPARE(storePtr->messages_.at(0).role, sentinel::core::ChatRole::System);
+    QCOMPARE(storePtr->messages_.at(1).role, sentinel::core::ChatRole::User);
+    QCOMPARE(storePtr->messages_.at(1).content, QStringLiteral("status"));
+    QCOMPARE(storePtr->messages_.at(2).role, sentinel::core::ChatRole::Assistant);
+}
+
+void ApplicationControllerTest::clearsPersistentChatHistoryWhenAvailable() {
+    auto store = std::make_unique<RecordingChatHistoryStore>();
+    const auto storePtr = store.get();
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr,
+                                     std::move(store));
+
+    controller.sendMessage(QStringLiteral("status"));
+    controller.clearChat();
+
+    QVERIFY(storePtr->wasCleared_);
+    QCOMPARE(storePtr->messages_.size(), 1);
+    QCOMPARE(storePtr->messages_.first().id, 1);
+    QCOMPARE(storePtr->messages_.first().role, sentinel::core::ChatRole::System);
+    QCOMPARE(controller.chatHistory().size(), 1);
+}
+
+void ApplicationControllerTest::keepsRuntimeChatWorkingWhenHistoryStoreUnavailable() {
+    auto store = std::make_unique<RecordingChatHistoryStore>(
+        QList<sentinel::core::ChatMessage>{}, false);
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr,
+                                     std::move(store));
+
+    const auto sent = controller.sendMessage(QStringLiteral("status"));
+
+    QVERIFY(sent);
+    QCOMPARE(controller.chatHistory().size(), 3);
+    QCOMPARE(controller.chatHistory().at(1).content, QStringLiteral("status"));
 }
 
 void ApplicationControllerTest::storesRuntimeMemoryEntries() {

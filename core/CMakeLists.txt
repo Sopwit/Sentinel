@@ -4,6 +4,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ApplicationController.h
     include/sentinel/core/ChatMessage.h
     include/sentinel/core/ChatSession.h
+    include/sentinel/core/IChatHistoryStore.h
     include/sentinel/core/IChatProvider.h
     include/sentinel/core/IClock.h
     include/sentinel/core/IContextEngine.h
@@ -16,6 +17,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/JsonSettingsStore.h
     include/sentinel/core/LocalEchoProvider.h
     include/sentinel/core/ModeManager.h
+    include/sentinel/core/SQLiteChatHistoryStore.h
     include/sentinel/core/SQLiteMemoryStore.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
@@ -28,6 +30,7 @@ add_library(sentinel_core STATIC
     src/JsonSettingsStore.cpp
     src/LocalEchoProvider.cpp
     src/ModeManager.cpp
+    src/SQLiteChatHistoryStore.cpp
     src/SQLiteMemoryStore.cpp
 )
 

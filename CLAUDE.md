@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 3.1 is complete.
+Phase 3.2 is complete.
 
 Implemented foundation:
 
@@ -19,26 +19,27 @@ Implemented foundation:
 - C++20 core library.
 - `JsonSettingsStore`.
 - `SQLiteMemoryStore`.
+- `IChatHistoryStore`.
+- `SQLiteChatHistoryStore`.
 - SQLite persistence tests.
 - Persistence separation between settings and memory.
+- Persistence separation between memory and chat history.
 - Documentation foundation.
 
-Current stabilization phase:
+Recent stabilization phase:
 
 - Phase 3.1.5, AI Context & Agent Instruction Layer.
 
-Not started:
+Recent implementation phase:
 
-- Phase 3.2.
+- Phase 3.2, Persistent Chat History Preparation.
 
 ## Constraints
 
-- Do not modify application logic for Phase 3.1.5.
-- Do not modify SQLite behavior.
-- Do not modify QML architecture.
-- Do not modify build system behavior.
+- Do not merge chat history into key-value memory.
+- Do not expose raw SQLite details to QML.
 - Do not add dependencies.
-- Do not implement Phase 3.2 features.
+- Do not start the next phase without an explicit task.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

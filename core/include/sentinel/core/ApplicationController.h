@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sentinel/core/ChatSession.h"
+#include "sentinel/core/IChatHistoryStore.h"
 #include "sentinel/core/IChatProvider.h"
 #include "sentinel/core/IMemoryStore.h"
 
@@ -21,6 +22,7 @@ public:
     ApplicationController(std::unique_ptr<IChatProvider> provider,
                           std::unique_ptr<IMemoryStore> memoryStore,
                           std::unique_ptr<ChatSession> chatSession = nullptr,
+                          std::unique_ptr<IChatHistoryStore> chatHistoryStore = nullptr,
                           QObject* parent = nullptr);
 
     QString providerName() const;
@@ -42,6 +44,7 @@ private:
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
+    std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
 };
 
 } // namespace sentinel::core

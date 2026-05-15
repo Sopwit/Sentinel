@@ -26,7 +26,9 @@ ctest --test-dir build --output-on-failure
 - `ChatSession`: append behavior, clear behavior, stable ids, roles, statuses, and deterministic timestamp injection.
 - `InMemoryStore`: missing keys, empty keys, put/get, repeated overwrites, multiple independent keys, and deterministic entry ordering.
 - `SQLiteMemoryStore`: parity with `InMemoryStore`, temporary database files, parent directory creation, persistence across instances, schema version initialization, and unavailable-path no-op behavior.
+- `SQLiteChatHistoryStore`: append/load, clear, deterministic ordering, persistence across instances, schema version initialization, and unavailable-path no-op behavior.
 - `ApplicationController`: structured chat history, local provider responses, provider error flow, unavailable-provider handling, blank chat rejection, memory key validation, runtime memory writes, and overwrite behavior through `IMemoryStore`.
+- `ApplicationController` chat persistence: optional startup load, append to history store, clear persistent chat, and unavailable-history-store fallback.
 - `LocalEchoProvider`: provider name/status, stable status labels, and deterministic local response.
 - `AppSettings`: defaults, input normalization, duplicate updates, blank input handling, and configuration profile changes.
 - `JsonSettingsStore`: missing files, directory creation, and persistence across instances.

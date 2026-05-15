@@ -65,7 +65,7 @@ Avoid broad prompts:
 - "Refactor the app."
 - "Add memory features."
 - "Make it production ready."
-- "Start Phase 3.2."
+- "Start the next phase."
 
 Avoid unclear scope:
 
@@ -88,4 +88,4 @@ Avoid unclear scope:
 - One storage boundary at a time.
 - No implicit dependencies.
 - No QML business logic.
-- No Phase 3.2 work until explicitly started.
+- No next-phase work until explicitly started.
