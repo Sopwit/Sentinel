@@ -1,16 +1,32 @@
 # Architecture Decisions
 
-## 1. Native Qt Desktop
+## 1. Cross-platform Qt Desktop
 
-Decision: Sentinel uses C++20, Qt 6, and QML for the desktop alpha.
+Decision: Sentinel uses C++20, Qt 6, and QML for a cross-platform desktop application.
 
-Reason: The product is desktop-first and should integrate with native Linux desktop environments without a web-shell runtime.
+Reason: The product is desktop-first and should remain portable while allowing a Linux/Fedora KDE Plasma optimized experience.
 
 Avoided:
 
 - Electron.
 - Browser-first desktop shell.
 - Python backend for the app core.
+- Linux-only core assumptions.
+
+## 1.1 Platform Abstraction Direction
+
+Decision: Keep platform-specific behavior behind explicit service interfaces.
+
+Reason: Linux integrations may be richer, but the core architecture must remain portable to Windows and macOS.
+
+Planned interfaces:
+
+- `IPlatformService`
+- `IPathProvider`
+- `INotificationService`
+- `ISystemIntegrationService`
+
+Rule: platform services should not leak into storage contracts, provider contracts, controllers, or QML pages.
 
 ## 2. Modular Monolith
 
@@ -104,3 +120,25 @@ Expected effect:
 - Less repeated context.
 - Lower risk of architecture drift.
 - Consistent constraints across Codex, Claude, ChatGPT, and similar agents.
+
+## 11. UI/UX Roadmap Direction
+
+Decision: Keep current UI as a foundation while planning a more mature Qt Quick experience.
+
+Current state:
+
+- Qt/QML shell.
+- Chat, memory, settings, dashboard, sidebar, header, and status bar.
+- Minimal lifecycle UX around chat history.
+
+Future direction:
+
+- Smooth animations.
+- Responsive layouts.
+- Adaptive themes.
+- Assistant-like chat interaction.
+- Animated panels.
+- Dashboard cards.
+- Extensible component system.
+
+Rule: future UI polish should stay behind QML/view-model boundaries and must not introduce business logic into QML.

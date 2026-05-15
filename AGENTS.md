@@ -2,17 +2,19 @@
 
 ## Project Summary
 
-Sentinel is a Linux-native, desktop-first AI operating layer. The current repository contains the native Desktop Alpha foundation, not the full long-term product.
+Sentinel is a cross-platform Qt/QML-based personal AI assistant desktop application, optimized first for Linux/Fedora KDE Plasma. The current repository contains the Desktop Alpha foundation, not the full long-term product.
 
-Primary target: Fedora KDE Plasma.
+Primary optimization target: Fedora KDE Plasma.
+
+Compatibility target: keep Windows and macOS possible through portable Qt/C++ architecture.
 
 ## Current Phase
 
-Phase 3.3 is completed.
+Phase 3.3 is close to completion.
 
 Most recent work: Phase 3.3, Chat History UX and Lifecycle Controls.
 
-Next phase has not started.
+Current planning focus: Phase 3.4, Cross-platform Architecture Readiness.
 
 ## Stack
 
@@ -30,7 +32,20 @@ Next phase has not started.
 - Keep provider behavior behind `IChatProvider`.
 - Keep memory behavior behind `IMemoryStore`.
 - Keep settings behavior behind `ISettingsStore`.
+- Keep platform-specific behavior behind explicit service interfaces.
+- Avoid Linux-only assumptions in core logic.
 - Do not introduce Electron, a Python backend, or unnecessary dependencies.
+
+## Platform Strategy
+
+- Core logic should remain portable across Linux, Windows, and macOS.
+- Linux integrations may be richer, especially for Fedora KDE Plasma.
+- Future platform services should use interfaces such as:
+  - `IPlatformService`
+  - `IPathProvider`
+  - `INotificationService`
+  - `ISystemIntegrationService`
+- Platform-specific code belongs behind these boundaries, not in controllers, stores, or QML pages.
 
 ## Persistence Rules
 
@@ -84,4 +99,4 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 
 ## Current Priority
 
-Maintain the Phase 3.3 lifecycle boundaries. Do not start the next phase without an explicit task.
+Maintain the Phase 3.3 lifecycle boundaries and Phase 3.4 cross-platform planning scope. Do not start Phase 4 without an explicit task.

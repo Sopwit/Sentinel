@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 3.3 is complete.
+Phase 3.3 is close to completion.
 
 Implemented foundation:
 
@@ -26,6 +26,13 @@ Implemented foundation:
 - Persistence separation between memory and chat history.
 - Chat history status and clear-confirmation UX.
 - Documentation foundation.
+
+Current direction:
+
+- Cross-platform Qt/QML desktop application.
+- Optimized first for Linux/Fedora KDE Plasma.
+- Keep Windows and macOS compatibility possible.
+- Prepare platform-specific behavior behind clean service interfaces.
 
 Recent stabilization phase:
 
@@ -42,8 +49,10 @@ Recent implementation phase:
 - Do not expose raw SQLite details to QML.
 - Do not add multi-conversation/thread support yet.
 - Do not add encryption, export, or pruning yet.
+- Do not hardcode Linux-only assumptions into core logic.
+- Do not add platform-specific integrations without an interface boundary.
 - Do not add dependencies.
-- Do not start the next phase without an explicit task.
+- Do not start full Phase 4 implementation.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

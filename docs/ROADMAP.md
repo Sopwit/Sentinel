@@ -1,29 +1,50 @@
 # Sentinel Roadmap
 
-## Phase 1: Desktop Alpha Foundation
+Sentinel is a cross-platform Qt/QML personal AI assistant desktop app, optimized first for Linux/Fedora KDE Plasma.
 
-Create the native Qt/QML desktop shell, core interfaces, local echo provider bridge, runtime memory store, mode switching, and documentation.
+## Phase 1: Foundation
 
-## Phase 2: Real Provider Integration
+Create the C++20/Qt project structure, core interfaces, local echo provider, runtime memory, mode handling, and documentation base.
 
-Add provider adapters for real AI APIs behind `IChatProvider`. Keep provider selection local and explicit.
+## Phase 2: UI Shell Foundation
 
-## Phase 3: SQLite Memory
+Build the QML desktop shell, dashboard, chat panel, memory/settings pages, view models, and local-only UX foundation.
 
-Add a SQLite-backed implementation of `IMemoryStore` for persistent key-value memory while keeping chat history persistence separate.
+## Phase 3: Persistence + Architecture Stabilization
 
-## Phase 4: Voice System
+Add settings persistence, SQLite key-value memory, dedicated chat history persistence, diagnostics, lifecycle controls, and AI context docs.
 
-Add local-first voice input and output behind clean interfaces. Avoid coupling voice code to QML.
+## Phase 3.4: Cross-platform Architecture Readiness
 
-## Phase 5: Automation Engine
+Prepare architecture for Linux, Windows, and macOS without implementing platform integrations yet.
 
-Introduce a safe local automation layer with permissions, auditability, and explicit user control.
+Focus:
 
-## Phase 6: Edge Device Prototype
+- Portable core boundaries.
+- Linux/Fedora KDE optimized path.
+- Future platform service interfaces.
+- Controlled dependency growth.
+- No Phase 4 implementation.
 
-Prototype deployment on Raspberry Pi or Jetson-class devices with constrained runtime profiles.
+Candidate interfaces:
 
-## Phase 7: Wearable Ecosystem
+- `IPlatformService`
+- `IPathProvider`
+- `INotificationService`
+- `ISystemIntegrationService`
 
-Explore companion wearable clients after the desktop and edge foundations are stable.
+## Phase 4: Agent Core & Tool System
+
+Introduce agent planning, tool execution boundaries, provider integration strategy, and explicit user control. Not started.
+
+## Phase 5: Advanced UI/UX & Motion System
+
+Evolve the Qt Quick experience with responsive layouts, adaptive themes, assistant-like interaction, animated panels, dashboard cards, and reusable components.
+
+## Phase 6: Security / Sandbox / Permissions
+
+Add permission models, auditability, sandboxing strategy, secret handling, and safe local automation constraints.
+
+## Phase 7: Packaging / Ecosystem / Extensions
+
+Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

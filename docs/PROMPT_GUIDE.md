@@ -51,10 +51,12 @@ Run the relevant test target after changes.
 Read AGENTS.md and docs/DECISIONS.md first.
 
 Task:
-Explain where chat history persistence should be added later.
+Update platform architecture notes for Phase 3.4.
 
-Do not implement it.
-Return only an architecture note with file references.
+Scope:
+docs only.
+
+Do not modify runtime code, QML implementation, SQLite code, dependencies, or Phase 4 behavior.
 ```
 
 ## Anti-Pattern Prompts
@@ -66,12 +68,15 @@ Avoid broad prompts:
 - "Add memory features."
 - "Make it production ready."
 - "Start the next phase."
+- "Make it Linux-only."
+- "Add animations everywhere."
 
 Avoid unclear scope:
 
 - Prompts that allow source, QML, build, and docs changes at the same time.
 - Prompts that mix implementation with speculative architecture.
 - Prompts that ask for persistence changes without naming the storage boundary.
+- Prompts that add platform-specific logic without naming the abstraction boundary.
 
 ## Keeping Prompts Small
 
@@ -86,6 +91,8 @@ Avoid unclear scope:
 
 - One phase at a time.
 - One storage boundary at a time.
+- One platform boundary at a time.
 - No implicit dependencies.
 - No QML business logic.
+- No Linux-only core assumptions.
 - No next-phase work until explicitly started.
