@@ -2,11 +2,11 @@
 
 ## Phase 1: Desktop Alpha Foundation
 
-Create the native Qt/QML desktop shell, core interfaces, fake provider bridge, runtime memory store, mode switching, and documentation.
+Create the native Qt/QML desktop shell, core interfaces, local echo provider bridge, runtime memory store, mode switching, and documentation.
 
 ## Phase 2: Real Provider Integration
 
-Add provider adapters for real AI APIs behind `IProvider`. Keep provider selection local and explicit.
+Add provider adapters for real AI APIs behind `IChatProvider`. Keep provider selection local and explicit.
 
 ## Phase 3: SQLite Memory
 

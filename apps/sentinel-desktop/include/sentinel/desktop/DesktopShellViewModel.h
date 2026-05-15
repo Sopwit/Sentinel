@@ -15,6 +15,7 @@ namespace sentinel::desktop {
 class DesktopShellViewModel final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString providerName READ providerName CONSTANT)
+    Q_PROPERTY(QString providerStatus READ providerStatus CONSTANT)
     Q_PROPERTY(QString currentModeName READ currentModeName NOTIFY currentModeChanged)
     Q_PROPERTY(QStringList availableModes READ availableModes CONSTANT)
     Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
@@ -30,6 +31,7 @@ public:
                           core::AppSettings& settings, QObject* parent = nullptr);
 
     QString providerName() const;
+    QString providerStatus() const;
     QString currentModeName() const;
     QStringList availableModes() const;
     QString currentPage() const;
@@ -42,7 +44,7 @@ public:
     QString configurationProfile() const;
     void setConfigurationProfile(const QString& configurationProfile);
 
-    Q_INVOKABLE void sendMessage(const QString& message);
+    Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE void setModeByName(const QString& modeName);
     Q_INVOKABLE void remember(const QString& key, const QString& value);
 

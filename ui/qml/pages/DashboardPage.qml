@@ -59,7 +59,7 @@ RowLayout {
                     Label {
                         Layout.fillWidth: true
                         text: "Mode: " + shellViewModel.currentModeName
-                              + ". The app exposes only local fake-provider chat, runtime memory, settings, and lightweight plugin/integration contracts."
+                              + ". The app exposes only local echo-provider chat, runtime memory, settings, and lightweight plugin/integration contracts."
                         color: "#d9fff4"
                         font.pixelSize: 16
                         lineHeight: 1.25

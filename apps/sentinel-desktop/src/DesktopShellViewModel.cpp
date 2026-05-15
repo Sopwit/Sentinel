@@ -26,6 +26,10 @@ QString DesktopShellViewModel::providerName() const {
     return controller_.providerName();
 }
 
+QString DesktopShellViewModel::providerStatus() const {
+    return controller_.providerStatus();
+}
+
 QString DesktopShellViewModel::currentModeName() const {
     return modeManager_.currentModeName();
 }
@@ -80,8 +84,8 @@ void DesktopShellViewModel::setConfigurationProfile(const QString& configuration
     settings_.setConfigurationProfile(configurationProfile);
 }
 
-void DesktopShellViewModel::sendMessage(const QString& message) {
-    controller_.sendMessage(message);
+bool DesktopShellViewModel::sendMessage(const QString& message) {
+    return controller_.sendMessage(message);
 }
 
 void DesktopShellViewModel::setModeByName(const QString& modeName) {
