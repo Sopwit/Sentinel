@@ -394,3 +394,24 @@ Boundary rules:
   that boundary.
 - Checkpoint documentation should summarize completed scope, limitations, readiness criteria, and
   explicit out-of-scope work.
+
+## 24. AI Orchestration Planning Is Separate From Runtime Execution
+
+Decision: Plan future AI orchestration around a separate `ModelRouter` and `RoutingPolicy` concept
+before Phase 5 UI work.
+
+Reason: Model/provider selection needs its own architecture boundary so chat providers, agent
+runtime metadata, tool execution, and model-management UI do not become coupled.
+
+Boundary rules:
+
+- `ModelRouter` and `RoutingPolicy` are future concepts only in Phase 4.11.
+- Provider capability profiles, task classification, local/cloud fallback, device-aware selection,
+  and user routing modes are metadata planning topics, not implemented runtime behavior.
+- Sensitive data should prefer local-only routing, and cloud use must require explicit user
+  permission in any future implementation.
+- Future model-management UI should display metadata such as installed/downloadable models,
+  recommendations, RAM/disk requirements, and local/cloud badges without owning routing logic.
+- This planning does not add provider integrations, networking, API keys, model downloads, model
+  execution, plugin loading, filesystem/system actions, real tool execution, approval UX, or
+  sandbox runtime.

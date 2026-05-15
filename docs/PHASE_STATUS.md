@@ -144,7 +144,7 @@ Must remain out of scope until explicitly approved:
 
 ### Phase 4: Agent Core & Tool System
 
-Completed through Phase 4.10 and remains local-safe.
+Completed through Phase 4.11 and remains local-safe.
 
 ### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
 
@@ -549,3 +549,32 @@ Boundary clarification:
 - Real execution, approval UX, sandbox runtime, provider integrations, plugin loading,
   networking/API keys, filesystem/system actions, shell/process launch, subprocess launch, and
   privileged automation remain out of scope.
+
+### Phase 4.11: AI Orchestration Planning Checkpoint
+
+Completed. Documented future model/provider routing direction before Phase 5 UI work.
+
+Scope:
+
+- Added future `ModelRouter` and `RoutingPolicy` planning.
+- Documented provider capability profiles and task classification.
+- Documented local/cloud fallback and device-aware model selection.
+- Documented user routing modes: Auto, Fast, Balanced, Quality, Local Only, Cloud Allowed, and
+  Battery Saver.
+- Documented future model-management UI metadata: installed/downloadable/recommended models,
+  RAM/disk requirements, and local/cloud badges.
+- Documented privacy-aware routing: sensitive data should prefer local-only, and cloud use must
+  require explicit user permission.
+- Clarified that this planning remains separate from current Phase 4 runtime, `IChatProvider`,
+  `IAgentRuntime`, tool execution, and future UI model-management screens.
+
+Still out of scope:
+
+- Real provider integrations.
+- Networking/API keys.
+- Ollama/OpenAI/Anthropic integration.
+- Model downloads or model execution.
+- Plugin loading.
+- Filesystem/system actions.
+- Real tool execution.
+- Runtime behavior changes.

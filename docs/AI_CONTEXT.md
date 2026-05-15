@@ -75,6 +75,9 @@ Future UI vision:
   active planned tool ids, and activity count/latest summary without execution or approval controls.
 - Phase 4 checkpoint documentation records completed scope, known limitations, and Phase 5
   readiness criteria while keeping execution non-operational.
+- AI orchestration planning now documents future `ModelRouter`, `RoutingPolicy`, provider
+  capability profiles, task classification, routing modes, privacy-aware routing, and model
+  management UI metadata without implementing providers or model execution.
 - `IMemoryStore` isolates memory storage.
 - `IChatHistoryStore` isolates chat history storage.
 - `ISettingsStore` isolates settings storage.
@@ -86,12 +89,12 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, and Phase 4.10.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, and Phase 4.11.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
   with local runtime context/session, in-memory activity logging for pipeline metadata, and
   read-only dashboard visibility for that state.
 - Next: Phase 5 UI/UX planning with continued local-safe constraints.
-- Recent: Phase 4.10, Architecture Checkpoint and Cleanup.
+- Recent: Phase 4.11, AI Orchestration Planning Checkpoint.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

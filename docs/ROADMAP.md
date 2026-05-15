@@ -61,7 +61,7 @@ Candidate interfaces:
 
 ## Phase 4: Agent Core & Tool System
 
-Completed through Phase 4.10 with metadata-only agent/tool boundaries and no real execution.
+Completed through Phase 4.11 with metadata-only agent/tool boundaries and no real execution.
 
 ### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
 
@@ -328,6 +328,29 @@ Still out of scope:
 - Execution or approval controls.
 - Real sandbox runtime or OS permission enforcement.
 
+### Phase 4.11: AI Orchestration Planning Checkpoint
+
+Completed. Planned future AI routing architecture before Phase 5.
+
+Delivered:
+
+- `ModelRouter` and `RoutingPolicy` direction.
+- Provider capability profile and task classification concepts.
+- Local/cloud fallback, device-aware selection, user routing modes, and privacy-aware routing.
+- Future model-management UI metadata scope.
+- Clear separation from current Phase 4 runtime, providers, agent runtime, tool execution, and UI
+  screens.
+
+Still out of scope:
+
+- Real provider integrations.
+- Networking/API keys.
+- Ollama/OpenAI/Anthropic integration.
+- Model downloads or model execution.
+- Plugin loading.
+- Filesystem/system actions.
+- Real tool execution.
+
 ## Phase 5: Advanced UI/UX & Motion System
 
 Evolve the Qt Quick experience with responsive layouts, adaptive themes, assistant-like interaction, animated panels, dashboard cards, and reusable components.
@@ -335,6 +358,8 @@ Evolve the Qt Quick experience with responsive layouts, adaptive themes, assista
 Readiness criteria:
 
 - Preserve Phase 4 no-execution boundaries.
+- Treat AI orchestration and model-management screens as metadata-only planning until an explicit
+  later implementation phase.
 - Keep QML behind view-models and avoid business logic in presentation code.
 - Treat agent/runtime visibility as read-only unless a later explicit phase changes it.
 - Keep full tests and formatting passing through UI changes.
