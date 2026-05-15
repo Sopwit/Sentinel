@@ -7,7 +7,7 @@ Sentinel uses CMake presets to keep local and CI builds consistent.
 - CMake 3.24 or newer.
 - Ninja.
 - C++20 compiler.
-- Qt 6.5 or newer with `Core`, `Gui`, `Quick`, `Qml`, and `Test`.
+- Qt 6.5 or newer with `Core`, `Gui`, `Quick`, `Qml`, `Sql`, and `Test`.
 
 ## Configure And Build
 
@@ -145,9 +145,20 @@ Linux CI installs Qt, configures with the `tests` preset, builds with Ninja, run
 
 QML should bind to `DesktopShellViewModel`, not directly to core services. Keep business rules in C++ and expose only small `Q_PROPERTY` and `Q_INVOKABLE` surfaces needed by the UI.
 
-Settings placeholders should go through `AppSettings`. Storage placeholders should go through `IMemoryStore`. Do not add SQLite, provider networking, or platform automation in the desktop shell layer.
+Settings placeholders should go through `AppSettings`. Memory storage should go through `IMemoryStore`. Do not add provider networking or platform automation in the desktop shell layer.
 
 Chat UI should consume `ChatMessageListModel` roles instead of formatting message history in QML. Keep chat mutation in `ApplicationController` and `ChatSession`.
+
+## Memory Storage
+
+Sentinel currently has two memory backends:
+
+- `InMemoryStore`: volatile backend used by unit tests and simple development fixtures.
+- `SQLiteMemoryStore`: persistent desktop backend implementing the same `IMemoryStore` key-value contract.
+
+The desktop app wires `SQLiteMemoryStore` to Qt's `AppDataLocation` as `memory.sqlite3`. Keep settings in `JsonSettingsStore`; do not mix settings and app memory in the same file or table.
+
+SQLite stores only explicit key-value memory entries. Chat history remains in-memory until a separate persistence design is added.
 
 ## Linux Packaging Direction
 

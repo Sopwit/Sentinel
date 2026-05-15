@@ -10,7 +10,7 @@ Add provider adapters for real AI APIs behind `IChatProvider`. Keep provider sel
 
 ## Phase 3: SQLite Memory
 
-Replace runtime-only memory with a SQLite-backed implementation of `IMemoryStore`.
+Add a SQLite-backed implementation of `IMemoryStore` for persistent key-value memory while keeping chat history persistence separate.
 
 ## Phase 4: Voice System
 

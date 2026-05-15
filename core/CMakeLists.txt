@@ -16,6 +16,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/JsonSettingsStore.h
     include/sentinel/core/LocalEchoProvider.h
     include/sentinel/core/ModeManager.h
+    include/sentinel/core/SQLiteMemoryStore.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
     src/ApplicationController.cpp
@@ -27,6 +28,7 @@ add_library(sentinel_core STATIC
     src/JsonSettingsStore.cpp
     src/LocalEchoProvider.cpp
     src/ModeManager.cpp
+    src/SQLiteMemoryStore.cpp
 )
 
 target_include_directories(sentinel_core
@@ -37,6 +39,7 @@ target_include_directories(sentinel_core
 target_link_libraries(sentinel_core
     PUBLIC
         Qt6::Core
+        Qt6::Sql
 )
 
 target_compile_features(sentinel_core PUBLIC cxx_std_20)

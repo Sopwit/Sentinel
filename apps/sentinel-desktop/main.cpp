@@ -3,10 +3,10 @@
 #include "sentinel/core/AppMetadata.h"
 #include "sentinel/core/AppSettings.h"
 #include "sentinel/core/ApplicationController.h"
-#include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/JsonSettingsStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/ModeManager.h"
+#include "sentinel/core/SQLiteMemoryStore.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
@@ -22,9 +22,11 @@ int main(int argc, char* argv[]) {
     QGuiApplication::setApplicationVersion(sentinel::core::AppMetadata::version());
     QGuiApplication::setDesktopFileName(sentinel::core::AppMetadata::appId());
 
+    const auto appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     sentinel::core::ApplicationController controller(
         std::make_unique<sentinel::core::LocalEchoProvider>(),
-        std::make_unique<sentinel::core::InMemoryStore>());
+        std::make_unique<sentinel::core::SQLiteMemoryStore>(appDataDir +
+                                                            QStringLiteral("/memory.sqlite3")));
     sentinel::core::ModeManager modeManager;
     const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     sentinel::core::AppSettings settings(std::make_unique<sentinel::core::JsonSettingsStore>(

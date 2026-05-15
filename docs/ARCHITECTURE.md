@@ -13,7 +13,7 @@ Sentinel Desktop Alpha is a modular monolith. The application is split into a na
 
 ## Current Runtime Flow
 
-`main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `InMemoryStore`, `ModeManager`, `AppSettings`, and `DesktopShellViewModel`, then exposes only the view model to QML.
+`main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `SQLiteMemoryStore`, `ModeManager`, `AppSettings`, and `DesktopShellViewModel`, then exposes only the view model to QML.
 
 QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, and settings defaults.
 
@@ -55,7 +55,11 @@ These files bind to `shellViewModel`. They should not own business rules, provid
 
 `IMemoryStore` is intentionally storage-backend independent. It stores exact key/value pairs and returns entries through a small value-based contract. Application-level validation, such as rejecting blank keys, belongs in controllers or services rather than storage implementations.
 
-`InMemoryStore` remains the default development and test backend. A future `SQLiteMemoryStore` should implement `IMemoryStore` without requiring changes to `ApplicationController`.
+`InMemoryStore` remains the default lightweight development and test backend. `SQLiteMemoryStore` implements the same `IMemoryStore` contract for desktop persistence without requiring changes to `ApplicationController`.
+
+The desktop app stores memory below Qt's `AppDataLocation` as `memory.sqlite3`. Settings remain separate in `JsonSettingsStore` below Qt's `AppConfigLocation`.
+
+SQLite stores only explicit key-value memory entries. Chat history remains in-memory and is not persisted yet.
 
 ## Settings Contract
 
@@ -94,7 +98,6 @@ Chat history is not persisted yet. Future persistence should be added behind a d
 ## Not Implemented Yet
 
 - Real AI providers.
-- SQLite persistence.
 - Voice input or output.
 - Automation agents.
 - Cloud sync.
