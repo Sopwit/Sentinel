@@ -59,6 +59,22 @@ docs only.
 Do not modify runtime code, QML implementation, SQLite code, dependencies, or Phase 4 behavior.
 ```
 
+```text
+Read AGENTS.md, docs/AI_CONTEXT.md, and docs/PHASE_STATUS.md first.
+
+Task:
+Run a Phase 3.5 architecture audit checkpoint and fix only small safe issues.
+
+Scope:
+core, apps/sentinel-desktop, ui/qml, tests, and docs.
+
+Do not:
+Start Phase 4 implementation, add networking/API keys, provider integrations, plugin loading, or privileged automation.
+
+After completion:
+Run build/tests and report readiness risks plus a Phase 4 readiness verdict.
+```
+
 ## Anti-Pattern Prompts
 
 Avoid broad prompts:

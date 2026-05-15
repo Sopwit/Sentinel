@@ -31,8 +31,8 @@ int main(int argc, char* argv[]) {
         std::make_unique<sentinel::core::SQLiteChatHistoryStore>(
             pathProvider.chatHistoryDatabasePath()));
     sentinel::core::ModeManager modeManager;
-    sentinel::core::AppSettings settings(std::make_unique<sentinel::core::JsonSettingsStore>(
-        pathProvider.settingsFilePath()));
+    sentinel::core::AppSettings settings(
+        std::make_unique<sentinel::core::JsonSettingsStore>(pathProvider.settingsFilePath()));
     sentinel::desktop::DesktopShellViewModel shellViewModel(controller, modeManager, settings);
 
     QQmlApplicationEngine engine;

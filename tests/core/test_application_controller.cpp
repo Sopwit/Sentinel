@@ -238,22 +238,18 @@ void ApplicationControllerTest::clearsChatHistory() {
 }
 
 void ApplicationControllerTest::loadsPersistedChatHistoryAtStartup() {
-    auto store = std::make_unique<RecordingChatHistoryStore>(
-        QList<sentinel::core::ChatMessage>{
-            {4, sentinel::core::ChatRole::System, QStringLiteral("previous system"),
-             QDateTime::fromString(QStringLiteral("2026-05-15T12:00:00.000Z"),
-                                   Qt::ISODateWithMs),
-             sentinel::core::ChatMessageStatus::Received},
-            {5, sentinel::core::ChatRole::User, QStringLiteral("previous user"),
-             QDateTime::fromString(QStringLiteral("2026-05-15T12:01:00.000Z"),
-                                   Qt::ISODateWithMs),
-             sentinel::core::ChatMessageStatus::Sent},
-        });
+    auto store = std::make_unique<RecordingChatHistoryStore>(QList<sentinel::core::ChatMessage>{
+        {4, sentinel::core::ChatRole::System, QStringLiteral("previous system"),
+         QDateTime::fromString(QStringLiteral("2026-05-15T12:00:00.000Z"), Qt::ISODateWithMs),
+         sentinel::core::ChatMessageStatus::Received},
+        {5, sentinel::core::ChatRole::User, QStringLiteral("previous user"),
+         QDateTime::fromString(QStringLiteral("2026-05-15T12:01:00.000Z"), Qt::ISODateWithMs),
+         sentinel::core::ChatMessageStatus::Sent},
+    });
     const auto storePtr = store.get();
 
     ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr,
-                                     std::move(store));
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
 
     QCOMPARE(controller.chatHistory().size(), 2);
     QCOMPARE(controller.chatHistory().first().id, 4);
@@ -265,8 +261,7 @@ void ApplicationControllerTest::appendsNewChatMessagesToHistoryStore() {
     auto store = std::make_unique<RecordingChatHistoryStore>();
     const auto storePtr = store.get();
     ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr,
-                                     std::move(store));
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
 
     const auto sent = controller.sendMessage(QStringLiteral("status"));
 
@@ -282,25 +277,25 @@ void ApplicationControllerTest::clearsPersistentChatHistoryWhenAvailable() {
     auto store = std::make_unique<RecordingChatHistoryStore>();
     const auto storePtr = store.get();
     ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr,
-                                     std::move(store));
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
 
     controller.sendMessage(QStringLiteral("status"));
-    controller.clearChat();
+    const auto cleared = controller.clearChat();
 
+    QVERIFY(cleared);
     QVERIFY(storePtr->wasCleared_);
     QCOMPARE(storePtr->messages_.size(), 1);
     QCOMPARE(storePtr->messages_.first().id, 1);
     QCOMPARE(storePtr->messages_.first().role, sentinel::core::ChatRole::System);
     QCOMPARE(controller.chatHistory().size(), 1);
+    QCOMPARE(controller.chatMaintenanceStatus(), QStringLiteral("Clear completed"));
 }
 
 void ApplicationControllerTest::keepsRuntimeChatWorkingWhenHistoryStoreUnavailable() {
-    auto store = std::make_unique<RecordingChatHistoryStore>(
-        QList<sentinel::core::ChatMessage>{}, false);
+    auto store =
+        std::make_unique<RecordingChatHistoryStore>(QList<sentinel::core::ChatMessage>{}, false);
     ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr,
-                                     std::move(store));
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
 
     const auto sent = controller.sendMessage(QStringLiteral("status"));
 
@@ -381,11 +376,10 @@ void ApplicationControllerTest::overwritesMemoryEntriesThroughStoreBackend() {
 }
 
 void ApplicationControllerTest::reportsRuntimeOnlyWhenChatStoreUnavailableOnClear() {
-    auto store = std::make_unique<RecordingChatHistoryStore>(
-        QList<sentinel::core::ChatMessage>{}, false);
+    auto store =
+        std::make_unique<RecordingChatHistoryStore>(QList<sentinel::core::ChatMessage>{}, false);
     ApplicationController controller(std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr,
-                                     std::move(store));
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
     QSignalSpy maintenanceSpy(&controller, &ApplicationController::maintenanceStatusChanged);
 
     controller.sendMessage(QStringLiteral("status"));
@@ -393,7 +387,7 @@ void ApplicationControllerTest::reportsRuntimeOnlyWhenChatStoreUnavailableOnClea
 
     QVERIFY(!cleared);
     QCOMPARE(controller.chatHistory().size(), 1);
-    QCOMPARE(controller.chatMaintenanceStatus(), QStringLiteral("Runtime only"));
+    QCOMPARE(controller.chatMaintenanceStatus(), QStringLiteral("Runtime Only"));
     QCOMPARE(maintenanceSpy.count(), 1);
 }
 

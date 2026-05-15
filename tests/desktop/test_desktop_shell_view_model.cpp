@@ -200,10 +200,9 @@ void DesktopShellViewModelTest::clearsMemoryActions() {
 }
 
 void DesktopShellViewModelTest::reportsRuntimeOnlyChatMaintenanceWhenStoreUnavailable() {
-    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
-                                     std::make_unique<InMemoryStore>(), nullptr,
-                                     std::make_unique<StaticChatHistoryStore>(
-                                         QList<sentinel::core::ChatMessage>{}, false)};
+    ApplicationController controller{
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr,
+        std::make_unique<StaticChatHistoryStore>(QList<sentinel::core::ChatMessage>{}, false)};
     ModeManager modeManager;
     AppSettings settings{std::make_unique<InMemorySettingsStore>()};
     DesktopShellViewModel viewModel{controller, modeManager, settings};
@@ -213,7 +212,7 @@ void DesktopShellViewModelTest::reportsRuntimeOnlyChatMaintenanceWhenStoreUnavai
     const auto cleared = viewModel.clearChat();
 
     QVERIFY(!cleared);
-    QCOMPARE(viewModel.chatMaintenanceStatus(), QStringLiteral("Runtime only"));
+    QCOMPARE(viewModel.chatMaintenanceStatus(), QStringLiteral("Runtime Only"));
     QCOMPARE(viewModel.chatMessages()->rowCount(), 1);
     QCOMPARE(maintenanceSpy.count(), 1);
 }

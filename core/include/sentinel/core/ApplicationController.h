@@ -17,8 +17,10 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString providerStatus READ providerStatus CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
-    Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY maintenanceStatusChanged)
-    Q_PROPERTY(QString chatMaintenanceStatus READ chatMaintenanceStatus NOTIFY maintenanceStatusChanged)
+    Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
+                   maintenanceStatusChanged)
+    Q_PROPERTY(
+        QString chatMaintenanceStatus READ chatMaintenanceStatus NOTIFY maintenanceStatusChanged)
 
 public:
     ApplicationController(std::unique_ptr<IChatProvider> provider,

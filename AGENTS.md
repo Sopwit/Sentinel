@@ -10,11 +10,11 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 3.4 is complete.
+Phase 3.5 is complete.
 
-Most recent work: Phase 3.4, Cross-platform Architecture Readiness and Storage Maintenance.
+Most recent work: Phase 3.5, Pre-agent Architecture Audit and Release Checkpoint.
 
-Current planning focus: Phase 4 preparation boundaries without runtime provider integrations.
+Current planning focus: Phase 4 readiness planning without runtime agent/tool implementation.
 
 ## Stack
 
@@ -99,4 +99,4 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 
 ## Current Priority
 
-Maintain Phase 3.4 platform boundaries and storage separation while avoiding Phase 4 runtime implementation without an explicit task.
+Maintain Phase 3.5 checkpoint constraints and keep Phase 4 work scoped to explicit tasks only.

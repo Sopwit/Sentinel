@@ -116,7 +116,7 @@ Runtime behavior:
 - If persistent chat storage is unavailable, runtime clear still succeeds with generic runtime-only status.
 - Runtime chat continues if chat persistence is unavailable.
 - QML receives only generic chat history status, such as `Available` or `Runtime Only`.
-- QML receives only generic maintenance statuses, such as `Ready`, `Clear completed`, `Runtime only`, or
+- QML receives only generic maintenance statuses, such as `Ready`, `Clear completed`, `Runtime Only`, or
   `Unavailable`.
 - The desktop UI confirms before clearing local chat history.
 
@@ -168,3 +168,24 @@ Future direction:
 - Extensible component system.
 
 Rule: future UI polish should stay behind QML/view-model boundaries and must not introduce business logic into QML.
+
+## 12. Pre-agent Release Checkpoint
+
+Decision: Add a stabilization checkpoint before Phase 4 implementation work.
+
+Reason: The architecture needs an explicit audit gate so agent/tool runtime work does not begin on top of stale docs, inconsistent wording, or accidental boundary drift.
+
+Checkpoint criteria:
+
+- Core boundaries and platform boundaries remain explicit and interface-driven.
+- QML exposure stays generic and does not leak SQLite/platform internals.
+- Persistence separation remains strict across settings, memory, and chat history.
+- Coverage exists for path ownership and maintenance status behavior.
+- Release verification (`cmake --preset tests`, `cmake --build --preset tests`, `ctest --preset tests`) and formatting checks pass.
+
+Out of scope during this checkpoint:
+
+- Phase 4 agent/tool runtime implementation.
+- Real provider/network integration and API keys.
+- Plugin loading.
+- Privileged automation.
