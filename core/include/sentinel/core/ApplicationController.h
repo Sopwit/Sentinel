@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sentinel/core/ChatSession.h"
 #include "sentinel/core/IChatProvider.h"
 #include "sentinel/core/IMemoryStore.h"
 
@@ -18,14 +19,18 @@ class ApplicationController final : public QObject {
 
 public:
     ApplicationController(std::unique_ptr<IChatProvider> provider,
-                          std::unique_ptr<IMemoryStore> memoryStore, QObject* parent = nullptr);
+                          std::unique_ptr<IMemoryStore> memoryStore,
+                          std::unique_ptr<ChatSession> chatSession = nullptr,
+                          QObject* parent = nullptr);
 
     QString providerName() const;
     QString providerStatus() const;
+    const QList<ChatMessage>& chatHistory() const;
     QStringList chatMessages() const;
     QStringList memoryEntries() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
+    Q_INVOKABLE void clearChat();
     Q_INVOKABLE void remember(const QString& key, const QString& value);
 
 signals:
@@ -35,7 +40,7 @@ signals:
 private:
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IMemoryStore> memoryStore_;
-    QStringList chatMessages_;
+    std::unique_ptr<ChatSession> chatSession_;
 };
 
 } // namespace sentinel::core

@@ -4,9 +4,13 @@ namespace sentinel::core {
 
 ApplicationController::ApplicationController(std::unique_ptr<IChatProvider> provider,
                                              std::unique_ptr<IMemoryStore> memoryStore,
+                                             std::unique_ptr<ChatSession> chatSession,
                                              QObject* parent)
-    : QObject(parent), provider_(std::move(provider)), memoryStore_(std::move(memoryStore)) {
-    chatMessages_.append(QStringLiteral("Sentinel: Sentinel Core online."));
+    : QObject(parent), provider_(std::move(provider)), memoryStore_(std::move(memoryStore)),
+      chatSession_(chatSession ? std::move(chatSession)
+                               : std::make_unique<ChatSession>(std::make_unique<SystemClock>())) {
+    chatSession_->appendSystemMessage(QStringLiteral("Sentinel Core online."),
+                                      ChatMessageStatus::Received);
 }
 
 QString ApplicationController::providerName() const {
@@ -17,8 +21,20 @@ QString ApplicationController::providerStatus() const {
     return provider_ ? chatProviderStatusName(provider_->status()) : QStringLiteral("Unavailable");
 }
 
+const QList<ChatMessage>& ApplicationController::chatHistory() const {
+    return chatSession_->messages();
+}
+
 QStringList ApplicationController::chatMessages() const {
-    return chatMessages_;
+    QStringList result;
+    for (const auto& message : chatSession_->messages()) {
+        if (message.role == ChatRole::User) {
+            result.append(QStringLiteral("You: %1").arg(message.content));
+        } else {
+            result.append(QStringLiteral("Sentinel: %1").arg(message.content));
+        }
+    }
+    return result;
 }
 
 QStringList ApplicationController::memoryEntries() const {
@@ -40,22 +56,30 @@ bool ApplicationController::sendMessage(const QString& message) {
         return false;
     }
 
-    chatMessages_.append(QStringLiteral("You: %1").arg(trimmed));
+    chatSession_->appendUserMessage(trimmed);
 
     if (!provider_ || provider_->status() != ChatProviderStatus::Ready) {
-        chatMessages_.append(
-            QStringLiteral("Sentinel: Provider unavailable. Status: %1").arg(providerStatus()));
+        chatSession_->appendAssistantMessage(
+            QStringLiteral("Provider unavailable. Status: %1").arg(providerStatus()),
+            ChatMessageStatus::Error);
         emit chatMessagesChanged();
         return false;
     }
 
     const auto reply = provider_->sendMessage(trimmed);
-    chatMessages_.append(
-        QStringLiteral("Sentinel: %1")
-            .arg(reply.success ? reply.message
-                               : QStringLiteral("Provider error: %1").arg(reply.errorMessage)));
+    chatSession_->appendAssistantMessage(
+        reply.success ? reply.message
+                      : QStringLiteral("Provider error: %1").arg(reply.errorMessage),
+        reply.success ? ChatMessageStatus::Received : ChatMessageStatus::Error);
     emit chatMessagesChanged();
     return reply.success;
+}
+
+void ApplicationController::clearChat() {
+    chatSession_->clear();
+    chatSession_->appendSystemMessage(QStringLiteral("Sentinel Core online."),
+                                      ChatMessageStatus::Received);
+    emit chatMessagesChanged();
 }
 
 void ApplicationController::remember(const QString& key, const QString& value) {

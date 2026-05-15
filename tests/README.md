@@ -5,6 +5,7 @@ Sentinel uses Qt Test for isolated C++ core tests.
 Current test targets:
 
 - `test_mode_manager`
+- `test_chat_session`
 - `test_in_memory_store`
 - `test_application_controller`
 - `test_app_settings`

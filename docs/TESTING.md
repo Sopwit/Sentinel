@@ -23,12 +23,13 @@ ctest --test-dir build --output-on-failure
 ## Current Coverage
 
 - `ModeManager`: default mode, available modes, repeated changes, duplicate mode selection, and unknown mode names.
+- `ChatSession`: append behavior, clear behavior, stable ids, roles, statuses, and deterministic timestamp injection.
 - `InMemoryStore`: missing keys, empty keys, put/get, repeated overwrites, multiple independent keys, and deterministic entry ordering.
-- `ApplicationController`: initial state, local provider responses, unavailable-provider handling, blank chat rejection, memory key validation, runtime memory writes, and overwrite behavior through `IMemoryStore`.
+- `ApplicationController`: structured chat history, local provider responses, provider error flow, unavailable-provider handling, blank chat rejection, memory key validation, runtime memory writes, and overwrite behavior through `IMemoryStore`.
 - `LocalEchoProvider`: provider name/status, stable status labels, and deterministic local response.
 - `AppSettings`: defaults, input normalization, duplicate updates, blank input handling, and configuration profile changes.
 - `JsonSettingsStore`: missing files, directory creation, and persistence across instances.
-- `DesktopShellViewModel`: QML-facing state exposure and forwarding for chat, mode, memory, and settings actions.
+- `DesktopShellViewModel`: QML-facing state exposure, `ChatMessageListModel` history, and forwarding for chat, mode, memory, and settings actions.
 
 ## Test Boundaries
 

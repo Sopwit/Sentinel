@@ -18,6 +18,7 @@ using sentinel::core::InMemorySettingsStore;
 using sentinel::core::InMemoryStore;
 using sentinel::core::LocalEchoProvider;
 using sentinel::core::ModeManager;
+using sentinel::desktop::ChatMessageListModel;
 using sentinel::desktop::DesktopShellViewModel;
 
 class DesktopShellViewModelTest final : public QObject {
@@ -27,6 +28,7 @@ private slots:
     void exposesInitialShellState();
     void forwardsChatActions();
     void ignoresBlankChatActions();
+    void clearsChatActions();
     void forwardsModeChanges();
     void forwardsMemoryWrites();
     void forwardsSettingsChanges();
@@ -65,9 +67,12 @@ void DesktopShellViewModelTest::forwardsChatActions() {
     const auto sent = fixture.viewModel.sendMessage(QStringLiteral("status"));
 
     QVERIFY(sent);
-    QCOMPARE(fixture.viewModel.chatMessages().size(), 3);
-    QCOMPARE(fixture.viewModel.chatMessages().last(),
-             QStringLiteral("Sentinel: Sentinel Core online. Local chat pipeline is active."));
+    QCOMPARE(fixture.viewModel.chatMessages()->rowCount(), 3);
+    const auto lastIndex = fixture.viewModel.chatMessages()->index(2, 0);
+    QCOMPARE(fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::ContentRole),
+             QStringLiteral("Sentinel Core online. Local chat pipeline is active."));
+    QCOMPARE(fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::StatusRole),
+             QStringLiteral("received"));
     QCOMPARE(spy.count(), 1);
 }
 
@@ -78,8 +83,19 @@ void DesktopShellViewModelTest::ignoresBlankChatActions() {
     const auto sent = fixture.viewModel.sendMessage(QStringLiteral("   "));
 
     QVERIFY(!sent);
-    QCOMPARE(fixture.viewModel.chatMessages().size(), 1);
+    QCOMPARE(fixture.viewModel.chatMessages()->rowCount(), 1);
     QCOMPARE(spy.count(), 0);
+}
+
+void DesktopShellViewModelTest::clearsChatActions() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::chatMessagesChanged);
+
+    fixture.viewModel.sendMessage(QStringLiteral("status"));
+    fixture.viewModel.clearChat();
+
+    QCOMPARE(fixture.viewModel.chatMessages()->rowCount(), 1);
+    QCOMPARE(spy.count(), 2);
 }
 
 void DesktopShellViewModelTest::forwardsModeChanges() {

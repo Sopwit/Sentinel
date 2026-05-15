@@ -1,5 +1,7 @@
 add_library(sentinel_desktop_viewmodels STATIC
+    include/sentinel/desktop/ChatMessageListModel.h
     include/sentinel/desktop/DesktopShellViewModel.h
+    src/ChatMessageListModel.cpp
     src/DesktopShellViewModel.cpp
 )
 

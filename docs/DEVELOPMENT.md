@@ -93,6 +93,8 @@ QML should bind to `DesktopShellViewModel`, not directly to core services. Keep 
 
 Settings placeholders should go through `AppSettings`. Storage placeholders should go through `IMemoryStore`. Do not add SQLite, provider networking, or platform automation in the desktop shell layer.
 
+Chat UI should consume `ChatMessageListModel` roles instead of formatting message history in QML. Keep chat mutation in `ApplicationController` and `ChatSession`.
+
 ## Linux Packaging Direction
 
 Fedora/KDE packaging should stay conventional:

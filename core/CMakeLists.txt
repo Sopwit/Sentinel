@@ -2,7 +2,10 @@ add_library(sentinel_core STATIC
     include/sentinel/core/AppMetadata.h
     include/sentinel/core/AppSettings.h
     include/sentinel/core/ApplicationController.h
+    include/sentinel/core/ChatMessage.h
+    include/sentinel/core/ChatSession.h
     include/sentinel/core/IChatProvider.h
+    include/sentinel/core/IClock.h
     include/sentinel/core/IContextEngine.h
     include/sentinel/core/IIntegration.h
     include/sentinel/core/IMemoryStore.h
@@ -16,6 +19,8 @@ add_library(sentinel_core STATIC
     src/AppMetadata.cpp
     src/AppSettings.cpp
     src/ApplicationController.cpp
+    src/ChatSession.cpp
+    src/IClock.cpp
     src/IContextEngine.cpp
     src/InMemoryStore.cpp
     src/InMemorySettingsStore.cpp

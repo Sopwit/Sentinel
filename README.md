@@ -10,6 +10,7 @@ This first version includes:
 - Qt 6 + QML desktop shell.
 - Modular C++ core library.
 - `IChatProvider` with a deterministic `LocalEchoProvider`.
+- Structured in-memory `ChatSession` with a QML-safe chat history model.
 - `IMemoryStore` with runtime-only `InMemoryStore`.
 - `IPlugin` and `IContextEngine` interfaces.
 - `ApplicationController` and `ModeManager`.
