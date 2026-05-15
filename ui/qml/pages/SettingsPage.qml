@@ -87,6 +87,49 @@ ShellPanel {
                 Layout.columnSpan: settingsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Task Plan"
+                value: settingsPage.viewModel.latestTaskPlanStatus + " (" + settingsPage.viewModel.plannedTaskStepCount + " step)"
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Plan Summary"
+                value: settingsPage.viewModel.latestTaskPlanSummary
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+        }
+
+        SectionTitle {
+            title: "Provider Catalog"
+            subtitle: "Read-only metadata placeholders for future model management. No setup, credentials, downloads, networking, or execution are enabled."
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Catalog Entries"
+                value: settingsPage.viewModel.providerCatalogCount.toString()
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.providerCatalogSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Provider"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
         }
 
         SectionTitle {

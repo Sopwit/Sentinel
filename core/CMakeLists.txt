@@ -14,6 +14,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/IContextEngine.h
     include/sentinel/core/IApprovalPolicy.h
     include/sentinel/core/IModelRouter.h
+    include/sentinel/core/IProviderCatalog.h
     include/sentinel/core/ISandboxPolicy.h
     include/sentinel/core/IIntegration.h
     include/sentinel/core/INotificationService.h
@@ -22,6 +23,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/IPlatformService.h
     include/sentinel/core/IPlugin.h
     include/sentinel/core/ISettingsStore.h
+    include/sentinel/core/ITaskPlanner.h
     include/sentinel/core/IToolExecutor.h
     include/sentinel/core/IToolRegistry.h
     include/sentinel/core/ISystemIntegrationService.h
@@ -34,12 +36,16 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ModelRouting.h
     include/sentinel/core/NullAgentRuntime.h
     include/sentinel/core/NullToolExecutor.h
+    include/sentinel/core/ProviderCatalog.h
     include/sentinel/core/SQLiteChatHistoryStore.h
     include/sentinel/core/SQLiteMemoryStore.h
     include/sentinel/core/StandardPathProvider.h
     include/sentinel/core/StaticApprovalPolicy.h
     include/sentinel/core/StaticModelRouter.h
+    include/sentinel/core/StaticProviderCatalog.h
     include/sentinel/core/StaticSandboxPolicy.h
+    include/sentinel/core/StaticTaskPlanner.h
+    include/sentinel/core/TaskPlanning.h
     include/sentinel/core/ToolApproval.h
     include/sentinel/core/ToolDescriptor.h
     include/sentinel/core/ToolExecution.h
@@ -66,7 +72,9 @@ add_library(sentinel_core STATIC
     src/StandardPathProvider.cpp
     src/StaticApprovalPolicy.cpp
     src/StaticModelRouter.cpp
+    src/StaticProviderCatalog.cpp
     src/StaticSandboxPolicy.cpp
+    src/StaticTaskPlanner.cpp
 )
 
 target_include_directories(sentinel_core

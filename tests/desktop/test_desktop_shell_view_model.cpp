@@ -40,6 +40,8 @@ private slots:
     void exposesRuntimeContextStatus();
     void exposesAgentActivityStatus();
     void exposesModelRoutingMetadata();
+    void exposesTaskPlanMetadata();
+    void exposesProviderCatalogMetadata();
     void updatesAndPersistsRoutingModeMetadata();
     void updatesVisibleAgentValuesForBlockedPipeline();
     void exposesOnlyQmlSafeAgentVisibilityProperties();
@@ -198,9 +200,31 @@ void DesktopShellViewModelTest::exposesModelRoutingMetadata() {
              QStringLiteral("Local Only -> Local Metadata Provider / Sentinel Local Placeholder"));
 }
 
+void DesktopShellViewModelTest::exposesTaskPlanMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
+    QCOMPARE(fixture.viewModel.plannedTaskStepCount(), 2);
+    QCOMPARE(fixture.viewModel.latestTaskPlanSummary(),
+             QStringLiteral("Unknown task uses safe local metadata fallback: Local Metadata "
+                            "Provider / Sentinel Local Placeholder."));
+}
+
+void DesktopShellViewModelTest::exposesProviderCatalogMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.providerCatalogCount(), 4);
+    QCOMPARE(fixture.viewModel.providerCatalogSummaries().size(), 4);
+    QVERIFY(fixture.viewModel.providerCatalogSummaries().contains(
+        QStringLiteral("Local Metadata Provider (Local, Available)")));
+    QVERIFY(fixture.viewModel.providerCatalogSummaries().contains(
+        QStringLiteral("Anthropic Cloud (Cloud, Not Configured)")));
+}
+
 void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::modelRoutingChanged);
+    QSignalSpy taskPlanSpy(&fixture.viewModel, &DesktopShellViewModel::taskPlanChanged);
 
     fixture.viewModel.setRoutingModeByName(QStringLiteral("Quality"));
 
@@ -210,6 +234,8 @@ void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
              QStringLiteral("Quality -> Local Metadata Provider / Sentinel Local Placeholder"));
     QCOMPARE(fixture.settings.routingModeName(), QStringLiteral("Quality"));
     QVERIFY(spy.count() >= 1);
+    QCOMPARE(fixture.viewModel.latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
+    QVERIFY(taskPlanSpy.count() >= 1);
 
     fixture.viewModel.setRoutingModeByName(QStringLiteral("unknown"));
     QCOMPARE(fixture.viewModel.currentRoutingMode(), QStringLiteral("Local Only"));
@@ -431,6 +457,11 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("runtimeContextActiveToolIds"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("agentActivityCount"), QByteArrayLiteral("int")},
         {QStringLiteral("latestAgentActivitySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("latestTaskPlanStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("latestTaskPlanSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("plannedTaskStepCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("providerCatalogCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("providerCatalogSummaries"), QByteArrayLiteral("QStringList")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -447,6 +478,10 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("runtimeContext"),
         QStringLiteral("agentActivityLog"),
         QStringLiteral("agentActivityEntries"),
+        QStringLiteral("providerCatalog"),
+        QStringLiteral("providerCatalogEntries"),
+        QStringLiteral("taskPlanner"),
+        QStringLiteral("latestTaskPlan"),
         QStringLiteral("controller"),
     };
     for (const auto& propertyName : forbiddenProperties) {

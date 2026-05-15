@@ -162,6 +162,8 @@ private slots:
     void exposesProviderStatus();
     void exposesAgentStatusWithoutRuntime();
     void exposesModelRoutingMetadata();
+    void exposesTaskPlanMetadata();
+    void exposesProviderCatalogMetadata();
     void updatesModelRoutingModeMetadata();
     void executesDeterministicAgentRequestWithRuntime();
     void exposesAgentToolMetadata();
@@ -255,9 +257,31 @@ void ApplicationControllerTest::exposesModelRoutingMetadata() {
              QStringLiteral("Local Only -> Local Metadata Provider / Sentinel Local Placeholder"));
 }
 
+void ApplicationControllerTest::exposesTaskPlanMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
+    QCOMPARE(controller->plannedTaskStepCount(), 2);
+    QCOMPARE(controller->latestTaskPlanSummary(),
+             QStringLiteral("Unknown task uses safe local metadata fallback: Local Metadata "
+                            "Provider / Sentinel Local Placeholder."));
+}
+
+void ApplicationControllerTest::exposesProviderCatalogMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->providerCatalogCount(), 4);
+    QCOMPARE(controller->providerCatalogSummaries().size(), 4);
+    QVERIFY(controller->providerCatalogSummaries().contains(
+        QStringLiteral("Local Metadata Provider (Local, Available)")));
+    QVERIFY(controller->providerCatalogSummaries().contains(
+        QStringLiteral("OpenAI Cloud (Cloud, Not Configured)")));
+}
+
 void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
     const auto controller = makeController();
     QSignalSpy spy(controller.get(), &ApplicationController::modelRoutingChanged);
+    QSignalSpy taskPlanSpy(controller.get(), &ApplicationController::taskPlanChanged);
 
     controller->setRoutingModeByName(QStringLiteral("Balanced"));
 
@@ -266,10 +290,13 @@ void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
     QCOMPARE(controller->selectedModelProviderSummary(),
              QStringLiteral("Balanced -> Local Metadata Provider / Sentinel Local Placeholder"));
     QCOMPARE(spy.count(), 1);
+    QCOMPARE(taskPlanSpy.count(), 1);
+    QCOMPARE(controller->latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
 
     controller->setRoutingModeByName(QStringLiteral("unknown"));
     QCOMPARE(controller->currentRoutingMode(), QStringLiteral("Local Only"));
     QCOMPARE(spy.count(), 2);
+    QCOMPARE(taskPlanSpy.count(), 2);
 }
 
 void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {

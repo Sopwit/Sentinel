@@ -10,7 +10,9 @@
 #include "sentinel/core/IChatProvider.h"
 #include "sentinel/core/IMemoryStore.h"
 #include "sentinel/core/IModelRouter.h"
+#include "sentinel/core/IProviderCatalog.h"
 #include "sentinel/core/ISandboxPolicy.h"
+#include "sentinel/core/ITaskPlanner.h"
 #include "sentinel/core/IToolExecutor.h"
 
 #include <QObject>
@@ -53,6 +55,11 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString modelRoutingStatus READ modelRoutingStatus NOTIFY modelRoutingChanged)
     Q_PROPERTY(QString selectedModelProviderSummary READ selectedModelProviderSummary NOTIFY
                    modelRoutingChanged)
+    Q_PROPERTY(QString latestTaskPlanStatus READ latestTaskPlanStatus NOTIFY taskPlanChanged)
+    Q_PROPERTY(QString latestTaskPlanSummary READ latestTaskPlanSummary NOTIFY taskPlanChanged)
+    Q_PROPERTY(int plannedTaskStepCount READ plannedTaskStepCount NOTIFY taskPlanChanged)
+    Q_PROPERTY(int providerCatalogCount READ providerCatalogCount CONSTANT)
+    Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -72,6 +79,8 @@ public:
                           std::unique_ptr<ISandboxPolicy> sandboxPolicy = nullptr,
                           std::unique_ptr<IToolExecutor> toolExecutor = nullptr,
                           std::unique_ptr<IModelRouter> modelRouter = nullptr,
+                          std::unique_ptr<IProviderCatalog> providerCatalog = nullptr,
+                          std::unique_ptr<ITaskPlanner> taskPlanner = nullptr,
                           QObject* parent = nullptr);
 
     QString providerName() const;
@@ -98,6 +107,11 @@ public:
     void setRoutingModeByName(const QString& routingModeName);
     QString modelRoutingStatus() const;
     QString selectedModelProviderSummary() const;
+    QString latestTaskPlanStatus() const;
+    QString latestTaskPlanSummary() const;
+    int plannedTaskStepCount() const;
+    int providerCatalogCount() const;
+    QStringList providerCatalogSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -128,10 +142,12 @@ signals:
     void runtimeContextChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
+    void taskPlanChanged();
 
 private:
     AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request) const;
     void appendPipelineActivity(const AgentPipelineResult& result);
+    void refreshLatestTaskPlan();
     void setMemoryMaintenanceStatus(const QString& status);
     void setChatMaintenanceStatus(const QString& status);
 
@@ -140,7 +156,9 @@ private:
     std::unique_ptr<IApprovalPolicy> approvalPolicy_;
     std::unique_ptr<ISandboxPolicy> sandboxPolicy_;
     std::unique_ptr<IToolExecutor> toolExecutor_;
+    std::unique_ptr<IProviderCatalog> providerCatalog_;
     std::unique_ptr<IModelRouter> modelRouter_;
+    std::unique_ptr<ITaskPlanner> taskPlanner_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
@@ -148,6 +166,7 @@ private:
     QString chatMaintenanceStatus_ = QStringLiteral("Ready");
     QString lastAgentResponse_ = QStringLiteral("No agent request yet.");
     AgentPipelineResult latestAgentPipelineResult_;
+    TaskPlan latestTaskPlan_;
     RuntimeSession runtimeSession_;
     AgentActivityLog agentActivityLog_;
 };

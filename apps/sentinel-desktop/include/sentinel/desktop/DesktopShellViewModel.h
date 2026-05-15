@@ -49,6 +49,11 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString modelRoutingStatus READ modelRoutingStatus NOTIFY modelRoutingChanged)
     Q_PROPERTY(QString selectedModelProviderSummary READ selectedModelProviderSummary NOTIFY
                    modelRoutingChanged)
+    Q_PROPERTY(QString latestTaskPlanStatus READ latestTaskPlanStatus NOTIFY taskPlanChanged)
+    Q_PROPERTY(QString latestTaskPlanSummary READ latestTaskPlanSummary NOTIFY taskPlanChanged)
+    Q_PROPERTY(int plannedTaskStepCount READ plannedTaskStepCount NOTIFY taskPlanChanged)
+    Q_PROPERTY(int providerCatalogCount READ providerCatalogCount CONSTANT)
+    Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -96,6 +101,11 @@ public:
     QStringList availableRoutingModes() const;
     QString modelRoutingStatus() const;
     QString selectedModelProviderSummary() const;
+    QString latestTaskPlanStatus() const;
+    QString latestTaskPlanSummary() const;
+    int plannedTaskStepCount() const;
+    int providerCatalogCount() const;
+    QStringList providerCatalogSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -139,6 +149,7 @@ signals:
     void runtimeContextChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
+    void taskPlanChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);

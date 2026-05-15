@@ -3,7 +3,9 @@
 #include "sentinel/core/NullToolExecutor.h"
 #include "sentinel/core/StaticApprovalPolicy.h"
 #include "sentinel/core/StaticModelRouter.h"
+#include "sentinel/core/StaticProviderCatalog.h"
 #include "sentinel/core/StaticSandboxPolicy.h"
+#include "sentinel/core/StaticTaskPlanner.h"
 
 namespace sentinel::core {
 
@@ -37,14 +39,19 @@ ApplicationController::ApplicationController(
     std::unique_ptr<ChatSession> chatSession, std::unique_ptr<IChatHistoryStore> chatHistoryStore,
     std::unique_ptr<IAgentRuntime> agentRuntime, std::unique_ptr<IApprovalPolicy> approvalPolicy,
     std::unique_ptr<ISandboxPolicy> sandboxPolicy, std::unique_ptr<IToolExecutor> toolExecutor,
-    std::unique_ptr<IModelRouter> modelRouter, QObject* parent)
+    std::unique_ptr<IModelRouter> modelRouter, std::unique_ptr<IProviderCatalog> providerCatalog,
+    std::unique_ptr<ITaskPlanner> taskPlanner, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
       sandboxPolicy_(sandboxPolicy ? std::move(sandboxPolicy)
                                    : std::make_unique<StaticSandboxPolicy>()),
       toolExecutor_(toolExecutor ? std::move(toolExecutor) : std::make_unique<NullToolExecutor>()),
-      modelRouter_(modelRouter ? std::move(modelRouter) : std::make_unique<StaticModelRouter>()),
+      providerCatalog_(providerCatalog ? std::move(providerCatalog)
+                                       : std::make_unique<StaticProviderCatalog>()),
+      modelRouter_(modelRouter ? std::move(modelRouter)
+                               : std::make_unique<StaticModelRouter>(*providerCatalog_)),
+      taskPlanner_(taskPlanner ? std::move(taskPlanner) : std::make_unique<StaticTaskPlanner>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -61,6 +68,7 @@ ApplicationController::ApplicationController(
             chatHistoryStore_->appendMessage(message);
         }
     }
+    refreshLatestTaskPlan();
 }
 
 QString ApplicationController::providerName() const {
@@ -159,7 +167,9 @@ void ApplicationController::setRoutingModeByName(const QString& routingModeName)
     }
 
     modelRouter_->setRoutingMode(nextMode);
+    refreshLatestTaskPlan();
     emit modelRoutingChanged();
+    emit taskPlanChanged();
 }
 
 QString ApplicationController::modelRoutingStatus() const {
@@ -175,6 +185,34 @@ QString ApplicationController::selectedModelProviderSummary() const {
         return QStringLiteral("No model router available.");
     }
     return safeModelRouteSummary(modelRouter_->route(TaskClassification{TaskType::Unknown}));
+}
+
+QString ApplicationController::latestTaskPlanStatus() const {
+    return taskPlanStatusName(latestTaskPlan_.status);
+}
+
+QString ApplicationController::latestTaskPlanSummary() const {
+    return safeTaskPlanSummary(latestTaskPlan_);
+}
+
+int ApplicationController::plannedTaskStepCount() const {
+    return latestTaskPlan_.steps.size();
+}
+
+int ApplicationController::providerCatalogCount() const {
+    return providerCatalog_ ? providerCatalog_->entries().size() : 0;
+}
+
+QStringList ApplicationController::providerCatalogSummaries() const {
+    QStringList summaries;
+    if (!providerCatalog_) {
+        return summaries;
+    }
+
+    for (const auto& entry : providerCatalog_->entries()) {
+        summaries.append(providerCatalogEntrySummary(entry));
+    }
+    return summaries;
 }
 
 int ApplicationController::availableToolCount() const {
@@ -356,6 +394,28 @@ void ApplicationController::appendPipelineActivity(const AgentPipelineResult& re
     agentActivityLog_.append(
         AgentActivityType::PipelineCompleted, executionActivityStatus(result.executionStatus()),
         QStringLiteral("Agent pipeline finished: %1").arg(agentPipelineStatusName(result)));
+}
+
+void ApplicationController::refreshLatestTaskPlan() {
+    if (!taskPlanner_ || !providerCatalog_) {
+        latestTaskPlan_ = TaskPlan{
+            TaskPlanStatus::Blocked,
+            modelRouter_ ? modelRouter_->routingMode() : RoutingMode::LocalOnly,
+            TaskClassification{TaskType::Unknown},
+            {},
+            {},
+            QStringLiteral("Task planner metadata is unavailable."),
+            false,
+            false,
+        };
+        return;
+    }
+
+    latestTaskPlan_ = taskPlanner_->plan(TaskPlanningRequest{
+        TaskClassification{TaskType::Unknown},
+        modelRouter_ ? modelRouter_->routingMode() : RoutingMode::LocalOnly,
+        providerCatalog_->entries(),
+    });
 }
 
 bool ApplicationController::clearMemory() {

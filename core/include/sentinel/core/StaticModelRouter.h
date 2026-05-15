@@ -1,14 +1,17 @@
 #pragma once
 
 #include "sentinel/core/IModelRouter.h"
+#include "sentinel/core/IProviderCatalog.h"
 
 namespace sentinel::core {
 
 class StaticModelRouter final : public IModelRouter {
 public:
     StaticModelRouter();
+    explicit StaticModelRouter(const IProviderCatalog& catalog);
     StaticModelRouter(RoutingMode routingMode, QList<ProviderDescriptor> providers,
                       QList<ModelDescriptor> models);
+    StaticModelRouter(RoutingMode routingMode, const IProviderCatalog& catalog);
 
     RoutingMode routingMode() const override;
     void setRoutingMode(RoutingMode mode) override;
