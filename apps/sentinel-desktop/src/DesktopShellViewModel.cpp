@@ -34,6 +34,28 @@ QStringList DesktopShellViewModel::availableModes() const {
     return modeManager_.availableModes();
 }
 
+QString DesktopShellViewModel::currentPage() const {
+    return currentPage_;
+}
+
+void DesktopShellViewModel::setCurrentPage(const QString& page) {
+    const auto normalized = normalizedPageOrDefault(page);
+    if (normalized == currentPage_) {
+        return;
+    }
+
+    currentPage_ = normalized;
+    emit currentPageChanged();
+}
+
+QStringList DesktopShellViewModel::availablePages() const {
+    return {
+        QStringLiteral("Dashboard"),
+        QStringLiteral("Memory"),
+        QStringLiteral("Settings"),
+    };
+}
+
 QStringList DesktopShellViewModel::chatMessages() const {
     return controller_.chatMessages();
 }
@@ -68,6 +90,16 @@ void DesktopShellViewModel::setModeByName(const QString& modeName) {
 
 void DesktopShellViewModel::remember(const QString& key, const QString& value) {
     controller_.remember(key, value);
+}
+
+QString DesktopShellViewModel::normalizedPageOrDefault(const QString& page) {
+    const auto trimmed = page.trimmed();
+    const QStringList pages{
+        QStringLiteral("Dashboard"),
+        QStringLiteral("Memory"),
+        QStringLiteral("Settings"),
+    };
+    return pages.contains(trimmed) ? trimmed : QStringLiteral("Dashboard");
 }
 
 } // namespace sentinel::desktop

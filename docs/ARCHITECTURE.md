@@ -29,6 +29,20 @@ QML handles layout and user input. C++ owns chat handling, provider calls, mode 
 
 Raw core objects are not exposed directly to QML.
 
+## QML Structure
+
+The desktop shell is split into small QML components:
+
+- `Main.qml`: application window and high-level layout.
+- `components/Sidebar.qml`: page navigation and provider/settings summary.
+- `components/HeaderBar.qml`: current mode and mode switcher.
+- `components/StatusBar.qml`: local alpha status footer.
+- `pages/DashboardPage.qml`: overview and chat panel host.
+- `pages/MemoryPage.qml`: runtime memory UI.
+- `pages/SettingsPage.qml`: settings placeholder UI.
+
+These files bind to `shellViewModel`. They should not own business rules, provider logic, persistence logic, or platform automation.
+
 ## Intentional Boundaries
 
 - Provider behavior is hidden behind `IProvider`.
@@ -45,9 +59,9 @@ Raw core objects are not exposed directly to QML.
 
 ## Settings Contract
 
-`ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation while `InMemorySettingsStore` provides the current runtime-only backend.
+`ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.
 
-Future persistent settings should implement `ISettingsStore` without changing QML or the desktop view model.
+The desktop app stores settings below Qt's `AppConfigLocation`. Future settings backends should implement `ISettingsStore` without changing QML or the desktop view model.
 
 ## Plugin And Integration Boundaries
 

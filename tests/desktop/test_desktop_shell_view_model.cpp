@@ -29,6 +29,8 @@ private slots:
     void forwardsModeChanges();
     void forwardsMemoryWrites();
     void forwardsSettingsChanges();
+    void tracksNavigationState();
+    void ignoresRepeatedAndUnknownNavigationChanges();
 };
 
 class ViewModelFixture {
@@ -48,6 +50,10 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QVERIFY(fixture.viewModel.availableModes().contains(QStringLiteral("Tactical Mode")));
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Dark"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
+    QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
+    QCOMPARE(fixture.viewModel.availablePages(),
+             QStringList({QStringLiteral("Dashboard"), QStringLiteral("Memory"),
+                          QStringLiteral("Settings")}));
 }
 
 void DesktopShellViewModelTest::forwardsChatActions() {
@@ -94,6 +100,32 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
     QCOMPARE(themeSpy.count(), 1);
     QCOMPARE(profileSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::tracksNavigationState() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::currentPageChanged);
+
+    fixture.viewModel.setCurrentPage(QStringLiteral("Memory"));
+
+    QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Memory"));
+    QCOMPARE(spy.count(), 1);
+
+    fixture.viewModel.setCurrentPage(QStringLiteral("Settings"));
+    QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Settings"));
+    QCOMPARE(spy.count(), 2);
+}
+
+void DesktopShellViewModelTest::ignoresRepeatedAndUnknownNavigationChanges() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::currentPageChanged);
+
+    fixture.viewModel.setCurrentPage(QStringLiteral("Dashboard"));
+    QCOMPARE(spy.count(), 0);
+
+    fixture.viewModel.setCurrentPage(QStringLiteral("Unknown"));
+    QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
+    QCOMPARE(spy.count(), 0);
 }
 
 QTEST_MAIN(DesktopShellViewModelTest)
