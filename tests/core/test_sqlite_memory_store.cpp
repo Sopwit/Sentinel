@@ -17,6 +17,7 @@ private slots:
     void handlesRepeatedOverwrites();
     void keepsMultipleKeysIndependent();
     void exposesAllEntriesDeterministically();
+    void clearsPersistedValues();
     void persistsValuesAcrossInstances();
     void initializesSchemaVersion();
     void reportsAvailabilityForValidDatabase();
@@ -115,6 +116,20 @@ void SQLiteMemoryStoreTest::exposesAllEntriesDeterministically() {
     QCOMPARE(entries.at(0).second, QStringLiteral("first"));
     QCOMPARE(entries.at(1).first, QStringLiteral("zulu"));
     QCOMPARE(entries.at(1).second, QStringLiteral("last"));
+}
+
+void SQLiteMemoryStoreTest::clearsPersistedValues() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    SQLiteMemoryStore store(databasePath(dir));
+
+    store.put(QStringLiteral("alpha"), QStringLiteral("first"));
+    store.put(QStringLiteral("zulu"), QStringLiteral("last"));
+    store.clear();
+
+    QVERIFY(store.entries().isEmpty());
+    QVERIFY(store.get(QStringLiteral("alpha")).isEmpty());
+    QVERIFY(store.lastError().isEmpty());
 }
 
 void SQLiteMemoryStoreTest::persistsValuesAcrossInstances() {

@@ -28,6 +28,14 @@ Planned interfaces:
 
 Rule: platform services should not leak into storage contracts, provider contracts, controllers, or QML pages.
 
+Phase 3.4 implementation status:
+
+- Added `IPathProvider`.
+- Added `IPlatformService`.
+- Added `INotificationService` as a lightweight placeholder.
+- Added `ISystemIntegrationService` as a lightweight placeholder.
+- Kept these as boundaries only; no OS-specific integration/automation implementation yet.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.
@@ -62,6 +70,12 @@ Storage decision:
 
 - Desktop memory is stored at `QStandardPaths::AppDataLocation + "/memory.sqlite3"`.
 - SQLite is accessed through Qt SQL and `QSQLITE`.
+- Path ownership now routes through `IPathProvider` (`StandardPathProvider` by default).
+
+Lifecycle decision:
+
+- Memory maintenance includes a clear operation through the `IMemoryStore` boundary.
+- UI receives generic maintenance status strings only.
 
 ## 7. Settings Persistence Boundary
 
@@ -72,6 +86,7 @@ Reason: Settings defaults, validation, and persistence can evolve without coupli
 Storage decision:
 
 - Desktop settings are stored at `QStandardPaths::AppConfigLocation + "/settings.json"`.
+- Path ownership now routes through `IPathProvider` (`StandardPathProvider` by default).
 
 ## 8. Settings And Memory Stay Separate
 
@@ -98,9 +113,20 @@ Runtime behavior:
 - `ApplicationController` loads persisted messages when available.
 - New runtime messages are appended to the chat history store when available.
 - Clearing chat clears runtime and persistent chat history when available.
+- If persistent chat storage is unavailable, runtime clear still succeeds with generic runtime-only status.
 - Runtime chat continues if chat persistence is unavailable.
 - QML receives only generic chat history status, such as `Available` or `Runtime Only`.
+- QML receives only generic maintenance statuses, such as `Ready`, `Clear completed`, `Runtime only`, or
+  `Unavailable`.
 - The desktop UI confirms before clearing local chat history.
+
+Data ownership rule:
+
+- Local data categories remain explicit and separate:
+  - Settings (`ISettingsStore`)
+  - Memory (`IMemoryStore`)
+  - Chat history (`IChatHistoryStore`)
+- Clear actions for memory/chat must not delete settings.
 
 Current limitation:
 

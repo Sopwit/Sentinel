@@ -11,6 +11,7 @@ public:
     void put(QString key, QString value) override;
     QString get(const QString& key) const override;
     MemoryEntries entries() const override;
+    void clear() override;
 
 private:
     QMap<QString, QString> entries_;

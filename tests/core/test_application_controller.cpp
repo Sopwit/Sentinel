@@ -84,6 +84,33 @@ public:
     bool wasCleared_ = false;
 };
 
+class UnavailableMemoryStore final : public sentinel::core::IMemoryStore {
+public:
+    void put(QString key, QString value) override {
+        Q_UNUSED(key);
+        Q_UNUSED(value);
+    }
+
+    QString get(const QString& key) const override {
+        Q_UNUSED(key);
+        return {};
+    }
+
+    sentinel::core::MemoryEntries entries() const override {
+        return {};
+    }
+
+    void clear() override {}
+
+    bool isAvailable() const override {
+        return false;
+    }
+
+    QString lastError() const override {
+        return QStringLiteral("unavailable");
+    }
+};
+
 class ApplicationControllerTest final : public QObject {
     Q_OBJECT
 
@@ -101,8 +128,11 @@ private slots:
     void clearsPersistentChatHistoryWhenAvailable();
     void keepsRuntimeChatWorkingWhenHistoryStoreUnavailable();
     void storesRuntimeMemoryEntries();
+    void clearsRuntimeMemoryEntries();
+    void failsSafeWhenMemoryStoreUnavailable();
     void rejectsBlankMemoryKeys();
     void overwritesMemoryEntriesThroughStoreBackend();
+    void reportsRuntimeOnlyWhenChatStoreUnavailableOnClear();
 };
 
 static std::unique_ptr<ApplicationController> makeController() {
@@ -293,6 +323,36 @@ void ApplicationControllerTest::storesRuntimeMemoryEntries() {
     QCOMPARE(spy.count(), 1);
 }
 
+void ApplicationControllerTest::clearsRuntimeMemoryEntries() {
+    const auto controller = makeController();
+    QSignalSpy spy(controller.get(), &ApplicationController::memoryEntriesChanged);
+    QSignalSpy maintenanceSpy(controller.get(), &ApplicationController::maintenanceStatusChanged);
+    controller->remember(QStringLiteral("mode"), QStringLiteral("Companion"));
+
+    const auto cleared = controller->clearMemory();
+
+    QVERIFY(cleared);
+    QVERIFY(controller->memoryEntries().isEmpty());
+    QCOMPARE(controller->memoryMaintenanceStatus(), QStringLiteral("Clear completed"));
+    QCOMPARE(spy.count(), 2);
+    QCOMPARE(maintenanceSpy.count(), 1);
+}
+
+void ApplicationControllerTest::failsSafeWhenMemoryStoreUnavailable() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<UnavailableMemoryStore>());
+    QSignalSpy spy(&controller, &ApplicationController::memoryEntriesChanged);
+    QSignalSpy maintenanceSpy(&controller, &ApplicationController::maintenanceStatusChanged);
+
+    const auto cleared = controller.clearMemory();
+
+    QVERIFY(!cleared);
+    QCOMPARE(controller.memoryStatus(), QStringLiteral("Unavailable"));
+    QCOMPARE(controller.memoryMaintenanceStatus(), QStringLiteral("Unavailable"));
+    QCOMPARE(spy.count(), 0);
+    QCOMPARE(maintenanceSpy.count(), 1);
+}
+
 void ApplicationControllerTest::rejectsBlankMemoryKeys() {
     const auto controller = makeController();
     QSignalSpy spy(controller.get(), &ApplicationController::memoryEntriesChanged);
@@ -318,6 +378,23 @@ void ApplicationControllerTest::overwritesMemoryEntriesThroughStoreBackend() {
 
     QCOMPARE(controller->memoryEntries(), expected);
     QCOMPARE(spy.count(), 3);
+}
+
+void ApplicationControllerTest::reportsRuntimeOnlyWhenChatStoreUnavailableOnClear() {
+    auto store = std::make_unique<RecordingChatHistoryStore>(
+        QList<sentinel::core::ChatMessage>{}, false);
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr,
+                                     std::move(store));
+    QSignalSpy maintenanceSpy(&controller, &ApplicationController::maintenanceStatusChanged);
+
+    controller.sendMessage(QStringLiteral("status"));
+    const auto cleared = controller.clearChat();
+
+    QVERIFY(!cleared);
+    QCOMPARE(controller.chatHistory().size(), 1);
+    QCOMPARE(controller.chatMaintenanceStatus(), QStringLiteral("Runtime only"));
+    QCOMPARE(maintenanceSpy.count(), 1);
 }
 
 QTEST_MAIN(ApplicationControllerTest)

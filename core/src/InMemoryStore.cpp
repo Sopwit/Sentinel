@@ -21,4 +21,8 @@ MemoryEntries InMemoryStore::entries() const {
     return result;
 }
 
+void InMemoryStore::clear() {
+    entries_.clear();
+}
+
 } // namespace sentinel::core

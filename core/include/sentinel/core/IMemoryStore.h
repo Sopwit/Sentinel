@@ -18,6 +18,7 @@ public:
     virtual void put(QString key, QString value) = 0;
     virtual QString get(const QString& key) const = 0;
     virtual MemoryEntries entries() const = 0;
+    virtual void clear() = 0;
     virtual bool isAvailable() const {
         return true;
     }

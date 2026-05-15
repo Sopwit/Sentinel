@@ -43,6 +43,14 @@ QString ApplicationController::chatHistoryStatus() const {
                                                                  : QStringLiteral("Runtime Only");
 }
 
+QString ApplicationController::memoryMaintenanceStatus() const {
+    return memoryMaintenanceStatus_;
+}
+
+QString ApplicationController::chatMaintenanceStatus() const {
+    return chatMaintenanceStatus_;
+}
+
 const QList<ChatMessage>& ApplicationController::chatHistory() const {
     return chatSession_->messages();
 }
@@ -106,17 +114,49 @@ bool ApplicationController::sendMessage(const QString& message) {
     return reply.success;
 }
 
-void ApplicationController::clearChat() {
-    if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-        chatHistoryStore_->clear();
+bool ApplicationController::clearMemory() {
+    if (!memoryStore_ || !memoryStore_->isAvailable()) {
+        setMemoryMaintenanceStatus(QStringLiteral("Unavailable"));
+        return false;
     }
+
+    memoryStore_->clear();
+    const auto succeeded = memoryStore_->lastError().isEmpty();
+    setMemoryMaintenanceStatus(succeeded ? QStringLiteral("Clear completed")
+                                         : QStringLiteral("Clear failed"));
+    emit memoryEntriesChanged();
+    return succeeded;
+}
+
+bool ApplicationController::clearChat() {
+    const auto persistentAvailable = chatHistoryStore_ && chatHistoryStore_->isAvailable();
+    auto persistentHealthy = persistentAvailable;
+    if (persistentAvailable) {
+        chatHistoryStore_->clear();
+        if (!chatHistoryStore_->lastError().isEmpty()) {
+            persistentHealthy = false;
+        }
+    }
+
     chatSession_->clear();
     const auto message = chatSession_->appendSystemMessage(QStringLiteral("Sentinel Core online."),
                                                            ChatMessageStatus::Received);
-    if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
+    if (persistentAvailable) {
         chatHistoryStore_->appendMessage(message);
+        if (!chatHistoryStore_->lastError().isEmpty()) {
+            persistentHealthy = false;
+        }
+    }
+
+    if (!persistentAvailable) {
+        setChatMaintenanceStatus(QStringLiteral("Runtime only"));
+    } else if (persistentHealthy) {
+        setChatMaintenanceStatus(QStringLiteral("Clear completed"));
+    } else {
+        setChatMaintenanceStatus(QStringLiteral("Clear failed"));
     }
     emit chatMessagesChanged();
+    return persistentHealthy;
 }
 
 void ApplicationController::remember(const QString& key, const QString& value) {
@@ -126,6 +166,22 @@ void ApplicationController::remember(const QString& key, const QString& value) {
 
     memoryStore_->put(key.trimmed(), value.trimmed());
     emit memoryEntriesChanged();
+}
+
+void ApplicationController::setMemoryMaintenanceStatus(const QString& status) {
+    if (memoryMaintenanceStatus_ == status) {
+        return;
+    }
+    memoryMaintenanceStatus_ = status;
+    emit maintenanceStatusChanged();
+}
+
+void ApplicationController::setChatMaintenanceStatus(const QString& status) {
+    if (chatMaintenanceStatus_ == status) {
+        return;
+    }
+    chatMaintenanceStatus_ = status;
+    emit maintenanceStatusChanged();
 }
 
 } // namespace sentinel::core

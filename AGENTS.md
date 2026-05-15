@@ -10,11 +10,11 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 3.3 is close to completion.
+Phase 3.4 is complete.
 
-Most recent work: Phase 3.3, Chat History UX and Lifecycle Controls.
+Most recent work: Phase 3.4, Cross-platform Architecture Readiness and Storage Maintenance.
 
-Current planning focus: Phase 3.4, Cross-platform Architecture Readiness.
+Current planning focus: Phase 4 preparation boundaries without runtime provider integrations.
 
 ## Stack
 
@@ -99,4 +99,4 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 
 ## Current Priority
 
-Maintain the Phase 3.3 lifecycle boundaries and Phase 3.4 cross-platform planning scope. Do not start Phase 4 without an explicit task.
+Maintain Phase 3.4 platform boundaries and storage separation while avoiding Phase 4 runtime implementation without an explicit task.

@@ -47,6 +47,54 @@ ShellPanel {
             }
         }
 
+        SectionTitle {
+            title: "Local Data Maintenance"
+            subtitle: "Settings are stored separately and are not deleted by memory/chat clear actions."
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: 2
+            columnSpacing: 12
+            rowSpacing: 8
+
+            Label {
+                text: "Memory Store"
+                color: "#82aaa1"
+            }
+
+            Label {
+                text: settingsPage.viewModel.memoryStatus + " (" + settingsPage.viewModel.memoryMaintenanceStatus + ")"
+                color: "#d9fff4"
+            }
+
+            Label {
+                text: "Chat History"
+                color: "#82aaa1"
+            }
+
+            Label {
+                text: settingsPage.viewModel.chatHistoryStatus + " (" + settingsPage.viewModel.chatMaintenanceStatus + ")"
+                color: "#d9fff4"
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: 8
+
+            Button {
+                text: "Clear Local Memory"
+                enabled: settingsPage.viewModel.memoryStatus === "Available"
+                onClicked: clearMemoryDialog.open()
+            }
+
+            Button {
+                text: "Clear Chat History"
+                onClicked: clearChatDialog.open()
+            }
+        }
+
         Label {
             Layout.fillWidth: true
             text: "Future settings should remain local-first and pass through AppSettings rather than being implemented in QML."
@@ -57,5 +105,39 @@ ShellPanel {
         Item {
             Layout.fillHeight: true
         }
+    }
+
+    Dialog {
+        id: clearMemoryDialog
+        title: "Clear local memory?"
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        anchors.centerIn: parent
+
+        Label {
+            text: "This clears local memory entries only. Settings are kept."
+            color: "#d9fff4"
+            wrapMode: Text.WordWrap
+            width: 320
+        }
+
+        onAccepted: settingsPage.viewModel.clearMemory()
+    }
+
+    Dialog {
+        id: clearChatDialog
+        title: "Clear chat history?"
+        modal: true
+        standardButtons: Dialog.Ok | Dialog.Cancel
+        anchors.centerIn: parent
+
+        Label {
+            text: "This clears local chat history. Settings are kept."
+            color: "#d9fff4"
+            wrapMode: Text.WordWrap
+            width: 320
+        }
+
+        onAccepted: settingsPage.viewModel.clearChat()
     }
 }

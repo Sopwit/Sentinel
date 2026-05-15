@@ -29,13 +29,17 @@ class DesktopShellViewModelTest final : public QObject {
 private slots:
     void exposesInitialShellState();
     void exposesChatHistoryStatus();
+    void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void ignoresBlankChatActions();
+    void clearsMemoryActions();
     void clearsChatActions();
+    void reportsRuntimeOnlyChatMaintenanceWhenStoreUnavailable();
     void forwardsModeChanges();
     void forwardsMemoryWrites();
     void forwardsSettingsChanges();
+    void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
     void ignoresRepeatedAndUnknownNavigationChanges();
 };
@@ -108,6 +112,13 @@ void DesktopShellViewModelTest::exposesChatHistoryStatus() {
     QCOMPARE(viewModel.chatHistoryStatus(), QStringLiteral("Available"));
 }
 
+void DesktopShellViewModelTest::exposesMaintenanceStatuses() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.memoryMaintenanceStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.chatMaintenanceStatus(), QStringLiteral("Ready"));
+}
+
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {
     QList<sentinel::core::ChatMessage> persisted{
         {7, sentinel::core::ChatRole::System, QStringLiteral("previous system"),
@@ -173,6 +184,40 @@ void DesktopShellViewModelTest::clearsChatActions() {
     QCOMPARE(spy.count(), 2);
 }
 
+void DesktopShellViewModelTest::clearsMemoryActions() {
+    ViewModelFixture fixture;
+    QSignalSpy memorySpy(&fixture.viewModel, &DesktopShellViewModel::memoryEntriesChanged);
+    QSignalSpy maintenanceSpy(&fixture.viewModel, &DesktopShellViewModel::maintenanceStatusChanged);
+    fixture.viewModel.remember(QStringLiteral("mode"), QStringLiteral("Companion"));
+
+    const auto cleared = fixture.viewModel.clearMemory();
+
+    QVERIFY(cleared);
+    QVERIFY(fixture.viewModel.memoryEntries().isEmpty());
+    QCOMPARE(fixture.viewModel.memoryMaintenanceStatus(), QStringLiteral("Clear completed"));
+    QCOMPARE(memorySpy.count(), 2);
+    QCOMPARE(maintenanceSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::reportsRuntimeOnlyChatMaintenanceWhenStoreUnavailable() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr,
+                                     std::make_unique<StaticChatHistoryStore>(
+                                         QList<sentinel::core::ChatMessage>{}, false)};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy maintenanceSpy(&viewModel, &DesktopShellViewModel::maintenanceStatusChanged);
+
+    viewModel.sendMessage(QStringLiteral("status"));
+    const auto cleared = viewModel.clearChat();
+
+    QVERIFY(!cleared);
+    QCOMPARE(viewModel.chatMaintenanceStatus(), QStringLiteral("Runtime only"));
+    QCOMPARE(viewModel.chatMessages()->rowCount(), 1);
+    QCOMPARE(maintenanceSpy.count(), 1);
+}
+
 void DesktopShellViewModelTest::forwardsModeChanges() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::currentModeChanged);
@@ -205,6 +250,20 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
     QCOMPARE(themeSpy.count(), 1);
     QCOMPARE(profileSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {
+    ViewModelFixture fixture;
+    fixture.viewModel.setThemeName(QStringLiteral("Sentinel Light"));
+    fixture.viewModel.setConfigurationProfile(QStringLiteral("Desktop Stable"));
+    fixture.viewModel.remember(QStringLiteral("mode"), QStringLiteral("Companion"));
+    fixture.viewModel.sendMessage(QStringLiteral("status"));
+
+    fixture.viewModel.clearMemory();
+    fixture.viewModel.clearChat();
+
+    QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
+    QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Stable"));
 }
 
 void DesktopShellViewModelTest::tracksNavigationState() {

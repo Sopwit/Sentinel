@@ -49,7 +49,7 @@ Chat history persistence is separate from key-value memory storage.
 
 ### Phase 3.3: Chat History UX and Lifecycle Controls
 
-Close to completion. Adds minimal chat history lifecycle UX on top of the Phase 3.2 persistence boundary.
+Completed. Adds minimal chat history lifecycle UX on top of the Phase 3.2 persistence boundary.
 
 Scope:
 
@@ -69,15 +69,26 @@ Current limitation:
 
 ### Phase 3.4: Cross-platform Architecture Readiness
 
-Documentation and architecture planning phase. No runtime implementation yet.
+Completed. Added architecture boundaries and storage maintenance surfaces without platform-specific runtime integrations.
 
 Scope:
 
-- Update project positioning from Linux-only to cross-platform core.
-- Preserve Linux/Fedora KDE Plasma as the first optimization target.
-- Define platform abstraction direction.
-- Keep core logic portable across Linux, Windows, and macOS.
-- Refine long-term UI/UX roadmap without implementing Phase 4.
+- Added platform boundary interfaces:
+  - `IPathProvider`
+  - `IPlatformService`
+  - `INotificationService` (lightweight placeholder)
+  - `ISystemIntegrationService` (lightweight placeholder)
+- Added default `StandardPathProvider` with Qt `QStandardPaths` ownership for:
+  - settings path
+  - memory database path
+  - chat history database path
+- Added storage maintenance controls:
+  - clear memory store
+  - clear chat history store with runtime-safe fallback
+  - settings persistence remains separate and unaffected
+- Added controller/view-model generic maintenance status surfaces for QML.
+- Added settings page controls for local memory/chat clear actions with confirmation dialogs.
+- Added tests for path behavior, clear behavior, unavailable stores, and settings isolation.
 
 Candidate future interfaces:
 
@@ -90,4 +101,4 @@ Candidate future interfaces:
 
 ### Phase 4: Agent Core & Tool System
 
-Not started. Do not implement Phase 4 behavior during Phase 3.4 planning.
+Not started. Do not implement Phase 4 behavior without an explicit task.

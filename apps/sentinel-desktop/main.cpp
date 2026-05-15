@@ -8,11 +8,11 @@
 #include "sentinel/core/ModeManager.h"
 #include "sentinel/core/SQLiteChatHistoryStore.h"
 #include "sentinel/core/SQLiteMemoryStore.h"
+#include "sentinel/core/StandardPathProvider.h"
 
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
-#include <QStandardPaths>
 
 #include <memory>
 
@@ -23,18 +23,16 @@ int main(int argc, char* argv[]) {
     QGuiApplication::setApplicationVersion(sentinel::core::AppMetadata::version());
     QGuiApplication::setDesktopFileName(sentinel::core::AppMetadata::appId());
 
-    const auto appDataDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    sentinel::core::StandardPathProvider pathProvider;
     sentinel::core::ApplicationController controller(
         std::make_unique<sentinel::core::LocalEchoProvider>(),
-        std::make_unique<sentinel::core::SQLiteMemoryStore>(appDataDir +
-                                                            QStringLiteral("/memory.sqlite3")),
+        std::make_unique<sentinel::core::SQLiteMemoryStore>(pathProvider.memoryDatabasePath()),
         nullptr,
         std::make_unique<sentinel::core::SQLiteChatHistoryStore>(
-            appDataDir + QStringLiteral("/chat_history.sqlite3")));
+            pathProvider.chatHistoryDatabasePath()));
     sentinel::core::ModeManager modeManager;
-    const auto configDir = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
     sentinel::core::AppSettings settings(std::make_unique<sentinel::core::JsonSettingsStore>(
-        configDir + QStringLiteral("/settings.json")));
+        pathProvider.settingsFilePath()));
     sentinel::desktop::DesktopShellViewModel shellViewModel(controller, modeManager, settings);
 
     QQmlApplicationEngine engine;
