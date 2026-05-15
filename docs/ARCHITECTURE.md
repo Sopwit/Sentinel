@@ -120,7 +120,86 @@ Phase 4.0 adds `NullAgentRuntime` as a deterministic local-only skeleton:
 - no tool execution
 - no system/file-modifying actions
 
-`ApplicationController` and `DesktopShellViewModel` expose only generic agent status and placeholder response text to QML.
+Phase 4.2 adds metadata-only tool invocation planning:
+
+- `ToolInvocationPlan` describes proposed tool-use intent.
+- `PlannedToolInvocation` contains selected tool id, summary/rationale, arguments, and copied
+  risk/execution metadata.
+- `IAgentRuntime::plan` returns inspectable planning data only.
+- `NullAgentRuntime` generates deterministic fake plans from registered tool descriptors.
+- Plans do not execute, mutate files, launch processes, call networks, or approve permissions.
+
+Phase 4.3 adds approval and permission metadata:
+
+- `IApprovalPolicy` evaluates planned invocations without executing them.
+- `StaticApprovalPolicy` provides deterministic local approval metadata.
+- `ApprovalDecision` records whether approval is not required, required, approved, or denied.
+- `ToolApprovalRequest` and `PermissionDescriptor` are descriptive metadata only.
+- Approval does not grant runtime capabilities, run tools, or activate a sandbox.
+
+Phase 4.4 adds sandbox and capability metadata:
+
+- `ISandboxPolicy` evaluates planned invocation metadata and approval metadata.
+- `StaticSandboxPolicy` provides deterministic local capability-boundary metadata.
+- `CapabilityDescriptor` labels future runtime capability requirements.
+- `SandboxEvaluationResult` records whether planned capabilities are allowed, denied, blocked by
+  approval, or not evaluated.
+- Sandbox evaluation does not grant OS permissions, execute tools, request privileges, or enforce a
+  real sandbox.
+- Approval can be required for sandbox evaluation to proceed, but approval does not override a
+  capability denial.
+
+Phase 4.5 adds a placeholder execution boundary:
+
+- `IToolExecutor` owns the future tool execution interface.
+- `NullToolExecutor` returns deterministic placeholder results only.
+- `ToolExecutionRequest` carries the plan, approval decision, sandbox evaluation, and known tool
+  ids as value data.
+- `ToolExecutionResult` records placeholder success, blocked, empty-plan, unknown-tool, or
+  not-requested status.
+- The boundary performs no real tool execution, shell/process launch, subprocess execution,
+  filesystem mutation, networking, plugin loading, OS automation, privilege escalation, or sandbox
+  enforcement.
+
+Phase 4.6 stabilizes the controller-level pipeline result:
+
+- `AgentPipelineResult` aggregates the value-only outputs from planning, approval, sandbox
+  metadata evaluation, and placeholder execution.
+- The full Phase 4 route is:
+  registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary.
+- The result exposes deterministic generic status and summary text for controller/view-model use.
+- The result does not expose mutable runtime internals and does not add execution controls.
+- Execution remains placeholder-only.
+
+Phase 4.7 adds runtime context/session ownership:
+
+- `RuntimeSession` owns one local `AgentRuntimeContext`.
+- `AgentRuntimeContext` records the latest `AgentPipelineResult`, active planned tool ids,
+  approval metadata, sandbox metadata, and placeholder execution metadata through value copies.
+- Runtime context ids and revisions are deterministic local metadata.
+- Runtime context is not persistence, planning, approval policy, sandbox enforcement, plugin
+  loading, or execution.
+- Runtime context does not launch processes, mutate files, call networks, load plugins, request
+  privileges, or enforce a real sandbox.
+
+Phase 4.8 adds in-memory agent activity/audit metadata:
+
+- `AgentActivityEntry` records deterministic sequence id, activity type, status, and generic
+  summary.
+- `AgentActivityLog` owns the in-memory activity list and deterministic ordering.
+- `ApplicationController` appends activity events for request receipt, planning, approval,
+  sandbox evaluation, placeholder execution evaluation, and final pipeline outcome.
+- The activity layer stores metadata-only summaries and does not persist, export, record secrets,
+  record raw system paths, execute tools, launch processes, call networks, load plugins, or enforce
+  sandbox behavior.
+- Future persistence/export/security work should sit behind an explicit audit/logging boundary and
+  is not implemented in the desktop alpha.
+
+`ApplicationController` and `DesktopShellViewModel` expose only generic agent status, placeholder
+response text, latest plan status/summary, latest approval status/summary, latest sandbox
+status/summary, latest placeholder execution status/summary, and latest aggregate pipeline
+status/summary, generic runtime context status/summary and active planned tool ids, plus activity
+count/latest activity summary to QML.
 
 ## Chat Session Pipeline
 
@@ -143,8 +222,13 @@ The current UX treats chat history as one local transcript. The clear action res
 ## Not Implemented Yet
 
 - Real AI providers.
+- Real tool execution.
+- Shell/process launching.
+- Subprocess execution.
+- Filesystem mutation.
 - Voice input or output.
 - Automation agents.
 - Cloud sync.
 - Runtime plugin loading.
+- Real sandbox runtime.
 - Wearable or edge-device support.

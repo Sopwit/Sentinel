@@ -24,6 +24,20 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::agentStatusChanged);
     connect(&controller_, &core::ApplicationController::agentResponseChanged, this,
             &DesktopShellViewModel::agentResponseChanged);
+    connect(&controller_, &core::ApplicationController::toolPlanChanged, this,
+            &DesktopShellViewModel::toolPlanChanged);
+    connect(&controller_, &core::ApplicationController::approvalChanged, this,
+            &DesktopShellViewModel::approvalChanged);
+    connect(&controller_, &core::ApplicationController::sandboxChanged, this,
+            &DesktopShellViewModel::sandboxChanged);
+    connect(&controller_, &core::ApplicationController::toolExecutionChanged, this,
+            &DesktopShellViewModel::toolExecutionChanged);
+    connect(&controller_, &core::ApplicationController::agentPipelineChanged, this,
+            &DesktopShellViewModel::agentPipelineChanged);
+    connect(&controller_, &core::ApplicationController::runtimeContextChanged, this,
+            &DesktopShellViewModel::runtimeContextChanged);
+    connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
+            &DesktopShellViewModel::agentActivityChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::themeNameChanged, this,
@@ -46,6 +60,70 @@ QString DesktopShellViewModel::agentStatus() const {
 
 QString DesktopShellViewModel::lastAgentResponse() const {
     return controller_.lastAgentResponse();
+}
+
+QString DesktopShellViewModel::latestToolPlanStatus() const {
+    return controller_.latestToolPlanStatus();
+}
+
+QString DesktopShellViewModel::latestToolPlanSummary() const {
+    return controller_.latestToolPlanSummary();
+}
+
+QString DesktopShellViewModel::latestApprovalStatus() const {
+    return controller_.latestApprovalStatus();
+}
+
+QString DesktopShellViewModel::latestApprovalSummary() const {
+    return controller_.latestApprovalSummary();
+}
+
+QString DesktopShellViewModel::latestSandboxStatus() const {
+    return controller_.latestSandboxStatus();
+}
+
+QString DesktopShellViewModel::latestSandboxSummary() const {
+    return controller_.latestSandboxSummary();
+}
+
+QString DesktopShellViewModel::latestToolExecutionStatus() const {
+    return controller_.latestToolExecutionStatus();
+}
+
+QString DesktopShellViewModel::latestToolExecutionSummary() const {
+    return controller_.latestToolExecutionSummary();
+}
+
+QString DesktopShellViewModel::latestAgentPipelineStatus() const {
+    return controller_.latestAgentPipelineStatus();
+}
+
+QString DesktopShellViewModel::latestAgentPipelineSummary() const {
+    return controller_.latestAgentPipelineSummary();
+}
+
+QString DesktopShellViewModel::runtimeSessionId() const {
+    return controller_.runtimeSessionId();
+}
+
+QString DesktopShellViewModel::runtimeContextStatus() const {
+    return controller_.runtimeContextStatus();
+}
+
+QString DesktopShellViewModel::runtimeContextSummary() const {
+    return controller_.runtimeContextSummary();
+}
+
+QStringList DesktopShellViewModel::runtimeContextActiveToolIds() const {
+    return controller_.runtimeContextActiveToolIds();
+}
+
+int DesktopShellViewModel::agentActivityCount() const {
+    return controller_.agentActivityCount();
+}
+
+QString DesktopShellViewModel::latestAgentActivitySummary() const {
+    return controller_.latestAgentActivitySummary();
 }
 
 int DesktopShellViewModel::availableToolCount() const {

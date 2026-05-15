@@ -215,3 +215,144 @@ Boundary rules:
 - `IToolRegistry` owns deterministic tool metadata registration and lookup.
 - `InMemoryToolRegistry` is the default local deterministic registry implementation.
 - Agent runtime may expose tool metadata from the registry, but must not execute tools in Phase 4.1.
+
+## 15. Tool Invocation Planning Before Execution
+
+Decision: Add a planning boundary before any tool execution runtime is introduced.
+
+Reason: The app needs a safe intermediate layer where an agent can describe intended tool use in
+structured data without gaining the ability to perform actions.
+
+Boundary rules:
+
+- Tool descriptors describe available tool metadata.
+- Proposed invocation plans describe intent to use a tool.
+- Invocation plans must remain value-only and non-operational.
+- Agent runtimes may return proposed invocation plans, but neither controller nor QML may execute
+  them.
+- Controller and view-model exposure is limited to generic plan status and summary strings.
+- Permission and sandbox runtime design must remain non-operational until a real execution phase is
+  explicitly approved.
+
+## 16. Approval Metadata Before Sandbox Or Execution
+
+Decision: Model approval and permission state as metadata before introducing sandboxing or tool
+execution.
+
+Reason: Planned tool invocations need deterministic approval state and risk visibility without
+granting the application any ability to perform actions.
+
+Boundary rules:
+
+- Approval policy evaluates `ToolInvocationPlan` values only.
+- Approval decisions describe state such as not required, requires approval, approved, or denied.
+- Permission descriptors are metadata labels, not runtime grants.
+- Controller and view-model exposure is limited to generic approval status and summary strings.
+- Approval does not execute tools, launch processes, mutate files, call networks, load plugins, or
+  activate sandbox behavior.
+- Real permission prompts, audit logs, sandboxing, and executors remain future work.
+
+## 17. Sandbox Capability Metadata Before Runtime Enforcement
+
+Decision: Model sandbox capability boundaries as deterministic metadata before introducing any
+real sandbox runtime or tool executor.
+
+Reason: The app needs a clear boundary between a plan, approval state, and the capabilities a
+future runtime would require, without granting operating-system permissions or executing actions.
+
+Boundary rules:
+
+- Planning describes intended tool invocation metadata.
+- Approval describes user or policy approval metadata.
+- Sandbox policy describes whether planned capability metadata is within the allowed boundary.
+- `ISandboxPolicy` evaluates `ToolInvocationPlan` and `ApprovalDecision` values only.
+- `CapabilityDescriptor` values are labels for future runtime constraints, not real permission
+  grants.
+- Approval does not override sandbox capability denial.
+- Controller and view-model exposure is limited to generic sandbox status and summary strings.
+- Sandbox evaluation does not execute tools, launch processes, mutate files, call networks, load
+  plugins, request privileges, or enforce an OS sandbox.
+
+## 18. Placeholder Execution Boundary Before Real Executors
+
+Decision: Add an execution ownership boundary that is explicitly placeholder-only before any real
+tool execution implementation.
+
+Reason: The application needs a stable interface for future execution ownership while preserving
+the current no-action safety model.
+
+Boundary rules:
+
+- Planning chooses intended tool invocation metadata.
+- Approval represents user or policy permission metadata.
+- Sandbox policy represents capability-boundary metadata.
+- `IToolExecutor` represents future execution ownership, but current implementations must remain
+  non-operational.
+- `NullToolExecutor` returns deterministic placeholder results only.
+- Approved and sandbox-allowed plans may produce placeholder success, not real action.
+- Denied, unapproved, sandbox-blocked, empty, or unknown-tool plans must be represented as blocked
+  or safely rejected.
+- Controller and view-model exposure is limited to generic execution status and summary strings.
+- The execution boundary must not launch processes, spawn subprocesses, mutate files, call
+  networks, load plugins, request privileges, invoke OS automation, or enforce a real sandbox.
+
+## 19. Agent Pipeline Result Stabilization
+
+Decision: Consolidate the controller-facing Phase 4 pipeline state into a value-based aggregate
+result.
+
+Reason: Planning, approval, sandbox, and placeholder execution statuses should move through one
+deterministic result model so controller and view-model summaries do not duplicate string fallback
+logic.
+
+Boundary rules:
+
+- The aggregate result represents metadata only.
+- The full route remains:
+  registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary.
+- QML may receive generic status and summary strings only.
+- The aggregate result does not expose raw mutable runtime internals or execution controls.
+- Stabilizing the result model does not authorize real execution, shell/process launch,
+  filesystem mutation, networking, provider integrations, plugin loading, privileged automation, or
+  real sandbox enforcement.
+
+## 20. Runtime Context Is Metadata Ownership Only
+
+Decision: Add a local runtime session/context owner that records the latest metadata-only agent
+pipeline state.
+
+Reason: Future agent orchestration needs a deterministic place to hold current runtime context
+without confusing that context with execution, persistence, plugin loading, or sandbox enforcement.
+
+Boundary rules:
+
+- `RuntimeSession` owns an in-memory `AgentRuntimeContext`.
+- `AgentRuntimeContext` may copy the latest pipeline result, active planned tool ids, approval
+  metadata, sandbox metadata, and placeholder execution metadata.
+- Session ids and revisions are deterministic local metadata.
+- Runtime context is read-only at the QML boundary and exposes generic summaries only.
+- Runtime context is not tool execution, planning, approval policy, persistence, plugin loading,
+  sandbox enforcement, OS automation, networking, or privileged automation.
+- Adding runtime context must not launch processes, spawn subprocesses, mutate files, call networks,
+  read API keys, load plugins, or enforce a real sandbox.
+
+## 21. Agent Activity Log Is In-Memory Metadata Only
+
+Decision: Add an in-memory activity/audit trail skeleton for metadata-only agent pipeline events.
+
+Reason: The agent pipeline needs deterministic observability before any future real execution or
+security audit feature is introduced.
+
+Boundary rules:
+
+- `AgentActivityEntry` is value data with deterministic sequence id, activity type, status, and
+  generic summary.
+- `AgentActivityLog` is in-memory only in Phase 4.8.
+- The controller may record request received, plan created, approval evaluated, sandbox evaluated,
+  placeholder execution evaluated, and pipeline completed/blocked events.
+- QML receives only aggregate read-only fields such as activity count and latest summary.
+- Activity logging must not persist to files or SQLite, export data, record secrets, record raw
+  system paths, launch processes, spawn subprocesses, mutate files, call networks, load plugins,
+  enforce sandbox behavior, or perform tool execution.
+- Future durable audit, export, pruning, redaction, and security review features must be explicit
+  later phases.

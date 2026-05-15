@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 4.1 is complete.
+Phase 4.8 is complete.
 
 Implemented foundation:
 
@@ -46,6 +46,13 @@ Recent implementation phase:
 - Phase 3.5, Pre-agent Architecture Audit and Release Checkpoint.
 - Phase 4.0, Agent Core Planning and Minimal Runtime Skeleton.
 - Phase 4.1, Tool Descriptor and Registry Skeleton.
+- Phase 4.2, Tool Invocation Planning Layer.
+- Phase 4.3, Approval and Permission Metadata Skeleton.
+- Phase 4.4, Sandbox and Capability Boundary Skeleton.
+- Phase 4.5, Execution Boundary Skeleton.
+- Phase 4.6, Agent Runtime Pipeline Stabilization.
+- Phase 4.7, Runtime Context and Tool Session Skeleton.
+- Phase 4.8, Agent Activity Log and Audit Trail Skeleton.
 
 ## Constraints
 
@@ -57,6 +64,8 @@ Recent implementation phase:
 - Do not add platform-specific integrations without an interface boundary.
 - Do not add dependencies.
 - Do not start full Phase 4 implementation.
+- Do not add real tool execution; Phase 4.2 plans, Phase 4.3 approval decisions, Phase 4.4
+  sandbox capability decisions, and Phase 4.5 execution results are metadata/placeholder-only.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

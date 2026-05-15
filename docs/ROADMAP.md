@@ -100,13 +100,193 @@ Still out of scope:
 - Platform automation.
 - Networking/API keys and provider integrations.
 
+### Phase 4.2: Tool Invocation Planning Boundary
+
+Completed. Added structured, value-only proposed tool invocation plans without adding execution.
+
+Delivered:
+
+- Proposed invocation value types (`ToolInvocationPlan`, `PlannedToolInvocation`,
+  `ToolInvocationArgument`, `ToolInvocationPlanStatus`).
+- Agent runtime support for metadata-only proposed plans.
+- Deterministic local placeholder planning in `NullAgentRuntime`.
+- Generic planning status/summary exposure through controller/view-model.
+- Tests that preserve the no-execution boundary.
+
+Still out of scope:
+
+- Tool execution runtime.
+- Shell/process execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Provider/network integrations.
+- API key handling.
+- Plugin loading.
+- Sandbox runtime.
+
+### Phase 4.3: Approval and Permission Metadata Skeleton
+
+Completed. Added approval policy metadata for planned tool invocations without execution or
+sandboxing.
+
+Delivered:
+
+- Approval metadata value types (`ApprovalStatus`, `ApprovalDecision`, `PermissionDescriptor`,
+  `ToolApprovalRequest`).
+- Approval policy boundary (`IApprovalPolicy`) and deterministic `StaticApprovalPolicy`.
+- Metadata-only evaluation of planned tool invocations.
+- Generic approval status/summary exposure through controller/view-model.
+- Tests for safe plans, risky approval requirements, approved/denied states, empty plans, and
+  deterministic policy behavior.
+
+Still out of scope:
+
+- Tool execution runtime.
+- Shell/process execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Provider/network integrations.
+- API key handling.
+- Plugin loading.
+- Sandbox runtime.
+
+### Phase 4.4: Sandbox and Capability Boundary Skeleton
+
+Completed. Added sandbox capability policy metadata for planned and approved invocations without
+execution or real sandbox enforcement.
+
+Delivered:
+
+- Capability metadata abstractions (`CapabilityDescriptor`, sandbox status/result records).
+- Sandbox policy boundary (`ISandboxPolicy`) and deterministic `StaticSandboxPolicy`.
+- Metadata-only evaluation of planned capabilities against allowed capability ids.
+- Generic sandbox status/summary exposure through controller/view-model.
+- Tests for metadata-only allowance, unknown capability denial, empty plans,
+  approved-but-not-capable blocking, and deterministic policy behavior.
+
+Still out of scope:
+
+- Tool execution runtime.
+- Shell/process execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Provider/network integrations.
+- API key handling.
+- Plugin loading.
+- Real sandbox runtime or OS permission enforcement.
+
+### Phase 4.5: Execution Boundary Skeleton
+
+Completed. Added a placeholder execution ownership boundary without real tool execution.
+
+Delivered:
+
+- Execution abstractions (`ToolExecutionRequest`, `ToolExecutionResult`,
+  `ToolExecutionStatus`).
+- Execution interface boundary (`IToolExecutor`) and deterministic `NullToolExecutor`.
+- Controller/view-model placeholder execution status and summary exposure.
+- Tests for placeholder success, blocked paths, empty plans, unknown tools, deterministic results,
+  and status exposure.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Provider/network integrations.
+- API key handling.
+- Plugin loading.
+- Real sandbox runtime or OS permission enforcement.
+
+### Phase 4.6: Agent Runtime Pipeline Stabilization
+
+Completed. Stabilized the metadata-only controller pipeline after the placeholder execution
+boundary.
+
+Delivered:
+
+- Aggregate `AgentPipelineResult` value model for planning, approval, sandbox, execution, and
+  summary state.
+- Centralized safe summary/status exposure for controller and desktop view-model use.
+- Clear controller route through:
+  registry -> planning -> approval -> sandbox capability metadata -> placeholder execution.
+- Focused tests for success, approval-blocked, sandbox-blocked, empty-plan, unknown-tool, and
+  deterministic status/summary output.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Provider/network integrations.
+- API key handling.
+- Plugin loading.
+- Real sandbox runtime or OS permission enforcement.
+
+### Phase 4.7: Runtime Context and Tool Session Skeleton
+
+Completed. Added deterministic local runtime context ownership without adding execution.
+
+Delivered:
+
+- `AgentRuntimeContext` value state for latest pipeline metadata, active planned tool ids, status,
+  summary, session id, and revision.
+- `RuntimeSession` as the in-memory owner for runtime context metadata.
+- Controller/view-model read-only runtime context status, summary, session id, and active planned
+  tool id exposure.
+- Tests for deterministic context creation, pipeline attachment, planned tool ordering, reset
+  behavior, and controller/view-model exposure.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Platform automation.
+- Provider/network integrations.
+- API key handling.
+- Plugin loading.
+- Runtime context persistence.
+- Real sandbox runtime or OS permission enforcement.
+
+### Phase 4.8: Agent Activity Log and Audit Trail Skeleton
+
+Completed. Added in-memory metadata-only activity logging for the agent pipeline.
+
+Delivered:
+
+- `AgentActivityEntry`, `AgentActivityType`, and `AgentActivityStatus` value metadata.
+- `AgentActivityLog` with deterministic in-memory sequence ordering and clear behavior.
+- Controller logging for request received, plan created, approval evaluated, sandbox evaluated,
+  placeholder execution evaluated, and pipeline completed/blocked.
+- Desktop view-model read-only activity count and latest summary exposure.
+- Tests for deterministic ordering, clear behavior, successful and blocked pipeline logging, and
+  controller/view-model exposure.
+
+Still out of scope:
+
+- Real tool execution.
+- Shell/process execution.
+- Subprocess execution.
+- Filesystem/system mutation.
+- Activity log persistence/export.
+- Secret capture or API key handling.
+- Provider/network integrations.
+- Plugin loading.
+- Real sandbox runtime or OS permission enforcement.
+
 ## Phase 5: Advanced UI/UX & Motion System
 
 Evolve the Qt Quick experience with responsive layouts, adaptive themes, assistant-like interaction, animated panels, dashboard cards, and reusable components.
 
 ## Phase 6: Security / Sandbox / Permissions
 
-Add permission models, auditability, sandboxing strategy, secret handling, and safe local automation constraints.
+Add real permission prompts, auditability, sandboxing strategy, secret handling, and safe local automation constraints.
 
 ## Phase 7: Packaging / Ecosystem / Extensions
 

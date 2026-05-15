@@ -1,14 +1,48 @@
 #include "sentinel/core/ApplicationController.h"
 
+#include "sentinel/core/NullToolExecutor.h"
+#include "sentinel/core/StaticApprovalPolicy.h"
+#include "sentinel/core/StaticSandboxPolicy.h"
+
 namespace sentinel::core {
 
-ApplicationController::ApplicationController(std::unique_ptr<IChatProvider> provider,
-                                             std::unique_ptr<IMemoryStore> memoryStore,
-                                             std::unique_ptr<ChatSession> chatSession,
-                                             std::unique_ptr<IChatHistoryStore> chatHistoryStore,
-                                             std::unique_ptr<IAgentRuntime> agentRuntime,
-                                             QObject* parent)
+namespace {
+
+AgentActivityStatus planActivityStatus(ToolInvocationPlanStatus status) {
+    return status == ToolInvocationPlanStatus::Planned ? AgentActivityStatus::Completed
+                                                       : AgentActivityStatus::Blocked;
+}
+
+AgentActivityStatus approvalActivityStatus(ApprovalStatus status) {
+    return status == ApprovalStatus::Denied || status == ApprovalStatus::RequiresApproval
+               ? AgentActivityStatus::Blocked
+               : AgentActivityStatus::Completed;
+}
+
+AgentActivityStatus sandboxActivityStatus(SandboxStatus status) {
+    return status == SandboxStatus::Allowed ? AgentActivityStatus::Completed
+                                            : AgentActivityStatus::Blocked;
+}
+
+AgentActivityStatus executionActivityStatus(ToolExecutionStatus status) {
+    return status == ToolExecutionStatus::PlaceholderSucceeded ? AgentActivityStatus::Completed
+                                                               : AgentActivityStatus::Blocked;
+}
+
+} // namespace
+
+ApplicationController::ApplicationController(
+    std::unique_ptr<IChatProvider> provider, std::unique_ptr<IMemoryStore> memoryStore,
+    std::unique_ptr<ChatSession> chatSession, std::unique_ptr<IChatHistoryStore> chatHistoryStore,
+    std::unique_ptr<IAgentRuntime> agentRuntime, std::unique_ptr<IApprovalPolicy> approvalPolicy,
+    std::unique_ptr<ISandboxPolicy> sandboxPolicy, std::unique_ptr<IToolExecutor> toolExecutor,
+    QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
+      approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
+                                     : std::make_unique<StaticApprovalPolicy>()),
+      sandboxPolicy_(sandboxPolicy ? std::move(sandboxPolicy)
+                                   : std::make_unique<StaticSandboxPolicy>()),
+      toolExecutor_(toolExecutor ? std::move(toolExecutor) : std::make_unique<NullToolExecutor>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -41,6 +75,70 @@ QString ApplicationController::agentStatus() const {
 
 QString ApplicationController::lastAgentResponse() const {
     return lastAgentResponse_;
+}
+
+QString ApplicationController::latestToolPlanStatus() const {
+    return toolInvocationPlanStatusName(latestAgentPipelineResult_.planningStatus());
+}
+
+QString ApplicationController::latestToolPlanSummary() const {
+    return safeToolPlanSummary(latestAgentPipelineResult_.plan);
+}
+
+QString ApplicationController::latestApprovalStatus() const {
+    return approvalStatusName(latestAgentPipelineResult_.approvalStatus());
+}
+
+QString ApplicationController::latestApprovalSummary() const {
+    return safeApprovalSummary(latestAgentPipelineResult_.approval);
+}
+
+QString ApplicationController::latestSandboxStatus() const {
+    return sandboxStatusName(latestAgentPipelineResult_.sandboxStatus());
+}
+
+QString ApplicationController::latestSandboxSummary() const {
+    return safeSandboxSummary(latestAgentPipelineResult_.sandbox);
+}
+
+QString ApplicationController::latestToolExecutionStatus() const {
+    return toolExecutionStatusName(latestAgentPipelineResult_.executionStatus());
+}
+
+QString ApplicationController::latestToolExecutionSummary() const {
+    return safeToolExecutionSummary(latestAgentPipelineResult_.execution);
+}
+
+QString ApplicationController::latestAgentPipelineStatus() const {
+    return agentPipelineStatusName(latestAgentPipelineResult_);
+}
+
+QString ApplicationController::latestAgentPipelineSummary() const {
+    return safeAgentPipelineSummary(latestAgentPipelineResult_);
+}
+
+QString ApplicationController::runtimeSessionId() const {
+    return runtimeSession_.context().sessionId.value;
+}
+
+QString ApplicationController::runtimeContextStatus() const {
+    return runtimeSession_.context().statusName();
+}
+
+QString ApplicationController::runtimeContextSummary() const {
+    return safeAgentRuntimeContextSummary(runtimeSession_.context());
+}
+
+QStringList ApplicationController::runtimeContextActiveToolIds() const {
+    return runtimeSession_.context().activePlannedToolIds;
+}
+
+int ApplicationController::agentActivityCount() const {
+    return agentActivityLog_.count();
+}
+
+QString ApplicationController::latestAgentActivitySummary() const {
+    return agentActivityLog_.latestSummary();
 }
 
 int ApplicationController::availableToolCount() const {
@@ -150,13 +248,30 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         return false;
     }
 
+    agentActivityLog_.append(AgentActivityType::RequestReceived, AgentActivityStatus::Recorded,
+                             QStringLiteral("Agent request received."));
+
     if (!agentRuntime_) {
+        agentActivityLog_.append(AgentActivityType::PipelineCompleted, AgentActivityStatus::Blocked,
+                                 QStringLiteral("Agent pipeline blocked: runtime unavailable."));
+        emit agentActivityChanged();
         if (lastAgentResponse_ != QStringLiteral("Agent runtime unavailable.")) {
             lastAgentResponse_ = QStringLiteral("Agent runtime unavailable.");
             emit agentResponseChanged();
         }
         return false;
     }
+
+    latestAgentPipelineResult_ = buildAgentPipelineResult(AgentRequest{trimmed});
+    appendPipelineActivity(latestAgentPipelineResult_);
+    runtimeSession_.attachPipelineResult(latestAgentPipelineResult_);
+    emit toolPlanChanged();
+    emit approvalChanged();
+    emit sandboxChanged();
+    emit toolExecutionChanged();
+    emit agentPipelineChanged();
+    emit runtimeContextChanged();
+    emit agentActivityChanged();
 
     const auto response = agentRuntime_->execute(AgentRequest{trimmed});
     const auto nextMessage =
@@ -167,6 +282,44 @@ bool ApplicationController::runAgentRequest(const QString& request) {
     }
     emit agentStatusChanged();
     return response.success;
+}
+
+AgentPipelineResult
+ApplicationController::buildAgentPipelineResult(const AgentRequest& request) const {
+    AgentPipelineResult result;
+    result.plan = agentRuntime_->plan(request);
+    result.approval = approvalPolicy_->evaluate(result.plan);
+    result.sandbox = sandboxPolicy_->evaluate(result.plan, result.approval);
+    result.execution = toolExecutor_->execute(ToolExecutionRequest{
+        result.plan,
+        result.approval,
+        result.sandbox,
+        availableToolIds(),
+    });
+    result.summary = safeToolExecutionSummary(result.execution);
+    return result;
+}
+
+void ApplicationController::appendPipelineActivity(const AgentPipelineResult& result) {
+    agentActivityLog_.append(AgentActivityType::PlanCreated,
+                             planActivityStatus(result.planningStatus()),
+                             QStringLiteral("Tool planning evaluated: %1")
+                                 .arg(toolInvocationPlanStatusName(result.planningStatus())));
+    agentActivityLog_.append(AgentActivityType::ApprovalEvaluated,
+                             approvalActivityStatus(result.approvalStatus()),
+                             QStringLiteral("Approval metadata evaluated: %1")
+                                 .arg(approvalStatusName(result.approvalStatus())));
+    agentActivityLog_.append(AgentActivityType::SandboxEvaluated,
+                             sandboxActivityStatus(result.sandboxStatus()),
+                             QStringLiteral("Sandbox metadata evaluated: %1")
+                                 .arg(sandboxStatusName(result.sandboxStatus())));
+    agentActivityLog_.append(AgentActivityType::PlaceholderExecutionEvaluated,
+                             executionActivityStatus(result.executionStatus()),
+                             QStringLiteral("Placeholder execution evaluated: %1")
+                                 .arg(toolExecutionStatusName(result.executionStatus())));
+    agentActivityLog_.append(
+        AgentActivityType::PipelineCompleted, executionActivityStatus(result.executionStatus()),
+        QStringLiteral("Agent pipeline finished: %1").arg(agentPipelineStatusName(result)));
 }
 
 bool ApplicationController::clearMemory() {

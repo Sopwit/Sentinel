@@ -85,6 +85,48 @@ public:
     bool wasCleared_ = false;
 };
 
+class FixedPlanRuntime final : public sentinel::core::IAgentRuntime {
+public:
+    FixedPlanRuntime(QList<sentinel::core::ToolDescriptor> tools,
+                     sentinel::core::ToolInvocationPlan plan)
+        : tools_(std::move(tools)), plan_(std::move(plan)) {}
+
+    QString name() const override {
+        return QStringLiteral("FixedPlanRuntime");
+    }
+
+    sentinel::core::AgentStatus status() const override {
+        return sentinel::core::AgentStatus::Ready;
+    }
+
+    QList<sentinel::core::AgentCapabilityDescriptor> capabilities() const override {
+        return {};
+    }
+
+    QList<sentinel::core::ToolDescriptor> availableTools() const override {
+        return tools_;
+    }
+
+    sentinel::core::ToolInvocationPlan
+    plan(const sentinel::core::AgentRequest& request) const override {
+        Q_UNUSED(request);
+        return plan_;
+    }
+
+    sentinel::core::AgentResponse execute(const sentinel::core::AgentRequest& request) override {
+        return {
+            true,
+            QStringLiteral("Fixed local agent placeholder processed: %1")
+                .arg(request.prompt.trimmed()),
+            sentinel::core::AgentStatus::Ready,
+        };
+    }
+
+private:
+    QList<sentinel::core::ToolDescriptor> tools_;
+    sentinel::core::ToolInvocationPlan plan_;
+};
+
 class UnavailableMemoryStore final : public sentinel::core::IMemoryStore {
 public:
     void put(QString key, QString value) override {
@@ -121,6 +163,17 @@ private slots:
     void exposesAgentStatusWithoutRuntime();
     void executesDeterministicAgentRequestWithRuntime();
     void exposesAgentToolMetadata();
+    void exposesLatestToolPlanStatusWithRuntime();
+    void exposesLatestApprovalStatusWithRuntime();
+    void exposesLatestSandboxStatusWithRuntime();
+    void exposesLatestToolExecutionStatusWithRuntime();
+    void exposesSuccessfulPipelineResultWithRuntime();
+    void exposesRuntimeContextForPipelineResult();
+    void exposesAgentActivityForPipelineResult();
+    void reportsRiskyToolPlanRequiresApproval();
+    void reportsSandboxBlockedPipelineResult();
+    void reportsEmptyPlanPipelineResult();
+    void reportsUnknownToolPipelineResult();
     void exposesMemoryStatus();
     void sendsMessageThroughProvider();
     void ignoresBlankChatMessages();
@@ -166,11 +219,29 @@ void ApplicationControllerTest::exposesAgentStatusWithoutRuntime() {
 
     QCOMPARE(controller->agentStatus(), QStringLiteral("Unavailable"));
     QCOMPARE(controller->lastAgentResponse(), QStringLiteral("No agent request yet."));
+    QCOMPARE(controller->latestToolPlanStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller->latestToolPlanSummary(), QStringLiteral("No tool plan yet."));
+    QCOMPARE(controller->latestApprovalStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller->latestApprovalSummary(), QStringLiteral("No approval decision yet."));
+    QCOMPARE(controller->latestSandboxStatus(), QStringLiteral("Not Evaluated"));
+    QCOMPARE(controller->latestSandboxSummary(), QStringLiteral("No sandbox evaluation yet."));
+    QCOMPARE(controller->latestToolExecutionStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller->latestToolExecutionSummary(),
+             QStringLiteral("No tool execution boundary result yet."));
+    QCOMPARE(controller->runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(controller->runtimeContextStatus(), QStringLiteral("Empty"));
+    QCOMPARE(controller->runtimeContextSummary(), QStringLiteral("No runtime context yet."));
+    QVERIFY(controller->runtimeContextActiveToolIds().isEmpty());
+    QCOMPARE(controller->agentActivityCount(), 0);
+    QCOMPARE(controller->latestAgentActivitySummary(), QStringLiteral("No agent activity yet."));
 
     const auto ran = controller->runAgentRequest(QStringLiteral("plan"));
 
     QVERIFY(!ran);
     QCOMPARE(controller->lastAgentResponse(), QStringLiteral("Agent runtime unavailable."));
+    QCOMPARE(controller->agentActivityCount(), 2);
+    QCOMPARE(controller->latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline blocked: runtime unavailable."));
 }
 
 void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
@@ -179,6 +250,12 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
                                      std::make_unique<sentinel::core::NullAgentRuntime>());
     QSignalSpy statusSpy(&controller, &ApplicationController::agentStatusChanged);
     QSignalSpy responseSpy(&controller, &ApplicationController::agentResponseChanged);
+    QSignalSpy planSpy(&controller, &ApplicationController::toolPlanChanged);
+    QSignalSpy approvalSpy(&controller, &ApplicationController::approvalChanged);
+    QSignalSpy sandboxSpy(&controller, &ApplicationController::sandboxChanged);
+    QSignalSpy toolExecutionSpy(&controller, &ApplicationController::toolExecutionChanged);
+    QSignalSpy runtimeContextSpy(&controller, &ApplicationController::runtimeContextChanged);
+    QSignalSpy activitySpy(&controller, &ApplicationController::agentActivityChanged);
 
     const auto ran = controller.runAgentRequest(QStringLiteral("check local plan"));
 
@@ -186,8 +263,37 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
     QCOMPARE(controller.agentStatus(), QStringLiteral("Ready"));
     QCOMPARE(controller.lastAgentResponse(),
              QStringLiteral("Local agent placeholder processed: check local plan"));
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
+    QCOMPARE(controller.latestToolPlanSummary(),
+             QStringLiteral("Metadata-only tool plan prepared."));
+    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
+    QCOMPARE(controller.latestApprovalSummary(),
+             QStringLiteral("Planned tool invocations do not require approval."));
+    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
+    QCOMPARE(controller.latestSandboxSummary(),
+             QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestToolExecutionSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestAgentPipelineSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(controller.runtimeContextStatus(), QStringLiteral("Active"));
+    QCOMPARE(controller.runtimeContextSummary(),
+             QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+    QCOMPARE(controller.runtimeContextActiveToolIds(),
+             QStringList{QStringLiteral("local-plan-summary")});
+    QCOMPARE(controller.agentActivityCount(), 6);
+    QCOMPARE(controller.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
     QCOMPARE(statusSpy.count(), 1);
     QCOMPARE(responseSpy.count(), 1);
+    QCOMPARE(planSpy.count(), 1);
+    QCOMPARE(approvalSpy.count(), 1);
+    QCOMPARE(sandboxSpy.count(), 1);
+    QCOMPARE(toolExecutionSpy.count(), 1);
+    QCOMPARE(runtimeContextSpy.count(), 1);
+    QCOMPARE(activitySpy.count(), 1);
 }
 
 void ApplicationControllerTest::exposesAgentToolMetadata() {
@@ -201,6 +307,289 @@ void ApplicationControllerTest::exposesAgentToolMetadata() {
 
     QCOMPARE(controller.availableToolCount(), 1);
     QCOMPARE(controller.availableToolIds(), QStringList{QStringLiteral("local-plan-summary")});
+}
+
+void ApplicationControllerTest::exposesLatestToolPlanStatusWithRuntime() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller.latestToolPlanSummary(), QStringLiteral("No tool plan yet."));
+
+    QVERIFY(!controller.runAgentRequest(QStringLiteral("   ")));
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller.latestToolPlanSummary(), QStringLiteral("No tool plan yet."));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
+    QCOMPARE(controller.latestToolPlanSummary(),
+             QStringLiteral("Metadata-only tool plan prepared."));
+}
+
+void ApplicationControllerTest::exposesLatestApprovalStatusWithRuntime() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+
+    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller.latestApprovalSummary(), QStringLiteral("No approval decision yet."));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
+    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
+    QCOMPARE(controller.latestApprovalSummary(),
+             QStringLiteral("Planned tool invocations do not require approval."));
+}
+
+void ApplicationControllerTest::exposesLatestSandboxStatusWithRuntime() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+
+    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Not Evaluated"));
+    QCOMPARE(controller.latestSandboxSummary(), QStringLiteral("No sandbox evaluation yet."));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
+    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
+    QCOMPARE(controller.latestSandboxSummary(),
+             QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
+}
+
+void ApplicationControllerTest::exposesLatestToolExecutionStatusWithRuntime() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller.latestToolExecutionSummary(),
+             QStringLiteral("No tool execution boundary result yet."));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller.latestAgentPipelineSummary(),
+             QStringLiteral("No agent pipeline result yet."));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestToolExecutionSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestAgentPipelineSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+}
+
+void ApplicationControllerTest::exposesSuccessfulPipelineResultWithRuntime() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+    QSignalSpy pipelineSpy(&controller, &ApplicationController::agentPipelineChanged);
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
+
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
+    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
+    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestAgentPipelineSummary(),
+             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(pipelineSpy.count(), 1);
+}
+
+void ApplicationControllerTest::exposesRuntimeContextForPipelineResult() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+    QSignalSpy runtimeContextSpy(&controller, &ApplicationController::runtimeContextChanged);
+
+    QCOMPARE(controller.runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(controller.runtimeContextStatus(), QStringLiteral("Empty"));
+    QCOMPARE(controller.runtimeContextSummary(), QStringLiteral("No runtime context yet."));
+    QVERIFY(controller.runtimeContextActiveToolIds().isEmpty());
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
+
+    QCOMPARE(controller.runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(controller.runtimeContextStatus(), QStringLiteral("Active"));
+    QCOMPARE(controller.runtimeContextSummary(),
+             QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+    QCOMPARE(controller.runtimeContextActiveToolIds(),
+             QStringList{QStringLiteral("local-plan-summary")});
+    QCOMPARE(runtimeContextSpy.count(), 1);
+}
+
+void ApplicationControllerTest::exposesAgentActivityForPipelineResult() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+    QSignalSpy activitySpy(&controller, &ApplicationController::agentActivityChanged);
+
+    QCOMPARE(controller.agentActivityCount(), 0);
+    QCOMPARE(controller.latestAgentActivitySummary(), QStringLiteral("No agent activity yet."));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
+
+    QCOMPARE(controller.agentActivityCount(), 6);
+    QCOMPARE(controller.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
+    QCOMPARE(activitySpy.count(), 1);
+}
+
+void ApplicationControllerTest::reportsRiskyToolPlanRequiresApproval() {
+    auto runtime =
+        std::make_unique<sentinel::core::NullAgentRuntime>(QList<sentinel::core::ToolDescriptor>{
+            sentinel::core::ToolDescriptor{
+                QStringLiteral("risky-tool"),
+                QStringLiteral("Risky Tool"),
+                QStringLiteral("Risk metadata only."),
+                sentinel::core::ToolRiskLevel::High,
+                sentinel::core::ToolExecutionMode::MetadataOnly,
+                {},
+            },
+        });
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::move(runtime));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft risky plan")));
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
+    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Requires Approval"));
+    QCOMPARE(controller.latestApprovalSummary(),
+             QStringLiteral("One or more planned tool invocations require approval."));
+    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Blocked By Approval"));
+    QCOMPARE(controller.latestSandboxSummary(),
+             QStringLiteral("Sandbox capability evaluation is blocked by approval metadata."));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller.latestToolExecutionSummary(),
+             QStringLiteral("Execution boundary blocked by approval metadata."));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller.latestAgentPipelineSummary(),
+             QStringLiteral("Execution boundary blocked by approval metadata."));
+    QCOMPARE(controller.agentActivityCount(), 6);
+    QCOMPARE(controller.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Blocked"));
+}
+
+void ApplicationControllerTest::reportsSandboxBlockedPipelineResult() {
+    const sentinel::core::ToolDescriptor tool{
+        QStringLiteral("local-tool"),
+        QStringLiteral("Local Tool"),
+        QStringLiteral("Metadata only."),
+        sentinel::core::ToolRiskLevel::Low,
+        sentinel::core::ToolExecutionMode::MetadataOnly,
+        {},
+    };
+    sentinel::core::ToolInvocationPlan plan{
+        sentinel::core::ToolInvocationPlanStatus::Planned,
+        QStringLiteral("Metadata-only tool plan prepared."),
+        {
+            sentinel::core::PlannedToolInvocation{
+                tool.id,
+                tool.name,
+                QStringLiteral("Plan metadata."),
+                QStringLiteral("Metadata-only rationale."),
+                tool.riskLevel,
+                tool.executionMode,
+                {},
+                {
+                    sentinel::core::CapabilityDescriptor{
+                        QStringLiteral("tool.blocked.capability"),
+                        QStringLiteral("Blocked metadata capability."),
+                    },
+                },
+            },
+        },
+    };
+    ApplicationController controller(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        std::make_unique<FixedPlanRuntime>(QList<sentinel::core::ToolDescriptor>{tool}, plan));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft sandbox blocked plan")));
+
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
+    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
+    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Denied"));
+    QCOMPARE(
+        controller.latestSandboxSummary(),
+        QStringLiteral("One or more planned capabilities are outside sandbox metadata policy."));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller.latestToolExecutionSummary(),
+             QStringLiteral("Execution boundary blocked by sandbox capability metadata."));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller.latestAgentPipelineSummary(),
+             QStringLiteral("Execution boundary blocked by sandbox capability metadata."));
+    QCOMPARE(controller.agentActivityCount(), 6);
+    QCOMPARE(controller.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Blocked"));
+}
+
+void ApplicationControllerTest::reportsEmptyPlanPipelineResult() {
+    sentinel::core::ToolInvocationPlan plan{
+        sentinel::core::ToolInvocationPlanStatus::NoToolsAvailable,
+        QStringLiteral("No tool metadata is available for planning."),
+        {},
+    };
+    ApplicationController controller(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        std::make_unique<FixedPlanRuntime>(QList<sentinel::core::ToolDescriptor>{}, plan));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft empty plan")));
+
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("No Tools Available"));
+    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Not Evaluated"));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Empty Plan"));
+    QCOMPARE(controller.latestToolExecutionSummary(),
+             QStringLiteral("No planned tool invocation reached the execution boundary."));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Empty Plan"));
+    QCOMPARE(controller.latestAgentPipelineSummary(),
+             QStringLiteral("No planned tool invocation reached the execution boundary."));
+    QCOMPARE(controller.agentActivityCount(), 6);
+    QCOMPARE(controller.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Empty Plan"));
+}
+
+void ApplicationControllerTest::reportsUnknownToolPipelineResult() {
+    const sentinel::core::ToolDescriptor knownTool{
+        QStringLiteral("known-tool"),
+        QStringLiteral("Known Tool"),
+        QStringLiteral("Metadata only."),
+        sentinel::core::ToolRiskLevel::Low,
+        sentinel::core::ToolExecutionMode::MetadataOnly,
+        {},
+    };
+    sentinel::core::ToolInvocationPlan plan{
+        sentinel::core::ToolInvocationPlanStatus::Planned,
+        QStringLiteral("Metadata-only tool plan prepared."),
+        {
+            sentinel::core::PlannedToolInvocation{
+                QStringLiteral("missing-tool"),
+                QStringLiteral("Missing Tool"),
+                QStringLiteral("Plan metadata."),
+                QStringLiteral("Metadata-only rationale."),
+                sentinel::core::ToolRiskLevel::Low,
+                sentinel::core::ToolExecutionMode::MetadataOnly,
+                {},
+                {},
+            },
+        },
+    };
+    ApplicationController controller(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        std::make_unique<FixedPlanRuntime>(QList<sentinel::core::ToolDescriptor>{knownTool}, plan));
+
+    QVERIFY(controller.runAgentRequest(QStringLiteral("draft unknown tool plan")));
+
+    QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
+    QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
+    QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Unknown Tool"));
+    QCOMPARE(controller.latestToolExecutionSummary(),
+             QStringLiteral("Execution boundary rejected unknown tool metadata: missing-tool"));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Unknown Tool"));
+    QCOMPARE(controller.latestAgentPipelineSummary(),
+             QStringLiteral("Execution boundary rejected unknown tool metadata: missing-tool"));
+    QCOMPARE(controller.agentActivityCount(), 6);
+    QCOMPARE(controller.latestAgentActivitySummary(),
+             QStringLiteral("Agent pipeline finished: Unknown Tool"));
 }
 
 void ApplicationControllerTest::exposesMemoryStatus() {

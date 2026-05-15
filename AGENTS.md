@@ -10,11 +10,12 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 4.1 is complete.
+Phase 4.8 is complete.
 
-Most recent work: Phase 4.1, Tool Descriptor and Registry Skeleton.
+Most recent work: Phase 4.8, Agent Activity Log and Audit Trail Skeleton.
 
-Current planning focus: Phase 4.2 planning while keeping tool execution non-operational.
+Current planning focus: post-Phase 4.8 stabilization while keeping real tool execution
+non-operational.
 
 ## Stack
 
@@ -99,4 +100,5 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 
 ## Current Priority
 
-Maintain provider/agent/tool-boundary separation and keep tool execution out of scope until explicitly approved.
+Maintain provider/agent/tool/sandbox/execution-boundary separation and keep real tool execution
+out of scope until explicitly approved.
