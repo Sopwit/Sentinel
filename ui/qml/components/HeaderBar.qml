@@ -35,8 +35,8 @@ ShellPanel {
                 spacing: SentinelTheme.spaceSm
 
                 Rectangle {
-                    width: 6
-                    height: 6
+                    Layout.preferredWidth: 6
+                    Layout.preferredHeight: 6
                     radius: 3
                     color: headerBar.modeAccent
                     opacity: 0.9

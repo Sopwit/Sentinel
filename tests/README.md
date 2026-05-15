@@ -7,11 +7,25 @@ Current test targets:
 - `test_mode_manager`
 - `test_chat_session`
 - `test_in_memory_store`
+- `test_sqlite_chat_history_store`
 - `test_sqlite_memory_store`
+- `test_in_memory_tool_registry`
+- `test_agent_activity_log`
+- `test_agent_pipeline_result`
+- `test_agent_runtime_context`
+- `test_static_approval_policy`
+- `test_static_sandbox_policy`
+- `test_static_model_router`
+- `test_static_provider_catalog`
+- `test_static_agent_registry`
+- `test_static_task_planner`
+- `test_null_tool_executor`
+- `test_standard_path_provider`
 - `test_application_controller`
 - `test_app_settings`
 - `test_json_settings_store`
 - `test_local_echo_provider`
+- `test_null_agent_runtime`
 - `test_desktop_shell_view_model`
 
 Run from the repository root:
