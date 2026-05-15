@@ -1,0 +1,79 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 24,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "tests",
+      "displayName": "Tests",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/tests"
+    },
+    {
+      "name": "no-ccache",
+      "displayName": "Debug without ccache wrapper",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/no-ccache",
+      "cacheVariables": {
+        "CMAKE_CXX_COMPILER": "/usr/bin/c++"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "tests",
+      "configurePreset": "tests"
+    },
+    {
+      "name": "no-ccache",
+      "configurePreset": "no-ccache"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "tests",
+      "configurePreset": "tests",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "no-ccache",
+      "configurePreset": "no-ccache",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
