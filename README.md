@@ -96,6 +96,12 @@ Development workflow details are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). 
 
 Open the repository root in CLion. CLion should detect the top-level `CMakeLists.txt`. Use a Ninja-based CMake profile and ensure Qt 6 is available through your environment or `CMAKE_PREFIX_PATH`.
 
+## Open With VS Code
+
+Open `Sentinel.code-workspace` for cross-platform QMLLS and C++ diagnostics defaults.
+For Qt QML module resolution, set `QML_IMPORT_PATH` and `QML2_IMPORT_PATH` to your Qt `qml`
+directory (examples are in `docs/DEVELOPMENT.md`).
+
 ## Intentionally Not Included Yet
 
 - Real AI API calls.

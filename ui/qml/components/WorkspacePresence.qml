@@ -12,7 +12,7 @@ ShellPanel {
     border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.10)
     bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.24)
     bracketSize: 12
-    implicitHeight: compact ? 430 : 560
+    implicitHeight: compact ? 300 : 420
 
     ColumnLayout {
         anchors.fill: parent
@@ -46,7 +46,7 @@ ShellPanel {
             id: scene
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.minimumHeight: presence.compact ? 300 : 420
+            Layout.minimumHeight: presence.compact ? 220 : 300
             readonly property real safeWidth: Math.max(1, width)
             readonly property real safeHeight: Math.max(1, height)
             readonly property real safeSize: Math.max(1, Math.min(safeWidth, safeHeight))

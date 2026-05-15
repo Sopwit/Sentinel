@@ -5,8 +5,8 @@ import Sentinel.Desktop
 GridLayout {
     id: dashboardPage
     required property var viewModel
-    readonly property bool wideLayout: width >= SentinelTheme.breakpointWide
-    readonly property bool compact: width < 760
+    readonly property bool wideLayout: width >= SentinelTheme.breakpointWide + 120
+    readonly property bool compact: width < 860
 
     columns: dashboardPage.wideLayout ? 12 : 1
     columnSpacing: SentinelTheme.spaceLg
@@ -18,7 +18,7 @@ GridLayout {
         Layout.fillWidth: true
         Layout.fillHeight: true
         Layout.columnSpan: dashboardPage.wideLayout ? 8 : 1
-        Layout.minimumHeight: dashboardPage.compact ? 430 : 560
+        Layout.minimumHeight: dashboardPage.compact ? 300 : 420
     }
 
     ColumnLayout {
@@ -69,7 +69,7 @@ GridLayout {
         SignalField {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            Layout.minimumHeight: 170
+            Layout.minimumHeight: 130
         }
     }
 

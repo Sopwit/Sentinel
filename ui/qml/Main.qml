@@ -4,15 +4,15 @@ import QtQuick.Layouts
 
 ApplicationWindow {
     id: root
-    width: 1200
-    height: 780
-    minimumWidth: 760
-    minimumHeight: 660
+    width: 1320
+    height: 860
+    minimumWidth: 900
+    minimumHeight: 700
     visible: true
     title: "Sentinel Desktop Alpha"
     color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
-    readonly property bool compactLayout: root.width < 900
+    readonly property bool compactLayout: root.width < 1080
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
     readonly property int currentPageIndex: root.viewModel.currentPage === "Dashboard" ? 0
                                             : root.viewModel.currentPage === "Memory" ? 1 : 2
@@ -32,7 +32,7 @@ ApplicationWindow {
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
-            spacing: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.space2Xl
+            spacing: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
 
             Sidebar {
                 viewModel: root.viewModel
@@ -44,13 +44,13 @@ ApplicationWindow {
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
+                spacing: SentinelTheme.spaceMd
 
                 HeaderBar {
                     viewModel: root.viewModel
                     compact: root.compactLayout
                     Layout.fillWidth: true
-                    Layout.preferredHeight: root.compactLayout ? 108 : 116
+                    Layout.preferredHeight: root.compactLayout ? 100 : 112
                 }
 
                 StackLayout {
@@ -93,6 +93,19 @@ ApplicationWindow {
                         }
                     }
                 }
+
+                StatusBar {
+                    viewModel: root.viewModel
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 34
+                }
+            }
+
+            ChatPanel {
+                viewModel: root.viewModel
+                visible: !root.compactLayout
+                Layout.preferredWidth: SentinelTheme.rightPanelWidth
+                Layout.fillHeight: true
             }
         }
 
@@ -100,8 +113,9 @@ ApplicationWindow {
             viewModel: root.viewModel
             compact: root.compactLayout
             Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: Math.min(root.width - SentinelTheme.space4Xl, root.compactLayout ? 320 : 390)
-            Layout.preferredHeight: implicitHeight
+            Layout.preferredWidth: Math.min(root.width - SentinelTheme.space4Xl,
+                                            root.compactLayout ? 320 : 420)
+            Layout.preferredHeight: compact ? 58 : 62
         }
     }
 }
