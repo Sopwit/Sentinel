@@ -13,6 +13,7 @@
       "binaryDir": "${sourceDir}/build/debug",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_DISABLE_FIND_PACKAGE_WrapVulkanHeaders": "ON",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
     },
