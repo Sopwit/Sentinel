@@ -86,3 +86,9 @@ Treat clang-tidy output as advisory for now. CI currently enforces build, tests,
 ## CI Expectations
 
 Linux CI installs Qt, configures with the `tests` preset, builds with Ninja, runs CTest, and checks formatting.
+
+## Desktop Shell Boundary
+
+QML should bind to `DesktopShellViewModel`, not directly to core services. Keep business rules in C++ and expose only small `Q_PROPERTY` and `Q_INVOKABLE` surfaces needed by the UI.
+
+Settings placeholders should go through `AppSettings`. Storage placeholders should go through `IMemoryStore`. Do not add SQLite, provider networking, or platform automation in the desktop shell layer.

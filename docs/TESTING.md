@@ -25,6 +25,8 @@ ctest --test-dir build --output-on-failure
 - `ModeManager`: default mode, available modes, repeated changes, duplicate mode selection, and unknown mode names.
 - `InMemoryStore`: missing keys, empty keys, put/get, repeated overwrites, multiple independent keys, and deterministic entry ordering.
 - `ApplicationController`: initial state, fake provider responses, blank chat rejection, memory key validation, runtime memory writes, and overwrite behavior through `IMemoryStore`.
+- `AppSettings`: defaults, input normalization, duplicate updates, blank input handling, and configuration profile changes.
+- `DesktopShellViewModel`: QML-facing state exposure and forwarding for chat, mode, memory, and settings actions.
 
 ## Test Boundaries
 

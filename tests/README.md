@@ -7,6 +7,8 @@ Current test targets:
 - `test_mode_manager`
 - `test_in_memory_store`
 - `test_application_controller`
+- `test_app_settings`
+- `test_desktop_shell_view_model`
 
 Run from the repository root:
 
