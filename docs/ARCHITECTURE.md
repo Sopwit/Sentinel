@@ -61,6 +61,10 @@ The desktop app stores memory below Qt's `AppDataLocation` as `memory.sqlite3`. 
 
 SQLite stores only explicit key-value memory entries. Chat history remains in-memory and is not persisted yet.
 
+`SQLiteMemoryStore` exposes generic availability and last-error diagnostics through `IMemoryStore`. The desktop shell only shows an Available/Unavailable memory status and does not expose SQLite-specific details to QML.
+
+The SQLite database includes a `memory_schema_metadata` table with `schema_version = 1`. This is migration preparation only; no migration framework exists yet.
+
 ## Settings Contract
 
 `ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.

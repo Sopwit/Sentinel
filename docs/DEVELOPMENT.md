@@ -160,6 +160,10 @@ The desktop app wires `SQLiteMemoryStore` to Qt's `AppDataLocation` as `memory.s
 
 SQLite stores only explicit key-value memory entries. Chat history remains in-memory until a separate persistence design is added.
 
+`SQLiteMemoryStore` creates a schema metadata table and records schema version `1`. Future migrations should build on that metadata table, but no migration framework should be added until there is a real schema change.
+
+If the SQLite database path is unavailable or unwritable, the store reports unavailable and safely behaves as an empty/no-op backend. This avoids noisy runtime logs and keeps the desktop shell usable.
+
 ## Linux Packaging Direction
 
 Fedora/KDE packaging should stay conventional:

@@ -12,6 +12,7 @@ This first version includes:
 - `IChatProvider` with a deterministic `LocalEchoProvider`.
 - Structured in-memory `ChatSession` with a QML-safe chat history model.
 - `IMemoryStore` with `InMemoryStore` for tests and `SQLiteMemoryStore` for desktop persistence.
+- Memory storage diagnostics and SQLite schema metadata preparation.
 - `IPlugin` and `IContextEngine` interfaces.
 - `ApplicationController` and `ModeManager`.
 - `AppSettings` with `ISettingsStore`, in-memory test storage, and lightweight JSON desktop storage.

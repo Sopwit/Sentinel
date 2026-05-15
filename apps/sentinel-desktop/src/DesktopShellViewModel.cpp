@@ -34,6 +34,10 @@ QString DesktopShellViewModel::providerStatus() const {
     return controller_.providerStatus();
 }
 
+QString DesktopShellViewModel::memoryStatus() const {
+    return controller_.memoryStatus();
+}
+
 QString DesktopShellViewModel::currentModeName() const {
     return modeManager_.currentModeName();
 }

@@ -50,6 +50,7 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
 
     QCOMPARE(fixture.viewModel.providerName(), QStringLiteral("LocalEchoProvider"));
     QCOMPARE(fixture.viewModel.providerStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.memoryStatus(), QStringLiteral("Available"));
     QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Companion Mode"));
     QVERIFY(fixture.viewModel.availableModes().contains(QStringLiteral("Tactical Mode")));
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Dark"));

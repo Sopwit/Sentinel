@@ -20,16 +20,23 @@ public:
     void put(QString key, QString value) override;
     QString get(const QString& key) const override;
     MemoryEntries entries() const override;
+    bool isAvailable() const override;
+    QString lastError() const override;
 
     QString databasePath() const;
+    int schemaVersion() const;
 
 private:
     void open();
     void initializeSchema();
+    void setLastError(QString error) const;
+
+    static constexpr int currentSchemaVersion = 1;
 
     QString databasePath_;
     QString connectionName_;
     QSqlDatabase database_;
+    mutable QString lastError_;
 };
 
 } // namespace sentinel::core

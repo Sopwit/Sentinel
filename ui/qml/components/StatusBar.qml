@@ -26,6 +26,12 @@ ShellPanel {
             font.pixelSize: 12
         }
 
+        Label {
+            text: "Memory: " + statusBar.viewModel.memoryStatus
+            color: "#82aaa1"
+            font.pixelSize: 12
+        }
+
         Item {
             Layout.fillWidth: true
         }
