@@ -136,6 +136,30 @@ qmllint -I build/no-ccache/apps/sentinel-desktop \
   build/no-ccache/apps/sentinel-desktop/Sentinel/Desktop/*.qml
 ```
 
+### VS Code + QMLLS (cross-platform)
+
+Use the checked-in `Sentinel.code-workspace` file when opening the project in VS Code. It keeps
+QML module import paths and C++ `compile_commands.json` resolution consistent across machines.
+
+QMLLS also needs Qt module paths from your environment. Set `QML_IMPORT_PATH` and
+`QML2_IMPORT_PATH` to your Qt `qml` directory:
+
+```bash
+# macOS (Homebrew)
+export QML_IMPORT_PATH=/opt/homebrew/opt/qt/lib/qml
+export QML2_IMPORT_PATH=/opt/homebrew/opt/qt/lib/qml
+
+# Linux (common distro paths)
+export QML_IMPORT_PATH=/usr/lib64/qt6/qml:/usr/lib/qt6/qml
+export QML2_IMPORT_PATH=/usr/lib64/qt6/qml:/usr/lib/qt6/qml
+```
+
+```powershell
+# Windows PowerShell (Qt installer example)
+$env:QML_IMPORT_PATH = "C:\Qt\6.7.3\msvc2019_64\qml"
+$env:QML2_IMPORT_PATH = "C:\Qt\6.7.3\msvc2019_64\qml"
+```
+
 The remaining known QML lint warning is the root `shellViewModel` context property injected from C++. It is harmless at runtime and intentionally left until a typed QML singleton is worth adding.
 
 ### Headless/offscreen Qt font warning
