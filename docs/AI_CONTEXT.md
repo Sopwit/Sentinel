@@ -2,23 +2,52 @@
 
 ## Vision
 
-Sentinel is a native desktop-first AI operating layer. The current product is a Desktop Alpha foundation for local UI, provider boundaries, memory storage, settings storage, and future extension points.
+Sentinel is a cross-platform Qt/QML-based personal AI assistant desktop application, optimized first for Linux/Fedora KDE Plasma. The current product is a Desktop Alpha foundation for local UI, provider boundaries, memory storage, settings storage, and future extension points.
 
 ## Target Platform
 
-- Primary: Fedora KDE Plasma.
-- Current implementation: Linux-native Qt desktop app.
-- Long-term platforms are out of scope for current implementation work unless a phase explicitly adds them.
+- Primary optimization target: Fedora KDE Plasma.
+- Compatibility goal: keep Windows and macOS possible.
+- Current implementation: Qt/QML desktop app with portable C++ core boundaries.
 
 ## Core Principles
 
 - Native desktop over web shell.
 - C++ core with QML presentation.
 - Clear interfaces before feature expansion.
+- Portable core before platform-specific integration.
 - Local-first defaults.
 - Minimal dependencies.
 - Storage responsibilities stay separated.
 - QML must not own business logic or persistence.
+
+## Platform Strategy
+
+- Keep core application logic platform-neutral.
+- Use Qt APIs where they preserve portability.
+- Put platform-specific behavior behind future service interfaces:
+  - `IPlatformService`
+  - `IPathProvider`
+  - `INotificationService`
+  - `ISystemIntegrationService`
+- Linux/Fedora KDE integrations may be deeper, but must not leak into shared core logic.
+
+## UI Direction
+
+Current UI foundation:
+
+- Qt Quick/QML shell.
+- Dashboard, chat, memory, settings, sidebar, header, and status bar.
+- QML-safe view models.
+
+Future UI vision:
+
+- Modern Qt Quick UX.
+- Smooth animations and animated panels.
+- Responsive layouts and adaptive themes.
+- Assistant-like chat-oriented interaction.
+- Dashboard cards and extensible components.
+- Modern desktop aesthetics without over-styling.
 
 ## Current Technical Foundation
 
@@ -39,8 +68,9 @@ Sentinel is a native desktop-first AI operating layer. The current product is a 
 
 ## Current Phase State
 
-- Completed: Phase 3.3.
+- Completed: Phase 3.1, Phase 3.1.5, and Phase 3.2.
+- Current: Phase 3.3 is close to completion.
+- Planning: Phase 3.4, Cross-platform Architecture Readiness.
 - Recent: Phase 3.1.5, AI Context & Agent Instruction Layer.
-- Next phase: not started.
 
-Current runtime still has no networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, or pruning.
+Current runtime still has no networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, or platform-specific service layer.

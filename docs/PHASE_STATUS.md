@@ -1,6 +1,6 @@
 # Phase Status
 
-## Completed
+## Completed / Stable
 
 ### Phase 1: Desktop Alpha Foundation
 
@@ -49,7 +49,7 @@ Chat history persistence is separate from key-value memory storage.
 
 ### Phase 3.3: Chat History UX and Lifecycle Controls
 
-Added minimal chat history lifecycle UX on top of the Phase 3.2 persistence boundary.
+Close to completion. Adds minimal chat history lifecycle UX on top of the Phase 3.2 persistence boundary.
 
 Scope:
 
@@ -65,8 +65,29 @@ Current limitation:
 - No multi-conversation/thread support.
 - No encryption, export, or pruning.
 
+## Current Alignment Work
+
+### Phase 3.4: Cross-platform Architecture Readiness
+
+Documentation and architecture planning phase. No runtime implementation yet.
+
+Scope:
+
+- Update project positioning from Linux-only to cross-platform core.
+- Preserve Linux/Fedora KDE Plasma as the first optimization target.
+- Define platform abstraction direction.
+- Keep core logic portable across Linux, Windows, and macOS.
+- Refine long-term UI/UX roadmap without implementing Phase 4.
+
+Candidate future interfaces:
+
+- `IPlatformService`
+- `IPathProvider`
+- `INotificationService`
+- `ISystemIntegrationService`
+
 ## Upcoming
 
-### Next Phase: Pending
+### Phase 4: Agent Core & Tool System
 
-Placeholder only. Do not implement future phase behavior without an explicit task.
+Not started. Do not implement Phase 4 behavior during Phase 3.4 planning.
