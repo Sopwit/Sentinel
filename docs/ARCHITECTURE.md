@@ -75,6 +75,22 @@ The desktop app stores settings below Qt's `AppConfigLocation`. Future settings 
 
 Future real providers should implement `IChatProvider` behind explicit configuration and status handling. Network transport, credentials, retries, streaming, and model selection are intentionally not part of Phase 2.2.
 
+## Chat Session Pipeline
+
+Chat history is owned by `ChatSession`, an in-memory session model with structured `ChatMessage` entries:
+
+- message id
+- role: `system`, `user`, or `assistant`
+- content
+- timestamp from an injectable clock
+- status: `sent`, `received`, or `error`
+
+`ApplicationController::sendMessage` validates input, appends a user message, calls `IChatProvider`, then appends an assistant reply or error message. Blank messages do not mutate history.
+
+The desktop layer exposes history through `ChatMessageListModel`, a QML-safe `QAbstractListModel`. QML reads roles and never receives raw core objects.
+
+Chat history is not persisted yet. Future persistence should be added behind a dedicated storage boundary, not by writing from QML.
+
 ## Not Implemented Yet
 
 - Real AI providers.

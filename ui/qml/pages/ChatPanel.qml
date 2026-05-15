@@ -23,15 +23,15 @@ ShellPanel {
             delegate: Rectangle {
                 width: ListView.view.width
                 radius: 14
-                color: modelData.indexOf("You:") === 0 ? "#173331" : "#102326"
-                border.color: modelData.indexOf("You:") === 0 ? "#35f2c044" : "#7be8c733"
+                color: messageRole === "user" ? "#173331" : messageStatus === "error" ? "#33191a" : "#102326"
+                border.color: messageRole === "user" ? "#35f2c044" : messageStatus === "error" ? "#d66b6b66" : "#7be8c733"
                 implicitHeight: messageText.implicitHeight + 22
 
                 Text {
                     id: messageText
                     anchors.fill: parent
                     anchors.margins: 11
-                    text: modelData
+                    text: (messageRole === "user" ? "You" : "Sentinel") + ": " + content
                     color: "#d9fff4"
                     wrapMode: Text.WordWrap
                     font.pixelSize: 13
@@ -66,6 +66,11 @@ ShellPanel {
                     shellViewModel.sendMessage(chatInput.text)
                     chatInput.clear()
                 }
+            }
+
+            Button {
+                text: "Clear"
+                onClicked: shellViewModel.clearChat()
             }
         }
     }

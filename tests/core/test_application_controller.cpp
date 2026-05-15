@@ -30,6 +30,22 @@ public:
     }
 };
 
+class ErrorProvider final : public IChatProvider {
+public:
+    QString name() const override {
+        return QStringLiteral("ErrorProvider");
+    }
+
+    ChatProviderStatus status() const override {
+        return ChatProviderStatus::Ready;
+    }
+
+    ChatProviderReply sendMessage(const QString& message) override {
+        Q_UNUSED(message);
+        return {false, {}, QStringLiteral("deterministic failure")};
+    }
+};
+
 class ApplicationControllerTest final : public QObject {
     Q_OBJECT
 
@@ -39,6 +55,8 @@ private slots:
     void sendsMessageThroughProvider();
     void ignoresBlankChatMessages();
     void handlesUnavailableProvider();
+    void handlesProviderErrorReply();
+    void clearsChatHistory();
     void storesRuntimeMemoryEntries();
     void rejectsBlankMemoryKeys();
     void overwritesMemoryEntriesThroughStoreBackend();
@@ -55,6 +73,8 @@ void ApplicationControllerTest::exposesProviderNameAndInitialSystemMessage() {
     QCOMPARE(controller->providerName(), QStringLiteral("LocalEchoProvider"));
     QCOMPARE(controller->chatMessages().size(), 1);
     QCOMPARE(controller->chatMessages().first(), QStringLiteral("Sentinel: Sentinel Core online."));
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->chatHistory().first().role, sentinel::core::ChatRole::System);
     QVERIFY(controller->memoryEntries().isEmpty());
 }
 
@@ -76,6 +96,8 @@ void ApplicationControllerTest::sendsMessageThroughProvider() {
     QCOMPARE(messages.at(1), QStringLiteral("You: status"));
     QCOMPARE(messages.at(2),
              QStringLiteral("Sentinel: Sentinel Core online. Local chat pipeline is active."));
+    QCOMPARE(controller->chatHistory().at(1).status, sentinel::core::ChatMessageStatus::Sent);
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
     QCOMPARE(spy.count(), 1);
 }
 
@@ -103,7 +125,37 @@ void ApplicationControllerTest::handlesUnavailableProvider() {
     QCOMPARE(controller->chatMessages().size(), 3);
     QCOMPARE(controller->chatMessages().last(),
              QStringLiteral("Sentinel: Provider unavailable. Status: Unavailable"));
+    QCOMPARE(controller->chatHistory().last().status, sentinel::core::ChatMessageStatus::Error);
     QCOMPARE(spy.count(), 1);
+}
+
+void ApplicationControllerTest::handlesProviderErrorReply() {
+    auto controller = std::make_unique<ApplicationController>(std::make_unique<ErrorProvider>(),
+                                                              std::make_unique<InMemoryStore>());
+    QSignalSpy spy(controller.get(), &ApplicationController::chatMessagesChanged);
+
+    const auto sent = controller->sendMessage(QStringLiteral("status"));
+
+    QVERIFY(!sent);
+    QCOMPARE(controller->chatMessages().size(), 3);
+    QCOMPARE(controller->chatMessages().last(),
+             QStringLiteral("Sentinel: Provider error: deterministic failure"));
+    QCOMPARE(controller->chatHistory().last().status, sentinel::core::ChatMessageStatus::Error);
+    QCOMPARE(spy.count(), 1);
+}
+
+void ApplicationControllerTest::clearsChatHistory() {
+    const auto controller = makeController();
+    QSignalSpy spy(controller.get(), &ApplicationController::chatMessagesChanged);
+
+    controller->sendMessage(QStringLiteral("status"));
+    controller->clearChat();
+
+    QCOMPARE(controller->chatMessages(),
+             QStringList{QStringLiteral("Sentinel: Sentinel Core online.")});
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->chatHistory().first().id, 1);
+    QCOMPARE(spy.count(), 2);
 }
 
 void ApplicationControllerTest::storesRuntimeMemoryEntries() {

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sentinel/desktop/ChatMessageListModel.h"
+
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -20,7 +22,7 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QStringList availableModes READ availableModes CONSTANT)
     Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
     Q_PROPERTY(QStringList availablePages READ availablePages CONSTANT)
-    Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
+    Q_PROPERTY(ChatMessageListModel* chatMessages READ chatMessages CONSTANT)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString themeName READ themeName WRITE setThemeName NOTIFY themeNameChanged)
     Q_PROPERTY(QString configurationProfile READ configurationProfile WRITE setConfigurationProfile
@@ -37,7 +39,7 @@ public:
     QString currentPage() const;
     void setCurrentPage(const QString& page);
     QStringList availablePages() const;
-    QStringList chatMessages() const;
+    ChatMessageListModel* chatMessages();
     QStringList memoryEntries() const;
     QString themeName() const;
     void setThemeName(const QString& themeName);
@@ -45,6 +47,7 @@ public:
     void setConfigurationProfile(const QString& configurationProfile);
 
     Q_INVOKABLE bool sendMessage(const QString& message);
+    Q_INVOKABLE void clearChat();
     Q_INVOKABLE void setModeByName(const QString& modeName);
     Q_INVOKABLE void remember(const QString& key, const QString& value);
 
@@ -62,6 +65,7 @@ private:
     core::ApplicationController& controller_;
     core::ModeManager& modeManager_;
     core::AppSettings& settings_;
+    ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");
 };
 

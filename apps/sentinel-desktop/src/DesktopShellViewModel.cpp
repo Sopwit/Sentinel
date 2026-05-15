@@ -9,9 +9,13 @@ namespace sentinel::desktop {
 DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& controller,
                                              core::ModeManager& modeManager,
                                              core::AppSettings& settings, QObject* parent)
-    : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings) {
-    connect(&controller_, &core::ApplicationController::chatMessagesChanged, this,
-            &DesktopShellViewModel::chatMessagesChanged);
+    : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings),
+      chatMessages_(this) {
+    chatMessages_.setMessages(controller_.chatHistory());
+    connect(&controller_, &core::ApplicationController::chatMessagesChanged, this, [this]() {
+        chatMessages_.setMessages(controller_.chatHistory());
+        emit chatMessagesChanged();
+    });
     connect(&controller_, &core::ApplicationController::memoryEntriesChanged, this,
             &DesktopShellViewModel::memoryEntriesChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
@@ -60,8 +64,8 @@ QStringList DesktopShellViewModel::availablePages() const {
     };
 }
 
-QStringList DesktopShellViewModel::chatMessages() const {
-    return controller_.chatMessages();
+ChatMessageListModel* DesktopShellViewModel::chatMessages() {
+    return &chatMessages_;
 }
 
 QStringList DesktopShellViewModel::memoryEntries() const {
@@ -86,6 +90,10 @@ void DesktopShellViewModel::setConfigurationProfile(const QString& configuration
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {
     return controller_.sendMessage(message);
+}
+
+void DesktopShellViewModel::clearChat() {
+    controller_.clearChat();
 }
 
 void DesktopShellViewModel::setModeByName(const QString& modeName) {
