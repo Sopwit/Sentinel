@@ -6,6 +6,7 @@
 #include "sentinel/core/JsonSettingsStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/ModeManager.h"
+#include "sentinel/core/NullAgentRuntime.h"
 #include "sentinel/core/SQLiteChatHistoryStore.h"
 #include "sentinel/core/SQLiteMemoryStore.h"
 #include "sentinel/core/StandardPathProvider.h"
@@ -29,7 +30,8 @@ int main(int argc, char* argv[]) {
         std::make_unique<sentinel::core::SQLiteMemoryStore>(pathProvider.memoryDatabasePath()),
         nullptr,
         std::make_unique<sentinel::core::SQLiteChatHistoryStore>(
-            pathProvider.chatHistoryDatabasePath()));
+            pathProvider.chatHistoryDatabasePath()),
+        std::make_unique<sentinel::core::NullAgentRuntime>());
     sentinel::core::ModeManager modeManager;
     sentinel::core::AppSettings settings(
         std::make_unique<sentinel::core::JsonSettingsStore>(pathProvider.settingsFilePath()));

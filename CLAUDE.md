@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 3.5 is complete.
+Phase 4.0 is complete.
 
 Implemented foundation:
 
@@ -44,6 +44,7 @@ Recent implementation phase:
 - Phase 3.3, Chat History UX and Lifecycle Controls.
 - Phase 3.4, Cross-platform Architecture Readiness and Storage Maintenance.
 - Phase 3.5, Pre-agent Architecture Audit and Release Checkpoint.
+- Phase 4.0, Agent Core Planning and Minimal Runtime Skeleton.
 
 ## Constraints
 

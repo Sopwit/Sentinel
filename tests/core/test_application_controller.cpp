@@ -2,6 +2,7 @@
 #include "sentinel/core/IChatHistoryStore.h"
 #include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
+#include "sentinel/core/NullAgentRuntime.h"
 
 #include <QSignalSpy>
 #include <QtTest>
@@ -117,6 +118,8 @@ class ApplicationControllerTest final : public QObject {
 private slots:
     void exposesProviderNameAndInitialSystemMessage();
     void exposesProviderStatus();
+    void exposesAgentStatusWithoutRuntime();
+    void executesDeterministicAgentRequestWithRuntime();
     void exposesMemoryStatus();
     void sendsMessageThroughProvider();
     void ignoresBlankChatMessages();
@@ -155,6 +158,35 @@ void ApplicationControllerTest::exposesProviderStatus() {
     const auto controller = makeController();
 
     QCOMPARE(controller->providerStatus(), QStringLiteral("Ready"));
+}
+
+void ApplicationControllerTest::exposesAgentStatusWithoutRuntime() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->agentStatus(), QStringLiteral("Unavailable"));
+    QCOMPARE(controller->lastAgentResponse(), QStringLiteral("No agent request yet."));
+
+    const auto ran = controller->runAgentRequest(QStringLiteral("plan"));
+
+    QVERIFY(!ran);
+    QCOMPARE(controller->lastAgentResponse(), QStringLiteral("Agent runtime unavailable."));
+}
+
+void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, nullptr,
+                                     std::make_unique<sentinel::core::NullAgentRuntime>());
+    QSignalSpy statusSpy(&controller, &ApplicationController::agentStatusChanged);
+    QSignalSpy responseSpy(&controller, &ApplicationController::agentResponseChanged);
+
+    const auto ran = controller.runAgentRequest(QStringLiteral("check local plan"));
+
+    QVERIFY(ran);
+    QCOMPARE(controller.agentStatus(), QStringLiteral("Ready"));
+    QCOMPARE(controller.lastAgentResponse(),
+             QStringLiteral("Local agent placeholder processed: check local plan"));
+    QCOMPARE(statusSpy.count(), 1);
+    QCOMPARE(responseSpy.count(), 1);
 }
 
 void ApplicationControllerTest::exposesMemoryStatus() {

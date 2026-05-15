@@ -20,6 +20,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::memoryEntriesChanged);
     connect(&controller_, &core::ApplicationController::maintenanceStatusChanged, this,
             &DesktopShellViewModel::maintenanceStatusChanged);
+    connect(&controller_, &core::ApplicationController::agentStatusChanged, this,
+            &DesktopShellViewModel::agentStatusChanged);
+    connect(&controller_, &core::ApplicationController::agentResponseChanged, this,
+            &DesktopShellViewModel::agentResponseChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::themeNameChanged, this,
@@ -34,6 +38,14 @@ QString DesktopShellViewModel::providerName() const {
 
 QString DesktopShellViewModel::providerStatus() const {
     return controller_.providerStatus();
+}
+
+QString DesktopShellViewModel::agentStatus() const {
+    return controller_.agentStatus();
+}
+
+QString DesktopShellViewModel::lastAgentResponse() const {
+    return controller_.lastAgentResponse();
 }
 
 QString DesktopShellViewModel::memoryStatus() const {
@@ -108,6 +120,10 @@ void DesktopShellViewModel::setConfigurationProfile(const QString& configuration
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {
     return controller_.sendMessage(message);
+}
+
+bool DesktopShellViewModel::runAgentRequest(const QString& request) {
+    return controller_.runAgentRequest(request);
 }
 
 bool DesktopShellViewModel::clearMemory() {

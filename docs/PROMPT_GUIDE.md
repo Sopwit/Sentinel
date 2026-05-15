@@ -75,6 +75,22 @@ After completion:
 Run build/tests and report readiness risks plus a Phase 4 readiness verdict.
 ```
 
+```text
+Read AGENTS.md, docs/DECISIONS.md, and docs/ARCHITECTURE.md first.
+
+Task:
+Implement Phase 4.0 minimal agent runtime skeleton.
+
+Scope:
+core agent-runtime interfaces, deterministic local runtime, minimal controller/view-model status wiring, focused tests, and docs.
+
+Do not:
+Implement real tools, networking, provider integrations, plugin loading, or privileged automation.
+
+After completion:
+Run full tests plus clang-format dry-run and report remaining limitations.
+```
+
 ## Anti-Pattern Prompts
 
 Avoid broad prompts:
