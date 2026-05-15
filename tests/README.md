@@ -7,6 +7,7 @@ Current test targets:
 - `test_mode_manager`
 - `test_chat_session`
 - `test_in_memory_store`
+- `test_sqlite_memory_store`
 - `test_application_controller`
 - `test_app_settings`
 - `test_json_settings_store`

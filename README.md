@@ -11,7 +11,7 @@ This first version includes:
 - Modular C++ core library.
 - `IChatProvider` with a deterministic `LocalEchoProvider`.
 - Structured in-memory `ChatSession` with a QML-safe chat history model.
-- `IMemoryStore` with runtime-only `InMemoryStore`.
+- `IMemoryStore` with `InMemoryStore` for tests and `SQLiteMemoryStore` for desktop persistence.
 - `IPlugin` and `IContextEngine` interfaces.
 - `ApplicationController` and `ModeManager`.
 - `AppSettings` with `ISettingsStore`, in-memory test storage, and lightweight JSON desktop storage.
@@ -25,7 +25,7 @@ Requirements:
 - CMake 3.24 or newer.
 - Ninja.
 - C++20 compiler.
-- Qt 6.5 or newer with `Core`, `Gui`, `Quick`, `Qml`, and `Test`.
+- Qt 6.5 or newer with `Core`, `Gui`, `Quick`, `Qml`, `Sql`, and `Test`.
 
 Configure and build:
 
@@ -77,7 +77,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-Current tests cover `ModeManager`, `InMemoryStore`, and `ApplicationController`. They do not launch the QML UI.
+Current tests cover `ModeManager`, memory stores, chat/session behavior, settings, providers, `ApplicationController`, and desktop view-model behavior. They do not launch the QML UI.
 
 Preset-based test workflow:
 
@@ -97,7 +97,7 @@ Open the repository root in CLion. CLion should detect the top-level `CMakeLists
 
 - Real AI API calls.
 - Network code.
-- SQLite persistence.
+- Chat history persistence.
 - Voice input or output.
 - Automation agents.
 - Cloud sync.
