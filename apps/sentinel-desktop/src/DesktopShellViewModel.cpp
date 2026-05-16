@@ -266,6 +266,58 @@ QStringList DesktopShellViewModel::orchestrationDiagnostics() const {
     return controller_.orchestrationDiagnostics();
 }
 
+QString DesktopShellViewModel::localRuntimeStatus() const {
+    return controller_.localRuntimeStatus();
+}
+
+QString DesktopShellViewModel::localRuntimeHealth() const {
+    return controller_.localRuntimeHealth();
+}
+
+QString DesktopShellViewModel::localRuntimeSummary() const {
+    return controller_.localRuntimeSummary();
+}
+
+QStringList DesktopShellViewModel::localRuntimeCapabilities() const {
+    return controller_.localRuntimeCapabilities();
+}
+
+QString DesktopShellViewModel::localRuntimeResponseStatus() const {
+    return controller_.localRuntimeResponseStatus();
+}
+
+QString DesktopShellViewModel::localRuntimeResponseSummary() const {
+    return controller_.localRuntimeResponseSummary();
+}
+
+int DesktopShellViewModel::localRuntimeSessionCount() const {
+    return controller_.localRuntimeSessionCount();
+}
+
+QString DesktopShellViewModel::localRuntimeSessionStatus() const {
+    return controller_.localRuntimeSessionStatus();
+}
+
+QString DesktopShellViewModel::localRuntimeSessionHealth() const {
+    return controller_.localRuntimeSessionHealth();
+}
+
+QString DesktopShellViewModel::localRuntimeSessionSummary() const {
+    return controller_.localRuntimeSessionSummary();
+}
+
+QString DesktopShellViewModel::localRuntimeAllocationSummary() const {
+    return controller_.localRuntimeAllocationSummary();
+}
+
+QString DesktopShellViewModel::localRuntimeReservationSummary() const {
+    return controller_.localRuntimeReservationSummary();
+}
+
+QStringList DesktopShellViewModel::localRuntimeSessionSummaries() const {
+    return controller_.localRuntimeSessionSummaries();
+}
+
 int DesktopShellViewModel::availableToolCount() const {
     return controller_.availableToolCount();
 }

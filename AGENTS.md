@@ -10,12 +10,12 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 6.9 is complete.
+Phase 7.1 is complete.
 
-Most recent work: Phase 6.9, Conversation State Graph Skeleton.
+Most recent work: Phase 7.1, Local Runtime Session Ownership Skeleton.
 
-Current planning focus: Phase 6.x stabilization while keeping real provider/model/tool execution
-non-operational.
+Current planning focus: Phase 7.x local runtime boundary stabilization while keeping real
+provider/model/tool execution non-operational unless a later phase explicitly scopes it.
 
 ## Stack
 
@@ -104,5 +104,6 @@ Maintain provider/agent/tool/sandbox/execution-boundary separation and keep real
 out of scope until explicitly approved.
 
 Keep model/provider routing, catalog, task planning, agent registry, memory taxonomy,
-orchestration snapshots/diagnostics, conversation session context, and conversation state graph
-metadata-only until an explicit later provider/model/agent/memory execution phase.
+orchestration snapshots/diagnostics, conversation session context, conversation state graph, and
+local runtime boundary/session metadata-only until an explicit later provider/model/agent/memory
+execution phase.

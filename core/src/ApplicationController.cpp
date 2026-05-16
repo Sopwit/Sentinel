@@ -1,5 +1,6 @@
 #include "sentinel/core/ApplicationController.h"
 
+#include "sentinel/core/LocalRuntime.h"
 #include "sentinel/core/NullToolExecutor.h"
 #include "sentinel/core/StaticAgentRegistry.h"
 #include "sentinel/core/StaticApprovalPolicy.h"
@@ -57,7 +58,8 @@ ApplicationController::ApplicationController(
     std::unique_ptr<ISandboxPolicy> sandboxPolicy, std::unique_ptr<IToolExecutor> toolExecutor,
     std::unique_ptr<IModelRouter> modelRouter, std::unique_ptr<IProviderCatalog> providerCatalog,
     std::unique_ptr<ITaskPlanner> taskPlanner, std::unique_ptr<IAgentRegistry> agentRegistry,
-    std::unique_ptr<IMemoryCatalog> memoryCatalog, QObject* parent)
+    std::unique_ptr<IMemoryCatalog> memoryCatalog, std::unique_ptr<ILocalRuntime> localRuntime,
+    std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -73,6 +75,10 @@ ApplicationController::ApplicationController(
                                    : std::make_unique<StaticAgentRegistry>()),
       memoryCatalog_(memoryCatalog ? std::move(memoryCatalog)
                                    : std::make_unique<StaticMemoryCatalog>()),
+      localRuntime_(localRuntime ? std::move(localRuntime) : std::make_unique<NullLocalRuntime>()),
+      localRuntimeSessions_(localRuntimeSessions
+                                ? std::move(localRuntimeSessions)
+                                : std::make_unique<NullLocalRuntimeSessionManager>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -401,6 +407,94 @@ QString ApplicationController::orchestrationReadinessSummary() const {
 
 QStringList ApplicationController::orchestrationDiagnostics() const {
     return orchestrationDiagnosticSummaries(currentOrchestrationReadinessReport());
+}
+
+QString ApplicationController::localRuntimeStatus() const {
+    if (!localRuntime_) {
+        return localRuntimeStatusName(LocalRuntimeStatus::Unavailable);
+    }
+    return localRuntimeStatusName(localRuntime_->descriptor().status);
+}
+
+QString ApplicationController::localRuntimeHealth() const {
+    if (!localRuntime_) {
+        return localRuntimeHealthName(LocalRuntimeHealth::Unavailable);
+    }
+    return localRuntimeHealthName(localRuntime_->descriptor().health);
+}
+
+QString ApplicationController::localRuntimeSummary() const {
+    if (!localRuntime_) {
+        return QStringLiteral("No local runtime boundary available.");
+    }
+    return safeLocalRuntimeSummary(localRuntime_->descriptor());
+}
+
+QStringList ApplicationController::localRuntimeCapabilities() const {
+    if (!localRuntime_) {
+        return {};
+    }
+    return localRuntimeCapabilitySummaries(localRuntime_->descriptor().capabilities);
+}
+
+QString ApplicationController::localRuntimeResponseStatus() const {
+    if (!localRuntime_) {
+        return QStringLiteral("Unavailable");
+    }
+    return localRuntime_->evaluate(LocalRuntimeRequest{}).status;
+}
+
+QString ApplicationController::localRuntimeResponseSummary() const {
+    if (!localRuntime_) {
+        return QStringLiteral("No local runtime boundary available.");
+    }
+    return safeLocalRuntimeResponseSummary(localRuntime_->evaluate(LocalRuntimeRequest{}));
+}
+
+int ApplicationController::localRuntimeSessionCount() const {
+    return localRuntimeSessions_ ? static_cast<int>(localRuntimeSessions_->sessions().size()) : 0;
+}
+
+QString ApplicationController::localRuntimeSessionStatus() const {
+    if (!localRuntimeSessions_) {
+        return localRuntimeSessionStatusName(LocalRuntimeSessionStatus::NotStarted);
+    }
+    return localRuntimeSessionStatusName(localRuntimeSessions_->currentSession().status);
+}
+
+QString ApplicationController::localRuntimeSessionHealth() const {
+    if (!localRuntimeSessions_) {
+        return localRuntimeSessionHealthName(LocalRuntimeSessionHealth::Unavailable);
+    }
+    return localRuntimeSessionHealthName(localRuntimeSessions_->currentSession().health);
+}
+
+QString ApplicationController::localRuntimeSessionSummary() const {
+    if (!localRuntimeSessions_) {
+        return QStringLiteral("No local runtime session metadata.");
+    }
+    return safeLocalRuntimeSessionSummary(localRuntimeSessions_->currentSession());
+}
+
+QString ApplicationController::localRuntimeAllocationSummary() const {
+    if (!localRuntimeSessions_) {
+        return QStringLiteral("No local runtime allocation metadata.");
+    }
+    return safeLocalRuntimeAllocationSummary(localRuntimeSessions_->currentSession().allocation);
+}
+
+QString ApplicationController::localRuntimeReservationSummary() const {
+    if (!localRuntimeSessions_) {
+        return QStringLiteral("No local runtime reservation metadata.");
+    }
+    return safeLocalRuntimeReservationSummary(localRuntimeSessions_->currentSession().reservation);
+}
+
+QStringList ApplicationController::localRuntimeSessionSummaries() const {
+    if (!localRuntimeSessions_) {
+        return {};
+    }
+    return sentinel::core::localRuntimeSessionSummaries(localRuntimeSessions_->sessions());
 }
 
 int ApplicationController::availableToolCount() const {

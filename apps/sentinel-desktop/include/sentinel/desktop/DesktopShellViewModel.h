@@ -86,6 +86,19 @@ class DesktopShellViewModel final : public QObject {
                    orchestrationSnapshotChanged)
     Q_PROPERTY(QStringList orchestrationDiagnostics READ orchestrationDiagnostics NOTIFY
                    orchestrationSnapshotChanged)
+    Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
+    Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
+    Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary CONSTANT)
+    Q_PROPERTY(QStringList localRuntimeCapabilities READ localRuntimeCapabilities CONSTANT)
+    Q_PROPERTY(QString localRuntimeResponseStatus READ localRuntimeResponseStatus CONSTANT)
+    Q_PROPERTY(QString localRuntimeResponseSummary READ localRuntimeResponseSummary CONSTANT)
+    Q_PROPERTY(int localRuntimeSessionCount READ localRuntimeSessionCount CONSTANT)
+    Q_PROPERTY(QString localRuntimeSessionStatus READ localRuntimeSessionStatus CONSTANT)
+    Q_PROPERTY(QString localRuntimeSessionHealth READ localRuntimeSessionHealth CONSTANT)
+    Q_PROPERTY(QString localRuntimeSessionSummary READ localRuntimeSessionSummary CONSTANT)
+    Q_PROPERTY(QString localRuntimeAllocationSummary READ localRuntimeAllocationSummary CONSTANT)
+    Q_PROPERTY(QString localRuntimeReservationSummary READ localRuntimeReservationSummary CONSTANT)
+    Q_PROPERTY(QStringList localRuntimeSessionSummaries READ localRuntimeSessionSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -158,6 +171,19 @@ public:
     QString orchestrationReadinessStatus() const;
     QString orchestrationReadinessSummary() const;
     QStringList orchestrationDiagnostics() const;
+    QString localRuntimeStatus() const;
+    QString localRuntimeHealth() const;
+    QString localRuntimeSummary() const;
+    QStringList localRuntimeCapabilities() const;
+    QString localRuntimeResponseStatus() const;
+    QString localRuntimeResponseSummary() const;
+    int localRuntimeSessionCount() const;
+    QString localRuntimeSessionStatus() const;
+    QString localRuntimeSessionHealth() const;
+    QString localRuntimeSessionSummary() const;
+    QString localRuntimeAllocationSummary() const;
+    QString localRuntimeReservationSummary() const;
+    QStringList localRuntimeSessionSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;

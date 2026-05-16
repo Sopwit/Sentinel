@@ -46,6 +46,7 @@ private slots:
     void exposesMemoryCatalogMetadata();
     void exposesOrchestrationSnapshotMetadata();
     void exposesOrchestrationReadinessDiagnostics();
+    void exposesLocalRuntimeMetadata();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
     void updatesAndPersistsRoutingModeMetadata();
@@ -281,6 +282,33 @@ void DesktopShellViewModelTest::exposesOrchestrationReadinessDiagnostics() {
         QStringLiteral("Info: Privacy Posture - Local-only routing posture is active.")));
     QVERIFY(fixture.viewModel.orchestrationDiagnostics().contains(
         QStringLiteral("Info: Execution Capability - Execution capability remains disabled.")));
+}
+
+void DesktopShellViewModelTest::exposesLocalRuntimeMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.localRuntimeStatus(), QStringLiteral("Metadata Only"));
+    QCOMPARE(fixture.viewModel.localRuntimeHealth(), QStringLiteral("Not Executable"));
+    QCOMPARE(fixture.viewModel.localRuntimeSummary(),
+             QStringLiteral("Null Local Runtime is metadata-only; local inference execution is "
+                            "disabled."));
+    QCOMPARE(fixture.viewModel.localRuntimeResponseStatus(), QStringLiteral("Refused"));
+    QCOMPARE(fixture.viewModel.localRuntimeResponseSummary(),
+             QStringLiteral("Local runtime boundary is metadata-only; execution is disabled."));
+    QCOMPARE(fixture.viewModel.localRuntimeCapabilities().size(), 3);
+    QVERIFY(fixture.viewModel.localRuntimeCapabilities().contains(
+        QStringLiteral("Streaming (Disabled): Streaming is intentionally disabled.")));
+    QCOMPARE(fixture.viewModel.localRuntimeSessionCount(), 1);
+    QCOMPARE(fixture.viewModel.localRuntimeSessionStatus(), QStringLiteral("Reserved"));
+    QCOMPARE(fixture.viewModel.localRuntimeSessionHealth(), QStringLiteral("Placeholder Only"));
+    QCOMPARE(fixture.viewModel.localRuntimeSessionSummary(),
+             QStringLiteral("local-runtime-session-1: Reserved placeholder local runtime "
+                            "metadata."));
+    QCOMPARE(fixture.viewModel.localRuntimeAllocationSummary(),
+             QStringLiteral("Metadata-only local runtime allocation; no model or process is "
+                            "started."));
+    QCOMPARE(fixture.viewModel.localRuntimeReservationSummary(),
+             QStringLiteral("Placeholder reservation is held for metadata visibility only."));
 }
 
 void DesktopShellViewModelTest::exposesConversationSessionMetadata() {
@@ -575,6 +603,19 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("orchestrationReadinessStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("orchestrationReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("orchestrationDiagnostics"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("localRuntimeStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeHealth"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeCapabilities"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("localRuntimeResponseStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeResponseSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeSessionCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("localRuntimeSessionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeSessionHealth"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeSessionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeAllocationSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeReservationSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeSessionSummaries"), QByteArrayLiteral("QStringList")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -606,6 +647,15 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("orchestrationReadinessReport"),
         QStringLiteral("orchestrationReadinessChecks"),
         QStringLiteral("orchestrationDiagnosticEntries"),
+        QStringLiteral("localRuntime"),
+        QStringLiteral("localRuntimeDescriptor"),
+        QStringLiteral("localRuntimeRequest"),
+        QStringLiteral("localRuntimeResponse"),
+        QStringLiteral("localRuntimeSession"),
+        QStringLiteral("localRuntimeSessions"),
+        QStringLiteral("localRuntimeSessionManager"),
+        QStringLiteral("localRuntimeAllocation"),
+        QStringLiteral("localRuntimeReservation"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),

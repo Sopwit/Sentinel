@@ -149,6 +149,62 @@ metadata summaries and do not change state. Accepted transitions do not execute 
 models, stream tokens, run tools, grant approvals, load plugins, scan filesystems, call networks,
 perform semantic/vector search, or start autonomous workers.
 
+## Phase 6 Checkpoint
+
+Phase 6.10 closes the metadata-only orchestration foundation before Phase 7. The checkpoint is
+documented in `docs/PHASE_6_CHECKPOINT.md`.
+
+Architecture findings:
+
+- Provider catalog, model routing, task planning, agent registry, memory taxonomy, orchestration
+  snapshot, diagnostics/readiness, conversation session, and conversation state graph remain
+  separate metadata responsibilities.
+- `ApplicationController` owns orchestration metadata and exposes deterministic summary/status
+  values.
+- `DesktopShellViewModel` remains the QML boundary and does not expose raw core objects.
+- Phase 7.0 should begin with local runtime boundary planning/ownership, not full model execution
+  unless an explicit later scope authorizes it.
+
+The checkpoint adds no provider integration, model execution, networking, API keys, downloads,
+streaming, tool execution, plugin loading, filesystem/system actions, embeddings, semantic search,
+or autonomous workers.
+
+## Local Runtime Boundary
+
+Phase 7.0 adds `ILocalRuntime` as the future local inference/runtime ownership boundary. The
+current implementation is `NullLocalRuntime`, which exposes deterministic metadata and refuses
+execution.
+
+Separation:
+
+- `ILocalRuntime` is not `IChatProvider`; it does not generate chat responses.
+- `ILocalRuntime` is not `IModelRouter`; it does not select provider/model routes.
+- `ILocalRuntime` is not `IAgentRuntime`; it does not plan or run agent actions.
+- `ILocalRuntime` is not `IToolExecutor`; it does not execute tools or planned invocations.
+
+The boundary reports local runtime status, health, capability summaries, and a placeholder refusal
+response. It does not call Ollama or any provider, execute models, download models, stream output,
+launch processes/subprocesses, scan filesystems, execute tools, load plugins, access networks, read
+API keys, or start background workers.
+
+## Local Runtime Session Metadata
+
+Phase 7.1 adds local runtime session ownership metadata. `LocalRuntimeSession` records a
+deterministic placeholder session id, lifecycle status, health, allocation metadata, reservation
+metadata, revision, and summary.
+
+Separation:
+
+- Local runtime sessions are not `ChatSession` transcript sessions.
+- Local runtime sessions are not Phase 4 `RuntimeSession` agent pipeline context.
+- Local runtime sessions are not provider/model execution.
+- Local runtime sessions are not tool execution or plugin ownership.
+
+`NullLocalRuntimeSessionManager` exposes a single deterministic placeholder session in `Reserved`
+and `Placeholder Only` state. Allocation and reservation records are descriptive metadata only and
+do not allocate models, launch processes/subprocesses, scan filesystems, call networks, stream
+output, execute tools, load plugins, or start background workers.
+
 ## Settings Contract
 
 `ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.

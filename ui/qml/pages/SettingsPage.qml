@@ -185,6 +185,76 @@ ShellPanel {
         }
 
         SectionTitle {
+            title: "Local Runtime Boundary"
+            subtitle: "Read-only local runtime metadata. No process launch, model execution, downloads, streaming, or provider calls are enabled."
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Runtime"
+                value: settingsPage.viewModel.localRuntimeStatus + " / " + settingsPage.viewModel.localRuntimeHealth
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Summary"
+                value: settingsPage.viewModel.localRuntimeSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Request Boundary"
+                value: settingsPage.viewModel.localRuntimeResponseStatus + " / " + settingsPage.viewModel.localRuntimeResponseSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Session"
+                value: settingsPage.viewModel.localRuntimeSessionStatus + " / " + settingsPage.viewModel.localRuntimeSessionHealth
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Session Summary"
+                value: settingsPage.viewModel.localRuntimeSessionSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Allocation"
+                value: settingsPage.viewModel.localRuntimeAllocationSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Reservation"
+                value: settingsPage.viewModel.localRuntimeReservationSummary
+                Layout.fillWidth: true
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.localRuntimeCapabilities
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Capability"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+        }
+
+        SectionTitle {
             title: "Runtime Context Session"
             subtitle: "Read-only conversation/session metadata. Chat history and agent runtime context remain separate."
         }
