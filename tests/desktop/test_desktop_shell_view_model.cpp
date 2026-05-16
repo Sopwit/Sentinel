@@ -45,6 +45,9 @@ private slots:
     void exposesProviderCatalogMetadata();
     void exposesMemoryCatalogMetadata();
     void exposesOrchestrationSnapshotMetadata();
+    void exposesOrchestrationReadinessDiagnostics();
+    void exposesConversationSessionMetadata();
+    void exposesConversationStateMetadata();
     void updatesAndPersistsRoutingModeMetadata();
     void updatesVisibleAgentValuesForBlockedPipeline();
     void exposesOnlyQmlSafeAgentVisibilityProperties();
@@ -266,10 +269,47 @@ void DesktopShellViewModelTest::exposesOrchestrationSnapshotMetadata() {
         QStringLiteral("Memory: Ambient (Available, Public Metadata, Session)")));
 }
 
+void DesktopShellViewModelTest::exposesOrchestrationReadinessDiagnostics() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.orchestrationReadinessStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.orchestrationReadinessSummary(),
+             QStringLiteral("Ready orchestration readiness: 10 deterministic metadata checks, 10 "
+                            "diagnostic entries."));
+    QCOMPARE(fixture.viewModel.orchestrationDiagnostics().size(), 10);
+    QVERIFY(fixture.viewModel.orchestrationDiagnostics().contains(
+        QStringLiteral("Info: Privacy Posture - Local-only routing posture is active.")));
+    QVERIFY(fixture.viewModel.orchestrationDiagnostics().contains(
+        QStringLiteral("Info: Execution Capability - Execution capability remains disabled.")));
+}
+
+void DesktopShellViewModelTest::exposesConversationSessionMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.conversationSessionId(), QStringLiteral("conversation-session-1"));
+    QCOMPARE(fixture.viewModel.conversationSessionStatus(), QStringLiteral("Active"));
+    QCOMPARE(fixture.viewModel.interactionMode(), QStringLiteral("Companion"));
+    QCOMPARE(fixture.viewModel.attentionState(), QStringLiteral("Observing"));
+    QCOMPARE(fixture.viewModel.contextWindowSummary(),
+             QStringLiteral("Workspace context window: Local Only route, Atlas (Coordinator, "
+                            "Available, Local), Ambient (Available, Public Metadata, Session)."));
+}
+
+void DesktopShellViewModelTest::exposesConversationStateMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.conversationState(), QStringLiteral("Idle"));
+    QCOMPARE(fixture.viewModel.conversationTransitionStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(fixture.viewModel.conversationTransitionSummary(),
+             QStringLiteral("No conversation transition yet."));
+}
+
 void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::modelRoutingChanged);
     QSignalSpy taskPlanSpy(&fixture.viewModel, &DesktopShellViewModel::taskPlanChanged);
+    QSignalSpy conversationSpy(&fixture.viewModel,
+                               &DesktopShellViewModel::conversationSessionChanged);
     QSignalSpy snapshotSpy(&fixture.viewModel,
                            &DesktopShellViewModel::orchestrationSnapshotChanged);
 
@@ -286,6 +326,8 @@ void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
     QCOMPARE(fixture.viewModel.orchestrationSnapshotStatus(), QStringLiteral("Ready"));
     QVERIFY(fixture.viewModel.orchestrationSignals().contains(
         QStringLiteral("Routing: Quality / Routed")));
+    QVERIFY(fixture.viewModel.contextWindowSummary().contains(QStringLiteral("Quality route")));
+    QVERIFY(conversationSpy.count() >= 1);
     QVERIFY(snapshotSpy.count() >= 1);
 
     fixture.viewModel.setRoutingModeByName(QStringLiteral("unknown"));
@@ -506,6 +548,14 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("runtimeContextStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeContextSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeContextActiveToolIds"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationSessionId"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSessionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("interactionMode"), QByteArrayLiteral("QString")},
+        {QStringLiteral("attentionState"), QByteArrayLiteral("QString")},
+        {QStringLiteral("contextWindowSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationState"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationTransitionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationTransitionSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("agentActivityCount"), QByteArrayLiteral("int")},
         {QStringLiteral("latestAgentActivitySummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("latestTaskPlanStatus"), QByteArrayLiteral("QString")},
@@ -522,6 +572,9 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("orchestrationSnapshotStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("orchestrationSnapshotSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("orchestrationSignals"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("orchestrationReadinessStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("orchestrationReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("orchestrationDiagnostics"), QByteArrayLiteral("QStringList")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -536,6 +589,11 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
     const QStringList forbiddenProperties{
         QStringLiteral("latestAgentPipelineResult"),
         QStringLiteral("runtimeContext"),
+        QStringLiteral("conversationSession"),
+        QStringLiteral("conversationContextWindow"),
+        QStringLiteral("conversationStateGraph"),
+        QStringLiteral("conversationTransitionResult"),
+        QStringLiteral("conversationTransitions"),
         QStringLiteral("agentActivityLog"),
         QStringLiteral("agentActivityEntries"),
         QStringLiteral("providerCatalog"),
@@ -545,6 +603,9 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("memoryShards"),
         QStringLiteral("orchestrationSnapshot"),
         QStringLiteral("workspaceStateSummary"),
+        QStringLiteral("orchestrationReadinessReport"),
+        QStringLiteral("orchestrationReadinessChecks"),
+        QStringLiteral("orchestrationDiagnosticEntries"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),
@@ -604,6 +665,7 @@ void DesktopShellViewModelTest::exposesStartupLoadedMessages() {
 void DesktopShellViewModelTest::forwardsChatActions() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::chatMessagesChanged);
+    QSignalSpy stateSpy(&fixture.viewModel, &DesktopShellViewModel::conversationStateChanged);
 
     const auto sent = fixture.viewModel.sendMessage(QStringLiteral("status"));
 
@@ -614,7 +676,13 @@ void DesktopShellViewModelTest::forwardsChatActions() {
              QStringLiteral("Sentinel Core online. Local chat pipeline is active."));
     QCOMPARE(fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::StatusRole),
              QStringLiteral("received"));
+    QCOMPARE(fixture.viewModel.conversationState(), QStringLiteral("Completed"));
+    QCOMPARE(fixture.viewModel.conversationTransitionStatus(), QStringLiteral("Accepted"));
+    QCOMPARE(fixture.viewModel.conversationTransitionSummary(),
+             QStringLiteral("Accepted conversation transition: Responding -> Completed: chat "
+                            "response metadata completed"));
     QCOMPARE(spy.count(), 1);
+    QVERIFY(stateSpy.count() >= 6);
 }
 
 void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
@@ -633,6 +701,7 @@ void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
     QSignalSpy pipelineSpy(&viewModel, &DesktopShellViewModel::agentPipelineChanged);
     QSignalSpy runtimeContextSpy(&viewModel, &DesktopShellViewModel::runtimeContextChanged);
     QSignalSpy activitySpy(&viewModel, &DesktopShellViewModel::agentActivityChanged);
+    QSignalSpy conversationStateSpy(&viewModel, &DesktopShellViewModel::conversationStateChanged);
 
     const auto ran = viewModel.runAgentRequest(QStringLiteral("draft local action"));
 
@@ -663,6 +732,11 @@ void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
     QCOMPARE(viewModel.agentActivityCount(), 6);
     QCOMPARE(viewModel.latestAgentActivitySummary(),
              QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
+    QCOMPARE(viewModel.conversationState(), QStringLiteral("Completed"));
+    QCOMPARE(viewModel.conversationTransitionStatus(), QStringLiteral("Accepted"));
+    QCOMPARE(viewModel.conversationTransitionSummary(),
+             QStringLiteral("Accepted conversation transition: Responding -> Completed: agent "
+                            "response metadata completed"));
     QCOMPARE(statusSpy.count(), 1);
     QCOMPARE(responseSpy.count(), 1);
     QCOMPARE(planSpy.count(), 1);
@@ -672,6 +746,7 @@ void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
     QCOMPARE(pipelineSpy.count(), 1);
     QCOMPARE(runtimeContextSpy.count(), 1);
     QCOMPARE(activitySpy.count(), 1);
+    QVERIFY(conversationStateSpy.count() >= 6);
 }
 
 void DesktopShellViewModelTest::ignoresBlankChatActions() {

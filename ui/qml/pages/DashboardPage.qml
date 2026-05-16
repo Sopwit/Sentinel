@@ -73,7 +73,7 @@ ScrollView {
 
             ShellPanel {
                 Layout.fillWidth: true
-                implicitHeight: 250
+                implicitHeight: 430
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.032)
                 border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.08)
                 bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
@@ -114,6 +114,63 @@ ScrollView {
                             font.pixelSize: SentinelTheme.fontTiny
                             elide: Text.ElideRight
                         }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "READINESS / " + dashboardPage.viewModel.orchestrationReadinessStatus
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.letterSpacing: 2.2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: dashboardPage.viewModel.orchestrationReadinessSummary
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.78)
+                        font.pixelSize: SentinelTheme.fontTiny
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "SESSION / " + dashboardPage.viewModel.conversationSessionStatus
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.letterSpacing: 2.2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: dashboardPage.viewModel.contextWindowSummary
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.78)
+                        font.pixelSize: SentinelTheme.fontTiny
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "STATE / " + dashboardPage.viewModel.conversationState
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.letterSpacing: 2.2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: dashboardPage.viewModel.conversationTransitionSummary
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.72)
+                        font.pixelSize: SentinelTheme.fontTiny
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
                     }
                 }
             }

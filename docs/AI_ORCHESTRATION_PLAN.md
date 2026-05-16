@@ -6,7 +6,13 @@ a provider/model catalog metadata boundary. Phase 6.3 adds capability graph and 
 metadata. Phase 6.4 adds static agent registry metadata. Phase 6.5 adds static memory taxonomy
 metadata. Phase 6.6 adds a deterministic orchestration snapshot read model. These phases do not
 implement providers, networking, model execution, downloads, API keys, autonomous agents, semantic
-memory execution, or tool execution.
+memory execution, or tool execution. Phase 6.7 adds metadata-only diagnostics and readiness
+reporting over those values without probing providers, models, filesystems, networks, or system
+services. Phase 6.8 adds a metadata-only conversation/session context layer over current routing,
+agent, memory, and snapshot summaries without adding streaming, execution, provider calls, or
+background behavior. Phase 6.9 adds a deterministic metadata-only conversation state graph that
+records high-level interaction transitions without executing providers, models, tools, approvals,
+or runtime work.
 
 ## Future Components
 
@@ -25,6 +31,15 @@ memory execution, or tool execution.
   recall hints, associations, and task affinity labels.
 - Orchestration snapshot: read-only aggregation of current routing, task, provider, agent, memory,
   runtime, and activity metadata for workspace visibility.
+- Orchestration diagnostics: deterministic readiness checks over existing metadata for routing,
+  catalog availability, task planner availability, snapshot health, local-only privacy posture,
+  cloud provider unavailability, and disabled execution capability.
+- Conversation session context: high-level interaction/session metadata that summarizes current
+  routing mode, preferred agent, memory affinity, attention state, and latest orchestration snapshot
+  without storing chat messages or executing runtime work.
+- Conversation state graph: deterministic state-transition metadata for the current high-level
+  interaction flow. It can accept or reject transitions, but it does not trigger provider/model
+  execution, tools, approval prompts, streaming, or autonomous work.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -71,7 +86,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 6.6 runtime remains metadata-only:
+Current Phase 6.9 runtime remains metadata-only:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -93,6 +108,17 @@ Current Phase 6.6 runtime remains metadata-only:
 - `OrchestrationSnapshot` and `WorkspaceStateSummary` aggregate current metadata into a read model
   for UI visibility. They do not schedule work, execute plans, call providers, refresh in the
   background, search memory, or mutate state.
+- `StaticOrchestrationDiagnostics` generates `OrchestrationReadinessReport` values from the
+  current snapshot and provider catalog metadata. It only checks already-owned metadata and does not
+  probe providers/models, scan the filesystem, call networks, execute tools, load plugins, start
+  background workers, or run external processes.
+- `ConversationSession` owns higher-level interaction/session metadata only. It is separate from
+  `ChatSession` transcript ownership and from Phase 4 `RuntimeSession` agent pipeline metadata.
+  It does not persist chat history, stream tokens, call providers/models, search memory, execute
+  tools, load plugins, scan filesystems, call networks, or start background workers.
+- `ConversationStateGraph` owns deterministic state-transition metadata only. It is separate from
+  `ConversationSession`, `ChatSession`, and Phase 4 `RuntimeSession`; accepted transitions are
+  status summaries, not execution triggers.
 - `AppSettings` persists the routing mode through `JsonSettingsStore`; it does not store provider
   credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.

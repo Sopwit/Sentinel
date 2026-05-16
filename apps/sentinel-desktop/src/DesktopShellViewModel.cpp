@@ -37,6 +37,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::agentPipelineChanged);
     connect(&controller_, &core::ApplicationController::runtimeContextChanged, this,
             &DesktopShellViewModel::runtimeContextChanged);
+    connect(&controller_, &core::ApplicationController::conversationSessionChanged, this,
+            &DesktopShellViewModel::conversationSessionChanged);
+    connect(&controller_, &core::ApplicationController::conversationStateChanged, this,
+            &DesktopShellViewModel::conversationStateChanged);
     connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
     connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
@@ -127,6 +131,38 @@ QStringList DesktopShellViewModel::runtimeContextActiveToolIds() const {
     return controller_.runtimeContextActiveToolIds();
 }
 
+QString DesktopShellViewModel::conversationSessionId() const {
+    return controller_.conversationSessionId();
+}
+
+QString DesktopShellViewModel::conversationSessionStatus() const {
+    return controller_.conversationSessionStatus();
+}
+
+QString DesktopShellViewModel::interactionMode() const {
+    return controller_.interactionMode();
+}
+
+QString DesktopShellViewModel::attentionState() const {
+    return controller_.attentionState();
+}
+
+QString DesktopShellViewModel::contextWindowSummary() const {
+    return controller_.contextWindowSummary();
+}
+
+QString DesktopShellViewModel::conversationState() const {
+    return controller_.conversationState();
+}
+
+QString DesktopShellViewModel::conversationTransitionStatus() const {
+    return controller_.conversationTransitionStatus();
+}
+
+QString DesktopShellViewModel::conversationTransitionSummary() const {
+    return controller_.conversationTransitionSummary();
+}
+
 int DesktopShellViewModel::agentActivityCount() const {
     return controller_.agentActivityCount();
 }
@@ -145,6 +181,7 @@ void DesktopShellViewModel::setRoutingModeByName(const QString& routingModeName)
     controller_.setRoutingModeByName(settings_.routingModeName());
     if (before == controller_.currentRoutingMode()) {
         emit modelRoutingChanged();
+        emit conversationSessionChanged();
         emit orchestrationSnapshotChanged();
     }
 }
@@ -215,6 +252,18 @@ QString DesktopShellViewModel::orchestrationSnapshotSummary() const {
 
 QStringList DesktopShellViewModel::orchestrationSignals() const {
     return controller_.orchestrationSignals();
+}
+
+QString DesktopShellViewModel::orchestrationReadinessStatus() const {
+    return controller_.orchestrationReadinessStatus();
+}
+
+QString DesktopShellViewModel::orchestrationReadinessSummary() const {
+    return controller_.orchestrationReadinessSummary();
+}
+
+QStringList DesktopShellViewModel::orchestrationDiagnostics() const {
+    return controller_.orchestrationDiagnostics();
 }
 
 int DesktopShellViewModel::availableToolCount() const {

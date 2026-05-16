@@ -90,6 +90,7 @@ ApplicationController::ApplicationController(
         }
     }
     refreshLatestTaskPlan();
+    refreshConversationSession();
 }
 
 QString ApplicationController::providerName() const {
@@ -164,6 +165,42 @@ QStringList ApplicationController::runtimeContextActiveToolIds() const {
     return runtimeSession_.context().activePlannedToolIds;
 }
 
+const ConversationSession& ApplicationController::currentConversationSession() const {
+    return conversationSession_.session();
+}
+
+QString ApplicationController::conversationSessionId() const {
+    return conversationSession_.session().id.value;
+}
+
+QString ApplicationController::conversationSessionStatus() const {
+    return conversationSession_.session().statusName();
+}
+
+QString ApplicationController::interactionMode() const {
+    return conversationSession_.session().interactionModeName();
+}
+
+QString ApplicationController::attentionState() const {
+    return conversationSession_.session().attentionStateName();
+}
+
+QString ApplicationController::contextWindowSummary() const {
+    return safeRuntimeContextWindowSummary(conversationSession_.session().contextWindow);
+}
+
+QString ApplicationController::conversationState() const {
+    return conversationStateName(conversationStateGraph_.currentState());
+}
+
+QString ApplicationController::conversationTransitionStatus() const {
+    return conversationTransitionStatusName(conversationStateGraph_.lastTransitionResult().status);
+}
+
+QString ApplicationController::conversationTransitionSummary() const {
+    return safeConversationTransitionSummary(conversationStateGraph_.lastTransitionResult());
+}
+
 int ApplicationController::agentActivityCount() const {
     return agentActivityLog_.count();
 }
@@ -189,8 +226,10 @@ void ApplicationController::setRoutingModeByName(const QString& routingModeName)
 
     modelRouter_->setRoutingMode(nextMode);
     refreshLatestTaskPlan();
+    refreshConversationSession();
     emit modelRoutingChanged();
     emit taskPlanChanged();
+    emit conversationSessionChanged();
     emit orchestrationSnapshotChanged();
 }
 
@@ -341,6 +380,29 @@ QStringList ApplicationController::orchestrationSignals() const {
     return orchestrationSignalSummaries(currentOrchestrationSnapshot());
 }
 
+OrchestrationReadinessReport ApplicationController::currentOrchestrationReadinessReport() const {
+    return StaticOrchestrationDiagnostics{}.generate(OrchestrationDiagnosticsInput{
+        currentOrchestrationSnapshot(),
+        providerCatalog_ ? providerCatalog_->entries() : QList<ProviderCatalogEntry>{},
+        providerCatalog_ != nullptr,
+        agentRegistry_ != nullptr,
+        memoryCatalog_ != nullptr,
+        taskPlanner_ != nullptr,
+    });
+}
+
+QString ApplicationController::orchestrationReadinessStatus() const {
+    return currentOrchestrationReadinessReport().status;
+}
+
+QString ApplicationController::orchestrationReadinessSummary() const {
+    return safeOrchestrationReadinessSummary(currentOrchestrationReadinessReport());
+}
+
+QStringList ApplicationController::orchestrationDiagnostics() const {
+    return orchestrationDiagnosticSummaries(currentOrchestrationReadinessReport());
+}
+
 int ApplicationController::availableToolCount() const {
     return agentRuntime_ ? static_cast<int>(agentRuntime_->availableTools().size()) : 0;
 }
@@ -410,12 +472,22 @@ bool ApplicationController::sendMessage(const QString& message) {
         return false;
     }
 
+    resetCompletedConversationState();
+    transitionConversationState(ConversationState::Listening,
+                                QStringLiteral("chat input metadata received"));
+    transitionConversationState(ConversationState::Planning,
+                                QStringLiteral("chat request metadata prepared"));
+    transitionConversationState(ConversationState::Routing,
+                                QStringLiteral("chat route metadata selected"));
+
     const auto userMessage = chatSession_->appendUserMessage(trimmed);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(userMessage);
     }
 
     if (!provider_ || provider_->status() != ChatProviderStatus::Ready) {
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("provider metadata unavailable"));
         const auto errorMessage = chatSession_->appendAssistantMessage(
             QStringLiteral("Provider unavailable. Status: %1").arg(providerStatus()),
             ChatMessageStatus::Error);
@@ -426,7 +498,18 @@ bool ApplicationController::sendMessage(const QString& message) {
         return false;
     }
 
+    transitionConversationState(ConversationState::ReadyToRespond,
+                                QStringLiteral("chat response metadata ready"));
+    transitionConversationState(ConversationState::Responding,
+                                QStringLiteral("chat response metadata active"));
     const auto reply = provider_->sendMessage(trimmed);
+    if (!reply.success) {
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("chat provider returned error metadata"));
+    } else {
+        transitionConversationState(ConversationState::Completed,
+                                    QStringLiteral("chat response metadata completed"));
+    }
     const auto assistantMessage = chatSession_->appendAssistantMessage(
         reply.success ? reply.message
                       : QStringLiteral("Provider error: %1").arg(reply.errorMessage),
@@ -448,13 +531,23 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         return false;
     }
 
+    resetCompletedConversationState();
+    transitionConversationState(ConversationState::Listening,
+                                QStringLiteral("agent request metadata received"));
+    transitionConversationState(ConversationState::Planning,
+                                QStringLiteral("agent planning metadata started"));
+
     agentActivityLog_.append(AgentActivityType::RequestReceived, AgentActivityStatus::Recorded,
                              QStringLiteral("Agent request received."));
 
     if (!agentRuntime_) {
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("agent runtime metadata unavailable"));
         agentActivityLog_.append(AgentActivityType::PipelineCompleted, AgentActivityStatus::Blocked,
                                  QStringLiteral("Agent pipeline blocked: runtime unavailable."));
+        refreshConversationSession();
         emit agentActivityChanged();
+        emit conversationSessionChanged();
         emit orchestrationSnapshotChanged();
         if (lastAgentResponse_ != QStringLiteral("Agent runtime unavailable.")) {
             lastAgentResponse_ = QStringLiteral("Agent runtime unavailable.");
@@ -463,15 +556,34 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         return false;
     }
 
+    transitionConversationState(ConversationState::Routing,
+                                QStringLiteral("agent route metadata selected"));
     latestAgentPipelineResult_ = buildAgentPipelineResult(AgentRequest{trimmed});
     appendPipelineActivity(latestAgentPipelineResult_);
     runtimeSession_.attachPipelineResult(latestAgentPipelineResult_);
+    if (latestAgentPipelineResult_.approvalStatus() == ApprovalStatus::RequiresApproval) {
+        transitionConversationState(ConversationState::WaitingForApproval,
+                                    QStringLiteral("approval metadata required"));
+    } else if (latestAgentPipelineResult_.executionStatus() ==
+               ToolExecutionStatus::PlaceholderSucceeded) {
+        transitionConversationState(ConversationState::ReadyToRespond,
+                                    QStringLiteral("agent response metadata ready"));
+        transitionConversationState(ConversationState::Responding,
+                                    QStringLiteral("agent response metadata active"));
+        transitionConversationState(ConversationState::Completed,
+                                    QStringLiteral("agent response metadata completed"));
+    } else {
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("agent pipeline metadata blocked"));
+    }
+    refreshConversationSession();
     emit toolPlanChanged();
     emit approvalChanged();
     emit sandboxChanged();
     emit toolExecutionChanged();
     emit agentPipelineChanged();
     emit runtimeContextChanged();
+    emit conversationSessionChanged();
     emit agentActivityChanged();
     emit orchestrationSnapshotChanged();
 
@@ -524,6 +636,20 @@ void ApplicationController::appendPipelineActivity(const AgentPipelineResult& re
         QStringLiteral("Agent pipeline finished: %1").arg(agentPipelineStatusName(result)));
 }
 
+void ApplicationController::resetCompletedConversationState() {
+    if (conversationStateGraph_.currentState() == ConversationState::Completed ||
+        conversationStateGraph_.currentState() == ConversationState::Error) {
+        transitionConversationState(ConversationState::Idle,
+                                    QStringLiteral("conversation state reset for new metadata"));
+    }
+}
+
+void ApplicationController::transitionConversationState(ConversationState nextState,
+                                                        const QString& reason) {
+    conversationStateGraph_.transitionTo(nextState, reason);
+    emit conversationStateChanged();
+}
+
 void ApplicationController::refreshLatestTaskPlan() {
     if (!taskPlanner_ || !providerCatalog_) {
         latestTaskPlan_ = TaskPlan{
@@ -551,6 +677,12 @@ void ApplicationController::refreshLatestTaskPlan() {
         agentRegistry_ ? agentRegistry_->agents() : QList<AgentDescriptor>{},
         memoryCatalog_ ? memoryCatalog_->shards() : QList<MemoryShardDescriptor>{},
     });
+}
+
+void ApplicationController::refreshConversationSession() {
+    conversationSession_.refreshContext(ConversationSessionContextBuilder{}.build(
+        currentRoutingMode(), currentAgentSummary(), currentMemoryAffinitySummary(),
+        orchestrationSnapshotSummary()));
 }
 
 bool ApplicationController::clearMemory() {

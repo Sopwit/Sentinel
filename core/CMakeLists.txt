@@ -8,6 +8,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ApplicationController.h
     include/sentinel/core/ChatMessage.h
     include/sentinel/core/ChatSession.h
+    include/sentinel/core/ConversationSession.h
+    include/sentinel/core/ConversationStateGraph.h
     include/sentinel/core/IAgentRuntime.h
     include/sentinel/core/IAgentRegistry.h
     include/sentinel/core/IChatHistoryStore.h
@@ -40,6 +42,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ModelRouting.h
     include/sentinel/core/NullAgentRuntime.h
     include/sentinel/core/NullToolExecutor.h
+    include/sentinel/core/OrchestrationDiagnostics.h
     include/sentinel/core/OrchestrationSnapshot.h
     include/sentinel/core/ProviderCatalog.h
     include/sentinel/core/SQLiteChatHistoryStore.h
@@ -64,6 +67,8 @@ add_library(sentinel_core STATIC
     src/AgentRuntimeContext.cpp
     src/ApplicationController.cpp
     src/ChatSession.cpp
+    src/ConversationSession.cpp
+    src/ConversationStateGraph.cpp
     src/IClock.cpp
     src/IContextEngine.cpp
     src/InMemoryStore.cpp
@@ -74,6 +79,7 @@ add_library(sentinel_core STATIC
     src/ModeManager.cpp
     src/NullAgentRuntime.cpp
     src/NullToolExecutor.cpp
+    src/OrchestrationDiagnostics.cpp
     src/SQLiteChatHistoryStore.cpp
     src/SQLiteMemoryStore.cpp
     src/StandardPathProvider.cpp

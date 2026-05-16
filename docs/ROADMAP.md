@@ -63,6 +63,68 @@ Candidate interfaces:
 
 Completed through Phase 4.11 with metadata-only agent/tool boundaries and no real execution.
 
+## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
+
+Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.
+
+Delivered:
+
+- Value-only diagnostic levels, diagnostic entries, readiness checks, and readiness reports.
+- Static readiness generation for routing, selected route, catalogs, planner availability, snapshot
+  health, local-only privacy posture, cloud provider unavailability, and disabled execution
+  capability.
+- Read-only controller/view-model status, summary, and diagnostic string exposure.
+- Minimal Dashboard and Settings visibility without setup or execution controls.
+
+Still out of scope:
+
+- Provider/model execution, provider probing, networking/API keys, model downloads, filesystem or
+  system scans/actions, real tool execution, plugin loading, embeddings, vector search, and
+  autonomous workers.
+
+## Phase 6.8: Runtime Context Session Layer
+
+Completed. Added a metadata-only conversation/session context layer above chat history and agent
+runtime metadata.
+
+Delivered:
+
+- Value-only conversation session id/status, interaction mode, attention state, context scope, and
+  context-window metadata.
+- Deterministic session context summaries from current routing mode, preferred agent, memory
+  affinity, and orchestration snapshot summary.
+- Read-only controller/view-model exposure and minimal Dashboard/Settings visibility.
+- Tests for session defaults, context metadata, routing updates, QML-safe exposure, and separation
+  from `ChatSession` and Phase 4 `RuntimeSession`.
+
+Still out of scope:
+
+- Provider/model execution, streaming, networking/API keys, model downloads, filesystem or system
+  actions, real tool execution, plugin loading, embeddings, vector search, semantic search,
+  autonomous workers, and multi-conversation persistence.
+
+## Phase 6.9: Conversation State Graph Skeleton
+
+Completed. Added a deterministic metadata-only conversation state graph for high-level
+interaction flow.
+
+Delivered:
+
+- Value-only conversation states, transitions, transition results, transition status, graph
+  interface, and static deterministic graph implementation.
+- Safe transition rules from Idle through Listening, Planning, Routing, response readiness,
+  response completion, approval-wait metadata, and Error.
+- Invalid transition rejection with deterministic summaries.
+- Read-only controller/view-model exposure and minimal Dashboard/Settings visibility.
+- Tests for valid/invalid transitions, error transitions, QML-safe exposure, and separation from
+  `ConversationSession`, `ChatSession`, and Phase 4 `RuntimeSession`.
+
+Still out of scope:
+
+- Provider/model execution, streaming, networking/API keys, model downloads, filesystem or system
+  actions, real tool execution, approval actions, plugin loading, embeddings, vector search,
+  semantic search, autonomous workers, and multi-conversation persistence.
+
 ### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
 
 Completed.
