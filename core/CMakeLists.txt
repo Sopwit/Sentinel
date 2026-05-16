@@ -38,6 +38,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/InMemorySettingsStore.h
     include/sentinel/core/JsonSettingsStore.h
     include/sentinel/core/LocalEchoProvider.h
+    include/sentinel/core/LocalInference.h
     include/sentinel/core/LocalRuntime.h
     include/sentinel/core/LocalRuntimeSession.h
     include/sentinel/core/MemoryMetadata.h
@@ -86,6 +87,7 @@ add_library(sentinel_core STATIC
     src/InMemoryToolRegistry.cpp
     src/JsonSettingsStore.cpp
     src/LocalEchoProvider.cpp
+    src/LocalInference.cpp
     src/LocalRuntime.cpp
     src/LocalRuntimeSession.cpp
     src/ModeManager.cpp

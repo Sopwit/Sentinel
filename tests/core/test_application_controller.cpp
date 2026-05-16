@@ -2,7 +2,9 @@
 #include "sentinel/core/IChatHistoryStore.h"
 #include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
+#include "sentinel/core/LocalInference.h"
 #include "sentinel/core/NullAgentRuntime.h"
+#include "sentinel/core/RuntimePermissions.h"
 
 #include <QSignalSpy>
 #include <QtTest>
@@ -14,8 +16,12 @@ using sentinel::core::ChatProviderReply;
 using sentinel::core::ChatProviderStatus;
 using sentinel::core::IChatHistoryStore;
 using sentinel::core::IChatProvider;
+using sentinel::core::ILocalInferenceClient;
 using sentinel::core::InMemoryStore;
 using sentinel::core::LocalEchoProvider;
+using sentinel::core::LocalInferenceRequest;
+using sentinel::core::LocalInferenceResponse;
+using sentinel::core::LocalInferenceStatus;
 
 class UnavailableProvider final : public IChatProvider {
 public:
@@ -154,6 +160,48 @@ public:
     }
 };
 
+class AllowLocalInferencePolicy final : public sentinel::core::IRuntimePermissionPolicy {
+public:
+    sentinel::core::RuntimePermissionDecision
+    evaluate(const sentinel::core::RuntimePermissionRequest& request) const override {
+        return {
+            sentinel::core::RuntimePermissionDecisionStatus::Allowed,
+            request,
+            QStringLiteral("Local inference permission allowed for injected test policy."),
+        };
+    }
+};
+
+class FakeLocalInferenceClient final : public ILocalInferenceClient {
+public:
+    LocalInferenceResponse infer(const LocalInferenceRequest& request) override {
+        called = true;
+        lastRequest = request;
+        LocalInferenceResponse response;
+        response.status = LocalInferenceStatus::Succeeded;
+        response.model = request.options.model;
+        response.endpoint = QStringLiteral("http://127.0.0.1:11434");
+        response.text = QStringLiteral("fake local completion");
+        response.summary = QStringLiteral("Fake local inference completed.");
+        response.traces = {
+            sentinel::core::LocalInferenceTrace{
+                1,
+                QStringLiteral("Fake Client"),
+                QStringLiteral("Succeeded"),
+                QStringLiteral("Injected fake local inference client was called."),
+            },
+        };
+        return response;
+    }
+
+    QString statusSummary() const override {
+        return QStringLiteral("Fake local inference client is ready.");
+    }
+
+    bool called = false;
+    LocalInferenceRequest lastRequest;
+};
+
 class ApplicationControllerTest final : public QObject {
     Q_OBJECT
 
@@ -170,6 +218,9 @@ private slots:
     void exposesOrchestrationReadinessDiagnostics();
     void exposesLocalRuntimeMetadata();
     void exposesOllamaRuntimeBoundaryMetadata();
+    void exposesLocalInferenceBoundaryMetadata();
+    void blocksLocalInferenceByDefaultPermission();
+    void runsInjectedLocalInferenceWhenPermissionAllows();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
     void updatesModelRoutingModeMetadata();
@@ -486,6 +537,62 @@ void ApplicationControllerTest::exposesOllamaRuntimeBoundaryMetadata() {
     QVERIFY(controller->ollamaHealthSummary().contains(QStringLiteral("no local health check")));
     QCOMPARE(controller->ollamaModelCount(), 0);
     QVERIFY(controller->ollamaModelSummaries().isEmpty());
+}
+
+void ApplicationControllerTest::exposesLocalInferenceBoundaryMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Not Requested"));
+    QVERIFY(controller->localInferenceSummary().contains(QStringLiteral("loopback-only")));
+    QCOMPARE(controller->localInferenceLastResponseSummary(),
+             QStringLiteral("No local inference request yet."));
+    QVERIFY(controller->localInferenceTraceSummaries().isEmpty());
+}
+
+void ApplicationControllerTest::blocksLocalInferenceByDefaultPermission() {
+    const auto controller = makeController();
+    QSignalSpy spy(controller.get(), &ApplicationController::localInferenceChanged);
+
+    const auto ran =
+        controller->runLocalInference(QStringLiteral("hello"), QStringLiteral("llama3.2"));
+
+    QVERIFY(!ran);
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->localInferenceSummary(),
+             QStringLiteral("Local inference blocked by runtime permission policy."));
+    QVERIFY(controller->localInferenceTraceSummaries().contains(
+        QStringLiteral("2. Permission Policy [Denied]: Runtime permission policy is "
+                       "metadata-only and denies execution by default.")));
+}
+
+void ApplicationControllerTest::runsInjectedLocalInferenceWhenPermissionAllows() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, std::move(fakeClient));
+    QSignalSpy spy(controller.get(), &ApplicationController::localInferenceChanged);
+
+    const auto ran =
+        controller->runLocalInference(QStringLiteral("hello"), QStringLiteral("local-model"));
+
+    QVERIFY(ran);
+    QVERIFY(fakeClientPtr->called);
+    QCOMPARE(fakeClientPtr->lastRequest.prompt, QStringLiteral("hello"));
+    QCOMPARE(fakeClientPtr->lastRequest.options.model, QStringLiteral("local-model"));
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Succeeded"));
+    QCOMPARE(controller->localInferenceLastResponseSummary(),
+             QStringLiteral("Local inference completed for local-model (21 characters)."));
+    QVERIFY(controller->localInferenceTraceSummaries().contains(
+        QStringLiteral("1. Permission Policy [Allowed]: Local inference permission allowed for "
+                       "injected test policy.")));
+    QVERIFY(controller->localInferenceTraceSummaries().contains(
+        QStringLiteral("2. Safety Policy [Compliant]: Runtime safety policy report: local-only "
+                       "and no-execution posture is enforced with deterministic metadata rules.")));
 }
 
 void ApplicationControllerTest::exposesConversationSessionMetadata() {

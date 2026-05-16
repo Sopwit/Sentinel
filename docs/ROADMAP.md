@@ -63,6 +63,25 @@ Candidate interfaces:
 
 Completed through Phase 4.11 with metadata-only agent/tool boundaries and no real execution.
 
+## Phase 9.3-9.5: Controlled Local Inference Boundary
+
+Completed. Added a narrow, explicit local-only inference boundary for Ollama.
+
+Delivered:
+
+- Value-only local inference request, options, response, status, error, and trace records.
+- `ILocalInferenceClient` with deterministic null refusal and a loopback-only Ollama
+  implementation.
+- Non-streaming `/api/generate` support only after controller permission and safety checks.
+- Controller and desktop view-model QML-safe local inference status, summary, last-response
+  summary, and trace exposure.
+- Tests that use fakes and never require a real Ollama service.
+
+Still out of scope:
+
+- Streaming, model management, downloads/pulls/deletes, cloud endpoints, API keys, autonomous
+  loops, tools/plugins, filesystem/system actions, subprocess launch, and broad UI changes.
+
 ## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
 
 Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.
@@ -934,11 +953,13 @@ Still out of scope:
   launch, cloud calls, API keys, tool/plugin execution, filesystem/system scans/actions, background
   workers, model selection UI, and routing chat requests to Ollama.
 
-## Phase 9.3: Inference Boundary Planning
+## Phase 9.3-9.5: Controlled Local Inference Boundary
 
-Planned future boundary work. Any executable Ollama inference path must be separately scoped,
-policy-gated, interface-owned, injectable/testable, and documented. Phase 9.0-9.2 health/discovery
-does not authorize prompt execution or chat routing.
+Completed. Adds the first explicit local-only inference path through `ILocalInferenceClient`.
+Ollama generation is restricted to local loopback HTTP, non-streaming `/api/generate`, installed
+model checks, and controller permission/safety gates. Streaming, model management, tools/plugins,
+cloud endpoints, subprocess launch, filesystem/system actions, autonomous loops, and chat routing
+automation remain out of scope.
 
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 

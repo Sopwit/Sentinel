@@ -150,6 +150,13 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary CONSTANT)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount CONSTANT)
     Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries CONSTANT)
+    Q_PROPERTY(QString localInferenceStatus READ localInferenceStatus NOTIFY localInferenceChanged)
+    Q_PROPERTY(
+        QString localInferenceSummary READ localInferenceSummary NOTIFY localInferenceChanged)
+    Q_PROPERTY(QString localInferenceLastResponseSummary READ localInferenceLastResponseSummary
+                   NOTIFY localInferenceChanged)
+    Q_PROPERTY(QStringList localInferenceTraceSummaries READ localInferenceTraceSummaries NOTIFY
+                   localInferenceChanged)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -274,6 +281,10 @@ public:
     QString ollamaHealthSummary() const;
     int ollamaModelCount() const;
     QStringList ollamaModelSummaries() const;
+    QString localInferenceStatus() const;
+    QString localInferenceSummary() const;
+    QString localInferenceLastResponseSummary() const;
+    QStringList localInferenceTraceSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -293,6 +304,7 @@ public:
     void setConfigurationProfile(const QString& configurationProfile);
 
     Q_INVOKABLE bool sendMessage(const QString& message);
+    Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -321,6 +333,7 @@ signals:
     void modelRoutingChanged();
     void taskPlanChanged();
     void orchestrationSnapshotChanged();
+    void localInferenceChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);

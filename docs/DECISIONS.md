@@ -1013,5 +1013,25 @@ Boundary rules:
   execution, filesystem/system scans/actions, background workers, setup UI, model selection UI, or
   routing chat requests to Ollama.
 
-Phase 9.3 may plan an inference boundary, but it must be separately scoped, policy-gated,
-interface-owned, injectable/testable, and documented before any prompt execution is allowed.
+Phase 9.3-9.5 adds that separately scoped, policy-gated, interface-owned,
+injectable/testable inference boundary.
+
+## 53. Local Inference Requires A Dedicated Boundary
+
+Decision: Prompt execution for local models must go through `ILocalInferenceClient`, not
+`IChatProvider`, `IProviderRuntimeBridge`, `IAgentRuntime`, or tool execution.
+
+Reason: Phase 9.3-9.5 introduces the first executable local inference path, so prompt execution
+needs a narrow owner that can be injected, tested without Ollama, and gated by existing
+permission/safety metadata before any runtime call is made.
+
+Boundary rules:
+
+- Only local loopback HTTP Ollama endpoints are valid.
+- No cloud endpoints, API keys, redirects, model pulls/downloads/deletes, subprocess launch,
+  filesystem/system actions, tools/plugins, or autonomous loops are allowed.
+- Streaming remains out of scope and is rejected as request metadata.
+- Blank prompts and missing or unavailable models are rejected safely.
+- `ApplicationController` records permission/safety and client traces before exposing summaries.
+- QML receives strings and string lists only; raw requests, responses, clients, and traces are not
+  exposed.

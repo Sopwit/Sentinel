@@ -27,9 +27,12 @@ while keeping execution disabled. Phase 8.3 through Phase 8.5 add metadata-only 
 adapter, provider bridge, and pre-integration readiness boundaries without calling, launching,
 discovering, or executing models. Phase 9.0 through Phase 9.2 add a controlled Ollama-local
 health/discovery boundary: loopback-only endpoint metadata, safe `/api/version` health checks, and
-optional `/api/tags` installed-model metadata. Chat inference, prompt execution, streaming,
-downloads, subprocess launch, cloud calls, tools, plugins, and filesystem/system actions remain
-disabled.
+optional `/api/tags` installed-model metadata. Phase 9.3 through Phase 9.5 add the first
+controlled local-only inference boundary through `ILocalInferenceClient`: prompt execution is
+allowed only after explicit controller routing through runtime permission and safety checks, and
+the Ollama implementation is restricted to local non-streaming `/api/generate`. Chat provider
+routing, streaming, downloads, subprocess launch, cloud calls, tools, plugins, and
+filesystem/system actions remain disabled.
 
 ## Future Components
 
@@ -83,6 +86,9 @@ disabled.
 - Runtime integration readiness: deterministic pre-integration report describing missing adapter,
   endpoint, discovery, bridge, and execution prerequisites without probing providers, runtimes,
   filesystems, networks, or system services.
+- Local inference client: explicit prompt-execution boundary for local runtimes. The current
+  Ollama implementation is loopback-only, non-streaming, injectable, and permission/safety-gated by
+  `ApplicationController`.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -129,7 +135,8 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 9.0-9.2 runtime allows only local Ollama health/discovery metadata:
+Current Phase 9.3-9.5 runtime allows local Ollama health/discovery metadata plus a controlled
+local inference boundary:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -201,14 +208,18 @@ Current Phase 9.0-9.2 runtime allows only local Ollama health/discovery metadata
   loopback read-only `/api/version` and `/api/tags` calls. It is not `IChatProvider`, execution
   lifecycle, provider bridge execution, model router execution, agent runtime, tool executor, or
   plugin runtime.
+- `ILocalInferenceClient` owns the controlled local inference boundary. `NullLocalInferenceClient`
+  refuses deterministically, and `OllamaLocalInferenceClient` may call only local loopback
+  non-streaming `/api/generate` after the controller has evaluated runtime permission and safety
+  metadata. It rejects blank prompts, missing or unavailable models, invalid endpoints, streaming
+  requests, and cancellation metadata safely.
 - `AppSettings` persists the routing mode and normalized Ollama endpoint through
   `JsonSettingsStore`; it does not store provider credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
 - `NullAgentRuntime` and `NullToolExecutor` still perform no real AI/model/tool execution.
 
-Provider inference, cloud routing, credentials, model downloads, model execution, autonomous agent
-runtime, semantic/vector memory, actionable model-management UI, and routing policy automation
-remain future work.
+Cloud routing, credentials, model downloads, streaming, autonomous agent runtime, semantic/vector
+memory, actionable model-management UI, and routing policy automation remain future work.
 
 ## Phase 9 Direction
 
@@ -218,7 +229,8 @@ permission, request pipeline, and safety policy boundaries while keeping executi
 default. Phase 7.6 checkpoints the runtime architecture in `docs/PHASE_7_CHECKPOINT.md`. Phase
 8.0 through Phase 8.2 add execution lifecycle/session coordination metadata only. Phase 8.3 through
 Phase 8.5 add adapter, bridge, and pre-integration readiness metadata only. Phase 9.0 through Phase
-9.2 add Ollama local health/discovery only. Phase 9.3 may plan an inference boundary, but it must
-remain explicitly scoped, interface-owned, policy-gated, deterministic in tests, and separate from
-cloud provider integration, credentials, downloads, streaming, tool execution, plugins, vector
-memory, and autonomous behavior unless a later phase approves those capabilities.
+9.2 add Ollama local health/discovery only. Phase 9.3 through Phase 9.5 add the first controlled
+local-only inference boundary. The next phase may consider streaming or richer model selection, but
+those capabilities remain out of scope until explicitly approved and kept separate from cloud
+provider integration, credentials, downloads, tool execution, plugins, vector memory, and
+autonomous behavior.

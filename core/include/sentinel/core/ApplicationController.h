@@ -19,6 +19,7 @@
 #include "sentinel/core/ISandboxPolicy.h"
 #include "sentinel/core/ITaskPlanner.h"
 #include "sentinel/core/IToolExecutor.h"
+#include "sentinel/core/LocalInference.h"
 #include "sentinel/core/LocalRuntime.h"
 #include "sentinel/core/LocalRuntimeSession.h"
 #include "sentinel/core/OllamaRuntime.h"
@@ -171,6 +172,13 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary CONSTANT)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount CONSTANT)
     Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries CONSTANT)
+    Q_PROPERTY(QString localInferenceStatus READ localInferenceStatus NOTIFY localInferenceChanged)
+    Q_PROPERTY(
+        QString localInferenceSummary READ localInferenceSummary NOTIFY localInferenceChanged)
+    Q_PROPERTY(QString localInferenceLastResponseSummary READ localInferenceLastResponseSummary
+                   NOTIFY localInferenceChanged)
+    Q_PROPERTY(QStringList localInferenceTraceSummaries READ localInferenceTraceSummaries NOTIFY
+                   localInferenceChanged)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -206,6 +214,7 @@ public:
         std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge = nullptr,
         std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness = nullptr,
         std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient = nullptr,
+        std::unique_ptr<ILocalInferenceClient> localInferenceClient = nullptr,
         QObject* parent = nullptr);
 
     QString providerName() const;
@@ -312,6 +321,10 @@ public:
     QString ollamaHealthSummary() const;
     int ollamaModelCount() const;
     QStringList ollamaModelSummaries() const;
+    QString localInferenceStatus() const;
+    QString localInferenceSummary() const;
+    QString localInferenceLastResponseSummary() const;
+    QStringList localInferenceTraceSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -323,6 +336,7 @@ public:
     QStringList memoryEntries() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
+    Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -346,6 +360,7 @@ signals:
     void modelRoutingChanged();
     void taskPlanChanged();
     void orchestrationSnapshotChanged();
+    void localInferenceChanged();
 
 private:
     AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request) const;
@@ -367,6 +382,9 @@ private:
     ProviderRuntimeBridgeResponse currentProviderRuntimeBridgeResponse() const;
     RuntimeIntegrationReport currentRuntimeIntegrationReport() const;
     OllamaHealthCheckResult currentOllamaHealthCheck() const;
+    LocalInferenceResponse blockedLocalInferenceResponse(const LocalInferenceRequest& request,
+                                                         LocalInferenceError error,
+                                                         const QString& summary) const;
 
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
@@ -390,6 +408,7 @@ private:
     std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge_;
     std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness_;
     std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient_;
+    std::unique_ptr<ILocalInferenceClient> localInferenceClient_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
@@ -402,6 +421,7 @@ private:
     ConversationSessionStore conversationSession_;
     StaticConversationStateGraph conversationStateGraph_;
     AgentActivityLog agentActivityLog_;
+    LocalInferenceResponse latestLocalInferenceResponse_;
 };
 
 } // namespace sentinel::core

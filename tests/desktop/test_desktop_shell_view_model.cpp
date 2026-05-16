@@ -48,6 +48,8 @@ private slots:
     void exposesOrchestrationReadinessDiagnostics();
     void exposesLocalRuntimeMetadata();
     void exposesOllamaRuntimeBoundaryMetadata();
+    void exposesLocalInferenceBoundaryMetadata();
+    void forwardsBlockedLocalInferenceRequest();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
     void updatesAndPersistsRoutingModeMetadata();
@@ -401,6 +403,33 @@ void DesktopShellViewModelTest::exposesOllamaRuntimeBoundaryMetadata() {
     QVERIFY(fixture.viewModel.ollamaModelSummaries().isEmpty());
 }
 
+void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.localInferenceStatus(), QStringLiteral("Not Requested"));
+    QVERIFY(fixture.viewModel.localInferenceSummary().contains(QStringLiteral("loopback-only")));
+    QCOMPARE(fixture.viewModel.localInferenceLastResponseSummary(),
+             QStringLiteral("No local inference request yet."));
+    QVERIFY(fixture.viewModel.localInferenceTraceSummaries().isEmpty());
+}
+
+void DesktopShellViewModelTest::forwardsBlockedLocalInferenceRequest() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::localInferenceChanged);
+
+    const auto ran =
+        fixture.viewModel.runLocalInference(QStringLiteral("hello"), QStringLiteral("llama3.2"));
+
+    QVERIFY(!ran);
+    QCOMPARE(spy.count(), 1);
+    QCOMPARE(fixture.viewModel.localInferenceStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.localInferenceSummary(),
+             QStringLiteral("Local inference blocked by runtime permission policy."));
+    QVERIFY(fixture.viewModel.localInferenceTraceSummaries().contains(
+        QStringLiteral("2. Permission Policy [Denied]: Runtime permission policy is "
+                       "metadata-only and denies execution by default.")));
+}
+
 void DesktopShellViewModelTest::exposesConversationSessionMetadata() {
     ViewModelFixture fixture;
 
@@ -740,6 +769,10 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("runtimeIntegrationReadinessStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeIntegrationReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeIntegrationReadinessChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("localInferenceStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localInferenceSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localInferenceLastResponseSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localInferenceTraceSummaries"), QByteArrayLiteral("QStringList")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -807,6 +840,10 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("runtimeIntegrationReadiness"),
         QStringLiteral("runtimeIntegrationReport"),
         QStringLiteral("runtimeIntegrationChecks"),
+        QStringLiteral("localInferenceClient"),
+        QStringLiteral("localInferenceRequest"),
+        QStringLiteral("localInferenceResponse"),
+        QStringLiteral("localInferenceTrace"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),
