@@ -501,6 +501,21 @@ ShellPanel {
                 Layout.fillWidth: true
             }
 
+            CheckBox {
+                id: localChatInferenceToggle
+                Layout.fillWidth: true
+                text: "Local chat inference"
+                checked: settingsPage.viewModel.localChatInferenceEnabled
+                onToggled: settingsPage.viewModel.localChatInferenceEnabled = checked
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Chat Routing"
+                value: settingsPage.viewModel.localChatInferenceStatus + " / " + settingsPage.viewModel.localChatInferenceSummary
+                Layout.fillWidth: true
+            }
+
             InfoRow {
                 compact: settingsPage.compact
                 label: "Runtime Badge"

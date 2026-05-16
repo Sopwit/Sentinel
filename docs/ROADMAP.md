@@ -105,6 +105,28 @@ Still out of scope:
   automatic chat-to-Ollama routing, real tools/plugins, filesystem/system actions, autonomous
   loops, and broad UI redesign.
 
+## Phase 10.0-10.2: Explicit Chat-To-Ollama Routing
+
+Completed. Chat can now route to the controlled local inference boundary only through an explicit
+opt-in setting.
+
+Delivered:
+
+- Persisted local chat inference enablement, disabled by default.
+- QML-safe routing status and summary for Settings and Chat surfaces.
+- `ApplicationController::sendMessage` preserves user-message append/history behavior, then uses
+  local inference only when the opt-in is enabled, the selected/effective local model is valid, the
+  Ollama endpoint is loopback HTTP, and permission/safety gates pass.
+- Safe assistant responses for local inference refusals and errors, with no duplicate chat
+  messages.
+- Tests for disabled default behavior, missing/invalid model handling, fake local inference
+  success, inference errors, non-loopback endpoint blocking, persistence, and view-model exposure.
+
+Still out of scope:
+
+- Streaming chat, model management/download/pull/delete UI, cloud provider routing, API keys,
+  tools/plugins, filesystem/system actions, subprocess launch, and autonomous loops.
+
 ## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
 
 Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.

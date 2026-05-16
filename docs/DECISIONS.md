@@ -1068,3 +1068,26 @@ Boundary rules:
 - Current behavior is deterministic disabled status and no opened stream.
 - No token streaming UI is required in this phase.
 - Non-streaming inference remains permission/safety gated and stable.
+
+## 56. Chat-To-Ollama Routing Is Explicit Opt-In
+
+Decision: Chat may use local Ollama inference only when a persisted local chat inference setting is
+explicitly enabled.
+
+Reason: Phase 10.0-10.2 is the first chat path that can call local inference, so the default must
+remain the deterministic local-safe provider path and every executable local request must stay
+behind the existing boundary.
+
+Boundary rules:
+
+- The local chat inference setting defaults to disabled.
+- Disabled chat uses the existing `IChatProvider` path.
+- Enabled chat still requires a valid selected/effective local model, local loopback HTTP Ollama
+  endpoint, runtime permission approval, and runtime safety compliance before invoking
+  `runLocalInference`.
+- User messages are appended before routing; exactly one assistant message is appended from either
+  the inference result or a safe refusal/error.
+- QML receives only a boolean setting plus routing status/summary strings.
+- Streaming, model management/download/pull/delete UI, cloud provider routing, API keys,
+  tools/plugins, filesystem/system actions, subprocess launch, and autonomous loops remain out of
+  scope.

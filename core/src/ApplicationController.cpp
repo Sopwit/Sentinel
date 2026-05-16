@@ -749,6 +749,7 @@ void ApplicationController::setSelectedLocalModel(const QString& model) {
 
     selectedLocalModel_ = normalized;
     emit localModelSelectionChanged();
+    emit localChatInferenceRoutingChanged();
 }
 
 QString ApplicationController::selectedLocalModelSummary() const {
@@ -781,6 +782,58 @@ QString ApplicationController::activeLocalRuntimeBadge() const {
     const auto model = effectiveLocalModel({});
     return model.isEmpty() ? QStringLiteral("Ollama Local / No Model")
                            : QStringLiteral("Ollama Local / %1").arg(model);
+}
+
+bool ApplicationController::localChatInferenceEnabled() const {
+    return localChatInferenceEnabled_;
+}
+
+void ApplicationController::setLocalChatInferenceEnabled(bool enabled) {
+    if (enabled == localChatInferenceEnabled_) {
+        return;
+    }
+
+    localChatInferenceEnabled_ = enabled;
+    emit localChatInferenceRoutingChanged();
+}
+
+QString ApplicationController::localChatInferenceStatus() const {
+    if (!localChatInferenceEnabled_) {
+        return QStringLiteral("Disabled");
+    }
+    if (!localInferenceEndpointAllowed()) {
+        return QStringLiteral("Blocked");
+    }
+    if (effectiveLocalModel({}).isEmpty()) {
+        return QStringLiteral("Missing Model");
+    }
+    const auto models = currentOllamaModels();
+    const auto model = effectiveLocalModel({});
+    if (!models.isEmpty() && !discoveredModelNamesContain(model, models)) {
+        return QStringLiteral("Invalid Model");
+    }
+    return QStringLiteral("Enabled");
+}
+
+QString ApplicationController::localChatInferenceSummary() const {
+    if (!localChatInferenceEnabled_) {
+        return QStringLiteral("Local chat inference is disabled; chat uses the local safe "
+                              "provider path.");
+    }
+    if (!localInferenceEndpointAllowed()) {
+        return QStringLiteral("Local chat inference is blocked: Ollama endpoint must be local "
+                              "loopback HTTP.");
+    }
+    if (effectiveLocalModel({}).isEmpty()) {
+        return QStringLiteral("Local chat inference is enabled but no valid local model is "
+                              "selected.");
+    }
+    if (localChatInferenceStatus() == QStringLiteral("Invalid Model")) {
+        return QStringLiteral("Local chat inference is enabled but the selected model is not in "
+                              "discovered local model metadata.");
+    }
+    return QStringLiteral(
+        "Local chat inference is enabled for explicit local-only Ollama routing.");
 }
 
 bool ApplicationController::localInferenceBusy() const {
@@ -923,6 +976,30 @@ bool ApplicationController::sendMessage(const QString& message) {
         chatHistoryStore_->appendMessage(userMessage);
     }
 
+    if (localChatInferenceEnabled_) {
+        transitionConversationState(ConversationState::ReadyToRespond,
+                                    QStringLiteral("local chat inference metadata ready"));
+        transitionConversationState(ConversationState::Responding,
+                                    QStringLiteral("local chat inference metadata active"));
+
+        const auto ranLocalInference = runLocalInference(trimmed, {});
+        const auto localStatus = latestLocalInferenceResponse_.status;
+        const auto assistantMessage = chatSession_->appendAssistantMessage(
+            ranLocalInference ? latestLocalInferenceResponse_.text
+                              : QStringLiteral("Local inference unavailable: %1")
+                                    .arg(safeLocalInferenceSummary(latestLocalInferenceResponse_)),
+            ranLocalInference ? ChatMessageStatus::Received : ChatMessageStatus::Error);
+        if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
+            chatHistoryStore_->appendMessage(assistantMessage);
+        }
+        transitionConversationState(
+            ranLocalInference ? ConversationState::Completed : ConversationState::Error,
+            ranLocalInference ? QStringLiteral("local chat inference metadata completed")
+                              : QStringLiteral("local chat inference metadata blocked"));
+        emit chatMessagesChanged();
+        return localStatus == LocalInferenceStatus::Succeeded;
+    }
+
     if (!provider_ || provider_->status() != ChatProviderStatus::Ready) {
         transitionConversationState(ConversationState::Error,
                                     QStringLiteral("provider metadata unavailable"));
@@ -978,6 +1055,14 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
             request, LocalInferenceError::MissingModel,
             QStringLiteral("Local inference request rejected: model is required."));
         latestLocalInferenceResponse_.status = LocalInferenceStatus::InvalidRequest;
+        emit localInferenceChanged();
+        return false;
+    }
+
+    if (!localInferenceEndpointAllowed()) {
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::EndpointBlocked,
+            QStringLiteral("Local inference blocked: endpoint must be local loopback HTTP."));
         emit localInferenceChanged();
         return false;
     }
@@ -1434,6 +1519,11 @@ bool ApplicationController::discoveredModelNamesContain(
         }
     }
     return false;
+}
+
+bool ApplicationController::localInferenceEndpointAllowed() const {
+    const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
+    return config.endpoint.isLoopbackHttp();
 }
 
 LocalInferenceResponse ApplicationController::blockedLocalInferenceResponse(

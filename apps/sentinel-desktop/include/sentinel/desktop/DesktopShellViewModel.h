@@ -156,6 +156,12 @@ class DesktopShellViewModel final : public QObject {
                    localModelSelectionChanged)
     Q_PROPERTY(QString activeLocalRuntimeBadge READ activeLocalRuntimeBadge NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
+                   setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
+    Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
+                   localChatInferenceRoutingChanged)
+    Q_PROPERTY(QString localChatInferenceSummary READ localChatInferenceSummary NOTIFY
+                   localChatInferenceRoutingChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
     Q_PROPERTY(QString localInferenceRuntimeState READ localInferenceRuntimeState NOTIFY
                    localInferenceChanged)
@@ -299,6 +305,10 @@ public:
     void setSelectedLocalModel(const QString& model);
     QString selectedLocalModelSummary() const;
     QString activeLocalRuntimeBadge() const;
+    bool localChatInferenceEnabled() const;
+    void setLocalChatInferenceEnabled(bool enabled);
+    QString localChatInferenceStatus() const;
+    QString localChatInferenceSummary() const;
     bool localInferenceBusy() const;
     QString localInferenceRuntimeState() const;
     QString localInferenceStatus() const;
@@ -358,6 +368,7 @@ signals:
     void taskPlanChanged();
     void orchestrationSnapshotChanged();
     void localModelSelectionChanged();
+    void localChatInferenceRoutingChanged();
     void localInferenceChanged();
 
 private:

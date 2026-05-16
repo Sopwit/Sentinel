@@ -414,6 +414,11 @@ void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
              QStringLiteral("No local model selected; inference requires an explicit model."));
     QCOMPARE(fixture.viewModel.activeLocalRuntimeBadge(),
              QStringLiteral("Ollama Local / No Model"));
+    QVERIFY(!fixture.viewModel.localChatInferenceEnabled());
+    QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.localChatInferenceSummary(),
+             QStringLiteral("Local chat inference is disabled; chat uses the local safe provider "
+                            "path."));
     QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Idle"));
     QCOMPARE(fixture.viewModel.localInferenceLatencySummary(),
              QStringLiteral("No local inference latency recorded."));
@@ -1079,18 +1084,25 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QSignalSpy themeSpy(&fixture.viewModel, &DesktopShellViewModel::themeNameChanged);
     QSignalSpy profileSpy(&fixture.viewModel, &DesktopShellViewModel::configurationProfileChanged);
     QSignalSpy modelSpy(&fixture.viewModel, &DesktopShellViewModel::localModelSelectionChanged);
+    QSignalSpy chatRoutingSpy(&fixture.viewModel,
+                              &DesktopShellViewModel::localChatInferenceRoutingChanged);
 
     fixture.viewModel.setThemeName(QStringLiteral("Sentinel Light"));
     fixture.viewModel.setConfigurationProfile(QStringLiteral("Phase 2 Shell"));
     fixture.viewModel.setSelectedLocalModel(QStringLiteral(" local-model "));
+    fixture.viewModel.setLocalChatInferenceEnabled(true);
 
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
     QCOMPARE(fixture.viewModel.selectedLocalModel(), QStringLiteral("local-model"));
     QCOMPARE(fixture.settings.selectedLocalModel(), QStringLiteral("local-model"));
+    QVERIFY(fixture.viewModel.localChatInferenceEnabled());
+    QVERIFY(fixture.settings.localChatInferenceEnabled());
+    QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Enabled"));
     QCOMPARE(themeSpy.count(), 1);
     QCOMPARE(profileSpy.count(), 1);
     QCOMPARE(modelSpy.count(), 1);
+    QCOMPARE(chatRoutingSpy.count(), 2);
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {

@@ -51,6 +51,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::orchestrationSnapshotChanged);
     connect(&controller_, &core::ApplicationController::localModelSelectionChanged, this,
             &DesktopShellViewModel::localModelSelectionChanged);
+    connect(&controller_, &core::ApplicationController::localChatInferenceRoutingChanged, this,
+            &DesktopShellViewModel::localChatInferenceRoutingChanged);
     connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
             &DesktopShellViewModel::localInferenceChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
@@ -63,7 +65,11 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::modelRoutingChanged);
     connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this,
             [this]() { controller_.setSelectedLocalModel(settings_.selectedLocalModel()); });
+    connect(&settings_, &core::AppSettings::localChatInferenceEnabledChanged, this, [this]() {
+        controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
+    });
     controller_.setSelectedLocalModel(settings_.selectedLocalModel());
+    controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -498,6 +504,25 @@ QString DesktopShellViewModel::selectedLocalModelSummary() const {
 
 QString DesktopShellViewModel::activeLocalRuntimeBadge() const {
     return controller_.activeLocalRuntimeBadge();
+}
+
+bool DesktopShellViewModel::localChatInferenceEnabled() const {
+    return controller_.localChatInferenceEnabled();
+}
+
+void DesktopShellViewModel::setLocalChatInferenceEnabled(bool enabled) {
+    settings_.setLocalChatInferenceEnabled(enabled);
+    if (controller_.localChatInferenceEnabled() != settings_.localChatInferenceEnabled()) {
+        controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
+    }
+}
+
+QString DesktopShellViewModel::localChatInferenceStatus() const {
+    return controller_.localChatInferenceStatus();
+}
+
+QString DesktopShellViewModel::localChatInferenceSummary() const {
+    return controller_.localChatInferenceSummary();
 }
 
 bool DesktopShellViewModel::localInferenceBusy() const {

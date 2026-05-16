@@ -187,10 +187,11 @@ response. It does not call Ollama or any provider, execute models, download mode
 launch processes/subprocesses, scan filesystems, execute tools, load plugins, access networks, read
 API keys, or start background workers.
 
-## Local Inference And Model Selection
+## Local Inference, Model Selection, And Explicit Chat Routing
 
-Phase 9.3 through Phase 9.8 add a controlled local inference path and selected-model metadata
-without turning chat into an Ollama-backed provider.
+Phase 9.3 through Phase 9.8 add a controlled local inference path and selected-model metadata.
+Phase 10.0 through Phase 10.2 add explicit chat-to-Ollama routing on top of that boundary while
+keeping the existing local-safe provider path as the default.
 
 Separation:
 
@@ -200,8 +201,10 @@ Separation:
 - `ApplicationController` evaluates runtime permission and safety metadata before invoking local
   inference.
 - `AppSettings` persists the selected local model as configuration only.
+- `AppSettings` also persists local chat inference enablement. The default is disabled.
 - `DesktopShellViewModel` exposes selected-model summaries, runtime badge, busy/idle/error state,
-  latency summary, trace strings, and disabled streaming status as QML-safe values only.
+  latency summary, trace strings, local chat routing status/summary, and disabled streaming status
+  as QML-safe values only.
 
 Model selection behavior:
 
@@ -219,11 +222,23 @@ Streaming skeleton:
   `ILocalInferenceStreamClient` define the future streaming boundary.
 - The current stream client is deterministic disabled behavior and opens no stream.
 
+Explicit chat routing:
+
+- `ApplicationController::sendMessage` always appends the user message before routing.
+- If local chat inference is disabled, chat uses the existing `IChatProvider` path.
+- If local chat inference is enabled, chat calls `runLocalInference` only after model resolution,
+  loopback endpoint validation, runtime permission evaluation, and runtime safety evaluation.
+- Successful local inference appends one assistant message from the local inference response.
+- Refusals, invalid models, blocked endpoints, permission/safety denials, and client errors append
+  one safe assistant error/refusal message.
+- The chat route does not stream tokens, invoke tools, launch subprocesses, perform filesystem or
+  system actions, call cloud providers, read API keys, or start autonomous loops.
+
 Still out of scope:
 
 - Model downloads, pulls, deletes, broad model-management UI, cloud provider calls, API keys,
   endpoint expansion, subprocess launch, filesystem/system actions, tools/plugins, autonomous
-  loops, automatic chat-to-Ollama routing, and token streaming UI.
+  loops, automatic routing without opt-in, and token streaming UI.
 
 ## Local Runtime Session Metadata
 
