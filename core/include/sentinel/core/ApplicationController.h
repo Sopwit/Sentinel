@@ -6,6 +6,7 @@
 #include "sentinel/core/ChatSession.h"
 #include "sentinel/core/ConversationSession.h"
 #include "sentinel/core/ConversationStateGraph.h"
+#include "sentinel/core/ExecutionLifecycle.h"
 #include "sentinel/core/IAgentRegistry.h"
 #include "sentinel/core/IAgentRuntime.h"
 #include "sentinel/core/IApprovalPolicy.h"
@@ -20,9 +21,11 @@
 #include "sentinel/core/IToolExecutor.h"
 #include "sentinel/core/LocalRuntime.h"
 #include "sentinel/core/LocalRuntimeSession.h"
+#include "sentinel/core/OllamaRuntime.h"
 #include "sentinel/core/OrchestrationDiagnostics.h"
 #include "sentinel/core/OrchestrationSnapshot.h"
 #include "sentinel/core/RuntimeCapabilities.h"
+#include "sentinel/core/RuntimeIntegration.h"
 #include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/RuntimePipeline.h"
 #include "sentinel/core/RuntimeSafety.h"
@@ -135,6 +138,39 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString runtimePipelineSummary READ runtimePipelineSummary CONSTANT)
     Q_PROPERTY(
         QStringList runtimePipelineTraceSummaries READ runtimePipelineTraceSummaries CONSTANT)
+    Q_PROPERTY(QString executionLifecycleState READ executionLifecycleState CONSTANT)
+    Q_PROPERTY(QString executionLifecycleStatus READ executionLifecycleStatus CONSTANT)
+    Q_PROPERTY(QString executionLifecycleSummary READ executionLifecycleSummary CONSTANT)
+    Q_PROPERTY(
+        QStringList executionLifecycleTraceSummaries READ executionLifecycleTraceSummaries CONSTANT)
+    Q_PROPERTY(QString executionSessionId READ executionSessionId CONSTANT)
+    Q_PROPERTY(QString executionSessionStatus READ executionSessionStatus CONSTANT)
+    Q_PROPERTY(QString executionSessionOwnership READ executionSessionOwnership CONSTANT)
+    Q_PROPERTY(QString executionCoordinationMode READ executionCoordinationMode CONSTANT)
+    Q_PROPERTY(QString executionSessionSummary READ executionSessionSummary CONSTANT)
+    Q_PROPERTY(QString executionCoordinationSnapshotSummary READ
+                   executionCoordinationSnapshotSummary CONSTANT)
+    Q_PROPERTY(QString localRuntimeAdapterStatus READ localRuntimeAdapterStatus CONSTANT)
+    Q_PROPERTY(QString localRuntimeAdapterHealth READ localRuntimeAdapterHealth CONSTANT)
+    Q_PROPERTY(QString localRuntimeAdapterSummary READ localRuntimeAdapterSummary CONSTANT)
+    Q_PROPERTY(QStringList localRuntimeAdapterCapabilitySummaries READ
+                   localRuntimeAdapterCapabilitySummaries CONSTANT)
+    Q_PROPERTY(QString providerRuntimeBridgeStatus READ providerRuntimeBridgeStatus CONSTANT)
+    Q_PROPERTY(QString providerRuntimeBridgeSummary READ providerRuntimeBridgeSummary CONSTANT)
+    Q_PROPERTY(QString providerRuntimeBridgeResponseSummary READ
+                   providerRuntimeBridgeResponseSummary CONSTANT)
+    Q_PROPERTY(
+        QString runtimeIntegrationReadinessStatus READ runtimeIntegrationReadinessStatus CONSTANT)
+    Q_PROPERTY(
+        QString runtimeIntegrationReadinessSummary READ runtimeIntegrationReadinessSummary CONSTANT)
+    Q_PROPERTY(QStringList runtimeIntegrationReadinessChecks READ runtimeIntegrationReadinessChecks
+                   CONSTANT)
+    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint CONSTANT)
+    Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus CONSTANT)
+    Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus CONSTANT)
+    Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary CONSTANT)
+    Q_PROPERTY(int ollamaModelCount READ ollamaModelCount CONSTANT)
+    Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -163,7 +199,14 @@ public:
         std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities = nullptr,
         std::unique_ptr<IRuntimePermissionPolicy> runtimePermissionPolicy = nullptr,
         std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy = nullptr,
-        std::unique_ptr<IRuntimePipeline> runtimePipeline = nullptr, QObject* parent = nullptr);
+        std::unique_ptr<IRuntimePipeline> runtimePipeline = nullptr,
+        std::unique_ptr<IExecutionLifecycle> executionLifecycle = nullptr,
+        std::unique_ptr<ExecutionCoordinator> executionCoordinator = nullptr,
+        std::unique_ptr<ILocalRuntimeAdapter> localRuntimeAdapter = nullptr,
+        std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge = nullptr,
+        std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness = nullptr,
+        std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient = nullptr,
+        QObject* parent = nullptr);
 
     QString providerName() const;
     QString providerStatus() const;
@@ -243,6 +286,32 @@ public:
     QString runtimePipelineStatus() const;
     QString runtimePipelineSummary() const;
     QStringList runtimePipelineTraceSummaries() const;
+    QString executionLifecycleState() const;
+    QString executionLifecycleStatus() const;
+    QString executionLifecycleSummary() const;
+    QStringList executionLifecycleTraceSummaries() const;
+    QString executionSessionId() const;
+    QString executionSessionStatus() const;
+    QString executionSessionOwnership() const;
+    QString executionCoordinationMode() const;
+    QString executionSessionSummary() const;
+    QString executionCoordinationSnapshotSummary() const;
+    QString localRuntimeAdapterStatus() const;
+    QString localRuntimeAdapterHealth() const;
+    QString localRuntimeAdapterSummary() const;
+    QStringList localRuntimeAdapterCapabilitySummaries() const;
+    QString providerRuntimeBridgeStatus() const;
+    QString providerRuntimeBridgeSummary() const;
+    QString providerRuntimeBridgeResponseSummary() const;
+    QString runtimeIntegrationReadinessStatus() const;
+    QString runtimeIntegrationReadinessSummary() const;
+    QStringList runtimeIntegrationReadinessChecks() const;
+    QString ollamaEndpoint() const;
+    QString ollamaConnectionStatus() const;
+    QString ollamaHealthStatus() const;
+    QString ollamaHealthSummary() const;
+    int ollamaModelCount() const;
+    QStringList ollamaModelSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -291,6 +360,13 @@ private:
     RuntimePermissionDecision currentRuntimePermissionDecision() const;
     RuntimeSafetyReport currentRuntimeSafetyReport() const;
     RuntimePipelineResult currentRuntimePipelineResult() const;
+    ExecutionRequest executionRequest() const;
+    ExecutionLifecycleResult currentExecutionLifecycleResult() const;
+    ExecutionCoordinationSnapshot currentExecutionCoordinationSnapshot() const;
+    ProviderRuntimeBridgeRequest providerRuntimeBridgeRequest() const;
+    ProviderRuntimeBridgeResponse currentProviderRuntimeBridgeResponse() const;
+    RuntimeIntegrationReport currentRuntimeIntegrationReport() const;
+    OllamaHealthCheckResult currentOllamaHealthCheck() const;
 
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
@@ -308,6 +384,12 @@ private:
     std::unique_ptr<IRuntimePermissionPolicy> runtimePermissionPolicy_;
     std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy_;
     std::unique_ptr<IRuntimePipeline> runtimePipeline_;
+    std::unique_ptr<IExecutionLifecycle> executionLifecycle_;
+    std::unique_ptr<ExecutionCoordinator> executionCoordinator_;
+    std::unique_ptr<ILocalRuntimeAdapter> localRuntimeAdapter_;
+    std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge_;
+    std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness_;
+    std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

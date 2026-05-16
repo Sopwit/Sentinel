@@ -47,6 +47,7 @@ private slots:
     void exposesOrchestrationSnapshotMetadata();
     void exposesOrchestrationReadinessDiagnostics();
     void exposesLocalRuntimeMetadata();
+    void exposesOllamaRuntimeBoundaryMetadata();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
     void updatesAndPersistsRoutingModeMetadata();
@@ -342,6 +343,62 @@ void DesktopShellViewModelTest::exposesLocalRuntimeMetadata() {
     QVERIFY(fixture.viewModel.runtimePipelineTraceSummaries().contains(
         QStringLiteral("Permission Policy [Denied]: Runtime permission policy is metadata-only and "
                        "denies execution by default.")));
+    QCOMPARE(fixture.viewModel.executionLifecycleState(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.executionLifecycleStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.executionLifecycleSummary(),
+             QStringLiteral("Execution lifecycle reached blocked metadata state; no execution is "
+                            "permitted."));
+    QCOMPARE(fixture.viewModel.executionLifecycleTraceSummaries().size(), 7);
+    QVERIFY(fixture.viewModel.executionLifecycleTraceSummaries().contains(
+        QStringLiteral("7. Blocked [Blocked]: Execution remains intentionally blocked.")));
+    QCOMPARE(fixture.viewModel.executionSessionId(), QStringLiteral("execution-session-1"));
+    QCOMPARE(fixture.viewModel.executionSessionStatus(), QStringLiteral("Reserved"));
+    QCOMPARE(fixture.viewModel.executionSessionOwnership(),
+             QStringLiteral("Application Controller"));
+    QCOMPARE(fixture.viewModel.executionCoordinationMode(), QStringLiteral("Metadata Only"));
+    QCOMPARE(fixture.viewModel.executionSessionSummary(),
+             QStringLiteral("Execution session is reserved for metadata only."));
+    QCOMPARE(fixture.viewModel.executionCoordinationSnapshotSummary(),
+             QStringLiteral("Execution coordination snapshot is read-only for "
+                            "execution-session-1; lifecycle is Blocked and execution is "
+                            "blocked."));
+    QCOMPARE(fixture.viewModel.localRuntimeAdapterStatus(), QStringLiteral("Placeholder"));
+    QCOMPARE(fixture.viewModel.localRuntimeAdapterHealth(), QStringLiteral("Metadata Only"));
+    QCOMPARE(fixture.viewModel.localRuntimeAdapterSummary(),
+             QStringLiteral("Ollama local runtime adapter contract is metadata-only; no runtime "
+                            "connection is configured."));
+    QCOMPARE(fixture.viewModel.localRuntimeAdapterCapabilitySummaries().size(), 3);
+    QVERIFY(fixture.viewModel.localRuntimeAdapterCapabilitySummaries().contains(
+        QStringLiteral("Model Discovery (Unavailable, Not Executable): Model discovery is "
+                       "intentionally disabled.")));
+    QCOMPARE(fixture.viewModel.providerRuntimeBridgeStatus(), QStringLiteral("Not Connected"));
+    QCOMPARE(fixture.viewModel.providerRuntimeBridgeSummary(),
+             QStringLiteral("Provider runtime bridge is not connected and cannot execute provider "
+                            "requests."));
+    QCOMPARE(fixture.viewModel.providerRuntimeBridgeResponseSummary(),
+             QStringLiteral("Provider runtime bridge is metadata-only; no provider or local "
+                            "runtime request was executed."));
+    QCOMPARE(fixture.viewModel.runtimeIntegrationReadinessStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.runtimeIntegrationReadinessSummary(),
+             QStringLiteral("Runtime integration readiness is blocked: Ollama local "
+                            "health/discovery metadata is available, but provider bridge "
+                            "execution and inference remain disabled."));
+    QCOMPARE(fixture.viewModel.runtimeIntegrationReadinessChecks().size(), 5);
+    QVERIFY(fixture.viewModel.runtimeIntegrationReadinessChecks().contains(
+        QStringLiteral("Pass: Endpoint Configuration - Safe local Ollama endpoint is configured "
+                       "for loopback-only health checks.")));
+}
+
+void DesktopShellViewModelTest::exposesOllamaRuntimeBoundaryMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.ollamaEndpoint(), QStringLiteral("http://127.0.0.1:11434"));
+    QCOMPARE(fixture.viewModel.ollamaConnectionStatus(), QStringLiteral("Unavailable"));
+    QCOMPARE(fixture.viewModel.ollamaHealthStatus(), QStringLiteral("Unavailable"));
+    QVERIFY(
+        fixture.viewModel.ollamaHealthSummary().contains(QStringLiteral("no local health check")));
+    QCOMPARE(fixture.viewModel.ollamaModelCount(), 0);
+    QVERIFY(fixture.viewModel.ollamaModelSummaries().isEmpty());
 }
 
 void DesktopShellViewModelTest::exposesConversationSessionMetadata() {
@@ -662,6 +719,27 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("runtimePipelineStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimePipelineSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimePipelineTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("executionLifecycleState"), QByteArrayLiteral("QString")},
+        {QStringLiteral("executionLifecycleStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("executionLifecycleSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("executionLifecycleTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("executionSessionId"), QByteArrayLiteral("QString")},
+        {QStringLiteral("executionSessionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("executionSessionOwnership"), QByteArrayLiteral("QString")},
+        {QStringLiteral("executionCoordinationMode"), QByteArrayLiteral("QString")},
+        {QStringLiteral("executionSessionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("executionCoordinationSnapshotSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeAdapterStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeAdapterHealth"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeAdapterSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localRuntimeAdapterCapabilitySummaries"),
+         QByteArrayLiteral("QStringList")},
+        {QStringLiteral("providerRuntimeBridgeStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("providerRuntimeBridgeSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("providerRuntimeBridgeResponseSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeIntegrationReadinessStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeIntegrationReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeIntegrationReadinessChecks"), QByteArrayLiteral("QStringList")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -714,6 +792,21 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("runtimePipeline"),
         QStringLiteral("runtimePipelineRequest"),
         QStringLiteral("runtimePipelineResult"),
+        QStringLiteral("executionLifecycle"),
+        QStringLiteral("executionLifecycleResult"),
+        QStringLiteral("executionLifecycleTraces"),
+        QStringLiteral("executionCoordinator"),
+        QStringLiteral("executionCoordinationSnapshot"),
+        QStringLiteral("executionSession"),
+        QStringLiteral("executionRequest"),
+        QStringLiteral("localRuntimeAdapter"),
+        QStringLiteral("localRuntimeAdapterDescriptor"),
+        QStringLiteral("providerRuntimeBridge"),
+        QStringLiteral("providerRuntimeBridgeRequest"),
+        QStringLiteral("providerRuntimeBridgeResponse"),
+        QStringLiteral("runtimeIntegrationReadiness"),
+        QStringLiteral("runtimeIntegrationReport"),
+        QStringLiteral("runtimeIntegrationChecks"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),

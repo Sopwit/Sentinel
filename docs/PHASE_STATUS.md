@@ -1372,3 +1372,142 @@ Still out of scope:
   process/subprocess launch, filesystem/system actions, real tools, plugin loading, sandbox
   runtime enforcement, embeddings/vector DB/semantic search, autonomous workers, and execution or
   setup UI.
+
+### Phase 8.0-8.2: Execution Lifecycle And Session Coordination
+
+Completed. Added a metadata-only execution lifecycle/session coordination layer without enabling
+execution.
+
+Scope:
+
+- Added execution value metadata:
+  - `ExecutionRequest`
+  - `ExecutionIntent`
+  - `ExecutionPriority`
+  - `ExecutionLifecycleState`
+  - `ExecutionLifecycleStatus`
+  - `ExecutionLifecycleResult`
+  - `ExecutionLifecycleTrace`
+  - `ExecutionTraceLevel`
+- Added execution session metadata:
+  - `ExecutionSession`
+  - `ExecutionSessionId`
+  - `ExecutionSessionStatus`
+  - `ExecutionOwnership`
+  - `ExecutionCoordinationMode`
+- Added `IExecutionLifecycle`, `StaticExecutionLifecycle`, `ExecutionCoordinator`, and
+  `ExecutionCoordinationSnapshot`.
+- Lifecycle evaluation is deterministic and ordered:
+  requested -> validating -> permission-check -> safety-check -> coordination ->
+  ready-placeholder -> blocked.
+- Execution remains blocked and non-executable even when the lifecycle reaches
+  ready-placeholder metadata.
+- Invalid transitions are rejected safely.
+- `ApplicationController` owns lifecycle/coordinator interfaces.
+- `DesktopShellViewModel` exposes QML-safe strings and string lists only.
+- Dashboard and Settings show read-only lifecycle/session/snapshot metadata with no controls.
+
+Separation:
+
+- Execution lifecycle is not local runtime, chat provider, agent runtime, tool executor, provider
+  adapter, or plugin/runtime worker.
+- Coordination snapshot is a read-only metadata view, not a scheduler.
+
+Still out of scope:
+
+- Real provider/model execution, Ollama launch, API keys, networking, downloads, streaming,
+  subprocess/process launch, filesystem/system actions, real tools, plugin loading, autonomous
+  workers, timers/background loops, and execution/setup UI.
+
+### Phase 8.3-8.5: Local Runtime Adapter, Provider Bridge, And Pre-integration Readiness
+
+Completed. Added metadata-only local runtime adapter, provider bridge, and runtime integration
+readiness boundaries to prepare for future Ollama/local runtime integration without calling,
+launching, discovering, or executing anything.
+
+Scope:
+
+- Added local runtime adapter metadata:
+  - `ILocalRuntimeAdapter`
+  - `LocalRuntimeAdapterDescriptor`
+  - `LocalRuntimeAdapterStatus`
+  - `LocalRuntimeAdapterHealth`
+  - `LocalRuntimeAdapterCapabilitySummary`
+  - `StaticLocalRuntimeAdapter`
+- Added provider bridge metadata:
+  - `IProviderRuntimeBridge`
+  - `ProviderRuntimeBridgeStatus`
+  - `ProviderRuntimeBridgeSummary`
+  - `ProviderRuntimeBridgeRequest`
+  - `ProviderRuntimeBridgeResponse`
+  - `StaticProviderRuntimeBridge`
+- Added pre-integration readiness metadata:
+  - `RuntimeIntegrationReadiness`
+  - `RuntimeIntegrationCheck`
+  - `RuntimeIntegrationReport`
+  - `StaticRuntimeIntegrationReadiness`
+- Adapter metadata is descriptive placeholder data only.
+- Provider bridge reports not connected and not executable.
+- Readiness report deterministically explains missing endpoint configuration, model discovery,
+  provider bridge connection, and execution permission before real Ollama/local runtime integration.
+- `ApplicationController` owns adapter/bridge/readiness boundaries.
+- `DesktopShellViewModel` exposes QML-safe strings and string lists only.
+- Dashboard and Settings show read-only integration readiness metadata with no controls.
+
+Separation:
+
+- Adapter contract is not execution.
+- Provider bridge is not an `IChatProvider` implementation.
+- Readiness report is not probing.
+- Execution lifecycle remains blocked.
+- Local runtime remains placeholder-only.
+
+Still out of scope:
+
+- Ollama/OpenAI/Anthropic calls, API keys, networking, downloads, streaming, process/subprocess
+  launch, filesystem/system actions, model discovery, model execution, real tools/plugins,
+  embeddings/vector DB, autonomous workers, endpoint fields, setup controls, and model selection UI.
+
+### Phase 9.0-9.2: Ollama Local Health And Discovery Boundary
+
+Completed. Added the first controlled local-provider integration boundary for Ollama health and
+installed-model metadata only.
+
+Scope:
+
+- Added Ollama value/config metadata:
+  - `OllamaEndpoint`
+  - `OllamaConfig`
+  - `OllamaConnectionStatus`
+  - `OllamaHealthStatus`
+  - `OllamaModelSummary`
+- Added runtime client boundary:
+  - `IOllamaRuntimeClient`
+  - `NullOllamaRuntimeClient`
+  - `OllamaHttpRuntimeClient`
+- Default endpoint is `http://127.0.0.1:11434`.
+- Endpoint normalization accepts loopback HTTP only and safely falls back to the default for cloud,
+  non-HTTP, malformed, query, fragment, or non-loopback endpoints.
+- `AppSettings` can persist the normalized Ollama endpoint; no API key or credential setting
+  exists.
+- HTTP health checks are limited to the loopback Ollama `/api/version` endpoint.
+- Optional model discovery is limited to the loopback Ollama `/api/tags` endpoint and returns
+  installed model metadata only.
+- `ApplicationController` exposes endpoint, connection status, health status, health summary, model
+  count, and model summary strings.
+- `DesktopShellViewModel` exposes QML-safe strings/counts/lists only.
+- Dashboard and Settings show read-only Ollama local status.
+
+Separation:
+
+- Ollama client is not an `IChatProvider`.
+- Ollama client is not execution lifecycle, model router execution, agent runtime, tool executor, or
+  plugin runtime.
+- Chat requests are not routed to Ollama.
+- Execution lifecycle remains blocked and non-executable.
+
+Still out of scope:
+
+- Prompt/model generation, streaming, model downloads/pulls/deletes/runs, subprocess/process
+  launch, cloud calls, API keys, tool/plugin execution, filesystem/system scans/actions, background
+  workers, setup UI, and model selection UI.

@@ -16,6 +16,8 @@ class AppSettings final : public QObject {
                    NOTIFY configurationProfileChanged)
     Q_PROPERTY(QString routingModeName READ routingModeName WRITE setRoutingModeName NOTIFY
                    routingModeNameChanged)
+    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint WRITE setOllamaEndpoint NOTIFY
+                   ollamaEndpointChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -30,15 +32,20 @@ public:
     void setRoutingModeName(const QString& routingModeName);
     QStringList availableRoutingModes() const;
 
+    QString ollamaEndpoint() const;
+    void setOllamaEndpoint(const QString& endpoint);
+
 signals:
     void themeNameChanged();
     void configurationProfileChanged();
     void routingModeNameChanged();
+    void ollamaEndpointChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
     static constexpr auto configurationProfileKey = "configurationProfile";
     static constexpr auto routingModeKey = "routingMode";
+    static constexpr auto ollamaEndpointKey = "ollamaEndpoint";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
 

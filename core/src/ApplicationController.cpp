@@ -63,7 +63,13 @@ ApplicationController::ApplicationController(
     std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities,
     std::unique_ptr<IRuntimePermissionPolicy> runtimePermissionPolicy,
     std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy,
-    std::unique_ptr<IRuntimePipeline> runtimePipeline, QObject* parent)
+    std::unique_ptr<IRuntimePipeline> runtimePipeline,
+    std::unique_ptr<IExecutionLifecycle> executionLifecycle,
+    std::unique_ptr<ExecutionCoordinator> executionCoordinator,
+    std::unique_ptr<ILocalRuntimeAdapter> localRuntimeAdapter,
+    std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge,
+    std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness,
+    std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -93,6 +99,20 @@ ApplicationController::ApplicationController(
                                                : std::make_unique<StaticRuntimeSafetyPolicy>()),
       runtimePipeline_(runtimePipeline ? std::move(runtimePipeline)
                                        : std::make_unique<StaticRuntimePipeline>()),
+      executionLifecycle_(executionLifecycle ? std::move(executionLifecycle)
+                                             : std::make_unique<StaticExecutionLifecycle>()),
+      executionCoordinator_(executionCoordinator ? std::move(executionCoordinator)
+                                                 : std::make_unique<ExecutionCoordinator>()),
+      localRuntimeAdapter_(localRuntimeAdapter ? std::move(localRuntimeAdapter)
+                                               : std::make_unique<StaticLocalRuntimeAdapter>()),
+      providerRuntimeBridge_(providerRuntimeBridge
+                                 ? std::move(providerRuntimeBridge)
+                                 : std::make_unique<StaticProviderRuntimeBridge>()),
+      runtimeIntegrationReadiness_(runtimeIntegrationReadiness
+                                       ? std::move(runtimeIntegrationReadiness)
+                                       : std::make_unique<StaticRuntimeIntegrationReadiness>()),
+      ollamaRuntimeClient_(ollamaRuntimeClient ? std::move(ollamaRuntimeClient)
+                                               : std::make_unique<NullOllamaRuntimeClient>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -578,6 +598,142 @@ QStringList ApplicationController::runtimePipelineTraceSummaries() const {
     return sentinel::core::runtimePipelineTraceSummaries(currentRuntimePipelineResult().traces);
 }
 
+QString ApplicationController::executionLifecycleState() const {
+    return executionLifecycleStateName(currentExecutionLifecycleResult().state);
+}
+
+QString ApplicationController::executionLifecycleStatus() const {
+    return executionLifecycleStatusName(currentExecutionLifecycleResult().status);
+}
+
+QString ApplicationController::executionLifecycleSummary() const {
+    return safeExecutionLifecycleSummary(currentExecutionLifecycleResult());
+}
+
+QStringList ApplicationController::executionLifecycleTraceSummaries() const {
+    return sentinel::core::executionLifecycleTraceSummaries(
+        currentExecutionLifecycleResult().traces);
+}
+
+QString ApplicationController::executionSessionId() const {
+    return executionCoordinator_ ? executionCoordinator_->session().id.value : QString{};
+}
+
+QString ApplicationController::executionSessionStatus() const {
+    return executionCoordinator_
+               ? executionSessionStatusName(executionCoordinator_->session().status)
+               : QStringLiteral("Blocked");
+}
+
+QString ApplicationController::executionSessionOwnership() const {
+    return executionCoordinator_
+               ? executionOwnershipName(executionCoordinator_->session().ownership)
+               : QStringLiteral("Application Controller");
+}
+
+QString ApplicationController::executionCoordinationMode() const {
+    return executionCoordinator_
+               ? executionCoordinationModeName(executionCoordinator_->session().coordinationMode)
+               : QStringLiteral("Metadata Only");
+}
+
+QString ApplicationController::executionSessionSummary() const {
+    return executionCoordinator_ ? safeExecutionSessionSummary(executionCoordinator_->session())
+                                 : QStringLiteral("No execution session metadata.");
+}
+
+QString ApplicationController::executionCoordinationSnapshotSummary() const {
+    return safeExecutionCoordinationSnapshotSummary(currentExecutionCoordinationSnapshot());
+}
+
+QString ApplicationController::localRuntimeAdapterStatus() const {
+    if (!localRuntimeAdapter_) {
+        return localRuntimeAdapterStatusName(LocalRuntimeAdapterStatus::Unavailable);
+    }
+    return localRuntimeAdapterStatusName(localRuntimeAdapter_->descriptor().status);
+}
+
+QString ApplicationController::localRuntimeAdapterHealth() const {
+    if (!localRuntimeAdapter_) {
+        return localRuntimeAdapterHealthName(LocalRuntimeAdapterHealth::NotExecutable);
+    }
+    return localRuntimeAdapterHealthName(localRuntimeAdapter_->descriptor().health);
+}
+
+QString ApplicationController::localRuntimeAdapterSummary() const {
+    if (!localRuntimeAdapter_) {
+        return QStringLiteral("No local runtime adapter metadata.");
+    }
+    return safeLocalRuntimeAdapterSummary(localRuntimeAdapter_->descriptor());
+}
+
+QStringList ApplicationController::localRuntimeAdapterCapabilitySummaries() const {
+    if (!localRuntimeAdapter_) {
+        return {};
+    }
+    return sentinel::core::localRuntimeAdapterCapabilitySummaries(
+        localRuntimeAdapter_->descriptor().capabilities);
+}
+
+QString ApplicationController::providerRuntimeBridgeStatus() const {
+    if (!providerRuntimeBridge_) {
+        return providerRuntimeBridgeStatusName(ProviderRuntimeBridgeStatus::Unavailable);
+    }
+    return providerRuntimeBridgeStatusName(providerRuntimeBridge_->summary().status);
+}
+
+QString ApplicationController::providerRuntimeBridgeSummary() const {
+    if (!providerRuntimeBridge_) {
+        return QStringLiteral("No provider runtime bridge metadata.");
+    }
+    return safeProviderRuntimeBridgeSummary(providerRuntimeBridge_->summary());
+}
+
+QString ApplicationController::providerRuntimeBridgeResponseSummary() const {
+    return safeProviderRuntimeBridgeResponseSummary(currentProviderRuntimeBridgeResponse());
+}
+
+QString ApplicationController::runtimeIntegrationReadinessStatus() const {
+    return runtimeIntegrationReadinessName(currentRuntimeIntegrationReport().readiness);
+}
+
+QString ApplicationController::runtimeIntegrationReadinessSummary() const {
+    return safeRuntimeIntegrationReportSummary(currentRuntimeIntegrationReport());
+}
+
+QStringList ApplicationController::runtimeIntegrationReadinessChecks() const {
+    return sentinel::core::runtimeIntegrationCheckSummaries(
+        currentRuntimeIntegrationReport().checks);
+}
+
+QString ApplicationController::ollamaEndpoint() const {
+    return ollamaRuntimeClient_ ? ollamaRuntimeClient_->config().endpoint.toString()
+                                : OllamaEndpoint::defaultEndpoint().toString();
+}
+
+QString ApplicationController::ollamaConnectionStatus() const {
+    return ollamaConnectionStatusName(currentOllamaHealthCheck().connectionStatus);
+}
+
+QString ApplicationController::ollamaHealthStatus() const {
+    return ollamaHealthStatusName(currentOllamaHealthCheck().healthStatus);
+}
+
+QString ApplicationController::ollamaHealthSummary() const {
+    return safeOllamaHealthSummary(currentOllamaHealthCheck());
+}
+
+int ApplicationController::ollamaModelCount() const {
+    return ollamaRuntimeClient_ ? static_cast<int>(ollamaRuntimeClient_->installedModels().size())
+                                : 0;
+}
+
+QStringList ApplicationController::ollamaModelSummaries() const {
+    return ollamaRuntimeClient_
+               ? sentinel::core::ollamaModelSummaries(ollamaRuntimeClient_->installedModels())
+               : QStringList{};
+}
+
 int ApplicationController::availableToolCount() const {
     return agentRuntime_ ? static_cast<int>(agentRuntime_->availableTools().size()) : 0;
 }
@@ -920,6 +1076,116 @@ RuntimePipelineResult ApplicationController::currentRuntimePipelineResult() cons
             runtimePermissionRequest(),
         },
         currentRuntimePermissionDecision(), currentRuntimeSafetyReport());
+}
+
+ExecutionRequest ApplicationController::executionRequest() const {
+    return ExecutionRequest{
+        QStringLiteral("execution-request-1"),
+        ExecutionIntent::RuntimePlaceholder,
+        ExecutionPriority::Normal,
+        QStringLiteral("Coordinate future execution lifecycle metadata without enabling "
+                       "execution."),
+    };
+}
+
+ExecutionLifecycleResult ApplicationController::currentExecutionLifecycleResult() const {
+    if (!executionLifecycle_) {
+        ExecutionLifecycleResult result;
+        result.request = executionRequest();
+        result.state = ExecutionLifecycleState::Blocked;
+        result.status = ExecutionLifecycleStatus::Blocked;
+        result.summary = QStringLiteral("No execution lifecycle available; execution is blocked.");
+        result.executable = false;
+        result.traces = {ExecutionLifecycleTrace{
+            1,
+            ExecutionLifecycleState::Blocked,
+            ExecutionTraceLevel::Blocked,
+            QStringLiteral("Execution lifecycle is unavailable."),
+        }};
+        return result;
+    }
+
+    return executionLifecycle_->evaluate(executionRequest());
+}
+
+ExecutionCoordinationSnapshot ApplicationController::currentExecutionCoordinationSnapshot() const {
+    if (!executionCoordinator_) {
+        ExecutionCoordinationSnapshot snapshot;
+        snapshot.lifecycle = currentExecutionLifecycleResult();
+        snapshot.readOnly = true;
+        snapshot.executable = false;
+        snapshot.summary = QStringLiteral("No execution coordinator available; execution is "
+                                          "blocked.");
+        return snapshot;
+    }
+
+    return executionCoordinator_->coordinate(currentExecutionLifecycleResult());
+}
+
+ProviderRuntimeBridgeRequest ApplicationController::providerRuntimeBridgeRequest() const {
+    return ProviderRuntimeBridgeRequest{
+        QStringLiteral("provider-runtime-bridge-request-1"),
+        QStringLiteral("ollama-local"),
+        localRuntimeAdapter_ ? localRuntimeAdapter_->descriptor().id
+                             : QStringLiteral("local-runtime-adapter-unavailable"),
+        QStringLiteral("Evaluate provider runtime bridge metadata without connecting or "
+                       "executing."),
+    };
+}
+
+ProviderRuntimeBridgeResponse ApplicationController::currentProviderRuntimeBridgeResponse() const {
+    if (!providerRuntimeBridge_) {
+        ProviderRuntimeBridgeResponse response;
+        response.request = providerRuntimeBridgeRequest();
+        response.status = ProviderRuntimeBridgeStatus::Unavailable;
+        response.summary = QStringLiteral("Provider runtime bridge is unavailable.");
+        response.connected = false;
+        response.executable = false;
+        return response;
+    }
+
+    return providerRuntimeBridge_->evaluate(providerRuntimeBridgeRequest());
+}
+
+RuntimeIntegrationReport ApplicationController::currentRuntimeIntegrationReport() const {
+    if (!runtimeIntegrationReadiness_) {
+        RuntimeIntegrationReport report;
+        report.readiness = RuntimeIntegrationReadiness::Blocked;
+        report.summary = QStringLiteral("No runtime integration readiness metadata available.");
+        report.executable = false;
+        return report;
+    }
+
+    const auto adapter =
+        localRuntimeAdapter_ ? localRuntimeAdapter_->descriptor() : LocalRuntimeAdapterDescriptor{};
+    const auto bridge =
+        providerRuntimeBridge_ ? providerRuntimeBridge_->summary() : ProviderRuntimeBridgeSummary{};
+    auto report = runtimeIntegrationReadiness_->evaluate(adapter, bridge);
+    const auto ollamaConfig =
+        ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
+    for (auto& check : report.checks) {
+        if (check.id == QStringLiteral("runtime-integration.endpoint")) {
+            check.passed = ollamaConfig.endpoint.isLoopbackHttp();
+            check.summary = QStringLiteral("Safe local Ollama endpoint is configured for "
+                                           "loopback-only health checks.");
+        } else if (check.id == QStringLiteral("runtime-integration.model-discovery")) {
+            check.passed = ollamaConfig.modelDiscoveryEnabled;
+            check.summary = QStringLiteral("Installed model discovery boundary is available for "
+                                           "read-only local metadata.");
+        }
+    }
+    report.summary = QStringLiteral("Runtime integration readiness is blocked: Ollama local "
+                                    "health/discovery metadata is available, but provider bridge "
+                                    "execution and inference remain disabled.");
+    return report;
+}
+
+OllamaHealthCheckResult ApplicationController::currentOllamaHealthCheck() const {
+    if (!ollamaRuntimeClient_) {
+        return NullOllamaRuntimeClient{}.healthCheck();
+    }
+
+    return ollamaRuntimeClient_->healthCheck();
 }
 
 bool ApplicationController::clearMemory() {

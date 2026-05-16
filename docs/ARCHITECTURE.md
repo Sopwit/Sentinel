@@ -297,6 +297,103 @@ The checkpoint adds no provider integration, model execution, networking, API ke
 streaming, subprocess/process launch, filesystem/system actions, tool execution, plugin loading,
 embeddings, semantic search, or autonomous workers.
 
+## Execution Lifecycle And Session Coordination
+
+Phase 8.0 through Phase 8.2 add a metadata-only execution lifecycle/session coordination layer for
+future provider/runtime integration.
+
+Separation:
+
+- `IExecutionLifecycle` is not `ILocalRuntime`; it does not own local inference.
+- `IExecutionLifecycle` is not `IChatProvider`; it does not generate chat responses.
+- `IExecutionLifecycle` is not `IAgentRuntime`; it does not run agents or workers.
+- `IExecutionLifecycle` is not `IToolExecutor`; it does not execute tools.
+- `ExecutionCoordinator` owns read-only lifecycle/session coordination snapshots only.
+
+`ExecutionRequest`, intent, priority, lifecycle state/status/result, ordered trace, session,
+ownership, and coordination mode values are deterministic metadata. `StaticExecutionLifecycle`
+records requested, validating, permission-check, safety-check, coordination, ready-placeholder, and
+blocked states while always returning non-executable blocked results. Invalid transitions are
+rejected safely and do not advance state.
+
+`ExecutionSession` and `ExecutionCoordinationSnapshot` describe ownership and coordination posture
+only. `ApplicationController` owns the lifecycle and coordinator interfaces, and
+`DesktopShellViewModel` exposes only strings and string lists. Dashboard and Settings visibility is
+read-only and has no execution controls.
+
+The layer does not call providers or models, launch Ollama, start subprocesses/processes, access
+the filesystem/system, access networks/API keys, download models, stream output, execute
+tools/plugins, start autonomous workers, or run timers/background loops.
+
+Future Phase 9 provider/runtime integration must remain behind explicit provider/runtime
+interfaces and policy gates. Phase 8 lifecycle metadata is a coordination read model, not execution
+authority.
+
+## Local Runtime Adapter And Provider Bridge Readiness
+
+Phase 8.3 through Phase 8.5 add metadata-only adapter, provider bridge, and pre-integration
+readiness boundaries for future Ollama/local runtime integration.
+
+Separation:
+
+- `ILocalRuntimeAdapter` is not execution and does not connect to or launch a local runtime.
+- `IProviderRuntimeBridge` is not an `IChatProvider` implementation and does not generate chat
+  responses.
+- `StaticRuntimeIntegrationReadiness` is not probing and does not inspect the system.
+- Execution lifecycle remains blocked.
+- `ILocalRuntime` remains placeholder-only.
+
+`LocalRuntimeAdapterDescriptor` and capability summaries describe the future adapter contract only.
+The static adapter reports placeholder metadata, no endpoint configuration, disabled model
+discovery, and no inference execution.
+
+`IProviderRuntimeBridge` describes the future boundary between provider routing and runtime
+adapters. The current static bridge reports not connected and not executable for every request.
+
+`RuntimeIntegrationReport` records ordered readiness checks for adapter contract, endpoint
+configuration, model discovery, provider bridge connection, and execution permission. Failed checks
+describe what must exist before future Ollama/local runtime integration can be considered.
+
+`ApplicationController` owns adapter/bridge/readiness objects and `DesktopShellViewModel` exposes
+only strings and string lists. Dashboard and Settings show read-only metadata and provide no setup
+buttons, endpoint fields, model selection UI, or execution controls.
+
+This layer does not call Ollama, OpenAI, Anthropic, or any provider; does not use API keys; does
+not access networks; does not download models; does not stream; does not launch
+processes/subprocesses; does not scan or mutate filesystems/systems; does not discover models; does
+not execute tools/plugins; does not create embeddings/vector databases; and does not start
+autonomous workers.
+
+## Ollama Local Health And Discovery Boundary
+
+Phase 9.0 through Phase 9.2 add the first controlled Ollama-local integration boundary. This is
+limited to endpoint configuration metadata, loopback-only health checks, and optional installed
+model metadata discovery.
+
+Separation:
+
+- `IOllamaRuntimeClient` is not `IChatProvider` and cannot generate chat responses.
+- `IOllamaRuntimeClient` is not `IProviderRuntimeBridge`, `IExecutionLifecycle`,
+  `IAgentRuntime`, `IToolExecutor`, or model router execution.
+- Chat requests are not routed to Ollama.
+- Execution lifecycle remains blocked.
+
+`OllamaEndpoint` normalizes endpoint input. Only loopback HTTP endpoints are valid; invalid,
+non-loopback, cloud, query, fragment, and non-HTTP values fall back to
+`http://127.0.0.1:11434`. `AppSettings` may persist only the normalized endpoint and does not
+store API keys or credentials.
+
+`NullOllamaRuntimeClient` provides deterministic unavailable behavior for tests and default safe
+ownership. `OllamaHttpRuntimeClient` is injectable and restricted to read-only local Ollama API
+paths: `/api/version` for health and `/api/tags` for installed model metadata. It does not send
+prompts, start generation, stream tokens, pull/download/delete/run models, launch subprocesses,
+scan the filesystem/system, call cloud endpoints, read API keys, execute tools/plugins, or start
+background workers.
+
+`ApplicationController` exposes only endpoint, connection status, health status, health summary,
+model count, and model summary strings. `DesktopShellViewModel` forwards those as QML-safe strings,
+counts, and lists. Dashboard and Settings show read-only local status only.
+
 ## Settings Contract
 
 `ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.
@@ -657,7 +754,7 @@ The current UX treats chat history as one local transcript. The clear action res
 
 ## Not Implemented Yet
 
-- Real AI providers.
+- Real AI provider inference.
 - Real tool execution.
 - Shell/process launching.
 - Subprocess execution.
