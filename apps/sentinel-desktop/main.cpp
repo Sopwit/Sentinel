@@ -14,6 +14,7 @@
 #include <QFont>
 #include <QFontDatabase>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 
@@ -60,6 +61,7 @@ int main(int argc, char* argv[]) {
     QGuiApplication::setOrganizationName(sentinel::core::AppMetadata::organizationName());
     QGuiApplication::setApplicationVersion(sentinel::core::AppMetadata::version());
     QGuiApplication::setDesktopFileName(sentinel::core::AppMetadata::appId());
+    QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png")));
 
     sentinel::core::StandardPathProvider pathProvider;
     sentinel::core::ApplicationController controller(

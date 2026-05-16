@@ -15,6 +15,7 @@
 # IDE/editor state
 /.idea/
 /.vscode/
+*.code-workspace
 *.user
 
 # OS-generated files

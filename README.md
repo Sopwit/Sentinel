@@ -98,9 +98,10 @@ Open the repository root in CLion. CLion should detect the top-level `CMakeLists
 
 ## Open With VS Code
 
-Open `Sentinel.code-workspace` for cross-platform QMLLS and C++ diagnostics defaults.
-For Qt QML module resolution, set `QML_IMPORT_PATH` and `QML2_IMPORT_PATH` to your Qt `qml`
-directory (examples are in `docs/DEVELOPMENT.md`).
+Open the repository root directly. Configure the `no-ccache` CMake preset once so clangd can use
+the checked-in `.clangd` compilation database path. For Qt QML module resolution, set
+`QML_IMPORT_PATH` and `QML2_IMPORT_PATH` to your Qt `qml` directory (examples are in
+`docs/DEVELOPMENT.md`).
 
 ## Intentionally Not Included Yet
 
