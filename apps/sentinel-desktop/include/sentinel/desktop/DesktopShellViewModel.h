@@ -109,6 +109,14 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString runtimeNegotiationSummary READ runtimeNegotiationSummary CONSTANT)
     Q_PROPERTY(
         QString localOnlyRuntimeEnforcementSummary READ localOnlyRuntimeEnforcementSummary CONSTANT)
+    Q_PROPERTY(QString runtimePermissionDecision READ runtimePermissionDecision CONSTANT)
+    Q_PROPERTY(QString runtimePermissionSummary READ runtimePermissionSummary CONSTANT)
+    Q_PROPERTY(QString runtimeSafetyDecision READ runtimeSafetyDecision CONSTANT)
+    Q_PROPERTY(QString runtimeSafetySummary READ runtimeSafetySummary CONSTANT)
+    Q_PROPERTY(QString runtimePipelineStatus READ runtimePipelineStatus CONSTANT)
+    Q_PROPERTY(QString runtimePipelineSummary READ runtimePipelineSummary CONSTANT)
+    Q_PROPERTY(
+        QStringList runtimePipelineTraceSummaries READ runtimePipelineTraceSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -200,6 +208,13 @@ public:
     QString runtimeNegotiationProfileSummary() const;
     QString runtimeNegotiationSummary() const;
     QString localOnlyRuntimeEnforcementSummary() const;
+    QString runtimePermissionDecision() const;
+    QString runtimePermissionSummary() const;
+    QString runtimeSafetyDecision() const;
+    QString runtimeSafetySummary() const;
+    QString runtimePipelineStatus() const;
+    QString runtimePipelineSummary() const;
+    QStringList runtimePipelineTraceSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;

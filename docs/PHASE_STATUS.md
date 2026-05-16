@@ -1255,3 +1255,86 @@ Still out of scope:
   execution, approval controls/actions, filesystem/system scans/actions, plugin loading, vector
   databases, embeddings, semantic search, autonomous background workers, timers, threads, external
   process calls, multi-conversation persistence, or broad UI redesign.
+
+### Phase 7.3: Runtime Permission Metadata Skeleton
+
+Completed. Added deterministic runtime permission metadata boundaries without enabling runtime
+execution.
+
+Scope:
+
+- Added value-only runtime permission metadata:
+  - `RuntimePermission`
+  - `RuntimePermissionLevel`
+  - `RuntimePermissionDecision`
+  - `RuntimePermissionRequest`
+- Added `IRuntimePermissionPolicy` and `StaticRuntimePermissionPolicy`.
+- Default policy denies runtime execution permission requests in metadata-only mode.
+- `ApplicationController` and `DesktopShellViewModel` expose QML-safe read-only permission
+  decision/summary strings.
+- Tests cover deterministic naming and default-deny behavior.
+
+Separation:
+
+- Runtime permission metadata is not runtime execution.
+- Runtime permission metadata is not provider/model invocation.
+- Runtime permission metadata is not tool/plugin execution.
+
+### Phase 7.4: Runtime Request Pipeline Skeleton
+
+Completed. Added a deterministic metadata-only runtime request pipeline with trace visibility and
+blocked execution status.
+
+Scope:
+
+- Added value-only runtime pipeline metadata:
+  - `RuntimePipelineRequest`
+  - `RuntimePipelineStage`
+  - `RuntimePipelineResult`
+  - `RuntimePipelineStatus`
+  - `RuntimePipelineTrace`
+- Added `IRuntimePipeline` and `StaticRuntimePipeline`.
+- Pipeline evaluates request metadata, permission decision metadata, and safety report metadata in
+  ordered trace stages.
+- Execution remains blocked and non-operational; pipeline returns status/summary/trace metadata
+  only.
+- `ApplicationController` and `DesktopShellViewModel` expose QML-safe read-only pipeline
+  status/summary/trace string lists.
+- Tests cover deterministic stage naming, ordered traces, and blocked execution metadata.
+
+Separation:
+
+- Runtime request pipeline is not provider runtime.
+- Runtime request pipeline is not model execution.
+- Runtime request pipeline is not process/tool/plugin execution.
+
+### Phase 7.5: Runtime Safety Policy Skeleton
+
+Completed. Added deterministic runtime safety posture metadata and rule reporting without sandbox
+runtime execution.
+
+Scope:
+
+- Added value-only runtime safety metadata:
+  - `RuntimeSafetyPolicy`
+  - `RuntimeSafetyRule`
+  - `RuntimeSafetyDecision`
+  - `RuntimeSafetyReport`
+- Added `IRuntimeSafetyPolicy` and `StaticRuntimeSafetyPolicy`.
+- Safety report enforces local-only and no-execution posture metadata with deterministic rules.
+- Settings page shows read-only runtime permission/safety/pipeline status and trace metadata without
+  controls.
+- Tests cover deterministic safety decision/report output and QML-safe controller/view-model
+  exposure.
+
+Separation:
+
+- Runtime safety policy metadata is not sandbox runtime enforcement.
+- Runtime safety policy metadata is not provider/model/tool execution.
+- Runtime safety policy metadata is not filesystem/network/process behavior.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, downloads, model
+  execution, streaming, process/subprocess launch, filesystem/system scans/actions, real tools,
+  plugin loading, embeddings/vector DB/semantic search, autonomous workers, and approval/setup UI.

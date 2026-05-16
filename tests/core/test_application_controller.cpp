@@ -403,6 +403,25 @@ void ApplicationControllerTest::exposesLocalRuntimeMetadata() {
     QCOMPARE(controller->localOnlyRuntimeEnforcementSummary(),
              QStringLiteral("Local-only enforcement is active; cloud relay and external runtime "
                             "execution remain unavailable."));
+    QCOMPARE(controller->runtimePermissionDecision(), QStringLiteral("Denied"));
+    QCOMPARE(controller->runtimePermissionSummary(),
+             QStringLiteral("Runtime permission policy is metadata-only and denies execution by "
+                            "default."));
+    QCOMPARE(controller->runtimeSafetyDecision(), QStringLiteral("Compliant"));
+    QCOMPARE(controller->runtimeSafetySummary(),
+             QStringLiteral("Runtime safety policy report: local-only and no-execution posture is "
+                            "enforced with deterministic metadata rules."));
+    QCOMPARE(controller->runtimePipelineStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->runtimePipelineSummary(),
+             QStringLiteral("Runtime request pipeline blocked execution metadata by permission and "
+                            "safety policy."));
+    QCOMPARE(controller->runtimePipelineTraceSummaries().size(), 4);
+    QVERIFY(controller->runtimePipelineTraceSummaries().contains(
+        QStringLiteral("Request Received [Metadata Received]: Runtime request pipeline metadata "
+                       "evaluation.")));
+    QVERIFY(controller->runtimePipelineTraceSummaries().contains(
+        QStringLiteral("Execution Boundary [Blocked]: Execution boundary remained blocked; no "
+                       "runtime action was performed.")));
 }
 
 void ApplicationControllerTest::exposesConversationSessionMetadata() {

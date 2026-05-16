@@ -793,10 +793,58 @@ Still out of scope:
   streaming, process/subprocess launch, filesystem/system actions, tools/plugins, autonomous
   workers, or broad UI redesign.
 
-## Phase 7.3: Runtime Permission And Policy Planning
+## Phase 7.3: Runtime Permission Metadata Skeleton
 
-Next. Define explicit policy and permission boundaries for any later local runtime execution work
-without enabling execution by default.
+Completed. Added runtime permission metadata boundaries (`RuntimePermission`,
+`RuntimePermissionLevel`, `RuntimePermissionDecision`, `RuntimePermissionRequest`) plus
+`IRuntimePermissionPolicy` and `StaticRuntimePermissionPolicy`.
+
+Delivered:
+
+- Deterministic default-deny runtime permission policy for execution-level requests.
+- Read-only controller/view-model permission decision and summary exposure.
+- Tests for deterministic naming and default-deny policy behavior.
+
+Still out of scope:
+
+- Any runtime execution, provider/model calls, process/tool/plugin execution, filesystem/system
+  actions, networking/API keys, or approval/setup UI.
+
+## Phase 7.4: Runtime Request Pipeline Skeleton
+
+Completed. Added metadata-only runtime request pipeline boundaries (`RuntimePipelineRequest`,
+`RuntimePipelineStage`, `RuntimePipelineResult`, `RuntimePipelineStatus`, `RuntimePipelineTrace`)
+plus `IRuntimePipeline` and `StaticRuntimePipeline`.
+
+Delivered:
+
+- Ordered deterministic pipeline traces for request, permission, safety, and blocked execution
+  boundary stages.
+- Read-only controller/view-model pipeline status/summary/trace exposure.
+- Tests for deterministic stage naming, ordered traces, and blocked execution metadata.
+
+Still out of scope:
+
+- Provider/model runtime execution, process launch, networking, filesystem/system actions, or real
+  tool/plugin execution.
+
+## Phase 7.5: Runtime Safety Policy Skeleton
+
+Completed. Added runtime safety posture metadata (`RuntimeSafetyPolicy`, `RuntimeSafetyRule`,
+`RuntimeSafetyDecision`, `RuntimeSafetyReport`) plus `IRuntimeSafetyPolicy` and
+`StaticRuntimeSafetyPolicy`.
+
+Delivered:
+
+- Deterministic local-only and no-execution safety report metadata.
+- Read-only settings/dashboard-adjacent runtime safety visibility through existing view-model
+  boundaries.
+- Tests for deterministic report output and QML-safe exposure through controller/view-model.
+
+Still out of scope:
+
+- Sandbox runtime enforcement, provider/model/tool execution, process launch, networking, and
+  filesystem/system actions.
 
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 

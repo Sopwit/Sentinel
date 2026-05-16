@@ -23,6 +23,9 @@
 #include "sentinel/core/OrchestrationDiagnostics.h"
 #include "sentinel/core/OrchestrationSnapshot.h"
 #include "sentinel/core/RuntimeCapabilities.h"
+#include "sentinel/core/RuntimePermissions.h"
+#include "sentinel/core/RuntimePipeline.h"
+#include "sentinel/core/RuntimeSafety.h"
 
 #include <QObject>
 #include <QStringList>
@@ -124,6 +127,14 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString runtimeNegotiationSummary READ runtimeNegotiationSummary CONSTANT)
     Q_PROPERTY(
         QString localOnlyRuntimeEnforcementSummary READ localOnlyRuntimeEnforcementSummary CONSTANT)
+    Q_PROPERTY(QString runtimePermissionDecision READ runtimePermissionDecision CONSTANT)
+    Q_PROPERTY(QString runtimePermissionSummary READ runtimePermissionSummary CONSTANT)
+    Q_PROPERTY(QString runtimeSafetyDecision READ runtimeSafetyDecision CONSTANT)
+    Q_PROPERTY(QString runtimeSafetySummary READ runtimeSafetySummary CONSTANT)
+    Q_PROPERTY(QString runtimePipelineStatus READ runtimePipelineStatus CONSTANT)
+    Q_PROPERTY(QString runtimePipelineSummary READ runtimePipelineSummary CONSTANT)
+    Q_PROPERTY(
+        QStringList runtimePipelineTraceSummaries READ runtimePipelineTraceSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -150,7 +161,9 @@ public:
         std::unique_ptr<ILocalRuntime> localRuntime = nullptr,
         std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions = nullptr,
         std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities = nullptr,
-        QObject* parent = nullptr);
+        std::unique_ptr<IRuntimePermissionPolicy> runtimePermissionPolicy = nullptr,
+        std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy = nullptr,
+        std::unique_ptr<IRuntimePipeline> runtimePipeline = nullptr, QObject* parent = nullptr);
 
     QString providerName() const;
     QString providerStatus() const;
@@ -223,6 +236,13 @@ public:
     QString runtimeNegotiationProfileSummary() const;
     QString runtimeNegotiationSummary() const;
     QString localOnlyRuntimeEnforcementSummary() const;
+    QString runtimePermissionDecision() const;
+    QString runtimePermissionSummary() const;
+    QString runtimeSafetyDecision() const;
+    QString runtimeSafetySummary() const;
+    QString runtimePipelineStatus() const;
+    QString runtimePipelineSummary() const;
+    QStringList runtimePipelineTraceSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -267,6 +287,10 @@ private:
     void refreshConversationSession();
     void setMemoryMaintenanceStatus(const QString& status);
     void setChatMaintenanceStatus(const QString& status);
+    RuntimePermissionRequest runtimePermissionRequest() const;
+    RuntimePermissionDecision currentRuntimePermissionDecision() const;
+    RuntimeSafetyReport currentRuntimeSafetyReport() const;
+    RuntimePipelineResult currentRuntimePipelineResult() const;
 
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
@@ -281,6 +305,9 @@ private:
     std::unique_ptr<ILocalRuntime> localRuntime_;
     std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions_;
     std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities_;
+    std::unique_ptr<IRuntimePermissionPolicy> runtimePermissionPolicy_;
+    std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy_;
+    std::unique_ptr<IRuntimePipeline> runtimePipeline_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

@@ -326,6 +326,22 @@ void DesktopShellViewModelTest::exposesLocalRuntimeMetadata() {
     QCOMPARE(fixture.viewModel.localOnlyRuntimeEnforcementSummary(),
              QStringLiteral("Local-only enforcement is active; cloud relay and external runtime "
                             "execution remain unavailable."));
+    QCOMPARE(fixture.viewModel.runtimePermissionDecision(), QStringLiteral("Denied"));
+    QCOMPARE(fixture.viewModel.runtimePermissionSummary(),
+             QStringLiteral("Runtime permission policy is metadata-only and denies execution by "
+                            "default."));
+    QCOMPARE(fixture.viewModel.runtimeSafetyDecision(), QStringLiteral("Compliant"));
+    QCOMPARE(fixture.viewModel.runtimeSafetySummary(),
+             QStringLiteral("Runtime safety policy report: local-only and no-execution posture is "
+                            "enforced with deterministic metadata rules."));
+    QCOMPARE(fixture.viewModel.runtimePipelineStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.runtimePipelineSummary(),
+             QStringLiteral("Runtime request pipeline blocked execution metadata by permission and "
+                            "safety policy."));
+    QCOMPARE(fixture.viewModel.runtimePipelineTraceSummaries().size(), 4);
+    QVERIFY(fixture.viewModel.runtimePipelineTraceSummaries().contains(
+        QStringLiteral("Permission Policy [Denied]: Runtime permission policy is metadata-only and "
+                       "denies execution by default.")));
 }
 
 void DesktopShellViewModelTest::exposesConversationSessionMetadata() {
@@ -639,6 +655,13 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("runtimeNegotiationProfileSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeNegotiationSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localOnlyRuntimeEnforcementSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimePermissionDecision"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimePermissionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeSafetyDecision"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeSafetySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimePipelineStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimePipelineSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimePipelineTraceSummaries"), QByteArrayLiteral("QStringList")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -683,6 +706,14 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("runtimeCapabilities"),
         QStringLiteral("runtimeNegotiationProfile"),
         QStringLiteral("runtimeNegotiationResult"),
+        QStringLiteral("runtimePermissionPolicy"),
+        QStringLiteral("runtimePermissionRequest"),
+        QStringLiteral("runtimePermissionDecisionRecord"),
+        QStringLiteral("runtimeSafetyPolicy"),
+        QStringLiteral("runtimeSafetyReport"),
+        QStringLiteral("runtimePipeline"),
+        QStringLiteral("runtimePipelineRequest"),
+        QStringLiteral("runtimePipelineResult"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),

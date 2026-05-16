@@ -231,6 +231,52 @@ The capability negotiation layer does not activate capabilities, call providers,
 download models, stream output, launch processes/subprocesses, scan filesystems, execute tools,
 load plugins, access networks, approve permissions, read API keys, or start background workers.
 
+## Runtime Permission Metadata
+
+Phase 7.3 adds `IRuntimePermissionPolicy` and `StaticRuntimePermissionPolicy` as a deterministic
+runtime permission metadata boundary.
+
+Separation:
+
+- Runtime permission metadata is not runtime execution.
+- Runtime permission metadata is not provider/model/tool/plugin invocation.
+- Runtime permission metadata is not filesystem/network/process access.
+
+`RuntimePermission`, `RuntimePermissionLevel`, `RuntimePermissionRequest`, and
+`RuntimePermissionDecision` describe future permission posture only. Default static policy behavior
+is deny-by-default for execution-level requests in metadata-only mode.
+
+## Runtime Request Pipeline Metadata
+
+Phase 7.4 adds `IRuntimePipeline` and `StaticRuntimePipeline` as a metadata-only request pipeline
+boundary.
+
+`RuntimePipelineRequest`, `RuntimePipelineStage`, `RuntimePipelineStatus`, `RuntimePipelineTrace`,
+and `RuntimePipelineResult` provide deterministic ordered trace/status summaries only.
+
+Separation:
+
+- Runtime request pipeline metadata is not provider runtime.
+- Runtime request pipeline metadata is not model execution.
+- Runtime request pipeline metadata is not process/tool/plugin execution.
+
+Execution remains blocked at the metadata boundary even when request metadata passes earlier
+stages.
+
+## Runtime Safety Policy Metadata
+
+Phase 7.5 adds `IRuntimeSafetyPolicy` and `StaticRuntimeSafetyPolicy` as deterministic safety
+posture metadata boundaries.
+
+`RuntimeSafetyPolicy`, `RuntimeSafetyRule`, `RuntimeSafetyDecision`, and `RuntimeSafetyReport`
+describe local-only and no-execution safety posture with deterministic rules.
+
+Separation:
+
+- Runtime safety policy metadata is not sandbox runtime enforcement.
+- Runtime safety policy metadata is not provider/model/tool execution.
+- Runtime safety policy metadata is not filesystem/network/process access.
+
 ## Settings Contract
 
 `ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.

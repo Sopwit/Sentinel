@@ -35,6 +35,11 @@ add_sentinel_core_test(test_static_agent_registry core/test_static_agent_registr
 add_sentinel_core_test(test_static_task_planner core/test_static_task_planner.cpp)
 add_sentinel_core_test(test_static_runtime_capability_registry
                        core/test_static_runtime_capability_registry.cpp)
+add_sentinel_core_test(test_static_runtime_permission_policy
+                       core/test_static_runtime_permission_policy.cpp)
+add_sentinel_core_test(test_static_runtime_safety_policy
+                       core/test_static_runtime_safety_policy.cpp)
+add_sentinel_core_test(test_static_runtime_pipeline core/test_static_runtime_pipeline.cpp)
 add_sentinel_core_test(test_null_tool_executor core/test_null_tool_executor.cpp)
 add_sentinel_core_test(test_local_runtime core/test_local_runtime.cpp)
 add_sentinel_core_test(test_local_runtime_session core/test_local_runtime_session.cpp)

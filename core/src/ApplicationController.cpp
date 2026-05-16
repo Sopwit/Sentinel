@@ -60,7 +60,10 @@ ApplicationController::ApplicationController(
     std::unique_ptr<ITaskPlanner> taskPlanner, std::unique_ptr<IAgentRegistry> agentRegistry,
     std::unique_ptr<IMemoryCatalog> memoryCatalog, std::unique_ptr<ILocalRuntime> localRuntime,
     std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions,
-    std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities, QObject* parent)
+    std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities,
+    std::unique_ptr<IRuntimePermissionPolicy> runtimePermissionPolicy,
+    std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy,
+    std::unique_ptr<IRuntimePipeline> runtimePipeline, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -83,6 +86,13 @@ ApplicationController::ApplicationController(
       runtimeCapabilities_(runtimeCapabilities
                                ? std::move(runtimeCapabilities)
                                : std::make_unique<StaticRuntimeCapabilityRegistry>()),
+      runtimePermissionPolicy_(runtimePermissionPolicy
+                                   ? std::move(runtimePermissionPolicy)
+                                   : std::make_unique<StaticRuntimePermissionPolicy>()),
+      runtimeSafetyPolicy_(runtimeSafetyPolicy ? std::move(runtimeSafetyPolicy)
+                                               : std::make_unique<StaticRuntimeSafetyPolicy>()),
+      runtimePipeline_(runtimePipeline ? std::move(runtimePipeline)
+                                       : std::make_unique<StaticRuntimePipeline>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -540,6 +550,34 @@ QString ApplicationController::localOnlyRuntimeEnforcementSummary() const {
     return sentinel::core::localOnlyRuntimeEnforcementSummary(runtimeCapabilities_->negotiate());
 }
 
+QString ApplicationController::runtimePermissionDecision() const {
+    return runtimePermissionDecisionStatusName(currentRuntimePermissionDecision().status);
+}
+
+QString ApplicationController::runtimePermissionSummary() const {
+    return safeRuntimePermissionDecisionSummary(currentRuntimePermissionDecision());
+}
+
+QString ApplicationController::runtimeSafetyDecision() const {
+    return runtimeSafetyDecisionName(currentRuntimeSafetyReport().decision);
+}
+
+QString ApplicationController::runtimeSafetySummary() const {
+    return safeRuntimeSafetySummary(currentRuntimeSafetyReport());
+}
+
+QString ApplicationController::runtimePipelineStatus() const {
+    return runtimePipelineStatusName(currentRuntimePipelineResult().status);
+}
+
+QString ApplicationController::runtimePipelineSummary() const {
+    return safeRuntimePipelineSummary(currentRuntimePipelineResult());
+}
+
+QStringList ApplicationController::runtimePipelineTraceSummaries() const {
+    return sentinel::core::runtimePipelineTraceSummaries(currentRuntimePipelineResult().traces);
+}
+
 int ApplicationController::availableToolCount() const {
     return agentRuntime_ ? static_cast<int>(agentRuntime_->availableTools().size()) : 0;
 }
@@ -820,6 +858,68 @@ void ApplicationController::refreshConversationSession() {
     conversationSession_.refreshContext(ConversationSessionContextBuilder{}.build(
         currentRoutingMode(), currentAgentSummary(), currentMemoryAffinitySummary(),
         orchestrationSnapshotSummary()));
+}
+
+RuntimePermissionRequest ApplicationController::runtimePermissionRequest() const {
+    return RuntimePermissionRequest{
+        RuntimePermission::LocalInference,
+        RuntimePermissionLevel::Execute,
+        QStringLiteral("local-runtime-request"),
+        QStringLiteral("Evaluate metadata-only permission for local runtime execution request."),
+    };
+}
+
+RuntimePermissionDecision ApplicationController::currentRuntimePermissionDecision() const {
+    if (!runtimePermissionPolicy_) {
+        return RuntimePermissionDecision{
+            RuntimePermissionDecisionStatus::Denied,
+            runtimePermissionRequest(),
+            QStringLiteral("No runtime permission policy available."),
+        };
+    }
+
+    return runtimePermissionPolicy_->evaluate(runtimePermissionRequest());
+}
+
+RuntimeSafetyReport ApplicationController::currentRuntimeSafetyReport() const {
+    if (!runtimeSafetyPolicy_) {
+        RuntimeSafetyReport report;
+        report.policy = RuntimeSafetyPolicy{
+            QStringLiteral("runtime-safety-policy-missing"),
+            QStringLiteral("Missing Runtime Safety Policy"),
+            true,
+            true,
+            QStringLiteral("No runtime safety policy available."),
+        };
+        report.decision = RuntimeSafetyDecision::Blocked;
+        report.summary = QStringLiteral("No runtime safety policy available.");
+        return report;
+    }
+
+    return runtimeSafetyPolicy_->evaluate();
+}
+
+RuntimePipelineResult ApplicationController::currentRuntimePipelineResult() const {
+    if (!runtimePipeline_) {
+        RuntimePipelineResult result;
+        result.status = RuntimePipelineStatus::Blocked;
+        result.summary = QStringLiteral("No runtime pipeline available.");
+        result.traces = {RuntimePipelineTrace{
+            RuntimePipelineStage::ExecutionBoundary,
+            QStringLiteral("Blocked"),
+            QStringLiteral("Runtime pipeline is unavailable."),
+        }};
+        result.executionBlocked = true;
+        return result;
+    }
+
+    return runtimePipeline_->evaluate(
+        RuntimePipelineRequest{
+            QStringLiteral("runtime-pipeline-request-1"),
+            QStringLiteral("Runtime request pipeline metadata evaluation."),
+            runtimePermissionRequest(),
+        },
+        currentRuntimePermissionDecision(), currentRuntimeSafetyReport());
 }
 
 bool ApplicationController::clearMemory() {

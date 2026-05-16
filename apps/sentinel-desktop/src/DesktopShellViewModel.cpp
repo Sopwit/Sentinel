@@ -342,6 +342,34 @@ QString DesktopShellViewModel::localOnlyRuntimeEnforcementSummary() const {
     return controller_.localOnlyRuntimeEnforcementSummary();
 }
 
+QString DesktopShellViewModel::runtimePermissionDecision() const {
+    return controller_.runtimePermissionDecision();
+}
+
+QString DesktopShellViewModel::runtimePermissionSummary() const {
+    return controller_.runtimePermissionSummary();
+}
+
+QString DesktopShellViewModel::runtimeSafetyDecision() const {
+    return controller_.runtimeSafetyDecision();
+}
+
+QString DesktopShellViewModel::runtimeSafetySummary() const {
+    return controller_.runtimeSafetySummary();
+}
+
+QString DesktopShellViewModel::runtimePipelineStatus() const {
+    return controller_.runtimePipelineStatus();
+}
+
+QString DesktopShellViewModel::runtimePipelineSummary() const {
+    return controller_.runtimePipelineSummary();
+}
+
+QStringList DesktopShellViewModel::runtimePipelineTraceSummaries() const {
+    return controller_.runtimePipelineTraceSummaries();
+}
+
 int DesktopShellViewModel::availableToolCount() const {
     return controller_.availableToolCount();
 }

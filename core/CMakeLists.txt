@@ -48,6 +48,9 @@ add_library(sentinel_core STATIC
     include/sentinel/core/OrchestrationSnapshot.h
     include/sentinel/core/ProviderCatalog.h
     include/sentinel/core/RuntimeCapabilities.h
+    include/sentinel/core/RuntimePermissions.h
+    include/sentinel/core/RuntimePipeline.h
+    include/sentinel/core/RuntimeSafety.h
     include/sentinel/core/SQLiteChatHistoryStore.h
     include/sentinel/core/SQLiteMemoryStore.h
     include/sentinel/core/StandardPathProvider.h
@@ -86,6 +89,9 @@ add_library(sentinel_core STATIC
     src/NullToolExecutor.cpp
     src/OrchestrationDiagnostics.cpp
     src/RuntimeCapabilities.cpp
+    src/RuntimePermissions.cpp
+    src/RuntimePipeline.cpp
+    src/RuntimeSafety.cpp
     src/SQLiteChatHistoryStore.cpp
     src/SQLiteMemoryStore.cpp
     src/StandardPathProvider.cpp
