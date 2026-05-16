@@ -10,9 +10,9 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 6.6 is complete.
+Phase 6.9 is complete.
 
-Most recent work: Phase 6.6, Orchestration Snapshot and Workspace State Skeleton.
+Most recent work: Phase 6.9, Conversation State Graph Skeleton.
 
 Current planning focus: Phase 6.x stabilization while keeping real provider/model/tool execution
 non-operational.
@@ -103,6 +103,6 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 Maintain provider/agent/tool/sandbox/execution-boundary separation and keep real tool execution
 out of scope until explicitly approved.
 
-Keep model/provider routing, catalog, task planning, agent registry, memory taxonomy, and
-orchestration snapshots metadata-only until an explicit later provider/model/agent/memory execution
-phase.
+Keep model/provider routing, catalog, task planning, agent registry, memory taxonomy,
+orchestration snapshots/diagnostics, conversation session context, and conversation state graph
+metadata-only until an explicit later provider/model/agent/memory execution phase.

@@ -167,7 +167,11 @@ private slots:
     void exposesProviderCatalogMetadata();
     void exposesMemoryCatalogMetadata();
     void exposesOrchestrationSnapshotMetadata();
+    void exposesOrchestrationReadinessDiagnostics();
+    void exposesConversationSessionMetadata();
+    void exposesConversationStateMetadata();
     void updatesModelRoutingModeMetadata();
+    void keepsConversationSessionSeparateFromChatAndRuntimeSessions();
     void executesDeterministicAgentRequestWithRuntime();
     void exposesAgentToolMetadata();
     void exposesLatestToolPlanStatusWithRuntime();
@@ -183,6 +187,7 @@ private slots:
     void reportsUnknownToolPipelineResult();
     void exposesMemoryStatus();
     void sendsMessageThroughProvider();
+    void updatesConversationStateForChatFlow();
     void ignoresBlankChatMessages();
     void handlesUnavailableProvider();
     void handlesProviderErrorReply();
@@ -332,10 +337,56 @@ void ApplicationControllerTest::exposesOrchestrationSnapshotMetadata() {
         QStringLiteral("Catalogs: 4 providers / 6 agents / 5 memory")));
 }
 
+void ApplicationControllerTest::exposesOrchestrationReadinessDiagnostics() {
+    const auto controller = makeController();
+    const auto report = controller->currentOrchestrationReadinessReport();
+
+    QCOMPARE(report.status, QStringLiteral("Ready"));
+    QCOMPARE(report.checks.size(), 10);
+    QCOMPARE(controller->orchestrationReadinessStatus(), QStringLiteral("Ready"));
+    QCOMPARE(controller->orchestrationReadinessSummary(),
+             QStringLiteral("Ready orchestration readiness: 10 deterministic metadata checks, 10 "
+                            "diagnostic entries."));
+    QVERIFY(controller->orchestrationDiagnostics().contains(
+        QStringLiteral("Info: Routing Mode - Local Only routing mode is set.")));
+    QVERIFY(controller->orchestrationDiagnostics().contains(
+        QStringLiteral("Info: Cloud Providers - Cloud provider metadata remains not configured.")));
+    QVERIFY(controller->orchestrationDiagnostics().contains(
+        QStringLiteral("Info: Execution Capability - Execution capability remains disabled.")));
+}
+
+void ApplicationControllerTest::exposesConversationSessionMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->conversationSessionId(), QStringLiteral("conversation-session-1"));
+    QCOMPARE(controller->conversationSessionStatus(), QStringLiteral("Active"));
+    QCOMPARE(controller->interactionMode(), QStringLiteral("Companion"));
+    QCOMPARE(controller->attentionState(), QStringLiteral("Observing"));
+    QCOMPARE(controller->currentConversationSession().revision, 1);
+    QCOMPARE(controller->contextWindowSummary(),
+             QStringLiteral("Workspace context window: Local Only route, Atlas (Coordinator, "
+                            "Available, Local), Ambient (Available, Public Metadata, Session)."));
+    QCOMPARE(controller->currentConversationSession().contextWindow.currentRoutingMode,
+             QStringLiteral("Local Only"));
+    QCOMPARE(controller->currentConversationSession().contextWindow.preferredAgentSummary,
+             QStringLiteral("Atlas (Coordinator, Available, Local)"));
+}
+
+void ApplicationControllerTest::exposesConversationStateMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->conversationState(), QStringLiteral("Idle"));
+    QCOMPARE(controller->conversationTransitionStatus(), QStringLiteral("Not Requested"));
+    QCOMPARE(controller->conversationTransitionSummary(),
+             QStringLiteral("No conversation transition yet."));
+}
+
 void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
     const auto controller = makeController();
     QSignalSpy spy(controller.get(), &ApplicationController::modelRoutingChanged);
     QSignalSpy taskPlanSpy(controller.get(), &ApplicationController::taskPlanChanged);
+    QSignalSpy conversationSpy(controller.get(),
+                               &ApplicationController::conversationSessionChanged);
     QSignalSpy snapshotSpy(controller.get(), &ApplicationController::orchestrationSnapshotChanged);
 
     controller->setRoutingModeByName(QStringLiteral("Balanced"));
@@ -349,6 +400,11 @@ void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
     QCOMPARE(controller->latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
     QCOMPARE(controller->currentOrchestrationSnapshot().workspace.routingMode,
              QStringLiteral("Balanced"));
+    QCOMPARE(controller->currentConversationSession().revision, 2);
+    QCOMPARE(controller->currentConversationSession().contextWindow.currentRoutingMode,
+             QStringLiteral("Balanced"));
+    QVERIFY(controller->contextWindowSummary().contains(QStringLiteral("Balanced route")));
+    QCOMPARE(conversationSpy.count(), 1);
     QCOMPARE(controller->orchestrationSnapshotStatus(), QStringLiteral("Ready"));
     QCOMPARE(snapshotSpy.count(), 1);
 
@@ -356,7 +412,28 @@ void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
     QCOMPARE(controller->currentRoutingMode(), QStringLiteral("Local Only"));
     QCOMPARE(spy.count(), 2);
     QCOMPARE(taskPlanSpy.count(), 2);
+    QCOMPARE(conversationSpy.count(), 2);
     QCOMPARE(snapshotSpy.count(), 2);
+}
+
+void ApplicationControllerTest::keepsConversationSessionSeparateFromChatAndRuntimeSessions() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->conversationSessionId(), QStringLiteral("conversation-session-1"));
+    QCOMPARE(controller->runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->conversationState(), QStringLiteral("Idle"));
+    QCOMPARE(controller->conversationTransitionStatus(), QStringLiteral("Not Requested"));
+
+    controller->setRoutingModeByName(QStringLiteral("Quality"));
+
+    QCOMPARE(controller->conversationSessionId(), QStringLiteral("conversation-session-1"));
+    QCOMPARE(controller->runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(controller->runtimeContextStatus(), QStringLiteral("Empty"));
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->chatMessages().first(), QStringLiteral("Sentinel: Sentinel Core online."));
+    QCOMPARE(controller->conversationState(), QStringLiteral("Idle"));
+    QCOMPARE(controller->conversationTransitionStatus(), QStringLiteral("Not Requested"));
 }
 
 void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
@@ -371,6 +448,7 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
     QSignalSpy toolExecutionSpy(&controller, &ApplicationController::toolExecutionChanged);
     QSignalSpy runtimeContextSpy(&controller, &ApplicationController::runtimeContextChanged);
     QSignalSpy activitySpy(&controller, &ApplicationController::agentActivityChanged);
+    QSignalSpy conversationStateSpy(&controller, &ApplicationController::conversationStateChanged);
 
     const auto ran = controller.runAgentRequest(QStringLiteral("check local plan"));
 
@@ -401,6 +479,11 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
     QCOMPARE(controller.agentActivityCount(), 6);
     QCOMPARE(controller.latestAgentActivitySummary(),
              QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
+    QCOMPARE(controller.conversationState(), QStringLiteral("Completed"));
+    QCOMPARE(controller.conversationTransitionStatus(), QStringLiteral("Accepted"));
+    QCOMPARE(controller.conversationTransitionSummary(),
+             QStringLiteral("Accepted conversation transition: Responding -> Completed: agent "
+                            "response metadata completed"));
     QCOMPARE(statusSpy.count(), 1);
     QCOMPARE(responseSpy.count(), 1);
     QCOMPARE(planSpy.count(), 1);
@@ -409,6 +492,7 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
     QCOMPARE(toolExecutionSpy.count(), 1);
     QCOMPARE(runtimeContextSpy.count(), 1);
     QCOMPARE(activitySpy.count(), 1);
+    QVERIFY(conversationStateSpy.count() >= 6);
 }
 
 void ApplicationControllerTest::exposesAgentToolMetadata() {
@@ -581,6 +665,11 @@ void ApplicationControllerTest::reportsRiskyToolPlanRequiresApproval() {
     QCOMPARE(controller.agentActivityCount(), 6);
     QCOMPARE(controller.latestAgentActivitySummary(),
              QStringLiteral("Agent pipeline finished: Blocked"));
+    QCOMPARE(controller.conversationState(), QStringLiteral("Waiting For Approval"));
+    QCOMPARE(controller.conversationTransitionStatus(), QStringLiteral("Accepted"));
+    QCOMPARE(controller.conversationTransitionSummary(),
+             QStringLiteral("Accepted conversation transition: Routing -> Waiting For Approval: "
+                            "approval metadata required"));
 }
 
 void ApplicationControllerTest::reportsSandboxBlockedPipelineResult() {
@@ -728,6 +817,23 @@ void ApplicationControllerTest::sendsMessageThroughProvider() {
     QCOMPARE(controller->chatHistory().at(1).status, sentinel::core::ChatMessageStatus::Sent);
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
     QCOMPARE(spy.count(), 1);
+}
+
+void ApplicationControllerTest::updatesConversationStateForChatFlow() {
+    const auto controller = makeController();
+    QSignalSpy stateSpy(controller.get(), &ApplicationController::conversationStateChanged);
+
+    const auto sent = controller->sendMessage(QStringLiteral("status"));
+
+    QVERIFY(sent);
+    QCOMPARE(controller->conversationState(), QStringLiteral("Completed"));
+    QCOMPARE(controller->conversationTransitionStatus(), QStringLiteral("Accepted"));
+    QCOMPARE(controller->conversationTransitionSummary(),
+             QStringLiteral("Accepted conversation transition: Responding -> Completed: chat "
+                            "response metadata completed"));
+    QCOMPARE(controller->runtimeSessionId(), QStringLiteral("runtime-session-1"));
+    QCOMPARE(controller->runtimeContextStatus(), QStringLiteral("Empty"));
+    QVERIFY(stateSpy.count() >= 6);
 }
 
 void ApplicationControllerTest::ignoresBlankChatMessages() {

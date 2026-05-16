@@ -150,6 +150,93 @@ ShellPanel {
         }
 
         SectionTitle {
+            title: "Orchestration Readiness"
+            subtitle: "Deterministic metadata diagnostics only. No provider probing, networking, filesystem scans, model calls, or execution are performed."
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Readiness"
+                value: settingsPage.viewModel.orchestrationReadinessStatus
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Summary"
+                value: settingsPage.viewModel.orchestrationReadinessSummary
+                Layout.fillWidth: true
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.orchestrationDiagnostics
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Diagnostic"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+        }
+
+        SectionTitle {
+            title: "Runtime Context Session"
+            subtitle: "Read-only conversation/session metadata. Chat history and agent runtime context remain separate."
+        }
+
+        GridLayout {
+            Layout.fillWidth: true
+            columns: settingsPage.compact ? 1 : 2
+            columnSpacing: SentinelTheme.spaceSm
+            rowSpacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Session"
+                value: settingsPage.viewModel.conversationSessionId + " / " + settingsPage.viewModel.conversationSessionStatus
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Interaction"
+                value: settingsPage.viewModel.interactionMode + " / " + settingsPage.viewModel.attentionState
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Context Window"
+                value: settingsPage.viewModel.contextWindowSummary
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "State"
+                value: settingsPage.viewModel.conversationState + " / " + settingsPage.viewModel.conversationTransitionStatus
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Transition"
+                value: settingsPage.viewModel.conversationTransitionSummary
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+        }
+
+        SectionTitle {
             title: "Provider Catalog"
             subtitle: "Read-only metadata placeholders for future model management. No setup, credentials, downloads, networking, or execution are enabled."
         }

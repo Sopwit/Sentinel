@@ -40,6 +40,19 @@ class DesktopShellViewModel final : public QObject {
         QString runtimeContextSummary READ runtimeContextSummary NOTIFY runtimeContextChanged)
     Q_PROPERTY(QStringList runtimeContextActiveToolIds READ runtimeContextActiveToolIds NOTIFY
                    runtimeContextChanged)
+    Q_PROPERTY(
+        QString conversationSessionId READ conversationSessionId NOTIFY conversationSessionChanged)
+    Q_PROPERTY(QString conversationSessionStatus READ conversationSessionStatus NOTIFY
+                   conversationSessionChanged)
+    Q_PROPERTY(QString interactionMode READ interactionMode NOTIFY conversationSessionChanged)
+    Q_PROPERTY(QString attentionState READ attentionState NOTIFY conversationSessionChanged)
+    Q_PROPERTY(
+        QString contextWindowSummary READ contextWindowSummary NOTIFY conversationSessionChanged)
+    Q_PROPERTY(QString conversationState READ conversationState NOTIFY conversationStateChanged)
+    Q_PROPERTY(QString conversationTransitionStatus READ conversationTransitionStatus NOTIFY
+                   conversationStateChanged)
+    Q_PROPERTY(QString conversationTransitionSummary READ conversationTransitionSummary NOTIFY
+                   conversationStateChanged)
     Q_PROPERTY(int agentActivityCount READ agentActivityCount NOTIFY agentActivityChanged)
     Q_PROPERTY(QString latestAgentActivitySummary READ latestAgentActivitySummary NOTIFY
                    agentActivityChanged)
@@ -66,6 +79,12 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString orchestrationSnapshotSummary READ orchestrationSnapshotSummary NOTIFY
                    orchestrationSnapshotChanged)
     Q_PROPERTY(QStringList orchestrationSignals READ orchestrationSignals NOTIFY
+                   orchestrationSnapshotChanged)
+    Q_PROPERTY(QString orchestrationReadinessStatus READ orchestrationReadinessStatus NOTIFY
+                   orchestrationSnapshotChanged)
+    Q_PROPERTY(QString orchestrationReadinessSummary READ orchestrationReadinessSummary NOTIFY
+                   orchestrationSnapshotChanged)
+    Q_PROPERTY(QStringList orchestrationDiagnostics READ orchestrationDiagnostics NOTIFY
                    orchestrationSnapshotChanged)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
@@ -107,6 +126,14 @@ public:
     QString runtimeContextStatus() const;
     QString runtimeContextSummary() const;
     QStringList runtimeContextActiveToolIds() const;
+    QString conversationSessionId() const;
+    QString conversationSessionStatus() const;
+    QString interactionMode() const;
+    QString attentionState() const;
+    QString contextWindowSummary() const;
+    QString conversationState() const;
+    QString conversationTransitionStatus() const;
+    QString conversationTransitionSummary() const;
     int agentActivityCount() const;
     QString latestAgentActivitySummary() const;
     QString currentRoutingMode() const;
@@ -128,6 +155,9 @@ public:
     QString orchestrationSnapshotStatus() const;
     QString orchestrationSnapshotSummary() const;
     QStringList orchestrationSignals() const;
+    QString orchestrationReadinessStatus() const;
+    QString orchestrationReadinessSummary() const;
+    QStringList orchestrationDiagnostics() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -169,6 +199,8 @@ signals:
     void toolExecutionChanged();
     void agentPipelineChanged();
     void runtimeContextChanged();
+    void conversationSessionChanged();
+    void conversationStateChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();

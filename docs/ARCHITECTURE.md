@@ -86,6 +86,10 @@ Phase 6.5 adds memory taxonomy metadata separately from this storage contract:
 - The taxonomy catalog does not read or write `IMemoryStore`, perform recall, build embeddings, run
   semantic search, create a vector database, or write autonomous memories.
 
+Phase 6.7 readiness diagnostics inspect existing orchestration metadata only. They do not read
+storage paths, scan files, query memory stores, build embeddings, run semantic search, mutate
+memory, or perform provider/model/tool execution.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.
@@ -105,6 +109,45 @@ The desktop app stores chat history below Qt's `AppDataLocation` as `chat_histor
 If chat persistence is unavailable, `ApplicationController` continues with the in-memory `ChatSession`. Clearing chat clears the persistent chat table only when the store is available.
 
 The desktop shell exposes generic chat history status only. QML does not know the database path, schema, driver, or last SQLite error.
+
+## Conversation Session Metadata
+
+Phase 6.8 adds `ConversationSession` as a higher-level interaction/session metadata layer. It is
+not a replacement for chat history and it is not the Phase 4 agent runtime context.
+
+Separation:
+
+- `ChatSession` owns in-memory chat messages and cooperates with `IChatHistoryStore` persistence.
+- `ConversationSession` owns deterministic interaction metadata: session id/status, interaction
+  mode, attention state, and a `RuntimeContextWindow` summary built from routing mode, preferred
+  agent, memory affinity, and the latest orchestration snapshot summary.
+- Phase 4 `RuntimeSession` owns agent pipeline metadata derived from the latest
+  `AgentPipelineResult`, including active planned tool ids and placeholder execution state.
+
+`ConversationSession` is refreshed from already-owned metadata after routing/task planning and
+agent-runtime metadata changes. It does not persist transcripts, create multi-conversation storage,
+stream model output, call providers/models, scan filesystems, search memory, build embeddings,
+execute tools, load plugins, call networks, or start background workers.
+
+## Conversation State Graph Metadata
+
+Phase 6.9 adds `ConversationStateGraph` as a deterministic state-machine skeleton for high-level
+conversation flow metadata. It is separate from the conversation session, chat transcript, and
+agent runtime metadata.
+
+Separation:
+
+- `ConversationStateGraph` owns only the current state and last transition result.
+- `ConversationSession` owns session identity, interaction mode, attention state, and context
+  window metadata.
+- `ChatSession` owns in-memory chat messages and chat history persistence coordination.
+- Phase 4 `RuntimeSession` owns agent pipeline context metadata.
+
+The graph supports deterministic states such as Idle, Listening, Planning, Routing, Waiting For
+Approval, Ready To Respond, Responding, Completed, and Error. Invalid transitions are rejected with
+metadata summaries and do not change state. Accepted transitions do not execute providers, execute
+models, stream tokens, run tools, grant approvals, load plugins, scan filesystems, call networks,
+perform semantic/vector search, or start autonomous workers.
 
 ## Settings Contract
 
@@ -277,6 +320,49 @@ Phase 6.2 adds provider catalog metadata:
 - Controller and desktop view-model expose only read-only catalog counts and summary strings.
 - Settings UI shows text-only catalog metadata without setup buttons, API key fields, downloads,
   networking, or execution controls.
+
+Phase 6.7 adds orchestration diagnostics/readiness metadata:
+
+- `OrchestrationDiagnostics.h` defines diagnostic levels, diagnostic entries, readiness checks, and
+  readiness reports as value data.
+- `StaticOrchestrationDiagnostics` generates deterministic ordered diagnostics from
+  `OrchestrationSnapshot` and provider catalog metadata.
+- Checks cover routing mode, selected provider/model route, provider catalog, agent registry,
+  memory taxonomy, task planner, snapshot health, local-only privacy posture, cloud provider
+  unavailability, and disabled execution capability.
+- Controller and desktop view-model exposure is read-only and QML-safe: status, summary, and
+  `QStringList` diagnostic lines.
+- Diagnostics do not probe real providers/models, read API keys, call networks, scan filesystems,
+  execute tools, load plugins, start workers, run external processes, build embeddings, or perform
+  semantic/vector search.
+
+Phase 6.8 adds conversation session/context metadata:
+
+- `ConversationSession.h` defines value-only session id, status, interaction mode, attention state,
+  context scope, and runtime context-window metadata.
+- `ConversationSessionStore` owns one deterministic local conversation session.
+- `ConversationSessionContextBuilder` builds a context-window summary from existing routing,
+  preferred agent, memory affinity, and orchestration snapshot summaries.
+- `ApplicationController` owns the conversation session separately from `ChatSession` and Phase 4
+  `RuntimeSession`.
+- `DesktopShellViewModel` exposes only QML-safe strings: session id/status, interaction mode,
+  attention state, and context-window summary.
+- The layer does not add provider/model execution, streaming, networking, filesystem/system
+  actions, tool execution, plugin loading, embeddings, vector search, semantic search, or
+  autonomous workers.
+
+Phase 6.9 adds conversation state graph metadata:
+
+- `ConversationStateGraph.h` defines value-only conversation states, transition requests, and
+  transition results.
+- `StaticConversationStateGraph` applies deterministic valid-transition rules and returns
+  accepted/rejected metadata.
+- Controller and desktop view-model exposure is read-only and QML-safe: current state, transition
+  status, and transition summary strings.
+- Dashboard and Settings show minimal text-only state metadata.
+- State transitions do not execute providers, execute models, stream output, run tools, approve
+  actions, load plugins, call networks, scan filesystems, perform semantic/vector search, or start
+  autonomous workers.
 
 Phase 6.3 adds capability graph and task planner metadata:
 

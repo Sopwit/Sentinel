@@ -4,6 +4,8 @@
 #include "sentinel/core/AgentPipelineResult.h"
 #include "sentinel/core/AgentRuntimeContext.h"
 #include "sentinel/core/ChatSession.h"
+#include "sentinel/core/ConversationSession.h"
+#include "sentinel/core/ConversationStateGraph.h"
 #include "sentinel/core/IAgentRegistry.h"
 #include "sentinel/core/IAgentRuntime.h"
 #include "sentinel/core/IApprovalPolicy.h"
@@ -16,6 +18,7 @@
 #include "sentinel/core/ISandboxPolicy.h"
 #include "sentinel/core/ITaskPlanner.h"
 #include "sentinel/core/IToolExecutor.h"
+#include "sentinel/core/OrchestrationDiagnostics.h"
 #include "sentinel/core/OrchestrationSnapshot.h"
 
 #include <QObject>
@@ -50,6 +53,19 @@ class ApplicationController final : public QObject {
         QString runtimeContextSummary READ runtimeContextSummary NOTIFY runtimeContextChanged)
     Q_PROPERTY(QStringList runtimeContextActiveToolIds READ runtimeContextActiveToolIds NOTIFY
                    runtimeContextChanged)
+    Q_PROPERTY(
+        QString conversationSessionId READ conversationSessionId NOTIFY conversationSessionChanged)
+    Q_PROPERTY(QString conversationSessionStatus READ conversationSessionStatus NOTIFY
+                   conversationSessionChanged)
+    Q_PROPERTY(QString interactionMode READ interactionMode NOTIFY conversationSessionChanged)
+    Q_PROPERTY(QString attentionState READ attentionState NOTIFY conversationSessionChanged)
+    Q_PROPERTY(
+        QString contextWindowSummary READ contextWindowSummary NOTIFY conversationSessionChanged)
+    Q_PROPERTY(QString conversationState READ conversationState NOTIFY conversationStateChanged)
+    Q_PROPERTY(QString conversationTransitionStatus READ conversationTransitionStatus NOTIFY
+                   conversationStateChanged)
+    Q_PROPERTY(QString conversationTransitionSummary READ conversationTransitionSummary NOTIFY
+                   conversationStateChanged)
     Q_PROPERTY(int agentActivityCount READ agentActivityCount NOTIFY agentActivityChanged)
     Q_PROPERTY(QString latestAgentActivitySummary READ latestAgentActivitySummary NOTIFY
                    agentActivityChanged)
@@ -75,6 +91,12 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString orchestrationSnapshotSummary READ orchestrationSnapshotSummary NOTIFY
                    orchestrationSnapshotChanged)
     Q_PROPERTY(QStringList orchestrationSignals READ orchestrationSignals NOTIFY
+                   orchestrationSnapshotChanged)
+    Q_PROPERTY(QString orchestrationReadinessStatus READ orchestrationReadinessStatus NOTIFY
+                   orchestrationSnapshotChanged)
+    Q_PROPERTY(QString orchestrationReadinessSummary READ orchestrationReadinessSummary NOTIFY
+                   orchestrationSnapshotChanged)
+    Q_PROPERTY(QStringList orchestrationDiagnostics READ orchestrationDiagnostics NOTIFY
                    orchestrationSnapshotChanged)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
@@ -119,6 +141,15 @@ public:
     QString runtimeContextStatus() const;
     QString runtimeContextSummary() const;
     QStringList runtimeContextActiveToolIds() const;
+    const ConversationSession& currentConversationSession() const;
+    QString conversationSessionId() const;
+    QString conversationSessionStatus() const;
+    QString interactionMode() const;
+    QString attentionState() const;
+    QString contextWindowSummary() const;
+    QString conversationState() const;
+    QString conversationTransitionStatus() const;
+    QString conversationTransitionSummary() const;
     int agentActivityCount() const;
     QString latestAgentActivitySummary() const;
     QString currentRoutingMode() const;
@@ -140,6 +171,10 @@ public:
     QString orchestrationSnapshotStatus() const;
     QString orchestrationSnapshotSummary() const;
     QStringList orchestrationSignals() const;
+    OrchestrationReadinessReport currentOrchestrationReadinessReport() const;
+    QString orchestrationReadinessStatus() const;
+    QString orchestrationReadinessSummary() const;
+    QStringList orchestrationDiagnostics() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -168,6 +203,8 @@ signals:
     void toolExecutionChanged();
     void agentPipelineChanged();
     void runtimeContextChanged();
+    void conversationSessionChanged();
+    void conversationStateChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();
@@ -176,7 +213,10 @@ signals:
 private:
     AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request) const;
     void appendPipelineActivity(const AgentPipelineResult& result);
+    void resetCompletedConversationState();
+    void transitionConversationState(ConversationState nextState, const QString& reason);
     void refreshLatestTaskPlan();
+    void refreshConversationSession();
     void setMemoryMaintenanceStatus(const QString& status);
     void setChatMaintenanceStatus(const QString& status);
 
@@ -199,6 +239,8 @@ private:
     AgentPipelineResult latestAgentPipelineResult_;
     TaskPlan latestTaskPlan_;
     RuntimeSession runtimeSession_;
+    ConversationSessionStore conversationSession_;
+    StaticConversationStateGraph conversationStateGraph_;
     AgentActivityLog agentActivityLog_;
 };
 

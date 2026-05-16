@@ -999,3 +999,102 @@ Still out of scope:
   model execution, real tool execution, filesystem/system actions, plugin loading, vector
   databases, embeddings, semantic search, autonomous background workers, timers, threads, or broad
   UI redesign.
+
+### Phase 6.7: Orchestration Diagnostics and Readiness Checklist
+
+Completed. Added deterministic diagnostics/readiness metadata over the existing orchestration
+snapshot and catalogs without probing providers, models, filesystems, networks, or system services.
+
+Scope:
+
+- Added value-only orchestration diagnostics metadata:
+  - `OrchestrationDiagnostic`
+  - `OrchestrationDiagnosticLevel`
+  - `OrchestrationReadinessCheck`
+  - `OrchestrationReadinessReport`
+- Added `StaticOrchestrationDiagnostics` for ordered, deterministic readiness report generation.
+- Diagnostics inspect metadata-only readiness for routing mode, selected provider/model route,
+  provider catalog, agent registry, memory taxonomy, task planner, snapshot health, local-only
+  privacy posture, cloud provider unavailability/not-configured posture, and disabled execution
+  capability.
+- `ApplicationController` and `DesktopShellViewModel` expose only QML-safe readiness status,
+  summary, and diagnostic `QStringList` values.
+- Dashboard and Settings show minimal read-only readiness visibility without actions or setup UI.
+- Tests cover deterministic ordering, local-only healthy metadata, cloud not-configured behavior,
+  execution disabled checking, and controller/view-model exposure.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, provider/model
+  probing, model downloads, model execution, real tool execution, filesystem/system scans/actions,
+  plugin loading, vector databases, embeddings, semantic search, autonomous background workers,
+  timers, threads, external process calls, or broad UI redesign.
+
+### Phase 6.8: Runtime Context Session Layer
+
+Completed. Added deterministic conversation/session context metadata without adding provider,
+model, memory, tool, streaming, or autonomous execution.
+
+Scope:
+
+- Added value-only runtime context session metadata:
+  - `ConversationSession`
+  - `ConversationSessionId`
+  - `ConversationSessionStatus`
+  - `RuntimeContextWindow`
+  - `InteractionMode`
+  - `AttentionState`
+  - `ContextScope`
+- Added `ConversationSessionStore` and `ConversationSessionContextBuilder` for deterministic
+  session/context-window ownership and summary generation.
+- `ApplicationController` owns the conversation session separately from `ChatSession` message
+  history and Phase 4 `RuntimeSession` agent runtime metadata.
+- Context windows summarize current routing mode, preferred agent, memory affinity, and latest
+  orchestration snapshot summary.
+- `DesktopShellViewModel` exposes only QML-safe read-only strings for conversation session id,
+  status, interaction mode, attention state, and context-window summary.
+- Dashboard and Settings show minimal read-only session/context metadata.
+- Tests cover deterministic session creation, status defaults, context-window metadata,
+  controller/view-model exposure, routing update reflection, and separation from `ChatSession` and
+  `RuntimeSession`.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, model downloads,
+  model execution, streaming, real tool execution, filesystem/system actions, plugin loading,
+  vector databases, embeddings, semantic search, autonomous background workers, timers, threads,
+  external process calls, multi-conversation persistence, or broad UI redesign.
+
+### Phase 6.9: Conversation State Graph Skeleton
+
+Completed. Added deterministic conversation state-machine metadata without adding provider, model,
+tool, approval, streaming, or autonomous execution.
+
+Scope:
+
+- Added value-only conversation state graph metadata:
+  - `ConversationState`
+  - `ConversationTransition`
+  - `ConversationTransitionResult`
+  - `ConversationTransitionStatus`
+  - `IConversationStateGraph`
+  - `StaticConversationStateGraph`
+- Defined deterministic high-level states: Idle, Listening, Planning, Routing,
+  Waiting For Approval, Ready To Respond, Responding, Completed, and Error.
+- Added safe transition rules for the current metadata flow and deterministic rejection summaries
+  for invalid transitions.
+- `ApplicationController` owns the state graph separately from `ConversationSession`,
+  `ChatSession`, and Phase 4 `RuntimeSession`.
+- `DesktopShellViewModel` exposes only QML-safe read-only strings for current state, transition
+  status, and transition summary.
+- Dashboard and Settings show minimal read-only state metadata.
+- Tests cover valid transitions, invalid transition rejection, error transitions,
+  controller/view-model exposure, QML-safe properties, and separation from chat/runtime metadata.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, model downloads,
+  model execution, streaming, real tool execution, approval controls/actions, filesystem/system
+  actions, plugin loading, vector databases, embeddings, semantic search, autonomous background
+  workers, timers, threads, external process calls, multi-conversation persistence, or broad UI
+  redesign.

@@ -694,3 +694,77 @@ Boundary rules:
   discovery are part of this phase.
 - QML may show read-only snapshot status, summary, and signal strings only; no execution controls
   are part of this phase.
+
+## 39. Orchestration Diagnostics Are Metadata Readiness Checks
+
+Decision: Add deterministic orchestration diagnostics and readiness reports over existing metadata
+without probing external systems or enabling execution.
+
+Reason: Sentinel needs a compact readiness checklist for routing, catalogs, planning, privacy, and
+execution-boundary posture before future provider/model work, but this phase must not imply hidden
+provider setup or runtime capability.
+
+Boundary rules:
+
+- `OrchestrationDiagnostic`, `OrchestrationReadinessCheck`, and
+  `OrchestrationReadinessReport` are value data only.
+- `StaticOrchestrationDiagnostics` inspects existing `OrchestrationSnapshot` and provider catalog
+  metadata only.
+- Diagnostic ordering must remain deterministic for tests and UI.
+- Checks may report metadata state for routing mode, selected route, provider catalog, agent
+  registry, memory taxonomy, task planner, snapshot health, local-only privacy posture, cloud
+  provider unavailability/not-configured status, and disabled execution capability.
+- Diagnostics must not call providers, execute models, probe local model runtimes, read API keys,
+  access networks, scan the filesystem, run external processes, execute tools, load plugins, build
+  embeddings, run semantic/vector search, mutate memory, or start background workers.
+- Controller and QML exposure stays read-only and QML-safe: status, summary, and diagnostic
+  strings only.
+
+## 40. Conversation Session Context Is Separate Metadata
+
+Decision: Add a higher-level conversation/session context layer as deterministic metadata without
+replacing chat history or Phase 4 runtime context.
+
+Reason: The desktop shell needs a stable interaction context summary for future AI workspace
+behavior, but the current alpha must keep chat messages, agent runtime metadata, and orchestration
+metadata separate and non-operational.
+
+Boundary rules:
+
+- `ChatSession` remains the in-memory chat transcript owner and stays connected to
+  `IChatHistoryStore` for persistence.
+- `ConversationSession` owns interaction/session metadata only: session id/status, interaction
+  mode, attention state, context scope, and context-window summaries.
+- Phase 4 `RuntimeSession` remains the agent pipeline metadata owner and is not merged into
+  `ConversationSession`.
+- The conversation context window may copy routing mode, preferred agent summary, memory affinity
+  summary, and latest orchestration snapshot summary.
+- Controller and QML exposure stays read-only and QML-safe: strings only.
+- This layer must not add multi-conversation persistence, provider/model calls, streaming, API key
+  handling, networking, model downloads, model execution, tool execution, plugin loading,
+  filesystem/system actions, embeddings, vector search, semantic search, autonomous workers,
+  timers, threads, or external process calls.
+
+## 41. Conversation State Graph Is Metadata Only
+
+Decision: Add a deterministic conversation state graph for high-level interaction state metadata
+without using state transitions as execution triggers.
+
+Reason: The shell needs a readable current state and last-transition summary for future
+conversation orchestration, while preserving the existing separation between chat transcripts,
+conversation session context, and agent runtime metadata.
+
+Boundary rules:
+
+- `ConversationStateGraph` owns only the current conversation state and last transition result.
+- `ConversationSession` remains the owner of session/context metadata.
+- `ChatSession` remains the owner of chat message history.
+- Phase 4 `RuntimeSession` remains the owner of agent pipeline runtime metadata.
+- Valid transitions are deterministic metadata rules; invalid transitions are rejected with
+  deterministic summaries.
+- Controller and QML exposure stays read-only and QML-safe: current state, transition status, and
+  transition summary strings only.
+- Transitions must not call providers, execute models, stream tokens, execute tools, approve
+  actions, load plugins, access networks, scan or mutate filesystems, perform system actions,
+  build embeddings, run semantic/vector search, start background workers, or run external
+  processes.

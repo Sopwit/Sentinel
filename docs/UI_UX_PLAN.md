@@ -162,6 +162,21 @@ Phase 6.6 adds text-only orchestration snapshot visibility. Dashboard surfaces m
 health, summary, and compact signals, but must not expose execution controls, autonomous toggles,
 provider setup, semantic search, vector graph execution, downloads, or background-worker controls.
 
+Phase 6.7 adds text-only orchestration readiness visibility. Dashboard and Settings may show
+diagnostic status, summary, and ordered diagnostic lines, but must not add setup buttons, provider
+configuration, probing actions, execution controls, autonomous toggles, filesystem scans, downloads,
+or background-worker controls.
+
+Phase 6.8 adds text-only conversation/session context visibility. Dashboard and Settings may show
+session id/status, interaction mode, attention state, and context-window summary, but must not add
+chat-thread management, execution controls, provider/model setup, streaming controls, filesystem
+scans, semantic search, downloads, or autonomous worker controls.
+
+Phase 6.9 adds text-only conversation state graph visibility. Dashboard and Settings may show the
+current state, last transition status, and last transition summary, but must not add approval
+buttons, execution controls, provider/model setup, streaming controls, filesystem scans, semantic
+search, downloads, or autonomous worker controls.
+
 ## Current Separation
 
 Current Phase 5 work is presentation foundation only:
