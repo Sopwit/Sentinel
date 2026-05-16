@@ -394,6 +394,32 @@ background workers.
 model count, and model summary strings. `DesktopShellViewModel` forwards those as QML-safe strings,
 counts, and lists. Dashboard and Settings show read-only local status only.
 
+## Controlled Local Inference Boundary
+
+Phase 9.3 through Phase 9.5 add the first explicit local-only inference boundary for Ollama.
+
+Separation:
+
+- `ILocalInferenceClient` is the only boundary that may submit a prompt to a local runtime.
+- `ILocalInferenceClient` is not `IChatProvider`, `IAgentRuntime`, `IToolExecutor`,
+  `IProviderRuntimeBridge`, or model-router execution.
+- `ApplicationController` must evaluate runtime permission and safety policy before calling the
+  local inference client.
+- `DesktopShellViewModel` exposes only status, summary, last-response summary, and trace strings.
+
+`LocalInferenceRequest`, `LocalInferenceOptions`, `LocalInferenceResponse`,
+`LocalInferenceStatus`, `LocalInferenceError`, and `LocalInferenceTrace` describe the controlled
+request/response contract. `NullLocalInferenceClient` refuses deterministically.
+`OllamaLocalInferenceClient` is local-only and may call only loopback HTTP Ollama endpoints. It
+rejects blank prompts, missing models, unavailable models, invalid endpoints, cancellation
+metadata, and streaming requests before generation. When allowed by controller policy checks, it
+uses non-streaming `/api/generate` with `stream: false`.
+
+The boundary does not call cloud endpoints, use API keys, follow redirects, pull/download/delete
+models, launch subprocesses, execute tools/plugins, access the filesystem/system, stream tokens, or
+start autonomous loops/background workers. Tests use injected fake clients and do not require
+Ollama to be running.
+
 ## Settings Contract
 
 `ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.

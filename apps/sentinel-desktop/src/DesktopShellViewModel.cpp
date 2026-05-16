@@ -49,6 +49,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::taskPlanChanged);
     connect(&controller_, &core::ApplicationController::orchestrationSnapshotChanged, this,
             &DesktopShellViewModel::orchestrationSnapshotChanged);
+    connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
+            &DesktopShellViewModel::localInferenceChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::themeNameChanged, this,
@@ -474,6 +476,22 @@ QStringList DesktopShellViewModel::ollamaModelSummaries() const {
     return controller_.ollamaModelSummaries();
 }
 
+QString DesktopShellViewModel::localInferenceStatus() const {
+    return controller_.localInferenceStatus();
+}
+
+QString DesktopShellViewModel::localInferenceSummary() const {
+    return controller_.localInferenceSummary();
+}
+
+QString DesktopShellViewModel::localInferenceLastResponseSummary() const {
+    return controller_.localInferenceLastResponseSummary();
+}
+
+QStringList DesktopShellViewModel::localInferenceTraceSummaries() const {
+    return controller_.localInferenceTraceSummaries();
+}
+
 int DesktopShellViewModel::availableToolCount() const {
     return controller_.availableToolCount();
 }
@@ -555,6 +573,10 @@ void DesktopShellViewModel::setConfigurationProfile(const QString& configuration
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {
     return controller_.sendMessage(message);
+}
+
+bool DesktopShellViewModel::runLocalInference(const QString& prompt, const QString& model) {
+    return controller_.runLocalInference(prompt, model);
 }
 
 bool DesktopShellViewModel::runAgentRequest(const QString& request) {

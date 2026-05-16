@@ -2,6 +2,30 @@
 
 ## Completed / Stable
 
+### Phase 9.3-9.5: Controlled Local Inference Boundary
+
+Completed. Adds the first explicit local-only inference path behind the Ollama/local inference
+boundary while keeping default behavior permission-blocked and non-autonomous.
+
+Scope:
+
+- Added `LocalInferenceRequest`, `LocalInferenceResponse`, `LocalInferenceStatus`,
+  `LocalInferenceOptions`, `LocalInferenceError`, and `LocalInferenceTrace`.
+- Added `ILocalInferenceClient`, deterministic `NullLocalInferenceClient`, and
+  `OllamaLocalInferenceClient`.
+- Restricted Ollama inference to local loopback HTTP and non-streaming `/api/generate`.
+- Controller local inference calls evaluate runtime permission and safety policy before invoking
+  the client.
+- Desktop view model exposes QML-safe status, summary, last-response summary, and trace strings
+  only.
+- Tests cover null refusal, blank prompt rejection, missing/unavailable model rejection, injected
+  fake success, QML-safe exposure, and default permission blocking.
+
+Still out of scope:
+
+- Cloud inference, API keys, provider routing automation, streaming, model pull/download/delete,
+  subprocess launch, filesystem/system actions, tools/plugins, autonomous loops, and UI redesign.
+
 ### Phase 1: Desktop Alpha Foundation
 
 Created the native Qt/QML desktop shell, C++ core interfaces, local provider boundary, runtime memory store, mode handling, and initial documentation.
