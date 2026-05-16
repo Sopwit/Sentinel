@@ -165,7 +165,7 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(fixture.viewModel.availablePages(),
              QStringList({QStringLiteral("Dashboard"), QStringLiteral("Memory"),
-                          QStringLiteral("Agents")}));
+                          QStringLiteral("Agents"), QStringLiteral("Settings")}));
 }
 
 void DesktopShellViewModelTest::exposesAgentStatusWithoutRuntime() {

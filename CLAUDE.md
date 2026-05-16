@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 7.2 is complete.
+Phase 7.6 is complete.
 
 Implemented foundation:
 
@@ -76,6 +76,10 @@ Recent implementation phase:
 - Phase 7.0, Local Runtime Boundary Skeleton.
 - Phase 7.1, Local Runtime Session Ownership Skeleton.
 - Phase 7.2, Runtime Capability Negotiation Layer.
+- Phase 7.3, Runtime Permission Metadata Skeleton.
+- Phase 7.4, Runtime Request Pipeline Skeleton.
+- Phase 7.5, Runtime Safety Policy Skeleton.
+- Phase 7.6, Runtime Architecture Checkpoint and Cleanup.
 
 ## Constraints
 
@@ -102,6 +106,11 @@ Recent implementation phase:
 - Phase 7.2 runtime capability negotiation is metadata only. Do not activate capabilities, call
   providers, execute models, launch processes, scan filesystems, access networks, load plugins, or
   execute tools.
+- Phase 7.3 through Phase 7.5 runtime permission, request pipeline, and safety policy boundaries
+  are metadata only. Do not add provider/model execution, process launch, filesystem/system
+  actions, networking, plugins, downloads, API keys, or real tools.
+- Phase 7.6 checkpoint work may update docs, tests, naming, ownership comments, and QML read-only
+  consistency only. Do not start runtime execution from checkpoint work.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

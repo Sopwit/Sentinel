@@ -911,3 +911,24 @@ Boundary rules:
 - Safety policy metadata is separate from sandbox runtime enforcement and execution ownership.
 - Safety policy metadata must not activate runtime capabilities, call providers/models, execute
   tools/plugins, launch processes, access filesystems, or access networks.
+
+## 49. Phase 7 Runtime Checkpoint Keeps Execution Out Of Scope
+
+Decision: Close Phase 7 with an architecture checkpoint before Phase 8 planning.
+
+Reason: The local runtime boundary now includes session, capability, permission, safety, and
+pipeline metadata. A checkpoint keeps those responsibilities separate and prevents metadata
+visibility from being treated as execution authority.
+
+Boundary rules:
+
+- Phase 7.6 may update documentation, tests, naming, ownership comments, and QML read-only exposure
+  consistency only.
+- `docs/PHASE_7_CHECKPOINT.md` is the durable checkpoint record for completed scope, limitations,
+  guardrails, readiness criteria, and strict out-of-scope work.
+- `ApplicationController` remains the C++ owner for runtime boundaries.
+- `DesktopShellViewModel` remains the QML-safe read-only exposure layer for runtime metadata.
+- The checkpoint must not add provider/model execution, provider calls, networking/API keys,
+  downloads, streaming, subprocess/process launch, filesystem/system actions, real tools, plugin
+  loading, sandbox runtime enforcement, embeddings, semantic search, autonomous workers, or
+  execution/setup UI.

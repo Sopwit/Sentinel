@@ -1338,3 +1338,37 @@ Still out of scope:
 - Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, downloads, model
   execution, streaming, process/subprocess launch, filesystem/system scans/actions, real tools,
   plugin loading, embeddings/vector DB/semantic search, autonomous workers, and approval/setup UI.
+
+### Phase 7.6: Runtime Architecture Checkpoint and Cleanup
+
+Completed. Checkpointed the Phase 7 local runtime boundary foundation before Phase 8.
+
+Scope:
+
+- Reviewed `ILocalRuntime`, local runtime session manager, capability registry, permission policy,
+  safety policy, request pipeline, `ApplicationController` ownership, and
+  `DesktopShellViewModel` QML exposure.
+- Added `docs/PHASE_7_CHECKPOINT.md` with completed scope, architecture findings, known
+  limitations, runtime guardrails, Phase 8 readiness criteria, and strict out-of-scope work.
+- Updated roadmap/status/architecture/decision/context docs to mark Phase 7.3 through Phase 7.6 as
+  completed metadata-only work.
+- Tightened QML read-only navigation exposure so the view-model page list includes every accepted
+  page name.
+- Added focused view-model test coverage for the updated read-only page list.
+
+Architecture findings:
+
+- Phase 7 runtime surfaces are deterministic metadata only.
+- Local runtime, session ownership, capability negotiation, permission policy, safety policy, and
+  request pipeline remain separate responsibilities.
+- `ApplicationController` owns runtime boundaries through interfaces and exposes only summary/status
+  values.
+- `DesktopShellViewModel` exposes QML-safe strings, counts, and string lists; raw runtime objects
+  remain hidden.
+
+Still out of scope:
+
+- Real provider/model execution, provider calls, API keys, networking, downloads, streaming,
+  process/subprocess launch, filesystem/system actions, real tools, plugin loading, sandbox
+  runtime enforcement, embeddings/vector DB/semantic search, autonomous workers, and execution or
+  setup UI.

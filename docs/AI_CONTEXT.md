@@ -151,6 +151,16 @@ Future UI vision:
   local-only/privacy-safe posture without activating capabilities, executing models, calling
   providers, networking, streaming, launching processes, scanning filesystems, executing tools,
   loading plugins, approving permissions, or starting workers.
+- Phase 7.3 adds metadata-only runtime permission policy. `IRuntimePermissionPolicy` and
+  `StaticRuntimePermissionPolicy` deny execution-level runtime permission requests by default.
+- Phase 7.4 adds a metadata-only runtime request pipeline. `IRuntimePipeline` and
+  `StaticRuntimePipeline` emit ordered request, permission, safety, and execution-boundary traces
+  without dispatching work.
+- Phase 7.5 adds metadata-only runtime safety policy reporting. `IRuntimeSafetyPolicy` and
+  `StaticRuntimeSafetyPolicy` report deterministic local-only and no-execution posture metadata.
+- Phase 7.6 checkpoints the Phase 7 runtime architecture in `docs/PHASE_7_CHECKPOINT.md` and
+  keeps runtime execution, networking, downloads, subprocesses, filesystem/system actions, tools,
+  and plugins out of scope.
 - Phase 5.0 adds UI/UX planning and a small QML design-token singleton without adding advanced
   motion, provider integration, model execution, or runtime behavior.
 - Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
@@ -175,15 +185,14 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, Phase 6.6, Phase 6.7, Phase 6.8, Phase 6.9, Phase 6.10, Phase 7.0, Phase 7.1, and Phase 7.2.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, Phase 6.6, Phase 6.7, Phase 6.8, Phase 6.9, Phase 6.10, Phase 7.0, Phase 7.1, Phase 7.2, Phase 7.3, Phase 7.4, Phase 7.5, and Phase 7.6.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline and metadata-only model
   routing skeleton:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
   with local runtime context/session, in-memory activity logging for pipeline metadata, and
   read-only dashboard visibility for that state. Model/provider routing is descriptor-only and
   currently resolves to a deterministic local placeholder.
-- Next: Phase 7.x local runtime boundary stabilization, not full model execution unless explicitly
-  scoped.
-- Recent: Phase 7.2, Runtime Capability Negotiation Layer.
+- Next: Phase 8 planning/readiness, not full model execution unless explicitly scoped.
+- Recent: Phase 7.6, Runtime Architecture Checkpoint and Cleanup.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

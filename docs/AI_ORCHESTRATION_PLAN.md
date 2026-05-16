@@ -108,7 +108,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 7.1 runtime remains metadata-only:
+Current Phase 7.6 runtime remains metadata-only:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -175,7 +175,8 @@ automation remain future work.
 Phase 7.0 starts with a local runtime boundary skeleton, not full provider/model execution. Phase
 7.2 adds capability negotiation vocabulary. Phase 7.3 through Phase 7.5 add metadata-only
 permission, request pipeline, and safety policy boundaries while keeping execution blocked by
-default. Any future local runtime implementation must be explicitly scoped, interface-owned,
-deterministic in tests, and still separate from cloud provider integration, credentials, downloads,
-streaming, tool execution, plugins, vector memory, and autonomous behavior unless a later phase
-approves those capabilities.
+default. Phase 7.6 checkpoints the runtime architecture in `docs/PHASE_7_CHECKPOINT.md`. Any future
+local runtime implementation must be explicitly scoped, interface-owned, deterministic in tests,
+and still separate from cloud provider integration, credentials, downloads, streaming, tool
+execution, plugins, vector memory, and autonomous behavior unless a later phase approves those
+capabilities.
