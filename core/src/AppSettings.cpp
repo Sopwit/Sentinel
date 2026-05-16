@@ -78,4 +78,19 @@ void AppSettings::setOllamaEndpoint(const QString& endpoint) {
     emit ollamaEndpointChanged();
 }
 
+QString AppSettings::selectedLocalModel() const {
+    return store_ ? store_->value(QString::fromLatin1(selectedLocalModelKey), {}).trimmed()
+                  : QString();
+}
+
+void AppSettings::setSelectedLocalModel(const QString& model) {
+    const auto normalized = model.trimmed();
+    if (normalized == selectedLocalModel() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(selectedLocalModelKey), normalized);
+    emit selectedLocalModelChanged();
+}
+
 } // namespace sentinel::core

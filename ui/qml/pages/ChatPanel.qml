@@ -44,7 +44,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: chatPanel.viewModel.providerName + " / " + chatPanel.viewModel.providerStatus + " / " + chatPanel.viewModel.chatHistoryStatus
+                    text: chatPanel.viewModel.providerName + " / " + chatPanel.viewModel.providerStatus + " / " + chatPanel.viewModel.chatHistoryStatus + " / " + chatPanel.viewModel.activeLocalRuntimeBadge + " / " + chatPanel.viewModel.localInferenceRuntimeState
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                     elide: Text.ElideRight

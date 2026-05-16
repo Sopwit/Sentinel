@@ -10,6 +10,8 @@
 #include "sentinel/core/StaticSandboxPolicy.h"
 #include "sentinel/core/StaticTaskPlanner.h"
 
+#include <QElapsedTimer>
+
 namespace sentinel::core {
 
 namespace {
@@ -728,18 +730,79 @@ QString ApplicationController::ollamaHealthSummary() const {
 }
 
 int ApplicationController::ollamaModelCount() const {
-    return ollamaRuntimeClient_ ? static_cast<int>(ollamaRuntimeClient_->installedModels().size())
-                                : 0;
+    return static_cast<int>(currentOllamaModels().size());
 }
 
 QStringList ApplicationController::ollamaModelSummaries() const {
-    return ollamaRuntimeClient_
-               ? sentinel::core::ollamaModelSummaries(ollamaRuntimeClient_->installedModels())
-               : QStringList{};
+    return sentinel::core::ollamaModelSummaries(currentOllamaModels());
+}
+
+QString ApplicationController::selectedLocalModel() const {
+    return selectedLocalModel_;
+}
+
+void ApplicationController::setSelectedLocalModel(const QString& model) {
+    const auto normalized = model.trimmed();
+    if (normalized == selectedLocalModel_) {
+        return;
+    }
+
+    selectedLocalModel_ = normalized;
+    emit localModelSelectionChanged();
+}
+
+QString ApplicationController::selectedLocalModelSummary() const {
+    const auto models = currentOllamaModels();
+    const auto selected = selectedLocalModel_.trimmed();
+    if (selected.isEmpty()) {
+        if (!models.isEmpty()) {
+            return QStringLiteral("No local model selected; fallback candidate is %1.")
+                .arg(models.first().name);
+        }
+        return QStringLiteral("No local model selected; inference requires an explicit model.");
+    }
+
+    if (!models.isEmpty() && !discoveredModelNamesContain(selected, models)) {
+        return QStringLiteral("Selected local model %1 was not found in discovered local models.")
+            .arg(selected);
+    }
+
+    if (models.isEmpty()) {
+        return QStringLiteral("Selected local model %1 is configured; discovery metadata is "
+                              "currently unavailable.")
+            .arg(selected);
+    }
+
+    return QStringLiteral("Selected local model %1 is available in local discovery metadata.")
+        .arg(selected);
+}
+
+QString ApplicationController::activeLocalRuntimeBadge() const {
+    const auto model = effectiveLocalModel({});
+    return model.isEmpty() ? QStringLiteral("Ollama Local / No Model")
+                           : QStringLiteral("Ollama Local / %1").arg(model);
+}
+
+bool ApplicationController::localInferenceBusy() const {
+    return localInferenceBusy_;
+}
+
+QString ApplicationController::localInferenceRuntimeState() const {
+    if (localInferenceBusy_) {
+        return QStringLiteral("Busy");
+    }
+    if (latestLocalInferenceResponse_.status == LocalInferenceStatus::Error ||
+        latestLocalInferenceResponse_.status == LocalInferenceStatus::Blocked ||
+        latestLocalInferenceResponse_.status == LocalInferenceStatus::InvalidRequest ||
+        latestLocalInferenceResponse_.status == LocalInferenceStatus::ModelUnavailable) {
+        return QStringLiteral("Error");
+    }
+    return QStringLiteral("Idle");
 }
 
 QString ApplicationController::localInferenceStatus() const {
-    return localInferenceStatusName(latestLocalInferenceResponse_.status);
+    return localInferenceBusy_ ? localInferenceStatusName(LocalInferenceStatus::Busy)
+                               : localInferenceStatusName(latestLocalInferenceResponse_.status);
 }
 
 QString ApplicationController::localInferenceSummary() const {
@@ -755,8 +818,27 @@ QString ApplicationController::localInferenceLastResponseSummary() const {
     return safeLocalInferenceResponseSummary(latestLocalInferenceResponse_);
 }
 
+QString ApplicationController::localInferenceLatencySummary() const {
+    return latestLocalInferenceResponse_.latencyMs >= 0
+               ? QStringLiteral("Last local inference latency: %1 ms.")
+                     .arg(latestLocalInferenceResponse_.latencyMs)
+               : QStringLiteral("No local inference latency recorded.");
+}
+
 QStringList ApplicationController::localInferenceTraceSummaries() const {
     return sentinel::core::localInferenceTraceSummaries(latestLocalInferenceResponse_.traces);
+}
+
+bool ApplicationController::localInferenceStreamingAvailable() const {
+    return false;
+}
+
+QString ApplicationController::localInferenceStreamStatus() const {
+    return localInferenceStreamStatusName(latestLocalInferenceStreamResult_.status);
+}
+
+QString ApplicationController::localInferenceStreamSummary() const {
+    return latestLocalInferenceStreamResult_.summary;
 }
 
 int ApplicationController::availableToolCount() const {
@@ -880,13 +962,33 @@ bool ApplicationController::sendMessage(const QString& message) {
 bool ApplicationController::runLocalInference(const QString& prompt, const QString& model) {
     LocalInferenceRequest request;
     request.prompt = prompt.trimmed();
-    request.options.model = model.trimmed();
+    request.options.model = effectiveLocalModel(model);
 
     if (request.prompt.isEmpty()) {
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::BlankPrompt,
             QStringLiteral("Local inference request rejected: prompt is blank."));
         latestLocalInferenceResponse_.status = LocalInferenceStatus::InvalidRequest;
+        emit localInferenceChanged();
+        return false;
+    }
+
+    if (request.options.model.isEmpty()) {
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::MissingModel,
+            QStringLiteral("Local inference request rejected: model is required."));
+        latestLocalInferenceResponse_.status = LocalInferenceStatus::InvalidRequest;
+        emit localInferenceChanged();
+        return false;
+    }
+
+    const auto discoveredModels = currentOllamaModels();
+    if (!discoveredModels.isEmpty() &&
+        !discoveredModelNamesContain(request.options.model, discoveredModels)) {
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::ModelUnavailable,
+            QStringLiteral("Local inference request rejected: selected model is not installed."));
+        latestLocalInferenceResponse_.status = LocalInferenceStatus::ModelUnavailable;
         emit localInferenceChanged();
         return false;
     }
@@ -935,7 +1037,16 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         return false;
     }
 
+    localInferenceBusy_ = true;
+    latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
+    latestLocalInferenceResponse_.summary = QStringLiteral("Local inference request is running.");
+    emit localInferenceChanged();
+
+    QElapsedTimer latencyTimer;
+    latencyTimer.start();
     auto clientResponse = localInferenceClient_->infer(request);
+    clientResponse.latencyMs = latencyTimer.elapsed();
+    localInferenceBusy_ = false;
     latestLocalInferenceResponse_ = clientResponse;
     latestLocalInferenceResponse_.traces = {
         LocalInferenceTrace{
@@ -1293,6 +1404,36 @@ OllamaHealthCheckResult ApplicationController::currentOllamaHealthCheck() const 
     }
 
     return ollamaRuntimeClient_->healthCheck();
+}
+
+QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
+    return ollamaRuntimeClient_ ? ollamaRuntimeClient_->installedModels()
+                                : QList<OllamaModelSummary>{};
+}
+
+QString ApplicationController::effectiveLocalModel(const QString& requestedModel) const {
+    const auto explicitModel = requestedModel.trimmed();
+    if (!explicitModel.isEmpty()) {
+        return explicitModel;
+    }
+
+    const auto selectedModel = selectedLocalModel_.trimmed();
+    if (!selectedModel.isEmpty()) {
+        return selectedModel;
+    }
+
+    const auto models = currentOllamaModels();
+    return models.isEmpty() ? QString() : models.first().name;
+}
+
+bool ApplicationController::discoveredModelNamesContain(
+    const QString& model, const QList<OllamaModelSummary>& models) const {
+    for (const auto& discoveredModel : models) {
+        if (discoveredModel.name == model) {
+            return true;
+        }
+    }
+    return false;
 }
 
 LocalInferenceResponse ApplicationController::blockedLocalInferenceResponse(

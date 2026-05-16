@@ -12,6 +12,7 @@ namespace sentinel::core {
 
 enum class LocalInferenceStatus : std::uint8_t {
     NotRequested,
+    Busy,
     Refused,
     Blocked,
     InvalidRequest,
@@ -65,7 +66,32 @@ struct LocalInferenceResponse {
     QString endpoint;
     QString text;
     QString summary = QStringLiteral("No local inference request yet.");
+    qint64 latencyMs = -1;
     QList<LocalInferenceTrace> traces;
+};
+
+enum class LocalInferenceStreamStatus : std::uint8_t {
+    Disabled,
+    NotStarted,
+    Refused,
+    Streaming,
+    Completed,
+    Error,
+};
+
+QString localInferenceStreamStatusName(LocalInferenceStreamStatus status);
+
+struct LocalInferenceStreamChunk {
+    int sequence = 0;
+    QString text;
+    bool finalChunk = false;
+    QString summary;
+};
+
+struct LocalInferenceStreamResult {
+    LocalInferenceStreamStatus status = LocalInferenceStreamStatus::Disabled;
+    QString summary = QStringLiteral("Local inference streaming is disabled.");
+    QList<LocalInferenceStreamChunk> chunks;
 };
 
 QString localInferenceTraceSummary(const LocalInferenceTrace& trace);
@@ -79,6 +105,20 @@ public:
 
     virtual LocalInferenceResponse infer(const LocalInferenceRequest& request) = 0;
     virtual QString statusSummary() const = 0;
+};
+
+class ILocalInferenceStreamClient {
+public:
+    virtual ~ILocalInferenceStreamClient() = default;
+
+    virtual LocalInferenceStreamResult startStream(const LocalInferenceRequest& request) = 0;
+    virtual QString statusSummary() const = 0;
+};
+
+class NullLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
+public:
+    LocalInferenceStreamResult startStream(const LocalInferenceRequest& request) override;
+    QString statusSummary() const override;
 };
 
 class NullLocalInferenceClient final : public ILocalInferenceClient {

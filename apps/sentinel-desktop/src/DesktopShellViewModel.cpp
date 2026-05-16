@@ -49,6 +49,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::taskPlanChanged);
     connect(&controller_, &core::ApplicationController::orchestrationSnapshotChanged, this,
             &DesktopShellViewModel::orchestrationSnapshotChanged);
+    connect(&controller_, &core::ApplicationController::localModelSelectionChanged, this,
+            &DesktopShellViewModel::localModelSelectionChanged);
     connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
             &DesktopShellViewModel::localInferenceChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
@@ -59,6 +61,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::configurationProfileChanged);
     connect(&settings_, &core::AppSettings::routingModeNameChanged, this,
             &DesktopShellViewModel::modelRoutingChanged);
+    connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this,
+            [this]() { controller_.setSelectedLocalModel(settings_.selectedLocalModel()); });
+    controller_.setSelectedLocalModel(settings_.selectedLocalModel());
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -476,6 +481,33 @@ QStringList DesktopShellViewModel::ollamaModelSummaries() const {
     return controller_.ollamaModelSummaries();
 }
 
+QString DesktopShellViewModel::selectedLocalModel() const {
+    return controller_.selectedLocalModel();
+}
+
+void DesktopShellViewModel::setSelectedLocalModel(const QString& model) {
+    settings_.setSelectedLocalModel(model);
+    if (controller_.selectedLocalModel() != settings_.selectedLocalModel()) {
+        controller_.setSelectedLocalModel(settings_.selectedLocalModel());
+    }
+}
+
+QString DesktopShellViewModel::selectedLocalModelSummary() const {
+    return controller_.selectedLocalModelSummary();
+}
+
+QString DesktopShellViewModel::activeLocalRuntimeBadge() const {
+    return controller_.activeLocalRuntimeBadge();
+}
+
+bool DesktopShellViewModel::localInferenceBusy() const {
+    return controller_.localInferenceBusy();
+}
+
+QString DesktopShellViewModel::localInferenceRuntimeState() const {
+    return controller_.localInferenceRuntimeState();
+}
+
 QString DesktopShellViewModel::localInferenceStatus() const {
     return controller_.localInferenceStatus();
 }
@@ -488,8 +520,24 @@ QString DesktopShellViewModel::localInferenceLastResponseSummary() const {
     return controller_.localInferenceLastResponseSummary();
 }
 
+QString DesktopShellViewModel::localInferenceLatencySummary() const {
+    return controller_.localInferenceLatencySummary();
+}
+
 QStringList DesktopShellViewModel::localInferenceTraceSummaries() const {
     return controller_.localInferenceTraceSummaries();
+}
+
+bool DesktopShellViewModel::localInferenceStreamingAvailable() const {
+    return controller_.localInferenceStreamingAvailable();
+}
+
+QString DesktopShellViewModel::localInferenceStreamStatus() const {
+    return controller_.localInferenceStreamStatus();
+}
+
+QString DesktopShellViewModel::localInferenceStreamSummary() const {
+    return controller_.localInferenceStreamSummary();
 }
 
 int DesktopShellViewModel::availableToolCount() const {

@@ -172,13 +172,27 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary CONSTANT)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount CONSTANT)
     Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries CONSTANT)
+    Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QString selectedLocalModelSummary READ selectedLocalModelSummary NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QString activeLocalRuntimeBadge READ activeLocalRuntimeBadge NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
+    Q_PROPERTY(QString localInferenceRuntimeState READ localInferenceRuntimeState NOTIFY
+                   localInferenceChanged)
     Q_PROPERTY(QString localInferenceStatus READ localInferenceStatus NOTIFY localInferenceChanged)
     Q_PROPERTY(
         QString localInferenceSummary READ localInferenceSummary NOTIFY localInferenceChanged)
     Q_PROPERTY(QString localInferenceLastResponseSummary READ localInferenceLastResponseSummary
                    NOTIFY localInferenceChanged)
+    Q_PROPERTY(QString localInferenceLatencySummary READ localInferenceLatencySummary NOTIFY
+                   localInferenceChanged)
     Q_PROPERTY(QStringList localInferenceTraceSummaries READ localInferenceTraceSummaries NOTIFY
                    localInferenceChanged)
+    Q_PROPERTY(bool localInferenceStreamingAvailable READ localInferenceStreamingAvailable CONSTANT)
+    Q_PROPERTY(QString localInferenceStreamStatus READ localInferenceStreamStatus CONSTANT)
+    Q_PROPERTY(QString localInferenceStreamSummary READ localInferenceStreamSummary CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -321,10 +335,20 @@ public:
     QString ollamaHealthSummary() const;
     int ollamaModelCount() const;
     QStringList ollamaModelSummaries() const;
+    QString selectedLocalModel() const;
+    void setSelectedLocalModel(const QString& model);
+    QString selectedLocalModelSummary() const;
+    QString activeLocalRuntimeBadge() const;
+    bool localInferenceBusy() const;
+    QString localInferenceRuntimeState() const;
     QString localInferenceStatus() const;
     QString localInferenceSummary() const;
     QString localInferenceLastResponseSummary() const;
+    QString localInferenceLatencySummary() const;
     QStringList localInferenceTraceSummaries() const;
+    bool localInferenceStreamingAvailable() const;
+    QString localInferenceStreamStatus() const;
+    QString localInferenceStreamSummary() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -360,6 +384,7 @@ signals:
     void modelRoutingChanged();
     void taskPlanChanged();
     void orchestrationSnapshotChanged();
+    void localModelSelectionChanged();
     void localInferenceChanged();
 
 private:
@@ -382,6 +407,10 @@ private:
     ProviderRuntimeBridgeResponse currentProviderRuntimeBridgeResponse() const;
     RuntimeIntegrationReport currentRuntimeIntegrationReport() const;
     OllamaHealthCheckResult currentOllamaHealthCheck() const;
+    QList<OllamaModelSummary> currentOllamaModels() const;
+    QString effectiveLocalModel(const QString& requestedModel) const;
+    bool discoveredModelNamesContain(const QString& model,
+                                     const QList<OllamaModelSummary>& models) const;
     LocalInferenceResponse blockedLocalInferenceResponse(const LocalInferenceRequest& request,
                                                          LocalInferenceError error,
                                                          const QString& summary) const;
@@ -421,7 +450,10 @@ private:
     ConversationSessionStore conversationSession_;
     StaticConversationStateGraph conversationStateGraph_;
     AgentActivityLog agentActivityLog_;
+    QString selectedLocalModel_;
+    bool localInferenceBusy_ = false;
     LocalInferenceResponse latestLocalInferenceResponse_;
+    LocalInferenceStreamResult latestLocalInferenceStreamResult_;
 };
 
 } // namespace sentinel::core

@@ -187,6 +187,44 @@ response. It does not call Ollama or any provider, execute models, download mode
 launch processes/subprocesses, scan filesystems, execute tools, load plugins, access networks, read
 API keys, or start background workers.
 
+## Local Inference And Model Selection
+
+Phase 9.3 through Phase 9.8 add a controlled local inference path and selected-model metadata
+without turning chat into an Ollama-backed provider.
+
+Separation:
+
+- `ILocalInferenceClient` owns non-streaming local prompt execution.
+- `OllamaLocalInferenceClient` is restricted to local loopback HTTP and non-streaming
+  `/api/generate`.
+- `ApplicationController` evaluates runtime permission and safety metadata before invoking local
+  inference.
+- `AppSettings` persists the selected local model as configuration only.
+- `DesktopShellViewModel` exposes selected-model summaries, runtime badge, busy/idle/error state,
+  latency summary, trace strings, and disabled streaming status as QML-safe values only.
+
+Model selection behavior:
+
+- An explicit model passed to `runLocalInference(prompt, model)` wins.
+- If no explicit model is provided, the selected local model is used.
+- If neither is present and discovered local model metadata is available, the first discovered
+  model is used as a fallback candidate.
+- If discovered model metadata is available and the selected/effective model is absent, inference
+  is rejected before the inference client is called.
+- If no model can be resolved, inference is rejected as an invalid request.
+
+Streaming skeleton:
+
+- `LocalInferenceStreamChunk`, `LocalInferenceStreamStatus`, `LocalInferenceStreamResult`, and
+  `ILocalInferenceStreamClient` define the future streaming boundary.
+- The current stream client is deterministic disabled behavior and opens no stream.
+
+Still out of scope:
+
+- Model downloads, pulls, deletes, broad model-management UI, cloud provider calls, API keys,
+  endpoint expansion, subprocess launch, filesystem/system actions, tools/plugins, autonomous
+  loops, automatic chat-to-Ollama routing, and token streaming UI.
+
 ## Local Runtime Session Metadata
 
 Phase 7.1 adds local runtime session ownership metadata. `LocalRuntimeSession` records a
