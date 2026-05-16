@@ -385,6 +385,24 @@ void ApplicationControllerTest::exposesLocalRuntimeMetadata() {
     QCOMPARE(controller->localRuntimeSessionSummaries(),
              QStringList{QStringLiteral("local-runtime-session-1: Reserved placeholder local "
                                         "runtime metadata.")});
+    QCOMPARE(controller->runtimeCapabilityCount(), 13);
+    QCOMPARE(controller->enabledRuntimeCapabilitySummaries().size(), 2);
+    QVERIFY(controller->enabledRuntimeCapabilitySummaries().contains(
+        QStringLiteral("Privacy-Safe Mode (Security, Enabled): Privacy-safe runtime metadata "
+                       "mode is active.")));
+    QCOMPARE(controller->disabledRuntimeCapabilitySummaries().size(), 11);
+    QVERIFY(controller->disabledRuntimeCapabilitySummaries().contains(
+        QStringLiteral("Tool Bridge (Integration, Unavailable): Tool bridge execution is "
+                       "unavailable.")));
+    QCOMPARE(controller->runtimeNegotiationProfileSummary(),
+             QStringLiteral("Metadata-only negotiation profile; no runtime capability is "
+                            "activated."));
+    QCOMPARE(controller->runtimeNegotiationSummary(),
+             QStringLiteral("Metadata-only runtime negotiation: 13 capabilities described, 2 "
+                            "enabled as safety metadata."));
+    QCOMPARE(controller->localOnlyRuntimeEnforcementSummary(),
+             QStringLiteral("Local-only enforcement is active; cloud relay and external runtime "
+                            "execution remain unavailable."));
 }
 
 void ApplicationControllerTest::exposesConversationSessionMetadata() {

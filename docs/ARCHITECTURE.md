@@ -205,6 +205,32 @@ and `Placeholder Only` state. Allocation and reservation records are descriptive
 do not allocate models, launch processes/subprocesses, scan filesystems, call networks, stream
 output, execute tools, load plugins, or start background workers.
 
+## Runtime Capability Negotiation Metadata
+
+Phase 7.2 adds `IRuntimeCapabilityRegistry` as the future runtime capability negotiation metadata
+boundary. The current implementation is `StaticRuntimeCapabilityRegistry`, which returns
+deterministic descriptors and a metadata-only negotiation result.
+
+Separation:
+
+- Runtime capability negotiation is not runtime execution.
+- Runtime capability negotiation is not provider/model routing.
+- Runtime capability negotiation is not agent execution.
+- Runtime capability negotiation is not tool execution.
+- Runtime capability negotiation is not permission approval.
+- Runtime capability negotiation is not plugin management.
+
+`RuntimeCapabilityDescriptor` records descriptive capability id, name, group, state, and summary
+metadata. `RuntimeNegotiationProfile` and `RuntimeNegotiationResult` summarize the static
+negotiation posture. Local-only enforcement and privacy-safe mode are enabled as safety metadata
+only. Local inference, streaming, multimodal, embeddings, semantic memory, memory binding, tool
+bridge, plugin bridge, filesystem access, external process execution, and cloud relay support
+remain disabled or unavailable and cannot execute.
+
+The capability negotiation layer does not activate capabilities, call providers, execute models,
+download models, stream output, launch processes/subprocesses, scan filesystems, execute tools,
+load plugins, access networks, approve permissions, read API keys, or start background workers.
+
 ## Settings Contract
 
 `ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.

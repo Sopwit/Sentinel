@@ -309,6 +309,23 @@ void DesktopShellViewModelTest::exposesLocalRuntimeMetadata() {
                             "started."));
     QCOMPARE(fixture.viewModel.localRuntimeReservationSummary(),
              QStringLiteral("Placeholder reservation is held for metadata visibility only."));
+    QCOMPARE(fixture.viewModel.runtimeCapabilityCount(), 13);
+    QCOMPARE(fixture.viewModel.enabledRuntimeCapabilitySummaries().size(), 2);
+    QVERIFY(fixture.viewModel.enabledRuntimeCapabilitySummaries().contains(
+        QStringLiteral("Local-Only Enforcement (Security, Enabled): Negotiation metadata enforces "
+                       "a local-only posture.")));
+    QCOMPARE(fixture.viewModel.disabledRuntimeCapabilitySummaries().size(), 11);
+    QVERIFY(fixture.viewModel.disabledRuntimeCapabilitySummaries().contains(
+        QStringLiteral("Streaming (Inference, Disabled): Token streaming is disabled.")));
+    QCOMPARE(fixture.viewModel.runtimeNegotiationProfileSummary(),
+             QStringLiteral("Metadata-only negotiation profile; no runtime capability is "
+                            "activated."));
+    QCOMPARE(fixture.viewModel.runtimeNegotiationSummary(),
+             QStringLiteral("Metadata-only runtime negotiation: 13 capabilities described, 2 "
+                            "enabled as safety metadata."));
+    QCOMPARE(fixture.viewModel.localOnlyRuntimeEnforcementSummary(),
+             QStringLiteral("Local-only enforcement is active; cloud relay and external runtime "
+                            "execution remain unavailable."));
 }
 
 void DesktopShellViewModelTest::exposesConversationSessionMetadata() {
@@ -616,6 +633,12 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("localRuntimeAllocationSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeReservationSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeSessionSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("runtimeCapabilityCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("enabledRuntimeCapabilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("disabledRuntimeCapabilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("runtimeNegotiationProfileSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("runtimeNegotiationSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localOnlyRuntimeEnforcementSummary"), QByteArrayLiteral("QString")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -656,6 +679,10 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("localRuntimeSessionManager"),
         QStringLiteral("localRuntimeAllocation"),
         QStringLiteral("localRuntimeReservation"),
+        QStringLiteral("runtimeCapabilityRegistry"),
+        QStringLiteral("runtimeCapabilities"),
+        QStringLiteral("runtimeNegotiationProfile"),
+        QStringLiteral("runtimeNegotiationResult"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),

@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 7.1 is complete.
+Phase 7.2 is complete.
 
 Implemented foundation:
 
@@ -75,6 +75,7 @@ Recent implementation phase:
 - Phase 6.10, Pre-runtime Architecture Checkpoint and Stabilization.
 - Phase 7.0, Local Runtime Boundary Skeleton.
 - Phase 7.1, Local Runtime Session Ownership Skeleton.
+- Phase 7.2, Runtime Capability Negotiation Layer.
 
 ## Constraints
 
@@ -98,6 +99,9 @@ Recent implementation phase:
   provider calls, model execution, process launch, downloads, streaming, tools, or plugins.
 - Phase 7.1 local runtime sessions are ownership/lifecycle metadata only. Do not start processes,
   allocate real models, probe runtimes, scan filesystems, stream output, or execute tools.
+- Phase 7.2 runtime capability negotiation is metadata only. Do not activate capabilities, call
+  providers, execute models, launch processes, scan filesystems, access networks, load plugins, or
+  execute tools.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

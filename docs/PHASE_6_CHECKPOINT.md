@@ -76,11 +76,13 @@ filesystem, or autonomous behavior.
 - Phase 7.1: Local runtime session ownership metadata. Completed as a deterministic placeholder
   lifecycle/session skeleton without probing processes, scanning files, downloading models, or
   calling providers.
-- Phase 7.2: Runtime permission and policy planning. Document how future execution, filesystem,
+- Phase 7.2: Runtime capability negotiation layer. Completed as a metadata-only capability
+  vocabulary and negotiation posture without activating runtime capabilities.
+- Phase 7.3: Runtime permission and policy planning. Document how future execution, filesystem,
   network, plugin, and model capabilities would be explicitly gated.
-- Phase 7.3: Local provider adapter skeleton if explicitly approved. Keep it disabled and
+- Phase 7.4: Local provider adapter skeleton if explicitly approved. Keep it disabled and
   metadata-only unless the phase scope allows real local provider calls.
-- Phase 7.4: Execution-readiness UX planning. Keep any UI read-only until approval and execution
+- Phase 7.5: Execution-readiness UX planning. Keep any UI read-only until approval and execution
   boundaries are implemented in C++.
 
 ## Strictly Out Of Scope For The Checkpoint

@@ -99,6 +99,16 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString localRuntimeAllocationSummary READ localRuntimeAllocationSummary CONSTANT)
     Q_PROPERTY(QString localRuntimeReservationSummary READ localRuntimeReservationSummary CONSTANT)
     Q_PROPERTY(QStringList localRuntimeSessionSummaries READ localRuntimeSessionSummaries CONSTANT)
+    Q_PROPERTY(int runtimeCapabilityCount READ runtimeCapabilityCount CONSTANT)
+    Q_PROPERTY(QStringList enabledRuntimeCapabilitySummaries READ enabledRuntimeCapabilitySummaries
+                   CONSTANT)
+    Q_PROPERTY(QStringList disabledRuntimeCapabilitySummaries READ
+                   disabledRuntimeCapabilitySummaries CONSTANT)
+    Q_PROPERTY(
+        QString runtimeNegotiationProfileSummary READ runtimeNegotiationProfileSummary CONSTANT)
+    Q_PROPERTY(QString runtimeNegotiationSummary READ runtimeNegotiationSummary CONSTANT)
+    Q_PROPERTY(
+        QString localOnlyRuntimeEnforcementSummary READ localOnlyRuntimeEnforcementSummary CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -184,6 +194,12 @@ public:
     QString localRuntimeAllocationSummary() const;
     QString localRuntimeReservationSummary() const;
     QStringList localRuntimeSessionSummaries() const;
+    int runtimeCapabilityCount() const;
+    QStringList enabledRuntimeCapabilitySummaries() const;
+    QStringList disabledRuntimeCapabilitySummaries() const;
+    QString runtimeNegotiationProfileSummary() const;
+    QString runtimeNegotiationSummary() const;
+    QString localOnlyRuntimeEnforcementSummary() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
