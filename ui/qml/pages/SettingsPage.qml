@@ -308,6 +308,69 @@ ShellPanel {
         }
 
         SectionTitle {
+            title: "Execution Lifecycle"
+            subtitle: "Read-only lifecycle and session coordination metadata. Execution remains intentionally disabled."
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Lifecycle"
+                value: settingsPage.viewModel.executionLifecycleState + " / " + settingsPage.viewModel.executionLifecycleStatus
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Lifecycle Summary"
+                value: settingsPage.viewModel.executionLifecycleSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Session"
+                value: settingsPage.viewModel.executionSessionId + " / " + settingsPage.viewModel.executionSessionStatus
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Ownership"
+                value: settingsPage.viewModel.executionSessionOwnership + " / " + settingsPage.viewModel.executionCoordinationMode
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Session Summary"
+                value: settingsPage.viewModel.executionSessionSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Snapshot"
+                value: settingsPage.viewModel.executionCoordinationSnapshotSummary
+                Layout.fillWidth: true
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.executionLifecycleTraceSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Lifecycle Trace"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+        }
+
+        SectionTitle {
             title: "Runtime Context Session"
             subtitle: "Read-only conversation/session metadata. Chat history and agent runtime context remain separate."
         }
@@ -356,6 +419,112 @@ ShellPanel {
                 value: settingsPage.viewModel.conversationTransitionSummary
                 Layout.columnSpan: settingsPage.compact ? 1 : 2
                 Layout.fillWidth: true
+            }
+        }
+
+        SectionTitle {
+            title: "Runtime Integration Readiness"
+            subtitle: "Read-only adapter, provider bridge, and Ollama local health metadata. Chat inference remains disabled."
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Adapter"
+                value: settingsPage.viewModel.localRuntimeAdapterStatus + " / " + settingsPage.viewModel.localRuntimeAdapterHealth
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Adapter Summary"
+                value: settingsPage.viewModel.localRuntimeAdapterSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Provider Bridge"
+                value: settingsPage.viewModel.providerRuntimeBridgeStatus + " / " + settingsPage.viewModel.providerRuntimeBridgeSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Bridge Response"
+                value: settingsPage.viewModel.providerRuntimeBridgeResponseSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Readiness"
+                value: settingsPage.viewModel.runtimeIntegrationReadinessStatus + " / " + settingsPage.viewModel.runtimeIntegrationReadinessSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Ollama Endpoint"
+                value: settingsPage.viewModel.ollamaEndpoint
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Ollama Health"
+                value: settingsPage.viewModel.ollamaConnectionStatus + " / " + settingsPage.viewModel.ollamaHealthStatus
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Ollama Summary"
+                value: settingsPage.viewModel.ollamaHealthSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Installed Models"
+                value: settingsPage.viewModel.ollamaModelCount.toString()
+                Layout.fillWidth: true
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.localRuntimeAdapterCapabilitySummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Adapter Capability"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.ollamaModelSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Ollama Model"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.runtimeIntegrationReadinessChecks
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Integration Check"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
             }
         }
 

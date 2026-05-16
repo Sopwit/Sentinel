@@ -10,6 +10,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ChatSession.h
     include/sentinel/core/ConversationSession.h
     include/sentinel/core/ConversationStateGraph.h
+    include/sentinel/core/ExecutionLifecycle.h
     include/sentinel/core/IAgentRuntime.h
     include/sentinel/core/IAgentRegistry.h
     include/sentinel/core/IChatHistoryStore.h
@@ -44,10 +45,12 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ModelRouting.h
     include/sentinel/core/NullAgentRuntime.h
     include/sentinel/core/NullToolExecutor.h
+    include/sentinel/core/OllamaRuntime.h
     include/sentinel/core/OrchestrationDiagnostics.h
     include/sentinel/core/OrchestrationSnapshot.h
     include/sentinel/core/ProviderCatalog.h
     include/sentinel/core/RuntimeCapabilities.h
+    include/sentinel/core/RuntimeIntegration.h
     include/sentinel/core/RuntimePermissions.h
     include/sentinel/core/RuntimePipeline.h
     include/sentinel/core/RuntimeSafety.h
@@ -75,6 +78,7 @@ add_library(sentinel_core STATIC
     src/ChatSession.cpp
     src/ConversationSession.cpp
     src/ConversationStateGraph.cpp
+    src/ExecutionLifecycle.cpp
     src/IClock.cpp
     src/IContextEngine.cpp
     src/InMemoryStore.cpp
@@ -87,8 +91,10 @@ add_library(sentinel_core STATIC
     src/ModeManager.cpp
     src/NullAgentRuntime.cpp
     src/NullToolExecutor.cpp
+    src/OllamaRuntime.cpp
     src/OrchestrationDiagnostics.cpp
     src/RuntimeCapabilities.cpp
+    src/RuntimeIntegration.cpp
     src/RuntimePermissions.cpp
     src/RuntimePipeline.cpp
     src/RuntimeSafety.cpp
@@ -112,6 +118,7 @@ target_include_directories(sentinel_core
 target_link_libraries(sentinel_core
     PUBLIC
         Qt6::Core
+        Qt6::Network
         Qt6::Sql
 )
 

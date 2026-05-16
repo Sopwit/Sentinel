@@ -169,6 +169,7 @@ private slots:
     void exposesOrchestrationSnapshotMetadata();
     void exposesOrchestrationReadinessDiagnostics();
     void exposesLocalRuntimeMetadata();
+    void exposesOllamaRuntimeBoundaryMetadata();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
     void updatesModelRoutingModeMetadata();
@@ -422,6 +423,69 @@ void ApplicationControllerTest::exposesLocalRuntimeMetadata() {
     QVERIFY(controller->runtimePipelineTraceSummaries().contains(
         QStringLiteral("Execution Boundary [Blocked]: Execution boundary remained blocked; no "
                        "runtime action was performed.")));
+    QCOMPARE(controller->executionLifecycleState(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->executionLifecycleStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->executionLifecycleSummary(),
+             QStringLiteral("Execution lifecycle reached blocked metadata state; no execution is "
+                            "permitted."));
+    QCOMPARE(controller->executionLifecycleTraceSummaries().size(), 7);
+    QVERIFY(controller->executionLifecycleTraceSummaries().contains(
+        QStringLiteral("6. Ready Placeholder [Warning]: Ready placeholder is descriptive and not "
+                       "executable.")));
+    QVERIFY(controller->executionLifecycleTraceSummaries().contains(
+        QStringLiteral("7. Blocked [Blocked]: Execution remains intentionally blocked.")));
+    QCOMPARE(controller->executionSessionId(), QStringLiteral("execution-session-1"));
+    QCOMPARE(controller->executionSessionStatus(), QStringLiteral("Reserved"));
+    QCOMPARE(controller->executionSessionOwnership(), QStringLiteral("Application Controller"));
+    QCOMPARE(controller->executionCoordinationMode(), QStringLiteral("Metadata Only"));
+    QCOMPARE(controller->executionSessionSummary(),
+             QStringLiteral("Execution session is reserved for metadata only."));
+    QCOMPARE(controller->executionCoordinationSnapshotSummary(),
+             QStringLiteral("Execution coordination snapshot is read-only for "
+                            "execution-session-1; lifecycle is Blocked and execution is "
+                            "blocked."));
+    QCOMPARE(controller->localRuntimeAdapterStatus(), QStringLiteral("Placeholder"));
+    QCOMPARE(controller->localRuntimeAdapterHealth(), QStringLiteral("Metadata Only"));
+    QCOMPARE(controller->localRuntimeAdapterSummary(),
+             QStringLiteral("Ollama local runtime adapter contract is metadata-only; no runtime "
+                            "connection is configured."));
+    QCOMPARE(controller->localRuntimeAdapterCapabilitySummaries().size(), 3);
+    QVERIFY(controller->localRuntimeAdapterCapabilitySummaries().contains(
+        QStringLiteral("Model Discovery (Unavailable, Not Executable): Model discovery is "
+                       "intentionally disabled.")));
+    QCOMPARE(controller->providerRuntimeBridgeStatus(), QStringLiteral("Not Connected"));
+    QCOMPARE(controller->providerRuntimeBridgeSummary(),
+             QStringLiteral("Provider runtime bridge is not connected and cannot execute provider "
+                            "requests."));
+    QCOMPARE(controller->providerRuntimeBridgeResponseSummary(),
+             QStringLiteral("Provider runtime bridge is metadata-only; no provider or local "
+                            "runtime request was executed."));
+    QCOMPARE(controller->runtimeIntegrationReadinessStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->runtimeIntegrationReadinessSummary(),
+             QStringLiteral("Runtime integration readiness is blocked: Ollama local "
+                            "health/discovery metadata is available, but provider bridge "
+                            "execution and inference remain disabled."));
+    QCOMPARE(controller->runtimeIntegrationReadinessChecks().size(), 5);
+    QVERIFY(controller->runtimeIntegrationReadinessChecks().contains(
+        QStringLiteral("Pass: Endpoint Configuration - Safe local Ollama endpoint is configured "
+                       "for loopback-only health checks.")));
+    QVERIFY(controller->runtimeIntegrationReadinessChecks().contains(
+        QStringLiteral("Pass: Model Discovery - Installed model discovery boundary is available "
+                       "for read-only local metadata.")));
+    QVERIFY(controller->runtimeIntegrationReadinessChecks().contains(
+        QStringLiteral("Blocked: Execution Permission - Execution lifecycle, runtime permission, "
+                       "safety, and pipeline boundaries still block execution.")));
+}
+
+void ApplicationControllerTest::exposesOllamaRuntimeBoundaryMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->ollamaEndpoint(), QStringLiteral("http://127.0.0.1:11434"));
+    QCOMPARE(controller->ollamaConnectionStatus(), QStringLiteral("Unavailable"));
+    QCOMPARE(controller->ollamaHealthStatus(), QStringLiteral("Unavailable"));
+    QVERIFY(controller->ollamaHealthSummary().contains(QStringLiteral("no local health check")));
+    QCOMPARE(controller->ollamaModelCount(), 0);
+    QVERIFY(controller->ollamaModelSummaries().isEmpty());
 }
 
 void ApplicationControllerTest::exposesConversationSessionMetadata() {

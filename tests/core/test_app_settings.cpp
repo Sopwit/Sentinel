@@ -23,6 +23,8 @@ private slots:
     void updatesRoutingMode();
     void fallsBackForInvalidRoutingMode();
     void persistsRoutingModeThroughJsonStore();
+    void exposesOllamaEndpointDefault();
+    void normalizesOllamaEndpoint();
 };
 
 static std::unique_ptr<AppSettings> makeSettings() {
@@ -117,6 +119,27 @@ void AppSettingsTest::persistsRoutingModeThroughJsonStore() {
     AppSettings reloaded{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
 
     QCOMPARE(reloaded.routingModeName(), QStringLiteral("Cloud Allowed"));
+}
+
+void AppSettingsTest::exposesOllamaEndpointDefault() {
+    const auto settings = makeSettings();
+
+    QCOMPARE(settings->ollamaEndpoint(), QStringLiteral("http://127.0.0.1:11434"));
+}
+
+void AppSettingsTest::normalizesOllamaEndpoint() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::ollamaEndpointChanged);
+
+    settings->setOllamaEndpoint(QStringLiteral(" http://localhost:11434/ "));
+
+    QCOMPARE(settings->ollamaEndpoint(), QStringLiteral("http://localhost:11434"));
+    QCOMPARE(spy.count(), 1);
+
+    settings->setOllamaEndpoint(QStringLiteral("https://example.com"));
+
+    QCOMPARE(settings->ollamaEndpoint(), QStringLiteral("http://127.0.0.1:11434"));
+    QCOMPARE(spy.count(), 2);
 }
 
 QTEST_MAIN(AppSettingsTest)

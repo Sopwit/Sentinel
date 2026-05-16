@@ -370,6 +370,110 @@ QStringList DesktopShellViewModel::runtimePipelineTraceSummaries() const {
     return controller_.runtimePipelineTraceSummaries();
 }
 
+QString DesktopShellViewModel::executionLifecycleState() const {
+    return controller_.executionLifecycleState();
+}
+
+QString DesktopShellViewModel::executionLifecycleStatus() const {
+    return controller_.executionLifecycleStatus();
+}
+
+QString DesktopShellViewModel::executionLifecycleSummary() const {
+    return controller_.executionLifecycleSummary();
+}
+
+QStringList DesktopShellViewModel::executionLifecycleTraceSummaries() const {
+    return controller_.executionLifecycleTraceSummaries();
+}
+
+QString DesktopShellViewModel::executionSessionId() const {
+    return controller_.executionSessionId();
+}
+
+QString DesktopShellViewModel::executionSessionStatus() const {
+    return controller_.executionSessionStatus();
+}
+
+QString DesktopShellViewModel::executionSessionOwnership() const {
+    return controller_.executionSessionOwnership();
+}
+
+QString DesktopShellViewModel::executionCoordinationMode() const {
+    return controller_.executionCoordinationMode();
+}
+
+QString DesktopShellViewModel::executionSessionSummary() const {
+    return controller_.executionSessionSummary();
+}
+
+QString DesktopShellViewModel::executionCoordinationSnapshotSummary() const {
+    return controller_.executionCoordinationSnapshotSummary();
+}
+
+QString DesktopShellViewModel::localRuntimeAdapterStatus() const {
+    return controller_.localRuntimeAdapterStatus();
+}
+
+QString DesktopShellViewModel::localRuntimeAdapterHealth() const {
+    return controller_.localRuntimeAdapterHealth();
+}
+
+QString DesktopShellViewModel::localRuntimeAdapterSummary() const {
+    return controller_.localRuntimeAdapterSummary();
+}
+
+QStringList DesktopShellViewModel::localRuntimeAdapterCapabilitySummaries() const {
+    return controller_.localRuntimeAdapterCapabilitySummaries();
+}
+
+QString DesktopShellViewModel::providerRuntimeBridgeStatus() const {
+    return controller_.providerRuntimeBridgeStatus();
+}
+
+QString DesktopShellViewModel::providerRuntimeBridgeSummary() const {
+    return controller_.providerRuntimeBridgeSummary();
+}
+
+QString DesktopShellViewModel::providerRuntimeBridgeResponseSummary() const {
+    return controller_.providerRuntimeBridgeResponseSummary();
+}
+
+QString DesktopShellViewModel::runtimeIntegrationReadinessStatus() const {
+    return controller_.runtimeIntegrationReadinessStatus();
+}
+
+QString DesktopShellViewModel::runtimeIntegrationReadinessSummary() const {
+    return controller_.runtimeIntegrationReadinessSummary();
+}
+
+QStringList DesktopShellViewModel::runtimeIntegrationReadinessChecks() const {
+    return controller_.runtimeIntegrationReadinessChecks();
+}
+
+QString DesktopShellViewModel::ollamaEndpoint() const {
+    return controller_.ollamaEndpoint();
+}
+
+QString DesktopShellViewModel::ollamaConnectionStatus() const {
+    return controller_.ollamaConnectionStatus();
+}
+
+QString DesktopShellViewModel::ollamaHealthStatus() const {
+    return controller_.ollamaHealthStatus();
+}
+
+QString DesktopShellViewModel::ollamaHealthSummary() const {
+    return controller_.ollamaHealthSummary();
+}
+
+int DesktopShellViewModel::ollamaModelCount() const {
+    return controller_.ollamaModelCount();
+}
+
+QStringList DesktopShellViewModel::ollamaModelSummaries() const {
+    return controller_.ollamaModelSummaries();
+}
+
 int DesktopShellViewModel::availableToolCount() const {
     return controller_.availableToolCount();
 }

@@ -932,3 +932,86 @@ Boundary rules:
   downloads, streaming, subprocess/process launch, filesystem/system actions, real tools, plugin
   loading, sandbox runtime enforcement, embeddings, semantic search, autonomous workers, or
   execution/setup UI.
+
+## 50. Execution Lifecycle Is Metadata-Only Coordination
+
+Decision: Add `IExecutionLifecycle`, `StaticExecutionLifecycle`, `ExecutionCoordinator`, and
+execution session metadata as a future execution lifecycle/session coordination layer.
+
+Reason: Future provider/runtime integration needs a deterministic lifecycle vocabulary before any
+execution path is enabled.
+
+Boundary rules:
+
+- Execution request, intent, priority, lifecycle state/status/result/trace, session ownership, and
+  coordination snapshot values are metadata only.
+- The lifecycle can describe requested, validating, permission-check, safety-check, coordination,
+  ready-placeholder, and blocked states.
+- The current lifecycle always ends blocked and non-executable.
+- Invalid transitions are rejected safely and do not advance state.
+- `ExecutionCoordinator` produces read-only snapshots only; it is not a scheduler or worker.
+- `ApplicationController` owns lifecycle/coordinator interfaces.
+- `DesktopShellViewModel` exposes only strings and string lists.
+- Execution lifecycle remains separate from `ILocalRuntime`, `IChatProvider`, `IAgentRuntime`,
+  `IToolExecutor`, provider adapters, tools, plugins, and platform services.
+- This decision does not allow provider/model execution, Ollama launch, process/subprocess launch,
+  filesystem/system actions, networking/API keys, downloads, streaming, tool/plugin execution,
+  autonomous workers, timers/background loops, execution controls, or setup UI.
+
+Future Phase 9 integration must add explicit provider/runtime interfaces, policy gates, tests, and
+documentation before any executable path can exist.
+
+## 51. Runtime Adapter And Provider Bridge Are Pre-integration Metadata
+
+Decision: Add local runtime adapter, provider runtime bridge, and runtime integration readiness
+contracts as metadata-only pre-integration boundaries.
+
+Reason: Future Ollama/local runtime integration needs explicit adapter and bridge ownership before
+any local provider implementation, endpoint configuration, model discovery, or execution path is
+introduced.
+
+Boundary rules:
+
+- `ILocalRuntimeAdapter` describes adapter metadata only and does not connect to, call, launch, or
+  probe a local runtime.
+- `LocalRuntimeAdapterDescriptor` and capability summaries are descriptive placeholders.
+- `IProviderRuntimeBridge` is not an `IChatProvider` implementation and does not generate responses.
+- Provider bridge requests/responses are metadata only and report not connected/not executable.
+- `StaticRuntimeIntegrationReadiness` produces ordered readiness checks from already-owned
+  metadata only; it does not probe the system.
+- Controller and QML exposure stays read-only and QML-safe: status strings, summaries, and string
+  lists.
+- Settings/Dashboard may show readiness metadata but must not add setup buttons, endpoint fields,
+  model selection UI, or execution controls.
+- This decision does not allow Ollama/OpenAI/Anthropic calls, API keys, networking, downloads,
+  streaming, process/subprocess launch, filesystem/system actions, model discovery, model
+  execution, real tools/plugins, embeddings/vector DB, or autonomous workers.
+
+## 52. Ollama Health Boundary Is Local Read-Only
+
+Decision: Add Ollama endpoint/config metadata and an `IOllamaRuntimeClient` boundary for local
+health checks and installed-model metadata discovery only.
+
+Reason: Phase 9 needs the first controlled real local-provider contact point, but chat inference,
+model execution, downloads, process launch, and tooling remain too broad for this step.
+
+Boundary rules:
+
+- Default endpoint is `http://127.0.0.1:11434`.
+- Endpoint normalization accepts only loopback HTTP endpoints and falls back to the default for
+  invalid, cloud, non-loopback, query, fragment, or non-HTTP values.
+- `AppSettings` may persist the normalized endpoint only; no API keys or credentials are stored.
+- `NullOllamaRuntimeClient` is deterministic and unavailable.
+- `OllamaHttpRuntimeClient` is injectable and may call only local Ollama read-only metadata APIs:
+  `/api/version` for health and `/api/tags` for installed model summaries.
+- The Ollama client is not `IChatProvider`, provider bridge execution, execution lifecycle, model
+  router execution, agent runtime, tool executor, or plugin runtime.
+- Controller and QML exposure stays read-only and QML-safe: endpoint, connection/health strings,
+  summary, model count, and model summary strings.
+- This decision does not allow prompt execution, model generation, streaming, model
+  download/pull/delete/run, subprocess/process launch, cloud provider calls, API keys, tool/plugin
+  execution, filesystem/system scans/actions, background workers, setup UI, model selection UI, or
+  routing chat requests to Ollama.
+
+Phase 9.3 may plan an inference boundary, but it must be separately scoped, policy-gated,
+interface-owned, injectable/testable, and documented before any prompt execution is allowed.

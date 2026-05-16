@@ -865,6 +865,81 @@ Still out of scope:
   launch, filesystem/system actions, real tools, plugin loading, sandbox runtime enforcement,
   embeddings/vector DB/semantic search, autonomous workers, or execution/setup UI.
 
+## Phase 8.0-8.2: Execution Lifecycle And Session Coordination
+
+Completed. Added metadata-only execution lifecycle/session coordination for future runtime
+integration while keeping execution disabled.
+
+Delivered:
+
+- Execution request/intent/priority and lifecycle state/status/result/trace metadata.
+- Execution session id/status/ownership/coordination-mode metadata.
+- `IExecutionLifecycle` with deterministic `StaticExecutionLifecycle`.
+- `ExecutionCoordinator` and read-only `ExecutionCoordinationSnapshot`.
+- Ordered lifecycle traces ending in blocked/non-executable state.
+- Invalid transition rejection.
+- Read-only controller/view-model Dashboard and Settings exposure.
+- Tests for deterministic lifecycle behavior, blocked-by-default posture, transition validation,
+  session ownership metadata, read-only coordination snapshots, and QML-safe exposure.
+
+Still out of scope:
+
+- Provider/model calls, Ollama launch, networking/API keys, downloads, streaming, process launch,
+  filesystem/system actions, tools/plugins, autonomous workers, timers/background loops, execution
+  controls, or setup UI.
+
+## Phase 8.3-8.5: Local Runtime Adapter / Provider Bridge Readiness
+
+Completed. Prepared the architecture for future Ollama/local runtime integration with metadata-only
+adapter, bridge, and readiness boundaries.
+
+Delivered:
+
+- `ILocalRuntimeAdapter` and deterministic `StaticLocalRuntimeAdapter` placeholder metadata.
+- Provider bridge boundary with not-connected and not-executable request/response metadata.
+- Runtime integration readiness report with ordered checks for adapter contract, endpoint
+  configuration, model discovery, provider bridge connection, and execution permission.
+- Read-only controller/view-model Dashboard and Settings exposure.
+- Tests for adapter metadata, bridge not-connected behavior, readiness ordering, controller
+  exposure, and QML-safe view-model properties.
+
+Still out of scope:
+
+- Ollama/provider calls, endpoint setup fields, networking/API keys, downloads, streaming,
+  process/subprocess launch, filesystem/system actions, model discovery, model execution,
+  tools/plugins, embeddings/vector DB, autonomous workers, and model selection UI.
+
+## Phase 9.0-9.2: Ollama Local Health And Discovery Boundary
+
+Completed. Added the first controlled Ollama/local integration surface while keeping chat
+inference and execution disabled.
+
+Delivered:
+
+- Ollama endpoint/config/status/model metadata.
+- `IOllamaRuntimeClient`, deterministic `NullOllamaRuntimeClient`, and injectable
+  `OllamaHttpRuntimeClient`.
+- Safe default endpoint: `http://127.0.0.1:11434`.
+- Loopback-HTTP-only endpoint normalization with fallback to the safe default.
+- `AppSettings` persistence for normalized endpoint only; no API keys or cloud endpoint default.
+- Health boundary limited to local `/api/version`.
+- Optional installed model discovery limited to local `/api/tags` read-only metadata.
+- Read-only controller/view-model exposure for endpoint, health, connection, model count, and model
+  summaries.
+- Settings/Dashboard local status visibility without setup or execution controls.
+
+Still out of scope:
+
+- Prompt execution, model generation, streaming, downloads/pulls/deletes/runs, subprocess/process
+  launch, cloud calls, API keys, tool/plugin execution, filesystem/system scans/actions, background
+  workers, model selection UI, and routing chat requests to Ollama.
+
+## Phase 9.3: Inference Boundary Planning
+
+Planned future boundary work. Any executable Ollama inference path must be separately scoped,
+policy-gated, interface-owned, injectable/testable, and documented. Phase 9.0-9.2 health/discovery
+does not authorize prompt execution or chat routing.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

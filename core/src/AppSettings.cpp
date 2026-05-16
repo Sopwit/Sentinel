@@ -1,6 +1,7 @@
 #include "sentinel/core/AppSettings.h"
 
 #include "sentinel/core/ModelRouting.h"
+#include "sentinel/core/OllamaRuntime.h"
 
 namespace sentinel::core {
 
@@ -57,6 +58,24 @@ void AppSettings::setRoutingModeName(const QString& routingModeName) {
 
 QStringList AppSettings::availableRoutingModes() const {
     return routingModeNames();
+}
+
+QString AppSettings::ollamaEndpoint() const {
+    const auto fallback = OllamaEndpoint::defaultEndpoint().toString();
+    return store_ ? OllamaEndpoint::fromUserInput(
+                        store_->value(QString::fromLatin1(ollamaEndpointKey), fallback))
+                        .toString()
+                  : fallback;
+}
+
+void AppSettings::setOllamaEndpoint(const QString& endpoint) {
+    const auto normalized = OllamaEndpoint::fromUserInput(endpoint).toString();
+    if (normalized == ollamaEndpoint() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(ollamaEndpointKey), normalized);
+    emit ollamaEndpointChanged();
 }
 
 } // namespace sentinel::core

@@ -161,6 +161,25 @@ Future UI vision:
 - Phase 7.6 checkpoints the Phase 7 runtime architecture in `docs/PHASE_7_CHECKPOINT.md` and
   keeps runtime execution, networking, downloads, subprocesses, filesystem/system actions, tools,
   and plugins out of scope.
+- Phase 8.0 through Phase 8.2 add metadata-only execution lifecycle/session coordination.
+  `IExecutionLifecycle`, `StaticExecutionLifecycle`, `ExecutionSession`, and
+  `ExecutionCoordinator` describe ordered requested, validating, permission-check, safety-check,
+  coordination, ready-placeholder, and blocked metadata. Execution remains blocked and
+  non-executable; no providers, models, tools, plugins, processes, networking, downloads,
+  filesystem/system actions, workers, timers, or setup controls are added.
+- Phase 8.3 through Phase 8.5 add metadata-only local runtime adapter, provider bridge, and
+  pre-integration readiness boundaries. `ILocalRuntimeAdapter`,
+  `IProviderRuntimeBridge`, and `StaticRuntimeIntegrationReadiness` describe the future
+  Ollama/local integration contract without endpoint setup, provider calls, process launch,
+  networking, downloads, model discovery, filesystem/system scans, streaming, execution, tools,
+  plugins, embeddings, or workers.
+- Phase 9.0 through Phase 9.2 add the first controlled Ollama-local health/discovery boundary.
+  `OllamaEndpoint`, `OllamaConfig`, `IOllamaRuntimeClient`, `NullOllamaRuntimeClient`, and
+  injectable `OllamaHttpRuntimeClient` support loopback-only endpoint metadata, `/api/version`
+  health checks, and optional `/api/tags` installed-model metadata. This remains separate from
+  `IChatProvider`, provider bridge execution, model router execution, execution lifecycle, agent
+  runtime, tools, and plugins; no prompt execution, streaming, downloads, process launch, cloud
+  calls, API keys, filesystem/system actions, or chat routing to Ollama is enabled.
 - Phase 5.0 adds UI/UX planning and a small QML design-token singleton without adding advanced
   motion, provider integration, model execution, or runtime behavior.
 - Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
@@ -185,14 +204,14 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, Phase 6.6, Phase 6.7, Phase 6.8, Phase 6.9, Phase 6.10, Phase 7.0, Phase 7.1, Phase 7.2, Phase 7.3, Phase 7.4, Phase 7.5, and Phase 7.6.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, Phase 6.6, Phase 6.7, Phase 6.8, Phase 6.9, Phase 6.10, Phase 7.0, Phase 7.1, Phase 7.2, Phase 7.3, Phase 7.4, Phase 7.5, Phase 7.6, Phase 8.0-8.2, Phase 8.3-8.5, and Phase 9.0-9.2.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline and metadata-only model
   routing skeleton:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
   with local runtime context/session, in-memory activity logging for pipeline metadata, and
   read-only dashboard visibility for that state. Model/provider routing is descriptor-only and
   currently resolves to a deterministic local placeholder.
-- Next: Phase 8 planning/readiness, not full model execution unless explicitly scoped.
-- Recent: Phase 7.6, Runtime Architecture Checkpoint and Cleanup.
+- Next: Phase 9.3 inference boundary planning, not prompt execution unless explicitly scoped.
+- Recent: Phase 9.0-9.2, Ollama Local Health And Discovery Boundary.
 
-Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.
+Current runtime still has no prompt/model execution, chat routing to Ollama, real tool execution, shell/process launch, filesystem mutation/scanning, cloud networking, API keys, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

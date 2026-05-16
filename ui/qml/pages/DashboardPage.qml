@@ -73,7 +73,7 @@ ScrollView {
 
             ShellPanel {
                 Layout.fillWidth: true
-                implicitHeight: 430
+                implicitHeight: 500
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.032)
                 border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.08)
                 bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
@@ -166,6 +166,63 @@ ScrollView {
                     Label {
                         Layout.fillWidth: true
                         text: dashboardPage.viewModel.conversationTransitionSummary
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.72)
+                        font.pixelSize: SentinelTheme.fontTiny
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "EXECUTION / " + dashboardPage.viewModel.executionLifecycleStatus
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.letterSpacing: 2.2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: dashboardPage.viewModel.executionCoordinationSnapshotSummary
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.72)
+                        font.pixelSize: SentinelTheme.fontTiny
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "INTEGRATION / " + dashboardPage.viewModel.runtimeIntegrationReadinessStatus
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.letterSpacing: 2.2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: dashboardPage.viewModel.runtimeIntegrationReadinessSummary
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.72)
+                        font.pixelSize: SentinelTheme.fontTiny
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "OLLAMA / " + dashboardPage.viewModel.ollamaHealthStatus
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.letterSpacing: 2.2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: dashboardPage.viewModel.ollamaHealthSummary
                         color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.72)
                         font.pixelSize: SentinelTheme.fontTiny
                         wrapMode: Text.WordWrap

@@ -40,6 +40,9 @@ add_sentinel_core_test(test_static_runtime_permission_policy
 add_sentinel_core_test(test_static_runtime_safety_policy
                        core/test_static_runtime_safety_policy.cpp)
 add_sentinel_core_test(test_static_runtime_pipeline core/test_static_runtime_pipeline.cpp)
+add_sentinel_core_test(test_static_execution_lifecycle core/test_static_execution_lifecycle.cpp)
+add_sentinel_core_test(test_runtime_integration core/test_runtime_integration.cpp)
+add_sentinel_core_test(test_ollama_runtime core/test_ollama_runtime.cpp)
 add_sentinel_core_test(test_null_tool_executor core/test_null_tool_executor.cpp)
 add_sentinel_core_test(test_local_runtime core/test_local_runtime.cpp)
 add_sentinel_core_test(test_local_runtime_session core/test_local_runtime_session.cpp)
