@@ -242,6 +242,27 @@ ShellPanel {
                 Layout.fillWidth: true
             }
 
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Negotiation"
+                value: settingsPage.viewModel.runtimeNegotiationSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Negotiation Profile"
+                value: settingsPage.viewModel.runtimeNegotiationProfileSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Local-Only Enforcement"
+                value: settingsPage.viewModel.localOnlyRuntimeEnforcementSummary
+                Layout.fillWidth: true
+            }
+
             Repeater {
                 model: settingsPage.viewModel.localRuntimeCapabilities
 

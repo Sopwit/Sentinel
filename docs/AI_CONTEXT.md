@@ -145,6 +145,12 @@ Future UI vision:
   reservation state for future local runtime ownership without allocating models, launching
   processes, calling providers, networking, streaming, scanning filesystems, executing tools,
   loading plugins, or starting workers.
+- Phase 7.2 adds metadata-only runtime capability negotiation. `RuntimeCapabilityDescriptor`,
+  `RuntimeNegotiationProfile`, `RuntimeNegotiationResult`, and
+  `StaticRuntimeCapabilityRegistry` describe deterministic future runtime capabilities and
+  local-only/privacy-safe posture without activating capabilities, executing models, calling
+  providers, networking, streaming, launching processes, scanning filesystems, executing tools,
+  loading plugins, approving permissions, or starting workers.
 - Phase 5.0 adds UI/UX planning and a small QML design-token singleton without adding advanced
   motion, provider integration, model execution, or runtime behavior.
 - Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
@@ -169,7 +175,7 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, Phase 6.6, Phase 6.7, Phase 6.8, Phase 6.9, Phase 6.10, Phase 7.0, and Phase 7.1.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, Phase 6.6, Phase 6.7, Phase 6.8, Phase 6.9, Phase 6.10, Phase 7.0, Phase 7.1, and Phase 7.2.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline and metadata-only model
   routing skeleton:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
@@ -178,6 +184,6 @@ Future UI vision:
   currently resolves to a deterministic local placeholder.
 - Next: Phase 7.x local runtime boundary stabilization, not full model execution unless explicitly
   scoped.
-- Recent: Phase 7.1, Local Runtime Session Ownership Skeleton.
+- Recent: Phase 7.2, Runtime Capability Negotiation Layer.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

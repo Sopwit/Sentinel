@@ -15,7 +15,9 @@ records high-level interaction transitions without executing providers, models, 
 or runtime work. Phase 6.10 checkpoints the completed Phase 6 metadata foundation before any Phase
 7 local runtime boundary work begins. Phase 7.0 adds `ILocalRuntime` as a metadata-only local
 runtime boundary that refuses execution. Phase 7.1 adds metadata-only local runtime session
-ownership/lifecycle state without allocating models or launching processes.
+ownership/lifecycle state without allocating models or launching processes. Phase 7.2 adds
+metadata-only runtime capability negotiation descriptors without activating capabilities or
+executing runtime work.
 
 ## Future Components
 
@@ -47,6 +49,9 @@ ownership/lifecycle state without allocating models or launching processes.
   implementation reports metadata and refuses execution without probing local runtimes.
 - Local runtime sessions: future local runtime ownership/session state. The current implementation
   reports deterministic placeholder lifecycle, allocation, and reservation metadata only.
+- Runtime capability negotiation: future runtime capability vocabulary and negotiation posture.
+  The current implementation reports deterministic capability descriptors, disabled/unavailable
+  capability summaries, local-only enforcement, and privacy-safe metadata only.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -133,6 +138,11 @@ Current Phase 7.1 runtime remains metadata-only:
   `NullLocalRuntimeSessionManager` reports one deterministic placeholder reserved session; it does
   not allocate models, launch processes, scan filesystems, stream output, call providers, execute
   tools, or load plugins.
+- `IRuntimeCapabilityRegistry` owns future runtime capability negotiation metadata only.
+  `StaticRuntimeCapabilityRegistry` reports deterministic capability descriptors and enables only
+  local-only/privacy-safe safety posture metadata; it does not activate capabilities, execute
+  models, call providers, stream output, access filesystems, launch processes, execute tools, load
+  plugins, or access networks.
 - `AppSettings` persists the routing mode through `JsonSettingsStore`; it does not store provider
   credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
@@ -144,8 +154,9 @@ automation remain future work.
 
 ## Phase 7 Direction
 
-Phase 7.0 starts with a local runtime boundary skeleton, not full provider/model execution. Any
-future local runtime implementation must be explicitly scoped, interface-owned, deterministic in
-tests, and still separate from cloud provider integration, credentials, downloads, streaming, tool
-execution, plugins, vector memory, and autonomous behavior unless a later phase approves those
-capabilities.
+Phase 7.0 starts with a local runtime boundary skeleton, not full provider/model execution. Phase
+7.2 adds capability negotiation vocabulary only; capability activation, permission policy, and
+runtime execution remain later explicit scopes. Any future local runtime implementation must be
+explicitly scoped, interface-owned, deterministic in tests, and still separate from cloud provider
+integration, credentials, downloads, streaming, tool execution, plugins, vector memory, and
+autonomous behavior unless a later phase approves those capabilities.

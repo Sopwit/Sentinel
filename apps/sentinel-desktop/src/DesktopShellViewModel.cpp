@@ -318,6 +318,30 @@ QStringList DesktopShellViewModel::localRuntimeSessionSummaries() const {
     return controller_.localRuntimeSessionSummaries();
 }
 
+int DesktopShellViewModel::runtimeCapabilityCount() const {
+    return controller_.runtimeCapabilityCount();
+}
+
+QStringList DesktopShellViewModel::enabledRuntimeCapabilitySummaries() const {
+    return controller_.enabledRuntimeCapabilitySummaries();
+}
+
+QStringList DesktopShellViewModel::disabledRuntimeCapabilitySummaries() const {
+    return controller_.disabledRuntimeCapabilitySummaries();
+}
+
+QString DesktopShellViewModel::runtimeNegotiationProfileSummary() const {
+    return controller_.runtimeNegotiationProfileSummary();
+}
+
+QString DesktopShellViewModel::runtimeNegotiationSummary() const {
+    return controller_.runtimeNegotiationSummary();
+}
+
+QString DesktopShellViewModel::localOnlyRuntimeEnforcementSummary() const {
+    return controller_.localOnlyRuntimeEnforcementSummary();
+}
+
 int DesktopShellViewModel::availableToolCount() const {
     return controller_.availableToolCount();
 }

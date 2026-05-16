@@ -833,3 +833,29 @@ Boundary rules:
 - Session metadata must not allocate models, call providers, use API keys, access networks,
   download models, stream output, launch processes/subprocesses, scan or mutate filesystems,
   execute tools, load plugins, or start background workers.
+
+## 45. Runtime Capability Negotiation Is Metadata Only
+
+Decision: Add a runtime capability negotiation registry that describes what future runtime work may
+support without activating or executing any capability.
+
+Reason: Future runtime phases need a stable vocabulary for local inference, streaming, multimodal,
+memory, tool/plugin bridge, filesystem/process, cloud relay, local-only, and privacy-safe
+capabilities before any execution or permission policy is implemented.
+
+Boundary rules:
+
+- `IRuntimeCapabilityRegistry` exposes deterministic capability descriptors and negotiation
+  metadata only.
+- `StaticRuntimeCapabilityRegistry` enables only safety posture metadata: local-only enforcement
+  and privacy-safe mode.
+- Disabled and unavailable capabilities remain descriptive and non-executable.
+- Runtime capability negotiation is separate from `ILocalRuntime`, local runtime sessions,
+  `IChatProvider`, `IModelRouter`, `IAgentRuntime`, `IToolExecutor`, approval policy, sandbox
+  policy, and plugin management.
+- Controller and QML exposure stays read-only and QML-safe: counts, enabled/disabled summaries,
+  negotiation profile summary, negotiation result summary, and local-only enforcement summary.
+- Capability negotiation must not activate capabilities, call providers, use API keys, access
+  networks, download models, execute models, stream output, launch processes/subprocesses, scan or
+  mutate filesystems, execute tools, load plugins, approve permissions, or start background
+  workers.

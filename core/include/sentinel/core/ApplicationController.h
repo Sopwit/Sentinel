@@ -22,6 +22,7 @@
 #include "sentinel/core/LocalRuntimeSession.h"
 #include "sentinel/core/OrchestrationDiagnostics.h"
 #include "sentinel/core/OrchestrationSnapshot.h"
+#include "sentinel/core/RuntimeCapabilities.h"
 
 #include <QObject>
 #include <QStringList>
@@ -113,6 +114,16 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString localRuntimeAllocationSummary READ localRuntimeAllocationSummary CONSTANT)
     Q_PROPERTY(QString localRuntimeReservationSummary READ localRuntimeReservationSummary CONSTANT)
     Q_PROPERTY(QStringList localRuntimeSessionSummaries READ localRuntimeSessionSummaries CONSTANT)
+    Q_PROPERTY(int runtimeCapabilityCount READ runtimeCapabilityCount CONSTANT)
+    Q_PROPERTY(QStringList enabledRuntimeCapabilitySummaries READ enabledRuntimeCapabilitySummaries
+                   CONSTANT)
+    Q_PROPERTY(QStringList disabledRuntimeCapabilitySummaries READ
+                   disabledRuntimeCapabilitySummaries CONSTANT)
+    Q_PROPERTY(
+        QString runtimeNegotiationProfileSummary READ runtimeNegotiationProfileSummary CONSTANT)
+    Q_PROPERTY(QString runtimeNegotiationSummary READ runtimeNegotiationSummary CONSTANT)
+    Q_PROPERTY(
+        QString localOnlyRuntimeEnforcementSummary READ localOnlyRuntimeEnforcementSummary CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -138,6 +149,7 @@ public:
         std::unique_ptr<IMemoryCatalog> memoryCatalog = nullptr,
         std::unique_ptr<ILocalRuntime> localRuntime = nullptr,
         std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions = nullptr,
+        std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities = nullptr,
         QObject* parent = nullptr);
 
     QString providerName() const;
@@ -205,6 +217,12 @@ public:
     QString localRuntimeAllocationSummary() const;
     QString localRuntimeReservationSummary() const;
     QStringList localRuntimeSessionSummaries() const;
+    int runtimeCapabilityCount() const;
+    QStringList enabledRuntimeCapabilitySummaries() const;
+    QStringList disabledRuntimeCapabilitySummaries() const;
+    QString runtimeNegotiationProfileSummary() const;
+    QString runtimeNegotiationSummary() const;
+    QString localOnlyRuntimeEnforcementSummary() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -262,6 +280,7 @@ private:
     std::unique_ptr<IMemoryCatalog> memoryCatalog_;
     std::unique_ptr<ILocalRuntime> localRuntime_;
     std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions_;
+    std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

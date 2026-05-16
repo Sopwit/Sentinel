@@ -1211,3 +1211,47 @@ Still out of scope:
   controls/actions, filesystem/system scans/actions, plugin loading, vector databases, embeddings,
   semantic search, autonomous background workers, timers, threads, external process calls,
   multi-conversation persistence, or broad UI redesign.
+
+### Phase 7.2: Runtime Capability Negotiation Layer
+
+Completed. Added deterministic runtime capability negotiation metadata without enabling runtime
+execution or capability activation.
+
+Scope:
+
+- Added value-only runtime capability negotiation metadata:
+  - `RuntimeCapabilityDescriptor`
+  - `RuntimeCapabilityState`
+  - `RuntimeCapabilityGroup`
+  - `RuntimeNegotiationProfile`
+  - `RuntimeNegotiationResult`
+- Added `IRuntimeCapabilityRegistry` as the future runtime capability metadata boundary.
+- Added `StaticRuntimeCapabilityRegistry` with deterministic descriptors for local inference,
+  streaming, multimodal, embeddings, semantic memory, tool bridge, plugin bridge, memory binding,
+  filesystem access, external process execution, cloud relay support, local-only enforcement, and
+  privacy-safe mode.
+- Enabled capabilities are safety metadata only: local-only enforcement and privacy-safe mode.
+- Disabled or unavailable capabilities remain non-executable and are not activated automatically.
+- `ApplicationController` exposes capability count, enabled/disabled summaries, negotiation
+  profile summary, negotiation result summary, and local-only enforcement summary.
+- `DesktopShellViewModel` exposes only QML-safe read-only strings, counts, and string lists.
+- Settings shows minimal read-only runtime negotiation metadata without controls.
+- Tests cover deterministic registry metadata, disabled/unavailable capability handling,
+  local-only enforcement metadata, controller exposure, and QML-safe view-model properties.
+
+Separation:
+
+- Runtime capability negotiation is not runtime execution.
+- Runtime capability negotiation is not provider routing.
+- Runtime capability negotiation is not agent execution.
+- Runtime capability negotiation is not tool execution.
+- Runtime capability negotiation is not permission approval.
+- Runtime capability negotiation is not plugin management.
+
+Still out of scope:
+
+- Capability activation, real provider integration, Ollama/OpenAI/Anthropic calls, API keys,
+  networking, model downloads, model execution, streaming, process/subprocess launch, real tool
+  execution, approval controls/actions, filesystem/system scans/actions, plugin loading, vector
+  databases, embeddings, semantic search, autonomous background workers, timers, threads, external
+  process calls, multi-conversation persistence, or broad UI redesign.

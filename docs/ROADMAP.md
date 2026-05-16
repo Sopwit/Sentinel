@@ -767,7 +767,33 @@ Still out of scope:
 - Provider calls, API keys, networking, downloads, model execution, streaming, process/subprocess
   launch, filesystem/system actions, tools/plugins, autonomous workers, or broad UI redesign.
 
-## Phase 7.2: Local Runtime Policy Planning
+## Phase 7.2: Runtime Capability Negotiation Layer
+
+Completed. Added deterministic runtime capability negotiation metadata without enabling
+capability activation or runtime execution.
+
+Delivered:
+
+- `RuntimeCapabilityDescriptor`, capability state/group metadata, negotiation profile, and
+  negotiation result values.
+- `IRuntimeCapabilityRegistry` and `StaticRuntimeCapabilityRegistry`.
+- Static descriptors for future local inference, streaming, multimodal, embeddings, semantic
+  memory, tool bridge, plugin bridge, memory binding, filesystem access, external process
+  execution, cloud relay support, local-only enforcement, and privacy-safe mode.
+- Read-only controller/view-model exposure for capability counts, enabled/disabled summaries,
+  negotiation summaries, and local-only enforcement metadata.
+- Minimal Settings visibility without toggles, activation actions, setup flows, downloads, or
+  execution controls.
+- Tests for deterministic metadata, disabled/unavailable handling, local-only enforcement, and
+  QML-safe exposure.
+
+Still out of scope:
+
+- Capability activation, provider calls, API keys, networking, downloads, model execution,
+  streaming, process/subprocess launch, filesystem/system actions, tools/plugins, autonomous
+  workers, or broad UI redesign.
+
+## Phase 7.3: Runtime Permission And Policy Planning
 
 Next. Define explicit policy and permission boundaries for any later local runtime execution work
 without enabling execution by default.

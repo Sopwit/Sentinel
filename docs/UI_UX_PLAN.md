@@ -191,6 +191,12 @@ health, allocation summary, and reservation summary, but must not add session co
 allocation actions, process launch, provider calls, downloads, streaming controls, scans,
 tool/plugin controls, or autonomous worker controls.
 
+Phase 7.2 adds read-only runtime capability negotiation visibility. Settings may show capability
+counts, enabled/disabled capability summaries, negotiation summary, and local-only enforcement
+metadata, but must not add toggles, activation buttons, setup flows, downloads, provider/model
+execution controls, filesystem/process controls, tool/plugin controls, or autonomous worker
+controls.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

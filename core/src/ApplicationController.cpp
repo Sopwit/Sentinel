@@ -59,7 +59,8 @@ ApplicationController::ApplicationController(
     std::unique_ptr<IModelRouter> modelRouter, std::unique_ptr<IProviderCatalog> providerCatalog,
     std::unique_ptr<ITaskPlanner> taskPlanner, std::unique_ptr<IAgentRegistry> agentRegistry,
     std::unique_ptr<IMemoryCatalog> memoryCatalog, std::unique_ptr<ILocalRuntime> localRuntime,
-    std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions, QObject* parent)
+    std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions,
+    std::unique_ptr<IRuntimeCapabilityRegistry> runtimeCapabilities, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -79,6 +80,9 @@ ApplicationController::ApplicationController(
       localRuntimeSessions_(localRuntimeSessions
                                 ? std::move(localRuntimeSessions)
                                 : std::make_unique<NullLocalRuntimeSessionManager>()),
+      runtimeCapabilities_(runtimeCapabilities
+                               ? std::move(runtimeCapabilities)
+                               : std::make_unique<StaticRuntimeCapabilityRegistry>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -495,6 +499,45 @@ QStringList ApplicationController::localRuntimeSessionSummaries() const {
         return {};
     }
     return sentinel::core::localRuntimeSessionSummaries(localRuntimeSessions_->sessions());
+}
+
+int ApplicationController::runtimeCapabilityCount() const {
+    return runtimeCapabilities_ ? static_cast<int>(runtimeCapabilities_->capabilities().size()) : 0;
+}
+
+QStringList ApplicationController::enabledRuntimeCapabilitySummaries() const {
+    if (!runtimeCapabilities_) {
+        return {};
+    }
+    return sentinel::core::enabledRuntimeCapabilitySummaries(runtimeCapabilities_->capabilities());
+}
+
+QStringList ApplicationController::disabledRuntimeCapabilitySummaries() const {
+    if (!runtimeCapabilities_) {
+        return {};
+    }
+    return sentinel::core::disabledRuntimeCapabilitySummaries(runtimeCapabilities_->capabilities());
+}
+
+QString ApplicationController::runtimeNegotiationProfileSummary() const {
+    if (!runtimeCapabilities_) {
+        return QStringLiteral("No runtime negotiation profile metadata.");
+    }
+    return safeRuntimeNegotiationProfileSummary(runtimeCapabilities_->negotiate().profile);
+}
+
+QString ApplicationController::runtimeNegotiationSummary() const {
+    if (!runtimeCapabilities_) {
+        return QStringLiteral("No runtime negotiation metadata.");
+    }
+    return safeRuntimeNegotiationSummary(runtimeCapabilities_->negotiate());
+}
+
+QString ApplicationController::localOnlyRuntimeEnforcementSummary() const {
+    if (!runtimeCapabilities_) {
+        return QStringLiteral("No local-only runtime enforcement metadata.");
+    }
+    return sentinel::core::localOnlyRuntimeEnforcementSummary(runtimeCapabilities_->negotiate());
 }
 
 int ApplicationController::availableToolCount() const {
