@@ -55,8 +55,12 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(int registeredAgentCount READ registeredAgentCount CONSTANT)
     Q_PROPERTY(QStringList activeAgentSummaries READ activeAgentSummaries CONSTANT)
     Q_PROPERTY(QString currentAgentSummary READ currentAgentSummary NOTIFY taskPlanChanged)
+    Q_PROPERTY(QString currentMemoryAffinitySummary READ currentMemoryAffinitySummary NOTIFY
+                   taskPlanChanged)
     Q_PROPERTY(int providerCatalogCount READ providerCatalogCount CONSTANT)
     Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries CONSTANT)
+    Q_PROPERTY(int memoryCatalogCount READ memoryCatalogCount CONSTANT)
+    Q_PROPERTY(QStringList memoryCatalogSummaries READ memoryCatalogSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -110,8 +114,11 @@ public:
     int registeredAgentCount() const;
     QStringList activeAgentSummaries() const;
     QString currentAgentSummary() const;
+    QString currentMemoryAffinitySummary() const;
     int providerCatalogCount() const;
     QStringList providerCatalogSummaries() const;
+    int memoryCatalogCount() const;
+    QStringList memoryCatalogSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;

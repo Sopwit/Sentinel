@@ -599,6 +599,28 @@ Still out of scope:
 Later Phase 6 work may revisit permission prompts, auditability, sandboxing strategy, secret
 handling, and safe local automation constraints only after explicit approval.
 
+### Phase 6.5: Memory Taxonomy and Semantic Metadata Skeleton
+
+Completed. Added static memory taxonomy metadata without semantic memory execution.
+
+Delivered:
+
+- `MemoryType`, memory shard status, retention, privacy, recall hint, affinity, and association
+  metadata.
+- `IMemoryCatalog` and deterministic `StaticMemoryCatalog`.
+- Static categories for Episodic, Semantic, Procedural, Reflective, and Ambient memory.
+- Planner annotation with preferred memory affinity metadata.
+- Read-only controller/view-model and QML exposure for memory category count, taxonomy summaries,
+  and current memory affinity summary.
+- Tests for catalog determinism, unique ids/types, retention/privacy preservation, planner
+  affinity metadata, and QML-safe exposure.
+
+Still out of scope:
+
+- Vector databases, embeddings, semantic search, autonomous memory writes, provider/model
+  execution, networking/API keys, downloads, tool execution, plugin loading, filesystem/system
+  actions, or replacing `IMemoryStore`/`SQLiteMemoryStore` key-value persistence.
+
 ## Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

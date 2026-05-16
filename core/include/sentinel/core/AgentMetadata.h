@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sentinel/core/MemoryMetadata.h"
 #include "sentinel/core/ProviderCatalog.h"
 
 #include <QList>
@@ -88,6 +89,7 @@ struct AgentCapabilityProfile {
     QString summary;
     QStringList capabilityTags;
     QStringList preferredTaskTypes;
+    QList<MemoryAffinity> memoryAffinities;
     ProviderKind providerAffinity = ProviderKind::Local;
     CatalogPrivacyLevel privacyAffinity = CatalogPrivacyLevel::LocalOnly;
 };

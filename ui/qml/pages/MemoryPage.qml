@@ -14,7 +14,35 @@ ShellPanel {
 
         SectionTitle {
             title: "Runtime Memory"
-            subtitle: "Local key-value memory with dedicated persistence. Settings and chat history remain separate."
+            subtitle: "Key-value memory remains separate from the metadata-only taxonomy below."
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: memoryPage.compact
+                label: "Taxonomy Categories"
+                value: memoryPage.viewModel.memoryCatalogCount.toString()
+            }
+
+            InfoRow {
+                compact: memoryPage.compact
+                label: "Planner Affinity"
+                value: memoryPage.viewModel.currentMemoryAffinitySummary
+            }
+
+            Repeater {
+                model: memoryPage.viewModel.memoryCatalogSummaries
+
+                InfoRow {
+                    compact: memoryPage.compact
+                    label: "Memory"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
         }
 
         GridLayout {

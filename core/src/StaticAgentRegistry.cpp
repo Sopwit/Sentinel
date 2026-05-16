@@ -11,11 +11,14 @@ AgentDescriptor agent(QString id, QString name, AgentRole role, AgentPriority pr
                       ProviderKind providerAffinity = ProviderKind::Local,
                       CatalogPrivacyLevel privacyAffinity = CatalogPrivacyLevel::LocalOnly) {
     AgentCapabilityProfile profile{
-        std::move(summary), std::move(tags), {}, providerAffinity, privacyAffinity,
+        std::move(summary), std::move(tags), {}, {}, providerAffinity, privacyAffinity,
     };
     for (const auto& affinity : affinities) {
         profile.preferredTaskTypes.append(taskTypeName(affinity.taskType));
     }
+    profile.memoryAffinities.append(
+        MemoryAffinity{role == AgentRole::Guardian ? MemoryType::Reflective : MemoryType::Semantic,
+                       TaskType::Unknown, 10});
 
     return AgentDescriptor{
         std::move(id),      std::move(name),       role, AgentState::Available, priority,

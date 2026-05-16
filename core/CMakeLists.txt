@@ -15,6 +15,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/IClock.h
     include/sentinel/core/IContextEngine.h
     include/sentinel/core/IApprovalPolicy.h
+    include/sentinel/core/IMemoryCatalog.h
     include/sentinel/core/IModelRouter.h
     include/sentinel/core/IProviderCatalog.h
     include/sentinel/core/ISandboxPolicy.h
@@ -34,6 +35,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/InMemorySettingsStore.h
     include/sentinel/core/JsonSettingsStore.h
     include/sentinel/core/LocalEchoProvider.h
+    include/sentinel/core/MemoryMetadata.h
     include/sentinel/core/ModeManager.h
     include/sentinel/core/ModelRouting.h
     include/sentinel/core/NullAgentRuntime.h
@@ -44,6 +46,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/StandardPathProvider.h
     include/sentinel/core/StaticApprovalPolicy.h
     include/sentinel/core/StaticAgentRegistry.h
+    include/sentinel/core/StaticMemoryCatalog.h
     include/sentinel/core/StaticModelRouter.h
     include/sentinel/core/StaticProviderCatalog.h
     include/sentinel/core/StaticSandboxPolicy.h
@@ -75,6 +78,7 @@ add_library(sentinel_core STATIC
     src/StandardPathProvider.cpp
     src/StaticApprovalPolicy.cpp
     src/StaticAgentRegistry.cpp
+    src/StaticMemoryCatalog.cpp
     src/StaticModelRouter.cpp
     src/StaticProviderCatalog.cpp
     src/StaticSandboxPolicy.cpp

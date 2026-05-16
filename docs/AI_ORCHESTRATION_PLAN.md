@@ -3,8 +3,9 @@
 Phase 4.11 recorded future AI routing direction only. Phase 6.0 began implementing that direction
 as metadata-only architecture. Phase 6.1 persists the user routing mode preference. Phase 6.2 adds
 a provider/model catalog metadata boundary. Phase 6.3 adds capability graph and task planner
-metadata. Phase 6.4 adds static agent registry metadata. These phases do not implement providers,
-networking, model execution, downloads, API keys, autonomous agents, or tool execution.
+metadata. Phase 6.4 adds static agent registry metadata. Phase 6.5 adds static memory taxonomy
+metadata. These phases do not implement providers, networking, model execution, downloads, API
+keys, autonomous agents, semantic memory execution, or tool execution.
 
 ## Future Components
 
@@ -19,6 +20,8 @@ networking, model execution, downloads, API keys, autonomous agents, or tool exe
   routing mode, provider/model catalog availability, privacy posture, and local/cloud suitability.
 - Agent registry: static descriptors for future orchestration roles, task affinities, privacy
   posture, and local/cloud metadata affinity.
+- Memory catalog: static descriptors for future memory categories, retention/privacy metadata,
+  recall hints, associations, and task affinity labels.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -65,7 +68,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 6.4 runtime remains metadata-only:
+Current Phase 6.5 runtime remains metadata-only:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -79,10 +82,16 @@ Current Phase 6.4 runtime remains metadata-only:
   or touch the filesystem/system.
 - `IAgentRegistry` and `StaticAgentRegistry` expose static agent descriptors only. Planner-selected
   agents are labels for metadata visibility, not runtime workers.
+- `IMemoryCatalog` and `StaticMemoryCatalog` expose static memory taxonomy descriptors only.
+  Planner-selected memory affinity is a label for future recall planning, not semantic search or
+  memory mutation.
+- `IMemoryStore` and `SQLiteMemoryStore` remain the key-value memory persistence boundary and are
+  not replaced by the taxonomy catalog.
 - `AppSettings` persists the routing mode through `JsonSettingsStore`; it does not store provider
   credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
 - `NullAgentRuntime` and `NullToolExecutor` still perform no real AI/model/tool execution.
 
 Provider integrations, cloud routing, credentials, model downloads, model execution, autonomous
-agent runtime, actionable model-management UI, and routing policy automation remain future work.
+agent runtime, semantic/vector memory, actionable model-management UI, and routing policy
+automation remain future work.

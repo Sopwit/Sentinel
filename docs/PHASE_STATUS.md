@@ -930,3 +930,40 @@ Still out of scope:
 - Real agent execution, autonomous loops, threads/background workers, provider integration,
   Ollama/OpenAI/Anthropic calls, API keys, networking, downloads, model execution, tool execution,
   memory writes, plugin loading, filesystem/system actions, or broad UI redesign.
+
+### Phase 6.5: Memory Taxonomy and Semantic Metadata Skeleton
+
+Completed. Added deterministic static memory taxonomy metadata without semantic memory execution or
+changes to key-value memory persistence.
+
+Scope:
+
+- Added value-only memory taxonomy metadata:
+  - `MemoryType`
+  - `MemoryShardDescriptor`
+  - `MemoryShardStatus`
+  - `MemoryAffinity`
+  - `MemoryRetentionPolicy`
+  - `MemoryPrivacyLevel`
+  - `MemoryRecallHint`
+  - `MemoryAssociationDescriptor`
+- Added `IMemoryCatalog` and deterministic `StaticMemoryCatalog`.
+- Catalog exposes Episodic, Semantic, Procedural, Reflective, and Ambient categories as static
+  metadata only.
+- Memory metadata includes retention, privacy, recall hint, tags, task affinities, and simple
+  association labels.
+- `IMemoryStore` and `SQLiteMemoryStore` remain the explicit key-value memory persistence boundary.
+- `StaticTaskPlanner` may annotate a plan with preferred memory affinity metadata.
+- `ApplicationController` and `DesktopShellViewModel` expose read-only memory category count,
+  memory taxonomy summaries, and current memory affinity summary.
+- Memory and Settings pages show text-only memory taxonomy metadata without semantic search or graph
+  execution controls.
+- Tests cover catalog determinism, unique ids/types, retention/privacy preservation, planner
+  affinity metadata, and controller/view-model exposure.
+
+Still out of scope:
+
+- Vector databases, embeddings, semantic search, autonomous memory writes, semantic recall
+  execution, provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, downloads,
+  model execution, tool execution, plugin loading, filesystem/system actions, replacing
+  `IMemoryStore`/`SQLiteMemoryStore`, or broad UI redesign.

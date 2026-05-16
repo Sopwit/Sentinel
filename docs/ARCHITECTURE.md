@@ -76,6 +76,16 @@ SQLite memory storage stores only explicit key-value memory entries. Chat histor
 
 The SQLite database includes a `memory_schema_metadata` table with `schema_version = 1`. This is migration preparation only; no migration framework exists yet.
 
+Phase 6.5 adds memory taxonomy metadata separately from this storage contract:
+
+- `MemoryMetadata.h` defines value-only memory taxonomy descriptors.
+- `IMemoryCatalog` is the read-only catalog boundary for memory category metadata.
+- `StaticMemoryCatalog` describes Episodic, Semantic, Procedural, Reflective, and Ambient memory
+  categories with retention, privacy, recall hint, association, and task-affinity labels.
+- `StaticTaskPlanner` may annotate task plans with preferred memory affinity metadata.
+- The taxonomy catalog does not read or write `IMemoryStore`, perform recall, build embeddings, run
+  semantic search, create a vector database, or write autonomous memories.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.
@@ -303,6 +313,20 @@ Phase 6.4 adds agent registry metadata:
 - The agent registry does not run autonomous loops, create threads/background workers, call
   providers/models, execute tools, access memory stores, load plugins, access the network, or
   perform filesystem/system actions.
+
+Phase 6.5 adds memory taxonomy metadata:
+
+- `MemoryMetadata.h` defines memory type, shard status, retention policy, privacy level, recall
+  hint, affinity, and association value metadata.
+- `IMemoryCatalog` is separate from `IMemoryStore`; it describes future semantic memory categories
+  while `IMemoryStore` remains the explicit key-value persistence contract.
+- `StaticMemoryCatalog` exposes deterministic Episodic, Semantic, Procedural, Reflective, and
+  Ambient metadata.
+- `StaticTaskPlanner` may attach preferred memory affinity labels to task plans.
+- Controller and desktop view model expose only category counts, text summaries, and current memory
+  affinity summary.
+- No vector database, embeddings, semantic search, provider/model execution, autonomous memory
+  writes, tool execution, networking, plugin loading, or filesystem/system action is added.
 
 Phase 5.0 adds UI/UX planning and design-system foundation only:
 
