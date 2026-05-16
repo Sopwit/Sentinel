@@ -177,9 +177,23 @@ current state, last transition status, and last transition summary, but must not
 buttons, execution controls, provider/model setup, streaming controls, filesystem scans, semantic
 search, downloads, or autonomous worker controls.
 
+Phase 6.10 is a pre-runtime checkpoint. It should not add UI redesigns or controls. Any Phase 7.0
+runtime-boundary UI should start as read-only metadata unless a later explicit scope adds approved
+runtime behavior behind C++ boundaries.
+
+Phase 7.0 adds read-only local runtime boundary visibility. Settings may show runtime status,
+health, capabilities, and refusal summary, but must not add runtime setup, provider calls, model
+execution, downloads, streaming controls, process launch, filesystem scans, tool/plugin controls,
+or autonomous worker controls.
+
+Phase 7.1 adds read-only local runtime session visibility. Settings may show session count, status,
+health, allocation summary, and reservation summary, but must not add session controls, model
+allocation actions, process launch, provider calls, downloads, streaming controls, scans,
+tool/plugin controls, or autonomous worker controls.
+
 ## Current Separation
 
-Current Phase 5 work is presentation foundation only:
+Current UI work remains presentation and metadata visibility only:
 
 - no provider integrations
 - no networking/API keys

@@ -1098,3 +1098,116 @@ Still out of scope:
   actions, plugin loading, vector databases, embeddings, semantic search, autonomous background
   workers, timers, threads, external process calls, multi-conversation persistence, or broad UI
   redesign.
+
+### Phase 6.10: Pre-runtime Architecture Checkpoint and Stabilization
+
+Completed. Checkpointed the completed Phase 6 metadata orchestration foundation before Phase 7.
+
+Scope:
+
+- Reviewed the Phase 6 architecture across provider catalog, model router, task planner, agent
+  registry, memory taxonomy, orchestration snapshot, diagnostics/readiness, conversation session,
+  conversation state graph, `ApplicationController` ownership, and `DesktopShellViewModel` QML
+  exposure.
+- Confirmed Phase 6 surfaces remain deterministic, value-based, and metadata-only.
+- Added `docs/PHASE_6_CHECKPOINT.md` with completed scope, architecture findings, known
+  limitations, Phase 7 readiness criteria, strict out-of-scope list, and recommended Phase 7
+  breakdown.
+- Updated roadmap/status/context/orchestration docs to mark Phase 6 as checkpointed.
+- Defined Phase 7.0 as local runtime boundary planning/implementation, not full model execution
+  unless explicitly scoped later.
+- No product features, runtime execution, provider integrations, or UI redesign were added.
+
+Architecture findings:
+
+- Provider catalog, model routing, task planning, agent registry, memory taxonomy, snapshot,
+  diagnostics, conversation session, and conversation state graph remain separate metadata
+  responsibilities.
+- `ChatSession`, `ConversationSession`, Phase 4 `RuntimeSession`, and `ConversationStateGraph`
+  remain separate.
+- QML exposure remains QML-safe through `DesktopShellViewModel`.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, model downloads,
+  model execution, streaming, real tool execution, approval controls/actions, filesystem/system
+  actions, plugin loading, vector databases, embeddings, semantic search, autonomous background
+  workers, timers, threads, external process calls, multi-conversation persistence, or broad UI
+  redesign.
+
+### Phase 7.0: Local Runtime Boundary Skeleton
+
+Completed. Added the future local inference/runtime boundary without enabling execution.
+
+Scope:
+
+- Added value-only local runtime metadata:
+  - `LocalRuntimeDescriptor`
+  - `LocalRuntimeStatus`
+  - `LocalRuntimeHealth`
+  - `LocalRuntimeCapability`
+  - `LocalRuntimeRequest`
+  - `LocalRuntimeResponse`
+- Added `ILocalRuntime` as a separate future local runtime boundary.
+- Added `NullLocalRuntime` with deterministic metadata and safe placeholder refusal for requests.
+- `ApplicationController` owns the local runtime boundary and exposes status, health, summary,
+  capability summaries, and refusal summary strings.
+- `DesktopShellViewModel` forwards only QML-safe read-only strings and string lists.
+- Settings shows minimal read-only local runtime metadata without actions.
+- Tests cover deterministic metadata, safe refusal, controller exposure, and view-model QML-safe
+  exposure.
+
+Separation:
+
+- `ILocalRuntime` is not `IChatProvider`.
+- `ILocalRuntime` is not `IModelRouter`.
+- `ILocalRuntime` is not `IAgentRuntime`.
+- `ILocalRuntime` is not `IToolExecutor`.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, model downloads,
+  model execution, streaming, process/subprocess launch, real tool execution, approval
+  controls/actions, filesystem/system scans/actions, plugin loading, vector databases, embeddings,
+  semantic search, autonomous background workers, timers, threads, external process calls,
+  multi-conversation persistence, or broad UI redesign.
+
+### Phase 7.1: Local Runtime Session Ownership Skeleton
+
+Completed. Added deterministic local runtime session ownership/lifecycle metadata without enabling
+runtime execution.
+
+Scope:
+
+- Added value-only local runtime session metadata:
+  - `LocalRuntimeSession`
+  - `LocalRuntimeSessionId`
+  - `LocalRuntimeSessionStatus`
+  - `LocalRuntimeSessionHealth`
+  - `LocalRuntimeAllocation`
+  - `LocalRuntimeReservation`
+- Added `ILocalRuntimeSessionManager` as the future local runtime session ownership boundary.
+- Added `NullLocalRuntimeSessionManager` with one deterministic placeholder reserved session.
+- Session lifecycle states are representable as metadata: Not Started, Reserved, Active,
+  Suspended, and Released.
+- `ApplicationController` exposes local runtime session count, status, health, summary,
+  allocation summary, reservation summary, and session summary strings.
+- `DesktopShellViewModel` exposes only QML-safe read-only strings, counts, and string lists.
+- Settings shows minimal read-only local runtime session metadata without actions.
+- Tests cover deterministic session metadata, lifecycle naming, summary ordering,
+  controller/view-model exposure, and QML-safe property boundaries.
+
+Separation:
+
+- Local runtime sessions are not chat sessions.
+- Local runtime sessions are not Phase 4 agent runtime execution/context.
+- Local runtime sessions are not provider/model execution.
+- Local runtime sessions are not tool execution or plugin ownership.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, model downloads,
+  model execution, streaming, process/subprocess launch, real tool execution, approval
+  controls/actions, filesystem/system scans/actions, plugin loading, vector databases, embeddings,
+  semantic search, autonomous background workers, timers, threads, external process calls,
+  multi-conversation persistence, or broad UI redesign.

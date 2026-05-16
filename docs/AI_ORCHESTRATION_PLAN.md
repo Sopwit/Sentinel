@@ -12,7 +12,10 @@ services. Phase 6.8 adds a metadata-only conversation/session context layer over
 agent, memory, and snapshot summaries without adding streaming, execution, provider calls, or
 background behavior. Phase 6.9 adds a deterministic metadata-only conversation state graph that
 records high-level interaction transitions without executing providers, models, tools, approvals,
-or runtime work.
+or runtime work. Phase 6.10 checkpoints the completed Phase 6 metadata foundation before any Phase
+7 local runtime boundary work begins. Phase 7.0 adds `ILocalRuntime` as a metadata-only local
+runtime boundary that refuses execution. Phase 7.1 adds metadata-only local runtime session
+ownership/lifecycle state without allocating models or launching processes.
 
 ## Future Components
 
@@ -40,6 +43,10 @@ or runtime work.
 - Conversation state graph: deterministic state-transition metadata for the current high-level
   interaction flow. It can accept or reject transitions, but it does not trigger provider/model
   execution, tools, approval prompts, streaming, or autonomous work.
+- Local runtime boundary: future local inference/runtime ownership surface. The current
+  implementation reports metadata and refuses execution without probing local runtimes.
+- Local runtime sessions: future local runtime ownership/session state. The current implementation
+  reports deterministic placeholder lifecycle, allocation, and reservation metadata only.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -86,7 +93,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 6.9 runtime remains metadata-only:
+Current Phase 7.1 runtime remains metadata-only:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -119,6 +126,13 @@ Current Phase 6.9 runtime remains metadata-only:
 - `ConversationStateGraph` owns deterministic state-transition metadata only. It is separate from
   `ConversationSession`, `ChatSession`, and Phase 4 `RuntimeSession`; accepted transitions are
   status summaries, not execution triggers.
+- `ILocalRuntime` owns future local runtime metadata only. `NullLocalRuntime` reports status,
+  health, capabilities, and a refusal response; it does not call local providers, execute models,
+  launch processes, scan filesystems, stream output, or execute tools.
+- `ILocalRuntimeSessionManager` owns future local runtime session metadata only.
+  `NullLocalRuntimeSessionManager` reports one deterministic placeholder reserved session; it does
+  not allocate models, launch processes, scan filesystems, stream output, call providers, execute
+  tools, or load plugins.
 - `AppSettings` persists the routing mode through `JsonSettingsStore`; it does not store provider
   credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
@@ -127,3 +141,11 @@ Current Phase 6.9 runtime remains metadata-only:
 Provider integrations, cloud routing, credentials, model downloads, model execution, autonomous
 agent runtime, semantic/vector memory, actionable model-management UI, and routing policy
 automation remain future work.
+
+## Phase 7 Direction
+
+Phase 7.0 starts with a local runtime boundary skeleton, not full provider/model execution. Any
+future local runtime implementation must be explicitly scoped, interface-owned, deterministic in
+tests, and still separate from cloud provider integration, credentials, downloads, streaming, tool
+execution, plugins, vector memory, and autonomous behavior unless a later phase approves those
+capabilities.

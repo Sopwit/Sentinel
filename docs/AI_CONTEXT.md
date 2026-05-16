@@ -129,6 +129,22 @@ Future UI vision:
   Waiting For Approval, Ready To Respond, Responding, Completed, and Error. Transitions produce
   accepted/rejected metadata summaries only and do not execute providers, models, tools, approval
   actions, streaming, networking, filesystem/system actions, semantic search, or autonomous work.
+- Phase 6.10 checkpoints the completed Phase 6 metadata orchestration foundation before Phase 7.
+  `docs/PHASE_6_CHECKPOINT.md` records completed scope, architecture findings, limitations, Phase
+  7 readiness criteria, and a recommended Phase 7 breakdown. It adds no product features, provider
+  integrations, runtime execution, networking, tools, plugins, model execution, streaming,
+  filesystem/system actions, semantic search, or autonomous behavior.
+- Phase 7.0 adds a metadata-only local runtime boundary skeleton. `ILocalRuntime` and
+  `NullLocalRuntime` report deterministic local runtime status, health, capabilities, and a safe
+  placeholder refusal response. This boundary is separate from `IChatProvider`, `IModelRouter`,
+  `IAgentRuntime`, and `IToolExecutor`, and it does not call providers, execute models, download
+  models, stream output, launch processes, scan filesystems, execute tools, load plugins, access
+  networks, read API keys, or start workers.
+- Phase 7.1 adds metadata-only local runtime session ownership. `LocalRuntimeSession` and
+  `NullLocalRuntimeSessionManager` describe deterministic placeholder lifecycle, allocation, and
+  reservation state for future local runtime ownership without allocating models, launching
+  processes, calling providers, networking, streaming, scanning filesystems, executing tools,
+  loading plugins, or starting workers.
 - Phase 5.0 adds UI/UX planning and a small QML design-token singleton without adding advanced
   motion, provider integration, model execution, or runtime behavior.
 - Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
@@ -153,14 +169,15 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, Phase 6.6, Phase 6.7, Phase 6.8, and Phase 6.9.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, Phase 6.6, Phase 6.7, Phase 6.8, Phase 6.9, Phase 6.10, Phase 7.0, and Phase 7.1.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline and metadata-only model
   routing skeleton:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
   with local runtime context/session, in-memory activity logging for pipeline metadata, and
   read-only dashboard visibility for that state. Model/provider routing is descriptor-only and
   currently resolves to a deterministic local placeholder.
-- Next: Phase 6.x stabilization and later explicitly approved provider/model work.
-- Recent: Phase 6.9, Conversation State Graph Skeleton.
+- Next: Phase 7.x local runtime boundary stabilization, not full model execution unless explicitly
+  scoped.
+- Recent: Phase 7.1, Local Runtime Session Ownership Skeleton.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.

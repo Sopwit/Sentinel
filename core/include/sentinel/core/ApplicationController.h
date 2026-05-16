@@ -18,6 +18,8 @@
 #include "sentinel/core/ISandboxPolicy.h"
 #include "sentinel/core/ITaskPlanner.h"
 #include "sentinel/core/IToolExecutor.h"
+#include "sentinel/core/LocalRuntime.h"
+#include "sentinel/core/LocalRuntimeSession.h"
 #include "sentinel/core/OrchestrationDiagnostics.h"
 #include "sentinel/core/OrchestrationSnapshot.h"
 
@@ -98,6 +100,19 @@ class ApplicationController final : public QObject {
                    orchestrationSnapshotChanged)
     Q_PROPERTY(QStringList orchestrationDiagnostics READ orchestrationDiagnostics NOTIFY
                    orchestrationSnapshotChanged)
+    Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
+    Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
+    Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary CONSTANT)
+    Q_PROPERTY(QStringList localRuntimeCapabilities READ localRuntimeCapabilities CONSTANT)
+    Q_PROPERTY(QString localRuntimeResponseStatus READ localRuntimeResponseStatus CONSTANT)
+    Q_PROPERTY(QString localRuntimeResponseSummary READ localRuntimeResponseSummary CONSTANT)
+    Q_PROPERTY(int localRuntimeSessionCount READ localRuntimeSessionCount CONSTANT)
+    Q_PROPERTY(QString localRuntimeSessionStatus READ localRuntimeSessionStatus CONSTANT)
+    Q_PROPERTY(QString localRuntimeSessionHealth READ localRuntimeSessionHealth CONSTANT)
+    Q_PROPERTY(QString localRuntimeSessionSummary READ localRuntimeSessionSummary CONSTANT)
+    Q_PROPERTY(QString localRuntimeAllocationSummary READ localRuntimeAllocationSummary CONSTANT)
+    Q_PROPERTY(QString localRuntimeReservationSummary READ localRuntimeReservationSummary CONSTANT)
+    Q_PROPERTY(QStringList localRuntimeSessionSummaries READ localRuntimeSessionSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -108,20 +123,22 @@ class ApplicationController final : public QObject {
         QString chatMaintenanceStatus READ chatMaintenanceStatus NOTIFY maintenanceStatusChanged)
 
 public:
-    ApplicationController(std::unique_ptr<IChatProvider> provider,
-                          std::unique_ptr<IMemoryStore> memoryStore,
-                          std::unique_ptr<ChatSession> chatSession = nullptr,
-                          std::unique_ptr<IChatHistoryStore> chatHistoryStore = nullptr,
-                          std::unique_ptr<IAgentRuntime> agentRuntime = nullptr,
-                          std::unique_ptr<IApprovalPolicy> approvalPolicy = nullptr,
-                          std::unique_ptr<ISandboxPolicy> sandboxPolicy = nullptr,
-                          std::unique_ptr<IToolExecutor> toolExecutor = nullptr,
-                          std::unique_ptr<IModelRouter> modelRouter = nullptr,
-                          std::unique_ptr<IProviderCatalog> providerCatalog = nullptr,
-                          std::unique_ptr<ITaskPlanner> taskPlanner = nullptr,
-                          std::unique_ptr<IAgentRegistry> agentRegistry = nullptr,
-                          std::unique_ptr<IMemoryCatalog> memoryCatalog = nullptr,
-                          QObject* parent = nullptr);
+    ApplicationController(
+        std::unique_ptr<IChatProvider> provider, std::unique_ptr<IMemoryStore> memoryStore,
+        std::unique_ptr<ChatSession> chatSession = nullptr,
+        std::unique_ptr<IChatHistoryStore> chatHistoryStore = nullptr,
+        std::unique_ptr<IAgentRuntime> agentRuntime = nullptr,
+        std::unique_ptr<IApprovalPolicy> approvalPolicy = nullptr,
+        std::unique_ptr<ISandboxPolicy> sandboxPolicy = nullptr,
+        std::unique_ptr<IToolExecutor> toolExecutor = nullptr,
+        std::unique_ptr<IModelRouter> modelRouter = nullptr,
+        std::unique_ptr<IProviderCatalog> providerCatalog = nullptr,
+        std::unique_ptr<ITaskPlanner> taskPlanner = nullptr,
+        std::unique_ptr<IAgentRegistry> agentRegistry = nullptr,
+        std::unique_ptr<IMemoryCatalog> memoryCatalog = nullptr,
+        std::unique_ptr<ILocalRuntime> localRuntime = nullptr,
+        std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions = nullptr,
+        QObject* parent = nullptr);
 
     QString providerName() const;
     QString providerStatus() const;
@@ -175,6 +192,19 @@ public:
     QString orchestrationReadinessStatus() const;
     QString orchestrationReadinessSummary() const;
     QStringList orchestrationDiagnostics() const;
+    QString localRuntimeStatus() const;
+    QString localRuntimeHealth() const;
+    QString localRuntimeSummary() const;
+    QStringList localRuntimeCapabilities() const;
+    QString localRuntimeResponseStatus() const;
+    QString localRuntimeResponseSummary() const;
+    int localRuntimeSessionCount() const;
+    QString localRuntimeSessionStatus() const;
+    QString localRuntimeSessionHealth() const;
+    QString localRuntimeSessionSummary() const;
+    QString localRuntimeAllocationSummary() const;
+    QString localRuntimeReservationSummary() const;
+    QStringList localRuntimeSessionSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -230,6 +260,8 @@ private:
     std::unique_ptr<ITaskPlanner> taskPlanner_;
     std::unique_ptr<IAgentRegistry> agentRegistry_;
     std::unique_ptr<IMemoryCatalog> memoryCatalog_;
+    std::unique_ptr<ILocalRuntime> localRuntime_;
+    std::unique_ptr<ILocalRuntimeSessionManager> localRuntimeSessions_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

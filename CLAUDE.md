@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 6.9 is complete.
+Phase 7.1 is complete.
 
 Implemented foundation:
 
@@ -72,6 +72,9 @@ Recent implementation phase:
 - Phase 6.7, Orchestration Diagnostics and Readiness Checklist.
 - Phase 6.8, Runtime Context Session Layer.
 - Phase 6.9, Conversation State Graph Skeleton.
+- Phase 6.10, Pre-runtime Architecture Checkpoint and Stabilization.
+- Phase 7.0, Local Runtime Boundary Skeleton.
+- Phase 7.1, Local Runtime Session Ownership Skeleton.
 
 ## Constraints
 
@@ -89,6 +92,12 @@ Recent implementation phase:
   catalog data, task planning, agent registry, memory taxonomy, orchestration snapshot metadata,
   diagnostics/readiness/session context metadata, and conversation state transitions are
   metadata-only.
+- Do not start Phase 7 runtime execution from checkpoint work. Phase 7.0 should begin with local
+  runtime boundary planning/ownership unless explicitly scoped otherwise.
+- Phase 7.0 local runtime boundary is metadata-only and refuses execution. Do not add local
+  provider calls, model execution, process launch, downloads, streaming, tools, or plugins.
+- Phase 7.1 local runtime sessions are ownership/lifecycle metadata only. Do not start processes,
+  allocate real models, probe runtimes, scan filesystems, stream output, or execute tools.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

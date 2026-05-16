@@ -125,6 +125,27 @@ Still out of scope:
   actions, real tool execution, approval actions, plugin loading, embeddings, vector search,
   semantic search, autonomous workers, and multi-conversation persistence.
 
+## Phase 6.10: Pre-runtime Architecture Checkpoint
+
+Completed. Checkpointed the Phase 6 metadata orchestration foundation before Phase 7.
+
+Delivered:
+
+- `docs/PHASE_6_CHECKPOINT.md` with completed scope, architecture findings, known limitations,
+  Phase 7 readiness criteria, strict out-of-scope list, and recommended Phase 7 breakdown.
+- Review across provider catalog, model router, task planner, agent registry, memory taxonomy,
+  orchestration snapshot, diagnostics/readiness, conversation session, conversation state graph,
+  controller ownership, and QML boundary.
+- Phase/status/context docs updated to mark Phase 6 as checkpointed.
+- Phase 7.0 defined as local runtime boundary planning/implementation, not full model execution
+  unless explicitly scoped later.
+
+Still out of scope:
+
+- Provider/model execution, streaming, networking/API keys, model downloads, filesystem or system
+  actions, real tool execution, approval actions, plugin loading, embeddings, vector search,
+  semantic search, autonomous workers, and broad UI redesign.
+
 ### Phase 4.0: Agent Core Planning and Minimal Runtime Skeleton
 
 Completed.
@@ -705,6 +726,52 @@ Still out of scope:
   model execution, tool execution, filesystem/system actions, plugin loading, vector databases,
   embeddings, semantic search, autonomous background workers, timers, or broad UI redesign.
 
-## Phase 7: Packaging / Ecosystem / Extensions
+## Phase 7.0: Local Runtime Boundary Skeleton
+
+Completed. Added the future local runtime ownership boundary without treating Phase 7.0 as full
+model execution.
+
+Delivered:
+
+- `ILocalRuntime` boundary for future local inference/runtime ownership.
+- Value-only local runtime descriptor, status, health, capability, request, and response metadata.
+- `NullLocalRuntime` deterministic metadata and placeholder refusal behavior.
+- Read-only controller/view-model exposure and minimal Settings visibility.
+- Tests for metadata determinism, safe refusal, controller exposure, and QML-safe view-model
+  properties.
+
+Still out of scope:
+
+- Cloud provider integration, API keys, networking, model downloads, model execution, streaming,
+  real tool execution, plugin loading, vector databases, embeddings, semantic search, autonomous
+  workers, filesystem/system actions, or broad UI redesign.
+
+## Phase 7.1: Local Runtime Session Ownership Skeleton
+
+Completed. Added deterministic local runtime session ownership/lifecycle metadata without real
+runtime execution.
+
+Delivered:
+
+- `LocalRuntimeSession`, session id/status/health metadata, allocation metadata, and reservation
+  metadata.
+- `ILocalRuntimeSessionManager` and `NullLocalRuntimeSessionManager`.
+- One deterministic placeholder reserved session for read-only visibility.
+- Controller/view-model QML-safe session status, health, count, summary, allocation, reservation,
+  and summary-list exposure.
+- Tests for lifecycle names, deterministic placeholder metadata, summary ordering, and QML-safe
+  exposure.
+
+Still out of scope:
+
+- Provider calls, API keys, networking, downloads, model execution, streaming, process/subprocess
+  launch, filesystem/system actions, tools/plugins, autonomous workers, or broad UI redesign.
+
+## Phase 7.2: Local Runtime Policy Planning
+
+Next. Define explicit policy and permission boundaries for any later local runtime execution work
+without enabling execution by default.
+
+## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

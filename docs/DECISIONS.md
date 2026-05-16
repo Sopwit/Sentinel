@@ -768,3 +768,68 @@ Boundary rules:
   actions, load plugins, access networks, scan or mutate filesystems, perform system actions,
   build embeddings, run semantic/vector search, start background workers, or run external
   processes.
+
+## 42. Phase 6 Checkpoint Before Runtime Work
+
+Decision: Close Phase 6 with a pre-runtime architecture checkpoint before starting Phase 7.
+
+Reason: Phase 6 introduced multiple metadata orchestration surfaces. A checkpoint keeps the
+no-execution model explicit, records readiness criteria, and prevents Phase 7 from being treated
+as implicit provider/model/tool execution.
+
+Boundary rules:
+
+- Phase 6.10 may update documentation and small safe consistency gaps only.
+- The checkpoint must not add product features, provider integrations, networking, API key
+  handling, downloads, streaming, model execution, real tool execution, plugin loading,
+  filesystem/system actions, vector search, embeddings, semantic search, or autonomous workers.
+- Phase 7.0 should begin with local runtime boundary planning and ownership mapping.
+- Full provider/model execution, cloud routing, credentials, downloads, streaming, plugins, vector
+  memory, and real tool execution require later explicit scopes.
+- QML exposure remains through `DesktopShellViewModel` and QML-safe values only.
+- `docs/PHASE_6_CHECKPOINT.md` is the durable checkpoint record for completed scope, known
+  limitations, readiness criteria, and recommended Phase 7 breakdown.
+
+## 43. Local Runtime Boundary Is Metadata Only
+
+Decision: Add `ILocalRuntime` as the future local inference/runtime boundary with a
+non-executable null implementation.
+
+Reason: Sentinel needs an explicit owner for future local runtime metadata before any provider or
+model execution is considered. The boundary should make local runtime readiness visible without
+probing local services or implying executable capability.
+
+Boundary rules:
+
+- `ILocalRuntime` is separate from `IChatProvider`, `IModelRouter`, `IAgentRuntime`, and
+  `IToolExecutor`.
+- `LocalRuntimeDescriptor`, status, health, and capability values are metadata only.
+- `NullLocalRuntime` reports deterministic metadata and refuses requests with a placeholder
+  non-executable response.
+- Controller and QML exposure stays read-only and QML-safe: status, health, summary, capability
+  summaries, and refusal summary strings only.
+- The local runtime boundary must not call Ollama/providers, execute models, download models,
+  stream tokens, launch processes/subprocesses, scan or mutate filesystems, execute tools, load
+  plugins, access networks, read API keys, or start background workers.
+
+## 44. Local Runtime Sessions Are Ownership Metadata
+
+Decision: Add local runtime session ownership/lifecycle metadata without allocating or executing
+runtime resources.
+
+Reason: Future local runtime work needs a stable place to describe session ownership, allocation,
+and reservation state before any local provider/model execution can be considered.
+
+Boundary rules:
+
+- `LocalRuntimeSession` is not `ChatSession`.
+- `LocalRuntimeSession` is not Phase 4 `RuntimeSession`.
+- `LocalRuntimeSession` is not provider/model execution.
+- `LocalRuntimeSession` is not tool execution or plugin ownership.
+- `LocalRuntimeAllocation` and `LocalRuntimeReservation` are descriptive metadata only.
+- `NullLocalRuntimeSessionManager` returns deterministic placeholder sessions only.
+- Controller and QML exposure stays read-only and QML-safe: counts, status strings, summaries, and
+  string lists.
+- Session metadata must not allocate models, call providers, use API keys, access networks,
+  download models, stream output, launch processes/subprocesses, scan or mutate filesystems,
+  execute tools, load plugins, or start background workers.

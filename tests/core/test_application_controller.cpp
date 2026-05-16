@@ -168,6 +168,7 @@ private slots:
     void exposesMemoryCatalogMetadata();
     void exposesOrchestrationSnapshotMetadata();
     void exposesOrchestrationReadinessDiagnostics();
+    void exposesLocalRuntimeMetadata();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
     void updatesModelRoutingModeMetadata();
@@ -353,6 +354,37 @@ void ApplicationControllerTest::exposesOrchestrationReadinessDiagnostics() {
         QStringLiteral("Info: Cloud Providers - Cloud provider metadata remains not configured.")));
     QVERIFY(controller->orchestrationDiagnostics().contains(
         QStringLiteral("Info: Execution Capability - Execution capability remains disabled.")));
+}
+
+void ApplicationControllerTest::exposesLocalRuntimeMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->localRuntimeStatus(), QStringLiteral("Metadata Only"));
+    QCOMPARE(controller->localRuntimeHealth(), QStringLiteral("Not Executable"));
+    QCOMPARE(controller->localRuntimeSummary(),
+             QStringLiteral("Null Local Runtime is metadata-only; local inference execution is "
+                            "disabled."));
+    QCOMPARE(controller->localRuntimeResponseStatus(), QStringLiteral("Refused"));
+    QCOMPARE(controller->localRuntimeResponseSummary(),
+             QStringLiteral("Local runtime boundary is metadata-only; execution is disabled."));
+    QCOMPARE(controller->localRuntimeCapabilities().size(), 3);
+    QVERIFY(controller->localRuntimeCapabilities().contains(
+        QStringLiteral("Local Inference (Disabled): Inference execution is intentionally "
+                       "disabled.")));
+    QCOMPARE(controller->localRuntimeSessionCount(), 1);
+    QCOMPARE(controller->localRuntimeSessionStatus(), QStringLiteral("Reserved"));
+    QCOMPARE(controller->localRuntimeSessionHealth(), QStringLiteral("Placeholder Only"));
+    QCOMPARE(controller->localRuntimeSessionSummary(),
+             QStringLiteral("local-runtime-session-1: Reserved placeholder local runtime "
+                            "metadata."));
+    QCOMPARE(controller->localRuntimeAllocationSummary(),
+             QStringLiteral("Metadata-only local runtime allocation; no model or process is "
+                            "started."));
+    QCOMPARE(controller->localRuntimeReservationSummary(),
+             QStringLiteral("Placeholder reservation is held for metadata visibility only."));
+    QCOMPARE(controller->localRuntimeSessionSummaries(),
+             QStringList{QStringLiteral("local-runtime-session-1: Reserved placeholder local "
+                                        "runtime metadata.")});
 }
 
 void ApplicationControllerTest::exposesConversationSessionMetadata() {
