@@ -26,6 +26,7 @@ private slots:
     void exposesOllamaEndpointDefault();
     void normalizesOllamaEndpoint();
     void persistsSelectedLocalModel();
+    void persistsLocalChatInferenceOptIn();
 };
 
 static std::unique_ptr<AppSettings> makeSettings() {
@@ -38,6 +39,7 @@ void AppSettingsTest::exposesDefaults() {
     QCOMPARE(settings->themeName(), QStringLiteral("Sentinel Dark"));
     QCOMPARE(settings->configurationProfile(), QStringLiteral("Desktop Alpha"));
     QVERIFY(settings->selectedLocalModel().isEmpty());
+    QVERIFY(!settings->localChatInferenceEnabled());
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -155,6 +157,25 @@ void AppSettingsTest::persistsSelectedLocalModel() {
 
     settings->setSelectedLocalModel(QStringLiteral("llama3.2"));
     QCOMPARE(spy.count(), 1);
+}
+
+void AppSettingsTest::persistsLocalChatInferenceOptIn() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::localChatInferenceEnabledChanged);
+
+    QVERIFY(!settings->localChatInferenceEnabled());
+
+    settings->setLocalChatInferenceEnabled(true);
+
+    QVERIFY(settings->localChatInferenceEnabled());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setLocalChatInferenceEnabled(true);
+    QCOMPARE(spy.count(), 1);
+
+    settings->setLocalChatInferenceEnabled(false);
+    QVERIFY(!settings->localChatInferenceEnabled());
+    QCOMPARE(spy.count(), 2);
 }
 
 QTEST_MAIN(AppSettingsTest)

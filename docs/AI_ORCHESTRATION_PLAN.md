@@ -35,7 +35,10 @@ routing, streaming, downloads, subprocess launch, cloud calls, tools, plugins, a
 filesystem/system actions remain disabled. Phase 9.6 through Phase 9.8 add selected local model
 metadata, runtime inference UX state, and a disabled streaming skeleton. Model selection is
 configuration metadata with safe discovered-model validation when available; streaming types exist
-as a future boundary but current behavior remains disabled and non-operational.
+as a future boundary but current behavior remains disabled and non-operational. Phase 10.0 through
+Phase 10.2 add explicit chat-to-Ollama routing: chat uses local inference only when the persisted
+opt-in setting is enabled, a valid local model is selected or resolved, the endpoint is loopback
+HTTP, and permission/safety gates pass.
 
 ## Future Components
 
@@ -97,6 +100,8 @@ as a future boundary but current behavior remains disabled and non-operational.
   This is not model management and cannot download, pull, delete, launch, or install models.
 - Local inference streaming skeleton: future stream chunk/status/client vocabulary. The current
   implementation reports disabled status only and opens no stream.
+- Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
+  boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -143,8 +148,9 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 9.6-9.8 runtime allows local Ollama health/discovery metadata plus a controlled
-local inference boundary, selected-model metadata, and disabled streaming skeleton:
+Current Phase 10.0-10.2 runtime allows local Ollama health/discovery metadata plus a controlled
+local inference boundary, selected-model metadata, disabled streaming skeleton, and explicit
+opt-in chat-to-Ollama routing:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -225,20 +231,24 @@ local inference boundary, selected-model metadata, and disabled streaming skelet
   explicit model first, then the selected local model, then a safe discovered-model fallback when
   model metadata is available. Known invalid selections are rejected before inference. No downloads,
   pulls, deletes, or model-management actions exist.
+- Local chat inference routing is disabled by default. When enabled, `ApplicationController`
+  appends the user message, calls `runLocalInference` only if the effective model is valid, the
+  Ollama endpoint is loopback HTTP, and runtime permission/safety checks pass, then appends exactly
+  one assistant response from the inference result or a safe refusal/error.
 - `ILocalInferenceStreamClient` owns future streaming shape only. `NullLocalInferenceStreamClient`
   reports deterministic disabled behavior, produces no chunks, and does not call Ollama or any
   provider.
 - `AppSettings` persists the routing mode and normalized Ollama endpoint through
-  `JsonSettingsStore`; it also persists the selected local model name. It does not store provider
-  credentials or API keys.
+  `JsonSettingsStore`; it also persists the selected local model name and local chat inference
+  opt-in. It does not store provider credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
 - `NullAgentRuntime` and `NullToolExecutor` still perform no real AI/model/tool execution.
 
 Cloud routing, credentials, model downloads, model pulls/deletes, real streaming, autonomous agent
-runtime, semantic/vector memory, actionable model-management UI, and routing policy automation
-remain future work.
+runtime, semantic/vector memory, actionable model-management UI, and automatic routing policy
+automation remain future work.
 
-## Phase 9 Direction
+## Phase 10 Direction
 
 Phase 7.0 starts with a local runtime boundary skeleton, not full provider/model execution. Phase
 7.2 adds capability negotiation vocabulary. Phase 7.3 through Phase 7.5 add metadata-only
@@ -248,7 +258,7 @@ default. Phase 7.6 checkpoints the runtime architecture in `docs/PHASE_7_CHECKPO
 Phase 8.5 add adapter, bridge, and pre-integration readiness metadata only. Phase 9.0 through Phase
 9.2 add Ollama local health/discovery only. Phase 9.3 through Phase 9.5 add the first controlled
 local-only inference boundary. Phase 9.6 through Phase 9.8 add selected-model metadata, runtime UX
-state, and a disabled streaming skeleton. The next explicit phase may consider guarded
-chat-to-Ollama routing or real streaming, but those capabilities remain separate from cloud
-provider integration, credentials, downloads, model management, tool execution, plugins, vector
-memory, and autonomous behavior.
+state, and a disabled streaming skeleton. Phase 10.0 through Phase 10.2 add explicit opt-in
+chat-to-Ollama routing. The next explicit phase may consider streaming chat, but that remains
+separate from cloud provider integration, credentials, downloads, model management, tool execution,
+plugins, vector memory, and autonomous behavior.

@@ -2,6 +2,28 @@
 
 ## Completed / Stable
 
+### Phase 10.0-10.2: Explicit Chat-To-Ollama Routing
+
+Completed. Adds explicit opt-in chat routing to the controlled local inference boundary while
+preserving the existing local-safe chat path by default.
+
+Scope:
+
+- Added a persisted local chat inference setting; default is disabled.
+- Desktop view model exposes QML-safe local chat routing status and summary.
+- Chat may call `runLocalInference` only when local chat inference is enabled, an effective local
+  model is available and valid against discovered metadata when present, the Ollama endpoint is
+  local loopback HTTP, and runtime permission/safety gates pass.
+- User chat messages are still appended before routing, and exactly one assistant response is
+  appended from either the inference result or a safe local refusal/error.
+- Settings exposes a guarded local chat inference toggle, and ChatPanel shows the active routing
+  status/model/runtime badge without model-management or provider setup controls.
+
+Still out of scope:
+
+- Streaming chat, model downloads, pulls, deletes, broad model management UI, cloud calls, API
+  keys, subprocess launch, filesystem/system actions, tools/plugins, and autonomous loops.
+
 ### Phase 9.6-9.8: Model Selection, Runtime UX State, And Streaming Skeleton
 
 Completed. Adds selected local model metadata, runtime inference UX state, and a disabled

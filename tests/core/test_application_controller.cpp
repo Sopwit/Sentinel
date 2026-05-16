@@ -205,13 +205,32 @@ public:
     LocalInferenceRequest lastRequest;
 };
 
+class ErrorLocalInferenceClient final : public ILocalInferenceClient {
+public:
+    LocalInferenceResponse infer(const LocalInferenceRequest& request) override {
+        called = true;
+        LocalInferenceResponse response;
+        response.status = LocalInferenceStatus::Error;
+        response.model = request.options.model;
+        response.error = sentinel::core::LocalInferenceError::ClientUnavailable;
+        response.summary = QStringLiteral("Injected local inference failure.");
+        return response;
+    }
+
+    QString statusSummary() const override {
+        return QStringLiteral("Injected local inference client returns errors.");
+    }
+
+    bool called = false;
+};
+
 class FakeOllamaRuntimeClient final : public sentinel::core::IOllamaRuntimeClient {
 public:
-    explicit FakeOllamaRuntimeClient(QList<OllamaModelSummary> models)
-        : models_(std::move(models)) {}
+    explicit FakeOllamaRuntimeClient(QList<OllamaModelSummary> models, OllamaConfig config = {})
+        : models_(std::move(models)), config_(std::move(config)) {}
 
     OllamaConfig config() const override {
-        return OllamaConfig{};
+        return config_;
     }
 
     OllamaHealthCheckResult healthCheck() const override {
@@ -226,6 +245,7 @@ public:
 
 private:
     QList<OllamaModelSummary> models_;
+    OllamaConfig config_;
 };
 
 class ApplicationControllerTest final : public QObject {
@@ -250,6 +270,11 @@ private slots:
     void exposesStreamingSkeletonDisabledMetadata();
     void blocksLocalInferenceByDefaultPermission();
     void runsInjectedLocalInferenceWhenPermissionAllows();
+    void usesProviderChatPathWhenLocalChatInferenceDisabled();
+    void enabledLocalChatInferenceWithoutValidModelFailsSafely();
+    void enabledLocalChatInferenceAppendsFakeResponse();
+    void enabledLocalChatInferenceErrorAppendsSafeRefusal();
+    void localChatInferenceBlocksNonLoopbackEndpoint();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
     void updatesModelRoutingModeMetadata();
@@ -685,6 +710,131 @@ void ApplicationControllerTest::runsInjectedLocalInferenceWhenPermissionAllows()
     QVERIFY(controller->localInferenceTraceSummaries().contains(
         QStringLiteral("2. Safety Policy [Compliant]: Runtime safety policy report: local-only "
                        "and no-execution posture is enforced with deterministic metadata rules.")));
+}
+
+void ApplicationControllerTest::usesProviderChatPathWhenLocalChatInferenceDisabled() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(sent);
+    QVERIFY(!fakeClientPtr->called);
+    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(1).role, sentinel::core::ChatRole::User);
+    QCOMPARE(controller->chatHistory().at(2).content,
+             QStringLiteral("Sentinel Core online. Local chat pipeline is active."));
+}
+
+void ApplicationControllerTest::enabledLocalChatInferenceWithoutValidModelFailsSafely() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{}),
+        std::move(fakeClient));
+
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(!sent);
+    QVERIFY(!fakeClientPtr->called);
+    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Missing Model"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
+    QVERIFY(controller->chatHistory().at(2).content.contains(
+        QStringLiteral("Local inference request rejected: model is required.")));
+}
+
+void ApplicationControllerTest::enabledLocalChatInferenceAppendsFakeResponse() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto historyStore = std::make_unique<RecordingChatHistoryStore>();
+    auto* historyStorePtr = historyStore.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr,
+        std::move(historyStore), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(),
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+    QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
+
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(sent);
+    QVERIFY(fakeClientPtr->called);
+    QCOMPARE(fakeClientPtr->lastRequest.options.model, QStringLiteral("llama3.2"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
+    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("fake local completion"));
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
+    QCOMPARE(historyStorePtr->messages_.size(), 3);
+    QCOMPARE(chatSpy.count(), 1);
+}
+
+void ApplicationControllerTest::enabledLocalChatInferenceErrorAppendsSafeRefusal() {
+    auto errorClient = std::make_unique<ErrorLocalInferenceClient>();
+    auto* errorClientPtr = errorClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(errorClient));
+
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(!sent);
+    QVERIFY(errorClientPtr->called);
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
+    QCOMPARE(controller->chatHistory().at(2).content,
+             QStringLiteral("Local inference unavailable: Injected local inference failure."));
+}
+
+void ApplicationControllerTest::localChatInferenceBlocksNonLoopbackEndpoint() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    OllamaConfig config;
+    config.endpoint.url = QUrl(QStringLiteral("https://example.com"));
+    config.endpoint.valid = false;
+    config.endpoint.normalizedFromInvalid = false;
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}, config),
+        std::move(fakeClient));
+
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(!sent);
+    QVERIFY(!fakeClientPtr->called);
+    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
+    QVERIFY(controller->chatHistory().at(2).content.contains(
+        QStringLiteral("endpoint must be local loopback HTTP")));
 }
 
 void ApplicationControllerTest::exposesConversationSessionMetadata() {

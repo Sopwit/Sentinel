@@ -93,4 +93,20 @@ void AppSettings::setSelectedLocalModel(const QString& model) {
     emit selectedLocalModelChanged();
 }
 
+bool AppSettings::localChatInferenceEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(localChatInferenceEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setLocalChatInferenceEnabled(bool enabled) {
+    if (enabled == localChatInferenceEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(localChatInferenceEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit localChatInferenceEnabledChanged();
+}
+
 } // namespace sentinel::core
