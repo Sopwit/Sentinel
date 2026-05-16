@@ -859,3 +859,55 @@ Boundary rules:
   networks, download models, execute models, stream output, launch processes/subprocesses, scan or
   mutate filesystems, execute tools, load plugins, approve permissions, or start background
   workers.
+
+## 46. Runtime Permission Policy Is Metadata-Only Default-Deny
+
+Decision: Add `IRuntimePermissionPolicy` with `StaticRuntimePermissionPolicy` as a deterministic
+permission metadata boundary that denies execution-level runtime requests by default.
+
+Reason: Runtime phases need explicit permission vocabulary and decision metadata before any future
+execution authority is considered.
+
+Boundary rules:
+
+- `RuntimePermission`, `RuntimePermissionLevel`, `RuntimePermissionRequest`, and
+  `RuntimePermissionDecision` are value metadata only.
+- Default policy behavior denies execution-level requests in metadata-only mode.
+- Permission metadata is separate from capability negotiation, runtime safety reporting, and runtime
+  request pipeline status.
+- Permission metadata must not execute models/providers/tools/plugins, launch processes, access
+  filesystems, or access networks.
+
+## 47. Runtime Request Pipeline Is Metadata Trace Only
+
+Decision: Add `IRuntimePipeline` with `StaticRuntimePipeline` as a deterministic request-pipeline
+metadata boundary.
+
+Reason: Runtime readiness work needs ordered request/permission/safety/execution-boundary trace
+visibility before any execution runtime is introduced.
+
+Boundary rules:
+
+- `RuntimePipelineRequest`, stage/status enums, traces, and results are value metadata only.
+- The pipeline consumes existing permission/safety metadata and returns deterministic status/summary
+  traces.
+- Execution boundary stage remains blocked/no-execution in current phase.
+- Pipeline metadata must not call providers/models, execute tools/plugins, launch processes, access
+  filesystems, or access networks.
+
+## 48. Runtime Safety Policy Reports Local-Only No-Execution Posture
+
+Decision: Add `IRuntimeSafetyPolicy` with `StaticRuntimeSafetyPolicy` as deterministic runtime
+safety posture metadata.
+
+Reason: Runtime boundary stabilization needs explicit local-only/no-execution safety reporting
+before sandbox/runtime execution work is approved.
+
+Boundary rules:
+
+- `RuntimeSafetyPolicy`, `RuntimeSafetyRule`, `RuntimeSafetyDecision`, and `RuntimeSafetyReport`
+  are value metadata only.
+- Safety reporting is deterministic and read-only for controller/view-model/QML visibility.
+- Safety policy metadata is separate from sandbox runtime enforcement and execution ownership.
+- Safety policy metadata must not activate runtime capabilities, call providers/models, execute
+  tools/plugins, launch processes, access filesystems, or access networks.

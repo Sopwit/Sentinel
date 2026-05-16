@@ -263,12 +263,44 @@ ShellPanel {
                 Layout.fillWidth: true
             }
 
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Permission Policy"
+                value: settingsPage.viewModel.runtimePermissionDecision + " / " + settingsPage.viewModel.runtimePermissionSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Safety Policy"
+                value: settingsPage.viewModel.runtimeSafetyDecision + " / " + settingsPage.viewModel.runtimeSafetySummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Request Pipeline"
+                value: settingsPage.viewModel.runtimePipelineStatus + " / " + settingsPage.viewModel.runtimePipelineSummary
+                Layout.fillWidth: true
+            }
+
             Repeater {
                 model: settingsPage.viewModel.localRuntimeCapabilities
 
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Capability"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.runtimePipelineTraceSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Pipeline Trace"
                     value: modelData
                     Layout.fillWidth: true
                 }

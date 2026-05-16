@@ -17,7 +17,10 @@ or runtime work. Phase 6.10 checkpoints the completed Phase 6 metadata foundatio
 runtime boundary that refuses execution. Phase 7.1 adds metadata-only local runtime session
 ownership/lifecycle state without allocating models or launching processes. Phase 7.2 adds
 metadata-only runtime capability negotiation descriptors without activating capabilities or
-executing runtime work.
+executing runtime work. Phase 7.3 adds metadata-only runtime permission policy descriptors with a
+deterministic default-deny execution posture. Phase 7.4 adds a metadata-only runtime request
+pipeline that emits ordered traces and blocked execution summaries only. Phase 7.5 adds
+metadata-only runtime safety policy reporting for local-only and no-execution posture.
 
 ## Future Components
 
@@ -52,6 +55,13 @@ executing runtime work.
 - Runtime capability negotiation: future runtime capability vocabulary and negotiation posture.
   The current implementation reports deterministic capability descriptors, disabled/unavailable
   capability summaries, local-only enforcement, and privacy-safe metadata only.
+- Runtime permission policy: future execution permission boundary. The current implementation
+  reports deterministic permission request/decision metadata and denies execution requests by
+  default.
+- Runtime request pipeline: future runtime request ownership path. The current implementation
+  reports deterministic stage/status/trace metadata and keeps execution blocked.
+- Runtime safety policy: future runtime safety/sandbox posture boundary. The current implementation
+  reports deterministic local-only and no-execution safety rules and summaries.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -143,6 +153,14 @@ Current Phase 7.1 runtime remains metadata-only:
   local-only/privacy-safe safety posture metadata; it does not activate capabilities, execute
   models, call providers, stream output, access filesystems, launch processes, execute tools, load
   plugins, or access networks.
+- `IRuntimePermissionPolicy` owns future runtime permission policy metadata only.
+  `StaticRuntimePermissionPolicy` denies execution-level runtime permissions by default in
+  metadata-only mode.
+- `IRuntimeSafetyPolicy` owns future runtime safety posture metadata only.
+  `StaticRuntimeSafetyPolicy` reports deterministic local-only/no-execution policy and rules.
+- `IRuntimePipeline` owns future runtime request pipeline metadata only.
+  `StaticRuntimePipeline` emits deterministic request/permission/safety/execution-boundary traces
+  and returns blocked metadata summaries without performing actions.
 - `AppSettings` persists the routing mode through `JsonSettingsStore`; it does not store provider
   credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
@@ -155,8 +173,9 @@ automation remain future work.
 ## Phase 7 Direction
 
 Phase 7.0 starts with a local runtime boundary skeleton, not full provider/model execution. Phase
-7.2 adds capability negotiation vocabulary only; capability activation, permission policy, and
-runtime execution remain later explicit scopes. Any future local runtime implementation must be
-explicitly scoped, interface-owned, deterministic in tests, and still separate from cloud provider
-integration, credentials, downloads, streaming, tool execution, plugins, vector memory, and
-autonomous behavior unless a later phase approves those capabilities.
+7.2 adds capability negotiation vocabulary. Phase 7.3 through Phase 7.5 add metadata-only
+permission, request pipeline, and safety policy boundaries while keeping execution blocked by
+default. Any future local runtime implementation must be explicitly scoped, interface-owned,
+deterministic in tests, and still separate from cloud provider integration, credentials, downloads,
+streaming, tool execution, plugins, vector memory, and autonomous behavior unless a later phase
+approves those capabilities.
