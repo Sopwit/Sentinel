@@ -71,6 +71,53 @@ ScrollView {
                 }
             }
 
+            ShellPanel {
+                Layout.fillWidth: true
+                implicitHeight: 250
+                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.032)
+                border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.08)
+                bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
+                bracketSize: 9
+
+                ColumnLayout {
+                    anchors.fill: parent
+                    anchors.margins: SentinelTheme.spaceLg
+                    spacing: SentinelTheme.spaceSm
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "ORCHESTRATION SNAPSHOT / " + dashboardPage.viewModel.orchestrationSnapshotStatus
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.letterSpacing: 2.2
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: dashboardPage.viewModel.orchestrationSnapshotSummary
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.86)
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 3
+                        elide: Text.ElideRight
+                    }
+
+                    Repeater {
+                        model: Math.min(4, dashboardPage.viewModel.orchestrationSignals.length)
+
+                        Label {
+                            required property int index
+                            Layout.fillWidth: true
+                            text: dashboardPage.viewModel.orchestrationSignals[index]
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontTiny
+                            elide: Text.ElideRight
+                        }
+                    }
+                }
+            }
+
         }
 
         CognitionStreamPanel {

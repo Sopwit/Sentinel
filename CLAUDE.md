@@ -11,7 +11,7 @@
 
 ## Current Completed Phase Summary
 
-Phase 6.5 is complete.
+Phase 6.6 is complete.
 
 Implemented foundation:
 
@@ -68,6 +68,7 @@ Recent implementation phase:
 - Phase 6.3, Capability Graph and Task Planner Skeleton.
 - Phase 6.4, Agent System Skeleton.
 - Phase 6.5, Memory Taxonomy and Semantic Metadata Skeleton.
+- Phase 6.6, Orchestration Snapshot and Workspace State Skeleton.
 
 ## Constraints
 
@@ -82,7 +83,8 @@ Recent implementation phase:
 - Do not add real tool execution; Phase 4.2 plans, Phase 4.3 approval decisions, Phase 4.4
   sandbox capability decisions, and Phase 4.5 execution results are metadata/placeholder-only.
 - Do not add real provider/model/agent or semantic memory execution; Phase 6.x model routing,
-  catalog data, task planning, agent registry, and memory taxonomy metadata are metadata-only.
+  catalog data, task planning, agent registry, memory taxonomy, and orchestration snapshot metadata
+  are metadata-only.
 - Do not introduce Electron or a Python backend.
 
 ## Expected Output After Implementations

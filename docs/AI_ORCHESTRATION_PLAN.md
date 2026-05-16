@@ -4,8 +4,9 @@ Phase 4.11 recorded future AI routing direction only. Phase 6.0 began implementi
 as metadata-only architecture. Phase 6.1 persists the user routing mode preference. Phase 6.2 adds
 a provider/model catalog metadata boundary. Phase 6.3 adds capability graph and task planner
 metadata. Phase 6.4 adds static agent registry metadata. Phase 6.5 adds static memory taxonomy
-metadata. These phases do not implement providers, networking, model execution, downloads, API
-keys, autonomous agents, semantic memory execution, or tool execution.
+metadata. Phase 6.6 adds a deterministic orchestration snapshot read model. These phases do not
+implement providers, networking, model execution, downloads, API keys, autonomous agents, semantic
+memory execution, or tool execution.
 
 ## Future Components
 
@@ -22,6 +23,8 @@ keys, autonomous agents, semantic memory execution, or tool execution.
   posture, and local/cloud metadata affinity.
 - Memory catalog: static descriptors for future memory categories, retention/privacy metadata,
   recall hints, associations, and task affinity labels.
+- Orchestration snapshot: read-only aggregation of current routing, task, provider, agent, memory,
+  runtime, and activity metadata for workspace visibility.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -68,7 +71,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 6.5 runtime remains metadata-only:
+Current Phase 6.6 runtime remains metadata-only:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -87,6 +90,9 @@ Current Phase 6.5 runtime remains metadata-only:
   memory mutation.
 - `IMemoryStore` and `SQLiteMemoryStore` remain the key-value memory persistence boundary and are
   not replaced by the taxonomy catalog.
+- `OrchestrationSnapshot` and `WorkspaceStateSummary` aggregate current metadata into a read model
+  for UI visibility. They do not schedule work, execute plans, call providers, refresh in the
+  background, search memory, or mutate state.
 - `AppSettings` persists the routing mode through `JsonSettingsStore`; it does not store provider
   credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.

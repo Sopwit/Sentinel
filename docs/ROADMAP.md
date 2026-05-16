@@ -621,6 +621,28 @@ Still out of scope:
   execution, networking/API keys, downloads, tool execution, plugin loading, filesystem/system
   actions, or replacing `IMemoryStore`/`SQLiteMemoryStore` key-value persistence.
 
+### Phase 6.6: Orchestration Snapshot and Workspace State Skeleton
+
+Completed. Added a deterministic metadata aggregation read model without execution behavior.
+
+Delivered:
+
+- `OrchestrationSnapshot`, `WorkspaceStateSummary`, `OrchestrationHealthStatus`, and
+  `OrchestrationSignal` value metadata.
+- Snapshot aggregation over current routing mode/status, selected provider/model summary, task plan
+  status/summary, preferred agent summary, memory affinity summary, provider catalog count, agent
+  count, memory taxonomy count, runtime context status, and activity metadata.
+- Read-only controller/view-model exposure for snapshot status, summary, and signal strings.
+- Minimal Dashboard snapshot visibility using existing shell panel patterns.
+- Tests for deterministic snapshot construction, routing-mode updates, included provider/agent/
+  memory counts, preferred agent/memory/task summaries, and QML-safe exposure.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, model downloads,
+  model execution, tool execution, filesystem/system actions, plugin loading, vector databases,
+  embeddings, semantic search, autonomous background workers, timers, or broad UI redesign.
+
 ## Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

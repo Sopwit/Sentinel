@@ -158,6 +158,10 @@ summaries, retention/privacy labels, and planner affinity metadata, but must not
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool
 controls.
 
+Phase 6.6 adds text-only orchestration snapshot visibility. Dashboard surfaces may show snapshot
+health, summary, and compact signals, but must not expose execution controls, autonomous toggles,
+provider setup, semantic search, vector graph execution, downloads, or background-worker controls.
+
 ## Current Separation
 
 Current Phase 5 work is presentation foundation only:

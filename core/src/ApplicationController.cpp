@@ -34,6 +34,20 @@ AgentActivityStatus executionActivityStatus(ToolExecutionStatus status) {
                                                                : AgentActivityStatus::Blocked;
 }
 
+OrchestrationHealthStatus healthStatusFor(const QString& routingStatus,
+                                          const QString& taskPlanStatus) {
+    if (routingStatus == QStringLiteral("Unavailable") ||
+        taskPlanStatus == QStringLiteral("Blocked")) {
+        return OrchestrationHealthStatus::Degraded;
+    }
+
+    if (routingStatus.isEmpty() || taskPlanStatus.isEmpty()) {
+        return OrchestrationHealthStatus::Unknown;
+    }
+
+    return OrchestrationHealthStatus::Ready;
+}
+
 } // namespace
 
 ApplicationController::ApplicationController(
@@ -177,6 +191,7 @@ void ApplicationController::setRoutingModeByName(const QString& routingModeName)
     refreshLatestTaskPlan();
     emit modelRoutingChanged();
     emit taskPlanChanged();
+    emit orchestrationSnapshotChanged();
 }
 
 QString ApplicationController::modelRoutingStatus() const {
@@ -266,6 +281,64 @@ QStringList ApplicationController::memoryCatalogSummaries() const {
         summaries.append(memoryShardSummary(shard));
     }
     return summaries;
+}
+
+OrchestrationSnapshot ApplicationController::currentOrchestrationSnapshot() const {
+    WorkspaceStateSummary workspace{
+        currentRoutingMode(),           modelRoutingStatus(),    selectedModelProviderSummary(),
+        latestTaskPlanStatus(),         latestTaskPlanSummary(), currentAgentSummary(),
+        currentMemoryAffinitySummary(), runtimeContextStatus(),  runtimeContextSummary(),
+        latestAgentActivitySummary(),   providerCatalogCount(),  registeredAgentCount(),
+        memoryCatalogCount(),           agentActivityCount(),
+    };
+
+    OrchestrationSnapshot snapshot;
+    snapshot.healthStatus = healthStatusFor(workspace.routingStatus, workspace.taskPlanStatus);
+    snapshot.workspace = workspace;
+    snapshot.summary = QStringLiteral("%1 orchestration snapshot: %2 route, %3 task plan, %4 "
+                                      "provider entries, %5 agents, %6 memory categories.")
+                           .arg(orchestrationHealthStatusName(snapshot.healthStatus),
+                                workspace.routingMode, workspace.taskPlanStatus)
+                           .arg(workspace.providerCatalogCount)
+                           .arg(workspace.registeredAgentCount)
+                           .arg(workspace.memoryCatalogCount);
+    snapshot.executionEnabled = false;
+    snapshot.signalList = {
+        OrchestrationSignal{
+            QStringLiteral("routing"), QStringLiteral("Routing"),
+            QStringLiteral("%1 / %2").arg(workspace.routingMode, workspace.routingStatus)},
+        OrchestrationSignal{QStringLiteral("provider-model"), QStringLiteral("Provider Model"),
+                            workspace.selectedProviderModelSummary},
+        OrchestrationSignal{
+            QStringLiteral("task-plan"), QStringLiteral("Task Plan"),
+            QStringLiteral("%1 / %2").arg(workspace.taskPlanStatus, workspace.taskPlanSummary)},
+        OrchestrationSignal{QStringLiteral("agent"), QStringLiteral("Agent"),
+                            workspace.preferredAgentSummary},
+        OrchestrationSignal{QStringLiteral("memory"), QStringLiteral("Memory"),
+                            workspace.memoryAffinitySummary},
+        OrchestrationSignal{QStringLiteral("catalogs"), QStringLiteral("Catalogs"),
+                            QStringLiteral("%1 providers / %2 agents / %3 memory")
+                                .arg(workspace.providerCatalogCount)
+                                .arg(workspace.registeredAgentCount)
+                                .arg(workspace.memoryCatalogCount)},
+        OrchestrationSignal{QStringLiteral("runtime"), QStringLiteral("Runtime"),
+                            QStringLiteral("%1 / activity %2")
+                                .arg(workspace.runtimeContextStatus)
+                                .arg(workspace.activityCount)},
+    };
+    return snapshot;
+}
+
+QString ApplicationController::orchestrationSnapshotStatus() const {
+    return orchestrationHealthStatusName(currentOrchestrationSnapshot().healthStatus);
+}
+
+QString ApplicationController::orchestrationSnapshotSummary() const {
+    return safeOrchestrationSnapshotSummary(currentOrchestrationSnapshot());
+}
+
+QStringList ApplicationController::orchestrationSignals() const {
+    return orchestrationSignalSummaries(currentOrchestrationSnapshot());
 }
 
 int ApplicationController::availableToolCount() const {
@@ -382,6 +455,7 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         agentActivityLog_.append(AgentActivityType::PipelineCompleted, AgentActivityStatus::Blocked,
                                  QStringLiteral("Agent pipeline blocked: runtime unavailable."));
         emit agentActivityChanged();
+        emit orchestrationSnapshotChanged();
         if (lastAgentResponse_ != QStringLiteral("Agent runtime unavailable.")) {
             lastAgentResponse_ = QStringLiteral("Agent runtime unavailable.");
             emit agentResponseChanged();
@@ -399,6 +473,7 @@ bool ApplicationController::runAgentRequest(const QString& request) {
     emit agentPipelineChanged();
     emit runtimeContextChanged();
     emit agentActivityChanged();
+    emit orchestrationSnapshotChanged();
 
     const auto response = agentRuntime_->execute(AgentRequest{trimmed});
     const auto nextMessage =

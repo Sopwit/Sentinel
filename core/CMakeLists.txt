@@ -40,6 +40,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ModelRouting.h
     include/sentinel/core/NullAgentRuntime.h
     include/sentinel/core/NullToolExecutor.h
+    include/sentinel/core/OrchestrationSnapshot.h
     include/sentinel/core/ProviderCatalog.h
     include/sentinel/core/SQLiteChatHistoryStore.h
     include/sentinel/core/SQLiteMemoryStore.h

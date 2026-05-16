@@ -43,6 +43,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::modelRoutingChanged);
     connect(&controller_, &core::ApplicationController::taskPlanChanged, this,
             &DesktopShellViewModel::taskPlanChanged);
+    connect(&controller_, &core::ApplicationController::orchestrationSnapshotChanged, this,
+            &DesktopShellViewModel::orchestrationSnapshotChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::themeNameChanged, this,
@@ -143,6 +145,7 @@ void DesktopShellViewModel::setRoutingModeByName(const QString& routingModeName)
     controller_.setRoutingModeByName(settings_.routingModeName());
     if (before == controller_.currentRoutingMode()) {
         emit modelRoutingChanged();
+        emit orchestrationSnapshotChanged();
     }
 }
 
@@ -200,6 +203,18 @@ int DesktopShellViewModel::memoryCatalogCount() const {
 
 QStringList DesktopShellViewModel::memoryCatalogSummaries() const {
     return controller_.memoryCatalogSummaries();
+}
+
+QString DesktopShellViewModel::orchestrationSnapshotStatus() const {
+    return controller_.orchestrationSnapshotStatus();
+}
+
+QString DesktopShellViewModel::orchestrationSnapshotSummary() const {
+    return controller_.orchestrationSnapshotSummary();
+}
+
+QStringList DesktopShellViewModel::orchestrationSignals() const {
+    return controller_.orchestrationSignals();
 }
 
 int DesktopShellViewModel::availableToolCount() const {

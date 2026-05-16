@@ -328,6 +328,19 @@ Phase 6.5 adds memory taxonomy metadata:
 - No vector database, embeddings, semantic search, provider/model execution, autonomous memory
   writes, tool execution, networking, plugin loading, or filesystem/system action is added.
 
+Phase 6.6 adds an orchestration snapshot read model:
+
+- `OrchestrationSnapshot.h` defines value-only orchestration health, signal, workspace state, and
+  snapshot metadata.
+- `ApplicationController` builds the current snapshot deterministically from existing routing,
+  provider catalog, task plan, preferred agent, memory affinity, runtime context, and activity
+  metadata.
+- `DesktopShellViewModel` exposes only snapshot status, summary, and signal strings.
+- Dashboard shows the snapshot as read-only workspace intelligence metadata.
+- The snapshot is a read model, not a scheduler or execution system. It does not create background
+  refresh, threads, timers, provider/model calls, memory search, tool execution, networking,
+  plugins, filesystem/system actions, embeddings, or vector search.
+
 Phase 5.0 adds UI/UX planning and design-system foundation only:
 
 - `docs/UI_UX_PLAN.md` records the design direction and motion constraints.

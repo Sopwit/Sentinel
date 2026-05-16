@@ -107,6 +107,12 @@ Future UI vision:
   `IMemoryStore`/`SQLiteMemoryStore` key-value persistence and adds no embeddings, vector database,
   semantic search, autonomous memory writes, provider/model calls, tools, networking, plugins, or
   filesystem/system actions.
+- Phase 6.6 adds a metadata-only orchestration snapshot read model. `OrchestrationSnapshot` and
+  `WorkspaceStateSummary` aggregate existing routing, provider catalog, task plan, preferred agent,
+  memory affinity, runtime context, and activity metadata into deterministic read-only summaries and
+  signals. It is not an execution system and adds no background refresh, threads, timers, provider
+  calls, model calls, memory search, networking, embeddings, vector database, tools, plugins, or
+  filesystem/system actions.
 - Phase 5.0 adds UI/UX planning and a small QML design-token singleton without adding advanced
   motion, provider integration, model execution, or runtime behavior.
 - Phase 5.1 adds lightweight motion and interaction tokens plus subtle hover/focus/page-transition
@@ -131,7 +137,7 @@ Future UI vision:
 
 ## Current Phase State
 
-- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, and Phase 6.5.
+- Completed: Phase 3.1, Phase 3.1.5, Phase 3.2, Phase 3.3, Phase 3.4, Phase 3.5, Phase 4.0, Phase 4.1, Phase 4.2, Phase 4.3, Phase 4.4, Phase 4.5, Phase 4.6, Phase 4.7, Phase 4.8, Phase 4.9, Phase 4.10, Phase 4.11, Phase 5.0, Phase 5.1, Phase 5.2, Phase 5.3, Phase 5.4, Phase 6.0, Phase 6.1, Phase 6.2, Phase 6.3, Phase 6.4, Phase 6.5, and Phase 6.6.
 - Current: Desktop alpha with a stabilized metadata-only agent pipeline and metadata-only model
   routing skeleton:
   registry -> planning -> approval -> sandbox capability metadata -> placeholder execution boundary,
@@ -139,6 +145,6 @@ Future UI vision:
   read-only dashboard visibility for that state. Model/provider routing is descriptor-only and
   currently resolves to a deterministic local placeholder.
 - Next: Phase 6.x stabilization and later explicitly approved provider/model work.
-- Recent: Phase 6.5, Memory Taxonomy and Semantic Metadata Skeleton.
+- Recent: Phase 6.6, Orchestration Snapshot and Workspace State Skeleton.
 
 Current runtime still has no real tool execution, shell/process launch, filesystem mutation, networking, API keys, real provider integrations, plugin loading, privileged automation, multi-conversation support, encryption, export, pruning, real sandbox runtime, subprocess execution, or platform-specific service implementations.
