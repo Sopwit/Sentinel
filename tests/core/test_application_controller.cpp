@@ -22,6 +22,9 @@ using sentinel::core::LocalEchoProvider;
 using sentinel::core::LocalInferenceRequest;
 using sentinel::core::LocalInferenceResponse;
 using sentinel::core::LocalInferenceStatus;
+using sentinel::core::OllamaConfig;
+using sentinel::core::OllamaHealthCheckResult;
+using sentinel::core::OllamaModelSummary;
 
 class UnavailableProvider final : public IChatProvider {
 public:
@@ -202,6 +205,29 @@ public:
     LocalInferenceRequest lastRequest;
 };
 
+class FakeOllamaRuntimeClient final : public sentinel::core::IOllamaRuntimeClient {
+public:
+    explicit FakeOllamaRuntimeClient(QList<OllamaModelSummary> models)
+        : models_(std::move(models)) {}
+
+    OllamaConfig config() const override {
+        return OllamaConfig{};
+    }
+
+    OllamaHealthCheckResult healthCheck() const override {
+        OllamaHealthCheckResult result;
+        result.summary = QStringLiteral("Fake Ollama health metadata.");
+        return result;
+    }
+
+    QList<OllamaModelSummary> installedModels() const override {
+        return models_;
+    }
+
+private:
+    QList<OllamaModelSummary> models_;
+};
+
 class ApplicationControllerTest final : public QObject {
     Q_OBJECT
 
@@ -219,6 +245,9 @@ private slots:
     void exposesLocalRuntimeMetadata();
     void exposesOllamaRuntimeBoundaryMetadata();
     void exposesLocalInferenceBoundaryMetadata();
+    void exposesSelectedModelDefaultAndFallback();
+    void rejectsInvalidSelectedModelAgainstDiscoveryMetadata();
+    void exposesStreamingSkeletonDisabledMetadata();
     void blocksLocalInferenceByDefaultPermission();
     void runsInjectedLocalInferenceWhenPermissionAllows();
     void exposesConversationSessionMetadata();
@@ -546,7 +575,67 @@ void ApplicationControllerTest::exposesLocalInferenceBoundaryMetadata() {
     QVERIFY(controller->localInferenceSummary().contains(QStringLiteral("loopback-only")));
     QCOMPARE(controller->localInferenceLastResponseSummary(),
              QStringLiteral("No local inference request yet."));
+    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Idle"));
+    QCOMPARE(controller->localInferenceLatencySummary(),
+             QStringLiteral("No local inference latency recorded."));
     QVERIFY(controller->localInferenceTraceSummaries().isEmpty());
+}
+
+void ApplicationControllerTest::exposesSelectedModelDefaultAndFallback() {
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        nullptr);
+
+    QVERIFY(controller->selectedLocalModel().isEmpty());
+    QCOMPARE(controller->selectedLocalModelSummary(),
+             QStringLiteral("No local model selected; fallback candidate is llama3.2."));
+    QCOMPARE(controller->activeLocalRuntimeBadge(), QStringLiteral("Ollama Local / llama3.2"));
+
+    controller->setSelectedLocalModel(QStringLiteral(" llama3.2 "));
+
+    QCOMPARE(controller->selectedLocalModel(), QStringLiteral("llama3.2"));
+    QCOMPARE(controller->selectedLocalModelSummary(),
+             QStringLiteral("Selected local model llama3.2 is available in local discovery "
+                            "metadata."));
+    QCOMPARE(controller->activeLocalRuntimeBadge(), QStringLiteral("Ollama Local / llama3.2"));
+}
+
+void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetadata() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+
+    controller->setSelectedLocalModel(QStringLiteral("missing-model"));
+    const auto ran = controller->runLocalInference(QStringLiteral("hello"), {});
+
+    QVERIFY(!ran);
+    QVERIFY(!fakeClientPtr->called);
+    QCOMPARE(controller->selectedLocalModelSummary(),
+             QStringLiteral("Selected local model missing-model was not found in discovered local "
+                            "models."));
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Model Unavailable"));
+    QCOMPARE(controller->localInferenceSummary(),
+             QStringLiteral("Local inference request rejected: selected model is not installed."));
+}
+
+void ApplicationControllerTest::exposesStreamingSkeletonDisabledMetadata() {
+    const auto controller = makeController();
+
+    QVERIFY(!controller->localInferenceStreamingAvailable());
+    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->localInferenceStreamSummary(),
+             QStringLiteral("Local inference streaming is disabled."));
 }
 
 void ApplicationControllerTest::blocksLocalInferenceByDefaultPermission() {
@@ -583,10 +672,13 @@ void ApplicationControllerTest::runsInjectedLocalInferenceWhenPermissionAllows()
     QVERIFY(fakeClientPtr->called);
     QCOMPARE(fakeClientPtr->lastRequest.prompt, QStringLiteral("hello"));
     QCOMPARE(fakeClientPtr->lastRequest.options.model, QStringLiteral("local-model"));
-    QCOMPARE(spy.count(), 1);
+    QCOMPARE(spy.count(), 2);
+    QVERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Idle"));
     QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(controller->localInferenceLastResponseSummary(),
              QStringLiteral("Local inference completed for local-model (21 characters)."));
+    QVERIFY(controller->localInferenceLatencySummary().contains(QStringLiteral("ms")));
     QVERIFY(controller->localInferenceTraceSummaries().contains(
         QStringLiteral("1. Permission Policy [Allowed]: Local inference permission allowed for "
                        "injected test policy.")));

@@ -410,6 +410,17 @@ void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
     QVERIFY(fixture.viewModel.localInferenceSummary().contains(QStringLiteral("loopback-only")));
     QCOMPARE(fixture.viewModel.localInferenceLastResponseSummary(),
              QStringLiteral("No local inference request yet."));
+    QCOMPARE(fixture.viewModel.selectedLocalModelSummary(),
+             QStringLiteral("No local model selected; inference requires an explicit model."));
+    QCOMPARE(fixture.viewModel.activeLocalRuntimeBadge(),
+             QStringLiteral("Ollama Local / No Model"));
+    QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Idle"));
+    QCOMPARE(fixture.viewModel.localInferenceLatencySummary(),
+             QStringLiteral("No local inference latency recorded."));
+    QVERIFY(!fixture.viewModel.localInferenceStreamingAvailable());
+    QCOMPARE(fixture.viewModel.localInferenceStreamStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.localInferenceStreamSummary(),
+             QStringLiteral("Local inference streaming is disabled."));
     QVERIFY(fixture.viewModel.localInferenceTraceSummaries().isEmpty());
 }
 
@@ -423,6 +434,7 @@ void DesktopShellViewModelTest::forwardsBlockedLocalInferenceRequest() {
     QVERIFY(!ran);
     QCOMPARE(spy.count(), 1);
     QCOMPARE(fixture.viewModel.localInferenceStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Error"));
     QCOMPARE(fixture.viewModel.localInferenceSummary(),
              QStringLiteral("Local inference blocked by runtime permission policy."));
     QVERIFY(fixture.viewModel.localInferenceTraceSummaries().contains(
@@ -1066,14 +1078,19 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     ViewModelFixture fixture;
     QSignalSpy themeSpy(&fixture.viewModel, &DesktopShellViewModel::themeNameChanged);
     QSignalSpy profileSpy(&fixture.viewModel, &DesktopShellViewModel::configurationProfileChanged);
+    QSignalSpy modelSpy(&fixture.viewModel, &DesktopShellViewModel::localModelSelectionChanged);
 
     fixture.viewModel.setThemeName(QStringLiteral("Sentinel Light"));
     fixture.viewModel.setConfigurationProfile(QStringLiteral("Phase 2 Shell"));
+    fixture.viewModel.setSelectedLocalModel(QStringLiteral(" local-model "));
 
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
+    QCOMPARE(fixture.viewModel.selectedLocalModel(), QStringLiteral("local-model"));
+    QCOMPARE(fixture.settings.selectedLocalModel(), QStringLiteral("local-model"));
     QCOMPARE(themeSpy.count(), 1);
     QCOMPARE(profileSpy.count(), 1);
+    QCOMPARE(modelSpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {

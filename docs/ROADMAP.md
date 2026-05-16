@@ -82,6 +82,29 @@ Still out of scope:
 - Streaming, model management, downloads/pulls/deletes, cloud endpoints, API keys, autonomous
   loops, tools/plugins, filesystem/system actions, subprocess launch, and broad UI changes.
 
+## Phase 9.6-9.8: Model Selection, Runtime UX State, And Streaming Skeleton
+
+Completed. Added selected-model metadata and runtime UX visibility without expanding execution.
+
+Delivered:
+
+- Persisted selected local model setting.
+- Effective local model resolution from explicit model, selected model, or safe discovered-model
+  fallback.
+- Safe validation against discovered local Ollama model metadata when available.
+- QML-safe selected-model summary, active runtime/model badge, idle/busy/error state, latency
+  summary, and trace exposure.
+- Disabled streaming skeleton types and client boundary for future token streaming work.
+- Minimal Settings and Chat metadata visibility only.
+- Tests for default/fallback behavior, invalid selected model behavior, busy/state metadata,
+  disabled streaming skeleton, view-model exposure, and fake inference success.
+
+Still out of scope:
+
+- Model downloads, pulls, deletes, process launch, cloud calls, API keys, real streaming UI,
+  automatic chat-to-Ollama routing, real tools/plugins, filesystem/system actions, autonomous
+  loops, and broad UI redesign.
+
 ## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
 
 Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.

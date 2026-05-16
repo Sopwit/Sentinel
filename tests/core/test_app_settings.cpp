@@ -25,6 +25,7 @@ private slots:
     void persistsRoutingModeThroughJsonStore();
     void exposesOllamaEndpointDefault();
     void normalizesOllamaEndpoint();
+    void persistsSelectedLocalModel();
 };
 
 static std::unique_ptr<AppSettings> makeSettings() {
@@ -36,6 +37,7 @@ void AppSettingsTest::exposesDefaults() {
 
     QCOMPARE(settings->themeName(), QStringLiteral("Sentinel Dark"));
     QCOMPARE(settings->configurationProfile(), QStringLiteral("Desktop Alpha"));
+    QVERIFY(settings->selectedLocalModel().isEmpty());
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -140,6 +142,19 @@ void AppSettingsTest::normalizesOllamaEndpoint() {
 
     QCOMPARE(settings->ollamaEndpoint(), QStringLiteral("http://127.0.0.1:11434"));
     QCOMPARE(spy.count(), 2);
+}
+
+void AppSettingsTest::persistsSelectedLocalModel() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::selectedLocalModelChanged);
+
+    settings->setSelectedLocalModel(QStringLiteral(" llama3.2 "));
+
+    QCOMPARE(settings->selectedLocalModel(), QStringLiteral("llama3.2"));
+    QCOMPARE(spy.count(), 1);
+
+    settings->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    QCOMPARE(spy.count(), 1);
 }
 
 QTEST_MAIN(AppSettingsTest)

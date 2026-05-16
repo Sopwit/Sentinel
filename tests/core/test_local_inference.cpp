@@ -5,7 +5,9 @@
 using sentinel::core::LocalInferenceError;
 using sentinel::core::LocalInferenceRequest;
 using sentinel::core::LocalInferenceStatus;
+using sentinel::core::LocalInferenceStreamStatus;
 using sentinel::core::NullLocalInferenceClient;
+using sentinel::core::NullLocalInferenceStreamClient;
 using sentinel::core::OllamaConfig;
 using sentinel::core::OllamaLocalInferenceClient;
 
@@ -18,6 +20,7 @@ private slots:
     void missingModelRejectedBeforeOllamaCall();
     void unavailableModelRejectedBeforeGeneration();
     void invalidEndpointIsBlocked();
+    void streamSkeletonIsDeterministicallyDisabled();
 };
 
 void LocalInferenceTest::nullClientDeterministicallyRefuses() {
@@ -94,6 +97,23 @@ void LocalInferenceTest::invalidEndpointIsBlocked() {
     QCOMPARE(response.status, LocalInferenceStatus::Blocked);
     QCOMPARE(response.error, LocalInferenceError::EndpointBlocked);
     QVERIFY(response.summary.contains(QStringLiteral("loopback HTTP")));
+}
+
+void LocalInferenceTest::streamSkeletonIsDeterministicallyDisabled() {
+    NullLocalInferenceStreamClient client;
+
+    const auto result = client.startStream(LocalInferenceRequest{
+        QStringLiteral("stream-request-1"),
+        QStringLiteral("hello"),
+        {QStringLiteral("llama3.2"), 1, true, false},
+    });
+
+    QCOMPARE(result.status, LocalInferenceStreamStatus::Disabled);
+    QCOMPARE(result.summary,
+             QStringLiteral("Local inference streaming is disabled; no stream was opened."));
+    QVERIFY(result.chunks.isEmpty());
+    QCOMPARE(client.statusSummary(),
+             QStringLiteral("Local inference streaming skeleton is disabled."));
 }
 
 QTEST_MAIN(LocalInferenceTest)

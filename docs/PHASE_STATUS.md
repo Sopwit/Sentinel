@@ -2,6 +2,32 @@
 
 ## Completed / Stable
 
+### Phase 9.6-9.8: Model Selection, Runtime UX State, And Streaming Skeleton
+
+Completed. Adds selected local model metadata, runtime inference UX state, and a disabled
+streaming skeleton while keeping chat routing and local execution explicitly guarded.
+
+Scope:
+
+- Added a persisted selected local model setting.
+- Controller resolves an effective local model from an explicit request, selected model, or safe
+  discovered-model fallback when metadata is available.
+- Selected model validation uses discovered local model metadata when available and rejects known
+  invalid selections before invoking inference.
+- Runtime UX metadata now includes idle/busy/error state, active local runtime/model badge,
+  last-response latency summary, and existing trace summaries.
+- Added `LocalInferenceStreamChunk`, `LocalInferenceStreamStatus`, `LocalInferenceStreamResult`,
+  `ILocalInferenceStreamClient`, and deterministic disabled stream client behavior.
+- Desktop view model exposes QML-safe strings, lists, and booleans only.
+- Settings and chat surfaces show model/runtime readiness metadata without adding model-management
+  actions or routing chat through Ollama.
+
+Still out of scope:
+
+- Model downloads, pulls, deletes, broad model management UI, automatic chat-to-Ollama routing,
+  real token streaming UI, cloud calls, API keys, subprocess launch, filesystem/system actions,
+  tools/plugins, and autonomous loops.
+
 ### Phase 9.3-9.5: Controlled Local Inference Boundary
 
 Completed. Adds the first explicit local-only inference path behind the Ollama/local inference

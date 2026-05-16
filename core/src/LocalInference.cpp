@@ -128,6 +128,8 @@ QString localInferenceStatusName(LocalInferenceStatus status) {
     switch (status) {
     case LocalInferenceStatus::NotRequested:
         return QStringLiteral("Not Requested");
+    case LocalInferenceStatus::Busy:
+        return QStringLiteral("Busy");
     case LocalInferenceStatus::Refused:
         return QStringLiteral("Refused");
     case LocalInferenceStatus::Blocked:
@@ -143,6 +145,25 @@ QString localInferenceStatusName(LocalInferenceStatus status) {
     }
 
     return QStringLiteral("Not Requested");
+}
+
+QString localInferenceStreamStatusName(LocalInferenceStreamStatus status) {
+    switch (status) {
+    case LocalInferenceStreamStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case LocalInferenceStreamStatus::NotStarted:
+        return QStringLiteral("Not Started");
+    case LocalInferenceStreamStatus::Refused:
+        return QStringLiteral("Refused");
+    case LocalInferenceStreamStatus::Streaming:
+        return QStringLiteral("Streaming");
+    case LocalInferenceStreamStatus::Completed:
+        return QStringLiteral("Completed");
+    case LocalInferenceStreamStatus::Error:
+        return QStringLiteral("Error");
+    }
+
+    return QStringLiteral("Disabled");
 }
 
 QString localInferenceErrorName(LocalInferenceError error) {
@@ -223,6 +244,20 @@ LocalInferenceResponse NullLocalInferenceClient::infer(const LocalInferenceReque
 
 QString NullLocalInferenceClient::statusSummary() const {
     return QStringLiteral("Local inference client is unavailable.");
+}
+
+LocalInferenceStreamResult
+NullLocalInferenceStreamClient::startStream(const LocalInferenceRequest& request) {
+    Q_UNUSED(request);
+    return LocalInferenceStreamResult{
+        LocalInferenceStreamStatus::Disabled,
+        QStringLiteral("Local inference streaming is disabled; no stream was opened."),
+        {},
+    };
+}
+
+QString NullLocalInferenceStreamClient::statusSummary() const {
+    return QStringLiteral("Local inference streaming skeleton is disabled.");
 }
 
 OllamaLocalInferenceClient::OllamaLocalInferenceClient(OllamaConfig config, int timeoutMs)

@@ -494,6 +494,41 @@ ShellPanel {
                 Layout.fillWidth: true
             }
 
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Selected Model"
+                value: settingsPage.viewModel.selectedLocalModelSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Runtime Badge"
+                value: settingsPage.viewModel.activeLocalRuntimeBadge
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Inference State"
+                value: settingsPage.viewModel.localInferenceRuntimeState + " / " + settingsPage.viewModel.localInferenceStatus
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Inference Latency"
+                value: settingsPage.viewModel.localInferenceLatencySummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Streaming"
+                value: settingsPage.viewModel.localInferenceStreamStatus + " / " + settingsPage.viewModel.localInferenceStreamSummary
+                Layout.fillWidth: true
+            }
+
             Repeater {
                 model: settingsPage.viewModel.localRuntimeAdapterCapabilitySummaries
 

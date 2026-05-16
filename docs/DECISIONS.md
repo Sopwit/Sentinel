@@ -1035,3 +1035,36 @@ Boundary rules:
 - `ApplicationController` records permission/safety and client traces before exposing summaries.
 - QML receives strings and string lists only; raw requests, responses, clients, and traces are not
   exposed.
+
+## 54. Selected Local Model Metadata Before Model Management
+
+Decision: Persist a selected local model name as configuration metadata and validate it against
+discovered local model metadata only when that metadata is already available.
+
+Reason: Users need a stable local-model preference before chat routing is allowed to target local
+inference, but selection must not imply model management or execution.
+
+Boundary rules:
+
+- Selected local model storage is a setting, not memory or chat history.
+- No model download, pull, delete, install, or process launch is introduced.
+- Known invalid selected models are rejected before local inference is invoked.
+- Unknown discovery state is reported as metadata rather than treated as permission to manage
+  models.
+- QML receives summaries, strings, lists, and booleans only.
+
+## 55. Streaming Boundary Before Streaming Execution
+
+Decision: Add streaming value types and an interface while keeping the implementation disabled.
+
+Reason: Streaming needs a separate contract from non-streaming inference so future token delivery
+can be guarded and tested without destabilizing the existing `/api/generate` path.
+
+Boundary rules:
+
+- `LocalInferenceStreamChunk`, `LocalInferenceStreamStatus`, and stream result values are
+  metadata/value objects.
+- `ILocalInferenceStreamClient` is a boundary, not permission to stream.
+- Current behavior is deterministic disabled status and no opened stream.
+- No token streaming UI is required in this phase.
+- Non-streaming inference remains permission/safety gated and stable.
