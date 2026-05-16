@@ -20,6 +20,42 @@ qt_add_executable(sentinel-desktop
     main.cpp
 )
 
+set(SENTINEL_APP_ICON_PNG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.png)
+set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.svg)
+set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.icns)
+set(SENTINEL_APP_ICON_ICO ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.ico)
+set(SENTINEL_WINDOWS_RESOURCE ${CMAKE_CURRENT_BINARY_DIR}/sentinel-desktop.rc)
+
+set_source_files_properties(${SENTINEL_APP_ICON_PNG}
+    PROPERTIES
+        QT_RESOURCE_ALIAS icons/dev.sentinel.Sentinel.png
+)
+
+qt_add_resources(sentinel-desktop sentinel_desktop_assets
+    PREFIX /
+    FILES
+        ${SENTINEL_APP_ICON_PNG}
+)
+
+if(APPLE)
+    target_sources(sentinel-desktop PRIVATE ${SENTINEL_APP_ICON_ICNS})
+    set_source_files_properties(${SENTINEL_APP_ICON_ICNS}
+        PROPERTIES
+            MACOSX_PACKAGE_LOCATION Resources
+    )
+endif()
+
+if(WIN32)
+    configure_file(
+        ${CMAKE_SOURCE_DIR}/resources/windows/sentinel-desktop.rc.in
+        ${SENTINEL_WINDOWS_RESOURCE}
+        @ONLY
+    )
+    target_sources(sentinel-desktop PRIVATE
+        ${SENTINEL_WINDOWS_RESOURCE}
+    )
+endif()
+
 set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/Main.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/Atmosphere.qml
@@ -93,5 +129,32 @@ target_link_libraries(sentinel-desktop
 
 set_target_properties(sentinel-desktop PROPERTIES
     MACOSX_BUNDLE TRUE
+    MACOSX_BUNDLE_BUNDLE_NAME "Sentinel Desktop"
+    MACOSX_BUNDLE_GUI_IDENTIFIER "dev.sentinel.Sentinel"
+    MACOSX_BUNDLE_ICON_FILE "dev.sentinel.Sentinel.icns"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     WIN32_EXECUTABLE TRUE
 )
+
+include(GNUInstallDirs)
+
+install(TARGETS sentinel-desktop
+    BUNDLE DESTINATION .
+    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+if(UNIX AND NOT APPLE)
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dev.sentinel.Sentinel.desktop.in
+        RENAME dev.sentinel.Sentinel.desktop
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/applications
+    )
+
+    install(FILES ${SENTINEL_APP_ICON_SVG}
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/scalable/apps
+    )
+
+    install(FILES ${SENTINEL_APP_ICON_PNG}
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/1024x1024/apps
+    )
+endif()

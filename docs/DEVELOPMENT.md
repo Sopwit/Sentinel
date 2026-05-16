@@ -122,7 +122,8 @@ Exclude these generated or local-only folders from IDE indexing and static analy
 - Qt autogen folders such as `*_autogen/`
 - Qt qmlcache folders such as `.rcc/qmlcache/`
 
-For clangd, this repository includes `.clangd` pointing at `build/no-ccache`. Reconfigure that preset before relying on IDE diagnostics:
+For clangd, this repository includes `.clangd` pointing at `build/no-ccache`. Configure that
+preset before relying on IDE diagnostics:
 
 ```bash
 cmake --preset no-ccache
@@ -138,10 +139,11 @@ qmllint -I build/no-ccache/apps/sentinel-desktop \
 
 ### VS Code + QMLLS (cross-platform)
 
-Use the checked-in `Sentinel.code-workspace` file when opening the project in VS Code. It keeps
-QML module import paths and C++ `compile_commands.json` resolution consistent across machines.
+Open the repository root in VS Code. Project-wide diagnostics should come from CMake presets and
+the checked-in `.clangd` file, not from a checked-in editor workspace. Personal `.code-workspace`
+files are intentionally ignored.
 
-QMLLS also needs Qt module paths from your environment. Set `QML_IMPORT_PATH` and
+QMLLS needs Qt module paths from your environment. Set `QML_IMPORT_PATH` and
 `QML2_IMPORT_PATH` to your Qt `qml` directory:
 
 ```bash
@@ -160,7 +162,8 @@ $env:QML_IMPORT_PATH = "C:\Qt\6.7.3\msvc2019_64\qml"
 $env:QML2_IMPORT_PATH = "C:\Qt\6.7.3\msvc2019_64\qml"
 ```
 
-The remaining known QML lint warning is the root `shellViewModel` context property injected from C++. It is harmless at runtime and intentionally left until a typed QML singleton is worth adding.
+Run `qmllint` against the built module as shown above. Do not lint generated qmlcache C++ output or
+ad hoc editor import paths.
 
 ### Headless/offscreen Qt font warning
 
@@ -214,8 +217,8 @@ If the SQLite database path is unavailable or unwritable, the store reports unav
 Fedora/KDE packaging should stay conventional:
 
 - Install the `sentinel-desktop` binary.
-- Install `packaging/linux/dev.sentinel.Sentinel.desktop.in` as a desktop entry after replacing placeholders if needed.
-- Install `resources/icons/dev.sentinel.Sentinel.svg` into the icon theme path.
+- Install the desktop entry through CMake as `dev.sentinel.Sentinel.desktop`.
+- Install `resources/icons/dev.sentinel.Sentinel.svg` and the 1024px PNG into hicolor icon theme paths.
 - Keep settings under Qt's `AppConfigLocation`.
 
 Do not add privileged services, autostart agents, or system automation until those phases are explicitly designed.
