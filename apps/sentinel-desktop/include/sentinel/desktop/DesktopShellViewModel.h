@@ -61,6 +61,12 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries CONSTANT)
     Q_PROPERTY(int memoryCatalogCount READ memoryCatalogCount CONSTANT)
     Q_PROPERTY(QStringList memoryCatalogSummaries READ memoryCatalogSummaries CONSTANT)
+    Q_PROPERTY(QString orchestrationSnapshotStatus READ orchestrationSnapshotStatus NOTIFY
+                   orchestrationSnapshotChanged)
+    Q_PROPERTY(QString orchestrationSnapshotSummary READ orchestrationSnapshotSummary NOTIFY
+                   orchestrationSnapshotChanged)
+    Q_PROPERTY(QStringList orchestrationSignals READ orchestrationSignals NOTIFY
+                   orchestrationSnapshotChanged)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -119,6 +125,9 @@ public:
     QStringList providerCatalogSummaries() const;
     int memoryCatalogCount() const;
     QStringList memoryCatalogSummaries() const;
+    QString orchestrationSnapshotStatus() const;
+    QString orchestrationSnapshotSummary() const;
+    QStringList orchestrationSignals() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -163,6 +172,7 @@ signals:
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();
+    void orchestrationSnapshotChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);

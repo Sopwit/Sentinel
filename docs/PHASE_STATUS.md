@@ -967,3 +967,35 @@ Still out of scope:
   execution, provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, downloads,
   model execution, tool execution, plugin loading, filesystem/system actions, replacing
   `IMemoryStore`/`SQLiteMemoryStore`, or broad UI redesign.
+
+### Phase 6.6: Orchestration Snapshot and Workspace State Skeleton
+
+Completed. Added deterministic orchestration/workspace state aggregation without provider,
+model, memory, tool, or autonomous execution.
+
+Scope:
+
+- Added value-only orchestration snapshot metadata:
+  - `OrchestrationSnapshot`
+  - `WorkspaceStateSummary`
+  - `OrchestrationHealthStatus`
+  - `OrchestrationSignal`
+- Snapshot aggregates read-only metadata from routing mode/status, selected provider/model summary,
+  latest task plan status/summary, preferred agent summary, memory affinity summary, provider
+  catalog count, agent count, memory taxonomy count, runtime context status, and activity metadata.
+- `ApplicationController` builds the current snapshot deterministically on demand and emits snapshot
+  change notifications alongside relevant metadata-only changes.
+- `DesktopShellViewModel` exposes only QML-safe snapshot status, summary, and compact signal
+  strings.
+- Dashboard shows a minimal read-only orchestration snapshot panel using existing presentation
+  patterns.
+- Tests cover deterministic snapshot value behavior, controller aggregation, routing-mode updates,
+  provider/agent/memory counts, preferred agent/memory/task summaries, and view-model QML-safe
+  exposure.
+
+Still out of scope:
+
+- Real provider integration, Ollama/OpenAI/Anthropic calls, API keys, networking, model downloads,
+  model execution, real tool execution, filesystem/system actions, plugin loading, vector
+  databases, embeddings, semantic search, autonomous background workers, timers, threads, or broad
+  UI redesign.

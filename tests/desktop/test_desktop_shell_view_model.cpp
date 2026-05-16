@@ -44,6 +44,7 @@ private slots:
     void exposesAgentRegistryMetadata();
     void exposesProviderCatalogMetadata();
     void exposesMemoryCatalogMetadata();
+    void exposesOrchestrationSnapshotMetadata();
     void updatesAndPersistsRoutingModeMetadata();
     void updatesVisibleAgentValuesForBlockedPipeline();
     void exposesOnlyQmlSafeAgentVisibilityProperties();
@@ -251,10 +252,26 @@ void DesktopShellViewModelTest::exposesMemoryCatalogMetadata() {
              QStringLiteral("Ambient (Available, Public Metadata, Session)"));
 }
 
+void DesktopShellViewModelTest::exposesOrchestrationSnapshotMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.orchestrationSnapshotStatus(), QStringLiteral("Ready"));
+    QVERIFY(fixture.viewModel.orchestrationSnapshotSummary().contains(
+        QStringLiteral("4 provider entries, 6 agents, 5 memory categories")));
+    QVERIFY(fixture.viewModel.orchestrationSignals().contains(
+        QStringLiteral("Routing: Local Only / Routed")));
+    QVERIFY(fixture.viewModel.orchestrationSignals().contains(
+        QStringLiteral("Agent: Atlas (Coordinator, Available, Local)")));
+    QVERIFY(fixture.viewModel.orchestrationSignals().contains(
+        QStringLiteral("Memory: Ambient (Available, Public Metadata, Session)")));
+}
+
 void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::modelRoutingChanged);
     QSignalSpy taskPlanSpy(&fixture.viewModel, &DesktopShellViewModel::taskPlanChanged);
+    QSignalSpy snapshotSpy(&fixture.viewModel,
+                           &DesktopShellViewModel::orchestrationSnapshotChanged);
 
     fixture.viewModel.setRoutingModeByName(QStringLiteral("Quality"));
 
@@ -266,6 +283,10 @@ void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
     QVERIFY(spy.count() >= 1);
     QCOMPARE(fixture.viewModel.latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
     QVERIFY(taskPlanSpy.count() >= 1);
+    QCOMPARE(fixture.viewModel.orchestrationSnapshotStatus(), QStringLiteral("Ready"));
+    QVERIFY(fixture.viewModel.orchestrationSignals().contains(
+        QStringLiteral("Routing: Quality / Routed")));
+    QVERIFY(snapshotSpy.count() >= 1);
 
     fixture.viewModel.setRoutingModeByName(QStringLiteral("unknown"));
     QCOMPARE(fixture.viewModel.currentRoutingMode(), QStringLiteral("Local Only"));
@@ -498,6 +519,9 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("providerCatalogSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("memoryCatalogCount"), QByteArrayLiteral("int")},
         {QStringLiteral("memoryCatalogSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("orchestrationSnapshotStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("orchestrationSnapshotSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("orchestrationSignals"), QByteArrayLiteral("QStringList")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -519,6 +543,8 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("memoryCatalog"),
         QStringLiteral("memoryCatalogEntries"),
         QStringLiteral("memoryShards"),
+        QStringLiteral("orchestrationSnapshot"),
+        QStringLiteral("workspaceStateSummary"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),

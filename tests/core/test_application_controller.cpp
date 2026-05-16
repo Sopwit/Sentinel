@@ -166,6 +166,7 @@ private slots:
     void exposesAgentRegistryMetadata();
     void exposesProviderCatalogMetadata();
     void exposesMemoryCatalogMetadata();
+    void exposesOrchestrationSnapshotMetadata();
     void updatesModelRoutingModeMetadata();
     void executesDeterministicAgentRequestWithRuntime();
     void exposesAgentToolMetadata();
@@ -308,10 +309,34 @@ void ApplicationControllerTest::exposesMemoryCatalogMetadata() {
              QStringLiteral("Ambient (Available, Public Metadata, Session)"));
 }
 
+void ApplicationControllerTest::exposesOrchestrationSnapshotMetadata() {
+    const auto controller = makeController();
+    const auto snapshot = controller->currentOrchestrationSnapshot();
+
+    QCOMPARE(snapshot.healthStatus, sentinel::core::OrchestrationHealthStatus::Ready);
+    QCOMPARE(snapshot.workspace.routingMode, QStringLiteral("Local Only"));
+    QCOMPARE(snapshot.workspace.routingStatus, QStringLiteral("Routed"));
+    QCOMPARE(snapshot.workspace.taskPlanStatus, QStringLiteral("Fallback Planned"));
+    QCOMPARE(snapshot.workspace.providerCatalogCount, 4);
+    QCOMPARE(snapshot.workspace.registeredAgentCount, 6);
+    QCOMPARE(snapshot.workspace.memoryCatalogCount, 5);
+    QCOMPARE(snapshot.workspace.preferredAgentSummary,
+             QStringLiteral("Atlas (Coordinator, Available, Local)"));
+    QCOMPARE(snapshot.workspace.memoryAffinitySummary,
+             QStringLiteral("Ambient (Available, Public Metadata, Session)"));
+    QVERIFY(!snapshot.executionEnabled);
+    QCOMPARE(controller->orchestrationSnapshotStatus(), QStringLiteral("Ready"));
+    QVERIFY(controller->orchestrationSnapshotSummary().contains(
+        QStringLiteral("4 provider entries, 6 agents, 5 memory categories")));
+    QVERIFY(controller->orchestrationSignals().contains(
+        QStringLiteral("Catalogs: 4 providers / 6 agents / 5 memory")));
+}
+
 void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
     const auto controller = makeController();
     QSignalSpy spy(controller.get(), &ApplicationController::modelRoutingChanged);
     QSignalSpy taskPlanSpy(controller.get(), &ApplicationController::taskPlanChanged);
+    QSignalSpy snapshotSpy(controller.get(), &ApplicationController::orchestrationSnapshotChanged);
 
     controller->setRoutingModeByName(QStringLiteral("Balanced"));
 
@@ -322,11 +347,16 @@ void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
     QCOMPARE(spy.count(), 1);
     QCOMPARE(taskPlanSpy.count(), 1);
     QCOMPARE(controller->latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
+    QCOMPARE(controller->currentOrchestrationSnapshot().workspace.routingMode,
+             QStringLiteral("Balanced"));
+    QCOMPARE(controller->orchestrationSnapshotStatus(), QStringLiteral("Ready"));
+    QCOMPARE(snapshotSpy.count(), 1);
 
     controller->setRoutingModeByName(QStringLiteral("unknown"));
     QCOMPARE(controller->currentRoutingMode(), QStringLiteral("Local Only"));
     QCOMPARE(spy.count(), 2);
     QCOMPARE(taskPlanSpy.count(), 2);
+    QCOMPARE(snapshotSpy.count(), 2);
 }
 
 void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {

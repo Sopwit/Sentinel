@@ -670,3 +670,27 @@ Boundary rules:
   dynamic discovery are part of this phase.
 - QML may show read-only counts and summaries only; no semantic search controls or memory graph
   execution controls are part of this phase.
+
+## 38. Orchestration Snapshot Is A Read Model
+
+Decision: Add a deterministic orchestration snapshot that aggregates existing metadata for
+workspace visibility without adding orchestration execution.
+
+Reason: The desktop shell needs one compact read model for routing, task planning, provider
+catalog, agent, memory taxonomy, runtime context, and activity metadata before any future execution
+or automation phase.
+
+Boundary rules:
+
+- `OrchestrationSnapshot` and `WorkspaceStateSummary` are value data only.
+- The snapshot is built from existing metadata already owned by `ApplicationController`.
+- The snapshot may include health status, summary text, and compact signal strings for QML.
+- Snapshot updates are tied to existing metadata-only changes such as routing changes and runtime
+  metadata updates.
+- The snapshot must not execute plans, call providers, execute models, search memory, embed data,
+  vectorize data, execute tools, load plugins, access networks, mutate files, perform system
+  actions, or start autonomous loops.
+- No background refresh, timers, threads, workers, downloads, API keys, credentials, or dynamic
+  discovery are part of this phase.
+- QML may show read-only snapshot status, summary, and signal strings only; no execution controls
+  are part of this phase.
