@@ -645,3 +645,28 @@ Boundary rules:
   discovery are part of this phase.
 - QML may show read-only counts and summaries only; no execution controls or autonomous toggles are
   part of this phase.
+
+## 37. Memory Taxonomy Is Metadata Only
+
+Decision: Add a static memory taxonomy catalog before any semantic memory, vector memory, or
+autonomous recall/write behavior.
+
+Reason: Sentinel needs stable memory category names, retention/privacy labels, recall hints, and
+planner affinity metadata without changing the existing key-value memory persistence boundary.
+
+Boundary rules:
+
+- `IMemoryCatalog` exposes read-only value metadata only.
+- `StaticMemoryCatalog` returns deterministic descriptors for Episodic, Semantic, Procedural,
+  Reflective, and Ambient memory categories.
+- Memory descriptors may include type, shard status, retention policy, privacy level, recall hint,
+  task affinities, tags, and association metadata.
+- `IMemoryStore` remains the explicit key-value memory persistence contract.
+- `SQLiteMemoryStore` remains simple key-value storage and is not replaced by the taxonomy catalog.
+- `StaticTaskPlanner` may select a preferred memory affinity metadata label for a plan, but it must
+  not recall, search, write, embed, vectorize, or mutate memory.
+- No vector database, embeddings, semantic search, autonomous memory writes, provider/model calls,
+  networking, API keys, downloads, tool execution, plugin loading, filesystem/system actions, or
+  dynamic discovery are part of this phase.
+- QML may show read-only counts and summaries only; no semantic search controls or memory graph
+  execution controls are part of this phase.

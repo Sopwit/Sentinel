@@ -43,6 +43,7 @@ private slots:
     void exposesTaskPlanMetadata();
     void exposesAgentRegistryMetadata();
     void exposesProviderCatalogMetadata();
+    void exposesMemoryCatalogMetadata();
     void updatesAndPersistsRoutingModeMetadata();
     void updatesVisibleAgentValuesForBlockedPipeline();
     void exposesOnlyQmlSafeAgentVisibilityProperties();
@@ -209,6 +210,8 @@ void DesktopShellViewModelTest::exposesTaskPlanMetadata() {
     QCOMPARE(fixture.viewModel.latestTaskPlanSummary(),
              QStringLiteral("Unknown task uses safe local metadata fallback: Local Metadata "
                             "Provider / Sentinel Local Placeholder."));
+    QCOMPARE(fixture.viewModel.currentMemoryAffinitySummary(),
+             QStringLiteral("Ambient (Available, Public Metadata, Session)"));
 }
 
 void DesktopShellViewModelTest::exposesAgentRegistryMetadata() {
@@ -233,6 +236,19 @@ void DesktopShellViewModelTest::exposesProviderCatalogMetadata() {
         QStringLiteral("Local Metadata Provider (Local, Available)")));
     QVERIFY(fixture.viewModel.providerCatalogSummaries().contains(
         QStringLiteral("Anthropic Cloud (Cloud, Not Configured)")));
+}
+
+void DesktopShellViewModelTest::exposesMemoryCatalogMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.memoryCatalogCount(), 5);
+    QCOMPARE(fixture.viewModel.memoryCatalogSummaries().size(), 5);
+    QVERIFY(fixture.viewModel.memoryCatalogSummaries().contains(
+        QStringLiteral("Reflective (Available, Sensitive, User Controlled)")));
+    QVERIFY(fixture.viewModel.memoryCatalogSummaries().contains(
+        QStringLiteral("Ambient (Available, Public Metadata, Session)")));
+    QCOMPARE(fixture.viewModel.currentMemoryAffinitySummary(),
+             QStringLiteral("Ambient (Available, Public Metadata, Session)"));
 }
 
 void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
@@ -477,8 +493,11 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("registeredAgentCount"), QByteArrayLiteral("int")},
         {QStringLiteral("activeAgentSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("currentAgentSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("currentMemoryAffinitySummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("providerCatalogCount"), QByteArrayLiteral("int")},
         {QStringLiteral("providerCatalogSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("memoryCatalogCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("memoryCatalogSummaries"), QByteArrayLiteral("QStringList")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -497,6 +516,9 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("agentActivityEntries"),
         QStringLiteral("providerCatalog"),
         QStringLiteral("providerCatalogEntries"),
+        QStringLiteral("memoryCatalog"),
+        QStringLiteral("memoryCatalogEntries"),
+        QStringLiteral("memoryShards"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),

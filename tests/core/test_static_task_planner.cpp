@@ -1,4 +1,5 @@
 #include "sentinel/core/StaticAgentRegistry.h"
+#include "sentinel/core/StaticMemoryCatalog.h"
 #include "sentinel/core/StaticProviderCatalog.h"
 #include "sentinel/core/StaticTaskPlanner.h"
 
@@ -12,6 +13,7 @@ using sentinel::core::ProviderDescriptor;
 using sentinel::core::ProviderKind;
 using sentinel::core::RoutingMode;
 using sentinel::core::StaticAgentRegistry;
+using sentinel::core::StaticMemoryCatalog;
 using sentinel::core::StaticProviderCatalog;
 using sentinel::core::StaticTaskPlanner;
 using sentinel::core::TaskClassification;
@@ -33,6 +35,7 @@ private slots:
     void unavailableCloudOnlyCatalogIsBlocked();
     void plannedStepsStayOrdered();
     void assignsPreferredAgentMetadata();
+    void assignsMemoryAffinityMetadata();
 };
 
 static QList<ProviderCatalogEntry> defaultCatalogEntries() {
@@ -41,6 +44,10 @@ static QList<ProviderCatalogEntry> defaultCatalogEntries() {
 
 static QList<sentinel::core::AgentDescriptor> defaultAgents() {
     return StaticAgentRegistry{}.agents();
+}
+
+static QList<sentinel::core::MemoryShardDescriptor> defaultMemoryShards() {
+    return StaticMemoryCatalog{}.shards();
 }
 
 static ProviderCatalogEntry unavailableCloudOnlyEntry() {
@@ -208,6 +215,33 @@ void StaticTaskPlannerTest::assignsPreferredAgentMetadata() {
     });
     QCOMPARE(codingPlan.preferredAgentId, QStringLiteral("kaze"));
     QVERIFY(codingPlan.steps.isEmpty());
+}
+
+void StaticTaskPlannerTest::assignsMemoryAffinityMetadata() {
+    const StaticTaskPlanner planner;
+
+    const auto sensitivePlan = planner.plan(TaskPlanningRequest{
+        TaskClassification{TaskType::SensitiveData, true, QStringLiteral("private context")},
+        RoutingMode::CloudAllowed,
+        defaultCatalogEntries(),
+        defaultAgents(),
+        defaultMemoryShards(),
+    });
+    QCOMPARE(sensitivePlan.preferredMemoryTypeId, QStringLiteral("reflective"));
+    QVERIFY(sensitivePlan.preferredMemorySummary.contains(QStringLiteral("Reflective")));
+    QCOMPARE(sensitivePlan.memoryAffinities.size(), 1);
+    QCOMPARE(sensitivePlan.steps.last().memoryTypeId, QStringLiteral("reflective"));
+    QCOMPARE(sensitivePlan.steps.last().memoryTypeName, QStringLiteral("Reflective"));
+
+    const auto codingPlan = planner.plan(TaskPlanningRequest{
+        TaskClassification{TaskType::Coding},
+        RoutingMode::LocalOnly,
+        defaultCatalogEntries(),
+        defaultAgents(),
+        defaultMemoryShards(),
+    });
+    QCOMPARE(codingPlan.preferredMemoryTypeId, QStringLiteral("procedural"));
+    QVERIFY(codingPlan.preferredMemorySummary.contains(QStringLiteral("Procedural")));
 }
 
 QTEST_MAIN(StaticTaskPlannerTest)

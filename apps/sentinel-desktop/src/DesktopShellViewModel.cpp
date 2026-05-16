@@ -182,12 +182,24 @@ QString DesktopShellViewModel::currentAgentSummary() const {
     return controller_.currentAgentSummary();
 }
 
+QString DesktopShellViewModel::currentMemoryAffinitySummary() const {
+    return controller_.currentMemoryAffinitySummary();
+}
+
 int DesktopShellViewModel::providerCatalogCount() const {
     return controller_.providerCatalogCount();
 }
 
 QStringList DesktopShellViewModel::providerCatalogSummaries() const {
     return controller_.providerCatalogSummaries();
+}
+
+int DesktopShellViewModel::memoryCatalogCount() const {
+    return controller_.memoryCatalogCount();
+}
+
+QStringList DesktopShellViewModel::memoryCatalogSummaries() const {
+    return controller_.memoryCatalogSummaries();
 }
 
 int DesktopShellViewModel::availableToolCount() const {

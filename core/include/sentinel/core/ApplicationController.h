@@ -9,6 +9,7 @@
 #include "sentinel/core/IApprovalPolicy.h"
 #include "sentinel/core/IChatHistoryStore.h"
 #include "sentinel/core/IChatProvider.h"
+#include "sentinel/core/IMemoryCatalog.h"
 #include "sentinel/core/IMemoryStore.h"
 #include "sentinel/core/IModelRouter.h"
 #include "sentinel/core/IProviderCatalog.h"
@@ -62,8 +63,12 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(int registeredAgentCount READ registeredAgentCount CONSTANT)
     Q_PROPERTY(QStringList activeAgentSummaries READ activeAgentSummaries CONSTANT)
     Q_PROPERTY(QString currentAgentSummary READ currentAgentSummary NOTIFY taskPlanChanged)
+    Q_PROPERTY(QString currentMemoryAffinitySummary READ currentMemoryAffinitySummary NOTIFY
+                   taskPlanChanged)
     Q_PROPERTY(int providerCatalogCount READ providerCatalogCount CONSTANT)
     Q_PROPERTY(QStringList providerCatalogSummaries READ providerCatalogSummaries CONSTANT)
+    Q_PROPERTY(int memoryCatalogCount READ memoryCatalogCount CONSTANT)
+    Q_PROPERTY(QStringList memoryCatalogSummaries READ memoryCatalogSummaries CONSTANT)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
@@ -86,6 +91,7 @@ public:
                           std::unique_ptr<IProviderCatalog> providerCatalog = nullptr,
                           std::unique_ptr<ITaskPlanner> taskPlanner = nullptr,
                           std::unique_ptr<IAgentRegistry> agentRegistry = nullptr,
+                          std::unique_ptr<IMemoryCatalog> memoryCatalog = nullptr,
                           QObject* parent = nullptr);
 
     QString providerName() const;
@@ -118,8 +124,11 @@ public:
     int registeredAgentCount() const;
     QStringList activeAgentSummaries() const;
     QString currentAgentSummary() const;
+    QString currentMemoryAffinitySummary() const;
     int providerCatalogCount() const;
     QStringList providerCatalogSummaries() const;
+    int memoryCatalogCount() const;
+    QStringList memoryCatalogSummaries() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;
@@ -168,6 +177,7 @@ private:
     std::unique_ptr<IModelRouter> modelRouter_;
     std::unique_ptr<ITaskPlanner> taskPlanner_;
     std::unique_ptr<IAgentRegistry> agentRegistry_;
+    std::unique_ptr<IMemoryCatalog> memoryCatalog_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

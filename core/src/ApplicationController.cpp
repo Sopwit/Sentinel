@@ -3,6 +3,7 @@
 #include "sentinel/core/NullToolExecutor.h"
 #include "sentinel/core/StaticAgentRegistry.h"
 #include "sentinel/core/StaticApprovalPolicy.h"
+#include "sentinel/core/StaticMemoryCatalog.h"
 #include "sentinel/core/StaticModelRouter.h"
 #include "sentinel/core/StaticProviderCatalog.h"
 #include "sentinel/core/StaticSandboxPolicy.h"
@@ -42,7 +43,7 @@ ApplicationController::ApplicationController(
     std::unique_ptr<ISandboxPolicy> sandboxPolicy, std::unique_ptr<IToolExecutor> toolExecutor,
     std::unique_ptr<IModelRouter> modelRouter, std::unique_ptr<IProviderCatalog> providerCatalog,
     std::unique_ptr<ITaskPlanner> taskPlanner, std::unique_ptr<IAgentRegistry> agentRegistry,
-    QObject* parent)
+    std::unique_ptr<IMemoryCatalog> memoryCatalog, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -56,6 +57,8 @@ ApplicationController::ApplicationController(
       taskPlanner_(taskPlanner ? std::move(taskPlanner) : std::make_unique<StaticTaskPlanner>()),
       agentRegistry_(agentRegistry ? std::move(agentRegistry)
                                    : std::make_unique<StaticAgentRegistry>()),
+      memoryCatalog_(memoryCatalog ? std::move(memoryCatalog)
+                                   : std::make_unique<StaticMemoryCatalog>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -227,6 +230,12 @@ QString ApplicationController::currentAgentSummary() const {
                : latestTaskPlan_.preferredAgentSummary;
 }
 
+QString ApplicationController::currentMemoryAffinitySummary() const {
+    return latestTaskPlan_.preferredMemorySummary.isEmpty()
+               ? QStringLiteral("No memory taxonomy metadata selected.")
+               : latestTaskPlan_.preferredMemorySummary;
+}
+
 int ApplicationController::providerCatalogCount() const {
     return providerCatalog_ ? static_cast<int>(providerCatalog_->entries().size()) : 0;
 }
@@ -239,6 +248,22 @@ QStringList ApplicationController::providerCatalogSummaries() const {
 
     for (const auto& entry : providerCatalog_->entries()) {
         summaries.append(providerCatalogEntrySummary(entry));
+    }
+    return summaries;
+}
+
+int ApplicationController::memoryCatalogCount() const {
+    return memoryCatalog_ ? static_cast<int>(memoryCatalog_->shards().size()) : 0;
+}
+
+QStringList ApplicationController::memoryCatalogSummaries() const {
+    QStringList summaries;
+    if (!memoryCatalog_) {
+        return summaries;
+    }
+
+    for (const auto& shard : memoryCatalog_->shards()) {
+        summaries.append(memoryShardSummary(shard));
     }
     return summaries;
 }
@@ -435,6 +460,9 @@ void ApplicationController::refreshLatestTaskPlan() {
             QStringLiteral("Task planner metadata is unavailable."),
             {},
             {},
+            {},
+            {},
+            {},
             false,
             false,
         };
@@ -446,6 +474,7 @@ void ApplicationController::refreshLatestTaskPlan() {
         modelRouter_ ? modelRouter_->routingMode() : RoutingMode::LocalOnly,
         providerCatalog_->entries(),
         agentRegistry_ ? agentRegistry_->agents() : QList<AgentDescriptor>{},
+        memoryCatalog_ ? memoryCatalog_->shards() : QList<MemoryShardDescriptor>{},
     });
 }
 

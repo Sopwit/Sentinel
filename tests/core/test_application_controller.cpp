@@ -165,6 +165,7 @@ private slots:
     void exposesTaskPlanMetadata();
     void exposesAgentRegistryMetadata();
     void exposesProviderCatalogMetadata();
+    void exposesMemoryCatalogMetadata();
     void updatesModelRoutingModeMetadata();
     void executesDeterministicAgentRequestWithRuntime();
     void exposesAgentToolMetadata();
@@ -266,6 +267,8 @@ void ApplicationControllerTest::exposesTaskPlanMetadata() {
     QCOMPARE(controller->latestTaskPlanSummary(),
              QStringLiteral("Unknown task uses safe local metadata fallback: Local Metadata "
                             "Provider / Sentinel Local Placeholder."));
+    QCOMPARE(controller->currentMemoryAffinitySummary(),
+             QStringLiteral("Ambient (Available, Public Metadata, Session)"));
 }
 
 void ApplicationControllerTest::exposesAgentRegistryMetadata() {
@@ -290,6 +293,19 @@ void ApplicationControllerTest::exposesProviderCatalogMetadata() {
         QStringLiteral("Local Metadata Provider (Local, Available)")));
     QVERIFY(controller->providerCatalogSummaries().contains(
         QStringLiteral("OpenAI Cloud (Cloud, Not Configured)")));
+}
+
+void ApplicationControllerTest::exposesMemoryCatalogMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->memoryCatalogCount(), 5);
+    QCOMPARE(controller->memoryCatalogSummaries().size(), 5);
+    QVERIFY(controller->memoryCatalogSummaries().contains(
+        QStringLiteral("Episodic (Available, Private, User Controlled)")));
+    QVERIFY(controller->memoryCatalogSummaries().contains(
+        QStringLiteral("Semantic (Available, Local Only, Durable)")));
+    QCOMPARE(controller->currentMemoryAffinitySummary(),
+             QStringLiteral("Ambient (Available, Public Metadata, Session)"));
 }
 
 void ApplicationControllerTest::updatesModelRoutingModeMetadata() {

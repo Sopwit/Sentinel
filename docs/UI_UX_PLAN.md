@@ -153,6 +153,11 @@ Phase 6.4 adds text-only agent registry visibility. Agent panels may show static
 state summaries, and preferred-agent metadata, but must not expose autonomous toggles, execution
 buttons, setup controls, tool controls, provider calls, or background-worker controls.
 
+Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
+summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
+search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool
+controls.
+
 ## Current Separation
 
 Current Phase 5 work is presentation foundation only:

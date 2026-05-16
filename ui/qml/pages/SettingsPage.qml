@@ -112,6 +112,14 @@ ShellPanel {
                 Layout.columnSpan: settingsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Memory Affinity"
+                value: settingsPage.viewModel.currentMemoryAffinitySummary
+                Layout.columnSpan: settingsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
         }
 
         SectionTitle {
@@ -162,6 +170,33 @@ ShellPanel {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Provider"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+        }
+
+        SectionTitle {
+            title: "Memory Taxonomy"
+            subtitle: "Read-only category metadata for future recall planning. No embeddings, semantic search, or autonomous memory writes are enabled."
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Memory Categories"
+                value: settingsPage.viewModel.memoryCatalogCount.toString()
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.memoryCatalogSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Memory"
                     value: modelData
                     Layout.fillWidth: true
                 }

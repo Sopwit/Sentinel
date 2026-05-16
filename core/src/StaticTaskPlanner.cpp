@@ -109,6 +109,16 @@ int affinityWeightFor(const AgentDescriptor& agent, TaskType taskType) {
     return weight;
 }
 
+int memoryAffinityWeightFor(const MemoryShardDescriptor& shard, TaskType taskType) {
+    int weight = 0;
+    for (const auto& affinity : shard.affinities) {
+        if (affinity.taskType == taskType) {
+            weight = std::max(weight, affinity.weight);
+        }
+    }
+    return weight;
+}
+
 AgentDescriptor preferredAgentFor(const TaskPlanningRequest& request) {
     AgentDescriptor preferred;
     int preferredWeight = -1;
@@ -134,8 +144,42 @@ AgentDescriptor preferredAgentFor(const TaskPlanningRequest& request) {
     return preferred;
 }
 
+MemoryShardDescriptor preferredMemoryShardFor(const TaskPlanningRequest& request) {
+    MemoryShardDescriptor preferred;
+    int preferredWeight = -1;
+
+    for (const auto& shard : request.memoryShards) {
+        if (!isMemoryShardAvailable(shard.status)) {
+            continue;
+        }
+
+        if (request.task.sensitive && shard.privacyLevel == MemoryPrivacyLevel::PublicMetadata) {
+            continue;
+        }
+
+        const auto weight = memoryAffinityWeightFor(shard, request.task.type);
+        if (weight > preferredWeight ||
+            (weight == preferredWeight && (preferred.id.isEmpty() || shard.id < preferred.id))) {
+            preferred = shard;
+            preferredWeight = weight;
+        }
+    }
+
+    return preferred;
+}
+
+QList<MemoryAffinity> memoryAffinitiesFor(const MemoryShardDescriptor& shard, TaskType taskType) {
+    QList<MemoryAffinity> affinities;
+    for (const auto& affinity : shard.affinities) {
+        if (affinity.taskType == taskType) {
+            affinities.append(affinity);
+        }
+    }
+    return affinities;
+}
+
 PlannedTaskStep stepFor(const Candidate& candidate, const AgentDescriptor& preferredAgent,
-                        int order, QString summary) {
+                        const MemoryShardDescriptor& preferredMemory, int order, QString summary) {
     return PlannedTaskStep{
         order,
         QStringLiteral("step-%1-%2").arg(order).arg(candidate.model.descriptor.id),
@@ -144,6 +188,8 @@ PlannedTaskStep stepFor(const Candidate& candidate, const AgentDescriptor& prefe
         candidate.model.descriptor.id,
         preferredAgent.id,
         preferredAgent.displayName,
+        preferredMemory.id,
+        preferredMemory.displayName,
         candidate.provider.descriptor.kind,
         candidate.provider.availability,
         candidate.model.descriptor.localOnly,
@@ -159,6 +205,8 @@ PlannedTaskStep graphStep(int capabilityCount) {
         {},
         {},
         {},
+        {},
+        {},
         ProviderKind::Local,
         CatalogAvailability::Available,
         true,
@@ -166,7 +214,8 @@ PlannedTaskStep graphStep(int capabilityCount) {
 }
 
 TaskPlan blockedPlan(const TaskPlanningRequest& request, CapabilityGraph graph, QString summary,
-                     const AgentDescriptor& preferredAgent) {
+                     const AgentDescriptor& preferredAgent,
+                     const MemoryShardDescriptor& preferredMemory) {
     return TaskPlan{
         TaskPlanStatus::Blocked,
         request.routingMode,
@@ -176,6 +225,9 @@ TaskPlan blockedPlan(const TaskPlanningRequest& request, CapabilityGraph graph, 
         std::move(summary),
         preferredAgent.id,
         preferredAgent.id.isEmpty() ? QString() : agentDescriptorSummary(preferredAgent),
+        preferredMemory.id,
+        preferredMemory.id.isEmpty() ? QString() : memoryShardSummary(preferredMemory),
+        memoryAffinitiesFor(preferredMemory, request.task.type),
         false,
         false,
     };
@@ -186,10 +238,11 @@ TaskPlan blockedPlan(const TaskPlanningRequest& request, CapabilityGraph graph, 
 TaskPlan StaticTaskPlanner::plan(const TaskPlanningRequest& request) const {
     auto graph = buildCapabilityGraph(request.catalogEntries);
     const auto preferredAgent = preferredAgentFor(request);
+    const auto preferredMemory = preferredMemoryShardFor(request);
     if (request.catalogEntries.isEmpty()) {
         return blockedPlan(request, std::move(graph),
                            QStringLiteral("No provider catalog metadata is available."),
-                           preferredAgent);
+                           preferredAgent, preferredMemory);
     }
 
     const auto localRequired = taskRequiresLocalOnly(request);
@@ -215,8 +268,9 @@ TaskPlan StaticTaskPlanner::plan(const TaskPlanningRequest& request) const {
                     .arg(candidate.provider.descriptor.name, candidate.model.descriptor.name);
         }
 
-        const QList<PlannedTaskStep> steps{graphStep(static_cast<int>(graph.nodes.size())),
-                                           stepFor(candidate, preferredAgent, 2, summary)};
+        const QList<PlannedTaskStep> steps{
+            graphStep(static_cast<int>(graph.nodes.size())),
+            stepFor(candidate, preferredAgent, preferredMemory, 2, summary)};
         return TaskPlan{
             status,
             request.routingMode,
@@ -226,6 +280,9 @@ TaskPlan StaticTaskPlanner::plan(const TaskPlanningRequest& request) const {
             summary,
             preferredAgent.id,
             preferredAgent.id.isEmpty() ? QString() : agentDescriptorSummary(preferredAgent),
+            preferredMemory.id,
+            preferredMemory.id.isEmpty() ? QString() : memoryShardSummary(preferredMemory),
+            memoryAffinitiesFor(preferredMemory, request.task.type),
             false,
             false,
         };
@@ -235,20 +292,20 @@ TaskPlan StaticTaskPlanner::plan(const TaskPlanningRequest& request) const {
         return blockedPlan(
             request, std::move(graph),
             QStringLiteral("No available local metadata capability can satisfy this task."),
-            preferredAgent);
+            preferredAgent, preferredMemory);
     }
 
     if (!routingAllowsCloud(request.routingMode)) {
         return blockedPlan(
             request, std::move(graph),
             QStringLiteral("No available local metadata capability exists for this routing mode."),
-            preferredAgent);
+            preferredAgent, preferredMemory);
     }
 
     return blockedPlan(
         request, std::move(graph),
         QStringLiteral("Cloud metadata candidates are unavailable or not configured."),
-        preferredAgent);
+        preferredAgent, preferredMemory);
 }
 
 } // namespace sentinel::core
