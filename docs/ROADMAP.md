@@ -846,6 +846,25 @@ Still out of scope:
 - Sandbox runtime enforcement, provider/model/tool execution, process launch, networking, and
   filesystem/system actions.
 
+## Phase 7.6: Runtime Architecture Checkpoint and Cleanup
+
+Completed. Closed the Phase 7 metadata-only local runtime foundation before Phase 8.
+
+Delivered:
+
+- `docs/PHASE_7_CHECKPOINT.md` covering completed Phase 7 scope, known limitations, runtime
+  guardrails, Phase 8 readiness criteria, and strict out-of-scope work.
+- Architecture/status/roadmap/decision/context updates for completed Phase 7.3 through Phase 7.6
+  work.
+- Small QML read-only exposure consistency fix for the accepted page list.
+- Focused desktop view-model test update for the runtime/navigation boundary.
+
+Still out of scope:
+
+- Real provider/model execution, networking/API keys, downloads, streaming, process/subprocess
+  launch, filesystem/system actions, real tools, plugin loading, sandbox runtime enforcement,
+  embeddings/vector DB/semantic search, autonomous workers, or execution/setup UI.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

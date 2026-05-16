@@ -17,6 +17,8 @@ ShellPanel {
             return "\u2302"
         if (pageName === "Memory")
             return "\u25a6"
+        if (pageName === "Agents")
+            return "\u25ce"
         return "\u2699"
     }
 

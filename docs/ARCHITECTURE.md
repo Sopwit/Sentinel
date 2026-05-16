@@ -277,6 +277,26 @@ Separation:
 - Runtime safety policy metadata is not provider/model/tool execution.
 - Runtime safety policy metadata is not filesystem/network/process access.
 
+## Phase 7 Checkpoint
+
+Phase 7.6 closes the metadata-only local runtime foundation before Phase 8. The checkpoint is
+documented in `docs/PHASE_7_CHECKPOINT.md`.
+
+Architecture findings:
+
+- Local runtime, session ownership, capability negotiation, permission policy, safety policy, and
+  request pipeline remain separate metadata responsibilities.
+- `ApplicationController` owns Phase 7 runtime boundaries through explicit interfaces and exposes
+  deterministic summary/status values.
+- `DesktopShellViewModel` remains the QML boundary and exposes only strings, counts, and string
+  lists for runtime metadata.
+- The Settings page remains read-only for runtime metadata and has no setup, approval, execution,
+  provider, download, tool, plugin, filesystem, process, or network controls.
+
+The checkpoint adds no provider integration, model execution, networking, API keys, downloads,
+streaming, subprocess/process launch, filesystem/system actions, tool execution, plugin loading,
+embeddings, semantic search, or autonomous workers.
+
 ## Settings Contract
 
 `ISettingsStore` is the persistence boundary for app settings. `AppSettings` owns defaults and validation. `InMemorySettingsStore` remains the default test backend, while `JsonSettingsStore` provides a lightweight desktop persistence backend.

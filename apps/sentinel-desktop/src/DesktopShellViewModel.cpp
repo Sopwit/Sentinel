@@ -421,6 +421,7 @@ QStringList DesktopShellViewModel::availablePages() const {
         QStringLiteral("Dashboard"),
         QStringLiteral("Memory"),
         QStringLiteral("Agents"),
+        QStringLiteral("Settings"),
     };
 }
 
