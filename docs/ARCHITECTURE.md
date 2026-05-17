@@ -14,7 +14,8 @@ Sentinel Desktop Alpha is a modular monolith. The application is split into a na
 ## Current Runtime Flow
 
 `main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `NullAgentRuntime`,
-`SQLiteMemoryStore`, `SQLiteChatHistoryStore`, `ModeManager`, `AppSettings`, and
+`SQLiteMemoryStore`, `SQLiteChatHistoryStore`, the loopback-only Ollama runtime/inference clients,
+the local-only runtime permission policy, `ModeManager`, `AppSettings`, and
 `DesktopShellViewModel`, then exposes only the view model to QML.
 
 QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, chat history persistence, and settings defaults.
@@ -257,6 +258,29 @@ Explicit chat routing:
   filesystem paths, raw internal objects, provider credentials, and broad endpoint details.
 - The chat route does not invoke tools, launch subprocesses, perform filesystem or system actions,
   call cloud providers, read API keys, download/pull/delete models, or start autonomous loops.
+
+Phase 14.7 through Phase 15.0 activates this path in the desktop app for controlled local-only
+Ollama chat. The production desktop wiring uses `OllamaHttpRuntimeClient`,
+`OllamaLocalInferenceClient`, and `OllamaLocalInferenceStreamClient` against the persisted
+loopback endpoint. A narrow `LocalOnlyRuntimePermissionPolicy` allows only explicit local
+inference requests and denies provider invocation, tool invocation, external processes,
+filesystem access, broader network access, and plugin invocation. The existing static
+metadata-only permission policy remains available for deterministic tests and blocked-runtime
+scenarios.
+
+Controlled activation boundaries:
+
+- Health checks call only local loopback HTTP `/api/version`.
+- Model discovery calls only local loopback HTTP `/api/tags`.
+- Non-streaming inference calls only local loopback HTTP `/api/generate` with `stream: false`.
+- Streaming inference is opt-in and calls only local loopback HTTP `/api/generate` with
+  `stream: true`.
+- Chat invokes inference only from explicit user messages and only when local chat inference is
+  enabled.
+- Runtime state is exposed to QML as unavailable, idle, inferencing, streaming, or failed.
+- No cloud provider, API key, autonomous agent, tool, shell, filesystem-wide action, model
+  management action, Piper execution, Whisper execution, microphone access, or playback path is
+  activated by local Ollama chat.
 
 ## Voice Boundary
 

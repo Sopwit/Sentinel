@@ -201,13 +201,21 @@ metadata, but must not add toggles, activation buttons, setup flows, downloads, 
 execution controls, filesystem/process controls, tool/plugin controls, or autonomous worker
 controls.
 
+Phase 14.7 through Phase 15.0 activates controlled local Ollama chat while keeping UI changes
+minimal. Dashboard and Chat may show runtime availability, selected model, inference state, and
+streaming state. Settings may allow selecting discovered local Ollama models and toggling explicit
+local chat inference/streaming. These controls must remain narrow: no cloud setup, API keys,
+model downloads/pulls/deletes, tool controls, shell controls, filesystem-wide actions, voice
+record/play controls, or autonomous-agent controls.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:
 
-- no provider integrations
-- no networking/API keys
-- no model downloads or execution
+- no cloud provider integrations
+- no non-loopback networking/API keys
+- no model downloads/pulls/deletes
+- no model execution outside explicit local Ollama chat inference
 - no plugin loading
 - no real tool execution
 - no approval UX that triggers actions

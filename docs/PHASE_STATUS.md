@@ -2,6 +2,37 @@
 
 ## Completed / Stable
 
+### Phase 14.7-15.0: Controlled Local Ollama Runtime Activation
+
+Completed. Enables controlled local-only Ollama chat inference for explicitly selected local
+models while preserving the no-cloud, no-agent, no-tool, and no-voice-execution posture.
+
+Scope:
+
+- The desktop app now wires the real loopback-only Ollama runtime client, non-streaming inference
+  client, and streaming-ready inference client from the persisted Ollama endpoint setting.
+- Runtime health checks use only the configured local loopback HTTP endpoint and `/api/version`.
+- Local model discovery uses only the configured local loopback HTTP endpoint and `/api/tags`.
+- A narrow local-only runtime permission policy allows only explicit `LocalInference` execution;
+  provider invocation, tool invocation, external process, filesystem, broader network, and plugin
+  permissions remain denied.
+- Chat invokes Ollama only when local chat inference is explicitly enabled, the endpoint is
+  loopback HTTP, a selected/effective local model is valid, and runtime permission/safety gates
+  pass.
+- Selected local model persistence remains in settings and is validated against discovered local
+  model metadata when available.
+- Runtime state exposure now uses the controlled activation vocabulary: unavailable, idle,
+  inferencing, streaming, and failed.
+- Streaming remains opt-in and architecture-ready; completed streams are finalized into one chat
+  message and live preview text is cleared.
+- Tests remain deterministic through fake Ollama runtime and inference clients.
+
+Still out of scope:
+
+- Cloud/API keys/providers, autonomous agents, tool execution, shell execution, filesystem-wide
+  actions, model downloads/pulls/deletes, Ollama process management, microphone access, playback,
+  Whisper execution, Piper playback, and autonomous voice loops.
+
 ### Phase 14.4-14.6: Voice Configuration UX Polish And Safe Auto-Detection Hints
 
 Completed. Polishes the local Piper/Whisper Settings UX and adds read-only, non-invasive path

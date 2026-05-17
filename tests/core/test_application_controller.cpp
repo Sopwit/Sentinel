@@ -312,6 +312,10 @@ public:
 
     OllamaHealthCheckResult healthCheck() const override {
         OllamaHealthCheckResult result;
+        if (!models_.isEmpty()) {
+            result.connectionStatus = sentinel::core::OllamaConnectionStatus::Connected;
+            result.healthStatus = sentinel::core::OllamaHealthStatus::Healthy;
+        }
         result.summary = QStringLiteral("Fake Ollama health metadata.");
         return result;
     }
@@ -689,7 +693,7 @@ void ApplicationControllerTest::exposesLocalInferenceBoundaryMetadata() {
     QVERIFY(controller->localInferenceSummary().contains(QStringLiteral("loopback-only")));
     QCOMPARE(controller->localInferenceLastResponseSummary(),
              QStringLiteral("No local inference request yet."));
-    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Idle"));
+    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Unavailable"));
     QCOMPARE(controller->localInferenceLatencySummary(),
              QStringLiteral("No local inference latency recorded."));
     QVERIFY(controller->localInferenceTraceSummaries().isEmpty());

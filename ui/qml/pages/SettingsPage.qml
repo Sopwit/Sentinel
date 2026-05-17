@@ -317,7 +317,7 @@ ScrollView {
                         text: "Piper command used by a future gated TTS path. It is not run here."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
-                        font.pixelSize: SentinelTheme.fontSizeSmall
+                        font.pixelSize: SentinelTheme.fontSmall
                     }
 
                     Label {
@@ -342,7 +342,7 @@ ScrollView {
                         text: "Local Piper voice model path. Sentinel only checks whether this path is readable."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
-                        font.pixelSize: SentinelTheme.fontSizeSmall
+                        font.pixelSize: SentinelTheme.fontSmall
                     }
 
                     Label {
@@ -367,7 +367,7 @@ ScrollView {
                         text: "Whisper command for future STT work. It is not launched or probed here."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
-                        font.pixelSize: SentinelTheme.fontSizeSmall
+                        font.pixelSize: SentinelTheme.fontSmall
                     }
 
                     Label {
@@ -392,7 +392,7 @@ ScrollView {
                         text: "Whisper model file or directory. Only the configured path is checked."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
-                        font.pixelSize: SentinelTheme.fontSizeSmall
+                        font.pixelSize: SentinelTheme.fontSmall
                     }
                 }
 
