@@ -263,7 +263,9 @@ Explicit chat routing:
 
 Phase 12.0 through Phase 12.2 add a disabled voice planning boundary for future text-to-speech and
 speech-to-text work. Phase 12.3 through Phase 12.6 add metadata-only voice runtime/session
-orchestration on top of that boundary.
+orchestration on top of that boundary. Phase 12.7 through Phase 12.9 checkpoint the voice
+architecture and document local Piper/Whisper integration prerequisites before any executable
+voice work.
 
 Separation:
 
@@ -300,6 +302,18 @@ Current behavior:
 Future Piper/Whisper integration should happen only through these provider interfaces and the
 runtime coordinator boundary after a later explicit phase defines audio device permissions, local
 binary/model ownership, cancellation, playback/capture lifecycle, and runtime safety checks.
+
+Phase 12 checkpoint:
+
+- `docs/PHASE_12_CHECKPOINT.md` records the completed voice scope, current architecture, known
+  limitations, safety guardrails, future Piper integration plan, future Whisper integration plan,
+  and Phase 13 readiness criteria.
+- Architecture review found the voice provider boundaries, session/pipeline metadata, static
+  coordinator, controller ownership, and view-model exposure remain separated and metadata-only.
+- Existing coverage verifies deterministic voice pipeline behavior, null TTS/STT refusal,
+  blocked/error metadata paths, disabled runtime posture, and QML-safe exposure.
+- Phase 13 should not add executable voice behavior until permissions, local binary/model
+  ownership, lifecycle, cancellation, error handling, and safety gates are explicitly scoped.
 
 Current local AI user flow:
 

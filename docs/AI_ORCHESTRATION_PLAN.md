@@ -58,7 +58,11 @@ through Phase 12.6 add metadata-only voice runtime planning and session orchestr
 deterministic idle, preparing, awaiting-input, transcribing-placeholder, inference-placeholder,
 synthesis-placeholder, completed, blocked, and error pipeline; no microphone, playback,
 Piper/Whisper execution, subprocesses, downloads, cloud calls, API keys, filesystem/system actions,
-or autonomous voice loops are enabled.
+or autonomous voice loops are enabled. Phase 12.7 through Phase 12.9 checkpoint the voice
+architecture and document local Piper/Whisper integration prerequisites in
+`docs/PHASE_12_CHECKPOINT.md`; they add no microphone access, playback, Piper/Whisper execution,
+subprocesses, downloads, cloud calls, API keys, filesystem/system actions, voice controls, or
+autonomous voice loops.
 
 ## Future Components
 
@@ -136,6 +140,10 @@ or autonomous voice loops are enabled.
   implementation reports runtime unavailable, TTS/STT unavailable, microphone disabled, playback
   disabled, local-only policy active, and process execution disabled while emitting deterministic
   metadata-only pipeline traces.
+- Voice checkpoint and local integration plan: Phase 12 closes with a documented readiness gate for
+  future Piper and Whisper work. Piper must remain behind `ITextToSpeechProvider`; Whisper must
+  remain behind `ISpeechToTextProvider`; both require explicit permission, lifecycle,
+  cancellation, local binary/model ownership, and safety decisions before execution.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -182,11 +190,12 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 11.7-11.9 runtime allows local Ollama health/discovery metadata plus a controlled
+Current Phase 12.7-12.9 runtime allows local Ollama health/discovery metadata plus a controlled
 local inference boundary, selected-model metadata, explicit opt-in chat-to-Ollama routing, a
-guarded local-only streaming boundary, action-light local model selection UX, and metadata-only
-model-management readiness. The Phase 11 checkpoint verifies this flow through runtime QA and
-documents Phase 12 readiness without adding new runtime authority:
+guarded local-only streaming boundary, action-light local model selection UX, metadata-only
+model-management readiness, and metadata-only voice provider/session/runtime boundaries. The Phase
+12 checkpoint verifies the voice boundary and documents Phase 13 readiness without adding audio
+I/O or new runtime authority:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -301,6 +310,10 @@ documents Phase 12 readiness without adding new runtime authority:
   inference-placeholder, synthesis-placeholder, completed, blocked, and error states. It does not
   open microphones, play audio, execute Piper or Whisper, launch subprocesses, touch filesystems,
   call cloud providers, use API keys, or run autonomous voice loops.
+- `docs/PHASE_12_CHECKPOINT.md` records the Phase 12 voice architecture review and Phase 13
+  readiness criteria. Future Piper/Whisper integration must stay local-first, injectable,
+  permission/safety-gated, and separate from chat providers, local inference clients, tools,
+  plugins, memory, and model management.
 - `AppSettings` persists the routing mode and normalized Ollama endpoint through
   `JsonSettingsStore`; it also persists the selected local model name, local chat inference
   opt-in, and local streaming opt-in. It does not store provider credentials or API keys.

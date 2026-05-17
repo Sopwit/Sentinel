@@ -1255,3 +1255,28 @@ Boundary rules:
 - No microphone access, audio playback, recording, synthesis, transcription, subprocess/process
   launch, filesystem/system action, download, cloud call, API key, voice activation, autonomous
   loop, or broad UI redesign is introduced.
+
+## 64. Phase 12 Voice Checkpoint Plans Integration Before Execution
+
+Decision: Close Phase 12 with a voice architecture checkpoint and local Piper/Whisper integration
+plan instead of adding real audio behavior.
+
+Reason: The provider boundaries and runtime/session metadata are now in place. Before Phase 13 can
+add any executable local voice capability, Sentinel needs a durable record of ownership,
+limitations, safety guardrails, and readiness criteria.
+
+Boundary rules:
+
+- Checkpoint work may update documentation, clarify architecture decisions, and confirm existing
+  test coverage.
+- `ITextToSpeechProvider`, `ISpeechToTextProvider`, and `IVoiceRuntimeCoordinator` remain the
+  required boundaries for any future Piper, Whisper, playback, capture, or voice session work.
+- `ApplicationController` owns injected/default voice providers and the runtime coordinator.
+- `DesktopShellViewModel` and QML remain limited to read-only strings, string lists, and booleans.
+- Future Piper work must define local binary ownership, model path ownership, playback lifecycle,
+  cancellation, permission prompts, and safety checks before execution.
+- Future Whisper work must define microphone permission, capture lifecycle, local binary/model
+  ownership, transcription privacy, cancellation, and error handling before execution.
+- No microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
+  launch, filesystem/system action, download, cloud call, API key, voice button, activation flow,
+  autonomous voice loop, or broad UI redesign is introduced by the checkpoint.

@@ -308,6 +308,27 @@ Still out of scope:
   filesystem/system actions, downloads, cloud calls, API keys, voice activation, autonomous loops,
   and broad UI redesign.
 
+## Phase 12.7-12.9: Voice Checkpoint And Local Voice Integration Planning
+
+Completed. Checkpointed Phase 12 voice architecture and documented the prerequisites for future
+local Piper and Whisper integration without adding real audio behavior.
+
+Delivered:
+
+- Reviewed TTS/STT provider boundaries, voice session/pipeline metadata, static runtime
+  coordination, controller ownership, and QML-safe view-model exposure.
+- Added `docs/PHASE_12_CHECKPOINT.md` with completed scope, current architecture, known
+  limitations, safety guardrails, future Piper plan, future Whisper plan, and Phase 13 readiness
+  criteria.
+- Confirmed existing voice tests cover deterministic pipeline traces, null provider refusal,
+  controller/view-model exposure, blocked/error metadata, and disabled runtime posture.
+
+Still out of scope:
+
+- Microphone access, audio playback, Piper/Whisper execution, subprocess/process launch,
+  filesystem/system actions, downloads, cloud calls, API keys, voice buttons, activation flows,
+  autonomous voice loops, and broad UI redesign.
+
 ## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
 
 Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.
