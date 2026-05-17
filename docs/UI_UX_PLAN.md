@@ -4,14 +4,14 @@ Phase 5 establishes a small design-system and interaction foundation for Sentine
 not implement advanced motion, assistant visuals, model management, provider integration, or
 execution features.
 
-Phase 5.4 translates the useful UI direction from the `lovable-tasarim` design reference into
-native Qt/QML. For visual identity, `lovable-tasarim` is the source of truth. The
-React/Vite/Tailwind project remains a reference only and is not integrated into the production app.
+Phase 5.4 translated the useful UI direction from the former `lovable-tasarim` design reference
+into native Qt/QML. The React/Vite/Tailwind reference has been removed from the production
+repository after the native shell adopted the useful visual identity pieces.
 
 Phase 5.4.5 is a stabilization checkpoint. It should reduce obvious risk in the existing QML and
 docs without adding new product features, UI systems, runtime behavior, or web dependencies.
 
-Phase 5.5 reconstructs the visual shell around the `lovable-tasarim` identity more directly:
+Phase 5.5 reconstructed the visual shell around the translated Sentinel identity:
 cinematic AI operating environment, presence-first workspace, floating translucent surfaces,
 negative space, partial bracket grammar, cyan/teal glow hierarchy, and a bottom command dock.
 
@@ -50,7 +50,8 @@ Guidelines:
 - Prefer small shared components for repeated controls such as command buttons, text fields, and
   read-only status rows.
 - Keep component styling close to existing QML patterns.
-- Match `lovable-tasarim` composition before adding generic utility-app dashboard conventions.
+- Preserve the translated Sentinel composition before adding generic utility-app dashboard
+  conventions.
 - Do not move business logic into QML.
 - Avoid broad visual rewrites during foundation work.
 
@@ -117,7 +118,8 @@ Motion should be quiet and functional:
 
 ## Phase 5.5 Visual Identity Notes
 
-- `lovable-tasarim` is the visual source of truth for Phase 5.x composition and atmosphere.
+- The translated native QML shell is now the visual source of truth for composition and
+  atmosphere.
 - The Dashboard/Core page should prioritize the central presence scene over metric-card density.
 - Navigation should feel dock-led and cinematic, with the left rail reduced to ambient identity and
   local status.

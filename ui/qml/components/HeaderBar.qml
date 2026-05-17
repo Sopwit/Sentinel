@@ -7,14 +7,11 @@ ShellPanel {
     required property var viewModel
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    readonly property int modeButtonWidth: compact ? 190 : 230
 
     color: "transparent"
     border.color: "transparent"
     showBrackets: false
-
-    function modeIndex() {
-        return headerBar.viewModel.availableModes.indexOf(headerBar.viewModel.currentModeName)
-    }
 
     GridLayout {
         anchors.fill: parent
@@ -86,7 +83,7 @@ ShellPanel {
                     anchors.fill: parent
                     anchors.leftMargin: SentinelTheme.spaceMd
                     anchors.rightMargin: SentinelTheme.spaceMd
-                    text: "Local alpha / no network provider"
+                    text: headerBar.viewModel.ollamaHealthStatus + " / " + headerBar.viewModel.selectedLocalModelStatus
                     color: SentinelTheme.textPlaceholder
                     verticalAlignment: Text.AlignVCenter
                     font.pixelSize: SentinelTheme.fontSmall
@@ -94,11 +91,102 @@ ShellPanel {
                 }
             }
 
-            ComboBox {
-                Layout.preferredWidth: headerBar.compact ? 190 : 230
-                model: headerBar.viewModel.availableModes
-                currentIndex: headerBar.modeIndex()
-                onActivated: headerBar.viewModel.setModeByName(currentText)
+            Button {
+                id: modeButton
+                Layout.preferredWidth: headerBar.modeButtonWidth
+                Layout.preferredHeight: SentinelTheme.controlHeight
+                hoverEnabled: true
+                focusPolicy: Qt.StrongFocus
+                text: headerBar.viewModel.currentModeName
+                onClicked: modePopup.open()
+
+                contentItem: RowLayout {
+                    anchors.fill: parent
+                    anchors.leftMargin: SentinelTheme.spaceMd
+                    anchors.rightMargin: SentinelTheme.spaceMd
+                    spacing: SentinelTheme.spaceSm
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: modeButton.text
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontSmall
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        text: "\u25be"
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                    }
+                }
+
+                background: Rectangle {
+                    radius: SentinelTheme.controlHeight / 2
+                    color: modeButton.down || modePopup.opened
+                           ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.18)
+                           : modeButton.hovered
+                             ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.12)
+                             : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                    border.color: modeButton.activeFocus ? SentinelTheme.focusBorder
+                                                         : SentinelTheme.withAlpha(headerBar.modeAccent, 0.18)
+                    border.width: 1
+                }
+
+                Popup {
+                    id: modePopup
+                    y: modeButton.height + SentinelTheme.spaceXs
+                    width: headerBar.modeButtonWidth
+                    modal: false
+                    focus: true
+                    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+                    padding: SentinelTheme.spaceXs
+
+                    background: Rectangle {
+                        radius: SentinelTheme.radiusLg
+                        color: SentinelTheme.backgroundRaised
+                        border.color: SentinelTheme.withAlpha(headerBar.modeAccent, 0.22)
+                    }
+
+                    contentItem: ColumnLayout {
+                        spacing: SentinelTheme.spaceXs
+
+                        Repeater {
+                            model: headerBar.viewModel.availableModes
+
+                            Button {
+                                id: modeOption
+                                required property string modelData
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: SentinelTheme.controlHeight
+                                flat: true
+                                hoverEnabled: true
+                                text: modelData
+                                onClicked: {
+                                    headerBar.viewModel.setModeByName(modelData)
+                                    modePopup.close()
+                                }
+
+                                contentItem: Label {
+                                    text: modeOption.text
+                                    color: modeOption.modelData === headerBar.viewModel.currentModeName
+                                           ? SentinelTheme.textPrimary
+                                           : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: modeOption.hovered
+                                           ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.10)
+                                           : "transparent"
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }

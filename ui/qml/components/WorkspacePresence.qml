@@ -35,7 +35,7 @@ ShellPanel {
             }
 
             Label {
-                text: "COHERENCE 0.974"
+                text: presence.viewModel.orchestrationReadinessStatus
                 color: SentinelTheme.accent
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 2.4
@@ -71,7 +71,7 @@ ShellPanel {
             Label {
                 anchors.left: parent.left
                 anchors.top: parent.top
-                text: "NODE / 04A\nSYNCED"
+                text: "OLLAMA / " + presence.viewModel.ollamaHealthStatus + "\nMODE / " + presence.viewModel.currentRoutingMode
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 1.8
@@ -81,7 +81,7 @@ ShellPanel {
             Label {
                 anchors.right: parent.right
                 anchors.top: parent.top
-                text: "LAT / 12ms\nTOOLS / " + (presence.viewModel.availableToolCount === undefined ? 0 : presence.viewModel.availableToolCount)
+                text: "CHAT / " + presence.viewModel.localChatInferenceStatus + "\nSTREAM / " + presence.viewModel.localInferenceStreamStatus
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignRight
                 font.pixelSize: SentinelTheme.fontTiny
@@ -92,7 +92,7 @@ ShellPanel {
             Label {
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
-                text: "PSI / 7.318"
+                text: "MODEL / " + presence.viewModel.selectedLocalModelStatus
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 1.8
@@ -101,7 +101,7 @@ ShellPanel {
             Label {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
-                text: "EXEC / DISABLED"
+                text: "VOICE / " + presence.viewModel.voiceReadinessStatus
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignRight
                 font.pixelSize: SentinelTheme.fontTiny
@@ -111,7 +111,7 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            text: "\"I am listening across local channels. Nothing demands your attention.\""
+            text: presence.viewModel.localRuntimeSummary
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.78)
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap

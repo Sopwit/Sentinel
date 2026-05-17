@@ -87,20 +87,6 @@ ShellPanel {
                         font.pixelSize: SentinelTheme.fontTiny
                         elide: Text.ElideRight
                     }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 2
-                        radius: 1
-                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-
-                        Rectangle {
-                            width: parent.width
-                            height: parent.height
-                            radius: 1
-                            color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.72)
-                        }
-                    }
                 }
             }
         }

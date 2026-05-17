@@ -40,25 +40,23 @@ ShellPanel {
         }
 
         Repeater {
-            model: 5
+            model: [
+                stream.viewModel.latestAgentPipelineSummary,
+                stream.viewModel.latestAgentActivitySummary,
+                stream.viewModel.runtimeContextSummary,
+                stream.viewModel.conversationTransitionSummary,
+                stream.viewModel.localInferenceSummary
+            ]
 
             RowLayout {
                 required property int index
-                readonly property string rowTime: index === 0 ? "00:14:02"
-                                              : index === 1 ? "00:13:48"
-                                              : index === 2 ? "00:13:31"
-                                              : index === 3 ? "00:13:12" : "00:12:55"
-                readonly property string rowMessage: index === 0 ? stream.viewModel.latestAgentPipelineSummary
-                                                 : index === 1 ? "Synthesized local context bridge across runtime memory placeholders"
-                                                 : index === 2 ? "Agent metadata perimeter scan complete / no execution requested"
-                                                 : index === 3 ? "Re-balanced visual posture for " + stream.viewModel.currentModeName
-                                                 : "Drafted local echo response / awaiting operator input"
+                required property string modelData
                 Layout.fillWidth: true
                 spacing: SentinelTheme.spaceMd
 
                 Label {
                     Layout.preferredWidth: 58
-                    text: rowTime
+                    text: "0" + (index + 1)
                     color: SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.72)
                     font.pixelSize: SentinelTheme.fontTiny
                     font.letterSpacing: 1.1
@@ -74,7 +72,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: rowMessage
+                    text: modelData
                     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.88)
                     font.pixelSize: SentinelTheme.fontSmall
                     elide: Text.ElideRight

@@ -1034,8 +1034,9 @@ Still out of scope:
 
 ### Phase 5.4: Workspace UX Integration
 
-Completed. Translated the useful `lovable-tasarim` UI/UX direction into native Qt/QML while keeping
-React, Vite, Tailwind, Node tooling, and WebView integration out of the production app.
+Completed. Translated the useful direction from the former `lovable-tasarim` UI/UX reference into
+native Qt/QML while keeping React, Vite, Tailwind, Node tooling, and WebView integration out of the
+production app.
 
 Scope:
 
@@ -1050,7 +1051,7 @@ Scope:
 
 Follow-up visual migration:
 
-- Move the completed QML workspace closer to the `lovable-tasarim` visual identity source of truth.
+- Move the completed QML workspace closer to the translated Sentinel visual identity.
 - Emphasize cinematic presence-first composition, softer translucent surfaces, reduced dashboard
   density, larger central AI presence, thinner visual hierarchy, and more negative space.
 - Keep the implementation native Qt/QML and preserve all no-execution boundaries.
@@ -1077,7 +1078,7 @@ Scope:
   translation.
 - Fix only small safe issues such as stale docs, naming inconsistencies, duplicated simple QML
   styling, fragile bindings, minor label clarity, and checklist gaps.
-- Keep `lovable-tasarim` as a design reference only.
+- Keep any external design references outside the production app.
 
 Known risks to monitor before Phase 5.5:
 
@@ -1100,8 +1101,8 @@ Phase 5.5 readiness criteria:
 
 ### Phase 5.5: Visual Identity Reconstruction
 
-Completed. Reconstructed the Dashboard/Core visual shell to match `lovable-tasarim` more closely
-while preserving Sentinel's native Qt/QML and C++ architecture boundaries.
+Completed. Reconstructed the Dashboard/Core visual shell around the translated Sentinel visual
+identity while preserving Sentinel's native Qt/QML and C++ architecture boundaries.
 
 Scope:
 

@@ -849,8 +849,8 @@ Readiness criteria:
 
 ### Phase 5.4: Workspace UX Integration
 
-Completed. Used `lovable-tasarim` as a design reference only and translated its workspace direction
-into native Qt/QML.
+Completed. Used the former `lovable-tasarim` design reference only long enough to translate its
+workspace direction into native Qt/QML.
 
 Delivered:
 
@@ -888,7 +888,7 @@ Still out of scope:
 
 ### Phase 5.5: Visual Identity Reconstruction
 
-Completed. Rebuilt the native QML shell around the `lovable-tasarim` visual source of truth.
+Completed. Rebuilt the native QML shell around the translated Sentinel visual identity.
 
 Delivered:
 

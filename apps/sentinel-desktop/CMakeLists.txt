@@ -66,12 +66,10 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelDock.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelMetricCard.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SignalField.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml
@@ -80,7 +78,6 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/AgentsPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/MemoryPage.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/pages/MetricCard.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/SettingsPage.qml
 )
 
@@ -93,12 +90,10 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml PR
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml PROPERTIES QT_RESOURCE_ALIAS SectionTitle.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml PROPERTIES QT_RESOURCE_ALIAS SentinelButton.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelDock.qml PROPERTIES QT_RESOURCE_ALIAS SentinelDock.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelMetricCard.qml PROPERTIES QT_RESOURCE_ALIAS SentinelMetricCard.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qml PROPERTIES QT_RESOURCE_ALIAS SentinelOrb.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTelemetry.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTextField.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml PROPERTIES QT_RESOURCE_ALIAS ShellPanel.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SignalField.qml PROPERTIES QT_RESOURCE_ALIAS SignalField.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml PROPERTIES QT_RESOURCE_ALIAS Sidebar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml PROPERTIES QT_RESOURCE_ALIAS StatusBar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml PROPERTIES QT_RESOURCE_ALIAS WorkspacePresence.qml)
@@ -107,7 +102,6 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml PROPE
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/AgentsPage.qml PROPERTIES QT_RESOURCE_ALIAS AgentsPage.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml PROPERTIES QT_RESOURCE_ALIAS DashboardPage.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/MemoryPage.qml PROPERTIES QT_RESOURCE_ALIAS MemoryPage.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/MetricCard.qml PROPERTIES QT_RESOURCE_ALIAS MetricCard.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/SettingsPage.qml PROPERTIES QT_RESOURCE_ALIAS SettingsPage.qml)
 
 qt_add_qml_module(sentinel-desktop

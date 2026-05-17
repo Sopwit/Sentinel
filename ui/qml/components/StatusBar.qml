@@ -20,7 +20,7 @@ ShellPanel {
         spacing: SentinelTheme.spaceMd
 
         Label {
-            text: "Status: Local Alpha"
+            text: statusBar.viewModel.ollamaHealthStatus
             color: SentinelTheme.textPrimary
             font.pixelSize: SentinelTheme.fontSmall
         }
@@ -32,27 +32,27 @@ ShellPanel {
         }
 
         Label {
-            text: "Memory: " + statusBar.viewModel.memoryStatus
+            text: "Model: " + statusBar.viewModel.selectedLocalModelStatus
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
         }
 
         Label {
-            text: "Chat: " + statusBar.viewModel.chatHistoryStatus
-            color: SentinelTheme.textMuted
-            font.pixelSize: SentinelTheme.fontSmall
-            visible: !statusBar.compact
-        }
-
-        Label {
-            text: "Agent: " + statusBar.viewModel.agentStatus
+            text: "Chat: " + statusBar.viewModel.localChatInferenceStatus
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             visible: !statusBar.compact
         }
 
         Label {
-            text: "Tools: " + statusBar.viewModel.availableToolCount
+            text: "Stream: " + statusBar.viewModel.localInferenceStreamStatus
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
+            visible: !statusBar.compact
+        }
+
+        Label {
+            text: "Voice: " + statusBar.viewModel.voiceReadinessStatus
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             visible: !statusBar.compact
@@ -63,7 +63,7 @@ ShellPanel {
         }
 
         Label {
-            text: "Provider: " + statusBar.viewModel.providerName + " / " + statusBar.viewModel.providerStatus
+            text: statusBar.viewModel.orchestrationReadinessStatus + " / " + statusBar.viewModel.runtimeSafetyDecision
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             elide: Text.ElideRight

@@ -9,7 +9,8 @@ ShellPanel {
     required property var viewModel
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property int currentPageIndex: dock.viewModel.availablePages.indexOf(
+    readonly property var dockPages: ["Dashboard", "Memory", "Agents"]
+    readonly property int currentPageIndex: dock.dockPages.indexOf(
                                                 dock.viewModel.currentPage)
 
     function pageIcon(pageName) {
@@ -71,7 +72,7 @@ ShellPanel {
             Rectangle {
                 id: activeTrack
                 visible: dock.currentPageIndex >= 0
-                readonly property int pageCount: Math.max(1, dock.viewModel.availablePages.length)
+                readonly property int pageCount: Math.max(1, dock.dockPages.length)
                 readonly property real tabWidth: tabsHost.width / pageCount
                 readonly property real tabPadding: compact ? 4 : 5
                 x: tabWidth * Math.max(0, dock.currentPageIndex) + tabPadding
@@ -95,7 +96,7 @@ ShellPanel {
                 spacing: compact ? 4 : 6
 
                 Repeater {
-                    model: dock.viewModel.availablePages
+                    model: dock.dockPages
 
                     Button {
                         id: dockButton
