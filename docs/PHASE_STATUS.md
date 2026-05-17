@@ -2,6 +2,27 @@
 
 ## Completed / Stable
 
+### Phase 12.7-12.9: Voice Checkpoint And Local Voice Integration Planning
+
+Completed. Checkpoints the completed Phase 12 voice boundary/runtime architecture and documents
+future local Piper/Whisper integration prerequisites without enabling audio I/O or execution.
+
+Scope:
+
+- Reviewed `ITextToSpeechProvider`, `ISpeechToTextProvider`, `VoiceSession`, voice pipeline
+  metadata, `StaticVoiceRuntimeCoordinator`, `ApplicationController` ownership, and
+  `DesktopShellViewModel` QML-safe exposure.
+- Added `docs/PHASE_12_CHECKPOINT.md` with completed scope, current architecture, limitations,
+  safety guardrails, future Piper plan, future Whisper plan, and Phase 13 readiness criteria.
+- Confirmed existing tests cover deterministic voice pipeline behavior, null TTS/STT refusal,
+  controller/view-model exposure, disabled runtime posture, and blocked/error metadata paths.
+
+Still out of scope:
+
+- Microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
+  launch, filesystem/system actions, downloads, cloud calls, API keys, voice controls, activation
+  flows, autonomous voice loops, and broad UI redesign.
+
 ### Phase 12.3-12.6: Voice Runtime Planning And Session Orchestration Skeleton
 
 Completed. Adds deterministic voice session/runtime orchestration metadata without enabling audio
