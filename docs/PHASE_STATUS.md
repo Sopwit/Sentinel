@@ -2,6 +2,65 @@
 
 ## Completed / Stable
 
+### Phase 13.3-13.5: Piper TTS Adapter Skeleton
+
+Completed. Adds a safe Piper text-to-speech provider boundary without enabling audio playback,
+Piper execution, downloads, cloud calls, API keys, model loading, or filesystem-wide scans.
+
+Scope:
+
+- Added `PiperTtsConfig`, `PiperVoiceModelDescriptor`, `PiperTtsRequest`,
+  `PiperTtsResult`, `PiperTtsStatus`, `IPiperTtsClient`, `NullPiperTtsClient`, and
+  `PiperTextToSpeechProvider`.
+- The default Piper adapter is disabled/not configured and reports deterministic readiness
+  metadata only.
+- Missing Piper binary or voice model metadata produces deterministic refusal before reaching any
+  client boundary.
+- `ApplicationController` exposes Piper TTS status, summary, readiness checks, and readiness bool.
+- `DesktopShellViewModel` forwards Piper TTS metadata as QML-safe strings, string lists, and
+  booleans.
+- Settings shows read-only Piper readiness metadata with no speak button, path picker, model
+  picker, setup action, playback control, or broad UI redesign.
+- Tests cover null-client refusal, missing binary/model refusal, provider summaries,
+  controller/view-model exposure, and no-side-effect posture.
+
+Still out of scope:
+
+- Audio playback, Piper subprocess execution, file-output synthesis, microphone access,
+  Whisper/STT work, downloads, cloud/API-key behavior, filesystem-wide scans, automatic runtime
+  probing, model loading, path/model pickers, speak controls, and uncontrolled process execution.
+
+Next:
+
+- A later explicit phase may add controlled file-output TTS only after enabling policy,
+  user-controlled paths, lifecycle, cancellation, cleanup, and safety checks are defined.
+
+### Phase 13.0-13.2: Local Voice Runtime Safety, Binary Ownership, And Model Ownership Skeleton
+
+Completed. Adds metadata-only ownership boundaries for future local Piper/Whisper runtime
+integration without enabling audio I/O, subprocesses, downloads, model loading, or execution.
+
+Scope:
+
+- Added voice binary, model, runtime permission, and runtime safety metadata for future Piper and
+  Whisper ownership.
+- Added `IVoiceRuntimeEnvironment` with deterministic null/static environment implementations.
+- The default environment reports missing/not-configured Piper and Whisper binary/model metadata,
+  denied voice runtime permissions, and blocked execution safety posture.
+- `ApplicationController` exposes voice binary, model, permission, environment, and safety
+  summaries.
+- `DesktopShellViewModel` forwards only QML-safe strings, string lists, and booleans.
+- Settings extends read-only Voice Readiness metadata with environment, binary, model, permission,
+  and safety summaries, with no activation controls.
+- Tests cover deterministic null/static environment behavior, missing binary/model metadata,
+  safety blocking, controller/view-model exposure, and no-execution posture.
+
+Still out of scope:
+
+- Microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
+  launch, filesystem-wide scans, model loading, downloads, cloud calls, API keys, voice controls,
+  path pickers, and broad UI redesign.
+
 ### Phase 12.7-12.9: Voice Checkpoint And Local Voice Integration Planning
 
 Completed. Checkpoints the completed Phase 12 voice boundary/runtime architecture and documents

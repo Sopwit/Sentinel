@@ -588,6 +588,33 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
     QVERIFY(!fixture.viewModel.voicePlaybackEnabled());
     QVERIFY(fixture.viewModel.voiceLocalOnlyPolicy());
     QVERIFY(!fixture.viewModel.voiceProcessExecutionEnabled());
+    QCOMPARE(fixture.viewModel.voiceRuntimeEnvironmentStatus(), QStringLiteral("Blocked"));
+    QVERIFY(fixture.viewModel.voiceRuntimeEnvironmentSummary().contains(
+        QStringLiteral("metadata-only")));
+    QCOMPARE(fixture.viewModel.voiceBinarySummaries().size(), 2);
+    QVERIFY(fixture.viewModel.voiceBinarySummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Whisper Binary: Missing")));
+    QCOMPARE(fixture.viewModel.voiceModelSummaries().size(), 2);
+    QVERIFY(fixture.viewModel.voiceModelSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper Voice Model: Missing")));
+    QCOMPARE(fixture.viewModel.voiceRuntimePermissionSummaries().size(), 4);
+    QVERIFY(fixture.viewModel.voiceRuntimePermissionSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Microphone: Denied")));
+    QCOMPARE(fixture.viewModel.voiceRuntimeSafetyStatus(), QStringLiteral("Blocked"));
+    QVERIFY(
+        fixture.viewModel.voiceRuntimeSafetySummary().contains(QStringLiteral("blocks execution")));
+    QCOMPARE(fixture.viewModel.voiceRuntimeSafetyChecks().size(), 7);
+    QVERIFY(!fixture.viewModel.voiceRuntimeExecutionAllowed());
+    QCOMPARE(fixture.viewModel.piperTtsStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.piperTtsSummary().contains(QStringLiteral("disabled by default")));
+    QCOMPARE(fixture.viewModel.piperTtsReadinessChecks().size(), 7);
+    QVERIFY(fixture.viewModel.piperTtsReadinessChecks()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper binary")));
+    QVERIFY(!fixture.viewModel.piperTtsReady());
 }
 
 void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
@@ -1022,6 +1049,19 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("voicePlaybackEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("voiceLocalOnlyPolicy"), QByteArrayLiteral("bool")},
         {QStringLiteral("voiceProcessExecutionEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("voiceRuntimeEnvironmentStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceRuntimeEnvironmentSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceBinarySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceModelSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceRuntimePermissionSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceRuntimeSafetyStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceRuntimeSafetySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceRuntimeSafetyChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceRuntimeExecutionAllowed"), QByteArrayLiteral("bool")},
+        {QStringLiteral("piperTtsStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperTtsSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperTtsReadinessChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("piperTtsReady"), QByteArrayLiteral("bool")},
         {QStringLiteral("localChatInferenceStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceBusy"), QByteArrayLiteral("bool")},

@@ -105,3 +105,35 @@ current Desktop Alpha voice architecture.
   chat providers, local inference clients, tools, plugins, memory, and model management.
 - Re-run the full test preset, clang-format dry-run, and `git diff --check` before starting any
   executable voice integration.
+
+## Phase 13.0-13.2 Follow-up Status
+
+Phase 13.0-13.2 has now added the first local voice runtime environment ownership skeleton while
+preserving the checkpoint guardrails:
+
+- Piper and Whisper binary/model ownership is represented as metadata only.
+- The default environment reports missing/not-configured binary and model paths.
+- Runtime permissions are denied by default.
+- Runtime safety blocks execution, microphone access, playback, subprocesses, filesystem-wide
+  scans, downloads, cloud calls, and API-key behavior.
+- Settings remains read-only and has no voice buttons, activation controls, setup actions, or path
+  picker.
+
+Executable Piper/Whisper integration remains a future phase.
+
+## Phase 13.3-13.5 Follow-up Status
+
+Phase 13.3-13.5 has added the first Piper TTS adapter skeleton while preserving the checkpoint
+guardrails:
+
+- Piper TTS configuration, request/result, voice model descriptor, status, client boundary, null
+  client, and provider skeleton are represented as metadata/refusal code only.
+- The default Piper adapter is disabled/not configured.
+- Missing Piper binary or voice model metadata refuses deterministically before any client boundary.
+- Settings remains read-only and has no speak button, playback control, setup action, path picker,
+  or model picker.
+- Piper execution, file-output synthesis, audio playback, microphone access, Whisper/STT,
+  downloads, cloud calls, API keys, filesystem-wide scans, and model loading remain disabled.
+
+A later explicit phase can add controlled file-output TTS only after enablement policy,
+user-controlled paths, lifecycle, cancellation, cleanup, and runtime safety checks are defined.

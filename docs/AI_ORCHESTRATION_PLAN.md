@@ -62,7 +62,15 @@ or autonomous voice loops are enabled. Phase 12.7 through Phase 12.9 checkpoint 
 architecture and document local Piper/Whisper integration prerequisites in
 `docs/PHASE_12_CHECKPOINT.md`; they add no microphone access, playback, Piper/Whisper execution,
 subprocesses, downloads, cloud calls, API keys, filesystem/system actions, voice controls, or
-autonomous voice loops.
+autonomous voice loops. Phase 13.0 through Phase 13.2 add metadata-only local voice runtime
+environment ownership for future Piper/Whisper binaries, models, permissions, and safety
+reporting; execution remains blocked and no microphone, playback, subprocess, filesystem-wide
+scan, model loading, download, cloud call, API key, path picker, or voice control is enabled.
+Phase 13.3 through Phase 13.5 add a Piper TTS adapter skeleton behind the text-to-speech boundary:
+configuration, request/result, model descriptor, null client, and provider readiness metadata are
+present, but audio playback, file-output synthesis, Piper subprocess execution, downloads, cloud
+calls, API keys, filesystem-wide scans, model loading, speak controls, and path/model pickers
+remain disabled.
 
 ## Future Components
 
@@ -144,6 +152,15 @@ autonomous voice loops.
   future Piper and Whisper work. Piper must remain behind `ITextToSpeechProvider`; Whisper must
   remain behind `ISpeechToTextProvider`; both require explicit permission, lifecycle,
   cancellation, local binary/model ownership, and safety decisions before execution.
+- Voice runtime environment: metadata-only ownership for expected future Piper/Whisper binary
+  paths, voice model paths, runtime permissions, and safety checks. Current null/static
+  implementations report missing/not-configured binaries and models, denied permissions, and
+  blocked execution without launching processes, scanning the filesystem broadly, loading models,
+  opening audio devices, downloading assets, or calling cloud services.
+- Piper TTS adapter boundary: typed Piper TTS configuration, voice model descriptor, request,
+  result, status, client, null client, and provider metadata. The current provider is
+  disabled/not configured by default, refuses missing binary/model metadata deterministically, and
+  keeps any subprocess/file-output path non-callable until a later explicit phase.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -190,12 +207,12 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 12.7-12.9 runtime allows local Ollama health/discovery metadata plus a controlled
+Current Phase 13.3-13.5 runtime allows local Ollama health/discovery metadata plus a controlled
 local inference boundary, selected-model metadata, explicit opt-in chat-to-Ollama routing, a
 guarded local-only streaming boundary, action-light local model selection UX, metadata-only
-model-management readiness, and metadata-only voice provider/session/runtime boundaries. The Phase
-12 checkpoint verifies the voice boundary and documents Phase 13 readiness without adding audio
-I/O or new runtime authority:
+model-management readiness, metadata-only voice provider/session/runtime boundaries, and
+metadata-only local voice runtime environment ownership plus a disabled Piper TTS adapter
+skeleton. Phase 13 adds no audio I/O or new runtime authority:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -314,6 +331,17 @@ I/O or new runtime authority:
   readiness criteria. Future Piper/Whisper integration must stay local-first, injectable,
   permission/safety-gated, and separate from chat providers, local inference clients, tools,
   plugins, memory, and model management.
+- `IVoiceRuntimeEnvironment` owns future local voice runtime environment metadata only.
+  `NullVoiceRuntimeEnvironment` and `StaticVoiceRuntimeEnvironment` describe Piper/Whisper
+  binary/model readiness, denied runtime permissions, and blocked safety posture. They do not
+  execute Piper or Whisper, launch subprocesses, load models, scan the filesystem broadly, open
+  microphones, play audio, download assets, call cloud providers, use API keys, or add voice
+  controls.
+- `PiperTextToSpeechProvider` owns the current Piper TTS adapter skeleton behind
+  `ITextToSpeechProvider`. `NullPiperTtsClient` refuses synthesis deterministically, and missing
+  Piper binary/model metadata is rejected before any client boundary. The adapter does not play
+  audio, write synthesized files, launch Piper, load models, scan broadly, download assets, call
+  cloud providers, use API keys, expose speak controls, or add path/model pickers.
 - `AppSettings` persists the routing mode and normalized Ollama endpoint through
   `JsonSettingsStore`; it also persists the selected local model name, local chat inference
   opt-in, and local streaming opt-in. It does not store provider credentials or API keys.

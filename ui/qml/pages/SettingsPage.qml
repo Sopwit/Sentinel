@@ -629,12 +629,88 @@ ShellPanel {
                 Layout.fillWidth: true
             }
 
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Voice Environment"
+                value: settingsPage.viewModel.voiceRuntimeEnvironmentStatus + " / " + settingsPage.viewModel.voiceRuntimeEnvironmentSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Voice Safety"
+                value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / " + settingsPage.viewModel.voiceRuntimeSafetySummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Piper TTS"
+                value: settingsPage.viewModel.piperTtsStatus + " / " + settingsPage.viewModel.piperTtsSummary
+                Layout.fillWidth: true
+            }
+
             Repeater {
                 model: settingsPage.viewModel.voiceCapabilitySummaries
 
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Voice Capability"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.voiceBinarySummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Voice Binary"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.voiceModelSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Voice Model"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.voiceRuntimePermissionSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Voice Permission"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.voiceRuntimeSafetyChecks
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Voice Safety Check"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.piperTtsReadinessChecks
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Piper Check"
                     value: modelData
                     Layout.fillWidth: true
                 }
