@@ -796,6 +796,25 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QVERIFY(controller.voiceReadinessChecks()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("No microphone access")));
+    QCOMPARE(controller.voiceSessionId(), QStringLiteral("voice-session-1"));
+    QCOMPARE(controller.voiceSessionStatus(), QStringLiteral("completed"));
+    QVERIFY(controller.voiceSessionSummary().contains(QStringLiteral("metadata-only")));
+    QCOMPARE(controller.voicePipelineStatus(), QStringLiteral("completed"));
+    QVERIFY(controller.voicePipelineSummary().contains(QStringLiteral("metadata-only")));
+    QCOMPARE(controller.voicePipelineTraceSummaries().size(), 7);
+    QVERIFY(controller.voicePipelineTraceSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("transcribing-placeholder")));
+    QCOMPARE(controller.voiceRuntimeStatus(), QStringLiteral("Unavailable"));
+    QVERIFY(controller.voiceRuntimeSummary().contains(QStringLiteral("microphone disabled")));
+    QCOMPARE(controller.voiceRuntimeCheckSummaries().size(), 7);
+    QVERIFY(!controller.voiceRuntimeAvailable());
+    QVERIFY(!controller.voiceTextToSpeechAvailable());
+    QVERIFY(!controller.voiceSpeechToTextAvailable());
+    QVERIFY(!controller.voiceMicrophoneEnabled());
+    QVERIFY(!controller.voicePlaybackEnabled());
+    QVERIFY(controller.voiceLocalOnlyPolicy());
+    QVERIFY(!controller.voiceProcessExecutionEnabled());
 }
 
 void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetadata() {

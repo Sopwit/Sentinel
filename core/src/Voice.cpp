@@ -41,6 +41,73 @@ QString voiceRuntimeModeName(VoiceRuntimeMode mode) {
     return QStringLiteral("Disabled");
 }
 
+QString voiceSessionStateName(VoiceSessionState state) {
+    switch (state) {
+    case VoiceSessionState::Idle:
+        return QStringLiteral("idle");
+    case VoiceSessionState::Preparing:
+        return QStringLiteral("preparing");
+    case VoiceSessionState::AwaitingInput:
+        return QStringLiteral("awaiting-input");
+    case VoiceSessionState::TranscribingPlaceholder:
+        return QStringLiteral("transcribing-placeholder");
+    case VoiceSessionState::InferencePlaceholder:
+        return QStringLiteral("inference-placeholder");
+    case VoiceSessionState::SynthesisPlaceholder:
+        return QStringLiteral("synthesis-placeholder");
+    case VoiceSessionState::Completed:
+        return QStringLiteral("completed");
+    case VoiceSessionState::Blocked:
+        return QStringLiteral("blocked");
+    case VoiceSessionState::Error:
+        return QStringLiteral("error");
+    }
+
+    return QStringLiteral("idle");
+}
+
+QString voicePipelineStageName(VoicePipelineStage stage) {
+    switch (stage) {
+    case VoicePipelineStage::Idle:
+        return QStringLiteral("idle");
+    case VoicePipelineStage::Preparing:
+        return QStringLiteral("preparing");
+    case VoicePipelineStage::AwaitingInput:
+        return QStringLiteral("awaiting-input");
+    case VoicePipelineStage::TranscribingPlaceholder:
+        return QStringLiteral("transcribing-placeholder");
+    case VoicePipelineStage::InferencePlaceholder:
+        return QStringLiteral("inference-placeholder");
+    case VoicePipelineStage::SynthesisPlaceholder:
+        return QStringLiteral("synthesis-placeholder");
+    case VoicePipelineStage::Completed:
+        return QStringLiteral("completed");
+    case VoicePipelineStage::Blocked:
+        return QStringLiteral("blocked");
+    case VoicePipelineStage::Error:
+        return QStringLiteral("error");
+    }
+
+    return QStringLiteral("idle");
+}
+
+QString voicePipelineStatusName(VoicePipelineStatus status) {
+    switch (status) {
+    case VoicePipelineStatus::Pending:
+        return QStringLiteral("pending");
+    case VoicePipelineStatus::MetadataOnly:
+        return QStringLiteral("metadata-only");
+    case VoicePipelineStatus::Completed:
+        return QStringLiteral("completed");
+    case VoicePipelineStatus::Blocked:
+        return QStringLiteral("blocked");
+    case VoicePipelineStatus::Error:
+        return QStringLiteral("error");
+    }
+
+    return QStringLiteral("pending");
+}
+
 QString voiceProviderDescriptorSummary(const VoiceProviderDescriptor& descriptor) {
     return QStringLiteral("%1: %2 / %3. %4")
         .arg(descriptor.name, voiceProviderStatusName(descriptor.status),
@@ -74,18 +141,88 @@ VoiceReadinessReport buildVoiceReadinessReport(const VoiceProviderDescriptor& te
                                                const VoiceProviderDescriptor& speechToText) {
     VoiceReadinessReport report;
     report.status = QStringLiteral("Disabled");
-    report.summary = QStringLiteral("Voice readiness is metadata-only: TTS and STT are disabled; "
-                                    "no microphone, playback, Whisper, Piper, subprocess, "
-                                    "download, cloud, or API-key path is active.");
+    report.summary =
+        QStringLiteral("Voice readiness is metadata-only: runtime unavailable, TTS unavailable, "
+                       "STT unavailable, no microphone access, playback disabled, local-only "
+                       "policy active, Piper and Whisper disabled, and process execution "
+                       "disabled.");
     report.checks = {
+        QStringLiteral("Runtime: Unavailable. Voice session orchestration is metadata-only."),
         QStringLiteral("Text to speech: %1").arg(voiceProviderDescriptorSummary(textToSpeech)),
         QStringLiteral("Speech to text: %1").arg(voiceProviderDescriptorSummary(speechToText)),
-        QStringLiteral("Audio input/output: Disabled. No microphone access or audio playback is "
-                       "performed."),
-        QStringLiteral("Runtime execution: Disabled. No Piper, Whisper, subprocess, filesystem, "
-                       "download, cloud, or API-key action is performed."),
+        QStringLiteral("Microphone: Disabled. No microphone access is performed."),
+        QStringLiteral("Playback: Disabled. No audio playback is performed."),
+        QStringLiteral("Policy: Local Only. Voice metadata cannot call cloud providers or use API "
+                       "keys."),
+        QStringLiteral("Process execution: Disabled. No Piper, Whisper, subprocess, filesystem, "
+                       "download, or system action is performed."),
     };
     return report;
+}
+
+QString voiceRuntimeSummaryText(const VoiceRuntimeSummary& summary) {
+    if (!summary.summary.trimmed().isEmpty()) {
+        return summary.summary.trimmed();
+    }
+
+    return QStringLiteral("Voice runtime %1.").arg(summary.status);
+}
+
+QStringList voiceRuntimeCheckSummaries(const VoiceRuntimeSummary& summary) {
+    if (!summary.checks.isEmpty()) {
+        return summary.checks;
+    }
+
+    return {
+        QStringLiteral("Runtime: %1")
+            .arg(summary.runtimeAvailable ? QStringLiteral("Available")
+                                          : QStringLiteral("Unavailable")),
+        QStringLiteral("TTS: %1").arg(summary.textToSpeechAvailable
+                                          ? QStringLiteral("Available")
+                                          : QStringLiteral("Unavailable")),
+        QStringLiteral("STT: %1").arg(summary.speechToTextAvailable
+                                          ? QStringLiteral("Available")
+                                          : QStringLiteral("Unavailable")),
+        QStringLiteral("Microphone: %1")
+            .arg(summary.microphoneEnabled ? QStringLiteral("Enabled")
+                                           : QStringLiteral("Disabled")),
+        QStringLiteral("Playback: %1")
+            .arg(summary.playbackEnabled ? QStringLiteral("Enabled") : QStringLiteral("Disabled")),
+        QStringLiteral("Local-only policy: %1")
+            .arg(summary.localOnlyPolicy ? QStringLiteral("Active") : QStringLiteral("Inactive")),
+        QStringLiteral("Process execution: %1")
+            .arg(summary.processExecutionEnabled ? QStringLiteral("Enabled")
+                                                 : QStringLiteral("Disabled")),
+    };
+}
+
+QString voicePipelineTraceSummary(const VoicePipelineTrace& trace) {
+    if (!trace.summary.trimmed().isEmpty()) {
+        return QStringLiteral("%1 [%2]: %3")
+            .arg(voicePipelineStageName(trace.stage), voicePipelineStatusName(trace.status),
+                 trace.summary.trimmed());
+    }
+
+    return QStringLiteral("%1 [%2]").arg(voicePipelineStageName(trace.stage),
+                                         voicePipelineStatusName(trace.status));
+}
+
+QStringList voicePipelineTraceSummaries(const QList<VoicePipelineTrace>& traces) {
+    QStringList summaries;
+    for (const auto& trace : traces) {
+        summaries.append(voicePipelineTraceSummary(trace));
+    }
+    return summaries;
+}
+
+QString safeVoicePipelineSummary(const VoicePipelineResult& result) {
+    if (!result.summary.trimmed().isEmpty()) {
+        return result.summary.trimmed();
+    }
+
+    return QStringLiteral("Voice pipeline %1 (%2 traces).")
+        .arg(voicePipelineStatusName(result.status))
+        .arg(result.traces.size());
 }
 
 VoiceProviderDescriptor NullTextToSpeechProvider::descriptor() const {
@@ -142,6 +279,88 @@ VoiceResponse NullSpeechToTextProvider::transcribe(const VoiceRequest& request) 
 
 QString NullSpeechToTextProvider::statusSummary() const {
     return descriptor().summary;
+}
+
+VoiceSession StaticVoiceRuntimeCoordinator::currentSession() const {
+    return VoiceSession{
+        VoiceSessionId{QStringLiteral("voice-session-1")},
+        VoiceSessionState::Idle,
+        runtimeSummary(),
+        QStringLiteral("Voice session is idle; runtime orchestration is metadata-only."),
+    };
+}
+
+VoiceRuntimeSummary StaticVoiceRuntimeCoordinator::runtimeSummary() const {
+    VoiceRuntimeSummary summary;
+    summary.status = QStringLiteral("Unavailable");
+    summary.summary =
+        QStringLiteral("Voice runtime unavailable: TTS unavailable, STT unavailable, microphone "
+                       "disabled, playback disabled, local-only policy active, and process "
+                       "execution disabled.");
+    summary.checks = voiceRuntimeCheckSummaries(summary);
+    return summary;
+}
+
+VoicePipelineResult
+StaticVoiceRuntimeCoordinator::evaluate(VoiceSessionState requestedState) const {
+    VoicePipelineResult result;
+    result.session = currentSession();
+    result.session.state = requestedState;
+    result.session.summary = QStringLiteral("Voice session %1 is metadata-only.")
+                                 .arg(voiceSessionStateName(requestedState));
+
+    const auto appendTrace = [&result](VoicePipelineStage stage, VoicePipelineStatus status,
+                                       const QString& summary) {
+        result.traces.append(VoicePipelineTrace{stage, status, summary});
+    };
+
+    appendTrace(VoicePipelineStage::Idle, VoicePipelineStatus::MetadataOnly,
+                QStringLiteral("Voice runtime starts idle without opening audio devices."));
+    appendTrace(VoicePipelineStage::Preparing, VoicePipelineStatus::MetadataOnly,
+                QStringLiteral("Preparation records metadata only; no files, processes, or "
+                               "devices are touched."));
+
+    if (requestedState == VoiceSessionState::Blocked) {
+        appendTrace(VoicePipelineStage::Blocked, VoicePipelineStatus::Blocked,
+                    QStringLiteral("Voice pipeline blocked by metadata-only runtime policy."));
+        result.status = VoicePipelineStatus::Blocked;
+        result.summary =
+            QStringLiteral("Voice pipeline blocked before audio input, inference, or playback.");
+        return result;
+    }
+
+    if (requestedState == VoiceSessionState::Error) {
+        appendTrace(VoicePipelineStage::Error, VoicePipelineStatus::Error,
+                    QStringLiteral("Voice pipeline recorded error metadata without runtime "
+                                   "execution."));
+        result.status = VoicePipelineStatus::Error;
+        result.summary =
+            QStringLiteral("Voice pipeline recorded error metadata; no runtime action was "
+                           "performed.");
+        return result;
+    }
+
+    appendTrace(VoicePipelineStage::AwaitingInput, VoicePipelineStatus::MetadataOnly,
+                QStringLiteral("Awaiting-input is placeholder metadata; microphone remains "
+                               "disabled."));
+    appendTrace(VoicePipelineStage::TranscribingPlaceholder, VoicePipelineStatus::MetadataOnly,
+                QStringLiteral("Transcribing placeholder does not invoke Whisper or read audio."));
+    appendTrace(VoicePipelineStage::InferencePlaceholder, VoicePipelineStatus::MetadataOnly,
+                QStringLiteral("Inference placeholder does not call providers, models, tools, or "
+                               "cloud services."));
+    appendTrace(VoicePipelineStage::SynthesisPlaceholder, VoicePipelineStatus::MetadataOnly,
+                QStringLiteral("Synthesis placeholder does not invoke Piper or play audio."));
+    appendTrace(VoicePipelineStage::Completed, VoicePipelineStatus::Completed,
+                QStringLiteral("Voice pipeline completed deterministic metadata planning only."));
+
+    result.session.state = VoiceSessionState::Completed;
+    result.session.summary =
+        QStringLiteral("Voice session completed metadata-only pipeline planning.");
+    result.status = VoicePipelineStatus::Completed;
+    result.summary =
+        QStringLiteral("Voice pipeline completed metadata-only planning; no audio or runtime "
+                       "execution occurred.");
+    return result;
 }
 
 } // namespace sentinel::core

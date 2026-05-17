@@ -110,7 +110,8 @@ ApplicationController::ApplicationController(
     std::unique_ptr<ILocalInferenceStreamClient> localInferenceStreamClient,
     std::unique_ptr<IModelManagementService> modelManagementService,
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider,
-    std::unique_ptr<ISpeechToTextProvider> speechToTextProvider, QObject* parent)
+    std::unique_ptr<ISpeechToTextProvider> speechToTextProvider,
+    std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -168,6 +169,9 @@ ApplicationController::ApplicationController(
                                                  : std::make_unique<NullTextToSpeechProvider>()),
       speechToTextProvider_(speechToTextProvider ? std::move(speechToTextProvider)
                                                  : std::make_unique<NullSpeechToTextProvider>()),
+      voiceRuntimeCoordinator_(voiceRuntimeCoordinator
+                                   ? std::move(voiceRuntimeCoordinator)
+                                   : std::make_unique<StaticVoiceRuntimeCoordinator>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -982,6 +986,85 @@ QString ApplicationController::speechToTextStatus() const {
 QString ApplicationController::speechToTextSummary() const {
     return speechToTextProvider_ ? speechToTextProvider_->statusSummary()
                                  : QStringLiteral("No speech-to-text provider metadata.");
+}
+
+VoiceSession ApplicationController::currentVoiceSession() const {
+    return voiceRuntimeCoordinator_ ? voiceRuntimeCoordinator_->currentSession() : VoiceSession{};
+}
+
+VoicePipelineResult ApplicationController::currentVoicePipelineResult() const {
+    return voiceRuntimeCoordinator_
+               ? voiceRuntimeCoordinator_->evaluate(VoiceSessionState::Completed)
+               : VoicePipelineResult{};
+}
+
+VoiceRuntimeSummary ApplicationController::currentVoiceRuntimeSummary() const {
+    return voiceRuntimeCoordinator_ ? voiceRuntimeCoordinator_->runtimeSummary()
+                                    : VoiceRuntimeSummary{};
+}
+
+QString ApplicationController::voiceSessionId() const {
+    return currentVoiceSession().id.value;
+}
+
+QString ApplicationController::voiceSessionStatus() const {
+    return voiceSessionStateName(currentVoicePipelineResult().session.state);
+}
+
+QString ApplicationController::voiceSessionSummary() const {
+    return currentVoicePipelineResult().session.summary;
+}
+
+QString ApplicationController::voicePipelineStatus() const {
+    return voicePipelineStatusName(currentVoicePipelineResult().status);
+}
+
+QString ApplicationController::voicePipelineSummary() const {
+    return safeVoicePipelineSummary(currentVoicePipelineResult());
+}
+
+QStringList ApplicationController::voicePipelineTraceSummaries() const {
+    return sentinel::core::voicePipelineTraceSummaries(currentVoicePipelineResult().traces);
+}
+
+QString ApplicationController::voiceRuntimeStatus() const {
+    return currentVoiceRuntimeSummary().status;
+}
+
+QString ApplicationController::voiceRuntimeSummary() const {
+    return voiceRuntimeSummaryText(currentVoiceRuntimeSummary());
+}
+
+QStringList ApplicationController::voiceRuntimeCheckSummaries() const {
+    return sentinel::core::voiceRuntimeCheckSummaries(currentVoiceRuntimeSummary());
+}
+
+bool ApplicationController::voiceRuntimeAvailable() const {
+    return currentVoiceRuntimeSummary().runtimeAvailable;
+}
+
+bool ApplicationController::voiceTextToSpeechAvailable() const {
+    return currentVoiceRuntimeSummary().textToSpeechAvailable;
+}
+
+bool ApplicationController::voiceSpeechToTextAvailable() const {
+    return currentVoiceRuntimeSummary().speechToTextAvailable;
+}
+
+bool ApplicationController::voiceMicrophoneEnabled() const {
+    return currentVoiceRuntimeSummary().microphoneEnabled;
+}
+
+bool ApplicationController::voicePlaybackEnabled() const {
+    return currentVoiceRuntimeSummary().playbackEnabled;
+}
+
+bool ApplicationController::voiceLocalOnlyPolicy() const {
+    return currentVoiceRuntimeSummary().localOnlyPolicy;
+}
+
+bool ApplicationController::voiceProcessExecutionEnabled() const {
+    return currentVoiceRuntimeSummary().processExecutionEnabled;
 }
 
 bool ApplicationController::localChatInferenceEnabled() const {

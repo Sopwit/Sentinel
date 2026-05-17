@@ -582,7 +582,7 @@ ShellPanel {
 
             InfoRow {
                 compact: settingsPage.compact
-                label: "Voice Runtime"
+                label: "Voice Mode"
                 value: settingsPage.viewModel.voiceRuntimeMode + " / " + settingsPage.viewModel.voiceReadinessStatus
                 Layout.fillWidth: true
             }
@@ -608,6 +608,27 @@ ShellPanel {
                 Layout.fillWidth: true
             }
 
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Voice Session"
+                value: settingsPage.viewModel.voiceSessionStatus + " / " + settingsPage.viewModel.voiceSessionSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Voice Pipeline"
+                value: settingsPage.viewModel.voicePipelineStatus + " / " + settingsPage.viewModel.voicePipelineSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Voice Runtime"
+                value: settingsPage.viewModel.voiceRuntimeStatus + " / " + settingsPage.viewModel.voiceRuntimeSummary
+                Layout.fillWidth: true
+            }
+
             Repeater {
                 model: settingsPage.viewModel.voiceCapabilitySummaries
 
@@ -625,6 +646,28 @@ ShellPanel {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Voice Check"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.voiceRuntimeCheckSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Runtime Check"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.voicePipelineTraceSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Voice Trace"
                     value: modelData
                     Layout.fillWidth: true
                 }
