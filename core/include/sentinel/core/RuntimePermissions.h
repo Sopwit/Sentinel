@@ -102,4 +102,9 @@ public:
     RuntimePermissionDecision evaluate(const RuntimePermissionRequest& request) const override;
 };
 
+class LocalOnlyRuntimePermissionPolicy final : public IRuntimePermissionPolicy {
+public:
+    RuntimePermissionDecision evaluate(const RuntimePermissionRequest& request) const override;
+};
+
 } // namespace sentinel::core

@@ -2,6 +2,7 @@
 
 #include <QtTest>
 
+using sentinel::core::LocalOnlyRuntimePermissionPolicy;
 using sentinel::core::RuntimePermission;
 using sentinel::core::RuntimePermissionDecisionStatus;
 using sentinel::core::runtimePermissionDecisionStatusName;
@@ -18,6 +19,7 @@ class StaticRuntimePermissionPolicyTest final : public QObject {
 private slots:
     void namesPermissionMetadata();
     void deniesExecutionByDefault();
+    void allowsOnlyExplicitLocalInference();
 };
 
 void StaticRuntimePermissionPolicyTest::namesPermissionMetadata() {
@@ -52,6 +54,32 @@ void StaticRuntimePermissionPolicyTest::deniesExecutionByDefault() {
     QCOMPARE(safeRuntimePermissionDecisionSummary(decision),
              QStringLiteral("Runtime permission policy is metadata-only and denies execution by "
                             "default."));
+}
+
+void StaticRuntimePermissionPolicyTest::allowsOnlyExplicitLocalInference() {
+    const LocalOnlyRuntimePermissionPolicy policy;
+
+    const auto localDecision = policy.evaluate(RuntimePermissionRequest{
+        RuntimePermission::LocalInference,
+        RuntimePermissionLevel::Execute,
+        QStringLiteral("local-chat-request"),
+        QStringLiteral("Evaluate explicit local chat inference."),
+    });
+    QCOMPARE(localDecision.status, RuntimePermissionDecisionStatus::Allowed);
+    QCOMPARE(safeRuntimePermissionDecisionSummary(localDecision),
+             QStringLiteral("Local-only inference permission is allowed for explicit user chat "
+                            "requests."));
+
+    const auto toolDecision = policy.evaluate(RuntimePermissionRequest{
+        RuntimePermission::ToolInvocation,
+        RuntimePermissionLevel::Execute,
+        QStringLiteral("tool-request"),
+        QStringLiteral("Evaluate tool execution."),
+    });
+    QCOMPARE(toolDecision.status, RuntimePermissionDecisionStatus::Denied);
+    QCOMPARE(safeRuntimePermissionDecisionSummary(toolDecision),
+             QStringLiteral("Runtime permission denied: only explicit local inference is "
+                            "allowed."));
 }
 
 QTEST_MAIN(StaticRuntimePermissionPolicyTest)

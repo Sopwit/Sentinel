@@ -707,7 +707,7 @@ void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
     QCOMPARE(fixture.viewModel.localChatInferenceSummary(),
              QStringLiteral("Local chat inference is disabled; chat stays on the local safe "
                             "provider path and no Ollama prompt is sent."));
-    QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Idle"));
+    QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Unavailable"));
     QCOMPARE(fixture.viewModel.localInferenceLatencySummary(),
              QStringLiteral("No local inference latency recorded."));
     QVERIFY(!fixture.viewModel.localInferenceStreamingAvailable());
@@ -730,7 +730,7 @@ void DesktopShellViewModelTest::forwardsBlockedLocalInferenceRequest() {
     QVERIFY(!ran);
     QCOMPARE(spy.count(), 1);
     QCOMPARE(fixture.viewModel.localInferenceStatus(), QStringLiteral("Blocked"));
-    QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Error"));
+    QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Failed"));
     QCOMPARE(fixture.viewModel.localInferenceSummary(),
              QStringLiteral("Local inference blocked by runtime permission policy."));
     QVERIFY(fixture.viewModel.localInferenceTraceSummaries().contains(

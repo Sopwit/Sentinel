@@ -81,7 +81,13 @@ local Piper/Whisper path configuration and exact-path validation metadata only; 
 execution, microphone access, playback, downloads, cloud/API keys, filesystem-wide scans, or
 autonomous voice loops are enabled. Phase 14.4 through Phase 14.6 polish the voice configuration
 UX and add safe hint-only path suggestions: binary hints inspect only fixed known Homebrew/local
-paths, model hints inspect only configured paths, and no hint is applied automatically.
+paths, model hints inspect only configured paths, and no hint is applied automatically. Phase
+14.7 through Phase 15.0 activate controlled local Ollama chat inference in the desktop app:
+health/discovery and generate calls are loopback-only, selected-model settings are honored,
+runtime state is exposed as unavailable/idle/inferencing/streaming/failed, and a narrow
+local-only permission policy allows only explicit local inference while continuing to deny cloud
+providers, API keys, autonomous agents, tools, shell execution, filesystem-wide actions, model
+management actions, microphone access, playback, Piper execution, and Whisper execution.
 
 ## Future Components
 
@@ -225,15 +231,15 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 14.6 runtime allows local Ollama health/discovery metadata plus a controlled
-local inference boundary, selected-model metadata, explicit opt-in chat-to-Ollama routing, a
-guarded local-only streaming boundary, action-light local model selection UX, metadata-only
-model-management readiness, metadata-only voice provider/session/runtime boundaries,
-metadata-only local voice runtime environment ownership, controlled Piper file-output synthesis,
-and local Piper/Whisper path configuration UX with hint-only fixed-location suggestions. Phase 14.6
-still adds no audio playback,
-microphone access, autonomous voice loop, cloud voice calls, model downloads, Whisper execution, or
-voice action controls:
+Current Phase 15.0 runtime activates controlled local Ollama chat inference while keeping the
+larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
+selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
+action-light local model selection UX, metadata-only model-management readiness, metadata-only
+voice provider/session/runtime boundaries, metadata-only local voice runtime environment ownership,
+controlled Piper file-output synthesis, and local Piper/Whisper path configuration UX with
+hint-only fixed-location suggestions. Phase 15.0 still adds no audio playback, microphone access,
+autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper execution, voice
+action controls, autonomous agents, tool execution, shell execution, or filesystem-wide actions:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -278,9 +284,11 @@ voice action controls:
   local-only/privacy-safe safety posture metadata; it does not activate capabilities, execute
   models, call providers, stream output, access filesystems, launch processes, execute tools, load
   plugins, or access networks.
-- `IRuntimePermissionPolicy` owns future runtime permission policy metadata only.
-  `StaticRuntimePermissionPolicy` denies execution-level runtime permissions by default in
-  metadata-only mode.
+- `IRuntimePermissionPolicy` owns runtime permission decisions. `StaticRuntimePermissionPolicy`
+  still denies execution-level runtime permissions by default for metadata-only/test scenarios.
+  `LocalOnlyRuntimePermissionPolicy` is used by the desktop app to allow only explicit local
+  inference and to deny provider invocation, tool invocation, external process, filesystem access,
+  broader network access, and plugin invocation.
 - `IRuntimeSafetyPolicy` owns future runtime safety posture metadata only.
   `StaticRuntimeSafetyPolicy` reports deterministic local-only/no-execution policy and rules.
 - `IRuntimePipeline` owns future runtime request pipeline metadata only.

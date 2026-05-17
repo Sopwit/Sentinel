@@ -5,8 +5,11 @@
 #include "sentinel/core/ApplicationController.h"
 #include "sentinel/core/JsonSettingsStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
+#include "sentinel/core/LocalInference.h"
 #include "sentinel/core/ModeManager.h"
 #include "sentinel/core/NullAgentRuntime.h"
+#include "sentinel/core/OllamaRuntime.h"
+#include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/SQLiteChatHistoryStore.h"
 #include "sentinel/core/SQLiteMemoryStore.h"
 #include "sentinel/core/StandardPathProvider.h"
@@ -64,16 +67,23 @@ int main(int argc, char* argv[]) {
     QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png")));
 
     sentinel::core::StandardPathProvider pathProvider;
+    sentinel::core::AppSettings settings(
+        std::make_unique<sentinel::core::JsonSettingsStore>(pathProvider.settingsFilePath()));
+    const auto ollamaConfig = sentinel::core::OllamaConfig::fromEndpoint(settings.ollamaEndpoint());
     sentinel::core::ApplicationController controller(
         std::make_unique<sentinel::core::LocalEchoProvider>(),
         std::make_unique<sentinel::core::SQLiteMemoryStore>(pathProvider.memoryDatabasePath()),
         nullptr,
         std::make_unique<sentinel::core::SQLiteChatHistoryStore>(
             pathProvider.chatHistoryDatabasePath()),
-        std::make_unique<sentinel::core::NullAgentRuntime>());
+        std::make_unique<sentinel::core::NullAgentRuntime>(), nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<sentinel::core::LocalOnlyRuntimePermissionPolicy>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<sentinel::core::OllamaHttpRuntimeClient>(ollamaConfig),
+        std::make_unique<sentinel::core::OllamaLocalInferenceClient>(ollamaConfig),
+        std::make_unique<sentinel::core::OllamaLocalInferenceStreamClient>(ollamaConfig));
     sentinel::core::ModeManager modeManager;
-    sentinel::core::AppSettings settings(
-        std::make_unique<sentinel::core::JsonSettingsStore>(pathProvider.settingsFilePath()));
     controller.setRoutingModeByName(settings.routingModeName());
     sentinel::desktop::DesktopShellViewModel shellViewModel(controller, modeManager, settings);
 

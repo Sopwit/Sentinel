@@ -1441,3 +1441,30 @@ Boundary rules:
 - No Piper execution, Whisper execution, microphone access, playback, downloads,
   filesystem-wide scans, recursive model discovery, cloud/API keys, autonomous loops, path
   pickers, or automatic settings writes are added in this decision.
+
+## 71. Local Ollama Chat Activation Is Narrow And Explicit
+
+Decision: Activate real local Ollama inference only for explicit user chat requests and only
+through the existing local runtime/inference interfaces.
+
+Reason: Phase 14.7-15.0 is the first phase where desktop chat may produce real model responses.
+That activation must stay narrower than provider routing, agent execution, tool execution, voice
+runtime work, or model management.
+
+Boundary rules:
+
+- The desktop app uses the persisted Ollama endpoint after loopback-only normalization.
+- Health checks are limited to local loopback HTTP `/api/version`.
+- Model discovery is limited to local loopback HTTP `/api/tags`.
+- Inference is limited to local loopback HTTP `/api/generate` for an explicitly selected or
+  safely resolved local model.
+- `LocalOnlyRuntimePermissionPolicy` allows only `LocalInference` execution and denies provider
+  invocation, tool invocation, external process, filesystem access, broader network access, and
+  plugin invocation.
+- `ApplicationController::sendMessage` remains the only chat path that may invoke local inference,
+  and only when local chat inference is enabled by settings.
+- QML receives only QML-safe strings, string lists, booleans, and chat models from
+  `DesktopShellViewModel`.
+- No cloud/API keys/providers, autonomous agents, tools, shell execution, filesystem-wide actions,
+  model downloads/pulls/deletes, microphone access, playback, Piper execution, Whisper execution,
+  or autonomous voice loop is added by this activation.

@@ -39,4 +39,23 @@ StaticRuntimePermissionPolicy::evaluate(const RuntimePermissionRequest& request)
     };
 }
 
+RuntimePermissionDecision
+LocalOnlyRuntimePermissionPolicy::evaluate(const RuntimePermissionRequest& request) const {
+    if (request.permission == RuntimePermission::LocalInference &&
+        request.level == RuntimePermissionLevel::Execute) {
+        return RuntimePermissionDecision{
+            RuntimePermissionDecisionStatus::Allowed,
+            request,
+            QStringLiteral("Local-only inference permission is allowed for explicit user chat "
+                           "requests."),
+        };
+    }
+
+    return RuntimePermissionDecision{
+        RuntimePermissionDecisionStatus::Denied,
+        request,
+        QStringLiteral("Runtime permission denied: only explicit local inference is allowed."),
+    };
+}
+
 } // namespace sentinel::core

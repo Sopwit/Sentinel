@@ -1605,14 +1605,20 @@ bool ApplicationController::localInferenceBusy() const {
 
 QString ApplicationController::localInferenceRuntimeState() const {
     if (localInferenceBusy_) {
-        return QStringLiteral("Busy");
+        return latestLocalInferenceStreamResult_.status == LocalInferenceStreamStatus::Streaming
+                   ? QStringLiteral("Streaming")
+                   : QStringLiteral("Inferencing");
     }
     if (latestLocalInferenceResponse_.status == LocalInferenceStatus::Error ||
         latestLocalInferenceResponse_.status == LocalInferenceStatus::Refused ||
         latestLocalInferenceResponse_.status == LocalInferenceStatus::Blocked ||
         latestLocalInferenceResponse_.status == LocalInferenceStatus::InvalidRequest ||
         latestLocalInferenceResponse_.status == LocalInferenceStatus::ModelUnavailable) {
-        return QStringLiteral("Error");
+        return QStringLiteral("Failed");
+    }
+    if (latestLocalInferenceResponse_.status == LocalInferenceStatus::NotRequested &&
+        currentOllamaHealthCheck().healthStatus != OllamaHealthStatus::Healthy) {
+        return QStringLiteral("Unavailable");
     }
     return QStringLiteral("Idle");
 }

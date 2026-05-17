@@ -489,6 +489,29 @@ Still out of scope:
   capture, audio playback, downloads, cloud/API keys, filesystem-wide scans, and autonomous voice
   loops.
 
+## Phase 14.7-15.0: Controlled Local Ollama Runtime Activation
+
+Completed. Activated the existing controlled Ollama path in the desktop app for explicit
+local-only chat inference.
+
+Delivered:
+
+- Real desktop wiring for the loopback-only Ollama runtime health/discovery client.
+- Real desktop wiring for non-streaming local Ollama `/api/generate` inference.
+- Streaming-capable local Ollama client remains opt-in and architecture-ready.
+- Persisted selected local model remains the chat inference target when valid.
+- A narrow local-only runtime permission policy allows only explicit local inference and denies
+  tools, providers, external processes, filesystem access, broader network access, and plugins.
+- Dashboard, chat, and settings continue to expose QML-safe runtime availability, selected model,
+  inference status, and streaming status.
+- Tests remain deterministic with fake runtime and inference clients.
+
+Still out of scope:
+
+- Cloud providers/API keys, model downloads/pulls/deletes, Ollama process management, autonomous
+  agents, tools/plugins, shell execution, filesystem-wide actions, microphone access, playback,
+  Piper/Whisper execution, and autonomous voice loops.
+
 ## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
 
 Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.
