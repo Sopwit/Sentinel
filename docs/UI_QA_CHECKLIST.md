@@ -6,7 +6,7 @@ add automated UI driving, provider execution, tool execution, or platform integr
 ## Screen States
 
 - Dashboard/Core: central presence scene, large Sentinel orb, floating telemetry readouts, right AI
-  bridge surface, bottom dock navigation, and ultra-thin left rail.
+  bridge surface, bottom dock navigation, and bottom-right settings command.
 - Chat: initial local transcript, typed prompt, sent message, local echo response, and clear-chat
   confirmation dialog.
 - Memory: empty list, key/value entry row, stored memory row, and compact stacked form.
@@ -18,7 +18,7 @@ add automated UI driving, provider execution, tool execution, or platform integr
 
 ## Width Checks
 
-- Compact: about 760 px wide. Sidebar should stay usable, labels may elide, forms stack, and no
+- Compact: about 760 px wide. Dock/settings access should stay usable, labels may elide, forms stack, and no
   control text should overlap.
 - Normal: about 1000 px wide. Main navigation, header, pages, and footer should remain balanced.
 - Wide: 1200 px or wider. Dashboard overview and chat should sit side by side without excessive

@@ -24,8 +24,8 @@ negative space, partial bracket grammar, cyan/teal glow hierarchy, and a bottom 
   settings.
 - Local-first posture: UI should make unavailable networking/provider capability clear without
   implying hidden cloud behavior.
-- Workspace-oriented layout: ultra-thin left status rail, central Sentinel presence scene, floating
-  right interaction surface, bottom command dock, and compact top system status.
+- Workspace-oriented layout: central Sentinel presence scene, floating right interaction surface,
+  bottom command dock, bottom-right settings command, and compact top system status.
 - Cinematic AI operating environment: presence-first, negative-space driven, atmospheric,
   translucent, and emotionally calmer than a developer dashboard.
 
@@ -40,7 +40,7 @@ Token categories:
 - radius: restrained panel and control rounding
 - typography: stable pixel sizes for current desktop shell text
 - motion: standard durations and easing values for low-cost UI transitions
-- layout: compact and wide breakpoints, sidebar widths, and small spacing helpers
+- layout: compact and wide breakpoints, dock sizing, and small spacing helpers
 - mode visuals: accent, panel color, glow scale, and status text helpers for Companion, Focus,
   Mission, System, Minimal, and Tactical modes
 
@@ -63,7 +63,8 @@ Guidelines:
 - `MetricCard` and nested panels should use shared card padding.
 - Section headings should wrap cleanly and keep page subtitles muted.
 - `ShellPanel` owns glass-like panel borders and lightweight corner brackets.
-- `SentinelDock` owns bottom navigation and page switching through the existing view model.
+- `SentinelDock` owns bottom navigation ordered Runtime/Memory, Home, Agents through the existing
+  view model. Settings remains a bottom-right command button.
 - `SentinelOrb` owns the lightweight central presence geometry.
 - `SentinelTelemetry` owns small floating readouts for safe view-model metadata.
 - `WorkspacePresence` composes the central ambient presence scene and reads only safe view-model
@@ -76,16 +77,17 @@ Guidelines:
 
 The shell should support three practical desktop width categories:
 
-- Compact: narrow windows should reduce margins, use the compact sidebar width, and stack dense
+- Compact: narrow windows should reduce margins, use compact dock sizing, and stack dense
   forms or dashboard panels.
-- Normal: default desktop windows should keep the sidebar visible and preserve current page
+- Normal: default desktop windows should keep dock/settings access visible and preserve current page
   structure.
 - Wide: wider windows can place dashboard overview and chat side by side.
 
 Guidelines:
 
 - Prefer wrapping grids and smaller margins over hidden controls.
-- Keep the sidebar available at compact widths, but allow labels to elide before layout breaks.
+- Keep dock and settings access available at compact widths, but allow labels to elide before
+  layout breaks.
 - Keep status surfaces readable without exposing paths, platform details, or raw internals.
 - Avoid expensive resize behavior, blur-heavy layers, and device-specific calculations.
 - Linux/Fedora KDE and macOS should remain usable with ordinary resizable windows and native Qt
@@ -121,8 +123,8 @@ Motion should be quiet and functional:
 - The translated native QML shell is now the visual source of truth for composition and
   atmosphere.
 - The Dashboard/Core page should prioritize the central presence scene over metric-card density.
-- Navigation should feel dock-led and cinematic, with the left rail reduced to ambient identity and
-  local status.
+- Navigation should feel dock-led and cinematic, with settings kept as a separate bottom-right
+  command and local status surfaced in the header/dashboard.
 - Right-side interaction should read as a floating AI bridge surface, not an enterprise chat card.
 - Continuous motion remains limited to lightweight opacity, scale, and rotation animations.
 

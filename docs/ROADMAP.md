@@ -791,7 +791,7 @@ Completed. Added lightweight interaction motion without advanced visuals.
 Delivered:
 
 - Motion duration/easing tokens in `SentinelTheme.qml`.
-- Sidebar hover/focus polish.
+- Dock hover/focus polish.
 - Tokenized command button hover/focus styling.
 - Text-field focus-ring transitions.
 - Lightweight page opacity transition hooks.
@@ -810,7 +810,7 @@ Completed. Added responsive layout behavior without changing runtime capabilitie
 Delivered:
 
 - Compact and wide breakpoint tokens in `SentinelTheme.qml`.
-- Adaptive shell margins, sidebar width, header/status behavior, and page spacing.
+- Adaptive shell margins, dock sizing, header/status behavior, and page spacing.
 - Dashboard/card/chat wrapping for narrower windows.
 - Memory and settings forms that stack at compact widths.
 - UI/UX guidance for practical Linux/KDE and macOS resizing behavior.
@@ -893,7 +893,7 @@ Completed. Rebuilt the native QML shell around the translated Sentinel visual id
 Delivered:
 
 - Presence-first Dashboard/Core composition with a larger central Sentinel orb scene.
-- Ultra-thin left rail, floating bottom dock navigation, and a softer right AI bridge surface.
+- Floating bottom dock navigation, bottom-right settings command, and a softer right AI bridge surface.
 - Reusable QML primitives for the dock, orb, and floating telemetry readouts.
 - Expanded visual tokens for glass surfaces, ambient glow, spacing, and dock sizing.
 - Reduced utility-dashboard density by moving runtime/status information into small scene readouts.

@@ -7,7 +7,26 @@ ShellPanel {
     required property var viewModel
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    property date now: new Date()
     readonly property int modeButtonWidth: compact ? 190 : 230
+
+    function greetingFor(dateValue) {
+        const hour = dateValue.getHours()
+        if (hour < 12)
+            return "Good morning, Operator."
+        if (hour < 18)
+            return "Good afternoon, Operator."
+        return "Good evening, Operator."
+    }
+
+    function dashboardSubtitle() {
+        const modelText = headerBar.viewModel.selectedLocalModelStatus === "Available"
+                          ? headerBar.viewModel.selectedLocalModelSummary
+                          : "No ready local model. Start Ollama and install/select a local model."
+        return "Ollama " + headerBar.viewModel.ollamaHealthStatus + ". Chat "
+                + headerBar.viewModel.localChatInferenceStatus + ". Stream "
+                + headerBar.viewModel.localInferenceStreamStatus + ". " + modelText
+    }
 
     color: "transparent"
     border.color: "transparent"
@@ -50,7 +69,7 @@ ShellPanel {
             }
 
             Label {
-                text: headerBar.viewModel.currentPage === "Dashboard" ? "Good evening, Operator" : headerBar.viewModel.currentPage
+                text: headerBar.viewModel.currentPage === "Dashboard" ? headerBar.greetingFor(headerBar.now) : headerBar.viewModel.currentPage
                 color: SentinelTheme.textPrimary
                 font.pixelSize: headerBar.compact ? SentinelTheme.fontTitle : SentinelTheme.fontDisplay
                 font.weight: Font.Light
@@ -59,7 +78,7 @@ ShellPanel {
             Label {
                 Layout.fillWidth: true
                 text: headerBar.viewModel.currentPage === "Dashboard"
-                      ? "The system is calm. Local runtime layers are breathing in coherence."
+                      ? headerBar.dashboardSubtitle()
                       : headerBar.viewModel.currentModeName + " - " + SentinelTheme.modeStatusText(headerBar.viewModel.currentModeName)
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontBody
@@ -189,5 +208,13 @@ ShellPanel {
                 }
             }
         }
+    }
+
+    Timer {
+        interval: 60000
+        repeat: true
+        running: true
+        triggeredOnStart: true
+        onTriggered: headerBar.now = new Date()
     }
 }

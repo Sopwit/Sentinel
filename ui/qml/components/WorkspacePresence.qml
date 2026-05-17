@@ -7,12 +7,17 @@ ShellPanel {
     required property var viewModel
     property bool compact: width < 620
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    property color secondaryAccent: SentinelTheme.modeSecondaryAccent(viewModel.currentModeName)
+    readonly property bool activityActive: viewModel.localInferenceBusy
+                                           || viewModel.localInferenceStreamingText.length > 0
+                                           || viewModel.voicePipelineStatus !== "Idle"
 
-    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.032)
-    border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.10)
-    bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.24)
+    color: SentinelTheme.modePanelColor(viewModel.currentModeName)
+    border.color: SentinelTheme.withAlpha(modeAccent, 0.16)
+    bracketColor: SentinelTheme.withAlpha(modeAccent, 0.24)
     bracketSize: 12
     implicitHeight: compact ? 300 : 420
+    clip: true
 
     ColumnLayout {
         anchors.fill: parent
@@ -36,7 +41,7 @@ ShellPanel {
 
             Label {
                 text: presence.viewModel.orchestrationReadinessStatus
-                color: SentinelTheme.accent
+                color: presence.modeAccent
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 2.4
             }
@@ -56,14 +61,15 @@ ShellPanel {
                 width: Math.min(scene.safeWidth * 0.88, presence.compact ? 390 : 620)
                 height: width
                 radius: width / 2
-                color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.038)
-                border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.035)
+                color: SentinelTheme.withAlpha(presence.secondaryAccent, presence.activityActive ? 0.060 : 0.026)
+                border.color: SentinelTheme.withAlpha(presence.modeAccent, 0.050)
             }
 
             SentinelOrb {
                 viewModel: presence.viewModel
                 compact: presence.compact
-                width: Math.min(scene.safeWidth * 0.74, presence.compact ? 340 : 520)
+                active: presence.activityActive
+                width: Math.min(scene.safeWidth * 0.70, scene.safeHeight * 0.86, presence.compact ? 320 : 500)
                 height: width
                 anchors.centerIn: parent
             }
@@ -112,7 +118,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             text: presence.viewModel.localRuntimeSummary
-            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.78)
+            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.80)
             horizontalAlignment: Text.AlignHCenter
             wrapMode: Text.WordWrap
             font.pixelSize: SentinelTheme.fontBody

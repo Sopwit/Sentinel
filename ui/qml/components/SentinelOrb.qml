@@ -5,8 +5,10 @@ Item {
     id: orb
     required property var viewModel
     property color accent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    property color secondaryAccent: SentinelTheme.modeSecondaryAccent(viewModel.currentModeName)
     property real glowScale: SentinelTheme.modeGlowScale(viewModel.currentModeName)
     property bool compact: width < 360
+    property bool active: false
     readonly property real safeSize: Math.max(1, Math.min(width, height))
 
     implicitWidth: compact ? 320 : 520
@@ -17,8 +19,8 @@ Item {
         width: orb.safeSize * 0.98
         height: width
         radius: width / 2
-        color: SentinelTheme.withAlpha(orb.accent, 0.045 * orb.glowScale)
-        border.color: SentinelTheme.withAlpha(orb.accent, 0.035)
+        color: SentinelTheme.withAlpha(orb.accent, (orb.active ? 0.050 : 0.030) * orb.glowScale)
+        border.color: SentinelTheme.withAlpha(orb.accent, orb.active ? 0.055 : 0.028)
     }
 
     Rectangle {
@@ -26,7 +28,7 @@ Item {
         width: orb.safeSize * 0.72
         height: width
         radius: width / 2
-        color: SentinelTheme.withAlpha(orb.accent, 0.055 * orb.glowScale)
+        color: SentinelTheme.withAlpha(orb.secondaryAccent, (orb.active ? 0.060 : 0.032) * orb.glowScale)
         border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
     }
 
@@ -41,7 +43,7 @@ Item {
             from: 0
             to: 360
             duration: orb.viewModel.currentModeName === "Tactical Mode" ? 14000 : SentinelTheme.durationOrbit
-            running: orb.visible
+            running: orb.visible && orb.active
         }
 
         Repeater {
@@ -54,7 +56,7 @@ Item {
                 height: width
                 radius: width / 2
                 color: "transparent"
-                border.color: SentinelTheme.withAlpha(orb.accent, 0.055 + index * 0.014)
+                border.color: SentinelTheme.withAlpha(orb.accent, (orb.active ? 0.055 : 0.030) + index * 0.010)
                 border.width: 1
                 rotation: index * 17
             }
@@ -64,7 +66,7 @@ Item {
             width: 7
             height: 7
             radius: 4
-            color: orb.accent
+            color: orb.active ? orb.accent : SentinelTheme.withAlpha(orb.accent, 0.58)
             x: outerOrbit.width / 2 - width / 2
             y: -height / 2
             opacity: 0.92
@@ -82,7 +84,7 @@ Item {
             from: 0
             to: 360
             duration: SentinelTheme.durationOrbit * 0.86
-            running: orb.visible
+            running: orb.visible && orb.active
         }
 
         Repeater {
@@ -102,7 +104,7 @@ Item {
                 x: pointCloud.width / 2 + Math.cos(theta) * pointCloud.width * 0.48 * radiusFactor - width / 2
                 y: pointCloud.height / 2 + Math.sin(theta * 1.37) * pointCloud.height * 0.48 * radiusFactor * ySquash - height / 2
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.42 + (index % 6) * 0.055)
-                opacity: 0.72 + (index % 5) * 0.05
+                opacity: orb.active ? 0.72 + (index % 5) * 0.05 : 0.44 + (index % 5) * 0.025
             }
         }
     }
@@ -118,7 +120,7 @@ Item {
             from: 360
             to: 0
             duration: SentinelTheme.durationOrbit * 0.72
-            running: orb.visible
+            running: orb.visible && orb.active
         }
 
         Rectangle {
@@ -132,7 +134,7 @@ Item {
             width: 6
             height: 6
             radius: 3
-            color: SentinelTheme.accentTertiary
+            color: orb.secondaryAccent
             x: -width / 2
             y: reverseOrbit.height / 2 - height / 2
             opacity: 0.85
@@ -145,12 +147,13 @@ Item {
         width: orb.safeSize * 0.34
         height: width
         radius: width / 2
-        color: SentinelTheme.withAlpha(orb.accent, 0.13 * orb.glowScale)
+        color: SentinelTheme.withAlpha(orb.accent, (orb.active ? 0.13 : 0.075) * orb.glowScale)
         border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
 
         SequentialAnimation on scale {
             id: coreBreath
             loops: Animation.Infinite
+            running: orb.visible && orb.active
             NumberAnimation {
                 from: 0.96
                 to: 1.045

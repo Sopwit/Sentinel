@@ -154,7 +154,7 @@ Decision: Keep current UI as a foundation while planning a more mature Qt Quick 
 Current state:
 
 - Qt/QML shell.
-- Chat, memory, settings, dashboard, sidebar, header, and status bar.
+- Chat, memory, settings, dashboard, bottom dock, header, and status bar.
 - Minimal lifecycle UX around chat history.
 
 Future direction:
@@ -458,7 +458,7 @@ preserving the current simple Qt/QML architecture.
 
 Boundary rules:
 
-- Responsive behavior is limited to QML presentation tokens, spacing, wrapping, sidebar width, and
+- Responsive behavior is limited to QML presentation tokens, spacing, wrapping, dock sizing, and
   page/card column choices.
 - Breakpoints should remain cheap width checks, not runtime services or device-specific platform
   probes.
@@ -500,7 +500,7 @@ Boundary rules:
   translucent floating surfaces, soft glow hierarchy, thin-line geometry, and generous negative
   space.
 - `SentinelTheme.qml` may own mode-aware visual helpers, but those helpers remain presentation-only.
-- `Atmosphere`, `WorkspacePresence`, `ShellPanel`, sidebar, header, dashboard, and chat panel
+- `Atmosphere`, `WorkspacePresence`, `ShellPanel`, dock, header, dashboard, and chat panel
   changes must bind to QML-safe view-model properties only.
 - Workspace UI must not add provider/model execution, real tools, approval controls, sandbox
   runtime, plugin loading, networking, filesystem/system actions, voice, hardware integration,

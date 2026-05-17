@@ -9,18 +9,26 @@ ShellPanel {
     required property var viewModel
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property var dockPages: ["Dashboard", "Memory", "Agents"]
+    readonly property var dockPages: ["Memory", "Dashboard", "Agents"]
     readonly property int currentPageIndex: dock.dockPages.indexOf(
                                                 dock.viewModel.currentPage)
 
     function pageIcon(pageName) {
         if (pageName === "Dashboard")
-            return "\u2302"
+            return "\u25ce"
         if (pageName === "Memory")
             return "\u25a6"
         if (pageName === "Agents")
-            return "\u25ce"
+            return "\u25c7"
         return "\u2699"
+    }
+
+    function pageLabel(pageName) {
+        if (pageName === "Dashboard")
+            return "Home"
+        if (pageName === "Memory")
+            return "Runtime/Memory"
+        return pageName
     }
 
     implicitWidth: compact ? 320 : 440
@@ -38,31 +46,6 @@ ShellPanel {
         anchors.topMargin: 8
         anchors.bottomMargin: 8
         spacing: SentinelTheme.spaceXs
-
-        Rectangle {
-            Layout.preferredWidth: 28
-            Layout.preferredHeight: 28
-            Layout.alignment: Qt.AlignVCenter
-            radius: 14
-            color: SentinelTheme.withAlpha(dock.modeAccent, 0.12)
-            border.color: SentinelTheme.withAlpha(dock.modeAccent, 0.24)
-
-            Label {
-                anchors.centerIn: parent
-                text: "\u25c9"
-                color: dock.modeAccent
-                font.pixelSize: SentinelTheme.fontSmall
-                font.weight: Font.Light
-            }
-        }
-
-        Rectangle {
-            Layout.preferredWidth: 1
-            Layout.fillHeight: true
-            Layout.topMargin: SentinelTheme.spaceSm
-            Layout.bottomMargin: SentinelTheme.spaceSm
-            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-        }
 
         Item {
             id: tabsHost
@@ -112,11 +95,12 @@ ShellPanel {
 
                         contentItem: Text {
                             anchors.centerIn: parent
-                            text: dock.pageIcon(dockButton.modelData)
+                            text: dock.compact ? dock.pageIcon(dockButton.modelData) : dock.pageIcon(dockButton.modelData) + "  " + dock.pageLabel(dockButton.modelData)
                             color: dockButton.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                            font.pixelSize: 16
+                            font.pixelSize: dock.compact ? 16 : SentinelTheme.fontSmall
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
                         }
 
                         background: Rectangle {
