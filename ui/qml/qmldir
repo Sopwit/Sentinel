@@ -16,7 +16,6 @@ SentinelOrb 1.0 components/SentinelOrb.qml
 SentinelTelemetry 1.0 components/SentinelTelemetry.qml
 SentinelTextField 1.0 components/SentinelTextField.qml
 ShellPanel 1.0 components/ShellPanel.qml
-Sidebar 1.0 components/Sidebar.qml
 StatusBar 1.0 components/StatusBar.qml
 WorkspacePresence 1.0 components/WorkspacePresence.qml
 

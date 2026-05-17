@@ -50,10 +50,11 @@ ScrollView {
                         color: SentinelTheme.textMuted
                     }
 
-                    SentinelTextField {
+                    InfoRow {
                         Layout.fillWidth: true
-                        text: settingsPage.viewModel.themeName
-                        onEditingFinished: settingsPage.viewModel.setThemeName(text)
+                        compact: true
+                        label: "Active"
+                        value: settingsPage.viewModel.themeName
                     }
 
                     Label {
@@ -61,10 +62,11 @@ ScrollView {
                         color: SentinelTheme.textMuted
                     }
 
-                    SentinelTextField {
+                    InfoRow {
                         Layout.fillWidth: true
-                        text: settingsPage.viewModel.configurationProfile
-                        onEditingFinished: settingsPage.viewModel.setConfigurationProfile(text)
+                        compact: true
+                        label: "Active"
+                        value: settingsPage.viewModel.configurationProfile
                     }
                 }
 
@@ -109,15 +111,22 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Summary"
-                    value: settingsPage.viewModel.ollamaHealthSummary
+                    label: "Discovered Models"
+                    value: settingsPage.viewModel.ollamaModelCount.toString()
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Discovered Models"
-                    value: settingsPage.viewModel.ollamaModelCount.toString()
+                    label: "Selected Model"
+                    value: settingsPage.viewModel.selectedLocalModelSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Why unavailable"
+                    value: settingsPage.viewModel.ollamaModelCount > 0 ? settingsPage.viewModel.ollamaHealthSummary : "Start Ollama and install/select a local model."
                     Layout.fillWidth: true
                 }
             }
@@ -157,8 +166,8 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Selected"
-                    value: settingsPage.viewModel.selectedLocalModelSummary
+                    label: "Selected Metadata"
+                    value: settingsPage.viewModel.selectedLocalModelMetadataSummary
                     Layout.fillWidth: true
                 }
 
@@ -186,6 +195,13 @@ ScrollView {
                         value: settingsPage.viewModel.modelRecommendationSummaries[index]
                         Layout.fillWidth: true
                     }
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Setup Hint"
+                    value: settingsPage.viewModel.ollamaModelCount > 0 ? "Select one discovered local model. Downloads are not available here." : "Start Ollama and install/select a local model."
+                    Layout.fillWidth: true
                 }
             }
         }
@@ -277,6 +293,35 @@ ScrollView {
                     compact: settingsPage.compact
                     label: "Piper TTS"
                     value: settingsPage.viewModel.piperTtsStatus + " / " + settingsPage.viewModel.piperTtsSummary
+                    Layout.fillWidth: true
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.voiceBinarySummaries
+
+                    InfoRow {
+                        compact: settingsPage.compact
+                        label: "Binary"
+                        value: modelData
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.voiceModelSummaries
+
+                    InfoRow {
+                        compact: settingsPage.compact
+                        label: "Model"
+                        value: modelData
+                        Layout.fillWidth: true
+                    }
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Execution"
+                    value: settingsPage.viewModel.voiceRuntimeExecutionAllowed ? "Enabled by policy" : "Disabled. No microphone, playback, Piper, or Whisper execution is available here."
                     Layout.fillWidth: true
                 }
 

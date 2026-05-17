@@ -70,7 +70,6 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml
@@ -94,7 +93,6 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qm
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTelemetry.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTextField.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml PROPERTIES QT_RESOURCE_ALIAS ShellPanel.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/Sidebar.qml PROPERTIES QT_RESOURCE_ALIAS Sidebar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml PROPERTIES QT_RESOURCE_ALIAS StatusBar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml PROPERTIES QT_RESOURCE_ALIAS WorkspacePresence.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTheme.qml QT_QML_SINGLETON_TYPE TRUE)

@@ -36,7 +36,6 @@ Raw core objects are not exposed directly to QML.
 The desktop shell is split into small QML components:
 
 - `Main.qml`: application window and high-level layout.
-- `components/Sidebar.qml`: page navigation and provider/settings summary.
 - `components/HeaderBar.qml`: current mode and mode switcher.
 - `components/Atmosphere.qml`: low-cost ambient shell background.
 - `components/WorkspacePresence.qml`: central mode-aware workspace presence visualization.
@@ -911,7 +910,7 @@ Phase 5.0 adds UI/UX planning and design-system foundation only:
 Phase 5.1 adds lightweight motion and interaction foundation:
 
 - `SentinelTheme.qml` includes motion duration and easing tokens.
-- Sidebar navigation, command buttons, text-field focus rings, and page opacity transitions use
+- Dock navigation, command buttons, text-field focus rings, and page opacity transitions use
   subtle tokenized transitions.
 - No heavy animation, particle systems, assistant-face rendering, custom OpenGL/Vulkan rendering,
   provider/model execution, networking, plugin loading, filesystem/system actions, or runtime
@@ -921,7 +920,7 @@ Phase 5.2 adds adaptive layout foundation:
 
 - `SentinelTheme.qml` includes compact/wide breakpoint and responsive spacing helpers.
 - `Main.qml` owns shell-level compact/wide state for presentation sizing only.
-- Sidebar, header, status, dashboard, chat, memory, and settings layouts wrap or elide content at
+- Header, status, dashboard, chat, memory, settings, and dock layouts wrap or elide content at
   narrower widths while keeping view-model contracts unchanged.
 - No provider/model execution, networking, plugin loading, filesystem/system actions, approval
   controls, sandbox behavior, assistant-face rendering, particle systems, or custom rendering
@@ -940,7 +939,7 @@ Phase 5.3 adds component consistency and visual QA foundation:
 Phase 5.4 adds workspace UX integration from the former `lovable-tasarim` design reference:
 
 - The React/TypeScript/Tailwind reference remains outside the production architecture.
-- Qt/QML owns the translated left rail, central presence workspace, right chat panel, ambient
+- Qt/QML owns the translated central presence workspace, right chat panel, ambient
   background, glass panel treatment, and lightweight motion.
 - Mode-aware visual helpers live in `SentinelTheme.qml` and are presentation-only.
 - QML continues to bind to `DesktopShellViewModel`; no raw core objects, provider changes, tool

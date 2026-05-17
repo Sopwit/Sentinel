@@ -7,8 +7,8 @@ ApplicationWindow {
     id: root
     width: 1320
     height: 860
-    minimumWidth: 900
-    minimumHeight: 700
+    minimumWidth: 780
+    minimumHeight: 640
     visible: true
     title: "Sentinel Desktop Alpha"
     color: SentinelTheme.backgroundBase
@@ -44,13 +44,6 @@ ApplicationWindow {
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
-
-            Sidebar {
-                viewModel: root.viewModel
-                compact: root.compactLayout
-                Layout.preferredWidth: root.compactLayout ? SentinelTheme.sidebarCompactWidth : SentinelTheme.sidebarNormalWidth
-                Layout.fillHeight: true
-            }
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -125,8 +118,8 @@ ApplicationWindow {
 
             ChatPanel {
                 viewModel: root.viewModel
-                visible: !root.compactLayout
-                Layout.preferredWidth: SentinelTheme.rightPanelWidth
+                visible: !root.compactLayout && root.viewModel.currentPage === "Dashboard"
+                Layout.preferredWidth: Math.min(SentinelTheme.rightPanelWidth, root.width * 0.32)
                 Layout.fillHeight: true
             }
         }
@@ -136,7 +129,7 @@ ApplicationWindow {
             compact: root.compactLayout
             Layout.alignment: Qt.AlignHCenter
             Layout.preferredWidth: Math.min(root.width - SentinelTheme.space4Xl,
-                                            root.compactLayout ? 320 : 420)
+                                            root.compactLayout ? 360 : 440)
             Layout.preferredHeight: compact ? 58 : 62
         }
     }

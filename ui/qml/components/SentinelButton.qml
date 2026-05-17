@@ -28,8 +28,8 @@ Button {
 
     background: Rectangle {
         radius: SentinelTheme.radiusMd
-        color: control.down || control.hovered || control.activeFocus ? SentinelTheme.accentHover : SentinelTheme.surfaceSoft
-        border.color: control.activeFocus ? SentinelTheme.focusBorder : control.hovered ? SentinelTheme.accentBorder : SentinelTheme.accentBorderSubtle
+        color: control.down || control.hovered || control.activeFocus ? SentinelTheme.accentHover : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
+        border.color: control.activeFocus ? SentinelTheme.focusBorder : control.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.36) : SentinelTheme.accentBorderSubtle
         border.width: 1
 
         Behavior on color {

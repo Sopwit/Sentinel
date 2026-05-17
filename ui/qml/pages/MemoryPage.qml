@@ -3,44 +3,50 @@ import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import Sentinel.Desktop
 
-ShellPanel {
+ScrollView {
     id: memoryPage
     required property var viewModel
     readonly property bool compact: width < 720
+    clip: true
+    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
     ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: SentinelTheme.pageMargin(memoryPage.width)
+        width: memoryPage.availableWidth
         spacing: SentinelTheme.contentSpacing(memoryPage.width)
 
         SectionTitle {
             title: "Runtime Memory"
-            subtitle: "Key-value memory remains separate from the metadata-only taxonomy below."
+            subtitle: "Key-value memory, chat history status, and future semantic memory stay separate."
         }
 
-        ColumnLayout {
+        ShellPanel {
             Layout.fillWidth: true
-            spacing: SentinelTheme.spaceSm
+            implicitHeight: memoryStatusColumn.implicitHeight + SentinelTheme.space2Xl
 
-            InfoRow {
-                compact: memoryPage.compact
-                label: "Taxonomy Categories"
-                value: memoryPage.viewModel.memoryCatalogCount.toString()
-            }
-
-            InfoRow {
-                compact: memoryPage.compact
-                label: "Planner Affinity"
-                value: memoryPage.viewModel.currentMemoryAffinitySummary
-            }
-
-            Repeater {
-                model: memoryPage.viewModel.memoryCatalogSummaries
+            ColumnLayout {
+                id: memoryStatusColumn
+                anchors.fill: parent
+                anchors.margins: SentinelTheme.spaceLg
+                spacing: SentinelTheme.spaceSm
 
                 InfoRow {
                     compact: memoryPage.compact
-                    label: "Memory"
-                    value: modelData
+                    label: "Key-value Store"
+                    value: memoryPage.viewModel.memoryStatus + " (" + memoryPage.viewModel.memoryMaintenanceStatus + ")"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: memoryPage.compact
+                    label: "Chat History"
+                    value: memoryPage.viewModel.chatHistoryStatus + " (" + memoryPage.viewModel.chatMaintenanceStatus + ")"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: memoryPage.compact
+                    label: "Semantic Memory"
+                    value: "Future placeholder only. No embeddings, vector search, or autonomous recall."
                     Layout.fillWidth: true
                 }
             }
@@ -80,7 +86,7 @@ ShellPanel {
         ListView {
             id: memoryList
             Layout.fillWidth: true
-            Layout.fillHeight: true
+            Layout.preferredHeight: Math.max(220, memoryPage.height - 360)
             clip: true
             spacing: SentinelTheme.spaceSm
             model: memoryPage.viewModel.memoryEntries

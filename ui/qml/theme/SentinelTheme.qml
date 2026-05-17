@@ -25,14 +25,14 @@ QtObject {
     readonly property color textPlaceholder: "#6d8490"
     readonly property color textOnAccent: "#07131a"
 
-    readonly property color accent: "#9bdfff"
-    readonly property color accentHover: "#bceaff"
-    readonly property color accentSecondary: "#8bb8ff"
-    readonly property color accentTertiary: "#9ff0d0"
+    readonly property color accent: "#79dcff"
+    readonly property color accentHover: "#a6e9ff"
+    readonly property color accentSecondary: "#83aaf5"
+    readonly property color accentTertiary: "#72e4c7"
     readonly property color accentBorder: "#c8ecff26"
     readonly property color accentBorderSubtle: "#ffffff0d"
     readonly property color accentBorderSoft: "#9bdfff1a"
-    readonly property color focusBorder: "#bceaffaa"
+    readonly property color focusBorder: "#ffd27aaa"
     readonly property color successBorder: "#9ff0d033"
     readonly property color errorBorder: "#d66b6b66"
     readonly property color separator: "#ffffff0f"
@@ -42,6 +42,8 @@ QtObject {
     readonly property color glassStrong: "#ffffff12"
     readonly property color orbitalLine: "#bfefff16"
     readonly property color bracketLine: "#bfefff2e"
+    readonly property color warning: "#ffd27a"
+    readonly property color warningText: "#141009"
     readonly property color ambientCyan: "#65dfff"
     readonly property color ambientTeal: "#7fffd4"
     readonly property color ambientViolet: "#8bb8ff"
@@ -79,8 +81,6 @@ QtObject {
 
     readonly property int breakpointCompact: 760
     readonly property int breakpointWide: 1120
-    readonly property int sidebarCompactWidth: 56
-    readonly property int sidebarNormalWidth: 64
     readonly property int rightPanelWidth: 380
     readonly property int dockHeight: 72
 
@@ -110,29 +110,41 @@ QtObject {
 
     function modeAccent(modeName) {
         if (modeName === "Focus Mode")
-            return "#9ff0d0"
+            return "#8eb8ff"
         if (modeName === "Mission Mode")
-            return "#ffd27a"
+            return "#e7b866"
         if (modeName === "System Mode")
-            return "#b7c6ff"
+            return "#7fe7ff"
         if (modeName === "Minimal Mode")
-            return "#c9d2d8"
+            return "#9aa8af"
         if (modeName === "Tactical Mode")
-            return "#ff8f8f"
+            return "#ff7a5f"
         return accent
+    }
+
+    function modeSecondaryAccent(modeName) {
+        if (modeName === "Mission Mode")
+            return "#67d8c2"
+        if (modeName === "Tactical Mode")
+            return "#ffb15f"
+        if (modeName === "Minimal Mode")
+            return "#6f7d84"
+        if (modeName === "Focus Mode")
+            return "#6f9de8"
+        return accentTertiary
     }
 
     function modePanelColor(modeName) {
         if (modeName === "Focus Mode")
-            return "#213b38aa"
+            return "#1a2b42aa"
         if (modeName === "Mission Mode")
-            return "#3e3420aa"
+            return "#302f24aa"
         if (modeName === "System Mode")
-            return "#29314aaa"
+            return "#1b3440aa"
         if (modeName === "Minimal Mode")
-            return "#252c32aa"
+            return "#1d2429aa"
         if (modeName === "Tactical Mode")
-            return "#3b252aaa"
+            return "#38221faa"
         return "#25364366"
     }
 
@@ -152,11 +164,11 @@ QtObject {
 
     function modeGlowScale(modeName) {
         if (modeName === "Minimal Mode")
-            return 0.45
+            return 0.28
         if (modeName === "Tactical Mode" || modeName === "Mission Mode")
-            return 1.25
+            return 1.12
         if (modeName === "Focus Mode")
-            return 0.75
+            return 0.68
         return 1.0
     }
 

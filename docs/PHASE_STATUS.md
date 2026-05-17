@@ -959,7 +959,7 @@ behavior.
 Scope:
 
 - Added duration/easing motion tokens to `SentinelTheme.qml`.
-- Added lightweight hover/focus behavior for sidebar navigation.
+- Added lightweight hover/focus behavior for shell navigation.
 - Added `SentinelButton.qml` for tokenized command button hover/focus states.
 - Added focus-ring transitions for text fields.
 - Added low-cost page opacity transition hooks.
@@ -986,7 +986,7 @@ Scope:
 
 - Added layout breakpoint and responsive spacing tokens to `SentinelTheme.qml`.
 - Lowered the desktop shell minimum width for narrower resizable windows.
-- Added compact sidebar behavior with stable eliding labels.
+- Added compact shell navigation behavior with stable eliding labels.
 - Updated header/status surfaces to avoid crowding at compact widths.
 - Updated dashboard, chat, memory, and settings layouts to wrap with lightweight `GridLayout`
   column changes.
@@ -1108,7 +1108,7 @@ Scope:
 
 - Moved the main workspace from a dashboard-panel composition toward a cinematic presence-first
   scene.
-- Added an ultra-thin ambient left rail and bottom floating dock navigation.
+- Added bottom floating dock navigation and ambient shell framing.
 - Expanded QML visual primitives for a central orb, floating telemetry readouts, and dock-led
   navigation.
 - De-emphasized rigid metric/status panels on the Dashboard/Core page.

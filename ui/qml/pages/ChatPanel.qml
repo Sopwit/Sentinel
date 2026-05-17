@@ -8,6 +8,8 @@ ShellPanel {
     required property var viewModel
     property bool compact: width < 520
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    readonly property bool modelReady: viewModel.selectedLocalModelStatus === "Available"
+                                      || viewModel.selectedLocalModelStatus === "Fallback"
 
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.038)
     border.color: SentinelTheme.withAlpha(modeAccent, 0.095)
@@ -45,10 +47,50 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: chatPanel.viewModel.localChatInferenceStatus + " / " + chatPanel.viewModel.localInferenceStreamStatus + " / " + chatPanel.viewModel.selectedLocalModelStatus
+                    text: "Model " + chatPanel.viewModel.selectedLocalModelStatus
+                          + " / Chat " + chatPanel.viewModel.localChatInferenceStatus
+                          + " / Stream " + chatPanel.viewModel.localInferenceStreamStatus
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                     elide: Text.ElideRight
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            radius: SentinelTheme.radiusMd
+            color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.055)
+            border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.12)
+            implicitHeight: runtimeStatusColumn.implicitHeight + SentinelTheme.spaceMd
+
+            ColumnLayout {
+                id: runtimeStatusColumn
+                anchors.fill: parent
+                anchors.margins: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceXs
+
+                InfoRow {
+                    compact: true
+                    label: "Selected"
+                    value: chatPanel.viewModel.selectedLocalModelSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
+                    label: "Runtime"
+                    value: chatPanel.viewModel.ollamaHealthStatus + " / " + chatPanel.viewModel.localInferenceRuntimeState
+                    Layout.fillWidth: true
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    visible: !chatPanel.modelReady
+                    text: "Start Ollama and install/select a local model."
+                    color: SentinelTheme.warning
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
                 }
             }
         }
@@ -150,7 +192,7 @@ ShellPanel {
                 id: chatInput
                 Layout.fillWidth: true
                 Layout.columnSpan: chatPanel.compact ? 2 : 1
-                placeholderText: "Speak with Sentinel"
+                placeholderText: chatPanel.modelReady ? "Message Sentinel" : "Local model setup required for Ollama chat"
                 onAccepted: sendButton.clicked()
             }
 

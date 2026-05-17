@@ -35,9 +35,9 @@ ScrollView {
             ShellPanel {
                 Layout.fillWidth: true
                 implicitHeight: stateColumn.implicitHeight + SentinelTheme.space2Xl
-                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.032)
-                border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.08)
-                bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
+                color: SentinelTheme.modePanelColor(dashboardPage.viewModel.currentModeName)
+                border.color: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.10)
+                bracketColor: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.20)
                 bracketSize: 9
 
                 ColumnLayout {
@@ -48,7 +48,7 @@ ScrollView {
 
                     Label {
                         Layout.fillWidth: true
-                        text: "LOCAL STATE"
+                        text: "RUNTIME / MEMORY"
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontTiny
                         font.letterSpacing: 2.2
@@ -85,30 +85,14 @@ ScrollView {
 
                     InfoRow {
                         compact: true
-                        label: "Voice / Piper"
-                        value: dashboardPage.viewModel.voiceReadinessStatus + " / " + dashboardPage.viewModel.piperTtsStatus
+                        label: "Memory"
+                        value: dashboardPage.viewModel.memoryStatus + " / Chat history " + dashboardPage.viewModel.chatHistoryStatus
                         Layout.fillWidth: true
                     }
-                }
-            }
-
-            ShellPanel {
-                Layout.fillWidth: true
-                implicitHeight: summaryColumn.implicitHeight + SentinelTheme.space2Xl
-                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.032)
-                border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.08)
-                bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
-                bracketSize: 9
-
-                ColumnLayout {
-                    id: summaryColumn
-                    anchors.fill: parent
-                    anchors.margins: SentinelTheme.spaceLg
-                    spacing: SentinelTheme.spaceSm
 
                     Label {
                         Layout.fillWidth: true
-                        text: "ORCHESTRATION SNAPSHOT / " + dashboardPage.viewModel.orchestrationSnapshotStatus
+                        text: "SETUP"
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontTiny
                         font.letterSpacing: 2.2
@@ -117,37 +101,29 @@ ScrollView {
 
                     Label {
                         Layout.fillWidth: true
-                        text: dashboardPage.viewModel.orchestrationSnapshotSummary
+                        text: dashboardPage.viewModel.ollamaModelCount > 0 ? dashboardPage.viewModel.selectedLocalModelSummary : "Start Ollama and install/select a local model."
                         color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.86)
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
-                        maximumLineCount: 3
+                        maximumLineCount: 4
                         elide: Text.ElideRight
                     }
 
                     InfoRow {
                         compact: true
-                        label: "Readiness"
-                        value: dashboardPage.viewModel.orchestrationReadinessStatus
+                        label: "Voice"
+                        value: dashboardPage.viewModel.voiceReadinessStatus + " / " + dashboardPage.viewModel.piperTtsStatus
                         Layout.fillWidth: true
                     }
 
                     InfoRow {
                         compact: true
                         label: "Agents"
-                        value: dashboardPage.viewModel.registeredAgentCount + " registered / " + dashboardPage.viewModel.currentAgentSummary
-                        Layout.fillWidth: true
-                    }
-
-                    InfoRow {
-                        compact: true
-                        label: "Memory"
-                        value: dashboardPage.viewModel.memoryCatalogCount + " taxonomy categories / " + dashboardPage.viewModel.memoryStatus
+                        value: dashboardPage.viewModel.registeredAgentCount + " registered"
                         Layout.fillWidth: true
                     }
                 }
             }
-
         }
     }
 }

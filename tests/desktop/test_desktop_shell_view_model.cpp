@@ -199,7 +199,7 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(fixture.viewModel.availablePages(),
-             QStringList({QStringLiteral("Dashboard"), QStringLiteral("Memory"),
+             QStringList({QStringLiteral("Memory"), QStringLiteral("Dashboard"),
                           QStringLiteral("Agents"), QStringLiteral("Settings")}));
 }
 

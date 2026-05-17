@@ -821,8 +821,8 @@ void DesktopShellViewModel::setCurrentPage(const QString& page) {
 
 QStringList DesktopShellViewModel::availablePages() const {
     return {
-        QStringLiteral("Dashboard"),
         QStringLiteral("Memory"),
+        QStringLiteral("Dashboard"),
         QStringLiteral("Agents"),
         QStringLiteral("Settings"),
     };
@@ -883,8 +883,8 @@ void DesktopShellViewModel::remember(const QString& key, const QString& value) {
 QString DesktopShellViewModel::normalizedPageOrDefault(const QString& page) {
     const auto trimmed = page.trimmed();
     const QStringList pages{
-        QStringLiteral("Dashboard"),
         QStringLiteral("Memory"),
+        QStringLiteral("Dashboard"),
         QStringLiteral("Agents"),
         QStringLiteral("Settings"),
     };
