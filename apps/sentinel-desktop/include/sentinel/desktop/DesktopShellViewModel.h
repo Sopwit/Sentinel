@@ -195,6 +195,20 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(bool voicePlaybackEnabled READ voicePlaybackEnabled CONSTANT)
     Q_PROPERTY(bool voiceLocalOnlyPolicy READ voiceLocalOnlyPolicy CONSTANT)
     Q_PROPERTY(bool voiceProcessExecutionEnabled READ voiceProcessExecutionEnabled CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeEnvironmentStatus READ voiceRuntimeEnvironmentStatus CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeEnvironmentSummary READ voiceRuntimeEnvironmentSummary CONSTANT)
+    Q_PROPERTY(QStringList voiceBinarySummaries READ voiceBinarySummaries CONSTANT)
+    Q_PROPERTY(QStringList voiceModelSummaries READ voiceModelSummaries CONSTANT)
+    Q_PROPERTY(
+        QStringList voiceRuntimePermissionSummaries READ voiceRuntimePermissionSummaries CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeSafetyStatus READ voiceRuntimeSafetyStatus CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeSafetySummary READ voiceRuntimeSafetySummary CONSTANT)
+    Q_PROPERTY(QStringList voiceRuntimeSafetyChecks READ voiceRuntimeSafetyChecks CONSTANT)
+    Q_PROPERTY(bool voiceRuntimeExecutionAllowed READ voiceRuntimeExecutionAllowed CONSTANT)
+    Q_PROPERTY(QString piperTtsStatus READ piperTtsStatus CONSTANT)
+    Q_PROPERTY(QString piperTtsSummary READ piperTtsSummary CONSTANT)
+    Q_PROPERTY(QStringList piperTtsReadinessChecks READ piperTtsReadinessChecks CONSTANT)
+    Q_PROPERTY(bool piperTtsReady READ piperTtsReady CONSTANT)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
@@ -385,6 +399,19 @@ public:
     bool voicePlaybackEnabled() const;
     bool voiceLocalOnlyPolicy() const;
     bool voiceProcessExecutionEnabled() const;
+    QString voiceRuntimeEnvironmentStatus() const;
+    QString voiceRuntimeEnvironmentSummary() const;
+    QStringList voiceBinarySummaries() const;
+    QStringList voiceModelSummaries() const;
+    QStringList voiceRuntimePermissionSummaries() const;
+    QString voiceRuntimeSafetyStatus() const;
+    QString voiceRuntimeSafetySummary() const;
+    QStringList voiceRuntimeSafetyChecks() const;
+    bool voiceRuntimeExecutionAllowed() const;
+    QString piperTtsStatus() const;
+    QString piperTtsSummary() const;
+    QStringList piperTtsReadinessChecks() const;
+    bool piperTtsReady() const;
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;

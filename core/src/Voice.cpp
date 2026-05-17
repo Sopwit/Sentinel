@@ -1,5 +1,7 @@
 #include "sentinel/core/Voice.h"
 
+#include <utility>
+
 namespace sentinel::core {
 
 QString voiceCapabilityName(VoiceCapability capability) {
@@ -106,6 +108,36 @@ QString voicePipelineStatusName(VoicePipelineStatus status) {
     }
 
     return QStringLiteral("pending");
+}
+
+QString voiceBinaryStatusName(VoiceBinaryStatus status) {
+    switch (status) {
+    case VoiceBinaryStatus::Missing:
+        return QStringLiteral("Missing");
+    case VoiceBinaryStatus::ExpectedPath:
+        return QStringLiteral("Expected Path");
+    case VoiceBinaryStatus::PresentMetadata:
+        return QStringLiteral("Present Metadata");
+    case VoiceBinaryStatus::Unavailable:
+        return QStringLiteral("Unavailable");
+    }
+
+    return QStringLiteral("Unavailable");
+}
+
+QString voiceModelStatusName(VoiceModelStatus status) {
+    switch (status) {
+    case VoiceModelStatus::Missing:
+        return QStringLiteral("Missing");
+    case VoiceModelStatus::ExpectedPath:
+        return QStringLiteral("Expected Path");
+    case VoiceModelStatus::PresentMetadata:
+        return QStringLiteral("Present Metadata");
+    case VoiceModelStatus::Unavailable:
+        return QStringLiteral("Unavailable");
+    }
+
+    return QStringLiteral("Unavailable");
 }
 
 QString voiceProviderDescriptorSummary(const VoiceProviderDescriptor& descriptor) {
@@ -223,6 +255,98 @@ QString safeVoicePipelineSummary(const VoicePipelineResult& result) {
     return QStringLiteral("Voice pipeline %1 (%2 traces).")
         .arg(voicePipelineStatusName(result.status))
         .arg(result.traces.size());
+}
+
+QString voiceBinaryDescriptorSummary(const VoiceBinaryDescriptor& descriptor) {
+    const auto path = descriptor.expectedPath.trimmed().isEmpty()
+                          ? QStringLiteral("not configured")
+                          : descriptor.expectedPath.trimmed();
+    const auto summary = descriptor.summary.trimmed().isEmpty()
+                             ? QStringLiteral("No voice binary metadata available.")
+                             : descriptor.summary.trimmed();
+    return QStringLiteral("%1: %2 for %3 at %4. Executable allowed: %5. %6")
+        .arg(descriptor.name, voiceBinaryStatusName(descriptor.status),
+             voiceCapabilityName(descriptor.capability), path,
+             descriptor.executableAllowed ? QStringLiteral("yes") : QStringLiteral("no"), summary);
+}
+
+QStringList voiceBinaryDescriptorSummaries(const QList<VoiceBinaryDescriptor>& descriptors) {
+    QStringList summaries;
+    for (const auto& descriptor : descriptors) {
+        summaries.append(voiceBinaryDescriptorSummary(descriptor));
+    }
+    return summaries;
+}
+
+QString voiceModelDescriptorSummary(const VoiceModelDescriptor& descriptor) {
+    const auto path = descriptor.expectedPath.trimmed().isEmpty()
+                          ? QStringLiteral("not configured")
+                          : descriptor.expectedPath.trimmed();
+    const auto summary = descriptor.summary.trimmed().isEmpty()
+                             ? QStringLiteral("No voice model metadata available.")
+                             : descriptor.summary.trimmed();
+    return QStringLiteral("%1: %2 for %3 at %4. Load allowed: %5. %6")
+        .arg(descriptor.name, voiceModelStatusName(descriptor.status),
+             voiceCapabilityName(descriptor.capability), path,
+             descriptor.loadAllowed ? QStringLiteral("yes") : QStringLiteral("no"), summary);
+}
+
+QStringList voiceModelDescriptorSummaries(const QList<VoiceModelDescriptor>& descriptors) {
+    QStringList summaries;
+    for (const auto& descriptor : descriptors) {
+        summaries.append(voiceModelDescriptorSummary(descriptor));
+    }
+    return summaries;
+}
+
+QString voiceRuntimePermissionSummary(const VoiceRuntimePermission& permission) {
+    const auto summary = permission.summary.trimmed().isEmpty()
+                             ? QStringLiteral("No permission metadata available.")
+                             : permission.summary.trimmed();
+    return QStringLiteral("%1: %2. %3")
+        .arg(permission.name,
+             permission.granted ? QStringLiteral("Granted") : QStringLiteral("Denied"), summary);
+}
+
+QStringList voiceRuntimePermissionSummaries(const QList<VoiceRuntimePermission>& permissions) {
+    QStringList summaries;
+    for (const auto& permission : permissions) {
+        summaries.append(voiceRuntimePermissionSummary(permission));
+    }
+    return summaries;
+}
+
+QString voiceRuntimeSafetySummaryText(const VoiceRuntimeSafetyReport& report) {
+    if (!report.summary.trimmed().isEmpty()) {
+        return report.summary.trimmed();
+    }
+
+    return QStringLiteral("Voice runtime safety status: %1.").arg(report.status);
+}
+
+QStringList voiceRuntimeSafetyCheckSummaries(const VoiceRuntimeSafetyReport& report) {
+    if (!report.checks.isEmpty()) {
+        return report.checks;
+    }
+
+    return {
+        QStringLiteral("Execution: %1")
+            .arg(report.executionAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
+        QStringLiteral("Microphone: %1")
+            .arg(report.microphoneAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
+        QStringLiteral("Playback: %1")
+            .arg(report.playbackAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
+        QStringLiteral("Process execution: %1")
+            .arg(report.processExecutionAllowed ? QStringLiteral("Allowed")
+                                                : QStringLiteral("Blocked")),
+        QStringLiteral("Filesystem-wide scan: %1")
+            .arg(report.filesystemWideScanAllowed ? QStringLiteral("Allowed")
+                                                  : QStringLiteral("Blocked")),
+        QStringLiteral("Downloads: %1")
+            .arg(report.downloadsAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
+        QStringLiteral("Cloud: %1")
+            .arg(report.cloudAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
+    };
 }
 
 VoiceProviderDescriptor NullTextToSpeechProvider::descriptor() const {
@@ -361,6 +485,107 @@ StaticVoiceRuntimeCoordinator::evaluate(VoiceSessionState requestedState) const 
         QStringLiteral("Voice pipeline completed metadata-only planning; no audio or runtime "
                        "execution occurred.");
     return result;
+}
+
+QString NullVoiceRuntimeEnvironment::status() const {
+    return QStringLiteral("Blocked");
+}
+
+QString NullVoiceRuntimeEnvironment::summary() const {
+    return QStringLiteral("Voice runtime environment is metadata-only: Piper and Whisper binaries "
+                          "and models are not configured, execution is blocked, and no filesystem "
+                          "scan is performed.");
+}
+
+QList<VoiceBinaryDescriptor> NullVoiceRuntimeEnvironment::binaries() const {
+    return {
+        VoiceBinaryDescriptor{QStringLiteral("piper-binary"), QStringLiteral("Piper Binary"),
+                              VoiceCapability::TextToSpeech, VoiceBinaryStatus::Missing,
+                              QStringLiteral("not configured"), false,
+                              QStringLiteral("Expected future Piper binary path is not configured; "
+                                             "Sentinel will not execute Piper.")},
+        VoiceBinaryDescriptor{QStringLiteral("whisper-binary"), QStringLiteral("Whisper Binary"),
+                              VoiceCapability::SpeechToText, VoiceBinaryStatus::Missing,
+                              QStringLiteral("not configured"), false,
+                              QStringLiteral("Expected future Whisper binary path is not "
+                                             "configured; Sentinel will not execute Whisper.")},
+    };
+}
+
+QList<VoiceModelDescriptor> NullVoiceRuntimeEnvironment::models() const {
+    return {
+        VoiceModelDescriptor{QStringLiteral("piper-voice-model"),
+                             QStringLiteral("Piper Voice Model"), VoiceCapability::TextToSpeech,
+                             VoiceModelStatus::Missing, QStringLiteral("not configured"), false,
+                             QStringLiteral("Expected future Piper voice model path is not "
+                                            "configured or loaded.")},
+        VoiceModelDescriptor{QStringLiteral("whisper-model"), QStringLiteral("Whisper Model"),
+                             VoiceCapability::SpeechToText, VoiceModelStatus::Missing,
+                             QStringLiteral("not configured"), false,
+                             QStringLiteral("Expected future Whisper model path is not configured "
+                                            "or loaded.")},
+    };
+}
+
+QList<VoiceRuntimePermission> NullVoiceRuntimeEnvironment::permissions() const {
+    return {
+        VoiceRuntimePermission{QStringLiteral("voice.microphone"), QStringLiteral("Microphone"),
+                               false, QStringLiteral("Microphone access is not requested.")},
+        VoiceRuntimePermission{QStringLiteral("voice.playback"), QStringLiteral("Playback"), false,
+                               QStringLiteral("Audio playback is not enabled.")},
+        VoiceRuntimePermission{QStringLiteral("voice.process"), QStringLiteral("Process Execution"),
+                               false,
+                               QStringLiteral("Piper and Whisper subprocess execution is "
+                                              "blocked by default.")},
+        VoiceRuntimePermission{QStringLiteral("voice.model-read"),
+                               QStringLiteral("Voice Model Read"), false,
+                               QStringLiteral("Voice model files are not opened or scanned.")},
+    };
+}
+
+VoiceRuntimeSafetyReport NullVoiceRuntimeEnvironment::safetyReport() const {
+    VoiceRuntimeSafetyReport report;
+    report.status = QStringLiteral("Blocked");
+    report.summary =
+        QStringLiteral("Voice runtime safety blocks execution by default: no microphone, playback, "
+                       "Piper, Whisper, subprocess, filesystem-wide scan, download, cloud call, or "
+                       "API key behavior is allowed.");
+    report.checks = voiceRuntimeSafetyCheckSummaries(report);
+    return report;
+}
+
+StaticVoiceRuntimeEnvironment::StaticVoiceRuntimeEnvironment()
+    : StaticVoiceRuntimeEnvironment(NullVoiceRuntimeEnvironment{}.binaries(),
+                                    NullVoiceRuntimeEnvironment{}.models()) {}
+
+StaticVoiceRuntimeEnvironment::StaticVoiceRuntimeEnvironment(QList<VoiceBinaryDescriptor> binaries,
+                                                             QList<VoiceModelDescriptor> models)
+    : binaries_(std::move(binaries)), models_(std::move(models)) {}
+
+QString StaticVoiceRuntimeEnvironment::status() const {
+    return safetyReport().status;
+}
+
+QString StaticVoiceRuntimeEnvironment::summary() const {
+    return QStringLiteral("Voice runtime environment readiness is static metadata only: expected "
+                          "Piper/Whisper binary and model paths are described without execution, "
+                          "downloads, audio I/O, or filesystem-wide scanning.");
+}
+
+QList<VoiceBinaryDescriptor> StaticVoiceRuntimeEnvironment::binaries() const {
+    return binaries_;
+}
+
+QList<VoiceModelDescriptor> StaticVoiceRuntimeEnvironment::models() const {
+    return models_;
+}
+
+QList<VoiceRuntimePermission> StaticVoiceRuntimeEnvironment::permissions() const {
+    return NullVoiceRuntimeEnvironment{}.permissions();
+}
+
+VoiceRuntimeSafetyReport StaticVoiceRuntimeEnvironment::safetyReport() const {
+    return NullVoiceRuntimeEnvironment{}.safetyReport();
 }
 
 } // namespace sentinel::core

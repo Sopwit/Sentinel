@@ -815,6 +815,31 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QVERIFY(!controller.voicePlaybackEnabled());
     QVERIFY(controller.voiceLocalOnlyPolicy());
     QVERIFY(!controller.voiceProcessExecutionEnabled());
+    QCOMPARE(controller.voiceRuntimeEnvironmentStatus(), QStringLiteral("Blocked"));
+    QVERIFY(controller.voiceRuntimeEnvironmentSummary().contains(QStringLiteral("metadata-only")));
+    QCOMPARE(controller.voiceBinarySummaries().size(), 2);
+    QVERIFY(controller.voiceBinarySummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper Binary: Missing")));
+    QCOMPARE(controller.voiceModelSummaries().size(), 2);
+    QVERIFY(controller.voiceModelSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Whisper Model: Missing")));
+    QCOMPARE(controller.voiceRuntimePermissionSummaries().size(), 4);
+    QVERIFY(controller.voiceRuntimePermissionSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Process Execution: Denied")));
+    QCOMPARE(controller.voiceRuntimeSafetyStatus(), QStringLiteral("Blocked"));
+    QVERIFY(controller.voiceRuntimeSafetySummary().contains(QStringLiteral("blocks execution")));
+    QCOMPARE(controller.voiceRuntimeSafetyChecks().size(), 7);
+    QVERIFY(!controller.voiceRuntimeExecutionAllowed());
+    QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Disabled"));
+    QVERIFY(controller.piperTtsSummary().contains(QStringLiteral("disabled by default")));
+    QCOMPARE(controller.piperTtsReadinessChecks().size(), 7);
+    QVERIFY(controller.piperTtsReadinessChecks()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper binary")));
+    QVERIFY(!controller.piperTtsReady());
 }
 
 void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetadata() {

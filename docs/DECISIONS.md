@@ -1280,3 +1280,59 @@ Boundary rules:
 - No microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
   launch, filesystem/system action, download, cloud call, API key, voice button, activation flow,
   autonomous voice loop, or broad UI redesign is introduced by the checkpoint.
+
+## 65. Local Voice Runtime Environment Owns Binary And Model Readiness Before Execution
+
+Decision: Add a metadata-only voice runtime environment boundary for future local Piper/Whisper
+binary, model, permission, and safety ownership before any execution is allowed.
+
+Reason: Piper and Whisper integration requires local binary paths, model paths, permission gates,
+and runtime safety checks. These must be visible and testable before Sentinel can safely execute
+voice binaries or touch audio devices.
+
+Boundary rules:
+
+- `VoiceBinaryDescriptor` and `VoiceModelDescriptor` describe expected future Piper/Whisper binary
+  and model ownership only.
+- `VoiceRuntimePermission` describes denied/default-off microphone, playback, process execution,
+  and model-read posture as metadata.
+- `VoiceRuntimeSafetyReport` blocks execution by default and reports no microphone, playback,
+  process execution, filesystem-wide scan, download, cloud call, or API-key behavior.
+- `IVoiceRuntimeEnvironment` is separate from `ITextToSpeechProvider`,
+  `ISpeechToTextProvider`, and `IVoiceRuntimeCoordinator`.
+- `NullVoiceRuntimeEnvironment` and `StaticVoiceRuntimeEnvironment` are deterministic and
+  non-operational.
+- Controller and view-model exposure remains limited to strings, string lists, and booleans.
+- Settings may display read-only environment, binary, model, permission, and safety metadata only.
+- No microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
+  launch, filesystem-wide scan, model loading, download, cloud call, API key, setup button, path
+  picker, or broad UI redesign is introduced.
+
+## 66. Piper TTS Adapter Starts As A Non-Executable Provider Boundary
+
+Decision: Add a Piper text-to-speech adapter skeleton behind the voice provider boundary without
+enabling audio playback, file-output synthesis, or Piper subprocess execution.
+
+Reason: Piper integration needs typed request/result/configuration metadata, binary/model readiness
+checks, and deterministic refusal behavior before Sentinel can safely define any executable local
+TTS flow.
+
+Boundary rules:
+
+- `PiperTtsConfig`, `PiperVoiceModelDescriptor`, `PiperTtsRequest`, `PiperTtsResult`, and
+  `PiperTtsStatus` are value-only Piper TTS metadata.
+- `IPiperTtsClient` is the future low-level client boundary, and `NullPiperTtsClient` is the
+  default deterministic non-operational implementation.
+- `PiperTextToSpeechProvider` stays behind `ITextToSpeechProvider` and reports status/readiness
+  metadata only.
+- The default Piper adapter is disabled/not configured.
+- Missing Piper binary or voice model metadata causes deterministic refusal before any client
+  boundary is reached.
+- The sketched execution path remains non-callable by default; even metadata-ready requests refuse
+  until a later explicit phase defines controlled file-output synthesis.
+- Controller and view-model exposure remains limited to QML-safe strings, string lists, and
+  booleans.
+- Settings may display read-only Piper readiness only.
+- No audio playback, microphone access, Whisper/STT, Piper execution, subprocess/process launch,
+  model loading, download, cloud/API-key behavior, filesystem-wide scan, speak button, model/path
+  picker, or broad UI redesign is introduced.

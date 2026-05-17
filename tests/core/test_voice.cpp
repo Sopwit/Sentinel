@@ -1,14 +1,30 @@
+#include "sentinel/core/PiperTts.h"
 #include "sentinel/core/Voice.h"
 
 #include <QtTest>
 
 using sentinel::core::buildVoiceReadinessReport;
+using sentinel::core::NullPiperTtsClient;
 using sentinel::core::NullSpeechToTextProvider;
 using sentinel::core::NullTextToSpeechProvider;
+using sentinel::core::NullVoiceRuntimeEnvironment;
+using sentinel::core::PiperTextToSpeechProvider;
+using sentinel::core::PiperTtsConfig;
+using sentinel::core::PiperTtsRequest;
+using sentinel::core::PiperTtsStatus;
+using sentinel::core::piperTtsStatusName;
+using sentinel::core::safePiperTtsResultSummary;
 using sentinel::core::safeVoicePipelineSummary;
 using sentinel::core::safeVoiceResponseSummary;
 using sentinel::core::StaticVoiceRuntimeCoordinator;
+using sentinel::core::StaticVoiceRuntimeEnvironment;
+using sentinel::core::VoiceBinaryDescriptor;
+using sentinel::core::voiceBinaryDescriptorSummaries;
+using sentinel::core::VoiceBinaryStatus;
 using sentinel::core::VoiceCapability;
+using sentinel::core::VoiceModelDescriptor;
+using sentinel::core::voiceModelDescriptorSummaries;
+using sentinel::core::VoiceModelStatus;
 using sentinel::core::VoicePipelineStage;
 using sentinel::core::voicePipelineStageName;
 using sentinel::core::VoicePipelineStatus;
@@ -31,6 +47,12 @@ private slots:
     void readinessReportStaysMetadataOnly();
     void staticVoiceRuntimeCoordinatorCompletesDeterministicPipeline();
     void staticVoiceRuntimeCoordinatorReportsBlockedAndErrorMetadata();
+    void nullVoiceRuntimeEnvironmentReportsMissingOwnershipMetadata();
+    void staticVoiceRuntimeEnvironmentUsesInjectedMetadataOnly();
+    void voiceRuntimeSafetyBlocksExecutionByDefault();
+    void nullPiperTtsClientRefusesWithoutSideEffects();
+    void piperTextToSpeechProviderRefusesMissingBinaryAndModel();
+    void piperTextToSpeechProviderReportsSafetyBlockedMetadata();
 };
 
 void VoiceTest::nullTextToSpeechRefusesDeterministically() {
@@ -154,6 +176,143 @@ void VoiceTest::staticVoiceRuntimeCoordinatorReportsBlockedAndErrorMetadata() {
     QVERIFY(voicePipelineTraceSummaries(error.traces)
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("without runtime execution")));
+}
+
+void VoiceTest::nullVoiceRuntimeEnvironmentReportsMissingOwnershipMetadata() {
+    NullVoiceRuntimeEnvironment environment;
+
+    QCOMPARE(environment.status(), QStringLiteral("Blocked"));
+    QVERIFY(environment.summary().contains(QStringLiteral("metadata-only")));
+    QVERIFY(environment.summary().contains(QStringLiteral("no filesystem scan")));
+    QCOMPARE(environment.binaries().size(), 2);
+    QCOMPARE(environment.models().size(), 2);
+    QCOMPARE(environment.binaries().first().status, VoiceBinaryStatus::Missing);
+    QCOMPARE(environment.models().last().status, VoiceModelStatus::Missing);
+    QVERIFY(voiceBinaryDescriptorSummaries(environment.binaries())
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper Binary: Missing")));
+    QVERIFY(voiceModelDescriptorSummaries(environment.models())
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Whisper Model: Missing")));
+    QVERIFY(!environment.binaries().first().executableAllowed);
+    QVERIFY(!environment.models().first().loadAllowed);
+}
+
+void VoiceTest::staticVoiceRuntimeEnvironmentUsesInjectedMetadataOnly() {
+    StaticVoiceRuntimeEnvironment environment{
+        QList<VoiceBinaryDescriptor>{
+            VoiceBinaryDescriptor{QStringLiteral("piper-binary"), QStringLiteral("Piper Binary"),
+                                  VoiceCapability::TextToSpeech, VoiceBinaryStatus::ExpectedPath,
+                                  QStringLiteral("/opt/sentinel/voice/piper"), false,
+                                  QStringLiteral("Expected explicit Piper path only.")},
+            VoiceBinaryDescriptor{QStringLiteral("whisper-binary"),
+                                  QStringLiteral("Whisper Binary"), VoiceCapability::SpeechToText,
+                                  VoiceBinaryStatus::ExpectedPath,
+                                  QStringLiteral("/opt/sentinel/voice/whisper"), false,
+                                  QStringLiteral("Expected explicit Whisper path only.")},
+        },
+        QList<VoiceModelDescriptor>{
+            VoiceModelDescriptor{QStringLiteral("piper-model"), QStringLiteral("Piper Voice Model"),
+                                 VoiceCapability::TextToSpeech, VoiceModelStatus::ExpectedPath,
+                                 QStringLiteral("/opt/sentinel/voice/models/piper.onnx"), false,
+                                 QStringLiteral("Expected explicit Piper model path only.")},
+            VoiceModelDescriptor{QStringLiteral("whisper-model"), QStringLiteral("Whisper Model"),
+                                 VoiceCapability::SpeechToText, VoiceModelStatus::ExpectedPath,
+                                 QStringLiteral("/opt/sentinel/voice/models/whisper.bin"), false,
+                                 QStringLiteral("Expected explicit Whisper model path only.")},
+        }};
+
+    QCOMPARE(environment.status(), QStringLiteral("Blocked"));
+    QVERIFY(environment.summary().contains(QStringLiteral("static metadata only")));
+    QVERIFY(voiceBinaryDescriptorSummaries(environment.binaries())
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("/opt/sentinel/voice/piper")));
+    QVERIFY(voiceModelDescriptorSummaries(environment.models())
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("/opt/sentinel/voice/models/whisper.bin")));
+    QCOMPARE(environment.permissions().size(), 4);
+}
+
+void VoiceTest::voiceRuntimeSafetyBlocksExecutionByDefault() {
+    StaticVoiceRuntimeEnvironment environment;
+    const auto report = environment.safetyReport();
+
+    QCOMPARE(report.status, QStringLiteral("Blocked"));
+    QVERIFY(!report.executionAllowed);
+    QVERIFY(!report.microphoneAllowed);
+    QVERIFY(!report.playbackAllowed);
+    QVERIFY(!report.processExecutionAllowed);
+    QVERIFY(!report.filesystemWideScanAllowed);
+    QVERIFY(!report.downloadsAllowed);
+    QVERIFY(!report.cloudAllowed);
+    QCOMPARE(report.checks.size(), 7);
+    QVERIFY(report.summary.contains(QStringLiteral("Piper")));
+    QVERIFY(report.summary.contains(QStringLiteral("Whisper")));
+}
+
+void VoiceTest::nullPiperTtsClientRefusesWithoutSideEffects() {
+    NullPiperTtsClient client;
+    const auto result = client.synthesize(PiperTtsRequest{QStringLiteral("hello")},
+                                          sentinel::core::defaultDisabledPiperTtsConfig());
+
+    QCOMPARE(client.status(), PiperTtsStatus::Disabled);
+    QVERIFY(client.statusSummary().contains(QStringLiteral("never launches Piper")));
+    QCOMPARE(result.status, PiperTtsStatus::Disabled);
+    QVERIFY(!result.success);
+    QVERIFY(result.audioPath.isEmpty());
+    QVERIFY(safePiperTtsResultSummary(result).contains(QStringLiteral("disabled")));
+    QCOMPARE(result.traces.size(), 1);
+}
+
+void VoiceTest::piperTextToSpeechProviderRefusesMissingBinaryAndModel() {
+    auto config = sentinel::core::defaultDisabledPiperTtsConfig();
+    config.enabled = true;
+    PiperTextToSpeechProvider missingAll{config, std::make_unique<NullPiperTtsClient>()};
+
+    QCOMPARE(missingAll.status(), PiperTtsStatus::NotConfigured);
+    QCOMPARE(piperTtsStatusName(missingAll.status()), QStringLiteral("Not Configured"));
+    QVERIFY(missingAll.piperStatusSummary().contains(QStringLiteral("not configured")));
+
+    config.binary.expectedPath = QStringLiteral("/opt/sentinel/voice/piper");
+    PiperTextToSpeechProvider missingBinary{config, std::make_unique<NullPiperTtsClient>()};
+    QCOMPARE(missingBinary.status(), PiperTtsStatus::MissingBinary);
+    auto result = missingBinary.synthesizePiper(PiperTtsRequest{QStringLiteral("hello")});
+    QCOMPARE(result.status, PiperTtsStatus::MissingBinary);
+    QVERIFY(!result.success);
+    QVERIFY(result.audioPath.isEmpty());
+
+    config.binary.status = VoiceBinaryStatus::ExpectedPath;
+    config.voiceModel.expectedPath = QStringLiteral("/opt/sentinel/voice/models/en.onnx");
+    PiperTextToSpeechProvider missingModel{config, std::make_unique<NullPiperTtsClient>()};
+    QCOMPARE(missingModel.status(), PiperTtsStatus::MissingModel);
+    result = missingModel.synthesizePiper(PiperTtsRequest{QStringLiteral("hello")});
+    QCOMPARE(result.status, PiperTtsStatus::MissingModel);
+    QVERIFY(!result.success);
+    QVERIFY(result.audioPath.isEmpty());
+}
+
+void VoiceTest::piperTextToSpeechProviderReportsSafetyBlockedMetadata() {
+    PiperTtsConfig config = sentinel::core::defaultDisabledPiperTtsConfig();
+    config.enabled = true;
+    config.binary.status = VoiceBinaryStatus::PresentMetadata;
+    config.binary.expectedPath = QStringLiteral("/opt/sentinel/voice/piper");
+    config.voiceModel.status = VoiceModelStatus::PresentMetadata;
+    config.voiceModel.expectedPath = QStringLiteral("/opt/sentinel/voice/models/en.onnx");
+
+    PiperTextToSpeechProvider provider{config, std::make_unique<NullPiperTtsClient>()};
+
+    QCOMPARE(provider.status(), PiperTtsStatus::SafetyBlocked);
+    QCOMPARE(provider.descriptor().id, QStringLiteral("piper-tts"));
+    QCOMPARE(provider.descriptor().status, VoiceProviderStatus::Disabled);
+    QVERIFY(provider.piperStatusSummary().contains(QStringLiteral("safety policy")));
+    QVERIFY(provider.readinessChecks()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper binary")));
+
+    const auto response = provider.synthesize(VoiceRequest{QStringLiteral("hello")});
+    QCOMPARE(response.status, VoiceProviderStatus::Refused);
+    QVERIFY(!response.available);
+    QVERIFY(response.summary.contains(QStringLiteral("blocked")));
 }
 
 QTEST_MAIN(VoiceTest)

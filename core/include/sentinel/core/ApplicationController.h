@@ -26,6 +26,7 @@
 #include "sentinel/core/OllamaRuntime.h"
 #include "sentinel/core/OrchestrationDiagnostics.h"
 #include "sentinel/core/OrchestrationSnapshot.h"
+#include "sentinel/core/PiperTts.h"
 #include "sentinel/core/RuntimeCapabilities.h"
 #include "sentinel/core/RuntimeIntegration.h"
 #include "sentinel/core/RuntimePermissions.h"
@@ -219,6 +220,20 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(bool voicePlaybackEnabled READ voicePlaybackEnabled CONSTANT)
     Q_PROPERTY(bool voiceLocalOnlyPolicy READ voiceLocalOnlyPolicy CONSTANT)
     Q_PROPERTY(bool voiceProcessExecutionEnabled READ voiceProcessExecutionEnabled CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeEnvironmentStatus READ voiceRuntimeEnvironmentStatus CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeEnvironmentSummary READ voiceRuntimeEnvironmentSummary CONSTANT)
+    Q_PROPERTY(QStringList voiceBinarySummaries READ voiceBinarySummaries CONSTANT)
+    Q_PROPERTY(QStringList voiceModelSummaries READ voiceModelSummaries CONSTANT)
+    Q_PROPERTY(
+        QStringList voiceRuntimePermissionSummaries READ voiceRuntimePermissionSummaries CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeSafetyStatus READ voiceRuntimeSafetyStatus CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeSafetySummary READ voiceRuntimeSafetySummary CONSTANT)
+    Q_PROPERTY(QStringList voiceRuntimeSafetyChecks READ voiceRuntimeSafetyChecks CONSTANT)
+    Q_PROPERTY(bool voiceRuntimeExecutionAllowed READ voiceRuntimeExecutionAllowed CONSTANT)
+    Q_PROPERTY(QString piperTtsStatus READ piperTtsStatus CONSTANT)
+    Q_PROPERTY(QString piperTtsSummary READ piperTtsSummary CONSTANT)
+    Q_PROPERTY(QStringList piperTtsReadinessChecks READ piperTtsReadinessChecks CONSTANT)
+    Q_PROPERTY(bool piperTtsReady READ piperTtsReady CONSTANT)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
@@ -288,6 +303,8 @@ public:
         std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider = nullptr,
         std::unique_ptr<ISpeechToTextProvider> speechToTextProvider = nullptr,
         std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator = nullptr,
+        std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment = nullptr,
+        std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider = nullptr,
         QObject* parent = nullptr);
 
     QString providerName() const;
@@ -436,6 +453,19 @@ public:
     bool voicePlaybackEnabled() const;
     bool voiceLocalOnlyPolicy() const;
     bool voiceProcessExecutionEnabled() const;
+    QString voiceRuntimeEnvironmentStatus() const;
+    QString voiceRuntimeEnvironmentSummary() const;
+    QStringList voiceBinarySummaries() const;
+    QStringList voiceModelSummaries() const;
+    QStringList voiceRuntimePermissionSummaries() const;
+    QString voiceRuntimeSafetyStatus() const;
+    QString voiceRuntimeSafetySummary() const;
+    QStringList voiceRuntimeSafetyChecks() const;
+    bool voiceRuntimeExecutionAllowed() const;
+    QString piperTtsStatus() const;
+    QString piperTtsSummary() const;
+    QStringList piperTtsReadinessChecks() const;
+    bool piperTtsReady() const;
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;
@@ -550,6 +580,8 @@ private:
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider_;
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider_;
     std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator_;
+    std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment_;
+    std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

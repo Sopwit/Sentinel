@@ -646,6 +646,58 @@ bool DesktopShellViewModel::voiceProcessExecutionEnabled() const {
     return controller_.voiceProcessExecutionEnabled();
 }
 
+QString DesktopShellViewModel::voiceRuntimeEnvironmentStatus() const {
+    return controller_.voiceRuntimeEnvironmentStatus();
+}
+
+QString DesktopShellViewModel::voiceRuntimeEnvironmentSummary() const {
+    return controller_.voiceRuntimeEnvironmentSummary();
+}
+
+QStringList DesktopShellViewModel::voiceBinarySummaries() const {
+    return controller_.voiceBinarySummaries();
+}
+
+QStringList DesktopShellViewModel::voiceModelSummaries() const {
+    return controller_.voiceModelSummaries();
+}
+
+QStringList DesktopShellViewModel::voiceRuntimePermissionSummaries() const {
+    return controller_.voiceRuntimePermissionSummaries();
+}
+
+QString DesktopShellViewModel::voiceRuntimeSafetyStatus() const {
+    return controller_.voiceRuntimeSafetyStatus();
+}
+
+QString DesktopShellViewModel::voiceRuntimeSafetySummary() const {
+    return controller_.voiceRuntimeSafetySummary();
+}
+
+QStringList DesktopShellViewModel::voiceRuntimeSafetyChecks() const {
+    return controller_.voiceRuntimeSafetyChecks();
+}
+
+bool DesktopShellViewModel::voiceRuntimeExecutionAllowed() const {
+    return controller_.voiceRuntimeExecutionAllowed();
+}
+
+QString DesktopShellViewModel::piperTtsStatus() const {
+    return controller_.piperTtsStatus();
+}
+
+QString DesktopShellViewModel::piperTtsSummary() const {
+    return controller_.piperTtsSummary();
+}
+
+QStringList DesktopShellViewModel::piperTtsReadinessChecks() const {
+    return controller_.piperTtsReadinessChecks();
+}
+
+bool DesktopShellViewModel::piperTtsReady() const {
+    return controller_.piperTtsReady();
+}
+
 bool DesktopShellViewModel::localChatInferenceEnabled() const {
     return controller_.localChatInferenceEnabled();
 }

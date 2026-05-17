@@ -74,6 +74,24 @@ enum class VoicePipelineStatus : std::uint8_t {
 
 QString voicePipelineStatusName(VoicePipelineStatus status);
 
+enum class VoiceBinaryStatus : std::uint8_t {
+    Missing,
+    ExpectedPath,
+    PresentMetadata,
+    Unavailable,
+};
+
+QString voiceBinaryStatusName(VoiceBinaryStatus status);
+
+enum class VoiceModelStatus : std::uint8_t {
+    Missing,
+    ExpectedPath,
+    PresentMetadata,
+    Unavailable,
+};
+
+QString voiceModelStatusName(VoiceModelStatus status);
+
 struct VoiceProviderDescriptor {
     QString id;
     QString name;
@@ -136,6 +154,46 @@ struct VoicePipelineResult {
     QList<VoicePipelineTrace> traces;
 };
 
+struct VoiceBinaryDescriptor {
+    QString id;
+    QString name;
+    VoiceCapability capability = VoiceCapability::TextToSpeech;
+    VoiceBinaryStatus status = VoiceBinaryStatus::Missing;
+    QString expectedPath;
+    bool executableAllowed = false;
+    QString summary;
+};
+
+struct VoiceModelDescriptor {
+    QString id;
+    QString name;
+    VoiceCapability capability = VoiceCapability::TextToSpeech;
+    VoiceModelStatus status = VoiceModelStatus::Missing;
+    QString expectedPath;
+    bool loadAllowed = false;
+    QString summary;
+};
+
+struct VoiceRuntimePermission {
+    QString id;
+    QString name;
+    bool granted = false;
+    QString summary;
+};
+
+struct VoiceRuntimeSafetyReport {
+    QString status = QStringLiteral("Blocked");
+    QString summary = QStringLiteral("Voice runtime execution is blocked by default.");
+    bool executionAllowed = false;
+    bool microphoneAllowed = false;
+    bool playbackAllowed = false;
+    bool processExecutionAllowed = false;
+    bool filesystemWideScanAllowed = false;
+    bool downloadsAllowed = false;
+    bool cloudAllowed = false;
+    QStringList checks;
+};
+
 QString voiceProviderDescriptorSummary(const VoiceProviderDescriptor& descriptor);
 QStringList voiceProviderCapabilitySummaries(const VoiceProviderDescriptor& descriptor);
 QString safeVoiceResponseSummary(const VoiceResponse& response);
@@ -146,6 +204,14 @@ QStringList voiceRuntimeCheckSummaries(const VoiceRuntimeSummary& summary);
 QString voicePipelineTraceSummary(const VoicePipelineTrace& trace);
 QStringList voicePipelineTraceSummaries(const QList<VoicePipelineTrace>& traces);
 QString safeVoicePipelineSummary(const VoicePipelineResult& result);
+QString voiceBinaryDescriptorSummary(const VoiceBinaryDescriptor& descriptor);
+QStringList voiceBinaryDescriptorSummaries(const QList<VoiceBinaryDescriptor>& descriptors);
+QString voiceModelDescriptorSummary(const VoiceModelDescriptor& descriptor);
+QStringList voiceModelDescriptorSummaries(const QList<VoiceModelDescriptor>& descriptors);
+QString voiceRuntimePermissionSummary(const VoiceRuntimePermission& permission);
+QStringList voiceRuntimePermissionSummaries(const QList<VoiceRuntimePermission>& permissions);
+QString voiceRuntimeSafetySummaryText(const VoiceRuntimeSafetyReport& report);
+QStringList voiceRuntimeSafetyCheckSummaries(const VoiceRuntimeSafetyReport& report);
 
 class ITextToSpeechProvider {
 public:
@@ -193,6 +259,46 @@ public:
     VoiceSession currentSession() const override;
     VoiceRuntimeSummary runtimeSummary() const override;
     VoicePipelineResult evaluate(VoiceSessionState requestedState) const override;
+};
+
+class IVoiceRuntimeEnvironment {
+public:
+    virtual ~IVoiceRuntimeEnvironment() = default;
+
+    virtual QString status() const = 0;
+    virtual QString summary() const = 0;
+    virtual QList<VoiceBinaryDescriptor> binaries() const = 0;
+    virtual QList<VoiceModelDescriptor> models() const = 0;
+    virtual QList<VoiceRuntimePermission> permissions() const = 0;
+    virtual VoiceRuntimeSafetyReport safetyReport() const = 0;
+};
+
+class NullVoiceRuntimeEnvironment final : public IVoiceRuntimeEnvironment {
+public:
+    QString status() const override;
+    QString summary() const override;
+    QList<VoiceBinaryDescriptor> binaries() const override;
+    QList<VoiceModelDescriptor> models() const override;
+    QList<VoiceRuntimePermission> permissions() const override;
+    VoiceRuntimeSafetyReport safetyReport() const override;
+};
+
+class StaticVoiceRuntimeEnvironment final : public IVoiceRuntimeEnvironment {
+public:
+    StaticVoiceRuntimeEnvironment();
+    StaticVoiceRuntimeEnvironment(QList<VoiceBinaryDescriptor> binaries,
+                                  QList<VoiceModelDescriptor> models);
+
+    QString status() const override;
+    QString summary() const override;
+    QList<VoiceBinaryDescriptor> binaries() const override;
+    QList<VoiceModelDescriptor> models() const override;
+    QList<VoiceRuntimePermission> permissions() const override;
+    VoiceRuntimeSafetyReport safetyReport() const override;
+
+private:
+    QList<VoiceBinaryDescriptor> binaries_;
+    QList<VoiceModelDescriptor> models_;
 };
 
 } // namespace sentinel::core

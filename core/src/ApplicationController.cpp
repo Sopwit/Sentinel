@@ -111,7 +111,9 @@ ApplicationController::ApplicationController(
     std::unique_ptr<IModelManagementService> modelManagementService,
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider,
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider,
-    std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator, QObject* parent)
+    std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator,
+    std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment,
+    std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -172,6 +174,12 @@ ApplicationController::ApplicationController(
       voiceRuntimeCoordinator_(voiceRuntimeCoordinator
                                    ? std::move(voiceRuntimeCoordinator)
                                    : std::make_unique<StaticVoiceRuntimeCoordinator>()),
+      voiceRuntimeEnvironment_(voiceRuntimeEnvironment
+                                   ? std::move(voiceRuntimeEnvironment)
+                                   : std::make_unique<NullVoiceRuntimeEnvironment>()),
+      piperTextToSpeechProvider_(piperTextToSpeechProvider
+                                     ? std::move(piperTextToSpeechProvider)
+                                     : std::make_unique<PiperTextToSpeechProvider>()),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -1065,6 +1073,76 @@ bool ApplicationController::voiceLocalOnlyPolicy() const {
 
 bool ApplicationController::voiceProcessExecutionEnabled() const {
     return currentVoiceRuntimeSummary().processExecutionEnabled;
+}
+
+QString ApplicationController::voiceRuntimeEnvironmentStatus() const {
+    return voiceRuntimeEnvironment_ ? voiceRuntimeEnvironment_->status()
+                                    : QStringLiteral("Blocked");
+}
+
+QString ApplicationController::voiceRuntimeEnvironmentSummary() const {
+    return voiceRuntimeEnvironment_
+               ? voiceRuntimeEnvironment_->summary()
+               : QStringLiteral("No voice runtime environment metadata available.");
+}
+
+QStringList ApplicationController::voiceBinarySummaries() const {
+    return voiceRuntimeEnvironment_
+               ? voiceBinaryDescriptorSummaries(voiceRuntimeEnvironment_->binaries())
+               : QStringList{};
+}
+
+QStringList ApplicationController::voiceModelSummaries() const {
+    return voiceRuntimeEnvironment_
+               ? voiceModelDescriptorSummaries(voiceRuntimeEnvironment_->models())
+               : QStringList{};
+}
+
+QStringList ApplicationController::voiceRuntimePermissionSummaries() const {
+    return voiceRuntimeEnvironment_ ? sentinel::core::voiceRuntimePermissionSummaries(
+                                          voiceRuntimeEnvironment_->permissions())
+                                    : QStringList{};
+}
+
+QString ApplicationController::voiceRuntimeSafetyStatus() const {
+    return voiceRuntimeEnvironment_ ? voiceRuntimeEnvironment_->safetyReport().status
+                                    : QStringLiteral("Blocked");
+}
+
+QString ApplicationController::voiceRuntimeSafetySummary() const {
+    return voiceRuntimeEnvironment_
+               ? voiceRuntimeSafetySummaryText(voiceRuntimeEnvironment_->safetyReport())
+               : QStringLiteral("Voice runtime safety metadata is unavailable.");
+}
+
+QStringList ApplicationController::voiceRuntimeSafetyChecks() const {
+    return voiceRuntimeEnvironment_
+               ? voiceRuntimeSafetyCheckSummaries(voiceRuntimeEnvironment_->safetyReport())
+               : QStringList{};
+}
+
+bool ApplicationController::voiceRuntimeExecutionAllowed() const {
+    return voiceRuntimeEnvironment_ && voiceRuntimeEnvironment_->safetyReport().executionAllowed;
+}
+
+QString ApplicationController::piperTtsStatus() const {
+    return piperTextToSpeechProvider_ ? piperTtsStatusName(piperTextToSpeechProvider_->status())
+                                      : piperTtsStatusName(PiperTtsStatus::Disabled);
+}
+
+QString ApplicationController::piperTtsSummary() const {
+    return piperTextToSpeechProvider_ ? piperTextToSpeechProvider_->piperStatusSummary()
+                                      : QStringLiteral("No Piper TTS provider metadata available.");
+}
+
+QStringList ApplicationController::piperTtsReadinessChecks() const {
+    return piperTextToSpeechProvider_ ? piperTextToSpeechProvider_->readinessChecks()
+                                      : QStringList{};
+}
+
+bool ApplicationController::piperTtsReady() const {
+    return piperTextToSpeechProvider_ &&
+           piperTextToSpeechProvider_->status() == PiperTtsStatus::ReadyMetadata;
 }
 
 bool ApplicationController::localChatInferenceEnabled() const {
