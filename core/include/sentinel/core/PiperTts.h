@@ -18,7 +18,11 @@ enum class PiperTtsStatus : std::uint8_t {
     MissingModel,
     SafetyBlocked,
     Refused,
+    Configured,
     ReadyMetadata,
+    Succeeded,
+    Failed,
+    Timeout,
 };
 
 QString piperTtsStatusName(PiperTtsStatus status);
@@ -37,10 +41,13 @@ struct PiperVoiceModelDescriptor {
 struct PiperTtsConfig {
     bool enabled = false;
     bool processExecutionAllowed = false;
+    bool fileOutputAllowed = false;
     bool audioPlaybackAllowed = false;
     VoiceBinaryDescriptor binary;
     PiperVoiceModelDescriptor voiceModel;
     VoiceRuntimeSafetyReport safetyReport;
+    QString controlledOutputDirectory;
+    int timeoutMs = 5000;
     QString summary;
 };
 
@@ -49,13 +56,19 @@ struct PiperTtsRequest {
     QString languageHint;
     QString outputPath;
     bool allowProcessExecution = false;
+    bool localOnly = true;
     bool allowAudioPlayback = false;
+    int timeoutMs = 5000;
 };
 
 struct PiperTtsResult {
     PiperTtsStatus status = PiperTtsStatus::Disabled;
     bool success = false;
     QString audioPath;
+    QString outputPathSummary;
+    int timeoutMs = 0;
+    int exitCode = -1;
+    QString error;
     QString summary;
     QStringList traces;
 };
@@ -83,6 +96,14 @@ public:
                               const PiperTtsConfig& config) override;
 };
 
+class ProcessPiperTtsClient final : public IPiperTtsClient {
+public:
+    PiperTtsStatus status() const override;
+    QString statusSummary() const override;
+    PiperTtsResult synthesize(const PiperTtsRequest& request,
+                              const PiperTtsConfig& config) override;
+};
+
 class PiperTextToSpeechProvider final : public ITextToSpeechProvider {
 public:
     PiperTextToSpeechProvider();
@@ -95,6 +116,8 @@ public:
     PiperTtsStatus status() const;
     QString piperStatusSummary() const;
     QStringList readinessChecks() const;
+    QString fileOutputStatus() const;
+    QString fileOutputSummary() const;
     PiperTtsResult synthesizePiper(const PiperTtsRequest& request);
     const PiperTtsConfig& config() const;
 

@@ -2,7 +2,6 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls.Basic
-import QtQuick.Layouts
 
 ShellPanel {
     id: dock
@@ -10,8 +9,11 @@ ShellPanel {
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property var dockPages: ["Memory", "Dashboard", "Agents"]
-    readonly property int currentPageIndex: dock.dockPages.indexOf(
-                                                dock.viewModel.currentPage)
+    readonly property int horizontalPadding: compact ? SentinelTheme.spaceSm : SentinelTheme.spaceMd
+    readonly property int verticalPadding: compact ? SentinelTheme.spaceXs : SentinelTheme.spaceSm
+    readonly property int itemSpacing: compact ? SentinelTheme.spaceXs : SentinelTheme.spaceSm
+    readonly property int itemWidth: Math.floor((width - horizontalPadding * 2 - itemSpacing * 2) / 3)
+    readonly property int itemHeight: height - verticalPadding * 2
 
     function pageIcon(pageName) {
         if (pageName === "Dashboard")
@@ -32,89 +34,79 @@ ShellPanel {
     }
 
     implicitWidth: compact ? 320 : 440
-    implicitHeight: compact ? 60 : 66
+    implicitHeight: compact ? 58 : 62
     radius: SentinelTheme.radiusPill
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.82)
     border.color: SentinelTheme.withAlpha(modeAccent, 0.20)
     showBrackets: false
     clip: true
 
-    RowLayout {
-        anchors.fill: parent
-        anchors.leftMargin: SentinelTheme.spaceMd
-        anchors.rightMargin: SentinelTheme.spaceMd
-        anchors.topMargin: 8
-        anchors.bottomMargin: 8
-        spacing: SentinelTheme.spaceXs
+    Row {
+        id: dockItems
+        anchors.centerIn: parent
+        width: dock.itemWidth * dock.dockPages.length
+               + dock.itemSpacing * (dock.dockPages.length - 1)
+        height: dock.itemHeight
+        spacing: dock.itemSpacing
 
-        Item {
-            id: tabsHost
-            Layout.fillWidth: true
-            Layout.fillHeight: true
+        Repeater {
+            model: dock.dockPages
 
-            Rectangle {
-                id: activeTrack
-                visible: dock.currentPageIndex >= 0
-                readonly property int pageCount: Math.max(1, dock.dockPages.length)
-                readonly property real tabWidth: tabsHost.width / pageCount
-                readonly property real tabPadding: compact ? 4 : 5
-                x: tabWidth * Math.max(0, dock.currentPageIndex) + tabPadding
-                y: 0
-                width: tabWidth - tabPadding * 2
-                height: tabsHost.height
-                radius: SentinelTheme.radiusPill
-                color: SentinelTheme.withAlpha(dock.modeAccent, 0.14)
-                border.color: SentinelTheme.withAlpha(dock.modeAccent, 0.30)
+            Button {
+                id: dockButton
+                required property string modelData
+                readonly property bool active: dock.viewModel.currentPage === modelData
 
-                Behavior on x {
-                    NumberAnimation {
-                        duration: SentinelTheme.durationNormal
-                        easing.type: SentinelTheme.easingEmphasized
-                    }
-                }
-            }
+                width: dock.itemWidth
+                height: dock.itemHeight
+                flat: true
+                hoverEnabled: true
+                focusPolicy: Qt.StrongFocus
+                onClicked: dock.viewModel.currentPage = modelData
 
-            RowLayout {
-                anchors.fill: parent
-                spacing: compact ? 4 : 6
+                contentItem: Item {
+                    Row {
+                        anchors.centerIn: parent
+                        spacing: dock.compact ? 0 : 6
+                        height: parent.height
 
-                Repeater {
-                    model: dock.dockPages
-
-                    Button {
-                        id: dockButton
-                        required property string modelData
-                        readonly property bool active: dock.viewModel.currentPage === modelData
-
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        flat: true
-                        hoverEnabled: true
-                        focusPolicy: Qt.StrongFocus
-                        onClicked: dock.viewModel.currentPage = modelData
-
-                        contentItem: Text {
-                            anchors.centerIn: parent
-                            text: dock.compact ? dock.pageIcon(dockButton.modelData) : dock.pageIcon(dockButton.modelData) + "  " + dock.pageLabel(dockButton.modelData)
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            text: dock.pageIcon(dockButton.modelData)
                             color: dockButton.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                             font.pixelSize: dock.compact ? 16 : SentinelTheme.fontSmall
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            elide: Text.ElideRight
                         }
 
-                        background: Rectangle {
-                            radius: SentinelTheme.radiusPill
-                            color: dockButton.hovered && !dockButton.active
-                                   ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
-                                   : "transparent"
-                            border.color: dockButton.activeFocus ? SentinelTheme.focusBorder
-                                                                 : "transparent"
+                        Text {
+                            anchors.verticalCenter: parent.verticalCenter
+                            visible: !dock.compact
+                            text: dock.pageLabel(dockButton.modelData)
+                            color: dockButton.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontSmall
+                            horizontalAlignment: Text.AlignLeft
+                            verticalAlignment: Text.AlignVCenter
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
                         }
                     }
                 }
+
+                background: Rectangle {
+                    radius: SentinelTheme.radiusPill
+                    color: dockButton.active
+                           ? SentinelTheme.withAlpha(dock.modeAccent, 0.14)
+                           : dockButton.hovered
+                             ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
+                             : "transparent"
+                    border.color: dockButton.activeFocus ? SentinelTheme.focusBorder
+                                                         : dockButton.active
+                                                           ? SentinelTheme.withAlpha(dock.modeAccent, 0.30)
+                                                           : "transparent"
+                    border.width: 1
+                }
             }
         }
-
     }
 }

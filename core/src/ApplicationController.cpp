@@ -11,6 +11,7 @@
 #include "sentinel/core/StaticTaskPlanner.h"
 
 #include <QElapsedTimer>
+#include <QFileInfo>
 
 namespace sentinel::core {
 
@@ -83,6 +84,169 @@ QString localInferenceChatFailureMessage(const LocalInferenceResponse& response)
     }
 
     return safeLocalInferenceSummary(response);
+}
+
+bool hasConfiguredVoicePath(const QString& path) {
+    return !path.trimmed().isEmpty();
+}
+
+QString displayedVoicePath(const QString& path) {
+    return hasConfiguredVoicePath(path) ? path.trimmed() : QStringLiteral("not configured");
+}
+
+QString pathExistenceText(const QFileInfo& info) {
+    return info.exists() ? QStringLiteral("exists") : QStringLiteral("missing");
+}
+
+QString pathReadabilityText(const QFileInfo& info) {
+    return info.exists() && info.isReadable() ? QStringLiteral("readable")
+                                              : QStringLiteral("unreadable");
+}
+
+QString pathExecutableText(const QFileInfo& info) {
+    return info.exists() && info.isExecutable() ? QStringLiteral("executable")
+                                                : QStringLiteral("non-executable");
+}
+
+QString configuredStatusBadge(const QString& label, const QString& path, bool requiresExecutable) {
+    const auto configured = hasConfiguredVoicePath(path);
+    if (!configured) {
+        return QStringLiteral("%1: Missing").arg(label);
+    }
+
+    const QFileInfo info(path.trimmed());
+    QStringList badges{QStringLiteral("Configured")};
+    badges.append(info.exists() ? QStringLiteral("Valid") : QStringLiteral("Missing"));
+    badges.append(info.exists() && info.isReadable() ? QStringLiteral("Readable")
+                                                     : QStringLiteral("Unreadable"));
+    if (requiresExecutable) {
+        badges.append(info.exists() && info.isExecutable() ? QStringLiteral("Executable")
+                                                           : QStringLiteral("Non-executable"));
+    }
+    return QStringLiteral("%1: %2").arg(label, badges.join(QStringLiteral(" / ")));
+}
+
+QString configuredPathValueSummary(const QString& label, const QString& path) {
+    return QStringLiteral("%1 path: %2").arg(label, displayedVoicePath(path));
+}
+
+QString binaryHintSummary(const QString& label, const QString& configuredPath,
+                          const QStringList& knownPaths) {
+    const QFileInfo configuredInfo(configuredPath.trimmed());
+    if (hasConfiguredVoicePath(configuredPath) && configuredInfo.exists() &&
+        configuredInfo.isReadable() && configuredInfo.isExecutable()) {
+        return QStringLiteral("%1 hint: configured path is executable; no suggestion needed.")
+            .arg(label);
+    }
+
+    for (const auto& path : knownPaths) {
+        const QFileInfo info(path);
+        if (info.exists() && info.isReadable() && info.isExecutable()) {
+            return QStringLiteral("%1 hint: %2 appears executable. Suggestion only; settings are "
+                                  "not changed automatically.")
+                .arg(label, path);
+        }
+    }
+
+    return QStringLiteral("%1 hint: no executable found in known Homebrew/local locations.")
+        .arg(label);
+}
+
+QString modelHintSummary(const QString& label, const QString& configuredPath,
+                         const QString& missingSummary) {
+    const QFileInfo info(configuredPath.trimmed());
+    if (hasConfiguredVoicePath(configuredPath) && info.exists() && info.isReadable()) {
+        return QStringLiteral("%1 hint: configured path is readable; no suggestion needed.")
+            .arg(label);
+    }
+
+    return QStringLiteral("%1 hint: %2").arg(label, missingSummary);
+}
+
+VoiceBinaryDescriptor configuredVoiceBinaryDescriptor(const QString& id, const QString& name,
+                                                      VoiceCapability capability,
+                                                      const QString& path,
+                                                      const QString& runtimeName) {
+    const QFileInfo info(path.trimmed());
+    const auto configured = hasConfiguredVoicePath(path);
+    const auto exists = configured && info.exists();
+    return VoiceBinaryDescriptor{
+        id,
+        name,
+        capability,
+        exists ? VoiceBinaryStatus::PresentMetadata : VoiceBinaryStatus::Missing,
+        displayedVoicePath(path),
+        exists && info.isReadable() && info.isExecutable(),
+        configured
+            ? QStringLiteral("%1 binary metadata only: path %2, %3, %4. Sentinel will not execute "
+                             "%1 in this phase.")
+                  .arg(runtimeName, pathExistenceText(info), pathReadabilityText(info),
+                       pathExecutableText(info))
+            : QStringLiteral("%1 binary path is not configured; Sentinel will not execute %1.")
+                  .arg(runtimeName),
+    };
+}
+
+VoiceModelDescriptor configuredVoiceModelDescriptor(const QString& id, const QString& name,
+                                                    VoiceCapability capability, const QString& path,
+                                                    const QString& runtimeName) {
+    const QFileInfo info(path.trimmed());
+    const auto configured = hasConfiguredVoicePath(path);
+    const auto exists = configured && info.exists();
+    return VoiceModelDescriptor{
+        id,
+        name,
+        capability,
+        exists ? VoiceModelStatus::PresentMetadata : VoiceModelStatus::Missing,
+        displayedVoicePath(path),
+        exists && info.isReadable(),
+        configured
+            ? QStringLiteral("%1 model metadata only: path %2, %3. Sentinel will not load or scan "
+                             "%1 models in this phase.")
+                  .arg(runtimeName, pathExistenceText(info), pathReadabilityText(info))
+            : QStringLiteral("%1 model path is not configured or loaded.").arg(runtimeName),
+    };
+}
+
+bool hasConfiguredVoicePaths(const QString& piperBinaryPath, const QString& piperModelPath,
+                             const QString& whisperBinaryPath, const QString& whisperModelPath) {
+    return hasConfiguredVoicePath(piperBinaryPath) || hasConfiguredVoicePath(piperModelPath) ||
+           hasConfiguredVoicePath(whisperBinaryPath) || hasConfiguredVoicePath(whisperModelPath);
+}
+
+PiperTtsConfig configuredPiperTtsConfig(const QString& piperBinaryPath,
+                                        const QString& piperModelPath) {
+    auto config = defaultDisabledPiperTtsConfig();
+    const auto binary = configuredVoiceBinaryDescriptor(
+        QStringLiteral("piper-binary"), QStringLiteral("Piper Binary"),
+        VoiceCapability::TextToSpeech, piperBinaryPath, QStringLiteral("Piper"));
+    const auto model = configuredVoiceModelDescriptor(
+        QStringLiteral("piper-voice-model"), QStringLiteral("Piper Voice Model"),
+        VoiceCapability::TextToSpeech, piperModelPath, QStringLiteral("Piper"));
+
+    config.enabled =
+        hasConfiguredVoicePath(piperBinaryPath) || hasConfiguredVoicePath(piperModelPath);
+    config.processExecutionAllowed = false;
+    config.fileOutputAllowed = false;
+    config.audioPlaybackAllowed = false;
+    config.binary = binary;
+    config.voiceModel = PiperVoiceModelDescriptor{
+        QStringLiteral("piper-voice-model"),
+        QStringLiteral("Piper Voice Model"),
+        model.status,
+        model.expectedPath,
+        {},
+        {},
+        model.loadAllowed,
+        model.summary,
+    };
+    config.safetyReport = NullVoiceRuntimeEnvironment{}.safetyReport();
+    config.summary = config.enabled
+                         ? QStringLiteral("Piper path configuration is stored as metadata only; "
+                                          "Piper execution and playback remain blocked.")
+                         : QStringLiteral("Piper TTS adapter is disabled and not configured; it "
+                                          "exposes readiness metadata only.");
+    return config;
 }
 
 } // namespace
@@ -946,6 +1110,15 @@ bool ApplicationController::voiceEnabled() const {
 }
 
 VoiceReadinessReport ApplicationController::currentVoiceReadinessReport() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        const PiperTextToSpeechProvider piperProvider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return buildVoiceReadinessReport(piperProvider.descriptor(),
+                                         speechToTextProvider_ ? speechToTextProvider_->descriptor()
+                                                               : VoiceProviderDescriptor{});
+    }
+
     return buildVoiceReadinessReport(
         textToSpeechProvider_ ? textToSpeechProvider_->descriptor() : VoiceProviderDescriptor{},
         speechToTextProvider_ ? speechToTextProvider_->descriptor() : VoiceProviderDescriptor{});
@@ -975,12 +1148,26 @@ QStringList ApplicationController::voiceCapabilitySummaries() const {
 }
 
 QString ApplicationController::textToSpeechStatus() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        const PiperTextToSpeechProvider piperProvider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return voiceProviderStatusName(piperProvider.descriptor().status);
+    }
+
     return textToSpeechProvider_
                ? voiceProviderStatusName(textToSpeechProvider_->descriptor().status)
                : voiceProviderStatusName(VoiceProviderStatus::Unavailable);
 }
 
 QString ApplicationController::textToSpeechSummary() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        const PiperTextToSpeechProvider piperProvider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return piperProvider.statusSummary();
+    }
+
     return textToSpeechProvider_ ? textToSpeechProvider_->statusSummary()
                                  : QStringLiteral("No text-to-speech provider metadata.");
 }
@@ -1076,23 +1263,61 @@ bool ApplicationController::voiceProcessExecutionEnabled() const {
 }
 
 QString ApplicationController::voiceRuntimeEnvironmentStatus() const {
+    if (hasConfiguredVoicePaths(piperBinaryPath_, piperModelPath_, whisperBinaryPath_,
+                                whisperModelPath_)) {
+        return QStringLiteral("Configured Metadata");
+    }
+
     return voiceRuntimeEnvironment_ ? voiceRuntimeEnvironment_->status()
                                     : QStringLiteral("Blocked");
 }
 
 QString ApplicationController::voiceRuntimeEnvironmentSummary() const {
+    if (hasConfiguredVoicePaths(piperBinaryPath_, piperModelPath_, whisperBinaryPath_,
+                                whisperModelPath_)) {
+        return QStringLiteral("Voice configuration stores Piper and Whisper paths as metadata "
+                              "only. Exact configured paths are checked for exists/readable and "
+                              "binary executable state without running Piper, running Whisper, "
+                              "opening audio devices, downloading models, or scanning the "
+                              "filesystem.");
+    }
+
     return voiceRuntimeEnvironment_
                ? voiceRuntimeEnvironment_->summary()
                : QStringLiteral("No voice runtime environment metadata available.");
 }
 
 QStringList ApplicationController::voiceBinarySummaries() const {
+    if (hasConfiguredVoicePaths(piperBinaryPath_, piperModelPath_, whisperBinaryPath_,
+                                whisperModelPath_)) {
+        return voiceBinaryDescriptorSummaries({
+            configuredVoiceBinaryDescriptor(
+                QStringLiteral("piper-binary"), QStringLiteral("Piper Binary"),
+                VoiceCapability::TextToSpeech, piperBinaryPath_, QStringLiteral("Piper")),
+            configuredVoiceBinaryDescriptor(
+                QStringLiteral("whisper-binary"), QStringLiteral("Whisper Binary"),
+                VoiceCapability::SpeechToText, whisperBinaryPath_, QStringLiteral("Whisper")),
+        });
+    }
+
     return voiceRuntimeEnvironment_
                ? voiceBinaryDescriptorSummaries(voiceRuntimeEnvironment_->binaries())
                : QStringList{};
 }
 
 QStringList ApplicationController::voiceModelSummaries() const {
+    if (hasConfiguredVoicePaths(piperBinaryPath_, piperModelPath_, whisperBinaryPath_,
+                                whisperModelPath_)) {
+        return voiceModelDescriptorSummaries({
+            configuredVoiceModelDescriptor(
+                QStringLiteral("piper-voice-model"), QStringLiteral("Piper Voice Model"),
+                VoiceCapability::TextToSpeech, piperModelPath_, QStringLiteral("Piper")),
+            configuredVoiceModelDescriptor(
+                QStringLiteral("whisper-model"), QStringLiteral("Whisper Model"),
+                VoiceCapability::SpeechToText, whisperModelPath_, QStringLiteral("Whisper")),
+        });
+    }
+
     return voiceRuntimeEnvironment_
                ? voiceModelDescriptorSummaries(voiceRuntimeEnvironment_->models())
                : QStringList{};
@@ -1126,23 +1351,185 @@ bool ApplicationController::voiceRuntimeExecutionAllowed() const {
 }
 
 QString ApplicationController::piperTtsStatus() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        PiperTextToSpeechProvider provider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return piperTtsStatusName(provider.status());
+    }
+
     return piperTextToSpeechProvider_ ? piperTtsStatusName(piperTextToSpeechProvider_->status())
                                       : piperTtsStatusName(PiperTtsStatus::Disabled);
 }
 
 QString ApplicationController::piperTtsSummary() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        PiperTextToSpeechProvider provider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return provider.piperStatusSummary();
+    }
+
     return piperTextToSpeechProvider_ ? piperTextToSpeechProvider_->piperStatusSummary()
                                       : QStringLiteral("No Piper TTS provider metadata available.");
 }
 
 QStringList ApplicationController::piperTtsReadinessChecks() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        PiperTextToSpeechProvider provider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return provider.readinessChecks();
+    }
+
     return piperTextToSpeechProvider_ ? piperTextToSpeechProvider_->readinessChecks()
                                       : QStringList{};
 }
 
 bool ApplicationController::piperTtsReady() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        PiperTextToSpeechProvider provider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return provider.status() == PiperTtsStatus::Configured;
+    }
+
     return piperTextToSpeechProvider_ &&
-           piperTextToSpeechProvider_->status() == PiperTtsStatus::ReadyMetadata;
+           piperTextToSpeechProvider_->status() == PiperTtsStatus::Configured;
+}
+
+QString ApplicationController::piperTtsFileOutputStatus() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        PiperTextToSpeechProvider provider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return provider.fileOutputStatus();
+    }
+
+    return piperTextToSpeechProvider_ ? piperTextToSpeechProvider_->fileOutputStatus()
+                                      : piperTtsStatusName(PiperTtsStatus::Disabled);
+}
+
+QString ApplicationController::piperTtsFileOutputSummary() const {
+    if (hasConfiguredVoicePath(piperBinaryPath_) || hasConfiguredVoicePath(piperModelPath_)) {
+        PiperTextToSpeechProvider provider{
+            configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
+            std::make_unique<NullPiperTtsClient>()};
+        return provider.fileOutputSummary();
+    }
+
+    return piperTextToSpeechProvider_
+               ? piperTextToSpeechProvider_->fileOutputSummary()
+               : QStringLiteral("No Piper TTS file-output metadata available.");
+}
+
+QString ApplicationController::piperBinaryPath() const {
+    return piperBinaryPath_;
+}
+
+void ApplicationController::setPiperBinaryPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == piperBinaryPath_) {
+        return;
+    }
+
+    piperBinaryPath_ = normalized;
+    emit voiceConfigurationChanged();
+}
+
+QString ApplicationController::piperModelPath() const {
+    return piperModelPath_;
+}
+
+void ApplicationController::setPiperModelPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == piperModelPath_) {
+        return;
+    }
+
+    piperModelPath_ = normalized;
+    emit voiceConfigurationChanged();
+}
+
+QString ApplicationController::whisperBinaryPath() const {
+    return whisperBinaryPath_;
+}
+
+void ApplicationController::setWhisperBinaryPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == whisperBinaryPath_) {
+        return;
+    }
+
+    whisperBinaryPath_ = normalized;
+    emit voiceConfigurationChanged();
+}
+
+QString ApplicationController::whisperModelPath() const {
+    return whisperModelPath_;
+}
+
+void ApplicationController::setWhisperModelPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == whisperModelPath_) {
+        return;
+    }
+
+    whisperModelPath_ = normalized;
+    emit voiceConfigurationChanged();
+}
+
+QStringList ApplicationController::voiceConfigurationSummaries() const {
+    return voiceBinarySummaries() + voiceModelSummaries();
+}
+
+QString ApplicationController::voiceConfigurationReadinessSummary() const {
+    const auto piperBinaryConfigured = hasConfiguredVoicePath(piperBinaryPath_);
+    const auto piperModelConfigured = hasConfiguredVoicePath(piperModelPath_);
+    const auto whisperBinaryConfigured = hasConfiguredVoicePath(whisperBinaryPath_);
+    const auto whisperModelConfigured = hasConfiguredVoicePath(whisperModelPath_);
+    return QStringLiteral("Piper binary %1, Piper model %2, Whisper binary %3, Whisper model %4. "
+                          "Configuration is metadata-only; Piper and Whisper are not executed.")
+        .arg(piperBinaryConfigured ? QStringLiteral("configured") : QStringLiteral("missing"),
+             piperModelConfigured ? QStringLiteral("configured") : QStringLiteral("missing"),
+             whisperBinaryConfigured ? QStringLiteral("configured") : QStringLiteral("missing"),
+             whisperModelConfigured ? QStringLiteral("configured") : QStringLiteral("missing"));
+}
+
+QStringList ApplicationController::voiceConfigurationStatusBadges() const {
+    return {
+        configuredStatusBadge(QStringLiteral("Piper binary"), piperBinaryPath_, true),
+        configuredStatusBadge(QStringLiteral("Piper model"), piperModelPath_, false),
+        configuredStatusBadge(QStringLiteral("Whisper binary"), whisperBinaryPath_, true),
+        configuredStatusBadge(QStringLiteral("Whisper model"), whisperModelPath_, false),
+    };
+}
+
+QStringList ApplicationController::voiceConfigurationHintSummaries() const {
+    const QStringList piperBinaryKnownPaths{
+        QStringLiteral("/opt/homebrew/bin/piper"),
+        QStringLiteral("/usr/local/bin/piper"),
+    };
+    const QStringList whisperBinaryKnownPaths{
+        QStringLiteral("/opt/homebrew/bin/whisper"),
+        QStringLiteral("/usr/local/bin/whisper"),
+    };
+
+    return {
+        configuredPathValueSummary(QStringLiteral("Piper binary"), piperBinaryPath_),
+        binaryHintSummary(QStringLiteral("Piper binary"), piperBinaryPath_, piperBinaryKnownPaths),
+        modelHintSummary(QStringLiteral("Piper model"), piperModelPath_,
+                         QStringLiteral("configure a local Piper model path to validate it.")),
+        configuredPathValueSummary(QStringLiteral("Whisper binary"), whisperBinaryPath_),
+        binaryHintSummary(QStringLiteral("Whisper binary"), whisperBinaryPath_,
+                          whisperBinaryKnownPaths),
+        modelHintSummary(
+            QStringLiteral("Whisper model"), whisperModelPath_,
+            QStringLiteral(
+                "only the configured path is checked; no model directories are scanned.")),
+        QStringLiteral("Auto-detection is hint-only and checks only fixed known binary locations "
+                       "plus configured paths. Piper and Whisper are not executed."),
+    };
 }
 
 bool ApplicationController::localChatInferenceEnabled() const {

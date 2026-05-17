@@ -220,20 +220,45 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(bool voicePlaybackEnabled READ voicePlaybackEnabled CONSTANT)
     Q_PROPERTY(bool voiceLocalOnlyPolicy READ voiceLocalOnlyPolicy CONSTANT)
     Q_PROPERTY(bool voiceProcessExecutionEnabled READ voiceProcessExecutionEnabled CONSTANT)
-    Q_PROPERTY(QString voiceRuntimeEnvironmentStatus READ voiceRuntimeEnvironmentStatus CONSTANT)
-    Q_PROPERTY(QString voiceRuntimeEnvironmentSummary READ voiceRuntimeEnvironmentSummary CONSTANT)
-    Q_PROPERTY(QStringList voiceBinarySummaries READ voiceBinarySummaries CONSTANT)
-    Q_PROPERTY(QStringList voiceModelSummaries READ voiceModelSummaries CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeEnvironmentStatus READ voiceRuntimeEnvironmentStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString voiceRuntimeEnvironmentSummary READ voiceRuntimeEnvironmentSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(
+        QStringList voiceBinarySummaries READ voiceBinarySummaries NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(
+        QStringList voiceModelSummaries READ voiceModelSummaries NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(
         QStringList voiceRuntimePermissionSummaries READ voiceRuntimePermissionSummaries CONSTANT)
     Q_PROPERTY(QString voiceRuntimeSafetyStatus READ voiceRuntimeSafetyStatus CONSTANT)
     Q_PROPERTY(QString voiceRuntimeSafetySummary READ voiceRuntimeSafetySummary CONSTANT)
     Q_PROPERTY(QStringList voiceRuntimeSafetyChecks READ voiceRuntimeSafetyChecks CONSTANT)
     Q_PROPERTY(bool voiceRuntimeExecutionAllowed READ voiceRuntimeExecutionAllowed CONSTANT)
-    Q_PROPERTY(QString piperTtsStatus READ piperTtsStatus CONSTANT)
-    Q_PROPERTY(QString piperTtsSummary READ piperTtsSummary CONSTANT)
-    Q_PROPERTY(QStringList piperTtsReadinessChecks READ piperTtsReadinessChecks CONSTANT)
-    Q_PROPERTY(bool piperTtsReady READ piperTtsReady CONSTANT)
+    Q_PROPERTY(QString piperTtsStatus READ piperTtsStatus NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString piperTtsSummary READ piperTtsSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList piperTtsReadinessChecks READ piperTtsReadinessChecks NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(bool piperTtsReady READ piperTtsReady NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString piperTtsFileOutputStatus READ piperTtsFileOutputStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperTtsFileOutputSummary READ piperTtsFileOutputSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperBinaryPath READ whisperBinaryPath WRITE setWhisperBinaryPath NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperModelPath READ whisperModelPath WRITE setWhisperModelPath NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QStringList voiceConfigurationSummaries READ voiceConfigurationSummaries NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString voiceConfigurationReadinessSummary READ voiceConfigurationReadinessSummary
+                   NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList voiceConfigurationStatusBadges READ voiceConfigurationStatusBadges NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QStringList voiceConfigurationHintSummaries READ voiceConfigurationHintSummaries
+                   NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
@@ -466,6 +491,20 @@ public:
     QString piperTtsSummary() const;
     QStringList piperTtsReadinessChecks() const;
     bool piperTtsReady() const;
+    QString piperTtsFileOutputStatus() const;
+    QString piperTtsFileOutputSummary() const;
+    QString piperBinaryPath() const;
+    void setPiperBinaryPath(const QString& path);
+    QString piperModelPath() const;
+    void setPiperModelPath(const QString& path);
+    QString whisperBinaryPath() const;
+    void setWhisperBinaryPath(const QString& path);
+    QString whisperModelPath() const;
+    void setWhisperModelPath(const QString& path);
+    QStringList voiceConfigurationSummaries() const;
+    QString voiceConfigurationReadinessSummary() const;
+    QStringList voiceConfigurationStatusBadges() const;
+    QStringList voiceConfigurationHintSummaries() const;
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;
@@ -521,6 +560,7 @@ signals:
     void localModelSelectionChanged();
     void localChatInferenceRoutingChanged();
     void localInferenceChanged();
+    void voiceConfigurationChanged();
 
 private:
     AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request) const;
@@ -600,6 +640,10 @@ private:
     bool localInferenceBusy_ = false;
     LocalInferenceResponse latestLocalInferenceResponse_;
     LocalInferenceStreamResult latestLocalInferenceStreamResult_;
+    QString piperBinaryPath_;
+    QString piperModelPath_;
+    QString whisperBinaryPath_;
+    QString whisperModelPath_;
 };
 
 } // namespace sentinel::core
