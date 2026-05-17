@@ -37,17 +37,20 @@ ApplicationWindow {
         anchors.leftMargin: SentinelTheme.pageMargin(root.width)
         anchors.rightMargin: SentinelTheme.pageMargin(root.width)
         anchors.topMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
-        anchors.bottomMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
+        anchors.bottomMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
+                              + dock.height + SentinelTheme.spaceMd
         spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
 
         RowLayout {
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: 0
             spacing: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
 
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
+                Layout.minimumHeight: 0
                 spacing: SentinelTheme.spaceMd
 
                 HeaderBar {
@@ -60,6 +63,7 @@ ApplicationWindow {
                 StackLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
+                    Layout.minimumHeight: 0
                     clip: true
                     currentIndex: root.currentPageIndex()
 
@@ -121,17 +125,22 @@ ApplicationWindow {
                 visible: !root.compactLayout && root.viewModel.currentPage === "Dashboard"
                 Layout.preferredWidth: Math.min(SentinelTheme.rightPanelWidth, root.width * 0.32)
                 Layout.fillHeight: true
+                Layout.minimumHeight: 0
             }
         }
+    }
 
-        SentinelDock {
-            viewModel: root.viewModel
-            compact: root.compactLayout
-            Layout.alignment: Qt.AlignHCenter
-            Layout.preferredWidth: Math.min(root.width - SentinelTheme.space4Xl,
-                                            root.compactLayout ? 360 : 440)
-            Layout.preferredHeight: compact ? 58 : 62
-        }
+    SentinelDock {
+        id: dock
+        viewModel: root.viewModel
+        compact: root.compactLayout
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
+        width: Math.min(root.width - SentinelTheme.space4Xl,
+                        root.compactLayout ? 360 : 440)
+        height: compact ? 58 : 62
+        z: 30
     }
 
     Button {

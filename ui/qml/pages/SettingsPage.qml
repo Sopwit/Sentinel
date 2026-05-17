@@ -7,87 +7,98 @@ ScrollView {
     id: settingsPage
     required property var viewModel
     readonly property bool compact: width < 760
+    readonly property int panelPadding: SentinelTheme.spaceLg
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
     function sectionHeight(content) {
-        return content.implicitHeight + SentinelTheme.space2Xl
+        return content.implicitHeight + panelPadding * 2
     }
 
-    ColumnLayout {
+    contentWidth: availableWidth
+
+    Item {
         width: settingsPage.availableWidth
-        spacing: SentinelTheme.spaceLg
+        implicitHeight: settingsColumn.implicitHeight
 
-        SectionTitle {
-            title: "Settings"
-            subtitle: "Local preferences and read-only runtime state."
-        }
+        Column {
+            id: settingsColumn
+            width: parent.width
+            spacing: SentinelTheme.spaceLg
 
-        ShellPanel {
-            Layout.fillWidth: true
-            implicitHeight: settingsPage.sectionHeight(generalContent)
+            SectionTitle {
+                width: parent.width
+                title: "Settings"
+                subtitle: "Local preferences and read-only runtime state."
+            }
 
-            ColumnLayout {
-                id: generalContent
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceLg
-                spacing: SentinelTheme.spaceSm
+            ShellPanel {
+                width: parent.width
+                implicitHeight: settingsPage.sectionHeight(generalContent)
 
-                SectionTitle {
-                    title: "General"
-                    subtitle: "Desktop shell preferences."
-                    Layout.fillWidth: true
-                }
+                ColumnLayout {
+                    id: generalContent
+                    x: settingsPage.panelPadding
+                    y: settingsPage.panelPadding
+                    width: parent.width - settingsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
 
-                GridLayout {
-                    Layout.fillWidth: true
-                    columns: settingsPage.compact ? 1 : 2
-                    columnSpacing: SentinelTheme.spaceSm
-                    rowSpacing: SentinelTheme.spaceSm
+                    SectionTitle {
+                        title: "General"
+                        subtitle: "Desktop shell preferences."
+                        Layout.fillWidth: true
+                    }
 
-                    Label {
-                        text: "Theme"
-                        color: SentinelTheme.textMuted
+                    GridLayout {
+                        Layout.fillWidth: true
+                        columns: settingsPage.compact ? 1 : 2
+                        columnSpacing: SentinelTheme.spaceSm
+                        rowSpacing: SentinelTheme.spaceSm
+
+                        Label {
+                            text: "Theme"
+                            color: SentinelTheme.textMuted
+                        }
+
+                        InfoRow {
+                            Layout.fillWidth: true
+                            compact: true
+                            label: "Active"
+                            value: settingsPage.viewModel.themeName
+                        }
+
+                        Label {
+                            text: "Config Profile"
+                            color: SentinelTheme.textMuted
+                        }
+
+                        InfoRow {
+                            Layout.fillWidth: true
+                            compact: true
+                            label: "Active"
+                            value: settingsPage.viewModel.configurationProfile
+                        }
                     }
 
                     InfoRow {
+                        compact: settingsPage.compact
+                        label: "Storage"
+                        value: "Memory " + settingsPage.viewModel.memoryStatus + " / Chat " + settingsPage.viewModel.chatHistoryStatus
                         Layout.fillWidth: true
-                        compact: true
-                        label: "Active"
-                        value: settingsPage.viewModel.themeName
                     }
-
-                    Label {
-                        text: "Config Profile"
-                        color: SentinelTheme.textMuted
-                    }
-
-                    InfoRow {
-                        Layout.fillWidth: true
-                        compact: true
-                        label: "Active"
-                        value: settingsPage.viewModel.configurationProfile
-                    }
-                }
-
-                InfoRow {
-                    compact: settingsPage.compact
-                    label: "Storage"
-                    value: "Memory " + settingsPage.viewModel.memoryStatus + " / Chat " + settingsPage.viewModel.chatHistoryStatus
-                    Layout.fillWidth: true
                 }
             }
-        }
 
-        ShellPanel {
-            Layout.fillWidth: true
-            implicitHeight: settingsPage.sectionHeight(localAiContent)
+            ShellPanel {
+                width: parent.width
+                implicitHeight: settingsPage.sectionHeight(localAiContent)
 
-            ColumnLayout {
-                id: localAiContent
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceLg
-                spacing: SentinelTheme.spaceSm
+                ColumnLayout {
+                    id: localAiContent
+                    x: settingsPage.panelPadding
+                    y: settingsPage.panelPadding
+                    width: parent.width - settingsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
                     title: "Local AI / Ollama"
@@ -132,15 +143,16 @@ ScrollView {
             }
         }
 
-        ShellPanel {
-            Layout.fillWidth: true
-            implicitHeight: settingsPage.sectionHeight(modelContent)
+            ShellPanel {
+                width: parent.width
+                implicitHeight: settingsPage.sectionHeight(modelContent)
 
-            ColumnLayout {
-                id: modelContent
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceLg
-                spacing: SentinelTheme.spaceSm
+                ColumnLayout {
+                    id: modelContent
+                    x: settingsPage.panelPadding
+                    y: settingsPage.panelPadding
+                    width: parent.width - settingsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
                     title: "Model Selection"
@@ -206,15 +218,16 @@ ScrollView {
             }
         }
 
-        ShellPanel {
-            Layout.fillWidth: true
-            implicitHeight: settingsPage.sectionHeight(chatContent)
+            ShellPanel {
+                width: parent.width
+                implicitHeight: settingsPage.sectionHeight(chatContent)
 
-            ColumnLayout {
-                id: chatContent
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceLg
-                spacing: SentinelTheme.spaceSm
+                ColumnLayout {
+                    id: chatContent
+                    x: settingsPage.panelPadding
+                    y: settingsPage.panelPadding
+                    width: parent.width - settingsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
                     title: "Streaming / Chat"
@@ -259,15 +272,16 @@ ScrollView {
             }
         }
 
-        ShellPanel {
-            Layout.fillWidth: true
-            implicitHeight: settingsPage.sectionHeight(voiceContent)
+            ShellPanel {
+                width: parent.width
+                implicitHeight: settingsPage.sectionHeight(voiceContent)
 
-            ColumnLayout {
-                id: voiceContent
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceLg
-                spacing: SentinelTheme.spaceSm
+                ColumnLayout {
+                    id: voiceContent
+                    x: settingsPage.panelPadding
+                    y: settingsPage.panelPadding
+                    width: parent.width - settingsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
                     title: "Voice / Piper"
@@ -334,15 +348,16 @@ ScrollView {
             }
         }
 
-        ShellPanel {
-            Layout.fillWidth: true
-            implicitHeight: settingsPage.sectionHeight(safetyContent)
+            ShellPanel {
+                width: parent.width
+                implicitHeight: settingsPage.sectionHeight(safetyContent)
 
-            ColumnLayout {
-                id: safetyContent
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceLg
-                spacing: SentinelTheme.spaceSm
+                ColumnLayout {
+                    id: safetyContent
+                    x: settingsPage.panelPadding
+                    y: settingsPage.panelPadding
+                    width: parent.width - settingsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
                     title: "Safety / Diagnostics"
@@ -394,15 +409,16 @@ ScrollView {
             }
         }
 
-        ShellPanel {
-            Layout.fillWidth: true
-            implicitHeight: maintenanceContent.implicitHeight + SentinelTheme.space2Xl
+            ShellPanel {
+                width: parent.width
+                implicitHeight: settingsPage.sectionHeight(maintenanceContent)
 
-            ColumnLayout {
-                id: maintenanceContent
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceLg
-                spacing: SentinelTheme.spaceSm
+                ColumnLayout {
+                    id: maintenanceContent
+                    x: settingsPage.panelPadding
+                    y: settingsPage.panelPadding
+                    width: parent.width - settingsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
                     title: "Local Data"
@@ -445,6 +461,7 @@ ScrollView {
                 }
             }
         }
+    }
     }
 
     Dialog {
