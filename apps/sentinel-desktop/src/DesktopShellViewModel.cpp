@@ -582,6 +582,70 @@ QString DesktopShellViewModel::speechToTextSummary() const {
     return controller_.speechToTextSummary();
 }
 
+QString DesktopShellViewModel::voiceSessionId() const {
+    return controller_.voiceSessionId();
+}
+
+QString DesktopShellViewModel::voiceSessionStatus() const {
+    return controller_.voiceSessionStatus();
+}
+
+QString DesktopShellViewModel::voiceSessionSummary() const {
+    return controller_.voiceSessionSummary();
+}
+
+QString DesktopShellViewModel::voicePipelineStatus() const {
+    return controller_.voicePipelineStatus();
+}
+
+QString DesktopShellViewModel::voicePipelineSummary() const {
+    return controller_.voicePipelineSummary();
+}
+
+QStringList DesktopShellViewModel::voicePipelineTraceSummaries() const {
+    return controller_.voicePipelineTraceSummaries();
+}
+
+QString DesktopShellViewModel::voiceRuntimeStatus() const {
+    return controller_.voiceRuntimeStatus();
+}
+
+QString DesktopShellViewModel::voiceRuntimeSummary() const {
+    return controller_.voiceRuntimeSummary();
+}
+
+QStringList DesktopShellViewModel::voiceRuntimeCheckSummaries() const {
+    return controller_.voiceRuntimeCheckSummaries();
+}
+
+bool DesktopShellViewModel::voiceRuntimeAvailable() const {
+    return controller_.voiceRuntimeAvailable();
+}
+
+bool DesktopShellViewModel::voiceTextToSpeechAvailable() const {
+    return controller_.voiceTextToSpeechAvailable();
+}
+
+bool DesktopShellViewModel::voiceSpeechToTextAvailable() const {
+    return controller_.voiceSpeechToTextAvailable();
+}
+
+bool DesktopShellViewModel::voiceMicrophoneEnabled() const {
+    return controller_.voiceMicrophoneEnabled();
+}
+
+bool DesktopShellViewModel::voicePlaybackEnabled() const {
+    return controller_.voicePlaybackEnabled();
+}
+
+bool DesktopShellViewModel::voiceLocalOnlyPolicy() const {
+    return controller_.voiceLocalOnlyPolicy();
+}
+
+bool DesktopShellViewModel::voiceProcessExecutionEnabled() const {
+    return controller_.voiceProcessExecutionEnabled();
+}
+
 bool DesktopShellViewModel::localChatInferenceEnabled() const {
     return controller_.localChatInferenceEnabled();
 }

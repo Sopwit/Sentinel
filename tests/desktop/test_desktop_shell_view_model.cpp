@@ -569,6 +569,25 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
     QVERIFY(fixture.viewModel.voiceReadinessChecks()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("No Piper")));
+    QCOMPARE(fixture.viewModel.voiceSessionId(), QStringLiteral("voice-session-1"));
+    QCOMPARE(fixture.viewModel.voiceSessionStatus(), QStringLiteral("completed"));
+    QVERIFY(fixture.viewModel.voiceSessionSummary().contains(QStringLiteral("metadata-only")));
+    QCOMPARE(fixture.viewModel.voicePipelineStatus(), QStringLiteral("completed"));
+    QVERIFY(fixture.viewModel.voicePipelineSummary().contains(QStringLiteral("metadata-only")));
+    QCOMPARE(fixture.viewModel.voicePipelineTraceSummaries().size(), 7);
+    QVERIFY(fixture.viewModel.voicePipelineTraceSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("synthesis-placeholder")));
+    QCOMPARE(fixture.viewModel.voiceRuntimeStatus(), QStringLiteral("Unavailable"));
+    QVERIFY(fixture.viewModel.voiceRuntimeSummary().contains(QStringLiteral("playback disabled")));
+    QCOMPARE(fixture.viewModel.voiceRuntimeCheckSummaries().size(), 7);
+    QVERIFY(!fixture.viewModel.voiceRuntimeAvailable());
+    QVERIFY(!fixture.viewModel.voiceTextToSpeechAvailable());
+    QVERIFY(!fixture.viewModel.voiceSpeechToTextAvailable());
+    QVERIFY(!fixture.viewModel.voiceMicrophoneEnabled());
+    QVERIFY(!fixture.viewModel.voicePlaybackEnabled());
+    QVERIFY(fixture.viewModel.voiceLocalOnlyPolicy());
+    QVERIFY(!fixture.viewModel.voiceProcessExecutionEnabled());
 }
 
 void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
@@ -987,6 +1006,22 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("textToSpeechSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("speechToTextStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("speechToTextSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceSessionId"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceSessionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceSessionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voicePipelineStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voicePipelineSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voicePipelineTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceRuntimeStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceRuntimeSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceRuntimeCheckSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceRuntimeAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("voiceTextToSpeechAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("voiceSpeechToTextAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("voiceMicrophoneEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("voicePlaybackEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("voiceLocalOnlyPolicy"), QByteArrayLiteral("bool")},
+        {QStringLiteral("voiceProcessExecutionEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("localChatInferenceStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceBusy"), QByteArrayLiteral("bool")},
@@ -1088,6 +1123,11 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("voiceRequest"),
         QStringLiteral("voiceResponse"),
         QStringLiteral("voiceReadinessReport"),
+        QStringLiteral("voiceRuntimeCoordinator"),
+        QStringLiteral("voiceRuntimeSummaryRecord"),
+        QStringLiteral("voiceSession"),
+        QStringLiteral("voicePipelineResult"),
+        QStringLiteral("voicePipelineTrace"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),

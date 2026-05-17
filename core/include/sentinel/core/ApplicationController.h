@@ -203,6 +203,22 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString textToSpeechSummary READ textToSpeechSummary CONSTANT)
     Q_PROPERTY(QString speechToTextStatus READ speechToTextStatus CONSTANT)
     Q_PROPERTY(QString speechToTextSummary READ speechToTextSummary CONSTANT)
+    Q_PROPERTY(QString voiceSessionId READ voiceSessionId CONSTANT)
+    Q_PROPERTY(QString voiceSessionStatus READ voiceSessionStatus CONSTANT)
+    Q_PROPERTY(QString voiceSessionSummary READ voiceSessionSummary CONSTANT)
+    Q_PROPERTY(QString voicePipelineStatus READ voicePipelineStatus CONSTANT)
+    Q_PROPERTY(QString voicePipelineSummary READ voicePipelineSummary CONSTANT)
+    Q_PROPERTY(QStringList voicePipelineTraceSummaries READ voicePipelineTraceSummaries CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeStatus READ voiceRuntimeStatus CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeSummary READ voiceRuntimeSummary CONSTANT)
+    Q_PROPERTY(QStringList voiceRuntimeCheckSummaries READ voiceRuntimeCheckSummaries CONSTANT)
+    Q_PROPERTY(bool voiceRuntimeAvailable READ voiceRuntimeAvailable CONSTANT)
+    Q_PROPERTY(bool voiceTextToSpeechAvailable READ voiceTextToSpeechAvailable CONSTANT)
+    Q_PROPERTY(bool voiceSpeechToTextAvailable READ voiceSpeechToTextAvailable CONSTANT)
+    Q_PROPERTY(bool voiceMicrophoneEnabled READ voiceMicrophoneEnabled CONSTANT)
+    Q_PROPERTY(bool voicePlaybackEnabled READ voicePlaybackEnabled CONSTANT)
+    Q_PROPERTY(bool voiceLocalOnlyPolicy READ voiceLocalOnlyPolicy CONSTANT)
+    Q_PROPERTY(bool voiceProcessExecutionEnabled READ voiceProcessExecutionEnabled CONSTANT)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
@@ -271,6 +287,7 @@ public:
         std::unique_ptr<IModelManagementService> modelManagementService = nullptr,
         std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider = nullptr,
         std::unique_ptr<ISpeechToTextProvider> speechToTextProvider = nullptr,
+        std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator = nullptr,
         QObject* parent = nullptr);
 
     QString providerName() const;
@@ -400,6 +417,25 @@ public:
     QString textToSpeechSummary() const;
     QString speechToTextStatus() const;
     QString speechToTextSummary() const;
+    VoiceSession currentVoiceSession() const;
+    VoicePipelineResult currentVoicePipelineResult() const;
+    VoiceRuntimeSummary currentVoiceRuntimeSummary() const;
+    QString voiceSessionId() const;
+    QString voiceSessionStatus() const;
+    QString voiceSessionSummary() const;
+    QString voicePipelineStatus() const;
+    QString voicePipelineSummary() const;
+    QStringList voicePipelineTraceSummaries() const;
+    QString voiceRuntimeStatus() const;
+    QString voiceRuntimeSummary() const;
+    QStringList voiceRuntimeCheckSummaries() const;
+    bool voiceRuntimeAvailable() const;
+    bool voiceTextToSpeechAvailable() const;
+    bool voiceSpeechToTextAvailable() const;
+    bool voiceMicrophoneEnabled() const;
+    bool voicePlaybackEnabled() const;
+    bool voiceLocalOnlyPolicy() const;
+    bool voiceProcessExecutionEnabled() const;
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;
@@ -513,6 +549,7 @@ private:
     std::unique_ptr<IModelManagementService> modelManagementService_;
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider_;
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider_;
+    std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;

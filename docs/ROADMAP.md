@@ -270,6 +270,44 @@ Still out of scope:
   filesystem/system actions, cloud calls, API keys, voice buttons, record/speak buttons, and broad
   UI redesign.
 
+## Phase 12.3-12.6: Voice Runtime Planning And Session Orchestration Skeleton
+
+Completed. Added a metadata-only voice runtime/session orchestration skeleton without enabling
+audio I/O or runtime execution.
+
+Delivered:
+
+- `VoiceSession`, `VoiceSessionId`, `VoiceSessionState`, `VoicePipelineStage`,
+  `VoicePipelineStatus`, `VoicePipelineTrace`, `IVoiceRuntimeCoordinator`, and
+  `StaticVoiceRuntimeCoordinator`.
+- Deterministic voice pipeline metadata for idle, preparing, awaiting-input,
+  transcribing-placeholder, inference-placeholder, synthesis-placeholder, completed, blocked, and
+  error states.
+- Runtime/readiness summaries for runtime unavailable, TTS unavailable, STT unavailable,
+  microphone disabled, playback disabled, local-only policy active, and process execution disabled.
+- Controller and desktop view-model exposure through QML-safe strings, string lists, and booleans.
+- Read-only Settings voice runtime/session/pipeline metadata with no microphone, playback, voice
+  activation, setup, or model-management controls.
+- Tests for pipeline transitions, blocked/error metadata, controller exposure, view-model exposure,
+  and no-runtime posture.
+
+Future Piper/Whisper runtime boundary:
+
+- Piper may only enter through `ITextToSpeechProvider` after a later explicit phase defines binary
+  ownership, model path ownership, playback lifecycle, cancellation, permission prompts, and
+  safety policy.
+- Whisper may only enter through `ISpeechToTextProvider` after a later explicit phase defines
+  microphone permission, capture lifecycle, local model ownership, transcription privacy,
+  cancellation, and error handling.
+- Voice runtime coordination must remain injectable and testable; QML must continue consuming
+  strings, string lists, and booleans rather than provider/runtime objects.
+
+Still out of scope:
+
+- Microphone access, audio playback, Piper/Whisper execution, subprocess/process launch,
+  filesystem/system actions, downloads, cloud calls, API keys, voice activation, autonomous loops,
+  and broad UI redesign.
+
 ## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
 
 Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.

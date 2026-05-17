@@ -53,7 +53,12 @@ QML-safe runtime status exposure without adding new runtime authority. Phase 11.
 filesystem/system actions, tools/plugins, subprocess launch, autonomous behavior, or UI redesign.
 Phase 12.0 through Phase 12.2 add a disabled voice boundary and TTS/STT readiness skeleton with
 null providers only; no recording, playback, Whisper/Piper execution, subprocesses, downloads,
-cloud calls, API keys, filesystem/system actions, or voice controls are enabled.
+cloud calls, API keys, filesystem/system actions, or voice controls are enabled. Phase 12.3
+through Phase 12.6 add metadata-only voice runtime planning and session orchestration with a
+deterministic idle, preparing, awaiting-input, transcribing-placeholder, inference-placeholder,
+synthesis-placeholder, completed, blocked, and error pipeline; no microphone, playback,
+Piper/Whisper execution, subprocesses, downloads, cloud calls, API keys, filesystem/system actions,
+or autonomous voice loops are enabled.
 
 ## Future Components
 
@@ -127,6 +132,10 @@ cloud calls, API keys, filesystem/system actions, or voice controls are enabled.
   readiness metadata. Piper should enter only through `ITextToSpeechProvider`, and Whisper should
   enter only through `ISpeechToTextProvider`, after a later explicit phase defines audio
   permissions, local model ownership, playback/capture lifecycle, cancellation, and safety checks.
+- Voice runtime coordinator: future voice session/pipeline ownership surface. The current
+  implementation reports runtime unavailable, TTS/STT unavailable, microphone disabled, playback
+  disabled, local-only policy active, and process execution disabled while emitting deterministic
+  metadata-only pipeline traces.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -286,6 +295,12 @@ documents Phase 12 readiness without adding new runtime authority:
   `NullTextToSpeechProvider` and `NullSpeechToTextProvider` report disabled metadata and return
   safe refusals. No microphone, playback, Piper, Whisper, subprocess, filesystem/system action,
   download, cloud call, API key, or voice UI control is active.
+- `IVoiceRuntimeCoordinator` owns future voice runtime/session orchestration metadata only.
+  `StaticVoiceRuntimeCoordinator` emits deterministic session status, runtime summaries, and
+  pipeline traces for idle, preparing, awaiting-input, transcribing-placeholder,
+  inference-placeholder, synthesis-placeholder, completed, blocked, and error states. It does not
+  open microphones, play audio, execute Piper or Whisper, launch subprocesses, touch filesystems,
+  call cloud providers, use API keys, or run autonomous voice loops.
 - `AppSettings` persists the routing mode and normalized Ollama endpoint through
   `JsonSettingsStore`; it also persists the selected local model name, local chat inference
   opt-in, and local streaming opt-in. It does not store provider credentials or API keys.

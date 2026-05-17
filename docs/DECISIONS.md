@@ -1226,3 +1226,32 @@ Boundary rules:
 - No microphone access, audio playback, recording, synthesis, transcription, subprocess/process
   launch, filesystem/system action, download, cloud call, API key, voice button, record button,
   speak button, or broad UI redesign is introduced.
+
+## 63. Voice Runtime Coordination Is Metadata-Only
+
+Decision: Add voice session and pipeline orchestration as deterministic metadata before any audio
+runtime is allowed.
+
+Reason: Voice runtime work needs session ownership, pipeline state, trace visibility, and readiness
+reporting before Sentinel can safely define microphone capture, playback, Piper, Whisper, process
+ownership, or cancellation behavior.
+
+Boundary rules:
+
+- `VoiceSession`, `VoiceSessionId`, `VoiceSessionState`, `VoicePipelineStage`,
+  `VoicePipelineStatus`, and `VoicePipelineTrace` are value-only metadata.
+- `IVoiceRuntimeCoordinator` owns future voice runtime/session coordination.
+- `StaticVoiceRuntimeCoordinator` emits deterministic idle, preparing, awaiting-input,
+  transcribing-placeholder, inference-placeholder, synthesis-placeholder, completed, blocked, and
+  error metadata.
+- Runtime summaries explicitly report runtime unavailable, TTS unavailable, STT unavailable,
+  microphone disabled, playback disabled, local-only policy active, and process execution disabled.
+- Controller and view-model exposure remains limited to strings, string lists, and booleans.
+- Settings may display read-only voice session/runtime/pipeline metadata only.
+- Future Piper integration must stay behind `ITextToSpeechProvider` and the runtime coordinator
+  boundary.
+- Future Whisper integration must stay behind `ISpeechToTextProvider` and the runtime coordinator
+  boundary.
+- No microphone access, audio playback, recording, synthesis, transcription, subprocess/process
+  launch, filesystem/system action, download, cloud call, API key, voice activation, autonomous
+  loop, or broad UI redesign is introduced.

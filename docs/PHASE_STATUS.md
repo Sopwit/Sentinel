@@ -2,6 +2,35 @@
 
 ## Completed / Stable
 
+### Phase 12.3-12.6: Voice Runtime Planning And Session Orchestration Skeleton
+
+Completed. Adds deterministic voice session/runtime orchestration metadata without enabling audio
+capture, playback, local voice binaries, or runtime execution.
+
+Scope:
+
+- Added `VoiceSession`, `VoiceSessionId`, `VoiceSessionState`, `VoicePipelineStage`,
+  `VoicePipelineStatus`, `VoicePipelineTrace`, `IVoiceRuntimeCoordinator`, and
+  `StaticVoiceRuntimeCoordinator`.
+- Added a deterministic metadata-only voice pipeline: idle, preparing, awaiting-input,
+  transcribing-placeholder, inference-placeholder, synthesis-placeholder, and completed, with
+  blocked and error metadata paths.
+- Added voice runtime summaries for runtime, TTS, STT, microphone, playback, local-only policy,
+  and process-execution posture.
+- `ApplicationController` exposes voice session status, pipeline summary, runtime summary, trace
+  summaries, and readiness details.
+- `DesktopShellViewModel` forwards only QML-safe strings, string lists, and booleans.
+- Settings extends the existing read-only Voice Readiness section with session/runtime/pipeline
+  metadata and no voice controls.
+- Tests cover deterministic pipeline transitions, blocked/error metadata behavior, controller
+  exposure, view-model QML-safe exposure, and disabled runtime posture.
+
+Still out of scope:
+
+- Microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
+  launch, filesystem/system actions, downloads, cloud calls, API keys, voice buttons, activation
+  controls, and autonomous voice loops.
+
 ### Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 
 Completed. Adds a disabled-by-default voice architecture boundary and readiness surface without

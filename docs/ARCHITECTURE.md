@@ -262,7 +262,8 @@ Explicit chat routing:
 ## Voice Boundary
 
 Phase 12.0 through Phase 12.2 add a disabled voice planning boundary for future text-to-speech and
-speech-to-text work.
+speech-to-text work. Phase 12.3 through Phase 12.6 add metadata-only voice runtime/session
+orchestration on top of that boundary.
 
 Separation:
 
@@ -271,22 +272,34 @@ Separation:
 - `NullTextToSpeechProvider` and `NullSpeechToTextProvider` are the current implementations.
 - `VoiceCapability`, `VoiceProviderDescriptor`, `VoiceProviderStatus`, `VoiceRuntimeMode`,
   `VoiceRequest`, `VoiceResponse`, and `VoiceReadinessReport` are value-only metadata.
-- `ApplicationController` exposes voice readiness/status summaries only.
+- `VoiceSession`, `VoiceSessionId`, `VoiceSessionState`, `VoicePipelineStage`,
+  `VoicePipelineStatus`, `VoicePipelineTrace`, `IVoiceRuntimeCoordinator`, and
+  `StaticVoiceRuntimeCoordinator` model future runtime/session orchestration without operating
+  audio devices or binaries.
+- `ApplicationController` exposes voice readiness, runtime, session, pipeline, and trace
+  summaries only.
 - `DesktopShellViewModel` exposes QML-safe strings, string lists, and booleans only.
 
 Current behavior:
 
 - Voice runtime mode is disabled.
+- Voice runtime status is unavailable.
 - TTS returns a safe disabled/refusal placeholder and produces no audio.
 - STT returns a safe disabled/refusal placeholder and reads no audio.
-- Settings may show read-only voice readiness metadata, but no voice controls exist.
+- The static voice pipeline emits deterministic metadata for idle, preparing, awaiting-input,
+  transcribing-placeholder, inference-placeholder, synthesis-placeholder, completed, blocked, and
+  error states.
+- Runtime summaries explicitly report runtime unavailable, TTS unavailable, STT unavailable,
+  microphone disabled, playback disabled, local-only policy active, and process execution disabled.
+- Settings may show read-only voice readiness/runtime/session/pipeline metadata, but no voice
+  controls exist.
 - No microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
   launch, filesystem/system actions, downloads, cloud calls, API keys, or voice setup flow is
   present.
 
-Future Piper/Whisper integration should happen only through these provider interfaces after a
-later explicit phase defines audio device permissions, local model ownership, cancellation,
-playback/capture lifecycle, and runtime safety checks.
+Future Piper/Whisper integration should happen only through these provider interfaces and the
+runtime coordinator boundary after a later explicit phase defines audio device permissions, local
+binary/model ownership, cancellation, playback/capture lifecycle, and runtime safety checks.
 
 Current local AI user flow:
 
