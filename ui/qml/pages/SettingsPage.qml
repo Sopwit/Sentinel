@@ -424,7 +424,7 @@ ShellPanel {
 
         SectionTitle {
             title: "Runtime Integration Readiness"
-            subtitle: "Read-only adapter, provider bridge, and Ollama local health metadata. Chat inference remains disabled."
+            subtitle: "Adapter, provider bridge, and Ollama local runtime metadata. Model selection and explicit local toggles are the only actions here."
         }
 
         ColumnLayout {
@@ -494,11 +494,140 @@ ShellPanel {
                 Layout.fillWidth: true
             }
 
+            ComboBox {
+                id: localModelCombo
+                Layout.fillWidth: true
+                enabled: settingsPage.viewModel.ollamaModelCount > 0
+                model: settingsPage.viewModel.ollamaModelNames
+                currentIndex: settingsPage.viewModel.ollamaModelNames.indexOf(settingsPage.viewModel.selectedLocalModel)
+                displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.selectedLocalModelStatus + " / No model selected"
+                onActivated: settingsPage.viewModel.selectedLocalModel = currentText
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Model Status"
+                value: settingsPage.viewModel.selectedLocalModelStatus
+                Layout.fillWidth: true
+            }
+
             InfoRow {
                 compact: settingsPage.compact
                 label: "Selected Model"
                 value: settingsPage.viewModel.selectedLocalModelSummary
                 Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Model Metadata"
+                value: settingsPage.viewModel.selectedLocalModelMetadataSummary
+                Layout.fillWidth: true
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.modelRecommendationSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Recommendation"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            SectionTitle {
+                title: "Model Management"
+                subtitle: "Read-only readiness metadata. Pull, delete, and install actions remain future scoped."
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Management Status"
+                value: settingsPage.viewModel.modelManagementStatus
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Management Summary"
+                value: settingsPage.viewModel.modelManagementSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Action Availability"
+                value: settingsPage.viewModel.modelManagementActionAvailability
+                Layout.fillWidth: true
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.modelRequirementSummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Requirement"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            SectionTitle {
+                title: "Voice Readiness"
+                subtitle: "Read-only voice architecture metadata. Recording, playback, Whisper, Piper, subprocesses, downloads, cloud calls, and API keys remain out of scope."
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Voice Runtime"
+                value: settingsPage.viewModel.voiceRuntimeMode + " / " + settingsPage.viewModel.voiceReadinessStatus
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "Voice Summary"
+                value: settingsPage.viewModel.voiceReadinessSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "TTS"
+                value: settingsPage.viewModel.textToSpeechStatus + " / " + settingsPage.viewModel.textToSpeechSummary
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: settingsPage.compact
+                label: "STT"
+                value: settingsPage.viewModel.speechToTextStatus + " / " + settingsPage.viewModel.speechToTextSummary
+                Layout.fillWidth: true
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.voiceCapabilitySummaries
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Voice Capability"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: settingsPage.viewModel.voiceReadinessChecks
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Voice Check"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
             }
 
             CheckBox {
@@ -507,6 +636,14 @@ ShellPanel {
                 text: "Local chat inference"
                 checked: settingsPage.viewModel.localChatInferenceEnabled
                 onToggled: settingsPage.viewModel.localChatInferenceEnabled = checked
+            }
+
+            CheckBox {
+                id: localInferenceStreamingToggle
+                Layout.fillWidth: true
+                text: "Local response streaming"
+                checked: settingsPage.viewModel.localInferenceStreamingEnabled
+                onToggled: settingsPage.viewModel.localInferenceStreamingEnabled = checked
             }
 
             InfoRow {

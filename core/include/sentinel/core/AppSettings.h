@@ -22,6 +22,8 @@ class AppSettings final : public QObject {
                    selectedLocalModelChanged)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceEnabledChanged)
+    Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
+                   setLocalInferenceStreamingEnabled NOTIFY localInferenceStreamingEnabledChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -44,6 +46,8 @@ public:
 
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
+    bool localInferenceStreamingEnabled() const;
+    void setLocalInferenceStreamingEnabled(bool enabled);
 
 signals:
     void themeNameChanged();
@@ -52,6 +56,7 @@ signals:
     void ollamaEndpointChanged();
     void selectedLocalModelChanged();
     void localChatInferenceEnabledChanged();
+    void localInferenceStreamingEnabledChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
@@ -60,6 +65,7 @@ private:
     static constexpr auto ollamaEndpointKey = "ollamaEndpoint";
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";
     static constexpr auto localChatInferenceEnabledKey = "localChatInferenceEnabled";
+    static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
 

@@ -127,6 +127,149 @@ Still out of scope:
 - Streaming chat, model management/download/pull/delete UI, cloud provider routing, API keys,
   tools/plugins, filesystem/system actions, subprocess launch, and autonomous loops.
 
+## Phase 10.3-10.5: Streaming Chat Boundary And Live Response UX
+
+Completed. Added a local-only streaming response boundary and minimal live chat visibility.
+
+Delivered:
+
+- Persisted local inference streaming opt-in, disabled by default.
+- `ILocalInferenceStreamClient` supports ordered chunk callbacks and safe stream result metadata.
+- `OllamaLocalInferenceStreamClient` supports loopback-only `/api/generate` streaming with no
+  redirects, no cloud endpoints, no credentials, no model-management actions, and no subprocesses.
+- Chat streaming activates only after the local chat inference opt-in, streaming opt-in,
+  valid-model resolution, loopback endpoint validation, and runtime permission/safety gates pass.
+- Streaming chunks accumulate into a single final assistant message and are persisted once.
+- Desktop view model exposes QML-safe streaming enabled/status/active/live-text/summary values.
+- ChatPanel shows active streaming text without a broad redesign or model-management controls.
+- Tests cover disabled default fallback, fake ordered chunks, malformed chunks, cancellation,
+  duplicate-message protection, and view-model exposure without requiring Ollama.
+
+Still out of scope:
+
+- Cloud calls, API keys, model downloads/pulls/deletes, broad model management UI, tools/plugins,
+  filesystem/system actions, subprocess launch, autonomous loops, and broad UI redesign.
+
+## Phase 10.6-10.8: Model Selection And Local Runtime Management UX
+
+Completed. Added action-light local model selection and runtime status visibility without adding
+model-management operations.
+
+Delivered:
+
+- Settings lists discovered local Ollama model names when read-only `/api/tags` metadata is
+  available.
+- Selecting a discovered local model updates the persisted selected local model setting.
+- Controller and desktop view model expose QML-safe selected model status, selected metadata
+  summary, model names, and model summaries.
+- Model metadata summaries include model name, size when present, modified date when present, and
+  Local Only status.
+- Invalid selected models are surfaced clearly and remain blocked by existing validation before
+  inference or streaming can call the local client.
+- Runtime UX now shows health, model count, selected-model status, chat inference enablement,
+  streaming enablement, runtime badge, inference state, latency, and streaming status together.
+- Tests use fakes and do not require a real Ollama service.
+
+Still out of scope:
+
+- Model downloads, pulls, deletes, installs, process/subprocess launch, cloud providers, API keys,
+  endpoint expansion, filesystem/system actions, tools/plugins, autonomous loops, and broad model
+  management.
+
+## Phase 11.0-11.2: Lightweight Local Model Management Readiness
+
+Completed. Prepared local model management UX and metadata without enabling management actions.
+
+Delivered:
+
+- `IModelManagementService` with deterministic `StaticModelManagementService` metadata.
+- Value-only action, status, request, result, recommendation, and requirement summary types.
+- Deterministic recommended local model metadata with approximate descriptive RAM/disk values.
+- Controller and desktop view-model exposure through strings and string lists only.
+- Read-only Settings model management readiness section showing installed model count through
+  existing discovery, selected/effective model metadata, recommendations, requirements, and action
+  unavailability.
+- Tests for deterministic recommendations, unavailable action behavior, and QML-safe exposure.
+
+Still out of scope:
+
+- Real model downloads, pulls, deletes, installs, subprocess/process launch, filesystem/system
+  scans or actions, cloud calls, API keys, tools/plugins, autonomous loops, and provider setup.
+
+## Phase 11.3-11.6: Local AI Experience Stabilization And Runtime UX Polish
+
+Completed. Polished the current local AI user flow without adding new runtime authority.
+
+Delivered:
+
+- More explicit local inference and streaming summaries for disabled, missing model, invalid model,
+  endpoint-blocked, permission-blocked, safety-blocked, unavailable-client, timeout, invalid
+  response, and request-failure cases.
+- Streaming live text is now temporary: it is visible only while streaming is active, then cleared
+  once the final assistant response is written through normal chat history.
+- Chat history remains one local transcript, with user messages appended before routing and one
+  assistant message appended from either the successful local response or a safe refusal/error.
+- Settings model selection now makes no-selection/fallback/invalid/available states clearer and
+  keeps recommendation summaries close to the selector.
+- Tests use fake local clients and fake Ollama metadata; no real Ollama service is required.
+
+Still out of scope:
+
+- Model downloads, pulls, deletes, installs, real cancellation controls, cloud providers, API keys,
+  endpoint expansion, subprocess launch, filesystem/system actions, tools/plugins, autonomous
+  loops, and broad model-management workflows.
+
+## Phase 11.7-11.9: Local AI Usability Checkpoint And Runtime QA
+
+Completed. Checkpointed the current local AI user flow and runtime QA posture before Phase 12.
+
+Delivered:
+
+- Reviewed unavailable Ollama, no selected model, invalid selected model, disabled local chat
+  inference, disabled/enabled streaming, permission/safety blocking, fake non-streaming success,
+  and fake streaming success flows.
+- Added focused tests for local AI settings persistence through JSON reload, safety-blocked local
+  inference, stream-error live-preview cleanup, and expanded QML-safe local AI property exposure.
+- Added `docs/PHASE_11_CHECKPOINT.md` with completed scope, current user flow, known limitations,
+  safety guardrails, and Phase 12 readiness criteria.
+
+Still out of scope:
+
+- New product features, model pull/delete/install, cloud providers/API keys, filesystem/system
+  actions, tools/plugins, subprocess launch, UI redesign, autonomous loops, and broad model
+  management.
+
+## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
+
+Completed. Prepared voice architecture without enabling real audio I/O or voice runtime work.
+
+Delivered:
+
+- `VoiceCapability`, `VoiceProviderDescriptor`, `VoiceProviderStatus`, `VoiceRuntimeMode`,
+  `VoiceRequest`, `VoiceResponse`, and `VoiceReadinessReport`.
+- `ITextToSpeechProvider` and `ISpeechToTextProvider` boundaries.
+- Deterministic null TTS/STT providers that refuse safely while disabled.
+- Controller and desktop view-model exposure through QML-safe strings, string lists, and booleans.
+- Read-only Settings Voice Readiness metadata with no voice action buttons.
+- Tests for disabled null-provider behavior, readiness summaries, controller exposure, and
+  view-model exposure.
+
+Future Piper/Whisper path:
+
+- Piper should enter behind `ITextToSpeechProvider` only after an explicit audio-output/runtime
+  phase defines local binary ownership, model paths, permission prompts, playback ownership, and
+  safety policy.
+- Whisper should enter behind `ISpeechToTextProvider` only after an explicit audio-input/runtime
+  phase defines microphone permission, capture lifecycle, local model ownership, transcription
+  privacy, and cancellation/error handling.
+- Both integrations must remain local-first, injectable for tests, and separated from QML.
+
+Still out of scope:
+
+- Recording, playback, Whisper/Piper execution, subprocess/process launch, downloads,
+  filesystem/system actions, cloud calls, API keys, voice buttons, record/speak buttons, and broad
+  UI redesign.
+
 ## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
 
 Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.

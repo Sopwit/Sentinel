@@ -34,11 +34,26 @@ the Ollama implementation is restricted to local non-streaming `/api/generate`. 
 routing, streaming, downloads, subprocess launch, cloud calls, tools, plugins, and
 filesystem/system actions remain disabled. Phase 9.6 through Phase 9.8 add selected local model
 metadata, runtime inference UX state, and a disabled streaming skeleton. Model selection is
-configuration metadata with safe discovered-model validation when available; streaming types exist
-as a future boundary but current behavior remains disabled and non-operational. Phase 10.0 through
+configuration metadata with safe discovered-model validation when available. Phase 10.0 through
 Phase 10.2 add explicit chat-to-Ollama routing: chat uses local inference only when the persisted
 opt-in setting is enabled, a valid local model is selected or resolved, the endpoint is loopback
-HTTP, and permission/safety gates pass.
+HTTP, and permission/safety gates pass. Phase 10.3 through Phase 10.5 add guarded local-only chat
+streaming: streaming remains disabled by default and activates only after the local chat inference
+opt-in, streaming opt-in, valid model, loopback endpoint, and permission/safety gates pass. Phase
+10.6 through Phase 10.8 add lightweight local model selection and runtime management UX over
+discovered metadata without adding model-management actions. Phase 11.0 through Phase 11.2 add
+lightweight local model management readiness metadata: deterministic recommendations, approximate
+RAM/disk requirement summaries, and unavailable action results without downloads, deletes,
+installs, scans, subprocesses, cloud calls, credentials, tools/plugins, or autonomous loops. Phase
+11.3 through Phase 11.6 stabilize the local AI experience: safer refusal/error summaries, clearer
+selected-model and discovered-model UX, streaming preview reset/finalization behavior, and
+QML-safe runtime status exposure without adding new runtime authority. Phase 11.7 through Phase
+11.9 checkpoint the local AI user flow and runtime QA posture with focused tests and
+`docs/PHASE_11_CHECKPOINT.md`; they add no model management actions, cloud providers,
+filesystem/system actions, tools/plugins, subprocess launch, autonomous behavior, or UI redesign.
+Phase 12.0 through Phase 12.2 add a disabled voice boundary and TTS/STT readiness skeleton with
+null providers only; no recording, playback, Whisper/Piper execution, subprocesses, downloads,
+cloud calls, API keys, filesystem/system actions, or voice controls are enabled.
 
 ## Future Components
 
@@ -98,10 +113,20 @@ HTTP, and permission/safety gates pass.
 - Local model selection metadata: persisted selected model name, safe effective-model fallback from
   installed-model discovery when available, selected-model summary, and active runtime/model badge.
   This is not model management and cannot download, pull, delete, launch, or install models.
-- Local inference streaming skeleton: future stream chunk/status/client vocabulary. The current
-  implementation reports disabled status only and opens no stream.
+- Local inference streaming boundary: stream chunk/status/error/cancellation/malformed-chunk
+  metadata, ordered chunk callbacks, accumulated assistant text, and a loopback-only Ollama
+  `/api/generate` stream client. Streaming is disabled by default and guarded by explicit settings
+  plus existing model, endpoint, permission, and safety checks.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
+- Local model management readiness: deterministic metadata for recommended local models,
+  approximate RAM/disk requirements, and unavailable pull/delete/install actions. This does not own
+  installed-model discovery, downloads, deletion, installation, subprocesses, filesystem/system
+  scans, cloud calls, API keys, tools/plugins, or autonomous loops.
+- Voice provider boundary: future TTS/STT provider interfaces plus disabled null providers and
+  readiness metadata. Piper should enter only through `ITextToSpeechProvider`, and Whisper should
+  enter only through `ISpeechToTextProvider`, after a later explicit phase defines audio
+  permissions, local model ownership, playback/capture lifecycle, cancellation, and safety checks.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -148,9 +173,11 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 10.0-10.2 runtime allows local Ollama health/discovery metadata plus a controlled
-local inference boundary, selected-model metadata, disabled streaming skeleton, and explicit
-opt-in chat-to-Ollama routing:
+Current Phase 11.7-11.9 runtime allows local Ollama health/discovery metadata plus a controlled
+local inference boundary, selected-model metadata, explicit opt-in chat-to-Ollama routing, a
+guarded local-only streaming boundary, action-light local model selection UX, and metadata-only
+model-management readiness. The Phase 11 checkpoint verifies this flow through runtime QA and
+documents Phase 12 readiness without adding new runtime authority:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -231,22 +258,43 @@ opt-in chat-to-Ollama routing:
   explicit model first, then the selected local model, then a safe discovered-model fallback when
   model metadata is available. Known invalid selections are rejected before inference. No downloads,
   pulls, deletes, or model-management actions exist.
+- Settings can display discovered local model names and metadata summaries, select one discovered
+  model, persist that selection, and show Missing, Fallback, Available, Unverified, or Invalid
+  state. Model summaries include name, size when available, modified date when available, and Local
+  Only status. Recommendation summaries may appear near selection, but they do not trigger
+  downloads, installs, pulls, deletes, or scans.
 - Local chat inference routing is disabled by default. When enabled, `ApplicationController`
   appends the user message, calls `runLocalInference` only if the effective model is valid, the
   Ollama endpoint is loopback HTTP, and runtime permission/safety checks pass, then appends exactly
-  one assistant response from the inference result or a safe refusal/error.
-- `ILocalInferenceStreamClient` owns future streaming shape only. `NullLocalInferenceStreamClient`
-  reports deterministic disabled behavior, produces no chunks, and does not call Ollama or any
-  provider.
+  one assistant response from the inference result or a safe refusal/error. Refusal/error summaries
+  are user-readable and technical enough for diagnosis, but do not expose stack traces, secrets,
+  filesystem paths, raw internal objects, provider credentials, or broad endpoint details.
+- `ILocalInferenceStreamClient` owns local streaming shape and ordered chunk callbacks.
+  `NullLocalInferenceStreamClient` reports deterministic disabled behavior, and
+  `OllamaLocalInferenceStreamClient` may call only loopback HTTP `/api/generate` streaming with no
+  redirects, cloud endpoints, API keys, downloads/pulls/deletes, subprocess launch, tools, or
+  plugins.
+- Local chat streaming is disabled by default. When enabled with local chat inference, successful
+  chunks update QML-safe live response text only while streaming is active. Completion clears the
+  live preview and persists exactly one final assistant message through chat history; malformed
+  chunks, cancellation, timeout, refusal, and errors are summarized safely.
+- `IModelManagementService` owns future model-management readiness metadata only.
+  `StaticModelManagementService` returns deterministic recommendations and approximate descriptive
+  requirement summaries. Pull, delete, and install requests return not implemented/unavailable
+  results and perform no actions.
+- `ITextToSpeechProvider` and `ISpeechToTextProvider` own future voice provider boundaries only.
+  `NullTextToSpeechProvider` and `NullSpeechToTextProvider` report disabled metadata and return
+  safe refusals. No microphone, playback, Piper, Whisper, subprocess, filesystem/system action,
+  download, cloud call, API key, or voice UI control is active.
 - `AppSettings` persists the routing mode and normalized Ollama endpoint through
-  `JsonSettingsStore`; it also persists the selected local model name and local chat inference
-  opt-in. It does not store provider credentials or API keys.
+  `JsonSettingsStore`; it also persists the selected local model name, local chat inference
+  opt-in, and local streaming opt-in. It does not store provider credentials or API keys.
 - Tool planning, approval, sandbox, and execution boundaries remain non-operational.
 - `NullAgentRuntime` and `NullToolExecutor` still perform no real AI/model/tool execution.
 
-Cloud routing, credentials, model downloads, model pulls/deletes, real streaming, autonomous agent
-runtime, semantic/vector memory, actionable model-management UI, and automatic routing policy
-automation remain future work.
+Cloud routing, credentials, model downloads, model pulls/deletes/installs, autonomous agent
+runtime, semantic/vector memory, actionable model-management operations, and automatic routing
+policy automation remain future work.
 
 ## Phase 10 Direction
 
@@ -259,6 +307,7 @@ Phase 8.5 add adapter, bridge, and pre-integration readiness metadata only. Phas
 9.2 add Ollama local health/discovery only. Phase 9.3 through Phase 9.5 add the first controlled
 local-only inference boundary. Phase 9.6 through Phase 9.8 add selected-model metadata, runtime UX
 state, and a disabled streaming skeleton. Phase 10.0 through Phase 10.2 add explicit opt-in
-chat-to-Ollama routing. The next explicit phase may consider streaming chat, but that remains
-separate from cloud provider integration, credentials, downloads, model management, tool execution,
-plugins, vector memory, and autonomous behavior.
+chat-to-Ollama routing. Phase 10.3 through Phase 10.5 add guarded local-only streaming chat and
+live response UX. Phase 10.6 through Phase 10.8 add local model selection and runtime management
+UX while keeping cloud provider integration, credentials, downloads, model management operations,
+tool execution, plugins, vector memory, and autonomous behavior out of scope.

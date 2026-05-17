@@ -44,7 +44,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: chatPanel.viewModel.providerName + " / " + chatPanel.viewModel.providerStatus + " / " + chatPanel.viewModel.chatHistoryStatus + " / " + chatPanel.viewModel.localChatInferenceStatus + " / " + chatPanel.viewModel.activeLocalRuntimeBadge + " / " + chatPanel.viewModel.localInferenceRuntimeState
+                    text: chatPanel.viewModel.providerName + " / " + chatPanel.viewModel.providerStatus + " / " + chatPanel.viewModel.chatHistoryStatus + " / " + chatPanel.viewModel.localChatInferenceStatus + " / " + chatPanel.viewModel.localInferenceStreamStatus + " / " + chatPanel.viewModel.activeLocalRuntimeBadge + " / " + chatPanel.viewModel.localInferenceRuntimeState
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                     elide: Text.ElideRight
@@ -94,6 +94,39 @@ ShellPanel {
                         font.pixelSize: SentinelTheme.fontBody
                         lineHeight: 1.28
                     }
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            visible: chatPanel.viewModel.localInferenceBusy && chatPanel.viewModel.localInferenceStreamingText.length > 0
+            radius: SentinelTheme.radiusLg
+            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.020)
+            border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.14)
+            implicitHeight: streamingColumn.implicitHeight + 24
+
+            ColumnLayout {
+                id: streamingColumn
+                anchors.fill: parent
+                anchors.margins: SentinelTheme.spaceMd
+                spacing: SentinelTheme.spaceXs
+
+                Text {
+                    Layout.fillWidth: true
+                    text: "SENTINEL / STREAMING"
+                    color: chatPanel.modeAccent
+                    font.pixelSize: SentinelTheme.fontTiny
+                    font.letterSpacing: 2.1
+                }
+
+                Text {
+                    Layout.fillWidth: true
+                    text: chatPanel.viewModel.localInferenceStreamingText
+                    color: SentinelTheme.textPrimary
+                    wrapMode: Text.WordWrap
+                    font.pixelSize: SentinelTheme.fontBody
+                    lineHeight: 1.28
                 }
             }
         }

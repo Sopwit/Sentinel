@@ -27,6 +27,8 @@ private slots:
     void normalizesOllamaEndpoint();
     void persistsSelectedLocalModel();
     void persistsLocalChatInferenceOptIn();
+    void persistsLocalInferenceStreamingOptIn();
+    void persistsLocalAiRuntimeSettingsThroughJsonStore();
 };
 
 static std::unique_ptr<AppSettings> makeSettings() {
@@ -40,6 +42,7 @@ void AppSettingsTest::exposesDefaults() {
     QCOMPARE(settings->configurationProfile(), QStringLiteral("Desktop Alpha"));
     QVERIFY(settings->selectedLocalModel().isEmpty());
     QVERIFY(!settings->localChatInferenceEnabled());
+    QVERIFY(!settings->localInferenceStreamingEnabled());
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -176,6 +179,44 @@ void AppSettingsTest::persistsLocalChatInferenceOptIn() {
     settings->setLocalChatInferenceEnabled(false);
     QVERIFY(!settings->localChatInferenceEnabled());
     QCOMPARE(spy.count(), 2);
+}
+
+void AppSettingsTest::persistsLocalInferenceStreamingOptIn() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::localInferenceStreamingEnabledChanged);
+
+    QVERIFY(!settings->localInferenceStreamingEnabled());
+
+    settings->setLocalInferenceStreamingEnabled(true);
+
+    QVERIFY(settings->localInferenceStreamingEnabled());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setLocalInferenceStreamingEnabled(true);
+    QCOMPARE(spy.count(), 1);
+
+    settings->setLocalInferenceStreamingEnabled(false);
+    QVERIFY(!settings->localInferenceStreamingEnabled());
+    QCOMPARE(spy.count(), 2);
+}
+
+void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto filePath = dir.filePath(QStringLiteral("settings.json"));
+
+    {
+        AppSettings settings{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
+        settings.setSelectedLocalModel(QStringLiteral(" llama3.2 "));
+        settings.setLocalChatInferenceEnabled(true);
+        settings.setLocalInferenceStreamingEnabled(true);
+    }
+
+    AppSettings reloaded{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
+
+    QCOMPARE(reloaded.selectedLocalModel(), QStringLiteral("llama3.2"));
+    QVERIFY(reloaded.localChatInferenceEnabled());
+    QVERIFY(reloaded.localInferenceStreamingEnabled());
 }
 
 QTEST_MAIN(AppSettingsTest)

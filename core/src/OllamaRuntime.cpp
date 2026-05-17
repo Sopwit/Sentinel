@@ -97,6 +97,29 @@ JsonReply getJson(const QUrl& url, int timeoutMs) {
     return JsonReply{true, document, {}};
 }
 
+QString sizeSummary(qint64 sizeBytes) {
+    if (sizeBytes <= 0) {
+        return QStringLiteral("size unavailable");
+    }
+
+    constexpr qint64 kib = 1024;
+    constexpr qint64 mib = kib * 1024;
+    constexpr qint64 gib = mib * 1024;
+    if (sizeBytes >= gib) {
+        return QStringLiteral("%1 GiB").arg(
+            QString::number(static_cast<double>(sizeBytes) / static_cast<double>(gib), 'f', 1));
+    }
+    if (sizeBytes >= mib) {
+        return QStringLiteral("%1 MiB").arg(
+            QString::number(static_cast<double>(sizeBytes) / static_cast<double>(mib), 'f', 1));
+    }
+    if (sizeBytes >= kib) {
+        return QStringLiteral("%1 KiB").arg(
+            QString::number(static_cast<double>(sizeBytes) / static_cast<double>(kib), 'f', 1));
+    }
+    return QStringLiteral("%1 B").arg(sizeBytes);
+}
+
 } // namespace
 
 OllamaEndpoint OllamaEndpoint::defaultEndpoint() {
@@ -129,10 +152,13 @@ OllamaConfig OllamaConfig::fromEndpoint(const QString& endpoint) {
 }
 
 QString ollamaModelSummary(const OllamaModelSummary& model) {
-    if (model.modifiedAt.isEmpty()) {
-        return model.name;
+    QStringList details;
+    details.append(sizeSummary(model.sizeBytes));
+    if (!model.modifiedAt.isEmpty()) {
+        details.append(QStringLiteral("modified %1").arg(model.modifiedAt));
     }
-    return QStringLiteral("%1 (%2)").arg(model.name, model.modifiedAt);
+    details.append(QStringLiteral("Local Only"));
+    return QStringLiteral("%1 (%2)").arg(model.name, details.join(QStringLiteral(", ")));
 }
 
 QStringList ollamaModelSummaries(const QList<OllamaModelSummary>& models) {

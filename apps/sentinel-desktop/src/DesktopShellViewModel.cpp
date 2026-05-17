@@ -68,8 +68,12 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::localChatInferenceEnabledChanged, this, [this]() {
         controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     });
+    connect(&settings_, &core::AppSettings::localInferenceStreamingEnabledChanged, this, [this]() {
+        controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
+    });
     controller_.setSelectedLocalModel(settings_.selectedLocalModel());
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
+    controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -483,6 +487,10 @@ int DesktopShellViewModel::ollamaModelCount() const {
     return controller_.ollamaModelCount();
 }
 
+QStringList DesktopShellViewModel::ollamaModelNames() const {
+    return controller_.ollamaModelNames();
+}
+
 QStringList DesktopShellViewModel::ollamaModelSummaries() const {
     return controller_.ollamaModelSummaries();
 }
@@ -498,12 +506,80 @@ void DesktopShellViewModel::setSelectedLocalModel(const QString& model) {
     }
 }
 
+QString DesktopShellViewModel::selectedLocalModelStatus() const {
+    return controller_.selectedLocalModelStatus();
+}
+
 QString DesktopShellViewModel::selectedLocalModelSummary() const {
     return controller_.selectedLocalModelSummary();
 }
 
+QString DesktopShellViewModel::selectedLocalModelMetadataSummary() const {
+    return controller_.selectedLocalModelMetadataSummary();
+}
+
 QString DesktopShellViewModel::activeLocalRuntimeBadge() const {
     return controller_.activeLocalRuntimeBadge();
+}
+
+QString DesktopShellViewModel::modelManagementStatus() const {
+    return controller_.modelManagementStatus();
+}
+
+QString DesktopShellViewModel::modelManagementSummary() const {
+    return controller_.modelManagementSummary();
+}
+
+QString DesktopShellViewModel::modelManagementActionAvailability() const {
+    return controller_.modelManagementActionAvailability();
+}
+
+QStringList DesktopShellViewModel::modelRecommendationSummaries() const {
+    return controller_.modelRecommendationSummaries();
+}
+
+QStringList DesktopShellViewModel::modelRequirementSummaries() const {
+    return controller_.modelRequirementSummaries();
+}
+
+QString DesktopShellViewModel::voiceRuntimeMode() const {
+    return controller_.voiceRuntimeMode();
+}
+
+bool DesktopShellViewModel::voiceEnabled() const {
+    return controller_.voiceEnabled();
+}
+
+QString DesktopShellViewModel::voiceReadinessStatus() const {
+    return controller_.voiceReadinessStatus();
+}
+
+QString DesktopShellViewModel::voiceReadinessSummary() const {
+    return controller_.voiceReadinessSummary();
+}
+
+QStringList DesktopShellViewModel::voiceReadinessChecks() const {
+    return controller_.voiceReadinessChecks();
+}
+
+QStringList DesktopShellViewModel::voiceCapabilitySummaries() const {
+    return controller_.voiceCapabilitySummaries();
+}
+
+QString DesktopShellViewModel::textToSpeechStatus() const {
+    return controller_.textToSpeechStatus();
+}
+
+QString DesktopShellViewModel::textToSpeechSummary() const {
+    return controller_.textToSpeechSummary();
+}
+
+QString DesktopShellViewModel::speechToTextStatus() const {
+    return controller_.speechToTextStatus();
+}
+
+QString DesktopShellViewModel::speechToTextSummary() const {
+    return controller_.speechToTextSummary();
 }
 
 bool DesktopShellViewModel::localChatInferenceEnabled() const {
@@ -523,6 +599,18 @@ QString DesktopShellViewModel::localChatInferenceStatus() const {
 
 QString DesktopShellViewModel::localChatInferenceSummary() const {
     return controller_.localChatInferenceSummary();
+}
+
+bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
+    return controller_.localInferenceStreamingEnabled();
+}
+
+void DesktopShellViewModel::setLocalInferenceStreamingEnabled(bool enabled) {
+    settings_.setLocalInferenceStreamingEnabled(enabled);
+    if (controller_.localInferenceStreamingEnabled() !=
+        settings_.localInferenceStreamingEnabled()) {
+        controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
+    }
 }
 
 bool DesktopShellViewModel::localInferenceBusy() const {
@@ -563,6 +651,10 @@ QString DesktopShellViewModel::localInferenceStreamStatus() const {
 
 QString DesktopShellViewModel::localInferenceStreamSummary() const {
     return controller_.localInferenceStreamSummary();
+}
+
+QString DesktopShellViewModel::localInferenceStreamingText() const {
+    return controller_.localInferenceStreamingText();
 }
 
 int DesktopShellViewModel::availableToolCount() const {

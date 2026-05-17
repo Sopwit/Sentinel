@@ -43,6 +43,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/LocalRuntimeSession.h
     include/sentinel/core/MemoryMetadata.h
     include/sentinel/core/ModeManager.h
+    include/sentinel/core/ModelManagement.h
     include/sentinel/core/ModelRouting.h
     include/sentinel/core/NullAgentRuntime.h
     include/sentinel/core/NullToolExecutor.h
@@ -71,6 +72,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ToolExecution.h
     include/sentinel/core/ToolInvocationPlan.h
     include/sentinel/core/ToolSandbox.h
+    include/sentinel/core/Voice.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
     src/AgentActivityLog.cpp
@@ -91,6 +93,7 @@ add_library(sentinel_core STATIC
     src/LocalRuntime.cpp
     src/LocalRuntimeSession.cpp
     src/ModeManager.cpp
+    src/ModelManagement.cpp
     src/NullAgentRuntime.cpp
     src/NullToolExecutor.cpp
     src/OllamaRuntime.cpp
@@ -110,6 +113,7 @@ add_library(sentinel_core STATIC
     src/StaticProviderCatalog.cpp
     src/StaticSandboxPolicy.cpp
     src/StaticTaskPlanner.cpp
+    src/Voice.cpp
 )
 
 target_include_directories(sentinel_core
