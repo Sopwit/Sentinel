@@ -149,19 +149,44 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus CONSTANT)
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary CONSTANT)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount CONSTANT)
+    Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames CONSTANT)
     Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries CONSTANT)
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(QString selectedLocalModelStatus READ selectedLocalModelStatus NOTIFY
+                   localModelSelectionChanged)
     Q_PROPERTY(QString selectedLocalModelSummary READ selectedLocalModelSummary NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(QString selectedLocalModelMetadataSummary READ selectedLocalModelMetadataSummary
+                   NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QString activeLocalRuntimeBadge READ activeLocalRuntimeBadge NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(
+        QString modelManagementStatus READ modelManagementStatus NOTIFY localModelSelectionChanged)
+    Q_PROPERTY(QString modelManagementSummary READ modelManagementSummary NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(
+        QString modelManagementActionAvailability READ modelManagementActionAvailability CONSTANT)
+    Q_PROPERTY(QStringList modelRecommendationSummaries READ modelRecommendationSummaries CONSTANT)
+    Q_PROPERTY(QStringList modelRequirementSummaries READ modelRequirementSummaries CONSTANT)
+    Q_PROPERTY(QString voiceRuntimeMode READ voiceRuntimeMode CONSTANT)
+    Q_PROPERTY(bool voiceEnabled READ voiceEnabled CONSTANT)
+    Q_PROPERTY(QString voiceReadinessStatus READ voiceReadinessStatus CONSTANT)
+    Q_PROPERTY(QString voiceReadinessSummary READ voiceReadinessSummary CONSTANT)
+    Q_PROPERTY(QStringList voiceReadinessChecks READ voiceReadinessChecks CONSTANT)
+    Q_PROPERTY(QStringList voiceCapabilitySummaries READ voiceCapabilitySummaries CONSTANT)
+    Q_PROPERTY(QString textToSpeechStatus READ textToSpeechStatus CONSTANT)
+    Q_PROPERTY(QString textToSpeechSummary READ textToSpeechSummary CONSTANT)
+    Q_PROPERTY(QString speechToTextStatus READ speechToTextStatus CONSTANT)
+    Q_PROPERTY(QString speechToTextSummary READ speechToTextSummary CONSTANT)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceSummary READ localChatInferenceSummary NOTIFY
                    localChatInferenceRoutingChanged)
+    Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
+                   setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
     Q_PROPERTY(QString localInferenceRuntimeState READ localInferenceRuntimeState NOTIFY
                    localInferenceChanged)
@@ -174,9 +199,14 @@ class DesktopShellViewModel final : public QObject {
                    localInferenceChanged)
     Q_PROPERTY(QStringList localInferenceTraceSummaries READ localInferenceTraceSummaries NOTIFY
                    localInferenceChanged)
-    Q_PROPERTY(bool localInferenceStreamingAvailable READ localInferenceStreamingAvailable CONSTANT)
-    Q_PROPERTY(QString localInferenceStreamStatus READ localInferenceStreamStatus CONSTANT)
-    Q_PROPERTY(QString localInferenceStreamSummary READ localInferenceStreamSummary CONSTANT)
+    Q_PROPERTY(bool localInferenceStreamingAvailable READ localInferenceStreamingAvailable NOTIFY
+                   localInferenceChanged)
+    Q_PROPERTY(QString localInferenceStreamStatus READ localInferenceStreamStatus NOTIFY
+                   localInferenceChanged)
+    Q_PROPERTY(QString localInferenceStreamSummary READ localInferenceStreamSummary NOTIFY
+                   localInferenceChanged)
+    Q_PROPERTY(QString localInferenceStreamingText READ localInferenceStreamingText NOTIFY
+                   localInferenceChanged)
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
@@ -300,15 +330,35 @@ public:
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
     int ollamaModelCount() const;
+    QStringList ollamaModelNames() const;
     QStringList ollamaModelSummaries() const;
     QString selectedLocalModel() const;
     void setSelectedLocalModel(const QString& model);
+    QString selectedLocalModelStatus() const;
     QString selectedLocalModelSummary() const;
+    QString selectedLocalModelMetadataSummary() const;
     QString activeLocalRuntimeBadge() const;
+    QString modelManagementStatus() const;
+    QString modelManagementSummary() const;
+    QString modelManagementActionAvailability() const;
+    QStringList modelRecommendationSummaries() const;
+    QStringList modelRequirementSummaries() const;
+    QString voiceRuntimeMode() const;
+    bool voiceEnabled() const;
+    QString voiceReadinessStatus() const;
+    QString voiceReadinessSummary() const;
+    QStringList voiceReadinessChecks() const;
+    QStringList voiceCapabilitySummaries() const;
+    QString textToSpeechStatus() const;
+    QString textToSpeechSummary() const;
+    QString speechToTextStatus() const;
+    QString speechToTextSummary() const;
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;
     QString localChatInferenceSummary() const;
+    bool localInferenceStreamingEnabled() const;
+    void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;
     QString localInferenceRuntimeState() const;
     QString localInferenceStatus() const;
@@ -319,6 +369,7 @@ public:
     bool localInferenceStreamingAvailable() const;
     QString localInferenceStreamStatus() const;
     QString localInferenceStreamSummary() const;
+    QString localInferenceStreamingText() const;
     int availableToolCount() const;
     QStringList availableToolIds() const;
     QString memoryStatus() const;

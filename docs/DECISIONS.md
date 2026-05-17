@@ -1091,3 +1091,138 @@ Boundary rules:
 - Streaming, model management/download/pull/delete UI, cloud provider routing, API keys,
   tools/plugins, filesystem/system actions, subprocess launch, and autonomous loops remain out of
   scope.
+
+## 57. Streaming Chat Requires A Separate Local-Only Opt-In
+
+Decision: Chat streaming uses `ILocalInferenceStreamClient` and a separate persisted local
+streaming opt-in.
+
+Reason: Streaming has different runtime behavior from non-streaming inference. It needs ordered
+chunk metadata, live QML-safe text exposure, cancellation/error/refusal handling, and duplicate
+message protection without weakening the existing local-only inference guards.
+
+Boundary rules:
+
+- Streaming defaults to disabled.
+- Streaming may run only when local chat inference is enabled, streaming is enabled and available,
+  the effective model is valid, the endpoint is local loopback HTTP, and permission/safety checks
+  pass.
+- `OllamaLocalInferenceStreamClient` may call only local loopback `/api/generate` streaming with
+  manual redirect policy.
+- No cloud endpoints, API keys, model downloads/pulls/deletes, subprocess launch,
+  filesystem/system actions, tools/plugins, or autonomous loops are introduced.
+- Malformed chunks are ignored with metadata; timeout, cancellation, refusal, and client errors
+  produce safe summaries.
+- Streaming chunks update live view-model text, but the final assistant message is appended and
+  persisted once.
+
+## 58. Model Selection UX Is Not Model Management
+
+Decision: Settings may expose discovered local Ollama models for selection and status visibility,
+but it must not expose model management actions.
+
+Reason: Phase 10.6-10.8 improves the local runtime workflow now that explicit local inference,
+model discovery, and guarded streaming exist. The UX should make installed-model state clear
+without adding downloads, deletion, process ownership, cloud setup, or autonomous behavior.
+
+Boundary rules:
+
+- The selected local model remains a persisted setting.
+- Settings can select only from already discovered local model names.
+- Controller validation remains authoritative and rejects known invalid selected/effective models
+  before inference or streaming clients are called.
+- Model summaries are QML-safe strings containing name, size when available, modified date when
+  available, and Local Only status.
+- Runtime management UX is read-only/action-light apart from selected model and existing local
+  chat/streaming toggles.
+- No model downloads, pulls, deletes, installs, cloud providers, API keys, filesystem/system
+  actions, subprocess launch, tools/plugins, autonomous loops, or broad model-management workflow
+  are introduced.
+
+## 59. Model Management Readiness Is Metadata-Only
+
+Decision: Add `IModelManagementService` and a deterministic `StaticModelManagementService` for
+readiness metadata, recommendations, requirements, and unavailable action results only.
+
+Reason: The UI needs to prepare users for future local model management without quietly granting
+Sentinel authority to download, delete, install, scan, or launch anything.
+
+Boundary rules:
+
+- Recommendations and RAM/disk requirements are static, approximate, descriptive metadata.
+- Pull, delete, and install requests return unavailable/not implemented results.
+- Controller and view-model exposure is limited to strings and string lists.
+- Existing Ollama model discovery remains the only installed-model metadata source.
+- No model downloads, pulls, deletes, installs, filesystem/system scans or actions, process launch,
+  cloud calls, API keys, tools/plugins, autonomous loops, or broad setup workflow is introduced.
+
+## 60. Local AI Runtime UX Must Finalize Through Chat History
+
+Decision: Local inference and streaming UX may expose transient runtime state, but final assistant
+responses must be represented by normal chat history messages.
+
+Reason: Chat history is the durable transcript boundary. Live streaming text is useful while a
+response is in progress, but keeping it after completion risks duplicate or stale assistant text in
+QML and weakens transcript correctness.
+
+Boundary rules:
+
+- Live streaming text is QML-readable only while streaming is active.
+- When streaming completes, the live preview is cleared and the accumulated final response is
+  appended once through `ChatSession` and `IChatHistoryStore` when available.
+- Refusals and errors are converted to safe user-facing summaries before they become assistant
+  chat messages.
+- Summaries may include technical categories such as missing model, invalid model, endpoint
+  blocked, permission blocked, safety blocked, timeout, invalid response, and client unavailable.
+- Summaries must not expose stack traces, secrets, filesystem paths, raw internal objects, provider
+  credentials, or broad endpoint details.
+- No real cancellation button, downloads, pulls, deletes, installs, cloud providers, API keys,
+  filesystem/system actions, subprocess launch, tools/plugins, or autonomous loops are introduced.
+
+## 61. Phase 11 Local AI Checkpoint Is Runtime QA Only
+
+Decision: Close Phase 11 with a local AI usability and runtime QA checkpoint instead of adding new
+local AI features.
+
+Reason: The current local Ollama path now has opt-in chat inference, opt-in streaming, model
+selection, runtime summaries, safe refusal/error states, and fake-client testability. Before Phase
+12, the priority is confirming that these paths stay bounded and predictable.
+
+Boundary rules:
+
+- Checkpoint work may add focused tests, documentation, safe wording, and QML-safe exposure checks.
+- Checkpoint work must preserve existing local chat inference, streaming, model validation,
+  endpoint, permission, and safety gates.
+- Selected model, local chat inference, and streaming settings remain settings persistence only.
+- Streaming live-preview text must clear after completion, refusal, cancellation, or error; final
+  assistant output remains a normal chat history message.
+- QML must not expose raw local inference clients, stream clients, requests, responses, runtime
+  policies, Ollama internals, model-management service objects, stores, paths, secrets, or
+  credentials.
+- No new product features, model pull/delete/install, cloud providers/API keys,
+  filesystem/system actions, subprocess launch, tools/plugins, UI redesign, or autonomous behavior
+  are introduced by the checkpoint.
+
+## 62. Voice Starts As A Disabled Provider Boundary
+
+Decision: Add text-to-speech and speech-to-text provider interfaces with deterministic null
+providers before adding any real voice runtime.
+
+Reason: Voice affects microphones, speakers, local binaries, model files, permissions, privacy, and
+runtime lifecycle. Sentinel needs a testable architecture boundary and UI readiness surface before
+any audio I/O or Piper/Whisper integration is allowed.
+
+Boundary rules:
+
+- `ITextToSpeechProvider` and `ISpeechToTextProvider` own future voice provider behavior.
+- Current `NullTextToSpeechProvider` and `NullSpeechToTextProvider` implementations are disabled
+  and return safe refusals.
+- `VoiceCapability`, `VoiceProviderDescriptor`, `VoiceProviderStatus`, `VoiceRuntimeMode`,
+  `VoiceRequest`, `VoiceResponse`, and `VoiceReadinessReport` are value-only metadata.
+- Controller and view-model exposure is limited to strings, string lists, and booleans.
+- Settings may display read-only voice readiness metadata only.
+- Future Piper integration must stay behind `ITextToSpeechProvider`.
+- Future Whisper integration must stay behind `ISpeechToTextProvider`.
+- No microphone access, audio playback, recording, synthesis, transcription, subprocess/process
+  launch, filesystem/system action, download, cloud call, API key, voice button, record button,
+  speak button, or broad UI redesign is introduced.

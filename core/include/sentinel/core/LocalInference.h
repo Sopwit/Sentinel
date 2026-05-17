@@ -7,6 +7,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <functional>
 
 namespace sentinel::core {
 
@@ -76,6 +77,7 @@ enum class LocalInferenceStreamStatus : std::uint8_t {
     Refused,
     Streaming,
     Completed,
+    Cancelled,
     Error,
 };
 
@@ -85,13 +87,21 @@ struct LocalInferenceStreamChunk {
     int sequence = 0;
     QString text;
     bool finalChunk = false;
+    bool malformed = false;
     QString summary;
 };
 
 struct LocalInferenceStreamResult {
     LocalInferenceStreamStatus status = LocalInferenceStreamStatus::Disabled;
+    LocalInferenceError error = LocalInferenceError::None;
     QString summary = QStringLiteral("Local inference streaming is disabled.");
+    QString model;
+    QString endpoint;
+    QString accumulatedText;
+    bool cancelled = false;
+    int malformedChunkCount = 0;
     QList<LocalInferenceStreamChunk> chunks;
+    QList<LocalInferenceTrace> traces;
 };
 
 QString localInferenceTraceSummary(const LocalInferenceTrace& trace);
@@ -111,14 +121,20 @@ class ILocalInferenceStreamClient {
 public:
     virtual ~ILocalInferenceStreamClient() = default;
 
-    virtual LocalInferenceStreamResult startStream(const LocalInferenceRequest& request) = 0;
+    virtual LocalInferenceStreamResult
+    startStream(const LocalInferenceRequest& request,
+                const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) = 0;
     virtual QString statusSummary() const = 0;
+    virtual bool isAvailable() const = 0;
 };
 
 class NullLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
 public:
-    LocalInferenceStreamResult startStream(const LocalInferenceRequest& request) override;
+    LocalInferenceStreamResult
+    startStream(const LocalInferenceRequest& request,
+                const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) override;
     QString statusSummary() const override;
+    bool isAvailable() const override;
 };
 
 class NullLocalInferenceClient final : public ILocalInferenceClient {
@@ -140,6 +156,25 @@ private:
     bool endpointAllowed() const;
     QList<OllamaModelSummary> installedModels(int timeoutMs) const;
     bool hasInstalledModel(const QString& model, int timeoutMs) const;
+
+    OllamaConfig config_;
+    int timeoutMs_ = 30000;
+};
+
+class OllamaLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
+public:
+    explicit OllamaLocalInferenceStreamClient(OllamaConfig config = OllamaConfig{},
+                                              int timeoutMs = 30000);
+
+    LocalInferenceStreamResult
+    startStream(const LocalInferenceRequest& request,
+                const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) override;
+    QString statusSummary() const override;
+    bool isAvailable() const override;
+
+private:
+    QUrl endpointUrl(const QString& path) const;
+    bool endpointAllowed() const;
 
     OllamaConfig config_;
     int timeoutMs_ = 30000;

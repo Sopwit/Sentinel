@@ -10,6 +10,7 @@
 #include <QTimer>
 #include <QVariant>
 
+#include <functional>
 #include <utility>
 
 namespace sentinel::core {
@@ -117,6 +118,11 @@ JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs) {
     return JsonReply{true, false, document, {}};
 }
 
+bool hasRedirectStatus(QNetworkReply* reply) {
+    const auto status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    return status >= 300 && status < 400;
+}
+
 LocalInferenceTrace trace(int sequence, const QString& stage, const QString& status,
                           const QString& summary) {
     return LocalInferenceTrace{sequence, stage, status, summary};
@@ -159,6 +165,8 @@ QString localInferenceStreamStatusName(LocalInferenceStreamStatus status) {
         return QStringLiteral("Streaming");
     case LocalInferenceStreamStatus::Completed:
         return QStringLiteral("Completed");
+    case LocalInferenceStreamStatus::Cancelled:
+        return QStringLiteral("Cancelled");
     case LocalInferenceStreamStatus::Error:
         return QStringLiteral("Error");
     }
@@ -246,18 +254,31 @@ QString NullLocalInferenceClient::statusSummary() const {
     return QStringLiteral("Local inference client is unavailable.");
 }
 
-LocalInferenceStreamResult
-NullLocalInferenceStreamClient::startStream(const LocalInferenceRequest& request) {
+LocalInferenceStreamResult NullLocalInferenceStreamClient::startStream(
+    const LocalInferenceRequest& request,
+    const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) {
     Q_UNUSED(request);
+    Q_UNUSED(onChunk);
     return LocalInferenceStreamResult{
         LocalInferenceStreamStatus::Disabled,
+        LocalInferenceError::ClientUnavailable,
         QStringLiteral("Local inference streaming is disabled; no stream was opened."),
+        {},
+        {},
+        {},
+        false,
+        0,
+        {},
         {},
     };
 }
 
 QString NullLocalInferenceStreamClient::statusSummary() const {
-    return QStringLiteral("Local inference streaming skeleton is disabled.");
+    return QStringLiteral("Local inference streaming is disabled.");
+}
+
+bool NullLocalInferenceStreamClient::isAvailable() const {
+    return false;
 }
 
 OllamaLocalInferenceClient::OllamaLocalInferenceClient(OllamaConfig config, int timeoutMs)
@@ -422,6 +443,249 @@ bool OllamaLocalInferenceClient::hasInstalledModel(const QString& model, int tim
         }
     }
     return false;
+}
+
+OllamaLocalInferenceStreamClient::OllamaLocalInferenceStreamClient(OllamaConfig config,
+                                                                   int timeoutMs)
+    : config_(std::move(config)), timeoutMs_(timeoutMs) {}
+
+LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
+    const LocalInferenceRequest& request,
+    const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) {
+    LocalInferenceStreamResult result;
+    result.status = LocalInferenceStreamStatus::NotStarted;
+    result.model = request.options.model.trimmed();
+    result.endpoint = config_.endpoint.toString();
+    result.traces.append(trace(1, QStringLiteral("Stream Request"), QStringLiteral("Received"),
+                               QStringLiteral("Local streaming request reached Ollama boundary.")));
+
+    if (request.prompt.trimmed().isEmpty()) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.error = LocalInferenceError::BlankPrompt;
+        result.summary = QStringLiteral("Local streaming request rejected: prompt is blank.");
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
+
+    if (result.model.isEmpty()) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.error = LocalInferenceError::MissingModel;
+        result.summary = QStringLiteral("Local streaming request rejected: model is required.");
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
+
+    if (request.options.cancellationRequested) {
+        result.status = LocalInferenceStreamStatus::Cancelled;
+        result.error = LocalInferenceError::RequestFailed;
+        result.cancelled = true;
+        result.summary = QStringLiteral("Local streaming request was cancelled before generation.");
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Cancelled"), result.summary));
+        return result;
+    }
+
+    if (!endpointAllowed()) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.error = LocalInferenceError::EndpointBlocked;
+        result.summary =
+            QStringLiteral("Local streaming blocked: endpoint must be local loopback HTTP.");
+        result.traces.append(
+            trace(2, QStringLiteral("Endpoint"), QStringLiteral("Blocked"), result.summary));
+        return result;
+    }
+
+    QJsonObject body;
+    body.insert(QStringLiteral("model"), result.model);
+    body.insert(QStringLiteral("prompt"), request.prompt.trimmed());
+    body.insert(QStringLiteral("stream"), true);
+
+    QNetworkAccessManager manager;
+    QNetworkRequest networkRequest{endpointUrl(QStringLiteral("/api/generate"))};
+    networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
+                             QStringLiteral("application/json"));
+    networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                                QNetworkRequest::ManualRedirectPolicy);
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+
+    QByteArray pending;
+    int sequence = 0;
+    bool done = false;
+
+    QNetworkReply* reply =
+        manager.post(networkRequest, QJsonDocument(body).toJson(QJsonDocument::Compact));
+
+    auto processLine = [&](const QByteArray& line) {
+        const auto trimmedLine = line.trimmed();
+        if (trimmedLine.isEmpty()) {
+            return;
+        }
+
+        QJsonParseError parseError;
+        const auto document = QJsonDocument::fromJson(trimmedLine, &parseError);
+        if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
+            ++sequence;
+            ++result.malformedChunkCount;
+            LocalInferenceStreamChunk chunk{
+                sequence, {}, false, true, QStringLiteral("Malformed local stream chunk ignored."),
+            };
+            result.chunks.append(chunk);
+            result.traces.append(trace(sequence + 2, QStringLiteral("Stream Chunk"),
+                                       QStringLiteral("Malformed"), chunk.summary));
+            if (onChunk) {
+                onChunk(chunk);
+            }
+            return;
+        }
+
+        const auto object = document.object();
+        const auto text = object.value(QStringLiteral("response")).toString();
+        const auto finalChunk = object.value(QStringLiteral("done")).toBool(false);
+        if (text.isEmpty() && !finalChunk) {
+            ++sequence;
+            ++result.malformedChunkCount;
+            LocalInferenceStreamChunk chunk{
+                sequence,
+                {},
+                false,
+                true,
+                QStringLiteral("Local stream chunk did not include response text."),
+            };
+            result.chunks.append(chunk);
+            result.traces.append(trace(sequence + 2, QStringLiteral("Stream Chunk"),
+                                       QStringLiteral("Malformed"), chunk.summary));
+            if (onChunk) {
+                onChunk(chunk);
+            }
+            return;
+        }
+
+        ++sequence;
+        done = done || finalChunk;
+        result.accumulatedText.append(text);
+        LocalInferenceStreamChunk chunk{
+            sequence,
+            text,
+            finalChunk,
+            false,
+            finalChunk ? QStringLiteral("Final local stream chunk received.")
+                       : QStringLiteral("Local stream chunk received."),
+        };
+        result.chunks.append(chunk);
+        if (onChunk) {
+            onChunk(chunk);
+        }
+    };
+
+    QObject::connect(reply, &QNetworkReply::readyRead, &loop, [&]() {
+        pending.append(reply->readAll());
+        while (true) {
+            const auto newlineIndex = pending.indexOf('\n');
+            if (newlineIndex < 0) {
+                break;
+            }
+            const auto line = pending.left(newlineIndex);
+            pending.remove(0, newlineIndex + 1);
+            processLine(line);
+        }
+    });
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    timer.start(request.options.timeoutMs > 0 ? request.options.timeoutMs : timeoutMs_);
+    result.status = LocalInferenceStreamStatus::Streaming;
+    result.summary = QStringLiteral("Local Ollama streaming generation is active.");
+    loop.exec();
+
+    if (timer.isActive()) {
+        timer.stop();
+    } else {
+        reply->abort();
+        result.status = LocalInferenceStreamStatus::Error;
+        result.error = LocalInferenceError::Timeout;
+        result.summary = QStringLiteral("Local Ollama streaming generation timed out.");
+        reply->deleteLater();
+        return result;
+    }
+
+    pending.append(reply->readAll());
+    if (!pending.trimmed().isEmpty()) {
+        processLine(pending);
+    }
+
+    if (hasRedirectStatus(reply)) {
+        result.status = LocalInferenceStreamStatus::Error;
+        result.error = LocalInferenceError::EndpointBlocked;
+        result.summary = QStringLiteral("Local Ollama streaming blocked: redirects are not "
+                                        "allowed.");
+        reply->deleteLater();
+        return result;
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        const auto error = reply->errorString();
+        result.status = LocalInferenceStreamStatus::Error;
+        result.error = LocalInferenceError::RequestFailed;
+        result.summary = QStringLiteral("Local Ollama streaming generation failed: %1").arg(error);
+        reply->deleteLater();
+        return result;
+    }
+
+    reply->deleteLater();
+
+    if (request.options.cancellationRequested) {
+        result.status = LocalInferenceStreamStatus::Cancelled;
+        result.error = LocalInferenceError::RequestFailed;
+        result.cancelled = true;
+        result.summary = QStringLiteral("Local Ollama streaming generation was cancelled.");
+        return result;
+    }
+
+    if (!done || result.accumulatedText.trimmed().isEmpty()) {
+        result.status = LocalInferenceStreamStatus::Error;
+        result.error = LocalInferenceError::InvalidResponse;
+        result.summary = QStringLiteral("Local Ollama streaming response did not complete with "
+                                        "assistant text.");
+        return result;
+    }
+
+    result.status = LocalInferenceStreamStatus::Completed;
+    result.error = LocalInferenceError::None;
+    result.summary = result.malformedChunkCount > 0
+                         ? QStringLiteral("Local Ollama streaming completed with %1 malformed "
+                                          "chunk(s) ignored.")
+                               .arg(result.malformedChunkCount)
+                         : QStringLiteral("Local Ollama streaming completed.");
+    result.traces.append(trace(result.traces.size() + 1, QStringLiteral("Stream Generation"),
+                               QStringLiteral("Completed"), result.summary));
+    return result;
+}
+
+QString OllamaLocalInferenceStreamClient::statusSummary() const {
+    return endpointAllowed() ? QStringLiteral("Ollama local streaming boundary is configured for "
+                                              "loopback-only /api/generate.")
+                             : QStringLiteral("Ollama local streaming boundary is blocked by "
+                                              "endpoint policy.");
+}
+
+bool OllamaLocalInferenceStreamClient::isAvailable() const {
+    return endpointAllowed();
+}
+
+QUrl OllamaLocalInferenceStreamClient::endpointUrl(const QString& path) const {
+    QUrl url = config_.endpoint.url;
+    url.setPath(path);
+    url.setQuery(QString());
+    url.setFragment(QString());
+    return url;
+}
+
+bool OllamaLocalInferenceStreamClient::endpointAllowed() const {
+    return config_.endpoint.isLoopbackHttp();
 }
 
 } // namespace sentinel::core

@@ -187,24 +187,38 @@ response. It does not call Ollama or any provider, execute models, download mode
 launch processes/subprocesses, scan filesystems, execute tools, load plugins, access networks, read
 API keys, or start background workers.
 
-## Local Inference, Model Selection, And Explicit Chat Routing
+## Local Inference, Model Selection, Explicit Chat Routing, And Streaming
 
 Phase 9.3 through Phase 9.8 add a controlled local inference path and selected-model metadata.
 Phase 10.0 through Phase 10.2 add explicit chat-to-Ollama routing on top of that boundary while
-keeping the existing local-safe provider path as the default.
+keeping the existing local-safe provider path as the default. Phase 10.3 through Phase 10.5 add
+guarded local-only streaming for chat responses. Phase 10.6 through Phase 10.8 add action-light
+model selection and runtime management UX over discovered local metadata. Phase 11.0 through Phase
+11.2 add model-management readiness metadata only. Phase 11.3 through Phase 11.6 stabilize local
+AI chat/runtime UX with safer summaries, clearer model-selection presentation, and streaming
+preview finalization without adding new execution capabilities. Phase 11.7 through Phase 11.9
+checkpoint the local AI user flow and runtime QA posture with focused tests and
+`docs/PHASE_11_CHECKPOINT.md`; they do not add runtime authority or product features.
 
 Separation:
 
 - `ILocalInferenceClient` owns non-streaming local prompt execution.
 - `OllamaLocalInferenceClient` is restricted to local loopback HTTP and non-streaming
   `/api/generate`.
+- `ILocalInferenceStreamClient` owns streaming local prompt execution and reports chunk/status,
+  error, cancellation, malformed-chunk, trace, and accumulated-text metadata.
+- `OllamaLocalInferenceStreamClient` is restricted to local loopback HTTP `/api/generate`
+  streaming and uses manual redirect policy. It does not call cloud endpoints, use API keys,
+  download/pull/delete models, launch subprocesses, or execute tools.
 - `ApplicationController` evaluates runtime permission and safety metadata before invoking local
-  inference.
+  inference or streaming inference.
 - `AppSettings` persists the selected local model as configuration only.
 - `AppSettings` also persists local chat inference enablement. The default is disabled.
+- `AppSettings` persists local inference streaming enablement. The default is disabled.
 - `DesktopShellViewModel` exposes selected-model summaries, runtime badge, busy/idle/error state,
-  latency summary, trace strings, local chat routing status/summary, and disabled streaming status
-  as QML-safe values only.
+  latency summary, trace strings, local chat routing status/summary, streaming
+  enabled/status/live-text/summary values, discovered model names, model metadata summaries, and
+  selected model status as QML-safe values only.
 
 Model selection behavior:
 
@@ -215,30 +229,115 @@ Model selection behavior:
 - If discovered model metadata is available and the selected/effective model is absent, inference
   is rejected before the inference client is called.
 - If no model can be resolved, inference is rejected as an invalid request.
+- Settings can select from discovered local model names only when metadata is available.
+- Selected-model UX reports Missing, Fallback, Available, Unverified, or Invalid state.
+- Model metadata display is limited to name, size when available, modified date when available,
+  and Local Only status.
 
-Streaming skeleton:
+Streaming behavior:
 
-- `LocalInferenceStreamChunk`, `LocalInferenceStreamStatus`, `LocalInferenceStreamResult`, and
-  `ILocalInferenceStreamClient` define the future streaming boundary.
-- The current stream client is deterministic disabled behavior and opens no stream.
+- Streaming is disabled by default through settings.
+- Chat streaming activates only when local chat inference is enabled, streaming is enabled and
+  available, the selected/effective model is valid, the endpoint is loopback HTTP, and runtime
+  permission/safety gates pass.
+- Chunks update QML-safe live response text only while the stream is active. When streaming
+  completes, the live preview is cleared and the final assistant text is appended once through
+  normal chat history. Malformed chunks are ignored with metadata; timeout, cancellation, refusal,
+  and errors produce safe summaries.
 
 Explicit chat routing:
 
 - `ApplicationController::sendMessage` always appends the user message before routing.
 - If local chat inference is disabled, chat uses the existing `IChatProvider` path.
-- If local chat inference is enabled, chat calls `runLocalInference` only after model resolution,
-  loopback endpoint validation, runtime permission evaluation, and runtime safety evaluation.
+- If local chat inference is enabled, chat calls streaming or non-streaming local inference only
+  after model resolution, loopback endpoint validation, runtime permission evaluation, and runtime
+  safety evaluation.
 - Successful local inference appends one assistant message from the local inference response.
 - Refusals, invalid models, blocked endpoints, permission/safety denials, and client errors append
-  one safe assistant error/refusal message.
-- The chat route does not stream tokens, invoke tools, launch subprocesses, perform filesystem or
-  system actions, call cloud providers, read API keys, or start autonomous loops.
+  one safe assistant error/refusal message. These messages avoid stack traces, secrets,
+  filesystem paths, raw internal objects, provider credentials, and broad endpoint details.
+- The chat route does not invoke tools, launch subprocesses, perform filesystem or system actions,
+  call cloud providers, read API keys, download/pull/delete models, or start autonomous loops.
+
+## Voice Boundary
+
+Phase 12.0 through Phase 12.2 add a disabled voice planning boundary for future text-to-speech and
+speech-to-text work.
+
+Separation:
+
+- `ITextToSpeechProvider` owns the future TTS provider boundary.
+- `ISpeechToTextProvider` owns the future STT provider boundary.
+- `NullTextToSpeechProvider` and `NullSpeechToTextProvider` are the current implementations.
+- `VoiceCapability`, `VoiceProviderDescriptor`, `VoiceProviderStatus`, `VoiceRuntimeMode`,
+  `VoiceRequest`, `VoiceResponse`, and `VoiceReadinessReport` are value-only metadata.
+- `ApplicationController` exposes voice readiness/status summaries only.
+- `DesktopShellViewModel` exposes QML-safe strings, string lists, and booleans only.
+
+Current behavior:
+
+- Voice runtime mode is disabled.
+- TTS returns a safe disabled/refusal placeholder and produces no audio.
+- STT returns a safe disabled/refusal placeholder and reads no audio.
+- Settings may show read-only voice readiness metadata, but no voice controls exist.
+- No microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
+  launch, filesystem/system actions, downloads, cloud calls, API keys, or voice setup flow is
+  present.
+
+Future Piper/Whisper integration should happen only through these provider interfaces after a
+later explicit phase defines audio device permissions, local model ownership, cancellation,
+playback/capture lifecycle, and runtime safety checks.
+
+Current local AI user flow:
+
+- The user may view local Ollama health and discovered model metadata through loopback-only
+  runtime checks.
+- Settings can persist a selected local model from discovered names. If no model is selected,
+  discovery metadata may supply a safe fallback candidate; if discovery reports the selected model
+  missing, local inference and streaming are refused before the client is called.
+- The user must explicitly enable local chat inference before chat prompts can route to Ollama.
+- The user must explicitly enable streaming before chat uses the streaming boundary; otherwise
+  guarded non-streaming local inference is used when local chat inference is enabled.
+- Runtime status, selected/effective model status, streaming state, last-response summary, latency,
+  and traces are exposed to QML as strings, string lists, booleans, and counts only.
 
 Still out of scope:
 
-- Model downloads, pulls, deletes, broad model-management UI, cloud provider calls, API keys,
+- Model downloads, pulls, deletes, installs, broad model-management actions, cloud provider calls,
+  API keys,
   endpoint expansion, subprocess launch, filesystem/system actions, tools/plugins, autonomous
-  loops, automatic routing without opt-in, and token streaming UI.
+  loops, and automatic routing without opt-in.
+
+Phase 11 checkpoint:
+
+- `docs/PHASE_11_CHECKPOINT.md` records the completed local AI scope, current user flow, known
+  limitations, safety guardrails, and Phase 12 readiness criteria.
+- Runtime QA coverage includes disabled local inference, missing and invalid models,
+  permission/safety blocking, disabled and enabled streaming, stream-error preview cleanup, fake
+  non-streaming success, fake streaming success, stable settings persistence, duplicate-message
+  protection through final chat history, and QML-safe exposure checks.
+- The checkpoint preserves the existing boundaries: no model management actions, cloud providers,
+  API keys, filesystem/system actions, subprocess launch, tools/plugins, autonomous loops, or UI
+  redesign.
+
+## Local Model Management Readiness
+
+Phase 11.0 through Phase 11.2 add `IModelManagementService` as a metadata/readiness boundary for
+future local model management. The current implementation is `StaticModelManagementService`.
+
+Separation:
+
+- `IModelManagementService` is not `IOllamaRuntimeClient`; it does not discover installed models.
+- `IModelManagementService` is not `ILocalInferenceClient`; it does not execute prompts.
+- `IModelManagementService` is not process, filesystem, provider, cloud, or credential ownership.
+
+The service returns deterministic recommendations and approximate descriptive RAM/disk requirement
+summaries. Pull, delete, and install requests return unavailable/not implemented results.
+`ApplicationController` combines this metadata with existing installed-model count and selected
+model state, and `DesktopShellViewModel` exposes QML-safe strings/lists only.
+
+This boundary does not download, pull, delete, install, scan filesystems, launch subprocesses,
+call cloud services, read API keys, execute tools/plugins, or run autonomous loops.
 
 ## Local Runtime Session Metadata
 

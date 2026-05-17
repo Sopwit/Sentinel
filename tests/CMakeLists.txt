@@ -44,6 +44,7 @@ add_sentinel_core_test(test_static_execution_lifecycle core/test_static_executio
 add_sentinel_core_test(test_runtime_integration core/test_runtime_integration.cpp)
 add_sentinel_core_test(test_ollama_runtime core/test_ollama_runtime.cpp)
 add_sentinel_core_test(test_local_inference core/test_local_inference.cpp)
+add_sentinel_core_test(test_voice core/test_voice.cpp)
 add_sentinel_core_test(test_null_tool_executor core/test_null_tool_executor.cpp)
 add_sentinel_core_test(test_local_runtime core/test_local_runtime.cpp)
 add_sentinel_core_test(test_local_runtime_session core/test_local_runtime_session.cpp)

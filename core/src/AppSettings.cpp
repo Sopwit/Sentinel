@@ -109,4 +109,20 @@ void AppSettings::setLocalChatInferenceEnabled(bool enabled) {
     emit localChatInferenceEnabledChanged();
 }
 
+bool AppSettings::localInferenceStreamingEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(localInferenceStreamingEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setLocalInferenceStreamingEnabled(bool enabled) {
+    if (enabled == localInferenceStreamingEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(localInferenceStreamingEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit localInferenceStreamingEnabledChanged();
+}
+
 } // namespace sentinel::core

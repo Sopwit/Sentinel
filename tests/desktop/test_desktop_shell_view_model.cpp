@@ -8,6 +8,7 @@
 #include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/ModeManager.h"
 #include "sentinel/core/NullAgentRuntime.h"
+#include "sentinel/core/OllamaRuntime.h"
 
 #include <QHash>
 #include <QMetaProperty>
@@ -23,6 +24,9 @@ using sentinel::core::InMemorySettingsStore;
 using sentinel::core::InMemoryStore;
 using sentinel::core::LocalEchoProvider;
 using sentinel::core::ModeManager;
+using sentinel::core::OllamaConfig;
+using sentinel::core::OllamaHealthCheckResult;
+using sentinel::core::OllamaModelSummary;
 using sentinel::desktop::ChatMessageListModel;
 using sentinel::desktop::DesktopShellViewModel;
 
@@ -48,6 +52,9 @@ private slots:
     void exposesOrchestrationReadinessDiagnostics();
     void exposesLocalRuntimeMetadata();
     void exposesOllamaRuntimeBoundaryMetadata();
+    void exposesDiscoveredModelSelectionMetadata();
+    void exposesModelManagementReadinessMetadata();
+    void exposesVoiceReadinessMetadata();
     void exposesLocalInferenceBoundaryMetadata();
     void forwardsBlockedLocalInferenceRequest();
     void exposesConversationSessionMetadata();
@@ -110,6 +117,31 @@ public:
 private:
     QList<sentinel::core::ChatMessage> messages_;
     bool available_ = true;
+};
+
+class FakeOllamaRuntimeClient final : public sentinel::core::IOllamaRuntimeClient {
+public:
+    explicit FakeOllamaRuntimeClient(QList<OllamaModelSummary> models)
+        : models_(std::move(models)) {}
+
+    OllamaConfig config() const override {
+        return {};
+    }
+
+    OllamaHealthCheckResult healthCheck() const override {
+        OllamaHealthCheckResult result;
+        result.connectionStatus = sentinel::core::OllamaConnectionStatus::Connected;
+        result.healthStatus = sentinel::core::OllamaHealthStatus::Healthy;
+        result.summary = QStringLiteral("Fake Ollama health metadata.");
+        return result;
+    }
+
+    QList<OllamaModelSummary> installedModels() const override {
+        return models_;
+    }
+
+private:
+    QList<OllamaModelSummary> models_;
 };
 
 class FixedPlanRuntime final : public sentinel::core::IAgentRuntime {
@@ -400,7 +432,143 @@ void DesktopShellViewModelTest::exposesOllamaRuntimeBoundaryMetadata() {
     QVERIFY(
         fixture.viewModel.ollamaHealthSummary().contains(QStringLiteral("no local health check")));
     QCOMPARE(fixture.viewModel.ollamaModelCount(), 0);
+    QVERIFY(fixture.viewModel.ollamaModelNames().isEmpty());
     QVERIFY(fixture.viewModel.ollamaModelSummaries().isEmpty());
+}
+
+void DesktopShellViewModelTest::exposesDiscoveredModelSelectionMetadata() {
+    ApplicationController controller{
+        std::make_unique<LocalEchoProvider>(),
+        std::make_unique<InMemoryStore>(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{
+            {QStringLiteral("llama3.2"), QStringLiteral("2026-05-01T10:00:00Z"), 2147483648},
+            {QStringLiteral("mistral"), {}, 1024},
+        })};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+    QSignalSpy spy(&viewModel, &DesktopShellViewModel::localModelSelectionChanged);
+
+    QCOMPARE(viewModel.ollamaModelCount(), 2);
+    QCOMPARE(viewModel.ollamaModelNames(),
+             QStringList({QStringLiteral("llama3.2"), QStringLiteral("mistral")}));
+    QVERIFY(viewModel.ollamaModelSummaries().contains(
+        QStringLiteral("llama3.2 (2.0 GiB, modified 2026-05-01T10:00:00Z, Local Only)")));
+    QCOMPARE(viewModel.selectedLocalModelStatus(), QStringLiteral("Fallback"));
+    QCOMPARE(viewModel.selectedLocalModelMetadataSummary(),
+             QStringLiteral("Fallback model: llama3.2 (2.0 GiB, modified "
+                            "2026-05-01T10:00:00Z, Local Only)"));
+
+    viewModel.setSelectedLocalModel(QStringLiteral("mistral"));
+
+    QCOMPARE(settings.selectedLocalModel(), QStringLiteral("mistral"));
+    QCOMPARE(viewModel.selectedLocalModel(), QStringLiteral("mistral"));
+    QCOMPARE(viewModel.selectedLocalModelStatus(), QStringLiteral("Available"));
+    QCOMPARE(viewModel.selectedLocalModelMetadataSummary(),
+             QStringLiteral("Selected model: mistral (1.0 KiB, Local Only)"));
+    QVERIFY(spy.count() >= 1);
+
+    viewModel.setSelectedLocalModel(QStringLiteral("missing"));
+
+    QCOMPARE(settings.selectedLocalModel(), QStringLiteral("missing"));
+    QCOMPARE(viewModel.selectedLocalModelStatus(), QStringLiteral("Invalid"));
+    QCOMPARE(viewModel.selectedLocalModelMetadataSummary(),
+             QStringLiteral("Invalid selection: missing is not in discovered local model "
+                            "metadata."));
+}
+
+void DesktopShellViewModelTest::exposesModelManagementReadinessMetadata() {
+    ApplicationController controller{
+        std::make_unique<LocalEchoProvider>(),
+        std::make_unique<InMemoryStore>(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{
+            {QStringLiteral("llama3.2"), QStringLiteral("2026-05-01T10:00:00Z"), 2147483648},
+        })};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+
+    QCOMPARE(viewModel.modelManagementStatus(), QStringLiteral("Metadata Only"));
+    QCOMPARE(viewModel.modelManagementSummary(),
+             QStringLiteral("Model management readiness is metadata-only: 1 installed local "
+                            "models reported, selected model llama3.2, actions unavailable."));
+    QVERIFY(viewModel.modelManagementActionAvailability().contains(
+        QStringLiteral("Pull for llama3.2 is unavailable")));
+    QCOMPARE(viewModel.modelRecommendationSummaries().size(), 3);
+    QCOMPARE(viewModel.modelRequirementSummaries().size(), 3);
+    QVERIFY(
+        viewModel.modelRecommendationSummaries().first().contains(QStringLiteral("llama3.2:3b")));
+    QVERIFY(viewModel.modelRequirementSummaries().first().contains(
+        QStringLiteral("approx disk about 3 GB")));
+}
+
+void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.voiceRuntimeMode(), QStringLiteral("Disabled"));
+    QVERIFY(!fixture.viewModel.voiceEnabled());
+    QCOMPARE(fixture.viewModel.voiceReadinessStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.voiceReadinessSummary().contains(QStringLiteral("metadata-only")));
+    QCOMPARE(fixture.viewModel.textToSpeechStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.speechToTextStatus(), QStringLiteral("Disabled"));
+    QVERIFY(
+        fixture.viewModel.textToSpeechSummary().contains(QStringLiteral("disabled placeholder")));
+    QVERIFY(
+        fixture.viewModel.speechToTextSummary().contains(QStringLiteral("disabled placeholder")));
+    QCOMPARE(fixture.viewModel.voiceCapabilitySummaries().size(), 2);
+    QVERIFY(fixture.viewModel.voiceCapabilitySummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Speech To Text")));
+    QVERIFY(fixture.viewModel.voiceReadinessChecks()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("No microphone access")));
+    QVERIFY(fixture.viewModel.voiceReadinessChecks()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("No Piper")));
 }
 
 void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
@@ -411,21 +579,28 @@ void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
     QCOMPARE(fixture.viewModel.localInferenceLastResponseSummary(),
              QStringLiteral("No local inference request yet."));
     QCOMPARE(fixture.viewModel.selectedLocalModelSummary(),
-             QStringLiteral("No local model selected; inference requires an explicit model."));
+             QStringLiteral("No local model selected and no discovered Ollama models are "
+                            "available; local inference requires a selected or explicit model."));
+    QCOMPARE(fixture.viewModel.selectedLocalModelStatus(), QStringLiteral("Missing"));
+    QCOMPARE(fixture.viewModel.selectedLocalModelMetadataSummary(),
+             QStringLiteral("No local model metadata available."));
     QCOMPARE(fixture.viewModel.activeLocalRuntimeBadge(),
              QStringLiteral("Ollama Local / No Model"));
     QVERIFY(!fixture.viewModel.localChatInferenceEnabled());
     QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Disabled"));
     QCOMPARE(fixture.viewModel.localChatInferenceSummary(),
-             QStringLiteral("Local chat inference is disabled; chat uses the local safe provider "
-                            "path."));
+             QStringLiteral("Local chat inference is disabled; chat stays on the local safe "
+                            "provider path and no Ollama prompt is sent."));
     QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Idle"));
     QCOMPARE(fixture.viewModel.localInferenceLatencySummary(),
              QStringLiteral("No local inference latency recorded."));
     QVERIFY(!fixture.viewModel.localInferenceStreamingAvailable());
+    QVERIFY(!fixture.viewModel.localInferenceStreamingEnabled());
     QCOMPARE(fixture.viewModel.localInferenceStreamStatus(), QStringLiteral("Disabled"));
     QCOMPARE(fixture.viewModel.localInferenceStreamSummary(),
-             QStringLiteral("Local inference streaming is disabled."));
+             QStringLiteral("Local inference streaming is disabled; responses finalize through "
+                            "normal chat history."));
+    QVERIFY(fixture.viewModel.localInferenceStreamingText().isEmpty());
     QVERIFY(fixture.viewModel.localInferenceTraceSummaries().isEmpty());
 }
 
@@ -786,10 +961,45 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("runtimeIntegrationReadinessStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeIntegrationReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeIntegrationReadinessChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("ollamaEndpoint"), QByteArrayLiteral("QString")},
+        {QStringLiteral("ollamaConnectionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("ollamaHealthStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("ollamaHealthSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("ollamaModelCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("ollamaModelNames"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("ollamaModelSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("selectedLocalModelStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedLocalModelSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedLocalModelMetadataSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("activeLocalRuntimeBadge"), QByteArrayLiteral("QString")},
+        {QStringLiteral("modelManagementStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("modelManagementSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("modelManagementActionAvailability"), QByteArrayLiteral("QString")},
+        {QStringLiteral("modelRecommendationSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelRequirementSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceRuntimeMode"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("voiceReadinessStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceReadinessChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceCapabilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("textToSpeechStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("textToSpeechSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("speechToTextStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("speechToTextSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localChatInferenceStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localChatInferenceSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localInferenceBusy"), QByteArrayLiteral("bool")},
+        {QStringLiteral("localInferenceRuntimeState"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceLastResponseSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localInferenceLatencySummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("localInferenceStreamingAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("localInferenceStreamStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localInferenceStreamSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localInferenceStreamingText"), QByteArrayLiteral("QString")},
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -860,7 +1070,24 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("localInferenceClient"),
         QStringLiteral("localInferenceRequest"),
         QStringLiteral("localInferenceResponse"),
+        QStringLiteral("localInferenceStreamClient"),
+        QStringLiteral("localInferenceStreamResult"),
+        QStringLiteral("localInferenceStreamChunk"),
         QStringLiteral("localInferenceTrace"),
+        QStringLiteral("ollamaRuntimeClient"),
+        QStringLiteral("ollamaConfig"),
+        QStringLiteral("ollamaEndpointRecord"),
+        QStringLiteral("ollamaHealthCheck"),
+        QStringLiteral("ollamaModels"),
+        QStringLiteral("modelManagementService"),
+        QStringLiteral("modelManagementRequest"),
+        QStringLiteral("modelManagementResult"),
+        QStringLiteral("textToSpeechProvider"),
+        QStringLiteral("speechToTextProvider"),
+        QStringLiteral("voiceProviderDescriptor"),
+        QStringLiteral("voiceRequest"),
+        QStringLiteral("voiceResponse"),
+        QStringLiteral("voiceReadinessReport"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),
@@ -1086,11 +1313,13 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QSignalSpy modelSpy(&fixture.viewModel, &DesktopShellViewModel::localModelSelectionChanged);
     QSignalSpy chatRoutingSpy(&fixture.viewModel,
                               &DesktopShellViewModel::localChatInferenceRoutingChanged);
+    QSignalSpy inferenceSpy(&fixture.viewModel, &DesktopShellViewModel::localInferenceChanged);
 
     fixture.viewModel.setThemeName(QStringLiteral("Sentinel Light"));
     fixture.viewModel.setConfigurationProfile(QStringLiteral("Phase 2 Shell"));
     fixture.viewModel.setSelectedLocalModel(QStringLiteral(" local-model "));
     fixture.viewModel.setLocalChatInferenceEnabled(true);
+    fixture.viewModel.setLocalInferenceStreamingEnabled(true);
 
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
@@ -1098,11 +1327,14 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(fixture.settings.selectedLocalModel(), QStringLiteral("local-model"));
     QVERIFY(fixture.viewModel.localChatInferenceEnabled());
     QVERIFY(fixture.settings.localChatInferenceEnabled());
+    QVERIFY(fixture.viewModel.localInferenceStreamingEnabled());
+    QVERIFY(fixture.settings.localInferenceStreamingEnabled());
     QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Enabled"));
     QCOMPARE(themeSpy.count(), 1);
     QCOMPARE(profileSpy.count(), 1);
     QCOMPARE(modelSpy.count(), 1);
     QCOMPARE(chatRoutingSpy.count(), 2);
+    QCOMPARE(inferenceSpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {

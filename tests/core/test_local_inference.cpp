@@ -102,18 +102,20 @@ void LocalInferenceTest::invalidEndpointIsBlocked() {
 void LocalInferenceTest::streamSkeletonIsDeterministicallyDisabled() {
     NullLocalInferenceStreamClient client;
 
-    const auto result = client.startStream(LocalInferenceRequest{
-        QStringLiteral("stream-request-1"),
-        QStringLiteral("hello"),
-        {QStringLiteral("llama3.2"), 1, true, false},
-    });
+    const auto result = client.startStream(
+        LocalInferenceRequest{
+            QStringLiteral("stream-request-1"),
+            QStringLiteral("hello"),
+            {QStringLiteral("llama3.2"), 1, true, false},
+        },
+        {});
 
     QCOMPARE(result.status, LocalInferenceStreamStatus::Disabled);
     QCOMPARE(result.summary,
              QStringLiteral("Local inference streaming is disabled; no stream was opened."));
     QVERIFY(result.chunks.isEmpty());
-    QCOMPARE(client.statusSummary(),
-             QStringLiteral("Local inference streaming skeleton is disabled."));
+    QCOMPARE(client.statusSummary(), QStringLiteral("Local inference streaming is disabled."));
+    QVERIFY(!client.isAvailable());
 }
 
 QTEST_MAIN(LocalInferenceTest)
