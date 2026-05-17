@@ -10,6 +10,8 @@ ShellPanel {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property bool modelReady: viewModel.selectedLocalModelStatus === "Available"
                                       || viewModel.selectedLocalModelStatus === "Fallback"
+    readonly property int contentPadding: compact ? SentinelTheme.spaceMd : SentinelTheme.space2Xl
+    readonly property int cardPadding: SentinelTheme.spaceMd
 
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.038)
     border.color: SentinelTheme.withAlpha(modeAccent, 0.095)
@@ -18,7 +20,7 @@ ShellPanel {
 
     ColumnLayout {
         anchors.fill: parent
-        anchors.margins: chatPanel.compact ? SentinelTheme.spaceMd : SentinelTheme.space2Xl
+        anchors.margins: chatPanel.contentPadding
         spacing: SentinelTheme.spaceLg
 
         RowLayout {
@@ -66,8 +68,9 @@ ShellPanel {
 
             ColumnLayout {
                 id: runtimeStatusColumn
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceSm
+                x: SentinelTheme.spaceSm
+                y: SentinelTheme.spaceSm
+                width: parent.width - SentinelTheme.spaceSm * 2
                 spacing: SentinelTheme.spaceXs
 
                 InfoRow {
@@ -99,6 +102,7 @@ ShellPanel {
             id: messageList
             Layout.fillWidth: true
             Layout.fillHeight: true
+            Layout.minimumHeight: 160
             clip: true
             spacing: SentinelTheme.spaceLg
             model: chatPanel.viewModel.chatMessages
@@ -113,12 +117,13 @@ ShellPanel {
                 radius: SentinelTheme.radiusLg
                 color: messageDelegate.messageRole === "user" ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.075) : messageDelegate.messageStatus === "error" ? SentinelTheme.errorSurface : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.020)
                 border.color: messageDelegate.messageRole === "user" ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.16) : messageDelegate.messageStatus === "error" ? SentinelTheme.errorBorder : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.035)
-                implicitHeight: messageColumn.implicitHeight + 26
+                implicitHeight: messageColumn.implicitHeight + chatPanel.cardPadding * 2
 
                 ColumnLayout {
                     id: messageColumn
-                    anchors.fill: parent
-                    anchors.margins: SentinelTheme.spaceMd
+                    x: chatPanel.cardPadding
+                    y: chatPanel.cardPadding
+                    width: parent.width - chatPanel.cardPadding * 2
                     spacing: SentinelTheme.spaceXs
 
                     Text {
@@ -147,12 +152,13 @@ ShellPanel {
             radius: SentinelTheme.radiusLg
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.020)
             border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.14)
-            implicitHeight: streamingColumn.implicitHeight + 24
+            implicitHeight: streamingColumn.implicitHeight + chatPanel.cardPadding * 2
 
             ColumnLayout {
                 id: streamingColumn
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceMd
+                x: chatPanel.cardPadding
+                y: chatPanel.cardPadding
+                width: parent.width - chatPanel.cardPadding * 2
                 spacing: SentinelTheme.spaceXs
 
                 Text {
