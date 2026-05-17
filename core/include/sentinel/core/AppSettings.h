@@ -24,6 +24,14 @@ class AppSettings final : public QObject {
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceEnabledChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceStreamingEnabledChanged)
+    Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
+                   piperBinaryPathChanged)
+    Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
+                   piperModelPathChanged)
+    Q_PROPERTY(QString whisperBinaryPath READ whisperBinaryPath WRITE setWhisperBinaryPath NOTIFY
+                   whisperBinaryPathChanged)
+    Q_PROPERTY(QString whisperModelPath READ whisperModelPath WRITE setWhisperModelPath NOTIFY
+                   whisperModelPathChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -48,6 +56,14 @@ public:
     void setLocalChatInferenceEnabled(bool enabled);
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
+    QString piperBinaryPath() const;
+    void setPiperBinaryPath(const QString& path);
+    QString piperModelPath() const;
+    void setPiperModelPath(const QString& path);
+    QString whisperBinaryPath() const;
+    void setWhisperBinaryPath(const QString& path);
+    QString whisperModelPath() const;
+    void setWhisperModelPath(const QString& path);
 
 signals:
     void themeNameChanged();
@@ -57,6 +73,10 @@ signals:
     void selectedLocalModelChanged();
     void localChatInferenceEnabledChanged();
     void localInferenceStreamingEnabledChanged();
+    void piperBinaryPathChanged();
+    void piperModelPathChanged();
+    void whisperBinaryPathChanged();
+    void whisperModelPathChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
@@ -66,6 +86,10 @@ private:
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";
     static constexpr auto localChatInferenceEnabledKey = "localChatInferenceEnabled";
     static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
+    static constexpr auto piperBinaryPathKey = "piperBinaryPath";
+    static constexpr auto piperModelPathKey = "piperModelPath";
+    static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";
+    static constexpr auto whisperModelPathKey = "whisperModelPath";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
 

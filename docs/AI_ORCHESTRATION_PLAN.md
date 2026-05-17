@@ -70,7 +70,18 @@ Phase 13.3 through Phase 13.5 add a Piper TTS adapter skeleton behind the text-t
 configuration, request/result, model descriptor, null client, and provider readiness metadata are
 present, but audio playback, file-output synthesis, Piper subprocess execution, downloads, cloud
 calls, API keys, filesystem-wide scans, model loading, speak controls, and path/model pickers
-remain disabled.
+remain disabled. Phase 13.6 through Phase 13.8 add controlled local Piper file-output synthesis:
+it remains disabled by default and can run only after explicit binary/model/output-directory,
+local-only request, process-permission, and voice safety gates pass. Playback, microphone access,
+downloads, cloud/API-key behavior, filesystem-wide scans, autonomous voice loops, and voice
+controls remain out of scope. Phase 13.9 checkpoints the Voice/Piper architecture in
+`docs/PHASE_13_CHECKPOINT.md`, confirms the current TTS path is `text -> Piper provider -> gated
+file-output metadata`, and adds no runtime behavior. Phase 14.0 through Phase 14.3 add persisted
+local Piper/Whisper path configuration and exact-path validation metadata only; no Piper/Whisper
+execution, microphone access, playback, downloads, cloud/API keys, filesystem-wide scans, or
+autonomous voice loops are enabled. Phase 14.4 through Phase 14.6 polish the voice configuration
+UX and add safe hint-only path suggestions: binary hints inspect only fixed known Homebrew/local
+paths, model hints inspect only configured paths, and no hint is applied automatically.
 
 ## Future Components
 
@@ -158,9 +169,16 @@ remain disabled.
   blocked execution without launching processes, scanning the filesystem broadly, loading models,
   opening audio devices, downloading assets, or calling cloud services.
 - Piper TTS adapter boundary: typed Piper TTS configuration, voice model descriptor, request,
-  result, status, client, null client, and provider metadata. The current provider is
-  disabled/not configured by default, refuses missing binary/model metadata deterministically, and
-  keeps any subprocess/file-output path non-callable until a later explicit phase.
+  result, status, client, null client, process client, and provider metadata. The current TTS path
+  is `text -> Piper provider -> gated file-output metadata`. The current provider is disabled/not
+  configured by default, refuses missing or invalid binary/model metadata deterministically, and
+  permits local file output only inside an app-controlled output directory after explicit
+  process-permission and safety gates pass.
+- Local voice configuration UX: persisted Piper binary/model and Whisper binary/model path strings,
+  exact configured-path metadata checks, fixed-location binary hints, configured-path model hints,
+  and Settings visibility. This is configuration only; it does not run Piper or Whisper, load
+  models, open microphones, play audio, download assets, scan directories recursively, apply hints
+  automatically, use API keys, or start autonomous voice behavior.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -207,12 +225,15 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 13.3-13.5 runtime allows local Ollama health/discovery metadata plus a controlled
+Current Phase 14.6 runtime allows local Ollama health/discovery metadata plus a controlled
 local inference boundary, selected-model metadata, explicit opt-in chat-to-Ollama routing, a
 guarded local-only streaming boundary, action-light local model selection UX, metadata-only
-model-management readiness, metadata-only voice provider/session/runtime boundaries, and
-metadata-only local voice runtime environment ownership plus a disabled Piper TTS adapter
-skeleton. Phase 13 adds no audio I/O or new runtime authority:
+model-management readiness, metadata-only voice provider/session/runtime boundaries,
+metadata-only local voice runtime environment ownership, controlled Piper file-output synthesis,
+and local Piper/Whisper path configuration UX with hint-only fixed-location suggestions. Phase 14.6
+still adds no audio playback,
+microphone access, autonomous voice loop, cloud voice calls, model downloads, Whisper execution, or
+voice action controls:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -339,9 +360,25 @@ skeleton. Phase 13 adds no audio I/O or new runtime authority:
   controls.
 - `PiperTextToSpeechProvider` owns the current Piper TTS adapter skeleton behind
   `ITextToSpeechProvider`. `NullPiperTtsClient` refuses synthesis deterministically, and missing
-  Piper binary/model metadata is rejected before any client boundary. The adapter does not play
-  audio, write synthesized files, launch Piper, load models, scan broadly, download assets, call
-  cloud providers, use API keys, expose speak controls, or add path/model pickers.
+  or invalid Piper binary/model metadata is rejected before any client boundary.
+  `ProcessPiperTtsClient` may launch Piper only for explicit local file output after the provider
+  accepts enabled configuration, executable binary, readable model, controlled output path,
+  local-only request, process permission, and safety gates. The adapter does not play audio, open
+  microphones, scan broadly, download assets, call cloud providers, use API keys, expose speak
+  controls, or add path/model pickers.
+- Voice Configuration in Settings persists Piper binary path, Piper model path, Whisper binary
+  path, and Whisper model directory/path as strings. The controller validates only those exact
+  paths for exists/missing, readable/unreadable, and executable/non-executable binary metadata.
+  The controller also exposes read-only hints from only `/opt/homebrew/bin/piper`,
+  `/usr/local/bin/piper`, `/opt/homebrew/bin/whisper`, `/usr/local/bin/whisper`, and already
+  configured model paths. The validation and hints do not execute binaries, load models, inspect
+  model contents, recurse through directories, auto-write settings, download assets, open audio
+  devices, call cloud services, or start background work.
+- `docs/PHASE_13_CHECKPOINT.md` records the Phase 13 Voice/Piper review, confirms the TTS path as
+  `text -> Piper provider -> gated file-output metadata`, and marks Phase 14 ready only for
+  explicit planning or configuration-readiness work unless a later phase separately authorizes
+  playback, microphone capture, Whisper execution, downloads, cloud/API-key behavior, or
+  autonomous voice loops.
 - `AppSettings` persists the routing mode and normalized Ollama endpoint through
   `JsonSettingsStore`; it also persists the selected local model name, local chat inference
   opt-in, and local streaming opt-in. It does not store provider credentials or API keys.

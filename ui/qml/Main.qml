@@ -37,8 +37,7 @@ ApplicationWindow {
         anchors.leftMargin: SentinelTheme.pageMargin(root.width)
         anchors.rightMargin: SentinelTheme.pageMargin(root.width)
         anchors.topMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
-        anchors.bottomMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
-                              + dock.height + SentinelTheme.spaceMd
+        anchors.bottomMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
         spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
 
         RowLayout {

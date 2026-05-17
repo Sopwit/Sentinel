@@ -391,6 +391,104 @@ Next:
 - A later explicit phase can add controlled file-output TTS only after user-controlled binary/model
   paths, enabling policy, lifecycle, cancellation, cleanup, and runtime safety checks are defined.
 
+## Phase 13.6-13.8: Controlled Piper TTS File-Output Boundary
+
+Completed. Added explicit local-only Piper file-output synthesis behind the existing provider and
+client interfaces, while preserving disabled-by-default behavior.
+
+Delivered:
+
+- Piper file-output request/result metadata for controlled output path, timeout, exit code, error,
+  and trace summaries.
+- A configured/succeeded/failed/timeout/refused status vocabulary for the file-output boundary.
+- Strict gates for enabled configuration, valid executable Piper binary, valid readable voice
+  model, app-controlled output directory, explicit process permission, local-only request posture,
+  playback disabled, microphone disabled, no downloads, no cloud/API-key behavior, and no
+  filesystem-wide scans.
+- `ProcessPiperTtsClient` as the real local file-output client behind `IPiperTtsClient`, plus
+  deterministic fake-client test coverage.
+- Controller/view-model QML-safe Piper file-output status and summary exposure.
+- Settings readiness visibility only; no speak/play control, path picker, or model picker.
+
+Still out of scope:
+
+- Audio playback, microphone access, automatic voice loops, Whisper/STT, model downloads,
+  cloud/API-key behavior, broad filesystem scans, uncontrolled subprocess execution, and broad UI
+  redesign.
+
+## Phase 13.9: Voice/Piper Checkpoint And Readiness Review
+
+Completed. Reviewed the current voice/Piper architecture and documented Phase 14 readiness without
+adding runtime behavior.
+
+Delivered:
+
+- Added `docs/PHASE_13_CHECKPOINT.md`.
+- Confirmed the current TTS path is `text -> Piper provider -> gated file-output metadata`.
+- Confirmed Piper remains disabled by default.
+- Confirmed file-output synthesis is local-only and reachable only behind explicit provider,
+  request, binary/model, controlled-output-path, permission, and safety gates.
+- Confirmed no playback, microphone access, Whisper execution, downloads, cloud/API-key behavior,
+  or autonomous voice loop exists.
+- Documented future Piper path/model configuration UX, controlled playback, Whisper STT adapter,
+  and voice conversation loop phases.
+
+Still out of scope:
+
+- New runtime behavior, audio playback, microphone access, Whisper/STT execution, downloads,
+  cloud/API-key behavior, autonomous voice loops, path/model pickers, speak/play/record controls,
+  and broad UI redesign.
+
+## Phase 14.0-14.3: Local Voice Configuration UX For Piper And Whisper
+
+Completed. Added persisted local Piper/Whisper path configuration and compact Settings visibility
+without enabling voice execution.
+
+Delivered:
+
+- Persisted Piper binary path, Piper model path, Whisper binary path, and Whisper model
+  directory/path settings.
+- Settings Voice Configuration section with text fields, current configured values, readiness
+  summary, binary/model metadata, and existing Piper readiness rows.
+- Exact configured-path validation only: exists/missing, readable/unreadable, and
+  executable/non-executable for binaries.
+- `ApplicationController` and `DesktopShellViewModel` QML-safe exposure for configured path
+  strings and readiness summaries.
+- Piper readiness updates from configured metadata but remains blocked by the existing safety
+  posture unless a later execution phase explicitly changes the gates.
+- Tests for defaults, fake configured files/directories, missing paths, executable and
+  non-executable binaries, persistence reload, view-model exposure, and no execution side effects.
+
+Still out of scope:
+
+- Running Piper, running Whisper, microphone capture, audio playback, model downloads,
+  filesystem-wide scans, cloud/API keys, autonomous voice loops, path picker integration, and voice
+  action controls.
+
+## Phase 14.4-14.6: Voice Configuration UX Polish And Safe Auto-Detection Hints
+
+Completed. Improved the Piper/Whisper configuration surface and added safe read-only path hints
+without enabling voice execution.
+
+Delivered:
+
+- Settings shows each configured path clearly with short help text, compact status badges, and
+  concise read-only hints.
+- Piper and Whisper binary hints check only fixed known Homebrew/local locations and never run the
+  binaries.
+- Piper and Whisper model hints use configured-path readability only; no recursive or broad model
+  discovery is performed.
+- `ApplicationController` and `DesktopShellViewModel` expose hint/status values as strings and
+  string lists only.
+- Tests cover deterministic configured-path hint behavior, missing-path badges, QML-safe exposure,
+  and the no-execution boundary.
+
+Still out of scope:
+
+- Automatic settings writes from hints, path pickers, running Piper, running Whisper, microphone
+  capture, audio playback, downloads, cloud/API keys, filesystem-wide scans, and autonomous voice
+  loops.
+
 ## Phase 6.7: Orchestration Diagnostics and Readiness Checklist
 
 Completed. Added deterministic readiness diagnostics over existing orchestration metadata only.

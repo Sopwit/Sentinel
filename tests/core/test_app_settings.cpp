@@ -28,6 +28,7 @@ private slots:
     void persistsSelectedLocalModel();
     void persistsLocalChatInferenceOptIn();
     void persistsLocalInferenceStreamingOptIn();
+    void persistsVoiceConfigurationPaths();
     void persistsLocalAiRuntimeSettingsThroughJsonStore();
 };
 
@@ -43,6 +44,10 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(settings->selectedLocalModel().isEmpty());
     QVERIFY(!settings->localChatInferenceEnabled());
     QVERIFY(!settings->localInferenceStreamingEnabled());
+    QVERIFY(settings->piperBinaryPath().isEmpty());
+    QVERIFY(settings->piperModelPath().isEmpty());
+    QVERIFY(settings->whisperBinaryPath().isEmpty());
+    QVERIFY(settings->whisperModelPath().isEmpty());
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -200,6 +205,28 @@ void AppSettingsTest::persistsLocalInferenceStreamingOptIn() {
     QCOMPARE(spy.count(), 2);
 }
 
+void AppSettingsTest::persistsVoiceConfigurationPaths() {
+    const auto settings = makeSettings();
+    QSignalSpy piperBinarySpy(settings.get(), &AppSettings::piperBinaryPathChanged);
+    QSignalSpy piperModelSpy(settings.get(), &AppSettings::piperModelPathChanged);
+    QSignalSpy whisperBinarySpy(settings.get(), &AppSettings::whisperBinaryPathChanged);
+    QSignalSpy whisperModelSpy(settings.get(), &AppSettings::whisperModelPathChanged);
+
+    settings->setPiperBinaryPath(QStringLiteral(" /tmp/piper "));
+    settings->setPiperModelPath(QStringLiteral(" /tmp/piper.onnx "));
+    settings->setWhisperBinaryPath(QStringLiteral(" /tmp/whisper "));
+    settings->setWhisperModelPath(QStringLiteral(" /tmp/whisper-models "));
+
+    QCOMPARE(settings->piperBinaryPath(), QStringLiteral("/tmp/piper"));
+    QCOMPARE(settings->piperModelPath(), QStringLiteral("/tmp/piper.onnx"));
+    QCOMPARE(settings->whisperBinaryPath(), QStringLiteral("/tmp/whisper"));
+    QCOMPARE(settings->whisperModelPath(), QStringLiteral("/tmp/whisper-models"));
+    QCOMPARE(piperBinarySpy.count(), 1);
+    QCOMPARE(piperModelSpy.count(), 1);
+    QCOMPARE(whisperBinarySpy.count(), 1);
+    QCOMPARE(whisperModelSpy.count(), 1);
+}
+
 void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
@@ -210,6 +237,10 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setSelectedLocalModel(QStringLiteral(" llama3.2 "));
         settings.setLocalChatInferenceEnabled(true);
         settings.setLocalInferenceStreamingEnabled(true);
+        settings.setPiperBinaryPath(QStringLiteral("/opt/piper/piper"));
+        settings.setPiperModelPath(QStringLiteral("/opt/piper/model.onnx"));
+        settings.setWhisperBinaryPath(QStringLiteral("/opt/whisper/whisper"));
+        settings.setWhisperModelPath(QStringLiteral("/opt/whisper/models"));
     }
 
     AppSettings reloaded{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
@@ -217,6 +248,10 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QCOMPARE(reloaded.selectedLocalModel(), QStringLiteral("llama3.2"));
     QVERIFY(reloaded.localChatInferenceEnabled());
     QVERIFY(reloaded.localInferenceStreamingEnabled());
+    QCOMPARE(reloaded.piperBinaryPath(), QStringLiteral("/opt/piper/piper"));
+    QCOMPARE(reloaded.piperModelPath(), QStringLiteral("/opt/piper/model.onnx"));
+    QCOMPARE(reloaded.whisperBinaryPath(), QStringLiteral("/opt/whisper/whisper"));
+    QCOMPARE(reloaded.whisperModelPath(), QStringLiteral("/opt/whisper/models"));
 }
 
 QTEST_MAIN(AppSettingsTest)

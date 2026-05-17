@@ -8,7 +8,10 @@
 #include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/Voice.h"
 
+#include <QDir>
+#include <QFile>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest>
 
 #include <memory>
@@ -343,6 +346,7 @@ private slots:
     void modelManagementRecommendationsAreDeterministicAndActionsUnavailable();
     void exposesModelManagementReadinessMetadata();
     void exposesVoiceReadinessMetadata();
+    void validatesConfiguredVoicePathsAsMetadataOnly();
     void rejectsInvalidSelectedModelAgainstDiscoveryMetadata();
     void exposesStreamingSkeletonDisabledMetadata();
     void streamDisabledByDefaultFallsBackToNonStreaming();
@@ -835,11 +839,101 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QVERIFY(!controller.voiceRuntimeExecutionAllowed());
     QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Disabled"));
     QVERIFY(controller.piperTtsSummary().contains(QStringLiteral("disabled by default")));
-    QCOMPARE(controller.piperTtsReadinessChecks().size(), 7);
+    QCOMPARE(controller.piperTtsReadinessChecks().size(), 9);
     QVERIFY(controller.piperTtsReadinessChecks()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("Piper binary")));
     QVERIFY(!controller.piperTtsReady());
+    QCOMPARE(controller.piperTtsFileOutputStatus(), QStringLiteral("Disabled"));
+    QVERIFY(controller.piperTtsFileOutputSummary().contains(
+        QStringLiteral("No playback or microphone access")));
+}
+
+void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto piperBinaryPath = dir.filePath(QStringLiteral("piper"));
+    const auto piperModelPath = dir.filePath(QStringLiteral("voice.onnx"));
+    const auto whisperBinaryPath = dir.filePath(QStringLiteral("whisper"));
+    const auto whisperModelPath = dir.filePath(QStringLiteral("whisper-models"));
+    const auto missingPath = dir.filePath(QStringLiteral("missing-piper"));
+
+    QFile piperBinary{piperBinaryPath};
+    QVERIFY(piperBinary.open(QIODevice::WriteOnly));
+    piperBinary.close();
+    QVERIFY(QFile::setPermissions(piperBinaryPath, QFile::ReadOwner | QFile::ExeOwner));
+
+    QFile piperModel{piperModelPath};
+    QVERIFY(piperModel.open(QIODevice::WriteOnly));
+    piperModel.close();
+
+    QFile whisperBinary{whisperBinaryPath};
+    QVERIFY(whisperBinary.open(QIODevice::WriteOnly));
+    whisperBinary.close();
+    QVERIFY(QFile::setPermissions(whisperBinaryPath, QFile::ReadOwner));
+
+    QVERIFY(QDir{}.mkpath(whisperModelPath));
+
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QSignalSpy spy(&controller, &ApplicationController::voiceConfigurationChanged);
+
+    controller.setPiperBinaryPath(piperBinaryPath);
+    controller.setPiperModelPath(piperModelPath);
+    controller.setWhisperBinaryPath(whisperBinaryPath);
+    controller.setWhisperModelPath(whisperModelPath);
+
+    QCOMPARE(spy.count(), 4);
+    QCOMPARE(controller.voiceRuntimeEnvironmentStatus(), QStringLiteral("Configured Metadata"));
+    QVERIFY(controller.voiceConfigurationReadinessSummary().contains(
+        QStringLiteral("Piper binary configured")));
+    QVERIFY(controller.voiceConfigurationReadinessSummary().contains(
+        QStringLiteral("Whisper model configured")));
+    QVERIFY(controller.voiceBinarySummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper binary metadata only: path exists, readable, "
+                                         "executable")));
+    QVERIFY(controller.voiceBinarySummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Whisper binary metadata only: path exists, readable, "
+                                         "non-executable")));
+    QVERIFY(controller.voiceModelSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Whisper model metadata only: path exists, readable")));
+    QVERIFY(controller.voiceConfigurationStatusBadges().contains(
+        QStringLiteral("Piper binary: Configured / Valid / Readable / "
+                       "Executable")));
+    QVERIFY(controller.voiceConfigurationStatusBadges().contains(
+        QStringLiteral("Whisper binary: Configured / Valid / Readable / "
+                       "Non-executable")));
+    QVERIFY(controller.voiceConfigurationHintSummaries().contains(
+        QStringLiteral("Piper binary hint: configured path is executable; no "
+                       "suggestion needed.")));
+    QVERIFY(controller.voiceConfigurationHintSummaries().contains(
+        QStringLiteral("Whisper model hint: configured path is readable; no "
+                       "suggestion needed.")));
+    QVERIFY(controller.voiceConfigurationHintSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Auto-detection is hint-only")));
+    QVERIFY(controller.piperTtsReadinessChecks()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Null Piper TTS client is disabled and never launches "
+                                         "Piper")));
+    QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Safety Blocked"));
+    QVERIFY(!controller.piperTtsReady());
+
+    controller.setPiperBinaryPath(missingPath);
+
+    QVERIFY(controller.voiceBinarySummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper Binary: Missing")));
+    QVERIFY(controller.voiceBinarySummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("path missing")));
+    QVERIFY(controller.voiceConfigurationStatusBadges().contains(
+        QStringLiteral("Piper binary: Configured / Missing / Unreadable / "
+                       "Non-executable")));
+    QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Missing Binary"));
 }
 
 void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetadata() {

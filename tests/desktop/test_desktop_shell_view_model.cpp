@@ -10,9 +10,12 @@
 #include "sentinel/core/NullAgentRuntime.h"
 #include "sentinel/core/OllamaRuntime.h"
 
+#include <QDir>
+#include <QFile>
 #include <QHash>
 #include <QMetaProperty>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QtTest>
 
 #include <memory>
@@ -55,6 +58,7 @@ private slots:
     void exposesDiscoveredModelSelectionMetadata();
     void exposesModelManagementReadinessMetadata();
     void exposesVoiceReadinessMetadata();
+    void exposesVoiceConfigurationMetadata();
     void exposesLocalInferenceBoundaryMetadata();
     void forwardsBlockedLocalInferenceRequest();
     void exposesConversationSessionMetadata();
@@ -610,10 +614,76 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
     QVERIFY(!fixture.viewModel.voiceRuntimeExecutionAllowed());
     QCOMPARE(fixture.viewModel.piperTtsStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.viewModel.piperTtsSummary().contains(QStringLiteral("disabled by default")));
-    QCOMPARE(fixture.viewModel.piperTtsReadinessChecks().size(), 7);
+    QCOMPARE(fixture.viewModel.piperTtsReadinessChecks().size(), 9);
     QVERIFY(fixture.viewModel.piperTtsReadinessChecks()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("Piper binary")));
+    QVERIFY(!fixture.viewModel.piperTtsReady());
+    QCOMPARE(fixture.viewModel.piperTtsFileOutputStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.piperTtsFileOutputSummary().contains(
+        QStringLiteral("No playback or microphone access")));
+}
+
+void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto piperBinaryPath = dir.filePath(QStringLiteral("piper"));
+    const auto piperModelPath = dir.filePath(QStringLiteral("voice.onnx"));
+    const auto whisperBinaryPath = dir.filePath(QStringLiteral("whisper"));
+    const auto whisperModelPath = dir.filePath(QStringLiteral("whisper-models"));
+
+    QFile piperBinary{piperBinaryPath};
+    QVERIFY(piperBinary.open(QIODevice::WriteOnly));
+    piperBinary.close();
+    QVERIFY(QFile::setPermissions(piperBinaryPath, QFile::ReadOwner | QFile::ExeOwner));
+
+    QFile piperModel{piperModelPath};
+    QVERIFY(piperModel.open(QIODevice::WriteOnly));
+    piperModel.close();
+
+    QFile whisperBinary{whisperBinaryPath};
+    QVERIFY(whisperBinary.open(QIODevice::WriteOnly));
+    whisperBinary.close();
+    QVERIFY(QFile::setPermissions(whisperBinaryPath, QFile::ReadOwner));
+    QVERIFY(QDir{}.mkpath(whisperModelPath));
+
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::voiceConfigurationChanged);
+
+    fixture.viewModel.setPiperBinaryPath(piperBinaryPath);
+    fixture.viewModel.setPiperModelPath(piperModelPath);
+    fixture.viewModel.setWhisperBinaryPath(whisperBinaryPath);
+    fixture.viewModel.setWhisperModelPath(whisperModelPath);
+
+    QCOMPARE(spy.count(), 4);
+    QCOMPARE(fixture.settings.piperBinaryPath(), piperBinaryPath);
+    QCOMPARE(fixture.settings.piperModelPath(), piperModelPath);
+    QCOMPARE(fixture.settings.whisperBinaryPath(), whisperBinaryPath);
+    QCOMPARE(fixture.settings.whisperModelPath(), whisperModelPath);
+    QVERIFY(fixture.viewModel.voiceConfigurationReadinessSummary().contains(
+        QStringLiteral("Piper binary configured")));
+    QVERIFY(fixture.viewModel.voiceConfigurationSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper binary metadata only: path exists, readable, "
+                                         "executable")));
+    QVERIFY(fixture.viewModel.voiceConfigurationSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Whisper binary metadata only: path exists, readable, "
+                                         "non-executable")));
+    QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
+        QStringLiteral("Piper binary: Configured / Valid / Readable / "
+                       "Executable")));
+    QVERIFY(fixture.viewModel.voiceConfigurationHintSummaries().contains(
+        QStringLiteral("Piper binary hint: configured path is executable; no "
+                       "suggestion needed.")));
+    QVERIFY(fixture.viewModel.voiceConfigurationHintSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("settings are not changed automatically")) ||
+            fixture.viewModel.voiceConfigurationHintSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("no executable found in known Homebrew/local locations")));
+    QCOMPARE(fixture.viewModel.piperTtsStatus(), QStringLiteral("Safety Blocked"));
+    QVERIFY(fixture.viewModel.piperTtsSummary().contains(QStringLiteral("safety policy")));
     QVERIFY(!fixture.viewModel.piperTtsReady());
 }
 
@@ -1062,6 +1132,12 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("piperTtsSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("piperTtsReadinessChecks"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("piperTtsReady"), QByteArrayLiteral("bool")},
+        {QStringLiteral("piperTtsFileOutputStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperTtsFileOutputSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceConfigurationSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceConfigurationReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voiceConfigurationStatusBadges"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceConfigurationHintSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("localChatInferenceStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceBusy"), QByteArrayLiteral("bool")},

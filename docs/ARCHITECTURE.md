@@ -267,7 +267,12 @@ architecture and document local Piper/Whisper integration prerequisites before a
 voice work. Phase 13.0 through Phase 13.2 add metadata-only local voice runtime environment,
 binary ownership, model ownership, permission, and safety reporting for future Piper/Whisper work.
 Phase 13.3 through Phase 13.5 add a Piper TTS adapter skeleton with readiness/refusal metadata
-only.
+only. Phase 13.6 through Phase 13.8 add controlled Piper local file-output synthesis behind the
+same provider/client boundary. Phase 13.9 checkpoints the voice/Piper architecture and records
+Phase 14 readiness without adding runtime behavior. Phase 14.0 through Phase 14.3 add persisted
+local Piper/Whisper path configuration and exact-path validation metadata only. Phase 14.4 through
+Phase 14.6 polish the voice configuration UX and add read-only hint metadata from fixed known
+binary locations and configured paths only.
 
 Separation:
 
@@ -286,12 +291,16 @@ Separation:
   Whisper binary/model ownership and safety posture without execution.
 - `PiperTtsConfig`, `PiperVoiceModelDescriptor`, `PiperTtsRequest`, `PiperTtsResult`,
   `PiperTtsStatus`, `IPiperTtsClient`, `NullPiperTtsClient`, and
-  `PiperTextToSpeechProvider` model a safe Piper TTS boundary without launching Piper or producing
-  audio.
+  `PiperTextToSpeechProvider` model a safe Piper TTS boundary. `ProcessPiperTtsClient` is the
+  controlled local file-output client and is reachable only after provider policy accepts every
+  file-output gate.
 - `ApplicationController` exposes voice readiness, runtime, session, pipeline, and trace
   summaries plus binary/model/environment/permission/safety and Piper TTS readiness summaries
-  only.
-- `DesktopShellViewModel` exposes QML-safe strings, string lists, and booleans only.
+  only, including Piper file-output status, output path summary metadata, and local voice
+  configuration summaries.
+- `DesktopShellViewModel` exposes QML-safe strings, string lists, and booleans only. Voice
+  configuration setters persist path strings through `AppSettings`; QML does not receive provider,
+  process, filesystem, audio-device, or model objects.
 
 Current behavior:
 
@@ -307,17 +316,32 @@ Current behavior:
 - Runtime environment summaries report Piper and Whisper binary/model paths as missing or expected
   metadata only. They do not launch binaries, load models, scan the filesystem broadly, download
   assets, or open devices.
-- Piper TTS is disabled/not configured by default. Missing binary or voice model metadata produces
+- Settings can store Piper binary path, Piper model path, Whisper binary path, and Whisper model
+  directory/path. Validation checks only each configured path for exists/missing,
+  readable/unreadable, and executable/non-executable for binaries.
+- Settings also shows read-only hints. Binary hints check only `/opt/homebrew/bin/piper`,
+  `/usr/local/bin/piper`, `/opt/homebrew/bin/whisper`, and `/usr/local/bin/whisper`. Model hints
+  check configured paths only. Hints are never applied to settings automatically.
+- Piper TTS is disabled/not configured by default. Missing or invalid binary/model paths produce
   deterministic refusal before any client boundary can run.
+- Controlled Piper file output is available only when explicitly enabled, the Piper binary exists
+  and is executable, the voice model exists and is readable, the output path is inside the
+  app-controlled output directory, process execution is allowed by request/config/safety policy,
+  playback and microphone access are blocked, and the request is local-only.
 - `NullPiperTtsClient` refuses synthesis without writing files, playing audio, downloading assets,
   loading models, scanning broadly, or launching a subprocess.
+- `ProcessPiperTtsClient` may launch Piper only through that accepted file-output boundary and
+  writes to the controlled cache/temp output file. It does not play audio, open microphones,
+  download models, call cloud providers, read API keys, or scan the filesystem broadly.
+- The current TTS path is `text -> Piper provider -> gated file-output metadata`.
 - Voice runtime safety blocks execution by default and denies microphone, playback, process
   execution, filesystem-wide scan, download, and cloud/API-key behavior.
-- Settings may show read-only voice readiness/runtime/session/pipeline metadata, but no voice
-  controls, setup buttons, speak buttons, model pickers, or path pickers exist.
-- No microphone access, audio playback, Piper execution, Whisper execution, subprocess/process
-  launch, filesystem-wide scan, model loading, downloads, cloud calls, API keys, or voice setup
-  flow is present.
+- Settings shows compact voice configuration text fields plus voice readiness/runtime/session/
+  pipeline metadata, but no voice controls, setup actions, speak buttons, record buttons, playback
+  controls, downloads, or path pickers exist.
+- No microphone access, audio playback, Whisper execution, filesystem-wide scan, model downloads,
+  cloud calls, API keys, or autonomous voice loop is present. Piper execution is limited to
+  explicit local file-output synthesis after all gates pass and remains disabled by default.
 
 Future Piper/Whisper integration should happen only through these provider interfaces and the
 runtime coordinator/environment boundaries after a later explicit phase defines audio device
@@ -335,6 +359,34 @@ Phase 12 checkpoint:
   blocked/error metadata paths, disabled runtime posture, and QML-safe exposure.
 - Phase 13 should not add executable voice behavior until permissions, local binary/model
   ownership, lifecycle, cancellation, error handling, and safety gates are explicitly scoped.
+
+Phase 13 checkpoint:
+
+- `docs/PHASE_13_CHECKPOINT.md` records the completed Phase 13 voice/Piper scope, current Piper
+  architecture, current TTS path, safety boundary findings, remaining limitations, future
+  next-step phases, and Phase 14 readiness criteria.
+- Architecture review found Piper remains behind `ITextToSpeechProvider`, file-output execution
+  remains behind `IPiperTtsClient` and explicit provider gates, and QML exposure remains
+  read-only/QML-safe.
+- Existing coverage verifies null provider refusal, disabled/default posture, missing binary/model
+  refusal, safety blocking, invalid request refusal, controlled fake file-output success, failure,
+  timeout metadata, and controller/view-model exposure.
+- Phase 14 may begin with planning or configuration-readiness work, but playback, microphone
+  capture, Whisper execution, downloads, cloud/API-key behavior, and autonomous voice loops still
+  require explicit later phase scope.
+
+Phase 14 configuration:
+
+- `AppSettings` persists the four local voice path strings separately from memory and chat history.
+- `ApplicationController` derives voice binary/model descriptors and Piper readiness from those
+  strings by inspecting only the exact configured paths.
+- `ApplicationController` also derives compact status badges and hint summaries without executing
+  binaries or scanning broadly.
+- `DesktopShellViewModel` forwards the persisted path values, readiness summaries, status badges,
+  and hint summaries to Settings as QML-safe strings and string lists.
+- Configuration does not run Piper, run Whisper, access microphones, play audio, download models,
+  scan directories recursively, apply hints automatically, add API keys, or start autonomous
+  behavior.
 
 Current local AI user flow:
 

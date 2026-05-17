@@ -55,6 +55,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::localChatInferenceRoutingChanged);
     connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
             &DesktopShellViewModel::localInferenceChanged);
+    connect(&controller_, &core::ApplicationController::voiceConfigurationChanged, this,
+            &DesktopShellViewModel::voiceConfigurationChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::themeNameChanged, this,
@@ -71,9 +73,21 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::localInferenceStreamingEnabledChanged, this, [this]() {
         controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
     });
+    connect(&settings_, &core::AppSettings::piperBinaryPathChanged, this,
+            [this]() { controller_.setPiperBinaryPath(settings_.piperBinaryPath()); });
+    connect(&settings_, &core::AppSettings::piperModelPathChanged, this,
+            [this]() { controller_.setPiperModelPath(settings_.piperModelPath()); });
+    connect(&settings_, &core::AppSettings::whisperBinaryPathChanged, this,
+            [this]() { controller_.setWhisperBinaryPath(settings_.whisperBinaryPath()); });
+    connect(&settings_, &core::AppSettings::whisperModelPathChanged, this,
+            [this]() { controller_.setWhisperModelPath(settings_.whisperModelPath()); });
     controller_.setSelectedLocalModel(settings_.selectedLocalModel());
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
+    controller_.setPiperBinaryPath(settings_.piperBinaryPath());
+    controller_.setPiperModelPath(settings_.piperModelPath());
+    controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
+    controller_.setWhisperModelPath(settings_.whisperModelPath());
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -696,6 +710,74 @@ QStringList DesktopShellViewModel::piperTtsReadinessChecks() const {
 
 bool DesktopShellViewModel::piperTtsReady() const {
     return controller_.piperTtsReady();
+}
+
+QString DesktopShellViewModel::piperTtsFileOutputStatus() const {
+    return controller_.piperTtsFileOutputStatus();
+}
+
+QString DesktopShellViewModel::piperTtsFileOutputSummary() const {
+    return controller_.piperTtsFileOutputSummary();
+}
+
+QString DesktopShellViewModel::piperBinaryPath() const {
+    return controller_.piperBinaryPath();
+}
+
+void DesktopShellViewModel::setPiperBinaryPath(const QString& path) {
+    settings_.setPiperBinaryPath(path);
+    if (controller_.piperBinaryPath() != settings_.piperBinaryPath()) {
+        controller_.setPiperBinaryPath(settings_.piperBinaryPath());
+    }
+}
+
+QString DesktopShellViewModel::piperModelPath() const {
+    return controller_.piperModelPath();
+}
+
+void DesktopShellViewModel::setPiperModelPath(const QString& path) {
+    settings_.setPiperModelPath(path);
+    if (controller_.piperModelPath() != settings_.piperModelPath()) {
+        controller_.setPiperModelPath(settings_.piperModelPath());
+    }
+}
+
+QString DesktopShellViewModel::whisperBinaryPath() const {
+    return controller_.whisperBinaryPath();
+}
+
+void DesktopShellViewModel::setWhisperBinaryPath(const QString& path) {
+    settings_.setWhisperBinaryPath(path);
+    if (controller_.whisperBinaryPath() != settings_.whisperBinaryPath()) {
+        controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
+    }
+}
+
+QString DesktopShellViewModel::whisperModelPath() const {
+    return controller_.whisperModelPath();
+}
+
+void DesktopShellViewModel::setWhisperModelPath(const QString& path) {
+    settings_.setWhisperModelPath(path);
+    if (controller_.whisperModelPath() != settings_.whisperModelPath()) {
+        controller_.setWhisperModelPath(settings_.whisperModelPath());
+    }
+}
+
+QStringList DesktopShellViewModel::voiceConfigurationSummaries() const {
+    return controller_.voiceConfigurationSummaries();
+}
+
+QString DesktopShellViewModel::voiceConfigurationReadinessSummary() const {
+    return controller_.voiceConfigurationReadinessSummary();
+}
+
+QStringList DesktopShellViewModel::voiceConfigurationStatusBadges() const {
+    return controller_.voiceConfigurationStatusBadges();
+}
+
+QStringList DesktopShellViewModel::voiceConfigurationHintSummaries() const {
+    return controller_.voiceConfigurationHintSummaries();
 }
 
 bool DesktopShellViewModel::localChatInferenceEnabled() const {

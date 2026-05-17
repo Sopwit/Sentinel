@@ -1336,3 +1336,108 @@ Boundary rules:
 - No audio playback, microphone access, Whisper/STT, Piper execution, subprocess/process launch,
   model loading, download, cloud/API-key behavior, filesystem-wide scan, speak button, model/path
   picker, or broad UI redesign is introduced.
+
+## 67. Piper TTS File Output Is Explicit, Local, And Controlled
+
+Decision: Add controlled Piper text-to-audio file output behind `ITextToSpeechProvider` and
+`IPiperTtsClient`, while keeping Piper disabled by default and keeping playback/microphone
+behavior out of scope.
+
+Reason: Sentinel can safely advance Piper integration only by separating synthesis-to-file from
+playback, requiring explicit local policy gates, and keeping test execution injectable without a
+real Piper binary or voice model.
+
+Boundary rules:
+
+- The default Piper configuration remains disabled/not configured.
+- File-output synthesis requires an enabled Piper config, an existing executable Piper binary, an
+  existing readable voice model, an app-controlled output directory, explicit process execution
+  permission in request/config/safety policy, a local-only request, playback disabled, microphone
+  disabled, downloads blocked, cloud/API-key behavior blocked, and filesystem-wide scans blocked.
+- Output files are generated only inside the configured controlled cache/temp output directory.
+- `ProcessPiperTtsClient` is the real local process client and is reachable only after provider
+  gates pass; tests can inject deterministic fake clients.
+- Results report configured, refused, missing, safety-blocked, succeeded, failed, and timeout
+  metadata with safe output path summaries, timeout values, exit code, and error summaries.
+- Controller and view-model exposure remains QML-safe strings, string lists, and booleans.
+- Settings may display Piper configured/missing/file-output readiness only.
+- No automatic playback, microphone access, Whisper/STT, model download, cloud/API-key behavior,
+  broad filesystem scan, autonomous voice loop, speak/play button, path picker, model picker, or
+  broad UI redesign is introduced.
+
+## 68. Phase 13 Voice/Piper Checkpoint Preserves The Safety Boundary
+
+Decision: Close Phase 13 with a Voice/Piper checkpoint and readiness review before adding any
+voice setup, playback, STT, or conversation-loop behavior.
+
+Reason: Phase 13 introduced Piper ownership metadata, a provider/client boundary, and controlled
+file-output synthesis. The project needs a durable review of the resulting safety boundary before
+Phase 14 work can choose whether to focus on configuration UX, playback, Whisper, or voice-loop
+planning.
+
+Boundary rules:
+
+- Checkpoint work may update documentation and confirm existing architecture/test coverage only.
+- The current TTS path is `text -> Piper provider -> gated file-output metadata`.
+- Piper remains disabled by default.
+- File output remains reachable only after explicit enabled configuration, local-only request
+  posture, process permission, executable binary, readable model, controlled output path, playback
+  disabled, microphone disabled, no downloads, no cloud/API-key behavior, no filesystem-wide
+  scans, and safety approval gates pass.
+- `PiperTextToSpeechProvider` remains behind `ITextToSpeechProvider`; `ProcessPiperTtsClient`
+  remains behind `IPiperTtsClient`.
+- `ISpeechToTextProvider` remains a null-provider boundary; no Whisper adapter or execution is
+  introduced.
+- Controller and view-model exposure remains limited to QML-safe strings, string lists, and
+  booleans.
+- Settings remains read-only for voice/Piper readiness and does not expose setup, path/model
+  picker, speak, play, record, or activation controls.
+- No new runtime behavior, audio playback, microphone access, Whisper execution, downloads,
+  cloud/API-key behavior, autonomous voice loop, voice conversation loop, or broad UI redesign is
+  introduced by the checkpoint.
+
+## 69. Local Voice Configuration Is Persisted Metadata, Not Execution
+
+Decision: Store Piper and Whisper binary/model path configuration in settings and validate only
+the exact configured paths as metadata.
+
+Reason: Users need a visible setup surface before a future voice runtime phase, but path storage
+must not grant Sentinel authority to run local voice binaries, open audio devices, download models,
+or scan the filesystem broadly.
+
+Boundary rules:
+
+- `AppSettings` owns persisted strings for Piper binary path, Piper model path, Whisper binary
+  path, and Whisper model directory/path.
+- `ApplicationController` derives readiness summaries from those strings using exact-path
+  metadata checks: configured/missing, exists/missing, readable/unreadable, and
+  executable/non-executable for binaries.
+- `DesktopShellViewModel` exposes QML-safe strings and string lists only.
+- Settings may provide compact text entry for paths and readiness summaries.
+- Piper readiness may reflect configured metadata, but Piper execution remains behind existing
+  provider/client safety gates and remains blocked by default.
+- Whisper remains configuration metadata only; no STT adapter or execution path is added.
+- No Piper execution, Whisper execution, microphone access, playback, downloads,
+  filesystem-wide scans, cloud/API keys, autonomous loops, or path picker integration are added in
+  this decision.
+
+## 70. Voice Auto-Detection Is Hint-Only And Non-Invasive
+
+Decision: Expose Piper and Whisper path hints as read-only Settings suggestions, not automatic
+configuration or runtime probing.
+
+Reason: Users benefit from common-location hints, but Sentinel must not expand configuration UX
+into filesystem discovery, binary execution, downloads, or automatic setup.
+
+Boundary rules:
+
+- Binary hints may check only fixed known locations: `/opt/homebrew/bin/piper`,
+  `/usr/local/bin/piper`, `/opt/homebrew/bin/whisper`, and `/usr/local/bin/whisper`.
+- Model hints may validate only already configured model paths for readability.
+- Hints are QML-safe strings/string lists and are never applied to settings automatically.
+- Status badges may report configured/missing, valid/missing, readable/unreadable, and
+  executable/non-executable metadata only.
+- Settings may show concise help text, compact badges, and short hint rows.
+- No Piper execution, Whisper execution, microphone access, playback, downloads,
+  filesystem-wide scans, recursive model discovery, cloud/API keys, autonomous loops, path
+  pickers, or automatic settings writes are added in this decision.

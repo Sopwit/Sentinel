@@ -125,4 +125,63 @@ void AppSettings::setLocalInferenceStreamingEnabled(bool enabled) {
     emit localInferenceStreamingEnabledChanged();
 }
 
+QString AppSettings::piperBinaryPath() const {
+    return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
+                  : QString();
+}
+
+void AppSettings::setPiperBinaryPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == piperBinaryPath() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(piperBinaryPathKey), normalized);
+    emit piperBinaryPathChanged();
+}
+
+QString AppSettings::piperModelPath() const {
+    return store_ ? store_->value(QString::fromLatin1(piperModelPathKey), {}).trimmed() : QString();
+}
+
+void AppSettings::setPiperModelPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == piperModelPath() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(piperModelPathKey), normalized);
+    emit piperModelPathChanged();
+}
+
+QString AppSettings::whisperBinaryPath() const {
+    return store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed()
+                  : QString();
+}
+
+void AppSettings::setWhisperBinaryPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == whisperBinaryPath() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(whisperBinaryPathKey), normalized);
+    emit whisperBinaryPathChanged();
+}
+
+QString AppSettings::whisperModelPath() const {
+    return store_ ? store_->value(QString::fromLatin1(whisperModelPathKey), {}).trimmed()
+                  : QString();
+}
+
+void AppSettings::setWhisperModelPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == whisperModelPath() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(whisperModelPathKey), normalized);
+    emit whisperModelPathChanged();
+}
+
 } // namespace sentinel::core
