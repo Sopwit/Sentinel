@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -77,6 +78,7 @@ ShellPanel {
         }
 
         ListView {
+            id: memoryList
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -102,6 +104,14 @@ ShellPanel {
                     wrapMode: Text.WordWrap
                 }
             }
+        }
+
+        Label {
+            Layout.fillWidth: true
+            visible: memoryList.count === 0
+            text: "No key-value memory entries stored."
+            color: SentinelTheme.textMuted
+            horizontalAlignment: Text.AlignHCenter
         }
     }
 }

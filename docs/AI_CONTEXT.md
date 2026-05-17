@@ -190,9 +190,10 @@ Future UI vision:
   systems.
 - Phase 5.3 normalizes small QML component patterns and adds a manual visual QA checklist without
   adding execution-related UI or advanced assistant visuals.
-- Phase 5.4 translates the useful `lovable-tasarim` design-reference direction into native Qt/QML
-  with a left rail, central workspace presence, right chat panel, mode-aware visual tokens, and
-  lightweight ambient motion. React/Vite/Tailwind/Node/WebView remain outside the production app.
+- Phase 5.4 translated the useful former `lovable-tasarim` design-reference direction into native
+  Qt/QML with a left rail, central workspace presence, right chat panel, mode-aware visual tokens,
+  and lightweight ambient motion. React/Vite/Tailwind/Node/WebView remain outside the production
+  app.
 - `IMemoryStore` isolates memory storage.
 - `IChatHistoryStore` isolates chat history storage.
 - `ISettingsStore` isolates settings storage.

@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import Sentinel.Desktop
 
 ShellPanel {
     id: chatPanel
@@ -44,7 +45,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: chatPanel.viewModel.providerName + " / " + chatPanel.viewModel.providerStatus + " / " + chatPanel.viewModel.chatHistoryStatus + " / " + chatPanel.viewModel.localChatInferenceStatus + " / " + chatPanel.viewModel.localInferenceStreamStatus + " / " + chatPanel.viewModel.activeLocalRuntimeBadge + " / " + chatPanel.viewModel.localInferenceRuntimeState
+                    text: chatPanel.viewModel.localChatInferenceStatus + " / " + chatPanel.viewModel.localInferenceStreamStatus + " / " + chatPanel.viewModel.selectedLocalModelStatus
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                     elide: Text.ElideRight

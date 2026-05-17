@@ -937,7 +937,7 @@ Phase 5.3 adds component consistency and visual QA foundation:
   actions, approval controls, assistant-face rendering, particle systems, or custom rendering
   systems are added.
 
-Phase 5.4 adds workspace UX integration from the `lovable-tasarim` design reference:
+Phase 5.4 adds workspace UX integration from the former `lovable-tasarim` design reference:
 
 - The React/TypeScript/Tailwind reference remains outside the production architecture.
 - Qt/QML owns the translated left rail, central presence workspace, right chat panel, ambient

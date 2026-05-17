@@ -38,13 +38,14 @@ ShellPanel {
             radius: 17
             color: SentinelTheme.withAlpha(sidebar.modeAccent, 0.10)
             border.color: SentinelTheme.withAlpha(sidebar.modeAccent, 0.22)
+            clip: true
 
-            Label {
-                anchors.centerIn: parent
-                text: "S"
-                color: sidebar.modeAccent
-                font.pixelSize: SentinelTheme.fontControl
-                font.weight: Font.Light
+            Image {
+                anchors.fill: parent
+                anchors.margins: 4
+                source: "qrc:/icons/dev.sentinel.Sentinel.png"
+                fillMode: Image.PreserveAspectFit
+                smooth: true
             }
         }
 

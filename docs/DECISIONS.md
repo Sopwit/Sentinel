@@ -487,8 +487,8 @@ Boundary rules:
 
 ## 29. Workspace UX Reference Translation Stays Native
 
-Decision: Treat `lovable-tasarim` as the visual identity source of truth while translating its
-workspace ideas into native Qt/QML components.
+Decision: Treat the former `lovable-tasarim` reference as a historical design input whose useful
+workspace ideas were translated into native Qt/QML components.
 
 Reason: Sentinel must remain a native Qt/C++ modular monolith while borrowing only stable UI/UX
 direction from the reference.
@@ -522,8 +522,8 @@ Boundary rules:
 
 ## 31. Phase 5.5 Reconstructs Visual Identity Natively
 
-Decision: Reconstruct the Phase 5.x shell around `lovable-tasarim` as the visual source of truth
-while keeping Sentinel native Qt/QML and C++.
+Decision: Reconstruct the Phase 5.x shell around the translated Sentinel visual identity while
+keeping Sentinel native Qt/QML and C++.
 
 Reason: The technically correct Phase 5.4 workspace still read too much like a developer dashboard
 or utility application. Sentinel needs a presence-first cinematic operating environment before

@@ -12,13 +12,11 @@ InfoRow 1.0 components/InfoRow.qml
 SectionTitle 1.0 components/SectionTitle.qml
 SentinelButton 1.0 components/SentinelButton.qml
 SentinelDock 1.0 components/SentinelDock.qml
-SentinelMetricCard 1.0 components/SentinelMetricCard.qml
 SentinelOrb 1.0 components/SentinelOrb.qml
 SentinelTelemetry 1.0 components/SentinelTelemetry.qml
 SentinelTextField 1.0 components/SentinelTextField.qml
 ShellPanel 1.0 components/ShellPanel.qml
 Sidebar 1.0 components/Sidebar.qml
-SignalField 1.0 components/SignalField.qml
 StatusBar 1.0 components/StatusBar.qml
 WorkspacePresence 1.0 components/WorkspacePresence.qml
 
@@ -26,5 +24,4 @@ ChatPanel 1.0 pages/ChatPanel.qml
 AgentsPage 1.0 pages/AgentsPage.qml
 DashboardPage 1.0 pages/DashboardPage.qml
 MemoryPage 1.0 pages/MemoryPage.qml
-MetricCard 1.0 pages/MetricCard.qml
 SettingsPage 1.0 pages/SettingsPage.qml
