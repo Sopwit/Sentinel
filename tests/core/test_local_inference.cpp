@@ -67,8 +67,9 @@ void LocalInferenceTest::missingModelRejectedBeforeOllamaCall() {
 }
 
 void LocalInferenceTest::unavailableModelRejectedBeforeGeneration() {
-    OllamaLocalInferenceClient client{
-        OllamaConfig::fromEndpoint(QStringLiteral("http://127.0.0.1:11434")), 1};
+    auto config = OllamaConfig::fromEndpoint(QStringLiteral("http://127.0.0.1:11434"));
+    config.modelDiscoveryEnabled = false;
+    OllamaLocalInferenceClient client{config, 1};
 
     const auto response = client.infer(LocalInferenceRequest{
         QStringLiteral("request-1"),

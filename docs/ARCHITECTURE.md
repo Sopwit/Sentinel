@@ -15,7 +15,8 @@ Sentinel Desktop Alpha is a modular monolith. The application is split into a na
 
 `main.cpp` creates `ApplicationController`, `LocalEchoProvider`, `NullAgentRuntime`,
 `SQLiteMemoryStore`, `SQLiteChatHistoryStore`, the loopback-only Ollama runtime/inference clients,
-the local-only runtime permission policy, `ModeManager`, `AppSettings`, and
+the async local inference worker, the local-only runtime permission policy, `ModeManager`,
+`AppSettings`, and
 `DesktopShellViewModel`, then exposes only the view model to QML.
 
 QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, chat history persistence, and settings defaults.
@@ -210,8 +211,11 @@ Separation:
 - `OllamaLocalInferenceStreamClient` is restricted to local loopback HTTP `/api/generate`
   streaming and uses manual redirect policy. It does not call cloud endpoints, use API keys,
   download/pull/delete models, launch subprocesses, or execute tools.
+- `ILocalInferenceWorker` is the async worker boundary above those clients. The desktop wiring
+  runs real Ollama non-streaming and streaming calls on a worker thread and posts request-id
+  guarded chunks/results back to `ApplicationController`.
 - `ApplicationController` evaluates runtime permission and safety metadata before invoking local
-  inference or streaming inference.
+  inference or streaming inference, then finalizes chat only from the matching active request id.
 - `AppSettings` persists the selected local model as configuration only.
 - `AppSettings` also persists local chat inference enablement. The default is disabled.
 - `AppSettings` persists local inference streaming enablement. The default is disabled.
@@ -244,10 +248,19 @@ Streaming behavior:
   completes, the live preview is cleared and the final assistant text is appended once through
   normal chat history. Malformed chunks are ignored with metadata; timeout, cancellation, refusal,
   and errors produce safe summaries.
+- Timeout metadata is carried for health checks, model discovery, non-streaming generation, and
+  streaming generation. Failure summaries distinguish Ollama not running, unreachable local
+  endpoint, missing selected model, selected model absent from discovery metadata, timeout,
+  malformed response, interrupted stream, permission/safety block, and duplicate busy request.
+- Failed streams clear live preview text and do not persist partial assistant output.
+- The current worker provides request-id cancellation/stale-result metadata. It does not forcibly
+  interrupt an in-flight Ollama HTTP request beyond the existing client timeout behavior.
 
 Explicit chat routing:
 
 - `ApplicationController::sendMessage` always appends the user message before routing.
+- If a local inference request is already active, duplicate sends are rejected before appending
+  another user message.
 - If local chat inference is disabled, chat uses the existing `IChatProvider` path.
 - If local chat inference is enabled, chat calls streaming or non-streaming local inference only
   after model resolution, loopback endpoint validation, runtime permission evaluation, and runtime
@@ -261,12 +274,13 @@ Explicit chat routing:
 
 Phase 14.7 through Phase 15.0 activates this path in the desktop app for controlled local-only
 Ollama chat. The production desktop wiring uses `OllamaHttpRuntimeClient`,
-`OllamaLocalInferenceClient`, and `OllamaLocalInferenceStreamClient` against the persisted
-loopback endpoint. A narrow `LocalOnlyRuntimePermissionPolicy` allows only explicit local
-inference requests and denies provider invocation, tool invocation, external processes,
-filesystem access, broader network access, and plugin invocation. The existing static
-metadata-only permission policy remains available for deterministic tests and blocked-runtime
-scenarios.
+`OllamaLocalInferenceClient`, `OllamaLocalInferenceStreamClient`, and `ILocalInferenceWorker`
+against the persisted loopback endpoint. Phase 15.8 moves generate/stream execution behind the
+worker so controller/UI responsiveness does not depend on Ollama model-loading latency. A narrow
+`LocalOnlyRuntimePermissionPolicy` allows only explicit local inference requests and denies
+provider invocation, tool invocation, external processes, filesystem access, broader network
+access, and plugin invocation. The existing static metadata-only permission policy remains
+available for deterministic tests and blocked-runtime scenarios.
 
 Controlled activation boundaries:
 
@@ -275,6 +289,8 @@ Controlled activation boundaries:
 - Non-streaming inference calls only local loopback HTTP `/api/generate` with `stream: false`.
 - Streaming inference is opt-in and calls only local loopback HTTP `/api/generate` with
   `stream: true`.
+- Real generation and streaming calls execute through the async local inference worker; QML sees
+  only QML-safe busy/status/summary/live-text metadata.
 - Chat invokes inference only from explicit user messages and only when local chat inference is
   enabled.
 - Runtime state is exposed to QML as unavailable, idle, inferencing, streaming, or failed.

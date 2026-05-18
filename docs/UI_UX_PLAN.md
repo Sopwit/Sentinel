@@ -220,6 +220,12 @@ generated file path summary. The UI must not expose playback, microphone recordi
 execution, arbitrary output paths, downloads, cloud/API-key setup, broad filesystem scans, or an
 autonomous voice loop.
 
+Phase 15.7 stabilizes local Ollama reliability without a broad redesign. Chat may disable the
+input and Send button while local inference is active and may show concise inference failure
+summaries near runtime status. Error copy should distinguish stopped/unreachable Ollama, missing
+or invalid local model, timeout, malformed response, interrupted stream, permission/safety block,
+and duplicate busy request without exposing raw internals.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

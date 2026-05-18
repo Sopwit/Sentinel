@@ -348,6 +348,7 @@ public:
         std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator = nullptr,
         std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment = nullptr,
         std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider = nullptr,
+        std::unique_ptr<ILocalInferenceWorker> localInferenceWorker = nullptr,
         QObject* parent = nullptr);
 
     QString providerName() const;
@@ -562,6 +563,7 @@ public:
 
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
+    Q_INVOKABLE bool cancelLocalInference();
     Q_INVOKABLE bool generatePiperTtsFile(const QString& text);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
@@ -617,6 +619,13 @@ private:
                                      const QList<OllamaModelSummary>& models) const;
     bool localInferenceEndpointAllowed() const;
     bool runLocalInferenceStream(const QString& prompt, const QString& model);
+    void finishLocalInferenceRequest(const QString& requestId,
+                                     const LocalInferenceResponse& response);
+    void updateLocalInferenceStreamRequest(const QString& requestId,
+                                           const LocalInferenceStreamChunk& chunk);
+    void finishLocalInferenceStreamRequest(const QString& requestId,
+                                           const LocalInferenceStreamResult& result);
+    void finalizeLocalChatInference(bool succeeded);
     LocalInferenceResponse blockedLocalInferenceResponse(const LocalInferenceRequest& request,
                                                          LocalInferenceError error,
                                                          const QString& summary) const;
@@ -643,8 +652,9 @@ private:
     std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge_;
     std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness_;
     std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient_;
-    std::unique_ptr<ILocalInferenceClient> localInferenceClient_;
-    std::unique_ptr<ILocalInferenceStreamClient> localInferenceStreamClient_;
+    std::unique_ptr<ILocalInferenceWorker> localInferenceWorker_;
+    bool localInferenceClientIsRealOllama_ = false;
+    bool localInferenceStreamClientIsRealOllama_ = false;
     std::unique_ptr<IModelManagementService> modelManagementService_;
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider_;
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider_;
@@ -667,6 +677,9 @@ private:
     bool localChatInferenceEnabled_ = false;
     bool localInferenceStreamingEnabled_ = false;
     bool localInferenceBusy_ = false;
+    bool activeLocalInferenceIsChatRequest_ = false;
+    quint64 localInferenceRequestSequence_ = 0;
+    QString activeLocalInferenceRequestId_;
     LocalInferenceResponse latestLocalInferenceResponse_;
     LocalInferenceStreamResult latestLocalInferenceStreamResult_;
     bool piperFileOutputExecutionEnabled_ = false;

@@ -9,6 +9,23 @@ ShellPanel {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property date now: new Date()
     readonly property int modeButtonWidth: compact ? 190 : 230
+    readonly property string dashboardModelText: headerBar.viewModel.selectedLocalModelStatus === "Available"
+                                                ? headerBar.viewModel.selectedLocalModelSummary
+                                                : "No ready local model. Start Ollama and install/select a local model."
+    readonly property string dashboardSubtitleText: "Ollama "
+                                                   + headerBar.viewModel.ollamaHealthStatus
+                                                   + ". Chat "
+                                                   + headerBar.viewModel.localChatInferenceStatus
+                                                   + ". Stream "
+                                                   + headerBar.viewModel.localInferenceStreamStatus
+                                                   + ". "
+                                                   + headerBar.dashboardModelText
+    readonly property string modeSubtitleText: headerBar.viewModel.currentModeName
+                                               + " - "
+                                               + SentinelTheme.modeStatusText(headerBar.viewModel.currentModeName)
+    readonly property string subtitleText: headerBar.viewModel.currentPage === "Dashboard"
+                                           ? headerBar.dashboardSubtitleText
+                                           : headerBar.modeSubtitleText
 
     function greetingFor(dateValue) {
         const hour = dateValue.getHours()
@@ -17,15 +34,6 @@ ShellPanel {
         if (hour < 18)
             return "Good afternoon, Operator."
         return "Good evening, Operator."
-    }
-
-    function dashboardSubtitle() {
-        const modelText = headerBar.viewModel.selectedLocalModelStatus === "Available"
-                          ? headerBar.viewModel.selectedLocalModelSummary
-                          : "No ready local model. Start Ollama and install/select a local model."
-        return "Ollama " + headerBar.viewModel.ollamaHealthStatus + ". Chat "
-                + headerBar.viewModel.localChatInferenceStatus + ". Stream "
-                + headerBar.viewModel.localInferenceStreamStatus + ". " + modelText
     }
 
     color: "transparent"
@@ -77,9 +85,7 @@ ShellPanel {
 
             Label {
                 Layout.fillWidth: true
-                text: headerBar.viewModel.currentPage === "Dashboard"
-                      ? headerBar.dashboardSubtitle()
-                      : headerBar.viewModel.currentModeName + " - " + SentinelTheme.modeStatusText(headerBar.viewModel.currentModeName)
+                text: headerBar.subtitleText
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontBody
                 wrapMode: Text.WordWrap

@@ -72,10 +72,21 @@ QString localInferenceChatFailureMessage(const LocalInferenceResponse& response)
         return QStringLiteral("Local inference blocked by runtime safety policy.");
     case LocalInferenceError::ClientUnavailable:
         return QStringLiteral("Local inference unavailable: the local Ollama client is not ready.");
+    case LocalInferenceError::OllamaNotRunning:
+        return QStringLiteral("Local inference unavailable: Ollama is not running locally.");
+    case LocalInferenceError::EndpointUnreachable:
+        return QStringLiteral("Local inference unavailable: the local Ollama endpoint is "
+                              "unreachable.");
     case LocalInferenceError::Timeout:
         return QStringLiteral("Local inference failed: the local Ollama request timed out.");
     case LocalInferenceError::InvalidResponse:
         return QStringLiteral("Local inference failed: Ollama returned an invalid response.");
+    case LocalInferenceError::StreamInterrupted:
+        return QStringLiteral("Local inference failed: the Ollama stream ended before a complete "
+                              "assistant response was received.");
+    case LocalInferenceError::BusyRequest:
+        return QStringLiteral("Local inference is already running. Wait for the current request "
+                              "to finish before sending another message.");
     case LocalInferenceError::RequestFailed:
         if (!response.summary.trimmed().isEmpty()) {
             return QStringLiteral("Local inference failed: %1").arg(response.summary.trimmed());
@@ -433,7 +444,8 @@ ApplicationController::ApplicationController(
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider,
     std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator,
     std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment,
-    std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider, QObject* parent)
+    std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider,
+    std::unique_ptr<ILocalInferenceWorker> localInferenceWorker, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -477,13 +489,6 @@ ApplicationController::ApplicationController(
                                        : std::make_unique<StaticRuntimeIntegrationReadiness>()),
       ollamaRuntimeClient_(ollamaRuntimeClient ? std::move(ollamaRuntimeClient)
                                                : std::make_unique<NullOllamaRuntimeClient>()),
-      localInferenceClient_(localInferenceClient ? std::move(localInferenceClient)
-                                                 : std::make_unique<OllamaLocalInferenceClient>(
-                                                       ollamaRuntimeClient_->config())),
-      localInferenceStreamClient_(
-          localInferenceStreamClient
-              ? std::move(localInferenceStreamClient)
-              : std::make_unique<OllamaLocalInferenceStreamClient>(ollamaRuntimeClient_->config())),
       modelManagementService_(modelManagementService
                                   ? std::move(modelManagementService)
                                   : std::make_unique<StaticModelManagementService>()),
@@ -506,6 +511,24 @@ ApplicationController::ApplicationController(
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
       chatHistoryStore_(std::move(chatHistoryStore)) {
+    localInferenceClientIsRealOllama_ =
+        dynamic_cast<OllamaLocalInferenceClient*>(localInferenceClient.get()) != nullptr ||
+        !localInferenceClient;
+    localInferenceStreamClientIsRealOllama_ = dynamic_cast<OllamaLocalInferenceStreamClient*>(
+                                                  localInferenceStreamClient.get()) != nullptr ||
+                                              !localInferenceStreamClient;
+    localInferenceWorker_ =
+        localInferenceWorker
+            ? std::move(localInferenceWorker)
+            : std::make_unique<LocalInferenceWorker>(
+                  localInferenceClient ? std::move(localInferenceClient)
+                                       : std::make_unique<OllamaLocalInferenceClient>(
+                                             ollamaRuntimeClient_->config()),
+                  localInferenceStreamClient ? std::move(localInferenceStreamClient)
+                                             : std::make_unique<OllamaLocalInferenceStreamClient>(
+                                                   ollamaRuntimeClient_->config()),
+                  this, localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
+
     const auto persistedMessages = chatHistoryStore_ && chatHistoryStore_->isAvailable()
                                        ? chatHistoryStore_->loadMessages()
                                        : QList<ChatMessage>{};
@@ -1964,8 +1987,8 @@ QString ApplicationController::localInferenceStatus() const {
 
 QString ApplicationController::localInferenceSummary() const {
     if (latestLocalInferenceResponse_.status == LocalInferenceStatus::NotRequested &&
-        localInferenceClient_) {
-        return localInferenceClient_->statusSummary();
+        localInferenceWorker_) {
+        return localInferenceWorker_->statusSummary();
     }
 
     return safeLocalInferenceSummary(latestLocalInferenceResponse_);
@@ -1987,8 +2010,8 @@ QStringList ApplicationController::localInferenceTraceSummaries() const {
 }
 
 bool ApplicationController::localInferenceStreamingAvailable() const {
-    return localInferenceStreamingEnabled_ && localInferenceStreamClient_ &&
-           localInferenceStreamClient_->isAvailable();
+    return localInferenceStreamingEnabled_ && localInferenceWorker_ &&
+           localInferenceWorker_->streamingAvailable();
 }
 
 QString ApplicationController::localInferenceStreamStatus() const {
@@ -2000,7 +2023,7 @@ QString ApplicationController::localInferenceStreamSummary() const {
         return QStringLiteral("Local inference streaming is disabled; responses finalize through "
                               "normal chat history.");
     }
-    if (!localInferenceStreamClient_) {
+    if (!localInferenceWorker_) {
         return QStringLiteral("Local inference streaming client is unavailable.");
     }
     if (localInferenceBusy_ &&
@@ -2010,7 +2033,7 @@ QString ApplicationController::localInferenceStreamSummary() const {
                    : latestLocalInferenceStreamResult_.summary;
     }
     if (latestLocalInferenceStreamResult_.status == LocalInferenceStreamStatus::Disabled) {
-        return localInferenceStreamClient_->statusSummary();
+        return localInferenceWorker_->streamStatusSummary();
     }
     return latestLocalInferenceStreamResult_.summary;
 }
@@ -2092,6 +2115,23 @@ bool ApplicationController::sendMessage(const QString& message) {
         return false;
     }
 
+    if (localInferenceBusy_) {
+        LocalInferenceRequest request;
+        request.prompt = trimmed;
+        request.options.model = effectiveLocalModel({});
+        const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
+        request.options.timeoutMs =
+            localInferenceStreamingEnabled_ ? config.streamTimeoutMs : config.generateTimeoutMs;
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::BusyRequest,
+            QStringLiteral("Local inference request rejected: another request is already "
+                           "running."));
+        latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
+        latestLocalInferenceStreamResult_.accumulatedText.clear();
+        emit localInferenceChanged();
+        return false;
+    }
+
     resetCompletedConversationState();
     transitionConversationState(ConversationState::Listening,
                                 QStringLiteral("chat input metadata received"));
@@ -2111,23 +2151,18 @@ bool ApplicationController::sendMessage(const QString& message) {
         transitionConversationState(ConversationState::Responding,
                                     QStringLiteral("local chat inference metadata active"));
 
-        const auto ranLocalInference = localInferenceStreamingAvailable()
-                                           ? runLocalInferenceStream(trimmed, {})
-                                           : runLocalInference(trimmed, {});
-        const auto localStatus = latestLocalInferenceResponse_.status;
-        const auto assistantMessage = chatSession_->appendAssistantMessage(
-            ranLocalInference ? latestLocalInferenceResponse_.text
-                              : localInferenceChatFailureMessage(latestLocalInferenceResponse_),
-            ranLocalInference ? ChatMessageStatus::Received : ChatMessageStatus::Error);
-        if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
-            chatHistoryStore_->appendMessage(assistantMessage);
-        }
-        transitionConversationState(
-            ranLocalInference ? ConversationState::Completed : ConversationState::Error,
-            ranLocalInference ? QStringLiteral("local chat inference metadata completed")
-                              : QStringLiteral("local chat inference metadata blocked"));
         emit chatMessagesChanged();
-        return localStatus == LocalInferenceStatus::Succeeded;
+        activeLocalInferenceIsChatRequest_ = true;
+        const auto startedLocalInference = localInferenceStreamingAvailable()
+                                               ? runLocalInferenceStream(trimmed, {})
+                                               : runLocalInference(trimmed, {});
+        if (startedLocalInference || !activeLocalInferenceIsChatRequest_) {
+            return latestLocalInferenceResponse_.status == LocalInferenceStatus::Succeeded ||
+                   localInferenceBusy_;
+        }
+
+        finalizeLocalChatInference(false);
+        return false;
     }
 
     if (!provider_ || provider_->status() != ChatProviderStatus::Ready) {
@@ -2167,9 +2202,26 @@ bool ApplicationController::sendMessage(const QString& message) {
 }
 
 bool ApplicationController::runLocalInference(const QString& prompt, const QString& model) {
+    if (localInferenceBusy_) {
+        LocalInferenceRequest request;
+        request.prompt = prompt.trimmed();
+        request.options.model = effectiveLocalModel(model);
+        const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
+        request.options.timeoutMs = config.generateTimeoutMs;
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::BusyRequest,
+            QStringLiteral("Local inference request rejected: another request is already "
+                           "running."));
+        emit localInferenceChanged();
+        return false;
+    }
+
     LocalInferenceRequest request;
     request.prompt = prompt.trimmed();
     request.options.model = effectiveLocalModel(model);
+    const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
+    request.options.timeoutMs = config.generateTimeoutMs;
+    latestLocalInferenceStreamResult_.accumulatedText.clear();
 
     if (request.prompt.isEmpty()) {
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
@@ -2244,7 +2296,29 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         return false;
     }
 
-    if (!localInferenceClient_) {
+    const auto health =
+        localInferenceClientIsRealOllama_ ? currentOllamaHealthCheck() : OllamaHealthCheckResult{};
+    if (localInferenceClientIsRealOllama_ && health.healthStatus != OllamaHealthStatus::Healthy) {
+        const auto summary = health.summary.trimmed().isEmpty()
+                                 ? QStringLiteral("Local inference blocked: Ollama health check "
+                                                  "did not report a healthy local endpoint.")
+                                 : health.summary.trimmed();
+        const auto lowered = summary.toLower();
+        LocalInferenceError error = LocalInferenceError::EndpointUnreachable;
+        if (lowered.contains(QStringLiteral("not running")) ||
+            lowered.contains(QStringLiteral("connection refused"))) {
+            error = LocalInferenceError::OllamaNotRunning;
+        } else if (lowered.contains(QStringLiteral("timed out"))) {
+            error = LocalInferenceError::Timeout;
+        }
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(request, error, summary);
+        latestLocalInferenceResponse_.status = LocalInferenceStatus::Error;
+        latestLocalInferenceResponse_.timeoutMs = health.timeoutMs;
+        emit localInferenceChanged();
+        return false;
+    }
+
+    if (!localInferenceWorker_) {
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::ClientUnavailable,
             QStringLiteral("Local inference blocked: client is unavailable."));
@@ -2252,54 +2326,114 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         return false;
     }
 
+    request.id = QStringLiteral("local-inference-request-%1").arg(++localInferenceRequestSequence_);
+    activeLocalInferenceRequestId_ = request.id;
     localInferenceBusy_ = true;
     latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
     latestLocalInferenceResponse_.summary = QStringLiteral("Local inference request is running.");
+    latestLocalInferenceResponse_.timeoutMs = request.options.timeoutMs;
     emit localInferenceChanged();
 
-    QElapsedTimer latencyTimer;
-    latencyTimer.start();
-    auto clientResponse = localInferenceClient_->infer(request);
-    clientResponse.latencyMs = latencyTimer.elapsed();
+    const auto started = localInferenceWorker_->startInference(
+        request, [this, permissionDecision, safetyReport](const QString& requestId,
+                                                          const LocalInferenceResponse& response) {
+            auto completedResponse = response;
+            completedResponse.traces = {
+                LocalInferenceTrace{
+                    1,
+                    QStringLiteral("Permission Policy"),
+                    runtimePermissionDecisionStatusName(permissionDecision.status),
+                    safeRuntimePermissionDecisionSummary(permissionDecision),
+                },
+                LocalInferenceTrace{
+                    2,
+                    QStringLiteral("Safety Policy"),
+                    runtimeSafetyDecisionName(safetyReport.decision),
+                    safeRuntimeSafetySummary(safetyReport),
+                },
+            };
+            completedResponse.traces.append(response.traces);
+            for (int i = 0; i < completedResponse.traces.size(); ++i) {
+                completedResponse.traces[i].sequence = i + 1;
+            }
+            finishLocalInferenceRequest(requestId, completedResponse);
+        });
+    if (!started) {
+        localInferenceBusy_ = false;
+        activeLocalInferenceRequestId_.clear();
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::BusyRequest,
+            QStringLiteral("Local inference request rejected: worker is busy."));
+        latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
+        emit localInferenceChanged();
+        return false;
+    }
+    return localInferenceBusy_ ||
+           latestLocalInferenceResponse_.status == LocalInferenceStatus::Succeeded;
+}
+
+bool ApplicationController::cancelLocalInference() {
+    if (!localInferenceBusy_ || activeLocalInferenceRequestId_.isEmpty()) {
+        return false;
+    }
+
+    const auto requestId = activeLocalInferenceRequestId_;
+    if (localInferenceWorker_) {
+        localInferenceWorker_->cancel(requestId);
+    }
+    activeLocalInferenceRequestId_.clear();
+    activeLocalInferenceIsChatRequest_ = false;
     localInferenceBusy_ = false;
-    latestLocalInferenceResponse_ = clientResponse;
-    latestLocalInferenceResponse_.traces = {
-        LocalInferenceTrace{
-            1,
-            QStringLiteral("Permission Policy"),
-            runtimePermissionDecisionStatusName(permissionDecision.status),
-            safeRuntimePermissionDecisionSummary(permissionDecision),
-        },
-        LocalInferenceTrace{
-            2,
-            QStringLiteral("Safety Policy"),
-            runtimeSafetyDecisionName(safetyReport.decision),
-            safeRuntimeSafetySummary(safetyReport),
-        },
-    };
-    latestLocalInferenceResponse_.traces.append(clientResponse.traces);
-    for (int i = 0; i < latestLocalInferenceResponse_.traces.size(); ++i) {
-        latestLocalInferenceResponse_.traces[i].sequence = i + 1;
+    latestLocalInferenceResponse_.status = LocalInferenceStatus::Blocked;
+    latestLocalInferenceResponse_.error = LocalInferenceError::RequestFailed;
+    latestLocalInferenceResponse_.text.clear();
+    latestLocalInferenceResponse_.summary =
+        QStringLiteral("Local inference request was cancelled; stale results will be ignored.");
+    latestLocalInferenceStreamResult_.accumulatedText.clear();
+    if (latestLocalInferenceStreamResult_.status == LocalInferenceStreamStatus::Streaming) {
+        latestLocalInferenceStreamResult_.status = LocalInferenceStreamStatus::Cancelled;
+        latestLocalInferenceStreamResult_.summary =
+            QStringLiteral("Local streaming request was cancelled.");
     }
     emit localInferenceChanged();
-    return latestLocalInferenceResponse_.status == LocalInferenceStatus::Succeeded;
+    return true;
 }
 
 bool ApplicationController::runLocalInferenceStream(const QString& prompt, const QString& model) {
+    if (localInferenceBusy_) {
+        LocalInferenceRequest request;
+        request.prompt = prompt.trimmed();
+        request.options.model = effectiveLocalModel(model);
+        request.options.streamingRequested = true;
+        const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
+        request.options.timeoutMs = config.streamTimeoutMs;
+        latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
+            request, LocalInferenceError::BusyRequest,
+            QStringLiteral("Local streaming request rejected: another request is already "
+                           "running."));
+        latestLocalInferenceStreamResult_.accumulatedText.clear();
+        emit localInferenceChanged();
+        return false;
+    }
+
     LocalInferenceRequest request;
     request.prompt = prompt.trimmed();
     request.options.model = effectiveLocalModel(model);
     request.options.streamingRequested = true;
+    const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
+    request.options.timeoutMs = config.streamTimeoutMs;
 
     auto blockStream = [this,
                         &request](LocalInferenceError error, const QString& summary,
                                   LocalInferenceStatus status = LocalInferenceStatus::Blocked) {
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(request, error, summary);
         latestLocalInferenceResponse_.status = status;
+        latestLocalInferenceResponse_.timeoutMs = request.options.timeoutMs;
         latestLocalInferenceStreamResult_ = LocalInferenceStreamResult{};
         latestLocalInferenceStreamResult_.status = LocalInferenceStreamStatus::Refused;
         latestLocalInferenceStreamResult_.error = error;
         latestLocalInferenceStreamResult_.summary = summary;
+        latestLocalInferenceStreamResult_.timeoutMs = request.options.timeoutMs;
         emit localInferenceChanged();
         return false;
     };
@@ -2375,11 +2509,35 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
         return blocked;
     }
 
-    if (!localInferenceStreamClient_ || !localInferenceStreamClient_->isAvailable()) {
+    const auto health = localInferenceStreamClientIsRealOllama_ ? currentOllamaHealthCheck()
+                                                                : OllamaHealthCheckResult{};
+    if (localInferenceStreamClientIsRealOllama_ &&
+        health.healthStatus != OllamaHealthStatus::Healthy) {
+        const auto summary = health.summary.trimmed().isEmpty()
+                                 ? QStringLiteral("Local streaming blocked: Ollama health check "
+                                                  "did not report a healthy local endpoint.")
+                                 : health.summary.trimmed();
+        const auto lowered = summary.toLower();
+        LocalInferenceError error = LocalInferenceError::EndpointUnreachable;
+        if (lowered.contains(QStringLiteral("not running")) ||
+            lowered.contains(QStringLiteral("connection refused"))) {
+            error = LocalInferenceError::OllamaNotRunning;
+        } else if (lowered.contains(QStringLiteral("timed out"))) {
+            error = LocalInferenceError::Timeout;
+        }
+        const auto blocked = blockStream(error, summary, LocalInferenceStatus::Error);
+        latestLocalInferenceResponse_.timeoutMs = health.timeoutMs;
+        emit localInferenceChanged();
+        return blocked;
+    }
+
+    if (!localInferenceWorker_ || !localInferenceWorker_->streamingAvailable()) {
         return blockStream(LocalInferenceError::ClientUnavailable,
                            QStringLiteral("Local streaming blocked: client is unavailable."));
     }
 
+    request.id = QStringLiteral("local-inference-request-%1").arg(++localInferenceRequestSequence_);
+    activeLocalInferenceRequestId_ = request.id;
     localInferenceBusy_ = true;
     latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
     latestLocalInferenceResponse_.model = request.options.model;
@@ -2388,60 +2546,140 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
     latestLocalInferenceStreamResult_ = LocalInferenceStreamResult{};
     latestLocalInferenceStreamResult_.status = LocalInferenceStreamStatus::Streaming;
     latestLocalInferenceStreamResult_.model = request.options.model;
+    latestLocalInferenceStreamResult_.timeoutMs = request.options.timeoutMs;
     latestLocalInferenceStreamResult_.summary =
         QStringLiteral("Local streaming request is running.");
     emit localInferenceChanged();
 
-    QElapsedTimer latencyTimer;
-    latencyTimer.start();
-    auto streamResult = localInferenceStreamClient_->startStream(
-        request, [this](const LocalInferenceStreamChunk& chunk) {
-            latestLocalInferenceStreamResult_.chunks.append(chunk);
-            if (!chunk.malformed) {
-                latestLocalInferenceStreamResult_.accumulatedText.append(chunk.text);
-                latestLocalInferenceResponse_.text =
-                    latestLocalInferenceStreamResult_.accumulatedText;
+    const auto started = localInferenceWorker_->startStream(
+        request,
+        [this](const QString& requestId, const LocalInferenceStreamChunk& chunk) {
+            updateLocalInferenceStreamRequest(requestId, chunk);
+        },
+        [this, permissionDecision, safetyReport](const QString& requestId,
+                                                 const LocalInferenceStreamResult& result) {
+            auto completedResult = result;
+            completedResult.traces = {
+                LocalInferenceTrace{
+                    1,
+                    QStringLiteral("Permission Policy"),
+                    runtimePermissionDecisionStatusName(permissionDecision.status),
+                    safeRuntimePermissionDecisionSummary(permissionDecision),
+                },
+                LocalInferenceTrace{
+                    2,
+                    QStringLiteral("Safety Policy"),
+                    runtimeSafetyDecisionName(safetyReport.decision),
+                    safeRuntimeSafetySummary(safetyReport),
+                },
+            };
+            completedResult.traces.append(result.traces);
+            for (int i = 0; i < completedResult.traces.size(); ++i) {
+                completedResult.traces[i].sequence = i + 1;
             }
-            latestLocalInferenceStreamResult_.summary = chunk.summary;
-            emit localInferenceChanged();
+            finishLocalInferenceStreamRequest(requestId, completedResult);
         });
+    if (!started) {
+        localInferenceBusy_ = false;
+        activeLocalInferenceRequestId_.clear();
+        return blockStream(LocalInferenceError::BusyRequest,
+                           QStringLiteral("Local streaming request rejected: worker is busy."),
+                           LocalInferenceStatus::Busy);
+    }
+    return localInferenceBusy_ ||
+           latestLocalInferenceResponse_.status == LocalInferenceStatus::Succeeded;
+}
+
+void ApplicationController::finishLocalInferenceRequest(const QString& requestId,
+                                                        const LocalInferenceResponse& response) {
+    if (requestId != activeLocalInferenceRequestId_) {
+        return;
+    }
 
     localInferenceBusy_ = false;
-    latestLocalInferenceStreamResult_ = streamResult;
-    latestLocalInferenceStreamResult_.accumulatedText.clear();
-    latestLocalInferenceResponse_.latencyMs = latencyTimer.elapsed();
-    latestLocalInferenceResponse_.model = streamResult.model;
-    latestLocalInferenceResponse_.endpoint = streamResult.endpoint;
-    latestLocalInferenceResponse_.text = streamResult.accumulatedText;
-    latestLocalInferenceResponse_.error = streamResult.error;
-    latestLocalInferenceResponse_.summary = streamResult.summary;
-    latestLocalInferenceResponse_.status =
-        streamResult.status == LocalInferenceStreamStatus::Completed
-            ? LocalInferenceStatus::Succeeded
-        : streamResult.status == LocalInferenceStreamStatus::Refused ? LocalInferenceStatus::Refused
-        : streamResult.status == LocalInferenceStreamStatus::Cancelled
-            ? LocalInferenceStatus::Blocked
-            : LocalInferenceStatus::Error;
-    latestLocalInferenceResponse_.traces = {
-        LocalInferenceTrace{
-            1,
-            QStringLiteral("Permission Policy"),
-            runtimePermissionDecisionStatusName(permissionDecision.status),
-            safeRuntimePermissionDecisionSummary(permissionDecision),
-        },
-        LocalInferenceTrace{
-            2,
-            QStringLiteral("Safety Policy"),
-            runtimeSafetyDecisionName(safetyReport.decision),
-            safeRuntimeSafetySummary(safetyReport),
-        },
-    };
-    latestLocalInferenceResponse_.traces.append(streamResult.traces);
-    for (int i = 0; i < latestLocalInferenceResponse_.traces.size(); ++i) {
-        latestLocalInferenceResponse_.traces[i].sequence = i + 1;
+    activeLocalInferenceRequestId_.clear();
+    latestLocalInferenceResponse_ = response;
+    if (latestLocalInferenceResponse_.timeoutMs <= 0) {
+        latestLocalInferenceResponse_.timeoutMs =
+            ollamaRuntimeClient_ ? ollamaRuntimeClient_->config().generateTimeoutMs : 30000;
+    }
+    if (latestLocalInferenceResponse_.status != LocalInferenceStatus::Succeeded) {
+        latestLocalInferenceResponse_.text.clear();
     }
     emit localInferenceChanged();
-    return latestLocalInferenceResponse_.status == LocalInferenceStatus::Succeeded;
+
+    if (activeLocalInferenceIsChatRequest_) {
+        finalizeLocalChatInference(latestLocalInferenceResponse_.status ==
+                                   LocalInferenceStatus::Succeeded);
+    }
+}
+
+void ApplicationController::updateLocalInferenceStreamRequest(
+    const QString& requestId, const LocalInferenceStreamChunk& chunk) {
+    if (requestId != activeLocalInferenceRequestId_ || !localInferenceBusy_) {
+        return;
+    }
+
+    latestLocalInferenceStreamResult_.chunks.append(chunk);
+    if (!chunk.malformed) {
+        latestLocalInferenceStreamResult_.accumulatedText.append(chunk.text);
+        latestLocalInferenceResponse_.text = latestLocalInferenceStreamResult_.accumulatedText;
+    }
+    latestLocalInferenceStreamResult_.summary = chunk.summary;
+    emit localInferenceChanged();
+}
+
+void ApplicationController::finishLocalInferenceStreamRequest(
+    const QString& requestId, const LocalInferenceStreamResult& result) {
+    if (requestId != activeLocalInferenceRequestId_) {
+        return;
+    }
+
+    localInferenceBusy_ = false;
+    activeLocalInferenceRequestId_.clear();
+    latestLocalInferenceStreamResult_ = result;
+    if (latestLocalInferenceStreamResult_.timeoutMs <= 0) {
+        latestLocalInferenceStreamResult_.timeoutMs =
+            ollamaRuntimeClient_ ? ollamaRuntimeClient_->config().streamTimeoutMs : 30000;
+    }
+    latestLocalInferenceStreamResult_.accumulatedText.clear();
+    latestLocalInferenceResponse_.model = result.model;
+    latestLocalInferenceResponse_.endpoint = result.endpoint;
+    latestLocalInferenceResponse_.text = result.accumulatedText;
+    latestLocalInferenceResponse_.error = result.error;
+    latestLocalInferenceResponse_.summary = result.summary;
+    latestLocalInferenceResponse_.timeoutMs = latestLocalInferenceStreamResult_.timeoutMs;
+    if (result.status != LocalInferenceStreamStatus::Completed) {
+        latestLocalInferenceResponse_.text.clear();
+    }
+    latestLocalInferenceResponse_.status =
+        result.status == LocalInferenceStreamStatus::Completed   ? LocalInferenceStatus::Succeeded
+        : result.status == LocalInferenceStreamStatus::Refused   ? LocalInferenceStatus::Refused
+        : result.status == LocalInferenceStreamStatus::Cancelled ? LocalInferenceStatus::Blocked
+                                                                 : LocalInferenceStatus::Error;
+    latestLocalInferenceResponse_.traces = result.traces;
+    emit localInferenceChanged();
+
+    if (activeLocalInferenceIsChatRequest_) {
+        finalizeLocalChatInference(latestLocalInferenceResponse_.status ==
+                                   LocalInferenceStatus::Succeeded);
+    }
+}
+
+void ApplicationController::finalizeLocalChatInference(bool succeeded) {
+    activeLocalInferenceIsChatRequest_ = false;
+    const auto assistantMessage = chatSession_->appendAssistantMessage(
+        succeeded ? latestLocalInferenceResponse_.text
+                  : localInferenceChatFailureMessage(latestLocalInferenceResponse_),
+        succeeded ? ChatMessageStatus::Received : ChatMessageStatus::Error);
+    if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
+        chatHistoryStore_->appendMessage(assistantMessage);
+    }
+    transitionConversationState(succeeded ? ConversationState::Completed : ConversationState::Error,
+                                succeeded
+                                    ? QStringLiteral("local chat inference metadata completed")
+                                    : QStringLiteral("local chat inference metadata blocked"));
+    emit chatMessagesChanged();
 }
 
 bool ApplicationController::runAgentRequest(const QString& request) {

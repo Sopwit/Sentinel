@@ -1521,3 +1521,53 @@ Boundary rules:
 - No playback, microphone access, Whisper execution, downloads, cloud/API keys,
   filesystem-wide scans, autonomous voice loops, raw process internals, or background voice actions
   are added in this decision.
+
+## 74. Local Ollama Failures Must Be Categorized And Bounded
+
+Decision: Local Ollama chat reliability is part of the controlled local inference boundary, not a
+new provider/runtime authority expansion.
+
+Reason: Users need deterministic failures when Ollama is stopped, unreachable, slow, missing a
+model, returning malformed data, or interrupting a stream. Silent fallthrough makes the local
+runtime path hard to debug and can leave chat UI in an ambiguous state.
+
+Boundary rules:
+
+- Health checks, model discovery, non-streaming generation, and streaming generation carry explicit
+  timeout metadata.
+- Failure summaries must stay QML-safe and must not expose secrets, raw internals, stack traces,
+  broad endpoint details, filesystem paths, or credentials.
+- Duplicate sends while local inference is active are rejected before appending another user
+  message.
+- Failed streams clear live preview text and never persist partial assistant output as the final
+  assistant message.
+- Successful streaming and non-streaming local inference append one assistant message only.
+- Permission and safety denials remain explicit categories and still occur before model execution.
+- No cloud providers, API keys, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, filesystem/system actions, autonomous loops, playback, microphone access, Piper
+  behavior changes, or Whisper execution are added by this reliability decision.
+
+## 75. Local Inference Uses An Async Worker Boundary
+
+Decision: Real local Ollama generation and streaming must run behind `ILocalInferenceWorker`
+instead of directly inside `ApplicationController`.
+
+Reason: Ollama model loading and generation can be slow even with bounded timeouts. The controller
+and QML thread should own policy, state, and chat finalization, while blocking network waits stay
+behind a worker boundary.
+
+Boundary rules:
+
+- `ApplicationController` still performs local chat opt-in, model validation, loopback endpoint
+  validation, runtime permission evaluation, runtime safety evaluation, and busy duplicate-send
+  rejection before a worker request starts.
+- Worker results are accepted only when their request id matches the active controller request.
+  Stale results are ignored.
+- Successful non-streaming and streaming requests append exactly one assistant message.
+- Failed requests do not persist partial assistant output, and streaming preview text is cleared
+  on completion, error, or cancellation.
+- Cancellation is currently metadata/request-id invalidation only; it does not promise immediate
+  interruption of an in-flight Ollama HTTP request beyond existing client timeouts.
+- The worker boundary does not add cloud providers, API keys, model downloads/pulls/deletes,
+  Ollama process management, tools, plugins, filesystem/system actions, Piper changes, Whisper
+  execution, microphone access, playback, or autonomous loops.

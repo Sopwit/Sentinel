@@ -9,6 +9,9 @@ ScrollView {
     readonly property bool wideLayout: width >= SentinelTheme.breakpointWide + 120
     readonly property bool compact: width < 860
     readonly property int panelPadding: SentinelTheme.spaceLg
+    readonly property string runtimeStatusText: dashboardPage.viewModel.ollamaHealthStatus
+                                                + " / "
+                                                + dashboardPage.viewModel.localInferenceRuntimeState
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -66,7 +69,7 @@ ScrollView {
                         InfoRow {
                             compact: true
                             label: "Runtime"
-                            value: dashboardPage.viewModel.ollamaHealthStatus + " / " + dashboardPage.viewModel.localInferenceRuntimeState
+                            value: dashboardPage.runtimeStatusText
                             Layout.fillWidth: true
                         }
 

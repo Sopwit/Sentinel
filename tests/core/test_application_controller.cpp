@@ -13,6 +13,7 @@
 #include <QFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QTimer>
 #include <QtTest>
 
 #include <memory>
@@ -24,12 +25,16 @@ using sentinel::core::IChatHistoryStore;
 using sentinel::core::IChatProvider;
 using sentinel::core::ILocalInferenceClient;
 using sentinel::core::ILocalInferenceStreamClient;
+using sentinel::core::ILocalInferenceWorker;
 using sentinel::core::InMemoryStore;
 using sentinel::core::LocalEchoProvider;
+using sentinel::core::LocalInferenceFinishedCallback;
 using sentinel::core::LocalInferenceRequest;
 using sentinel::core::LocalInferenceResponse;
 using sentinel::core::LocalInferenceStatus;
 using sentinel::core::LocalInferenceStreamChunk;
+using sentinel::core::LocalInferenceStreamChunkCallback;
+using sentinel::core::LocalInferenceStreamFinishedCallback;
 using sentinel::core::LocalInferenceStreamResult;
 using sentinel::core::LocalInferenceStreamStatus;
 using sentinel::core::ModelManagementAction;
@@ -247,6 +252,35 @@ public:
     bool called = false;
 };
 
+class CategorizedErrorLocalInferenceClient final : public ILocalInferenceClient {
+public:
+    CategorizedErrorLocalInferenceClient(sentinel::core::LocalInferenceError error, QString summary)
+        : error_(error), summary_(std::move(summary)) {}
+
+    LocalInferenceResponse infer(const LocalInferenceRequest& request) override {
+        called = true;
+        lastRequest = request;
+        LocalInferenceResponse response;
+        response.status = LocalInferenceStatus::Error;
+        response.model = request.options.model;
+        response.error = error_;
+        response.summary = summary_;
+        response.timeoutMs = request.options.timeoutMs;
+        return response;
+    }
+
+    QString statusSummary() const override {
+        return QStringLiteral("Injected categorized local inference client returns errors.");
+    }
+
+    bool called = false;
+    LocalInferenceRequest lastRequest;
+
+private:
+    sentinel::core::LocalInferenceError error_;
+    QString summary_;
+};
+
 class FakeLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
 public:
     explicit FakeLocalInferenceStreamClient(
@@ -279,6 +313,10 @@ public:
         if (finalStatus_ != LocalInferenceStreamStatus::Completed) {
             result.error = sentinel::core::LocalInferenceError::RequestFailed;
         }
+        if (finalStatus_ == LocalInferenceStreamStatus::Error &&
+            summary_.contains(QStringLiteral("did not complete"))) {
+            result.error = sentinel::core::LocalInferenceError::StreamInterrupted;
+        }
         if (finalStatus_ == LocalInferenceStreamStatus::Cancelled) {
             result.cancelled = true;
         }
@@ -300,6 +338,151 @@ private:
     QList<LocalInferenceStreamChunk> chunks_;
     LocalInferenceStreamStatus finalStatus_ = LocalInferenceStreamStatus::Completed;
     QString summary_;
+};
+
+class AsyncLocalInferenceWorker final : public ILocalInferenceWorker {
+public:
+    enum class Mode {
+        Success,
+        TimeoutError,
+    };
+
+    explicit AsyncLocalInferenceWorker(Mode mode = Mode::Success) : mode_(mode) {}
+
+    bool startInference(const LocalInferenceRequest& request,
+                        LocalInferenceFinishedCallback onFinished) override {
+        if (busy) {
+            return false;
+        }
+        busy = true;
+        called = true;
+        lastRequest = request;
+        QTimer::singleShot(delayMs, [this, request, onFinished = std::move(onFinished)]() mutable {
+            busy = false;
+            LocalInferenceResponse response;
+            response.model = request.options.model;
+            response.endpoint = QStringLiteral("http://127.0.0.1:11434");
+            response.timeoutMs = request.options.timeoutMs;
+            if (mode_ == Mode::TimeoutError) {
+                response.status = LocalInferenceStatus::Error;
+                response.error = sentinel::core::LocalInferenceError::Timeout;
+                response.summary =
+                    QStringLiteral("Async fake local inference timed out after %1 ms.")
+                        .arg(request.options.timeoutMs);
+            } else {
+                response.status = LocalInferenceStatus::Succeeded;
+                response.text = QStringLiteral("async fake completion");
+                response.summary = QStringLiteral("Async fake local inference completed.");
+            }
+            if (onFinished) {
+                onFinished(request.id, response);
+            }
+        });
+        return true;
+    }
+
+    bool startStream(const LocalInferenceRequest& request,
+                     LocalInferenceStreamChunkCallback onChunk,
+                     LocalInferenceStreamFinishedCallback onFinished) override {
+        if (busy) {
+            return false;
+        }
+        busy = true;
+        called = true;
+        lastRequest = request;
+        QTimer::singleShot(delayMs, [this, request, onChunk = std::move(onChunk),
+                                     onFinished = std::move(onFinished)]() mutable {
+            busy = false;
+            if (mode_ == Mode::Success && onChunk) {
+                onChunk(request.id, LocalInferenceStreamChunk{
+                                        1,
+                                        QStringLiteral("async "),
+                                        false,
+                                        false,
+                                        QStringLiteral("async chunk"),
+                                    });
+            }
+            LocalInferenceStreamResult result;
+            result.model = request.options.model;
+            result.endpoint = QStringLiteral("http://127.0.0.1:11434");
+            result.timeoutMs = request.options.timeoutMs;
+            if (mode_ == Mode::TimeoutError) {
+                result.status = LocalInferenceStreamStatus::Error;
+                result.error = sentinel::core::LocalInferenceError::Timeout;
+                result.summary = QStringLiteral("Async fake local stream timed out.");
+            } else {
+                result.status = LocalInferenceStreamStatus::Completed;
+                result.accumulatedText = QStringLiteral("async stream completion");
+                result.summary = QStringLiteral("Async fake local stream completed.");
+            }
+            if (onFinished) {
+                onFinished(request.id, result);
+            }
+        });
+        return true;
+    }
+
+    void cancel(const QString& requestId) override {
+        cancelledRequestIds.append(requestId);
+    }
+
+    QString statusSummary() const override {
+        return QStringLiteral("Async fake local inference worker is ready.");
+    }
+
+    QString streamStatusSummary() const override {
+        return QStringLiteral("Async fake local stream worker is ready.");
+    }
+
+    bool streamingAvailable() const override {
+        return true;
+    }
+
+    Mode mode_ = Mode::Success;
+    int delayMs = 0;
+    bool busy = false;
+    bool called = false;
+    QStringList cancelledRequestIds;
+    LocalInferenceRequest lastRequest;
+};
+
+class ReentrantLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
+public:
+    LocalInferenceStreamResult
+    startStream(const LocalInferenceRequest& request,
+                const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) override {
+        called = true;
+        lastRequest = request;
+        if (onChunk) {
+            onChunk(LocalInferenceStreamChunk{1, QStringLiteral("partial"), false, false,
+                                              QStringLiteral("first chunk")});
+        }
+        if (controller) {
+            duplicateAccepted = controller->sendMessage(QStringLiteral("duplicate"));
+        }
+
+        LocalInferenceStreamResult result;
+        result.status = LocalInferenceStreamStatus::Completed;
+        result.model = request.options.model;
+        result.endpoint = QStringLiteral("http://127.0.0.1:11434");
+        result.accumulatedText = QStringLiteral("final response");
+        result.summary = QStringLiteral("Reentrant stream completed.");
+        result.timeoutMs = request.options.timeoutMs;
+        return result;
+    }
+
+    QString statusSummary() const override {
+        return QStringLiteral("Reentrant local stream client is ready.");
+    }
+
+    bool isAvailable() const override {
+        return true;
+    }
+
+    ApplicationController* controller = nullptr;
+    bool called = false;
+    bool duplicateAccepted = true;
+    LocalInferenceRequest lastRequest;
 };
 
 class FakeOllamaRuntimeClient final : public sentinel::core::IOllamaRuntimeClient {
@@ -437,6 +620,15 @@ private slots:
     void enabledLocalChatStreamingHandlesMalformedChunk();
     void enabledLocalChatStreamingCancellationAppendsSafeRefusal();
     void streamingPreviewClearsAfterStreamError();
+    void asyncLocalChatInferenceCompletesWithFakeWorker();
+    void asyncLocalChatInferenceErrorResetsBusy();
+    void asyncDuplicateSendIsRejectedBeforeAppending();
+    void staleAsyncResultIsIgnoredAfterCancellation();
+    void localInferenceTimeoutAppendsConciseFailureAndResetsBusy();
+    void localInferenceMalformedResponseAppendsConciseFailureAndResetsBusy();
+    void ollamaUnavailablePathAppendsConciseFailureWithoutRealService();
+    void duplicateSendDuringActiveStreamIsRejectedWithoutAppending();
+    void streamingInterruptionClearsPreviewAndAppendsOneFailure();
     void blocksLocalInferenceByDefaultPermission();
     void blocksLocalInferenceWhenSafetyPolicyBlocks();
     void runsInjectedLocalInferenceWhenPermissionAllows();
@@ -526,6 +718,18 @@ static void configureReadyPiperPaths(ApplicationController& controller, QTempora
 
     controller.setPiperBinaryPath(piperBinaryPath);
     controller.setPiperModelPath(piperModelPath);
+}
+
+static std::unique_ptr<ApplicationController>
+makeAsyncWorkerController(std::unique_ptr<ILocalInferenceWorker> worker) {
+    return std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, std::move(worker));
 }
 
 void ApplicationControllerTest::exposesProviderNameAndInitialSystemMessage() {
@@ -1281,7 +1485,7 @@ void ApplicationControllerTest::enabledLocalChatStreamingAppendsOrderedChunksOnc
     QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("hello stream"));
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
     QCOMPARE(historyStorePtr->messages_.size(), 3);
-    QCOMPARE(chatSpy.count(), 1);
+    QCOMPARE(chatSpy.count(), 2);
     QVERIFY(localSpy.count() >= 4);
 }
 
@@ -1394,7 +1598,225 @@ void ApplicationControllerTest::streamingPreviewClearsAfterStreamError() {
     QCOMPARE(controller->chatHistory().at(2).content,
              QStringLiteral("Local inference failed: Injected local stream error."));
     QCOMPARE(historyStorePtr->messages_.size(), 3);
-    QCOMPARE(chatSpy.count(), 1);
+    QCOMPARE(chatSpy.count(), 2);
+}
+
+void ApplicationControllerTest::asyncLocalChatInferenceCompletesWithFakeWorker() {
+    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
+    auto* workerPtr = worker.get();
+    auto controller = makeAsyncWorkerController(std::move(worker));
+    QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
+
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(sent);
+    QVERIFY(workerPtr->called);
+    QVERIFY(controller->localInferenceBusy());
+    QCOMPARE(controller->chatHistory().size(), 2);
+
+    QTRY_VERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Succeeded"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
+    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("async fake completion"));
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
+    QCOMPARE(chatSpy.count(), 2);
+}
+
+void ApplicationControllerTest::asyncLocalChatInferenceErrorResetsBusy() {
+    auto worker =
+        std::make_unique<AsyncLocalInferenceWorker>(AsyncLocalInferenceWorker::Mode::TimeoutError);
+    auto controller = makeAsyncWorkerController(std::move(worker));
+
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(sent);
+    QVERIFY(controller->localInferenceBusy());
+    QTRY_VERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
+    QCOMPARE(controller->chatHistory().at(2).content,
+             QStringLiteral("Local inference failed: the local Ollama request timed out."));
+}
+
+void ApplicationControllerTest::asyncDuplicateSendIsRejectedBeforeAppending() {
+    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
+    worker->delayMs = 25;
+    auto controller = makeAsyncWorkerController(std::move(worker));
+
+    controller->setLocalChatInferenceEnabled(true);
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+    const auto duplicateAccepted = controller->sendMessage(QStringLiteral("duplicate"));
+
+    QVERIFY(!duplicateAccepted);
+    QCOMPARE(controller->chatHistory().size(), 2);
+    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Busy"));
+
+    QTRY_VERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("async fake completion"));
+}
+
+void ApplicationControllerTest::staleAsyncResultIsIgnoredAfterCancellation() {
+    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
+    auto* workerPtr = worker.get();
+    worker->delayMs = 25;
+    auto controller = makeAsyncWorkerController(std::move(worker));
+
+    controller->setLocalChatInferenceEnabled(true);
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+    QVERIFY(controller->localInferenceBusy());
+    QVERIFY(controller->cancelLocalInference());
+
+    QVERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->chatHistory().size(), 2);
+    QVERIFY(!workerPtr->cancelledRequestIds.isEmpty());
+
+    QTest::qWait(50);
+    QCOMPARE(controller->chatHistory().size(), 2);
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->localInferenceSummary(),
+             QStringLiteral("Local inference request was cancelled; stale results will be "
+                            "ignored."));
+}
+
+void ApplicationControllerTest::localInferenceTimeoutAppendsConciseFailureAndResetsBusy() {
+    auto timeoutClient = std::make_unique<CategorizedErrorLocalInferenceClient>(
+        sentinel::core::LocalInferenceError::Timeout,
+        QStringLiteral("Local Ollama generation timed out after 30000 ms."));
+    auto* timeoutClientPtr = timeoutClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(timeoutClient));
+
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(!sent);
+    QVERIFY(timeoutClientPtr->called);
+    QVERIFY(!controller->localInferenceBusy());
+    QCOMPARE(timeoutClientPtr->lastRequest.options.timeoutMs, 30000);
+    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
+    QCOMPARE(controller->chatHistory().at(2).content,
+             QStringLiteral("Local inference failed: the local Ollama request timed out."));
+}
+
+void ApplicationControllerTest::
+    localInferenceMalformedResponseAppendsConciseFailureAndResetsBusy() {
+    auto malformedClient = std::make_unique<CategorizedErrorLocalInferenceClient>(
+        sentinel::core::LocalInferenceError::InvalidResponse,
+        QStringLiteral("Local Ollama generation failed: Ollama returned malformed JSON."));
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(malformedClient));
+
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(!sent);
+    QVERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(2).content,
+             QStringLiteral("Local inference failed: Ollama returned an invalid response."));
+}
+
+void ApplicationControllerTest::ollamaUnavailablePathAppendsConciseFailureWithoutRealService() {
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{}));
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setLocalChatInferenceEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(!sent);
+    QVERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
+    QCOMPARE(controller->chatHistory().at(2).content,
+             QStringLiteral("Local inference unavailable: the local Ollama endpoint is "
+                            "unreachable."));
+}
+
+void ApplicationControllerTest::duplicateSendDuringActiveStreamIsRejectedWithoutAppending() {
+    auto streamClient = std::make_unique<ReentrantLocalInferenceStreamClient>();
+    auto* streamClientPtr = streamClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
+    streamClientPtr->controller = controller.get();
+
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setLocalInferenceStreamingEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(sent);
+    QVERIFY(streamClientPtr->called);
+    QVERIFY(!streamClientPtr->duplicateAccepted);
+    QVERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
+    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("final response"));
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Succeeded"));
+}
+
+void ApplicationControllerTest::streamingInterruptionClearsPreviewAndAppendsOneFailure() {
+    auto streamClient = std::make_unique<FakeLocalInferenceStreamClient>(
+        QList<LocalInferenceStreamChunk>{
+            {1, QStringLiteral("partial "), false, false, QStringLiteral("first chunk")},
+        },
+        LocalInferenceStreamStatus::Error,
+        QStringLiteral("Local Ollama streaming response did not complete with assistant text."));
+    auto historyStore = std::make_unique<RecordingChatHistoryStore>();
+    auto* historyStorePtr = historyStore.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr,
+        std::move(historyStore), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(),
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
+
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setLocalInferenceStreamingEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(!sent);
+    QVERIFY(!controller->localInferenceBusy());
+    QVERIFY(controller->localInferenceStreamingText().isEmpty());
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
+    QCOMPARE(controller->chatHistory().at(2).content,
+             QStringLiteral("Local inference failed: the Ollama stream ended before a complete "
+                            "assistant response was received."));
+    QCOMPARE(historyStorePtr->messages_.size(), 3);
 }
 
 void ApplicationControllerTest::blocksLocalInferenceByDefaultPermission() {
@@ -1569,7 +1991,7 @@ void ApplicationControllerTest::enabledLocalChatInferenceAppendsFakeResponse() {
     QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("fake local completion"));
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
     QCOMPARE(historyStorePtr->messages_.size(), 3);
-    QCOMPARE(chatSpy.count(), 1);
+    QCOMPARE(chatSpy.count(), 2);
 }
 
 void ApplicationControllerTest::enabledLocalChatInferenceErrorAppendsSafeRefusal() {
