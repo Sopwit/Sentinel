@@ -11,6 +11,7 @@
 #include "sentinel/core/OllamaRuntime.h"
 #include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/SQLiteChatHistoryStore.h"
+#include "sentinel/core/SQLiteConversationStore.h"
 #include "sentinel/core/SQLiteMemoryStore.h"
 #include "sentinel/core/StandardPathProvider.h"
 
@@ -82,7 +83,10 @@ int main(int argc, char* argv[]) {
         nullptr, nullptr, nullptr, nullptr, nullptr,
         std::make_unique<sentinel::core::OllamaHttpRuntimeClient>(ollamaConfig),
         std::make_unique<sentinel::core::OllamaLocalInferenceClient>(ollamaConfig),
-        std::make_unique<sentinel::core::OllamaLocalInferenceStreamClient>(ollamaConfig));
+        std::make_unique<sentinel::core::OllamaLocalInferenceStreamClient>(ollamaConfig), nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<sentinel::core::SQLiteConversationStore>(
+            pathProvider.conversationDatabasePath()));
     controller.setConversationExportDirectory(pathProvider.conversationExportDirectoryPath());
     sentinel::core::ModeManager modeManager;
     controller.setRoutingModeByName(settings.routingModeName());

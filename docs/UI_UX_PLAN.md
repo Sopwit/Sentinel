@@ -268,6 +268,15 @@ conversation-store status, conversation count, and an active-conversation summar
 surface remains the existing single transcript; no thread sidebar, import UI, cloud sync, or broad
 layout redesign is introduced.
 
+Phase 15.26 through Phase 15.29 add a compact Conversation Browser surface inside Chat. The
+browser may show conversation title, last updated summary, message count, and archived state, with
+small create, switch, rename, archive, and unarchive actions. It must preserve the current
+Sentinel bridge composition and bottom dock, avoid a chat-app/sidebar redesign, and avoid delete,
+cloud sync, import/export workflow expansion, embeddings/vector search, semantic memory, tool
+execution, or runtime safety changes. Switching should feel like loading a local transcript: live
+preview disappears, active request metadata resets, and the selected messages replace the visible
+thread without duplicate rows.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

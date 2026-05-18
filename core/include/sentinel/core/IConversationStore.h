@@ -76,6 +76,7 @@ public:
     virtual QList<ConversationMessageRecord> loadMessages(const QString& conversationId) const = 0;
     virtual bool renameConversation(const QString& conversationId, const QString& title) = 0;
     virtual bool archiveConversation(const QString& conversationId) = 0;
+    virtual bool unarchiveConversation(const QString& conversationId) = 0;
     virtual bool deleteConversation(const QString& conversationId) = 0;
 
     virtual ConversationStoreStatus status() const {

@@ -388,6 +388,33 @@ Still out of scope:
 - Cloud sync, transcript import, arbitrary filesystem writes, broad UI redesign, and using the
   multi-conversation store as the active chat transcript path.
 
+## Phase 15.26-15.29: Conversation Browser UI Foundation And Safe Session Switching
+
+Completed. Activated the multi-conversation store as the active local transcript source behind a
+small Chat browser surface.
+
+Delivered:
+
+- App-owned SQLite conversation database path (`conversations.sqlite3`) and desktop wiring for
+  `SQLiteConversationStore`.
+- Controller-owned active conversation lifecycle: initialize a valid active conversation, copy
+  legacy single-transcript startup messages into an empty conversation store when available, load
+  selected conversation messages into `ChatSession`, and keep archived conversations read-only for
+  sending.
+- Compact Chat browser showing title, updated summary, message count, archived state, and actions
+  for create, switch, rename, archive, and unarchive.
+- Session switching semantics that cancel/invalidate active async request metadata, clear streaming
+  preview text, reset conversation runtime/search state, and load the selected transcript without
+  duplicate user or assistant insertion.
+- Stale async result protection remains request-id based; completions from a previous active
+  conversation are ignored after switching.
+- Focused controller, SQLite, and desktop view-model tests without real Ollama.
+
+Still out of scope:
+
+- Permanent delete UI, cloud sync, import, multi-conversation export, embeddings/vector DB,
+  semantic memory, tools/plugins/system execution, and changes to Ollama/runtime safety policy.
+
 ## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 
 Completed. Prepared voice architecture without enabling real audio I/O or voice runtime work.

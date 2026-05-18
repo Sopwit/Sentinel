@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 15.26-15.29: Conversation Browser UI Foundation And Safe Session Switching
+
+Completed. Exposes the multi-conversation store through a compact Chat browser and makes the
+active transcript load from `IConversationStore` while keeping legacy single-transcript history as
+a compatibility source when needed.
+
+Scope:
+
+- Desktop wiring now uses `SQLiteConversationStore` at the app data `conversations.sqlite3` path.
+- `ApplicationController` maintains one valid active conversation id, creates an initial
+  conversation when the store is empty, and copies existing single-transcript startup messages
+  into that conversation when possible.
+- Chat shows a compact conversation browser with title, last-updated summary, message count, and
+  archived state, plus create, switch, rename, archive, and unarchive actions.
+- Switching conversations invalidates active async request metadata, clears live streaming
+  preview, resets runtime/search state, loads the selected transcript, and emits QML-safe browser
+  metadata updates.
+- Stale async completions from an earlier active conversation are ignored through the existing
+  request-id guard, so they do not append duplicate assistant messages or corrupt the newly active
+  transcript.
+- Tests cover create/list/load, switching, rename/archive/unarchive, SQLite persistence across
+  controller recreation, stale async result protection, duplicate-insertion avoidance, busy reset,
+  active-conversation validity, and view-model exposure.
+
+Known limitation:
+
+- The browser is intentionally compact and local-only. There is no permanent delete UI, import,
+  cloud sync, multi-conversation export, semantic/vector search, embeddings, tools/plugins, or
+  changes to Ollama/runtime safety policy.
+
 ### Phase 15.23-15.25: Multi-Conversation Storage Foundation
 
 Completed. Adds the first real multi-conversation store boundary while keeping the active desktop

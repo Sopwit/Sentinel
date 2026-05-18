@@ -991,6 +991,34 @@ QStringList DesktopShellViewModel::conversationStoreSummaries() const {
     return controller_.conversationStoreSummaries();
 }
 
+QString DesktopShellViewModel::activeConversationId() const {
+    return controller_.activeConversationId();
+}
+
+bool DesktopShellViewModel::activeConversationArchived() const {
+    return controller_.activeConversationArchived();
+}
+
+QStringList DesktopShellViewModel::conversationIds() const {
+    return controller_.conversationIds();
+}
+
+QStringList DesktopShellViewModel::conversationTitles() const {
+    return controller_.conversationTitles();
+}
+
+QStringList DesktopShellViewModel::conversationLastUpdatedSummaries() const {
+    return controller_.conversationLastUpdatedSummaries();
+}
+
+QStringList DesktopShellViewModel::conversationMessageCountSummaries() const {
+    return controller_.conversationMessageCountSummaries();
+}
+
+QStringList DesktopShellViewModel::conversationArchivedSummaries() const {
+    return controller_.conversationArchivedSummaries();
+}
+
 QString DesktopShellViewModel::conversationHistorySummaryText() const {
     return controller_.conversationHistorySummaryText();
 }
@@ -1216,6 +1244,27 @@ bool DesktopShellViewModel::exportTranscript(const QString& format) {
 
 bool DesktopShellViewModel::requestConversationExport(const QString& format) {
     return exportTranscript(format);
+}
+
+QString DesktopShellViewModel::createConversation(const QString& title) {
+    return controller_.createConversation(title);
+}
+
+bool DesktopShellViewModel::switchConversation(const QString& conversationId) {
+    return controller_.switchConversation(conversationId);
+}
+
+bool DesktopShellViewModel::renameConversation(const QString& conversationId,
+                                               const QString& title) {
+    return controller_.renameConversation(conversationId, title);
+}
+
+bool DesktopShellViewModel::archiveConversation(const QString& conversationId) {
+    return controller_.archiveConversation(conversationId);
+}
+
+bool DesktopShellViewModel::unarchiveConversation(const QString& conversationId) {
+    return controller_.unarchiveConversation(conversationId);
 }
 
 bool DesktopShellViewModel::runAgentRequest(const QString& request) {

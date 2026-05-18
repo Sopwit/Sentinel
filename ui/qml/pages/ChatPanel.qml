@@ -69,6 +69,155 @@ ShellPanel {
         Rectangle {
             Layout.fillWidth: true
             radius: SentinelTheme.radiusMd
+            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
+            border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10)
+            implicitHeight: conversationBrowserColumn.implicitHeight + SentinelTheme.spaceMd
+
+            ColumnLayout {
+                id: conversationBrowserColumn
+                x: SentinelTheme.spaceSm
+                y: SentinelTheme.spaceSm
+                width: parent.width - SentinelTheme.spaceSm * 2
+                spacing: SentinelTheme.spaceSm
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm
+
+                    ColumnLayout {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceXs
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: "CONVERSATIONS"
+                            color: chatPanel.modeAccent
+                            font.pixelSize: SentinelTheme.fontTiny
+                            font.letterSpacing: 2.2
+                            elide: Text.ElideRight
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: chatPanel.viewModel.activeConversationSummary
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontSmall
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    SentinelButton {
+                        text: "New"
+                        Layout.preferredWidth: 82
+                        onClicked: {
+                            var nextNumber = chatPanel.viewModel.conversationStoreConversationCount + 1
+                            chatPanel.viewModel.createConversation("Conversation " + nextNumber)
+                        }
+                    }
+                }
+
+                Repeater {
+                    model: chatPanel.viewModel.conversationIds.length
+
+                    delegate: Rectangle {
+                        required property int index
+                        readonly property string conversationId: chatPanel.viewModel.conversationIds[index]
+                        readonly property bool active: conversationId === chatPanel.viewModel.activeConversationId
+                        Layout.fillWidth: true
+                        radius: SentinelTheme.radiusSm
+                        color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10) : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.018)
+                        border.color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.26) : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                        implicitHeight: conversationRow.implicitHeight + SentinelTheme.spaceSm
+
+                        RowLayout {
+                            id: conversationRow
+                            x: SentinelTheme.spaceSm
+                            y: SentinelTheme.spaceXs
+                            width: parent.width - SentinelTheme.spaceSm * 2
+                            spacing: SentinelTheme.spaceSm
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: chatPanel.viewModel.conversationTitles[index]
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    font.bold: active
+                                    elide: Text.ElideRight
+                                }
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: chatPanel.viewModel.conversationLastUpdatedSummaries[index]
+                                          + " / "
+                                          + chatPanel.viewModel.conversationMessageCountSummaries[index]
+                                          + " / "
+                                          + chatPanel.viewModel.conversationArchivedSummaries[index]
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                    elide: Text.ElideRight
+                                }
+                            }
+
+                            SentinelButton {
+                                text: active ? "Open" : "Switch"
+                                Layout.preferredWidth: 76
+                                enabled: !active
+                                onClicked: chatPanel.viewModel.switchConversation(conversationId)
+                            }
+
+                            SentinelButton {
+                                text: chatPanel.viewModel.conversationArchivedSummaries[index] === "Archived" ? "Unarchive" : "Archive"
+                                Layout.preferredWidth: 92
+                                onClicked: {
+                                    if (chatPanel.viewModel.conversationArchivedSummaries[index] === "Archived")
+                                        chatPanel.viewModel.unarchiveConversation(conversationId)
+                                    else
+                                        chatPanel.viewModel.archiveConversation(conversationId)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: chatPanel.compact ? 1 : 3
+                    columnSpacing: SentinelTheme.spaceSm
+                    rowSpacing: SentinelTheme.spaceSm
+
+                    SentinelTextField {
+                        id: renameInput
+                        Layout.fillWidth: true
+                        Layout.columnSpan: chatPanel.compact ? 1 : 2
+                        placeholderText: "Rename active conversation"
+                        enabled: chatPanel.viewModel.activeConversationId.length > 0
+                        onAccepted: {
+                            if (renameButton.enabled)
+                                renameButton.clicked()
+                        }
+                    }
+
+                    SentinelButton {
+                        id: renameButton
+                        text: "Rename"
+                        enabled: renameInput.text.trim().length > 0
+                        Layout.fillWidth: chatPanel.compact
+                        onClicked: {
+                            chatPanel.viewModel.renameConversation(chatPanel.viewModel.activeConversationId, renameInput.text)
+                            renameInput.clear()
+                        }
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            Layout.fillWidth: true
+            radius: SentinelTheme.radiusMd
             color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.055)
             border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.12)
             implicitHeight: runtimeStatusColumn.implicitHeight + SentinelTheme.spaceMd
@@ -308,7 +457,7 @@ ShellPanel {
                 Layout.fillWidth: true
                 Layout.columnSpan: chatPanel.compact ? 2 : 1
                 placeholderText: chatPanel.modelReady ? "Message Sentinel" : "Local model setup required for Ollama chat"
-                enabled: !chatPanel.viewModel.localInferenceBusy
+                enabled: !chatPanel.viewModel.localInferenceBusy && !chatPanel.viewModel.activeConversationArchived
                 onAccepted: {
                     if (sendButton.enabled)
                         sendButton.clicked()
@@ -318,7 +467,9 @@ ShellPanel {
             SentinelButton {
                 id: sendButton
                 text: "Send"
-                enabled: chatInput.text.trim().length > 0 && !chatPanel.viewModel.localInferenceBusy
+                enabled: chatInput.text.trim().length > 0
+                         && !chatPanel.viewModel.localInferenceBusy
+                         && !chatPanel.viewModel.activeConversationArchived
                 Layout.fillWidth: chatPanel.compact
                 onClicked: {
                     chatPanel.viewModel.sendMessage(chatInput.text)

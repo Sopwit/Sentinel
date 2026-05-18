@@ -69,6 +69,7 @@ private slots:
     void exposesOnlyQmlSafeAgentVisibilityProperties();
     void exposesChatHistoryStatus();
     void exposesConversationStoreReadinessMetadata();
+    void forwardsConversationBrowserActions();
     void exposesConversationHistorySummaryMetadata();
     void exposesConversationBrowserMetadata();
     void exposesMultiConversationReadinessMetadata();
@@ -1377,15 +1378,39 @@ void DesktopShellViewModelTest::exposesConversationStoreReadinessMetadata() {
     ViewModelFixture fixture;
 
     QCOMPARE(fixture.viewModel.conversationStoreStatus(), QStringLiteral("Ready"));
-    QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 0);
+    QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 1);
     QVERIFY(fixture.viewModel.activeConversationSummary().contains(
         QStringLiteral("Current Transcript")));
-    QVERIFY(fixture.viewModel.conversationStoreSummaries().isEmpty());
+    QCOMPARE(fixture.viewModel.conversationStoreSummaries().size(), 1);
+    QCOMPARE(fixture.viewModel.conversationIds().size(), 1);
+    QCOMPARE(fixture.viewModel.conversationTitles().first(), QStringLiteral("Current Transcript"));
+    QCOMPARE(fixture.viewModel.conversationArchivedSummaries().first(), QStringLiteral("Active"));
+    QVERIFY(!fixture.viewModel.activeConversationArchived());
 
     QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("store exposure")));
 
-    QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 0);
+    QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 1);
     QVERIFY(fixture.viewModel.activeConversationSummary().contains(QStringLiteral("3 messages")));
+    QCOMPARE(fixture.viewModel.conversationMessageCountSummaries().first(),
+             QStringLiteral("3 messages"));
+}
+
+void DesktopShellViewModelTest::forwardsConversationBrowserActions() {
+    ViewModelFixture fixture;
+
+    const auto firstId = fixture.viewModel.activeConversationId();
+    const auto secondId = fixture.viewModel.createConversation(QStringLiteral("Second"));
+    QVERIFY(!secondId.isEmpty());
+    QCOMPARE(fixture.viewModel.activeConversationId(), secondId);
+    QVERIFY(fixture.viewModel.conversationTitles().contains(QStringLiteral("Second")));
+
+    QVERIFY(fixture.viewModel.renameConversation(secondId, QStringLiteral("Renamed")));
+    QVERIFY(fixture.viewModel.conversationTitles().contains(QStringLiteral("Renamed")));
+    QVERIFY(fixture.viewModel.archiveConversation(secondId));
+    QVERIFY(fixture.viewModel.conversationArchivedSummaries().contains(QStringLiteral("Archived")));
+    QVERIFY(fixture.viewModel.unarchiveConversation(secondId));
+    QVERIFY(fixture.viewModel.switchConversation(firstId));
+    QCOMPARE(fixture.viewModel.activeConversationId(), firstId);
 }
 
 void DesktopShellViewModelTest::exposesConversationHistorySummaryMetadata() {

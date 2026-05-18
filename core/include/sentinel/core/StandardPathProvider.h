@@ -9,6 +9,7 @@ public:
     QString settingsFilePath() const override;
     QString memoryDatabasePath() const override;
     QString chatHistoryDatabasePath() const override;
+    QString conversationDatabasePath() const override;
     QString conversationExportDirectoryPath() const override;
 };
 

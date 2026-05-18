@@ -1,5 +1,6 @@
 #include "sentinel/core/ApplicationController.h"
 #include "sentinel/core/IChatHistoryStore.h"
+#include "sentinel/core/InMemoryConversationStore.h"
 #include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/LocalInference.h"
@@ -7,6 +8,7 @@
 #include "sentinel/core/NullAgentRuntime.h"
 #include "sentinel/core/PiperTts.h"
 #include "sentinel/core/RuntimePermissions.h"
+#include "sentinel/core/SQLiteConversationStore.h"
 #include "sentinel/core/Voice.h"
 
 #include <QDir>
@@ -27,6 +29,7 @@ using sentinel::core::ChatProviderReply;
 using sentinel::core::ChatProviderStatus;
 using sentinel::core::IChatHistoryStore;
 using sentinel::core::IChatProvider;
+using sentinel::core::IConversationStore;
 using sentinel::core::ILocalInferenceClient;
 using sentinel::core::ILocalInferenceStreamClient;
 using sentinel::core::ILocalInferenceWorker;
@@ -46,6 +49,7 @@ using sentinel::core::ModelManagementRequest;
 using sentinel::core::OllamaConfig;
 using sentinel::core::OllamaHealthCheckResult;
 using sentinel::core::OllamaModelSummary;
+using sentinel::core::SQLiteConversationStore;
 using sentinel::core::StaticModelManagementService;
 
 class UnavailableProvider final : public IChatProvider {
@@ -643,6 +647,10 @@ private slots:
     void reportsPersistedConversationHistorySummary();
     void reportsRuntimeOnlyConversationHistorySummary();
     void exposesConversationStoreReadinessWithoutSwitchingTranscriptStorage();
+    void createsSwitchesRenamesArchivesAndUnarchivesConversations();
+    void persistsActiveConversationAcrossControllerRecreation();
+    void switchingConversationIgnoresStaleAsyncResultAndResetsBusy();
+    void switchingConversationDoesNotDuplicateTranscriptInsertion();
     void reportsSingleConversationBrowserEntryDeterministically();
     void reportsEmptyTranscriptConversationBrowserSummary();
     void reportsConversationBrowserMessageCountSummary();
@@ -715,6 +723,16 @@ private slots:
 static std::unique_ptr<ApplicationController> makeController() {
     return std::make_unique<ApplicationController>(std::make_unique<LocalEchoProvider>(),
                                                    std::make_unique<InMemoryStore>());
+}
+
+static std::unique_ptr<ApplicationController>
+makeControllerWithConversationStore(std::unique_ptr<IConversationStore> conversationStore) {
+    return std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::move(conversationStore));
 }
 
 struct PiperControllerFixture {
@@ -1817,17 +1835,129 @@ void ApplicationControllerTest::
                                      std::make_unique<InMemoryStore>()};
 
     QCOMPARE(controller.conversationStoreStatus(), QStringLiteral("Ready"));
-    QCOMPARE(controller.conversationStoreConversationCount(), 0);
+    QCOMPARE(controller.conversationStoreConversationCount(), 1);
     QVERIFY(controller.activeConversationSummary().contains(QStringLiteral("Current Transcript")));
     QVERIFY(controller.activeConversationSummary().contains(QStringLiteral("1 message")));
-    QVERIFY(controller.conversationStoreSummaries().isEmpty());
+    QCOMPARE(controller.conversationStoreSummaries().size(), 1);
+    QVERIFY(!controller.activeConversationId().isEmpty());
+    QCOMPARE(controller.conversationIds().size(), 1);
+    QCOMPARE(controller.conversationTitles().first(), QStringLiteral("Current Transcript"));
+    QCOMPARE(controller.conversationArchivedSummaries().first(), QStringLiteral("Active"));
     QCOMPARE(controller.conversationListCurrentTitle(), QStringLiteral("Current Transcript"));
 
     QVERIFY(controller.sendMessage(QStringLiteral("store exposure")));
 
-    QCOMPARE(controller.conversationStoreConversationCount(), 0);
+    QCOMPARE(controller.conversationStoreConversationCount(), 1);
     QVERIFY(controller.activeConversationSummary().contains(QStringLiteral("3 messages")));
     QCOMPARE(controller.conversationListCurrentTitle(), QStringLiteral("Current Transcript"));
+    QCOMPARE(controller.conversationMessageCountSummaries().first(), QStringLiteral("3 messages"));
+}
+
+void ApplicationControllerTest::createsSwitchesRenamesArchivesAndUnarchivesConversations() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    const auto firstId = controller.activeConversationId();
+    QVERIFY(controller.sendMessage(QStringLiteral("first transcript token")));
+
+    const auto secondId = controller.createConversation(QStringLiteral("Second Thread"));
+    QVERIFY(!secondId.isEmpty());
+    QVERIFY(secondId != firstId);
+    QCOMPARE(controller.activeConversationId(), secondId);
+    QCOMPARE(controller.chatHistory().size(), 1);
+    QVERIFY(controller.sendMessage(QStringLiteral("second transcript token")));
+    QCOMPARE(controller.chatHistory().size(), 3);
+
+    QVERIFY(controller.switchConversation(firstId));
+    QCOMPARE(controller.activeConversationId(), firstId);
+    QCOMPARE(controller.chatHistory().size(), 3);
+    QVERIFY(controller.chatHistory().at(1).content.contains(QStringLiteral("first transcript")));
+
+    QVERIFY(controller.renameConversation(firstId, QStringLiteral("Renamed First")));
+    QVERIFY(controller.conversationTitles().contains(QStringLiteral("Renamed First")));
+    QVERIFY(controller.archiveConversation(firstId));
+    QVERIFY(!controller.activeConversationArchived());
+    QVERIFY(controller.conversationArchivedSummaries().contains(QStringLiteral("Archived")));
+    QVERIFY(controller.unarchiveConversation(firstId));
+    QVERIFY(controller.conversationArchivedSummaries().contains(QStringLiteral("Active")));
+}
+
+void ApplicationControllerTest::persistsActiveConversationAcrossControllerRecreation() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto databasePath = dir.filePath(QStringLiteral("conversations.sqlite3"));
+    QString firstId;
+    QString secondId;
+
+    {
+        auto controller = makeControllerWithConversationStore(
+            std::make_unique<SQLiteConversationStore>(databasePath));
+        firstId = controller->activeConversationId();
+        QVERIFY(controller->sendMessage(QStringLiteral("persisted first token")));
+        secondId = controller->createConversation(QStringLiteral("Persisted Second"));
+        QVERIFY(controller->sendMessage(QStringLiteral("persisted second token")));
+        QVERIFY(!firstId.isEmpty());
+        QVERIFY(!secondId.isEmpty());
+    }
+
+    auto reloaded = makeControllerWithConversationStore(
+        std::make_unique<SQLiteConversationStore>(databasePath));
+    QCOMPARE(reloaded->conversationStoreConversationCount(), 2);
+    QCOMPARE(reloaded->activeConversationId(), firstId);
+    QCOMPARE(reloaded->chatHistory().size(), 3);
+    QVERIFY(reloaded->chatHistory().at(1).content.contains(QStringLiteral("persisted first")));
+    QVERIFY(reloaded->switchConversation(secondId));
+    QCOMPARE(reloaded->chatHistory().size(), 3);
+    QVERIFY(reloaded->chatHistory().at(1).content.contains(QStringLiteral("persisted second")));
+}
+
+void ApplicationControllerTest::switchingConversationIgnoresStaleAsyncResultAndResetsBusy() {
+    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
+    worker->delayMs = 20;
+    auto* workerPtr = worker.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, std::move(worker));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setLocalChatInferenceEnabled(true);
+    const auto firstId = controller->activeConversationId();
+    const auto secondId = controller->createConversation(QStringLiteral("After Switch"));
+    QVERIFY(controller->switchConversation(firstId));
+
+    QVERIFY(controller->sendMessage(QStringLiteral("async stale token")));
+    QVERIFY(controller->localInferenceBusy());
+    QVERIFY(workerPtr->called);
+    QVERIFY(controller->switchConversation(secondId));
+    QVERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->conversationRuntimeRequestId(), QStringLiteral("None"));
+    QCOMPARE(controller->chatHistory().size(), 1);
+
+    QTRY_VERIFY(!workerPtr->busy);
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QVERIFY(controller->switchConversation(firstId));
+    QCOMPARE(controller->chatHistory().size(), 2);
+    QVERIFY(controller->chatHistory().at(1).content.contains(QStringLiteral("async stale token")));
+}
+
+void ApplicationControllerTest::switchingConversationDoesNotDuplicateTranscriptInsertion() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    const auto firstId = controller.activeConversationId();
+    QVERIFY(controller.sendMessage(QStringLiteral("duplicate guard")));
+    const auto secondId = controller.createConversation(QStringLiteral("Second"));
+    QVERIFY(controller.sendMessage(QStringLiteral("other guard")));
+
+    QVERIFY(controller.switchConversation(firstId));
+    QCOMPARE(controller.chatHistory().size(), 3);
+    QVERIFY(controller.switchConversation(secondId));
+    QCOMPARE(controller.chatHistory().size(), 3);
+    QVERIFY(controller.switchConversation(firstId));
+    QCOMPARE(controller.chatHistory().size(), 3);
+    QVERIFY(controller.conversationStoreSummaries().first().contains(QStringLiteral("3 messages")));
 }
 
 void ApplicationControllerTest::reportsSingleConversationBrowserEntryDeterministically() {
