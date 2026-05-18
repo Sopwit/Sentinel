@@ -1,5 +1,6 @@
 #include "sentinel/core/ApplicationController.h"
 
+#include "sentinel/core/InMemoryConversationStore.h"
 #include "sentinel/core/LocalRuntime.h"
 #include "sentinel/core/NullToolExecutor.h"
 #include "sentinel/core/StaticAgentRegistry.h"
@@ -608,7 +609,8 @@ ApplicationController::ApplicationController(
     std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator,
     std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment,
     std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider,
-    std::unique_ptr<ILocalInferenceWorker> localInferenceWorker, QObject* parent)
+    std::unique_ptr<ILocalInferenceWorker> localInferenceWorker,
+    std::unique_ptr<IConversationStore> conversationStore, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -674,6 +676,8 @@ ApplicationController::ApplicationController(
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
       chatHistoryStore_(std::move(chatHistoryStore)),
+      conversationStore_(conversationStore ? std::move(conversationStore)
+                                           : std::make_unique<InMemoryConversationStore>()),
       conversationExportDirectory_(defaultConversationExportDirectory()) {
     localInferenceClientIsRealOllama_ =
         dynamic_cast<OllamaLocalInferenceClient*>(localInferenceClient.get()) != nullptr ||
@@ -2301,6 +2305,48 @@ QString ApplicationController::memoryStatus() const {
 QString ApplicationController::chatHistoryStatus() const {
     return chatHistoryStore_ && chatHistoryStore_->isAvailable() ? QStringLiteral("Available")
                                                                  : QStringLiteral("Runtime Only");
+}
+
+QString ApplicationController::conversationStoreStatus() const {
+    return conversationStore_ ? conversationStoreStatusName(conversationStore_->status())
+                              : QStringLiteral("Unavailable");
+}
+
+int ApplicationController::conversationStoreConversationCount() const {
+    return conversationStore_ ? conversationStore_->listConversations().size() : 0;
+}
+
+QString ApplicationController::activeConversationSummary() const {
+    if (!conversationStore_) {
+        return QStringLiteral("Current Transcript / %1 %2 / Conversation store unavailable")
+            .arg(conversationHistorySummary_.messageCount)
+            .arg(conversationHistorySummary_.messageCount == 1 ? QStringLiteral("message")
+                                                               : QStringLiteral("messages"));
+    }
+
+    const auto records = conversationStore_->listConversations();
+    if (records.isEmpty()) {
+        return QStringLiteral("Current Transcript / %1 %2 / Single Transcript active")
+            .arg(conversationHistorySummary_.messageCount)
+            .arg(conversationHistorySummary_.messageCount == 1 ? QStringLiteral("message")
+                                                               : QStringLiteral("messages"));
+    }
+
+    return conversationRecordSummary(records.first());
+}
+
+QStringList ApplicationController::conversationStoreSummaries() const {
+    QStringList summaries;
+    if (!conversationStore_) {
+        return summaries;
+    }
+
+    const auto records = conversationStore_->listConversations();
+    summaries.reserve(records.size());
+    for (const auto& record : records) {
+        summaries.append(conversationRecordSummary(record));
+    }
+    return summaries;
 }
 
 ConversationHistorySummary ApplicationController::conversationHistorySummary() const {

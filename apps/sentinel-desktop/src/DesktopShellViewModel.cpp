@@ -975,6 +975,22 @@ QString DesktopShellViewModel::chatHistoryStatus() const {
     return controller_.chatHistoryStatus();
 }
 
+QString DesktopShellViewModel::conversationStoreStatus() const {
+    return controller_.conversationStoreStatus();
+}
+
+int DesktopShellViewModel::conversationStoreConversationCount() const {
+    return controller_.conversationStoreConversationCount();
+}
+
+QString DesktopShellViewModel::activeConversationSummary() const {
+    return controller_.activeConversationSummary();
+}
+
+QStringList DesktopShellViewModel::conversationStoreSummaries() const {
+    return controller_.conversationStoreSummaries();
+}
+
 QString DesktopShellViewModel::conversationHistorySummaryText() const {
     return controller_.conversationHistorySummaryText();
 }

@@ -32,6 +32,7 @@ public:
 private:
     static QString normalizedTitle(const QString& title);
     bool conversationExists(const QString& conversationId) const;
+    bool conversationArchived(const QString& conversationId) const;
     bool updateConversationMetadata(const QString& conversationId, bool archived, bool deleted);
     void open();
     void initializeSchema();

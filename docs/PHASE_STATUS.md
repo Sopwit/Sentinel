@@ -2,6 +2,30 @@
 
 ## Completed / Stable
 
+### Phase 15.23-15.25: Multi-Conversation Storage Foundation
+
+Completed. Adds the first real multi-conversation store boundary while keeping the active desktop
+chat path on the existing single-transcript `IChatHistoryStore`.
+
+Scope:
+
+- Added `IConversationStore`, `ConversationRecord`, `ConversationMessageRecord`,
+  `ConversationStoreStatus`, and `ConversationStoreError`.
+- Added `InMemoryConversationStore` and `SQLiteConversationStore` with create/list/load,
+  append-message, rename, archive, and soft-delete behavior.
+- `ApplicationController` owns a conversation-store dependency separately from `IChatHistoryStore`
+  and exposes QML-safe status, count, active summary, and summary list values.
+- Settings shows read-only conversation-store readiness and active-conversation summary.
+- Tests cover in-memory and SQLite create/list/load, append/load, deterministic ordering,
+  persistence across SQLite instances, no destructive migration of the single transcript store, and
+  controller/view-model exposure.
+
+Known limitation:
+
+- Existing chat still uses the current single local transcript. There is no UI switch to
+  multi-conversation workflows, no import, no cloud sync, and no automatic migration from
+  `chat_history.sqlite3`.
+
 ### Phase 15.20-15.22: Multi-Conversation Planning Skeleton
 
 Completed. Adds metadata-only multi-conversation planning readiness while preserving current

@@ -263,6 +263,11 @@ migration readiness (`Not Started`), migration status summary (`Not Started / Pl
 schema status summary. This remains planning-only metadata: no schema migration, no
 multi-conversation persistence, and no new browser/thread controls.
 
+Phase 15.23 through Phase 15.25 add read-only multi-conversation store readiness. Settings may show
+conversation-store status, conversation count, and an active-conversation summary. The active chat
+surface remains the existing single transcript; no thread sidebar, import UI, cloud sync, or broad
+layout redesign is introduced.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

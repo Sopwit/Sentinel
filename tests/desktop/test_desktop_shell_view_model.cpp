@@ -68,6 +68,7 @@ private slots:
     void updatesVisibleAgentValuesForBlockedPipeline();
     void exposesOnlyQmlSafeAgentVisibilityProperties();
     void exposesChatHistoryStatus();
+    void exposesConversationStoreReadinessMetadata();
     void exposesConversationHistorySummaryMetadata();
     void exposesConversationBrowserMetadata();
     void exposesMultiConversationReadinessMetadata();
@@ -1370,6 +1371,21 @@ void DesktopShellViewModelTest::exposesChatHistoryStatus() {
     DesktopShellViewModel viewModel{controller, modeManager, settings};
 
     QCOMPARE(viewModel.chatHistoryStatus(), QStringLiteral("Available"));
+}
+
+void DesktopShellViewModelTest::exposesConversationStoreReadinessMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.conversationStoreStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 0);
+    QVERIFY(fixture.viewModel.activeConversationSummary().contains(
+        QStringLiteral("Current Transcript")));
+    QVERIFY(fixture.viewModel.conversationStoreSummaries().isEmpty());
+
+    QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("store exposure")));
+
+    QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 0);
+    QVERIFY(fixture.viewModel.activeConversationSummary().contains(QStringLiteral("3 messages")));
 }
 
 void DesktopShellViewModelTest::exposesConversationHistorySummaryMetadata() {

@@ -134,7 +134,10 @@ entry summary without introducing multi-conversation storage, migration, or brow
 15.20 through Phase 15.22 adds metadata-only multi-conversation planning/readiness records
 (`ConversationId`, `ConversationDescriptor`, `ConversationLifecycleStatus`,
 `ConversationStorageMode`, `ConversationMigrationReadiness`, `ConversationSchemaPlan`) while keeping
-storage behavior single-transcript and schema changes unapplied.
+storage behavior single-transcript and schema changes unapplied. Phase 15.23 through Phase 15.25
+adds the real `IConversationStore` boundary with in-memory and SQLite implementations, but the
+active chat path still uses `IChatHistoryStore`; no migration, import, cloud sync, tool/plugin
+scope, or autonomous conversation orchestration is added.
 
 ## Future Components
 
@@ -318,7 +321,8 @@ search metadata, controlled Markdown/JSON current-transcript export to an app-ow
 single-entry conversation-browser readiness summaries for the current transcript only, and
 read-only multi-conversation planning readiness metadata (`Single Transcript` current mode,
 `Multi Conversation` future mode, `Not Started / Planned` migration summary, schema status summary)
-without schema mutation. Phase 15.22
+without schema mutation, plus read-only conversation-store readiness/count/summary exposure from
+the separate `IConversationStore` boundary. Phase 15.25
 still adds no audio playback,
 microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
 execution, autonomous agents, tool execution, shell execution, filesystem-wide actions, vector

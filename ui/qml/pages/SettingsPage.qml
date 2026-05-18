@@ -673,6 +673,23 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
+                    label: "Conversation Store"
+                    value: settingsPage.viewModel.conversationStoreStatus
+                           + " / "
+                           + settingsPage.viewModel.conversationStoreConversationCount
+                           + (settingsPage.viewModel.conversationStoreConversationCount === 1 ? " conversation" : " conversations")
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Active Conversation"
+                    value: settingsPage.viewModel.activeConversationSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
                     label: "Schema plan"
                     value: settingsPage.viewModel.conversationSchemaStatusSummary
                     Layout.fillWidth: true
