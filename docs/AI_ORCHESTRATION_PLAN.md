@@ -143,6 +143,11 @@ conversation id, loads selected conversation messages into `ChatSession`, resets
 request metadata on switch, and relies on request-id guards so stale async results from a previous
 conversation are ignored. The browser UI is compact and local-only; no delete UI, cloud sync,
 import, semantic/vector memory, tools/plugins/system execution, or Ollama safety change is added.
+Phase 15.30 through Phase 15.32 add compact Conversation Browser polish and safe delete-readiness
+metadata: current/archived state summaries, empty-state copy, archived-send hinting,
+`ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult`.
+Permanent delete remains disabled by default; delete requests refuse without storage mutation, and
+archive/unarchive remain the supported local removal lifecycle.
 
 ## Future Components
 

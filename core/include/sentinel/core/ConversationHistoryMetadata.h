@@ -264,4 +264,54 @@ struct ConversationExportResult {
     QString summary = QStringLiteral("Transcript export has not run.");
 };
 
+enum class ConversationDeletePolicyStatus {
+    DisabledByDefault,
+};
+
+inline QString conversationDeletePolicyStatusName(ConversationDeletePolicyStatus status) {
+    switch (status) {
+    case ConversationDeletePolicyStatus::DisabledByDefault:
+        return QStringLiteral("Disabled By Default");
+    }
+
+    return QStringLiteral("Disabled By Default");
+}
+
+struct ConversationDeletePolicy {
+    ConversationDeletePolicyStatus status = ConversationDeletePolicyStatus::DisabledByDefault;
+    bool permanentDeleteEnabled = false;
+    bool archiveFirst = true;
+    QString summary =
+        QStringLiteral("Archive-first policy active; permanent delete is disabled by default.");
+    QStringList requirements{
+        QStringLiteral("Archive remains the supported safe removal flow"),
+        QStringLiteral("Permanent delete requires an explicit future phase gate"),
+        QStringLiteral("Permanent delete requires destructive-mutation tests"),
+        QStringLiteral("Permanent delete requires guarded UI confirmation"),
+    };
+};
+
+struct ConversationDeleteReadiness {
+    ConversationDeletePolicy policy;
+    bool available = false;
+    QString status = QStringLiteral("Disabled");
+    QString summary =
+        QStringLiteral("Permanent delete is disabled. Archive or unarchive conversations instead.");
+    QStringList checks{
+        QStringLiteral("Policy: Archive first"),
+        QStringLiteral("Permanent delete: Disabled by default"),
+        QStringLiteral("Storage mutation: Refused"),
+        QStringLiteral("UI: No destructive delete control"),
+    };
+};
+
+struct ConversationDeleteResult {
+    bool accepted = false;
+    bool mutatedStorage = false;
+    QString status = QStringLiteral("Not Run");
+    QString conversationId;
+    QString refusalSummary;
+    QString summary = QStringLiteral("Permanent delete has not been requested.");
+};
+
 } // namespace sentinel::core

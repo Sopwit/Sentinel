@@ -339,14 +339,27 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString activeConversationId READ activeConversationId NOTIFY chatMessagesChanged)
     Q_PROPERTY(
         bool activeConversationArchived READ activeConversationArchived NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString activeConversationStateSummary READ activeConversationStateSummary NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(QStringList conversationIds READ conversationIds NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList conversationTitles READ conversationTitles NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationActiveSummaries READ conversationActiveSummaries NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(QStringList conversationLastUpdatedSummaries READ conversationLastUpdatedSummaries
                    NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList conversationMessageCountSummaries READ conversationMessageCountSummaries
                    NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList conversationArchivedSummaries READ conversationArchivedSummaries NOTIFY
                    chatMessagesChanged)
+    Q_PROPERTY(int activeConversationCount READ activeConversationCount NOTIFY chatMessagesChanged)
+    Q_PROPERTY(
+        int archivedConversationCount READ archivedConversationCount NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int userCreatedConversationCount READ userCreatedConversationCount NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(bool conversationBrowserEmptyStateVisible READ conversationBrowserEmptyStateVisible
+                   NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString conversationBrowserEmptyStateSummary READ
+                   conversationBrowserEmptyStateSummary NOTIFY chatMessagesChanged)
     Q_PROPERTY(QString conversationHistorySummaryText READ conversationHistorySummaryText NOTIFY
                    chatMessagesChanged)
     Q_PROPERTY(QStringList conversationHistorySummaryLines READ conversationHistorySummaryLines
@@ -415,6 +428,24 @@ class ApplicationController final : public QObject {
                    conversationExportChanged)
     Q_PROPERTY(QString conversationExportLastTimestamp READ conversationExportLastTimestamp NOTIFY
                    conversationExportChanged)
+    Q_PROPERTY(bool conversationDeleteAvailable READ conversationDeleteAvailable NOTIFY
+                   conversationDeleteChanged)
+    Q_PROPERTY(QString conversationDeletePolicyStatus READ conversationDeletePolicyStatus NOTIFY
+                   conversationDeleteChanged)
+    Q_PROPERTY(QString conversationDeletePolicySummary READ conversationDeletePolicySummary NOTIFY
+                   conversationDeleteChanged)
+    Q_PROPERTY(QStringList conversationDeletePolicyRequirements READ
+                   conversationDeletePolicyRequirements NOTIFY conversationDeleteChanged)
+    Q_PROPERTY(QString conversationDeleteReadinessStatus READ conversationDeleteReadinessStatus
+                   NOTIFY conversationDeleteChanged)
+    Q_PROPERTY(QString conversationDeleteReadinessSummary READ conversationDeleteReadinessSummary
+                   NOTIFY conversationDeleteChanged)
+    Q_PROPERTY(QStringList conversationDeleteReadinessChecks READ conversationDeleteReadinessChecks
+                   NOTIFY conversationDeleteChanged)
+    Q_PROPERTY(QString conversationDeleteLastStatus READ conversationDeleteLastStatus NOTIFY
+                   conversationDeleteChanged)
+    Q_PROPERTY(QString conversationDeleteLastResultSummary READ conversationDeleteLastResultSummary
+                   NOTIFY conversationDeleteChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
@@ -677,11 +708,18 @@ public:
     QStringList conversationStoreSummaries() const;
     QString activeConversationId() const;
     bool activeConversationArchived() const;
+    QString activeConversationStateSummary() const;
     QStringList conversationIds() const;
     QStringList conversationTitles() const;
+    QStringList conversationActiveSummaries() const;
     QStringList conversationLastUpdatedSummaries() const;
     QStringList conversationMessageCountSummaries() const;
     QStringList conversationArchivedSummaries() const;
+    int activeConversationCount() const;
+    int archivedConversationCount() const;
+    int userCreatedConversationCount() const;
+    bool conversationBrowserEmptyStateVisible() const;
+    QString conversationBrowserEmptyStateSummary() const;
     ConversationHistorySummary conversationHistorySummary() const;
     QString conversationHistorySummaryText() const;
     QStringList conversationHistorySummaryLines() const;
@@ -727,6 +765,18 @@ public:
     QString conversationExportLastFileName() const;
     int conversationExportLastMessageCount() const;
     QString conversationExportLastTimestamp() const;
+    ConversationDeletePolicy conversationDeletePolicy() const;
+    ConversationDeleteReadiness conversationDeleteReadiness() const;
+    ConversationDeleteResult latestConversationDeleteResult() const;
+    bool conversationDeleteAvailable() const;
+    QString conversationDeletePolicyStatus() const;
+    QString conversationDeletePolicySummary() const;
+    QStringList conversationDeletePolicyRequirements() const;
+    QString conversationDeleteReadinessStatus() const;
+    QString conversationDeleteReadinessSummary() const;
+    QStringList conversationDeleteReadinessChecks() const;
+    QString conversationDeleteLastStatus() const;
+    QString conversationDeleteLastResultSummary() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     const QList<ChatMessage>& chatHistory() const;
@@ -747,6 +797,7 @@ public:
     Q_INVOKABLE bool renameConversation(const QString& conversationId, const QString& title);
     Q_INVOKABLE bool archiveConversation(const QString& conversationId);
     Q_INVOKABLE bool unarchiveConversation(const QString& conversationId);
+    Q_INVOKABLE bool requestPermanentDeleteConversation(const QString& conversationId);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -769,6 +820,7 @@ signals:
     void conversationRuntimeChanged();
     void conversationSearchChanged();
     void conversationExportChanged();
+    void conversationDeleteChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();
@@ -895,6 +947,8 @@ private:
     ConversationSearchSummary latestConversationSearchSummary_;
     ConversationExportReadiness conversationExportReadiness_;
     ConversationExportResult latestConversationExportResult_;
+    ConversationDeletePolicy conversationDeletePolicy_;
+    ConversationDeleteResult latestConversationDeleteResult_;
     QString conversationExportDirectory_;
     QString activeConversationId_;
     LocalInferenceResponse latestLocalInferenceResponse_;

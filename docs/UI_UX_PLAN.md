@@ -277,6 +277,15 @@ execution, or runtime safety changes. Switching should feel like loading a local
 preview disappears, active request metadata resets, and the selected messages replace the visible
 thread without duplicate rows.
 
+Phase 15.30 through Phase 15.32 polish that compact browser without changing its shape. Chat may
+make the current conversation more obvious, visually mute archived rows, show an empty-state hint
+when no user-created conversations exist, and provide compact rename success/refusal feedback.
+Archived active conversations should show a direct hint and disable message sending until
+unarchived. Settings may show active/archived counts plus archive-first delete readiness. Delete
+controls remain status-only: no destructive delete button, confirmation flow, filesystem action,
+cloud sync, import, broad redesign, model/voice/tool/plugin behavior, or runtime-policy change is
+introduced.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

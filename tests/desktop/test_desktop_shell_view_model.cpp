@@ -70,6 +70,7 @@ private slots:
     void exposesChatHistoryStatus();
     void exposesConversationStoreReadinessMetadata();
     void forwardsConversationBrowserActions();
+    void exposesConversationDeleteReadinessMetadata();
     void exposesConversationHistorySummaryMetadata();
     void exposesConversationBrowserMetadata();
     void exposesMultiConversationReadinessMetadata();
@@ -1411,6 +1412,41 @@ void DesktopShellViewModelTest::forwardsConversationBrowserActions() {
     QVERIFY(fixture.viewModel.unarchiveConversation(secondId));
     QVERIFY(fixture.viewModel.switchConversation(firstId));
     QCOMPARE(fixture.viewModel.activeConversationId(), firstId);
+}
+
+void DesktopShellViewModelTest::exposesConversationDeleteReadinessMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy deleteSpy(&fixture.viewModel, &DesktopShellViewModel::conversationDeleteChanged);
+
+    QVERIFY(!fixture.viewModel.conversationDeleteAvailable());
+    QCOMPARE(fixture.viewModel.conversationDeletePolicyStatus(),
+             QStringLiteral("Disabled By Default"));
+    QVERIFY(fixture.viewModel.conversationDeletePolicySummary().contains(
+        QStringLiteral("Archive-first")));
+    QVERIFY(fixture.viewModel.conversationDeletePolicyRequirements().contains(
+        QStringLiteral("Archive remains the supported safe removal flow")));
+    QCOMPARE(fixture.viewModel.conversationDeleteReadinessStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.conversationDeleteReadinessSummary().contains(
+        QStringLiteral("Permanent delete is disabled")));
+    QVERIFY(fixture.viewModel.conversationDeleteReadinessChecks().contains(
+        QStringLiteral("Permanent delete: Disabled by default")));
+    QVERIFY(fixture.viewModel.activeConversationStateSummary().contains(
+        QStringLiteral("sending is available")));
+    QCOMPARE(fixture.viewModel.activeConversationCount(), 1);
+    QCOMPARE(fixture.viewModel.archivedConversationCount(), 0);
+    QVERIFY(fixture.viewModel.conversationBrowserEmptyStateVisible());
+    QVERIFY(fixture.viewModel.conversationBrowserEmptyStateSummary().contains(
+        QStringLiteral("No user-created conversations")));
+
+    const auto activeId = fixture.viewModel.activeConversationId();
+    QVERIFY(!fixture.viewModel.requestPermanentDeleteConversation(activeId));
+
+    QCOMPARE(deleteSpy.size(), 1);
+    QCOMPARE(fixture.viewModel.conversationDeleteLastStatus(), QStringLiteral("Refused"));
+    QVERIFY(fixture.viewModel.conversationDeleteLastResultSummary().contains(
+        QStringLiteral("refused")));
+    QCOMPARE(fixture.viewModel.activeConversationId(), activeId);
+    QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 1);
 }
 
 void DesktopShellViewModelTest::exposesConversationHistorySummaryMetadata() {

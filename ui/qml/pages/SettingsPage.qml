@@ -685,6 +685,31 @@ ScrollView {
                     compact: settingsPage.compact
                     label: "Active Conversation"
                     value: settingsPage.viewModel.activeConversationSummary
+                           + " / "
+                           + settingsPage.viewModel.activeConversationStateSummary
+                           + " / "
+                           + settingsPage.viewModel.activeConversationCount
+                           + " active, "
+                           + settingsPage.viewModel.archivedConversationCount
+                           + " archived"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Delete Policy"
+                    value: settingsPage.viewModel.conversationDeletePolicyStatus
+                           + " / "
+                           + settingsPage.viewModel.conversationDeletePolicySummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Delete Readiness"
+                    value: settingsPage.viewModel.conversationDeleteReadinessStatus
+                           + " / "
+                           + settingsPage.viewModel.conversationDeleteReadinessSummary
                     Layout.fillWidth: true
                 }
 

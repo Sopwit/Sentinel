@@ -241,6 +241,13 @@ Runtime behavior:
   is exposed.
 - Archived conversations are visible and loadable, but sending into an archived active
   conversation is refused.
+- Phase 15.30 through Phase 15.32 keep archive as the primary safe removal flow. Delete readiness
+  is metadata-only through `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and
+  `ConversationDeleteResult`.
+- Permanent delete is disabled by default. A delete request is a guarded refusal path that reports
+  status and does not call the store delete operation or mutate transcripts.
+- Future permanent delete requires an explicit phase gate, destructive-mutation tests, guarded
+  confirmation UI, and continued QML-safe status exposure before any destructive action is enabled.
 
 Out of scope:
 
