@@ -79,6 +79,24 @@ class ApplicationController final : public QObject {
                    conversationStateChanged)
     Q_PROPERTY(QString conversationTransitionSummary READ conversationTransitionSummary NOTIFY
                    conversationStateChanged)
+    Q_PROPERTY(QString conversationRuntimeSummary READ conversationRuntimeSummary NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(QStringList conversationRuntimeSummaryLines READ conversationRuntimeSummaryLines
+                   NOTIFY conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeRequestId READ conversationRuntimeRequestId NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeActiveModel READ conversationRuntimeActiveModel NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeActiveRoute READ conversationRuntimeActiveRoute NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(bool conversationRuntimeStreaming READ conversationRuntimeStreaming NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeLastSuccessSummary READ
+                   conversationRuntimeLastSuccessSummary NOTIFY conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeLastErrorSummary READ conversationRuntimeLastErrorSummary
+                   NOTIFY conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeLastLatencySummary READ
+                   conversationRuntimeLastLatencySummary NOTIFY conversationRuntimeChanged)
     Q_PROPERTY(int agentActivityCount READ agentActivityCount NOTIFY agentActivityChanged)
     Q_PROPERTY(QString latestAgentActivitySummary READ latestAgentActivitySummary NOTIFY
                    agentActivityChanged)
@@ -378,6 +396,15 @@ public:
     QString conversationState() const;
     QString conversationTransitionStatus() const;
     QString conversationTransitionSummary() const;
+    QString conversationRuntimeSummary() const;
+    QStringList conversationRuntimeSummaryLines() const;
+    QString conversationRuntimeRequestId() const;
+    QString conversationRuntimeActiveModel() const;
+    QString conversationRuntimeActiveRoute() const;
+    bool conversationRuntimeStreaming() const;
+    QString conversationRuntimeLastSuccessSummary() const;
+    QString conversationRuntimeLastErrorSummary() const;
+    QString conversationRuntimeLastLatencySummary() const;
     int agentActivityCount() const;
     QString latestAgentActivitySummary() const;
     QString currentRoutingMode() const;
@@ -584,6 +611,7 @@ signals:
     void runtimeContextChanged();
     void conversationSessionChanged();
     void conversationStateChanged();
+    void conversationRuntimeChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();
@@ -626,6 +654,11 @@ private:
     void finishLocalInferenceStreamRequest(const QString& requestId,
                                            const LocalInferenceStreamResult& result);
     void finalizeLocalChatInference(bool succeeded);
+    void resetConversationRuntimeState();
+    void setConversationRuntimeRequest(const QString& requestId, const QString& model,
+                                       const QString& route, bool streaming);
+    void setConversationRuntimeResult(bool succeeded, const QString& summary,
+                                      qint64 latencyMs = -1);
     LocalInferenceResponse blockedLocalInferenceResponse(const LocalInferenceRequest& request,
                                                          LocalInferenceError error,
                                                          const QString& summary) const;
@@ -680,6 +713,13 @@ private:
     bool activeLocalInferenceIsChatRequest_ = false;
     quint64 localInferenceRequestSequence_ = 0;
     QString activeLocalInferenceRequestId_;
+    QString conversationRuntimeRequestId_ = QStringLiteral("None");
+    QString conversationRuntimeActiveModel_ = QStringLiteral("None");
+    QString conversationRuntimeActiveRoute_ = QStringLiteral("Provider");
+    bool conversationRuntimeStreaming_ = false;
+    QString conversationRuntimeLastSuccessSummary_ = QStringLiteral("No successful response yet.");
+    QString conversationRuntimeLastErrorSummary_ = QStringLiteral("No error or refusal yet.");
+    QString conversationRuntimeLastLatencySummary_ = QStringLiteral("No latency recorded.");
     LocalInferenceResponse latestLocalInferenceResponse_;
     LocalInferenceStreamResult latestLocalInferenceStreamResult_;
     bool piperFileOutputExecutionEnabled_ = false;

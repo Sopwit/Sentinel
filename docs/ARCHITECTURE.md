@@ -216,6 +216,10 @@ Separation:
   guarded chunks/results back to `ApplicationController`.
 - `ApplicationController` evaluates runtime permission and safety metadata before invoking local
   inference or streaming inference, then finalizes chat only from the matching active request id.
+- `ApplicationController` owns a concise conversation-runtime read model for the current
+  transcript session: current graph state, current request id, active model, active route, active
+  streaming flag, last success summary, last error/refusal summary, and last latency summary.
+  `DesktopShellViewModel` exposes these as QML-safe strings, string lists, and booleans only.
 - `AppSettings` persists the selected local model as configuration only.
 - `AppSettings` also persists local chat inference enablement. The default is disabled.
 - `AppSettings` persists local inference streaming enablement. The default is disabled.
@@ -255,6 +259,10 @@ Streaming behavior:
 - Failed streams clear live preview text and do not persist partial assistant output.
 - The current worker provides request-id cancellation/stale-result metadata. It does not forcibly
   interrupt an in-flight Ollama HTTP request beyond the existing client timeout behavior.
+- Clear Chat clears the in-memory transcript, clears persistent chat rows when available, reseeds
+  the single system message through the chat-history boundary, resets transient runtime summaries,
+  and returns the conversation graph to Idle. Restart loading uses persisted rows directly when
+  present, so startup does not duplicate system or assistant messages.
 
 Explicit chat routing:
 

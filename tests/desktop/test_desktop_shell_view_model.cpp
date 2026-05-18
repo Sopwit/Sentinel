@@ -63,6 +63,7 @@ private slots:
     void forwardsBlockedLocalInferenceRequest();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
+    void exposesConversationRuntimeMetadata();
     void updatesAndPersistsRoutingModeMetadata();
     void updatesVisibleAgentValuesForBlockedPipeline();
     void exposesOnlyQmlSafeAgentVisibilityProperties();
@@ -784,6 +785,24 @@ void DesktopShellViewModelTest::exposesConversationStateMetadata() {
              QStringLiteral("No conversation transition yet."));
 }
 
+void DesktopShellViewModelTest::exposesConversationRuntimeMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.conversationRuntimeRequestId(), QStringLiteral("None"));
+    QCOMPARE(fixture.viewModel.conversationRuntimeActiveModel(), QStringLiteral("None"));
+    QCOMPARE(fixture.viewModel.conversationRuntimeActiveRoute(), QStringLiteral("Provider"));
+    QVERIFY(!fixture.viewModel.conversationRuntimeStreaming());
+    QCOMPARE(fixture.viewModel.conversationRuntimeLastSuccessSummary(),
+             QStringLiteral("No successful response yet."));
+    QCOMPARE(fixture.viewModel.conversationRuntimeLastErrorSummary(),
+             QStringLiteral("No error or refusal yet."));
+    QCOMPARE(fixture.viewModel.conversationRuntimeLastLatencySummary(),
+             QStringLiteral("No latency recorded."));
+    QVERIFY(fixture.viewModel.conversationRuntimeSummary().contains(QStringLiteral("Idle")));
+    QVERIFY(fixture.viewModel.conversationRuntimeSummaryLines().contains(
+        QStringLiteral("State: Idle")));
+}
+
 void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::modelRoutingChanged);
@@ -1036,6 +1055,15 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("conversationState"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationTransitionStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationTransitionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationRuntimeSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationRuntimeSummaryLines"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationRuntimeRequestId"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationRuntimeActiveModel"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationRuntimeActiveRoute"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationRuntimeStreaming"), QByteArrayLiteral("bool")},
+        {QStringLiteral("conversationRuntimeLastSuccessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationRuntimeLastErrorSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationRuntimeLastLatencySummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("agentActivityCount"), QByteArrayLiteral("int")},
         {QStringLiteral("latestAgentActivitySummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("latestTaskPlanStatus"), QByteArrayLiteral("QString")},
@@ -1206,6 +1234,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("conversationSession"),
         QStringLiteral("conversationContextWindow"),
         QStringLiteral("conversationStateGraph"),
+        QStringLiteral("conversationRuntimeStateRecord"),
         QStringLiteral("conversationTransitionResult"),
         QStringLiteral("conversationTransitions"),
         QStringLiteral("agentActivityLog"),

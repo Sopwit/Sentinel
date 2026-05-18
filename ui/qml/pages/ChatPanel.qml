@@ -96,8 +96,25 @@ ShellPanel {
 
                 InfoRow {
                     compact: true
+                    label: "Session"
+                    value: chatPanel.viewModel.conversationState
+                           + " / "
+                           + chatPanel.viewModel.conversationRuntimeActiveRoute
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
                     label: "Inference"
                     value: chatPanel.viewModel.localInferenceSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
+                    visible: chatPanel.viewModel.conversationRuntimeRequestId !== "None"
+                    label: "Request"
+                    value: chatPanel.viewModel.conversationRuntimeRequestId
                     Layout.fillWidth: true
                 }
 

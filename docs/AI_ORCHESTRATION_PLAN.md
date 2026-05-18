@@ -108,7 +108,11 @@ Piper, or Whisper authority is added. Phase 15.8 moves real local generation and
 `ILocalInferenceWorker`: controller policy checks still happen first, callbacks are request-id
 guarded, stale results after metadata cancellation are ignored, successful completions append one
 assistant message, and failed streams clear preview text without persisting partial assistant
-output.
+output. Phase 15.9 adds a concise conversation-runtime read model over that path: current
+conversation state, request id, active model, active route, active streaming flag, last success
+summary, last error/refusal summary, and last latency summary. Clear Chat resets that transient
+state and persistent chat through the existing chat-history boundary, while restart loading keeps
+persisted transcript rows stable without duplicating system or assistant messages.
 
 ## Future Components
 
@@ -175,6 +179,10 @@ output.
 - Async local inference worker: injectable worker boundary that runs real Ollama non-streaming and
   streaming calls away from the controller/UI thread, posts QML-safe metadata updates back through
   request-id guarded callbacks, and ignores stale results after metadata cancellation.
+- Conversation runtime state: controller-owned session read model for current request id, active
+  model/route, streaming activity, last success, last error/refusal, and latency. It is UI metadata
+  only and does not own chat persistence, route selection, provider execution, tools, or runtime
+  workers.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 - Local model management readiness: deterministic metadata for recommended local models,
@@ -264,7 +272,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 15.8 runtime activates controlled local Ollama chat inference while keeping the
+Current Phase 15.9 runtime activates controlled local Ollama chat inference while keeping the
 larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
 selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
 action-light local model selection UX, metadata-only model-management readiness, metadata-only
@@ -273,8 +281,9 @@ controlled Piper file-output synthesis behind persisted opt-in and explicit acti
 Piper/Whisper path configuration UX with hint-only fixed-location suggestions plus explicit
 Ready/Blocked/Missing path preparation metadata. The Ollama path reports bounded timeout/error
 metadata, runs real generate/stream work through an async worker boundary, and clears failed
-streaming previews without persisting partial assistant output. Phase 15.8 still adds no audio
-playback,
+streaming previews without persisting partial assistant output. Conversation runtime summaries are
+request-id guarded and reset on Clear Chat alongside persistent transcript cleanup. Phase 15.9
+still adds no audio playback,
 microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
 execution, autonomous agents, tool execution, shell execution, or filesystem-wide actions:
 

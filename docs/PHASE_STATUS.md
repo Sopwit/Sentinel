@@ -2,6 +2,34 @@
 
 ## Completed / Stable
 
+### Phase 15.9: Conversation Runtime State And Session Continuity
+
+Completed. Adds a concise conversation-runtime read model over the existing async local inference
+and chat-history paths.
+
+Scope:
+
+- `ApplicationController` now tracks QML-safe conversation runtime state: current conversation
+  state, current request id, active model, active route, active streaming state, last successful
+  response summary, last error/refusal summary, and last latency summary.
+- `DesktopShellViewModel` forwards the runtime state as strings, string lists, and booleans only.
+- Chat shows the current session state, route, and active request id without exposing traces,
+  worker objects, provider internals, or SQLite details.
+- Chat history remains one stable local transcript. Successful inference appends one assistant
+  message, failed inference appends one safe error assistant message, and stale async completions
+  after cancellation do not update visible runtime state or history.
+- App restart still loads persisted chat rows as-is and does not synthesize duplicate system or
+  assistant messages when history exists.
+- Clear Chat now resets transient runtime state, cancels the active request id metadata when
+  needed, resets the conversation graph to Idle, and clears/reseeds persistent chat history through
+  the existing `IChatHistoryStore` boundary.
+
+Still out of scope:
+
+- Cloud/API keys/providers, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper
+  changes, and Whisper execution.
+
 ### Phase 15.8: Async Local Runtime Worker Foundation
 
 Completed. Moves local chat inference execution behind an async worker boundary so real Ollama

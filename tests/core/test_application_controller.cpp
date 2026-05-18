@@ -633,6 +633,9 @@ private slots:
     void asyncLocalChatInferenceCompletesWithFakeWorker();
     void asyncLocalChatStreamingCompletesWithFakeWorker();
     void asyncLocalChatInferenceErrorResetsBusy();
+    void asyncSuccessUpdatesConversationRuntimeState();
+    void asyncFailureUpdatesConversationRuntimeErrorWithoutCorruptingHistory();
+    void clearChatClearsConversationRuntimeAndPersistence();
     void asyncDuplicateSendIsRejectedBeforeAppending();
     void staleAsyncResultIsIgnoredAfterCancellation();
     void localInferenceTimeoutAppendsConciseFailureAndResetsBusy();
@@ -1685,6 +1688,72 @@ void ApplicationControllerTest::asyncLocalChatInferenceErrorResetsBusy() {
              QStringLiteral("Local inference failed: the local Ollama request timed out."));
 }
 
+void ApplicationControllerTest::asyncSuccessUpdatesConversationRuntimeState() {
+    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
+    auto controller = makeAsyncWorkerController(std::move(worker));
+    QSignalSpy runtimeSpy(controller.get(), &ApplicationController::conversationRuntimeChanged);
+
+    controller->setLocalChatInferenceEnabled(true);
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+
+    QCOMPARE(controller->conversationRuntimeRequestId(),
+             QStringLiteral("local-inference-request-1"));
+    QCOMPARE(controller->conversationRuntimeActiveModel(), QStringLiteral("llama3.2"));
+    QCOMPARE(controller->conversationRuntimeActiveRoute(), QStringLiteral("Local Ollama"));
+    QVERIFY(!controller->conversationRuntimeStreaming());
+
+    QTRY_VERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->conversationState(), QStringLiteral("Completed"));
+    QVERIFY(
+        controller->conversationRuntimeLastSuccessSummary().contains(QStringLiteral("completed")));
+    QCOMPARE(controller->conversationRuntimeLastErrorSummary(),
+             QStringLiteral("No error or refusal yet."));
+    QVERIFY(runtimeSpy.count() >= 2);
+}
+
+void ApplicationControllerTest::
+    asyncFailureUpdatesConversationRuntimeErrorWithoutCorruptingHistory() {
+    auto worker =
+        std::make_unique<AsyncLocalInferenceWorker>(AsyncLocalInferenceWorker::Mode::TimeoutError);
+    auto controller = makeAsyncWorkerController(std::move(worker));
+
+    controller->setLocalChatInferenceEnabled(true);
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+
+    QTRY_VERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->conversationState(), QStringLiteral("Error"));
+    QVERIFY(
+        controller->conversationRuntimeLastErrorSummary().contains(QStringLiteral("timed out")));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(0).role, sentinel::core::ChatRole::System);
+    QCOMPARE(controller->chatHistory().at(1).role, sentinel::core::ChatRole::User);
+    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
+    QCOMPARE(controller->chatHistory().at(2).role, sentinel::core::ChatRole::Assistant);
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
+}
+
+void ApplicationControllerTest::clearChatClearsConversationRuntimeAndPersistence() {
+    auto store = std::make_unique<RecordingChatHistoryStore>();
+    const auto storePtr = store.get();
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
+
+    QVERIFY(controller.sendMessage(QStringLiteral("status")));
+    QCOMPARE(storePtr->messages_.size(), 3);
+    QVERIFY(controller.clearChat());
+
+    QCOMPARE(controller.conversationState(), QStringLiteral("Idle"));
+    QCOMPARE(controller.conversationRuntimeRequestId(), QStringLiteral("None"));
+    QCOMPARE(controller.conversationRuntimeActiveModel(), QStringLiteral("None"));
+    QCOMPARE(controller.conversationRuntimeLastSuccessSummary(),
+             QStringLiteral("No successful response yet."));
+    QCOMPARE(controller.conversationRuntimeLastErrorSummary(),
+             QStringLiteral("No error or refusal yet."));
+    QVERIFY(storePtr->wasCleared_);
+    QCOMPARE(storePtr->messages_.size(), 1);
+    QCOMPARE(storePtr->messages_.first().role, sentinel::core::ChatRole::System);
+}
+
 void ApplicationControllerTest::asyncDuplicateSendIsRejectedBeforeAppending() {
     auto worker = std::make_unique<AsyncLocalInferenceWorker>();
     worker->delayMs = 25;
@@ -1723,6 +1792,9 @@ void ApplicationControllerTest::staleAsyncResultIsIgnoredAfterCancellation() {
     QCOMPARE(controller->chatHistory().size(), 2);
     QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
     QCOMPARE(controller->localInferenceSummary(),
+             QStringLiteral("Local inference request was cancelled; stale results will be "
+                            "ignored."));
+    QCOMPARE(controller->conversationRuntimeLastErrorSummary(),
              QStringLiteral("Local inference request was cancelled; stale results will be "
                             "ignored."));
 }

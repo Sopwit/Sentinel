@@ -134,6 +134,32 @@ Current limitation:
 - Multi-conversation/thread support is intentionally not implemented yet.
 - Encryption, export, and pruning are intentionally not implemented yet.
 
+## 9.1 Conversation Runtime State And Continuity
+
+Decision: Keep transient conversation runtime state in `ApplicationController` and expose it
+through `DesktopShellViewModel` as QML-safe summaries only.
+
+Reason: Chat history persistence, conversation graph metadata, and async inference request state
+are related but separate responsibilities. The UI needs a concise current-session read model
+without gaining access to raw workers, provider objects, request structs, traces, or SQLite state.
+
+Runtime behavior:
+
+- Runtime state tracks current graph state, current request id, active model, active route, active
+  streaming flag, last successful response summary, last error/refusal summary, and last latency
+  summary.
+- Async local inference completions remain request-id guarded. Stale completions after metadata
+  cancellation do not update visible state or chat history.
+- Restart loading uses persisted chat rows directly when available. Startup creates the default
+  system message only when no persisted transcript exists.
+- Clear Chat clears runtime state and persistent chat consistently through `IChatHistoryStore`,
+  then reseeds the single system message.
+
+Out of scope:
+
+- Multi-conversation storage, provider expansion, cloud/API keys, model downloads/deletes,
+  tools/plugins, filesystem/system actions, and voice execution changes.
+
 ## 10. AI Context Layer
 
 Decision: Add repository-local AI instruction files in Phase 3.1.5.
