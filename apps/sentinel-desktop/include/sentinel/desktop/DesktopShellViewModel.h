@@ -53,6 +53,24 @@ class DesktopShellViewModel final : public QObject {
                    conversationStateChanged)
     Q_PROPERTY(QString conversationTransitionSummary READ conversationTransitionSummary NOTIFY
                    conversationStateChanged)
+    Q_PROPERTY(QString conversationRuntimeSummary READ conversationRuntimeSummary NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(QStringList conversationRuntimeSummaryLines READ conversationRuntimeSummaryLines
+                   NOTIFY conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeRequestId READ conversationRuntimeRequestId NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeActiveModel READ conversationRuntimeActiveModel NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeActiveRoute READ conversationRuntimeActiveRoute NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(bool conversationRuntimeStreaming READ conversationRuntimeStreaming NOTIFY
+                   conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeLastSuccessSummary READ
+                   conversationRuntimeLastSuccessSummary NOTIFY conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeLastErrorSummary READ conversationRuntimeLastErrorSummary
+                   NOTIFY conversationRuntimeChanged)
+    Q_PROPERTY(QString conversationRuntimeLastLatencySummary READ
+                   conversationRuntimeLastLatencySummary NOTIFY conversationRuntimeChanged)
     Q_PROPERTY(int agentActivityCount READ agentActivityCount NOTIFY agentActivityChanged)
     Q_PROPERTY(QString latestAgentActivitySummary READ latestAgentActivitySummary NOTIFY
                    agentActivityChanged)
@@ -328,6 +346,15 @@ public:
     QString conversationState() const;
     QString conversationTransitionStatus() const;
     QString conversationTransitionSummary() const;
+    QString conversationRuntimeSummary() const;
+    QStringList conversationRuntimeSummaryLines() const;
+    QString conversationRuntimeRequestId() const;
+    QString conversationRuntimeActiveModel() const;
+    QString conversationRuntimeActiveRoute() const;
+    bool conversationRuntimeStreaming() const;
+    QString conversationRuntimeLastSuccessSummary() const;
+    QString conversationRuntimeLastErrorSummary() const;
+    QString conversationRuntimeLastLatencySummary() const;
     int agentActivityCount() const;
     QString latestAgentActivitySummary() const;
     QString currentRoutingMode() const;
@@ -545,6 +572,7 @@ signals:
     void runtimeContextChanged();
     void conversationSessionChanged();
     void conversationStateChanged();
+    void conversationRuntimeChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();

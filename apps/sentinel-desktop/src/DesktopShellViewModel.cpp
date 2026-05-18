@@ -41,6 +41,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::conversationSessionChanged);
     connect(&controller_, &core::ApplicationController::conversationStateChanged, this,
             &DesktopShellViewModel::conversationStateChanged);
+    connect(&controller_, &core::ApplicationController::conversationRuntimeChanged, this,
+            &DesktopShellViewModel::conversationRuntimeChanged);
     connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
     connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
@@ -196,6 +198,42 @@ QString DesktopShellViewModel::conversationTransitionStatus() const {
 
 QString DesktopShellViewModel::conversationTransitionSummary() const {
     return controller_.conversationTransitionSummary();
+}
+
+QString DesktopShellViewModel::conversationRuntimeSummary() const {
+    return controller_.conversationRuntimeSummary();
+}
+
+QStringList DesktopShellViewModel::conversationRuntimeSummaryLines() const {
+    return controller_.conversationRuntimeSummaryLines();
+}
+
+QString DesktopShellViewModel::conversationRuntimeRequestId() const {
+    return controller_.conversationRuntimeRequestId();
+}
+
+QString DesktopShellViewModel::conversationRuntimeActiveModel() const {
+    return controller_.conversationRuntimeActiveModel();
+}
+
+QString DesktopShellViewModel::conversationRuntimeActiveRoute() const {
+    return controller_.conversationRuntimeActiveRoute();
+}
+
+bool DesktopShellViewModel::conversationRuntimeStreaming() const {
+    return controller_.conversationRuntimeStreaming();
+}
+
+QString DesktopShellViewModel::conversationRuntimeLastSuccessSummary() const {
+    return controller_.conversationRuntimeLastSuccessSummary();
+}
+
+QString DesktopShellViewModel::conversationRuntimeLastErrorSummary() const {
+    return controller_.conversationRuntimeLastErrorSummary();
+}
+
+QString DesktopShellViewModel::conversationRuntimeLastLatencySummary() const {
+    return controller_.conversationRuntimeLastLatencySummary();
 }
 
 int DesktopShellViewModel::agentActivityCount() const {

@@ -226,6 +226,11 @@ summaries near runtime status. Error copy should distinguish stopped/unreachable
 or invalid local model, timeout, malformed response, interrupted stream, permission/safety block,
 and duplicate busy request without exposing raw internals.
 
+Phase 15.9 adds concise conversation runtime visibility. Chat may show current session state,
+active route, and active request id while a request is known. The surface should stay compact and
+avoid raw traces, worker details, provider objects, database paths, or debug dumps. Clear Chat
+should visually return the transcript/runtime status to a clean single-system-message state.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

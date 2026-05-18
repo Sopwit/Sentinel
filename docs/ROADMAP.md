@@ -258,6 +258,31 @@ Delivered:
 Still out of scope:
 
 - Launching Ollama, managing model loads, downloading/pulling/deleting models, cloud providers,
+  API keys, tools/plugins, filesystem/system actions, autonomous loops, microphone access,
+  playback, Piper changes, and Whisper execution.
+
+## Phase 15.9: Conversation Runtime State And Session Continuity
+
+Completed. Tightened the chat/session continuity layer around async local inference.
+
+Delivered:
+
+- Conversation-runtime state now summarizes current graph state, request id, active model, active
+  route, streaming activity, last success, last error/refusal, and latency.
+- The desktop view model exposes only QML-safe strings, string lists, and booleans.
+- Chat shows a compact current session/route/request status without debug traces.
+- Restart loading keeps persisted chat history stable and does not add duplicate startup system or
+  assistant messages when stored history exists.
+- Clear Chat clears runtime state and persistent chat consistently through the existing
+  chat-history boundary.
+- Tests cover async success/failure state updates, stale result behavior, clear/reset continuity,
+  persisted startup loading, duplicate-message avoidance, and QML-safe exposure.
+
+Still out of scope:
+
+- New providers, cloud/API keys, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper changes,
+  and Whisper execution.
   API keys, tools/plugins, filesystem/system actions, Piper changes, Whisper execution, playback,
   microphone access, and autonomous loops.
 
