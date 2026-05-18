@@ -109,7 +109,14 @@ The desktop app stores chat history below Qt's `AppDataLocation` as `chat_histor
 
 If chat persistence is unavailable, `ApplicationController` continues with the in-memory `ChatSession`. Clearing chat clears the persistent chat table only when the store is available.
 
-The desktop shell exposes generic chat history status only. QML does not know the database path, schema, driver, or last SQLite error.
+The desktop shell exposes generic chat history and conversation-history UX metadata only. QML can
+show whether the active transcript is Persisted or Runtime Only, message counts, last save status,
+and last restore status. It does not know the database path, schema, driver, or last SQLite error.
+
+`ConversationHistorySummary`, `ConversationPersistenceStatus`, and `ConversationClearResult` are
+value-only metadata records derived by `ApplicationController`. They do not introduce
+multi-conversation storage, transcript search, import/export, pruning, encryption, or any
+filesystem access beyond the existing app-owned chat-history store.
 
 ## Conversation Session Metadata
 
@@ -261,8 +268,9 @@ Streaming behavior:
   interrupt an in-flight Ollama HTTP request beyond the existing client timeout behavior.
 - Clear Chat clears the in-memory transcript, clears persistent chat rows when available, reseeds
   the single system message through the chat-history boundary, resets transient runtime summaries,
-  and returns the conversation graph to Idle. Restart loading uses persisted rows directly when
-  present, so startup does not duplicate system or assistant messages.
+  resets active request metadata and live streaming text, and returns the conversation graph to
+  Idle. Restart loading uses persisted rows directly when present, so startup does not duplicate
+  system or assistant messages.
 
 Explicit chat routing:
 

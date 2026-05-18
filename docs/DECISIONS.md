@@ -148,17 +148,21 @@ Runtime behavior:
 - Runtime state tracks current graph state, current request id, active model, active route, active
   streaming flag, last successful response summary, last error/refusal summary, and last latency
   summary.
+- Conversation history UX metadata tracks only the active single transcript: persistence status,
+  message counts, last save status, last restore status, and clear result summary.
 - Async local inference completions remain request-id guarded. Stale completions after metadata
   cancellation do not update visible state or chat history.
 - Restart loading uses persisted chat rows directly when available. Startup creates the default
   system message only when no persisted transcript exists.
-- Clear Chat clears runtime state and persistent chat consistently through `IChatHistoryStore`,
-  then reseeds the single system message.
+- Clear Chat clears runtime state, active request metadata, live streaming text, and persistent
+  chat consistently through `IChatHistoryStore` when available, then reseeds the single system
+  message.
 
 Out of scope:
 
-- Multi-conversation storage, provider expansion, cloud/API keys, model downloads/deletes,
-  tools/plugins, filesystem/system actions, and voice execution changes.
+- Multi-conversation storage, transcript browser/search, export/import, encryption, pruning,
+  provider expansion, cloud/API keys, model downloads/deletes, tools/plugins, filesystem/system
+  actions, and voice execution changes.
 
 ## 10. AI Context Layer
 

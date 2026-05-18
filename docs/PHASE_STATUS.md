@@ -2,6 +2,38 @@
 
 ## Completed / Stable
 
+### Phase 15.10: Persistent Conversation UX And Chat History Management
+
+Completed. Adds compact persistent conversation UX metadata on top of the existing single
+transcript chat-history boundary.
+
+Scope:
+
+- Added value-only conversation history metadata for persistence status, message counts, last
+  save/restore status, and clear results.
+- `ApplicationController` now derives a QML-safe conversation history summary from the current
+  `ChatSession` and `IChatHistoryStore` availability without exposing SQLite paths, schemas, or
+  store internals.
+- Chat and Settings show whether the transcript is persisted or runtime-only, the current message
+  count summary, and concise saved/restored status.
+- Clear Chat copy now states that runtime transcript, persisted local chat history when available,
+  active request metadata, and live streaming text are reset while settings and memory are kept.
+- Clear Chat continues to clear/reseed the single transcript deterministically with one initial
+  system message and no duplicate startup/system messages.
+- Tests cover persisted summary, runtime-only fallback summary, runtime plus persisted clear,
+  streaming/request metadata reset after clear, and single initial system-message behavior.
+
+Known limitation:
+
+- Chat history remains one local transcript. There is still no multi-conversation/thread browser,
+  export/import, encryption, pruning, transcript search, or advanced history management.
+
+Still out of scope:
+
+- Cloud/API keys/providers, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper
+  changes, Whisper execution, transcript export/import, and multi-conversation storage.
+
 ### Phase 15.9: Conversation Runtime State And Session Continuity
 
 Completed. Adds a concise conversation-runtime read model over the existing async local inference

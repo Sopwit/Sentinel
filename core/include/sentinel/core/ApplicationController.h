@@ -4,6 +4,7 @@
 #include "sentinel/core/AgentPipelineResult.h"
 #include "sentinel/core/AgentRuntimeContext.h"
 #include "sentinel/core/ChatSession.h"
+#include "sentinel/core/ConversationHistoryMetadata.h"
 #include "sentinel/core/ConversationSession.h"
 #include "sentinel/core/ConversationStateGraph.h"
 #include "sentinel/core/ExecutionLifecycle.h"
@@ -326,6 +327,18 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString conversationHistorySummaryText READ conversationHistorySummaryText NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationHistorySummaryLines READ conversationHistorySummaryLines
+                   NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int conversationHistoryMessageCount READ conversationHistoryMessageCount NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QString conversationPersistenceStatus READ conversationPersistenceStatus NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QString conversationLastSavedStatus READ conversationLastSavedStatus NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QString conversationLastRestoredStatus READ conversationLastRestoredStatus NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
@@ -582,6 +595,13 @@ public:
     QStringList availableToolIds() const;
     QString memoryStatus() const;
     QString chatHistoryStatus() const;
+    ConversationHistorySummary conversationHistorySummary() const;
+    QString conversationHistorySummaryText() const;
+    QStringList conversationHistorySummaryLines() const;
+    int conversationHistoryMessageCount() const;
+    QString conversationPersistenceStatus() const;
+    QString conversationLastSavedStatus() const;
+    QString conversationLastRestoredStatus() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     const QList<ChatMessage>& chatHistory() const;
@@ -655,6 +675,7 @@ private:
                                            const LocalInferenceStreamResult& result);
     void finalizeLocalChatInference(bool succeeded);
     void resetConversationRuntimeState();
+    void refreshConversationHistorySummary();
     void setConversationRuntimeRequest(const QString& requestId, const QString& model,
                                        const QString& route, bool streaming);
     void setConversationRuntimeResult(bool succeeded, const QString& summary,
@@ -720,6 +741,8 @@ private:
     QString conversationRuntimeLastSuccessSummary_ = QStringLiteral("No successful response yet.");
     QString conversationRuntimeLastErrorSummary_ = QStringLiteral("No error or refusal yet.");
     QString conversationRuntimeLastLatencySummary_ = QStringLiteral("No latency recorded.");
+    ConversationHistorySummary conversationHistorySummary_;
+    ConversationClearResult latestConversationClearResult_;
     LocalInferenceResponse latestLocalInferenceResponse_;
     LocalInferenceStreamResult latestLocalInferenceStreamResult_;
     bool piperFileOutputExecutionEnabled_ = false;

@@ -636,6 +636,10 @@ private slots:
     void asyncSuccessUpdatesConversationRuntimeState();
     void asyncFailureUpdatesConversationRuntimeErrorWithoutCorruptingHistory();
     void clearChatClearsConversationRuntimeAndPersistence();
+    void reportsPersistedConversationHistorySummary();
+    void reportsRuntimeOnlyConversationHistorySummary();
+    void clearChatResetsStreamingAndActiveRequestMetadata();
+    void clearChatKeepsSingleInitialSystemMessage();
     void asyncDuplicateSendIsRejectedBeforeAppending();
     void staleAsyncResultIsIgnoredAfterCancellation();
     void localInferenceTimeoutAppendsConciseFailureAndResetsBusy();
@@ -1750,6 +1754,78 @@ void ApplicationControllerTest::clearChatClearsConversationRuntimeAndPersistence
     QCOMPARE(controller.conversationRuntimeLastErrorSummary(),
              QStringLiteral("No error or refusal yet."));
     QVERIFY(storePtr->wasCleared_);
+    QCOMPARE(storePtr->messages_.size(), 1);
+    QCOMPARE(storePtr->messages_.first().role, sentinel::core::ChatRole::System);
+}
+
+void ApplicationControllerTest::reportsPersistedConversationHistorySummary() {
+    auto store = std::make_unique<RecordingChatHistoryStore>();
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
+
+    QVERIFY(controller.sendMessage(QStringLiteral("status")));
+
+    QCOMPARE(controller.conversationPersistenceStatus(), QStringLiteral("Persisted"));
+    QCOMPARE(controller.conversationHistoryMessageCount(), 3);
+    QVERIFY(controller.conversationHistorySummaryText().contains(QStringLiteral("3 messages")));
+    QVERIFY(controller.conversationHistorySummaryText().contains(QStringLiteral("1 user")));
+    QVERIFY(controller.conversationHistorySummaryText().contains(QStringLiteral("1 assistant")));
+    QCOMPARE(controller.conversationLastSavedStatus(),
+             QStringLiteral("Saved latest assistant message."));
+}
+
+void ApplicationControllerTest::reportsRuntimeOnlyConversationHistorySummary() {
+    auto store =
+        std::make_unique<RecordingChatHistoryStore>(QList<sentinel::core::ChatMessage>{}, false);
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
+
+    QVERIFY(controller.sendMessage(QStringLiteral("status")));
+
+    QCOMPARE(controller.conversationPersistenceStatus(), QStringLiteral("Runtime Only"));
+    QCOMPARE(controller.conversationHistoryMessageCount(), 3);
+    QVERIFY(controller.conversationHistorySummaryText().contains(
+        QStringLiteral("Runtime Only transcript")));
+    QCOMPARE(controller.conversationLastSavedStatus(),
+             QStringLiteral("Runtime-only transcript; persistence unavailable."));
+    QVERIFY(controller.conversationLastRestoredStatus().contains(QStringLiteral("unavailable")));
+}
+
+void ApplicationControllerTest::clearChatResetsStreamingAndActiveRequestMetadata() {
+    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
+    worker->streamFinishDelayMs = 100;
+    auto* workerPtr = worker.get();
+    auto controller = makeAsyncWorkerController(std::move(worker));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setLocalInferenceStreamingEnabled(true);
+
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+    QTRY_VERIFY(controller->localInferenceStreamingText().contains(QStringLiteral("async")));
+
+    QVERIFY(!controller->clearChat());
+
+    QVERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->localInferenceStreamingText(), QString());
+    QCOMPARE(controller->conversationRuntimeRequestId(), QStringLiteral("None"));
+    QCOMPARE(controller->conversationRuntimeActiveModel(), QStringLiteral("None"));
+    QCOMPARE(controller->conversationRuntimeActiveRoute(), QStringLiteral("Provider"));
+    QCOMPARE(workerPtr->cancelledRequestIds.size(), 1);
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->chatHistory().first().role, sentinel::core::ChatRole::System);
+}
+
+void ApplicationControllerTest::clearChatKeepsSingleInitialSystemMessage() {
+    auto store = std::make_unique<RecordingChatHistoryStore>();
+    const auto storePtr = store.get();
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
+
+    QVERIFY(controller.clearChat());
+    QVERIFY(controller.clearChat());
+
+    QCOMPARE(controller.chatHistory().size(), 1);
+    QCOMPARE(controller.chatHistory().first().role, sentinel::core::ChatRole::System);
+    QCOMPARE(controller.chatHistory().first().content, QStringLiteral("Sentinel Core online."));
     QCOMPARE(storePtr->messages_.size(), 1);
     QCOMPARE(storePtr->messages_.first().role, sentinel::core::ChatRole::System);
 }

@@ -534,13 +534,29 @@ ApplicationController::ApplicationController(
                                        : QList<ChatMessage>{};
     if (!persistedMessages.isEmpty()) {
         chatSession_->loadMessages(persistedMessages);
+        conversationHistorySummary_.lastRestoredStatus =
+            QStringLiteral("Restored %1 persisted messages.").arg(persistedMessages.size());
+        conversationHistorySummary_.lastSavedStatus =
+            QStringLiteral("Persisted transcript loaded.");
     } else {
+        conversationHistorySummary_.lastRestoredStatus =
+            chatHistoryStore_ && chatHistoryStore_->isAvailable()
+                ? QStringLiteral("No persisted transcript restored.")
+                : QStringLiteral("Chat history store unavailable; runtime-only transcript.");
         const auto message = chatSession_->appendSystemMessage(
             QStringLiteral("Sentinel Core online."), ChatMessageStatus::Received);
         if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
             chatHistoryStore_->appendMessage(message);
+            conversationHistorySummary_.lastSavedStatus =
+                chatHistoryStore_->lastError().isEmpty()
+                    ? QStringLiteral("Saved initial system message.")
+                    : QStringLiteral("Initial system message save failed.");
+        } else {
+            conversationHistorySummary_.lastSavedStatus =
+                QStringLiteral("Runtime-only transcript; persistence unavailable.");
         }
     }
+    refreshConversationHistorySummary();
     refreshLatestTaskPlan();
     refreshConversationSession();
 }
@@ -2122,6 +2138,43 @@ QString ApplicationController::chatHistoryStatus() const {
                                                                  : QStringLiteral("Runtime Only");
 }
 
+ConversationHistorySummary ApplicationController::conversationHistorySummary() const {
+    return conversationHistorySummary_;
+}
+
+QString ApplicationController::conversationHistorySummaryText() const {
+    return conversationHistorySummary_.summary;
+}
+
+QStringList ApplicationController::conversationHistorySummaryLines() const {
+    return {
+        QStringLiteral("Persistence: %1").arg(conversationPersistenceStatus()),
+        QStringLiteral("Messages: %1 total, %2 user, %3 assistant, %4 system")
+            .arg(conversationHistorySummary_.messageCount)
+            .arg(conversationHistorySummary_.userMessageCount)
+            .arg(conversationHistorySummary_.assistantMessageCount)
+            .arg(conversationHistorySummary_.systemMessageCount),
+        QStringLiteral("Saved: %1").arg(conversationHistorySummary_.lastSavedStatus),
+        QStringLiteral("Restored: %1").arg(conversationHistorySummary_.lastRestoredStatus),
+    };
+}
+
+int ApplicationController::conversationHistoryMessageCount() const {
+    return conversationHistorySummary_.messageCount;
+}
+
+QString ApplicationController::conversationPersistenceStatus() const {
+    return conversationPersistenceStatusName(conversationHistorySummary_.persistenceStatus);
+}
+
+QString ApplicationController::conversationLastSavedStatus() const {
+    return conversationHistorySummary_.lastSavedStatus;
+}
+
+QString ApplicationController::conversationLastRestoredStatus() const {
+    return conversationHistorySummary_.lastRestoredStatus;
+}
+
 QString ApplicationController::memoryMaintenanceStatus() const {
     return memoryMaintenanceStatus_;
 }
@@ -2193,6 +2246,12 @@ bool ApplicationController::sendMessage(const QString& message) {
     const auto userMessage = chatSession_->appendUserMessage(trimmed);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(userMessage);
+        conversationHistorySummary_.lastSavedStatus =
+            chatHistoryStore_->lastError().isEmpty() ? QStringLiteral("Saved latest user message.")
+                                                     : QStringLiteral("User message save failed.");
+    } else {
+        conversationHistorySummary_.lastSavedStatus =
+            QStringLiteral("Runtime-only transcript; persistence unavailable.");
     }
 
     if (localChatInferenceEnabled_) {
@@ -2201,6 +2260,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         transitionConversationState(ConversationState::Responding,
                                     QStringLiteral("local chat inference metadata active"));
 
+        refreshConversationHistorySummary();
         emit chatMessagesChanged();
         activeLocalInferenceIsChatRequest_ = true;
         const auto startedLocalInference = localInferenceStreamingAvailable()
@@ -2223,11 +2283,19 @@ bool ApplicationController::sendMessage(const QString& message) {
             ChatMessageStatus::Error);
         if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
             chatHistoryStore_->appendMessage(errorMessage);
+            conversationHistorySummary_.lastSavedStatus =
+                chatHistoryStore_->lastError().isEmpty()
+                    ? QStringLiteral("Saved latest assistant message.")
+                    : QStringLiteral("Assistant message save failed.");
+        } else {
+            conversationHistorySummary_.lastSavedStatus =
+                QStringLiteral("Runtime-only transcript; persistence unavailable.");
         }
         setConversationRuntimeRequest(QStringLiteral("provider-chat-request"),
                                       QStringLiteral("None"),
                                       QStringLiteral("Provider: %1").arg(providerName()), false);
         setConversationRuntimeResult(false, errorMessage.content);
+        refreshConversationHistorySummary();
         emit chatMessagesChanged();
         return false;
     }
@@ -2250,10 +2318,18 @@ bool ApplicationController::sendMessage(const QString& message) {
         reply.success ? ChatMessageStatus::Received : ChatMessageStatus::Error);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(assistantMessage);
+        conversationHistorySummary_.lastSavedStatus =
+            chatHistoryStore_->lastError().isEmpty()
+                ? QStringLiteral("Saved latest assistant message.")
+                : QStringLiteral("Assistant message save failed.");
+    } else {
+        conversationHistorySummary_.lastSavedStatus =
+            QStringLiteral("Runtime-only transcript; persistence unavailable.");
     }
     setConversationRuntimeRequest(QStringLiteral("provider-chat-request"), QStringLiteral("None"),
                                   QStringLiteral("Provider: %1").arg(providerName()), false);
     setConversationRuntimeResult(reply.success, assistantMessage.content);
+    refreshConversationHistorySummary();
     emit chatMessagesChanged();
     return reply.success;
 }
@@ -2749,11 +2825,19 @@ void ApplicationController::finalizeLocalChatInference(bool succeeded) {
         succeeded ? ChatMessageStatus::Received : ChatMessageStatus::Error);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(assistantMessage);
+        conversationHistorySummary_.lastSavedStatus =
+            chatHistoryStore_->lastError().isEmpty()
+                ? QStringLiteral("Saved latest assistant message.")
+                : QStringLiteral("Assistant message save failed.");
+    } else {
+        conversationHistorySummary_.lastSavedStatus =
+            QStringLiteral("Runtime-only transcript; persistence unavailable.");
     }
     transitionConversationState(succeeded ? ConversationState::Completed : ConversationState::Error,
                                 succeeded
                                     ? QStringLiteral("local chat inference metadata completed")
                                     : QStringLiteral("local chat inference metadata blocked"));
+    refreshConversationHistorySummary();
     emit chatMessagesChanged();
 }
 
@@ -2941,6 +3025,41 @@ void ApplicationController::resetConversationRuntimeState() {
     latestLocalInferenceStreamResult_ = LocalInferenceStreamResult{};
     emit localInferenceChanged();
     emit conversationRuntimeChanged();
+}
+
+void ApplicationController::refreshConversationHistorySummary() {
+    ConversationHistorySummary summary;
+    summary.persistenceStatus = chatHistoryStore_ && chatHistoryStore_->isAvailable()
+                                    ? ConversationPersistenceStatus::Persisted
+                                    : ConversationPersistenceStatus::RuntimeOnly;
+    summary.lastSavedStatus = conversationHistorySummary_.lastSavedStatus;
+    summary.lastRestoredStatus = conversationHistorySummary_.lastRestoredStatus;
+
+    for (const auto& message : chatSession_->messages()) {
+        ++summary.messageCount;
+        switch (message.role) {
+        case ChatRole::System:
+            ++summary.systemMessageCount;
+            break;
+        case ChatRole::User:
+            ++summary.userMessageCount;
+            break;
+        case ChatRole::Assistant:
+            ++summary.assistantMessageCount;
+            break;
+        }
+    }
+
+    const auto messageLabel =
+        summary.messageCount == 1 ? QStringLiteral("message") : QStringLiteral("messages");
+    summary.summary = QStringLiteral("%1 transcript, %2 %3 (%4 user, %5 assistant, %6 system).")
+                          .arg(conversationPersistenceStatusName(summary.persistenceStatus))
+                          .arg(summary.messageCount)
+                          .arg(messageLabel)
+                          .arg(summary.userMessageCount)
+                          .arg(summary.assistantMessageCount)
+                          .arg(summary.systemMessageCount);
+    conversationHistorySummary_ = summary;
 }
 
 void ApplicationController::setConversationRuntimeRequest(const QString& requestId,
@@ -3214,6 +3333,7 @@ bool ApplicationController::clearMemory() {
 bool ApplicationController::clearChat() {
     const auto persistentAvailable = chatHistoryStore_ && chatHistoryStore_->isAvailable();
     auto persistentHealthy = persistentAvailable;
+    latestConversationClearResult_.persistentStoreAvailable = persistentAvailable;
     if (persistentAvailable) {
         chatHistoryStore_->clear();
         if (!chatHistoryStore_->lastError().isEmpty()) {
@@ -3233,13 +3353,35 @@ bool ApplicationController::clearChat() {
 
     if (!persistentAvailable) {
         setChatMaintenanceStatus(QStringLiteral("Runtime Only"));
+        conversationHistorySummary_.lastSavedStatus =
+            QStringLiteral("Runtime-only transcript; persistence unavailable.");
+        latestConversationClearResult_.status = ConversationClearStatus::ClearedRuntimeOnly;
+        latestConversationClearResult_.persistentStoreCleared = false;
+        latestConversationClearResult_.summary =
+            QStringLiteral("Runtime chat cleared and reset; no persistent chat store available.");
     } else if (persistentHealthy) {
         setChatMaintenanceStatus(QStringLiteral("Clear completed"));
+        conversationHistorySummary_.lastSavedStatus =
+            QStringLiteral("Cleared persisted chat history and saved initial system message.");
+        latestConversationClearResult_.status = ConversationClearStatus::ClearedPersisted;
+        latestConversationClearResult_.persistentStoreCleared = true;
+        latestConversationClearResult_.summary =
+            QStringLiteral("Runtime and persisted chat history cleared.");
     } else {
         setChatMaintenanceStatus(QStringLiteral("Clear failed"));
+        conversationHistorySummary_.lastSavedStatus =
+            QStringLiteral("Clear attempted; persistent chat history reported an error.");
+        latestConversationClearResult_.status = ConversationClearStatus::Failed;
+        latestConversationClearResult_.persistentStoreCleared = false;
+        latestConversationClearResult_.summary =
+            QStringLiteral("Runtime chat reset, but persistent chat clear reported an error.");
     }
+    conversationHistorySummary_.lastRestoredStatus =
+        QStringLiteral("Current transcript reset after clear.");
+    latestConversationClearResult_.remainingMessageCount = chatSession_->messages().size();
     resetConversationRuntimeState();
     conversationStateGraph_.reset();
+    refreshConversationHistorySummary();
     emit conversationStateChanged();
     emit chatMessagesChanged();
     return persistentHealthy;

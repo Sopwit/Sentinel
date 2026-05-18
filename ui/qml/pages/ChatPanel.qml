@@ -105,6 +105,23 @@ ShellPanel {
 
                 InfoRow {
                     compact: true
+                    label: "History"
+                    value: chatPanel.viewModel.conversationPersistenceStatus
+                           + " / "
+                           + chatPanel.viewModel.conversationHistoryMessageCount
+                           + (chatPanel.viewModel.conversationHistoryMessageCount === 1 ? " message" : " messages")
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
+                    label: "Saved"
+                    value: chatPanel.viewModel.conversationLastSavedStatus
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
                     label: "Inference"
                     value: chatPanel.viewModel.localInferenceSummary
                     Layout.fillWidth: true
@@ -266,10 +283,10 @@ ShellPanel {
         anchors.centerIn: parent
 
         Label {
-            text: "This clears the current transcript and persisted local chat history."
+            text: "This clears the visible transcript, cancels active request state, resets live streaming text, and clears persisted local chat history when available. Settings and memory are kept."
             color: SentinelTheme.textPrimary
             wrapMode: Text.WordWrap
-            width: 320
+            width: 360
         }
 
         onAccepted: chatPanel.viewModel.clearChat()

@@ -68,6 +68,7 @@ private slots:
     void updatesVisibleAgentValuesForBlockedPipeline();
     void exposesOnlyQmlSafeAgentVisibilityProperties();
     void exposesChatHistoryStatus();
+    void exposesConversationHistorySummaryMetadata();
     void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
@@ -1331,6 +1332,27 @@ void DesktopShellViewModelTest::exposesChatHistoryStatus() {
     DesktopShellViewModel viewModel{controller, modeManager, settings};
 
     QCOMPARE(viewModel.chatHistoryStatus(), QStringLiteral("Available"));
+}
+
+void DesktopShellViewModelTest::exposesConversationHistorySummaryMetadata() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr,
+                                     std::make_unique<StaticChatHistoryStore>()};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+
+    QCOMPARE(viewModel.conversationPersistenceStatus(), QStringLiteral("Persisted"));
+    QCOMPARE(viewModel.conversationHistoryMessageCount(), 1);
+    QVERIFY(viewModel.conversationHistorySummaryText().contains(QStringLiteral("1 message")));
+    QVERIFY(viewModel.conversationLastSavedStatus().contains(QStringLiteral("initial system")));
+
+    QVERIFY(viewModel.sendMessage(QStringLiteral("status")));
+
+    QCOMPARE(viewModel.conversationHistoryMessageCount(), 3);
+    QVERIFY(viewModel.conversationHistorySummaryText().contains(QStringLiteral("3 messages")));
+    QCOMPARE(viewModel.conversationLastSavedStatus(),
+             QStringLiteral("Saved latest assistant message."));
 }
 
 void DesktopShellViewModelTest::exposesMaintenanceStatuses() {

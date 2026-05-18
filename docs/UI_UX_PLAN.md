@@ -231,6 +231,13 @@ active route, and active request id while a request is known. The surface should
 avoid raw traces, worker details, provider objects, database paths, or debug dumps. Clear Chat
 should visually return the transcript/runtime status to a clean single-system-message state.
 
+Phase 15.10 improves persistent conversation UX without redesigning Chat or Settings. Chat and
+Settings may show compact persisted/runtime-only status, message count summary, and last
+save/restore status. Clear Chat confirmation should be explicit that runtime transcript,
+persisted local chat history when available, active request metadata, and live streaming text are
+reset while settings and memory remain separate. No transcript browser, thread list, export/import,
+search, pruning, encryption, or advanced history-management UI is added.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:
