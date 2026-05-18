@@ -286,6 +286,12 @@ controls remain status-only: no destructive delete button, confirmation flow, fi
 cloud sync, import, broad redesign, model/voice/tool/plugin behavior, or runtime-policy change is
 introduced.
 
+Phase 15.33 through Phase 15.35 is a runtime QA/checkpoint pass for the same browser. It may update
+documentation and focused tests for browser/session-switch/delete-readiness behavior, but should
+not change the compact browser shape or add new user workflows. Archived active conversation
+blocking, delete-readiness status, and stale-response safety remain expressed through existing
+QML-safe view-model metadata.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

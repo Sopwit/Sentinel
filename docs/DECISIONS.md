@@ -254,6 +254,33 @@ Out of scope:
 - Cloud sync, import, multi-conversation export, permanent delete UI, embeddings/vector DB,
   semantic memory, tools/plugins/system execution, and changes to Ollama/runtime safety policy.
 
+## 9.4 Conversation Delete Readiness Checkpoint
+
+Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent
+delete disabled until a later explicit destructive phase.
+
+Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
+confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
+path is non-mutating instead of enabling deletion.
+
+Runtime behavior:
+
+- `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult` expose
+  value-only status.
+- `ApplicationController::requestPermanentDeleteConversation()` refuses and does not call
+  `IConversationStore::deleteConversation()`.
+- `SQLiteConversationStore::deleteConversation()` remains soft metadata only for future readiness:
+  deleted conversations are hidden from normal list/load APIs, while stored message rows remain in
+  the database.
+- Archived conversations are visible and loadable, but new sends are blocked until unarchived.
+- Switching conversations invalidates active async request ids so stale completions cannot mutate
+  the newly active transcript.
+
+Out of scope:
+
+- Permanent delete execution, cloud sync, import/export workflow changes, semantic/vector memory,
+  model/voice/tool/plugin changes, broad UI redesign, and runtime authority expansion.
+
 ## 10. AI Context Layer
 
 Decision: Add repository-local AI instruction files in Phase 3.1.5.

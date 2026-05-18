@@ -441,6 +441,26 @@ Still out of scope:
   export, arbitrary filesystem writes, broad UI redesign, model/voice/tool/plugin behavior, and
   runtime safety-policy changes.
 
+## Phase 15.33-15.35: Conversation Browser Runtime QA And Checkpoint
+
+Completed. Audited the current conversation browser runtime path and checkpointed Phase 15
+conversation readiness before Phase 16.
+
+Delivered:
+
+- Reviewed multi-conversation store/browser/session switching architecture.
+- Added `docs/PHASE_15_CONVERSATION_CHECKPOINT.md`.
+- Added focused QA tests for SQLite soft-delete row retention and controller permanent-delete
+  refusal without SQLite mutation.
+- Confirmed single-transcript compatibility startup behavior, non-destructive SQLite conversation
+  storage, archived-send blocking, stale async result protection after switching, and disabled
+  permanent-delete readiness.
+
+Still out of scope:
+
+- Semantic memory, embeddings/vector DB, cloud sync, import/export changes, permanent delete
+  execution, broad UI redesign, model/voice/tool/plugin changes, and runtime authority expansion.
+
 ## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 
 Completed. Prepared voice architecture without enabling real audio I/O or voice runtime work.

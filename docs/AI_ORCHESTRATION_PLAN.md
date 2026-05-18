@@ -148,6 +148,13 @@ metadata: current/archived state summaries, empty-state copy, archived-send hint
 `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult`.
 Permanent delete remains disabled by default; delete requests refuse without storage mutation, and
 archive/unarchive remain the supported local removal lifecycle.
+Phase 15.33 through Phase 15.35 checkpoint that conversation runtime path: single-transcript
+compatibility remains a startup source when the conversation store is empty, SQLite conversation
+delete behavior is soft/non-destructive, archived conversations block sends, conversation switching
+continues to invalidate request ids so stale async responses are ignored, and permanent delete
+requests remain disabled and non-mutating. No semantic memory, embeddings/vector DB, cloud sync,
+import/export change, permanent delete execution, UI redesign, model/voice/tool/plugin change, or
+runtime authority expansion is added.
 
 ## Future Components
 
@@ -315,7 +322,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 15.29 runtime activates controlled local Ollama chat inference while keeping the
+Current Phase 15.35 runtime activates controlled local Ollama chat inference while keeping the
 larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
 selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
 action-light local model selection UX, metadata-only model-management readiness, metadata-only
@@ -328,11 +335,13 @@ streaming previews without persisting partial assistant output. Conversation run
 request-id guarded and reset on Clear Chat or conversation switch alongside active transcript
 loading. Conversation history UX metadata now has a compact local conversation browser over
 `IConversationStore`, with create/switch/rename/archive/unarchive actions and controlled
-Markdown/JSON export still scoped to the currently visible transcript only. Phase 15.29 still adds
-no audio playback,
-microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
-execution, autonomous agents, tool execution, shell execution, filesystem-wide actions, vector
-search, embeddings, semantic search, SQLite FTS, file picker, import, or arbitrary export paths:
+Markdown/JSON export still scoped to the currently visible transcript only. Permanent delete
+remains disabled and non-mutating, archived conversations remain send-blocked until unarchived,
+and stale async completions after switching remain ignored. Phase 15.35 still adds no audio
+playback, microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads,
+Whisper execution, autonomous agents, tool execution, shell execution, filesystem-wide actions,
+vector search, embeddings, semantic search, SQLite FTS, file picker, import, permanent-delete
+execution, or arbitrary export paths:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.

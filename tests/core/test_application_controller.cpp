@@ -652,6 +652,7 @@ private slots:
     void archiveUnarchiveUpdatesBrowserSummaries();
     void deleteReadinessIsDisabledByDefault();
     void deleteRequestRefusesSafelyWithoutMutation();
+    void deleteRequestRefusesSafelyWithoutSQLiteMutation();
     void activeConversationRemainsValidAfterArchiveUnarchive();
     void persistsActiveConversationAcrossControllerRecreation();
     void switchingConversationIgnoresStaleAsyncResultAndResetsBusy();
@@ -1961,6 +1962,42 @@ void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutMutation() {
     QCOMPARE(controller.activeConversationId(), firstId);
     QCOMPARE(controller.chatHistory().size(), beforeMessages);
     QVERIFY(controller.switchConversation(firstId));
+}
+
+void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutSQLiteMutation() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto databasePath = dir.filePath(QStringLiteral("conversations.sqlite3"));
+    QString firstId;
+
+    {
+        auto controller = makeControllerWithConversationStore(
+            std::make_unique<SQLiteConversationStore>(databasePath));
+        firstId = controller->activeConversationId();
+        QVERIFY(controller->sendMessage(QStringLiteral("sqlite delete safety token")));
+        const auto beforeCount = controller->conversationStoreConversationCount();
+        const auto beforeMessages = controller->chatHistory().size();
+
+        QVERIFY(!controller->requestPermanentDeleteConversation(firstId));
+
+        QCOMPARE(controller->conversationDeleteLastStatus(), QStringLiteral("Refused"));
+        QVERIFY(
+            controller->conversationDeleteLastResultSummary().contains(QStringLiteral("refused")));
+        QCOMPARE(controller->conversationStoreConversationCount(), beforeCount);
+        QCOMPARE(controller->activeConversationId(), firstId);
+        QCOMPARE(controller->chatHistory().size(), beforeMessages);
+    }
+
+    SQLiteConversationStore reloaded(databasePath);
+    const auto conversations = reloaded.listConversations();
+    QCOMPARE(conversations.size(), 1);
+    QCOMPARE(conversations.first().id, firstId);
+    QVERIFY(!conversations.first().archived);
+    QVERIFY(!conversations.first().deleted);
+
+    const auto messages = reloaded.loadMessages(firstId);
+    QCOMPARE(messages.size(), 3);
+    QCOMPARE(messages.at(1).content, QStringLiteral("sqlite delete safety token"));
 }
 
 void ApplicationControllerTest::activeConversationRemainsValidAfterArchiveUnarchive() {

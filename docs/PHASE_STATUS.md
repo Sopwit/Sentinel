@@ -2,6 +2,28 @@
 
 ## Completed / Stable
 
+### Phase 15.33-15.35: Conversation Browser Runtime QA And Checkpoint
+
+Completed. Checkpoints the multi-conversation browser/runtime path after the delete-readiness
+polish and confirms it remains local, non-destructive, and QML-safe.
+
+Scope:
+
+- Reviewed active-conversation ownership, store/browser actions, session switching, archive
+  behavior, stale async response handling, and delete-readiness refusal behavior.
+- Added `docs/PHASE_15_CONVERSATION_CHECKPOINT.md`.
+- Added focused QA coverage for SQLite soft-delete metadata retaining message rows and controller
+  permanent-delete refusal leaving a SQLite conversation store unchanged.
+- Confirmed legacy single-transcript history remains a compatibility startup source when the
+  conversation store is empty.
+- Confirmed archived conversations remain visible/loadable and block sending clearly.
+
+Known limitation:
+
+- Permanent delete remains disabled and non-mutating. No semantic memory, embeddings/vector DB,
+  cloud sync, import/export changes, permanent delete execution, broad UI redesign,
+  model/voice/tool/plugin changes, or runtime authority expansion is added.
+
 ### Phase 15.30-15.32: Conversation Browser Polish And Delete Readiness
 
 Completed. Polishes the compact Conversation Browser and adds safe permanent-delete readiness
