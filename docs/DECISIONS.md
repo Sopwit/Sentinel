@@ -195,12 +195,17 @@ Runtime behavior:
 - Empty transcripts with only the initial system message are refused.
 - Export result metadata includes status, safe output filename, exported message count, timestamp,
   and safe error/refusal summaries.
+- Phase 15.17-15.19 adds value-only browser-readiness metadata on the same boundary:
+  `ConversationDisplayTitle`, `ConversationListEntry`, `ConversationListSummary`, and
+  `ConversationBrowserStatus`.
+- Browser metadata currently exposes exactly one current transcript entry with title, message count,
+  persistence status, last updated/saved summary, and search/export availability summaries.
 - QML receives only strings, string lists, booleans, and counts through `DesktopShellViewModel`.
 
 Out of scope:
 
 - Vector search, semantic search, embeddings, SQLite full-text indexes, persisted search state,
-  file pickers, arbitrary output paths, import, transcript browser, multi-conversation storage,
+  file pickers, arbitrary output paths, import, full transcript browser UI, multi-conversation storage,
   encryption, pruning, broader filesystem/system actions, cloud/API keys, tools, and plugins.
 
 ## 10. AI Context Layer

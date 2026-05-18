@@ -131,6 +131,31 @@ QString conversationSearchResultSummary(const ConversationSearchResult& result) 
         .arg(result.role, QString::number(result.messageId), result.preview);
 }
 
+ConversationBrowserStatus conversationBrowserStatusFor(const ConversationHistorySummary& summary) {
+    const auto nonSystemCount = summary.userMessageCount + summary.assistantMessageCount;
+    return nonSystemCount > 0 ? ConversationBrowserStatus::Ready
+                              : ConversationBrowserStatus::EmptyTranscript;
+}
+
+QString conversationSearchAvailabilitySummary(const ConversationSearchSummary& summary) {
+    if (summary.query.text.trimmed().isEmpty()) {
+        return QStringLiteral("Search ready for current transcript.");
+    }
+    return QStringLiteral("%1 / %2").arg(conversationSearchStatusName(summary.status),
+                                         summary.summary);
+}
+
+QString conversationExportAvailabilitySummary(const ConversationExportReadiness& readiness,
+                                              const ConversationExportResult& result) {
+    const auto availability =
+        readiness.available ? QStringLiteral("Available") : QStringLiteral("Unavailable");
+    if (!result.status.trimmed().isEmpty() && result.status != QStringLiteral("Not Run")) {
+        return QStringLiteral("%1 / Last export: %2 (%3)")
+            .arg(availability, result.status, result.summary);
+    }
+    return QStringLiteral("%1 / %2").arg(availability, readiness.summary);
+}
+
 ConversationExportFormat conversationExportFormatFromName(const QString& format) {
     const auto normalized = format.trimmed().toLower();
     if (normalized == QStringLiteral("markdown") || normalized == QStringLiteral("md")) {
@@ -2313,6 +2338,85 @@ QString ApplicationController::conversationLastSavedStatus() const {
 
 QString ApplicationController::conversationLastRestoredStatus() const {
     return conversationHistorySummary_.lastRestoredStatus;
+}
+
+ConversationDisplayTitle ApplicationController::currentConversationDisplayTitle() const {
+    ConversationDisplayTitle title;
+    title.text = QStringLiteral("Current Transcript");
+    title.summary =
+        QStringLiteral("%1 / %2 %3")
+            .arg(conversationPersistenceStatus())
+            .arg(conversationHistorySummary_.messageCount)
+            .arg(conversationHistorySummary_.messageCount == 1 ? QStringLiteral("message")
+                                                               : QStringLiteral("messages"));
+    return title;
+}
+
+ConversationListEntry ApplicationController::currentConversationListEntry() const {
+    ConversationListEntry entry;
+    entry.displayTitle = currentConversationDisplayTitle();
+    entry.messageCount = conversationHistorySummary_.messageCount;
+    entry.persistenceStatus = conversationHistorySummary_.persistenceStatus;
+    entry.lastUpdatedSummary = conversationHistorySummary_.lastSavedStatus;
+    entry.searchAvailabilitySummary =
+        conversationSearchAvailabilitySummary(latestConversationSearchSummary_);
+    entry.exportAvailabilitySummary = conversationExportAvailabilitySummary(
+        conversationExportReadiness_, latestConversationExportResult_);
+    entry.summary = QStringLiteral("%1 / %2 / %3")
+                        .arg(entry.displayTitle.summary, entry.searchAvailabilitySummary,
+                             entry.exportAvailabilitySummary);
+    return entry;
+}
+
+ConversationListSummary ApplicationController::conversationListSummary() const {
+    ConversationListSummary summary;
+    summary.status = conversationBrowserStatusFor(conversationHistorySummary_);
+    summary.entryCount = 1;
+    summary.entries = {currentConversationListEntry()};
+    summary.summary = QStringLiteral("%1 browser with %2 current transcript entry.")
+                          .arg(conversationBrowserStatusName(summary.status),
+                               QString::number(summary.entryCount));
+    return summary;
+}
+
+QString ApplicationController::conversationBrowserStatus() const {
+    return conversationBrowserStatusName(conversationListSummary().status);
+}
+
+QString ApplicationController::conversationBrowserSummaryText() const {
+    return conversationListSummary().summary;
+}
+
+int ApplicationController::conversationListEntryCount() const {
+    return conversationListSummary().entryCount;
+}
+
+QString ApplicationController::conversationListCurrentTitle() const {
+    return currentConversationListEntry().displayTitle.text;
+}
+
+int ApplicationController::conversationListCurrentMessageCount() const {
+    return currentConversationListEntry().messageCount;
+}
+
+QString ApplicationController::conversationListCurrentPersistenceStatus() const {
+    return conversationPersistenceStatusName(currentConversationListEntry().persistenceStatus);
+}
+
+QString ApplicationController::conversationListCurrentLastUpdatedSummary() const {
+    return currentConversationListEntry().lastUpdatedSummary;
+}
+
+QString ApplicationController::conversationListCurrentSearchAvailabilitySummary() const {
+    return currentConversationListEntry().searchAvailabilitySummary;
+}
+
+QString ApplicationController::conversationListCurrentExportAvailabilitySummary() const {
+    return currentConversationListEntry().exportAvailabilitySummary;
+}
+
+QString ApplicationController::conversationListCurrentSummary() const {
+    return currentConversationListEntry().summary;
 }
 
 ConversationSearchSummary ApplicationController::conversationSearchSummary() const {

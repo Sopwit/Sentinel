@@ -642,6 +642,11 @@ private slots:
     void clearChatClearsConversationRuntimeAndPersistence();
     void reportsPersistedConversationHistorySummary();
     void reportsRuntimeOnlyConversationHistorySummary();
+    void reportsSingleConversationBrowserEntryDeterministically();
+    void reportsEmptyTranscriptConversationBrowserSummary();
+    void reportsConversationBrowserMessageCountSummary();
+    void clearChatUpdatesConversationBrowserEntry();
+    void conversationBrowserReflectsSearchAndExportAvailability();
     void inMemoryConversationSearchFindsUserAndAssistantMessages();
     void emptyConversationSearchDoesNotMutateHistory();
     void conversationSearchDoesNotMutateHistory();
@@ -1802,6 +1807,65 @@ void ApplicationControllerTest::reportsRuntimeOnlyConversationHistorySummary() {
     QCOMPARE(controller.conversationLastSavedStatus(),
              QStringLiteral("Runtime-only transcript; persistence unavailable."));
     QVERIFY(controller.conversationLastRestoredStatus().contains(QStringLiteral("unavailable")));
+}
+
+void ApplicationControllerTest::reportsSingleConversationBrowserEntryDeterministically() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+
+    QCOMPARE(controller.conversationListEntryCount(), 1);
+    QCOMPARE(controller.conversationListCurrentTitle(), QStringLiteral("Current Transcript"));
+    QCOMPARE(controller.conversationListCurrentMessageCount(), 1);
+    QCOMPARE(controller.conversationListCurrentPersistenceStatus(), QStringLiteral("Runtime Only"));
+}
+
+void ApplicationControllerTest::reportsEmptyTranscriptConversationBrowserSummary() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+
+    QCOMPARE(controller.conversationBrowserStatus(), QStringLiteral("Empty Transcript"));
+    QVERIFY(controller.conversationBrowserSummaryText().contains(
+        QStringLiteral("current transcript entry")));
+}
+
+void ApplicationControllerTest::reportsConversationBrowserMessageCountSummary() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QVERIFY(controller.sendMessage(QStringLiteral("count token")));
+
+    QCOMPARE(controller.conversationListCurrentMessageCount(), 3);
+    QVERIFY(controller.conversationListCurrentSummary().contains(QStringLiteral("3 messages")));
+}
+
+void ApplicationControllerTest::clearChatUpdatesConversationBrowserEntry() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QVERIFY(controller.sendMessage(QStringLiteral("clear token")));
+    QCOMPARE(controller.conversationListCurrentMessageCount(), 3);
+
+    QVERIFY(!controller.clearChat());
+
+    QCOMPARE(controller.conversationBrowserStatus(), QStringLiteral("Empty Transcript"));
+    QCOMPARE(controller.conversationListCurrentMessageCount(), 1);
+    QVERIFY(controller.conversationListCurrentLastUpdatedSummary().contains(
+        QStringLiteral("Runtime-only transcript")));
+}
+
+void ApplicationControllerTest::conversationBrowserReflectsSearchAndExportAvailability() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    controller.setConversationExportDirectory(dir.path());
+    QVERIFY(controller.sendMessage(QStringLiteral("availability token")));
+
+    QVERIFY(controller.searchConversation(QStringLiteral("token")));
+    QVERIFY(controller.conversationListCurrentSearchAvailabilitySummary().contains(
+        QStringLiteral("Completed")));
+
+    QVERIFY(controller.exportTranscript(QStringLiteral("json")));
+    QVERIFY(controller.conversationListCurrentExportAvailabilitySummary().contains(
+        QStringLiteral("Last export: Succeeded")));
 }
 
 void ApplicationControllerTest::inMemoryConversationSearchFindsUserAndAssistantMessages() {

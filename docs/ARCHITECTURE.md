@@ -143,6 +143,17 @@ chat-history storage contract:
 - `DesktopShellViewModel` exposes only QML-safe strings, string lists, booleans, and counts for
   search/export state.
 
+Phase 15.17 through Phase 15.19 add a single-transcript conversation-browser foundation without
+changing chat-history persistence:
+
+- `ConversationDisplayTitle`, `ConversationListEntry`, `ConversationListSummary`, and
+  `ConversationBrowserStatus` are value-only metadata records.
+- `ApplicationController` derives exactly one current transcript entry from existing
+  `ChatSession`/history/search/export metadata.
+- `DesktopShellViewModel` exposes browser values as QML-safe strings and counts only.
+- No multi-conversation/thread storage, migration, import/export redesign, cloud sync, or broader
+  filesystem authority is introduced.
+
 ## Conversation Session Metadata
 
 Phase 6.8 adds `ConversationSession` as a higher-level interaction/session metadata layer. It is
