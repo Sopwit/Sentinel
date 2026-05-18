@@ -648,6 +648,11 @@ private slots:
     void reportsRuntimeOnlyConversationHistorySummary();
     void exposesConversationStoreReadinessWithoutSwitchingTranscriptStorage();
     void createsSwitchesRenamesArchivesAndUnarchivesConversations();
+    void archivedActiveConversationBlocksSend();
+    void archiveUnarchiveUpdatesBrowserSummaries();
+    void deleteReadinessIsDisabledByDefault();
+    void deleteRequestRefusesSafelyWithoutMutation();
+    void activeConversationRemainsValidAfterArchiveUnarchive();
     void persistsActiveConversationAcrossControllerRecreation();
     void switchingConversationIgnoresStaleAsyncResultAndResetsBusy();
     void switchingConversationDoesNotDuplicateTranscriptInsertion();
@@ -1879,6 +1884,102 @@ void ApplicationControllerTest::createsSwitchesRenamesArchivesAndUnarchivesConve
     QVERIFY(controller.conversationArchivedSummaries().contains(QStringLiteral("Archived")));
     QVERIFY(controller.unarchiveConversation(firstId));
     QVERIFY(controller.conversationArchivedSummaries().contains(QStringLiteral("Active")));
+}
+
+void ApplicationControllerTest::archivedActiveConversationBlocksSend() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    const auto firstId = controller.activeConversationId();
+    QVERIFY(controller.sendMessage(QStringLiteral("archived first token")));
+    const auto secondId = controller.createConversation(QStringLiteral("Second"));
+    QVERIFY(!secondId.isEmpty());
+    QVERIFY(controller.archiveConversation(firstId));
+    QVERIFY(controller.switchConversation(firstId));
+    QVERIFY(controller.activeConversationArchived());
+    QVERIFY(controller.activeConversationStateSummary().contains(
+        QStringLiteral("sending is disabled")));
+    const auto beforeCount = controller.chatHistory().size();
+
+    QVERIFY(!controller.sendMessage(QStringLiteral("blocked archived send")));
+
+    QCOMPARE(controller.activeConversationId(), firstId);
+    QCOMPARE(controller.chatHistory().size(), beforeCount);
+    QVERIFY(controller.conversationMessageCountSummaries().contains(QStringLiteral("3 messages")));
+}
+
+void ApplicationControllerTest::archiveUnarchiveUpdatesBrowserSummaries() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    const auto firstId = controller.activeConversationId();
+    const auto secondId = controller.createConversation(QStringLiteral("Second"));
+    QVERIFY(!secondId.isEmpty());
+
+    QCOMPARE(controller.activeConversationCount(), 2);
+    QCOMPARE(controller.archivedConversationCount(), 0);
+    QVERIFY(controller.conversationActiveSummaries().contains(QStringLiteral("Current")));
+    QVERIFY(controller.conversationArchivedSummaries().contains(QStringLiteral("Active")));
+
+    QVERIFY(controller.archiveConversation(firstId));
+
+    QCOMPARE(controller.activeConversationCount(), 1);
+    QCOMPARE(controller.archivedConversationCount(), 1);
+    QVERIFY(controller.conversationArchivedSummaries().contains(QStringLiteral("Archived")));
+
+    QVERIFY(controller.unarchiveConversation(firstId));
+
+    QCOMPARE(controller.activeConversationCount(), 2);
+    QCOMPARE(controller.archivedConversationCount(), 0);
+    QVERIFY(controller.conversationArchivedSummaries().contains(QStringLiteral("Active")));
+}
+
+void ApplicationControllerTest::deleteReadinessIsDisabledByDefault() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+
+    QVERIFY(!controller.conversationDeleteAvailable());
+    QCOMPARE(controller.conversationDeletePolicyStatus(), QStringLiteral("Disabled By Default"));
+    QCOMPARE(controller.conversationDeleteReadinessStatus(), QStringLiteral("Disabled"));
+    QVERIFY(controller.conversationDeleteReadinessSummary().contains(
+        QStringLiteral("Permanent delete is disabled")));
+    QVERIFY(controller.conversationDeleteReadinessChecks().contains(
+        QStringLiteral("Permanent delete: Disabled by default")));
+}
+
+void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutMutation() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    const auto firstId = controller.activeConversationId();
+    QVERIFY(controller.sendMessage(QStringLiteral("delete safety token")));
+    const auto beforeCount = controller.conversationStoreConversationCount();
+    const auto beforeMessages = controller.chatHistory().size();
+
+    QVERIFY(!controller.requestPermanentDeleteConversation(firstId));
+
+    QCOMPARE(controller.conversationDeleteLastStatus(), QStringLiteral("Refused"));
+    QVERIFY(controller.conversationDeleteLastResultSummary().contains(QStringLiteral("refused")));
+    QCOMPARE(controller.conversationStoreConversationCount(), beforeCount);
+    QCOMPARE(controller.activeConversationId(), firstId);
+    QCOMPARE(controller.chatHistory().size(), beforeMessages);
+    QVERIFY(controller.switchConversation(firstId));
+}
+
+void ApplicationControllerTest::activeConversationRemainsValidAfterArchiveUnarchive() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    const auto firstId = controller.activeConversationId();
+
+    QVERIFY(controller.archiveConversation(firstId));
+
+    QVERIFY(!controller.activeConversationId().isEmpty());
+    QVERIFY(controller.activeConversationId() != QStringLiteral("single-transcript"));
+    QVERIFY(!controller.activeConversationArchived());
+    QVERIFY(controller.conversationIds().contains(controller.activeConversationId()));
+
+    QVERIFY(controller.unarchiveConversation(firstId));
+    QVERIFY(controller.switchConversation(firstId));
+
+    QCOMPARE(controller.activeConversationId(), firstId);
+    QVERIFY(!controller.activeConversationArchived());
 }
 
 void ApplicationControllerTest::persistsActiveConversationAcrossControllerRecreation() {

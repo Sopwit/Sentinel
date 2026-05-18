@@ -21,6 +21,7 @@ ShellPanel {
     readonly property string runtimeStatusText: chatPanel.viewModel.ollamaHealthStatus
                                                 + " / "
                                                 + chatPanel.viewModel.localInferenceRuntimeState
+    property string renameStatusText: ""
 
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.038)
     border.color: SentinelTheme.withAlpha(modeAccent, 0.095)
@@ -100,6 +101,8 @@ ShellPanel {
                         Label {
                             Layout.fillWidth: true
                             text: chatPanel.viewModel.activeConversationSummary
+                                  + " / "
+                                  + chatPanel.viewModel.activeConversationStateSummary
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall
                             elide: Text.ElideRight
@@ -123,10 +126,12 @@ ShellPanel {
                         required property int index
                         readonly property string conversationId: chatPanel.viewModel.conversationIds[index]
                         readonly property bool active: conversationId === chatPanel.viewModel.activeConversationId
+                        readonly property bool archived: chatPanel.viewModel.conversationArchivedSummaries[index] === "Archived"
                         Layout.fillWidth: true
                         radius: SentinelTheme.radiusSm
-                        color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10) : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.018)
-                        border.color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.26) : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                        color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.12) : archived ? SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.035) : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.018)
+                        border.color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.38) : archived ? SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.09) : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                        opacity: archived && !active ? 0.72 : 1.0
                         implicitHeight: conversationRow.implicitHeight + SentinelTheme.spaceSm
 
                         RowLayout {
@@ -142,8 +147,8 @@ ShellPanel {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: chatPanel.viewModel.conversationTitles[index]
-                                    color: SentinelTheme.textPrimary
+                                    text: (active ? "CURRENT / " : "") + chatPanel.viewModel.conversationTitles[index]
+                                    color: archived && !active ? SentinelTheme.textMuted : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall
                                     font.bold: active
                                     elide: Text.ElideRight
@@ -151,7 +156,9 @@ ShellPanel {
 
                                 Text {
                                     Layout.fillWidth: true
-                                    text: chatPanel.viewModel.conversationLastUpdatedSummaries[index]
+                                    text: chatPanel.viewModel.conversationActiveSummaries[index]
+                                          + " / "
+                                          + chatPanel.viewModel.conversationLastUpdatedSummaries[index]
                                           + " / "
                                           + chatPanel.viewModel.conversationMessageCountSummaries[index]
                                           + " / "
@@ -183,6 +190,15 @@ ShellPanel {
                     }
                 }
 
+                Label {
+                    Layout.fillWidth: true
+                    visible: chatPanel.viewModel.conversationBrowserEmptyStateVisible
+                    text: chatPanel.viewModel.conversationBrowserEmptyStateSummary
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                }
+
                 GridLayout {
                     Layout.fillWidth: true
                     columns: chatPanel.compact ? 1 : 3
@@ -207,10 +223,30 @@ ShellPanel {
                         enabled: renameInput.text.trim().length > 0
                         Layout.fillWidth: chatPanel.compact
                         onClicked: {
-                            chatPanel.viewModel.renameConversation(chatPanel.viewModel.activeConversationId, renameInput.text)
-                            renameInput.clear()
+                            var renamed = chatPanel.viewModel.renameConversation(chatPanel.viewModel.activeConversationId, renameInput.text)
+                            chatPanel.renameStatusText = renamed ? "Rename saved." : "Rename refused."
+                            if (renamed)
+                                renameInput.clear()
                         }
                     }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    visible: chatPanel.renameStatusText.length > 0
+                    text: chatPanel.renameStatusText
+                    color: chatPanel.renameStatusText === "Rename saved." ? SentinelTheme.success : SentinelTheme.warning
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                }
+
+                InfoRow {
+                    compact: true
+                    label: "Delete"
+                    value: chatPanel.viewModel.conversationDeleteReadinessStatus
+                           + " / "
+                           + chatPanel.viewModel.conversationDeleteReadinessSummary
+                    Layout.fillWidth: true
                 }
             }
         }
@@ -306,6 +342,15 @@ ShellPanel {
                     Layout.fillWidth: true
                     visible: !chatPanel.modelReady
                     text: "Start Ollama and install/select a local model."
+                    color: SentinelTheme.warning
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    visible: chatPanel.viewModel.activeConversationArchived
+                    text: chatPanel.viewModel.activeConversationStateSummary
                     color: SentinelTheme.warning
                     font.pixelSize: SentinelTheme.fontSmall
                     wrapMode: Text.WordWrap
@@ -456,7 +501,7 @@ ShellPanel {
                 id: chatInput
                 Layout.fillWidth: true
                 Layout.columnSpan: chatPanel.compact ? 2 : 1
-                placeholderText: chatPanel.modelReady ? "Message Sentinel" : "Local model setup required for Ollama chat"
+                placeholderText: chatPanel.viewModel.activeConversationArchived ? "Unarchive this conversation to send" : chatPanel.modelReady ? "Message Sentinel" : "Local model setup required for Ollama chat"
                 enabled: !chatPanel.viewModel.localInferenceBusy && !chatPanel.viewModel.activeConversationArchived
                 onAccepted: {
                     if (sendButton.enabled)

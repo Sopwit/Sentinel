@@ -2,6 +2,34 @@
 
 ## Completed / Stable
 
+### Phase 15.30-15.32: Conversation Browser Polish And Delete Readiness
+
+Completed. Polishes the compact Conversation Browser and adds safe permanent-delete readiness
+metadata while keeping archive as the supported removal flow.
+
+Scope:
+
+- Chat browser now marks the current conversation more clearly, mutes archived rows, shows active
+  versus inactive row summaries, and shows an empty-state hint when no user-created conversations
+  exist.
+- Rename actions now provide compact success/refusal feedback without broad redesign.
+- Archived active conversations remain loadable, but Chat shows a clear hint and keeps sending
+  disabled until the conversation is unarchived.
+- Added `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and
+  `ConversationDeleteResult` metadata.
+- Permanent delete is disabled by default. Delete readiness exposes why it is disabled, and the
+  guarded delete request path refuses safely without mutating storage.
+- Settings shows active/archived conversation counts and archive-first delete policy/readiness.
+- Tests cover archived active send blocking, archive/unarchive browser summaries, disabled delete
+  readiness, refused no-mutation delete requests, valid active conversation state after
+  archive/unarchive, and QML-safe view-model exposure.
+
+Known limitation:
+
+- Permanent delete remains non-operational. There is no destructive delete UI, cloud sync, import,
+  multi-conversation export, arbitrary filesystem writes, model/voice/tool/plugin change, or
+  runtime safety-policy change.
+
 ### Phase 15.26-15.29: Conversation Browser UI Foundation And Safe Session Switching
 
 Completed. Exposes the multi-conversation store through a compact Chat browser and makes the

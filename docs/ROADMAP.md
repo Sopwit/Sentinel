@@ -415,6 +415,32 @@ Still out of scope:
 - Permanent delete UI, cloud sync, import, multi-conversation export, embeddings/vector DB,
   semantic memory, tools/plugins/system execution, and changes to Ollama/runtime safety policy.
 
+## Phase 15.30-15.32: Conversation Browser Polish And Safe Delete Readiness
+
+Completed. Improved the compact browser UX and prepared permanent-delete safety metadata without
+enabling destructive deletion.
+
+Delivered:
+
+- Clearer current-conversation row treatment, visually muted archived rows, active/inactive row
+  summaries, active and archived counts, and empty-state copy when no user-created conversations
+  exist.
+- Compact rename feedback for saved/refused rename attempts.
+- Archived active conversation hinting: sending is disabled with explicit copy until unarchived.
+- `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult`
+  metadata, forwarded through `ApplicationController` and `DesktopShellViewModel` as QML-safe
+  strings, booleans, counts, and string lists.
+- Archive-first policy is documented and visible. Permanent delete is disabled by default, and the
+  delete request path refuses safely without mutating storage.
+- Focused tests for archived send blocking, archive/unarchive summaries, disabled delete
+  readiness, no-mutation delete refusal, active-id validity, and QML-safe exposure.
+
+Still out of scope:
+
+- Destructive permanent delete UI or storage mutation, cloud sync, import, multi-conversation
+  export, arbitrary filesystem writes, broad UI redesign, model/voice/tool/plugin behavior, and
+  runtime safety-policy changes.
+
 ## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 
 Completed. Prepared voice architecture without enabling real audio I/O or voice runtime work.

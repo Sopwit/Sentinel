@@ -47,6 +47,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::conversationSearchChanged);
     connect(&controller_, &core::ApplicationController::conversationExportChanged, this,
             &DesktopShellViewModel::conversationExportChanged);
+    connect(&controller_, &core::ApplicationController::conversationDeleteChanged, this,
+            &DesktopShellViewModel::conversationDeleteChanged);
     connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
     connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
@@ -999,12 +1001,20 @@ bool DesktopShellViewModel::activeConversationArchived() const {
     return controller_.activeConversationArchived();
 }
 
+QString DesktopShellViewModel::activeConversationStateSummary() const {
+    return controller_.activeConversationStateSummary();
+}
+
 QStringList DesktopShellViewModel::conversationIds() const {
     return controller_.conversationIds();
 }
 
 QStringList DesktopShellViewModel::conversationTitles() const {
     return controller_.conversationTitles();
+}
+
+QStringList DesktopShellViewModel::conversationActiveSummaries() const {
+    return controller_.conversationActiveSummaries();
 }
 
 QStringList DesktopShellViewModel::conversationLastUpdatedSummaries() const {
@@ -1017,6 +1027,26 @@ QStringList DesktopShellViewModel::conversationMessageCountSummaries() const {
 
 QStringList DesktopShellViewModel::conversationArchivedSummaries() const {
     return controller_.conversationArchivedSummaries();
+}
+
+int DesktopShellViewModel::activeConversationCount() const {
+    return controller_.activeConversationCount();
+}
+
+int DesktopShellViewModel::archivedConversationCount() const {
+    return controller_.archivedConversationCount();
+}
+
+int DesktopShellViewModel::userCreatedConversationCount() const {
+    return controller_.userCreatedConversationCount();
+}
+
+bool DesktopShellViewModel::conversationBrowserEmptyStateVisible() const {
+    return controller_.conversationBrowserEmptyStateVisible();
+}
+
+QString DesktopShellViewModel::conversationBrowserEmptyStateSummary() const {
+    return controller_.conversationBrowserEmptyStateSummary();
 }
 
 QString DesktopShellViewModel::conversationHistorySummaryText() const {
@@ -1159,6 +1189,42 @@ QString DesktopShellViewModel::conversationExportLastTimestamp() const {
     return controller_.conversationExportLastTimestamp();
 }
 
+bool DesktopShellViewModel::conversationDeleteAvailable() const {
+    return controller_.conversationDeleteAvailable();
+}
+
+QString DesktopShellViewModel::conversationDeletePolicyStatus() const {
+    return controller_.conversationDeletePolicyStatus();
+}
+
+QString DesktopShellViewModel::conversationDeletePolicySummary() const {
+    return controller_.conversationDeletePolicySummary();
+}
+
+QStringList DesktopShellViewModel::conversationDeletePolicyRequirements() const {
+    return controller_.conversationDeletePolicyRequirements();
+}
+
+QString DesktopShellViewModel::conversationDeleteReadinessStatus() const {
+    return controller_.conversationDeleteReadinessStatus();
+}
+
+QString DesktopShellViewModel::conversationDeleteReadinessSummary() const {
+    return controller_.conversationDeleteReadinessSummary();
+}
+
+QStringList DesktopShellViewModel::conversationDeleteReadinessChecks() const {
+    return controller_.conversationDeleteReadinessChecks();
+}
+
+QString DesktopShellViewModel::conversationDeleteLastStatus() const {
+    return controller_.conversationDeleteLastStatus();
+}
+
+QString DesktopShellViewModel::conversationDeleteLastResultSummary() const {
+    return controller_.conversationDeleteLastResultSummary();
+}
+
 QString DesktopShellViewModel::memoryMaintenanceStatus() const {
     return controller_.memoryMaintenanceStatus();
 }
@@ -1265,6 +1331,10 @@ bool DesktopShellViewModel::archiveConversation(const QString& conversationId) {
 
 bool DesktopShellViewModel::unarchiveConversation(const QString& conversationId) {
     return controller_.unarchiveConversation(conversationId);
+}
+
+bool DesktopShellViewModel::requestPermanentDeleteConversation(const QString& conversationId) {
+    return controller_.requestPermanentDeleteConversation(conversationId);
 }
 
 bool DesktopShellViewModel::runAgentRequest(const QString& request) {

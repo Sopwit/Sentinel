@@ -202,6 +202,21 @@ store is empty:
 - Archived conversations remain listable/loadable and can be unarchived. Sending into an archived
   active conversation is refused.
 
+Phase 15.30 through Phase 15.32 add browser-polish and delete-readiness metadata on the same
+boundary:
+
+- `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult` are
+  value-only safety records. They do not expose storage internals to QML.
+- The current policy is archive-first. Permanent delete is disabled by default and requires a
+  later explicit phase gate, destructive-mutation tests, and guarded confirmation UI before it can
+  mutate storage.
+- `ApplicationController` exposes QML-safe active/archived state summaries, active and archived
+  counts, empty-state text, delete readiness, delete policy, and last delete-request result.
+- `requestPermanentDeleteConversation()` is a guarded refusal path only. It reports a refused
+  result and does not call `IConversationStore::deleteConversation()` or mutate transcripts.
+- Archived active conversations stay loadable and read-only for sending, with UI hint metadata
+  explaining that the conversation must be unarchived before sending.
+
 No cloud sync, import, permanent delete UI, multi-conversation export, vector/semantic search,
 tool/plugin/system execution, or Ollama safety policy change is introduced.
 

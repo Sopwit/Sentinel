@@ -2467,6 +2467,18 @@ bool ApplicationController::activeConversationArchived() const {
     return activeConversationRecord().archived;
 }
 
+QString ApplicationController::activeConversationStateSummary() const {
+    const auto active = activeConversationRecord();
+    if (active.id.isEmpty()) {
+        return QStringLiteral("No active conversation metadata is available.");
+    }
+    if (active.archived) {
+        return QStringLiteral("Archived conversation selected; sending is disabled until it is "
+                              "unarchived.");
+    }
+    return QStringLiteral("Active conversation selected; sending is available.");
+}
+
 QStringList ApplicationController::conversationIds() const {
     QStringList ids;
     for (const auto& record : conversationRecords()) {
@@ -2481,6 +2493,15 @@ QStringList ApplicationController::conversationTitles() const {
         titles.append(record.title);
     }
     return titles;
+}
+
+QStringList ApplicationController::conversationActiveSummaries() const {
+    QStringList summaries;
+    for (const auto& record : conversationRecords()) {
+        summaries.append(record.id == activeConversationId_ ? QStringLiteral("Current")
+                                                            : QStringLiteral("Inactive"));
+    }
+    return summaries;
 }
 
 QStringList ApplicationController::conversationLastUpdatedSummaries() const {
@@ -2511,6 +2532,53 @@ QStringList ApplicationController::conversationArchivedSummaries() const {
         summaries.append(record.archived ? QStringLiteral("Archived") : QStringLiteral("Active"));
     }
     return summaries;
+}
+
+int ApplicationController::activeConversationCount() const {
+    int count = 0;
+    for (const auto& record : conversationRecords()) {
+        if (!record.archived && !record.deleted) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+int ApplicationController::archivedConversationCount() const {
+    int count = 0;
+    for (const auto& record : conversationRecords()) {
+        if (record.archived && !record.deleted) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+int ApplicationController::userCreatedConversationCount() const {
+    int count = 0;
+    for (const auto& record : conversationRecords()) {
+        const bool initialTranscript =
+            record.title == QStringLiteral("Current Transcript") && record.messageCount <= 1;
+        if (!initialTranscript && !record.deleted) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+bool ApplicationController::conversationBrowserEmptyStateVisible() const {
+    return userCreatedConversationCount() == 0;
+}
+
+QString ApplicationController::conversationBrowserEmptyStateSummary() const {
+    if (conversationBrowserEmptyStateVisible()) {
+        return QStringLiteral("No user-created conversations yet. Start with New or send a "
+                              "message in the current transcript.");
+    }
+    return QStringLiteral("%1 user-created %2 available.")
+        .arg(userCreatedConversationCount())
+        .arg(userCreatedConversationCount() == 1 ? QStringLiteral("conversation")
+                                                 : QStringLiteral("conversations"));
 }
 
 ConversationHistorySummary ApplicationController::conversationHistorySummary() const {
@@ -2748,6 +2816,64 @@ QString ApplicationController::conversationExportLastTimestamp() const {
                : latestConversationExportResult_.exportedAtUtc;
 }
 
+ConversationDeletePolicy ApplicationController::conversationDeletePolicy() const {
+    return conversationDeletePolicy_;
+}
+
+ConversationDeleteReadiness ApplicationController::conversationDeleteReadiness() const {
+    ConversationDeleteReadiness readiness;
+    readiness.policy = conversationDeletePolicy_;
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        readiness.summary =
+            QStringLiteral("Permanent delete is disabled and the conversation store is "
+                           "unavailable.");
+        readiness.checks.append(QStringLiteral("Store: Unavailable"));
+    } else {
+        readiness.checks.append(QStringLiteral("Store: Ready for archive/unarchive only"));
+    }
+    return readiness;
+}
+
+ConversationDeleteResult ApplicationController::latestConversationDeleteResult() const {
+    return latestConversationDeleteResult_;
+}
+
+bool ApplicationController::conversationDeleteAvailable() const {
+    return conversationDeleteReadiness().available;
+}
+
+QString ApplicationController::conversationDeletePolicyStatus() const {
+    return conversationDeletePolicyStatusName(conversationDeletePolicy_.status);
+}
+
+QString ApplicationController::conversationDeletePolicySummary() const {
+    return conversationDeletePolicy_.summary;
+}
+
+QStringList ApplicationController::conversationDeletePolicyRequirements() const {
+    return conversationDeletePolicy_.requirements;
+}
+
+QString ApplicationController::conversationDeleteReadinessStatus() const {
+    return conversationDeleteReadiness().status;
+}
+
+QString ApplicationController::conversationDeleteReadinessSummary() const {
+    return conversationDeleteReadiness().summary;
+}
+
+QStringList ApplicationController::conversationDeleteReadinessChecks() const {
+    return conversationDeleteReadiness().checks;
+}
+
+QString ApplicationController::conversationDeleteLastStatus() const {
+    return latestConversationDeleteResult_.status;
+}
+
+QString ApplicationController::conversationDeleteLastResultSummary() const {
+    return latestConversationDeleteResult_.summary;
+}
+
 QString ApplicationController::memoryMaintenanceStatus() const {
     return memoryMaintenanceStatus_;
 }
@@ -2941,6 +3067,18 @@ bool ApplicationController::exportTranscript(const QString& format) {
 
 bool ApplicationController::requestConversationExport(const QString& format) {
     return exportTranscript(format);
+}
+
+bool ApplicationController::requestPermanentDeleteConversation(const QString& conversationId) {
+    latestConversationDeleteResult_ = ConversationDeleteResult{};
+    latestConversationDeleteResult_.conversationId = conversationId.trimmed();
+    latestConversationDeleteResult_.status = QStringLiteral("Refused");
+    latestConversationDeleteResult_.refusalSummary =
+        QStringLiteral("Permanent delete is disabled by the archive-first conversation policy.");
+    latestConversationDeleteResult_.summary =
+        QStringLiteral("Permanent delete refused: archive or unarchive conversations instead.");
+    emit conversationDeleteChanged();
+    return false;
 }
 
 QString ApplicationController::createConversation(const QString& title) {
