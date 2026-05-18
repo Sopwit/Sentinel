@@ -112,7 +112,11 @@ output. Phase 15.9 adds a concise conversation-runtime read model over that path
 conversation state, request id, active model, active route, active streaming flag, last success
 summary, last error/refusal summary, and last latency summary. Clear Chat resets that transient
 state and persistent chat through the existing chat-history boundary, while restart loading keeps
-persisted transcript rows stable without duplicating system or assistant messages.
+persisted transcript rows stable without duplicating system or assistant messages. Phase 15.10
+adds value-only persistent conversation UX metadata for the same single transcript: persisted
+versus runtime-only status, message counts, last saved/restored status, and clear results. It does
+not add multi-conversation storage, transcript browsing, export/import, encryption, pruning,
+search, or new filesystem authority.
 
 ## Future Components
 
@@ -183,6 +187,10 @@ persisted transcript rows stable without duplicating system or assistant message
   model/route, streaming activity, last success, last error/refusal, and latency. It is UI metadata
   only and does not own chat persistence, route selection, provider execution, tools, or runtime
   workers.
+- Conversation history UX metadata: value-only summary of the active single transcript, including
+  persistence status, message counts, saved/restored status, and clear result. It does not add
+  multiple conversations, transcript browsing, export/import, pruning, encryption, search, or
+  storage access outside the existing `IChatHistoryStore`.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 - Local model management readiness: deterministic metadata for recommended local models,
@@ -272,7 +280,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 15.9 runtime activates controlled local Ollama chat inference while keeping the
+Current Phase 15.10 runtime activates controlled local Ollama chat inference while keeping the
 larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
 selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
 action-light local model selection UX, metadata-only model-management readiness, metadata-only
@@ -282,8 +290,9 @@ Piper/Whisper path configuration UX with hint-only fixed-location suggestions pl
 Ready/Blocked/Missing path preparation metadata. The Ollama path reports bounded timeout/error
 metadata, runs real generate/stream work through an async worker boundary, and clears failed
 streaming previews without persisting partial assistant output. Conversation runtime summaries are
-request-id guarded and reset on Clear Chat alongside persistent transcript cleanup. Phase 15.9
-still adds no audio playback,
+request-id guarded and reset on Clear Chat alongside persistent transcript cleanup. Conversation
+history UX metadata remains single-transcript, compact, and value-only. Phase 15.10 still adds no
+audio playback,
 microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
 execution, autonomous agents, tool execution, shell execution, or filesystem-wide actions:
 

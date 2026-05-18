@@ -302,6 +302,18 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
     Q_PROPERTY(QString chatHistoryStatus READ chatHistoryStatus CONSTANT)
+    Q_PROPERTY(QString conversationHistorySummaryText READ conversationHistorySummaryText NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationHistorySummaryLines READ conversationHistorySummaryLines
+                   NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int conversationHistoryMessageCount READ conversationHistoryMessageCount NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QString conversationPersistenceStatus READ conversationPersistenceStatus NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QString conversationLastSavedStatus READ conversationLastSavedStatus NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(QString conversationLastRestoredStatus READ conversationLastRestoredStatus NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
     Q_PROPERTY(
@@ -527,6 +539,12 @@ public:
     QStringList availableToolIds() const;
     QString memoryStatus() const;
     QString chatHistoryStatus() const;
+    QString conversationHistorySummaryText() const;
+    QStringList conversationHistorySummaryLines() const;
+    int conversationHistoryMessageCount() const;
+    QString conversationPersistenceStatus() const;
+    QString conversationLastSavedStatus() const;
+    QString conversationLastRestoredStatus() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     QString currentModeName() const;

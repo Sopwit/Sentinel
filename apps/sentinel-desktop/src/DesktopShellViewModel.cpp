@@ -971,6 +971,30 @@ QString DesktopShellViewModel::chatHistoryStatus() const {
     return controller_.chatHistoryStatus();
 }
 
+QString DesktopShellViewModel::conversationHistorySummaryText() const {
+    return controller_.conversationHistorySummaryText();
+}
+
+QStringList DesktopShellViewModel::conversationHistorySummaryLines() const {
+    return controller_.conversationHistorySummaryLines();
+}
+
+int DesktopShellViewModel::conversationHistoryMessageCount() const {
+    return controller_.conversationHistoryMessageCount();
+}
+
+QString DesktopShellViewModel::conversationPersistenceStatus() const {
+    return controller_.conversationPersistenceStatus();
+}
+
+QString DesktopShellViewModel::conversationLastSavedStatus() const {
+    return controller_.conversationLastSavedStatus();
+}
+
+QString DesktopShellViewModel::conversationLastRestoredStatus() const {
+    return controller_.conversationLastRestoredStatus();
+}
+
 QString DesktopShellViewModel::memoryMaintenanceStatus() const {
     return controller_.memoryMaintenanceStatus();
 }

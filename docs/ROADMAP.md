@@ -1506,6 +1506,28 @@ Still out of scope:
   plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper
   changes, and Whisper execution.
 
+## Phase 15.10: Persistent Conversation UX And Chat History Management
+
+Completed. Improved the single-transcript chat history UX without adding a transcript browser or
+thread system.
+
+Delivered:
+
+- Conversation history summary metadata for persisted/runtime-only status, message counts, last
+  saved status, and last restored status.
+- Compact Chat and Settings rows showing persistence state and transcript summary without SQLite
+  details or debug text.
+- Clear Chat confirmation copy now makes runtime reset, persisted-history clearing, streaming text
+  reset, and settings/memory preservation explicit.
+- Focused coverage for persisted summary, runtime-only fallback, clear behavior, streaming/request
+  reset after clear, and no duplicate initial/system messages.
+
+Still out of scope:
+
+- Multi-conversation/thread management, transcript browser, export/import, encryption, pruning,
+  transcript search, cloud/API keys, model management actions, tools/plugins, filesystem/system
+  actions, and voice execution changes.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

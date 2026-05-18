@@ -610,7 +610,23 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Chat History"
-                    value: settingsPage.viewModel.chatHistoryStatus + " (" + settingsPage.viewModel.chatMaintenanceStatus + ")"
+                    value: settingsPage.viewModel.conversationHistorySummaryText
+                           + " / "
+                           + settingsPage.viewModel.chatMaintenanceStatus
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Chat Save"
+                    value: settingsPage.viewModel.conversationLastSavedStatus
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Chat Restore"
+                    value: settingsPage.viewModel.conversationLastRestoredStatus
                     Layout.fillWidth: true
                 }
 
@@ -663,10 +679,10 @@ ScrollView {
         anchors.centerIn: parent
 
         Label {
-            text: "This clears local chat history. Settings are kept."
+            text: "This clears the runtime transcript and persisted local chat history when available, then restores the single initial system message. Settings and memory are kept."
             color: SentinelTheme.textPrimary
             wrapMode: Text.WordWrap
-            width: 320
+            width: 360
         }
 
         onAccepted: settingsPage.viewModel.clearChat()
