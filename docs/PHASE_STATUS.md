@@ -2,6 +2,72 @@
 
 ## Completed / Stable
 
+### Phase 15.14-15.16: Local Transcript Export Implementation
+
+Completed. Adds safe local Markdown/JSON export for the current single transcript.
+
+Scope:
+
+- Added controlled current-transcript export for Markdown and JSON only.
+- Export writes only to the app-owned export directory below Qt `AppDataLocation`; QML does not
+  receive raw filesystem paths.
+- Export filenames are sanitized, timestamped, and made unique to avoid silent overwrite.
+- Empty transcripts with only the initial system message are refused with a safe summary.
+- Export result metadata now reports status, safe output filename, exported message count, last
+  export timestamp, and concise error/refusal summaries.
+- `ApplicationController` exposes `exportTranscript(format)` and keeps the existing export request
+  wrapper forwarding to the same implementation.
+- `DesktopShellViewModel` exposes QML-safe export status/summary/filename/count/timestamp values.
+- Chat and Settings show small Export Markdown and Export JSON actions plus last export status.
+- Tests cover Markdown content, JSON structure, empty-transcript refusal, timestamped filename
+  behavior, view-model exposure, and no arbitrary path writes through the UI/controller action.
+
+Known limitation:
+
+- Export is current-transcript only. There is no import, file picker, custom output path, transcript
+  browser, multi-conversation export, encryption, pruning, cloud sync, or external process.
+
+Still out of scope:
+
+- Cloud/API keys/providers, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, arbitrary filesystem actions, autonomous loops, microphone access, playback, Piper
+  changes, Whisper execution, vector search, embeddings, semantic search, database FTS, import,
+  and multi-conversation storage.
+
+### Phase 15.11-15.13: Conversation Search, Export Readiness, And Transcript QA
+
+Completed. Adds lightweight transcript search metadata and disabled export readiness for the
+current single transcript.
+
+Scope:
+
+- Added value-only conversation search query/result/summary metadata over the current in-memory
+  `ChatSession` transcript.
+- Search is literal, case-insensitive, and in-memory only. It does not use vector search, semantic
+  search, embeddings, SQLite full-text indexes, or database queries.
+- Empty search queries produce an empty-query summary and do not mutate chat history.
+- Clear Chat resets search metadata along with runtime state, persistence, streaming/live text,
+  active request metadata, and the transcript reseed.
+- Added value-only export format/request/readiness/result metadata. Export remains disabled and
+  metadata-only; no file picker is shown and no filesystem export/write action is performed.
+- Chat and Settings show compact search/export readiness. Chat also provides a small current
+  transcript search field.
+- Tests cover user/assistant search matches, empty query behavior, no history mutation during
+  search, search reset on clear, disabled export/no side effects, and QML-safe view-model exposure.
+
+Known limitation:
+
+- Chat history remains one local transcript. Search is not persisted, not indexed, not semantic,
+  and not multi-conversation aware. Export/import, encryption, pruning, file writing, and transcript
+  browser workflows remain unimplemented.
+
+Still out of scope:
+
+- Cloud/API keys/providers, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper
+  changes, Whisper execution, vector search, embeddings, semantic search, database FTS, file
+  picker/export writes, and multi-conversation storage.
+
 ### Phase 15.10: Persistent Conversation UX And Chat History Management
 
 Completed. Adds compact persistent conversation UX metadata on top of the existing single

@@ -107,6 +107,9 @@ Rows load in ascending `id` order so the transcript remains deterministic across
 
 The desktop app stores chat history below Qt's `AppDataLocation` as `chat_history.sqlite3`. The database includes a `chat_history_schema_metadata` table with `schema_version = 1`.
 
+The desktop app stores transcript exports below Qt's `AppDataLocation` in an `exports` directory.
+Exports are separate Markdown/JSON files and are not part of the chat-history SQLite store.
+
 If chat persistence is unavailable, `ApplicationController` continues with the in-memory `ChatSession`. Clearing chat clears the persistent chat table only when the store is available.
 
 The desktop shell exposes generic chat history and conversation-history UX metadata only. QML can
@@ -117,6 +120,28 @@ and last restore status. It does not know the database path, schema, driver, or 
 value-only metadata records derived by `ApplicationController`. They do not introduce
 multi-conversation storage, transcript search, import/export, pruning, encryption, or any
 filesystem access beyond the existing app-owned chat-history store.
+
+Phase 15.11 through Phase 15.13 add lightweight transcript search and export-readiness metadata.
+Phase 15.14 through Phase 15.16 implement controlled local transcript export without changing the
+chat-history storage contract:
+
+- `ConversationSearchQuery`, `ConversationSearchResult`, and `ConversationSearchSummary` describe
+  literal case-insensitive search over the current in-memory `ChatSession` messages only.
+- Search reads the active transcript and updates controller-owned summary metadata. It does not
+  mutate chat history, query SQLite, create indexes, build embeddings, perform semantic/vector
+  search, or persist search state.
+- Clear Chat resets search metadata after the single initial system message is reseeded.
+- `ConversationExportFormat`, `ConversationExportRequest`, `ConversationExportReadiness`, and
+  `ConversationExportResult` describe current-transcript Markdown/JSON export only.
+- Export writes only to the app-controlled export directory below Qt `AppDataLocation` through the
+  path-provider boundary. The desktop app uses `StandardPathProvider::conversationExportDirectoryPath()`.
+- Export filenames are sanitized, timestamped, and made unique before writing with `QSaveFile`.
+- Empty transcripts with no user or assistant messages are refused.
+- `ApplicationController::exportTranscript(format)` is the controller entry point. QML receives
+  only safe result strings, the output filename, message count, and timestamp; it does not receive
+  raw filesystem paths.
+- `DesktopShellViewModel` exposes only QML-safe strings, string lists, booleans, and counts for
+  search/export state.
 
 ## Conversation Session Metadata
 

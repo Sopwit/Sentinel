@@ -238,6 +238,19 @@ persisted local chat history when available, active request metadata, and live s
 reset while settings and memory remain separate. No transcript browser, thread list, export/import,
 search, pruning, encryption, or advanced history-management UI is added.
 
+Phase 15.11 through Phase 15.13 add compact transcript QA visibility. Chat may show current
+in-memory search status and disabled export readiness, plus a small search field scoped to the
+current transcript only. Settings may show read-only search/export summaries. The UI must not show
+a file picker, enabled export button, transcript browser, thread list, semantic/vector search
+controls, indexing controls, import controls, pruning, encryption, tools/plugins, or filesystem
+actions.
+
+Phase 15.14 through Phase 15.16 add narrow current-transcript export actions. Chat and Settings
+may show Export Markdown and Export JSON buttons plus the last export status and safe filename.
+The UI must not expose raw filesystem paths, a file picker, custom output locations, import,
+thread browsing, multi-conversation export, cloud sync, external process controls, or broad
+filesystem actions.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:
@@ -250,7 +263,7 @@ Current UI work remains presentation and metadata visibility only:
 - no real tool execution
 - no approval UX that triggers actions
 - no sandbox runtime
-- no filesystem/system actions
+- no filesystem/system actions beyond controlled app-owned transcript export and Piper file output
 - no particle systems or assistant-face rendering
 
 Manual visual QA expectations are tracked in `docs/UI_QA_CHECKLIST.md`.

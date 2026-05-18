@@ -128,11 +128,19 @@ Data ownership rule:
   - Chat history (`IChatHistoryStore`)
 - Clear actions for memory/chat must not delete settings.
 
+Export decision:
+
+- Desktop transcript exports are stored at `QStandardPaths::AppDataLocation + "/exports"`.
+- Export is current-transcript only and supports Markdown and JSON.
+- Export filenames are sanitized, timestamped, and unique.
+- QML receives only status, safe filename, message count, timestamp, and summary metadata.
+- No arbitrary output path, file picker, import, cloud sync, or external process is available.
+
 Current limitation:
 
 - Chat history is a single local transcript.
 - Multi-conversation/thread support is intentionally not implemented yet.
-- Encryption, export, and pruning are intentionally not implemented yet.
+- Encryption, import, arbitrary export locations, and pruning are intentionally not implemented yet.
 
 ## 9.1 Conversation Runtime State And Continuity
 
@@ -163,6 +171,37 @@ Out of scope:
 - Multi-conversation storage, transcript browser/search, export/import, encryption, pruning,
   provider expansion, cloud/API keys, model downloads/deletes, tools/plugins, filesystem/system
   actions, and voice execution changes.
+
+## 9.2 Transcript Search And Local Export
+
+Decision: Keep transcript search and export controller-owned, local-only, and scoped to the current
+single transcript.
+
+Reason: The current product still has one local transcript. The UI needs small QA/readiness
+visibility and a safe local export action without adding database indexing, arbitrary filesystem
+authority, import, or multi-conversation workflows.
+
+Runtime behavior:
+
+- Search uses `ConversationSearchQuery`, `ConversationSearchResult`, and
+  `ConversationSearchSummary` over the current in-memory `ChatSession` messages.
+- Search is literal and case-insensitive. Empty queries return an empty-query summary.
+- Search updates only search metadata and does not append, remove, persist, reorder, or mutate chat
+  messages.
+- Clear Chat resets search state.
+- Export uses `ConversationExportFormat`, `ConversationExportRequest`,
+  `ConversationExportReadiness`, and `ConversationExportResult` metadata for Markdown and JSON.
+- Export writes only to the app-controlled export directory below Qt `AppDataLocation`.
+- Empty transcripts with only the initial system message are refused.
+- Export result metadata includes status, safe output filename, exported message count, timestamp,
+  and safe error/refusal summaries.
+- QML receives only strings, string lists, booleans, and counts through `DesktopShellViewModel`.
+
+Out of scope:
+
+- Vector search, semantic search, embeddings, SQLite full-text indexes, persisted search state,
+  file pickers, arbitrary output paths, import, transcript browser, multi-conversation storage,
+  encryption, pruning, broader filesystem/system actions, cloud/API keys, tools, and plugins.
 
 ## 10. AI Context Layer
 

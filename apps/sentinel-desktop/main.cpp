@@ -83,6 +83,7 @@ int main(int argc, char* argv[]) {
         std::make_unique<sentinel::core::OllamaHttpRuntimeClient>(ollamaConfig),
         std::make_unique<sentinel::core::OllamaLocalInferenceClient>(ollamaConfig),
         std::make_unique<sentinel::core::OllamaLocalInferenceStreamClient>(ollamaConfig));
+    controller.setConversationExportDirectory(pathProvider.conversationExportDirectoryPath());
     sentinel::core::ModeManager modeManager;
     controller.setRoutingModeByName(settings.routingModeName());
     sentinel::desktop::DesktopShellViewModel shellViewModel(controller, modeManager, settings);

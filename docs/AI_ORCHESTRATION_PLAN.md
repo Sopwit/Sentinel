@@ -116,7 +116,18 @@ persisted transcript rows stable without duplicating system or assistant message
 adds value-only persistent conversation UX metadata for the same single transcript: persisted
 versus runtime-only status, message counts, last saved/restored status, and clear results. It does
 not add multi-conversation storage, transcript browsing, export/import, encryption, pruning,
-search, or new filesystem authority.
+search, or new filesystem authority. Phase 15.11 through Phase 15.13 add transcript QA metadata
+on that same boundary: literal case-insensitive in-memory search over the current `ChatSession`
+only, clear-chat reset of search state, and disabled export readiness/result metadata for Plain
+Text, Markdown, and JSON. Export requests remain metadata-only and write no files. No vector
+search, semantic search, embeddings, SQLite full-text index, persisted search state, file picker,
+export write, import, multi-conversation storage, cloud/API key, tool/plugin, or filesystem/system
+action is added. Phase 15.14 through Phase 15.16 implement controlled current-transcript export:
+Markdown and JSON writes are allowed only to the app-controlled export directory below Qt
+`AppDataLocation`, filenames are sanitized/timestamped/unique, empty transcripts are refused, and
+QML receives only safe filename/status/count/timestamp summaries. No import, arbitrary output path,
+file picker, cloud sync, external process, tools/plugins, semantic/vector search, or
+multi-conversation storage is added.
 
 ## Future Components
 
@@ -191,6 +202,10 @@ search, or new filesystem authority.
   persistence status, message counts, saved/restored status, and clear result. It does not add
   multiple conversations, transcript browsing, export/import, pruning, encryption, search, or
   storage access outside the existing `IChatHistoryStore`.
+- Conversation transcript QA and export metadata: literal in-memory search query/results over the
+  active single transcript plus controlled Markdown/JSON export result records. Search does not
+  mutate history or query storage. Export writes only to the app-controlled export directory and
+  does not support import, arbitrary paths, file pickers, or multi-conversation workflows.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 - Local model management readiness: deterministic metadata for recommended local models,
@@ -280,7 +295,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 15.10 runtime activates controlled local Ollama chat inference while keeping the
+Current Phase 15.16 runtime activates controlled local Ollama chat inference while keeping the
 larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
 selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
 action-light local model selection UX, metadata-only model-management readiness, metadata-only
@@ -291,10 +306,12 @@ Ready/Blocked/Missing path preparation metadata. The Ollama path reports bounded
 metadata, runs real generate/stream work through an async worker boundary, and clears failed
 streaming previews without persisting partial assistant output. Conversation runtime summaries are
 request-id guarded and reset on Clear Chat alongside persistent transcript cleanup. Conversation
-history UX metadata remains single-transcript, compact, and value-only. Phase 15.10 still adds no
-audio playback,
+history UX metadata remains single-transcript, compact, and value-only, with literal in-memory
+search metadata plus controlled Markdown/JSON current-transcript export to an app-owned directory.
+Phase 15.16 still adds no audio playback,
 microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
-execution, autonomous agents, tool execution, shell execution, or filesystem-wide actions:
+execution, autonomous agents, tool execution, shell execution, filesystem-wide actions, vector
+search, embeddings, semantic search, SQLite FTS, file picker, import, or arbitrary export paths:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.

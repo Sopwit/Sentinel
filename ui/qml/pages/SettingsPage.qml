@@ -630,6 +630,31 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Search"
+                    value: settingsPage.viewModel.conversationSearchStatus
+                           + " / "
+                           + settingsPage.viewModel.conversationSearchSummaryText
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Export"
+                    value: settingsPage.viewModel.conversationExportLastStatus
+                           + " / "
+                           + settingsPage.viewModel.conversationExportLastResultSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Export File"
+                    value: settingsPage.viewModel.conversationExportLastFileName
+                    Layout.fillWidth: true
+                }
+
                 GridLayout {
                     Layout.fillWidth: true
                     columns: settingsPage.compact ? 1 : 2
@@ -647,6 +672,20 @@ ScrollView {
                         text: "Clear Chat History"
                         Layout.fillWidth: true
                         onClicked: clearChatDialog.open()
+                    }
+
+                    SentinelButton {
+                        text: "Export Markdown"
+                        enabled: settingsPage.viewModel.conversationExportAvailable
+                        Layout.fillWidth: true
+                        onClicked: settingsPage.viewModel.exportTranscript("markdown")
+                    }
+
+                    SentinelButton {
+                        text: "Export JSON"
+                        enabled: settingsPage.viewModel.conversationExportAvailable
+                        Layout.fillWidth: true
+                        onClicked: settingsPage.viewModel.exportTranscript("json")
                     }
                 }
             }

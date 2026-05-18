@@ -43,6 +43,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::conversationStateChanged);
     connect(&controller_, &core::ApplicationController::conversationRuntimeChanged, this,
             &DesktopShellViewModel::conversationRuntimeChanged);
+    connect(&controller_, &core::ApplicationController::conversationSearchChanged, this,
+            &DesktopShellViewModel::conversationSearchChanged);
+    connect(&controller_, &core::ApplicationController::conversationExportChanged, this,
+            &DesktopShellViewModel::conversationExportChanged);
     connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
     connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
@@ -995,6 +999,62 @@ QString DesktopShellViewModel::conversationLastRestoredStatus() const {
     return controller_.conversationLastRestoredStatus();
 }
 
+QString DesktopShellViewModel::conversationSearchQueryText() const {
+    return controller_.conversationSearchQueryText();
+}
+
+QString DesktopShellViewModel::conversationSearchStatus() const {
+    return controller_.conversationSearchStatus();
+}
+
+QString DesktopShellViewModel::conversationSearchSummaryText() const {
+    return controller_.conversationSearchSummaryText();
+}
+
+int DesktopShellViewModel::conversationSearchResultCount() const {
+    return controller_.conversationSearchResultCount();
+}
+
+QStringList DesktopShellViewModel::conversationSearchResultSummaries() const {
+    return controller_.conversationSearchResultSummaries();
+}
+
+bool DesktopShellViewModel::conversationExportAvailable() const {
+    return controller_.conversationExportAvailable();
+}
+
+QString DesktopShellViewModel::conversationExportReadinessStatus() const {
+    return controller_.conversationExportReadinessStatus();
+}
+
+QString DesktopShellViewModel::conversationExportReadinessSummary() const {
+    return controller_.conversationExportReadinessSummary();
+}
+
+QStringList DesktopShellViewModel::conversationExportReadinessChecks() const {
+    return controller_.conversationExportReadinessChecks();
+}
+
+QString DesktopShellViewModel::conversationExportLastResultSummary() const {
+    return controller_.conversationExportLastResultSummary();
+}
+
+QString DesktopShellViewModel::conversationExportLastStatus() const {
+    return controller_.conversationExportLastStatus();
+}
+
+QString DesktopShellViewModel::conversationExportLastFileName() const {
+    return controller_.conversationExportLastFileName();
+}
+
+int DesktopShellViewModel::conversationExportLastMessageCount() const {
+    return controller_.conversationExportLastMessageCount();
+}
+
+QString DesktopShellViewModel::conversationExportLastTimestamp() const {
+    return controller_.conversationExportLastTimestamp();
+}
+
 QString DesktopShellViewModel::memoryMaintenanceStatus() const {
     return controller_.memoryMaintenanceStatus();
 }
@@ -1064,6 +1124,22 @@ bool DesktopShellViewModel::sendMessage(const QString& message) {
 
 bool DesktopShellViewModel::runLocalInference(const QString& prompt, const QString& model) {
     return controller_.runLocalInference(prompt, model);
+}
+
+bool DesktopShellViewModel::searchConversation(const QString& query) {
+    return controller_.searchConversation(query);
+}
+
+void DesktopShellViewModel::clearConversationSearch() {
+    controller_.clearConversationSearch();
+}
+
+bool DesktopShellViewModel::exportTranscript(const QString& format) {
+    return controller_.exportTranscript(format);
+}
+
+bool DesktopShellViewModel::requestConversationExport(const QString& format) {
+    return exportTranscript(format);
 }
 
 bool DesktopShellViewModel::runAgentRequest(const QString& request) {

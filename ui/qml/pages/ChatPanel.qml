@@ -122,6 +122,24 @@ ShellPanel {
 
                 InfoRow {
                     compact: true
+                    label: "Search"
+                    value: chatPanel.viewModel.conversationSearchStatus
+                           + " / "
+                           + chatPanel.viewModel.conversationSearchSummaryText
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
+                    label: "Export"
+                    value: chatPanel.viewModel.conversationExportLastStatus
+                           + " / "
+                           + chatPanel.viewModel.conversationExportLastResultSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
                     label: "Inference"
                     value: chatPanel.viewModel.localInferenceSummary
                     Layout.fillWidth: true
@@ -241,6 +259,49 @@ ShellPanel {
             columns: chatPanel.compact ? 2 : 3
             columnSpacing: SentinelTheme.spaceMd
             rowSpacing: SentinelTheme.spaceMd
+
+            SentinelTextField {
+                id: searchInput
+                Layout.fillWidth: true
+                Layout.columnSpan: chatPanel.compact ? 2 : 1
+                placeholderText: "Search current transcript"
+                onAccepted: {
+                    if (searchButton.enabled)
+                        searchButton.clicked()
+                }
+            }
+
+            SentinelButton {
+                id: searchButton
+                text: "Search"
+                enabled: searchInput.text.trim().length > 0
+                Layout.fillWidth: chatPanel.compact
+                onClicked: chatPanel.viewModel.searchConversation(searchInput.text)
+            }
+
+            SentinelButton {
+                text: "Reset"
+                enabled: chatPanel.viewModel.conversationSearchQueryText.length > 0
+                Layout.fillWidth: chatPanel.compact
+                onClicked: {
+                    searchInput.clear()
+                    chatPanel.viewModel.clearConversationSearch()
+                }
+            }
+
+            SentinelButton {
+                text: "Export Markdown"
+                enabled: chatPanel.viewModel.conversationExportAvailable
+                Layout.fillWidth: chatPanel.compact
+                onClicked: chatPanel.viewModel.exportTranscript("markdown")
+            }
+
+            SentinelButton {
+                text: "Export JSON"
+                enabled: chatPanel.viewModel.conversationExportAvailable
+                Layout.fillWidth: chatPanel.compact
+                onClicked: chatPanel.viewModel.exportTranscript("json")
+            }
 
             SentinelTextField {
                 id: chatInput
