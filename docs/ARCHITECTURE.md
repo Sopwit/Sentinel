@@ -220,6 +220,23 @@ boundary:
 No cloud sync, import, permanent delete UI, multi-conversation export, vector/semantic search,
 tool/plugin/system execution, or Ollama safety policy change is introduced.
 
+Phase 15.33 through Phase 15.35 checkpoint the conversation browser runtime architecture:
+
+- Multi-conversation storage remains behind `IConversationStore`; QML receives only view-model
+  strings, string lists, booleans, and counts.
+- Legacy `IChatHistoryStore` data remains a compatibility startup source and is not destructively
+  migrated or cleared by conversation-store initialization.
+- `SQLiteConversationStore::deleteConversation()` is a soft metadata operation, while the current
+  controller permanent-delete request path refuses before calling it.
+- Archived conversations remain loadable/readable and reject new appends through controller and
+  store checks.
+- Conversation switching resets active request metadata/live preview/search state and stale async
+  completions remain ignored by request-id guards.
+
+No semantic memory, embeddings/vector DB, cloud sync, import/export changes, permanent-delete
+execution, broad UI redesign, model/voice/tool/plugin changes, or runtime authority expansion is
+introduced by this checkpoint.
+
 ## Conversation Session Metadata
 
 Phase 6.8 adds `ConversationSession` as a higher-level interaction/session metadata layer. It is

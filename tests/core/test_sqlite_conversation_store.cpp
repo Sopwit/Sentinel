@@ -2,7 +2,10 @@
 #include "sentinel/core/SQLiteConversationStore.h"
 
 #include <QFile>
+#include <QSqlDatabase>
+#include <QSqlQuery>
 #include <QTemporaryDir>
+#include <QUuid>
 #include <QtTest>
 
 using sentinel::core::ChatMessage;
@@ -24,6 +27,7 @@ private slots:
     void persistsConversationsAcrossInstances();
     void blocksAppendingToArchivedConversation();
     void softDeleteHidesConversation();
+    void softDeleteMarksOnlyAndKeepsMessagesInDatabase();
     void safelyNoOpsForUnopenableDatabasePath();
     void doesNotMigrateOrClearSingleTranscriptStore();
 };
@@ -154,6 +158,58 @@ void SQLiteConversationStoreTest::softDeleteHidesConversation() {
     const auto conversations = store.listConversations();
     QCOMPARE(conversations.size(), 1);
     QCOMPARE(conversations.first().id, second.id);
+}
+
+void SQLiteConversationStoreTest::softDeleteMarksOnlyAndKeepsMessagesInDatabase() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto path = databasePath(dir);
+    QString conversationId;
+
+    {
+        SQLiteConversationStore store(path);
+        const auto conversation = store.createConversation(QStringLiteral("Soft Delete"));
+        conversationId = conversation.id;
+        QVERIFY(store.appendMessage(
+            message(conversationId, 1, ChatRole::System, QStringLiteral("system"))));
+        QVERIFY(store.appendMessage(
+            message(conversationId, 2, ChatRole::User, QStringLiteral("kept"))));
+
+        QVERIFY(store.deleteConversation(conversationId));
+        QVERIFY(store.listConversations().isEmpty());
+        QVERIFY(store.loadMessages(conversationId).isEmpty());
+        QCOMPARE(store.lastError().code, ConversationStoreErrorCode::InvalidConversationId);
+    }
+
+    const auto connectionName = QStringLiteral("sentinel_soft_delete_test_%1")
+                                    .arg(QUuid::createUuid().toString(QUuid::Id128));
+    auto database = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
+    database.setDatabaseName(path);
+    QVERIFY(database.open());
+
+    {
+        QSqlQuery query(database);
+        query.prepare(QStringLiteral("SELECT archived, deleted FROM conversations WHERE id = ?"));
+        query.addBindValue(conversationId);
+        QVERIFY(query.exec());
+        QVERIFY(query.next());
+        QVERIFY(query.value(0).toBool());
+        QVERIFY(query.value(1).toBool());
+    }
+
+    {
+        QSqlQuery query(database);
+        query.prepare(
+            QStringLiteral("SELECT COUNT(*) FROM conversation_messages WHERE conversation_id = ?"));
+        query.addBindValue(conversationId);
+        QVERIFY(query.exec());
+        QVERIFY(query.next());
+        QCOMPARE(query.value(0).toInt(), 2);
+    }
+
+    database.close();
+    database = {};
+    QSqlDatabase::removeDatabase(connectionName);
 }
 
 void SQLiteConversationStoreTest::safelyNoOpsForUnopenableDatabasePath() {
