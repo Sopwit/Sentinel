@@ -402,21 +402,30 @@ public:
                                         QStringLiteral("async chunk"),
                                     });
             }
-            LocalInferenceStreamResult result;
-            result.model = request.options.model;
-            result.endpoint = QStringLiteral("http://127.0.0.1:11434");
-            result.timeoutMs = request.options.timeoutMs;
-            if (mode_ == Mode::TimeoutError) {
-                result.status = LocalInferenceStreamStatus::Error;
-                result.error = sentinel::core::LocalInferenceError::Timeout;
-                result.summary = QStringLiteral("Async fake local stream timed out.");
+
+            auto finish = [this, request, onFinished = std::move(onFinished)]() mutable {
+                LocalInferenceStreamResult result;
+                result.model = request.options.model;
+                result.endpoint = QStringLiteral("http://127.0.0.1:11434");
+                result.timeoutMs = request.options.timeoutMs;
+                if (mode_ == Mode::TimeoutError) {
+                    result.status = LocalInferenceStreamStatus::Error;
+                    result.error = sentinel::core::LocalInferenceError::Timeout;
+                    result.summary = QStringLiteral("Async fake local stream timed out.");
+                } else {
+                    result.status = LocalInferenceStreamStatus::Completed;
+                    result.accumulatedText = QStringLiteral("async stream completion");
+                    result.summary = QStringLiteral("Async fake local stream completed.");
+                }
+                if (onFinished) {
+                    onFinished(request.id, result);
+                }
+            };
+
+            if (streamFinishDelayMs > 0) {
+                QTimer::singleShot(streamFinishDelayMs, std::move(finish));
             } else {
-                result.status = LocalInferenceStreamStatus::Completed;
-                result.accumulatedText = QStringLiteral("async stream completion");
-                result.summary = QStringLiteral("Async fake local stream completed.");
-            }
-            if (onFinished) {
-                onFinished(request.id, result);
+                finish();
             }
         });
         return true;
@@ -440,6 +449,7 @@ public:
 
     Mode mode_ = Mode::Success;
     int delayMs = 0;
+    int streamFinishDelayMs = 0;
     bool busy = false;
     bool called = false;
     QStringList cancelledRequestIds;
@@ -621,6 +631,7 @@ private slots:
     void enabledLocalChatStreamingCancellationAppendsSafeRefusal();
     void streamingPreviewClearsAfterStreamError();
     void asyncLocalChatInferenceCompletesWithFakeWorker();
+    void asyncLocalChatStreamingCompletesWithFakeWorker();
     void asyncLocalChatInferenceErrorResetsBusy();
     void asyncDuplicateSendIsRejectedBeforeAppending();
     void staleAsyncResultIsIgnoredAfterCancellation();
@@ -1620,6 +1631,38 @@ void ApplicationControllerTest::asyncLocalChatInferenceCompletesWithFakeWorker()
     QCOMPARE(controller->chatHistory().size(), 3);
     QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
     QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("async fake completion"));
+    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
+    QCOMPARE(chatSpy.count(), 2);
+}
+
+void ApplicationControllerTest::asyncLocalChatStreamingCompletesWithFakeWorker() {
+    auto worker = std::make_unique<AsyncLocalInferenceWorker>();
+    auto* workerPtr = worker.get();
+    worker->delayMs = 10;
+    worker->streamFinishDelayMs = 250;
+    auto controller = makeAsyncWorkerController(std::move(worker));
+    QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
+
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setLocalInferenceStreamingEnabled(true);
+    const auto sent = controller->sendMessage(QStringLiteral("hello"));
+
+    QVERIFY(sent);
+    QVERIFY(workerPtr->called);
+    QVERIFY(controller->localInferenceBusy());
+    QCOMPARE(controller->chatHistory().size(), 2);
+    QCOMPARE(workerPtr->lastRequest.options.streamingRequested, true);
+
+    QTRY_COMPARE(controller->localInferenceStreamingText(), QStringLiteral("async "));
+    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Streaming"));
+
+    QTRY_VERIFY(!controller->localInferenceBusy());
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Succeeded"));
+    QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Completed"));
+    QVERIFY(controller->localInferenceStreamingText().isEmpty());
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
+    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("async stream completion"));
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
     QCOMPARE(chatSpy.count(), 2);
 }
