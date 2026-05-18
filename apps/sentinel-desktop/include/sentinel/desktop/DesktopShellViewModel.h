@@ -314,6 +314,33 @@ class DesktopShellViewModel final : public QObject {
                    chatMessagesChanged)
     Q_PROPERTY(QString conversationLastRestoredStatus READ conversationLastRestoredStatus NOTIFY
                    chatMessagesChanged)
+    Q_PROPERTY(QString conversationSearchQueryText READ conversationSearchQueryText NOTIFY
+                   conversationSearchChanged)
+    Q_PROPERTY(QString conversationSearchStatus READ conversationSearchStatus NOTIFY
+                   conversationSearchChanged)
+    Q_PROPERTY(QString conversationSearchSummaryText READ conversationSearchSummaryText NOTIFY
+                   conversationSearchChanged)
+    Q_PROPERTY(int conversationSearchResultCount READ conversationSearchResultCount NOTIFY
+                   conversationSearchChanged)
+    Q_PROPERTY(QStringList conversationSearchResultSummaries READ conversationSearchResultSummaries
+                   NOTIFY conversationSearchChanged)
+    Q_PROPERTY(bool conversationExportAvailable READ conversationExportAvailable CONSTANT)
+    Q_PROPERTY(
+        QString conversationExportReadinessStatus READ conversationExportReadinessStatus CONSTANT)
+    Q_PROPERTY(
+        QString conversationExportReadinessSummary READ conversationExportReadinessSummary CONSTANT)
+    Q_PROPERTY(QStringList conversationExportReadinessChecks READ conversationExportReadinessChecks
+                   CONSTANT)
+    Q_PROPERTY(QString conversationExportLastResultSummary READ conversationExportLastResultSummary
+                   NOTIFY conversationExportChanged)
+    Q_PROPERTY(QString conversationExportLastStatus READ conversationExportLastStatus NOTIFY
+                   conversationExportChanged)
+    Q_PROPERTY(QString conversationExportLastFileName READ conversationExportLastFileName NOTIFY
+                   conversationExportChanged)
+    Q_PROPERTY(int conversationExportLastMessageCount READ conversationExportLastMessageCount NOTIFY
+                   conversationExportChanged)
+    Q_PROPERTY(QString conversationExportLastTimestamp READ conversationExportLastTimestamp NOTIFY
+                   conversationExportChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
     Q_PROPERTY(
@@ -545,6 +572,20 @@ public:
     QString conversationPersistenceStatus() const;
     QString conversationLastSavedStatus() const;
     QString conversationLastRestoredStatus() const;
+    QString conversationSearchQueryText() const;
+    QString conversationSearchStatus() const;
+    QString conversationSearchSummaryText() const;
+    int conversationSearchResultCount() const;
+    QStringList conversationSearchResultSummaries() const;
+    bool conversationExportAvailable() const;
+    QString conversationExportReadinessStatus() const;
+    QString conversationExportReadinessSummary() const;
+    QStringList conversationExportReadinessChecks() const;
+    QString conversationExportLastResultSummary() const;
+    QString conversationExportLastStatus() const;
+    QString conversationExportLastFileName() const;
+    int conversationExportLastMessageCount() const;
+    QString conversationExportLastTimestamp() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     QString currentModeName() const;
@@ -562,6 +603,10 @@ public:
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
     Q_INVOKABLE bool generatePiperTtsFile(const QString& text);
+    Q_INVOKABLE bool searchConversation(const QString& query);
+    Q_INVOKABLE void clearConversationSearch();
+    Q_INVOKABLE bool exportTranscript(const QString& format);
+    Q_INVOKABLE bool requestConversationExport(const QString& format);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -591,6 +636,8 @@ signals:
     void conversationSessionChanged();
     void conversationStateChanged();
     void conversationRuntimeChanged();
+    void conversationSearchChanged();
+    void conversationExportChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();

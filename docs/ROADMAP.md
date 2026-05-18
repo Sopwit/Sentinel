@@ -278,13 +278,50 @@ Delivered:
 - Tests cover async success/failure state updates, stale result behavior, clear/reset continuity,
   persisted startup loading, duplicate-message avoidance, and QML-safe exposure.
 
+## Phase 15.11-15.13: Conversation Search, Export Readiness, And Transcript QA
+
+Completed. Added narrow transcript QA metadata without expanding storage or filesystem authority.
+
+Delivered:
+
+- Literal case-insensitive search over the current in-memory single transcript.
+- QML-safe search query/status/summary/result-count/result-summary exposure.
+- Clear Chat resets search metadata to the empty-query state.
+- Disabled export readiness metadata for Plain Text, Markdown, and JSON formats.
+- Metadata-only export requests return disabled/not-implemented results and write no files.
+- Compact Chat and Settings visibility for search/export state, plus a small current-transcript
+  search field in Chat.
+- Focused tests for user/assistant matches, empty query behavior, no mutation during search, clear
+  reset, export no side effects, and view-model exposure.
+
 Still out of scope:
 
-- New providers, cloud/API keys, model downloads/pulls/deletes, Ollama process management, tools,
-  plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper changes,
-  and Whisper execution.
-  API keys, tools/plugins, filesystem/system actions, Piper changes, Whisper execution, playback,
-  microphone access, and autonomous loops.
+- Persisted search, SQLite FTS, vector search, semantic search, embeddings, export file writes,
+  file pickers, import, transcript browser, multi-conversation storage, encryption, pruning,
+  cloud/API keys, tools/plugins, filesystem/system actions, Piper changes, Whisper execution,
+  playback, microphone access, and autonomous loops.
+
+## Phase 15.14-15.16: Local Transcript Export Implementation
+
+Completed. Implemented controlled local export for the current single transcript.
+
+Delivered:
+
+- Markdown and JSON export actions for the current transcript only.
+- App-controlled export directory below Qt `AppDataLocation` via the path-provider boundary.
+- Sanitized timestamped filenames with uniqueness handling to avoid surprise overwrites.
+- Export refusals for empty transcripts with no user or assistant messages.
+- QML-safe result metadata: status, safe filename, exported message count, last export timestamp,
+  and concise error/refusal summaries.
+- Small Chat and Settings export actions without broad redesign.
+- Focused tests for Markdown content, JSON structure, empty-refusal behavior, filename behavior,
+  view-model exposure, and no arbitrary output path action.
+
+Still out of scope:
+
+- Import, arbitrary file picker/output path, transcript browser, multi-conversation export,
+  encryption, pruning, cloud/API sync, external processes, tools/plugins, semantic/vector search,
+  cloud/API keys, tools/plugins, filesystem/system actions, and model-management operations.
 
 ## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 

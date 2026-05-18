@@ -69,6 +69,7 @@ private slots:
     void exposesOnlyQmlSafeAgentVisibilityProperties();
     void exposesChatHistoryStatus();
     void exposesConversationHistorySummaryMetadata();
+    void exposesConversationSearchAndExportMetadata();
     void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
@@ -1214,6 +1215,20 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("localInferenceStreamStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceStreamSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceStreamingText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSearchQueryText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSearchStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSearchSummaryText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSearchResultCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationSearchResultSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationExportAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("conversationExportReadinessStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationExportReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationExportReadinessChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationExportLastResultSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationExportLastStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationExportLastFileName"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationExportLastMessageCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationExportLastTimestamp"), QByteArrayLiteral("QString")},
     };
 
     const QSet<QString> writableProperties{
@@ -1236,6 +1251,10 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("conversationContextWindow"),
         QStringLiteral("conversationStateGraph"),
         QStringLiteral("conversationRuntimeStateRecord"),
+        QStringLiteral("conversationSearchSummary"),
+        QStringLiteral("conversationSearchResults"),
+        QStringLiteral("conversationExportReadiness"),
+        QStringLiteral("conversationExportResult"),
         QStringLiteral("conversationTransitionResult"),
         QStringLiteral("conversationTransitions"),
         QStringLiteral("agentActivityLog"),
@@ -1353,6 +1372,47 @@ void DesktopShellViewModelTest::exposesConversationHistorySummaryMetadata() {
     QVERIFY(viewModel.conversationHistorySummaryText().contains(QStringLiteral("3 messages")));
     QCOMPARE(viewModel.conversationLastSavedStatus(),
              QStringLiteral("Saved latest assistant message."));
+}
+
+void DesktopShellViewModelTest::exposesConversationSearchAndExportMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy searchSpy(&fixture.viewModel, &DesktopShellViewModel::conversationSearchChanged);
+    QSignalSpy exportSpy(&fixture.viewModel, &DesktopShellViewModel::conversationExportChanged);
+
+    QCOMPARE(fixture.viewModel.conversationSearchStatus(), QStringLiteral("Empty Query"));
+    QCOMPARE(fixture.viewModel.conversationSearchResultCount(), 0);
+    QVERIFY(fixture.viewModel.conversationSearchSummaryText().contains(
+        QStringLiteral("No transcript search query")));
+    QVERIFY(fixture.viewModel.conversationExportAvailable());
+    QCOMPARE(fixture.viewModel.conversationExportReadinessStatus(), QStringLiteral("Ready"));
+    QVERIFY(fixture.viewModel.conversationExportReadinessChecks().contains(
+        QStringLiteral("Output: App-controlled export directory")));
+    QCOMPARE(fixture.viewModel.conversationExportLastStatus(), QStringLiteral("Not Run"));
+
+    QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("search token")));
+    QVERIFY(fixture.viewModel.searchConversation(QStringLiteral("token")));
+
+    QCOMPARE(fixture.viewModel.conversationSearchQueryText(), QStringLiteral("token"));
+    QCOMPARE(fixture.viewModel.conversationSearchStatus(), QStringLiteral("Completed"));
+    QCOMPARE(fixture.viewModel.conversationSearchResultCount(), 1);
+    QVERIFY(fixture.viewModel.conversationSearchResultSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("user #2")));
+    QVERIFY(searchSpy.count() >= 1);
+
+    QTemporaryDir exportDir;
+    QVERIFY(exportDir.isValid());
+    fixture.controller.setConversationExportDirectory(exportDir.path());
+    QVERIFY(fixture.viewModel.exportTranscript(QStringLiteral("json")));
+    QCOMPARE(fixture.viewModel.conversationExportLastStatus(), QStringLiteral("Succeeded"));
+    QVERIFY(fixture.viewModel.conversationExportLastFileName().endsWith(QStringLiteral(".json")));
+    QCOMPARE(fixture.viewModel.conversationExportLastMessageCount(),
+             fixture.viewModel.conversationHistoryMessageCount());
+    QCOMPARE(exportSpy.count(), 1);
+
+    fixture.viewModel.clearConversationSearch();
+    QCOMPARE(fixture.viewModel.conversationSearchStatus(), QStringLiteral("Empty Query"));
+    QCOMPARE(fixture.viewModel.conversationSearchResultCount(), 0);
 }
 
 void DesktopShellViewModelTest::exposesMaintenanceStatuses() {

@@ -29,4 +29,9 @@ QString StandardPathProvider::chatHistoryDatabasePath() const {
            QStringLiteral("/chat_history.sqlite3");
 }
 
+QString StandardPathProvider::conversationExportDirectoryPath() const {
+    return writableDirectoryOrFallback(QStandardPaths::AppDataLocation) +
+           QStringLiteral("/exports");
+}
+
 } // namespace sentinel::core

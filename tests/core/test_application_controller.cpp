@@ -11,6 +11,10 @@
 
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QRegularExpression>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTimer>
@@ -638,6 +642,15 @@ private slots:
     void clearChatClearsConversationRuntimeAndPersistence();
     void reportsPersistedConversationHistorySummary();
     void reportsRuntimeOnlyConversationHistorySummary();
+    void inMemoryConversationSearchFindsUserAndAssistantMessages();
+    void emptyConversationSearchDoesNotMutateHistory();
+    void conversationSearchDoesNotMutateHistory();
+    void clearChatResetsConversationSearchSummary();
+    void markdownConversationExportWritesCurrentTranscript();
+    void jsonConversationExportWritesValidStructure();
+    void emptyConversationExportIsRefused();
+    void conversationExportUsesSanitizedTimestampedFilenames();
+    void unsupportedConversationExportFormatWritesNoFile();
     void clearChatResetsStreamingAndActiveRequestMetadata();
     void clearChatKeepsSingleInitialSystemMessage();
     void asyncDuplicateSendIsRejectedBeforeAppending();
@@ -1789,6 +1802,184 @@ void ApplicationControllerTest::reportsRuntimeOnlyConversationHistorySummary() {
     QCOMPARE(controller.conversationLastSavedStatus(),
              QStringLiteral("Runtime-only transcript; persistence unavailable."));
     QVERIFY(controller.conversationLastRestoredStatus().contains(QStringLiteral("unavailable")));
+}
+
+void ApplicationControllerTest::inMemoryConversationSearchFindsUserAndAssistantMessages() {
+    ApplicationController controller{std::make_unique<ErrorProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+
+    QVERIFY(!controller.sendMessage(QStringLiteral("alpha deterministic user search")));
+
+    QVERIFY(controller.searchConversation(QStringLiteral("deterministic")));
+
+    QCOMPARE(controller.conversationSearchStatus(), QStringLiteral("Completed"));
+    QCOMPARE(controller.conversationSearchQueryText(), QStringLiteral("deterministic"));
+    QCOMPARE(controller.conversationSearchResultCount(), 2);
+    QVERIFY(controller.conversationSearchSummaryText().contains(QStringLiteral("2")));
+    QVERIFY(controller.conversationSearchResultSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("user #2")));
+    QVERIFY(controller.conversationSearchResultSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("assistant #3")));
+}
+
+void ApplicationControllerTest::emptyConversationSearchDoesNotMutateHistory() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QVERIFY(controller.sendMessage(QStringLiteral("status")));
+    const auto before = controller.chatHistory();
+
+    QVERIFY(!controller.searchConversation(QStringLiteral("   ")));
+
+    QCOMPARE(controller.conversationSearchStatus(), QStringLiteral("Empty Query"));
+    QCOMPARE(controller.conversationSearchResultCount(), 0);
+    QCOMPARE(controller.chatHistory().size(), before.size());
+    for (int i = 0; i < before.size(); ++i) {
+        QCOMPARE(controller.chatHistory().at(i).id, before.at(i).id);
+        QCOMPARE(controller.chatHistory().at(i).role, before.at(i).role);
+        QCOMPARE(controller.chatHistory().at(i).content, before.at(i).content);
+    }
+}
+
+void ApplicationControllerTest::conversationSearchDoesNotMutateHistory() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QVERIFY(controller.sendMessage(QStringLiteral("status")));
+    const auto before = controller.chatHistory();
+
+    QVERIFY(controller.searchConversation(QStringLiteral("status")));
+
+    QCOMPARE(controller.chatHistory().size(), before.size());
+    for (int i = 0; i < before.size(); ++i) {
+        QCOMPARE(controller.chatHistory().at(i).id, before.at(i).id);
+        QCOMPARE(controller.chatHistory().at(i).role, before.at(i).role);
+        QCOMPARE(controller.chatHistory().at(i).content, before.at(i).content);
+        QCOMPARE(controller.chatHistory().at(i).status, before.at(i).status);
+    }
+}
+
+void ApplicationControllerTest::clearChatResetsConversationSearchSummary() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QVERIFY(controller.sendMessage(QStringLiteral("status")));
+    QVERIFY(controller.searchConversation(QStringLiteral("status")));
+    QCOMPARE(controller.conversationSearchResultCount(), 1);
+
+    QVERIFY(!controller.clearChat());
+
+    QCOMPARE(controller.conversationSearchStatus(), QStringLiteral("Empty Query"));
+    QCOMPARE(controller.conversationSearchQueryText(), QString());
+    QCOMPARE(controller.conversationSearchResultCount(), 0);
+    QCOMPARE(controller.chatHistory().size(), 1);
+}
+
+void ApplicationControllerTest::markdownConversationExportWritesCurrentTranscript() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    controller.setConversationExportDirectory(dir.path());
+
+    QVERIFY(controller.sendMessage(QStringLiteral("export markdown token")));
+    QVERIFY(controller.exportTranscript(QStringLiteral("Markdown")));
+
+    const auto result = controller.latestConversationExportResult();
+    QVERIFY(result.success);
+    QVERIFY(result.wroteFile);
+    QCOMPARE(result.messageCount, controller.chatHistory().size());
+    QVERIFY(result.outputFileName.endsWith(QStringLiteral(".md")));
+    QVERIFY(QFileInfo(result.outputPath).absolutePath() ==
+            QFileInfo(dir.path()).absoluteFilePath());
+    QFile file(result.outputPath);
+    QVERIFY(file.open(QIODevice::ReadOnly | QIODevice::Text));
+    const auto content = QString::fromUtf8(file.readAll());
+    QVERIFY(content.contains(QStringLiteral("# Sentinel Transcript")));
+    QVERIFY(content.contains(QStringLiteral("## user #2")));
+    QVERIFY(content.contains(QStringLiteral("export markdown token")));
+    QCOMPARE(controller.conversationExportLastStatus(), QStringLiteral("Succeeded"));
+    QCOMPARE(controller.conversationExportLastFileName(), result.outputFileName);
+}
+
+void ApplicationControllerTest::jsonConversationExportWritesValidStructure() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    controller.setConversationExportDirectory(dir.path());
+
+    QVERIFY(controller.sendMessage(QStringLiteral("export json token")));
+    QVERIFY(controller.exportTranscript(QStringLiteral("json")));
+
+    const auto result = controller.latestConversationExportResult();
+    QVERIFY(result.success);
+    QVERIFY(result.outputFileName.endsWith(QStringLiteral(".json")));
+    QFile file(result.outputPath);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    const auto document = QJsonDocument::fromJson(file.readAll());
+    QVERIFY(document.isObject());
+    const auto root = document.object();
+    QCOMPARE(root.value(QStringLiteral("format")).toString(),
+             QStringLiteral("sentinel.transcript.v1"));
+    QCOMPARE(root.value(QStringLiteral("messageCount")).toInt(), controller.chatHistory().size());
+    const auto messages = root.value(QStringLiteral("messages")).toArray();
+    QCOMPARE(messages.size(), controller.chatHistory().size());
+    QCOMPARE(messages.at(1).toObject().value(QStringLiteral("role")).toString(),
+             QStringLiteral("user"));
+    QCOMPARE(messages.at(1).toObject().value(QStringLiteral("content")).toString(),
+             QStringLiteral("export json token"));
+}
+
+void ApplicationControllerTest::emptyConversationExportIsRefused() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    controller.setConversationExportDirectory(dir.path());
+
+    QVERIFY(!controller.exportTranscript(QStringLiteral("markdown")));
+
+    const auto result = controller.latestConversationExportResult();
+    QCOMPARE(result.status, QStringLiteral("Refused"));
+    QVERIFY(!result.wroteFile);
+    QVERIFY(result.refusalSummary.contains(QStringLiteral("no user or assistant messages")));
+    QCOMPARE(QDir(dir.path()).entryList(QDir::Files).size(), 0);
+}
+
+void ApplicationControllerTest::conversationExportUsesSanitizedTimestampedFilenames() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    controller.setConversationExportDirectory(dir.path());
+
+    QVERIFY(controller.sendMessage(QStringLiteral("filename token")));
+    QVERIFY(controller.exportTranscript(QStringLiteral("markdown")));
+    QVERIFY(controller.exportTranscript(QStringLiteral("markdown")));
+
+    const auto result = controller.latestConversationExportResult();
+    QVERIFY(result.outputFileName.startsWith(QStringLiteral("sentinel-transcript-")));
+    QVERIFY(result.outputFileName.endsWith(QStringLiteral(".md")));
+    QVERIFY(!result.outputFileName.contains(QLatin1Char('/')));
+    QVERIFY(!result.outputFileName.contains(QLatin1Char(':')));
+    QVERIFY(result.outputFileName.contains(QRegularExpression(
+        QStringLiteral("^sentinel-transcript-[0-9]{8}-[0-9]{6}-[0-9]{3}(-[0-9]+)?\\.md$"))));
+    QCOMPARE(QDir(dir.path()).entryList(QStringList{QStringLiteral("*.md")}, QDir::Files).size(),
+             2);
+}
+
+void ApplicationControllerTest::unsupportedConversationExportFormatWritesNoFile() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    controller.setConversationExportDirectory(dir.path());
+
+    QVERIFY(controller.sendMessage(QStringLiteral("plain text should not export")));
+    QVERIFY(!controller.exportTranscript(QStringLiteral("plain text")));
+
+    QCOMPARE(controller.latestConversationExportResult().status, QStringLiteral("Refused"));
+    QCOMPARE(QDir(dir.path()).entryList(QDir::Files).size(), 0);
 }
 
 void ApplicationControllerTest::clearChatResetsStreamingAndActiveRequestMetadata() {

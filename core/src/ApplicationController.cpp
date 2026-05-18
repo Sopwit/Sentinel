@@ -10,9 +10,18 @@
 #include "sentinel/core/StaticSandboxPolicy.h"
 #include "sentinel/core/StaticTaskPlanner.h"
 
+#include <QDateTime>
+#include <QDir>
 #include <QElapsedTimer>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QSaveFile>
+#include <QStandardPaths>
+#include <QTextStream>
 
+#include <algorithm>
 #include <cstdint>
 
 namespace sentinel::core {
@@ -97,6 +106,135 @@ QString localInferenceChatFailureMessage(const LocalInferenceResponse& response)
     }
 
     return safeLocalInferenceSummary(response);
+}
+
+QString conversationSearchPreview(const QString& content, int matchIndex, int queryLength) {
+    const auto trimmed = content.simplified();
+    if (matchIndex < 0 || queryLength <= 0) {
+        return trimmed.left(96);
+    }
+
+    const auto start = std::max<qsizetype>(0, matchIndex - 32);
+    const auto end = std::min<qsizetype>(trimmed.size(), matchIndex + queryLength + 48);
+    auto preview = trimmed.mid(start, end - start);
+    if (start > 0) {
+        preview.prepend(QStringLiteral("..."));
+    }
+    if (end < trimmed.size()) {
+        preview.append(QStringLiteral("..."));
+    }
+    return preview;
+}
+
+QString conversationSearchResultSummary(const ConversationSearchResult& result) {
+    return QStringLiteral("%1 #%2: %3")
+        .arg(result.role, QString::number(result.messageId), result.preview);
+}
+
+ConversationExportFormat conversationExportFormatFromName(const QString& format) {
+    const auto normalized = format.trimmed().toLower();
+    if (normalized == QStringLiteral("markdown") || normalized == QStringLiteral("md")) {
+        return ConversationExportFormat::Markdown;
+    }
+    if (normalized == QStringLiteral("json")) {
+        return ConversationExportFormat::Json;
+    }
+    return ConversationExportFormat::PlainText;
+}
+
+QString defaultConversationExportDirectory() {
+    const auto appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const auto basePath = appDataPath.isEmpty() ? QDir::currentPath() : appDataPath;
+    return basePath + QStringLiteral("/exports");
+}
+
+QString sanitizedExportFileStem(QString stem) {
+    stem = stem.trimmed().toLower();
+
+    QString sanitized;
+    sanitized.reserve(stem.size());
+    bool previousDash = false;
+    for (const auto ch : stem) {
+        const bool allowed = ch.isLetterOrNumber() || ch == QLatin1Char('_');
+        if (allowed) {
+            sanitized.append(ch);
+            previousDash = false;
+            continue;
+        }
+
+        if (!previousDash) {
+            sanitized.append(QLatin1Char('-'));
+            previousDash = true;
+        }
+    }
+
+    while (sanitized.startsWith(QLatin1Char('-'))) {
+        sanitized.remove(0, 1);
+    }
+    while (sanitized.endsWith(QLatin1Char('-'))) {
+        sanitized.chop(1);
+    }
+
+    return sanitized.isEmpty() ? QStringLiteral("sentinel-transcript") : sanitized.left(96);
+}
+
+QString conversationExportExtension(ConversationExportFormat format) {
+    switch (format) {
+    case ConversationExportFormat::Markdown:
+        return QStringLiteral("md");
+    case ConversationExportFormat::Json:
+        return QStringLiteral("json");
+    case ConversationExportFormat::PlainText:
+        break;
+    }
+
+    return QString();
+}
+
+QString uniqueExportFilePath(const QDir& directory, const QString& baseName,
+                             const QString& extension) {
+    auto candidate = directory.filePath(QStringLiteral("%1.%2").arg(baseName, extension));
+    int suffix = 2;
+    while (QFileInfo::exists(candidate)) {
+        candidate = directory.filePath(
+            QStringLiteral("%1-%2.%3").arg(baseName, QString::number(suffix++), extension));
+    }
+    return candidate;
+}
+
+QString markdownTranscript(const QList<ChatMessage>& messages, const QString& exportedAtUtc) {
+    QString output;
+    QTextStream stream(&output);
+    stream << "# Sentinel Transcript\n\n";
+    stream << "Exported: " << exportedAtUtc << "\n";
+    stream << "Messages: " << messages.size() << "\n\n";
+    for (const auto& message : messages) {
+        stream << "## " << chatRoleName(message.role) << " #" << message.id << "\n\n";
+        stream << "- Timestamp: " << message.timestamp.toUTC().toString(Qt::ISODate) << "\n";
+        stream << "- Status: " << chatMessageStatusName(message.status) << "\n\n";
+        stream << message.content.trimmed() << "\n\n";
+    }
+    return output;
+}
+
+QByteArray jsonTranscript(const QList<ChatMessage>& messages, const QString& exportedAtUtc) {
+    QJsonArray messageArray;
+    for (const auto& message : messages) {
+        QJsonObject object;
+        object.insert(QStringLiteral("id"), message.id);
+        object.insert(QStringLiteral("role"), chatRoleName(message.role));
+        object.insert(QStringLiteral("status"), chatMessageStatusName(message.status));
+        object.insert(QStringLiteral("timestamp"), message.timestamp.toUTC().toString(Qt::ISODate));
+        object.insert(QStringLiteral("content"), message.content);
+        messageArray.append(object);
+    }
+
+    QJsonObject root;
+    root.insert(QStringLiteral("format"), QStringLiteral("sentinel.transcript.v1"));
+    root.insert(QStringLiteral("exportedAt"), exportedAtUtc);
+    root.insert(QStringLiteral("messageCount"), messages.size());
+    root.insert(QStringLiteral("messages"), messageArray);
+    return QJsonDocument(root).toJson(QJsonDocument::Indented);
 }
 
 bool hasConfiguredVoicePath(const QString& path) {
@@ -510,7 +648,8 @@ ApplicationController::ApplicationController(
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
-      chatHistoryStore_(std::move(chatHistoryStore)) {
+      chatHistoryStore_(std::move(chatHistoryStore)),
+      conversationExportDirectory_(defaultConversationExportDirectory()) {
     localInferenceClientIsRealOllama_ =
         dynamic_cast<OllamaLocalInferenceClient*>(localInferenceClient.get()) != nullptr ||
         !localInferenceClient;
@@ -557,6 +696,7 @@ ApplicationController::ApplicationController(
         }
     }
     refreshConversationHistorySummary();
+    resetConversationSearchSummary();
     refreshLatestTaskPlan();
     refreshConversationSession();
 }
@@ -2175,6 +2315,82 @@ QString ApplicationController::conversationLastRestoredStatus() const {
     return conversationHistorySummary_.lastRestoredStatus;
 }
 
+ConversationSearchSummary ApplicationController::conversationSearchSummary() const {
+    return latestConversationSearchSummary_;
+}
+
+QString ApplicationController::conversationSearchQueryText() const {
+    return latestConversationSearchSummary_.query.text;
+}
+
+QString ApplicationController::conversationSearchStatus() const {
+    return conversationSearchStatusName(latestConversationSearchSummary_.status);
+}
+
+QString ApplicationController::conversationSearchSummaryText() const {
+    return latestConversationSearchSummary_.summary;
+}
+
+int ApplicationController::conversationSearchResultCount() const {
+    return latestConversationSearchSummary_.resultCount;
+}
+
+QStringList ApplicationController::conversationSearchResultSummaries() const {
+    QStringList summaries;
+    for (const auto& result : latestConversationSearchSummary_.results) {
+        summaries.append(conversationSearchResultSummary(result));
+    }
+    return summaries;
+}
+
+ConversationExportReadiness ApplicationController::conversationExportReadiness() const {
+    return conversationExportReadiness_;
+}
+
+ConversationExportResult ApplicationController::latestConversationExportResult() const {
+    return latestConversationExportResult_;
+}
+
+bool ApplicationController::conversationExportAvailable() const {
+    return conversationExportReadiness_.available;
+}
+
+QString ApplicationController::conversationExportReadinessStatus() const {
+    return conversationExportReadiness_.status;
+}
+
+QString ApplicationController::conversationExportReadinessSummary() const {
+    return conversationExportReadiness_.summary;
+}
+
+QStringList ApplicationController::conversationExportReadinessChecks() const {
+    return conversationExportReadiness_.checks;
+}
+
+QString ApplicationController::conversationExportLastResultSummary() const {
+    return latestConversationExportResult_.summary;
+}
+
+QString ApplicationController::conversationExportLastStatus() const {
+    return latestConversationExportResult_.status;
+}
+
+QString ApplicationController::conversationExportLastFileName() const {
+    return latestConversationExportResult_.outputFileName.isEmpty()
+               ? QStringLiteral("No export file")
+               : latestConversationExportResult_.outputFileName;
+}
+
+int ApplicationController::conversationExportLastMessageCount() const {
+    return latestConversationExportResult_.messageCount;
+}
+
+QString ApplicationController::conversationExportLastTimestamp() const {
+    return latestConversationExportResult_.exportedAtUtc.isEmpty()
+               ? QStringLiteral("No export timestamp")
+               : latestConversationExportResult_.exportedAtUtc;
+}
+
 QString ApplicationController::memoryMaintenanceStatus() const {
     return memoryMaintenanceStatus_;
 }
@@ -2210,6 +2426,164 @@ QStringList ApplicationController::memoryEntries() const {
     }
 
     return result;
+}
+
+bool ApplicationController::searchConversation(const QString& query) {
+    const auto trimmed = query.trimmed();
+    latestConversationSearchSummary_ = ConversationSearchSummary{};
+    latestConversationSearchSummary_.query.text = trimmed;
+    latestConversationSearchSummary_.transcriptMessageCount = chatSession_->messages().size();
+
+    if (trimmed.isEmpty()) {
+        latestConversationSearchSummary_.summary =
+            QStringLiteral("No transcript search query entered.");
+        emit conversationSearchChanged();
+        return false;
+    }
+
+    const auto caseSensitivity = Qt::CaseInsensitive;
+    for (const auto& message : chatSession_->messages()) {
+        if (!latestConversationSearchSummary_.query.includeSystemMessages &&
+            message.role == ChatRole::System) {
+            continue;
+        }
+
+        const auto matchIndex = message.content.indexOf(trimmed, 0, caseSensitivity);
+        if (matchIndex < 0) {
+            continue;
+        }
+
+        latestConversationSearchSummary_.results.append(ConversationSearchResult{
+            message.id,
+            chatRoleName(message.role),
+            static_cast<int>(matchIndex),
+            conversationSearchPreview(message.content, static_cast<int>(matchIndex),
+                                      static_cast<int>(trimmed.size())),
+        });
+    }
+
+    latestConversationSearchSummary_.status = ConversationSearchStatus::Completed;
+    latestConversationSearchSummary_.resultCount = latestConversationSearchSummary_.results.size();
+    latestConversationSearchSummary_.summary =
+        latestConversationSearchSummary_.resultCount == 0
+            ? QStringLiteral("No in-memory transcript matches for \"%1\".").arg(trimmed)
+            : QStringLiteral("Found %1 in-memory transcript %2 for \"%3\".")
+                  .arg(latestConversationSearchSummary_.resultCount)
+                  .arg(latestConversationSearchSummary_.resultCount == 1
+                           ? QStringLiteral("match")
+                           : QStringLiteral("matches"))
+                  .arg(trimmed);
+    emit conversationSearchChanged();
+    return latestConversationSearchSummary_.resultCount > 0;
+}
+
+void ApplicationController::clearConversationSearch() {
+    resetConversationSearchSummary();
+    emit conversationSearchChanged();
+}
+
+bool ApplicationController::exportTranscript(const QString& format) {
+    latestConversationExportResult_ = ConversationExportResult{};
+    latestConversationExportResult_.request.format = conversationExportFormatFromName(format);
+    const auto exportFormat = latestConversationExportResult_.request.format;
+    const auto extension = conversationExportExtension(exportFormat);
+    if (extension.isEmpty()) {
+        latestConversationExportResult_.status = QStringLiteral("Refused");
+        latestConversationExportResult_.refusalSummary =
+            QStringLiteral("Unsupported transcript export format.");
+        latestConversationExportResult_.summary =
+            QStringLiteral("Transcript export refused: only Markdown and JSON are supported.");
+        emit conversationExportChanged();
+        return false;
+    }
+
+    QList<ChatMessage> messages;
+    int nonSystemMessageCount = 0;
+    for (const auto& message : chatSession_->messages()) {
+        if (message.role != ChatRole::System) {
+            ++nonSystemMessageCount;
+        }
+        if (latestConversationExportResult_.request.includeSystemMessages ||
+            message.role != ChatRole::System) {
+            messages.append(message);
+        }
+    }
+
+    if (nonSystemMessageCount == 0) {
+        latestConversationExportResult_.status = QStringLiteral("Refused");
+        latestConversationExportResult_.refusalSummary =
+            QStringLiteral("Transcript has no user or assistant messages to export.");
+        latestConversationExportResult_.summary =
+            QStringLiteral("Transcript export refused: the current transcript is empty.");
+        emit conversationExportChanged();
+        return false;
+    }
+
+    QDir exportDirectory(conversationExportDirectory_);
+    if (!exportDirectory.exists() && !exportDirectory.mkpath(QStringLiteral("."))) {
+        latestConversationExportResult_.status = QStringLiteral("Failed");
+        latestConversationExportResult_.errorSummary =
+            QStringLiteral("Could not create the controlled export directory.");
+        latestConversationExportResult_.summary =
+            QStringLiteral("Transcript export failed before writing a file.");
+        emit conversationExportChanged();
+        return false;
+    }
+
+    const auto exportedAt =
+        QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyy-MM-ddTHH:mm:ss.zzzZ"));
+    const auto timestampForFile =
+        QDateTime::currentDateTimeUtc().toString(QStringLiteral("yyyyMMdd-HHmmss-zzz"));
+    const auto baseName =
+        sanitizedExportFileStem(QStringLiteral("sentinel-transcript-%1").arg(timestampForFile));
+    const auto outputPath = uniqueExportFilePath(exportDirectory, baseName, extension);
+
+    QByteArray payload;
+    if (exportFormat == ConversationExportFormat::Markdown) {
+        payload = markdownTranscript(messages, exportedAt).toUtf8();
+    } else {
+        payload = jsonTranscript(messages, exportedAt);
+    }
+
+    QSaveFile file(outputPath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
+        latestConversationExportResult_.status = QStringLiteral("Failed");
+        latestConversationExportResult_.errorSummary =
+            QStringLiteral("Could not open the controlled export file.");
+        latestConversationExportResult_.summary =
+            QStringLiteral("Transcript export failed before writing a file.");
+        emit conversationExportChanged();
+        return false;
+    }
+
+    if (file.write(payload) != payload.size() || !file.commit()) {
+        latestConversationExportResult_.status = QStringLiteral("Failed");
+        latestConversationExportResult_.errorSummary =
+            QStringLiteral("Could not complete the controlled export file write.");
+        latestConversationExportResult_.summary =
+            QStringLiteral("Transcript export failed before completing the file.");
+        emit conversationExportChanged();
+        return false;
+    }
+
+    latestConversationExportResult_.success = true;
+    latestConversationExportResult_.wroteFile = true;
+    latestConversationExportResult_.status = QStringLiteral("Succeeded");
+    latestConversationExportResult_.outputPath = outputPath;
+    latestConversationExportResult_.outputFileName = QFileInfo(outputPath).fileName();
+    latestConversationExportResult_.messageCount = messages.size();
+    latestConversationExportResult_.exportedAtUtc = exportedAt;
+    latestConversationExportResult_.summary =
+        QStringLiteral("%1 transcript export saved %2 messages to %3.")
+            .arg(conversationExportFormatName(exportFormat))
+            .arg(messages.size())
+            .arg(latestConversationExportResult_.outputFileName);
+    emit conversationExportChanged();
+    return true;
+}
+
+bool ApplicationController::requestConversationExport(const QString& format) {
+    return exportTranscript(format);
 }
 
 bool ApplicationController::sendMessage(const QString& message) {
@@ -3062,6 +3436,17 @@ void ApplicationController::refreshConversationHistorySummary() {
     conversationHistorySummary_ = summary;
 }
 
+void ApplicationController::resetConversationSearchSummary() {
+    latestConversationSearchSummary_ = ConversationSearchSummary{};
+    latestConversationSearchSummary_.transcriptMessageCount = chatSession_->messages().size();
+}
+
+void ApplicationController::setConversationExportDirectory(const QString& directoryPath) {
+    const auto trimmed = directoryPath.trimmed();
+    conversationExportDirectory_ =
+        trimmed.isEmpty() ? defaultConversationExportDirectory() : trimmed;
+}
+
 void ApplicationController::setConversationRuntimeRequest(const QString& requestId,
                                                           const QString& model,
                                                           const QString& route, bool streaming) {
@@ -3382,7 +3767,9 @@ bool ApplicationController::clearChat() {
     resetConversationRuntimeState();
     conversationStateGraph_.reset();
     refreshConversationHistorySummary();
+    resetConversationSearchSummary();
     emit conversationStateChanged();
+    emit conversationSearchChanged();
     emit chatMessagesChanged();
     return persistentHealthy;
 }
