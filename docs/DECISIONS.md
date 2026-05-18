@@ -206,13 +206,18 @@ Runtime behavior:
 - Planning metadata reports current mode (`Single Transcript`), future mode (`Multi Conversation`),
   migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and
   schema status summary without mutating storage.
+- Phase 15.23-15.25 adds `IConversationStore` as the real multi-conversation storage boundary:
+  `InMemoryConversationStore` for deterministic runtime/test use and `SQLiteConversationStore` for
+  future persisted multi-conversation records.
+- The conversation store is separate from `IChatHistoryStore`; the current desktop chat transcript
+  remains single-transcript, and no automatic migration or destructive cleanup is performed.
 - QML receives only strings, string lists, booleans, and counts through `DesktopShellViewModel`.
 
 Out of scope:
 
 - Vector search, semantic search, embeddings, SQLite full-text indexes, persisted search state,
-  file pickers, arbitrary output paths, import, full transcript browser UI, multi-conversation storage,
-  encryption, pruning, broader filesystem/system actions, cloud/API keys, tools, and plugins.
+  file pickers, arbitrary output paths, import, full transcript browser UI, cloud sync, encryption,
+  pruning, broader filesystem/system actions, cloud/API keys, tools, and plugins.
 
 ## 10. AI Context Layer
 

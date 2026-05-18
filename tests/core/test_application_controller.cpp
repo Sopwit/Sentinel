@@ -642,6 +642,7 @@ private slots:
     void clearChatClearsConversationRuntimeAndPersistence();
     void reportsPersistedConversationHistorySummary();
     void reportsRuntimeOnlyConversationHistorySummary();
+    void exposesConversationStoreReadinessWithoutSwitchingTranscriptStorage();
     void reportsSingleConversationBrowserEntryDeterministically();
     void reportsEmptyTranscriptConversationBrowserSummary();
     void reportsConversationBrowserMessageCountSummary();
@@ -1808,6 +1809,25 @@ void ApplicationControllerTest::reportsRuntimeOnlyConversationHistorySummary() {
     QCOMPARE(controller.conversationLastSavedStatus(),
              QStringLiteral("Runtime-only transcript; persistence unavailable."));
     QVERIFY(controller.conversationLastRestoredStatus().contains(QStringLiteral("unavailable")));
+}
+
+void ApplicationControllerTest::
+    exposesConversationStoreReadinessWithoutSwitchingTranscriptStorage() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+
+    QCOMPARE(controller.conversationStoreStatus(), QStringLiteral("Ready"));
+    QCOMPARE(controller.conversationStoreConversationCount(), 0);
+    QVERIFY(controller.activeConversationSummary().contains(QStringLiteral("Current Transcript")));
+    QVERIFY(controller.activeConversationSummary().contains(QStringLiteral("1 message")));
+    QVERIFY(controller.conversationStoreSummaries().isEmpty());
+    QCOMPARE(controller.conversationListCurrentTitle(), QStringLiteral("Current Transcript"));
+
+    QVERIFY(controller.sendMessage(QStringLiteral("store exposure")));
+
+    QCOMPARE(controller.conversationStoreConversationCount(), 0);
+    QVERIFY(controller.activeConversationSummary().contains(QStringLiteral("3 messages")));
+    QCOMPARE(controller.conversationListCurrentTitle(), QStringLiteral("Current Transcript"));
 }
 
 void ApplicationControllerTest::reportsSingleConversationBrowserEntryDeterministically() {

@@ -167,6 +167,21 @@ boundary:
 - No SQLite schema migration, no multi-conversation storage, and no browser/thread controls are
   introduced.
 
+Phase 15.23 through Phase 15.25 add the first real multi-conversation storage boundary without
+switching the active chat transcript:
+
+- `IConversationStore` owns future multi-conversation records and message records separately from
+  `IChatHistoryStore`.
+- `ConversationRecord`, `ConversationMessageRecord`, `ConversationStoreStatus`, and
+  `ConversationStoreError` are value types safe to summarize through controller/view-model layers.
+- `InMemoryConversationStore` supports deterministic tests and runtime-only storage.
+- `SQLiteConversationStore` uses Qt SQL/QSQLITE for `conversations`, `conversation_messages`, and
+  `conversation_schema_metadata` in its own database file.
+- `ApplicationController` exposes conversation-store readiness as QML-safe strings, counts, and
+  string lists only. It does not route current chat messages into the multi-conversation store.
+- No destructive migration is performed. Existing `chat_history.sqlite3` and `IChatHistoryStore`
+  behavior remain the active single-transcript path.
+
 ## Conversation Session Metadata
 
 Phase 6.8 adds `ConversationSession` as a higher-level interaction/session metadata layer. It is

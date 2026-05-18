@@ -13,6 +13,7 @@
 #include "sentinel/core/IApprovalPolicy.h"
 #include "sentinel/core/IChatHistoryStore.h"
 #include "sentinel/core/IChatProvider.h"
+#include "sentinel/core/IConversationStore.h"
 #include "sentinel/core/IMemoryCatalog.h"
 #include "sentinel/core/IMemoryStore.h"
 #include "sentinel/core/IModelRouter.h"
@@ -327,6 +328,14 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(int availableToolCount READ availableToolCount CONSTANT)
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QStringList chatMessages READ chatMessages NOTIFY chatMessagesChanged)
+    Q_PROPERTY(
+        QString conversationStoreStatus READ conversationStoreStatus NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int conversationStoreConversationCount READ conversationStoreConversationCount NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(
+        QString activeConversationSummary READ activeConversationSummary NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationStoreSummaries READ conversationStoreSummaries NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(QString conversationHistorySummaryText READ conversationHistorySummaryText NOTIFY
                    chatMessagesChanged)
     Q_PROPERTY(QStringList conversationHistorySummaryLines READ conversationHistorySummaryLines
@@ -436,7 +445,7 @@ public:
         std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment = nullptr,
         std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider = nullptr,
         std::unique_ptr<ILocalInferenceWorker> localInferenceWorker = nullptr,
-        QObject* parent = nullptr);
+        std::unique_ptr<IConversationStore> conversationStore = nullptr, QObject* parent = nullptr);
 
     QString providerName() const;
     QString providerStatus() const;
@@ -651,6 +660,10 @@ public:
     QStringList availableToolIds() const;
     QString memoryStatus() const;
     QString chatHistoryStatus() const;
+    QString conversationStoreStatus() const;
+    int conversationStoreConversationCount() const;
+    QString activeConversationSummary() const;
+    QStringList conversationStoreSummaries() const;
     ConversationHistorySummary conversationHistorySummary() const;
     QString conversationHistorySummaryText() const;
     QStringList conversationHistorySummaryLines() const;
@@ -820,6 +833,7 @@ private:
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
+    std::unique_ptr<IConversationStore> conversationStore_;
     QString memoryMaintenanceStatus_ = QStringLiteral("Ready");
     QString chatMaintenanceStatus_ = QStringLiteral("Ready");
     QString lastAgentResponse_ = QStringLiteral("No agent request yet.");

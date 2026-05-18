@@ -367,6 +367,27 @@ Still out of scope:
 - SQLite schema migration, multi-conversation persistence, transcript import, cloud sync, and full
   browser/thread controls.
 
+## Phase 15.23-15.25: Multi-Conversation Storage Foundation
+
+Completed. Added a real multi-conversation store boundary while preserving current
+single-transcript chat behavior.
+
+Delivered:
+
+- `IConversationStore` plus conversation/message record, status, and error value types.
+- In-memory and SQLite conversation stores with create/list/load, append-message, deterministic
+  ordering, rename/archive/delete metadata operations, and SQLite persistence across instances.
+- Controller and desktop view-model read-only exposure for store status, conversation count, active
+  conversation summary, and conversation summaries.
+- Settings read-only storage-readiness rows, with no browser/thread workflow switch.
+- Tests for store behavior, SQLite persistence, no destructive migration of `IChatHistoryStore`,
+  current single-transcript behavior, and controller/view-model exposure.
+
+Still out of scope:
+
+- Cloud sync, transcript import, arbitrary filesystem writes, broad UI redesign, and using the
+  multi-conversation store as the active chat transcript path.
+
 ## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 
 Completed. Prepared voice architecture without enabling real audio I/O or voice runtime work.

@@ -302,6 +302,14 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QStringList availableToolIds READ availableToolIds CONSTANT)
     Q_PROPERTY(QString memoryStatus READ memoryStatus CONSTANT)
     Q_PROPERTY(QString chatHistoryStatus READ chatHistoryStatus CONSTANT)
+    Q_PROPERTY(
+        QString conversationStoreStatus READ conversationStoreStatus NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int conversationStoreConversationCount READ conversationStoreConversationCount NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(
+        QString activeConversationSummary READ activeConversationSummary NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationStoreSummaries READ conversationStoreSummaries NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(QString conversationHistorySummaryText READ conversationHistorySummaryText NOTIFY
                    chatMessagesChanged)
     Q_PROPERTY(QStringList conversationHistorySummaryLines READ conversationHistorySummaryLines
@@ -595,6 +603,10 @@ public:
     QStringList availableToolIds() const;
     QString memoryStatus() const;
     QString chatHistoryStatus() const;
+    QString conversationStoreStatus() const;
+    int conversationStoreConversationCount() const;
+    QString activeConversationSummary() const;
+    QStringList conversationStoreSummaries() const;
     QString conversationHistorySummaryText() const;
     QStringList conversationHistorySummaryLines() const;
     int conversationHistoryMessageCount() const;

@@ -49,6 +49,14 @@ struct ConversationRecord {
     QString summary = QStringLiteral("Conversation metadata is not available.");
 };
 
+inline QString conversationRecordSummary(const ConversationRecord& record) {
+    return QStringLiteral("%1 / %2 %3 / %4")
+        .arg(record.title)
+        .arg(record.messageCount)
+        .arg(record.messageCount == 1 ? QStringLiteral("message") : QStringLiteral("messages"))
+        .arg(record.archived ? QStringLiteral("Archived") : QStringLiteral("Active"));
+}
+
 struct ConversationMessageRecord {
     QString conversationId;
     int messageId = 0;

@@ -17,6 +17,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/IChatHistoryStore.h
     include/sentinel/core/IChatProvider.h
     include/sentinel/core/IClock.h
+    include/sentinel/core/IConversationStore.h
     include/sentinel/core/IContextEngine.h
     include/sentinel/core/IApprovalPolicy.h
     include/sentinel/core/IMemoryCatalog.h
@@ -37,6 +38,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/InMemoryToolRegistry.h
     include/sentinel/core/InMemoryStore.h
     include/sentinel/core/InMemorySettingsStore.h
+    include/sentinel/core/InMemoryConversationStore.h
     include/sentinel/core/JsonSettingsStore.h
     include/sentinel/core/LocalEchoProvider.h
     include/sentinel/core/LocalInference.h
@@ -59,6 +61,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/RuntimePipeline.h
     include/sentinel/core/RuntimeSafety.h
     include/sentinel/core/SQLiteChatHistoryStore.h
+    include/sentinel/core/SQLiteConversationStore.h
     include/sentinel/core/SQLiteMemoryStore.h
     include/sentinel/core/StandardPathProvider.h
     include/sentinel/core/StaticApprovalPolicy.h
@@ -86,6 +89,7 @@ add_library(sentinel_core STATIC
     src/ExecutionLifecycle.cpp
     src/IClock.cpp
     src/IContextEngine.cpp
+    src/InMemoryConversationStore.cpp
     src/InMemoryStore.cpp
     src/InMemorySettingsStore.cpp
     src/InMemoryToolRegistry.cpp
@@ -107,6 +111,7 @@ add_library(sentinel_core STATIC
     src/RuntimePipeline.cpp
     src/RuntimeSafety.cpp
     src/SQLiteChatHistoryStore.cpp
+    src/SQLiteConversationStore.cpp
     src/SQLiteMemoryStore.cpp
     src/StandardPathProvider.cpp
     src/StaticApprovalPolicy.cpp
