@@ -11,6 +11,14 @@ ShellPanel {
     readonly property bool activityActive: viewModel.localInferenceBusy
                                            || viewModel.localInferenceStreamingText.length > 0
                                            || viewModel.voicePipelineStatus !== "Idle"
+    readonly property string topLeftStatusText: "OLLAMA / "
+                                                + presence.viewModel.ollamaHealthStatus
+                                                + "\nMODE / "
+                                                + presence.viewModel.currentRoutingMode
+    readonly property string topRightStatusText: "CHAT / "
+                                                 + presence.viewModel.localChatInferenceStatus
+                                                 + "\nSTREAM / "
+                                                 + presence.viewModel.localInferenceStreamStatus
 
     color: SentinelTheme.modePanelColor(viewModel.currentModeName)
     border.color: SentinelTheme.withAlpha(modeAccent, 0.16)
@@ -77,7 +85,7 @@ ShellPanel {
             Label {
                 anchors.left: parent.left
                 anchors.top: parent.top
-                text: "OLLAMA / " + presence.viewModel.ollamaHealthStatus + "\nMODE / " + presence.viewModel.currentRoutingMode
+                text: presence.topLeftStatusText
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 1.8
@@ -87,7 +95,7 @@ ShellPanel {
             Label {
                 anchors.right: parent.right
                 anchors.top: parent.top
-                text: "CHAT / " + presence.viewModel.localChatInferenceStatus + "\nSTREAM / " + presence.viewModel.localInferenceStreamStatus
+                text: presence.topRightStatusText
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignRight
                 font.pixelSize: SentinelTheme.fontTiny

@@ -239,6 +239,28 @@ Still out of scope:
   actions, tools/plugins, subprocess launch, UI redesign, autonomous loops, and broad model
   management.
 
+## Phase 15.8: Async Local Runtime Worker Foundation
+
+Completed. Local Ollama chat inference now crosses an async worker boundary before real
+non-streaming or streaming generation is executed.
+
+Delivered:
+
+- `ILocalInferenceWorker` wraps the existing local inference and stream clients.
+- Real Ollama generate/stream calls are dispatched off the controller/UI thread and completed via
+  request-id guarded callbacks.
+- Chat behavior remains stable: one user message, one final assistant message on success, no
+  partial assistant persistence on failure, preview cleanup after streaming error/completion, and
+  duplicate-send rejection while busy.
+- Metadata-only cancellation invalidates the active request id so stale async results are ignored.
+- Tests use fake workers/clients and require no real Ollama service.
+
+Still out of scope:
+
+- Launching Ollama, managing model loads, downloading/pulling/deleting models, cloud providers,
+  API keys, tools/plugins, filesystem/system actions, Piper changes, Whisper execution, playback,
+  microphone access, and autonomous loops.
+
 ## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 
 Completed. Prepared voice architecture without enabling real audio I/O or voice runtime work.
@@ -1432,6 +1454,32 @@ Still out of scope:
 
 - Audio playback, microphone access, Whisper execution, arbitrary output paths, downloads,
   filesystem-wide scans, cloud/API keys, autonomous voice loops, and background voice actions.
+
+## Phase 15.7: Ollama Reliability And Runtime Stabilization
+
+Completed. Stabilized the controlled local Ollama chat path before continuing voice/STT work.
+
+Delivered:
+
+- Explicit timeout metadata for Ollama health checks, model discovery, non-streaming generation,
+  and streaming generation.
+- Clear local inference error categories for Ollama not running, endpoint unreachable, no selected
+  model, selected model missing, request timeout, malformed response, stream interruption,
+  permission/safety block, and duplicate busy request.
+- Controller cleanup that resets busy state after success/error/refusal/timeout and clears stale
+  streaming preview text after failures.
+- Duplicate chat sends are rejected while local inference is active without appending another user
+  message.
+- Chat UI disables send/input while inference is busy and surfaces a concise inference summary.
+- Fake-client tests cover unavailable Ollama, timeout, malformed response, selected model missing,
+  duplicate-send rejection, streaming interruption cleanup, busy reset after error, and one final
+  assistant message.
+
+Still out of scope:
+
+- Cloud providers/API keys, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper
+  changes, and Whisper execution.
 
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 

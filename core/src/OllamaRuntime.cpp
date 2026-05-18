@@ -51,8 +51,10 @@ QUrl normalizedOllamaUrl(const QString& endpoint, bool* valid) {
 
 struct JsonReply {
     bool ok = false;
+    bool timedOut = false;
     QJsonDocument document;
     QString error;
+    QNetworkReply::NetworkError networkError = QNetworkReply::NoError;
 };
 
 JsonReply getJson(const QUrl& url, int timeoutMs) {
@@ -76,13 +78,18 @@ JsonReply getJson(const QUrl& url, int timeoutMs) {
     } else {
         reply->abort();
         reply->deleteLater();
-        return JsonReply{false, {}, QStringLiteral("Ollama local request timed out.")};
+        return JsonReply{false,
+                         true,
+                         {},
+                         QStringLiteral("Ollama local request timed out."),
+                         QNetworkReply::TimeoutError};
     }
 
     if (reply->error() != QNetworkReply::NoError) {
         const auto error = reply->errorString();
+        const auto networkError = reply->error();
         reply->deleteLater();
-        return JsonReply{false, {}, error};
+        return JsonReply{false, false, {}, error, networkError};
     }
 
     const auto payload = reply->readAll();
@@ -91,10 +98,34 @@ JsonReply getJson(const QUrl& url, int timeoutMs) {
     QJsonParseError parseError;
     const auto document = QJsonDocument::fromJson(payload, &parseError);
     if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
-        return JsonReply{false, {}, QStringLiteral("Ollama local response was not valid JSON.")};
+        return JsonReply{false,
+                         false,
+                         {},
+                         QStringLiteral("Ollama local response was not valid JSON."),
+                         QNetworkReply::UnknownContentError};
     }
 
-    return JsonReply{true, document, {}};
+    return JsonReply{true, false, document, {}, QNetworkReply::NoError};
+}
+
+QString safeOllamaNetworkFailureSummary(const JsonReply& reply, const QString& operation,
+                                        int timeoutMs) {
+    if (reply.timedOut) {
+        return QStringLiteral("%1 timed out after %2 ms.").arg(operation).arg(timeoutMs);
+    }
+
+    if (reply.networkError == QNetworkReply::ConnectionRefusedError) {
+        return QStringLiteral("%1 failed: Ollama is not running or is not listening locally.")
+            .arg(operation);
+    }
+
+    if (reply.networkError == QNetworkReply::HostNotFoundError ||
+        reply.networkError == QNetworkReply::NetworkSessionFailedError ||
+        reply.networkError == QNetworkReply::TemporaryNetworkFailureError) {
+        return QStringLiteral("%1 failed: local Ollama endpoint is unreachable.").arg(operation);
+    }
+
+    return QStringLiteral("%1 failed: %2").arg(operation, reply.error);
 }
 
 QString sizeSummary(qint64 sizeBytes) {
@@ -191,6 +222,7 @@ OllamaHealthCheckResult NullOllamaRuntimeClient::healthCheck() const {
         config_.endpoint.toString(),
         QStringLiteral("Ollama runtime client is unavailable; no local health check was "
                        "performed."),
+        config_.healthCheckTimeoutMs,
     };
 }
 
@@ -199,7 +231,10 @@ QList<OllamaModelSummary> NullOllamaRuntimeClient::installedModels() const {
 }
 
 OllamaHttpRuntimeClient::OllamaHttpRuntimeClient(OllamaConfig config, int timeoutMs)
-    : config_(std::move(config)), timeoutMs_(timeoutMs) {}
+    : config_(std::move(config)), timeoutMs_(timeoutMs) {
+    config_.healthCheckTimeoutMs = timeoutMs_;
+    config_.modelDiscoveryTimeoutMs = timeoutMs_;
+}
 
 OllamaConfig OllamaHttpRuntimeClient::config() const {
     return config_;
@@ -212,16 +247,21 @@ OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck() const {
             OllamaHealthStatus::InvalidEndpoint,
             config_.endpoint.toString(),
             QStringLiteral("Ollama health check blocked: endpoint must be local loopback HTTP."),
+            config_.healthCheckTimeoutMs,
         };
     }
 
-    const auto reply = getJson(endpointUrl(QStringLiteral("/api/version")), timeoutMs_);
+    const auto timeoutMs =
+        config_.healthCheckTimeoutMs > 0 ? config_.healthCheckTimeoutMs : timeoutMs_;
+    const auto reply = getJson(endpointUrl(QStringLiteral("/api/version")), timeoutMs);
     if (!reply.ok) {
         return OllamaHealthCheckResult{
             OllamaConnectionStatus::Unavailable,
             OllamaHealthStatus::Error,
             config_.endpoint.toString(),
-            QStringLiteral("Ollama local health check failed: %1").arg(reply.error),
+            safeOllamaNetworkFailureSummary(reply, QStringLiteral("Ollama local health check"),
+                                            timeoutMs),
+            timeoutMs,
         };
     }
 
@@ -231,6 +271,7 @@ OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck() const {
         config_.endpoint.toString(),
         QStringLiteral("Ollama local endpoint is reachable; no prompt or model execution was "
                        "performed."),
+        timeoutMs,
     };
 }
 
@@ -239,7 +280,9 @@ QList<OllamaModelSummary> OllamaHttpRuntimeClient::installedModels() const {
         return {};
     }
 
-    const auto reply = getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs_);
+    const auto timeoutMs =
+        config_.modelDiscoveryTimeoutMs > 0 ? config_.modelDiscoveryTimeoutMs : timeoutMs_;
+    const auto reply = getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs);
     if (!reply.ok) {
         return {};
     }

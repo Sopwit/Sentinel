@@ -1,5 +1,6 @@
 #include "sentinel/core/LocalInference.h"
 
+#include <QElapsedTimer>
 #include <QEventLoop>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -7,6 +8,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QNetworkRequest>
+#include <QPointer>
 #include <QTimer>
 #include <QVariant>
 
@@ -22,6 +24,7 @@ struct JsonReply {
     bool timedOut = false;
     QJsonDocument document;
     QString error;
+    QNetworkReply::NetworkError networkError = QNetworkReply::NoError;
 };
 
 JsonReply getJson(const QUrl& url, int timeoutMs) {
@@ -45,13 +48,18 @@ JsonReply getJson(const QUrl& url, int timeoutMs) {
     } else {
         reply->abort();
         reply->deleteLater();
-        return JsonReply{false, true, {}, QStringLiteral("Ollama local request timed out.")};
+        return JsonReply{false,
+                         true,
+                         {},
+                         QStringLiteral("Ollama local request timed out."),
+                         QNetworkReply::TimeoutError};
     }
 
     if (reply->error() != QNetworkReply::NoError) {
         const auto error = reply->errorString();
+        const auto networkError = reply->error();
         reply->deleteLater();
-        return JsonReply{false, false, {}, error};
+        return JsonReply{false, false, {}, error, networkError};
     }
 
     const auto payload = reply->readAll();
@@ -64,10 +72,11 @@ JsonReply getJson(const QUrl& url, int timeoutMs) {
                          false,
                          {},
                          QStringLiteral("Ollama local response was not valid "
-                                        "JSON.")};
+                                        "JSON."),
+                         QNetworkReply::UnknownContentError};
     }
 
-    return JsonReply{true, false, document, {}};
+    return JsonReply{true, false, document, {}, QNetworkReply::NoError};
 }
 
 JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs) {
@@ -93,13 +102,18 @@ JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs) {
     } else {
         reply->abort();
         reply->deleteLater();
-        return JsonReply{false, true, {}, QStringLiteral("Ollama local generation timed out.")};
+        return JsonReply{false,
+                         true,
+                         {},
+                         QStringLiteral("Ollama local generation timed out."),
+                         QNetworkReply::TimeoutError};
     }
 
     if (reply->error() != QNetworkReply::NoError) {
         const auto error = reply->errorString();
+        const auto networkError = reply->error();
         reply->deleteLater();
-        return JsonReply{false, false, {}, error};
+        return JsonReply{false, false, {}, error, networkError};
     }
 
     const auto payload = reply->readAll();
@@ -112,10 +126,11 @@ JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs) {
                          false,
                          {},
                          QStringLiteral("Ollama local generation response was "
-                                        "not valid JSON.")};
+                                        "not valid JSON."),
+                         QNetworkReply::UnknownContentError};
     }
 
-    return JsonReply{true, false, document, {}};
+    return JsonReply{true, false, document, {}, QNetworkReply::NoError};
 }
 
 bool hasRedirectStatus(QNetworkReply* reply) {
@@ -126,6 +141,42 @@ bool hasRedirectStatus(QNetworkReply* reply) {
 LocalInferenceTrace trace(int sequence, const QString& stage, const QString& status,
                           const QString& summary) {
     return LocalInferenceTrace{sequence, stage, status, summary};
+}
+
+LocalInferenceError networkErrorCategory(const JsonReply& reply) {
+    if (reply.timedOut || reply.networkError == QNetworkReply::TimeoutError) {
+        return LocalInferenceError::Timeout;
+    }
+    if (reply.networkError == QNetworkReply::ConnectionRefusedError) {
+        return LocalInferenceError::OllamaNotRunning;
+    }
+    if (reply.networkError == QNetworkReply::HostNotFoundError ||
+        reply.networkError == QNetworkReply::NetworkSessionFailedError ||
+        reply.networkError == QNetworkReply::TemporaryNetworkFailureError) {
+        return LocalInferenceError::EndpointUnreachable;
+    }
+    if (reply.networkError == QNetworkReply::UnknownContentError) {
+        return LocalInferenceError::InvalidResponse;
+    }
+    return LocalInferenceError::RequestFailed;
+}
+
+QString safeNetworkFailureSummary(const JsonReply& reply, const QString& operation, int timeoutMs) {
+    const auto category = networkErrorCategory(reply);
+    if (category == LocalInferenceError::Timeout) {
+        return QStringLiteral("%1 timed out after %2 ms.").arg(operation).arg(timeoutMs);
+    }
+    if (category == LocalInferenceError::OllamaNotRunning) {
+        return QStringLiteral("%1 failed: Ollama is not running or is not listening locally.")
+            .arg(operation);
+    }
+    if (category == LocalInferenceError::EndpointUnreachable) {
+        return QStringLiteral("%1 failed: local Ollama endpoint is unreachable.").arg(operation);
+    }
+    if (category == LocalInferenceError::InvalidResponse) {
+        return QStringLiteral("%1 failed: Ollama returned malformed JSON.").arg(operation);
+    }
+    return QStringLiteral("%1 failed: %2").arg(operation, reply.error);
 }
 
 } // namespace
@@ -180,6 +231,10 @@ QString localInferenceErrorName(LocalInferenceError error) {
         return QStringLiteral("None");
     case LocalInferenceError::ClientUnavailable:
         return QStringLiteral("Client Unavailable");
+    case LocalInferenceError::OllamaNotRunning:
+        return QStringLiteral("Ollama Not Running");
+    case LocalInferenceError::EndpointUnreachable:
+        return QStringLiteral("Endpoint Unreachable");
     case LocalInferenceError::BlankPrompt:
         return QStringLiteral("Blank Prompt");
     case LocalInferenceError::MissingModel:
@@ -192,12 +247,16 @@ QString localInferenceErrorName(LocalInferenceError error) {
         return QStringLiteral("Permission Denied");
     case LocalInferenceError::SafetyBlocked:
         return QStringLiteral("Safety Blocked");
+    case LocalInferenceError::BusyRequest:
+        return QStringLiteral("Busy Request");
     case LocalInferenceError::RequestFailed:
         return QStringLiteral("Request Failed");
     case LocalInferenceError::Timeout:
         return QStringLiteral("Timeout");
     case LocalInferenceError::InvalidResponse:
         return QStringLiteral("Invalid Response");
+    case LocalInferenceError::StreamInterrupted:
+        return QStringLiteral("Stream Interrupted");
     }
 
     return QStringLiteral("None");
@@ -281,16 +340,171 @@ bool NullLocalInferenceStreamClient::isAvailable() const {
     return false;
 }
 
+LocalInferenceWorker::LocalInferenceWorker(
+    std::unique_ptr<ILocalInferenceClient> inferenceClient,
+    std::unique_ptr<ILocalInferenceStreamClient> streamClient, QObject* callbackContext,
+    bool threadedInference, bool threadedStream)
+    : inferenceClient_(inferenceClient ? std::move(inferenceClient)
+                                       : std::make_unique<NullLocalInferenceClient>()),
+      streamClient_(streamClient ? std::move(streamClient)
+                                 : std::make_unique<NullLocalInferenceStreamClient>()),
+      callbackContext_(callbackContext), threadedInference_(threadedInference),
+      threadedStream_(threadedStream) {}
+
+LocalInferenceWorker::~LocalInferenceWorker() {
+    if (activeThread_ && activeThread_->isRunning()) {
+        activeThread_->wait();
+    }
+    delete activeThread_;
+    activeThread_ = nullptr;
+}
+
+bool LocalInferenceWorker::hasActiveThread() const {
+    return activeThread_ && activeThread_->isRunning();
+}
+
+bool LocalInferenceWorker::startInference(const LocalInferenceRequest& request,
+                                          LocalInferenceFinishedCallback onFinished) {
+    if (!inferenceClient_ || hasActiveThread()) {
+        return false;
+    }
+
+    if (!threadedInference_) {
+        QElapsedTimer timer;
+        timer.start();
+        auto response = inferenceClient_->infer(request);
+        response.latencyMs = timer.elapsed();
+        if (onFinished) {
+            onFinished(request.id, response);
+        }
+        return true;
+    }
+
+    const QPointer<QObject> context{callbackContext_};
+    auto* thread =
+        QThread::create([this, request, onFinished = std::move(onFinished), context]() mutable {
+            QElapsedTimer timer;
+            timer.start();
+            auto response = inferenceClient_->infer(request);
+            response.latencyMs = timer.elapsed();
+            if (!context) {
+                return;
+            }
+            QMetaObject::invokeMethod(
+                context,
+                [this, requestId = request.id, response = std::move(response),
+                 onFinished = std::move(onFinished)]() mutable {
+                    if (onFinished) {
+                        onFinished(requestId, response);
+                    }
+                    if (activeThread_) {
+                        activeThread_->deleteLater();
+                    }
+                    activeThread_ = nullptr;
+                },
+                Qt::QueuedConnection);
+        });
+    thread->setObjectName(QStringLiteral("SentinelLocalInferenceWorker"));
+    activeThread_ = thread;
+    thread->start();
+    return true;
+}
+
+bool LocalInferenceWorker::startStream(const LocalInferenceRequest& request,
+                                       LocalInferenceStreamChunkCallback onChunk,
+                                       LocalInferenceStreamFinishedCallback onFinished) {
+    if (!streamClient_ || !streamClient_->isAvailable() || hasActiveThread()) {
+        return false;
+    }
+
+    if (!threadedStream_) {
+        auto result = streamClient_->startStream(
+            request, [this, &request, &onChunk](const LocalInferenceStreamChunk& chunk) {
+                if (onChunk) {
+                    onChunk(request.id, chunk);
+                }
+            });
+        if (onFinished) {
+            onFinished(request.id, result);
+        }
+        return true;
+    }
+
+    const QPointer<QObject> context{callbackContext_};
+    auto* thread = QThread::create([this, request, onChunk = std::move(onChunk),
+                                    onFinished = std::move(onFinished), context]() mutable {
+        auto result = streamClient_->startStream(
+            request, [requestId = request.id, onChunk,
+                      context](const LocalInferenceStreamChunk& chunk) mutable {
+                if (!context) {
+                    return;
+                }
+                QMetaObject::invokeMethod(
+                    context,
+                    [requestId, chunk, onChunk]() mutable {
+                        if (onChunk) {
+                            onChunk(requestId, chunk);
+                        }
+                    },
+                    Qt::QueuedConnection);
+            });
+        if (!context) {
+            return;
+        }
+        QMetaObject::invokeMethod(
+            context,
+            [this, requestId = request.id, result = std::move(result),
+             onFinished = std::move(onFinished)]() mutable {
+                if (onFinished) {
+                    onFinished(requestId, result);
+                }
+                if (activeThread_) {
+                    activeThread_->deleteLater();
+                }
+                activeThread_ = nullptr;
+            },
+            Qt::QueuedConnection);
+    });
+    thread->setObjectName(QStringLiteral("SentinelLocalInferenceStreamWorker"));
+    activeThread_ = thread;
+    thread->start();
+    return true;
+}
+
+void LocalInferenceWorker::cancel(const QString& requestId) {
+    Q_UNUSED(requestId);
+}
+
+QString LocalInferenceWorker::statusSummary() const {
+    return inferenceClient_ ? inferenceClient_->statusSummary()
+                            : QStringLiteral("Local inference client is unavailable.");
+}
+
+QString LocalInferenceWorker::streamStatusSummary() const {
+    return streamClient_ ? streamClient_->statusSummary()
+                         : QStringLiteral("Local inference streaming client is unavailable.");
+}
+
+bool LocalInferenceWorker::streamingAvailable() const {
+    return streamClient_ && streamClient_->isAvailable();
+}
+
 OllamaLocalInferenceClient::OllamaLocalInferenceClient(OllamaConfig config, int timeoutMs)
-    : config_(std::move(config)), timeoutMs_(timeoutMs) {}
+    : config_(std::move(config)), timeoutMs_(timeoutMs) {
+    config_.generateTimeoutMs = timeoutMs_;
+}
 
 LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceRequest& request) {
     LocalInferenceResponse response;
     response.endpoint = config_.endpoint.toString();
     response.model = request.options.model.trimmed();
+    response.timeoutMs =
+        request.options.timeoutMs > 0 ? request.options.timeoutMs : config_.generateTimeoutMs;
     response.traces.append(
         trace(1, QStringLiteral("Request"), QStringLiteral("Received"),
-              QStringLiteral("Local inference request reached Ollama boundary.")));
+              QStringLiteral("Local inference request reached Ollama boundary with %1 ms "
+                             "timeout metadata.")
+                  .arg(response.timeoutMs)));
 
     if (request.prompt.trimmed().isEmpty()) {
         response.status = LocalInferenceStatus::InvalidRequest;
@@ -340,8 +554,28 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
         return response;
     }
 
-    const auto timeoutMs = request.options.timeoutMs > 0 ? request.options.timeoutMs : timeoutMs_;
-    if (!hasInstalledModel(response.model, timeoutMs)) {
+    const auto timeoutMs = response.timeoutMs > 0 ? response.timeoutMs : timeoutMs_;
+    const auto modelLookup = installedModels(timeoutMs);
+    if (!modelLookup.ok) {
+        response.status = LocalInferenceStatus::Error;
+        response.error = networkErrorCategory(JsonReply{
+            false, modelLookup.timedOut, {}, modelLookup.error, modelLookup.networkError});
+        response.summary = safeNetworkFailureSummary(
+            JsonReply{false, modelLookup.timedOut, {}, modelLookup.error, modelLookup.networkError},
+            QStringLiteral("Local Ollama model discovery"), timeoutMs);
+        response.traces.append(
+            trace(2, QStringLiteral("Model Discovery"), QStringLiteral("Error"), response.summary));
+        return response;
+    }
+
+    bool modelAvailable = false;
+    for (const auto& installedModel : modelLookup.models) {
+        if (installedModel.name == response.model) {
+            modelAvailable = true;
+            break;
+        }
+    }
+    if (!modelAvailable) {
         response.status = LocalInferenceStatus::ModelUnavailable;
         response.error = LocalInferenceError::ModelUnavailable;
         response.summary =
@@ -358,13 +592,14 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
 
     response.traces.append(trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
                                  QStringLiteral("Calling local Ollama /api/generate without "
-                                                "streaming.")));
+                                                "streaming; timeout %1 ms.")
+                                     .arg(timeoutMs)));
     const auto reply = postJson(endpointUrl(QStringLiteral("/api/generate")), body, timeoutMs);
     if (!reply.ok) {
         response.status = LocalInferenceStatus::Error;
-        response.error =
-            reply.timedOut ? LocalInferenceError::Timeout : LocalInferenceError::RequestFailed;
-        response.summary = QStringLiteral("Local Ollama generation failed: %1").arg(reply.error);
+        response.error = networkErrorCategory(reply);
+        response.summary =
+            safeNetworkFailureSummary(reply, QStringLiteral("Local Ollama generation"), timeoutMs);
         response.traces.append(
             trace(3, QStringLiteral("Generation"), QStringLiteral("Error"), response.summary));
         return response;
@@ -409,14 +644,14 @@ bool OllamaLocalInferenceClient::endpointAllowed() const {
     return config_.endpoint.isLoopbackHttp();
 }
 
-QList<OllamaModelSummary> OllamaLocalInferenceClient::installedModels(int timeoutMs) const {
+ModelLookupReply OllamaLocalInferenceClient::installedModels(int timeoutMs) const {
     if (!config_.modelDiscoveryEnabled || !endpointAllowed()) {
-        return {};
+        return ModelLookupReply{true, false, {}, {}, QNetworkReply::NoError};
     }
 
     const auto reply = getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs);
     if (!reply.ok) {
-        return {};
+        return ModelLookupReply{false, reply.timedOut, {}, reply.error, reply.networkError};
     }
 
     QList<OllamaModelSummary> models;
@@ -433,21 +668,14 @@ QList<OllamaModelSummary> OllamaLocalInferenceClient::installedModels(int timeou
             object.value(QStringLiteral("size")).toVariant().toLongLong(),
         });
     }
-    return models;
-}
-
-bool OllamaLocalInferenceClient::hasInstalledModel(const QString& model, int timeoutMs) const {
-    for (const auto& installedModel : installedModels(timeoutMs)) {
-        if (installedModel.name == model) {
-            return true;
-        }
-    }
-    return false;
+    return ModelLookupReply{true, false, models, {}, QNetworkReply::NoError};
 }
 
 OllamaLocalInferenceStreamClient::OllamaLocalInferenceStreamClient(OllamaConfig config,
                                                                    int timeoutMs)
-    : config_(std::move(config)), timeoutMs_(timeoutMs) {}
+    : config_(std::move(config)), timeoutMs_(timeoutMs) {
+    config_.streamTimeoutMs = timeoutMs_;
+}
 
 LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     const LocalInferenceRequest& request,
@@ -456,8 +684,12 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     result.status = LocalInferenceStreamStatus::NotStarted;
     result.model = request.options.model.trimmed();
     result.endpoint = config_.endpoint.toString();
+    result.timeoutMs =
+        request.options.timeoutMs > 0 ? request.options.timeoutMs : config_.streamTimeoutMs;
     result.traces.append(trace(1, QStringLiteral("Stream Request"), QStringLiteral("Received"),
-                               QStringLiteral("Local streaming request reached Ollama boundary.")));
+                               QStringLiteral("Local streaming request reached Ollama boundary "
+                                              "with %1 ms timeout metadata.")
+                                   .arg(result.timeoutMs)));
 
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;
@@ -596,7 +828,8 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     });
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
-    timer.start(request.options.timeoutMs > 0 ? request.options.timeoutMs : timeoutMs_);
+    const auto timeoutMs = result.timeoutMs > 0 ? result.timeoutMs : timeoutMs_;
+    timer.start(timeoutMs);
     result.status = LocalInferenceStreamStatus::Streaming;
     result.summary = QStringLiteral("Local Ollama streaming generation is active.");
     loop.exec();
@@ -607,7 +840,8 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
         reply->abort();
         result.status = LocalInferenceStreamStatus::Error;
         result.error = LocalInferenceError::Timeout;
-        result.summary = QStringLiteral("Local Ollama streaming generation timed out.");
+        result.summary = QStringLiteral("Local Ollama streaming generation timed out after %1 ms.")
+                             .arg(timeoutMs);
         reply->deleteLater();
         return result;
     }
@@ -629,8 +863,10 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     if (reply->error() != QNetworkReply::NoError) {
         const auto error = reply->errorString();
         result.status = LocalInferenceStreamStatus::Error;
-        result.error = LocalInferenceError::RequestFailed;
-        result.summary = QStringLiteral("Local Ollama streaming generation failed: %1").arg(error);
+        const JsonReply failedReply{false, false, {}, error, reply->error()};
+        result.error = networkErrorCategory(failedReply);
+        result.summary = safeNetworkFailureSummary(
+            failedReply, QStringLiteral("Local Ollama streaming generation"), timeoutMs);
         reply->deleteLater();
         return result;
     }
@@ -647,7 +883,8 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
 
     if (!done || result.accumulatedText.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Error;
-        result.error = LocalInferenceError::InvalidResponse;
+        result.error =
+            done ? LocalInferenceError::InvalidResponse : LocalInferenceError::StreamInterrupted;
         result.summary = QStringLiteral("Local Ollama streaming response did not complete with "
                                         "assistant text.");
         return result;

@@ -98,7 +98,17 @@ file-output execution behind a persisted opt-in and explicit Generate TTS File a
 Piper binary/model paths are reused, output is generated only inside an app-controlled cache/temp
 directory, and status metadata reports disabled, blocked, missing, running, succeeded, failed, and
 timeout states. Playback, microphone access, Whisper execution, downloads, cloud/API keys,
-filesystem-wide scans, and autonomous voice loops remain out of scope.
+filesystem-wide scans, and autonomous voice loops remain out of scope. Phase 15.7 stabilizes
+controlled local Ollama reliability before additional voice/STT work: health, discovery,
+generation, and streaming requests carry timeout metadata; failures are categorized into
+not-running, endpoint-unreachable, missing/invalid model, timeout, malformed response, interrupted
+stream, permission/safety block, and duplicate busy request; busy/streaming cleanup is explicit;
+and no new cloud, model-management, tool, filesystem/system, autonomous, playback, microphone,
+Piper, or Whisper authority is added. Phase 15.8 moves real local generation and streaming behind
+`ILocalInferenceWorker`: controller policy checks still happen first, callbacks are request-id
+guarded, stale results after metadata cancellation are ignored, successful completions append one
+assistant message, and failed streams clear preview text without persisting partial assistant
+output.
 
 ## Future Components
 
@@ -162,6 +172,9 @@ filesystem-wide scans, and autonomous voice loops remain out of scope.
   metadata, ordered chunk callbacks, accumulated assistant text, and a loopback-only Ollama
   `/api/generate` stream client. Streaming is disabled by default and guarded by explicit settings
   plus existing model, endpoint, permission, and safety checks.
+- Async local inference worker: injectable worker boundary that runs real Ollama non-streaming and
+  streaming calls away from the controller/UI thread, posts QML-safe metadata updates back through
+  request-id guarded callbacks, and ignores stale results after metadata cancellation.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 - Local model management readiness: deterministic metadata for recommended local models,
@@ -251,14 +264,17 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 15.6 runtime activates controlled local Ollama chat inference while keeping the
+Current Phase 15.8 runtime activates controlled local Ollama chat inference while keeping the
 larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
 selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
 action-light local model selection UX, metadata-only model-management readiness, metadata-only
 voice provider/session/runtime boundaries, metadata-only local voice runtime environment ownership,
 controlled Piper file-output synthesis behind persisted opt-in and explicit action, and local
 Piper/Whisper path configuration UX with hint-only fixed-location suggestions plus explicit
-Ready/Blocked/Missing path preparation metadata. Phase 15.6 still adds no audio playback,
+Ready/Blocked/Missing path preparation metadata. The Ollama path reports bounded timeout/error
+metadata, runs real generate/stream work through an async worker boundary, and clears failed
+streaming previews without persisting partial assistant output. Phase 15.8 still adds no audio
+playback,
 microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
 execution, autonomous agents, tool execution, shell execution, or filesystem-wide actions:
 

@@ -3,13 +3,25 @@
 #include "sentinel/core/OllamaRuntime.h"
 
 #include <QList>
+#include <QNetworkReply>
+#include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QThread>
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 
 namespace sentinel::core {
+
+struct ModelLookupReply {
+    bool ok = false;
+    bool timedOut = false;
+    QList<OllamaModelSummary> models;
+    QString error;
+    QNetworkReply::NetworkError networkError = QNetworkReply::NoError;
+};
 
 enum class LocalInferenceStatus : std::uint8_t {
     NotRequested,
@@ -27,15 +39,19 @@ QString localInferenceStatusName(LocalInferenceStatus status);
 enum class LocalInferenceError : std::uint8_t {
     None,
     ClientUnavailable,
+    OllamaNotRunning,
+    EndpointUnreachable,
     BlankPrompt,
     MissingModel,
     EndpointBlocked,
     ModelUnavailable,
     PermissionDenied,
     SafetyBlocked,
+    BusyRequest,
     RequestFailed,
     Timeout,
     InvalidResponse,
+    StreamInterrupted,
 };
 
 QString localInferenceErrorName(LocalInferenceError error);
@@ -69,6 +85,7 @@ struct LocalInferenceResponse {
     QString summary = QStringLiteral("No local inference request yet.");
     qint64 latencyMs = -1;
     QList<LocalInferenceTrace> traces;
+    int timeoutMs = 0;
 };
 
 enum class LocalInferenceStreamStatus : std::uint8_t {
@@ -102,6 +119,7 @@ struct LocalInferenceStreamResult {
     int malformedChunkCount = 0;
     QList<LocalInferenceStreamChunk> chunks;
     QList<LocalInferenceTrace> traces;
+    int timeoutMs = 0;
 };
 
 QString localInferenceTraceSummary(const LocalInferenceTrace& trace);
@@ -128,6 +146,28 @@ public:
     virtual bool isAvailable() const = 0;
 };
 
+using LocalInferenceFinishedCallback =
+    std::function<void(const QString&, const LocalInferenceResponse&)>;
+using LocalInferenceStreamChunkCallback =
+    std::function<void(const QString&, const LocalInferenceStreamChunk&)>;
+using LocalInferenceStreamFinishedCallback =
+    std::function<void(const QString&, const LocalInferenceStreamResult&)>;
+
+class ILocalInferenceWorker {
+public:
+    virtual ~ILocalInferenceWorker() = default;
+
+    virtual bool startInference(const LocalInferenceRequest& request,
+                                LocalInferenceFinishedCallback onFinished) = 0;
+    virtual bool startStream(const LocalInferenceRequest& request,
+                             LocalInferenceStreamChunkCallback onChunk,
+                             LocalInferenceStreamFinishedCallback onFinished) = 0;
+    virtual void cancel(const QString& requestId) = 0;
+    virtual QString statusSummary() const = 0;
+    virtual QString streamStatusSummary() const = 0;
+    virtual bool streamingAvailable() const = 0;
+};
+
 class NullLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
 public:
     LocalInferenceStreamResult
@@ -143,6 +183,34 @@ public:
     QString statusSummary() const override;
 };
 
+class LocalInferenceWorker final : public ILocalInferenceWorker {
+public:
+    LocalInferenceWorker(std::unique_ptr<ILocalInferenceClient> inferenceClient,
+                         std::unique_ptr<ILocalInferenceStreamClient> streamClient,
+                         QObject* callbackContext, bool threadedInference, bool threadedStream);
+    ~LocalInferenceWorker() override;
+
+    bool startInference(const LocalInferenceRequest& request,
+                        LocalInferenceFinishedCallback onFinished) override;
+    bool startStream(const LocalInferenceRequest& request,
+                     LocalInferenceStreamChunkCallback onChunk,
+                     LocalInferenceStreamFinishedCallback onFinished) override;
+    void cancel(const QString& requestId) override;
+    QString statusSummary() const override;
+    QString streamStatusSummary() const override;
+    bool streamingAvailable() const override;
+
+private:
+    bool hasActiveThread() const;
+
+    std::unique_ptr<ILocalInferenceClient> inferenceClient_;
+    std::unique_ptr<ILocalInferenceStreamClient> streamClient_;
+    QObject* callbackContext_ = nullptr;
+    QThread* activeThread_ = nullptr;
+    bool threadedInference_ = false;
+    bool threadedStream_ = false;
+};
+
 class OllamaLocalInferenceClient final : public ILocalInferenceClient {
 public:
     explicit OllamaLocalInferenceClient(OllamaConfig config = OllamaConfig{},
@@ -154,8 +222,7 @@ public:
 private:
     QUrl endpointUrl(const QString& path) const;
     bool endpointAllowed() const;
-    QList<OllamaModelSummary> installedModels(int timeoutMs) const;
-    bool hasInstalledModel(const QString& model, int timeoutMs) const;
+    ModelLookupReply installedModels(int timeoutMs) const;
 
     OllamaConfig config_;
     int timeoutMs_ = 30000;

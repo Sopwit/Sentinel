@@ -12,6 +12,15 @@ ShellPanel {
                                       || viewModel.selectedLocalModelStatus === "Fallback"
     readonly property int contentPadding: compact ? SentinelTheme.spaceMd : SentinelTheme.space2Xl
     readonly property int cardPadding: SentinelTheme.spaceMd
+    readonly property string bridgeStatusText: "Model "
+                                               + chatPanel.viewModel.selectedLocalModelStatus
+                                               + " / Chat "
+                                               + chatPanel.viewModel.localChatInferenceStatus
+                                               + " / Stream "
+                                               + chatPanel.viewModel.localInferenceStreamStatus
+    readonly property string runtimeStatusText: chatPanel.viewModel.ollamaHealthStatus
+                                                + " / "
+                                                + chatPanel.viewModel.localInferenceRuntimeState
 
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.038)
     border.color: SentinelTheme.withAlpha(modeAccent, 0.095)
@@ -49,9 +58,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Model " + chatPanel.viewModel.selectedLocalModelStatus
-                          + " / Chat " + chatPanel.viewModel.localChatInferenceStatus
-                          + " / Stream " + chatPanel.viewModel.localInferenceStreamStatus
+                    text: chatPanel.bridgeStatusText
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                     elide: Text.ElideRight
@@ -83,7 +90,14 @@ ShellPanel {
                 InfoRow {
                     compact: true
                     label: "Runtime"
-                    value: chatPanel.viewModel.ollamaHealthStatus + " / " + chatPanel.viewModel.localInferenceRuntimeState
+                    value: chatPanel.runtimeStatusText
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
+                    label: "Inference"
+                    value: chatPanel.viewModel.localInferenceSummary
                     Layout.fillWidth: true
                 }
 
@@ -199,13 +213,17 @@ ShellPanel {
                 Layout.fillWidth: true
                 Layout.columnSpan: chatPanel.compact ? 2 : 1
                 placeholderText: chatPanel.modelReady ? "Message Sentinel" : "Local model setup required for Ollama chat"
-                onAccepted: sendButton.clicked()
+                enabled: !chatPanel.viewModel.localInferenceBusy
+                onAccepted: {
+                    if (sendButton.enabled)
+                        sendButton.clicked()
+                }
             }
 
             SentinelButton {
                 id: sendButton
                 text: "Send"
-                enabled: chatInput.text.trim().length > 0
+                enabled: chatInput.text.trim().length > 0 && !chatPanel.viewModel.localInferenceBusy
                 Layout.fillWidth: chatPanel.compact
                 onClicked: {
                     chatPanel.viewModel.sendMessage(chatInput.text)

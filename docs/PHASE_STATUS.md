@@ -2,6 +2,77 @@
 
 ## Completed / Stable
 
+### Phase 15.8: Async Local Runtime Worker Foundation
+
+Completed. Moves local chat inference execution behind an async worker boundary so real Ollama
+generation and streaming calls no longer run on the UI/controller thread.
+
+Scope:
+
+- Added an injectable local inference worker abstraction above the existing non-streaming and
+  streaming local inference clients.
+- The desktop app uses the worker to run real loopback-only Ollama generate/stream calls off the
+  controller thread while posting chunks and final results back through request-id guarded
+  callbacks.
+- Existing local chat gates remain unchanged: local chat opt-in, selected/effective model
+  validation, loopback endpoint policy, runtime permission policy, runtime safety policy, and busy
+  duplicate-send rejection.
+- Chat finalization remains single-write: user messages are appended once, successful assistant
+  responses are appended once, failures do not persist partial assistant output, and streaming
+  preview text is cleared on error and completion.
+- Cancellation is metadata-only: the active request id can be invalidated so stale async results
+  are ignored. The current worker does not interrupt a running Ollama HTTP request mid-flight.
+- Tests cover async fake success, async timeout/error, duplicate-send rejection while busy, stale
+  result ignoring after cancellation, busy reset, and no duplicate assistant messages. No real
+  Ollama service is required.
+
+Known limitation:
+
+- Ollama itself must still already be installed, running, and serving an installed local model
+  outside Sentinel. Sentinel still does not launch Ollama, load models proactively, pull/delete
+  models, manage model downloads, or provide hard network-request interruption beyond existing
+  timeouts and stale-result rejection.
+
+Still out of scope:
+
+- Cloud/API keys/providers, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper
+  changes, and Whisper execution.
+
+### Phase 15.7: Ollama Reliability And Runtime Stabilization
+
+Completed. Tightens local Ollama chat failure handling, timeout metadata, busy-state cleanup, and
+stream finalization without expanding runtime authority.
+
+Scope:
+
+- Health checks, model discovery, non-streaming generation, and streaming generation now carry
+  explicit timeout metadata in request/result traces.
+- Local inference failures are categorized as Ollama not running, endpoint unreachable, no model
+  selected, selected model missing, request timeout, malformed response, stream interrupted,
+  permission/safety blocked, and busy request already in progress.
+- Chat rejects duplicate sends while local inference is active before appending another user
+  message.
+- Failed streaming clears live preview text and does not persist partial assistant output.
+- Successful streaming and non-streaming paths still append exactly one final assistant message.
+- Chat UI disables input/send while inference is active and shows a concise inference summary near
+  runtime status.
+- Focused tests cover unavailable Ollama metadata, timeout, malformed response, selected model
+  missing, duplicate-send rejection, stream interruption cleanup, busy reset after errors, and
+  single final assistant persistence.
+
+Known limitation:
+
+- The current real Ollama clients still use synchronous Qt network waits behind explicit
+  controller calls. Timeouts are bounded and shorter for health/model discovery, but a later phase
+  should move real inference to an asynchronous worker path before broader runtime UX expansion.
+
+Still out of scope:
+
+- Cloud/API keys/providers, model downloads/pulls/deletes, Ollama process management, tools,
+  plugins, filesystem/system actions, autonomous loops, microphone access, playback, Piper changes,
+  and Whisper execution.
+
 ### Phase 15.4-15.6: Controlled Piper File-Output Execution
 
 Completed. Enables explicit, policy-gated Piper TTS file generation to an app-controlled

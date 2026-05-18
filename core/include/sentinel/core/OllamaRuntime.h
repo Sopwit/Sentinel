@@ -65,6 +65,10 @@ struct OllamaConfig {
     OllamaEndpoint endpoint = OllamaEndpoint::defaultEndpoint();
     bool healthCheckEnabled = true;
     bool modelDiscoveryEnabled = true;
+    int healthCheckTimeoutMs = 750;
+    int modelDiscoveryTimeoutMs = 1500;
+    int generateTimeoutMs = 30000;
+    int streamTimeoutMs = 30000;
 
     static OllamaConfig fromEndpoint(const QString& endpoint);
 };
@@ -80,6 +84,7 @@ struct OllamaHealthCheckResult {
     OllamaHealthStatus healthStatus = OllamaHealthStatus::Unavailable;
     QString endpoint;
     QString summary = QStringLiteral("Ollama runtime client is unavailable.");
+    int timeoutMs = 0;
 };
 
 QString ollamaModelSummary(const OllamaModelSummary& model);
