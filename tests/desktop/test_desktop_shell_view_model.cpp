@@ -69,6 +69,7 @@ private slots:
     void exposesOnlyQmlSafeAgentVisibilityProperties();
     void exposesChatHistoryStatus();
     void exposesConversationHistorySummaryMetadata();
+    void exposesConversationBrowserMetadata();
     void exposesConversationSearchAndExportMetadata();
     void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
@@ -1220,6 +1221,18 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("conversationSearchSummaryText"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationSearchResultCount"), QByteArrayLiteral("int")},
         {QStringLiteral("conversationSearchResultSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationBrowserStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationBrowserSummaryText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationListEntryCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationListCurrentTitle"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationListCurrentMessageCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationListCurrentPersistenceStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationListCurrentLastUpdatedSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationListCurrentSearchAvailabilitySummary"),
+         QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationListCurrentExportAvailabilitySummary"),
+         QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationListCurrentSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationExportAvailable"), QByteArrayLiteral("bool")},
         {QStringLiteral("conversationExportReadinessStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationExportReadinessSummary"), QByteArrayLiteral("QString")},
@@ -1374,6 +1387,27 @@ void DesktopShellViewModelTest::exposesConversationHistorySummaryMetadata() {
              QStringLiteral("Saved latest assistant message."));
 }
 
+void DesktopShellViewModelTest::exposesConversationBrowserMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.conversationBrowserStatus(), QStringLiteral("Empty Transcript"));
+    QCOMPARE(fixture.viewModel.conversationListEntryCount(), 1);
+    QCOMPARE(fixture.viewModel.conversationListCurrentTitle(),
+             QStringLiteral("Current Transcript"));
+    QCOMPARE(fixture.viewModel.conversationListCurrentMessageCount(), 1);
+    QCOMPARE(fixture.viewModel.conversationListCurrentPersistenceStatus(),
+             QStringLiteral("Runtime Only"));
+    QVERIFY(fixture.viewModel.conversationListCurrentSearchAvailabilitySummary().contains(
+        QStringLiteral("Search ready")));
+    QVERIFY(fixture.viewModel.conversationListCurrentExportAvailabilitySummary().contains(
+        QStringLiteral("Available")));
+
+    QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("browser token")));
+
+    QCOMPARE(fixture.viewModel.conversationBrowserStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.conversationListCurrentMessageCount(), 3);
+}
+
 void DesktopShellViewModelTest::exposesConversationSearchAndExportMetadata() {
     ViewModelFixture fixture;
     QSignalSpy searchSpy(&fixture.viewModel, &DesktopShellViewModel::conversationSearchChanged);
@@ -1398,6 +1432,8 @@ void DesktopShellViewModelTest::exposesConversationSearchAndExportMetadata() {
     QVERIFY(fixture.viewModel.conversationSearchResultSummaries()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("user #2")));
+    QVERIFY(fixture.viewModel.conversationListCurrentSearchAvailabilitySummary().contains(
+        QStringLiteral("Completed")));
     QVERIFY(searchSpy.count() >= 1);
 
     QTemporaryDir exportDir;
@@ -1408,6 +1444,8 @@ void DesktopShellViewModelTest::exposesConversationSearchAndExportMetadata() {
     QVERIFY(fixture.viewModel.conversationExportLastFileName().endsWith(QStringLiteral(".json")));
     QCOMPARE(fixture.viewModel.conversationExportLastMessageCount(),
              fixture.viewModel.conversationHistoryMessageCount());
+    QVERIFY(fixture.viewModel.conversationListCurrentExportAvailabilitySummary().contains(
+        QStringLiteral("Last export: Succeeded")));
     QCOMPARE(exportSpy.count(), 1);
 
     fixture.viewModel.clearConversationSearch();

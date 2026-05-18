@@ -60,6 +60,46 @@ struct ConversationClearResult {
     QString summary = QStringLiteral("Chat clear has not run.");
 };
 
+enum class ConversationBrowserStatus {
+    Ready,
+    EmptyTranscript,
+};
+
+inline QString conversationBrowserStatusName(ConversationBrowserStatus status) {
+    switch (status) {
+    case ConversationBrowserStatus::Ready:
+        return QStringLiteral("Ready");
+    case ConversationBrowserStatus::EmptyTranscript:
+        return QStringLiteral("Empty Transcript");
+    }
+
+    return QStringLiteral("Ready");
+}
+
+struct ConversationDisplayTitle {
+    QString text = QStringLiteral("Current Transcript");
+    QString summary = QStringLiteral("Single local transcript entry.");
+};
+
+struct ConversationListEntry {
+    ConversationDisplayTitle displayTitle;
+    int messageCount = 0;
+    ConversationPersistenceStatus persistenceStatus = ConversationPersistenceStatus::RuntimeOnly;
+    QString lastUpdatedSummary = QStringLiteral("No transcript update recorded.");
+    QString searchAvailabilitySummary =
+        QStringLiteral("Search is available for the current transcript.");
+    QString exportAvailabilitySummary =
+        QStringLiteral("Export is available for Markdown and JSON.");
+    QString summary = QStringLiteral("Current transcript entry metadata is not available.");
+};
+
+struct ConversationListSummary {
+    ConversationBrowserStatus status = ConversationBrowserStatus::Ready;
+    int entryCount = 1;
+    QList<ConversationListEntry> entries;
+    QString summary = QStringLiteral("Single current transcript entry.");
+};
+
 struct ConversationSearchQuery {
     QString text;
     bool includeSystemMessages = true;

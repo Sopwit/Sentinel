@@ -323,6 +323,27 @@ Still out of scope:
   encryption, pruning, cloud/API sync, external processes, tools/plugins, semantic/vector search,
   cloud/API keys, tools/plugins, filesystem/system actions, and model-management operations.
 
+## Phase 15.17-15.19: Conversation Browser Metadata Foundation
+
+Completed. Added a single-transcript conversation-list foundation for future browser UX.
+
+Delivered:
+
+- Value-only metadata records for browser-readiness:
+  `ConversationDisplayTitle`, `ConversationListEntry`, `ConversationListSummary`,
+  and `ConversationBrowserStatus`.
+- Deterministic single-entry exposure for the active local transcript: title, message count,
+  persistence status, last updated/saved summary, and search/export availability summaries.
+- QML-safe controller/view-model properties for compact Settings visibility.
+- Compact Settings “Current Transcript” readiness rows without sidebar/thread redesign.
+- Focused tests for deterministic single entry, empty summary, count summary, clear-chat update,
+  search/export availability reflection, and QML-safe exposure.
+
+Still out of scope:
+
+- Multi-conversation/thread storage, full transcript browser UI, database migration, import changes,
+  arbitrary export paths, cloud sync, tools/plugins, or model/runtime boundary expansion.
+
 ## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 
 Completed. Prepared voice architecture without enabling real audio I/O or voice runtime work.

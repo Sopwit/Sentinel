@@ -127,7 +127,10 @@ Markdown and JSON writes are allowed only to the app-controlled export directory
 `AppDataLocation`, filenames are sanitized/timestamped/unique, empty transcripts are refused, and
 QML receives only safe filename/status/count/timestamp summaries. No import, arbitrary output path,
 file picker, cloud sync, external process, tools/plugins, semantic/vector search, or
-multi-conversation storage is added.
+multi-conversation storage is added. Phase 15.17 through Phase 15.19 adds single-transcript
+conversation-browser metadata (`ConversationDisplayTitle`, `ConversationListEntry`,
+`ConversationListSummary`, `ConversationBrowserStatus`) so UI can expose one deterministic current
+entry summary without introducing multi-conversation storage, migration, or browser controls.
 
 ## Future Components
 
@@ -295,7 +298,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 15.16 runtime activates controlled local Ollama chat inference while keeping the
+Current Phase 15.19 runtime activates controlled local Ollama chat inference while keeping the
 larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
 selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
 action-light local model selection UX, metadata-only model-management readiness, metadata-only
@@ -307,8 +310,9 @@ metadata, runs real generate/stream work through an async worker boundary, and c
 streaming previews without persisting partial assistant output. Conversation runtime summaries are
 request-id guarded and reset on Clear Chat alongside persistent transcript cleanup. Conversation
 history UX metadata remains single-transcript, compact, and value-only, with literal in-memory
-search metadata plus controlled Markdown/JSON current-transcript export to an app-owned directory.
-Phase 15.16 still adds no audio playback,
+search metadata, controlled Markdown/JSON current-transcript export to an app-owned directory, and
+single-entry conversation-browser readiness summaries for the current transcript only. Phase 15.19
+still adds no audio playback,
 microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
 execution, autonomous agents, tool execution, shell execution, filesystem-wide actions, vector
 search, embeddings, semantic search, SQLite FTS, file picker, import, or arbitrary export paths:

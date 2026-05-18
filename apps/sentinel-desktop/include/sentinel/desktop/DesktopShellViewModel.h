@@ -314,6 +314,28 @@ class DesktopShellViewModel final : public QObject {
                    chatMessagesChanged)
     Q_PROPERTY(QString conversationLastRestoredStatus READ conversationLastRestoredStatus NOTIFY
                    chatMessagesChanged)
+    Q_PROPERTY(
+        QString conversationBrowserStatus READ conversationBrowserStatus NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString conversationBrowserSummaryText READ conversationBrowserSummaryText NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(
+        int conversationListEntryCount READ conversationListEntryCount NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString conversationListCurrentTitle READ conversationListCurrentTitle NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(int conversationListCurrentMessageCount READ conversationListCurrentMessageCount
+                   NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString conversationListCurrentPersistenceStatus READ
+                   conversationListCurrentPersistenceStatus NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString conversationListCurrentLastUpdatedSummary READ
+                   conversationListCurrentLastUpdatedSummary NOTIFY chatMessagesChanged)
+    Q_PROPERTY(
+        QString conversationListCurrentSearchAvailabilitySummary READ
+            conversationListCurrentSearchAvailabilitySummary NOTIFY conversationSearchChanged)
+    Q_PROPERTY(
+        QString conversationListCurrentExportAvailabilitySummary READ
+            conversationListCurrentExportAvailabilitySummary NOTIFY conversationExportChanged)
+    Q_PROPERTY(QString conversationListCurrentSummary READ conversationListCurrentSummary NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(QString conversationSearchQueryText READ conversationSearchQueryText NOTIFY
                    conversationSearchChanged)
     Q_PROPERTY(QString conversationSearchStatus READ conversationSearchStatus NOTIFY
@@ -572,6 +594,16 @@ public:
     QString conversationPersistenceStatus() const;
     QString conversationLastSavedStatus() const;
     QString conversationLastRestoredStatus() const;
+    QString conversationBrowserStatus() const;
+    QString conversationBrowserSummaryText() const;
+    int conversationListEntryCount() const;
+    QString conversationListCurrentTitle() const;
+    int conversationListCurrentMessageCount() const;
+    QString conversationListCurrentPersistenceStatus() const;
+    QString conversationListCurrentLastUpdatedSummary() const;
+    QString conversationListCurrentSearchAvailabilitySummary() const;
+    QString conversationListCurrentExportAvailabilitySummary() const;
+    QString conversationListCurrentSummary() const;
     QString conversationSearchQueryText() const;
     QString conversationSearchStatus() const;
     QString conversationSearchSummaryText() const;

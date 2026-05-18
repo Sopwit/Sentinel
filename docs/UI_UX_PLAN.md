@@ -251,6 +251,12 @@ The UI must not expose raw filesystem paths, a file picker, custom output locati
 thread browsing, multi-conversation export, cloud sync, external process controls, or broad
 filesystem actions.
 
+Phase 15.17 through Phase 15.19 add a compact current-transcript browser-readiness section.
+Chat/Settings may show browser status plus one current transcript entry summary (title, message
+count, persistence, last updated/saved summary, and search/export availability summaries). This is
+single-transcript foundation only: no full browser page, no sidebar redesign, no thread controls,
+and no multi-conversation storage UI.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

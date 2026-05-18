@@ -999,6 +999,46 @@ QString DesktopShellViewModel::conversationLastRestoredStatus() const {
     return controller_.conversationLastRestoredStatus();
 }
 
+QString DesktopShellViewModel::conversationBrowserStatus() const {
+    return controller_.conversationBrowserStatus();
+}
+
+QString DesktopShellViewModel::conversationBrowserSummaryText() const {
+    return controller_.conversationBrowserSummaryText();
+}
+
+int DesktopShellViewModel::conversationListEntryCount() const {
+    return controller_.conversationListEntryCount();
+}
+
+QString DesktopShellViewModel::conversationListCurrentTitle() const {
+    return controller_.conversationListCurrentTitle();
+}
+
+int DesktopShellViewModel::conversationListCurrentMessageCount() const {
+    return controller_.conversationListCurrentMessageCount();
+}
+
+QString DesktopShellViewModel::conversationListCurrentPersistenceStatus() const {
+    return controller_.conversationListCurrentPersistenceStatus();
+}
+
+QString DesktopShellViewModel::conversationListCurrentLastUpdatedSummary() const {
+    return controller_.conversationListCurrentLastUpdatedSummary();
+}
+
+QString DesktopShellViewModel::conversationListCurrentSearchAvailabilitySummary() const {
+    return controller_.conversationListCurrentSearchAvailabilitySummary();
+}
+
+QString DesktopShellViewModel::conversationListCurrentExportAvailabilitySummary() const {
+    return controller_.conversationListCurrentExportAvailabilitySummary();
+}
+
+QString DesktopShellViewModel::conversationListCurrentSummary() const {
+    return controller_.conversationListCurrentSummary();
+}
+
 QString DesktopShellViewModel::conversationSearchQueryText() const {
     return controller_.conversationSearchQueryText();
 }

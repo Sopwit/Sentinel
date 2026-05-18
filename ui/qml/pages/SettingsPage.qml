@@ -632,19 +632,43 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Search"
-                    value: settingsPage.viewModel.conversationSearchStatus
+                    label: "Transcript Browser"
+                    value: settingsPage.viewModel.conversationBrowserStatus
                            + " / "
-                           + settingsPage.viewModel.conversationSearchSummaryText
+                           + settingsPage.viewModel.conversationBrowserSummaryText
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Current Transcript"
+                    value: settingsPage.viewModel.conversationListCurrentTitle
+                           + " / "
+                           + settingsPage.viewModel.conversationListCurrentMessageCount
+                           + (settingsPage.viewModel.conversationListCurrentMessageCount === 1 ? " message" : " messages")
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Transcript Status"
+                    value: settingsPage.viewModel.conversationListCurrentPersistenceStatus
+                           + " / "
+                           + settingsPage.viewModel.conversationListCurrentLastUpdatedSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Search"
+                    value: settingsPage.viewModel.conversationListCurrentSearchAvailabilitySummary
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Export"
-                    value: settingsPage.viewModel.conversationExportLastStatus
-                           + " / "
-                           + settingsPage.viewModel.conversationExportLastResultSummary
+                    value: settingsPage.viewModel.conversationListCurrentExportAvailabilitySummary
                     Layout.fillWidth: true
                 }
 

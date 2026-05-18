@@ -2,6 +2,29 @@
 
 ## Completed / Stable
 
+### Phase 15.17-15.19: Conversation Browser Metadata Foundation
+
+Completed. Adds single-transcript conversation-browser metadata without changing storage shape.
+
+Scope:
+
+- Added value-only metadata records for a future browser surface:
+  `ConversationDisplayTitle`, `ConversationListEntry`, `ConversationListSummary`, and
+  `ConversationBrowserStatus`.
+- `ApplicationController` now exposes QML-safe current-transcript browser metadata: browser status,
+  single-entry count, current title, message count, persistence status, last updated/saved summary,
+  and search/export availability summaries.
+- Metadata remains deterministic and single-entry: one current local transcript is always exposed.
+- `DesktopShellViewModel` forwards these values as strings/booleans/counts only.
+- Settings now shows a compact “Current Transcript” readiness section using these values.
+- Tests cover deterministic single entry, empty transcript summary, message count summary, clear-chat
+  update behavior, search/export availability reflection, and QML-safe view-model exposure.
+
+Known limitation:
+
+- This is foundation only. No multi-conversation storage, thread list, transcript browser UI,
+  import, export-path picker, cloud sync, or schema migration is added.
+
 ### Phase 15.14-15.16: Local Transcript Export Implementation
 
 Completed. Adds safe local Markdown/JSON export for the current single transcript.
