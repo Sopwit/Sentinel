@@ -310,6 +310,17 @@ class DesktopShellViewModel final : public QObject {
         QString activeConversationSummary READ activeConversationSummary NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList conversationStoreSummaries READ conversationStoreSummaries NOTIFY
                    chatMessagesChanged)
+    Q_PROPERTY(QString activeConversationId READ activeConversationId NOTIFY chatMessagesChanged)
+    Q_PROPERTY(
+        bool activeConversationArchived READ activeConversationArchived NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationIds READ conversationIds NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationTitles READ conversationTitles NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationLastUpdatedSummaries READ conversationLastUpdatedSummaries
+                   NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationMessageCountSummaries READ conversationMessageCountSummaries
+                   NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationArchivedSummaries READ conversationArchivedSummaries NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(QString conversationHistorySummaryText READ conversationHistorySummaryText NOTIFY
                    chatMessagesChanged)
     Q_PROPERTY(QStringList conversationHistorySummaryLines READ conversationHistorySummaryLines
@@ -607,6 +618,13 @@ public:
     int conversationStoreConversationCount() const;
     QString activeConversationSummary() const;
     QStringList conversationStoreSummaries() const;
+    QString activeConversationId() const;
+    bool activeConversationArchived() const;
+    QStringList conversationIds() const;
+    QStringList conversationTitles() const;
+    QStringList conversationLastUpdatedSummaries() const;
+    QStringList conversationMessageCountSummaries() const;
+    QStringList conversationArchivedSummaries() const;
     QString conversationHistorySummaryText() const;
     QStringList conversationHistorySummaryLines() const;
     int conversationHistoryMessageCount() const;
@@ -663,6 +681,11 @@ public:
     Q_INVOKABLE void clearConversationSearch();
     Q_INVOKABLE bool exportTranscript(const QString& format);
     Q_INVOKABLE bool requestConversationExport(const QString& format);
+    Q_INVOKABLE QString createConversation(const QString& title);
+    Q_INVOKABLE bool switchConversation(const QString& conversationId);
+    Q_INVOKABLE bool renameConversation(const QString& conversationId, const QString& title);
+    Q_INVOKABLE bool archiveConversation(const QString& conversationId);
+    Q_INVOKABLE bool unarchiveConversation(const QString& conversationId);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();

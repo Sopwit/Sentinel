@@ -137,7 +137,12 @@ entry summary without introducing multi-conversation storage, migration, or brow
 storage behavior single-transcript and schema changes unapplied. Phase 15.23 through Phase 15.25
 adds the real `IConversationStore` boundary with in-memory and SQLite implementations, but the
 active chat path still uses `IChatHistoryStore`; no migration, import, cloud sync, tool/plugin
-scope, or autonomous conversation orchestration is added.
+scope, or autonomous conversation orchestration is added. Phase 15.26 through Phase 15.29 activates
+safe local session switching over `IConversationStore`: the controller owns a valid active
+conversation id, loads selected conversation messages into `ChatSession`, resets live preview and
+request metadata on switch, and relies on request-id guards so stale async results from a previous
+conversation are ignored. The browser UI is compact and local-only; no delete UI, cloud sync,
+import, semantic/vector memory, tools/plugins/system execution, or Ollama safety change is added.
 
 ## Future Components
 
@@ -305,7 +310,7 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 15.22 runtime activates controlled local Ollama chat inference while keeping the
+Current Phase 15.29 runtime activates controlled local Ollama chat inference while keeping the
 larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
 selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
 action-light local model selection UX, metadata-only model-management readiness, metadata-only
@@ -315,15 +320,11 @@ Piper/Whisper path configuration UX with hint-only fixed-location suggestions pl
 Ready/Blocked/Missing path preparation metadata. The Ollama path reports bounded timeout/error
 metadata, runs real generate/stream work through an async worker boundary, and clears failed
 streaming previews without persisting partial assistant output. Conversation runtime summaries are
-request-id guarded and reset on Clear Chat alongside persistent transcript cleanup. Conversation
-history UX metadata remains single-transcript, compact, and value-only, with literal in-memory
-search metadata, controlled Markdown/JSON current-transcript export to an app-owned directory,
-single-entry conversation-browser readiness summaries for the current transcript only, and
-read-only multi-conversation planning readiness metadata (`Single Transcript` current mode,
-`Multi Conversation` future mode, `Not Started / Planned` migration summary, schema status summary)
-without schema mutation, plus read-only conversation-store readiness/count/summary exposure from
-the separate `IConversationStore` boundary. Phase 15.25
-still adds no audio playback,
+request-id guarded and reset on Clear Chat or conversation switch alongside active transcript
+loading. Conversation history UX metadata now has a compact local conversation browser over
+`IConversationStore`, with create/switch/rename/archive/unarchive actions and controlled
+Markdown/JSON export still scoped to the currently visible transcript only. Phase 15.29 still adds
+no audio playback,
 microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
 execution, autonomous agents, tool execution, shell execution, filesystem-wide actions, vector
 search, embeddings, semantic search, SQLite FTS, file picker, import, or arbitrary export paths:

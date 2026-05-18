@@ -106,6 +106,7 @@ struct ConversationId {
 
 enum class ConversationLifecycleStatus {
     Active,
+    Archived,
     Planned,
 };
 
@@ -113,6 +114,8 @@ inline QString conversationLifecycleStatusName(ConversationLifecycleStatus statu
     switch (status) {
     case ConversationLifecycleStatus::Active:
         return QStringLiteral("Active");
+    case ConversationLifecycleStatus::Archived:
+        return QStringLiteral("Archived");
     case ConversationLifecycleStatus::Planned:
         return QStringLiteral("Planned");
     }

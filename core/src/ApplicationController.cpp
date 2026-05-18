@@ -724,6 +724,7 @@ ApplicationController::ApplicationController(
                 QStringLiteral("Runtime-only transcript; persistence unavailable.");
         }
     }
+    initializeActiveConversation();
     refreshConversationHistorySummary();
     resetConversationSearchSummary();
     refreshLatestTaskPlan();
@@ -2307,6 +2308,112 @@ QString ApplicationController::chatHistoryStatus() const {
                                                                  : QStringLiteral("Runtime Only");
 }
 
+QList<ConversationRecord> ApplicationController::conversationRecords() const {
+    return conversationStore_ ? conversationStore_->listConversations()
+                              : QList<ConversationRecord>{};
+}
+
+ConversationRecord ApplicationController::activeConversationRecord() const {
+    for (const auto& record : conversationRecords()) {
+        if (record.id == activeConversationId_) {
+            return record;
+        }
+    }
+    return {};
+}
+
+ConversationMessageRecord
+ApplicationController::conversationMessageRecordFromChatMessage(const ChatMessage& message) const {
+    return ConversationMessageRecord{
+        activeConversationId_, message.id,        message.role,
+        message.content,       message.timestamp, message.status,
+    };
+}
+
+ChatMessage ApplicationController::chatMessageFromConversationMessageRecord(
+    const ConversationMessageRecord& message) const {
+    return ChatMessage{
+        message.messageId, message.role, message.content, message.timestampUtc, message.status,
+    };
+}
+
+bool ApplicationController::ensureActiveConversation() {
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        activeConversationId_.clear();
+        return false;
+    }
+
+    const auto records = conversationStore_->listConversations();
+    for (const auto& record : records) {
+        if (record.id == activeConversationId_ && !record.deleted) {
+            return true;
+        }
+    }
+    for (const auto& record : records) {
+        if (!record.archived && !record.deleted) {
+            activeConversationId_ = record.id;
+            return true;
+        }
+    }
+
+    const auto record =
+        conversationStore_->createConversation(QStringLiteral("Current Transcript"));
+    activeConversationId_ = record.id;
+    return !activeConversationId_.isEmpty();
+}
+
+void ApplicationController::initializeActiveConversation() {
+    if (!ensureActiveConversation()) {
+        return;
+    }
+
+    const auto storedMessages = conversationStore_->loadMessages(activeConversationId_);
+    if (!storedMessages.isEmpty()) {
+        QList<ChatMessage> messages;
+        messages.reserve(storedMessages.size());
+        for (const auto& message : storedMessages) {
+            messages.append(chatMessageFromConversationMessageRecord(message));
+        }
+        chatSession_->loadMessages(messages);
+        conversationHistorySummary_.lastRestoredStatus =
+            QStringLiteral("Restored %1 active conversation messages.").arg(storedMessages.size());
+        conversationHistorySummary_.lastSavedStatus = QStringLiteral("Active conversation loaded.");
+        return;
+    }
+
+    for (const auto& message : chatSession_->messages()) {
+        persistActiveConversationMessage(message);
+    }
+}
+
+void ApplicationController::loadActiveConversationTranscript() {
+    if (!ensureActiveConversation()) {
+        return;
+    }
+
+    const auto storedMessages = conversationStore_->loadMessages(activeConversationId_);
+    QList<ChatMessage> messages;
+    messages.reserve(storedMessages.size());
+    for (const auto& message : storedMessages) {
+        messages.append(chatMessageFromConversationMessageRecord(message));
+    }
+    chatSession_->loadMessages(messages);
+    if (chatSession_->messages().isEmpty()) {
+        const auto systemMessage = chatSession_->appendSystemMessage(
+            QStringLiteral("Sentinel Core online."), ChatMessageStatus::Received);
+        persistActiveConversationMessage(systemMessage);
+    }
+    conversationHistorySummary_.lastRestoredStatus =
+        QStringLiteral("Loaded active conversation transcript.");
+}
+
+bool ApplicationController::persistActiveConversationMessage(const ChatMessage& message) {
+    if (!ensureActiveConversation()) {
+        return false;
+    }
+    return conversationStore_->appendMessage(conversationMessageRecordFromChatMessage(message));
+}
+
 QString ApplicationController::conversationStoreStatus() const {
     return conversationStore_ ? conversationStoreStatusName(conversationStore_->status())
                               : QStringLiteral("Unavailable");
@@ -2324,7 +2431,7 @@ QString ApplicationController::activeConversationSummary() const {
                                                                : QStringLiteral("messages"));
     }
 
-    const auto records = conversationStore_->listConversations();
+    const auto records = conversationRecords();
     if (records.isEmpty()) {
         return QStringLiteral("Current Transcript / %1 %2 / Single Transcript active")
             .arg(conversationHistorySummary_.messageCount)
@@ -2332,7 +2439,9 @@ QString ApplicationController::activeConversationSummary() const {
                                                                : QStringLiteral("messages"));
     }
 
-    return conversationRecordSummary(records.first());
+    const auto active = activeConversationRecord();
+    return active.id.isEmpty() ? conversationRecordSummary(records.first())
+                               : conversationRecordSummary(active);
 }
 
 QStringList ApplicationController::conversationStoreSummaries() const {
@@ -2341,10 +2450,65 @@ QStringList ApplicationController::conversationStoreSummaries() const {
         return summaries;
     }
 
-    const auto records = conversationStore_->listConversations();
+    const auto records = conversationRecords();
     summaries.reserve(records.size());
     for (const auto& record : records) {
         summaries.append(conversationRecordSummary(record));
+    }
+    return summaries;
+}
+
+QString ApplicationController::activeConversationId() const {
+    return activeConversationId_.isEmpty() ? QStringLiteral("single-transcript")
+                                           : activeConversationId_;
+}
+
+bool ApplicationController::activeConversationArchived() const {
+    return activeConversationRecord().archived;
+}
+
+QStringList ApplicationController::conversationIds() const {
+    QStringList ids;
+    for (const auto& record : conversationRecords()) {
+        ids.append(record.id);
+    }
+    return ids;
+}
+
+QStringList ApplicationController::conversationTitles() const {
+    QStringList titles;
+    for (const auto& record : conversationRecords()) {
+        titles.append(record.title);
+    }
+    return titles;
+}
+
+QStringList ApplicationController::conversationLastUpdatedSummaries() const {
+    QStringList summaries;
+    for (const auto& record : conversationRecords()) {
+        summaries.append(record.updatedAtUtc.isValid()
+                             ? QStringLiteral("Updated %1 UTC")
+                                   .arg(record.updatedAtUtc.toUTC().toString(Qt::ISODateWithMs))
+                             : QStringLiteral("Updated time unavailable"));
+    }
+    return summaries;
+}
+
+QStringList ApplicationController::conversationMessageCountSummaries() const {
+    QStringList summaries;
+    for (const auto& record : conversationRecords()) {
+        summaries.append(QStringLiteral("%1 %2")
+                             .arg(record.messageCount)
+                             .arg(record.messageCount == 1 ? QStringLiteral("message")
+                                                           : QStringLiteral("messages")));
+    }
+    return summaries;
+}
+
+QStringList ApplicationController::conversationArchivedSummaries() const {
+    QStringList summaries;
+    for (const auto& record : conversationRecords()) {
+        summaries.append(record.archived ? QStringLiteral("Archived") : QStringLiteral("Active"));
     }
     return summaries;
 }
@@ -2387,21 +2551,25 @@ QString ApplicationController::conversationLastRestoredStatus() const {
 }
 
 ConversationId ApplicationController::currentConversationId() const {
-    return {};
+    return ConversationId{activeConversationId()};
 }
 
 ConversationDescriptor ApplicationController::currentConversationDescriptor() const {
     ConversationDescriptor descriptor;
     descriptor.id = currentConversationId();
-    descriptor.displayTitle.text = QStringLiteral("Current Transcript");
+    const auto active = activeConversationRecord();
+    descriptor.displayTitle.text =
+        active.id.isEmpty() ? QStringLiteral("Current Transcript") : active.title;
     descriptor.displayTitle.summary =
         QStringLiteral("%1 / %2 %3")
             .arg(conversationPersistenceStatus())
             .arg(conversationHistorySummary_.messageCount)
             .arg(conversationHistorySummary_.messageCount == 1 ? QStringLiteral("message")
                                                                : QStringLiteral("messages"));
-    descriptor.lifecycleStatus = ConversationLifecycleStatus::Active;
-    descriptor.storageMode = ConversationStorageMode::SingleTranscript;
+    descriptor.lifecycleStatus = active.archived ? ConversationLifecycleStatus::Archived
+                                                 : ConversationLifecycleStatus::Active;
+    descriptor.storageMode = active.id.isEmpty() ? ConversationStorageMode::SingleTranscript
+                                                 : ConversationStorageMode::MultiConversation;
     descriptor.summary =
         QStringLiteral("%1 (%2)").arg(descriptor.displayTitle.summary,
                                       conversationLifecycleStatusName(descriptor.lifecycleStatus));
@@ -2775,9 +2943,129 @@ bool ApplicationController::requestConversationExport(const QString& format) {
     return exportTranscript(format);
 }
 
+QString ApplicationController::createConversation(const QString& title) {
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        return {};
+    }
+
+    if (localInferenceBusy_ && !activeLocalInferenceRequestId_.isEmpty()) {
+        cancelLocalInference();
+    }
+
+    const auto record = conversationStore_->createConversation(title);
+    if (record.id.isEmpty()) {
+        return {};
+    }
+    activeConversationId_ = record.id;
+    loadActiveConversationTranscript();
+    resetConversationRuntimeState();
+    conversationStateGraph_.reset();
+    refreshConversationHistorySummary();
+    resetConversationSearchSummary();
+    emit localInferenceChanged();
+    emit conversationRuntimeChanged();
+    emit conversationStateChanged();
+    emit conversationSearchChanged();
+    emit chatMessagesChanged();
+    return activeConversationId_;
+}
+
+bool ApplicationController::switchConversation(const QString& conversationId) {
+    const auto trimmedId = conversationId.trimmed();
+    if (trimmedId.isEmpty() || !conversationStore_ ||
+        conversationStore_->status() != ConversationStoreStatus::Ready) {
+        return false;
+    }
+
+    bool found = false;
+    for (const auto& record : conversationStore_->listConversations()) {
+        if (record.id == trimmedId && !record.deleted) {
+            found = true;
+            break;
+        }
+    }
+    if (!found) {
+        return false;
+    }
+    if (trimmedId == activeConversationId_) {
+        return true;
+    }
+
+    if (localInferenceBusy_ && !activeLocalInferenceRequestId_.isEmpty()) {
+        cancelLocalInference();
+    }
+    activeConversationId_ = trimmedId;
+    loadActiveConversationTranscript();
+    resetConversationRuntimeState();
+    conversationStateGraph_.reset();
+    refreshConversationHistorySummary();
+    resetConversationSearchSummary();
+    emit localInferenceChanged();
+    emit conversationRuntimeChanged();
+    emit conversationStateChanged();
+    emit conversationSearchChanged();
+    emit chatMessagesChanged();
+    return true;
+}
+
+bool ApplicationController::renameConversation(const QString& conversationId,
+                                               const QString& title) {
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        return false;
+    }
+    const auto renamed = conversationStore_->renameConversation(conversationId.trimmed(), title);
+    if (renamed) {
+        emit chatMessagesChanged();
+    }
+    return renamed;
+}
+
+bool ApplicationController::archiveConversation(const QString& conversationId) {
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        return false;
+    }
+    const auto archived = conversationStore_->archiveConversation(conversationId.trimmed());
+    if (!archived) {
+        return false;
+    }
+    if (conversationId.trimmed() == activeConversationId_) {
+        if (localInferenceBusy_ && !activeLocalInferenceRequestId_.isEmpty()) {
+            cancelLocalInference();
+        }
+        activeConversationId_.clear();
+        ensureActiveConversation();
+        loadActiveConversationTranscript();
+        resetConversationRuntimeState();
+        conversationStateGraph_.reset();
+        refreshConversationHistorySummary();
+        resetConversationSearchSummary();
+        emit localInferenceChanged();
+        emit conversationRuntimeChanged();
+        emit conversationStateChanged();
+        emit conversationSearchChanged();
+    }
+    emit chatMessagesChanged();
+    return true;
+}
+
+bool ApplicationController::unarchiveConversation(const QString& conversationId) {
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        return false;
+    }
+    const auto unarchived = conversationStore_->unarchiveConversation(conversationId.trimmed());
+    if (unarchived) {
+        emit chatMessagesChanged();
+    }
+    return unarchived;
+}
+
 bool ApplicationController::sendMessage(const QString& message) {
     const auto trimmed = message.trimmed();
     if (trimmed.isEmpty()) {
+        return false;
+    }
+
+    if (activeConversationArchived()) {
         return false;
     }
 
@@ -2807,6 +3095,7 @@ bool ApplicationController::sendMessage(const QString& message) {
                                 QStringLiteral("chat route metadata selected"));
 
     const auto userMessage = chatSession_->appendUserMessage(trimmed);
+    persistActiveConversationMessage(userMessage);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(userMessage);
         conversationHistorySummary_.lastSavedStatus =
@@ -2844,6 +3133,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         const auto errorMessage = chatSession_->appendAssistantMessage(
             QStringLiteral("Provider unavailable. Status: %1").arg(providerStatus()),
             ChatMessageStatus::Error);
+        persistActiveConversationMessage(errorMessage);
         if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
             chatHistoryStore_->appendMessage(errorMessage);
             conversationHistorySummary_.lastSavedStatus =
@@ -2879,6 +3169,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         reply.success ? reply.message
                       : QStringLiteral("Provider error: %1").arg(reply.errorMessage),
         reply.success ? ChatMessageStatus::Received : ChatMessageStatus::Error);
+    persistActiveConversationMessage(assistantMessage);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(assistantMessage);
         conversationHistorySummary_.lastSavedStatus =
@@ -3386,6 +3677,7 @@ void ApplicationController::finalizeLocalChatInference(bool succeeded) {
         succeeded ? latestLocalInferenceResponse_.text
                   : localInferenceChatFailureMessage(latestLocalInferenceResponse_),
         succeeded ? ChatMessageStatus::Received : ChatMessageStatus::Error);
+    persistActiveConversationMessage(assistantMessage);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(assistantMessage);
         conversationHistorySummary_.lastSavedStatus =
@@ -3916,8 +4208,16 @@ bool ApplicationController::clearChat() {
     }
 
     chatSession_->clear();
+    if (conversationStore_ && conversationStore_->status() == ConversationStoreStatus::Ready) {
+        const auto record =
+            conversationStore_->createConversation(QStringLiteral("Current Transcript"));
+        if (!record.id.isEmpty()) {
+            activeConversationId_ = record.id;
+        }
+    }
     const auto message = chatSession_->appendSystemMessage(QStringLiteral("Sentinel Core online."),
                                                            ChatMessageStatus::Received);
+    persistActiveConversationMessage(message);
     if (persistentAvailable) {
         chatHistoryStore_->appendMessage(message);
         if (!chatHistoryStore_->lastError().isEmpty()) {

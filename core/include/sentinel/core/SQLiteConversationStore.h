@@ -22,6 +22,7 @@ public:
     QList<ConversationMessageRecord> loadMessages(const QString& conversationId) const override;
     bool renameConversation(const QString& conversationId, const QString& title) override;
     bool archiveConversation(const QString& conversationId) override;
+    bool unarchiveConversation(const QString& conversationId) override;
     bool deleteConversation(const QString& conversationId) override;
     ConversationStoreStatus status() const override;
     ConversationStoreError lastError() const override;

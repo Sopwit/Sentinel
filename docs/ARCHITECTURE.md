@@ -182,6 +182,29 @@ switching the active chat transcript:
 - No destructive migration is performed. Existing `chat_history.sqlite3` and `IChatHistoryStore`
   behavior remain the active single-transcript path.
 
+Phase 15.26 through Phase 15.29 make `IConversationStore` the active local transcript source while
+preserving the older single-transcript history as a compatibility source when the conversation
+store is empty:
+
+- `StandardPathProvider::conversationDatabasePath()` owns the app data
+  `conversations.sqlite3` path. The desktop app wires `SQLiteConversationStore` there.
+- `ApplicationController` owns `activeConversationId_`. Startup ensures the active id is valid,
+  creates an initial conversation if needed, and copies loaded legacy `IChatHistoryStore` messages
+  into the empty conversation store when possible.
+- New user/assistant/system chat messages are appended to the active conversation through
+  `IConversationStore`. The visible `ChatSession` is a loaded transcript view of the active
+  conversation.
+- Switching conversations invalidates active async request metadata, clears live streaming preview
+  text, resets conversation runtime/search metadata, loads selected conversation messages, and
+  emits only QML-safe summary/list values.
+- Async inference completion remains request-id guarded. A stale completion from a previous active
+  conversation cannot append an assistant message or alter the newly active transcript.
+- Archived conversations remain listable/loadable and can be unarchived. Sending into an archived
+  active conversation is refused.
+
+No cloud sync, import, permanent delete UI, multi-conversation export, vector/semantic search,
+tool/plugin/system execution, or Ollama safety policy change is introduced.
+
 ## Conversation Session Metadata
 
 Phase 6.8 adds `ConversationSession` as a higher-level interaction/session metadata layer. It is

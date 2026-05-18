@@ -219,6 +219,34 @@ Out of scope:
   file pickers, arbitrary output paths, import, full transcript browser UI, cloud sync, encryption,
   pruning, broader filesystem/system actions, cloud/API keys, tools, and plugins.
 
+## 9.3 Active Conversation Lifecycle And Switching
+
+Decision: Use `IConversationStore` as the active local transcript source, with
+`ApplicationController` owning the active conversation id and QML receiving only safe browser
+metadata.
+
+Reason: Multi-conversation persistence is now available, but session switching must not give QML
+direct store access or weaken the async local inference safety model.
+
+Runtime behavior:
+
+- Startup ensures there is always a valid active conversation when the conversation store is ready.
+- If the store is empty, the controller creates a local conversation and copies existing
+  single-transcript startup messages into it when possible.
+- Switching conversations loads messages from `IConversationStore` into `ChatSession`, resets
+  runtime/search metadata, clears streaming preview text, and invalidates any active request id.
+- Stale async results are ignored by the request-id guard and cannot append assistant messages to a
+  newly selected conversation.
+- Rename/archive/unarchive are controller actions over `IConversationStore`; no permanent delete UI
+  is exposed.
+- Archived conversations are visible and loadable, but sending into an archived active
+  conversation is refused.
+
+Out of scope:
+
+- Cloud sync, import, multi-conversation export, permanent delete UI, embeddings/vector DB,
+  semantic memory, tools/plugins/system execution, and changes to Ollama/runtime safety policy.
+
 ## 10. AI Context Layer
 
 Decision: Add repository-local AI instruction files in Phase 3.1.5.

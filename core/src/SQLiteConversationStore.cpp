@@ -246,6 +246,10 @@ bool SQLiteConversationStore::archiveConversation(const QString& conversationId)
     return updateConversationMetadata(conversationId, true, false);
 }
 
+bool SQLiteConversationStore::unarchiveConversation(const QString& conversationId) {
+    return updateConversationMetadata(conversationId, false, false);
+}
+
 bool SQLiteConversationStore::deleteConversation(const QString& conversationId) {
     return updateConversationMetadata(conversationId, true, true);
 }

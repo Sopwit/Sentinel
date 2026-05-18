@@ -31,15 +31,18 @@ void StandardPathProviderTest::returnsExpectedFileNamesInStandardLocations() {
     const auto settingsPath = QDir::fromNativeSeparators(provider->settingsFilePath());
     const auto memoryPath = QDir::fromNativeSeparators(provider->memoryDatabasePath());
     const auto chatPath = QDir::fromNativeSeparators(provider->chatHistoryDatabasePath());
+    const auto conversationPath = QDir::fromNativeSeparators(provider->conversationDatabasePath());
     const auto exportPath = QDir::fromNativeSeparators(provider->conversationExportDirectoryPath());
 
     QVERIFY(settingsPath.startsWith(configDir));
     QVERIFY(memoryPath.startsWith(dataDir));
     QVERIFY(chatPath.startsWith(dataDir));
+    QVERIFY(conversationPath.startsWith(dataDir));
     QVERIFY(exportPath.startsWith(dataDir));
     QVERIFY(settingsPath.endsWith(QStringLiteral("/settings.json")));
     QVERIFY(memoryPath.endsWith(QStringLiteral("/memory.sqlite3")));
     QVERIFY(chatPath.endsWith(QStringLiteral("/chat_history.sqlite3")));
+    QVERIFY(conversationPath.endsWith(QStringLiteral("/conversations.sqlite3")));
     QVERIFY(exportPath.endsWith(QStringLiteral("/exports")));
 }
 

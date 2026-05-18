@@ -66,12 +66,11 @@ bool InMemoryConversationStore::appendMessage(const ConversationMessageRecord& m
 
     conversation->messageCount = conversationMessages.size();
     conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
-    conversation->summary =
-        QStringLiteral("%1 (%2 %3)")
-            .arg(conversation->title)
-            .arg(conversation->messageCount)
-            .arg(conversation->messageCount == 1 ? QStringLiteral("message")
-                                                 : QStringLiteral("messages"));
+    conversation->summary = QStringLiteral("%1 (%2 %3)")
+                                .arg(conversation->title)
+                                .arg(conversation->messageCount)
+                                .arg(conversation->messageCount == 1 ? QStringLiteral("message")
+                                                                     : QStringLiteral("messages"));
     setLastError(ConversationStoreErrorCode::None, {});
     return true;
 }
@@ -111,12 +110,11 @@ bool InMemoryConversationStore::renameConversation(const QString& conversationId
 
     conversation->title = normalizedTitle(title);
     conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
-    conversation->summary =
-        QStringLiteral("%1 (%2 %3)")
-            .arg(conversation->title)
-            .arg(conversation->messageCount)
-            .arg(conversation->messageCount == 1 ? QStringLiteral("message")
-                                                 : QStringLiteral("messages"));
+    conversation->summary = QStringLiteral("%1 (%2 %3)")
+                                .arg(conversation->title)
+                                .arg(conversation->messageCount)
+                                .arg(conversation->messageCount == 1 ? QStringLiteral("message")
+                                                                     : QStringLiteral("messages"));
     setLastError(ConversationStoreErrorCode::None, {});
     return true;
 }
@@ -132,6 +130,25 @@ bool InMemoryConversationStore::archiveConversation(const QString& conversationI
     conversation->archived = true;
     conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
     conversation->summary = QStringLiteral("%1 (archived, %2 %3)")
+                                .arg(conversation->title)
+                                .arg(conversation->messageCount)
+                                .arg(conversation->messageCount == 1 ? QStringLiteral("message")
+                                                                     : QStringLiteral("messages"));
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
+bool InMemoryConversationStore::unarchiveConversation(const QString& conversationId) {
+    auto* conversation = findConversation(conversationId);
+    if (!conversation || conversation->deleted) {
+        setLastError(ConversationStoreErrorCode::InvalidConversationId,
+                     QStringLiteral("Conversation does not exist."));
+        return false;
+    }
+
+    conversation->archived = false;
+    conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
+    conversation->summary = QStringLiteral("%1 (%2 %3)")
                                 .arg(conversation->title)
                                 .arg(conversation->messageCount)
                                 .arg(conversation->messageCount == 1 ? QStringLiteral("message")
