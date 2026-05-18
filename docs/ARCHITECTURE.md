@@ -296,7 +296,12 @@ same provider/client boundary. Phase 13.9 checkpoints the voice/Piper architectu
 Phase 14 readiness without adding runtime behavior. Phase 14.0 through Phase 14.3 add persisted
 local Piper/Whisper path configuration and exact-path validation metadata only. Phase 14.4 through
 Phase 14.6 polish the voice configuration UX and add read-only hint metadata from fixed known
-binary locations and configured paths only.
+binary locations and configured paths only. Phase 15.1 through Phase 15.3 refine path setup with
+explicit Apply Paths persistence, exact validation rows, and Ready/Blocked/Missing readiness for
+Piper file-output preparation and future Whisper STT preparation without enabling voice execution.
+Phase 15.4 through Phase 15.6 enable controlled Piper file-output execution only behind a
+persisted opt-in and explicit user action, with output constrained to an app-controlled cache/temp
+path and no playback, microphone, or Whisper execution.
 
 Separation:
 
@@ -320,11 +325,13 @@ Separation:
   file-output gate.
 - `ApplicationController` exposes voice readiness, runtime, session, pipeline, and trace
   summaries plus binary/model/environment/permission/safety and Piper TTS readiness summaries
-  only, including Piper file-output status, output path summary metadata, and local voice
-  configuration summaries.
+  only, including Piper file-output status, output path summary metadata, local voice
+  configuration summaries, exact validation rows, Ready/Blocked/Missing preparation status, and
+  controlled execution status/audio-path summaries.
 - `DesktopShellViewModel` exposes QML-safe strings, string lists, and booleans only. Voice
-  configuration setters persist path strings through `AppSettings`; QML does not receive provider,
-  process, filesystem, audio-device, or model objects.
+  configuration setters persist path strings and the Piper file-output opt-in through
+  `AppSettings`; QML does not receive provider, process, filesystem, audio-device, or model
+  objects.
 
 Current behavior:
 
@@ -343,20 +350,34 @@ Current behavior:
 - Settings can store Piper binary path, Piper model path, Whisper binary path, and Whisper model
   directory/path. Validation checks only each configured path for exists/missing,
   readable/unreadable, and executable/non-executable for binaries.
+- Settings can apply all four path fields explicitly. The same persisted settings still update
+  readiness immediately through the view-model/controller boundary.
 - Settings also shows read-only hints. Binary hints check only `/opt/homebrew/bin/piper`,
   `/usr/local/bin/piper`, `/opt/homebrew/bin/whisper`, and `/usr/local/bin/whisper`. Model hints
   check configured paths only. Hints are never applied to settings automatically.
+- Piper file-output TTS preparation reports Ready only when the configured Piper binary exists as
+  an executable file and the configured `.onnx` model path exists as a readable file. Blocked and
+  Missing states explain the exact failed path checks. This preparation status does not execute
+  Piper and is separate from the provider/client gates.
+- Whisper STT preparation reports Ready only when the configured Whisper binary exists as an
+  executable file and the configured model folder or model file exists and is readable. No Whisper
+  adapter or execution path is added.
 - Piper TTS is disabled/not configured by default. Missing or invalid binary/model paths produce
   deterministic refusal before any client boundary can run.
-- Controlled Piper file output is available only when explicitly enabled, the Piper binary exists
-  and is executable, the voice model exists and is readable, the output path is inside the
-  app-controlled output directory, process execution is allowed by request/config/safety policy,
-  playback and microphone access are blocked, and the request is local-only.
+- Controlled Piper file output is disabled by default through a persisted opt-in setting. It is
+  available only from an explicit user action when the opt-in is enabled, the Piper binary exists
+  and is executable, the voice model exists and is readable, the output path is generated inside
+  the app-controlled cache/temp output directory, process execution is allowed by
+  request/config/safety policy, playback and microphone access are blocked, and the request is
+  local-only.
 - `NullPiperTtsClient` refuses synthesis without writing files, playing audio, downloading assets,
   loading models, scanning broadly, or launching a subprocess.
 - `ProcessPiperTtsClient` may launch Piper only through that accepted file-output boundary and
   writes to the controlled cache/temp output file. It does not play audio, open microphones,
   download models, call cloud providers, read API keys, or scan the filesystem broadly.
+- Piper execution status metadata is exposed as disabled, blocked/safety-blocked, missing binary,
+  missing model, running, succeeded, failed, or timeout. Successful results expose only a generated
+  file path summary, not playback controls or process internals.
 - The current TTS path is `text -> Piper provider -> gated file-output metadata`.
 - Voice runtime safety blocks execution by default and denies microphone, playback, process
   execution, filesystem-wide scan, download, and cloud/API-key behavior.
@@ -411,6 +432,27 @@ Phase 14 configuration:
 - Configuration does not run Piper, run Whisper, access microphones, play audio, download models,
   scan directories recursively, apply hints automatically, add API keys, or start autonomous
   behavior.
+
+Phase 15.1-15.3 voice refinement:
+
+- Settings uses shorter Voice Configuration labels, clear help text, compact status badges, exact
+  validation rows, and an Apply Paths action.
+- Piper file-output TTS readiness is now shown as Ready, Blocked, or Missing with exact blocked
+  reasons, but Piper execution remains disabled unless a later explicit phase enables it through
+  the existing provider/client safety gates.
+- Whisper remains configuration/readiness only and reports whether STT can be prepared later.
+
+Phase 15.4-15.6 controlled Piper execution:
+
+- Settings adds a persisted controlled Piper file-output opt-in and an explicit Generate TTS File
+  action. The default state clearly reports Piper execution disabled.
+- The controller applies configured Piper paths to the real process client only when the opt-in and
+  explicit action are both present; otherwise execution is refused before reaching the process
+  client.
+- Generated audio files are written only to the controlled app cache/temp output directory. QML
+  receives status and path summary metadata only.
+- Playback, microphone input, Whisper execution, arbitrary output paths, downloads, cloud/API keys,
+  filesystem-wide scans, and autonomous voice loops remain future work.
 
 Current local AI user flow:
 

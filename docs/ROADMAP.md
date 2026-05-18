@@ -1391,6 +1391,48 @@ model checks, and controller permission/safety gates. Streaming, model managemen
 cloud endpoints, subprocess launch, filesystem/system actions, autonomous loops, and chat routing
 automation remain out of scope.
 
+## Phase 15.1-15.3: Voice Path Setup Refinement
+
+Completed. Refined local Piper/Whisper path setup without enabling voice execution.
+
+Delivered:
+
+- Explicit Apply Paths action for Voice Configuration.
+- Shorter path labels and user-facing help for Piper binary, Piper `.onnx` model, Whisper binary,
+  and Whisper model folder or file.
+- Exact configured-path validation rows for exists/readable/executable metadata.
+- Ready/Blocked/Missing status for Piper controlled file-output TTS preparation.
+- Ready/Blocked/Missing status for future Whisper STT preparation.
+- Focused controller/view-model tests for persistence, fake valid files, missing paths,
+  executable versus non-executable binaries, QML-safe exposure, and no execution side effects.
+
+Still out of scope:
+
+- Piper execution, Whisper execution, microphone access, playback, downloads, filesystem-wide
+  scans, cloud/API keys, autonomous voice loops, and voice action controls.
+
+## Phase 15.4-15.6: Controlled Piper File-Output Execution
+
+Completed. Added explicit, policy-gated Piper TTS file generation to an app-controlled cache/temp
+path.
+
+Delivered:
+
+- Persisted Piper file-output execution opt-in, disabled by default.
+- Explicit Generate TTS File action gated by the opt-in, configured executable Piper binary,
+  configured readable `.onnx` model, local-only request, and provider safety policy.
+- Controlled output path generation inside the app cache/temp directory only.
+- Execution status metadata for disabled, blocked/safety-blocked, missing binary, missing model,
+  running, succeeded, failed, and timeout states.
+- Generated audio path summary metadata after success without adding playback.
+- Deterministic fake-client tests for success, failure, timeout, opt-in gating, invalid paths,
+  controlled output metadata, QML-safe exposure, and persistence.
+
+Still out of scope:
+
+- Audio playback, microphone access, Whisper execution, arbitrary output paths, downloads,
+  filesystem-wide scans, cloud/API keys, autonomous voice loops, and background voice actions.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

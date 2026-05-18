@@ -82,6 +82,8 @@ QString piperTtsStatusName(PiperTtsStatus status) {
         return QStringLiteral("Safety Blocked");
     case PiperTtsStatus::Refused:
         return QStringLiteral("Refused");
+    case PiperTtsStatus::Running:
+        return QStringLiteral("Running");
     case PiperTtsStatus::Configured:
         return QStringLiteral("Configured");
     case PiperTtsStatus::ReadyMetadata:
@@ -343,6 +345,8 @@ QString PiperTextToSpeechProvider::piperStatusSummary() const {
                               "execution or controlled file output is not currently allowed.");
     case PiperTtsStatus::Refused:
         return QStringLiteral("Piper TTS refused synthesis before execution.");
+    case PiperTtsStatus::Running:
+        return QStringLiteral("Piper TTS file output is running.");
     case PiperTtsStatus::Configured:
         return QStringLiteral("Piper TTS is configured for explicit local file output only. "
                               "Playback and microphone access remain disabled.");
@@ -455,6 +459,10 @@ PiperTtsResult PiperTextToSpeechProvider::synthesizePiper(const PiperTtsRequest&
 
 const PiperTtsConfig& PiperTextToSpeechProvider::config() const {
     return config_;
+}
+
+void PiperTextToSpeechProvider::setConfig(PiperTtsConfig config) {
+    config_ = std::move(config);
 }
 
 PiperTtsStatus PiperTextToSpeechProvider::evaluateStatus() const {

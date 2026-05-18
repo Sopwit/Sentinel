@@ -2,6 +2,63 @@
 
 ## Completed / Stable
 
+### Phase 15.4-15.6: Controlled Piper File-Output Execution
+
+Completed. Enables explicit, policy-gated Piper TTS file generation to an app-controlled
+cache/temp path while keeping execution disabled by default and keeping playback/microphone
+behavior out of scope.
+
+Scope:
+
+- Added a persisted opt-in setting for controlled Piper file-output execution. The default remains
+  disabled.
+- Piper can run only from an explicit user action after the opt-in is enabled, the configured Piper
+  binary is executable, the configured `.onnx` model is readable, local-only/process/file-output
+  gates pass, and the output path is generated inside the controlled app cache/temp directory.
+- `ProcessPiperTtsClient` is reachable through `PiperTextToSpeechProvider` only after the
+  controller applies the explicit execution policy; fake clients remain injectable for
+  deterministic tests.
+- Status metadata now reports disabled, blocked/safety-blocked, missing binary, missing model,
+  running, succeeded, failed, and timeout states plus the generated audio path summary when
+  available.
+- Settings shows the Piper execution opt-in, an explicit Generate TTS File action, execution
+  status, and generated file path summary. No playback control is exposed.
+- Tests cover disabled defaults, opt-in gating, blocked/invalid paths, fake success, failure,
+  timeout, controlled output path metadata, QML-safe exposure, persistence, and no real Piper
+  requirement.
+
+Still out of scope:
+
+- Audio playback, microphone access, Whisper execution, arbitrary output paths, downloads,
+  filesystem-wide scans, cloud/API keys, autonomous voice loops, and background voice actions.
+
+### Phase 15.1-15.3: Voice Path Setup Refinement And Controlled Piper Readiness
+
+Completed. Refines the local Piper/Whisper configuration surface and prepares clearer controlled
+file-output TTS readiness metadata without enabling voice execution.
+
+Scope:
+
+- Voice Configuration now uses shorter labels, explicit help text, an Apply Paths action, compact
+  Ready/Blocked/Missing badges, and concise validation rows.
+- User-provided Piper and Whisper paths continue to persist through settings and immediately update
+  controller/view-model readiness metadata.
+- Exact configured-path validation reports Piper binary exists/executable, Piper `.onnx` model
+  exists/readable, Whisper binary exists/executable, and Whisper model folder or file
+  exists/readable.
+- Piper file-output TTS preparation now reports Ready, Blocked, or Missing separately from the
+  still-disabled Piper execution provider path, with blocked reasons listing the exact failed
+  path checks.
+- Whisper remains configuration/readiness only and reports whether STT can be prepared later.
+- Tests cover persisted path updates, fake valid files, missing paths, executable versus
+  non-executable binary metadata, QML-safe exposure, Apply Paths forwarding, and no execution side
+  effects.
+
+Still out of scope:
+
+- Running Piper, running Whisper, microphone access, playback, downloads, filesystem-wide scans,
+  cloud/API keys, autonomous voice loops, and voice action controls.
+
 ### Phase 14.7-15.0: Controlled Local Ollama Runtime Activation
 
 Completed. Enables controlled local-only Ollama chat inference for explicitly selected local

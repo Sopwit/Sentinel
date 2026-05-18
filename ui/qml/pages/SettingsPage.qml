@@ -285,7 +285,7 @@ ScrollView {
 
                 SectionTitle {
                     title: "Voice Configuration"
-                    subtitle: "Local path configuration with read-only validation hints."
+                    subtitle: "Local paths with immediate readiness validation."
                     Layout.fillWidth: true
                 }
 
@@ -296,14 +296,15 @@ ScrollView {
                     rowSpacing: SentinelTheme.spaceSm
 
                     Label {
-                        text: "Piper Binary"
+                        text: "Piper bin"
                         color: SentinelTheme.textMuted
                     }
 
                     SentinelTextField {
+                        id: piperBinaryField
                         Layout.fillWidth: true
                         text: settingsPage.viewModel.piperBinaryPath
-                        placeholderText: "/path/to/piper"
+                        placeholderText: "Piper binary path"
                         onEditingFinished: settingsPage.viewModel.piperBinaryPath = text
                     }
 
@@ -314,21 +315,22 @@ ScrollView {
 
                     Label {
                         Layout.fillWidth: true
-                        text: "Piper command used by a future gated TTS path. It is not run here."
+                        text: "Piper binary path. Must exist and be executable."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
                         font.pixelSize: SentinelTheme.fontSmall
                     }
 
                     Label {
-                        text: "Piper Model"
+                        text: "Piper model"
                         color: SentinelTheme.textMuted
                     }
 
                     SentinelTextField {
+                        id: piperModelField
                         Layout.fillWidth: true
                         text: settingsPage.viewModel.piperModelPath
-                        placeholderText: "/path/to/model.onnx"
+                        placeholderText: "Piper .onnx model path"
                         onEditingFinished: settingsPage.viewModel.piperModelPath = text
                     }
 
@@ -339,21 +341,22 @@ ScrollView {
 
                     Label {
                         Layout.fillWidth: true
-                        text: "Local Piper voice model path. Sentinel only checks whether this path is readable."
+                        text: "Piper .onnx model path. Must exist and be readable."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
                         font.pixelSize: SentinelTheme.fontSmall
                     }
 
                     Label {
-                        text: "Whisper Binary"
+                        text: "Whisper bin"
                         color: SentinelTheme.textMuted
                     }
 
                     SentinelTextField {
+                        id: whisperBinaryField
                         Layout.fillWidth: true
                         text: settingsPage.viewModel.whisperBinaryPath
-                        placeholderText: "/path/to/whisper"
+                        placeholderText: "Whisper binary path"
                         onEditingFinished: settingsPage.viewModel.whisperBinaryPath = text
                     }
 
@@ -364,21 +367,22 @@ ScrollView {
 
                     Label {
                         Layout.fillWidth: true
-                        text: "Whisper command for future STT work. It is not launched or probed here."
+                        text: "Whisper binary path. Must exist and be executable."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
                         font.pixelSize: SentinelTheme.fontSmall
                     }
 
                     Label {
-                        text: "Whisper Model"
+                        text: "Whisper model"
                         color: SentinelTheme.textMuted
                     }
 
                     SentinelTextField {
+                        id: whisperModelField
                         Layout.fillWidth: true
                         text: settingsPage.viewModel.whisperModelPath
-                        placeholderText: "/path/to/whisper-model-or-directory"
+                        placeholderText: "Whisper model folder or model file"
                         onEditingFinished: settingsPage.viewModel.whisperModelPath = text
                     }
 
@@ -389,17 +393,83 @@ ScrollView {
 
                     Label {
                         Layout.fillWidth: true
-                        text: "Whisper model file or directory. Only the configured path is checked."
+                        text: "Whisper model folder or model file. Must exist and be readable."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
                         font.pixelSize: SentinelTheme.fontSmall
                     }
                 }
 
+                SentinelButton {
+                    text: "Apply Paths"
+                    Layout.fillWidth: true
+                    onClicked: settingsPage.viewModel.applyVoiceConfigurationPaths(
+                        piperBinaryField.text,
+                        piperModelField.text,
+                        whisperBinaryField.text,
+                        whisperModelField.text)
+                }
+
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Readiness"
                     value: settingsPage.viewModel.voiceConfigurationReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Piper TTS"
+                    value: settingsPage.viewModel.piperFileOutputReadinessStatus + " / " + settingsPage.viewModel.piperFileOutputReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                CheckBox {
+                    Layout.fillWidth: true
+                    text: "Controlled Piper file output"
+                    checked: settingsPage.viewModel.piperFileOutputExecutionEnabled
+                    onToggled: settingsPage.viewModel.piperFileOutputExecutionEnabled = checked
+                }
+
+                GridLayout {
+                    Layout.fillWidth: true
+                    columns: settingsPage.compact ? 1 : 2
+                    columnSpacing: SentinelTheme.spaceSm
+                    rowSpacing: SentinelTheme.spaceSm
+
+                    SentinelTextField {
+                        id: piperTtsTextField
+                        Layout.fillWidth: true
+                        placeholderText: "Text for generated TTS file"
+                    }
+
+                    SentinelButton {
+                        text: "Generate TTS File"
+                        enabled: settingsPage.viewModel.piperFileOutputExecutionEnabled
+                                 && settingsPage.viewModel.piperFileOutputReadinessStatus === "Ready"
+                        Layout.fillWidth: true
+                        onClicked: settingsPage.viewModel.generatePiperTtsFile(piperTtsTextField.text)
+                    }
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "TTS File"
+                    value: settingsPage.viewModel.piperFileOutputExecutionStatus + " / " + settingsPage.viewModel.piperFileOutputExecutionSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Output"
+                    value: settingsPage.viewModel.piperFileOutputAudioPathSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Whisper STT"
+                    value: settingsPage.viewModel.whisperPreparationReadinessStatus + " / " + settingsPage.viewModel.whisperPreparationReadinessSummary
                     Layout.fillWidth: true
                 }
 
@@ -415,6 +485,17 @@ ScrollView {
                 }
 
                 Repeater {
+                    model: settingsPage.viewModel.voiceConfigurationValidationSummaries
+
+                    InfoRow {
+                        compact: settingsPage.compact
+                        label: "Check"
+                        value: modelData
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
                     model: settingsPage.viewModel.voiceConfigurationHintSummaries
 
                     InfoRow {
@@ -423,13 +504,6 @@ ScrollView {
                         value: modelData
                         Layout.fillWidth: true
                     }
-                }
-
-                InfoRow {
-                    compact: settingsPage.compact
-                    label: "Piper TTS"
-                    value: settingsPage.viewModel.piperTtsStatus + " / " + settingsPage.viewModel.piperTtsFileOutputStatus
-                    Layout.fillWidth: true
                 }
 
                 InfoRow {

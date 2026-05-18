@@ -13,6 +13,8 @@
 #include <QElapsedTimer>
 #include <QFileInfo>
 
+#include <cstdint>
+
 namespace sentinel::core {
 
 namespace {
@@ -90,6 +92,37 @@ bool hasConfiguredVoicePath(const QString& path) {
     return !path.trimmed().isEmpty();
 }
 
+enum class VoicePathReadiness : std::uint8_t {
+    Missing,
+    Blocked,
+    Ready,
+};
+
+struct VoicePathValidation {
+    QString label;
+    QString path;
+    bool configured = false;
+    bool exists = false;
+    bool file = false;
+    bool readable = false;
+    bool executable = false;
+    bool requiresExecutable = false;
+    bool requiresFile = false;
+};
+
+QString voicePathReadinessName(VoicePathReadiness readiness) {
+    switch (readiness) {
+    case VoicePathReadiness::Missing:
+        return QStringLiteral("Missing");
+    case VoicePathReadiness::Blocked:
+        return QStringLiteral("Blocked");
+    case VoicePathReadiness::Ready:
+        return QStringLiteral("Ready");
+    }
+
+    return QStringLiteral("Blocked");
+}
+
 QString displayedVoicePath(const QString& path) {
     return hasConfiguredVoicePath(path) ? path.trimmed() : QStringLiteral("not configured");
 }
@@ -108,26 +141,116 @@ QString pathExecutableText(const QFileInfo& info) {
                                                 : QStringLiteral("non-executable");
 }
 
-QString configuredStatusBadge(const QString& label, const QString& path, bool requiresExecutable) {
-    const auto configured = hasConfiguredVoicePath(path);
-    if (!configured) {
-        return QStringLiteral("%1: Missing").arg(label);
-    }
-
-    const QFileInfo info(path.trimmed());
-    QStringList badges{QStringLiteral("Configured")};
-    badges.append(info.exists() ? QStringLiteral("Valid") : QStringLiteral("Missing"));
-    badges.append(info.exists() && info.isReadable() ? QStringLiteral("Readable")
-                                                     : QStringLiteral("Unreadable"));
-    if (requiresExecutable) {
-        badges.append(info.exists() && info.isExecutable() ? QStringLiteral("Executable")
-                                                           : QStringLiteral("Non-executable"));
-    }
-    return QStringLiteral("%1: %2").arg(label, badges.join(QStringLiteral(" / ")));
+VoicePathValidation validateVoicePath(const QString& label, const QString& path,
+                                      bool requiresExecutable, bool requiresFile) {
+    const auto trimmed = path.trimmed();
+    const QFileInfo info(trimmed);
+    const auto configured = hasConfiguredVoicePath(trimmed);
+    return VoicePathValidation{
+        label,
+        displayedVoicePath(trimmed),
+        configured,
+        configured && info.exists(),
+        configured && info.exists() && info.isFile(),
+        configured && info.exists() && info.isReadable(),
+        configured && info.exists() && info.isExecutable(),
+        requiresExecutable,
+        requiresFile,
+    };
 }
 
-QString configuredPathValueSummary(const QString& label, const QString& path) {
-    return QStringLiteral("%1 path: %2").arg(label, displayedVoicePath(path));
+bool isVoicePathReady(const VoicePathValidation& validation) {
+    if (!validation.configured || !validation.exists || !validation.readable) {
+        return false;
+    }
+    if (validation.requiresFile && !validation.file) {
+        return false;
+    }
+    if (validation.requiresExecutable && !validation.executable) {
+        return false;
+    }
+    return true;
+}
+
+QString voicePathBlockedReason(const VoicePathValidation& validation) {
+    if (!validation.configured) {
+        return QStringLiteral("path is not configured");
+    }
+    if (!validation.exists) {
+        return QStringLiteral("path is missing");
+    }
+    if (validation.requiresFile && !validation.file) {
+        return QStringLiteral("path is not a file");
+    }
+    if (!validation.readable) {
+        return QStringLiteral("path is not readable");
+    }
+    if (validation.requiresExecutable && !validation.executable) {
+        return QStringLiteral("path is not executable");
+    }
+    return QStringLiteral("path is ready");
+}
+
+QString voicePathValidationSummary(const VoicePathValidation& validation) {
+    if (!validation.configured) {
+        return QStringLiteral("%1: Missing - path is not configured.").arg(validation.label);
+    }
+
+    QStringList metadata{
+        validation.exists ? QStringLiteral("exists") : QStringLiteral("missing"),
+        validation.readable ? QStringLiteral("readable") : QStringLiteral("unreadable"),
+    };
+    if (validation.requiresFile) {
+        metadata.append(validation.file ? QStringLiteral("file") : QStringLiteral("not a file"));
+    }
+    if (validation.requiresExecutable) {
+        metadata.append(validation.executable ? QStringLiteral("executable")
+                                              : QStringLiteral("non-executable"));
+    }
+
+    return QStringLiteral("%1: %2 - %3 at %4.")
+        .arg(validation.label,
+             isVoicePathReady(validation) ? QStringLiteral("Ready") : QStringLiteral("Blocked"),
+             metadata.join(QStringLiteral(", ")), validation.path);
+}
+
+QString voicePathStatusBadge(const VoicePathValidation& validation) {
+    if (!validation.configured) {
+        return QStringLiteral("%1: Missing").arg(validation.label);
+    }
+    if (isVoicePathReady(validation)) {
+        return QStringLiteral("%1: Ready").arg(validation.label);
+    }
+    return QStringLiteral("%1: Blocked (%2)")
+        .arg(validation.label, voicePathBlockedReason(validation));
+}
+
+VoicePathReadiness combinedReadiness(const QList<VoicePathValidation>& validations) {
+    bool anyConfigured = false;
+    for (const auto& validation : validations) {
+        anyConfigured = anyConfigured || validation.configured;
+    }
+    if (!anyConfigured) {
+        return VoicePathReadiness::Missing;
+    }
+
+    for (const auto& validation : validations) {
+        if (!isVoicePathReady(validation)) {
+            return VoicePathReadiness::Blocked;
+        }
+    }
+    return VoicePathReadiness::Ready;
+}
+
+QString combinedBlockedReasons(const QList<VoicePathValidation>& validations) {
+    QStringList reasons;
+    for (const auto& validation : validations) {
+        if (!isVoicePathReady(validation)) {
+            reasons.append(
+                QStringLiteral("%1 %2").arg(validation.label, voicePathBlockedReason(validation)));
+        }
+    }
+    return reasons.join(QStringLiteral("; "));
 }
 
 QString binaryHintSummary(const QString& label, const QString& configuredPath,
@@ -214,8 +337,37 @@ bool hasConfiguredVoicePaths(const QString& piperBinaryPath, const QString& pipe
            hasConfiguredVoicePath(whisperBinaryPath) || hasConfiguredVoicePath(whisperModelPath);
 }
 
+VoiceRuntimeSafetyReport controlledPiperFileOutputSafetyReport(bool executionAllowed) {
+    VoiceRuntimeSafetyReport report;
+    report.status = executionAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked");
+    report.summary =
+        executionAllowed
+            ? QStringLiteral("Voice runtime safety allows explicit local Piper file output only.")
+            : QStringLiteral("Voice runtime safety blocks Piper file output by default.");
+    report.executionAllowed = executionAllowed;
+    report.processExecutionAllowed = executionAllowed;
+    report.microphoneAllowed = false;
+    report.playbackAllowed = false;
+    report.filesystemWideScanAllowed = false;
+    report.downloadsAllowed = false;
+    report.cloudAllowed = false;
+    report.checks = {
+        QStringLiteral("Execution: %1")
+            .arg(executionAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
+        QStringLiteral("Process execution: %1")
+            .arg(executionAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
+        QStringLiteral("Microphone: Blocked"),
+        QStringLiteral("Playback: Blocked"),
+        QStringLiteral("Filesystem-wide scan: Blocked"),
+        QStringLiteral("Downloads: Blocked"),
+        QStringLiteral("Cloud: Blocked"),
+    };
+    return report;
+}
+
 PiperTtsConfig configuredPiperTtsConfig(const QString& piperBinaryPath,
-                                        const QString& piperModelPath) {
+                                        const QString& piperModelPath,
+                                        bool executionAllowed = false) {
     auto config = defaultDisabledPiperTtsConfig();
     const auto binary = configuredVoiceBinaryDescriptor(
         QStringLiteral("piper-binary"), QStringLiteral("Piper Binary"),
@@ -226,8 +378,8 @@ PiperTtsConfig configuredPiperTtsConfig(const QString& piperBinaryPath,
 
     config.enabled =
         hasConfiguredVoicePath(piperBinaryPath) || hasConfiguredVoicePath(piperModelPath);
-    config.processExecutionAllowed = false;
-    config.fileOutputAllowed = false;
+    config.processExecutionAllowed = executionAllowed;
+    config.fileOutputAllowed = executionAllowed;
     config.audioPlaybackAllowed = false;
     config.binary = binary;
     config.voiceModel = PiperVoiceModelDescriptor{
@@ -240,10 +392,14 @@ PiperTtsConfig configuredPiperTtsConfig(const QString& piperBinaryPath,
         model.loadAllowed,
         model.summary,
     };
-    config.safetyReport = NullVoiceRuntimeEnvironment{}.safetyReport();
+    config.safetyReport = controlledPiperFileOutputSafetyReport(executionAllowed);
     config.summary = config.enabled
-                         ? QStringLiteral("Piper path configuration is stored as metadata only; "
-                                          "Piper execution and playback remain blocked.")
+                         ? executionAllowed
+                               ? QStringLiteral("Piper path configuration is enabled for explicit "
+                                                "controlled file output only.")
+                               : QStringLiteral("Piper path configuration is stored as metadata "
+                                                "only; Piper execution and playback remain "
+                                                "blocked.")
                          : QStringLiteral("Piper TTS adapter is disabled and not configured; it "
                                           "exposes readiness metadata only.");
     return config;
@@ -341,9 +497,11 @@ ApplicationController::ApplicationController(
       voiceRuntimeEnvironment_(voiceRuntimeEnvironment
                                    ? std::move(voiceRuntimeEnvironment)
                                    : std::make_unique<NullVoiceRuntimeEnvironment>()),
-      piperTextToSpeechProvider_(piperTextToSpeechProvider
-                                     ? std::move(piperTextToSpeechProvider)
-                                     : std::make_unique<PiperTextToSpeechProvider>()),
+      piperTextToSpeechProvider_(
+          piperTextToSpeechProvider
+              ? std::move(piperTextToSpeechProvider)
+              : std::make_unique<PiperTextToSpeechProvider>(
+                    defaultDisabledPiperTtsConfig(), std::make_unique<ProcessPiperTtsClient>())),
       memoryStore_(std::move(memoryStore)),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
@@ -1484,24 +1642,27 @@ QStringList ApplicationController::voiceConfigurationSummaries() const {
 }
 
 QString ApplicationController::voiceConfigurationReadinessSummary() const {
-    const auto piperBinaryConfigured = hasConfiguredVoicePath(piperBinaryPath_);
-    const auto piperModelConfigured = hasConfiguredVoicePath(piperModelPath_);
-    const auto whisperBinaryConfigured = hasConfiguredVoicePath(whisperBinaryPath_);
-    const auto whisperModelConfigured = hasConfiguredVoicePath(whisperModelPath_);
-    return QStringLiteral("Piper binary %1, Piper model %2, Whisper binary %3, Whisper model %4. "
+    return QStringLiteral("Piper file-output TTS: %1. Whisper STT preparation: %2. "
                           "Configuration is metadata-only; Piper and Whisper are not executed.")
-        .arg(piperBinaryConfigured ? QStringLiteral("configured") : QStringLiteral("missing"),
-             piperModelConfigured ? QStringLiteral("configured") : QStringLiteral("missing"),
-             whisperBinaryConfigured ? QStringLiteral("configured") : QStringLiteral("missing"),
-             whisperModelConfigured ? QStringLiteral("configured") : QStringLiteral("missing"));
+        .arg(piperFileOutputReadinessStatus(), whisperPreparationReadinessStatus());
 }
 
 QStringList ApplicationController::voiceConfigurationStatusBadges() const {
+    const auto piperBinary =
+        validateVoicePath(QStringLiteral("Piper binary"), piperBinaryPath_, true, true);
+    const auto piperModel =
+        validateVoicePath(QStringLiteral("Piper model"), piperModelPath_, false, true);
+    const auto whisperBinary =
+        validateVoicePath(QStringLiteral("Whisper binary"), whisperBinaryPath_, true, true);
+    const auto whisperModel =
+        validateVoicePath(QStringLiteral("Whisper model"), whisperModelPath_, false, false);
     return {
-        configuredStatusBadge(QStringLiteral("Piper binary"), piperBinaryPath_, true),
-        configuredStatusBadge(QStringLiteral("Piper model"), piperModelPath_, false),
-        configuredStatusBadge(QStringLiteral("Whisper binary"), whisperBinaryPath_, true),
-        configuredStatusBadge(QStringLiteral("Whisper model"), whisperModelPath_, false),
+        QStringLiteral("Piper file-output TTS: %1").arg(piperFileOutputReadinessStatus()),
+        voicePathStatusBadge(piperBinary),
+        voicePathStatusBadge(piperModel),
+        QStringLiteral("Whisper STT preparation: %1").arg(whisperPreparationReadinessStatus()),
+        voicePathStatusBadge(whisperBinary),
+        voicePathStatusBadge(whisperModel),
     };
 }
 
@@ -1516,20 +1677,193 @@ QStringList ApplicationController::voiceConfigurationHintSummaries() const {
     };
 
     return {
-        configuredPathValueSummary(QStringLiteral("Piper binary"), piperBinaryPath_),
         binaryHintSummary(QStringLiteral("Piper binary"), piperBinaryPath_, piperBinaryKnownPaths),
-        modelHintSummary(QStringLiteral("Piper model"), piperModelPath_,
-                         QStringLiteral("configure a local Piper model path to validate it.")),
-        configuredPathValueSummary(QStringLiteral("Whisper binary"), whisperBinaryPath_),
+        modelHintSummary(QStringLiteral("Piper .onnx model"), piperModelPath_,
+                         QStringLiteral("set a local .onnx model path to validate it.")),
         binaryHintSummary(QStringLiteral("Whisper binary"), whisperBinaryPath_,
                           whisperBinaryKnownPaths),
-        modelHintSummary(
-            QStringLiteral("Whisper model"), whisperModelPath_,
-            QStringLiteral(
-                "only the configured path is checked; no model directories are scanned.")),
-        QStringLiteral("Auto-detection is hint-only and checks only fixed known binary locations "
-                       "plus configured paths. Piper and Whisper are not executed."),
+        modelHintSummary(QStringLiteral("Whisper model"), whisperModelPath_,
+                         QStringLiteral("set a model folder or model file path to validate it.")),
+        QStringLiteral("Hints are read-only. Apply Paths stores only the entered paths; no "
+                       "Piper, Whisper, microphone, playback, download, or scan is started."),
     };
+}
+
+QStringList ApplicationController::voiceConfigurationValidationSummaries() const {
+    return {
+        voicePathValidationSummary(
+            validateVoicePath(QStringLiteral("Piper binary"), piperBinaryPath_, true, true)),
+        voicePathValidationSummary(
+            validateVoicePath(QStringLiteral("Piper .onnx model"), piperModelPath_, false, true)),
+        voicePathValidationSummary(
+            validateVoicePath(QStringLiteral("Whisper binary"), whisperBinaryPath_, true, true)),
+        voicePathValidationSummary(validateVoicePath(QStringLiteral("Whisper model folder or file"),
+                                                     whisperModelPath_, false, false)),
+    };
+}
+
+QString ApplicationController::piperFileOutputReadinessStatus() const {
+    const auto readiness = combinedReadiness({
+        validateVoicePath(QStringLiteral("Piper binary"), piperBinaryPath_, true, true),
+        validateVoicePath(QStringLiteral("Piper .onnx model"), piperModelPath_, false, true),
+    });
+    return voicePathReadinessName(readiness);
+}
+
+QString ApplicationController::piperFileOutputReadinessSummary() const {
+    const QList<VoicePathValidation> validations{
+        validateVoicePath(QStringLiteral("Piper binary"), piperBinaryPath_, true, true),
+        validateVoicePath(QStringLiteral("Piper .onnx model"), piperModelPath_, false, true),
+    };
+    const auto readiness = combinedReadiness(validations);
+    if (readiness == VoicePathReadiness::Ready) {
+        return QStringLiteral("Ready for a later controlled file-output TTS phase: Piper binary "
+                              "is executable and the .onnx model path is readable. Piper is not "
+                              "executed in this phase.");
+    }
+    if (readiness == VoicePathReadiness::Missing) {
+        return QStringLiteral("Missing Piper paths: set a Piper binary path and a Piper .onnx "
+                              "model path. Piper is not executed.");
+    }
+    return QStringLiteral("Blocked Piper file-output TTS preparation: %1. Piper is not executed.")
+        .arg(combinedBlockedReasons(validations));
+}
+
+bool ApplicationController::piperFileOutputExecutionEnabled() const {
+    return piperFileOutputExecutionEnabled_;
+}
+
+void ApplicationController::setPiperFileOutputExecutionEnabled(bool enabled) {
+    if (enabled == piperFileOutputExecutionEnabled_) {
+        return;
+    }
+
+    piperFileOutputExecutionEnabled_ = enabled;
+    if (!enabled && latestPiperTtsResult_.status == PiperTtsStatus::Running) {
+        latestPiperTtsResult_ = PiperTtsResult{
+            PiperTtsStatus::Disabled,
+            false,
+            {},
+            {},
+            0,
+            -1,
+            {},
+            QStringLiteral("Piper execution disabled."),
+            {QStringLiteral("Piper execution opt-in was disabled.")},
+        };
+    }
+    emit voiceConfigurationChanged();
+}
+
+QString ApplicationController::piperFileOutputExecutionStatus() const {
+    if (!piperFileOutputExecutionEnabled_) {
+        return QStringLiteral("Disabled");
+    }
+    if (latestPiperTtsResult_.status == PiperTtsStatus::Disabled &&
+        latestPiperTtsResult_.summary.trimmed().isEmpty()) {
+        return piperFileOutputReadinessStatus() == QStringLiteral("Ready")
+                   ? QStringLiteral("Ready")
+                   : piperFileOutputReadinessStatus();
+    }
+    return piperTtsStatusName(latestPiperTtsResult_.status);
+}
+
+QString ApplicationController::piperFileOutputExecutionSummary() const {
+    if (!piperFileOutputExecutionEnabled_) {
+        return QStringLiteral("Piper execution disabled. Enable controlled file-output execution "
+                              "and use Generate TTS File to write a local file.");
+    }
+    if (!latestPiperTtsResult_.summary.trimmed().isEmpty()) {
+        return safePiperTtsResultSummary(latestPiperTtsResult_);
+    }
+    if (piperFileOutputReadinessStatus() != QStringLiteral("Ready")) {
+        return piperFileOutputReadinessSummary();
+    }
+    return QStringLiteral("Piper execution is enabled for explicit controlled file output only. "
+                          "No playback or microphone access is available.");
+}
+
+QString ApplicationController::piperFileOutputAudioPathSummary() const {
+    if (latestPiperTtsResult_.audioPath.trimmed().isEmpty()) {
+        return QStringLiteral("No generated Piper audio file.");
+    }
+    return latestPiperTtsResult_.outputPathSummary.trimmed().isEmpty()
+               ? QStringLiteral("Controlled Piper TTS output path: %1")
+                     .arg(latestPiperTtsResult_.audioPath)
+               : latestPiperTtsResult_.outputPathSummary;
+}
+
+bool ApplicationController::generatePiperTtsFile(const QString& text) {
+    if (!piperFileOutputExecutionEnabled_) {
+        latestPiperTtsResult_ = PiperTtsResult{
+            PiperTtsStatus::Disabled,
+            false,
+            {},
+            {},
+            0,
+            -1,
+            {},
+            QStringLiteral("Piper execution disabled."),
+            {QStringLiteral("Piper file-output generation refused because opt-in is disabled.")},
+        };
+        emit voiceConfigurationChanged();
+        return false;
+    }
+
+    auto config = configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_, true);
+    piperTextToSpeechProvider_->setConfig(std::move(config));
+    latestPiperTtsResult_ = PiperTtsResult{
+        PiperTtsStatus::Running,
+        false,
+        {},
+        {},
+        piperTextToSpeechProvider_->config().timeoutMs,
+        -1,
+        {},
+        QStringLiteral("Piper TTS file output is running."),
+        {QStringLiteral("Explicit user action requested controlled Piper file output.")},
+    };
+    emit voiceConfigurationChanged();
+
+    latestPiperTtsResult_ = piperTextToSpeechProvider_->synthesizePiper(PiperTtsRequest{
+        text,
+        {},
+        {},
+        true,
+        true,
+        false,
+        piperTextToSpeechProvider_->config().timeoutMs,
+    });
+    emit voiceConfigurationChanged();
+    return latestPiperTtsResult_.success;
+}
+
+QString ApplicationController::whisperPreparationReadinessStatus() const {
+    const auto readiness = combinedReadiness({
+        validateVoicePath(QStringLiteral("Whisper binary"), whisperBinaryPath_, true, true),
+        validateVoicePath(QStringLiteral("Whisper model folder or file"), whisperModelPath_, false,
+                          false),
+    });
+    return voicePathReadinessName(readiness);
+}
+
+QString ApplicationController::whisperPreparationReadinessSummary() const {
+    const QList<VoicePathValidation> validations{
+        validateVoicePath(QStringLiteral("Whisper binary"), whisperBinaryPath_, true, true),
+        validateVoicePath(QStringLiteral("Whisper model folder or file"), whisperModelPath_, false,
+                          false),
+    };
+    const auto readiness = combinedReadiness(validations);
+    if (readiness == VoicePathReadiness::Ready) {
+        return QStringLiteral("Ready for later STT preparation: Whisper binary is executable and "
+                              "the model folder or file is readable. Whisper is not executed.");
+    }
+    if (readiness == VoicePathReadiness::Missing) {
+        return QStringLiteral("Missing Whisper paths: set a Whisper binary path and a model "
+                              "folder or model file path. Whisper is not executed.");
+    }
+    return QStringLiteral("Blocked Whisper STT preparation: %1. Whisper is not executed.")
+        .arg(combinedBlockedReasons(validations));
 }
 
 bool ApplicationController::localChatInferenceEnabled() const {

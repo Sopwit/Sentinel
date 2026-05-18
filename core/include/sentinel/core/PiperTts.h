@@ -18,6 +18,7 @@ enum class PiperTtsStatus : std::uint8_t {
     MissingModel,
     SafetyBlocked,
     Refused,
+    Running,
     Configured,
     ReadyMetadata,
     Succeeded,
@@ -120,6 +121,7 @@ public:
     QString fileOutputSummary() const;
     PiperTtsResult synthesizePiper(const PiperTtsRequest& request);
     const PiperTtsConfig& config() const;
+    void setConfig(PiperTtsConfig config);
 
 private:
     PiperTtsStatus evaluateStatus() const;

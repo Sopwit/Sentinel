@@ -259,6 +259,24 @@ class ApplicationController final : public QObject {
                    voiceConfigurationChanged)
     Q_PROPERTY(QStringList voiceConfigurationHintSummaries READ voiceConfigurationHintSummaries
                    NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList voiceConfigurationValidationSummaries READ
+                   voiceConfigurationValidationSummaries NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString piperFileOutputReadinessStatus READ piperFileOutputReadinessStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperFileOutputReadinessSummary READ piperFileOutputReadinessSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(bool piperFileOutputExecutionEnabled READ piperFileOutputExecutionEnabled WRITE
+                   setPiperFileOutputExecutionEnabled NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString piperFileOutputExecutionStatus READ piperFileOutputExecutionStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperFileOutputExecutionSummary READ piperFileOutputExecutionSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperFileOutputAudioPathSummary READ piperFileOutputAudioPathSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperPreparationReadinessStatus READ whisperPreparationReadinessStatus
+                   NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperPreparationReadinessSummary READ whisperPreparationReadinessSummary
+                   NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
@@ -505,6 +523,16 @@ public:
     QString voiceConfigurationReadinessSummary() const;
     QStringList voiceConfigurationStatusBadges() const;
     QStringList voiceConfigurationHintSummaries() const;
+    QStringList voiceConfigurationValidationSummaries() const;
+    QString piperFileOutputReadinessStatus() const;
+    QString piperFileOutputReadinessSummary() const;
+    bool piperFileOutputExecutionEnabled() const;
+    void setPiperFileOutputExecutionEnabled(bool enabled);
+    QString piperFileOutputExecutionStatus() const;
+    QString piperFileOutputExecutionSummary() const;
+    QString piperFileOutputAudioPathSummary() const;
+    QString whisperPreparationReadinessStatus() const;
+    QString whisperPreparationReadinessSummary() const;
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;
@@ -534,6 +562,7 @@ public:
 
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
+    Q_INVOKABLE bool generatePiperTtsFile(const QString& text);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -640,6 +669,8 @@ private:
     bool localInferenceBusy_ = false;
     LocalInferenceResponse latestLocalInferenceResponse_;
     LocalInferenceStreamResult latestLocalInferenceStreamResult_;
+    bool piperFileOutputExecutionEnabled_ = false;
+    PiperTtsResult latestPiperTtsResult_;
     QString piperBinaryPath_;
     QString piperModelPath_;
     QString whisperBinaryPath_;
