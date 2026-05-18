@@ -2340,21 +2340,36 @@ QString ApplicationController::conversationLastRestoredStatus() const {
     return conversationHistorySummary_.lastRestoredStatus;
 }
 
-ConversationDisplayTitle ApplicationController::currentConversationDisplayTitle() const {
-    ConversationDisplayTitle title;
-    title.text = QStringLiteral("Current Transcript");
-    title.summary =
+ConversationId ApplicationController::currentConversationId() const {
+    return {};
+}
+
+ConversationDescriptor ApplicationController::currentConversationDescriptor() const {
+    ConversationDescriptor descriptor;
+    descriptor.id = currentConversationId();
+    descriptor.displayTitle.text = QStringLiteral("Current Transcript");
+    descriptor.displayTitle.summary =
         QStringLiteral("%1 / %2 %3")
             .arg(conversationPersistenceStatus())
             .arg(conversationHistorySummary_.messageCount)
             .arg(conversationHistorySummary_.messageCount == 1 ? QStringLiteral("message")
                                                                : QStringLiteral("messages"));
-    return title;
+    descriptor.lifecycleStatus = ConversationLifecycleStatus::Active;
+    descriptor.storageMode = ConversationStorageMode::SingleTranscript;
+    descriptor.summary =
+        QStringLiteral("%1 (%2)").arg(descriptor.displayTitle.summary,
+                                      conversationLifecycleStatusName(descriptor.lifecycleStatus));
+    return descriptor;
+}
+
+ConversationDisplayTitle ApplicationController::currentConversationDisplayTitle() const {
+    return currentConversationDescriptor().displayTitle;
 }
 
 ConversationListEntry ApplicationController::currentConversationListEntry() const {
     ConversationListEntry entry;
-    entry.displayTitle = currentConversationDisplayTitle();
+    const auto descriptor = currentConversationDescriptor();
+    entry.displayTitle = descriptor.displayTitle;
     entry.messageCount = conversationHistorySummary_.messageCount;
     entry.persistenceStatus = conversationHistorySummary_.persistenceStatus;
     entry.lastUpdatedSummary = conversationHistorySummary_.lastSavedStatus;
@@ -2417,6 +2432,30 @@ QString ApplicationController::conversationListCurrentExportAvailabilitySummary(
 
 QString ApplicationController::conversationListCurrentSummary() const {
     return currentConversationListEntry().summary;
+}
+
+ConversationSchemaPlan ApplicationController::conversationSchemaPlan() const {
+    return {};
+}
+
+QString ApplicationController::conversationCurrentStorageMode() const {
+    return conversationStorageModeName(conversationSchemaPlan().currentStorageMode);
+}
+
+QString ApplicationController::conversationFutureStorageMode() const {
+    return conversationStorageModeName(conversationSchemaPlan().futureStorageMode);
+}
+
+QString ApplicationController::conversationMigrationReadiness() const {
+    return conversationMigrationReadinessName(conversationSchemaPlan().migrationReadiness);
+}
+
+QString ApplicationController::conversationMigrationStatusSummary() const {
+    return conversationSchemaPlan().summary;
+}
+
+QString ApplicationController::conversationSchemaStatusSummary() const {
+    return conversationSchemaPlan().schemaStatusSummary;
 }
 
 ConversationSearchSummary ApplicationController::conversationSearchSummary() const {

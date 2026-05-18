@@ -660,6 +660,26 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
+                    label: "Multi-conversation readiness"
+                    value: settingsPage.viewModel.conversationCurrentStorageMode
+                           + " -> "
+                           + settingsPage.viewModel.conversationFutureStorageMode
+                           + " / "
+                           + settingsPage.viewModel.conversationMigrationReadiness
+                           + " / "
+                           + settingsPage.viewModel.conversationMigrationStatusSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Schema plan"
+                    value: settingsPage.viewModel.conversationSchemaStatusSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
                     label: "Search"
                     value: settingsPage.viewModel.conversationListCurrentSearchAvailabilitySummary
                     Layout.fillWidth: true

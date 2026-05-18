@@ -2,6 +2,29 @@
 
 ## Completed / Stable
 
+### Phase 15.20-15.22: Multi-Conversation Planning Skeleton
+
+Completed. Adds metadata-only multi-conversation planning readiness while preserving current
+single-transcript storage behavior.
+
+Scope:
+
+- Added planning abstractions: `ConversationId`, `ConversationDescriptor`,
+  `ConversationLifecycleStatus`, `ConversationStorageMode`, `ConversationMigrationReadiness`, and
+  `ConversationSchemaPlan`.
+- `ApplicationController` now exposes read-only planning/readiness metadata:
+  current storage mode, future storage mode, migration readiness, migration status summary, and
+  schema status summary.
+- `DesktopShellViewModel` forwards these values as QML-safe strings only.
+- Settings now includes a compact read-only “Multi-conversation readiness” status and schema-plan row.
+- Tests cover deterministic planning metadata, single-transcript mode staying active, planned/not
+  started readiness reporting, no storage mutation from metadata reads, and QML-safe exposure.
+
+Known limitation:
+
+- No SQLite schema migration, no multi-conversation persistence, no import, no cloud sync, and no
+  transcript browser/thread controls are added in this phase.
+
 ### Phase 15.17-15.19: Conversation Browser Metadata Foundation
 
 Completed. Adds single-transcript conversation-browser metadata without changing storage shape.

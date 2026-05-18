@@ -336,6 +336,13 @@ class DesktopShellViewModel final : public QObject {
             conversationListCurrentExportAvailabilitySummary NOTIFY conversationExportChanged)
     Q_PROPERTY(QString conversationListCurrentSummary READ conversationListCurrentSummary NOTIFY
                    chatMessagesChanged)
+    Q_PROPERTY(QString conversationCurrentStorageMode READ conversationCurrentStorageMode CONSTANT)
+    Q_PROPERTY(QString conversationFutureStorageMode READ conversationFutureStorageMode CONSTANT)
+    Q_PROPERTY(QString conversationMigrationReadiness READ conversationMigrationReadiness CONSTANT)
+    Q_PROPERTY(
+        QString conversationMigrationStatusSummary READ conversationMigrationStatusSummary CONSTANT)
+    Q_PROPERTY(
+        QString conversationSchemaStatusSummary READ conversationSchemaStatusSummary CONSTANT)
     Q_PROPERTY(QString conversationSearchQueryText READ conversationSearchQueryText NOTIFY
                    conversationSearchChanged)
     Q_PROPERTY(QString conversationSearchStatus READ conversationSearchStatus NOTIFY
@@ -604,6 +611,11 @@ public:
     QString conversationListCurrentSearchAvailabilitySummary() const;
     QString conversationListCurrentExportAvailabilitySummary() const;
     QString conversationListCurrentSummary() const;
+    QString conversationCurrentStorageMode() const;
+    QString conversationFutureStorageMode() const;
+    QString conversationMigrationReadiness() const;
+    QString conversationMigrationStatusSummary() const;
+    QString conversationSchemaStatusSummary() const;
     QString conversationSearchQueryText() const;
     QString conversationSearchStatus() const;
     QString conversationSearchSummaryText() const;

@@ -100,6 +100,78 @@ struct ConversationListSummary {
     QString summary = QStringLiteral("Single current transcript entry.");
 };
 
+struct ConversationId {
+    QString value = QStringLiteral("current-transcript");
+};
+
+enum class ConversationLifecycleStatus {
+    Active,
+    Planned,
+};
+
+inline QString conversationLifecycleStatusName(ConversationLifecycleStatus status) {
+    switch (status) {
+    case ConversationLifecycleStatus::Active:
+        return QStringLiteral("Active");
+    case ConversationLifecycleStatus::Planned:
+        return QStringLiteral("Planned");
+    }
+
+    return QStringLiteral("Active");
+}
+
+enum class ConversationStorageMode {
+    SingleTranscript,
+    MultiConversation,
+};
+
+inline QString conversationStorageModeName(ConversationStorageMode mode) {
+    switch (mode) {
+    case ConversationStorageMode::SingleTranscript:
+        return QStringLiteral("Single Transcript");
+    case ConversationStorageMode::MultiConversation:
+        return QStringLiteral("Multi Conversation");
+    }
+
+    return QStringLiteral("Single Transcript");
+}
+
+enum class ConversationMigrationReadiness {
+    NotStarted,
+    Planned,
+};
+
+inline QString conversationMigrationReadinessName(ConversationMigrationReadiness readiness) {
+    switch (readiness) {
+    case ConversationMigrationReadiness::NotStarted:
+        return QStringLiteral("Not Started");
+    case ConversationMigrationReadiness::Planned:
+        return QStringLiteral("Planned");
+    }
+
+    return QStringLiteral("Not Started");
+}
+
+struct ConversationDescriptor {
+    ConversationId id;
+    ConversationDisplayTitle displayTitle;
+    ConversationLifecycleStatus lifecycleStatus = ConversationLifecycleStatus::Active;
+    ConversationStorageMode storageMode = ConversationStorageMode::SingleTranscript;
+    QString summary = QStringLiteral("Current transcript descriptor metadata is not available.");
+};
+
+struct ConversationSchemaPlan {
+    ConversationStorageMode currentStorageMode = ConversationStorageMode::SingleTranscript;
+    ConversationStorageMode futureStorageMode = ConversationStorageMode::MultiConversation;
+    ConversationMigrationReadiness migrationReadiness = ConversationMigrationReadiness::NotStarted;
+    QString planningStatus = QStringLiteral("Planned");
+    bool schemaMutationApplied = false;
+    QString schemaStatusSummary =
+        QStringLiteral("No conversation schema migration applied; single-transcript schema remains "
+                       "active.");
+    QString summary = QStringLiteral("Not Started / Planned");
+};
+
 struct ConversationSearchQuery {
     QString text;
     bool includeSystemMessages = true;

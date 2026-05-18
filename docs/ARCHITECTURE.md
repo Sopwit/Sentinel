@@ -154,6 +154,19 @@ changing chat-history persistence:
 - No multi-conversation/thread storage, migration, import/export redesign, cloud sync, or broader
   filesystem authority is introduced.
 
+Phase 15.20 through Phase 15.22 add metadata-only multi-conversation planning readiness on the same
+boundary:
+
+- `ConversationId`, `ConversationDescriptor`, `ConversationLifecycleStatus`,
+  `ConversationStorageMode`, `ConversationMigrationReadiness`, and `ConversationSchemaPlan` model
+  future multi-conversation migration intent.
+- `ApplicationController` exposes read-only readiness values for current storage mode (`Single
+  Transcript`), future storage mode (`Multi Conversation`), migration readiness (`Not Started`),
+  migration status summary (`Not Started / Planned`), and schema status summary.
+- `DesktopShellViewModel` forwards those values as QML-safe strings.
+- No SQLite schema migration, no multi-conversation storage, and no browser/thread controls are
+  introduced.
+
 ## Conversation Session Metadata
 
 Phase 6.8 adds `ConversationSession` as a higher-level interaction/session metadata layer. It is
