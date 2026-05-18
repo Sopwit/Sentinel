@@ -200,6 +200,12 @@ Runtime behavior:
   `ConversationBrowserStatus`.
 - Browser metadata currently exposes exactly one current transcript entry with title, message count,
   persistence status, last updated/saved summary, and search/export availability summaries.
+- Phase 15.20-15.22 adds metadata-only multi-conversation planning readiness:
+  `ConversationId`, `ConversationDescriptor`, `ConversationLifecycleStatus`,
+  `ConversationStorageMode`, `ConversationMigrationReadiness`, and `ConversationSchemaPlan`.
+- Planning metadata reports current mode (`Single Transcript`), future mode (`Multi Conversation`),
+  migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and
+  schema status summary without mutating storage.
 - QML receives only strings, string lists, booleans, and counts through `DesktopShellViewModel`.
 
 Out of scope:

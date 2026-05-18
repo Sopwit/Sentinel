@@ -647,6 +647,7 @@ private slots:
     void reportsConversationBrowserMessageCountSummary();
     void clearChatUpdatesConversationBrowserEntry();
     void conversationBrowserReflectsSearchAndExportAvailability();
+    void reportsMultiConversationPlanningReadinessWithoutStorageMutation();
     void inMemoryConversationSearchFindsUserAndAssistantMessages();
     void emptyConversationSearchDoesNotMutateHistory();
     void conversationSearchDoesNotMutateHistory();
@@ -1866,6 +1867,27 @@ void ApplicationControllerTest::conversationBrowserReflectsSearchAndExportAvaila
     QVERIFY(controller.exportTranscript(QStringLiteral("json")));
     QVERIFY(controller.conversationListCurrentExportAvailabilitySummary().contains(
         QStringLiteral("Last export: Succeeded")));
+}
+
+void ApplicationControllerTest::reportsMultiConversationPlanningReadinessWithoutStorageMutation() {
+    auto store = std::make_unique<RecordingChatHistoryStore>();
+    const auto* storePtr = store.get();
+    ApplicationController controller(std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>(), nullptr, std::move(store));
+    const auto beforeCount = storePtr->messages_.size();
+
+    QCOMPARE(controller.conversationCurrentStorageMode(), QStringLiteral("Single Transcript"));
+    QCOMPARE(controller.conversationFutureStorageMode(), QStringLiteral("Multi Conversation"));
+    QCOMPARE(controller.conversationMigrationReadiness(), QStringLiteral("Not Started"));
+    QCOMPARE(controller.conversationMigrationStatusSummary(),
+             QStringLiteral("Not Started / Planned"));
+    QVERIFY(controller.conversationSchemaStatusSummary().contains(
+        QStringLiteral("No conversation schema migration applied")));
+    QCOMPARE(controller.conversationListEntryCount(), 1);
+    QCOMPARE(controller.conversationListCurrentTitle(), QStringLiteral("Current Transcript"));
+
+    QCOMPARE(storePtr->messages_.size(), beforeCount);
+    QVERIFY(!storePtr->wasCleared_);
 }
 
 void ApplicationControllerTest::inMemoryConversationSearchFindsUserAndAssistantMessages() {

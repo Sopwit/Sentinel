@@ -70,6 +70,7 @@ private slots:
     void exposesChatHistoryStatus();
     void exposesConversationHistorySummaryMetadata();
     void exposesConversationBrowserMetadata();
+    void exposesMultiConversationReadinessMetadata();
     void exposesConversationSearchAndExportMetadata();
     void exposesMaintenanceStatuses();
     void exposesStartupLoadedMessages();
@@ -1233,6 +1234,11 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("conversationListCurrentExportAvailabilitySummary"),
          QByteArrayLiteral("QString")},
         {QStringLiteral("conversationListCurrentSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationCurrentStorageMode"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationFutureStorageMode"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationMigrationReadiness"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationMigrationStatusSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSchemaStatusSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationExportAvailable"), QByteArrayLiteral("bool")},
         {QStringLiteral("conversationExportReadinessStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationExportReadinessSummary"), QByteArrayLiteral("QString")},
@@ -1406,6 +1412,21 @@ void DesktopShellViewModelTest::exposesConversationBrowserMetadata() {
 
     QCOMPARE(fixture.viewModel.conversationBrowserStatus(), QStringLiteral("Ready"));
     QCOMPARE(fixture.viewModel.conversationListCurrentMessageCount(), 3);
+}
+
+void DesktopShellViewModelTest::exposesMultiConversationReadinessMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.conversationCurrentStorageMode(),
+             QStringLiteral("Single Transcript"));
+    QCOMPARE(fixture.viewModel.conversationFutureStorageMode(),
+             QStringLiteral("Multi Conversation"));
+    QCOMPARE(fixture.viewModel.conversationMigrationReadiness(), QStringLiteral("Not Started"));
+    QCOMPARE(fixture.viewModel.conversationMigrationStatusSummary(),
+             QStringLiteral("Not Started / Planned"));
+    QVERIFY(fixture.viewModel.conversationSchemaStatusSummary().contains(
+        QStringLiteral("No conversation schema migration applied")));
+    QCOMPARE(fixture.viewModel.conversationListEntryCount(), 1);
 }
 
 void DesktopShellViewModelTest::exposesConversationSearchAndExportMetadata() {

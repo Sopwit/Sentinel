@@ -344,6 +344,29 @@ Still out of scope:
 - Multi-conversation/thread storage, full transcript browser UI, database migration, import changes,
   arbitrary export paths, cloud sync, tools/plugins, or model/runtime boundary expansion.
 
+## Phase 15.20-15.22: Multi-Conversation Planning Skeleton
+
+Completed. Prepared multi-conversation migration planning metadata without changing active storage.
+
+Delivered:
+
+- Planning abstractions: `ConversationId`, `ConversationDescriptor`,
+  `ConversationLifecycleStatus`, `ConversationStorageMode`, `ConversationMigrationReadiness`, and
+  `ConversationSchemaPlan`.
+- Deterministic readiness/status metadata exposing:
+  current storage mode (`Single Transcript`), future storage mode (`Multi Conversation`), migration
+  readiness (`Not Started`), migration status summary (`Not Started / Planned`), and schema status
+  summary.
+- QML-safe forwarding in `DesktopShellViewModel` and compact read-only Settings visibility via a
+  “Multi-conversation readiness” row.
+- Focused tests for deterministic metadata, unchanged single-transcript behavior, no storage
+  mutation from readiness reads, and QML-safe exposure.
+
+Still out of scope:
+
+- SQLite schema migration, multi-conversation persistence, transcript import, cloud sync, and full
+  browser/thread controls.
+
 ## Phase 12.0-12.2: Voice Boundary And TTS/STT Planning Skeleton
 
 Completed. Prepared voice architecture without enabling real audio I/O or voice runtime work.

@@ -257,6 +257,12 @@ count, persistence, last updated/saved summary, and search/export availability s
 single-transcript foundation only: no full browser page, no sidebar redesign, no thread controls,
 and no multi-conversation storage UI.
 
+Phase 15.20 through Phase 15.22 add a compact read-only multi-conversation readiness status.
+Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
+migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
+schema status summary. This remains planning-only metadata: no schema migration, no
+multi-conversation persistence, and no new browser/thread controls.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:

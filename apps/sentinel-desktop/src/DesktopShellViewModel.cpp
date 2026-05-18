@@ -1039,6 +1039,26 @@ QString DesktopShellViewModel::conversationListCurrentSummary() const {
     return controller_.conversationListCurrentSummary();
 }
 
+QString DesktopShellViewModel::conversationCurrentStorageMode() const {
+    return controller_.conversationCurrentStorageMode();
+}
+
+QString DesktopShellViewModel::conversationFutureStorageMode() const {
+    return controller_.conversationFutureStorageMode();
+}
+
+QString DesktopShellViewModel::conversationMigrationReadiness() const {
+    return controller_.conversationMigrationReadiness();
+}
+
+QString DesktopShellViewModel::conversationMigrationStatusSummary() const {
+    return controller_.conversationMigrationStatusSummary();
+}
+
+QString DesktopShellViewModel::conversationSchemaStatusSummary() const {
+    return controller_.conversationSchemaStatusSummary();
+}
+
 QString DesktopShellViewModel::conversationSearchQueryText() const {
     return controller_.conversationSearchQueryText();
 }

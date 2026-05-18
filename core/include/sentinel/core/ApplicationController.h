@@ -361,6 +361,13 @@ class ApplicationController final : public QObject {
             conversationListCurrentExportAvailabilitySummary NOTIFY conversationExportChanged)
     Q_PROPERTY(QString conversationListCurrentSummary READ conversationListCurrentSummary NOTIFY
                    chatMessagesChanged)
+    Q_PROPERTY(QString conversationCurrentStorageMode READ conversationCurrentStorageMode CONSTANT)
+    Q_PROPERTY(QString conversationFutureStorageMode READ conversationFutureStorageMode CONSTANT)
+    Q_PROPERTY(QString conversationMigrationReadiness READ conversationMigrationReadiness CONSTANT)
+    Q_PROPERTY(
+        QString conversationMigrationStatusSummary READ conversationMigrationStatusSummary CONSTANT)
+    Q_PROPERTY(
+        QString conversationSchemaStatusSummary READ conversationSchemaStatusSummary CONSTANT)
     Q_PROPERTY(QString conversationSearchQueryText READ conversationSearchQueryText NOTIFY
                    conversationSearchChanged)
     Q_PROPERTY(QString conversationSearchStatus READ conversationSearchStatus NOTIFY
@@ -651,6 +658,8 @@ public:
     QString conversationPersistenceStatus() const;
     QString conversationLastSavedStatus() const;
     QString conversationLastRestoredStatus() const;
+    ConversationId currentConversationId() const;
+    ConversationDescriptor currentConversationDescriptor() const;
     ConversationDisplayTitle currentConversationDisplayTitle() const;
     ConversationListEntry currentConversationListEntry() const;
     ConversationListSummary conversationListSummary() const;
@@ -664,6 +673,12 @@ public:
     QString conversationListCurrentSearchAvailabilitySummary() const;
     QString conversationListCurrentExportAvailabilitySummary() const;
     QString conversationListCurrentSummary() const;
+    ConversationSchemaPlan conversationSchemaPlan() const;
+    QString conversationCurrentStorageMode() const;
+    QString conversationFutureStorageMode() const;
+    QString conversationMigrationReadiness() const;
+    QString conversationMigrationStatusSummary() const;
+    QString conversationSchemaStatusSummary() const;
     ConversationSearchSummary conversationSearchSummary() const;
     QString conversationSearchQueryText() const;
     QString conversationSearchStatus() const;
