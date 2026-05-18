@@ -81,6 +81,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             [this]() { controller_.setWhisperBinaryPath(settings_.whisperBinaryPath()); });
     connect(&settings_, &core::AppSettings::whisperModelPathChanged, this,
             [this]() { controller_.setWhisperModelPath(settings_.whisperModelPath()); });
+    connect(&settings_, &core::AppSettings::piperFileOutputExecutionEnabledChanged, this, [this]() {
+        controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
+    });
     controller_.setSelectedLocalModel(settings_.selectedLocalModel());
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
@@ -88,6 +91,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.setPiperModelPath(settings_.piperModelPath());
     controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
     controller_.setWhisperModelPath(settings_.whisperModelPath());
+    controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -778,6 +782,64 @@ QStringList DesktopShellViewModel::voiceConfigurationStatusBadges() const {
 
 QStringList DesktopShellViewModel::voiceConfigurationHintSummaries() const {
     return controller_.voiceConfigurationHintSummaries();
+}
+
+QStringList DesktopShellViewModel::voiceConfigurationValidationSummaries() const {
+    return controller_.voiceConfigurationValidationSummaries();
+}
+
+QString DesktopShellViewModel::piperFileOutputReadinessStatus() const {
+    return controller_.piperFileOutputReadinessStatus();
+}
+
+QString DesktopShellViewModel::piperFileOutputReadinessSummary() const {
+    return controller_.piperFileOutputReadinessSummary();
+}
+
+bool DesktopShellViewModel::piperFileOutputExecutionEnabled() const {
+    return controller_.piperFileOutputExecutionEnabled();
+}
+
+void DesktopShellViewModel::setPiperFileOutputExecutionEnabled(bool enabled) {
+    settings_.setPiperFileOutputExecutionEnabled(enabled);
+    if (controller_.piperFileOutputExecutionEnabled() !=
+        settings_.piperFileOutputExecutionEnabled()) {
+        controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
+    }
+}
+
+QString DesktopShellViewModel::piperFileOutputExecutionStatus() const {
+    return controller_.piperFileOutputExecutionStatus();
+}
+
+QString DesktopShellViewModel::piperFileOutputExecutionSummary() const {
+    return controller_.piperFileOutputExecutionSummary();
+}
+
+QString DesktopShellViewModel::piperFileOutputAudioPathSummary() const {
+    return controller_.piperFileOutputAudioPathSummary();
+}
+
+QString DesktopShellViewModel::whisperPreparationReadinessStatus() const {
+    return controller_.whisperPreparationReadinessStatus();
+}
+
+QString DesktopShellViewModel::whisperPreparationReadinessSummary() const {
+    return controller_.whisperPreparationReadinessSummary();
+}
+
+void DesktopShellViewModel::applyVoiceConfigurationPaths(const QString& piperBinaryPath,
+                                                         const QString& piperModelPath,
+                                                         const QString& whisperBinaryPath,
+                                                         const QString& whisperModelPath) {
+    setPiperBinaryPath(piperBinaryPath);
+    setPiperModelPath(piperModelPath);
+    setWhisperBinaryPath(whisperBinaryPath);
+    setWhisperModelPath(whisperModelPath);
+}
+
+bool DesktopShellViewModel::generatePiperTtsFile(const QString& text) {
+    return controller_.generatePiperTtsFile(text);
 }
 
 bool DesktopShellViewModel::localChatInferenceEnabled() const {

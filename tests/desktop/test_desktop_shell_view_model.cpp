@@ -650,10 +650,8 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::voiceConfigurationChanged);
 
-    fixture.viewModel.setPiperBinaryPath(piperBinaryPath);
-    fixture.viewModel.setPiperModelPath(piperModelPath);
-    fixture.viewModel.setWhisperBinaryPath(whisperBinaryPath);
-    fixture.viewModel.setWhisperModelPath(whisperModelPath);
+    fixture.viewModel.applyVoiceConfigurationPaths(piperBinaryPath, piperModelPath,
+                                                   whisperBinaryPath, whisperModelPath);
 
     QCOMPARE(spy.count(), 4);
     QCOMPARE(fixture.settings.piperBinaryPath(), piperBinaryPath);
@@ -661,7 +659,7 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
     QCOMPARE(fixture.settings.whisperBinaryPath(), whisperBinaryPath);
     QCOMPARE(fixture.settings.whisperModelPath(), whisperModelPath);
     QVERIFY(fixture.viewModel.voiceConfigurationReadinessSummary().contains(
-        QStringLiteral("Piper binary configured")));
+        QStringLiteral("Piper file-output TTS: Ready")));
     QVERIFY(fixture.viewModel.voiceConfigurationSummaries()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("Piper binary metadata only: path exists, readable, "
@@ -671,8 +669,15 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
                 .contains(QStringLiteral("Whisper binary metadata only: path exists, readable, "
                                          "non-executable")));
     QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
-        QStringLiteral("Piper binary: Configured / Valid / Readable / "
-                       "Executable")));
+        QStringLiteral("Piper file-output TTS: Ready")));
+    QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
+        QStringLiteral("Piper binary: Ready")));
+    QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
+        QStringLiteral("Whisper binary: Blocked (path is not executable)")));
+    QVERIFY(fixture.viewModel.voiceConfigurationValidationSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper binary: Ready - exists, readable, file, "
+                                         "executable")));
     QVERIFY(fixture.viewModel.voiceConfigurationHintSummaries().contains(
         QStringLiteral("Piper binary hint: configured path is executable; no "
                        "suggestion needed.")));
@@ -683,6 +688,26 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("no executable found in known Homebrew/local locations")));
     QCOMPARE(fixture.viewModel.piperTtsStatus(), QStringLiteral("Safety Blocked"));
+    QCOMPARE(fixture.viewModel.piperFileOutputReadinessStatus(), QStringLiteral("Ready"));
+    QVERIFY(fixture.viewModel.piperFileOutputReadinessSummary().contains(
+        QStringLiteral("Ready for a later controlled file-output TTS phase")));
+    QVERIFY(!fixture.viewModel.piperFileOutputExecutionEnabled());
+    QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.piperFileOutputExecutionSummary().contains(
+        QStringLiteral("Piper execution disabled")));
+
+    fixture.viewModel.setPiperFileOutputExecutionEnabled(true);
+
+    QVERIFY(fixture.settings.piperFileOutputExecutionEnabled());
+    QVERIFY(fixture.viewModel.piperFileOutputExecutionEnabled());
+    QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Ready"));
+    QVERIFY(fixture.viewModel.piperFileOutputExecutionSummary().contains(
+        QStringLiteral("explicit controlled file output")));
+    QCOMPARE(fixture.viewModel.piperFileOutputAudioPathSummary(),
+             QStringLiteral("No generated Piper audio file."));
+    QCOMPARE(fixture.viewModel.whisperPreparationReadinessStatus(), QStringLiteral("Blocked"));
+    QVERIFY(fixture.viewModel.whisperPreparationReadinessSummary().contains(
+        QStringLiteral("Whisper binary path is not executable")));
     QVERIFY(fixture.viewModel.piperTtsSummary().contains(QStringLiteral("safety policy")));
     QVERIFY(!fixture.viewModel.piperTtsReady());
 }
@@ -1138,6 +1163,15 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("voiceConfigurationReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceConfigurationStatusBadges"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("voiceConfigurationHintSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voiceConfigurationValidationSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("piperFileOutputReadinessStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperFileOutputReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperFileOutputExecutionEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("piperFileOutputExecutionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperFileOutputExecutionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperFileOutputAudioPathSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("whisperPreparationReadinessStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("whisperPreparationReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceBusy"), QByteArrayLiteral("bool")},
@@ -1153,13 +1187,17 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("localInferenceStreamingText"), QByteArrayLiteral("QString")},
     };
 
+    const QSet<QString> writableProperties{
+        QStringLiteral("piperFileOutputExecutionEnabled"),
+    };
+
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
         const auto propertyIndex = metaObject->indexOfProperty(it.key().toUtf8().constData());
         QVERIFY2(propertyIndex >= 0,
                  qPrintable(QStringLiteral("Missing property %1").arg(it.key())));
         const auto property = metaObject->property(propertyIndex);
         QCOMPARE(QByteArray(property.typeName()), it.value());
-        QVERIFY(!property.isWritable());
+        QCOMPARE(property.isWritable(), writableProperties.contains(it.key()));
     }
 
     const QStringList forbiddenProperties{

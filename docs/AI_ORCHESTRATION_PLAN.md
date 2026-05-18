@@ -88,6 +88,17 @@ runtime state is exposed as unavailable/idle/inferencing/streaming/failed, and a
 local-only permission policy allows only explicit local inference while continuing to deny cloud
 providers, API keys, autonomous agents, tools, shell execution, filesystem-wide actions, model
 management actions, microphone access, playback, Piper execution, and Whisper execution.
+Phase 15.1 through Phase 15.3 refine voice path setup and controlled Piper readiness preparation:
+Piper/Whisper paths persist through settings, exact configured-path validation is exposed as
+QML-safe metadata, Piper file-output TTS preparation reports Ready/Blocked/Missing with exact
+blocked reasons, and Whisper remains future STT preparation metadata only. No Piper execution,
+Whisper execution, microphone access, playback, downloads, filesystem-wide scans, cloud/API keys,
+or autonomous voice loop is added. Phase 15.4 through Phase 15.6 enable controlled Piper
+file-output execution behind a persisted opt-in and explicit Generate TTS File action: configured
+Piper binary/model paths are reused, output is generated only inside an app-controlled cache/temp
+directory, and status metadata reports disabled, blocked, missing, running, succeeded, failed, and
+timeout states. Playback, microphone access, Whisper execution, downloads, cloud/API keys,
+filesystem-wide scans, and autonomous voice loops remain out of scope.
 
 ## Future Components
 
@@ -177,14 +188,23 @@ management actions, microphone access, playback, Piper execution, and Whisper ex
 - Piper TTS adapter boundary: typed Piper TTS configuration, voice model descriptor, request,
   result, status, client, null client, process client, and provider metadata. The current TTS path
   is `text -> Piper provider -> gated file-output metadata`. The current provider is disabled/not
-  configured by default, refuses missing or invalid binary/model metadata deterministically, and
-  permits local file output only inside an app-controlled output directory after explicit
+  configured by default until the persisted Piper file-output opt-in and explicit user action are
+  both present, refuses missing or invalid binary/model metadata deterministically, and permits
+  local file output only inside an app-controlled output directory after explicit
   process-permission and safety gates pass.
 - Local voice configuration UX: persisted Piper binary/model and Whisper binary/model path strings,
   exact configured-path metadata checks, fixed-location binary hints, configured-path model hints,
   and Settings visibility. This is configuration only; it does not run Piper or Whisper, load
   models, open microphones, play audio, download assets, scan directories recursively, apply hints
   automatically, use API keys, or start autonomous voice behavior.
+- Voice path readiness refinement: explicit Apply Paths persistence, exact validation rows, and
+  Ready/Blocked/Missing preparation status for Piper file-output TTS and future Whisper STT. Piper
+  readiness here means configured local paths are suitable for a later controlled file-output
+  phase; it does not bypass the existing provider/client permission and safety gates.
+- Controlled Piper file-output execution: persisted disabled-by-default opt-in, explicit Generate
+  TTS File action, controlled cache/temp output path, timeout/failure/status metadata, and
+  generated path summary only. Playback, microphone capture, Whisper execution, arbitrary output
+  paths, downloads, cloud/API keys, filesystem-wide scans, and autonomous loops remain excluded.
 
 These concepts remain separate from `IChatProvider`, `IAgentRuntime`, tool execution, and UI
 model-management screens. Providers may execute a chosen request in a later phase; the router only
@@ -231,15 +251,16 @@ routing logic, provider credentials, downloads, or execution.
 
 ## Current Separation
 
-Current Phase 15.0 runtime activates controlled local Ollama chat inference while keeping the
+Current Phase 15.6 runtime activates controlled local Ollama chat inference while keeping the
 larger orchestration system bounded. Sentinel allows loopback-only Ollama health/discovery,
 selected-model metadata, explicit opt-in chat-to-Ollama routing, guarded local-only streaming,
 action-light local model selection UX, metadata-only model-management readiness, metadata-only
 voice provider/session/runtime boundaries, metadata-only local voice runtime environment ownership,
-controlled Piper file-output synthesis, and local Piper/Whisper path configuration UX with
-hint-only fixed-location suggestions. Phase 15.0 still adds no audio playback, microphone access,
-autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper execution, voice
-action controls, autonomous agents, tool execution, shell execution, or filesystem-wide actions:
+controlled Piper file-output synthesis behind persisted opt-in and explicit action, and local
+Piper/Whisper path configuration UX with hint-only fixed-location suggestions plus explicit
+Ready/Blocked/Missing path preparation metadata. Phase 15.6 still adds no audio playback,
+microphone access, autonomous voice loop, cloud voice calls, API keys, model downloads, Whisper
+execution, autonomous agents, tool execution, shell execution, or filesystem-wide actions:
 
 - `IChatProvider` is still the chat provider boundary.
 - `IAgentRuntime` is still the metadata-only agent orchestration boundary.
@@ -369,11 +390,11 @@ action controls, autonomous agents, tool execution, shell execution, or filesyst
 - `PiperTextToSpeechProvider` owns the current Piper TTS adapter skeleton behind
   `ITextToSpeechProvider`. `NullPiperTtsClient` refuses synthesis deterministically, and missing
   or invalid Piper binary/model metadata is rejected before any client boundary.
-  `ProcessPiperTtsClient` may launch Piper only for explicit local file output after the provider
-  accepts enabled configuration, executable binary, readable model, controlled output path,
-  local-only request, process permission, and safety gates. The adapter does not play audio, open
-  microphones, scan broadly, download assets, call cloud providers, use API keys, expose speak
-  controls, or add path/model pickers.
+  `ProcessPiperTtsClient` may launch Piper only for explicit local file output after the persisted
+  opt-in is enabled and the provider accepts enabled configuration, executable binary, readable
+  model, controlled output path, local-only request, process permission, and safety gates. The
+  adapter does not play audio, open microphones, scan broadly, download assets, call cloud
+  providers, use API keys, expose playback controls, or add path/model pickers.
 - Voice Configuration in Settings persists Piper binary path, Piper model path, Whisper binary
   path, and Whisper model directory/path as strings. The controller validates only those exact
   paths for exists/missing, readable/unreadable, and executable/non-executable binary metadata.

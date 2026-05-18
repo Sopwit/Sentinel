@@ -184,4 +184,20 @@ void AppSettings::setWhisperModelPath(const QString& path) {
     emit whisperModelPathChanged();
 }
 
+bool AppSettings::piperFileOutputExecutionEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(piperFileOutputExecutionEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setPiperFileOutputExecutionEnabled(bool enabled) {
+    if (enabled == piperFileOutputExecutionEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(piperFileOutputExecutionEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit piperFileOutputExecutionEnabledChanged();
+}
+
 } // namespace sentinel::core

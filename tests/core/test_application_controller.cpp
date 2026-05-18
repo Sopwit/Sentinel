@@ -5,6 +5,7 @@
 #include "sentinel/core/LocalInference.h"
 #include "sentinel/core/ModelManagement.h"
 #include "sentinel/core/NullAgentRuntime.h"
+#include "sentinel/core/PiperTts.h"
 #include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/Voice.h"
 
@@ -329,6 +330,79 @@ private:
     OllamaConfig config_;
 };
 
+class FakePiperTtsClient final : public sentinel::core::IPiperTtsClient {
+public:
+    enum class Mode {
+        Success,
+        Failure,
+        Timeout,
+    };
+
+    explicit FakePiperTtsClient(Mode mode = Mode::Success) : mode_(mode) {}
+
+    sentinel::core::PiperTtsStatus status() const override {
+        return sentinel::core::PiperTtsStatus::Configured;
+    }
+
+    QString statusSummary() const override {
+        return QStringLiteral("Fake Piper TTS client is deterministic.");
+    }
+
+    sentinel::core::PiperTtsResult
+    synthesize(const sentinel::core::PiperTtsRequest& request,
+               const sentinel::core::PiperTtsConfig& config) override {
+        called = true;
+        lastRequest = request;
+        lastConfig = config;
+        if (mode_ == Mode::Failure) {
+            return {
+                sentinel::core::PiperTtsStatus::Failed,
+                false,
+                request.outputPath,
+                QStringLiteral("Controlled Piper TTS output path: %1").arg(request.outputPath),
+                request.timeoutMs,
+                2,
+                QStringLiteral("fake failure"),
+                QStringLiteral("Piper TTS failed while generating the controlled output file."),
+                {QStringLiteral("Fake Piper failure path.")},
+            };
+        }
+        if (mode_ == Mode::Timeout) {
+            return {
+                sentinel::core::PiperTtsStatus::Timeout,
+                false,
+                request.outputPath,
+                QStringLiteral("Controlled Piper TTS output path: %1").arg(request.outputPath),
+                request.timeoutMs,
+                -1,
+                QStringLiteral("fake timeout"),
+                QStringLiteral("Piper TTS timed out before file-output synthesis completed."),
+                {QStringLiteral("Fake Piper timeout path.")},
+            };
+        }
+
+        return {
+            sentinel::core::PiperTtsStatus::Succeeded,
+            true,
+            request.outputPath,
+            QStringLiteral("Controlled Piper TTS output path: %1").arg(request.outputPath),
+            request.timeoutMs,
+            0,
+            {},
+            QStringLiteral("Piper TTS generated a local controlled audio file. Playback was not "
+                           "started."),
+            {QStringLiteral("Fake Piper wrote controlled output without playback.")},
+        };
+    }
+
+    bool called = false;
+    sentinel::core::PiperTtsRequest lastRequest;
+    sentinel::core::PiperTtsConfig lastConfig;
+
+private:
+    Mode mode_ = Mode::Success;
+};
+
 class ApplicationControllerTest final : public QObject {
     Q_OBJECT
 
@@ -351,6 +425,10 @@ private slots:
     void exposesModelManagementReadinessMetadata();
     void exposesVoiceReadinessMetadata();
     void validatesConfiguredVoicePathsAsMetadataOnly();
+    void piperFileOutputExecutionRequiresExplicitOptIn();
+    void piperFileOutputExecutionUsesFakeClientForControlledSuccess();
+    void piperFileOutputExecutionReportsFailureAndTimeout();
+    void piperFileOutputExecutionBlocksInvalidBinaryOrModel();
     void rejectsInvalidSelectedModelAgainstDiscoveryMetadata();
     void exposesStreamingSkeletonDisabledMetadata();
     void streamDisabledByDefaultFallsBackToNonStreaming();
@@ -407,6 +485,47 @@ private slots:
 static std::unique_ptr<ApplicationController> makeController() {
     return std::make_unique<ApplicationController>(std::make_unique<LocalEchoProvider>(),
                                                    std::make_unique<InMemoryStore>());
+}
+
+struct PiperControllerFixture {
+    std::unique_ptr<ApplicationController> controller;
+    FakePiperTtsClient* client = nullptr;
+};
+
+static PiperControllerFixture makePiperController(FakePiperTtsClient::Mode mode) {
+    auto client = std::make_unique<FakePiperTtsClient>(mode);
+    auto* clientPtr = client.get();
+    auto provider = std::make_unique<sentinel::core::PiperTextToSpeechProvider>(
+        sentinel::core::defaultDisabledPiperTtsConfig(), std::move(client));
+    return {
+        std::make_unique<ApplicationController>(
+            std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr,
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+            nullptr, nullptr, std::move(provider)),
+        clientPtr,
+    };
+}
+
+static void configureReadyPiperPaths(ApplicationController& controller, QTemporaryDir& dir) {
+    const auto piperBinaryPath = dir.filePath(QStringLiteral("piper"));
+    const auto piperModelPath = dir.filePath(QStringLiteral("voice.onnx"));
+
+    QFile piperBinary{piperBinaryPath};
+    QVERIFY(piperBinary.open(QIODevice::WriteOnly));
+    piperBinary.write("#!/bin/sh\nexit 0\n");
+    piperBinary.close();
+    QVERIFY(QFile::setPermissions(
+        piperBinaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+
+    QFile piperModel{piperModelPath};
+    QVERIFY(piperModel.open(QIODevice::WriteOnly));
+    piperModel.write("model");
+    piperModel.close();
+
+    controller.setPiperBinaryPath(piperBinaryPath);
+    controller.setPiperModelPath(piperModelPath);
 }
 
 void ApplicationControllerTest::exposesProviderNameAndInitialSystemMessage() {
@@ -890,9 +1009,9 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
     QCOMPARE(spy.count(), 4);
     QCOMPARE(controller.voiceRuntimeEnvironmentStatus(), QStringLiteral("Configured Metadata"));
     QVERIFY(controller.voiceConfigurationReadinessSummary().contains(
-        QStringLiteral("Piper binary configured")));
+        QStringLiteral("Piper file-output TTS: Ready")));
     QVERIFY(controller.voiceConfigurationReadinessSummary().contains(
-        QStringLiteral("Whisper model configured")));
+        QStringLiteral("Whisper STT preparation: Blocked")));
     QVERIFY(controller.voiceBinarySummaries()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("Piper binary metadata only: path exists, readable, "
@@ -905,11 +1024,19 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("Whisper model metadata only: path exists, readable")));
     QVERIFY(controller.voiceConfigurationStatusBadges().contains(
-        QStringLiteral("Piper binary: Configured / Valid / Readable / "
-                       "Executable")));
+        QStringLiteral("Piper file-output TTS: Ready")));
     QVERIFY(controller.voiceConfigurationStatusBadges().contains(
-        QStringLiteral("Whisper binary: Configured / Valid / Readable / "
-                       "Non-executable")));
+        QStringLiteral("Piper binary: Ready")));
+    QVERIFY(controller.voiceConfigurationStatusBadges().contains(
+        QStringLiteral("Whisper binary: Blocked (path is not executable)")));
+    QVERIFY(controller.voiceConfigurationValidationSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Piper binary: Ready - exists, readable, file, "
+                                         "executable")));
+    QVERIFY(controller.voiceConfigurationValidationSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Whisper binary: Blocked - exists, readable, file, "
+                                         "non-executable")));
     QVERIFY(controller.voiceConfigurationHintSummaries().contains(
         QStringLiteral("Piper binary hint: configured path is executable; no "
                        "suggestion needed.")));
@@ -918,12 +1045,18 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
                        "suggestion needed.")));
     QVERIFY(controller.voiceConfigurationHintSummaries()
                 .join(QStringLiteral(" "))
-                .contains(QStringLiteral("Auto-detection is hint-only")));
+                .contains(QStringLiteral("Hints are read-only")));
     QVERIFY(controller.piperTtsReadinessChecks()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("Null Piper TTS client is disabled and never launches "
                                          "Piper")));
     QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Safety Blocked"));
+    QCOMPARE(controller.piperFileOutputReadinessStatus(), QStringLiteral("Ready"));
+    QVERIFY(controller.piperFileOutputReadinessSummary().contains(
+        QStringLiteral("Ready for a later controlled file-output TTS phase")));
+    QCOMPARE(controller.whisperPreparationReadinessStatus(), QStringLiteral("Blocked"));
+    QVERIFY(controller.whisperPreparationReadinessSummary().contains(
+        QStringLiteral("Whisper binary path is not executable")));
     QVERIFY(!controller.piperTtsReady());
 
     controller.setPiperBinaryPath(missingPath);
@@ -935,9 +1068,115 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("path missing")));
     QVERIFY(controller.voiceConfigurationStatusBadges().contains(
-        QStringLiteral("Piper binary: Configured / Missing / Unreadable / "
-                       "Non-executable")));
+        QStringLiteral("Piper binary: Blocked (path is missing)")));
+    QCOMPARE(controller.piperFileOutputReadinessStatus(), QStringLiteral("Blocked"));
+    QVERIFY(controller.piperFileOutputReadinessSummary().contains(
+        QStringLiteral("Piper binary path is missing")));
     QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Missing Binary"));
+}
+
+void ApplicationControllerTest::piperFileOutputExecutionRequiresExplicitOptIn() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto fixture = makePiperController(FakePiperTtsClient::Mode::Success);
+    configureReadyPiperPaths(*fixture.controller, dir);
+
+    QCOMPARE(fixture.controller->piperFileOutputReadinessStatus(), QStringLiteral("Ready"));
+    QVERIFY(!fixture.controller->piperFileOutputExecutionEnabled());
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("Piper execution disabled")));
+
+    const auto generated = fixture.controller->generatePiperTtsFile(QStringLiteral("hello"));
+
+    QVERIFY(!generated);
+    QVERIFY(!fixture.client->called);
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("Piper execution disabled")));
+    QCOMPARE(fixture.controller->piperFileOutputAudioPathSummary(),
+             QStringLiteral("No generated Piper audio file."));
+}
+
+void ApplicationControllerTest::piperFileOutputExecutionUsesFakeClientForControlledSuccess() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto fixture = makePiperController(FakePiperTtsClient::Mode::Success);
+    configureReadyPiperPaths(*fixture.controller, dir);
+
+    fixture.controller->setPiperFileOutputExecutionEnabled(true);
+    const auto generated = fixture.controller->generatePiperTtsFile(QStringLiteral("hello"));
+
+    QVERIFY(generated);
+    QVERIFY(fixture.client->called);
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Succeeded"));
+    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("Playback was not started")));
+    QVERIFY(fixture.controller->piperFileOutputAudioPathSummary().contains(
+        QStringLiteral("Controlled Piper TTS output path")));
+    QVERIFY(fixture.client->lastRequest.allowProcessExecution);
+    QVERIFY(fixture.client->lastRequest.localOnly);
+    QVERIFY(!fixture.client->lastRequest.allowAudioPlayback);
+    QVERIFY(fixture.client->lastRequest.outputPath.startsWith(
+        fixture.client->lastConfig.controlledOutputDirectory));
+    QVERIFY(!fixture.client->lastRequest.outputPath.contains(QStringLiteral("..")));
+    QVERIFY(fixture.client->lastConfig.processExecutionAllowed);
+    QVERIFY(fixture.client->lastConfig.fileOutputAllowed);
+    QVERIFY(!fixture.client->lastConfig.audioPlaybackAllowed);
+    QVERIFY(fixture.client->lastConfig.safetyReport.executionAllowed);
+    QVERIFY(fixture.client->lastConfig.safetyReport.processExecutionAllowed);
+    QVERIFY(!fixture.client->lastConfig.safetyReport.playbackAllowed);
+    QVERIFY(!fixture.client->lastConfig.safetyReport.microphoneAllowed);
+}
+
+void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout() {
+    QTemporaryDir failureDir;
+    QVERIFY(failureDir.isValid());
+    auto failed = makePiperController(FakePiperTtsClient::Mode::Failure);
+    configureReadyPiperPaths(*failed.controller, failureDir);
+    failed.controller->setPiperFileOutputExecutionEnabled(true);
+
+    QVERIFY(!failed.controller->generatePiperTtsFile(QStringLiteral("hello")));
+    QVERIFY(failed.client->called);
+    QCOMPARE(failed.controller->piperFileOutputExecutionStatus(), QStringLiteral("Failed"));
+    QVERIFY(failed.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("failed while generating")));
+
+    QTemporaryDir timeoutDir;
+    QVERIFY(timeoutDir.isValid());
+    auto timedOut = makePiperController(FakePiperTtsClient::Mode::Timeout);
+    configureReadyPiperPaths(*timedOut.controller, timeoutDir);
+    timedOut.controller->setPiperFileOutputExecutionEnabled(true);
+
+    QVERIFY(!timedOut.controller->generatePiperTtsFile(QStringLiteral("hello")));
+    QVERIFY(timedOut.client->called);
+    QCOMPARE(timedOut.controller->piperFileOutputExecutionStatus(), QStringLiteral("Timeout"));
+    QVERIFY(timedOut.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("timed out")));
+}
+
+void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrModel() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    auto fixture = makePiperController(FakePiperTtsClient::Mode::Success);
+    const auto piperBinaryPath = dir.filePath(QStringLiteral("piper"));
+    const auto missingModelPath = dir.filePath(QStringLiteral("missing.onnx"));
+
+    QFile piperBinary{piperBinaryPath};
+    QVERIFY(piperBinary.open(QIODevice::WriteOnly));
+    piperBinary.write("not executable");
+    piperBinary.close();
+
+    fixture.controller->setPiperBinaryPath(piperBinaryPath);
+    fixture.controller->setPiperModelPath(missingModelPath);
+    fixture.controller->setPiperFileOutputExecutionEnabled(true);
+
+    QVERIFY(!fixture.controller->generatePiperTtsFile(QStringLiteral("hello")));
+    QVERIFY(!fixture.client->called);
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(),
+             QStringLiteral("Missing Binary"));
+    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("binary metadata is missing")));
 }
 
 void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetadata() {

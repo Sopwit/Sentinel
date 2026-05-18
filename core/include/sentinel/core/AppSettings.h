@@ -32,6 +32,8 @@ class AppSettings final : public QObject {
                    whisperBinaryPathChanged)
     Q_PROPERTY(QString whisperModelPath READ whisperModelPath WRITE setWhisperModelPath NOTIFY
                    whisperModelPathChanged)
+    Q_PROPERTY(bool piperFileOutputExecutionEnabled READ piperFileOutputExecutionEnabled WRITE
+                   setPiperFileOutputExecutionEnabled NOTIFY piperFileOutputExecutionEnabledChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -64,6 +66,8 @@ public:
     void setWhisperBinaryPath(const QString& path);
     QString whisperModelPath() const;
     void setWhisperModelPath(const QString& path);
+    bool piperFileOutputExecutionEnabled() const;
+    void setPiperFileOutputExecutionEnabled(bool enabled);
 
 signals:
     void themeNameChanged();
@@ -77,6 +81,7 @@ signals:
     void piperModelPathChanged();
     void whisperBinaryPathChanged();
     void whisperModelPathChanged();
+    void piperFileOutputExecutionEnabledChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
@@ -90,6 +95,7 @@ private:
     static constexpr auto piperModelPathKey = "piperModelPath";
     static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";
     static constexpr auto whisperModelPathKey = "whisperModelPath";
+    static constexpr auto piperFileOutputExecutionEnabledKey = "piperFileOutputExecutionEnabled";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
 

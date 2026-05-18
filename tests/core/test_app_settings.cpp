@@ -29,6 +29,7 @@ private slots:
     void persistsLocalChatInferenceOptIn();
     void persistsLocalInferenceStreamingOptIn();
     void persistsVoiceConfigurationPaths();
+    void persistsPiperFileOutputExecutionOptIn();
     void persistsLocalAiRuntimeSettingsThroughJsonStore();
 };
 
@@ -48,6 +49,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(settings->piperModelPath().isEmpty());
     QVERIFY(settings->whisperBinaryPath().isEmpty());
     QVERIFY(settings->whisperModelPath().isEmpty());
+    QVERIFY(!settings->piperFileOutputExecutionEnabled());
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -227,6 +229,25 @@ void AppSettingsTest::persistsVoiceConfigurationPaths() {
     QCOMPARE(whisperModelSpy.count(), 1);
 }
 
+void AppSettingsTest::persistsPiperFileOutputExecutionOptIn() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::piperFileOutputExecutionEnabledChanged);
+
+    QVERIFY(!settings->piperFileOutputExecutionEnabled());
+
+    settings->setPiperFileOutputExecutionEnabled(true);
+
+    QVERIFY(settings->piperFileOutputExecutionEnabled());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setPiperFileOutputExecutionEnabled(true);
+    QCOMPARE(spy.count(), 1);
+
+    settings->setPiperFileOutputExecutionEnabled(false);
+    QVERIFY(!settings->piperFileOutputExecutionEnabled());
+    QCOMPARE(spy.count(), 2);
+}
+
 void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
@@ -241,6 +262,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setPiperModelPath(QStringLiteral("/opt/piper/model.onnx"));
         settings.setWhisperBinaryPath(QStringLiteral("/opt/whisper/whisper"));
         settings.setWhisperModelPath(QStringLiteral("/opt/whisper/models"));
+        settings.setPiperFileOutputExecutionEnabled(true);
     }
 
     AppSettings reloaded{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
@@ -252,6 +274,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QCOMPARE(reloaded.piperModelPath(), QStringLiteral("/opt/piper/model.onnx"));
     QCOMPARE(reloaded.whisperBinaryPath(), QStringLiteral("/opt/whisper/whisper"));
     QCOMPARE(reloaded.whisperModelPath(), QStringLiteral("/opt/whisper/models"));
+    QVERIFY(reloaded.piperFileOutputExecutionEnabled());
 }
 
 QTEST_MAIN(AppSettingsTest)

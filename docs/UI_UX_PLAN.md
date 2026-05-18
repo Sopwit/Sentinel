@@ -208,6 +208,18 @@ local chat inference/streaming. These controls must remain narrow: no cloud setu
 model downloads/pulls/deletes, tool controls, shell controls, filesystem-wide actions, voice
 record/play controls, or autonomous-agent controls.
 
+Phase 15.1 through Phase 15.3 refines Voice Configuration without broad redesign. Settings may use
+shorter labels, explicit help text, an Apply Paths action, compact Ready/Blocked/Missing badges,
+and exact validation rows for Piper/Whisper paths. These controls remain configuration-only: no
+speak, play, record, microphone, playback, downloads, Piper execution, Whisper execution, broad
+filesystem scan, cloud/API-key setup, or autonomous voice loop.
+
+Phase 15.4 through Phase 15.6 adds the narrow Piper file-output execution UI. Settings may expose
+a disabled-by-default opt-in, an explicit Generate TTS File action, clear execution status, and a
+generated file path summary. The UI must not expose playback, microphone recording, Whisper
+execution, arbitrary output paths, downloads, cloud/API-key setup, broad filesystem scans, or an
+autonomous voice loop.
+
 ## Current Separation
 
 Current UI work remains presentation and metadata visibility only:
