@@ -62,6 +62,49 @@ ScrollView {
                 }
             }
 
+            ShellPanel {
+                width: parent.width
+                implicitHeight: candidateColumn.implicitHeight + memoryPage.panelPadding * 2
+
+                ColumnLayout {
+                    id: candidateColumn
+                    x: memoryPage.panelPadding
+                    y: memoryPage.panelPadding
+                    width: parent.width - memoryPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Memory Candidates"
+                        value: memoryPage.viewModel.memoryCandidateCount + " total / "
+                               + memoryPage.viewModel.pendingMemoryCandidateCount + " pending / "
+                               + memoryPage.viewModel.approvedMemoryCandidateCount + " approved / "
+                               + memoryPage.viewModel.rejectedMemoryCandidateCount + " rejected"
+                        Layout.fillWidth: true
+                    }
+
+                    Repeater {
+                        model: memoryPage.viewModel.memoryCandidateSummaries
+
+                        InfoRow {
+                            required property string modelData
+                            compact: memoryPage.compact
+                            label: "Candidate"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Label {
+                        visible: memoryPage.viewModel.memoryCandidateCount === 0
+                        text: "No memory candidates pending review."
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+            }
+
             GridLayout {
                 width: parent.width
                 columns: memoryPage.compact ? 1 : 3

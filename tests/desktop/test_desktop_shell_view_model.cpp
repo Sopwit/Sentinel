@@ -76,6 +76,7 @@ private slots:
     void exposesMultiConversationReadinessMetadata();
     void exposesConversationSearchAndExportMetadata();
     void exposesMaintenanceStatuses();
+    void exposesMemoryCandidateMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1556,6 +1557,25 @@ void DesktopShellViewModelTest::exposesMaintenanceStatuses() {
 
     QCOMPARE(fixture.viewModel.memoryMaintenanceStatus(), QStringLiteral("Ready"));
     QCOMPARE(fixture.viewModel.chatMaintenanceStatus(), QStringLiteral("Ready"));
+}
+
+void DesktopShellViewModelTest::exposesMemoryCandidateMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::memoryCandidatesChanged);
+
+    const auto id = fixture.viewModel.createMemoryCandidateFromConversationText(
+        QStringLiteral("Sentinel memory candidates require user review."));
+
+    QCOMPARE(id, QStringLiteral("memory-candidate-1"));
+    QCOMPARE(fixture.viewModel.memoryCandidateCount(), 1);
+    QCOMPARE(fixture.viewModel.pendingMemoryCandidateCount(), 1);
+    QCOMPARE(fixture.viewModel.approvedMemoryCandidateCount(), 0);
+    QVERIFY(fixture.viewModel.memoryCandidateSummaries().first().contains(
+        QStringLiteral("Pending Review")));
+    QVERIFY(fixture.viewModel.approveMemoryCandidate(id));
+    QCOMPARE(fixture.viewModel.pendingMemoryCandidateCount(), 0);
+    QCOMPARE(fixture.viewModel.approvedMemoryCandidateCount(), 1);
+    QCOMPARE(spy.count(), 2);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

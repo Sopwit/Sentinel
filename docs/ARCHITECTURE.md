@@ -91,6 +91,26 @@ Phase 6.7 readiness diagnostics inspect existing orchestration metadata only. Th
 storage paths, scan files, query memory stores, build embeddings, run semantic search, mutate
 memory, or perform provider/model/tool execution.
 
+Phase 16.0 through Phase 16.3 add a controlled semantic memory candidate foundation beside, not
+inside, the existing memory contracts:
+
+- `MemoryCandidate`, `MemoryCandidateId`, `MemoryCandidateSource`,
+  `MemoryCandidateCategory`, `MemoryCandidateConfidence`, `MemoryReviewState`,
+  `MemoryCapturePolicy`, and `MemoryCandidateSummary` are value-only metadata records.
+- `MemoryRetentionPolicy` remains the shared taxonomy retention vocabulary.
+- `IMemoryCandidateStore` owns reviewable candidate metadata separately from `IMemoryStore` and
+  `IMemoryCatalog`.
+- `InMemoryMemoryCandidateStore` provides deterministic runtime/test storage only.
+- Candidates may be created from conversation text metadata supplied to the controller and default
+  to Pending Review.
+- Approval/rejection changes review metadata only and does not commit entries to key-value memory
+  or any long-term semantic store.
+- `DesktopShellViewModel` exposes only counts and summary strings to QML.
+
+This foundation deliberately does not add embeddings, a vector database, semantic search,
+autonomous capture, model/provider calls, cloud sync, tool/plugin authority, filesystem/system
+authority, or automatic writes to long-term memory.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.

@@ -1,6 +1,7 @@
 #include "sentinel/core/ApplicationController.h"
 
 #include "sentinel/core/InMemoryConversationStore.h"
+#include "sentinel/core/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/LocalRuntime.h"
 #include "sentinel/core/NullToolExecutor.h"
 #include "sentinel/core/StaticAgentRegistry.h"
@@ -673,6 +674,7 @@ ApplicationController::ApplicationController(
               : std::make_unique<PiperTextToSpeechProvider>(
                     defaultDisabledPiperTtsConfig(), std::make_unique<ProcessPiperTtsClient>())),
       memoryStore_(std::move(memoryStore)),
+      memoryCandidateStore_(std::make_unique<InMemoryMemoryCandidateStore>()),
       chatSession_(chatSession ? std::move(chatSession)
                                : std::make_unique<ChatSession>(std::make_unique<SystemClock>())),
       chatHistoryStore_(std::move(chatHistoryStore)),
@@ -2911,6 +2913,62 @@ QStringList ApplicationController::memoryEntries() const {
     return result;
 }
 
+QList<MemoryCandidate> ApplicationController::memoryCandidates() const {
+    return memoryCandidateStore_ ? memoryCandidateStore_->candidates() : QList<MemoryCandidate>{};
+}
+
+int ApplicationController::memoryCandidateCountForState(MemoryReviewState state) const {
+    int count = 0;
+    for (const auto& candidate : memoryCandidates()) {
+        if (candidate.reviewState == state) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+int ApplicationController::memoryCandidateCount() const {
+    return memoryCandidates().size();
+}
+
+int ApplicationController::pendingMemoryCandidateCount() const {
+    return memoryCandidateCountForState(MemoryReviewState::PendingReview);
+}
+
+int ApplicationController::approvedMemoryCandidateCount() const {
+    return memoryCandidateCountForState(MemoryReviewState::Approved);
+}
+
+int ApplicationController::rejectedMemoryCandidateCount() const {
+    return memoryCandidateCountForState(MemoryReviewState::Rejected);
+}
+
+QStringList ApplicationController::memoryCandidateSummaries() const {
+    QStringList result;
+    for (const auto& candidate : memoryCandidates()) {
+        const auto summary = memoryCandidateSummary(candidate);
+        result.append(QStringLiteral("%1: %2").arg(summary.id, summary.summary));
+    }
+    return result;
+}
+
+MemoryCandidate
+ApplicationController::memoryCandidateFromConversationText(const QString& text) const {
+    const auto normalized = text.simplified();
+    MemoryCandidate candidate;
+    candidate.source = MemoryCandidateSource::ConversationText;
+    candidate.category = MemoryCandidateCategory::Semantic;
+    candidate.confidence = MemoryCandidateConfidence::Medium;
+    candidate.reviewState = MemoryReviewState::PendingReview;
+    candidate.retentionPolicy = MemoryRetentionPolicy::UserControlled;
+    candidate.capturePolicy = MemoryCapturePolicy::ManualReviewRequired;
+    candidate.title = QStringLiteral("Conversation Memory Candidate");
+    candidate.excerpt = normalized.left(160);
+    candidate.sourceSummary = QStringLiteral("Captured from conversation text metadata only.");
+    candidate.reviewSummary = QStringLiteral("Pending user review.");
+    return candidate;
+}
+
 bool ApplicationController::searchConversation(const QString& query) {
     const auto trimmed = query.trimmed();
     latestConversationSearchSummary_ = ConversationSearchSummary{};
@@ -3195,6 +3253,50 @@ bool ApplicationController::unarchiveConversation(const QString& conversationId)
         emit chatMessagesChanged();
     }
     return unarchived;
+}
+
+QString ApplicationController::createMemoryCandidateFromConversationText(const QString& text) {
+    if (!memoryCandidateStore_) {
+        return {};
+    }
+
+    const auto trimmed = text.trimmed();
+    if (trimmed.isEmpty()) {
+        return {};
+    }
+
+    const auto candidate =
+        memoryCandidateStore_->createCandidate(memoryCandidateFromConversationText(trimmed));
+    emit memoryCandidatesChanged();
+    return candidate.id;
+}
+
+bool ApplicationController::approveMemoryCandidate(const QString& candidateId) {
+    if (!memoryCandidateStore_) {
+        return false;
+    }
+
+    const auto reviewed =
+        memoryCandidateStore_->setReviewState(candidateId, MemoryReviewState::Approved,
+                                              QStringLiteral("Approved by user review metadata."));
+    if (reviewed) {
+        emit memoryCandidatesChanged();
+    }
+    return reviewed;
+}
+
+bool ApplicationController::rejectMemoryCandidate(const QString& candidateId) {
+    if (!memoryCandidateStore_) {
+        return false;
+    }
+
+    const auto reviewed =
+        memoryCandidateStore_->setReviewState(candidateId, MemoryReviewState::Rejected,
+                                              QStringLiteral("Rejected by user review metadata."));
+    if (reviewed) {
+        emit memoryCandidatesChanged();
+    }
+    return reviewed;
 }
 
 bool ApplicationController::sendMessage(const QString& message) {

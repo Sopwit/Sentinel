@@ -37,6 +37,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ISystemIntegrationService.h
     include/sentinel/core/InMemoryToolRegistry.h
     include/sentinel/core/InMemoryStore.h
+    include/sentinel/core/InMemoryMemoryCandidateStore.h
     include/sentinel/core/InMemorySettingsStore.h
     include/sentinel/core/InMemoryConversationStore.h
     include/sentinel/core/JsonSettingsStore.h
@@ -45,6 +46,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/LocalRuntime.h
     include/sentinel/core/LocalRuntimeSession.h
     include/sentinel/core/MemoryMetadata.h
+    include/sentinel/core/MemoryCandidate.h
     include/sentinel/core/ModeManager.h
     include/sentinel/core/ModelManagement.h
     include/sentinel/core/ModelRouting.h
@@ -91,6 +93,7 @@ add_library(sentinel_core STATIC
     src/IContextEngine.cpp
     src/InMemoryConversationStore.cpp
     src/InMemoryStore.cpp
+    src/InMemoryMemoryCandidateStore.cpp
     src/InMemorySettingsStore.cpp
     src/InMemoryToolRegistry.cpp
     src/JsonSettingsStore.cpp
@@ -99,6 +102,7 @@ add_library(sentinel_core STATIC
     src/LocalRuntime.cpp
     src/LocalRuntimeSession.cpp
     src/ModeManager.cpp
+    src/MemoryCandidate.cpp
     src/ModelManagement.cpp
     src/NullAgentRuntime.cpp
     src/NullToolExecutor.cpp

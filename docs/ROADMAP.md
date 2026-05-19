@@ -1703,6 +1703,26 @@ Still out of scope:
   transcript search, cloud/API keys, model management actions, tools/plugins, filesystem/system
   actions, and voice execution changes.
 
+## Phase 16.0-16.3: Controlled Semantic Memory Foundation
+
+Completed. Prepared semantic memory architecture with reviewable metadata-only candidates.
+
+Delivered:
+
+- `MemoryCandidate` value types and `IMemoryCandidateStore`.
+- `InMemoryMemoryCandidateStore` for deterministic non-persistent candidate storage.
+- Controller/view-model candidate counts and QML-safe summary exposure.
+- Compact read-only Memory page candidate section.
+- Tests for pending defaults, approve/reject review metadata, deterministic summaries, no
+  key-value memory mutation, QML-safe exposure, and clear-chat preserving approved candidate
+  metadata.
+
+Still out of scope:
+
+- Embeddings, vector DB, semantic search, automatic memory capture, autonomous long-term memory
+  writes, cloud sync, provider/model calls, filesystem/system actions, tools/plugins, and durable
+  candidate persistence.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

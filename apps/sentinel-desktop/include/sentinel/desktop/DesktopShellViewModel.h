@@ -420,6 +420,15 @@ class DesktopShellViewModel final : public QObject {
                    conversationDeleteChanged)
     Q_PROPERTY(QString conversationDeleteLastResultSummary READ conversationDeleteLastResultSummary
                    NOTIFY conversationDeleteChanged)
+    Q_PROPERTY(int memoryCandidateCount READ memoryCandidateCount NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(int pendingMemoryCandidateCount READ pendingMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(int approvedMemoryCandidateCount READ approvedMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(int rejectedMemoryCandidateCount READ rejectedMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCandidateSummaries READ memoryCandidateSummaries NOTIFY
+                   memoryCandidatesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
     Q_PROPERTY(
@@ -707,6 +716,11 @@ public:
     QStringList conversationDeleteReadinessChecks() const;
     QString conversationDeleteLastStatus() const;
     QString conversationDeleteLastResultSummary() const;
+    int memoryCandidateCount() const;
+    int pendingMemoryCandidateCount() const;
+    int approvedMemoryCandidateCount() const;
+    int rejectedMemoryCandidateCount() const;
+    QStringList memoryCandidateSummaries() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     QString currentModeName() const;
@@ -734,6 +748,9 @@ public:
     Q_INVOKABLE bool archiveConversation(const QString& conversationId);
     Q_INVOKABLE bool unarchiveConversation(const QString& conversationId);
     Q_INVOKABLE bool requestPermanentDeleteConversation(const QString& conversationId);
+    Q_INVOKABLE QString createMemoryCandidateFromConversationText(const QString& text);
+    Q_INVOKABLE bool approveMemoryCandidate(const QString& candidateId);
+    Q_INVOKABLE bool rejectMemoryCandidate(const QString& candidateId);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -766,6 +783,7 @@ signals:
     void conversationSearchChanged();
     void conversationExportChanged();
     void conversationDeleteChanged();
+    void memoryCandidatesChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();

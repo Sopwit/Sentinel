@@ -259,6 +259,32 @@ Out of scope:
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent
 delete disabled until a later explicit destructive phase.
 
+## 10. Controlled Semantic Memory Candidates
+
+Decision: Semantic memory begins as reviewable candidate metadata, separate from key-value memory,
+memory taxonomy, chat history, and conversation storage.
+
+Reason: The desktop alpha needs a safe architecture path for future semantic memory without adding
+embeddings, vector storage, autonomous capture, provider calls, or hidden long-term memory
+mutation.
+
+Runtime behavior:
+
+- Candidates are represented by value-only records and stored through `IMemoryCandidateStore`.
+- The default implementation is `InMemoryMemoryCandidateStore`; no durable semantic memory store
+  exists yet.
+- Candidates created from conversation text metadata default to Pending Review.
+- Approve/reject actions update review metadata only.
+- Approved candidate metadata is not automatically committed to `IMemoryStore` or any semantic
+  database.
+- Clear Chat does not clear approved candidate metadata unless a later phase explicitly scopes
+  that lifecycle.
+
+Out of scope:
+
+- Embeddings, vector database, semantic search, automatic memory writes, cloud sync, model/provider
+  calls, filesystem/system actions, tools/plugins, and automatic capture toggles.
+
 Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
 confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
 path is non-mutating instead of enabling deletion.
