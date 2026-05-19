@@ -1900,6 +1900,33 @@ Still out of scope:
   cloud/API keys, tools/plugins, filesystem/system actions, automatic memory writes, broad UI
   redesign, and raw prompt display.
 
+## Phase 16.28-16.30: Deterministic Retrieval Planning Foundation
+
+Completed. Added deterministic retrieval planning across existing local context sources.
+
+Delivered:
+
+- `RetrievalPlanningPolicy`, `RetrievalPlanningStatus`, `RetrievalPlanningResult`,
+  `RetrievalCandidate`, `RetrievalSourcePriority`, `RetrievalBudget`, and
+  `RetrievalSelectionSummary`.
+- Fixed source priority: recent conversation window, deterministic older summaries, committed
+  key-value memory, runtime metadata, then orchestration metadata.
+- Character-budget allocation with deterministic truncation and selected/excluded source and
+  candidate counts.
+- Prompt context injection now consumes selected retrieval candidates while preserving source
+  separation and chronology where conversation blocks provide it.
+- QML-safe controller/view-model exposure for retrieval readiness, status, budget summaries,
+  source summaries, and selected/excluded counts.
+- Compact Chat, Memory, and Settings retrieval status.
+- Tests for source selection, budget allocation, truncation, chronology preservation,
+  summary/memory separation, no mutation during planning, and view-model exposure.
+
+Still out of scope:
+
+- Semantic retrieval, vector databases, embeddings, semantic ranking/search, provider/model calls,
+  cloud/API keys, automatic memory writes, tools/plugins, filesystem/system actions, debug console
+  UI, broad redesign, raw prompt display, and private assembled payload display.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

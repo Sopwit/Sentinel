@@ -81,6 +81,7 @@ private slots:
     void exposesContextAssemblyMetadata();
     void exposesConversationWindowMetadata();
     void exposesConversationSummaryMetadata();
+    void exposesRetrievalPlanningMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1722,6 +1723,29 @@ void DesktopShellViewModelTest::exposesConversationSummaryMetadata() {
     QVERIFY(fixture.viewModel.conversationSummaryOmittedMessageCount() >= 0);
     QVERIFY(fixture.viewModel.conversationSummaryTruncatedBlockCount() >= 0);
     QVERIFY(!fixture.viewModel.conversationSummaryBlockSummaries().isEmpty());
+}
+
+void DesktopShellViewModelTest::exposesRetrievalPlanningMetadata() {
+    ViewModelFixture fixture;
+
+    for (int i = 0; i < 12; ++i) {
+        QVERIFY(fixture.viewModel.sendMessage(
+            QStringLiteral("retrieval marker %1 %2").arg(i).arg(QString(120, QLatin1Char('r')))));
+    }
+    fixture.viewModel.remember(QStringLiteral("retrieval.preference"),
+                               QStringLiteral("local metadata only"));
+
+    QVERIFY(fixture.viewModel.retrievalPlanningStatus() == QStringLiteral("Ready") ||
+            fixture.viewModel.retrievalPlanningStatus() == QStringLiteral("Truncated"));
+    QCOMPARE(fixture.viewModel.retrievalPlanningReadiness(), QStringLiteral("Ready"));
+    QVERIFY(fixture.viewModel.retrievalPlanningSelectedSourceCount() >= 4);
+    QVERIFY(fixture.viewModel.retrievalPlanningSelectedCandidateCount() >= 4);
+    QVERIFY(fixture.viewModel.retrievalPlanningExcludedCandidateCount() >= 0);
+    QVERIFY(fixture.viewModel.retrievalPlanningTruncatedCandidateCount() >= 0);
+    QVERIFY(fixture.viewModel.retrievalPlanningBudgetSummary().contains(QStringLiteral("3200")));
+    QVERIFY(fixture.viewModel.retrievalPlanningSourceSummary().contains(
+        QStringLiteral("Conversation Context")));
+    QVERIFY(!fixture.viewModel.retrievalPlanningSourceSummaries().isEmpty());
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

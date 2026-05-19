@@ -231,6 +231,19 @@ runtime state, or orchestration metadata. No semantic summarization, embeddings/
 semantic ranking/search, provider/model calls, cloud/API keys, tools/plugins,
 filesystem/system actions, automatic memory writes, broad UI redesign, or raw prompt display is
 added.
+Phase 16.28 through Phase 16.30 add deterministic retrieval planning over the existing local
+context sources. `RetrievalPlanningPolicy`, `RetrievalPlanningStatus`,
+`RetrievalPlanningResult`, `RetrievalCandidate`, `RetrievalSourcePriority`, `RetrievalBudget`, and
+`RetrievalSelectionSummary` describe source participation, fixed priority, budget allocation,
+truncation, selected/excluded counts, and source summaries. Priority is recent conversation,
+deterministic older summaries, committed key-value memory, runtime metadata, then orchestration
+metadata. Prompt context injection consumes selected retrieval candidates, but planning itself
+does not mutate prompts, chat, memory, candidates, runtime state, or orchestration metadata.
+Semantic/vector retrieval, embeddings, vector databases, semantic ranking/search, provider/model
+calls, cloud/API keys, automatic memory writes, tools/plugins, filesystem/system actions, debug
+console UI, broad redesign, raw prompt display, and private assembled payload display remain
+future phase gates. Future vector/embedding compatibility must live behind a separate
+retrieval/ranking boundary that preserves deterministic planning and source separation.
 
 ## Future Components
 

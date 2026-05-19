@@ -352,6 +352,28 @@ class ApplicationController final : public QObject {
                    conversationSummaryTruncatedBlockCount NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList conversationSummaryBlockSummaries READ conversationSummaryBlockSummaries
                    NOTIFY chatMessagesChanged)
+    Q_PROPERTY(
+        QString retrievalPlanningStatus READ retrievalPlanningStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString retrievalPlanningSummary READ retrievalPlanningSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString retrievalPlanningReadiness READ retrievalPlanningReadiness NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString retrievalPlanningBudgetSummary READ retrievalPlanningBudgetSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString retrievalPlanningSourceSummary READ retrievalPlanningSourceSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int retrievalPlanningSelectedSourceCount READ retrievalPlanningSelectedSourceCount
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int retrievalPlanningExcludedSourceCount READ retrievalPlanningExcludedSourceCount
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int retrievalPlanningSelectedCandidateCount READ
+                   retrievalPlanningSelectedCandidateCount NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int retrievalPlanningExcludedCandidateCount READ
+                   retrievalPlanningExcludedCandidateCount NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int retrievalPlanningTruncatedCandidateCount READ
+                   retrievalPlanningTruncatedCandidateCount NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList retrievalPlanningSourceSummaries READ retrievalPlanningSourceSummaries
+                   NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -845,6 +867,19 @@ public:
     int conversationSummaryOmittedMessageCount() const;
     int conversationSummaryTruncatedBlockCount() const;
     QStringList conversationSummaryBlockSummaries() const;
+    RetrievalPlanningPolicy retrievalPlanningPolicy() const;
+    RetrievalPlanningResult retrievalPlanningResult() const;
+    QString retrievalPlanningStatus() const;
+    QString retrievalPlanningSummary() const;
+    QString retrievalPlanningReadiness() const;
+    QString retrievalPlanningBudgetSummary() const;
+    QString retrievalPlanningSourceSummary() const;
+    int retrievalPlanningSelectedSourceCount() const;
+    int retrievalPlanningExcludedSourceCount() const;
+    int retrievalPlanningSelectedCandidateCount() const;
+    int retrievalPlanningExcludedCandidateCount() const;
+    int retrievalPlanningTruncatedCandidateCount() const;
+    QStringList retrievalPlanningSourceSummaries() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;
@@ -1084,6 +1119,8 @@ private:
     bool runLocalInferenceStream(const QString& prompt, const QString& model);
     ConversationWindowResult conversationWindowForPrompt(const QString& prompt) const;
     ConversationSummaryResult conversationSummaryForPrompt(const QString& prompt) const;
+    QList<RetrievalCandidate> retrievalCandidatesForPrompt(const QString& prompt) const;
+    RetrievalPlanningResult retrievalPlanningForPrompt(const QString& prompt) const;
     QList<PromptContextBlock> promptContextBlocks(const QString& prompt) const;
     PromptContextInjectionResult preparePromptContextInjection(const QString& prompt) const;
     void finishLocalInferenceRequest(const QString& requestId,
@@ -1167,6 +1204,7 @@ private:
     ContextAssemblyPolicy contextAssemblyPolicy_;
     ConversationWindowPolicy conversationWindowPolicy_;
     ConversationSummaryPolicy conversationSummaryPolicy_;
+    RetrievalPlanningPolicy retrievalPlanningPolicy_;
     PromptContextInjectionPolicy promptContextInjectionPolicy_;
     PromptContextInjectionResult latestPromptContextInjectionResult_;
     std::unique_ptr<ChatSession> chatSession_;

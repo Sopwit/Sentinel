@@ -235,6 +235,30 @@ Future semantic summarization, embeddings, vector databases, semantic ranking/se
 memory writes, provider/model calls, tools/plugins, cloud/API keys, and filesystem/system actions
 remain separate future phase gates.
 
+Phase 16.28 through Phase 16.30 add deterministic retrieval planning before prompt context
+injection:
+
+- `RetrievalPlanningPolicy`, `RetrievalPlanningStatus`, `RetrievalPlanningResult`,
+  `RetrievalCandidate`, `RetrievalSourcePriority`, `RetrievalBudget`, and
+  `RetrievalSelectionSummary` are value-only records.
+- Planning decides which local context sources participate without mutating prompts during the
+  planning step.
+- Source priority is fixed: bounded recent conversation, deterministic older conversation
+  summaries, committed key-value memory, runtime metadata, then orchestration metadata.
+- Budget allocation and truncation are deterministic character-budget operations. Selected,
+  excluded, and truncated counts are retained per source.
+- Prompt context injection consumes only the selected retrieval candidates while preserving source
+  separation. Conversation chronology remains owned by the conversation window and summary
+  assemblers.
+- `DesktopShellViewModel` exposes only QML-safe status, readiness, source counts, excluded counts,
+  budget summaries, and source summaries.
+
+Semantic retrieval remains a separate future boundary. The current retrieval plan does not build
+embeddings, use a vector database, rank semantically, call providers/models, write memory, expose
+raw prompts, execute tools/plugins, or perform filesystem/system actions. Future vector or
+embedding compatibility must plug in behind a later explicit retrieval/ranking boundary while
+keeping deterministic planning and source separation intact.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.

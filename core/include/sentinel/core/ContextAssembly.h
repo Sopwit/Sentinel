@@ -43,11 +43,30 @@ enum class ConversationSummaryStatus : std::uint8_t {
     Truncated,
 };
 
+enum class RetrievalPlanningStatus : std::uint8_t {
+    NotPlanned,
+    Disabled,
+    Empty,
+    Ready,
+    Truncated,
+};
+
+enum class RetrievalSourcePriority : std::uint8_t {
+    RecentConversation = 1,
+    ConversationSummary = 2,
+    CommittedMemory = 3,
+    RuntimeMetadata = 4,
+    Orchestration = 5,
+};
+
 QString contextAssemblyStatusName(ContextAssemblyStatus status);
 QString contextAssemblySourceKindName(ContextAssemblySourceKind kind);
 QString promptContextInjectionStatusName(PromptContextInjectionStatus status);
 QString conversationWindowStatusName(ConversationWindowStatus status);
 QString conversationSummaryStatusName(ConversationSummaryStatus status);
+QString retrievalPlanningStatusName(RetrievalPlanningStatus status);
+QString retrievalSourcePriorityName(RetrievalSourcePriority priority);
+RetrievalSourcePriority retrievalSourcePriorityForKind(ContextAssemblySourceKind kind);
 
 struct ContextAssemblyPolicy {
     bool enabled = true;
@@ -237,6 +256,72 @@ struct ConversationSummaryResult {
     QString summary = QStringLiteral("No conversation summary is available.");
 };
 
+struct RetrievalPlanningPolicy {
+    bool enabled = true;
+    int maxCharacters = 3200;
+    bool includeRecentConversation = true;
+    bool includeConversationSummary = true;
+    bool includeCommittedMemory = true;
+    bool includeRuntimeMetadata = true;
+    bool includeOrchestration = true;
+    QString status = QStringLiteral("Ready");
+    QString summary = QStringLiteral(
+        "Deterministic retrieval planning selects local context sources without semantic search.");
+};
+
+struct RetrievalBudget {
+    int maxCharacters = 3200;
+    int estimatedCharacters = 0;
+    int allocatedCharacters = 0;
+    int includedCharacters = 0;
+    int remainingCharacters = 3200;
+    QString summary = QStringLiteral("0 of 3200 retrieval characters selected.");
+};
+
+struct RetrievalCandidate {
+    ContextAssemblySourceKind source = ContextAssemblySourceKind::Conversation;
+    RetrievalSourcePriority priority = RetrievalSourcePriority::RecentConversation;
+    QString title;
+    QString content;
+    int originalSize = 0;
+    int selectedSize = 0;
+    bool selected = false;
+    bool truncated = false;
+    QString exclusionReason;
+};
+
+struct RetrievalSelectionSummary {
+    ContextAssemblySourceKind source = ContextAssemblySourceKind::Conversation;
+    RetrievalSourcePriority priority = RetrievalSourcePriority::RecentConversation;
+    int candidateCount = 0;
+    int selectedCount = 0;
+    int excludedCount = 0;
+    int truncatedCount = 0;
+    int estimatedCharacters = 0;
+    int allocatedCharacters = 0;
+    int includedCharacters = 0;
+    QString summary = QStringLiteral("No retrieval candidates selected.");
+};
+
+struct RetrievalPlanningResult {
+    RetrievalPlanningStatus status = RetrievalPlanningStatus::NotPlanned;
+    RetrievalPlanningPolicy policy;
+    RetrievalBudget budget;
+    QList<RetrievalCandidate> candidates;
+    QList<RetrievalCandidate> selectedCandidates;
+    QList<RetrievalSelectionSummary> sourceSummaries;
+    int candidateCount = 0;
+    int selectedCandidateCount = 0;
+    int excludedCandidateCount = 0;
+    int truncatedCandidateCount = 0;
+    int selectedSourceCount = 0;
+    int excludedSourceCount = 0;
+    QString sourceSummary = QStringLiteral("No retrieval sources selected.");
+    QString budgetSummary = QStringLiteral("0 retrieval characters selected.");
+    QString summary = QStringLiteral("No retrieval planning has been generated.");
+    QStringList checks;
+};
+
 ContextAssemblySource makeContextAssemblySource(ContextAssemblySourceKind kind, bool requested,
                                                 bool available, int blockCount, int estimatedSize,
                                                 const QString& summary);
@@ -256,5 +341,8 @@ PromptContextInjectionResult injectPromptContext(const QString& prompt,
                                                  const PromptContextInjectionPolicy& policy);
 QStringList promptContextBlockSummaries(const PromptContextInjectionResult& result);
 QStringList conversationSummaryBlockSummaries(const ConversationSummaryResult& result);
+RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidates,
+                                      const RetrievalPlanningPolicy& policy);
+QStringList retrievalSourceSummaries(const RetrievalPlanningResult& result);
 
 } // namespace sentinel::core

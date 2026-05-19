@@ -1935,3 +1935,33 @@ Boundary rules:
 - Semantic summarization, embeddings/vector DB, semantic ranking/search, provider/model calls,
   cloud/API keys, tools/plugins, filesystem/system actions, automatic memory writes, and broad UI
   redesign require later explicit phase gates.
+
+## 81. Retrieval Planning Is Deterministic Source Selection
+
+Decision: Prompt context sources pass through deterministic retrieval planning before injection.
+
+Reason: Sentinel now has several local context sources. A planning layer is needed to keep source
+priority, budget allocation, and UI-visible readiness deterministic before future semantic
+retrieval exists.
+
+Boundary rules:
+
+- Retrieval planning uses `RetrievalPlanningPolicy`, `RetrievalPlanningStatus`,
+  `RetrievalPlanningResult`, `RetrievalCandidate`, `RetrievalSourcePriority`, `RetrievalBudget`,
+  and `RetrievalSelectionSummary`.
+- Priority order is fixed: recent conversation window, deterministic conversation summaries,
+  committed key-value memory, runtime metadata, then orchestration metadata.
+- Planning allocates a character budget in priority order and truncates deterministically.
+- Source separation is preserved. Conversation chronology remains preserved inside the recent
+  window and summary blocks before retrieval planning selects those blocks.
+- Planning exposes selected/excluded source counts, selected/excluded candidate counts, truncated
+  counts, readiness, budget summaries, and source summaries only.
+- Planning must not mutate prompts, chat history, committed memory, memory candidates, runtime
+  metadata, or orchestration metadata.
+- The prompt context injection step may consume selected retrieval candidates, but QML must not
+  receive the raw assembled prompt or private payload.
+- Semantic retrieval, vector databases, embeddings, semantic ranking/search, provider/model calls,
+  cloud/API keys, automatic memory writes, filesystem/system actions, tools/plugins, and broad UI
+  redesign require later explicit phase gates. Future vector/embedding compatibility must remain
+  behind a separate retrieval/ranking boundary and keep this deterministic planning contract
+  intact.

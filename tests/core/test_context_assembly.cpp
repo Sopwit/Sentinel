@@ -17,6 +17,11 @@ using sentinel::core::ConversationWindowMessage;
 using sentinel::core::ConversationWindowPolicy;
 using sentinel::core::ConversationWindowStatus;
 using sentinel::core::makeContextAssemblySource;
+using sentinel::core::planRetrieval;
+using sentinel::core::RetrievalCandidate;
+using sentinel::core::RetrievalPlanningPolicy;
+using sentinel::core::RetrievalPlanningStatus;
+using sentinel::core::retrievalSourceSummaries;
 
 class ContextAssemblyTest final : public QObject {
     Q_OBJECT
@@ -28,6 +33,9 @@ private slots:
     void conversationWindowEnforcesCharacterBudget();
     void conversationSummarySummarizesOlderOmittedMessagesChronologically();
     void conversationSummaryEnforcesDeterministicBudget();
+    void retrievalPlanningSelectsSourcesByDeterministicPriority();
+    void retrievalPlanningAllocatesBudgetAndTruncatesDeterministically();
+    void retrievalPlanningPreservesChronologyWithinSource();
 };
 
 void ContextAssemblyTest::createsDeterministicAssemblySummary() {
@@ -161,6 +169,101 @@ void ContextAssemblyTest::conversationSummaryEnforcesDeterministicBudget() {
     QVERIFY(result.budget.includedCharacters <= policy.maxCharacters);
     QVERIFY(result.text.contains(QStringLiteral("[Conversation Summary]")));
     QVERIFY(result.text.contains(QStringLiteral("[/Conversation Summary]")));
+}
+
+void ContextAssemblyTest::retrievalPlanningSelectsSourcesByDeterministicPriority() {
+    RetrievalPlanningPolicy policy;
+    policy.maxCharacters = 80;
+
+    const auto result = planRetrieval(
+        {
+            RetrievalCandidate{ContextAssemblySourceKind::Orchestration,
+                               {},
+                               QStringLiteral("Orchestration"),
+                               QStringLiteral("orchestration")},
+            RetrievalCandidate{ContextAssemblySourceKind::CommittedMemory,
+                               {},
+                               QStringLiteral("Memory"),
+                               QStringLiteral("memory")},
+            RetrievalCandidate{ContextAssemblySourceKind::Conversation,
+                               {},
+                               QStringLiteral("Window"),
+                               QStringLiteral("recent")},
+            RetrievalCandidate{ContextAssemblySourceKind::ConversationSummary,
+                               {},
+                               QStringLiteral("Summary"),
+                               QStringLiteral("summary")},
+        },
+        policy);
+
+    QCOMPARE(result.status, RetrievalPlanningStatus::Ready);
+    QCOMPARE(result.selectedCandidateCount, 4);
+    QCOMPARE(result.selectedCandidates.at(0).source, ContextAssemblySourceKind::Conversation);
+    QCOMPARE(result.selectedCandidates.at(1).source,
+             ContextAssemblySourceKind::ConversationSummary);
+    QCOMPARE(result.selectedCandidates.at(2).source, ContextAssemblySourceKind::CommittedMemory);
+    QCOMPARE(result.selectedCandidates.at(3).source, ContextAssemblySourceKind::Orchestration);
+    QVERIFY(retrievalSourceSummaries(result)
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Committed Memory Context")));
+}
+
+void ContextAssemblyTest::retrievalPlanningAllocatesBudgetAndTruncatesDeterministically() {
+    RetrievalPlanningPolicy policy;
+    policy.maxCharacters = 12;
+
+    const auto result = planRetrieval(
+        {
+            RetrievalCandidate{ContextAssemblySourceKind::Conversation,
+                               {},
+                               QStringLiteral("Window"),
+                               QStringLiteral("abcdefghij")},
+            RetrievalCandidate{ContextAssemblySourceKind::CommittedMemory,
+                               {},
+                               QStringLiteral("Memory"),
+                               QStringLiteral("klmnopqrst")},
+            RetrievalCandidate{ContextAssemblySourceKind::RuntimeMetadata,
+                               {},
+                               QStringLiteral("Runtime"),
+                               QStringLiteral("uv")},
+        },
+        policy);
+
+    QCOMPARE(result.status, RetrievalPlanningStatus::Truncated);
+    QCOMPARE(result.selectedCandidateCount, 2);
+    QCOMPARE(result.excludedCandidateCount, 1);
+    QCOMPARE(result.truncatedCandidateCount, 1);
+    QCOMPARE(result.budget.includedCharacters, 12);
+    QCOMPARE(result.selectedCandidates.at(0).content, QStringLiteral("abcdefghij"));
+    QCOMPARE(result.selectedCandidates.at(1).content, QStringLiteral("kl"));
+    QVERIFY(!result.selectedCandidates.at(1).content.contains(QStringLiteral("m")));
+}
+
+void ContextAssemblyTest::retrievalPlanningPreservesChronologyWithinSource() {
+    RetrievalPlanningPolicy policy;
+    policy.maxCharacters = 100;
+
+    const auto result = planRetrieval(
+        {
+            RetrievalCandidate{ContextAssemblySourceKind::Conversation,
+                               {},
+                               QStringLiteral("First"),
+                               QStringLiteral("#1 user: old")},
+            RetrievalCandidate{ContextAssemblySourceKind::Conversation,
+                               {},
+                               QStringLiteral("Second"),
+                               QStringLiteral("#2 assistant: new")},
+            RetrievalCandidate{ContextAssemblySourceKind::CommittedMemory,
+                               {},
+                               QStringLiteral("Memory"),
+                               QStringLiteral("stable = fact")},
+        },
+        policy);
+
+    QCOMPARE(result.status, RetrievalPlanningStatus::Ready);
+    QCOMPARE(result.selectedCandidates.at(0).title, QStringLiteral("First"));
+    QCOMPARE(result.selectedCandidates.at(1).title, QStringLiteral("Second"));
+    QCOMPARE(result.selectedCandidates.at(2).source, ContextAssemblySourceKind::CommittedMemory);
 }
 
 QTEST_MAIN(ContextAssemblyTest)

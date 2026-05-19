@@ -218,6 +218,33 @@ ScrollView {
                             Layout.fillWidth: true
                         }
                     }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Retrieval Planning"
+                        value: memoryPage.viewModel.retrievalPlanningStatus + " - "
+                               + memoryPage.viewModel.retrievalPlanningSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Retrieval Budget"
+                        value: memoryPage.viewModel.retrievalPlanningBudgetSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Retrieval Sources"
+                        value: memoryPage.viewModel.retrievalPlanningSelectedSourceCount
+                               + " selected / "
+                               + memoryPage.viewModel.retrievalPlanningExcludedSourceCount
+                               + " excluded / "
+                               + memoryPage.viewModel.retrievalPlanningSelectedCandidateCount
+                               + " blocks"
+                        Layout.fillWidth: true
+                    }
                 }
             }
 

@@ -367,6 +367,18 @@ ShellPanel {
 
                 InfoRow {
                     compact: true
+                    label: "Retrieval"
+                    value: chatPanel.viewModel.retrievalPlanningStatus
+                           + " / "
+                           + chatPanel.viewModel.retrievalPlanningSelectedSourceCount
+                           + " sources / "
+                           + chatPanel.viewModel.retrievalPlanningExcludedCandidateCount
+                           + " excluded"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
                     visible: chatPanel.viewModel.conversationRuntimeRequestId !== "None"
                     label: "Request"
                     value: chatPanel.viewModel.conversationRuntimeRequestId

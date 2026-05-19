@@ -323,6 +323,27 @@ ScrollView {
                     value: settingsPage.viewModel.conversationSummaryBudgetSummary
                     Layout.fillWidth: true
                 }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Retrieval"
+                    value: settingsPage.viewModel.retrievalPlanningStatus
+                           + " / "
+                           + settingsPage.viewModel.retrievalPlanningBudgetSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Retrieval Sources"
+                    value: settingsPage.viewModel.retrievalPlanningSelectedSourceCount
+                           + " selected / "
+                           + settingsPage.viewModel.retrievalPlanningExcludedSourceCount
+                           + " excluded / "
+                           + settingsPage.viewModel.retrievalPlanningTruncatedCandidateCount
+                           + " truncated"
+                    Layout.fillWidth: true
+                }
             }
         }
 
