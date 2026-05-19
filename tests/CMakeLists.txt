@@ -17,6 +17,8 @@ add_sentinel_core_test(test_chat_session core/test_chat_session.cpp)
 add_sentinel_core_test(test_conversation_session core/test_conversation_session.cpp)
 add_sentinel_core_test(test_conversation_state_graph core/test_conversation_state_graph.cpp)
 add_sentinel_core_test(test_in_memory_conversation_store core/test_in_memory_conversation_store.cpp)
+add_sentinel_core_test(test_in_memory_memory_candidate_store
+                       core/test_in_memory_memory_candidate_store.cpp)
 add_sentinel_core_test(test_in_memory_store core/test_in_memory_store.cpp)
 add_sentinel_core_test(test_sqlite_chat_history_store core/test_sqlite_chat_history_store.cpp)
 add_sentinel_core_test(test_sqlite_conversation_store core/test_sqlite_conversation_store.cpp)

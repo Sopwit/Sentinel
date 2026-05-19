@@ -24,6 +24,7 @@
 #include "sentinel/core/LocalInference.h"
 #include "sentinel/core/LocalRuntime.h"
 #include "sentinel/core/LocalRuntimeSession.h"
+#include "sentinel/core/MemoryCandidate.h"
 #include "sentinel/core/ModelManagement.h"
 #include "sentinel/core/OllamaRuntime.h"
 #include "sentinel/core/OrchestrationDiagnostics.h"
@@ -446,6 +447,15 @@ class ApplicationController final : public QObject {
                    conversationDeleteChanged)
     Q_PROPERTY(QString conversationDeleteLastResultSummary READ conversationDeleteLastResultSummary
                    NOTIFY conversationDeleteChanged)
+    Q_PROPERTY(int memoryCandidateCount READ memoryCandidateCount NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(int pendingMemoryCandidateCount READ pendingMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(int approvedMemoryCandidateCount READ approvedMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(int rejectedMemoryCandidateCount READ rejectedMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCandidateSummaries READ memoryCandidateSummaries NOTIFY
+                   memoryCandidatesChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
@@ -777,6 +787,11 @@ public:
     QStringList conversationDeleteReadinessChecks() const;
     QString conversationDeleteLastStatus() const;
     QString conversationDeleteLastResultSummary() const;
+    int memoryCandidateCount() const;
+    int pendingMemoryCandidateCount() const;
+    int approvedMemoryCandidateCount() const;
+    int rejectedMemoryCandidateCount() const;
+    QStringList memoryCandidateSummaries() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     const QList<ChatMessage>& chatHistory() const;
@@ -798,6 +813,9 @@ public:
     Q_INVOKABLE bool archiveConversation(const QString& conversationId);
     Q_INVOKABLE bool unarchiveConversation(const QString& conversationId);
     Q_INVOKABLE bool requestPermanentDeleteConversation(const QString& conversationId);
+    Q_INVOKABLE QString createMemoryCandidateFromConversationText(const QString& text);
+    Q_INVOKABLE bool approveMemoryCandidate(const QString& candidateId);
+    Q_INVOKABLE bool rejectMemoryCandidate(const QString& candidateId);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -821,6 +839,7 @@ signals:
     void conversationSearchChanged();
     void conversationExportChanged();
     void conversationDeleteChanged();
+    void memoryCandidatesChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();
@@ -883,6 +902,9 @@ private:
     LocalInferenceResponse blockedLocalInferenceResponse(const LocalInferenceRequest& request,
                                                          LocalInferenceError error,
                                                          const QString& summary) const;
+    QList<MemoryCandidate> memoryCandidates() const;
+    int memoryCandidateCountForState(MemoryReviewState state) const;
+    MemoryCandidate memoryCandidateFromConversationText(const QString& text) const;
 
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
@@ -916,6 +938,7 @@ private:
     std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment_;
     std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider_;
     std::unique_ptr<IMemoryStore> memoryStore_;
+    std::unique_ptr<IMemoryCandidateStore> memoryCandidateStore_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
     std::unique_ptr<IConversationStore> conversationStore_;

@@ -258,6 +258,12 @@ single-transcript foundation only: no full browser page, no sidebar redesign, no
 and no multi-conversation storage UI.
 
 Phase 15.20 through Phase 15.22 add a compact read-only multi-conversation readiness status.
+
+Phase 16.0 through Phase 16.3 add compact Memory Candidates visibility to the Memory page. The UI
+may show total, pending, approved, and rejected counts plus read-only summary rows. It must not add
+automatic capture toggles, semantic search, vector/embedding controls, provider/model calls,
+filesystem controls, cloud sync, tool/plugin controls, broad redesign, or autonomous memory
+actions.
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

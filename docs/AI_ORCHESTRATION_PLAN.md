@@ -155,6 +155,12 @@ continues to invalidate request ids so stale async responses are ignored, and pe
 requests remain disabled and non-mutating. No semantic memory, embeddings/vector DB, cloud sync,
 import/export change, permanent delete execution, UI redesign, model/voice/tool/plugin change, or
 runtime authority expansion is added.
+Phase 16.0 through Phase 16.3 add controlled semantic memory candidate metadata: candidates can be
+created from supplied conversation text metadata, default to Pending Review, and can be marked
+Approved or Rejected as review metadata only. The candidate store remains separate from
+`IMemoryStore`, the static memory taxonomy, chat history, and conversation storage. No embeddings,
+vector DB, semantic search, automatic memory writes, cloud sync, provider/model calls,
+tool/plugin authority, filesystem/system authority, or automatic capture loop is added.
 
 ## Future Components
 
@@ -233,6 +239,10 @@ runtime authority expansion is added.
   active single transcript plus controlled Markdown/JSON export result records. Search does not
   mutate history or query storage. Export writes only to the app-controlled export directory and
   does not support import, arbitrary paths, file pickers, or multi-conversation workflows.
+- Semantic memory candidates: reviewable metadata records derived from supplied conversation text
+  metadata. They default to Pending Review and remain separate from key-value memory, memory
+  taxonomy, embeddings, vector storage, semantic search, provider/model execution, and autonomous
+  memory writes.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 - Local model management readiness: deterministic metadata for recommended local models,

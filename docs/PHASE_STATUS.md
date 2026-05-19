@@ -2,6 +2,34 @@
 
 ## Completed / Stable
 
+### Phase 16.0-16.3: Controlled Semantic Memory Foundation
+
+Completed. Adds a review-only semantic memory candidate foundation without embeddings, vector
+storage, automatic capture, or long-term memory mutation.
+
+Scope:
+
+- Added value-only memory candidate abstractions: candidate id, source, category, confidence,
+  review state, retention policy, capture policy, candidate summary, `IMemoryCandidateStore`, and
+  `InMemoryMemoryCandidateStore`.
+- `ApplicationController` can create candidates from supplied conversation text metadata only.
+  Candidates default to `Pending Review`.
+- Approval and rejection update review metadata only. They do not write to `IMemoryStore`, memory
+  taxonomy, chat history, conversation storage, files, providers, models, tools, plugins, or
+  runtime services.
+- `DesktopShellViewModel` exposes QML-safe candidate counts and summary strings.
+- Memory shows a compact read-only “Memory Candidates” section with total, pending, approved, and
+  rejected counts.
+- Tests cover creation, default pending review, approve/reject metadata, no key-value memory
+  mutation, deterministic summaries, QML-safe exposure, and clear-chat preserving approved
+  candidate metadata.
+
+Known limitation:
+
+- Candidate storage is in-memory only and review metadata is not durable. There is no semantic
+  search, embeddings, vector DB, autonomous memory writes, cloud sync, provider/model call,
+  filesystem authority, tool/plugin authority, or automatic capture toggle.
+
 ### Phase 15.33-15.35: Conversation Browser Runtime QA And Checkpoint
 
 Completed. Checkpoints the multi-conversation browser/runtime path after the delete-readiness

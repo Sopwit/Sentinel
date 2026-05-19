@@ -49,6 +49,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::conversationExportChanged);
     connect(&controller_, &core::ApplicationController::conversationDeleteChanged, this,
             &DesktopShellViewModel::conversationDeleteChanged);
+    connect(&controller_, &core::ApplicationController::memoryCandidatesChanged, this,
+            &DesktopShellViewModel::memoryCandidatesChanged);
     connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
     connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
@@ -1225,6 +1227,26 @@ QString DesktopShellViewModel::conversationDeleteLastResultSummary() const {
     return controller_.conversationDeleteLastResultSummary();
 }
 
+int DesktopShellViewModel::memoryCandidateCount() const {
+    return controller_.memoryCandidateCount();
+}
+
+int DesktopShellViewModel::pendingMemoryCandidateCount() const {
+    return controller_.pendingMemoryCandidateCount();
+}
+
+int DesktopShellViewModel::approvedMemoryCandidateCount() const {
+    return controller_.approvedMemoryCandidateCount();
+}
+
+int DesktopShellViewModel::rejectedMemoryCandidateCount() const {
+    return controller_.rejectedMemoryCandidateCount();
+}
+
+QStringList DesktopShellViewModel::memoryCandidateSummaries() const {
+    return controller_.memoryCandidateSummaries();
+}
+
 QString DesktopShellViewModel::memoryMaintenanceStatus() const {
     return controller_.memoryMaintenanceStatus();
 }
@@ -1335,6 +1357,18 @@ bool DesktopShellViewModel::unarchiveConversation(const QString& conversationId)
 
 bool DesktopShellViewModel::requestPermanentDeleteConversation(const QString& conversationId) {
     return controller_.requestPermanentDeleteConversation(conversationId);
+}
+
+QString DesktopShellViewModel::createMemoryCandidateFromConversationText(const QString& text) {
+    return controller_.createMemoryCandidateFromConversationText(text);
+}
+
+bool DesktopShellViewModel::approveMemoryCandidate(const QString& candidateId) {
+    return controller_.approveMemoryCandidate(candidateId);
+}
+
+bool DesktopShellViewModel::rejectMemoryCandidate(const QString& candidateId) {
+    return controller_.rejectMemoryCandidate(candidateId);
 }
 
 bool DesktopShellViewModel::runAgentRequest(const QString& request) {

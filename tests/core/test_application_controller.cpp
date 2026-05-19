@@ -1,6 +1,7 @@
 #include "sentinel/core/ApplicationController.h"
 #include "sentinel/core/IChatHistoryStore.h"
 #include "sentinel/core/InMemoryConversationStore.h"
+#include "sentinel/core/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/InMemoryStore.h"
 #include "sentinel/core/LocalEchoProvider.h"
 #include "sentinel/core/LocalInference.h"
@@ -719,6 +720,10 @@ private slots:
     void clearsPersistentChatHistoryWhenAvailable();
     void keepsRuntimeChatWorkingWhenHistoryStoreUnavailable();
     void storesRuntimeMemoryEntries();
+    void createsMemoryCandidatesPendingReview();
+    void recordsMemoryCandidateApprovalAndRejectionMetadata();
+    void memoryCandidatesDoNotMutateKeyValueMemory();
+    void clearChatKeepsApprovedMemoryCandidateMetadata();
     void clearsRuntimeMemoryEntries();
     void failsSafeWhenMemoryStoreUnavailable();
     void rejectsBlankMemoryKeys();
@@ -3417,6 +3422,65 @@ void ApplicationControllerTest::storesRuntimeMemoryEntries() {
     controller->remember(QString(), QStringLiteral("ignored"));
     QCOMPARE(controller->memoryEntries(), QStringList{QStringLiteral("callsign: Sentinel")});
     QCOMPARE(spy.count(), 1);
+}
+
+void ApplicationControllerTest::createsMemoryCandidatesPendingReview() {
+    const auto controller = makeController();
+    QSignalSpy spy(controller.get(), &ApplicationController::memoryCandidatesChanged);
+
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("The user prefers concise local-only architecture notes."));
+
+    QCOMPARE(id, QStringLiteral("memory-candidate-1"));
+    QCOMPARE(controller->memoryCandidateCount(), 1);
+    QCOMPARE(controller->pendingMemoryCandidateCount(), 1);
+    QCOMPARE(controller->approvedMemoryCandidateCount(), 0);
+    QVERIFY(
+        controller->memoryCandidateSummaries().first().contains(QStringLiteral("Pending Review")));
+    QCOMPARE(spy.count(), 1);
+}
+
+void ApplicationControllerTest::recordsMemoryCandidateApprovalAndRejectionMetadata() {
+    const auto controller = makeController();
+
+    const auto approvedId = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Remember this project uses Qt and QML."));
+    const auto rejectedId = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Temporary phrasing should not become durable memory."));
+
+    QVERIFY(controller->approveMemoryCandidate(approvedId));
+    QVERIFY(controller->rejectMemoryCandidate(rejectedId));
+    QVERIFY(!controller->approveMemoryCandidate(QStringLiteral("missing")));
+    QCOMPARE(controller->pendingMemoryCandidateCount(), 0);
+    QCOMPARE(controller->approvedMemoryCandidateCount(), 1);
+    QCOMPARE(controller->rejectedMemoryCandidateCount(), 1);
+    QVERIFY(controller->memoryCandidateSummaries().at(0).contains(QStringLiteral("Approved")));
+    QVERIFY(controller->memoryCandidateSummaries().at(1).contains(QStringLiteral("Rejected")));
+}
+
+void ApplicationControllerTest::memoryCandidatesDoNotMutateKeyValueMemory() {
+    const auto controller = makeController();
+    controller->remember(QStringLiteral("mode"), QStringLiteral("Companion"));
+
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Candidate metadata should not write to IMemoryStore."));
+    QVERIFY(controller->approveMemoryCandidate(id));
+
+    QCOMPARE(controller->memoryEntries(), QStringList{QStringLiteral("mode: Companion")});
+}
+
+void ApplicationControllerTest::clearChatKeepsApprovedMemoryCandidateMetadata() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Keep this approved metadata across chat clear."));
+    QVERIFY(controller->approveMemoryCandidate(id));
+
+    controller->sendMessage(QStringLiteral("status"));
+    controller->clearChat();
+
+    QCOMPARE(controller->memoryCandidateCount(), 1);
+    QCOMPARE(controller->approvedMemoryCandidateCount(), 1);
+    QVERIFY(controller->memoryCandidateSummaries().first().contains(QStringLiteral("Approved")));
 }
 
 void ApplicationControllerTest::clearsRuntimeMemoryEntries() {
