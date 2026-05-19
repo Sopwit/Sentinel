@@ -2,6 +2,32 @@
 
 ## Completed / Stable
 
+### Phase 16.13-16.15: Memory Recall Metadata And Local Memory Surfacing
+
+Completed. Adds deterministic local recall over committed key-value memory entries while keeping
+recall read-only and separate from chat prompt construction.
+
+Scope:
+
+- Added value-only recall metadata: `MemoryRecallQuery`, `MemoryRecallResult`,
+  `MemoryRecallSummary`, `MemoryRecallStatus`, and `MemoryRecallPolicy`.
+- Recall reads only the existing `IMemoryStore` key-value entries and uses literal key/value
+  matching.
+- Empty queries return an empty-query summary and do not mutate memory or chat state.
+- Recall results expose QML-safe status, summary, result count, memory entry count, and compact
+  result strings.
+- Memory page shows a compact “Local Memory Recall” search field and matching committed entries.
+- Recall does not call providers/models, does not build embeddings, does not use a vector DB or
+  semantic search, and does not inject results into chat prompts.
+- Tests cover committed key/value recall, empty query behavior, read-only recall, recall after
+  commit, committed memory surviving clear chat, controller/view-model exposure, and no prompt
+  injection side effects.
+
+Known limitation:
+
+- Recall is literal/local/read-only only. Semantic recall, embeddings, vector indexing, prompt
+  injection, ranking, durable recall history, and automatic context assembly remain future work.
+
 ### Phase 16.10-16.12: Explicit Memory Commit Boundary
 
 Completed. Adds explicit user-controlled commitment from reviewed memory candidates into the

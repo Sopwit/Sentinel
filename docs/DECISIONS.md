@@ -1808,3 +1808,24 @@ Boundary rules:
 - The worker boundary does not add cloud providers, API keys, model downloads/pulls/deletes,
   Ollama process management, tools, plugins, filesystem/system actions, Piper changes, Whisper
   execution, microphone access, playback, or autonomous loops.
+
+## 76. Local Memory Recall Is Literal And Read-Only
+
+Decision: Memory recall starts as deterministic metadata over the existing local key-value memory
+store.
+
+Reason: Committed memory now exists, but using it must remain user-visible and bounded before any
+semantic recall or prompt-context assembly is introduced.
+
+Boundary rules:
+
+- Recall reads only `IMemoryStore::entries()`.
+- Matching is literal key/value matching only.
+- Empty queries return a safe empty-query summary.
+- Recall must not call providers/models, build embeddings, create a vector DB, use semantic
+  search, load tools/plugins, or perform filesystem/system actions.
+- Recall must not mutate memory, candidates, chat history, conversation state, or runtime state.
+- Recall results are QML-safe strings/counts/lists only and are not automatically injected into
+  chat prompts.
+- Semantic recall, ranking, embeddings/vector indexing, prompt injection, and automatic context
+  assembly require a later explicit phase.

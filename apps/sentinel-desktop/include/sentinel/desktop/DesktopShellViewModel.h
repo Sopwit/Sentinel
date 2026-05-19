@@ -466,6 +466,16 @@ class DesktopShellViewModel final : public QObject {
         QString lastMemoryCommitStatus READ lastMemoryCommitStatus NOTIFY memoryCandidatesChanged)
     Q_PROPERTY(QString lastMemoryCommitResultSummary READ lastMemoryCommitResultSummary NOTIFY
                    memoryCandidatesChanged)
+    Q_PROPERTY(QString memoryRecallPolicyStatus READ memoryRecallPolicyStatus CONSTANT)
+    Q_PROPERTY(QString memoryRecallPolicySummary READ memoryRecallPolicySummary CONSTANT)
+    Q_PROPERTY(QString memoryRecallQueryText READ memoryRecallQueryText NOTIFY memoryRecallChanged)
+    Q_PROPERTY(QString memoryRecallStatus READ memoryRecallStatus NOTIFY memoryRecallChanged)
+    Q_PROPERTY(
+        QString memoryRecallSummaryText READ memoryRecallSummaryText NOTIFY memoryRecallChanged)
+    Q_PROPERTY(int memoryRecallResultCount READ memoryRecallResultCount NOTIFY memoryRecallChanged)
+    Q_PROPERTY(QStringList memoryRecallResultSummaries READ memoryRecallResultSummaries NOTIFY
+                   memoryRecallChanged)
+    Q_PROPERTY(int memoryEntryCount READ memoryEntryCount NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
     Q_PROPERTY(
@@ -777,6 +787,14 @@ public:
     QStringList memoryCommitCandidateSummaries() const;
     QString lastMemoryCommitStatus() const;
     QString lastMemoryCommitResultSummary() const;
+    QString memoryRecallPolicyStatus() const;
+    QString memoryRecallPolicySummary() const;
+    QString memoryRecallQueryText() const;
+    QString memoryRecallStatus() const;
+    QString memoryRecallSummaryText() const;
+    int memoryRecallResultCount() const;
+    QStringList memoryRecallResultSummaries() const;
+    int memoryEntryCount() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     QString currentModeName() const;
@@ -810,6 +828,8 @@ public:
     Q_INVOKABLE bool resetMemoryCandidate(const QString& candidateId);
     Q_INVOKABLE bool archiveMemoryCandidate(const QString& candidateId);
     Q_INVOKABLE bool requestMemoryCandidateCommit(const QString& candidateId);
+    Q_INVOKABLE bool recallLocalMemory(const QString& query);
+    Q_INVOKABLE void clearLocalMemoryRecall();
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -843,6 +863,7 @@ signals:
     void conversationExportChanged();
     void conversationDeleteChanged();
     void memoryCandidatesChanged();
+    void memoryRecallChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();

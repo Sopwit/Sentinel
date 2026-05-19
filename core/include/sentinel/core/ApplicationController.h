@@ -25,6 +25,7 @@
 #include "sentinel/core/LocalRuntime.h"
 #include "sentinel/core/LocalRuntimeSession.h"
 #include "sentinel/core/MemoryCandidate.h"
+#include "sentinel/core/MemoryRecall.h"
 #include "sentinel/core/ModelManagement.h"
 #include "sentinel/core/OllamaRuntime.h"
 #include "sentinel/core/OrchestrationDiagnostics.h"
@@ -493,6 +494,16 @@ class ApplicationController final : public QObject {
         QString lastMemoryCommitStatus READ lastMemoryCommitStatus NOTIFY memoryCandidatesChanged)
     Q_PROPERTY(QString lastMemoryCommitResultSummary READ lastMemoryCommitResultSummary NOTIFY
                    memoryCandidatesChanged)
+    Q_PROPERTY(QString memoryRecallPolicyStatus READ memoryRecallPolicyStatus CONSTANT)
+    Q_PROPERTY(QString memoryRecallPolicySummary READ memoryRecallPolicySummary CONSTANT)
+    Q_PROPERTY(QString memoryRecallQueryText READ memoryRecallQueryText NOTIFY memoryRecallChanged)
+    Q_PROPERTY(QString memoryRecallStatus READ memoryRecallStatus NOTIFY memoryRecallChanged)
+    Q_PROPERTY(
+        QString memoryRecallSummaryText READ memoryRecallSummaryText NOTIFY memoryRecallChanged)
+    Q_PROPERTY(int memoryRecallResultCount READ memoryRecallResultCount NOTIFY memoryRecallChanged)
+    Q_PROPERTY(QStringList memoryRecallResultSummaries READ memoryRecallResultSummaries NOTIFY
+                   memoryRecallChanged)
+    Q_PROPERTY(int memoryEntryCount READ memoryEntryCount NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
@@ -852,6 +863,16 @@ public:
     QStringList memoryCommitCandidateSummaries() const;
     QString lastMemoryCommitStatus() const;
     QString lastMemoryCommitResultSummary() const;
+    MemoryRecallPolicy memoryRecallPolicy() const;
+    MemoryRecallSummary latestMemoryRecallSummary() const;
+    QString memoryRecallPolicyStatus() const;
+    QString memoryRecallPolicySummary() const;
+    QString memoryRecallQueryText() const;
+    QString memoryRecallStatus() const;
+    QString memoryRecallSummaryText() const;
+    int memoryRecallResultCount() const;
+    QStringList memoryRecallResultSummaries() const;
+    int memoryEntryCount() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     const QList<ChatMessage>& chatHistory() const;
@@ -879,6 +900,8 @@ public:
     Q_INVOKABLE bool resetMemoryCandidate(const QString& candidateId);
     Q_INVOKABLE bool archiveMemoryCandidate(const QString& candidateId);
     Q_INVOKABLE bool requestMemoryCandidateCommit(const QString& candidateId);
+    Q_INVOKABLE bool recallLocalMemory(const QString& query);
+    Q_INVOKABLE void clearLocalMemoryRecall();
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -903,6 +926,7 @@ signals:
     void conversationExportChanged();
     void conversationDeleteChanged();
     void memoryCandidatesChanged();
+    void memoryRecallChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();
@@ -972,6 +996,8 @@ private:
                                                const QString& candidateId) const;
     MemoryCommitReadiness memoryCommitReadinessForCandidateId(const QString& candidateId) const;
     bool memoryKeyExists(const QString& key) const;
+    MemoryEntries currentMemoryEntries() const;
+    void refreshMemoryRecallForCurrentEntries();
     MemoryCandidate memoryCandidateFromConversationText(const QString& text) const;
     bool reviewMemoryCandidate(const QString& candidateId, MemoryCandidateReviewAction action);
 
@@ -1011,6 +1037,8 @@ private:
     MemoryCandidateReviewResult latestMemoryCandidateReviewResult_;
     MemoryCommitPolicy memoryCommitPolicy_;
     MemoryCommitResult latestMemoryCommitResult_;
+    MemoryRecallPolicy memoryRecallPolicy_;
+    MemoryRecallSummary latestMemoryRecallSummary_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
     std::unique_ptr<IConversationStore> conversationStore_;

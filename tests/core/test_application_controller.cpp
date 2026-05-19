@@ -731,6 +731,11 @@ private slots:
     void archivedMemoryCandidateCannotCommit();
     void duplicateMemoryCommitKeyRefusesByDefault();
     void approvalDoesNotAutomaticallyCommitMemory();
+    void localMemoryRecallFindsCommittedKeyValueMemory();
+    void emptyLocalMemoryRecallDoesNotMutateMemory();
+    void localMemoryRecallAfterCommitFindsCommittedCandidate();
+    void clearChatKeepsCommittedMemoryRecallAvailable();
+    void localMemoryRecallDoesNotInjectIntoPrompt();
     void clearChatKeepsApprovedMemoryCandidateMetadata();
     void clearChatKeepsCommittedMemory();
     void clearsRuntimeMemoryEntries();
@@ -3628,6 +3633,83 @@ void ApplicationControllerTest::approvalDoesNotAutomaticallyCommitMemory() {
     QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("No Commit"));
     QCOMPARE(controller->committedMemoryCandidateCount(), 0);
     QCOMPARE(controller->memoryEntries(), QStringList{QStringLiteral("mode: Companion")});
+}
+
+void ApplicationControllerTest::localMemoryRecallFindsCommittedKeyValueMemory() {
+    const auto controller = makeController();
+    controller->remember(QStringLiteral("project.mode"), QStringLiteral("Companion local mode"));
+    controller->remember(QStringLiteral("preference.tone"), QStringLiteral("Concise answers"));
+
+    QVERIFY(controller->recallLocalMemory(QStringLiteral("concise")));
+
+    QCOMPARE(controller->memoryRecallPolicyStatus(), QStringLiteral("Local Literal Recall"));
+    QCOMPARE(controller->memoryRecallStatus(), QStringLiteral("Completed"));
+    QCOMPARE(controller->memoryRecallResultCount(), 1);
+    QCOMPARE(controller->memoryEntryCount(), 2);
+    QVERIFY(controller->memoryRecallSummaryText().contains(QStringLiteral("Found 1")));
+    QVERIFY(controller->memoryRecallResultSummaries().first().contains(
+        QStringLiteral("preference.tone")));
+    QVERIFY(controller->memoryRecallResultSummaries().first().contains(
+        QStringLiteral("matched value")));
+}
+
+void ApplicationControllerTest::emptyLocalMemoryRecallDoesNotMutateMemory() {
+    const auto controller = makeController();
+    controller->remember(QStringLiteral("mode"), QStringLiteral("Companion"));
+    const auto beforeEntries = controller->memoryEntries();
+    const auto beforeMessages = controller->chatHistory().size();
+
+    QVERIFY(!controller->recallLocalMemory(QStringLiteral("   ")));
+
+    QCOMPARE(controller->memoryRecallStatus(), QStringLiteral("Empty Query"));
+    QCOMPARE(controller->memoryRecallResultCount(), 0);
+    QCOMPARE(controller->memoryEntries(), beforeEntries);
+    QCOMPARE(controller->chatHistory().size(), beforeMessages);
+}
+
+void ApplicationControllerTest::localMemoryRecallAfterCommitFindsCommittedCandidate() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Committed recall should find this local value."));
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QVERIFY(controller->requestMemoryCandidateCommit(id));
+
+    QVERIFY(controller->recallLocalMemory(QStringLiteral("recall")));
+
+    QCOMPARE(controller->memoryRecallStatus(), QStringLiteral("Completed"));
+    QCOMPARE(controller->memoryRecallResultCount(), 1);
+    QVERIFY(controller->memoryRecallResultSummaries().first().contains(
+        QStringLiteral("memory.semantic.conversation-memory-candidate.memory-candidate-1")));
+}
+
+void ApplicationControllerTest::clearChatKeepsCommittedMemoryRecallAvailable() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Committed memory recall survives clear chat."));
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QVERIFY(controller->requestMemoryCandidateCommit(id));
+
+    QVERIFY(controller->sendMessage(QStringLiteral("status")));
+    controller->clearChat();
+    QVERIFY(controller->recallLocalMemory(QStringLiteral("survives")));
+
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->memoryRecallResultCount(), 1);
+    QCOMPARE(controller->committedMemoryCandidateCount(), 1);
+}
+
+void ApplicationControllerTest::localMemoryRecallDoesNotInjectIntoPrompt() {
+    const auto controller = makeController();
+    controller->remember(QStringLiteral("secret.local"), QStringLiteral("do not inject"));
+    QVERIFY(controller->recallLocalMemory(QStringLiteral("secret")));
+
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
+    QVERIFY(!controller->chatHistory().at(2).content.contains(QStringLiteral("do not inject")));
+    QVERIFY(!controller->conversationRuntimeLastSuccessSummary().contains(
+        QStringLiteral("do not inject")));
 }
 
 void ApplicationControllerTest::clearChatKeepsApprovedMemoryCandidateMetadata() {

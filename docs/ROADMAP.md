@@ -1779,6 +1779,28 @@ Still out of scope:
   filesystem/system actions beyond the existing memory store, autonomous memory mutation, overwrite
   UI, and durable candidate storage.
 
+## Phase 16.13-16.15: Memory Recall Metadata And Local Memory Surfacing
+
+Completed. Added a local read-only recall surface for committed key-value memory.
+
+Delivered:
+
+- `MemoryRecallQuery`, `MemoryRecallResult`, `MemoryRecallSummary`, `MemoryRecallStatus`, and
+  `MemoryRecallPolicy`.
+- Literal key/value matching over existing `IMemoryStore` entries only.
+- Controller/view-model exposure for recall policy, query text, status, summary, result count,
+  memory entry count, and compact result summaries.
+- Memory page “Local Memory Recall” field and compact result display.
+- Tests for committed memory recall, empty query behavior, no recall mutation, recall after commit,
+  clear-chat preserving committed memory recall, view-model exposure, and no prompt injection side
+  effects.
+
+Still out of scope:
+
+- Embeddings, vector DB, semantic search, provider/model calls, automatic prompt injection,
+  ranking, automatic context assembly, cloud/API keys, tools/plugins, filesystem/system actions,
+  and autonomous memory mutation.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

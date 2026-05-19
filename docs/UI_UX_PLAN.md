@@ -282,6 +282,13 @@ commit result through QML-safe strings/lists/counts. It must not add automatic c
 bulk commit, overwrite controls, semantic search, vector/embedding controls, provider/model calls,
 cloud sync, tool/plugin controls, broad redesign, or filesystem/system actions beyond the existing
 key-value memory store.
+
+Phase 16.13 through Phase 16.15 add a compact “Local Memory Recall” surface to the Memory page.
+The UI may show recall policy/status, committed memory entry count, result count, a literal
+key/value query field, and compact matching committed entries. It must label recall as local and
+read-only. It must not inject results into Chat automatically, imply semantic recall, add
+vector/embedding controls, provider/model calls, broad redesign, cloud sync, tool/plugin controls,
+or filesystem/system actions.
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

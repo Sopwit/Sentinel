@@ -51,6 +51,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::conversationDeleteChanged);
     connect(&controller_, &core::ApplicationController::memoryCandidatesChanged, this,
             &DesktopShellViewModel::memoryCandidatesChanged);
+    connect(&controller_, &core::ApplicationController::memoryRecallChanged, this,
+            &DesktopShellViewModel::memoryRecallChanged);
     connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
     connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
@@ -1323,6 +1325,38 @@ QString DesktopShellViewModel::lastMemoryCommitResultSummary() const {
     return controller_.lastMemoryCommitResultSummary();
 }
 
+QString DesktopShellViewModel::memoryRecallPolicyStatus() const {
+    return controller_.memoryRecallPolicyStatus();
+}
+
+QString DesktopShellViewModel::memoryRecallPolicySummary() const {
+    return controller_.memoryRecallPolicySummary();
+}
+
+QString DesktopShellViewModel::memoryRecallQueryText() const {
+    return controller_.memoryRecallQueryText();
+}
+
+QString DesktopShellViewModel::memoryRecallStatus() const {
+    return controller_.memoryRecallStatus();
+}
+
+QString DesktopShellViewModel::memoryRecallSummaryText() const {
+    return controller_.memoryRecallSummaryText();
+}
+
+int DesktopShellViewModel::memoryRecallResultCount() const {
+    return controller_.memoryRecallResultCount();
+}
+
+QStringList DesktopShellViewModel::memoryRecallResultSummaries() const {
+    return controller_.memoryRecallResultSummaries();
+}
+
+int DesktopShellViewModel::memoryEntryCount() const {
+    return controller_.memoryEntryCount();
+}
+
 QString DesktopShellViewModel::memoryMaintenanceStatus() const {
     return controller_.memoryMaintenanceStatus();
 }
@@ -1457,6 +1491,14 @@ bool DesktopShellViewModel::archiveMemoryCandidate(const QString& candidateId) {
 
 bool DesktopShellViewModel::requestMemoryCandidateCommit(const QString& candidateId) {
     return controller_.requestMemoryCandidateCommit(candidateId);
+}
+
+bool DesktopShellViewModel::recallLocalMemory(const QString& query) {
+    return controller_.recallLocalMemory(query);
+}
+
+void DesktopShellViewModel::clearLocalMemoryRecall() {
+    controller_.clearLocalMemoryRecall();
 }
 
 bool DesktopShellViewModel::runAgentRequest(const QString& request) {

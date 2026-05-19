@@ -77,6 +77,7 @@ private slots:
     void exposesConversationSearchAndExportMetadata();
     void exposesMaintenanceStatuses();
     void exposesMemoryCandidateMetadata();
+    void exposesLocalMemoryRecallMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1252,6 +1253,14 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("conversationExportLastFileName"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationExportLastMessageCount"), QByteArrayLiteral("int")},
         {QStringLiteral("conversationExportLastTimestamp"), QByteArrayLiteral("QString")},
+        {QStringLiteral("memoryRecallPolicyStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("memoryRecallPolicySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("memoryRecallQueryText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("memoryRecallStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("memoryRecallSummaryText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("memoryRecallResultCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("memoryRecallResultSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("memoryEntryCount"), QByteArrayLiteral("int")},
     };
 
     const QSet<QString> writableProperties{
@@ -1287,6 +1296,10 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("memoryCatalog"),
         QStringLiteral("memoryCatalogEntries"),
         QStringLiteral("memoryShards"),
+        QStringLiteral("memoryRecallSummary"),
+        QStringLiteral("memoryRecallResults"),
+        QStringLiteral("memoryRecallQuery"),
+        QStringLiteral("memoryRecallPolicy"),
         QStringLiteral("orchestrationSnapshot"),
         QStringLiteral("workspaceStateSummary"),
         QStringLiteral("orchestrationReadinessReport"),
@@ -1602,6 +1615,28 @@ void DesktopShellViewModelTest::exposesMemoryCandidateMetadata() {
     QVERIFY(
         fixture.viewModel.memoryCandidateSummaries().first().contains(QStringLiteral("Committed")));
     QCOMPARE(spy.count(), 3);
+}
+
+void DesktopShellViewModelTest::exposesLocalMemoryRecallMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::memoryRecallChanged);
+
+    fixture.viewModel.remember(QStringLiteral("preference.answerStyle"),
+                               QStringLiteral("Use concise local summaries."));
+    QVERIFY(fixture.viewModel.recallLocalMemory(QStringLiteral("concise")));
+
+    QCOMPARE(fixture.viewModel.memoryRecallPolicyStatus(), QStringLiteral("Local Literal Recall"));
+    QCOMPARE(fixture.viewModel.memoryRecallStatus(), QStringLiteral("Completed"));
+    QCOMPARE(fixture.viewModel.memoryRecallResultCount(), 1);
+    QCOMPARE(fixture.viewModel.memoryEntryCount(), 1);
+    QVERIFY(fixture.viewModel.memoryRecallSummaryText().contains(QStringLiteral("Found 1")));
+    QVERIFY(fixture.viewModel.memoryRecallResultSummaries().first().contains(
+        QStringLiteral("preference.answerStyle")));
+    QVERIFY(spy.count() >= 1);
+
+    fixture.viewModel.clearLocalMemoryRecall();
+    QCOMPARE(fixture.viewModel.memoryRecallStatus(), QStringLiteral("Not Searched"));
+    QCOMPARE(fixture.viewModel.memoryRecallResultCount(), 0);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {
