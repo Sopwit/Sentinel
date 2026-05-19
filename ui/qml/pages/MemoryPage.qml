@@ -64,6 +64,98 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                implicitHeight: recallColumn.implicitHeight + memoryPage.panelPadding * 2
+
+                ColumnLayout {
+                    id: recallColumn
+                    x: memoryPage.panelPadding
+                    y: memoryPage.panelPadding
+                    width: parent.width - memoryPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: "Local Memory Recall"
+                        subtitle: "Literal read-only search over committed key-value memory."
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Recall Policy"
+                        value: memoryPage.viewModel.memoryRecallPolicyStatus + " - "
+                               + memoryPage.viewModel.memoryRecallPolicySummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Recall Status"
+                        value: memoryPage.viewModel.memoryRecallStatus + " - "
+                               + memoryPage.viewModel.memoryRecallSummaryText
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Memory Entries"
+                        value: memoryPage.viewModel.memoryEntryCount + " committed / "
+                               + memoryPage.viewModel.memoryRecallResultCount + " recall matches"
+                        Layout.fillWidth: true
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+
+                        SentinelTextField {
+                            id: memoryRecallQuery
+                            Layout.fillWidth: true
+                            placeholderText: "literal key or value"
+                            onAccepted: memoryPage.viewModel.recallLocalMemory(text)
+                        }
+
+                        SentinelButton {
+                            text: "Recall"
+                            enabled: memoryRecallQuery.text.trim().length > 0
+                            Layout.preferredWidth: 96
+                            onClicked: memoryPage.viewModel.recallLocalMemory(memoryRecallQuery.text)
+                        }
+
+                        SentinelButton {
+                            text: "Clear"
+                            Layout.preferredWidth: 96
+                            onClicked: {
+                                memoryRecallQuery.clear()
+                                memoryPage.viewModel.clearLocalMemoryRecall()
+                            }
+                        }
+                    }
+
+                    Repeater {
+                        model: memoryPage.viewModel.memoryRecallResultSummaries
+
+                        Label {
+                            required property string modelData
+                            text: modelData
+                            color: SentinelTheme.textPrimary
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Label {
+                        visible: memoryPage.viewModel.memoryRecallResultCount === 0
+                                 && memoryPage.viewModel.memoryRecallStatus === "Completed"
+                        text: "No committed memory entries matched the recall query."
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+            }
+
+            ShellPanel {
+                width: parent.width
                 implicitHeight: candidateColumn.implicitHeight + memoryPage.panelPadding * 2
 
                 ColumnLayout {

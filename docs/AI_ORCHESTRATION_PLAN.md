@@ -183,6 +183,13 @@ store-unavailable, already-committed, and duplicate-key requests refuse safely. 
 vector DB, semantic search, provider/model calls, cloud/API keys, filesystem/system authority
 beyond the existing memory store, tools/plugins, overwrite UI, or autonomous memory mutation is
 added.
+Phase 16.13 through Phase 16.15 add local memory recall metadata and surfacing:
+`MemoryRecallQuery`, `MemoryRecallResult`, `MemoryRecallSummary`, `MemoryRecallStatus`, and
+`MemoryRecallPolicy` describe deterministic read-only recall over committed key-value memory.
+Recall reads `IMemoryStore::entries()` only, performs literal key/value matching, exposes
+QML-safe strings/counts/lists, and never injects results into chat prompts. Empty queries report
+Empty Query without mutation. No embeddings, vector DB, semantic search, provider/model calls,
+cloud/API keys, tools/plugins, filesystem/system actions, or autonomous memory behavior is added.
 
 ## Future Components
 
@@ -270,6 +277,10 @@ added.
   only after review, policy, availability, and duplicate-key checks pass; otherwise it refuses with
   QML-safe result metadata. Future phases may define overwrite controls, durable candidates, and
   mutation tests.
+- Local memory recall: deterministic literal key/value matching over committed `IMemoryStore`
+  entries. Current recall is read-only UI metadata and is not semantic recall or prompt injection.
+  Future phases may define semantic recall, ranking, embeddings/vector indexes, and controlled
+  context assembly.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 - Local model management readiness: deterministic metadata for recommended local models,

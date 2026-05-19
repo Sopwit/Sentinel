@@ -2902,11 +2902,7 @@ QStringList ApplicationController::chatMessages() const {
 
 QStringList ApplicationController::memoryEntries() const {
     QStringList result;
-    if (!memoryStore_) {
-        return result;
-    }
-
-    for (const auto& [key, value] : memoryStore_->entries()) {
+    for (const auto& [key, value] : currentMemoryEntries()) {
         result.append(QStringLiteral("%1: %2").arg(key, value));
     }
 
@@ -3136,6 +3132,59 @@ QString ApplicationController::lastMemoryCommitResultSummary() const {
                : latestMemoryCommitResult_.summary;
 }
 
+MemoryRecallPolicy ApplicationController::memoryRecallPolicy() const {
+    return memoryRecallPolicy_;
+}
+
+MemoryRecallSummary ApplicationController::latestMemoryRecallSummary() const {
+    return latestMemoryRecallSummary_;
+}
+
+QString ApplicationController::memoryRecallPolicyStatus() const {
+    return memoryRecallPolicy_.status;
+}
+
+QString ApplicationController::memoryRecallPolicySummary() const {
+    return memoryRecallPolicy_.summary;
+}
+
+QString ApplicationController::memoryRecallQueryText() const {
+    return latestMemoryRecallSummary_.query.text;
+}
+
+QString ApplicationController::memoryRecallStatus() const {
+    return memoryRecallStatusName(latestMemoryRecallSummary_.status);
+}
+
+QString ApplicationController::memoryRecallSummaryText() const {
+    if (latestMemoryRecallSummary_.memoryEntryCount != memoryEntryCount()) {
+        auto summary = latestMemoryRecallSummary_;
+        summary.memoryEntryCount = memoryEntryCount();
+        if (summary.status == MemoryRecallStatus::NotSearched) {
+            summary.summary =
+                QStringLiteral("No local memory recall query has been run. %1 committed %2 "
+                               "available.")
+                    .arg(summary.memoryEntryCount)
+                    .arg(summary.memoryEntryCount == 1 ? QStringLiteral("entry")
+                                                       : QStringLiteral("entries"));
+        }
+        return summary.summary;
+    }
+    return latestMemoryRecallSummary_.summary;
+}
+
+int ApplicationController::memoryRecallResultCount() const {
+    return latestMemoryRecallSummary_.resultCount;
+}
+
+QStringList ApplicationController::memoryRecallResultSummaries() const {
+    return sentinel::core::memoryRecallResultSummaries(latestMemoryRecallSummary_);
+}
+
+int ApplicationController::memoryEntryCount() const {
+    return currentMemoryEntries().size();
+}
+
 bool ApplicationController::memoryKeyExists(const QString& key) const {
     if (!memoryStore_) {
         return false;
@@ -3148,6 +3197,24 @@ bool ApplicationController::memoryKeyExists(const QString& key) const {
         }
     }
     return false;
+}
+
+MemoryEntries ApplicationController::currentMemoryEntries() const {
+    if (!memoryStore_ || !memoryStore_->isAvailable()) {
+        return {};
+    }
+    return memoryStore_->entries();
+}
+
+void ApplicationController::refreshMemoryRecallForCurrentEntries() {
+    if (latestMemoryRecallSummary_.query.text.trimmed().isEmpty()) {
+        latestMemoryRecallSummary_.memoryEntryCount = memoryEntryCount();
+        return;
+    }
+
+    latestMemoryRecallSummary_ = memoryRecallSummaryForEntries(
+        latestMemoryRecallSummary_.query, currentMemoryEntries(),
+        memoryStore_ && memoryStore_->isAvailable(), memoryRecallPolicy_);
 }
 
 MemoryCandidate
@@ -3556,9 +3623,26 @@ bool ApplicationController::requestMemoryCandidateCommit(const QString& candidat
         memoryCandidateStore_->recordCommitResult(latestMemoryCommitResult_);
     }
 
+    refreshMemoryRecallForCurrentEntries();
     emit memoryEntriesChanged();
+    emit memoryRecallChanged();
     emit memoryCandidatesChanged();
     return true;
+}
+
+bool ApplicationController::recallLocalMemory(const QString& query) {
+    latestMemoryRecallSummary_ = memoryRecallSummaryForEntries(
+        MemoryRecallQuery{query.trimmed(), true, true}, currentMemoryEntries(),
+        memoryStore_ && memoryStore_->isAvailable(), memoryRecallPolicy_);
+    emit memoryRecallChanged();
+    return latestMemoryRecallSummary_.status == MemoryRecallStatus::Completed &&
+           latestMemoryRecallSummary_.resultCount > 0;
+}
+
+void ApplicationController::clearLocalMemoryRecall() {
+    latestMemoryRecallSummary_ = MemoryRecallSummary{};
+    latestMemoryRecallSummary_.memoryEntryCount = memoryEntryCount();
+    emit memoryRecallChanged();
 }
 
 bool ApplicationController::sendMessage(const QString& message) {
@@ -4694,7 +4778,12 @@ bool ApplicationController::clearMemory() {
     const auto succeeded = memoryStore_->lastError().isEmpty();
     setMemoryMaintenanceStatus(succeeded ? QStringLiteral("Clear completed")
                                          : QStringLiteral("Clear failed"));
+    if (succeeded) {
+        latestMemoryRecallSummary_ = MemoryRecallSummary{};
+        latestMemoryRecallSummary_.memoryEntryCount = 0;
+    }
     emit memoryEntriesChanged();
+    emit memoryRecallChanged();
     return succeeded;
 }
 
@@ -4771,7 +4860,9 @@ void ApplicationController::remember(const QString& key, const QString& value) {
     }
 
     memoryStore_->put(key.trimmed(), value.trimmed());
+    refreshMemoryRecallForCurrentEntries();
     emit memoryEntriesChanged();
+    emit memoryRecallChanged();
 }
 
 void ApplicationController::setMemoryMaintenanceStatus(const QString& status) {

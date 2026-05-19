@@ -147,6 +147,18 @@ Phase 16.10 through Phase 16.12 add the explicit user-controlled memory commit b
 - `IMemoryCandidateStore` records committed candidate metadata separately from the key-value memory
   entry so QML can show committed status, committed key, timestamp summary, and committed count.
 
+Phase 16.13 through Phase 16.15 add local memory recall metadata over committed key-value memory:
+
+- `MemoryRecallQuery`, `MemoryRecallResult`, `MemoryRecallSummary`, `MemoryRecallStatus`, and
+  `MemoryRecallPolicy` are value-only read-model records.
+- `ApplicationController::recallLocalMemory()` reads only `IMemoryStore::entries()` and performs
+  literal key/value matching. It is deterministic and read-only.
+- Empty recall queries report Empty Query and do not mutate memory, chat, candidates, providers, or
+  runtime state.
+- Recall summaries expose only QML-safe strings, counts, and result lists through
+  `DesktopShellViewModel`.
+- Recall results are not injected into chat prompts or provider/model requests.
+
 This foundation deliberately does not add embeddings, a vector database, semantic search,
 autonomous capture, model/provider calls, cloud sync, tool/plugin authority, filesystem/system
 authority, or automatic writes to long-term memory.
