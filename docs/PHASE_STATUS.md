@@ -2,10 +2,38 @@
 
 ## Completed / Stable
 
-### Phase 16.0-16.3: Controlled Semantic Memory Foundation
+### Phase 16.7-16.9: Approved Memory Commit Planning
 
-Completed. Adds a review-only semantic memory candidate foundation without embeddings, vector
-storage, automatic capture, or long-term memory mutation.
+Completed. Adds explicit commit-planning metadata for approved memory candidates while keeping
+actual key-value memory mutation disabled by default and future-gated.
+
+Scope:
+
+- Added value-only commit-planning records: `MemoryCommitPlan`, `MemoryCommitTarget`,
+  `MemoryCommitReadiness`, `MemoryCommitResult`, and `MemoryCommitPolicy`.
+- Approved candidates now produce deterministic candidate-to-key-value-memory commit plan
+  summaries. Pending, rejected, archived, or missing candidates report blocked readiness.
+- The default commit policy disables actual commit. Commit requests refuse safely and do not call
+  `IMemoryStore::put()`.
+- Approval remains review metadata only. Approved candidate does not mean committed memory.
+- `DesktopShellViewModel` exposes QML-safe commit readiness status, checks, plan count,
+  target summary, per-candidate commit summaries, and last commit request result strings.
+- Memory shows a compact “Commit Readiness” status inside the existing candidate section and makes
+  the future-gated state visible without adding an enabled store/commit action.
+- Tests cover approved-candidate plan generation, pending/rejected refusal, disabled default
+  policy, refused no-mutation commit requests, deterministic summaries/counts, and view-model
+  exposure.
+
+Known limitation:
+
+- Candidate storage remains in-memory only and commit execution is non-operational. There is no
+  automatic memory write, semantic store, embeddings, vector DB, semantic search, provider/model
+  call, filesystem authority, tool/plugin authority, or autonomous memory mutation.
+
+### Phase 16.0-16.6: Controlled Semantic Memory Foundation And Review Flow
+
+Completed. Adds a review-only semantic memory candidate foundation and explicit candidate review
+flow without embeddings, vector storage, automatic capture, or long-term memory mutation.
 
 Scope:
 
@@ -17,12 +45,20 @@ Scope:
 - Approval and rejection update review metadata only. They do not write to `IMemoryStore`, memory
   taxonomy, chat history, conversation storage, files, providers, models, tools, plugins, or
   runtime services.
-- `DesktopShellViewModel` exposes QML-safe candidate counts and summary strings.
-- Memory shows a compact read-only “Memory Candidates” section with total, pending, approved, and
-  rejected counts.
-- Tests cover creation, default pending review, approve/reject metadata, no key-value memory
-  mutation, deterministic summaries, QML-safe exposure, and clear-chat preserving approved
-  candidate metadata.
+- Phase 16.4 through Phase 16.6 add explicit approve, reject, reset-to-pending, and archive review
+  actions with `MemoryCandidateReviewResult`, reviewed timestamp, reviewer/source summary, and
+  decision reason metadata.
+- Review transitions are guarded: approve/reject require Pending Review, reset requires Approved or
+  Rejected, and archive is terminal metadata after review.
+- Approved candidate metadata means reviewed, not committed. It is not automatically stored as
+  long-term key-value memory or semantic memory.
+- `DesktopShellViewModel` exposes QML-safe candidate ids, states, counts, state-filtered summaries,
+  and last review result strings.
+- Memory shows a compact “Memory Candidates” section with review counts, last review result, and
+  Approve/Reject/Reset controls. Approved is labeled as reviewed metadata, not committed memory.
+- Tests cover creation, default pending review, approve/reject/reset/archive transitions, invalid
+  transition refusal, no key-value memory mutation, deterministic counts/summaries, QML-safe
+  exposure, and clear-chat preserving approved candidate metadata.
 
 Known limitation:
 

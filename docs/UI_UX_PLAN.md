@@ -259,11 +259,20 @@ and no multi-conversation storage UI.
 
 Phase 15.20 through Phase 15.22 add a compact read-only multi-conversation readiness status.
 
-Phase 16.0 through Phase 16.3 add compact Memory Candidates visibility to the Memory page. The UI
-may show total, pending, approved, and rejected counts plus read-only summary rows. It must not add
-automatic capture toggles, semantic search, vector/embedding controls, provider/model calls,
-filesystem controls, cloud sync, tool/plugin controls, broad redesign, or autonomous memory
-actions.
+Phase 16.0 through Phase 16.6 add compact Memory Candidates visibility and review controls to the
+Memory page. The UI may show total, pending, approved, rejected, and archived counts, last review
+result metadata, candidate summary rows, and Approve/Reject/Reset actions. Approved must be
+presented as reviewed metadata, not committed long-term memory. It must not add automatic capture
+toggles, semantic search, vector/embedding controls, provider/model calls, filesystem controls,
+cloud sync, tool/plugin controls, broad redesign, or autonomous memory actions.
+
+Phase 16.7 through Phase 16.9 add compact Commit Readiness visibility to the existing Memory
+Candidates section. The UI may show readiness status, readiness checks, planned candidate count,
+target summary, per-candidate plan summaries, and last commit request result. It must make clear
+that Approved is not Committed and that commit is future-gated. It must not add an enabled commit
+or store action, automatic key-value memory writes, semantic search, vector/embedding controls,
+provider/model calls, filesystem controls, cloud sync, tool/plugin controls, broad redesign, or
+autonomous memory actions.
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

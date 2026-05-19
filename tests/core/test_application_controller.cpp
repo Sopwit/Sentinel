@@ -722,7 +722,13 @@ private slots:
     void storesRuntimeMemoryEntries();
     void createsMemoryCandidatesPendingReview();
     void recordsMemoryCandidateApprovalAndRejectionMetadata();
+    void resetsMemoryCandidateReviewMetadata();
+    void refusesInvalidMemoryCandidateReviewTransitions();
+    void archivesReviewedMemoryCandidatesAsTerminalMetadata();
     void memoryCandidatesDoNotMutateKeyValueMemory();
+    void approvedMemoryCandidateGeneratesDisabledCommitPlan();
+    void pendingAndRejectedMemoryCandidatesCannotCommit();
+    void memoryCommitRequestRefusesWithoutMutatingKeyValueMemory();
     void clearChatKeepsApprovedMemoryCandidateMetadata();
     void clearsRuntimeMemoryEntries();
     void failsSafeWhenMemoryStoreUnavailable();
@@ -3456,6 +3462,61 @@ void ApplicationControllerTest::recordsMemoryCandidateApprovalAndRejectionMetada
     QCOMPARE(controller->rejectedMemoryCandidateCount(), 1);
     QVERIFY(controller->memoryCandidateSummaries().at(0).contains(QStringLiteral("Approved")));
     QVERIFY(controller->memoryCandidateSummaries().at(1).contains(QStringLiteral("Rejected")));
+    QCOMPARE(controller->lastMemoryCandidateReviewStatus(), QStringLiteral("Refused"));
+    QVERIFY(controller->lastMemoryCandidateReviewSummary().contains(QStringLiteral("not found")));
+}
+
+void ApplicationControllerTest::resetsMemoryCandidateReviewMetadata() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Reset this reviewed candidate to pending."));
+
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QVERIFY(controller->resetMemoryCandidate(id));
+
+    QCOMPARE(controller->pendingMemoryCandidateCount(), 1);
+    QCOMPARE(controller->approvedMemoryCandidateCount(), 0);
+    QCOMPARE(controller->rejectedMemoryCandidateCount(), 0);
+    QVERIFY(
+        controller->memoryCandidateSummaries().first().contains(QStringLiteral("Pending Review")));
+    QVERIFY(controller->memoryCandidateSummaries().first().contains(
+        QStringLiteral("Reviewer: User review")));
+}
+
+void ApplicationControllerTest::refusesInvalidMemoryCandidateReviewTransitions() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Invalid transitions must not change candidate state."));
+
+    QVERIFY(!controller->resetMemoryCandidate(id));
+    QVERIFY(!controller->archiveMemoryCandidate(id));
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QVERIFY(!controller->rejectMemoryCandidate(id));
+
+    QCOMPARE(controller->pendingMemoryCandidateCount(), 0);
+    QCOMPARE(controller->approvedMemoryCandidateCount(), 1);
+    QCOMPARE(controller->rejectedMemoryCandidateCount(), 0);
+    QCOMPARE(controller->archivedMemoryCandidateCount(), 0);
+    QCOMPARE(controller->lastMemoryCandidateReviewStatus(), QStringLiteral("Refused"));
+}
+
+void ApplicationControllerTest::archivesReviewedMemoryCandidatesAsTerminalMetadata() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Archived candidate metadata should be terminal."));
+
+    QVERIFY(controller->rejectMemoryCandidate(id));
+    QVERIFY(controller->archiveMemoryCandidate(id));
+    QVERIFY(!controller->resetMemoryCandidate(id));
+
+    QCOMPARE(controller->memoryCandidateCount(), 1);
+    QCOMPARE(controller->pendingMemoryCandidateCount(), 0);
+    QCOMPARE(controller->approvedMemoryCandidateCount(), 0);
+    QCOMPARE(controller->rejectedMemoryCandidateCount(), 0);
+    QCOMPARE(controller->archivedMemoryCandidateCount(), 1);
+    QVERIFY(controller->archivedMemoryCandidateSummaries().first().contains(
+        QStringLiteral("Archived")));
+    QCOMPARE(controller->lastMemoryCandidateReviewStatus(), QStringLiteral("Refused"));
 }
 
 void ApplicationControllerTest::memoryCandidatesDoNotMutateKeyValueMemory() {
@@ -3466,6 +3527,57 @@ void ApplicationControllerTest::memoryCandidatesDoNotMutateKeyValueMemory() {
         QStringLiteral("Candidate metadata should not write to IMemoryStore."));
     QVERIFY(controller->approveMemoryCandidate(id));
 
+    QCOMPARE(controller->memoryEntries(), QStringList{QStringLiteral("mode: Companion")});
+}
+
+void ApplicationControllerTest::approvedMemoryCandidateGeneratesDisabledCommitPlan() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("The project keeps memory commits behind a future explicit gate."));
+
+    QVERIFY(controller->approveMemoryCandidate(id));
+
+    QCOMPARE(controller->memoryCommitPlanCount(), 1);
+    QCOMPARE(controller->memoryCommitReadinessStatus(), QStringLiteral("Disabled"));
+    QVERIFY(controller->memoryCommitReadinessSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->memoryCommitTargetSummary().contains(QStringLiteral("Key-value Memory")));
+    QVERIFY(controller->memoryCommitCandidateSummaries().first().contains(id));
+    QVERIFY(controller->memoryCommitCandidateSummaries().first().contains(
+        QStringLiteral("Key-value Memory")));
+    QVERIFY(controller->memoryCommitReadinessChecks()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("future-gated")));
+}
+
+void ApplicationControllerTest::pendingAndRejectedMemoryCandidatesCannotCommit() {
+    const auto controller = makeController();
+    const auto pendingId = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Pending candidates are not commit-ready."));
+    const auto rejectedId = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Rejected candidates are not commit-ready."));
+
+    QVERIFY(!controller->requestMemoryCandidateCommit(pendingId));
+    QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("Refused"));
+    QVERIFY(
+        controller->lastMemoryCommitResultSummary().contains(QStringLiteral("requires review")));
+
+    QVERIFY(controller->rejectMemoryCandidate(rejectedId));
+    QVERIFY(!controller->requestMemoryCandidateCommit(rejectedId));
+    QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("Refused"));
+    QVERIFY(controller->lastMemoryCommitResultSummary().contains(QStringLiteral("rejected")));
+}
+
+void ApplicationControllerTest::memoryCommitRequestRefusesWithoutMutatingKeyValueMemory() {
+    const auto controller = makeController();
+    controller->remember(QStringLiteral("mode"), QStringLiteral("Companion"));
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Approved candidates still do not mutate key-value memory by default."));
+
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QVERIFY(!controller->requestMemoryCandidateCommit(id));
+
+    QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("Refused"));
+    QVERIFY(controller->lastMemoryCommitResultSummary().contains(QStringLiteral("disabled")));
     QCOMPARE(controller->memoryEntries(), QStringList{QStringLiteral("mode: Companion")});
 }
 

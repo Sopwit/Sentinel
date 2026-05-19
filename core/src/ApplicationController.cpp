@@ -2943,6 +2943,26 @@ int ApplicationController::rejectedMemoryCandidateCount() const {
     return memoryCandidateCountForState(MemoryReviewState::Rejected);
 }
 
+int ApplicationController::archivedMemoryCandidateCount() const {
+    return memoryCandidateCountForState(MemoryReviewState::Archived);
+}
+
+QStringList ApplicationController::memoryCandidateIds() const {
+    QStringList result;
+    for (const auto& candidate : memoryCandidates()) {
+        result.append(candidate.id);
+    }
+    return result;
+}
+
+QStringList ApplicationController::memoryCandidateReviewStates() const {
+    QStringList result;
+    for (const auto& candidate : memoryCandidates()) {
+        result.append(memoryReviewStateName(candidate.reviewState));
+    }
+    return result;
+}
+
 QStringList ApplicationController::memoryCandidateSummaries() const {
     QStringList result;
     for (const auto& candidate : memoryCandidates()) {
@@ -2950,6 +2970,150 @@ QStringList ApplicationController::memoryCandidateSummaries() const {
         result.append(QStringLiteral("%1: %2").arg(summary.id, summary.summary));
     }
     return result;
+}
+
+QStringList ApplicationController::memoryCandidateSummariesForState(MemoryReviewState state) const {
+    QStringList result;
+    for (const auto& candidate : memoryCandidates()) {
+        if (candidate.reviewState != state) {
+            continue;
+        }
+        const auto summary = memoryCandidateSummary(candidate);
+        result.append(QStringLiteral("%1: %2").arg(summary.id, summary.summary));
+    }
+    return result;
+}
+
+QStringList ApplicationController::pendingMemoryCandidateSummaries() const {
+    return memoryCandidateSummariesForState(MemoryReviewState::PendingReview);
+}
+
+QStringList ApplicationController::approvedMemoryCandidateSummaries() const {
+    return memoryCandidateSummariesForState(MemoryReviewState::Approved);
+}
+
+QStringList ApplicationController::rejectedMemoryCandidateSummaries() const {
+    return memoryCandidateSummariesForState(MemoryReviewState::Rejected);
+}
+
+QStringList ApplicationController::archivedMemoryCandidateSummaries() const {
+    return memoryCandidateSummariesForState(MemoryReviewState::Archived);
+}
+
+MemoryCandidateReviewResult ApplicationController::latestMemoryCandidateReviewResult() const {
+    return latestMemoryCandidateReviewResult_;
+}
+
+QString ApplicationController::lastMemoryCandidateReviewStatus() const {
+    return latestMemoryCandidateReviewResult_.status.isEmpty()
+               ? QStringLiteral("No Review")
+               : latestMemoryCandidateReviewResult_.status;
+}
+
+QString ApplicationController::lastMemoryCandidateReviewSummary() const {
+    return latestMemoryCandidateReviewResult_.summary.isEmpty()
+               ? QStringLiteral("No memory candidate review action yet.")
+               : latestMemoryCandidateReviewResult_.summary;
+}
+
+MemoryCommitPolicy ApplicationController::memoryCommitPolicy() const {
+    return memoryCommitPolicy_;
+}
+
+const MemoryCandidate*
+ApplicationController::findMemoryCandidate(const QList<MemoryCandidate>& candidates,
+                                           const QString& candidateId) const {
+    const auto trimmed = candidateId.trimmed();
+    for (const auto& candidate : candidates) {
+        if (candidate.id == trimmed) {
+            return &candidate;
+        }
+    }
+    return nullptr;
+}
+
+MemoryCommitReadiness
+ApplicationController::memoryCommitReadinessForCandidateId(const QString& candidateId) const {
+    const auto candidates = memoryCandidates();
+    const auto* candidate = findMemoryCandidate(candidates, candidateId);
+    const auto storeAvailable = memoryStore_ && memoryStore_->isAvailable();
+    return memoryCommitReadinessForCandidate(candidate, storeAvailable, memoryCommitPolicy_);
+}
+
+MemoryCommitReadiness ApplicationController::memoryCommitReadiness() const {
+    const auto candidates = memoryCandidates();
+    for (const auto& candidate : candidates) {
+        if (candidate.reviewState == MemoryReviewState::Approved) {
+            const auto storeAvailable = memoryStore_ && memoryStore_->isAvailable();
+            return memoryCommitReadinessForCandidate(&candidate, storeAvailable,
+                                                     memoryCommitPolicy_);
+        }
+    }
+
+    if (!candidates.isEmpty()) {
+        const auto storeAvailable = memoryStore_ && memoryStore_->isAvailable();
+        return memoryCommitReadinessForCandidate(&candidates.first(), storeAvailable,
+                                                 memoryCommitPolicy_);
+    }
+
+    MemoryCommitReadiness readiness;
+    readiness.status = MemoryCommitReadinessStatus::MissingCandidate;
+    readiness.summary = QStringLiteral(
+        "Memory commit pending: no approved candidates are available for commit planning.");
+    readiness.checks.append(QStringLiteral("Candidate: none"));
+    readiness.checks.append(QStringLiteral("Commit: approved candidate required"));
+    return readiness;
+}
+
+MemoryCommitResult ApplicationController::latestMemoryCommitResult() const {
+    return latestMemoryCommitResult_;
+}
+
+QString ApplicationController::memoryCommitReadinessStatus() const {
+    return memoryCommitReadinessStatusName(memoryCommitReadiness().status);
+}
+
+QString ApplicationController::memoryCommitReadinessSummary() const {
+    return memoryCommitReadiness().summary;
+}
+
+QStringList ApplicationController::memoryCommitReadinessChecks() const {
+    return memoryCommitReadiness().checks;
+}
+
+int ApplicationController::memoryCommitPlanCount() const {
+    return approvedMemoryCandidateCount();
+}
+
+QString ApplicationController::memoryCommitTargetSummary() const {
+    return QStringLiteral("%1 / %2").arg(memoryCommitTargetName(memoryCommitPolicy_.target),
+                                         memoryCommitPolicy_.summary);
+}
+
+QStringList ApplicationController::memoryCommitCandidateSummaries() const {
+    QStringList summaries;
+    const auto candidates = memoryCandidates();
+    const auto storeAvailable = memoryStore_ && memoryStore_->isAvailable();
+    for (const auto& candidate : candidates) {
+        const auto readiness =
+            memoryCommitReadinessForCandidate(&candidate, storeAvailable, memoryCommitPolicy_);
+        summaries.append(QStringLiteral("%1: %2 - %3")
+                             .arg(candidate.id, memoryCommitReadinessStatusName(readiness.status),
+                                  readiness.plan.summary.isEmpty() ? readiness.summary
+                                                                   : readiness.plan.summary));
+    }
+    return summaries;
+}
+
+QString ApplicationController::lastMemoryCommitStatus() const {
+    return latestMemoryCommitResult_.status.isEmpty() ? QStringLiteral("No Commit")
+                                                      : latestMemoryCommitResult_.status;
+}
+
+QString ApplicationController::lastMemoryCommitResultSummary() const {
+    return latestMemoryCommitResult_.summary.isEmpty()
+               ? QStringLiteral("No memory commit request yet.")
+               : latestMemoryCommitResult_.summary;
 }
 
 MemoryCandidate
@@ -2967,6 +3131,23 @@ ApplicationController::memoryCandidateFromConversationText(const QString& text) 
     candidate.sourceSummary = QStringLiteral("Captured from conversation text metadata only.");
     candidate.reviewSummary = QStringLiteral("Pending user review.");
     return candidate;
+}
+
+bool ApplicationController::reviewMemoryCandidate(const QString& candidateId,
+                                                  MemoryCandidateReviewAction action) {
+    latestMemoryCandidateReviewResult_ = MemoryCandidateReviewResult{};
+    if (!memoryCandidateStore_) {
+        latestMemoryCandidateReviewResult_.status = QStringLiteral("Refused");
+        latestMemoryCandidateReviewResult_.summary =
+            QStringLiteral("Memory candidate review refused: candidate store is unavailable.");
+        emit memoryCandidatesChanged();
+        return false;
+    }
+
+    latestMemoryCandidateReviewResult_ = memoryCandidateStore_->reviewCandidate(
+        candidateId, action, QStringLiteral("Reviewer: User review"), {});
+    emit memoryCandidatesChanged();
+    return latestMemoryCandidateReviewResult_.accepted;
 }
 
 bool ApplicationController::searchConversation(const QString& query) {
@@ -3272,31 +3453,34 @@ QString ApplicationController::createMemoryCandidateFromConversationText(const Q
 }
 
 bool ApplicationController::approveMemoryCandidate(const QString& candidateId) {
-    if (!memoryCandidateStore_) {
-        return false;
-    }
-
-    const auto reviewed =
-        memoryCandidateStore_->setReviewState(candidateId, MemoryReviewState::Approved,
-                                              QStringLiteral("Approved by user review metadata."));
-    if (reviewed) {
-        emit memoryCandidatesChanged();
-    }
-    return reviewed;
+    return reviewMemoryCandidate(candidateId, MemoryCandidateReviewAction::Approve);
 }
 
 bool ApplicationController::rejectMemoryCandidate(const QString& candidateId) {
-    if (!memoryCandidateStore_) {
-        return false;
-    }
+    return reviewMemoryCandidate(candidateId, MemoryCandidateReviewAction::Reject);
+}
 
-    const auto reviewed =
-        memoryCandidateStore_->setReviewState(candidateId, MemoryReviewState::Rejected,
-                                              QStringLiteral("Rejected by user review metadata."));
-    if (reviewed) {
-        emit memoryCandidatesChanged();
-    }
-    return reviewed;
+bool ApplicationController::resetMemoryCandidate(const QString& candidateId) {
+    return reviewMemoryCandidate(candidateId, MemoryCandidateReviewAction::ResetToPending);
+}
+
+bool ApplicationController::archiveMemoryCandidate(const QString& candidateId) {
+    return reviewMemoryCandidate(candidateId, MemoryCandidateReviewAction::Archive);
+}
+
+bool ApplicationController::requestMemoryCandidateCommit(const QString& candidateId) {
+    latestMemoryCommitResult_ = MemoryCommitResult{};
+    latestMemoryCommitResult_.candidateId = candidateId.trimmed();
+    latestMemoryCommitResult_.target = memoryCommitPolicy_.target;
+    latestMemoryCommitResult_.requestedAtUtc = QDateTime::currentDateTimeUtc();
+
+    const auto readiness = memoryCommitReadinessForCandidateId(candidateId);
+    latestMemoryCommitResult_.status = QStringLiteral("Refused");
+    latestMemoryCommitResult_.summary =
+        QStringLiteral("Memory commit refused: %1").arg(readiness.summary);
+
+    emit memoryCandidatesChanged();
+    return false;
 }
 
 bool ApplicationController::sendMessage(const QString& message) {

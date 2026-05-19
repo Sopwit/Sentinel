@@ -1243,8 +1243,76 @@ int DesktopShellViewModel::rejectedMemoryCandidateCount() const {
     return controller_.rejectedMemoryCandidateCount();
 }
 
+int DesktopShellViewModel::archivedMemoryCandidateCount() const {
+    return controller_.archivedMemoryCandidateCount();
+}
+
+QStringList DesktopShellViewModel::memoryCandidateIds() const {
+    return controller_.memoryCandidateIds();
+}
+
+QStringList DesktopShellViewModel::memoryCandidateReviewStates() const {
+    return controller_.memoryCandidateReviewStates();
+}
+
 QStringList DesktopShellViewModel::memoryCandidateSummaries() const {
     return controller_.memoryCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::pendingMemoryCandidateSummaries() const {
+    return controller_.pendingMemoryCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::approvedMemoryCandidateSummaries() const {
+    return controller_.approvedMemoryCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::rejectedMemoryCandidateSummaries() const {
+    return controller_.rejectedMemoryCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::archivedMemoryCandidateSummaries() const {
+    return controller_.archivedMemoryCandidateSummaries();
+}
+
+QString DesktopShellViewModel::lastMemoryCandidateReviewStatus() const {
+    return controller_.lastMemoryCandidateReviewStatus();
+}
+
+QString DesktopShellViewModel::lastMemoryCandidateReviewSummary() const {
+    return controller_.lastMemoryCandidateReviewSummary();
+}
+
+QString DesktopShellViewModel::memoryCommitReadinessStatus() const {
+    return controller_.memoryCommitReadinessStatus();
+}
+
+QString DesktopShellViewModel::memoryCommitReadinessSummary() const {
+    return controller_.memoryCommitReadinessSummary();
+}
+
+QStringList DesktopShellViewModel::memoryCommitReadinessChecks() const {
+    return controller_.memoryCommitReadinessChecks();
+}
+
+int DesktopShellViewModel::memoryCommitPlanCount() const {
+    return controller_.memoryCommitPlanCount();
+}
+
+QString DesktopShellViewModel::memoryCommitTargetSummary() const {
+    return controller_.memoryCommitTargetSummary();
+}
+
+QStringList DesktopShellViewModel::memoryCommitCandidateSummaries() const {
+    return controller_.memoryCommitCandidateSummaries();
+}
+
+QString DesktopShellViewModel::lastMemoryCommitStatus() const {
+    return controller_.lastMemoryCommitStatus();
+}
+
+QString DesktopShellViewModel::lastMemoryCommitResultSummary() const {
+    return controller_.lastMemoryCommitResultSummary();
 }
 
 QString DesktopShellViewModel::memoryMaintenanceStatus() const {
@@ -1369,6 +1437,18 @@ bool DesktopShellViewModel::approveMemoryCandidate(const QString& candidateId) {
 
 bool DesktopShellViewModel::rejectMemoryCandidate(const QString& candidateId) {
     return controller_.rejectMemoryCandidate(candidateId);
+}
+
+bool DesktopShellViewModel::resetMemoryCandidate(const QString& candidateId) {
+    return controller_.resetMemoryCandidate(candidateId);
+}
+
+bool DesktopShellViewModel::archiveMemoryCandidate(const QString& candidateId) {
+    return controller_.archiveMemoryCandidate(candidateId);
+}
+
+bool DesktopShellViewModel::requestMemoryCandidateCommit(const QString& candidateId) {
+    return controller_.requestMemoryCandidateCommit(candidateId);
 }
 
 bool DesktopShellViewModel::runAgentRequest(const QString& request) {

@@ -10,8 +10,10 @@ class InMemoryMemoryCandidateStore final : public IMemoryCandidateStore {
 public:
     MemoryCandidate createCandidate(MemoryCandidate candidate) override;
     QList<MemoryCandidate> candidates() const override;
-    bool setReviewState(const MemoryCandidateId& id, MemoryReviewState state,
-                        const QString& reviewSummary) override;
+    MemoryCandidateReviewResult reviewCandidate(const MemoryCandidateId& id,
+                                                MemoryCandidateReviewAction action,
+                                                const QString& reviewerSummary,
+                                                const QString& decisionReason) override;
 
 private:
     QMap<MemoryCandidateId, MemoryCandidate> candidates_;

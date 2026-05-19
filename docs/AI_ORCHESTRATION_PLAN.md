@@ -155,12 +155,24 @@ continues to invalidate request ids so stale async responses are ignored, and pe
 requests remain disabled and non-mutating. No semantic memory, embeddings/vector DB, cloud sync,
 import/export change, permanent delete execution, UI redesign, model/voice/tool/plugin change, or
 runtime authority expansion is added.
-Phase 16.0 through Phase 16.3 add controlled semantic memory candidate metadata: candidates can be
-created from supplied conversation text metadata, default to Pending Review, and can be marked
-Approved or Rejected as review metadata only. The candidate store remains separate from
-`IMemoryStore`, the static memory taxonomy, chat history, and conversation storage. No embeddings,
-vector DB, semantic search, automatic memory writes, cloud sync, provider/model calls,
-tool/plugin authority, filesystem/system authority, or automatic capture loop is added.
+Phase 16.0 through Phase 16.6 add controlled semantic memory candidate metadata and an explicit
+review lifecycle: candidates can be created from supplied conversation text metadata, default to
+Pending Review, and can be approved, rejected, reset to pending, or archived as review metadata
+only. `MemoryCandidateReviewResult` records the accepted/refused action, reviewed timestamp,
+reviewer/source summary, and decision reason metadata. Approved means reviewed candidate metadata,
+not committed long-term memory. The candidate store remains separate from `IMemoryStore`, the
+static memory taxonomy, chat history, and conversation storage. No embeddings, vector DB, semantic
+search, automatic memory writes, cloud sync, provider/model calls, tool/plugin authority,
+filesystem/system authority, or automatic capture loop is added.
+Phase 16.7 through Phase 16.9 add approved-memory commit planning metadata:
+`MemoryCommitPlan`, `MemoryCommitTarget`, `MemoryCommitReadiness`, `MemoryCommitResult`, and
+`MemoryCommitPolicy`. Approved candidates can produce deterministic key-value memory target
+summaries, while pending/rejected/archived/missing candidates are blocked with explicit reasons.
+The default policy disables actual commit, and commit requests refuse before mutating
+`IMemoryStore`. Candidate, approved, planned, and committed are distinct states; committed memory
+remains a future explicit phase gate. No embeddings, vector DB, semantic search, automatic memory
+writes, cloud sync, provider/model calls, filesystem/system authority, tool/plugin authority, or
+autonomous memory mutation is added.
 
 ## Future Components
 
@@ -240,9 +252,13 @@ tool/plugin authority, filesystem/system authority, or automatic capture loop is
   mutate history or query storage. Export writes only to the app-controlled export directory and
   does not support import, arbitrary paths, file pickers, or multi-conversation workflows.
 - Semantic memory candidates: reviewable metadata records derived from supplied conversation text
-  metadata. They default to Pending Review and remain separate from key-value memory, memory
-  taxonomy, embeddings, vector storage, semantic search, provider/model execution, and autonomous
-  memory writes.
+  metadata. They default to Pending Review, expose a guarded approve/reject/reset/archive review
+  lifecycle, and remain separate from key-value memory, memory taxonomy, embeddings, vector
+  storage, semantic search, provider/model execution, and autonomous memory writes.
+- Memory commit planning: approved-candidate to key-value-memory plan/readiness metadata with
+  default-disabled commit policy. The request path refuses safely and does not write to
+  `IMemoryStore` until a later explicit commit phase defines the gate, confirmation UX, and
+  mutation tests.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 - Local model management readiness: deterministic metadata for recommended local models,

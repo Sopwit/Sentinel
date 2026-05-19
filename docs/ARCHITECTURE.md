@@ -91,21 +91,42 @@ Phase 6.7 readiness diagnostics inspect existing orchestration metadata only. Th
 storage paths, scan files, query memory stores, build embeddings, run semantic search, mutate
 memory, or perform provider/model/tool execution.
 
-Phase 16.0 through Phase 16.3 add a controlled semantic memory candidate foundation beside, not
-inside, the existing memory contracts:
+Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit
+review flow beside, not inside, the existing memory contracts:
 
 - `MemoryCandidate`, `MemoryCandidateId`, `MemoryCandidateSource`,
   `MemoryCandidateCategory`, `MemoryCandidateConfidence`, `MemoryReviewState`,
-  `MemoryCapturePolicy`, and `MemoryCandidateSummary` are value-only metadata records.
+  `MemoryCandidateReviewAction`, `MemoryCapturePolicy`, `MemoryCandidateSummary`, and
+  `MemoryCandidateReviewResult` are value-only metadata records.
 - `MemoryRetentionPolicy` remains the shared taxonomy retention vocabulary.
 - `IMemoryCandidateStore` owns reviewable candidate metadata separately from `IMemoryStore` and
   `IMemoryCatalog`.
 - `InMemoryMemoryCandidateStore` provides deterministic runtime/test storage only.
 - Candidates may be created from conversation text metadata supplied to the controller and default
   to Pending Review.
-- Approval/rejection changes review metadata only and does not commit entries to key-value memory
-  or any long-term semantic store.
-- `DesktopShellViewModel` exposes only counts and summary strings to QML.
+- Approve, reject, reset-to-pending, and archive actions change review metadata only and do not
+  commit entries to key-value memory or any long-term semantic store.
+- Reviewed timestamp, reviewer/source summary, and decision reason values are review metadata.
+  Approved means reviewed for possible future commitment; it does not mean stored long-term.
+- `DesktopShellViewModel` exposes only QML-safe ids, states, counts, summaries, state-filtered
+  summaries, and last review result strings to QML.
+
+Phase 16.7 through Phase 16.9 add commit-planning metadata on top of approved candidates:
+
+- `MemoryCommitPlan`, `MemoryCommitTarget`, `MemoryCommitReadiness`, `MemoryCommitResult`, and
+  `MemoryCommitPolicy` are value-only records.
+- A candidate can move from Pending Review to Approved review metadata, then receive a future
+  commit plan. Committed memory remains a separate state that does not exist operationally yet.
+- Approved candidates generate deterministic candidate-to-key-value-memory summaries, but the
+  default policy keeps commit disabled.
+- Pending, rejected, archived, or missing candidates cannot commit and report safe readiness
+  reasons.
+- Commit requests currently refuse before calling `IMemoryStore::put()`, so approval and commit
+  planning never mutate key-value memory.
+- The key-value memory store remains the only existing persistence target. No semantic memory
+  persistence target exists.
+- `DesktopShellViewModel` exposes only QML-safe commit readiness strings, checks, counts, target
+  summaries, per-candidate plan summaries, and last-result strings.
 
 This foundation deliberately does not add embeddings, a vector database, semantic search,
 autonomous capture, model/provider calls, cloud sync, tool/plugin authority, filesystem/system

@@ -454,7 +454,40 @@ class ApplicationController final : public QObject {
                    memoryCandidatesChanged)
     Q_PROPERTY(int rejectedMemoryCandidateCount READ rejectedMemoryCandidateCount NOTIFY
                    memoryCandidatesChanged)
+    Q_PROPERTY(int archivedMemoryCandidateCount READ archivedMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(
+        QStringList memoryCandidateIds READ memoryCandidateIds NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCandidateReviewStates READ memoryCandidateReviewStates NOTIFY
+                   memoryCandidatesChanged)
     Q_PROPERTY(QStringList memoryCandidateSummaries READ memoryCandidateSummaries NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList pendingMemoryCandidateSummaries READ pendingMemoryCandidateSummaries
+                   NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QStringList approvedMemoryCandidateSummaries READ approvedMemoryCandidateSummaries
+                   NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QStringList rejectedMemoryCandidateSummaries READ rejectedMemoryCandidateSummaries
+                   NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QStringList archivedMemoryCandidateSummaries READ archivedMemoryCandidateSummaries
+                   NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QString lastMemoryCandidateReviewStatus READ lastMemoryCandidateReviewStatus NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QString lastMemoryCandidateReviewSummary READ lastMemoryCandidateReviewSummary NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QString memoryCommitReadinessStatus READ memoryCommitReadinessStatus NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QString memoryCommitReadinessSummary READ memoryCommitReadinessSummary NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCommitReadinessChecks READ memoryCommitReadinessChecks NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(int memoryCommitPlanCount READ memoryCommitPlanCount NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QString memoryCommitTargetSummary READ memoryCommitTargetSummary NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCommitCandidateSummaries READ memoryCommitCandidateSummaries NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(
+        QString lastMemoryCommitStatus READ lastMemoryCommitStatus NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QString lastMemoryCommitResultSummary READ lastMemoryCommitResultSummary NOTIFY
                    memoryCandidatesChanged)
     Q_PROPERTY(QStringList memoryEntries READ memoryEntries NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
@@ -791,7 +824,28 @@ public:
     int pendingMemoryCandidateCount() const;
     int approvedMemoryCandidateCount() const;
     int rejectedMemoryCandidateCount() const;
+    int archivedMemoryCandidateCount() const;
+    QStringList memoryCandidateIds() const;
+    QStringList memoryCandidateReviewStates() const;
     QStringList memoryCandidateSummaries() const;
+    QStringList pendingMemoryCandidateSummaries() const;
+    QStringList approvedMemoryCandidateSummaries() const;
+    QStringList rejectedMemoryCandidateSummaries() const;
+    QStringList archivedMemoryCandidateSummaries() const;
+    MemoryCandidateReviewResult latestMemoryCandidateReviewResult() const;
+    QString lastMemoryCandidateReviewStatus() const;
+    QString lastMemoryCandidateReviewSummary() const;
+    MemoryCommitPolicy memoryCommitPolicy() const;
+    MemoryCommitReadiness memoryCommitReadiness() const;
+    MemoryCommitResult latestMemoryCommitResult() const;
+    QString memoryCommitReadinessStatus() const;
+    QString memoryCommitReadinessSummary() const;
+    QStringList memoryCommitReadinessChecks() const;
+    int memoryCommitPlanCount() const;
+    QString memoryCommitTargetSummary() const;
+    QStringList memoryCommitCandidateSummaries() const;
+    QString lastMemoryCommitStatus() const;
+    QString lastMemoryCommitResultSummary() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     const QList<ChatMessage>& chatHistory() const;
@@ -816,6 +870,9 @@ public:
     Q_INVOKABLE QString createMemoryCandidateFromConversationText(const QString& text);
     Q_INVOKABLE bool approveMemoryCandidate(const QString& candidateId);
     Q_INVOKABLE bool rejectMemoryCandidate(const QString& candidateId);
+    Q_INVOKABLE bool resetMemoryCandidate(const QString& candidateId);
+    Q_INVOKABLE bool archiveMemoryCandidate(const QString& candidateId);
+    Q_INVOKABLE bool requestMemoryCandidateCommit(const QString& candidateId);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
@@ -904,7 +961,12 @@ private:
                                                          const QString& summary) const;
     QList<MemoryCandidate> memoryCandidates() const;
     int memoryCandidateCountForState(MemoryReviewState state) const;
+    QStringList memoryCandidateSummariesForState(MemoryReviewState state) const;
+    const MemoryCandidate* findMemoryCandidate(const QList<MemoryCandidate>& candidates,
+                                               const QString& candidateId) const;
+    MemoryCommitReadiness memoryCommitReadinessForCandidateId(const QString& candidateId) const;
     MemoryCandidate memoryCandidateFromConversationText(const QString& text) const;
+    bool reviewMemoryCandidate(const QString& candidateId, MemoryCandidateReviewAction action);
 
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
@@ -939,6 +1001,9 @@ private:
     std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<IMemoryCandidateStore> memoryCandidateStore_;
+    MemoryCandidateReviewResult latestMemoryCandidateReviewResult_;
+    MemoryCommitPolicy memoryCommitPolicy_;
+    MemoryCommitResult latestMemoryCommitResult_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
     std::unique_ptr<IConversationStore> conversationStore_;
