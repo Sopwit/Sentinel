@@ -2374,6 +2374,55 @@ QStringList ApplicationController::retrievalPlanningSourceSummaries() const {
     return sentinel::core::retrievalSourceSummaries(retrievalPlanningResult());
 }
 
+SemanticRetrievalPolicy ApplicationController::semanticRetrievalPolicy() const {
+    return semanticRetrievalPolicy_;
+}
+
+bool ApplicationController::semanticRetrievalEnabled() const {
+    return semanticRetrievalPolicy_.enabled;
+}
+
+QString ApplicationController::semanticRetrievalStatus() const {
+    return semanticRetrievalStatusName(SemanticRetrievalStatus::Disabled);
+}
+
+QString ApplicationController::semanticRetrievalSummary() const {
+    return semanticRetrievalPolicy_.summary;
+}
+
+QString ApplicationController::semanticReadiness() const {
+    return QStringLiteral("Semantic-ready metadata only; semantic retrieval is not active.");
+}
+
+QString ApplicationController::embeddingProviderReadiness() const {
+    return embeddingProviderStatusName(EmbeddingProviderStatus::NotConfigured);
+}
+
+QString ApplicationController::embeddingProviderSummary() const {
+    return QStringLiteral(
+        "No runtime embedding provider is configured. Deterministic fake embeddings are available "
+        "to tests only.");
+}
+
+QString ApplicationController::vectorIndexReadiness() const {
+    return vectorIndexStatusName(VectorIndexStatus::NotConfigured);
+}
+
+QString ApplicationController::vectorIndexSummary() const {
+    return QStringLiteral(
+        "No runtime vector index is configured. Indexed items: 0. Semantic ranking is disabled.");
+}
+
+int ApplicationController::vectorIndexedItemCount() const {
+    return 0;
+}
+
+QStringList ApplicationController::semanticRetrievalReadinessChecks() const {
+    return sentinel::core::semanticRetrievalReadinessChecks(
+        semanticRetrievalPolicy_, EmbeddingProviderStatus::NotConfigured,
+        VectorIndexStatus::NotConfigured, vectorIndexedItemCount());
+}
+
 bool ApplicationController::localInferenceStreamingEnabled() const {
     return localInferenceStreamingEnabled_;
 }

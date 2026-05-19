@@ -747,6 +747,7 @@ private slots:
     void conversationSummaryPlanningDoesNotMutateState();
     void retrievalPlanningFeedsPromptContextWithoutMixingSources();
     void retrievalPlanningDoesNotMutateState();
+    void semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
     void clearChatKeepsApprovedMemoryCandidateMetadata();
@@ -4026,6 +4027,44 @@ void ApplicationControllerTest::retrievalPlanningDoesNotMutateState() {
     QCOMPARE(controller->memoryEntries(), beforeEntries);
     QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
     QCOMPARE(controller->promptContextInjectionStatus(), beforeInjectionStatus);
+}
+
+void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+    controller->remember(QStringLiteral("semantic.local"), QStringLiteral("deterministic only"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+
+    const auto planningBefore = controller->retrievalPlanningResult();
+    QCOMPARE(controller->semanticRetrievalEnabled(), false);
+    QCOMPARE(controller->semanticRetrievalStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->embeddingProviderReadiness(), QStringLiteral("Not Configured"));
+    QCOMPARE(controller->vectorIndexReadiness(), QStringLiteral("Not Configured"));
+    QCOMPARE(controller->vectorIndexedItemCount(), 0);
+    QVERIFY(controller->semanticRetrievalReadinessChecks().contains(
+        QStringLiteral("Semantic ranking: disabled")));
+    QVERIFY(controller->semanticRetrievalReadinessChecks().contains(
+        QStringLiteral("Raw vectors exposed to QML: no")));
+
+    QVERIFY(controller->sendMessage(QStringLiteral("semantic final question")));
+
+    const auto planningAfter = controller->retrievalPlanningResult();
+    QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
+    const auto prompt = fakeClientPtr->lastRequest.prompt;
+    QVERIFY(prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
+    QVERIFY(prompt.contains(QStringLiteral("semantic.local = deterministic only")));
+    QVERIFY(!prompt.contains(QStringLiteral("EmbeddingVector")));
+    QVERIFY(!prompt.contains(QStringLiteral("VectorSearch")));
+    QVERIFY(!prompt.contains(QStringLiteral("score")));
 }
 
 void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandidates() {

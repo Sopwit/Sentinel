@@ -259,6 +259,28 @@ raw prompts, execute tools/plugins, or perform filesystem/system actions. Future
 embedding compatibility must plug in behind a later explicit retrieval/ranking boundary while
 keeping deterministic planning and source separation intact.
 
+Phase 16.31 through Phase 16.33 add the embedding/vector abstraction foundation:
+
+- `SemanticRetrieval.h` defines value-only embedding, vector index, vector search, and semantic
+  retrieval policy/status records.
+- `IEmbeddingProvider` is the future boundary for embedding providers. The desktop runtime does
+  not configure a real provider yet.
+- `IVectorIndex` is the future boundary for vector indexes. The desktop runtime does not configure
+  a vector database or durable semantic store yet.
+- `FakeEmbeddingProvider` and `FakeVectorIndex` are deterministic local fakes for tests only.
+  Fake embeddings are numeric vectors derived from stable text hashing and token counting; fake
+  vector search is in-memory only with deterministic scoring and tie ordering.
+- `ApplicationController` exposes only summary metadata: semantic retrieval disabled state,
+  embedding provider readiness, vector index readiness, indexed item count, and readiness checks.
+- QML does not receive raw vectors, vector scores, prompt payloads, providers, indexes, or storage
+  handles.
+
+The abstraction layer deliberately does not affect retrieval planning or prompt assembly. Current
+prompt context still comes only from deterministic selected local context candidates. Semantic
+ranking, semantic prompt injection, real embedding providers, vector databases, provider/model
+calls, filesystem writes, downloads, plugins/tools, and system execution remain later explicit
+phase gates.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.

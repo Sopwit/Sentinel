@@ -244,6 +244,18 @@ calls, cloud/API keys, automatic memory writes, tools/plugins, filesystem/system
 console UI, broad redesign, raw prompt display, and private assembled payload display remain
 future phase gates. Future vector/embedding compatibility must live behind a separate
 retrieval/ranking boundary that preserves deterministic planning and source separation.
+Phase 16.31 through Phase 16.33 add the embedding/vector abstraction foundation:
+`EmbeddingVector`, `EmbeddingDocument`, `EmbeddingRequest`, `EmbeddingResult`,
+`EmbeddingProviderStatus`, `EmbeddingProviderPolicy`, `VectorIndexStatus`, `VectorIndexPolicy`,
+`VectorSearchQuery`, `VectorSearchResult`, `VectorSearchCandidate`,
+`SemanticRetrievalStatus`, and `SemanticRetrievalPolicy`, plus `IEmbeddingProvider` and
+`IVectorIndex`. The desktop runtime exposes only disabled semantic-readiness metadata and does not
+configure a real embedding provider, real vector index, vector database, or semantic ranker.
+`FakeEmbeddingProvider` and `FakeVectorIndex` are deterministic local test fakes only: stable
+hash/token-count vectors, in-memory insert/search/remove, deterministic scoring, and no provider
+calls, cloud/API keys, filesystem writes, downloads, plugins/tools, or system execution. Retrieval
+planning and prompt assembly remain deterministic and unchanged; semantic metadata does not alter
+source priority, prompt context, ranking, or injection.
 
 ## Future Components
 
@@ -318,6 +330,12 @@ retrieval/ranking boundary that preserves deterministic planning and source sepa
   persistence status, message counts, saved/restored status, and clear result. It does not add
   multiple conversations, transcript browsing, export/import, pruning, encryption, search, or
   storage access outside the existing `IChatHistoryStore`.
+- Embedding provider boundary: future local/provider-compatible embedding generation behind
+  `IEmbeddingProvider`. The current runtime has no configured provider; the deterministic fake is
+  test-only.
+- Vector index boundary: future in-memory or vector database-compatible indexing behind
+  `IVectorIndex`. The current runtime has no configured vector index and semantic retrieval remains
+  disabled.
 - Conversation transcript QA and export metadata: literal in-memory search query/results over the
   active single transcript plus controlled Markdown/JSON export result records. Search does not
   mutate history or query storage. Export writes only to the app-controlled export directory and

@@ -82,6 +82,7 @@ private slots:
     void exposesConversationWindowMetadata();
     void exposesConversationSummaryMetadata();
     void exposesRetrievalPlanningMetadata();
+    void exposesSemanticVectorReadinessMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1746,6 +1747,29 @@ void DesktopShellViewModelTest::exposesRetrievalPlanningMetadata() {
     QVERIFY(fixture.viewModel.retrievalPlanningSourceSummary().contains(
         QStringLiteral("Conversation Context")));
     QVERIFY(!fixture.viewModel.retrievalPlanningSourceSummaries().isEmpty());
+}
+
+void DesktopShellViewModelTest::exposesSemanticVectorReadinessMetadata() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    QCOMPARE(fixture.viewModel.semanticRetrievalEnabled(), false);
+    QCOMPARE(fixture.viewModel.semanticRetrievalStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.semanticRetrievalSummary().contains(
+        QStringLiteral("Semantic retrieval is disabled")));
+    QVERIFY(fixture.viewModel.semanticReadiness().contains(
+        QStringLiteral("Semantic-ready metadata only")));
+    QCOMPARE(fixture.viewModel.embeddingProviderReadiness(), QStringLiteral("Not Configured"));
+    QCOMPARE(fixture.viewModel.vectorIndexReadiness(), QStringLiteral("Not Configured"));
+    QCOMPARE(fixture.viewModel.vectorIndexedItemCount(), 0);
+    QVERIFY(fixture.viewModel.embeddingProviderSummary().contains(QStringLiteral("tests only")));
+    QVERIFY(fixture.viewModel.vectorIndexSummary().contains(QStringLiteral("Indexed items: 0")));
+    QVERIFY(fixture.viewModel.semanticRetrievalReadinessChecks().contains(
+        QStringLiteral("Raw vectors exposed to QML: no")));
+    QVERIFY(metaObject->indexOfProperty("semanticRetrievalSummary") >= 0);
+    QVERIFY(metaObject->indexOfProperty("embeddingProviderSummary") >= 0);
+    QVERIFY(metaObject->indexOfProperty("vectorIndexedItemCount") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("embeddingVector"), -1);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

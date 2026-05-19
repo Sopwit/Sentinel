@@ -349,6 +349,65 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                implicitHeight: settingsPage.sectionHeight(semanticContent)
+
+                ColumnLayout {
+                    id: semanticContent
+                    x: settingsPage.panelPadding
+                    y: settingsPage.panelPadding
+                    width: parent.width - settingsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                SectionTitle {
+                    title: "Semantic / Vector Readiness"
+                    subtitle: "Abstraction metadata only. Semantic retrieval is not active."
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Semantic Retrieval"
+                    value: settingsPage.viewModel.semanticRetrievalStatus
+                           + " / "
+                           + settingsPage.viewModel.semanticRetrievalSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Embedding Provider"
+                    value: settingsPage.viewModel.embeddingProviderReadiness
+                           + " / "
+                           + settingsPage.viewModel.embeddingProviderSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Vector Index"
+                    value: settingsPage.viewModel.vectorIndexReadiness
+                           + " / "
+                           + settingsPage.viewModel.vectorIndexedItemCount
+                           + " indexed items"
+                    Layout.fillWidth: true
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.semanticRetrievalReadinessChecks
+
+                    Label {
+                        required property string modelData
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+            }
+        }
+
+            ShellPanel {
+                width: parent.width
                 implicitHeight: settingsPage.sectionHeight(voiceContent)
 
                 ColumnLayout {
