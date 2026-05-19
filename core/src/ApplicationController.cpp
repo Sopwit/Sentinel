@@ -2178,6 +2178,145 @@ QString ApplicationController::localChatInferenceSummary() const {
     return QStringLiteral("Local chat inference is enabled for guarded local-only Ollama routing.");
 }
 
+bool ApplicationController::promptContextInjectionEnabled() const {
+    return promptContextInjectionEnabled_;
+}
+
+void ApplicationController::setPromptContextInjectionEnabled(bool enabled) {
+    if (enabled == promptContextInjectionEnabled_) {
+        return;
+    }
+
+    promptContextInjectionEnabled_ = enabled;
+    promptContextInjectionPolicy_.enabled = enabled;
+    promptContextInjectionPolicy_.status =
+        enabled ? QStringLiteral("Enabled") : QStringLiteral("Disabled");
+    promptContextInjectionPolicy_.summary =
+        enabled ? QStringLiteral("Prompt context injection is enabled for explicit local Ollama "
+                                 "requests with bounded local context only.")
+                : QStringLiteral("Prompt context injection is disabled; local prompts are sent "
+                                 "without assembled memory/context.");
+    if (!enabled) {
+        latestPromptContextInjectionResult_ = PromptContextInjectionResult{};
+    } else {
+        latestPromptContextInjectionResult_ = PromptContextInjectionResult{};
+        latestPromptContextInjectionResult_.policy = promptContextInjectionPolicy_;
+        latestPromptContextInjectionResult_.status = PromptContextInjectionStatus::Empty;
+        latestPromptContextInjectionResult_.summary =
+            QStringLiteral("Prompt context injection is enabled; no local prompt has been "
+                           "assembled yet.");
+    }
+    emit promptContextInjectionChanged();
+}
+
+PromptContextInjectionResult ApplicationController::latestPromptContextInjectionResult() const {
+    return latestPromptContextInjectionResult_;
+}
+
+QString ApplicationController::promptContextInjectionStatus() const {
+    return promptContextInjectionStatusName(latestPromptContextInjectionResult_.status);
+}
+
+QString ApplicationController::promptContextInjectionSummary() const {
+    return latestPromptContextInjectionResult_.summary;
+}
+
+int ApplicationController::promptContextInjectedBlockCount() const {
+    return latestPromptContextInjectionResult_.injectedBlockCount;
+}
+
+QString ApplicationController::promptContextSourceSummary() const {
+    return latestPromptContextInjectionResult_.sourceSummary;
+}
+
+QString ApplicationController::promptContextSizeSummary() const {
+    return latestPromptContextInjectionResult_.sizeSummary;
+}
+
+QStringList ApplicationController::promptContextBlockSummaries() const {
+    return sentinel::core::promptContextBlockSummaries(latestPromptContextInjectionResult_);
+}
+
+ConversationWindowPolicy ApplicationController::conversationWindowPolicy() const {
+    return conversationWindowPolicy_;
+}
+
+ConversationWindowResult ApplicationController::conversationWindowResult() const {
+    return conversationWindowForPrompt({});
+}
+
+QString ApplicationController::conversationWindowStatus() const {
+    return conversationWindowStatusName(conversationWindowResult().status);
+}
+
+QString ApplicationController::conversationWindowSummary() const {
+    return conversationWindowResult().summary.summary;
+}
+
+QString ApplicationController::conversationWindowBudgetSummary() const {
+    return conversationWindowResult().budget.summary;
+}
+
+int ApplicationController::conversationWindowBudgetCharacters() const {
+    return conversationWindowPolicy_.maxCharacters;
+}
+
+int ApplicationController::conversationWindowIncludedMessageCount() const {
+    return conversationWindowResult().summary.includedMessageCount;
+}
+
+int ApplicationController::conversationWindowTruncatedMessageCount() const {
+    return conversationWindowResult().summary.truncatedMessageCount;
+}
+
+int ApplicationController::conversationWindowOmittedMessageCount() const {
+    return conversationWindowResult().summary.omittedMessageCount;
+}
+
+ConversationSummaryPolicy ApplicationController::conversationSummaryPolicy() const {
+    return conversationSummaryPolicy_;
+}
+
+ConversationSummaryResult ApplicationController::conversationSummaryResult() const {
+    return conversationSummaryForPrompt({});
+}
+
+QString ApplicationController::conversationSummaryStatus() const {
+    return conversationSummaryStatusName(conversationSummaryResult().status);
+}
+
+QString ApplicationController::conversationSummaryText() const {
+    return conversationSummaryResult().summary;
+}
+
+QString ApplicationController::conversationSummaryBudgetSummary() const {
+    return conversationSummaryResult().budget.summary;
+}
+
+int ApplicationController::conversationSummaryBudgetCharacters() const {
+    return conversationSummaryPolicy_.maxCharacters;
+}
+
+int ApplicationController::conversationSummaryBlockCount() const {
+    return conversationSummaryResult().window.blockCount;
+}
+
+int ApplicationController::conversationSummaryMessageCount() const {
+    return conversationSummaryResult().window.summarizedMessageCount;
+}
+
+int ApplicationController::conversationSummaryOmittedMessageCount() const {
+    return conversationSummaryResult().window.omittedFromSummaryCount;
+}
+
+int ApplicationController::conversationSummaryTruncatedBlockCount() const {
+    return conversationSummaryResult().budget.truncatedBlockCount;
+}
+
+QStringList ApplicationController::conversationSummaryBlockSummaries() const {
+    return sentinel::core::conversationSummaryBlockSummaries(conversationSummaryResult());
+}
+
 bool ApplicationController::localInferenceStreamingEnabled() const {
     return localInferenceStreamingEnabled_;
 }
@@ -3140,6 +3279,215 @@ MemoryRecallSummary ApplicationController::latestMemoryRecallSummary() const {
     return latestMemoryRecallSummary_;
 }
 
+ContextAssemblyPolicy ApplicationController::contextAssemblyPolicy() const {
+    return contextAssemblyPolicy_;
+}
+
+ContextAssemblySource
+ApplicationController::contextAssemblySource(ContextAssemblySourceKind kind) const {
+    switch (kind) {
+    case ContextAssemblySourceKind::Conversation: {
+        int estimatedSize = 0;
+        for (const auto& message : chatSession_->messages()) {
+            estimatedSize += message.content.simplified().size();
+        }
+        return makeContextAssemblySource(kind, contextAssemblyPolicy_.includeConversationContext,
+                                         !chatSession_->messages().isEmpty(),
+                                         chatSession_->messages().size(), estimatedSize,
+                                         QStringLiteral("%1 active transcript messages available.")
+                                             .arg(chatSession_->messages().size()));
+    }
+    case ContextAssemblySourceKind::ConversationSummary: {
+        const auto summary = conversationSummaryResult();
+        return makeContextAssemblySource(
+            kind, contextAssemblyPolicy_.includeConversationContext, !summary.blocks.isEmpty(),
+            summary.blocks.size(), summary.budget.includedCharacters,
+            QStringLiteral("%1 deterministic local summary blocks available.")
+                .arg(summary.blocks.size()));
+    }
+    case ContextAssemblySourceKind::CommittedMemory: {
+        const auto entries = currentMemoryEntries();
+        int estimatedSize = 0;
+        for (const auto& entry : entries) {
+            estimatedSize += entry.first.simplified().size() + entry.second.simplified().size();
+        }
+        return makeContextAssemblySource(
+            kind, contextAssemblyPolicy_.includeCommittedMemoryContext, !entries.isEmpty(),
+            entries.size(), estimatedSize,
+            QStringLiteral("%1 committed key-value memory entries available.").arg(entries.size()));
+    }
+    case ContextAssemblySourceKind::RuntimeMetadata: {
+        const auto runtimeSummary = conversationRuntimeSummary();
+        return makeContextAssemblySource(
+            kind, contextAssemblyPolicy_.includeRuntimeMetadataContext,
+            !runtimeSummary.trimmed().isEmpty(), 1, runtimeSummary.simplified().size(),
+            QStringLiteral("Conversation runtime metadata is available."));
+    }
+    case ContextAssemblySourceKind::Orchestration: {
+        const auto orchestrationSummary = orchestrationSnapshotSummary();
+        return makeContextAssemblySource(
+            kind, contextAssemblyPolicy_.includeOrchestrationContext,
+            !orchestrationSummary.trimmed().isEmpty(), 1, orchestrationSummary.simplified().size(),
+            QStringLiteral("Orchestration snapshot metadata is available."));
+    }
+    }
+
+    return {};
+}
+
+ContextAssemblySummary ApplicationController::contextAssemblySummary() const {
+    ContextAssemblyRequest request;
+    request.includeConversationContext = contextAssemblyPolicy_.includeConversationContext;
+    request.includeCommittedMemoryContext = contextAssemblyPolicy_.includeCommittedMemoryContext;
+    request.includeRuntimeMetadataContext = contextAssemblyPolicy_.includeRuntimeMetadataContext;
+    request.includeOrchestrationContext = contextAssemblyPolicy_.includeOrchestrationContext;
+    return contextAssemblySummaryForRequest(
+        request,
+        {
+            contextAssemblySource(ContextAssemblySourceKind::Conversation),
+            contextAssemblySource(ContextAssemblySourceKind::ConversationSummary),
+            contextAssemblySource(ContextAssemblySourceKind::CommittedMemory),
+            contextAssemblySource(ContextAssemblySourceKind::RuntimeMetadata),
+            contextAssemblySource(ContextAssemblySourceKind::Orchestration),
+        },
+        contextAssemblyPolicy_);
+}
+
+ConversationWindowResult
+ApplicationController::conversationWindowForPrompt(const QString& prompt) const {
+    QList<ConversationWindowMessage> messages;
+    if (!chatSession_) {
+        return assembleConversationWindow(messages, conversationWindowPolicy_);
+    }
+
+    const auto promptText = prompt.simplified();
+    const auto& history = chatSession_->messages();
+    messages.reserve(history.size());
+    for (int i = 0; i < history.size(); ++i) {
+        const auto& message = history.at(i);
+        if (!promptText.isEmpty() && i == history.size() - 1 && message.role == ChatRole::User &&
+            message.content.simplified() == promptText) {
+            continue;
+        }
+
+        messages.append(ConversationWindowMessage{
+            i + 1,
+            chatRoleName(message.role),
+            message.content,
+        });
+    }
+
+    return assembleConversationWindow(messages, conversationWindowPolicy_);
+}
+
+ConversationSummaryResult
+ApplicationController::conversationSummaryForPrompt(const QString& prompt) const {
+    QList<ConversationWindowMessage> messages;
+    if (!chatSession_) {
+        return assembleConversationSummary(messages, {}, conversationSummaryPolicy_);
+    }
+
+    const auto promptText = prompt.simplified();
+    const auto& history = chatSession_->messages();
+    messages.reserve(history.size());
+    for (int i = 0; i < history.size(); ++i) {
+        const auto& message = history.at(i);
+        if (!promptText.isEmpty() && i == history.size() - 1 && message.role == ChatRole::User &&
+            message.content.simplified() == promptText) {
+            continue;
+        }
+
+        messages.append(ConversationWindowMessage{
+            i + 1,
+            chatRoleName(message.role),
+            message.content,
+        });
+    }
+
+    const auto window = assembleConversationWindow(messages, conversationWindowPolicy_);
+    return assembleConversationSummary(messages, window.messages, conversationSummaryPolicy_);
+}
+
+QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QString& prompt) const {
+    QList<PromptContextBlock> blocks;
+
+    if (contextAssemblyPolicy_.includeConversationContext) {
+        const auto window = conversationWindowForPrompt(prompt);
+        if (!window.text.trimmed().isEmpty()) {
+            blocks.append(PromptContextBlock{
+                ContextAssemblySourceKind::Conversation,
+                QStringLiteral("Bounded Conversation History"),
+                window.text,
+                window.budget.estimatedCharacters,
+                window.budget.includedCharacters,
+                window.status == ConversationWindowStatus::Truncated,
+            });
+        }
+
+        const auto summary = conversationSummaryForPrompt(prompt);
+        if (!summary.text.trimmed().isEmpty()) {
+            blocks.append(PromptContextBlock{
+                ContextAssemblySourceKind::ConversationSummary,
+                QStringLiteral("Older Conversation Summary"),
+                summary.text,
+                summary.budget.estimatedCharacters,
+                summary.budget.includedCharacters,
+                summary.status == ConversationSummaryStatus::Truncated,
+            });
+        }
+    }
+
+    if (contextAssemblyPolicy_.includeCommittedMemoryContext) {
+        auto entries = currentMemoryEntries();
+        std::sort(entries.begin(), entries.end(),
+                  [](const auto& left, const auto& right) { return left.first < right.first; });
+        QStringList lines;
+        for (const auto& entry : entries) {
+            if (entry.first.trimmed().isEmpty() || entry.second.trimmed().isEmpty()) {
+                continue;
+            }
+            lines.append(
+                QStringLiteral("%1 = %2").arg(entry.first.simplified(), entry.second.simplified()));
+        }
+        if (!lines.isEmpty()) {
+            blocks.append(PromptContextBlock{
+                ContextAssemblySourceKind::CommittedMemory,
+                QStringLiteral("Committed Local Memory"),
+                lines.join(QStringLiteral("\n")),
+            });
+        }
+    }
+
+    if (contextAssemblyPolicy_.includeRuntimeMetadataContext) {
+        const auto runtimeSummary = conversationRuntimeSummary().simplified();
+        if (!runtimeSummary.isEmpty()) {
+            blocks.append(PromptContextBlock{
+                ContextAssemblySourceKind::RuntimeMetadata,
+                QStringLiteral("Runtime Metadata Summary"),
+                runtimeSummary,
+            });
+        }
+    }
+
+    if (contextAssemblyPolicy_.includeOrchestrationContext) {
+        const auto orchestrationSummary = orchestrationSnapshotSummary().simplified();
+        if (!orchestrationSummary.isEmpty()) {
+            blocks.append(PromptContextBlock{
+                ContextAssemblySourceKind::Orchestration,
+                QStringLiteral("Orchestration Metadata Summary"),
+                orchestrationSummary,
+            });
+        }
+    }
+
+    return blocks;
+}
+
+PromptContextInjectionResult
+ApplicationController::preparePromptContextInjection(const QString& prompt) const {
+    return injectPromptContext(prompt, promptContextBlocks(prompt), promptContextInjectionPolicy_);
+}
+
 QString ApplicationController::memoryRecallPolicyStatus() const {
     return memoryRecallPolicy_.status;
 }
@@ -3179,6 +3527,62 @@ int ApplicationController::memoryRecallResultCount() const {
 
 QStringList ApplicationController::memoryRecallResultSummaries() const {
     return sentinel::core::memoryRecallResultSummaries(latestMemoryRecallSummary_);
+}
+
+QString ApplicationController::contextAssemblyPolicyStatus() const {
+    return contextAssemblyPolicy_.status;
+}
+
+QString ApplicationController::contextAssemblyPolicySummary() const {
+    return contextAssemblyPolicy_.summary;
+}
+
+QString ApplicationController::contextAssemblyStatus() const {
+    return contextAssemblyStatusName(contextAssemblySummary().status);
+}
+
+QString ApplicationController::contextAssemblySummaryText() const {
+    return contextAssemblySummary().summary;
+}
+
+int ApplicationController::contextAssemblySourceCount() const {
+    return contextAssemblySummary().requestedSourceCount;
+}
+
+int ApplicationController::contextAssemblyAvailableSourceCount() const {
+    return contextAssemblySummary().availableSourceCount;
+}
+
+int ApplicationController::contextAssemblyCandidateBlockCount() const {
+    return contextAssemblySummary().candidateBlockCount;
+}
+
+int ApplicationController::contextAssemblyEstimatedSize() const {
+    return contextAssemblySummary().estimatedSize;
+}
+
+QString ApplicationController::conversationContextAvailability() const {
+    return contextAssemblySource(ContextAssemblySourceKind::Conversation).status;
+}
+
+QString ApplicationController::committedMemoryContextAvailability() const {
+    return contextAssemblySource(ContextAssemblySourceKind::CommittedMemory).status;
+}
+
+QString ApplicationController::runtimeMetadataContextAvailability() const {
+    return contextAssemblySource(ContextAssemblySourceKind::RuntimeMetadata).status;
+}
+
+QString ApplicationController::orchestrationContextAvailability() const {
+    return contextAssemblySource(ContextAssemblySourceKind::Orchestration).status;
+}
+
+QStringList ApplicationController::contextAssemblySourceSummaries() const {
+    return sentinel::core::contextAssemblySourceSummaries(contextAssemblySummary());
+}
+
+QStringList ApplicationController::contextAssemblyReadinessChecks() const {
+    return contextAssemblySummary().checks;
 }
 
 int ApplicationController::memoryEntryCount() const {
@@ -3445,6 +3849,7 @@ QString ApplicationController::createConversation(const QString& title) {
     emit conversationStateChanged();
     emit conversationSearchChanged();
     emit chatMessagesChanged();
+    emit contextAssemblyChanged();
     return activeConversationId_;
 }
 
@@ -3483,6 +3888,7 @@ bool ApplicationController::switchConversation(const QString& conversationId) {
     emit conversationStateChanged();
     emit conversationSearchChanged();
     emit chatMessagesChanged();
+    emit contextAssemblyChanged();
     return true;
 }
 
@@ -3523,6 +3929,7 @@ bool ApplicationController::archiveConversation(const QString& conversationId) {
         emit conversationSearchChanged();
     }
     emit chatMessagesChanged();
+    emit contextAssemblyChanged();
     return true;
 }
 
@@ -3626,6 +4033,7 @@ bool ApplicationController::requestMemoryCandidateCommit(const QString& candidat
     refreshMemoryRecallForCurrentEntries();
     emit memoryEntriesChanged();
     emit memoryRecallChanged();
+    emit contextAssemblyChanged();
     emit memoryCandidatesChanged();
     return true;
 }
@@ -3700,6 +4108,7 @@ bool ApplicationController::sendMessage(const QString& message) {
 
         refreshConversationHistorySummary();
         emit chatMessagesChanged();
+        emit contextAssemblyChanged();
         activeLocalInferenceIsChatRequest_ = true;
         const auto startedLocalInference = localInferenceStreamingAvailable()
                                                ? runLocalInferenceStream(trimmed, {})
@@ -3736,6 +4145,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         setConversationRuntimeResult(false, errorMessage.content);
         refreshConversationHistorySummary();
         emit chatMessagesChanged();
+        emit contextAssemblyChanged();
         return false;
     }
 
@@ -3771,6 +4181,7 @@ bool ApplicationController::sendMessage(const QString& message) {
     setConversationRuntimeResult(reply.success, assistantMessage.content);
     refreshConversationHistorySummary();
     emit chatMessagesChanged();
+    emit contextAssemblyChanged();
     return reply.success;
 }
 
@@ -3898,6 +4309,10 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         emit localInferenceChanged();
         return false;
     }
+
+    latestPromptContextInjectionResult_ = preparePromptContextInjection(request.prompt);
+    request.prompt = latestPromptContextInjectionResult_.prompt;
+    emit promptContextInjectionChanged();
 
     request.id = QStringLiteral("local-inference-request-%1").arg(++localInferenceRequestSequence_);
     activeLocalInferenceRequestId_ = request.id;
@@ -4111,6 +4526,10 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
         return blockStream(LocalInferenceError::ClientUnavailable,
                            QStringLiteral("Local streaming blocked: client is unavailable."));
     }
+
+    latestPromptContextInjectionResult_ = preparePromptContextInjection(request.prompt);
+    request.prompt = latestPromptContextInjectionResult_.prompt;
+    emit promptContextInjectionChanged();
 
     request.id = QStringLiteral("local-inference-request-%1").arg(++localInferenceRequestSequence_);
     activeLocalInferenceRequestId_ = request.id;
@@ -4784,6 +5203,7 @@ bool ApplicationController::clearMemory() {
     }
     emit memoryEntriesChanged();
     emit memoryRecallChanged();
+    emit contextAssemblyChanged();
     return succeeded;
 }
 
@@ -4851,6 +5271,7 @@ bool ApplicationController::clearChat() {
     emit conversationStateChanged();
     emit conversationSearchChanged();
     emit chatMessagesChanged();
+    emit contextAssemblyChanged();
     return persistentHealthy;
 }
 
@@ -4863,6 +5284,7 @@ void ApplicationController::remember(const QString& key, const QString& value) {
     refreshMemoryRecallForCurrentEntries();
     emit memoryEntriesChanged();
     emit memoryRecallChanged();
+    emit contextAssemblyChanged();
 }
 
 void ApplicationController::setMemoryMaintenanceStatus(const QString& status) {

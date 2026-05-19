@@ -78,6 +78,9 @@ private slots:
     void exposesMaintenanceStatuses();
     void exposesMemoryCandidateMetadata();
     void exposesLocalMemoryRecallMetadata();
+    void exposesContextAssemblyMetadata();
+    void exposesConversationWindowMetadata();
+    void exposesConversationSummaryMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1211,6 +1214,22 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("whisperPreparationReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("promptContextInjectionEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("promptContextInjectionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("promptContextInjectionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("promptContextInjectedBlockCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("promptContextSourceSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("promptContextSizeSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("promptContextBlockSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationSummaryStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryBudgetSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryBudgetCharacters"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationSummaryBlockCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationSummaryMessageCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationSummaryOmittedMessageCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationSummaryTruncatedBlockCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationSummaryBlockSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("localInferenceBusy"), QByteArrayLiteral("bool")},
         {QStringLiteral("localInferenceRuntimeState"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceStatus"), QByteArrayLiteral("QString")},
@@ -1265,6 +1284,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
 
     const QSet<QString> writableProperties{
         QStringLiteral("piperFileOutputExecutionEnabled"),
+        QStringLiteral("promptContextInjectionEnabled"),
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -1639,6 +1659,71 @@ void DesktopShellViewModelTest::exposesLocalMemoryRecallMetadata() {
     QCOMPARE(fixture.viewModel.memoryRecallResultCount(), 0);
 }
 
+void DesktopShellViewModelTest::exposesContextAssemblyMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::contextAssemblyChanged);
+
+    fixture.viewModel.remember(QStringLiteral("preference.answerStyle"),
+                               QStringLiteral("Use concise local summaries."));
+
+    QCOMPARE(fixture.viewModel.contextAssemblyPolicyStatus(), QStringLiteral("Planning Only"));
+    QCOMPARE(fixture.viewModel.contextAssemblyStatus(), QStringLiteral("Ready"));
+    QVERIFY(fixture.viewModel.contextAssemblySummaryText().contains(QStringLiteral("available")));
+    QVERIFY(fixture.viewModel.contextAssemblySourceCount() >= 4);
+    QVERIFY(fixture.viewModel.contextAssemblyAvailableSourceCount() >= 3);
+    QVERIFY(fixture.viewModel.contextAssemblyCandidateBlockCount() >= 3);
+    QVERIFY(fixture.viewModel.contextAssemblyEstimatedSize() > 0);
+    QCOMPARE(fixture.viewModel.conversationContextAvailability(), QStringLiteral("Available"));
+    QCOMPARE(fixture.viewModel.committedMemoryContextAvailability(), QStringLiteral("Available"));
+    QCOMPARE(fixture.viewModel.runtimeMetadataContextAvailability(), QStringLiteral("Available"));
+    QCOMPARE(fixture.viewModel.orchestrationContextAvailability(), QStringLiteral("Available"));
+    QVERIFY(fixture.viewModel.contextAssemblySourceSummaries()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Committed Memory Context")));
+    QVERIFY(fixture.viewModel.contextAssemblyReadinessChecks().contains(
+        QStringLiteral("Prompt assembly: disabled")));
+    QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.promptContextInjectedBlockCount(), 0);
+    QVERIFY(spy.count() >= 1);
+}
+
+void DesktopShellViewModelTest::exposesConversationWindowMetadata() {
+    ViewModelFixture fixture;
+
+    for (int i = 0; i < 12; ++i) {
+        QVERIFY(fixture.viewModel.sendMessage(
+            QStringLiteral("window marker %1 %2").arg(i).arg(QString(120, QLatin1Char('w')))));
+    }
+
+    QCOMPARE(fixture.viewModel.conversationWindowStatus(), QStringLiteral("Truncated"));
+    QCOMPARE(fixture.viewModel.conversationWindowBudgetCharacters(), 1200);
+    QVERIFY(fixture.viewModel.conversationWindowSummary().contains(QStringLiteral("includes")));
+    QVERIFY(fixture.viewModel.conversationWindowBudgetSummary().contains(QStringLiteral("1200")));
+    QVERIFY(fixture.viewModel.conversationWindowIncludedMessageCount() > 0);
+    QVERIFY(fixture.viewModel.conversationWindowOmittedMessageCount() > 0);
+    QVERIFY(fixture.viewModel.conversationWindowTruncatedMessageCount() >= 0);
+}
+
+void DesktopShellViewModelTest::exposesConversationSummaryMetadata() {
+    ViewModelFixture fixture;
+
+    for (int i = 0; i < 12; ++i) {
+        QVERIFY(fixture.viewModel.sendMessage(
+            QStringLiteral("summary marker %1 %2").arg(i).arg(QString(120, QLatin1Char('s')))));
+    }
+
+    QCOMPARE(fixture.viewModel.conversationSummaryBudgetCharacters(), 700);
+    QVERIFY(fixture.viewModel.conversationSummaryStatus() == QStringLiteral("Ready") ||
+            fixture.viewModel.conversationSummaryStatus() == QStringLiteral("Truncated"));
+    QVERIFY(fixture.viewModel.conversationSummaryText().contains(QStringLiteral("older")));
+    QVERIFY(fixture.viewModel.conversationSummaryBudgetSummary().contains(QStringLiteral("700")));
+    QVERIFY(fixture.viewModel.conversationSummaryBlockCount() > 0);
+    QVERIFY(fixture.viewModel.conversationSummaryMessageCount() > 0);
+    QVERIFY(fixture.viewModel.conversationSummaryOmittedMessageCount() >= 0);
+    QVERIFY(fixture.viewModel.conversationSummaryTruncatedBlockCount() >= 0);
+    QVERIFY(!fixture.viewModel.conversationSummaryBlockSummaries().isEmpty());
+}
+
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {
     QList<sentinel::core::ChatMessage> persisted{
         {7, sentinel::core::ChatRole::System, QStringLiteral("previous system"),
@@ -1836,12 +1921,15 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QSignalSpy chatRoutingSpy(&fixture.viewModel,
                               &DesktopShellViewModel::localChatInferenceRoutingChanged);
     QSignalSpy inferenceSpy(&fixture.viewModel, &DesktopShellViewModel::localInferenceChanged);
+    QSignalSpy contextInjectionSpy(&fixture.viewModel,
+                                   &DesktopShellViewModel::promptContextInjectionChanged);
 
     fixture.viewModel.setThemeName(QStringLiteral("Sentinel Light"));
     fixture.viewModel.setConfigurationProfile(QStringLiteral("Phase 2 Shell"));
     fixture.viewModel.setSelectedLocalModel(QStringLiteral(" local-model "));
     fixture.viewModel.setLocalChatInferenceEnabled(true);
     fixture.viewModel.setLocalInferenceStreamingEnabled(true);
+    fixture.viewModel.setPromptContextInjectionEnabled(true);
 
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
@@ -1851,12 +1939,16 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QVERIFY(fixture.settings.localChatInferenceEnabled());
     QVERIFY(fixture.viewModel.localInferenceStreamingEnabled());
     QVERIFY(fixture.settings.localInferenceStreamingEnabled());
+    QVERIFY(fixture.viewModel.promptContextInjectionEnabled());
+    QVERIFY(fixture.settings.promptContextInjectionEnabled());
+    QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Empty"));
     QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Enabled"));
     QCOMPARE(themeSpy.count(), 1);
     QCOMPARE(profileSpy.count(), 1);
     QCOMPARE(modelSpy.count(), 1);
     QCOMPARE(chatRoutingSpy.count(), 2);
     QCOMPARE(inferenceSpy.count(), 1);
+    QCOMPARE(contextInjectionSpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {

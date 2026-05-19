@@ -332,6 +332,41 @@ ShellPanel {
 
                 InfoRow {
                     compact: true
+                    label: "Context"
+                    value: chatPanel.viewModel.promptContextInjectionStatus
+                           + " / "
+                           + chatPanel.viewModel.promptContextInjectedBlockCount
+                           + (chatPanel.viewModel.promptContextInjectedBlockCount === 1 ? " block / " : " blocks / ")
+                           + chatPanel.viewModel.promptContextSourceSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
+                    label: "Window"
+                    value: chatPanel.viewModel.conversationWindowStatus
+                           + " / "
+                           + chatPanel.viewModel.conversationWindowIncludedMessageCount
+                           + " included / "
+                           + chatPanel.viewModel.conversationWindowTruncatedMessageCount
+                           + " truncated"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
+                    label: "Summary"
+                    value: chatPanel.viewModel.conversationSummaryStatus
+                           + " / "
+                           + chatPanel.viewModel.conversationSummaryBlockCount
+                           + " blocks / "
+                           + chatPanel.viewModel.conversationSummaryTruncatedBlockCount
+                           + " truncated"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
                     visible: chatPanel.viewModel.conversationRuntimeRequestId !== "None"
                     label: "Request"
                     value: chatPanel.viewModel.conversationRuntimeRequestId

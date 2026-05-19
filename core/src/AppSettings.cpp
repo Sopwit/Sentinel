@@ -125,6 +125,22 @@ void AppSettings::setLocalInferenceStreamingEnabled(bool enabled) {
     emit localInferenceStreamingEnabledChanged();
 }
 
+bool AppSettings::promptContextInjectionEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(promptContextInjectionEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setPromptContextInjectionEnabled(bool enabled) {
+    if (enabled == promptContextInjectionEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(promptContextInjectionEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit promptContextInjectionEnabledChanged();
+}
+
 QString AppSettings::piperBinaryPath() const {
     return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
                   : QString();

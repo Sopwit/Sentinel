@@ -1829,3 +1829,109 @@ Boundary rules:
   chat prompts.
 - Semantic recall, ranking, embeddings/vector indexing, prompt injection, and automatic context
   assembly require a later explicit phase.
+
+## 77. Context Assembly Starts As Planning Metadata Only
+
+Decision: Context assembly begins as a deterministic readiness/read-model layer, not as prompt
+construction.
+
+Reason: Sentinel now has conversation transcripts, committed memory, runtime metadata, and
+orchestration metadata, but joining them into prompts would create a new execution boundary. The
+Desktop Alpha needs visible planning metadata first.
+
+Boundary rules:
+
+- Context assembly planning may estimate participation for conversation context, committed
+  key-value memory context, runtime metadata context, and orchestration metadata context.
+- Planning may expose source availability, source counts, candidate block counts, source
+  summaries, and simple character-size estimates.
+- Planning must not build a final LLM prompt, inject context into chat, automatically attach
+  context, call providers/models, run tools/plugins, or perform filesystem/system actions.
+- Planning must not mutate chat messages, memory entries, memory candidates, runtime state, or
+  orchestration state.
+- QML receives only safe strings, counts, and lists through the controller/view-model boundary.
+- Semantic ranking, embeddings/vector indexes, prompt assembly, and automatic context attachment
+  require a later explicit phase.
+
+## 78. Prompt Context Injection Is Local, Bounded, And Opt-In
+
+Decision: Prompt context injection may prepend explicitly assembled local context to local Ollama
+requests only when the user/app setting is enabled.
+
+Reason: Sentinel now has committed local memory and context planning metadata, but prompt assembly
+can expose private data to a model. It therefore needs a deterministic, visible, local-only policy
+boundary before richer recall exists.
+
+Boundary rules:
+
+- Injection is disabled by default and controlled by a persisted explicit setting.
+- Injection runs only after existing local inference busy, model, endpoint, permission, and safety
+  gates pass.
+- Allowed sources are current conversation context, committed key-value memory, runtime metadata
+  summaries, and orchestration metadata summaries.
+- Pending, rejected, archived, and merely approved memory candidates are never injected unless they
+  have been explicitly committed into `IMemoryStore`.
+- The assembled context block must be clearly delimited and budgeted by character count.
+- Truncation order is deterministic: conversation, committed memory, runtime metadata, then
+  orchestration metadata.
+- UI exposure is summary-only: status, block count, source summary, size summary, and block
+  summaries. The raw assembled private prompt is not exposed to QML.
+- Injection must not mutate memory, memory candidates, chat history, runtime metadata, or
+  orchestration metadata.
+- No embeddings, vector database, semantic ranking/search, automatic memory writes, cloud/API-key
+  behavior, tools/plugins, filesystem/system actions, or voice/runtime scope changes are added.
+
+## 79. Conversation History Uses A Deterministic Recent Window
+
+Decision: Prompt context injection must include conversation history through a bounded recent
+message window instead of injecting the full active transcript.
+
+Reason: Long local conversations can exceed useful prompt budgets. Sentinel needs predictable
+context behavior before semantic recall, summarization, or provider-specific context management is
+introduced.
+
+Boundary rules:
+
+- Windowing uses `ConversationWindowPolicy`, `ConversationWindowBudget`,
+  `ConversationWindowSummary`, `ConversationWindowResult`, and `ConversationWindowStatus`.
+- Recent messages are prioritized for inclusion, but included messages are emitted in their
+  original chronological order.
+- Truncation is deterministic and character-budget based only.
+- The current user prompt is not duplicated inside the conversation-history window; it remains in
+  the existing prompt section.
+- Conversation history, committed memory, runtime metadata, and orchestration metadata remain
+  separate delimited prompt-context blocks.
+- UI exposure is summary-only: status, budget summary, included count, omitted count, and
+  truncated count.
+- Window assembly must not mutate chat history, memory, memory candidates, runtime state, or
+  orchestration metadata.
+- No semantic ranking/search, embeddings, vector database, transcript summarization, cloud/API-key
+  behavior, provider/model change, tools/plugins, filesystem/system actions, or broad UI redesign
+  is added.
+
+## 80. Conversation Summaries Are Deterministic Local Compaction
+
+Decision: Older conversation context may be represented by bounded deterministic summary blocks
+only after the recent conversation window has selected its messages.
+
+Reason: Long chats need a local bridge between recent-window context and future semantic
+summarization. That bridge must preserve chronology and source separation without adding provider
+calls or memory writes.
+
+Boundary rules:
+
+- Summary metadata uses `ConversationSummaryPolicy`, `ConversationSummaryStatus`,
+  `ConversationSummaryResult`, `ConversationSummaryBlock`, `ConversationSummaryWindow`, and
+  `ConversationSummaryBudget`.
+- Summary candidates are messages omitted by the recent conversation window.
+- Blocks preserve original message indexes, chronological order, and visible roles.
+- Summary text is heuristic/local compaction only; it is not semantic summarization.
+- Recent conversation history, older conversation summaries, committed key-value memory, runtime
+  metadata, and orchestration metadata remain separate prompt-context blocks.
+- Summary budgeting is deterministic character budgeting with included size, block count,
+  summarized/omitted message count, and truncated-block metadata.
+- Summary planning and assembly must not mutate chat history, memory, memory candidates, runtime
+  state, or orchestration metadata.
+- Semantic summarization, embeddings/vector DB, semantic ranking/search, provider/model calls,
+  cloud/API keys, tools/plugins, filesystem/system actions, automatic memory writes, and broad UI
+  redesign require later explicit phase gates.

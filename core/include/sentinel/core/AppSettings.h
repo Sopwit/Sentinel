@@ -24,6 +24,8 @@ class AppSettings final : public QObject {
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceEnabledChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceStreamingEnabledChanged)
+    Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
+                   setPromptContextInjectionEnabled NOTIFY promptContextInjectionEnabledChanged)
     Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
                    piperBinaryPathChanged)
     Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
@@ -58,6 +60,8 @@ public:
     void setLocalChatInferenceEnabled(bool enabled);
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
+    bool promptContextInjectionEnabled() const;
+    void setPromptContextInjectionEnabled(bool enabled);
     QString piperBinaryPath() const;
     void setPiperBinaryPath(const QString& path);
     QString piperModelPath() const;
@@ -77,6 +81,7 @@ signals:
     void selectedLocalModelChanged();
     void localChatInferenceEnabledChanged();
     void localInferenceStreamingEnabledChanged();
+    void promptContextInjectionEnabledChanged();
     void piperBinaryPathChanged();
     void piperModelPathChanged();
     void whisperBinaryPathChanged();
@@ -91,6 +96,7 @@ private:
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";
     static constexpr auto localChatInferenceEnabledKey = "localChatInferenceEnabled";
     static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
+    static constexpr auto promptContextInjectionEnabledKey = "promptContextInjectionEnabled";
     static constexpr auto piperBinaryPathKey = "piperBinaryPath";
     static constexpr auto piperModelPathKey = "piperModelPath";
     static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";
