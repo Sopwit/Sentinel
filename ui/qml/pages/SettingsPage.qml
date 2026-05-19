@@ -249,6 +249,13 @@ ScrollView {
                     onToggled: settingsPage.viewModel.localInferenceStreamingEnabled = checked
                 }
 
+                CheckBox {
+                    Layout.fillWidth: true
+                    text: "Use local memory/context in chat"
+                    checked: settingsPage.viewModel.promptContextInjectionEnabled
+                    onToggled: settingsPage.viewModel.promptContextInjectionEnabled = checked
+                }
+
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Chat Routing"
@@ -267,6 +274,53 @@ ScrollView {
                     compact: settingsPage.compact
                     label: "Streaming"
                     value: settingsPage.viewModel.localInferenceStreamStatus + " / " + settingsPage.viewModel.localInferenceStreamSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Context"
+                    value: settingsPage.viewModel.promptContextInjectionStatus + " / " + settingsPage.viewModel.promptContextInjectionSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Window"
+                    value: settingsPage.viewModel.conversationWindowStatus
+                           + " / "
+                           + settingsPage.viewModel.conversationWindowBudgetSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Truncation"
+                    value: settingsPage.viewModel.conversationWindowIncludedMessageCount
+                           + " included / "
+                           + settingsPage.viewModel.conversationWindowOmittedMessageCount
+                           + " omitted / "
+                           + settingsPage.viewModel.conversationWindowTruncatedMessageCount
+                           + " truncated"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Summary"
+                    value: settingsPage.viewModel.conversationSummaryStatus
+                           + " / "
+                           + settingsPage.viewModel.conversationSummaryBlockCount
+                           + " blocks / "
+                           + settingsPage.viewModel.conversationSummaryMessageCount
+                           + " older messages"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Summary Budget"
+                    value: settingsPage.viewModel.conversationSummaryBudgetSummary
                     Layout.fillWidth: true
                 }
             }

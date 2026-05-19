@@ -28,6 +28,7 @@ private slots:
     void persistsSelectedLocalModel();
     void persistsLocalChatInferenceOptIn();
     void persistsLocalInferenceStreamingOptIn();
+    void persistsPromptContextInjectionOptIn();
     void persistsVoiceConfigurationPaths();
     void persistsPiperFileOutputExecutionOptIn();
     void persistsLocalAiRuntimeSettingsThroughJsonStore();
@@ -45,6 +46,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(settings->selectedLocalModel().isEmpty());
     QVERIFY(!settings->localChatInferenceEnabled());
     QVERIFY(!settings->localInferenceStreamingEnabled());
+    QVERIFY(!settings->promptContextInjectionEnabled());
     QVERIFY(settings->piperBinaryPath().isEmpty());
     QVERIFY(settings->piperModelPath().isEmpty());
     QVERIFY(settings->whisperBinaryPath().isEmpty());
@@ -207,6 +209,25 @@ void AppSettingsTest::persistsLocalInferenceStreamingOptIn() {
     QCOMPARE(spy.count(), 2);
 }
 
+void AppSettingsTest::persistsPromptContextInjectionOptIn() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::promptContextInjectionEnabledChanged);
+
+    QVERIFY(!settings->promptContextInjectionEnabled());
+
+    settings->setPromptContextInjectionEnabled(true);
+
+    QVERIFY(settings->promptContextInjectionEnabled());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setPromptContextInjectionEnabled(true);
+    QCOMPARE(spy.count(), 1);
+
+    settings->setPromptContextInjectionEnabled(false);
+    QVERIFY(!settings->promptContextInjectionEnabled());
+    QCOMPARE(spy.count(), 2);
+}
+
 void AppSettingsTest::persistsVoiceConfigurationPaths() {
     const auto settings = makeSettings();
     QSignalSpy piperBinarySpy(settings.get(), &AppSettings::piperBinaryPathChanged);
@@ -258,6 +279,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setSelectedLocalModel(QStringLiteral(" llama3.2 "));
         settings.setLocalChatInferenceEnabled(true);
         settings.setLocalInferenceStreamingEnabled(true);
+        settings.setPromptContextInjectionEnabled(true);
         settings.setPiperBinaryPath(QStringLiteral("/opt/piper/piper"));
         settings.setPiperModelPath(QStringLiteral("/opt/piper/model.onnx"));
         settings.setWhisperBinaryPath(QStringLiteral("/opt/whisper/whisper"));
@@ -270,6 +292,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QCOMPARE(reloaded.selectedLocalModel(), QStringLiteral("llama3.2"));
     QVERIFY(reloaded.localChatInferenceEnabled());
     QVERIFY(reloaded.localInferenceStreamingEnabled());
+    QVERIFY(reloaded.promptContextInjectionEnabled());
     QCOMPARE(reloaded.piperBinaryPath(), QStringLiteral("/opt/piper/piper"));
     QCOMPARE(reloaded.piperModelPath(), QStringLiteral("/opt/piper/model.onnx"));
     QCOMPARE(reloaded.whisperBinaryPath(), QStringLiteral("/opt/whisper/whisper"));

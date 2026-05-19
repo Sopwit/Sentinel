@@ -53,6 +53,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::memoryCandidatesChanged);
     connect(&controller_, &core::ApplicationController::memoryRecallChanged, this,
             &DesktopShellViewModel::memoryRecallChanged);
+    connect(&controller_, &core::ApplicationController::contextAssemblyChanged, this,
+            &DesktopShellViewModel::contextAssemblyChanged);
     connect(&controller_, &core::ApplicationController::agentActivityChanged, this,
             &DesktopShellViewModel::agentActivityChanged);
     connect(&controller_, &core::ApplicationController::modelRoutingChanged, this,
@@ -67,6 +69,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::localChatInferenceRoutingChanged);
     connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
             &DesktopShellViewModel::localInferenceChanged);
+    connect(&controller_, &core::ApplicationController::promptContextInjectionChanged, this,
+            &DesktopShellViewModel::promptContextInjectionChanged);
     connect(&controller_, &core::ApplicationController::voiceConfigurationChanged, this,
             &DesktopShellViewModel::voiceConfigurationChanged);
     connect(&modeManager_, &core::ModeManager::currentModeChanged, this,
@@ -85,6 +89,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::localInferenceStreamingEnabledChanged, this, [this]() {
         controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
     });
+    connect(&settings_, &core::AppSettings::promptContextInjectionEnabledChanged, this, [this]() {
+        controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
+    });
     connect(&settings_, &core::AppSettings::piperBinaryPathChanged, this,
             [this]() { controller_.setPiperBinaryPath(settings_.piperBinaryPath()); });
     connect(&settings_, &core::AppSettings::piperModelPathChanged, this,
@@ -99,6 +106,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.setSelectedLocalModel(settings_.selectedLocalModel());
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
+    controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
     controller_.setPiperBinaryPath(settings_.piperBinaryPath());
     controller_.setPiperModelPath(settings_.piperModelPath());
     controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
@@ -909,6 +917,105 @@ QString DesktopShellViewModel::localChatInferenceSummary() const {
     return controller_.localChatInferenceSummary();
 }
 
+bool DesktopShellViewModel::promptContextInjectionEnabled() const {
+    return controller_.promptContextInjectionEnabled();
+}
+
+void DesktopShellViewModel::setPromptContextInjectionEnabled(bool enabled) {
+    settings_.setPromptContextInjectionEnabled(enabled);
+    if (controller_.promptContextInjectionEnabled() != settings_.promptContextInjectionEnabled()) {
+        controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
+    }
+}
+
+QString DesktopShellViewModel::promptContextInjectionStatus() const {
+    return controller_.promptContextInjectionStatus();
+}
+
+QString DesktopShellViewModel::promptContextInjectionSummary() const {
+    return controller_.promptContextInjectionSummary();
+}
+
+int DesktopShellViewModel::promptContextInjectedBlockCount() const {
+    return controller_.promptContextInjectedBlockCount();
+}
+
+QString DesktopShellViewModel::promptContextSourceSummary() const {
+    return controller_.promptContextSourceSummary();
+}
+
+QString DesktopShellViewModel::promptContextSizeSummary() const {
+    return controller_.promptContextSizeSummary();
+}
+
+QStringList DesktopShellViewModel::promptContextBlockSummaries() const {
+    return controller_.promptContextBlockSummaries();
+}
+
+QString DesktopShellViewModel::conversationWindowStatus() const {
+    return controller_.conversationWindowStatus();
+}
+
+QString DesktopShellViewModel::conversationWindowSummary() const {
+    return controller_.conversationWindowSummary();
+}
+
+QString DesktopShellViewModel::conversationWindowBudgetSummary() const {
+    return controller_.conversationWindowBudgetSummary();
+}
+
+int DesktopShellViewModel::conversationWindowBudgetCharacters() const {
+    return controller_.conversationWindowBudgetCharacters();
+}
+
+int DesktopShellViewModel::conversationWindowIncludedMessageCount() const {
+    return controller_.conversationWindowIncludedMessageCount();
+}
+
+int DesktopShellViewModel::conversationWindowTruncatedMessageCount() const {
+    return controller_.conversationWindowTruncatedMessageCount();
+}
+
+int DesktopShellViewModel::conversationWindowOmittedMessageCount() const {
+    return controller_.conversationWindowOmittedMessageCount();
+}
+
+QString DesktopShellViewModel::conversationSummaryStatus() const {
+    return controller_.conversationSummaryStatus();
+}
+
+QString DesktopShellViewModel::conversationSummaryText() const {
+    return controller_.conversationSummaryText();
+}
+
+QString DesktopShellViewModel::conversationSummaryBudgetSummary() const {
+    return controller_.conversationSummaryBudgetSummary();
+}
+
+int DesktopShellViewModel::conversationSummaryBudgetCharacters() const {
+    return controller_.conversationSummaryBudgetCharacters();
+}
+
+int DesktopShellViewModel::conversationSummaryBlockCount() const {
+    return controller_.conversationSummaryBlockCount();
+}
+
+int DesktopShellViewModel::conversationSummaryMessageCount() const {
+    return controller_.conversationSummaryMessageCount();
+}
+
+int DesktopShellViewModel::conversationSummaryOmittedMessageCount() const {
+    return controller_.conversationSummaryOmittedMessageCount();
+}
+
+int DesktopShellViewModel::conversationSummaryTruncatedBlockCount() const {
+    return controller_.conversationSummaryTruncatedBlockCount();
+}
+
+QStringList DesktopShellViewModel::conversationSummaryBlockSummaries() const {
+    return controller_.conversationSummaryBlockSummaries();
+}
+
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
     return controller_.localInferenceStreamingEnabled();
 }
@@ -1351,6 +1458,62 @@ int DesktopShellViewModel::memoryRecallResultCount() const {
 
 QStringList DesktopShellViewModel::memoryRecallResultSummaries() const {
     return controller_.memoryRecallResultSummaries();
+}
+
+QString DesktopShellViewModel::contextAssemblyPolicyStatus() const {
+    return controller_.contextAssemblyPolicyStatus();
+}
+
+QString DesktopShellViewModel::contextAssemblyPolicySummary() const {
+    return controller_.contextAssemblyPolicySummary();
+}
+
+QString DesktopShellViewModel::contextAssemblyStatus() const {
+    return controller_.contextAssemblyStatus();
+}
+
+QString DesktopShellViewModel::contextAssemblySummaryText() const {
+    return controller_.contextAssemblySummaryText();
+}
+
+int DesktopShellViewModel::contextAssemblySourceCount() const {
+    return controller_.contextAssemblySourceCount();
+}
+
+int DesktopShellViewModel::contextAssemblyAvailableSourceCount() const {
+    return controller_.contextAssemblyAvailableSourceCount();
+}
+
+int DesktopShellViewModel::contextAssemblyCandidateBlockCount() const {
+    return controller_.contextAssemblyCandidateBlockCount();
+}
+
+int DesktopShellViewModel::contextAssemblyEstimatedSize() const {
+    return controller_.contextAssemblyEstimatedSize();
+}
+
+QString DesktopShellViewModel::conversationContextAvailability() const {
+    return controller_.conversationContextAvailability();
+}
+
+QString DesktopShellViewModel::committedMemoryContextAvailability() const {
+    return controller_.committedMemoryContextAvailability();
+}
+
+QString DesktopShellViewModel::runtimeMetadataContextAvailability() const {
+    return controller_.runtimeMetadataContextAvailability();
+}
+
+QString DesktopShellViewModel::orchestrationContextAvailability() const {
+    return controller_.orchestrationContextAvailability();
+}
+
+QStringList DesktopShellViewModel::contextAssemblySourceSummaries() const {
+    return controller_.contextAssemblySourceSummaries();
+}
+
+QStringList DesktopShellViewModel::contextAssemblyReadinessChecks() const {
+    return controller_.contextAssemblyReadinessChecks();
 }
 
 int DesktopShellViewModel::memoryEntryCount() const {

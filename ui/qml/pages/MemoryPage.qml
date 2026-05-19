@@ -156,6 +156,73 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                implicitHeight: contextAssemblyColumn.implicitHeight + memoryPage.panelPadding * 2
+
+                ColumnLayout {
+                    id: contextAssemblyColumn
+                    x: memoryPage.panelPadding
+                    y: memoryPage.panelPadding
+                    width: parent.width - memoryPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: "Context Assembly"
+                        subtitle: "Planning metadata only. Prompt assembly and automatic attachment remain disabled."
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Policy"
+                        value: memoryPage.viewModel.contextAssemblyPolicyStatus + " - "
+                               + memoryPage.viewModel.contextAssemblyPolicySummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Readiness"
+                        value: memoryPage.viewModel.contextAssemblyStatus + " - "
+                               + memoryPage.viewModel.contextAssemblySummaryText
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Sources"
+                        value: memoryPage.viewModel.contextAssemblyAvailableSourceCount + " available / "
+                               + memoryPage.viewModel.contextAssemblySourceCount + " requested / "
+                               + memoryPage.viewModel.contextAssemblyCandidateBlockCount + " blocks / ~"
+                               + memoryPage.viewModel.contextAssemblyEstimatedSize + " chars"
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Availability"
+                        value: "Conversation " + memoryPage.viewModel.conversationContextAvailability
+                               + " / Memory " + memoryPage.viewModel.committedMemoryContextAvailability
+                               + " / Runtime " + memoryPage.viewModel.runtimeMetadataContextAvailability
+                               + " / Orchestration " + memoryPage.viewModel.orchestrationContextAvailability
+                        Layout.fillWidth: true
+                    }
+
+                    Repeater {
+                        model: memoryPage.viewModel.contextAssemblySourceSummaries
+
+                        Label {
+                            required property string modelData
+                            text: modelData
+                            color: SentinelTheme.textMuted
+                            wrapMode: Text.WordWrap
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+            }
+
+            ShellPanel {
+                width: parent.width
                 implicitHeight: candidateColumn.implicitHeight + memoryPage.panelPadding * 2
 
                 ColumnLayout {

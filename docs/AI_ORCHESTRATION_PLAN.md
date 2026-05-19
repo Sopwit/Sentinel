@@ -190,6 +190,47 @@ Recall reads `IMemoryStore::entries()` only, performs literal key/value matching
 QML-safe strings/counts/lists, and never injects results into chat prompts. Empty queries report
 Empty Query without mutation. No embeddings, vector DB, semantic search, provider/model calls,
 cloud/API keys, tools/plugins, filesystem/system actions, or autonomous memory behavior is added.
+Phase 16.16 through Phase 16.18 add context assembly planning metadata:
+`ContextAssemblyRequest`, `ContextAssemblySource`, `ContextAssemblyResult`,
+`ContextAssemblyStatus`, `ContextAssemblyPolicy`, and `ContextAssemblySummary` estimate future
+participation for conversation context, committed memory context, runtime metadata context, and
+orchestration context. Planning exposes source availability, deterministic source summaries,
+candidate block counts, and simple character-size estimates through QML-safe controller/view-model
+values. It does not assemble prompts, inject context into chat, attach context automatically, call
+providers/models, run semantic ranking, build embeddings/vector indexes, execute tools/plugins, or
+perform filesystem/system actions.
+Phase 16.19 through Phase 16.21 add safe prompt context injection for local Ollama prompt
+requests. `PromptContextBlock`, `PromptContextBundle`, `PromptContextInjectionPolicy`,
+`PromptContextInjectionStatus`, and `PromptContextInjectionResult` describe bounded assembled
+context and summary-only UI exposure. Injection is disabled by default, requires an explicit
+setting, runs only after existing local inference gates pass, and prepends a clearly delimited
+context block to the local prompt. Sources are limited to current conversation context, committed
+key-value memory, runtime metadata summaries, and orchestration metadata summaries. Pending and
+rejected memory candidates are excluded. The block is character-budgeted with deterministic
+truncation. No embeddings, vector DB, semantic ranking/search, automatic memory writes, cloud/API
+keys, tools/plugins, filesystem/system actions, voice/runtime scope changes, or raw prompt UI
+exposure is added.
+Phase 16.22 through Phase 16.24 add deterministic conversation window management for that local
+prompt context path. `ConversationWindowPolicy`, `ConversationWindowSummary`,
+`ConversationWindowResult`, `ConversationWindowStatus`, and `ConversationWindowBudget` describe a
+recent-message-first character-budgeted history window. The selected messages are emitted in
+chronological order, the current user prompt stays outside the history block, committed memory
+remains a separate prompt-context source, and QML receives only budget/status/count summaries. No
+semantic ranking/search, embeddings, vector DB, transcript summarization, provider/model change,
+cloud/API-key behavior, tools/plugins, filesystem/system actions, broad UI redesign, or raw prompt
+display is added.
+Phase 16.25 through Phase 16.27 add deterministic conversation summary metadata for older history
+omitted by that recent window. `ConversationSummaryPolicy`, `ConversationSummaryStatus`,
+`ConversationSummaryResult`, `ConversationSummaryBlock`, `ConversationSummaryWindow`, and
+`ConversationSummaryBudget` describe local heuristic compaction with original message indexes,
+chronological order, role visibility, and bounded character budgets. Older summaries are injected
+as a separate prompt-context block from recent conversation history, committed key-value memory,
+runtime metadata, and orchestration metadata. Recent window priority is preserved, committed
+memory remains separate, and summary planning/assembly does not mutate chat, memory, candidates,
+runtime state, or orchestration metadata. No semantic summarization, embeddings/vector DB,
+semantic ranking/search, provider/model calls, cloud/API keys, tools/plugins,
+filesystem/system actions, automatic memory writes, broad UI redesign, or raw prompt display is
+added.
 
 ## Future Components
 
@@ -281,6 +322,10 @@ cloud/API keys, tools/plugins, filesystem/system actions, or autonomous memory b
   entries. Current recall is read-only UI metadata and is not semantic recall or prompt injection.
   Future phases may define semantic recall, ranking, embeddings/vector indexes, and controlled
   context assembly.
+- Context assembly planning: deterministic readiness metadata for future conversation, committed
+  memory, runtime metadata, and orchestration context participation. Current planning only counts
+  and summarizes candidate blocks and does not build prompts, inject context, attach context
+  automatically, call providers/models, rank semantically, or use embeddings/vector indexes.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
 - Local model management readiness: deterministic metadata for recommended local models,

@@ -16,6 +16,7 @@ add_sentinel_core_test(test_mode_manager core/test_mode_manager.cpp)
 add_sentinel_core_test(test_chat_session core/test_chat_session.cpp)
 add_sentinel_core_test(test_conversation_session core/test_conversation_session.cpp)
 add_sentinel_core_test(test_conversation_state_graph core/test_conversation_state_graph.cpp)
+add_sentinel_core_test(test_context_assembly core/test_context_assembly.cpp)
 add_sentinel_core_test(test_in_memory_conversation_store core/test_in_memory_conversation_store.cpp)
 add_sentinel_core_test(test_in_memory_memory_candidate_store
                        core/test_in_memory_memory_candidate_store.cpp)

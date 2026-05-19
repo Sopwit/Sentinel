@@ -276,6 +276,52 @@ class DesktopShellViewModel final : public QObject {
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceSummary READ localChatInferenceSummary NOTIFY
                    localChatInferenceRoutingChanged)
+    Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
+                   setPromptContextInjectionEnabled NOTIFY promptContextInjectionChanged)
+    Q_PROPERTY(QString promptContextInjectionStatus READ promptContextInjectionStatus NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QString promptContextInjectionSummary READ promptContextInjectionSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(int promptContextInjectedBlockCount READ promptContextInjectedBlockCount NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QString promptContextSourceSummary READ promptContextSourceSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QString promptContextSizeSummary READ promptContextSizeSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QStringList promptContextBlockSummaries READ promptContextBlockSummaries NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(
+        QString conversationWindowStatus READ conversationWindowStatus NOTIFY chatMessagesChanged)
+    Q_PROPERTY(
+        QString conversationWindowSummary READ conversationWindowSummary NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString conversationWindowBudgetSummary READ conversationWindowBudgetSummary NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(int conversationWindowBudgetCharacters READ conversationWindowBudgetCharacters NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(int conversationWindowIncludedMessageCount READ
+                   conversationWindowIncludedMessageCount NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int conversationWindowTruncatedMessageCount READ
+                   conversationWindowTruncatedMessageCount NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int conversationWindowOmittedMessageCount READ conversationWindowOmittedMessageCount
+                   NOTIFY chatMessagesChanged)
+    Q_PROPERTY(
+        QString conversationSummaryStatus READ conversationSummaryStatus NOTIFY chatMessagesChanged)
+    Q_PROPERTY(
+        QString conversationSummaryText READ conversationSummaryText NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QString conversationSummaryBudgetSummary READ conversationSummaryBudgetSummary NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(int conversationSummaryBudgetCharacters READ conversationSummaryBudgetCharacters
+                   NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int conversationSummaryBlockCount READ conversationSummaryBlockCount NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(int conversationSummaryMessageCount READ conversationSummaryMessageCount NOTIFY
+                   chatMessagesChanged)
+    Q_PROPERTY(int conversationSummaryOmittedMessageCount READ
+                   conversationSummaryOmittedMessageCount NOTIFY chatMessagesChanged)
+    Q_PROPERTY(int conversationSummaryTruncatedBlockCount READ
+                   conversationSummaryTruncatedBlockCount NOTIFY chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationSummaryBlockSummaries READ conversationSummaryBlockSummaries
+                   NOTIFY chatMessagesChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -475,6 +521,32 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(int memoryRecallResultCount READ memoryRecallResultCount NOTIFY memoryRecallChanged)
     Q_PROPERTY(QStringList memoryRecallResultSummaries READ memoryRecallResultSummaries NOTIFY
                    memoryRecallChanged)
+    Q_PROPERTY(QString contextAssemblyPolicyStatus READ contextAssemblyPolicyStatus CONSTANT)
+    Q_PROPERTY(QString contextAssemblyPolicySummary READ contextAssemblyPolicySummary CONSTANT)
+    Q_PROPERTY(
+        QString contextAssemblyStatus READ contextAssemblyStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString contextAssemblySummaryText READ contextAssemblySummaryText NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int contextAssemblySourceCount READ contextAssemblySourceCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int contextAssemblyAvailableSourceCount READ contextAssemblyAvailableSourceCount
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int contextAssemblyCandidateBlockCount READ contextAssemblyCandidateBlockCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int contextAssemblyEstimatedSize READ contextAssemblyEstimatedSize NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString conversationContextAvailability READ conversationContextAvailability NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString committedMemoryContextAvailability READ committedMemoryContextAvailability
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString runtimeMetadataContextAvailability READ runtimeMetadataContextAvailability
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString orchestrationContextAvailability READ orchestrationContextAvailability NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList contextAssemblySourceSummaries READ contextAssemblySourceSummaries NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList contextAssemblyReadinessChecks READ contextAssemblyReadinessChecks NOTIFY
+                   contextAssemblyChanged)
     Q_PROPERTY(int memoryEntryCount READ memoryEntryCount NOTIFY memoryEntriesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
@@ -684,6 +756,30 @@ public:
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;
     QString localChatInferenceSummary() const;
+    bool promptContextInjectionEnabled() const;
+    void setPromptContextInjectionEnabled(bool enabled);
+    QString promptContextInjectionStatus() const;
+    QString promptContextInjectionSummary() const;
+    int promptContextInjectedBlockCount() const;
+    QString promptContextSourceSummary() const;
+    QString promptContextSizeSummary() const;
+    QStringList promptContextBlockSummaries() const;
+    QString conversationWindowStatus() const;
+    QString conversationWindowSummary() const;
+    QString conversationWindowBudgetSummary() const;
+    int conversationWindowBudgetCharacters() const;
+    int conversationWindowIncludedMessageCount() const;
+    int conversationWindowTruncatedMessageCount() const;
+    int conversationWindowOmittedMessageCount() const;
+    QString conversationSummaryStatus() const;
+    QString conversationSummaryText() const;
+    QString conversationSummaryBudgetSummary() const;
+    int conversationSummaryBudgetCharacters() const;
+    int conversationSummaryBlockCount() const;
+    int conversationSummaryMessageCount() const;
+    int conversationSummaryOmittedMessageCount() const;
+    int conversationSummaryTruncatedBlockCount() const;
+    QStringList conversationSummaryBlockSummaries() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;
@@ -794,6 +890,20 @@ public:
     QString memoryRecallSummaryText() const;
     int memoryRecallResultCount() const;
     QStringList memoryRecallResultSummaries() const;
+    QString contextAssemblyPolicyStatus() const;
+    QString contextAssemblyPolicySummary() const;
+    QString contextAssemblyStatus() const;
+    QString contextAssemblySummaryText() const;
+    int contextAssemblySourceCount() const;
+    int contextAssemblyAvailableSourceCount() const;
+    int contextAssemblyCandidateBlockCount() const;
+    int contextAssemblyEstimatedSize() const;
+    QString conversationContextAvailability() const;
+    QString committedMemoryContextAvailability() const;
+    QString runtimeMetadataContextAvailability() const;
+    QString orchestrationContextAvailability() const;
+    QStringList contextAssemblySourceSummaries() const;
+    QStringList contextAssemblyReadinessChecks() const;
     int memoryEntryCount() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
@@ -864,6 +974,7 @@ signals:
     void conversationDeleteChanged();
     void memoryCandidatesChanged();
     void memoryRecallChanged();
+    void contextAssemblyChanged();
     void agentActivityChanged();
     void modelRoutingChanged();
     void taskPlanChanged();
@@ -872,6 +983,7 @@ signals:
     void localChatInferenceRoutingChanged();
     void localInferenceChanged();
     void voiceConfigurationChanged();
+    void promptContextInjectionChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);

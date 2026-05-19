@@ -159,9 +159,81 @@ Phase 16.13 through Phase 16.15 add local memory recall metadata over committed 
   `DesktopShellViewModel`.
 - Recall results are not injected into chat prompts or provider/model requests.
 
+Phase 16.16 through Phase 16.18 add context assembly planning metadata over existing read models:
+
+- `ContextAssemblyRequest`, `ContextAssemblySource`, `ContextAssemblyResult`,
+  `ContextAssemblyStatus`, `ContextAssemblyPolicy`, and `ContextAssemblySummary` are value-only
+  records.
+- Planning estimates which future context sources would participate: conversation context,
+  committed key-value memory context, runtime metadata context, and orchestration metadata context.
+- Planning produces deterministic source summaries, source counts, candidate block counts, and
+  simple character-size estimates only.
+- `ApplicationController` derives the read model from current transcript messages, committed
+  memory entries, conversation runtime summaries, and orchestration snapshot summaries.
+- `DesktopShellViewModel` exposes only QML-safe strings, counts, and lists.
+- Prompt assembly, prompt injection, automatic context attachment, provider/model calls, semantic
+  ranking, embeddings, vector databases, tools/plugins, and filesystem/system actions remain
+  disabled.
+
+Phase 16.19 through Phase 16.21 add safe prompt context injection for local Ollama requests:
+
+- `PromptContextBlock`, `PromptContextBundle`, `PromptContextInjectionPolicy`,
+  `PromptContextInjectionStatus`, and `PromptContextInjectionResult` describe bounded local context
+  assembly output.
+- Injection is disabled by default and is enabled only through explicit user/app settings.
+- When enabled, `ApplicationController` assembles deterministic context after local inference busy,
+  model, endpoint, permission, and safety gates pass.
+- The only allowed sources are current conversation context, committed `IMemoryStore` key-value
+  entries, conversation runtime summaries, and orchestration summary metadata.
+- Pending, rejected, archived, and merely approved memory candidates are excluded unless they have
+  been explicitly committed to key-value memory.
+- The prompt context block is clearly delimited, character-budgeted, and truncated in deterministic
+  source order before being prepended to the local Ollama prompt.
+- QML receives enabled/status/summary, block counts, source summary, size summary, and compact
+  block summaries only. It does not receive the raw assembled prompt or private context payload.
+
 This foundation deliberately does not add embeddings, a vector database, semantic search,
 autonomous capture, model/provider calls, cloud sync, tool/plugin authority, filesystem/system
 authority, or automatic writes to long-term memory.
+
+Phase 16.22 through Phase 16.24 add deterministic conversation window management to that prompt
+context path:
+
+- `ConversationWindowPolicy`, `ConversationWindowSummary`, `ConversationWindowResult`,
+  `ConversationWindowStatus`, and `ConversationWindowBudget` are value-only records.
+- The controller assembles a bounded recent-message conversation-history window before prompt
+  context injection. Recent messages are considered first for the character budget, and included
+  messages are emitted back in stable chronological order.
+- The current user prompt remains outside the conversation-history window and stays in the
+  existing `User prompt:` section, so the bounded history does not duplicate the active prompt.
+- Prompt context sources remain separated: bounded conversation history, committed key-value
+  memory, runtime metadata, and orchestration metadata are distinct delimited blocks.
+- Budget summaries expose estimated, included, omitted, and truncated counts through QML-safe
+  strings and integers only. The raw assembled prompt is still not exposed to QML.
+
+The window foundation deliberately does not add semantic ranking, embeddings/vector databases,
+summarization, model/provider routing changes, cloud/API-key behavior, tools/plugins,
+filesystem/system actions, or broad UI redesign.
+
+Phase 16.25 through Phase 16.27 add deterministic older-conversation summary blocks to the same
+bounded prompt context path:
+
+- `ConversationSummaryPolicy`, `ConversationSummaryStatus`, `ConversationSummaryResult`,
+  `ConversationSummaryBlock`, `ConversationSummaryWindow`, and `ConversationSummaryBudget` are
+  value-only records.
+- The controller derives summary candidates from transcript messages omitted by the recent
+  conversation window, preserving original message indexes, chronology, and visible roles.
+- Summary blocks are deterministic local compaction only: grouped transcript excerpts with bounded
+  truncation. They are not semantic summaries and do not call providers/models.
+- Prompt context sources remain separated: recent conversation window, older conversation summary,
+  committed key-value memory, runtime metadata, and orchestration metadata are distinct delimited
+  blocks.
+- Summary metadata reports block counts, summarized/omitted message counts, included character
+  counts, and truncated block counts through QML-safe strings and integers only.
+
+Future semantic summarization, embeddings, vector databases, semantic ranking/search, automatic
+memory writes, provider/model calls, tools/plugins, cloud/API keys, and filesystem/system actions
+remain separate future phase gates.
 
 ## Chat History Storage Contract
 

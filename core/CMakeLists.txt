@@ -8,6 +8,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ApplicationController.h
     include/sentinel/core/ChatMessage.h
     include/sentinel/core/ChatSession.h
+    include/sentinel/core/ContextAssembly.h
     include/sentinel/core/ConversationSession.h
     include/sentinel/core/ConversationHistoryMetadata.h
     include/sentinel/core/ConversationStateGraph.h
@@ -87,6 +88,7 @@ add_library(sentinel_core STATIC
     src/AgentRuntimeContext.cpp
     src/ApplicationController.cpp
     src/ChatSession.cpp
+    src/ContextAssembly.cpp
     src/ConversationSession.cpp
     src/ConversationStateGraph.cpp
     src/ExecutionLifecycle.cpp

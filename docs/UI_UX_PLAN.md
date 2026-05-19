@@ -289,6 +289,35 @@ key/value query field, and compact matching committed entries. It must label rec
 read-only. It must not inject results into Chat automatically, imply semantic recall, add
 vector/embedding controls, provider/model calls, broad redesign, cloud sync, tool/plugin controls,
 or filesystem/system actions.
+
+Phase 16.16 through Phase 16.18 add a compact “Context Assembly” readiness section to Memory or
+Settings. The UI may show conversation context availability, committed memory availability,
+runtime metadata availability, orchestration metadata availability, source counts, candidate block
+counts, simple size estimates, and readiness checks. It must describe the feature as planning
+metadata only. It must not add prompt assembly controls, automatic context attachment, provider or
+model calls, semantic ranking, embeddings/vector controls, cloud/API-key setup, tools/plugins,
+filesystem/system actions, or broad redesign.
+
+Phase 16.19 through Phase 16.21 add a guarded “Use local memory/context in chat” Settings toggle
+and compact Chat context status. The UI may show whether injection is enabled, the last injection
+status, injected block count, source summary, and size summary. It must not show the raw assembled
+prompt or private context payload. It must not add semantic/vector search controls, cloud/API-key
+setup, tools/plugins, filesystem/system actions, broad redesign, or voice/runtime controls.
+
+Phase 16.22 through Phase 16.24 add compact conversation-window readiness and truncation status.
+Chat may show window status, included message count, and truncated count near the existing context
+status. Settings may show budget and omitted/truncated summaries. The UI must stay summary-only:
+no raw prompt, no private context payload, no transcript dump, no semantic/vector controls, no
+model/provider setup expansion, no tools/plugins, no filesystem/system actions, and no broad
+redesign.
+
+Phase 16.25 through Phase 16.27 add compact deterministic conversation-summary readiness status.
+Chat may show summary status, block count, and truncated block count near context/window status.
+Settings may show summary budget, summarized-message count, omitted-message count, and block
+counts. The UI must keep this as metadata/status only: no raw prompt, no full summary payload
+display, no semantic summarization controls, no embeddings/vector controls, no provider/model
+setup expansion, no tools/plugins, no filesystem/system actions, and no broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

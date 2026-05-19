@@ -1801,6 +1801,105 @@ Still out of scope:
   ranking, automatic context assembly, cloud/API keys, tools/plugins, filesystem/system actions,
   and autonomous memory mutation.
 
+## Phase 16.16-16.18: Context Assembly Planning Foundation
+
+Completed. Added planning-only metadata for future context assembly.
+
+Delivered:
+
+- `ContextAssemblyRequest`, `ContextAssemblySource`, `ContextAssemblyResult`,
+  `ContextAssemblyStatus`, `ContextAssemblyPolicy`, and `ContextAssemblySummary`.
+- Deterministic source participation estimates for conversation context, committed memory context,
+  runtime metadata context, and orchestration context.
+- Candidate block counts and simple character-size estimates.
+- Controller/view-model exposure through QML-safe strings, counts, and lists.
+- Compact Memory page “Context Assembly” readiness section.
+- Tests for deterministic summaries, empty context, committed memory visibility, no mutation, no
+  prompt injection side effects, and view-model exposure.
+
+Still out of scope:
+
+- Prompt assembly, automatic context attachment, provider/model calls, semantic ranking,
+  embeddings/vector databases, cloud/API keys, tools/plugins, filesystem/system actions, and broad
+  UI redesign.
+
+## Phase 16.19-16.21: Safe Prompt Context Injection Foundation
+
+Completed. Added controlled prompt context injection for local Ollama requests.
+
+Delivered:
+
+- `PromptContextBlock`, `PromptContextBundle`, `PromptContextInjectionPolicy`,
+  `PromptContextInjectionStatus`, and `PromptContextInjectionResult`.
+- Disabled-by-default persisted setting for “Use local memory/context in chat”.
+- Deterministic, clearly delimited prompt context prepended to local Ollama prompts only after
+  existing model, endpoint, permission, safety, and busy gates pass.
+- Allowed sources limited to current conversation context, committed key-value memory, runtime
+  metadata summaries, and orchestration metadata summaries.
+- Fixed character budget, deterministic source order, and deterministic truncation.
+- QML-safe status, summary, block count, source summary, size summary, and block summaries without
+  exposing the raw private prompt.
+- Settings toggle and compact Chat context status.
+- Tests for disabled default, deterministic enabled injection, committed-only memory inclusion,
+  pending/rejected candidate exclusion, truncation, no mutation, safety-gate ordering, and
+  view-model exposure.
+
+Still out of scope:
+
+- Embeddings, vector DB, semantic ranking/search, automatic memory writes, cloud/API keys,
+  provider expansion, tools/plugins, filesystem/system actions, voice/runtime scope changes, broad
+  UI redesign, and raw prompt display.
+
+## Phase 16.22-16.24: Conversation Window Management Foundation
+
+Completed. Added deterministic bounded conversation-history windowing for local prompt context.
+
+Delivered:
+
+- `ConversationWindowPolicy`, `ConversationWindowSummary`, `ConversationWindowResult`,
+  `ConversationWindowStatus`, and `ConversationWindowBudget`.
+- Recent-message-first window selection with stable chronological output order.
+- Simple character budget enforcement with deterministic truncation and omitted/truncated counts.
+- Prompt context assembly now injects only the bounded recent conversation window, keeping it
+  clearly delimited from committed memory, runtime metadata, orchestration metadata, and the
+  current user prompt.
+- Controller/view-model exposure for QML-safe status, budget summary, included count, omitted
+  count, and truncated count.
+- Compact Chat and Settings window status without broad redesign.
+- Tests for recent-message prioritization, budget enforcement, committed-memory separation, long
+  chat prompt stability, no mutation, and view-model exposure.
+
+Still out of scope:
+
+- Semantic ranking/search, embeddings, vector DB, transcript summarization, provider/model
+  changes, cloud/API keys, tools/plugins, filesystem/system actions, broad UI redesign, and raw
+  prompt display.
+
+## Phase 16.25-16.27: Deterministic Conversation Summary Foundation
+
+Completed. Added deterministic local summaries for older history omitted by the bounded recent
+conversation window.
+
+Delivered:
+
+- `ConversationSummaryPolicy`, `ConversationSummaryStatus`, `ConversationSummaryResult`,
+  `ConversationSummaryBlock`, `ConversationSummaryWindow`, and `ConversationSummaryBudget`.
+- Local heuristic summary blocks that preserve original message indexes, chronology, and role
+  visibility.
+- Separate prompt context source for older conversation summaries, distinct from recent history,
+  committed memory, runtime metadata, and orchestration metadata.
+- Bounded deterministic character budgeting with included size, block count, summarized/omitted
+  message count, and truncated block count exposure.
+- Compact Chat and Settings summary status without broad redesign.
+- Tests for deterministic generation, chronological behavior, budget truncation, recent-window
+  interaction, memory separation, no mutation, and controller/view-model exposure.
+
+Still out of scope:
+
+- Semantic summarization, embeddings, vector DB, semantic ranking/search, provider/model calls,
+  cloud/API keys, tools/plugins, filesystem/system actions, automatic memory writes, broad UI
+  redesign, and raw prompt display.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

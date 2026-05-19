@@ -736,6 +736,17 @@ private slots:
     void localMemoryRecallAfterCommitFindsCommittedCandidate();
     void clearChatKeepsCommittedMemoryRecallAvailable();
     void localMemoryRecallDoesNotInjectIntoPrompt();
+    void contextAssemblyShowsCommittedMemorySource();
+    void contextAssemblyPlanningDoesNotMutateOrInjectPrompt();
+    void promptContextInjectionDisabledLeavesPromptUnchanged();
+    void enabledPromptContextInjectionIncludesDeterministicBundle();
+    void promptContextInjectionUsesOnlyCommittedMemory();
+    void promptContextInjectionBudgetTruncatesDeterministically();
+    void promptContextInjectionUsesBoundedRecentConversationWindow();
+    void conversationSummaryUsesOlderWindowAndStaysSeparateFromMemory();
+    void conversationSummaryPlanningDoesNotMutateState();
+    void promptContextInjectionDoesNotMutateMemoryOrCandidates();
+    void promptContextInjectionRespectsSafetyGateBeforeAssembly();
     void clearChatKeepsApprovedMemoryCandidateMetadata();
     void clearChatKeepsCommittedMemory();
     void clearsRuntimeMemoryEntries();
@@ -3710,6 +3721,291 @@ void ApplicationControllerTest::localMemoryRecallDoesNotInjectIntoPrompt() {
     QVERIFY(!controller->chatHistory().at(2).content.contains(QStringLiteral("do not inject")));
     QVERIFY(!controller->conversationRuntimeLastSuccessSummary().contains(
         QStringLiteral("do not inject")));
+}
+
+void ApplicationControllerTest::contextAssemblyShowsCommittedMemorySource() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Context assembly should see committed local memory."));
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QVERIFY(controller->requestMemoryCandidateCommit(id));
+
+    QCOMPARE(controller->contextAssemblyPolicyStatus(), QStringLiteral("Planning Only"));
+    QCOMPARE(controller->contextAssemblyStatus(), QStringLiteral("Ready"));
+    QCOMPARE(controller->committedMemoryContextAvailability(), QStringLiteral("Available"));
+    QVERIFY(controller->contextAssemblySourceSummaries()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Committed Memory Context: Available")));
+    QVERIFY(controller->contextAssemblyReadinessChecks().contains(
+        QStringLiteral("Prompt assembly: disabled")));
+    QVERIFY(controller->contextAssemblyReadinessChecks().contains(
+        QStringLiteral("Automatic context attachment: disabled")));
+}
+
+void ApplicationControllerTest::contextAssemblyPlanningDoesNotMutateOrInjectPrompt() {
+    const auto controller = makeController();
+    controller->remember(QStringLiteral("secret.local"), QStringLiteral("planning only"));
+    const auto beforeEntries = controller->memoryEntries();
+    const auto beforeMessages = controller->chatHistory().size();
+
+    const auto summary = controller->contextAssemblySummary();
+
+    QCOMPARE(summary.status, sentinel::core::ContextAssemblyStatus::Ready);
+    QCOMPARE(controller->memoryEntries(), beforeEntries);
+    QCOMPARE(controller->chatHistory().size(), beforeMessages);
+
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+    QVERIFY(!controller->chatHistory().last().content.contains(QStringLiteral("planning only")));
+}
+
+void ApplicationControllerTest::promptContextInjectionDisabledLeavesPromptUnchanged() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+    controller->setLocalChatInferenceEnabled(true);
+
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+
+    QVERIFY(fakeClientPtr->called);
+    QCOMPARE(fakeClientPtr->lastRequest.prompt, QStringLiteral("hello"));
+    QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->promptContextInjectedBlockCount(), 0);
+}
+
+void ApplicationControllerTest::enabledPromptContextInjectionIncludesDeterministicBundle() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+    controller->remember(QStringLiteral("preference.tone"), QStringLiteral("Concise answers"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+
+    const auto prompt = fakeClientPtr->lastRequest.prompt;
+    QVERIFY(prompt.startsWith(QStringLiteral("[Sentinel Local Context]")));
+    QVERIFY(prompt.contains(QStringLiteral("--- Bounded Conversation History ---")));
+    QVERIFY(prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
+    QVERIFY(prompt.contains(QStringLiteral("preference.tone = Concise answers")));
+    QVERIFY(prompt.contains(QStringLiteral("[/Sentinel Local Context]\n\nUser prompt:\nhello")));
+    QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Injected"));
+    QVERIFY(controller->promptContextInjectedBlockCount() >= 3);
+    QVERIFY(controller->promptContextSourceSummary().contains(QStringLiteral("Committed Memory")));
+}
+
+void ApplicationControllerTest::promptContextInjectionUsesOnlyCommittedMemory() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+    const auto pendingId = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Pending private candidate must not be injected."));
+    const auto rejectedId = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Rejected private candidate must not be injected."));
+    QVERIFY(controller->rejectMemoryCandidate(rejectedId));
+    Q_UNUSED(pendingId);
+    controller->remember(QStringLiteral("approved.local"), QStringLiteral("committed only"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+
+    const auto prompt = fakeClientPtr->lastRequest.prompt;
+    QVERIFY(prompt.contains(QStringLiteral("approved.local = committed only")));
+    QVERIFY(!prompt.contains(QStringLiteral("Pending private candidate")));
+    QVERIFY(!prompt.contains(QStringLiteral("Rejected private candidate")));
+}
+
+void ApplicationControllerTest::promptContextInjectionBudgetTruncatesDeterministically() {
+    const auto result = sentinel::core::injectPromptContext(
+        QStringLiteral("hello"),
+        QList<sentinel::core::PromptContextBlock>{
+            {sentinel::core::ContextAssemblySourceKind::Conversation,
+             QStringLiteral("Current Conversation Context"), QStringLiteral("abcdefghij")},
+            {sentinel::core::ContextAssemblySourceKind::CommittedMemory,
+             QStringLiteral("Committed Local Memory"), QStringLiteral("klmnopqrst")},
+        },
+        sentinel::core::PromptContextInjectionPolicy{true, 12});
+
+    QCOMPARE(result.status, sentinel::core::PromptContextInjectionStatus::Truncated);
+    QCOMPARE(result.injectedBlockCount, 2);
+    QVERIFY(result.prompt.contains(QStringLiteral("abcdefghij")));
+    QVERIFY(result.prompt.contains(QStringLiteral("kl")));
+    QVERIFY(!result.prompt.contains(QStringLiteral("klm")));
+    QVERIFY(result.sizeSummary.contains(QStringLiteral("12 of 20")));
+}
+
+void ApplicationControllerTest::promptContextInjectionUsesBoundedRecentConversationWindow() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+
+    for (int i = 0; i < 14; ++i) {
+        QVERIFY(controller->sendMessage(
+            QStringLiteral("history marker %1 %2").arg(i).arg(QString(120, QLatin1Char('x')))));
+    }
+    const auto messageCountBeforePrompt = controller->conversationHistoryMessageCount();
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+    controller->remember(QStringLiteral("stable.memory"), QStringLiteral("kept separate"));
+
+    QVERIFY(controller->sendMessage(QStringLiteral("final question")));
+
+    const auto prompt = fakeClientPtr->lastRequest.prompt;
+    QVERIFY(prompt.contains(QStringLiteral("--- Bounded Conversation History ---")));
+    QVERIFY(prompt.contains(QStringLiteral("[Conversation History]")));
+    QVERIFY(prompt.contains(QStringLiteral("[/Conversation History]")));
+    QVERIFY(prompt.contains(QStringLiteral("--- Older Conversation Summary ---")));
+    QVERIFY(prompt.contains(QStringLiteral("[Conversation Summary]")));
+    QVERIFY(prompt.contains(QStringLiteral("[/Conversation Summary]")));
+    QVERIFY(prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
+    QVERIFY(prompt.indexOf(QStringLiteral("[/Conversation History]")) <
+            prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---")));
+    QVERIFY(prompt.indexOf(QStringLiteral("[/Conversation Summary]")) <
+            prompt.indexOf(QStringLiteral("--- Committed Local Memory ---")));
+    QVERIFY(prompt.contains(QStringLiteral("history marker 0")));
+    QVERIFY(prompt.contains(QStringLiteral("history marker 13")));
+    QCOMPARE(prompt.count(QStringLiteral("final question")), 1);
+    QCOMPARE(controller->conversationHistoryMessageCount(), messageCountBeforePrompt + 2);
+    QCOMPARE(controller->conversationWindowStatus(), QStringLiteral("Truncated"));
+    QVERIFY(controller->conversationWindowIncludedMessageCount() > 0);
+    QVERIFY(controller->conversationWindowOmittedMessageCount() > 0);
+    QVERIFY(controller->conversationSummaryBlockCount() > 0);
+    QVERIFY(controller->conversationSummaryMessageCount() > 0);
+}
+
+void ApplicationControllerTest::conversationSummaryUsesOlderWindowAndStaysSeparateFromMemory() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+
+    for (int i = 0; i < 10; ++i) {
+        QVERIFY(controller->sendMessage(
+            QStringLiteral("summary marker %1 %2").arg(i).arg(QString(100, QLatin1Char('s')))));
+    }
+    controller->remember(QStringLiteral("summary.memory"), QStringLiteral("memory stays distinct"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+
+    QVERIFY(controller->sendMessage(QStringLiteral("summary final question")));
+
+    const auto prompt = fakeClientPtr->lastRequest.prompt;
+    const auto summaryStart = prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---"));
+    const auto memoryStart = prompt.indexOf(QStringLiteral("--- Committed Local Memory ---"));
+    QVERIFY(summaryStart >= 0);
+    QVERIFY(memoryStart > summaryStart);
+    QVERIFY(prompt.mid(summaryStart, memoryStart - summaryStart)
+                .contains(QStringLiteral("summary marker 0")));
+    QVERIFY(!prompt.mid(summaryStart, memoryStart - summaryStart)
+                 .contains(QStringLiteral("summary.memory = memory stays distinct")));
+    QVERIFY(
+        prompt.mid(memoryStart).contains(QStringLiteral("summary.memory = memory stays distinct")));
+    QCOMPARE(controller->conversationSummaryStatus(), QStringLiteral("Truncated"));
+    QVERIFY(controller->conversationSummaryBudgetSummary().contains(QStringLiteral("700")));
+    QVERIFY(!controller->conversationSummaryBlockSummaries().isEmpty());
+}
+
+void ApplicationControllerTest::conversationSummaryPlanningDoesNotMutateState() {
+    const auto controller = makeController();
+    for (int i = 0; i < 8; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("summary planning marker %1 %2")
+                                            .arg(i)
+                                            .arg(QString(120, QLatin1Char('p')))));
+    }
+    controller->remember(QStringLiteral("summary.local"), QStringLiteral("unchanged"));
+    const auto beforeEntries = controller->memoryEntries();
+    const auto beforeMessages = controller->conversationHistoryMessageCount();
+
+    const auto summary = controller->conversationSummaryResult();
+
+    QVERIFY(summary.status == sentinel::core::ConversationSummaryStatus::Ready ||
+            summary.status == sentinel::core::ConversationSummaryStatus::Truncated);
+    QCOMPARE(controller->memoryEntries(), beforeEntries);
+    QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
+    QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Disabled"));
+}
+
+void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandidates() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Candidate remains pending."));
+    controller->remember(QStringLiteral("stable.local"), QStringLiteral("unchanged"));
+    const auto beforeEntries = controller->memoryEntries();
+    const auto beforeCandidateCount = controller->memoryCandidateCount();
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+
+    QCOMPARE(controller->memoryEntries(), beforeEntries);
+    QCOMPARE(controller->memoryCandidateCount(), beforeCandidateCount);
+    QCOMPARE(controller->pendingMemoryCandidateCount(), 1);
+    QCOMPARE(controller->memoryCandidateIds().first(), id);
+}
+
+void ApplicationControllerTest::promptContextInjectionRespectsSafetyGateBeforeAssembly() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(),
+        std::make_unique<BlockLocalInferenceSafetyPolicy>(), nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+    controller->remember(QStringLiteral("stable.local"), QStringLiteral("do not assemble"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+
+    QVERIFY(!controller->sendMessage(QStringLiteral("hello")));
+
+    QVERIFY(!fakeClientPtr->called);
+    QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Empty"));
+    QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
 }
 
 void ApplicationControllerTest::clearChatKeepsApprovedMemoryCandidateMetadata() {
