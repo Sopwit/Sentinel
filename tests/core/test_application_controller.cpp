@@ -726,10 +726,13 @@ private slots:
     void refusesInvalidMemoryCandidateReviewTransitions();
     void archivesReviewedMemoryCandidatesAsTerminalMetadata();
     void memoryCandidatesDoNotMutateKeyValueMemory();
-    void approvedMemoryCandidateGeneratesDisabledCommitPlan();
+    void approvedMemoryCandidateCommitsToKeyValueMemory();
     void pendingAndRejectedMemoryCandidatesCannotCommit();
-    void memoryCommitRequestRefusesWithoutMutatingKeyValueMemory();
+    void archivedMemoryCandidateCannotCommit();
+    void duplicateMemoryCommitKeyRefusesByDefault();
+    void approvalDoesNotAutomaticallyCommitMemory();
     void clearChatKeepsApprovedMemoryCandidateMetadata();
+    void clearChatKeepsCommittedMemory();
     void clearsRuntimeMemoryEntries();
     void failsSafeWhenMemoryStoreUnavailable();
     void rejectsBlankMemoryKeys();
@@ -3530,23 +3533,36 @@ void ApplicationControllerTest::memoryCandidatesDoNotMutateKeyValueMemory() {
     QCOMPARE(controller->memoryEntries(), QStringList{QStringLiteral("mode: Companion")});
 }
 
-void ApplicationControllerTest::approvedMemoryCandidateGeneratesDisabledCommitPlan() {
+void ApplicationControllerTest::approvedMemoryCandidateCommitsToKeyValueMemory() {
     const auto controller = makeController();
     const auto id = controller->createMemoryCandidateFromConversationText(
-        QStringLiteral("The project keeps memory commits behind a future explicit gate."));
+        QStringLiteral("The project keeps memory commits behind explicit user action."));
 
     QVERIFY(controller->approveMemoryCandidate(id));
 
     QCOMPARE(controller->memoryCommitPlanCount(), 1);
-    QCOMPARE(controller->memoryCommitReadinessStatus(), QStringLiteral("Disabled"));
-    QVERIFY(controller->memoryCommitReadinessSummary().contains(QStringLiteral("disabled")));
+    QCOMPARE(controller->memoryCommitReadinessStatus(), QStringLiteral("Ready"));
+    QVERIFY(controller->memoryCommitReadinessSummary().contains(
+        QStringLiteral("explicit user action")));
     QVERIFY(controller->memoryCommitTargetSummary().contains(QStringLiteral("Key-value Memory")));
+    QVERIFY(
+        controller->memoryCommitTargetSummary().contains(QStringLiteral("Refuse Existing Key")));
     QVERIFY(controller->memoryCommitCandidateSummaries().first().contains(id));
     QVERIFY(controller->memoryCommitCandidateSummaries().first().contains(
         QStringLiteral("Key-value Memory")));
     QVERIFY(controller->memoryCommitReadinessChecks()
                 .join(QStringLiteral(" "))
-                .contains(QStringLiteral("future-gated")));
+                .contains(QStringLiteral("explicit user action")));
+    QVERIFY(controller->requestMemoryCandidateCommit(id));
+    QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("Committed"));
+    QVERIFY(controller->lastMemoryCommitResultSummary().contains(
+        QStringLiteral("memory.semantic.conversation-memory-candidate.memory-candidate-1")));
+    QCOMPARE(controller->committedMemoryCandidateCount(), 1);
+    QVERIFY(controller->memoryCandidateSummaries().first().contains(QStringLiteral("Committed")));
+    QCOMPARE(controller->memoryEntries(),
+             QStringList{QStringLiteral("memory.semantic.conversation-memory-candidate."
+                                        "memory-candidate-1: The project keeps memory commits "
+                                        "behind explicit user action.")});
 }
 
 void ApplicationControllerTest::pendingAndRejectedMemoryCandidatesCannotCommit() {
@@ -3567,17 +3583,50 @@ void ApplicationControllerTest::pendingAndRejectedMemoryCandidatesCannotCommit()
     QVERIFY(controller->lastMemoryCommitResultSummary().contains(QStringLiteral("rejected")));
 }
 
-void ApplicationControllerTest::memoryCommitRequestRefusesWithoutMutatingKeyValueMemory() {
+void ApplicationControllerTest::archivedMemoryCandidateCannotCommit() {
     const auto controller = makeController();
-    controller->remember(QStringLiteral("mode"), QStringLiteral("Companion"));
     const auto id = controller->createMemoryCandidateFromConversationText(
-        QStringLiteral("Approved candidates still do not mutate key-value memory by default."));
+        QStringLiteral("Archived candidates cannot be committed."));
+
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QVERIFY(controller->archiveMemoryCandidate(id));
+    QVERIFY(!controller->requestMemoryCandidateCommit(id));
+
+    QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("Refused"));
+    QVERIFY(controller->lastMemoryCommitResultSummary().contains(QStringLiteral("archived")));
+    QVERIFY(controller->memoryEntries().isEmpty());
+}
+
+void ApplicationControllerTest::duplicateMemoryCommitKeyRefusesByDefault() {
+    const auto controller = makeController();
+    controller->remember(QStringLiteral("memory.semantic.conversation-memory-candidate."
+                                        "memory-candidate-1"),
+                         QStringLiteral("Existing value"));
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Duplicate keys should refuse before overwrite."));
 
     QVERIFY(controller->approveMemoryCandidate(id));
     QVERIFY(!controller->requestMemoryCandidateCommit(id));
 
     QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("Refused"));
-    QVERIFY(controller->lastMemoryCommitResultSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->lastMemoryCommitResultSummary().contains(QStringLiteral("already exists")));
+    QCOMPARE(controller->committedMemoryCandidateCount(), 0);
+    QCOMPARE(controller->memoryEntries(),
+             QStringList{QStringLiteral("memory.semantic.conversation-memory-candidate."
+                                        "memory-candidate-1: Existing value")});
+}
+
+void ApplicationControllerTest::approvalDoesNotAutomaticallyCommitMemory() {
+    const auto controller = makeController();
+    controller->remember(QStringLiteral("mode"), QStringLiteral("Companion"));
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Approved candidates wait for explicit Commit."));
+
+    QVERIFY(controller->approveMemoryCandidate(id));
+
+    QCOMPARE(controller->lastMemoryCandidateReviewStatus(), QStringLiteral("Accepted"));
+    QCOMPARE(controller->lastMemoryCommitStatus(), QStringLiteral("No Commit"));
+    QCOMPARE(controller->committedMemoryCandidateCount(), 0);
     QCOMPARE(controller->memoryEntries(), QStringList{QStringLiteral("mode: Companion")});
 }
 
@@ -3593,6 +3642,23 @@ void ApplicationControllerTest::clearChatKeepsApprovedMemoryCandidateMetadata() 
     QCOMPARE(controller->memoryCandidateCount(), 1);
     QCOMPARE(controller->approvedMemoryCandidateCount(), 1);
     QVERIFY(controller->memoryCandidateSummaries().first().contains(QStringLiteral("Approved")));
+}
+
+void ApplicationControllerTest::clearChatKeepsCommittedMemory() {
+    const auto controller = makeController();
+    const auto id = controller->createMemoryCandidateFromConversationText(
+        QStringLiteral("Committed memory survives chat clear."));
+    QVERIFY(controller->approveMemoryCandidate(id));
+    QVERIFY(controller->requestMemoryCandidateCommit(id));
+
+    controller->sendMessage(QStringLiteral("status"));
+    controller->clearChat();
+
+    QCOMPARE(controller->committedMemoryCandidateCount(), 1);
+    QCOMPARE(controller->memoryEntries(),
+             QStringList{QStringLiteral("memory.semantic.conversation-memory-candidate."
+                                        "memory-candidate-1: Committed memory survives chat "
+                                        "clear.")});
 }
 
 void ApplicationControllerTest::clearsRuntimeMemoryEntries() {

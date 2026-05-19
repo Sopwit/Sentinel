@@ -109,10 +109,75 @@ QString memoryCommitReadinessStatusName(MemoryCommitReadinessStatus status) {
         return QStringLiteral("Missing Candidate");
     case MemoryCommitReadinessStatus::StoreUnavailable:
         return QStringLiteral("Store Unavailable");
+    case MemoryCommitReadinessStatus::AlreadyCommitted:
+        return QStringLiteral("Already Committed");
     }
 
     return QStringLiteral("Disabled");
 }
+
+QString memoryCommitStatusName(MemoryCommitStatus status) {
+    switch (status) {
+    case MemoryCommitStatus::NotCommitted:
+        return QStringLiteral("Not Committed");
+    case MemoryCommitStatus::Committed:
+        return QStringLiteral("Committed");
+    case MemoryCommitStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Not Committed");
+}
+
+QString memoryCommitConflictPolicyName(MemoryCommitConflictPolicy policy) {
+    switch (policy) {
+    case MemoryCommitConflictPolicy::Refuse:
+        return QStringLiteral("Refuse Existing Key");
+    case MemoryCommitConflictPolicy::Overwrite:
+        return QStringLiteral("Overwrite Existing Key");
+    }
+
+    return QStringLiteral("Refuse Existing Key");
+}
+
+namespace {
+
+QString sanitizedMemoryKeyPart(QString value) {
+    value = value.simplified().toLower();
+
+    QString result;
+    result.reserve(value.size());
+    bool lastWasSeparator = false;
+    for (const auto ch : value) {
+        if (ch.isLetterOrNumber()) {
+            result.append(ch);
+            lastWasSeparator = false;
+            continue;
+        }
+        if (!lastWasSeparator && !result.isEmpty()) {
+            result.append(QLatin1Char('-'));
+            lastWasSeparator = true;
+        }
+    }
+
+    while (result.endsWith(QLatin1Char('-'))) {
+        result.chop(1);
+    }
+
+    return result;
+}
+
+QString safeMemoryCommitKey(const MemoryCandidate& candidate) {
+    QStringList parts;
+    parts.append(QStringLiteral("memory"));
+    parts.append(sanitizedMemoryKeyPart(memoryCandidateCategoryName(candidate.category)));
+    parts.append(sanitizedMemoryKeyPart(candidate.title));
+    parts.append(sanitizedMemoryKeyPart(candidate.id));
+    parts.removeAll(QString());
+    return parts.join(QLatin1Char('.'));
+}
+
+} // namespace
 
 MemoryCandidateSummary memoryCandidateSummary(const MemoryCandidate& candidate) {
     MemoryCandidateSummary summary;
@@ -130,9 +195,17 @@ MemoryCandidateSummary memoryCandidateSummary(const MemoryCandidate& candidate) 
     summary.reviewer = candidate.reviewerSummary.trimmed().isEmpty()
                            ? QStringLiteral("Reviewer: User review")
                            : candidate.reviewerSummary.trimmed();
-    summary.summary = QStringLiteral("%1 / %2 / %3 / %4 / %5 / %6 / %7")
-                          .arg(summary.title, summary.state, summary.category, summary.confidence,
-                               summary.source, summary.reviewedAt, summary.reviewer);
+    summary.commitStatus = memoryCommitStatusName(candidate.commitStatus);
+    summary.committedAt = candidate.committedAtUtc.isNull()
+                              ? QStringLiteral("Not committed")
+                              : candidate.committedAtUtc.toString(Qt::ISODateWithMs);
+    summary.committedKey = candidate.committedKey.trimmed().isEmpty()
+                               ? QStringLiteral("No committed key")
+                               : candidate.committedKey.trimmed();
+    summary.summary =
+        QStringLiteral("%1 / %2 / %3 / %4 / %5 / %6 / %7 / %8 / %9")
+            .arg(summary.title, summary.state, summary.category, summary.confidence, summary.source,
+                 summary.reviewedAt, summary.reviewer, summary.commitStatus, summary.committedKey);
     return summary;
 }
 
@@ -141,7 +214,7 @@ MemoryCommitPlan memoryCommitPlanForCandidate(const MemoryCandidate& candidate,
     MemoryCommitPlan plan;
     plan.candidateId = candidate.id;
     plan.target = target;
-    plan.key = candidate.id;
+    plan.key = safeMemoryCommitKey(candidate);
     plan.valuePreview = candidate.excerpt.simplified().left(160);
     plan.targetSummary = memoryCommitTargetName(target);
     plan.summary = QStringLiteral("%1 -> %2 / key: %3 / value preview: %4")
@@ -169,6 +242,15 @@ MemoryCommitReadiness memoryCommitReadinessForCandidate(const MemoryCandidate* c
     readiness.checks.append(
         QStringLiteral("Review state: %1").arg(memoryReviewStateName(candidate->reviewState)));
     readiness.checks.append(QStringLiteral("Target: %1").arg(readiness.plan.targetSummary));
+
+    if (candidate->commitStatus == MemoryCommitStatus::Committed) {
+        readiness.status = MemoryCommitReadinessStatus::AlreadyCommitted;
+        readiness.summary = QStringLiteral("Memory commit complete: candidate is already stored "
+                                           "as key '%1'.")
+                                .arg(candidate->committedKey);
+        readiness.checks.append(QStringLiteral("Commit: already committed"));
+        return readiness;
+    }
 
     if (candidate->reviewState == MemoryReviewState::PendingReview) {
         readiness.status = MemoryCommitReadinessStatus::PendingReview;
@@ -199,18 +281,21 @@ MemoryCommitReadiness memoryCommitReadinessForCandidate(const MemoryCandidate* c
         return readiness;
     }
 
-    if (!policy.commitEnabled) {
+    if (!policy.explicitUserCommitAllowed) {
         readiness.status = MemoryCommitReadinessStatus::Disabled;
         readiness.summary = policy.summary;
-        readiness.checks.append(QStringLiteral("Commit: future-gated and disabled by policy"));
+        readiness.checks.append(QStringLiteral("Commit: disabled by policy"));
         return readiness;
     }
 
     readiness.ready = true;
     readiness.status = MemoryCommitReadinessStatus::Ready;
     readiness.summary =
-        QStringLiteral("Memory commit ready: approved candidate has an explicit target plan.");
-    readiness.checks.append(QStringLiteral("Commit: ready for explicit gated request"));
+        QStringLiteral("Memory commit ready: approved candidate can be stored by explicit user "
+                       "action.");
+    readiness.checks.append(QStringLiteral("Commit: explicit user action allowed"));
+    readiness.checks.append(QStringLiteral("Conflict policy: %1")
+                                .arg(memoryCommitConflictPolicyName(policy.conflictPolicy)));
     return readiness;
 }
 

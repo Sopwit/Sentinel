@@ -273,6 +273,15 @@ that Approved is not Committed and that commit is future-gated. It must not add 
 or store action, automatic key-value memory writes, semantic search, vector/embedding controls,
 provider/model calls, filesystem controls, cloud sync, tool/plugin controls, broad redesign, or
 autonomous memory actions.
+
+Phase 16.10 through Phase 16.12 add a narrow explicit Commit action to the existing Memory
+Candidates section. Commit is visible only for Approved candidates, and Approve remains labeled as
+a review decision while Commit is labeled as storing to local memory. The UI may show committed
+count, committed status, committed key/summary, readiness, duplicate-refusal result, and last
+commit result through QML-safe strings/lists/counts. It must not add automatic commit on approval,
+bulk commit, overwrite controls, semantic search, vector/embedding controls, provider/model calls,
+cloud sync, tool/plugin controls, broad redesign, or filesystem/system actions beyond the existing
+key-value memory store.
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no
@@ -317,9 +326,10 @@ Current UI work remains presentation and metadata visibility only:
 - no model execution outside explicit local Ollama chat inference
 - no plugin loading
 - no real tool execution
-- no approval UX that triggers actions
+- no approval UX that triggers autonomous actions
 - no sandbox runtime
-- no filesystem/system actions beyond controlled app-owned transcript export and Piper file output
+- no filesystem/system actions beyond controlled app-owned transcript export, Piper file output,
+  and explicit local key-value memory commit
 - no particle systems or assistant-face rendering
 
 Manual visual QA expectations are tracked in `docs/UI_QA_CHECKLIST.md`.

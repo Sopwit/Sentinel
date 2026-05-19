@@ -80,7 +80,8 @@ ScrollView {
                                + memoryPage.viewModel.pendingMemoryCandidateCount + " pending / "
                                + memoryPage.viewModel.approvedMemoryCandidateCount + " approved / "
                                + memoryPage.viewModel.rejectedMemoryCandidateCount + " rejected / "
-                               + memoryPage.viewModel.archivedMemoryCandidateCount + " archived"
+                               + memoryPage.viewModel.archivedMemoryCandidateCount + " archived / "
+                               + memoryPage.viewModel.committedMemoryCandidateCount + " committed"
                         Layout.fillWidth: true
                     }
 
@@ -146,6 +147,7 @@ ScrollView {
 
                             readonly property string candidateId: modelData
                             readonly property string candidateState: memoryPage.viewModel.memoryCandidateReviewStates[index]
+                            readonly property string candidateCommitStatus: memoryPage.viewModel.memoryCandidateCommitStatuses[index]
                             readonly property string candidateSummary: memoryPage.viewModel.memoryCandidateSummaries[index]
                             readonly property string commitSummary: memoryPage.viewModel.memoryCommitCandidateSummaries[index]
 
@@ -184,9 +186,18 @@ ScrollView {
 
                                 SentinelButton {
                                     text: "Reset"
-                                    enabled: candidateState === "Approved" || candidateState === "Rejected"
+                                    enabled: (candidateState === "Approved" || candidateState === "Rejected")
+                                             && candidateCommitStatus !== "Committed"
                                     Layout.preferredWidth: 96
                                     onClicked: memoryPage.viewModel.resetMemoryCandidate(candidateId)
+                                }
+
+                                SentinelButton {
+                                    visible: candidateState === "Approved"
+                                    text: "Commit"
+                                    enabled: candidateCommitStatus !== "Committed"
+                                    Layout.preferredWidth: 96
+                                    onClicked: memoryPage.viewModel.requestMemoryCandidateCommit(candidateId)
                                 }
 
                                 Item {

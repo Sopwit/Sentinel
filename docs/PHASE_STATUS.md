@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 16.10-16.12: Explicit Memory Commit Boundary
+
+Completed. Adds explicit user-controlled commitment from reviewed memory candidates into the
+existing key-value memory store while keeping approval, planning, and commitment as separate
+states.
+
+Scope:
+
+- Approved candidates can be committed only through an explicit user Commit action.
+- Approval remains review metadata only and does not write to `IMemoryStore`.
+- Pending, rejected, archived, missing, store-unavailable, already-committed, and duplicate-key
+  cases refuse safely.
+- Commit keys are deterministic and sanitized from candidate category, title, and id.
+- Commit values store only the reviewed candidate content. Source/review metadata remains in the
+  commit result and candidate committed summary, not in the key-value memory value.
+- The default conflict policy refuses existing keys; overwrite is not enabled.
+- Committed candidates expose committed status, committed key, and committed timestamp summaries
+  through controller/view-model strings and counts.
+- Memory UI shows Commit only for approved candidates and labels Approve as review while Commit
+  stores to local memory.
+- Tests cover approved commit, pending/rejected/archived refusal, duplicate-key refusal, no
+  automatic commit on approval, committed status exposure, clear-chat preserving committed memory,
+  and controller/view-model exposure.
+
+Known limitation:
+
+- Commit target is only the existing local key-value memory store. There is no embeddings/vector
+  DB, semantic search, provider/model call, cloud/API-key behavior, tools/plugins, filesystem or
+  system action expansion, autonomous capture, or overwrite UI.
+
 ### Phase 16.7-16.9: Approved Memory Commit Planning
 
 Completed. Adds explicit commit-planning metadata for approved memory candidates while keeping

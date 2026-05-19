@@ -1571,9 +1571,12 @@ void DesktopShellViewModelTest::exposesMemoryCandidateMetadata() {
     QCOMPARE(fixture.viewModel.pendingMemoryCandidateCount(), 1);
     QCOMPARE(fixture.viewModel.approvedMemoryCandidateCount(), 0);
     QCOMPARE(fixture.viewModel.archivedMemoryCandidateCount(), 0);
+    QCOMPARE(fixture.viewModel.committedMemoryCandidateCount(), 0);
     QCOMPARE(fixture.viewModel.memoryCandidateIds(), QStringList{id});
     QCOMPARE(fixture.viewModel.memoryCandidateReviewStates(),
              QStringList{QStringLiteral("Pending Review")});
+    QCOMPARE(fixture.viewModel.memoryCandidateCommitStatuses(),
+             QStringList{QStringLiteral("Not Committed")});
     QVERIFY(fixture.viewModel.memoryCandidateSummaries().first().contains(
         QStringLiteral("Pending Review")));
     QVERIFY(fixture.viewModel.approveMemoryCandidate(id));
@@ -1583,20 +1586,22 @@ void DesktopShellViewModelTest::exposesMemoryCandidateMetadata() {
     QVERIFY(
         fixture.viewModel.lastMemoryCandidateReviewSummary().contains(QStringLiteral("Approve")));
     QCOMPARE(fixture.viewModel.memoryCommitPlanCount(), 1);
-    QCOMPARE(fixture.viewModel.memoryCommitReadinessStatus(), QStringLiteral("Disabled"));
-    QVERIFY(fixture.viewModel.memoryCommitReadinessSummary().contains(QStringLiteral("disabled")));
+    QCOMPARE(fixture.viewModel.memoryCommitReadinessStatus(), QStringLiteral("Ready"));
+    QVERIFY(fixture.viewModel.memoryCommitReadinessSummary().contains(
+        QStringLiteral("explicit user action")));
     QVERIFY(
         fixture.viewModel.memoryCommitTargetSummary().contains(QStringLiteral("Key-value Memory")));
     QVERIFY(fixture.viewModel.memoryCommitCandidateSummaries().first().contains(id));
-    QVERIFY(!fixture.viewModel.requestMemoryCandidateCommit(id));
-    QCOMPARE(fixture.viewModel.lastMemoryCommitStatus(), QStringLiteral("Refused"));
-    QVERIFY(fixture.viewModel.lastMemoryCommitResultSummary().contains(QStringLiteral("disabled")));
-    QVERIFY(fixture.viewModel.resetMemoryCandidate(id));
-    QCOMPARE(fixture.viewModel.pendingMemoryCandidateCount(), 1);
-    QCOMPARE(fixture.viewModel.approvedMemoryCandidateCount(), 0);
-    QVERIFY(fixture.viewModel.pendingMemoryCandidateSummaries().first().contains(
-        QStringLiteral("Pending Review")));
-    QCOMPARE(spy.count(), 4);
+    QVERIFY(fixture.viewModel.requestMemoryCandidateCommit(id));
+    QCOMPARE(fixture.viewModel.lastMemoryCommitStatus(), QStringLiteral("Committed"));
+    QVERIFY(fixture.viewModel.lastMemoryCommitResultSummary().contains(
+        QStringLiteral("memory.semantic.conversation-memory-candidate.memory-candidate-1")));
+    QCOMPARE(fixture.viewModel.committedMemoryCandidateCount(), 1);
+    QCOMPARE(fixture.viewModel.memoryCandidateCommitStatuses(),
+             QStringList{QStringLiteral("Committed")});
+    QVERIFY(
+        fixture.viewModel.memoryCandidateSummaries().first().contains(QStringLiteral("Committed")));
+    QCOMPARE(spy.count(), 3);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

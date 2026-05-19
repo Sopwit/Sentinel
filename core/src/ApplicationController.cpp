@@ -2947,6 +2947,16 @@ int ApplicationController::archivedMemoryCandidateCount() const {
     return memoryCandidateCountForState(MemoryReviewState::Archived);
 }
 
+int ApplicationController::committedMemoryCandidateCount() const {
+    int count = 0;
+    for (const auto& candidate : memoryCandidates()) {
+        if (candidate.commitStatus == MemoryCommitStatus::Committed) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 QStringList ApplicationController::memoryCandidateIds() const {
     QStringList result;
     for (const auto& candidate : memoryCandidates()) {
@@ -2959,6 +2969,14 @@ QStringList ApplicationController::memoryCandidateReviewStates() const {
     QStringList result;
     for (const auto& candidate : memoryCandidates()) {
         result.append(memoryReviewStateName(candidate.reviewState));
+    }
+    return result;
+}
+
+QStringList ApplicationController::memoryCandidateCommitStatuses() const {
+    QStringList result;
+    for (const auto& candidate : memoryCandidates()) {
+        result.append(memoryCommitStatusName(candidate.commitStatus));
     }
     return result;
 }
@@ -3086,8 +3104,10 @@ int ApplicationController::memoryCommitPlanCount() const {
 }
 
 QString ApplicationController::memoryCommitTargetSummary() const {
-    return QStringLiteral("%1 / %2").arg(memoryCommitTargetName(memoryCommitPolicy_.target),
-                                         memoryCommitPolicy_.summary);
+    return QStringLiteral("%1 / %2 / %3")
+        .arg(memoryCommitTargetName(memoryCommitPolicy_.target),
+             memoryCommitConflictPolicyName(memoryCommitPolicy_.conflictPolicy),
+             memoryCommitPolicy_.summary);
 }
 
 QStringList ApplicationController::memoryCommitCandidateSummaries() const {
@@ -3114,6 +3134,20 @@ QString ApplicationController::lastMemoryCommitResultSummary() const {
     return latestMemoryCommitResult_.summary.isEmpty()
                ? QStringLiteral("No memory commit request yet.")
                : latestMemoryCommitResult_.summary;
+}
+
+bool ApplicationController::memoryKeyExists(const QString& key) const {
+    if (!memoryStore_) {
+        return false;
+    }
+
+    const auto trimmed = key.trimmed();
+    for (const auto& entry : memoryStore_->entries()) {
+        if (entry.first == trimmed) {
+            return true;
+        }
+    }
+    return false;
 }
 
 MemoryCandidate
@@ -3472,15 +3506,59 @@ bool ApplicationController::requestMemoryCandidateCommit(const QString& candidat
     latestMemoryCommitResult_ = MemoryCommitResult{};
     latestMemoryCommitResult_.candidateId = candidateId.trimmed();
     latestMemoryCommitResult_.target = memoryCommitPolicy_.target;
+    latestMemoryCommitResult_.commitStatus = MemoryCommitStatus::Refused;
     latestMemoryCommitResult_.requestedAtUtc = QDateTime::currentDateTimeUtc();
 
+    const auto candidates = memoryCandidates();
+    const auto* candidate = findMemoryCandidate(candidates, candidateId);
     const auto readiness = memoryCommitReadinessForCandidateId(candidateId);
-    latestMemoryCommitResult_.status = QStringLiteral("Refused");
-    latestMemoryCommitResult_.summary =
-        QStringLiteral("Memory commit refused: %1").arg(readiness.summary);
+    latestMemoryCommitResult_.committedKey = readiness.plan.key;
+    if (!readiness.ready || !candidate) {
+        latestMemoryCommitResult_.status = QStringLiteral("Refused");
+        latestMemoryCommitResult_.summary =
+            QStringLiteral("Memory commit refused: %1").arg(readiness.summary);
+        emit memoryCandidatesChanged();
+        return false;
+    }
 
+    if (memoryKeyExists(readiness.plan.key) &&
+        memoryCommitPolicy_.conflictPolicy == MemoryCommitConflictPolicy::Refuse) {
+        latestMemoryCommitResult_.status = QStringLiteral("Refused");
+        latestMemoryCommitResult_.summary =
+            QStringLiteral("Memory commit refused: key already exists and overwrite is disabled "
+                           "(%1).")
+                .arg(readiness.plan.key);
+        emit memoryCandidatesChanged();
+        return false;
+    }
+
+    const auto value = candidate->excerpt.simplified();
+    if (value.isEmpty()) {
+        latestMemoryCommitResult_.status = QStringLiteral("Refused");
+        latestMemoryCommitResult_.summary =
+            QStringLiteral("Memory commit refused: reviewed candidate content is empty.");
+        emit memoryCandidatesChanged();
+        return false;
+    }
+
+    memoryStore_->put(readiness.plan.key, value);
+
+    latestMemoryCommitResult_.accepted = true;
+    latestMemoryCommitResult_.commitStatus = MemoryCommitStatus::Committed;
+    latestMemoryCommitResult_.committedAtUtc = QDateTime::currentDateTimeUtc();
+    latestMemoryCommitResult_.status = QStringLiteral("Committed");
+    latestMemoryCommitResult_.summary =
+        QStringLiteral("Memory commit stored approved candidate as key '%1' at %2.")
+            .arg(readiness.plan.key,
+                 latestMemoryCommitResult_.committedAtUtc.toString(Qt::ISODateWithMs));
+
+    if (memoryCandidateStore_) {
+        memoryCandidateStore_->recordCommitResult(latestMemoryCommitResult_);
+    }
+
+    emit memoryEntriesChanged();
     emit memoryCandidatesChanged();
-    return false;
+    return true;
 }
 
 bool ApplicationController::sendMessage(const QString& message) {

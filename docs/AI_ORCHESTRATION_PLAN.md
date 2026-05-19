@@ -173,6 +173,16 @@ The default policy disables actual commit, and commit requests refuse before mut
 remains a future explicit phase gate. No embeddings, vector DB, semantic search, automatic memory
 writes, cloud sync, provider/model calls, filesystem/system authority, tool/plugin authority, or
 autonomous memory mutation is added.
+Phase 16.10 through Phase 16.12 add that explicit memory commit gate: approved candidates can be
+stored in the existing local key-value `IMemoryStore` only after an explicit user Commit action.
+Commit keys are sanitized from candidate category, title, and id; committed values contain only the
+reviewed candidate content; duplicate keys are refused by the default conflict policy; and
+committed status/key/timestamp summaries are exposed through the controller/view-model boundary.
+Approval still does not commit automatically. Pending, rejected, archived, missing,
+store-unavailable, already-committed, and duplicate-key requests refuse safely. No embeddings,
+vector DB, semantic search, provider/model calls, cloud/API keys, filesystem/system authority
+beyond the existing memory store, tools/plugins, overwrite UI, or autonomous memory mutation is
+added.
 
 ## Future Components
 
@@ -255,9 +265,10 @@ autonomous memory mutation is added.
   metadata. They default to Pending Review, expose a guarded approve/reject/reset/archive review
   lifecycle, and remain separate from key-value memory, memory taxonomy, embeddings, vector
   storage, semantic search, provider/model execution, and autonomous memory writes.
-- Memory commit planning: approved-candidate to key-value-memory plan/readiness metadata with
-  default-disabled commit policy. The request path refuses safely and does not write to
-  `IMemoryStore` until a later explicit commit phase defines the gate, confirmation UX, and
+- Memory commit boundary: approved-candidate to key-value-memory plan/readiness metadata plus an
+  explicit user Commit action. The request path writes reviewed candidate content to `IMemoryStore`
+  only after review, policy, availability, and duplicate-key checks pass; otherwise it refuses with
+  QML-safe result metadata. Future phases may define overwrite controls, durable candidates, and
   mutation tests.
 - Explicit local chat inference routing: persisted opt-in that lets chat use the local inference
   boundary only after model, endpoint, permission, and safety checks. Disabled remains the default.
