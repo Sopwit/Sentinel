@@ -2317,6 +2317,63 @@ QStringList ApplicationController::conversationSummaryBlockSummaries() const {
     return sentinel::core::conversationSummaryBlockSummaries(conversationSummaryResult());
 }
 
+RetrievalPlanningPolicy ApplicationController::retrievalPlanningPolicy() const {
+    return retrievalPlanningPolicy_;
+}
+
+RetrievalPlanningResult ApplicationController::retrievalPlanningResult() const {
+    return retrievalPlanningForPrompt({});
+}
+
+QString ApplicationController::retrievalPlanningStatus() const {
+    return retrievalPlanningStatusName(retrievalPlanningResult().status);
+}
+
+QString ApplicationController::retrievalPlanningSummary() const {
+    return retrievalPlanningResult().summary;
+}
+
+QString ApplicationController::retrievalPlanningReadiness() const {
+    const auto result = retrievalPlanningResult();
+    if (result.status == RetrievalPlanningStatus::Ready ||
+        result.status == RetrievalPlanningStatus::Truncated) {
+        return QStringLiteral("Ready");
+    }
+    return retrievalPlanningStatusName(result.status);
+}
+
+QString ApplicationController::retrievalPlanningBudgetSummary() const {
+    return retrievalPlanningResult().budgetSummary;
+}
+
+QString ApplicationController::retrievalPlanningSourceSummary() const {
+    return retrievalPlanningResult().sourceSummary;
+}
+
+int ApplicationController::retrievalPlanningSelectedSourceCount() const {
+    return retrievalPlanningResult().selectedSourceCount;
+}
+
+int ApplicationController::retrievalPlanningExcludedSourceCount() const {
+    return retrievalPlanningResult().excludedSourceCount;
+}
+
+int ApplicationController::retrievalPlanningSelectedCandidateCount() const {
+    return retrievalPlanningResult().selectedCandidateCount;
+}
+
+int ApplicationController::retrievalPlanningExcludedCandidateCount() const {
+    return retrievalPlanningResult().excludedCandidateCount;
+}
+
+int ApplicationController::retrievalPlanningTruncatedCandidateCount() const {
+    return retrievalPlanningResult().truncatedCandidateCount;
+}
+
+QStringList ApplicationController::retrievalPlanningSourceSummaries() const {
+    return sentinel::core::retrievalSourceSummaries(retrievalPlanningResult());
+}
+
 bool ApplicationController::localInferenceStreamingEnabled() const {
     return localInferenceStreamingEnabled_;
 }
@@ -3408,31 +3465,30 @@ ApplicationController::conversationSummaryForPrompt(const QString& prompt) const
     return assembleConversationSummary(messages, window.messages, conversationSummaryPolicy_);
 }
 
-QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QString& prompt) const {
-    QList<PromptContextBlock> blocks;
+QList<RetrievalCandidate>
+ApplicationController::retrievalCandidatesForPrompt(const QString& prompt) const {
+    QList<RetrievalCandidate> candidates;
 
     if (contextAssemblyPolicy_.includeConversationContext) {
         const auto window = conversationWindowForPrompt(prompt);
         if (!window.text.trimmed().isEmpty()) {
-            blocks.append(PromptContextBlock{
+            candidates.append(RetrievalCandidate{
                 ContextAssemblySourceKind::Conversation,
+                retrievalSourcePriorityForKind(ContextAssemblySourceKind::Conversation),
                 QStringLiteral("Bounded Conversation History"),
                 window.text,
                 window.budget.estimatedCharacters,
-                window.budget.includedCharacters,
-                window.status == ConversationWindowStatus::Truncated,
             });
         }
 
         const auto summary = conversationSummaryForPrompt(prompt);
         if (!summary.text.trimmed().isEmpty()) {
-            blocks.append(PromptContextBlock{
+            candidates.append(RetrievalCandidate{
                 ContextAssemblySourceKind::ConversationSummary,
+                retrievalSourcePriorityForKind(ContextAssemblySourceKind::ConversationSummary),
                 QStringLiteral("Older Conversation Summary"),
                 summary.text,
                 summary.budget.estimatedCharacters,
-                summary.budget.includedCharacters,
-                summary.status == ConversationSummaryStatus::Truncated,
             });
         }
     }
@@ -3450,8 +3506,9 @@ QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QStri
                 QStringLiteral("%1 = %2").arg(entry.first.simplified(), entry.second.simplified()));
         }
         if (!lines.isEmpty()) {
-            blocks.append(PromptContextBlock{
+            candidates.append(RetrievalCandidate{
                 ContextAssemblySourceKind::CommittedMemory,
+                retrievalSourcePriorityForKind(ContextAssemblySourceKind::CommittedMemory),
                 QStringLiteral("Committed Local Memory"),
                 lines.join(QStringLiteral("\n")),
             });
@@ -3461,8 +3518,9 @@ QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QStri
     if (contextAssemblyPolicy_.includeRuntimeMetadataContext) {
         const auto runtimeSummary = conversationRuntimeSummary().simplified();
         if (!runtimeSummary.isEmpty()) {
-            blocks.append(PromptContextBlock{
+            candidates.append(RetrievalCandidate{
                 ContextAssemblySourceKind::RuntimeMetadata,
+                retrievalSourcePriorityForKind(ContextAssemblySourceKind::RuntimeMetadata),
                 QStringLiteral("Runtime Metadata Summary"),
                 runtimeSummary,
             });
@@ -3472,12 +3530,43 @@ QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QStri
     if (contextAssemblyPolicy_.includeOrchestrationContext) {
         const auto orchestrationSummary = orchestrationSnapshotSummary().simplified();
         if (!orchestrationSummary.isEmpty()) {
-            blocks.append(PromptContextBlock{
+            candidates.append(RetrievalCandidate{
                 ContextAssemblySourceKind::Orchestration,
+                retrievalSourcePriorityForKind(ContextAssemblySourceKind::Orchestration),
                 QStringLiteral("Orchestration Metadata Summary"),
                 orchestrationSummary,
             });
         }
+    }
+
+    return candidates;
+}
+
+RetrievalPlanningResult
+ApplicationController::retrievalPlanningForPrompt(const QString& prompt) const {
+    RetrievalPlanningPolicy policy = retrievalPlanningPolicy_;
+    policy.maxCharacters = promptContextInjectionPolicy_.maxCharacters;
+    policy.includeRecentConversation = contextAssemblyPolicy_.includeConversationContext;
+    policy.includeConversationSummary = contextAssemblyPolicy_.includeConversationContext;
+    policy.includeCommittedMemory = contextAssemblyPolicy_.includeCommittedMemoryContext;
+    policy.includeRuntimeMetadata = contextAssemblyPolicy_.includeRuntimeMetadataContext;
+    policy.includeOrchestration = contextAssemblyPolicy_.includeOrchestrationContext;
+    return planRetrieval(retrievalCandidatesForPrompt(prompt), policy);
+}
+
+QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QString& prompt) const {
+    QList<PromptContextBlock> blocks;
+    const auto planning = retrievalPlanningForPrompt(prompt);
+    blocks.reserve(planning.selectedCandidates.size());
+    for (const auto& candidate : planning.selectedCandidates) {
+        blocks.append(PromptContextBlock{
+            candidate.source,
+            candidate.title,
+            candidate.content,
+            candidate.originalSize,
+            candidate.selectedSize,
+            candidate.truncated,
+        });
     }
 
     return blocks;

@@ -745,6 +745,8 @@ private slots:
     void promptContextInjectionUsesBoundedRecentConversationWindow();
     void conversationSummaryUsesOlderWindowAndStaysSeparateFromMemory();
     void conversationSummaryPlanningDoesNotMutateState();
+    void retrievalPlanningFeedsPromptContextWithoutMixingSources();
+    void retrievalPlanningDoesNotMutateState();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
     void clearChatKeepsApprovedMemoryCandidateMetadata();
@@ -3957,6 +3959,73 @@ void ApplicationControllerTest::conversationSummaryPlanningDoesNotMutateState() 
     QCOMPARE(controller->memoryEntries(), beforeEntries);
     QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
     QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Disabled"));
+}
+
+void ApplicationControllerTest::retrievalPlanningFeedsPromptContextWithoutMixingSources() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+
+    for (int i = 0; i < 10; ++i) {
+        QVERIFY(controller->sendMessage(
+            QStringLiteral("retrieval marker %1 %2").arg(i).arg(QString(100, QLatin1Char('r')))));
+    }
+    controller->remember(QStringLiteral("retrieval.memory"),
+                         QStringLiteral("committed memory remains distinct"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+
+    const auto planningBeforePrompt = controller->retrievalPlanningResult();
+    QVERIFY(planningBeforePrompt.status == sentinel::core::RetrievalPlanningStatus::Ready ||
+            planningBeforePrompt.status == sentinel::core::RetrievalPlanningStatus::Truncated);
+    QVERIFY(planningBeforePrompt.selectedSourceCount >= 4);
+    QCOMPARE(controller->retrievalPlanningReadiness(), QStringLiteral("Ready"));
+
+    QVERIFY(controller->sendMessage(QStringLiteral("retrieval final question")));
+
+    const auto prompt = fakeClientPtr->lastRequest.prompt;
+    const auto windowStart = prompt.indexOf(QStringLiteral("--- Bounded Conversation History ---"));
+    const auto summaryStart = prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---"));
+    const auto memoryStart = prompt.indexOf(QStringLiteral("--- Committed Local Memory ---"));
+    QVERIFY(windowStart >= 0);
+    QVERIFY(summaryStart > windowStart);
+    QVERIFY(memoryStart > summaryStart);
+    QVERIFY(prompt.mid(summaryStart, memoryStart - summaryStart)
+                .contains(QStringLiteral("retrieval marker 0")));
+    QVERIFY(!prompt.mid(summaryStart, memoryStart - summaryStart)
+                 .contains(QStringLiteral("retrieval.memory = committed memory remains distinct")));
+    QVERIFY(prompt.mid(memoryStart)
+                .contains(QStringLiteral("retrieval.memory = committed memory remains distinct")));
+    QVERIFY(controller->retrievalPlanningSourceSummary().contains(
+        QStringLiteral("Conversation Context")));
+}
+
+void ApplicationControllerTest::retrievalPlanningDoesNotMutateState() {
+    const auto controller = makeController();
+    for (int i = 0; i < 8; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("retrieval planning marker %1 %2")
+                                            .arg(i)
+                                            .arg(QString(120, QLatin1Char('p')))));
+    }
+    controller->remember(QStringLiteral("retrieval.local"), QStringLiteral("unchanged"));
+    const auto beforeEntries = controller->memoryEntries();
+    const auto beforeMessages = controller->conversationHistoryMessageCount();
+    const auto beforeInjectionStatus = controller->promptContextInjectionStatus();
+
+    const auto planning = controller->retrievalPlanningResult();
+
+    QVERIFY(planning.status == sentinel::core::RetrievalPlanningStatus::Ready ||
+            planning.status == sentinel::core::RetrievalPlanningStatus::Truncated);
+    QCOMPARE(controller->memoryEntries(), beforeEntries);
+    QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
+    QCOMPARE(controller->promptContextInjectionStatus(), beforeInjectionStatus);
 }
 
 void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandidates() {

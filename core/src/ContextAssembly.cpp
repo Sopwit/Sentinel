@@ -81,6 +81,57 @@ QString conversationSummaryStatusName(ConversationSummaryStatus status) {
     return QStringLiteral("Empty");
 }
 
+QString retrievalPlanningStatusName(RetrievalPlanningStatus status) {
+    switch (status) {
+    case RetrievalPlanningStatus::NotPlanned:
+        return QStringLiteral("Not Planned");
+    case RetrievalPlanningStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case RetrievalPlanningStatus::Empty:
+        return QStringLiteral("Empty");
+    case RetrievalPlanningStatus::Ready:
+        return QStringLiteral("Ready");
+    case RetrievalPlanningStatus::Truncated:
+        return QStringLiteral("Truncated");
+    }
+
+    return QStringLiteral("Not Planned");
+}
+
+QString retrievalSourcePriorityName(RetrievalSourcePriority priority) {
+    switch (priority) {
+    case RetrievalSourcePriority::RecentConversation:
+        return QStringLiteral("1 Recent Conversation");
+    case RetrievalSourcePriority::ConversationSummary:
+        return QStringLiteral("2 Conversation Summary");
+    case RetrievalSourcePriority::CommittedMemory:
+        return QStringLiteral("3 Committed Memory");
+    case RetrievalSourcePriority::RuntimeMetadata:
+        return QStringLiteral("4 Runtime Metadata");
+    case RetrievalSourcePriority::Orchestration:
+        return QStringLiteral("5 Orchestration");
+    }
+
+    return QStringLiteral("1 Recent Conversation");
+}
+
+RetrievalSourcePriority retrievalSourcePriorityForKind(ContextAssemblySourceKind kind) {
+    switch (kind) {
+    case ContextAssemblySourceKind::Conversation:
+        return RetrievalSourcePriority::RecentConversation;
+    case ContextAssemblySourceKind::ConversationSummary:
+        return RetrievalSourcePriority::ConversationSummary;
+    case ContextAssemblySourceKind::CommittedMemory:
+        return RetrievalSourcePriority::CommittedMemory;
+    case ContextAssemblySourceKind::RuntimeMetadata:
+        return RetrievalSourcePriority::RuntimeMetadata;
+    case ContextAssemblySourceKind::Orchestration:
+        return RetrievalSourcePriority::Orchestration;
+    }
+
+    return RetrievalSourcePriority::RecentConversation;
+}
+
 ContextAssemblySource makeContextAssemblySource(ContextAssemblySourceKind kind, bool requested,
                                                 bool available, int blockCount, int estimatedSize,
                                                 const QString& summary) {
@@ -584,6 +635,210 @@ QStringList conversationSummaryBlockSummaries(const ConversationSummaryResult& r
                                              : QStringLiteral("messages"))
                 .arg(block.includedSize)
                 .arg(block.truncated ? QStringLiteral(" / truncated") : QStringLiteral("")));
+    }
+    return summaries;
+}
+
+RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidates,
+                                      const RetrievalPlanningPolicy& policy) {
+    RetrievalPlanningResult result;
+    result.policy = policy;
+    result.budget.maxCharacters = std::max(0, policy.maxCharacters);
+    result.budget.remainingCharacters = result.budget.maxCharacters;
+    result.checks.append(QStringLiteral("Boundary: deterministic retrieval planning only"));
+    result.checks.append(QStringLiteral("Semantic/vector search: disabled"));
+    result.checks.append(QStringLiteral("Embeddings: disabled"));
+    result.checks.append(QStringLiteral("Provider/model calls: disabled"));
+    result.checks.append(QStringLiteral("Automatic memory writes: disabled"));
+    result.checks.append(QStringLiteral("Prompt mutation during planning: disabled"));
+
+    if (!policy.enabled) {
+        result.status = RetrievalPlanningStatus::Disabled;
+        result.summary = policy.summary;
+        result.checks.append(QStringLiteral("Policy: disabled"));
+        return result;
+    }
+
+    QList<RetrievalCandidate> normalized;
+    normalized.reserve(candidates.size());
+    for (const auto& candidate : candidates) {
+        RetrievalCandidate item = candidate;
+        item.title = item.title.simplified();
+        item.content = item.content.trimmed();
+        item.priority = retrievalSourcePriorityForKind(item.source);
+        item.originalSize = item.content.size();
+        item.selectedSize = 0;
+        item.selected = false;
+        item.truncated = false;
+        item.exclusionReason.clear();
+
+        const bool sourceAllowed = (item.source == ContextAssemblySourceKind::Conversation &&
+                                    policy.includeRecentConversation) ||
+                                   (item.source == ContextAssemblySourceKind::ConversationSummary &&
+                                    policy.includeConversationSummary) ||
+                                   (item.source == ContextAssemblySourceKind::CommittedMemory &&
+                                    policy.includeCommittedMemory) ||
+                                   (item.source == ContextAssemblySourceKind::RuntimeMetadata &&
+                                    policy.includeRuntimeMetadata) ||
+                                   (item.source == ContextAssemblySourceKind::Orchestration &&
+                                    policy.includeOrchestration);
+
+        if (item.content.isEmpty()) {
+            item.exclusionReason = QStringLiteral("Empty candidate");
+        } else if (!sourceAllowed) {
+            item.exclusionReason = QStringLiteral("Source disabled by policy");
+        }
+
+        normalized.append(item);
+    }
+
+    std::stable_sort(normalized.begin(), normalized.end(), [](const auto& left, const auto& right) {
+        return static_cast<int>(left.priority) < static_cast<int>(right.priority);
+    });
+
+    result.candidates.reserve(normalized.size());
+    int remaining = result.budget.maxCharacters;
+    for (auto item : normalized) {
+        result.budget.estimatedCharacters += item.originalSize;
+
+        if (!item.exclusionReason.isEmpty()) {
+            ++result.excludedCandidateCount;
+            result.candidates.append(item);
+            continue;
+        }
+
+        if (remaining <= 0) {
+            item.exclusionReason = QStringLiteral("Retrieval budget exhausted");
+            ++result.excludedCandidateCount;
+            result.candidates.append(item);
+            continue;
+        }
+
+        result.budget.allocatedCharacters += std::min(item.originalSize, remaining);
+        if (item.content.size() > remaining) {
+            item.content = item.content.left(remaining).trimmed();
+            item.truncated = true;
+            ++result.truncatedCandidateCount;
+        }
+
+        item.selectedSize = item.content.size();
+        if (item.selectedSize <= 0) {
+            item.exclusionReason = QStringLiteral("Retrieval budget exhausted");
+            ++result.excludedCandidateCount;
+            result.candidates.append(item);
+            continue;
+        }
+
+        item.selected = true;
+        remaining -= item.selectedSize;
+        result.budget.includedCharacters += item.selectedSize;
+        ++result.selectedCandidateCount;
+        result.selectedCandidates.append(item);
+        result.candidates.append(item);
+    }
+
+    result.candidateCount = result.candidates.size();
+    result.budget.remainingCharacters = std::max(0, remaining);
+    result.budget.summary =
+        QStringLiteral("%1 of %2 estimated retrieval characters selected within %3 character "
+                       "budget.")
+            .arg(result.budget.includedCharacters)
+            .arg(result.budget.estimatedCharacters)
+            .arg(result.budget.maxCharacters);
+    result.budgetSummary = result.budget.summary;
+
+    QList<ContextAssemblySourceKind> sourceOrder{
+        ContextAssemblySourceKind::Conversation,    ContextAssemblySourceKind::ConversationSummary,
+        ContextAssemblySourceKind::CommittedMemory, ContextAssemblySourceKind::RuntimeMetadata,
+        ContextAssemblySourceKind::Orchestration,
+    };
+    QStringList selectedSourceNames;
+    QStringList excludedSourceNames;
+    for (const auto source : sourceOrder) {
+        RetrievalSelectionSummary summary;
+        summary.source = source;
+        summary.priority = retrievalSourcePriorityForKind(source);
+
+        for (const auto& candidate : result.candidates) {
+            if (candidate.source != source) {
+                continue;
+            }
+            ++summary.candidateCount;
+            summary.estimatedCharacters += candidate.originalSize;
+            summary.allocatedCharacters += candidate.selected ? candidate.selectedSize : 0;
+            summary.includedCharacters += candidate.selected ? candidate.selectedSize : 0;
+            if (candidate.selected) {
+                ++summary.selectedCount;
+            } else {
+                ++summary.excludedCount;
+            }
+            if (candidate.truncated) {
+                ++summary.truncatedCount;
+            }
+        }
+
+        if (summary.candidateCount == 0) {
+            continue;
+        }
+
+        if (summary.selectedCount > 0) {
+            ++result.selectedSourceCount;
+            selectedSourceNames.append(contextAssemblySourceKindName(source));
+        }
+        if (summary.excludedCount > 0) {
+            ++result.excludedSourceCount;
+            excludedSourceNames.append(contextAssemblySourceKindName(source));
+        }
+
+        summary.summary =
+            QStringLiteral("%1 / priority %2 / %3 selected / %4 excluded / %5 truncated / %6 "
+                           "chars")
+                .arg(contextAssemblySourceKindName(source),
+                     retrievalSourcePriorityName(summary.priority))
+                .arg(summary.selectedCount)
+                .arg(summary.excludedCount)
+                .arg(summary.truncatedCount)
+                .arg(summary.includedCharacters);
+        result.sourceSummaries.append(summary);
+    }
+
+    result.sourceSummary = selectedSourceNames.isEmpty()
+                               ? QStringLiteral("No retrieval sources selected.")
+                               : QStringLiteral("%1 selected; excluded sources: %2")
+                                     .arg(selectedSourceNames.join(QStringLiteral(", ")),
+                                          excludedSourceNames.isEmpty()
+                                              ? QStringLiteral("none")
+                                              : excludedSourceNames.join(QStringLiteral(", ")));
+
+    if (result.candidateCount == 0 || result.selectedCandidateCount == 0) {
+        result.status = RetrievalPlanningStatus::Empty;
+        result.summary = QStringLiteral("Retrieval planning found no selectable local context.");
+        return result;
+    }
+
+    result.status = (result.excludedCandidateCount > 0 || result.truncatedCandidateCount > 0)
+                        ? RetrievalPlanningStatus::Truncated
+                        : RetrievalPlanningStatus::Ready;
+    result.summary =
+        QStringLiteral("Retrieval planning selected %1 of %2 candidate %3 from %4 %5; %6 excluded, "
+                       "%7 truncated. %8")
+            .arg(result.selectedCandidateCount)
+            .arg(result.candidateCount)
+            .arg(result.candidateCount == 1 ? QStringLiteral("block") : QStringLiteral("blocks"))
+            .arg(result.selectedSourceCount)
+            .arg(result.selectedSourceCount == 1 ? QStringLiteral("source")
+                                                 : QStringLiteral("sources"))
+            .arg(result.excludedCandidateCount)
+            .arg(result.truncatedCandidateCount)
+            .arg(result.budget.summary);
+    return result;
+}
+
+QStringList retrievalSourceSummaries(const RetrievalPlanningResult& result) {
+    QStringList summaries;
+    summaries.reserve(result.sourceSummaries.size());
+    for (const auto& summary : result.sourceSummaries) {
+        summaries.append(summary.summary);
     }
     return summaries;
 }

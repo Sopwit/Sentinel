@@ -2,6 +2,40 @@
 
 ## Completed / Stable
 
+### Phase 16.28-16.30: Deterministic Retrieval Planning Foundation
+
+Completed. Adds deterministic retrieval-planning metadata between context source preparation and
+prompt context injection.
+
+Scope:
+
+- Added value-only retrieval records: `RetrievalPlanningPolicy`, `RetrievalPlanningStatus`,
+  `RetrievalPlanningResult`, `RetrievalCandidate`, `RetrievalSourcePriority`, `RetrievalBudget`,
+  and `RetrievalSelectionSummary`.
+- Retrieval planning deterministically selects participating context sources across recent
+  conversation windows, deterministic conversation summaries, committed memory recall/runtime
+  entries, runtime metadata, and orchestration metadata.
+- Source priority is fixed and local: recent conversation, older conversation summaries, committed
+  key-value memory, runtime metadata, then orchestration metadata.
+- Planning applies a fixed character budget with deterministic allocation, truncation, selected
+  source counts, excluded source counts, selected/excluded candidate counts, and source summaries.
+- Prompt context injection now consumes selected retrieval candidates while keeping source blocks
+  separate and preserving chronology inside conversation-derived blocks.
+- Controller and desktop view model expose only QML-safe retrieval status, readiness, budget
+  summaries, source summaries, and counts.
+- Chat, Memory, and Settings show compact retrieval-planning status without raw prompt or private
+  assembled payload display.
+- Tests cover deterministic source priority, budget allocation, truncation, chronology
+  preservation, summary/memory separation, no mutation during planning, QML-safe exposure, and fake
+  local inference paths with no real Ollama requirement.
+
+Known limitation:
+
+- Retrieval planning is deterministic local source selection only. There is no semantic/vector
+  search, embeddings, vector database, provider/model call, cloud/API-key behavior, automatic
+  memory write, tools/plugins, filesystem/system action, debug console UI, broad redesign, or raw
+  prompt exposure.
+
 ### Phase 16.25-16.27: Deterministic Conversation Summary Foundation
 
 Completed. Adds bounded local conversation-summary metadata to the prompt context path.

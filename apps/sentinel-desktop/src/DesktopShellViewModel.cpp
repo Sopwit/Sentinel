@@ -1016,6 +1016,50 @@ QStringList DesktopShellViewModel::conversationSummaryBlockSummaries() const {
     return controller_.conversationSummaryBlockSummaries();
 }
 
+QString DesktopShellViewModel::retrievalPlanningStatus() const {
+    return controller_.retrievalPlanningStatus();
+}
+
+QString DesktopShellViewModel::retrievalPlanningSummary() const {
+    return controller_.retrievalPlanningSummary();
+}
+
+QString DesktopShellViewModel::retrievalPlanningReadiness() const {
+    return controller_.retrievalPlanningReadiness();
+}
+
+QString DesktopShellViewModel::retrievalPlanningBudgetSummary() const {
+    return controller_.retrievalPlanningBudgetSummary();
+}
+
+QString DesktopShellViewModel::retrievalPlanningSourceSummary() const {
+    return controller_.retrievalPlanningSourceSummary();
+}
+
+int DesktopShellViewModel::retrievalPlanningSelectedSourceCount() const {
+    return controller_.retrievalPlanningSelectedSourceCount();
+}
+
+int DesktopShellViewModel::retrievalPlanningExcludedSourceCount() const {
+    return controller_.retrievalPlanningExcludedSourceCount();
+}
+
+int DesktopShellViewModel::retrievalPlanningSelectedCandidateCount() const {
+    return controller_.retrievalPlanningSelectedCandidateCount();
+}
+
+int DesktopShellViewModel::retrievalPlanningExcludedCandidateCount() const {
+    return controller_.retrievalPlanningExcludedCandidateCount();
+}
+
+int DesktopShellViewModel::retrievalPlanningTruncatedCandidateCount() const {
+    return controller_.retrievalPlanningTruncatedCandidateCount();
+}
+
+QStringList DesktopShellViewModel::retrievalPlanningSourceSummaries() const {
+    return controller_.retrievalPlanningSourceSummaries();
+}
+
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
     return controller_.localInferenceStreamingEnabled();
 }

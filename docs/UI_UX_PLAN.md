@@ -318,6 +318,14 @@ counts. The UI must keep this as metadata/status only: no raw prompt, no full su
 display, no semantic summarization controls, no embeddings/vector controls, no provider/model
 setup expansion, no tools/plugins, no filesystem/system actions, and no broad redesign.
 
+Phase 16.28 through Phase 16.30 add compact deterministic retrieval-planning status. Chat may show
+retrieval status, selected source count, and excluded count near existing context/window/summary
+status. Memory and Settings may show retrieval readiness, budget summary, selected/excluded source
+counts, selected candidate count, and truncated count. The UI must remain summary-only: no debug
+console, no raw prompt, no private assembled payload display, no semantic/vector controls, no
+embedding controls, no provider/model setup expansion, no tools/plugins, no filesystem/system
+actions, and no broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no
