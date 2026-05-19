@@ -56,7 +56,25 @@ ScrollView {
                     InfoRow {
                         compact: memoryPage.compact
                         label: "Semantic Memory"
-                        value: "Future placeholder only. No embeddings, vector search, or autonomous recall."
+                        value: memoryPage.viewModel.semanticRetrievalStatus + " - "
+                               + memoryPage.viewModel.semanticReadiness
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Embeddings"
+                        value: memoryPage.viewModel.embeddingProviderReadiness + " - "
+                               + memoryPage.viewModel.embeddingProviderSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Vector Index"
+                        value: memoryPage.viewModel.vectorIndexReadiness + " / "
+                               + memoryPage.viewModel.vectorIndexedItemCount
+                               + " indexed items"
                         Layout.fillWidth: true
                     }
                 }

@@ -2,6 +2,39 @@
 
 ## Completed / Stable
 
+### Phase 16.31-16.33: Embedding And Vector Abstraction Foundation
+
+Completed. Adds semantic retrieval readiness abstractions without enabling semantic retrieval.
+
+Scope:
+
+- Added value/interface types for embedding providers, embedding requests/results/documents,
+  vectors, vector index policy/status, vector search queries/results/candidates, and semantic
+  retrieval policy/status.
+- Added `IEmbeddingProvider` and `IVectorIndex` boundaries for future embedding providers and
+  vector index backends.
+- Added deterministic local fake implementations for tests only: `FakeEmbeddingProvider` and
+  `FakeVectorIndex`.
+- Fake embeddings are stable hash/token-count vectors. Fake vector search is in-memory only with
+  deterministic cosine scoring and stable tie ordering.
+- Controller and desktop view model expose only QML-safe readiness metadata: semantic retrieval
+  disabled state, embedding provider readiness, vector index readiness, indexed item counts,
+  summaries, and checks.
+- Memory and Settings show compact semantic/vector readiness and clearly state that semantic
+  retrieval is not active.
+- Retrieval planning remains deterministic source selection. Semantic readiness metadata does not
+  change ranking, selected sources, prompt assembly, or prompt injection.
+- Tests cover deterministic fake embeddings, stable vectors, insert/search/remove, scoring order,
+  retrieval-planning non-regression, prompt non-mutation, QML-safe exposure, and fake-only behavior
+  with no real Ollama requirement.
+
+Known limitation:
+
+- Semantic retrieval remains disabled. There are no real embeddings, transformer inference,
+  semantic ranking/search, vector database integrations, cloud/API keys, provider/model calls,
+  filesystem writes, downloads, plugins/tools, system execution, semantic prompt injection, raw
+  vector QML exposure, or runtime authority expansion.
+
 ### Phase 16.28-16.30: Deterministic Retrieval Planning Foundation
 
 Completed. Adds deterministic retrieval-planning metadata between context source preparation and

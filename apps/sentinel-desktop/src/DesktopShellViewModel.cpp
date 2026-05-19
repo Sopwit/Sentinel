@@ -1060,6 +1060,50 @@ QStringList DesktopShellViewModel::retrievalPlanningSourceSummaries() const {
     return controller_.retrievalPlanningSourceSummaries();
 }
 
+core::SemanticRetrievalPolicy DesktopShellViewModel::semanticRetrievalPolicy() const {
+    return controller_.semanticRetrievalPolicy();
+}
+
+bool DesktopShellViewModel::semanticRetrievalEnabled() const {
+    return controller_.semanticRetrievalEnabled();
+}
+
+QString DesktopShellViewModel::semanticRetrievalStatus() const {
+    return controller_.semanticRetrievalStatus();
+}
+
+QString DesktopShellViewModel::semanticRetrievalSummary() const {
+    return controller_.semanticRetrievalSummary();
+}
+
+QString DesktopShellViewModel::semanticReadiness() const {
+    return controller_.semanticReadiness();
+}
+
+QString DesktopShellViewModel::embeddingProviderReadiness() const {
+    return controller_.embeddingProviderReadiness();
+}
+
+QString DesktopShellViewModel::embeddingProviderSummary() const {
+    return controller_.embeddingProviderSummary();
+}
+
+QString DesktopShellViewModel::vectorIndexReadiness() const {
+    return controller_.vectorIndexReadiness();
+}
+
+QString DesktopShellViewModel::vectorIndexSummary() const {
+    return controller_.vectorIndexSummary();
+}
+
+int DesktopShellViewModel::vectorIndexedItemCount() const {
+    return controller_.vectorIndexedItemCount();
+}
+
+QStringList DesktopShellViewModel::semanticRetrievalReadinessChecks() const {
+    return controller_.semanticRetrievalReadinessChecks();
+}
+
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
     return controller_.localInferenceStreamingEnabled();
 }

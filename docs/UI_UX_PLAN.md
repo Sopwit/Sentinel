@@ -326,6 +326,13 @@ console, no raw prompt, no private assembled payload display, no semantic/vector
 embedding controls, no provider/model setup expansion, no tools/plugins, no filesystem/system
 actions, and no broad redesign.
 
+Phase 16.31 through Phase 16.33 add compact semantic/vector readiness status. Memory and Settings
+may show semantic retrieval disabled state, embedding provider readiness, vector index readiness,
+indexed item count, summaries, and checks. The copy must make clear that semantic retrieval is not
+active. The UI must not add semantic search controls, embedding/vector debug UI, raw vector
+display, vector score display, provider setup, vector database setup, prompt payload display,
+filesystem/system actions, tools/plugins, or broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

@@ -1927,6 +1927,33 @@ Still out of scope:
   cloud/API keys, automatic memory writes, tools/plugins, filesystem/system actions, debug console
   UI, broad redesign, raw prompt display, and private assembled payload display.
 
+## Phase 16.31-16.33: Embedding And Vector Abstraction Foundation
+
+Completed. Prepared semantic retrieval architecture without enabling semantic behavior.
+
+Delivered:
+
+- `EmbeddingVector`, `EmbeddingDocument`, `EmbeddingRequest`, `EmbeddingResult`,
+  `EmbeddingProviderStatus`, `EmbeddingProviderPolicy`, `VectorIndexStatus`,
+  `VectorIndexPolicy`, `VectorSearchQuery`, `VectorSearchResult`, `VectorSearchCandidate`,
+  `SemanticRetrievalStatus`, and `SemanticRetrievalPolicy`.
+- `IEmbeddingProvider` and `IVectorIndex` boundaries for future local/provider embedding systems
+  and future vector database/index compatibility.
+- `FakeEmbeddingProvider` and `FakeVectorIndex` for deterministic tests only.
+- Stable fake vectors derived from local text hashing/token counting and deterministic in-memory
+  vector search with stable scoring/tie ordering.
+- QML-safe readiness metadata for semantic retrieval disabled state, embedding provider readiness,
+  vector index readiness, indexed item count, summaries, and checks.
+- Compact Memory and Settings semantic/vector readiness sections.
+- Tests for fake embedding generation, stable vectors, vector insert/search/remove, deterministic
+  scoring order, retrieval-planning non-regression, prompt non-mutation, and QML-safe exposure.
+
+Still out of scope:
+
+- Real embeddings, transformer inference, semantic ranking/search, semantic prompt injection,
+  vector database integration, cloud/API keys, provider/model calls, filesystem writes, downloads,
+  plugins/tools, system execution, debug UI, broad redesign, and runtime authority expansion.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

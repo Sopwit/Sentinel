@@ -37,6 +37,7 @@
 #include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/RuntimePipeline.h"
 #include "sentinel/core/RuntimeSafety.h"
+#include "sentinel/core/SemanticRetrieval.h"
 #include "sentinel/core/Voice.h"
 
 #include <QObject>
@@ -374,6 +375,17 @@ class ApplicationController final : public QObject {
                    retrievalPlanningTruncatedCandidateCount NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList retrievalPlanningSourceSummaries READ retrievalPlanningSourceSummaries
                    NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(bool semanticRetrievalEnabled READ semanticRetrievalEnabled CONSTANT)
+    Q_PROPERTY(QString semanticRetrievalStatus READ semanticRetrievalStatus CONSTANT)
+    Q_PROPERTY(QString semanticRetrievalSummary READ semanticRetrievalSummary CONSTANT)
+    Q_PROPERTY(QString semanticReadiness READ semanticReadiness CONSTANT)
+    Q_PROPERTY(QString embeddingProviderReadiness READ embeddingProviderReadiness CONSTANT)
+    Q_PROPERTY(QString embeddingProviderSummary READ embeddingProviderSummary CONSTANT)
+    Q_PROPERTY(QString vectorIndexReadiness READ vectorIndexReadiness CONSTANT)
+    Q_PROPERTY(QString vectorIndexSummary READ vectorIndexSummary CONSTANT)
+    Q_PROPERTY(int vectorIndexedItemCount READ vectorIndexedItemCount CONSTANT)
+    Q_PROPERTY(
+        QStringList semanticRetrievalReadinessChecks READ semanticRetrievalReadinessChecks CONSTANT)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -880,6 +892,17 @@ public:
     int retrievalPlanningExcludedCandidateCount() const;
     int retrievalPlanningTruncatedCandidateCount() const;
     QStringList retrievalPlanningSourceSummaries() const;
+    SemanticRetrievalPolicy semanticRetrievalPolicy() const;
+    bool semanticRetrievalEnabled() const;
+    QString semanticRetrievalStatus() const;
+    QString semanticRetrievalSummary() const;
+    QString semanticReadiness() const;
+    QString embeddingProviderReadiness() const;
+    QString embeddingProviderSummary() const;
+    QString vectorIndexReadiness() const;
+    QString vectorIndexSummary() const;
+    int vectorIndexedItemCount() const;
+    QStringList semanticRetrievalReadinessChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;
@@ -1205,6 +1228,7 @@ private:
     ConversationWindowPolicy conversationWindowPolicy_;
     ConversationSummaryPolicy conversationSummaryPolicy_;
     RetrievalPlanningPolicy retrievalPlanningPolicy_;
+    SemanticRetrievalPolicy semanticRetrievalPolicy_;
     PromptContextInjectionPolicy promptContextInjectionPolicy_;
     PromptContextInjectionResult latestPromptContextInjectionResult_;
     std::unique_ptr<ChatSession> chatSession_;

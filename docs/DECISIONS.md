@@ -1965,3 +1965,31 @@ Boundary rules:
   redesign require later explicit phase gates. Future vector/embedding compatibility must remain
   behind a separate retrieval/ranking boundary and keep this deterministic planning contract
   intact.
+
+## 82. Embedding And Vector Support Starts As Interfaces
+
+Decision: Semantic/vector retrieval begins with disabled abstraction boundaries, not real semantic
+runtime behavior.
+
+Reason: Future semantic retrieval needs clean provider and index compatibility without changing
+the current deterministic prompt pipeline or expanding runtime authority.
+
+Boundary rules:
+
+- `IEmbeddingProvider` owns future embedding generation behind an interface.
+- `IVectorIndex` owns future vector insert/search/remove behavior behind an interface.
+- `EmbeddingVector`, `EmbeddingDocument`, `EmbeddingRequest`, `EmbeddingResult`,
+  `EmbeddingProviderStatus`, `EmbeddingProviderPolicy`, `VectorIndexStatus`,
+  `VectorIndexPolicy`, `VectorSearchQuery`, `VectorSearchResult`, `VectorSearchCandidate`,
+  `SemanticRetrievalStatus`, and `SemanticRetrievalPolicy` are value/interface records only.
+- The desktop runtime exposes semantic/vector readiness metadata but does not configure a real
+  embedding provider or vector index.
+- `FakeEmbeddingProvider` and `FakeVectorIndex` are deterministic local test fakes only. They do
+  not call providers/models, use cloud/API keys, write files, download assets, load plugins, or
+  execute tools/system actions.
+- Fake embeddings use stable text hashing/token counting. Fake vector search is in-memory only and
+  uses deterministic scoring and stable tie ordering.
+- Retrieval planning and prompt assembly remain unchanged. Semantic readiness metadata must not
+  affect source priority, ranking, selected context, prompt injection, or raw prompt exposure.
+- QML receives only safe strings, counts, booleans, and checks. Raw vectors, scores, providers,
+  index handles, and private prompt payloads are not exposed.
