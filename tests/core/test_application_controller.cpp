@@ -748,6 +748,8 @@ private slots:
     void retrievalPlanningFeedsPromptContextWithoutMixingSources();
     void retrievalPlanningDoesNotMutateState();
     void semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt();
+    void semanticCandidateOrchestrationExposesSafeMetadata();
+    void semanticCandidateOrchestrationDoesNotMutatePrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
     void clearChatKeepsApprovedMemoryCandidateMetadata();
@@ -4065,6 +4067,62 @@ void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOr
     QVERIFY(!prompt.contains(QStringLiteral("EmbeddingVector")));
     QVERIFY(!prompt.contains(QStringLiteral("VectorSearch")));
     QVERIFY(!prompt.contains(QStringLiteral("score")));
+}
+
+void ApplicationControllerTest::semanticCandidateOrchestrationExposesSafeMetadata() {
+    const auto controller = makeController();
+    for (int i = 0; i < 8; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("semantic candidate marker %1 %2")
+                                            .arg(i)
+                                            .arg(QString(110, QLatin1Char('c')))));
+    }
+    controller->remember(QStringLiteral("candidate.local"), QStringLiteral("source isolated"));
+
+    const auto arbitration = controller->semanticCandidateArbitration();
+
+    QVERIFY(arbitration.status == sentinel::core::SemanticCandidateStatus::Ready ||
+            arbitration.status == sentinel::core::SemanticCandidateStatus::Truncated);
+    QVERIFY(controller->semanticCandidateCount() >= controller->semanticCandidateSelectedCount());
+    QVERIFY(controller->semanticCandidateSelectedCount() >= 4);
+    QVERIFY(controller->semanticCandidateExcludedCount() >= 1);
+    QVERIFY(controller->semanticCandidateParticipationSummaries()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Recent Conversation Window")));
+    QVERIFY(controller->semanticCandidateParticipationSummaries()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Future Semantic/Vector Candidates")));
+    QCOMPARE(controller->hybridRetrievalStatus(), QStringLiteral("Deterministic Only"));
+    QVERIFY(
+        controller->hybridRetrievalSummary().contains(QStringLiteral("semantic path disabled")));
+    QVERIFY(controller->hybridRetrievalReadinessChecks().contains(
+        QStringLiteral("Vector database activation: disabled")));
+}
+
+void ApplicationControllerTest::semanticCandidateOrchestrationDoesNotMutatePrompt() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+    controller->remember(QStringLiteral("candidate.prompt"), QStringLiteral("deterministic"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setPromptContextInjectionEnabled(true);
+
+    const auto candidateStatusBefore = controller->semanticCandidateStatus();
+
+    QVERIFY(controller->sendMessage(QStringLiteral("semantic candidate question")));
+
+    QCOMPARE(controller->semanticCandidateStatus(), candidateStatusBefore);
+    QVERIFY(fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("candidate.prompt = "
+                                                                      "deterministic")));
+    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Future Semantic/Vector")));
+    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("SemanticCandidate")));
+    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Hybrid retrieval")));
 }
 
 void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandidates() {

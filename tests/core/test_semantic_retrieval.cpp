@@ -6,6 +6,15 @@ using sentinel::core::EmbeddingDocument;
 using sentinel::core::EmbeddingRequest;
 using sentinel::core::FakeEmbeddingProvider;
 using sentinel::core::FakeVectorIndex;
+using sentinel::core::HybridRetrievalPolicy;
+using sentinel::core::hybridRetrievalReadiness;
+using sentinel::core::HybridRetrievalStatus;
+using sentinel::core::orchestrateSemanticCandidates;
+using sentinel::core::SemanticCandidate;
+using sentinel::core::SemanticCandidatePolicy;
+using sentinel::core::SemanticCandidateSelection;
+using sentinel::core::SemanticCandidateSource;
+using sentinel::core::SemanticCandidateStatus;
 using sentinel::core::VectorSearchQuery;
 
 class SemanticRetrievalTest final : public QObject {
@@ -16,6 +25,9 @@ private slots:
     void fakeEmbeddingUsesStableVectorsForSameInput();
     void fakeVectorIndexInsertSearchRemoveIsDeterministic();
     void fakeVectorIndexUsesStableScoringOrder();
+    void candidateOrchestrationOrdersAndBudgetsDeterministically();
+    void candidateOrchestrationPreservesSourceIsolationAndChronology();
+    void hybridReadinessKeepsSemanticPathDisabled();
 };
 
 void SemanticRetrievalTest::fakeEmbeddingGenerationIsDeterministic() {
@@ -110,6 +122,78 @@ void SemanticRetrievalTest::fakeVectorIndexUsesStableScoringOrder() {
     QVERIFY(result.candidates.at(0).score >= result.candidates.at(2).score);
     QCOMPARE(result.candidates.at(0).rank, 1);
     QCOMPARE(result.candidates.at(1).rank, 2);
+}
+
+void SemanticRetrievalTest::candidateOrchestrationOrdersAndBudgetsDeterministically() {
+    SemanticCandidatePolicy policy;
+    policy.maxCharacters = 21;
+
+    const auto result = orchestrateSemanticCandidates(
+        {
+            SemanticCandidate{SemanticCandidateSource::CommittedMemory, QStringLiteral("memory"),
+                              QStringLiteral("Memory"), QStringLiteral("memory-value")},
+            SemanticCandidate{SemanticCandidateSource::RecentConversation, QStringLiteral("recent"),
+                              QStringLiteral("Recent"), QStringLiteral("recent")},
+            SemanticCandidate{SemanticCandidateSource::RuntimeMetadata, QStringLiteral("runtime"),
+                              QStringLiteral("Runtime"), QStringLiteral("runtime-metadata")},
+        },
+        policy);
+
+    QCOMPARE(result.status, SemanticCandidateStatus::Truncated);
+    QCOMPARE(result.selectedCandidates.size(), 3);
+    QCOMPARE(result.selectedCandidates.at(0).source, SemanticCandidateSource::RecentConversation);
+    QCOMPARE(result.selectedCandidates.at(1).source, SemanticCandidateSource::CommittedMemory);
+    QCOMPARE(result.selectedCandidates.at(2).source, SemanticCandidateSource::RuntimeMetadata);
+    QCOMPARE(result.selectedCandidates.at(2).selection, SemanticCandidateSelection::Truncated);
+    QCOMPARE(result.budget.includedCharacters, 21);
+    QVERIFY(result.budgetSummary.contains(QStringLiteral("21")));
+}
+
+void SemanticRetrievalTest::candidateOrchestrationPreservesSourceIsolationAndChronology() {
+    SemanticCandidatePolicy policy;
+    policy.maxCharacters = 100;
+
+    const auto result = orchestrateSemanticCandidates(
+        {
+            SemanticCandidate{SemanticCandidateSource::RecentConversation,
+                              QStringLiteral("recent-1"), QStringLiteral("First"),
+                              QStringLiteral("#1 user: old")},
+            SemanticCandidate{SemanticCandidateSource::RecentConversation,
+                              QStringLiteral("recent-2"), QStringLiteral("Second"),
+                              QStringLiteral("#2 assistant: new")},
+            SemanticCandidate{SemanticCandidateSource::DeterministicSummary,
+                              QStringLiteral("summary"), QStringLiteral("Summary"),
+                              QStringLiteral("older summary")},
+            SemanticCandidate{SemanticCandidateSource::FutureSemanticVector,
+                              QStringLiteral("future"), QStringLiteral("Future"),
+                              QStringLiteral("vector payload disabled")},
+        },
+        policy);
+
+    QCOMPARE(result.selectedCandidates.at(0).id, QStringLiteral("recent-1"));
+    QCOMPARE(result.selectedCandidates.at(1).id, QStringLiteral("recent-2"));
+    QCOMPARE(result.selectedCandidates.at(2).source, SemanticCandidateSource::DeterministicSummary);
+    QVERIFY(result.exclusionSummary.contains(QStringLiteral("1 semantic candidate")));
+    QVERIFY(!result.selectedCandidates.last().content.contains(QStringLiteral("vector payload")));
+}
+
+void SemanticRetrievalTest::hybridReadinessKeepsSemanticPathDisabled() {
+    SemanticCandidatePolicy candidatePolicy;
+    const auto arbitration = orchestrateSemanticCandidates(
+        {
+            SemanticCandidate{SemanticCandidateSource::RecentConversation, QStringLiteral("recent"),
+                              QStringLiteral("Recent"), QStringLiteral("local only")},
+        },
+        candidatePolicy);
+
+    const auto readiness = hybridRetrievalReadiness(HybridRetrievalPolicy{}, arbitration);
+
+    QCOMPARE(readiness.status, HybridRetrievalStatus::DeterministicOnly);
+    QCOMPARE(readiness.semanticCandidateCount, 0);
+    QCOMPARE(readiness.deterministicCandidateCount, 1);
+    QVERIFY(readiness.checks.contains(QStringLiteral("Semantic path enabled: no")));
+    QVERIFY(readiness.checks.contains(QStringLiteral("Prompt mutation from semantic candidates: "
+                                                     "disabled")));
 }
 
 QTEST_MAIN(SemanticRetrievalTest)

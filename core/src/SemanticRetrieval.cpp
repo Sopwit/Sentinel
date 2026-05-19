@@ -68,6 +68,85 @@ QString semanticRetrievalStatusName(SemanticRetrievalStatus status) {
     return QStringLiteral("Disabled");
 }
 
+QString semanticCandidateSourceName(SemanticCandidateSource source) {
+    switch (source) {
+    case SemanticCandidateSource::RecentConversation:
+        return QStringLiteral("Recent Conversation Window");
+    case SemanticCandidateSource::DeterministicSummary:
+        return QStringLiteral("Deterministic Summaries");
+    case SemanticCandidateSource::CommittedMemory:
+        return QStringLiteral("Committed Memory");
+    case SemanticCandidateSource::RuntimeMetadata:
+        return QStringLiteral("Runtime Metadata");
+    case SemanticCandidateSource::OrchestrationMetadata:
+        return QStringLiteral("Orchestration Metadata");
+    case SemanticCandidateSource::FutureSemanticVector:
+        return QStringLiteral("Future Semantic/Vector Candidates");
+    }
+
+    return QStringLiteral("Recent Conversation Window");
+}
+
+QString semanticCandidateSelectionName(SemanticCandidateSelection selection) {
+    switch (selection) {
+    case SemanticCandidateSelection::NotEvaluated:
+        return QStringLiteral("Not Evaluated");
+    case SemanticCandidateSelection::Selected:
+        return QStringLiteral("Selected");
+    case SemanticCandidateSelection::Excluded:
+        return QStringLiteral("Excluded");
+    case SemanticCandidateSelection::Truncated:
+        return QStringLiteral("Truncated");
+    }
+
+    return QStringLiteral("Not Evaluated");
+}
+
+QString semanticCandidateStatusName(SemanticCandidateStatus status) {
+    switch (status) {
+    case SemanticCandidateStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticCandidateStatus::Empty:
+        return QStringLiteral("Empty");
+    case SemanticCandidateStatus::Ready:
+        return QStringLiteral("Ready");
+    case SemanticCandidateStatus::Truncated:
+        return QStringLiteral("Truncated");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString hybridRetrievalStatusName(HybridRetrievalStatus status) {
+    switch (status) {
+    case HybridRetrievalStatus::DeterministicOnly:
+        return QStringLiteral("Deterministic Only");
+    case HybridRetrievalStatus::SemanticDisabled:
+        return QStringLiteral("Semantic Disabled");
+    case HybridRetrievalStatus::ReadyMetadataOnly:
+        return QStringLiteral("Ready Metadata Only");
+    }
+
+    return QStringLiteral("Semantic Disabled");
+}
+
+SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source) {
+    switch (source) {
+    case ContextAssemblySourceKind::Conversation:
+        return SemanticCandidateSource::RecentConversation;
+    case ContextAssemblySourceKind::ConversationSummary:
+        return SemanticCandidateSource::DeterministicSummary;
+    case ContextAssemblySourceKind::CommittedMemory:
+        return SemanticCandidateSource::CommittedMemory;
+    case ContextAssemblySourceKind::RuntimeMetadata:
+        return SemanticCandidateSource::RuntimeMetadata;
+    case ContextAssemblySourceKind::Orchestration:
+        return SemanticCandidateSource::OrchestrationMetadata;
+    }
+
+    return SemanticCandidateSource::RecentConversation;
+}
+
 FakeEmbeddingProvider::FakeEmbeddingProvider(int dimensions) {
     policy_.enabled = true;
     policy_.fakeOnly = true;
@@ -290,6 +369,244 @@ QStringList semanticRetrievalReadinessChecks(const SemanticRetrievalPolicy& poli
         QStringLiteral("Raw vectors exposed to QML: %1")
             .arg(policy.exposeRawVectorsToQml ? QStringLiteral("yes") : QStringLiteral("no")),
     };
+}
+
+SemanticCandidateArbitration
+orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,
+                              const SemanticCandidatePolicy& policy) {
+    SemanticCandidateArbitration result;
+    result.budget.maxCharacters = std::max(0, policy.maxCharacters);
+    result.budget.remainingCharacters = result.budget.maxCharacters;
+
+    if (!policy.enabled) {
+        result.status = SemanticCandidateStatus::Disabled;
+        result.summary = policy.summary;
+        return result;
+    }
+
+    QList<SemanticCandidate> normalized;
+    normalized.reserve(candidates.size());
+    int sequence = 0;
+    for (const auto& candidate : candidates) {
+        SemanticCandidate item = candidate;
+        item.id = item.id.trimmed().isEmpty()
+                      ? QStringLiteral("semantic-candidate-%1").arg(sequence)
+                      : item.id.trimmed();
+        item.title = item.title.simplified();
+        item.content = item.content.trimmed();
+        item.originalSize = item.content.size();
+        item.selectedSize = 0;
+        item.selected = false;
+        item.truncated = false;
+        item.selection = SemanticCandidateSelection::NotEvaluated;
+        item.exclusionReason.clear();
+
+        if (item.content.isEmpty()) {
+            item.exclusionReason = QStringLiteral("Empty candidate");
+        }
+        if (item.source == SemanticCandidateSource::FutureSemanticVector &&
+            !policy.vectorCandidatesEnabled) {
+            item.exclusionReason = QStringLiteral("Semantic/vector candidate path disabled");
+        }
+
+        normalized.append(item);
+        ++sequence;
+    }
+
+    const auto sourceRank = [](SemanticCandidateSource source) {
+        switch (source) {
+        case SemanticCandidateSource::RecentConversation:
+            return 1;
+        case SemanticCandidateSource::DeterministicSummary:
+            return 2;
+        case SemanticCandidateSource::CommittedMemory:
+            return 3;
+        case SemanticCandidateSource::RuntimeMetadata:
+            return 4;
+        case SemanticCandidateSource::OrchestrationMetadata:
+            return 5;
+        case SemanticCandidateSource::FutureSemanticVector:
+            return 6;
+        }
+        return 99;
+    };
+
+    std::stable_sort(normalized.begin(), normalized.end(),
+                     [&](const auto& left, const auto& right) {
+                         return sourceRank(left.source) < sourceRank(right.source);
+                     });
+
+    int remaining = result.budget.maxCharacters;
+    for (auto item : normalized) {
+        result.budget.estimatedCharacters += item.originalSize;
+        if (!item.exclusionReason.isEmpty()) {
+            item.selection = SemanticCandidateSelection::Excluded;
+            result.candidates.append(item);
+            continue;
+        }
+
+        if (remaining <= 0) {
+            item.selection = SemanticCandidateSelection::Excluded;
+            item.exclusionReason = QStringLiteral("Semantic candidate budget exhausted");
+            result.candidates.append(item);
+            continue;
+        }
+
+        result.budget.allocatedCharacters += std::min(item.originalSize, remaining);
+        if (item.content.size() > remaining) {
+            item.content = item.content.left(remaining).trimmed();
+            item.truncated = true;
+        }
+
+        item.selectedSize = item.content.size();
+        if (item.selectedSize <= 0) {
+            item.selection = SemanticCandidateSelection::Excluded;
+            item.exclusionReason = QStringLiteral("Semantic candidate budget exhausted");
+            result.candidates.append(item);
+            continue;
+        }
+
+        item.selected = true;
+        item.selection = item.truncated ? SemanticCandidateSelection::Truncated
+                                        : SemanticCandidateSelection::Selected;
+        item.summary = QStringLiteral("%1 / %2 / %3 chars")
+                           .arg(semanticCandidateSourceName(item.source),
+                                semanticCandidateSelectionName(item.selection))
+                           .arg(item.selectedSize);
+        remaining -= item.selectedSize;
+        result.budget.includedCharacters += item.selectedSize;
+        result.selectedCandidates.append(item);
+        result.candidates.append(item);
+    }
+
+    result.budget.remainingCharacters = std::max(0, remaining);
+    result.budget.summary =
+        QStringLiteral("%1 of %2 estimated candidate characters selected within %3 character "
+                       "budget.")
+            .arg(result.budget.includedCharacters)
+            .arg(result.budget.estimatedCharacters)
+            .arg(result.budget.maxCharacters);
+    result.budgetSummary = result.budget.summary;
+
+    int selectedCount = 0;
+    int excludedCount = 0;
+    int truncatedCount = 0;
+    for (const auto& item : result.candidates) {
+        if (item.selected) {
+            ++selectedCount;
+        } else {
+            ++excludedCount;
+        }
+        if (item.truncated) {
+            ++truncatedCount;
+        }
+    }
+
+    result.exclusionSummary =
+        excludedCount == 0
+            ? QStringLiteral("No semantic candidates excluded.")
+            : QStringLiteral("%1 semantic candidate %2 excluded or unavailable.")
+                  .arg(excludedCount)
+                  .arg(excludedCount == 1 ? QStringLiteral("was") : QStringLiteral("were"));
+
+    if (result.candidates.isEmpty() || selectedCount == 0) {
+        result.status = SemanticCandidateStatus::Empty;
+        result.summary =
+            QStringLiteral("Semantic candidate orchestration found no selectable local metadata.");
+        return result;
+    }
+
+    result.status = (excludedCount > 0 || truncatedCount > 0) ? SemanticCandidateStatus::Truncated
+                                                              : SemanticCandidateStatus::Ready;
+    result.summary =
+        QStringLiteral("Semantic candidate orchestration selected %1 of %2 deterministic metadata "
+                       "%3; %4 excluded, %5 truncated. Semantic retrieval remains disabled.")
+            .arg(selectedCount)
+            .arg(result.candidates.size())
+            .arg(result.candidates.size() == 1 ? QStringLiteral("candidate")
+                                               : QStringLiteral("candidates"))
+            .arg(excludedCount)
+            .arg(truncatedCount);
+    return result;
+}
+
+QStringList
+semanticCandidateParticipationSummaries(const SemanticCandidateArbitration& arbitration) {
+    const QList<SemanticCandidateSource> sourceOrder{
+        SemanticCandidateSource::RecentConversation,
+        SemanticCandidateSource::DeterministicSummary,
+        SemanticCandidateSource::CommittedMemory,
+        SemanticCandidateSource::RuntimeMetadata,
+        SemanticCandidateSource::OrchestrationMetadata,
+        SemanticCandidateSource::FutureSemanticVector,
+    };
+
+    QStringList summaries;
+    for (const auto source : sourceOrder) {
+        SemanticCandidateSummary summary;
+        summary.source = source;
+        for (const auto& candidate : arbitration.candidates) {
+            if (candidate.source != source) {
+                continue;
+            }
+            ++summary.candidateCount;
+            if (candidate.selected) {
+                ++summary.selectedCount;
+                summary.includedCharacters += candidate.selectedSize;
+            } else {
+                ++summary.excludedCount;
+            }
+            if (candidate.truncated) {
+                ++summary.truncatedCount;
+            }
+        }
+        if (summary.candidateCount == 0) {
+            continue;
+        }
+        summary.summary = QStringLiteral("%1 / %2 candidates / %3 selected / %4 excluded / %5 "
+                                         "truncated / %6 chars")
+                              .arg(semanticCandidateSourceName(source))
+                              .arg(summary.candidateCount)
+                              .arg(summary.selectedCount)
+                              .arg(summary.excludedCount)
+                              .arg(summary.truncatedCount)
+                              .arg(summary.includedCharacters);
+        summaries.append(summary.summary);
+    }
+    return summaries;
+}
+
+HybridRetrievalReadiness hybridRetrievalReadiness(const HybridRetrievalPolicy& policy,
+                                                  const SemanticCandidateArbitration& arbitration) {
+    HybridRetrievalReadiness readiness;
+    readiness.policy = policy;
+    readiness.candidateStatus = arbitration.status;
+    readiness.deterministicCandidateCount = arbitration.selectedCandidates.size();
+    readiness.semanticCandidateCount = 0;
+    readiness.selectedCandidateCount = arbitration.selectedCandidates.size();
+    readiness.status = policy.semanticPathEnabled ? HybridRetrievalStatus::ReadyMetadataOnly
+                                                  : HybridRetrievalStatus::SemanticDisabled;
+    if (policy.deterministicRetrievalAuthoritative && !policy.semanticPathEnabled) {
+        readiness.status = HybridRetrievalStatus::DeterministicOnly;
+    }
+    readiness.summary =
+        QStringLiteral("Hybrid retrieval readiness: deterministic retrieval authoritative, %1 "
+                       "deterministic candidates participating, semantic path disabled.")
+            .arg(readiness.deterministicCandidateCount);
+    readiness.checks = {
+        QStringLiteral("Deterministic retrieval authoritative: %1")
+            .arg(policy.deterministicRetrievalAuthoritative ? QStringLiteral("yes")
+                                                            : QStringLiteral("no")),
+        QStringLiteral("Semantic path enabled: %1")
+            .arg(policy.semanticPathEnabled ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Semantic prompt injection: %1")
+            .arg(policy.semanticPromptInjectionEnabled ? QStringLiteral("enabled")
+                                                       : QStringLiteral("disabled")),
+        QStringLiteral("Provider/model calls: disabled"),
+        QStringLiteral("Vector database activation: disabled"),
+        QStringLiteral("Prompt mutation from semantic candidates: disabled"),
+    };
+    return readiness;
 }
 
 } // namespace sentinel::core

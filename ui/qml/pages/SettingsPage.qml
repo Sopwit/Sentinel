@@ -392,8 +392,62 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Candidate Orchestration"
+                    value: settingsPage.viewModel.semanticCandidateStatus
+                           + " / "
+                           + settingsPage.viewModel.semanticCandidateBudgetSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Candidate Counts"
+                    value: settingsPage.viewModel.semanticCandidateSelectedCount
+                           + " selected / "
+                           + settingsPage.viewModel.semanticCandidateExcludedCount
+                           + " excluded / "
+                           + settingsPage.viewModel.semanticCandidateTruncatedCount
+                           + " truncated"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Hybrid Retrieval"
+                    value: settingsPage.viewModel.hybridRetrievalStatus
+                           + " / "
+                           + settingsPage.viewModel.hybridRetrievalSummary
+                    Layout.fillWidth: true
+                }
+
                 Repeater {
                     model: settingsPage.viewModel.semanticRetrievalReadinessChecks
+
+                    Label {
+                        required property string modelData
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.hybridRetrievalReadinessChecks
+
+                    Label {
+                        required property string modelData
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.semanticCandidateParticipationSummaries
 
                     Label {
                         required property string modelData

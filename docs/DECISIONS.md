@@ -349,6 +349,36 @@ Out of scope:
   semantic search, provider/model calls, cloud/API keys, tools/plugins, filesystem/system actions
   beyond the existing memory store, and durable candidate persistence.
 
+## 10.3 Semantic Candidate Orchestration Before Semantic Retrieval
+
+Decision: Add semantic candidate orchestration as deterministic metadata before any semantic
+ranking, vector search, or prompt participation is enabled.
+
+Reason: Hybrid retrieval needs a stable vocabulary for candidate sources, participation budgets,
+arbitration, and fallback behavior before real semantic retrieval can safely influence prompts.
+
+Runtime behavior:
+
+- Semantic candidate records are value-only and derived from existing local metadata sources:
+  recent conversation windows, deterministic summaries, committed memory, runtime metadata,
+  orchestration metadata, and a disabled future semantic/vector source.
+- Arbitration uses fixed deterministic source ordering and character budgeting. Excluded and
+  truncated candidates are reported as metadata.
+- Source isolation is preserved. Conversation-derived sources keep their existing chronology
+  guarantees from the window/summary assemblers.
+- Hybrid retrieval readiness reports deterministic retrieval as authoritative and semantic
+  retrieval as disabled.
+- `ApplicationController` and `DesktopShellViewModel` expose only QML-safe strings, string lists,
+  booleans, and counts.
+- Prompt assembly remains owned by deterministic retrieval planning. Semantic candidates do not
+  mutate prompts or inject semantic/vector payloads.
+
+Out of scope:
+
+- Real embeddings, semantic ranking/search, vector database activation, transformer inference,
+  provider/model calls, cloud/API keys, semantic prompt injection, filesystem/system actions,
+  tools/plugins, raw vector/score UI, and runtime authority expansion.
+
 Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
 confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
 path is non-mutating instead of enabling deletion.

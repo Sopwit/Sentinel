@@ -1954,6 +1954,35 @@ Still out of scope:
   vector database integration, cloud/API keys, provider/model calls, filesystem writes, downloads,
   plugins/tools, system execution, debug UI, broad redesign, and runtime authority expansion.
 
+## Phase 16.34-16.36: Semantic Candidate Orchestration Foundation
+
+Completed. Prepared hybrid deterministic and future semantic retrieval orchestration metadata
+without activating semantic retrieval.
+
+Delivered:
+
+- Value-only semantic candidate orchestration types for candidate sources, selections, budgets,
+  windows, arbitration, summaries, status, policy, and hybrid retrieval readiness.
+- Candidate-source coverage for recent conversation windows, deterministic summaries, committed
+  key-value memory, runtime metadata, orchestration metadata, and disabled future semantic/vector
+  candidates.
+- Deterministic arbitration ordering and participation budgeting with exclusion/truncation
+  metadata, source isolation, chronology guarantees for conversation-derived sources, and compact
+  participation summaries.
+- Hybrid readiness metadata that keeps deterministic retrieval authoritative and reports the
+  semantic path disabled.
+- QML-safe Memory and Settings visibility for candidate counts, arbitration/budget summaries,
+  participation summaries, and hybrid retrieval readiness.
+- Tests for lifecycle metadata, arbitration order, deterministic budgeting, source isolation,
+  chronology preservation, retrieval-planning non-regression, prompt non-mutation, QML-safe
+  exposure, and fake-only/no-real-provider behavior.
+
+Still out of scope:
+
+- Real embeddings, semantic ranking/search, vector DB activation, transformer inference,
+  provider/model calls, cloud/API keys, semantic prompt injection, raw semantic/vector payload UI,
+  plugins/tools, filesystem/system actions, broad redesign, and runtime authority expansion.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

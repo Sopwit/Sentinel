@@ -83,6 +83,7 @@ private slots:
     void exposesConversationSummaryMetadata();
     void exposesRetrievalPlanningMetadata();
     void exposesSemanticVectorReadinessMetadata();
+    void exposesSemanticCandidateOrchestrationMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1770,6 +1771,40 @@ void DesktopShellViewModelTest::exposesSemanticVectorReadinessMetadata() {
     QVERIFY(metaObject->indexOfProperty("embeddingProviderSummary") >= 0);
     QVERIFY(metaObject->indexOfProperty("vectorIndexedItemCount") >= 0);
     QCOMPARE(metaObject->indexOfProperty("embeddingVector"), -1);
+}
+
+void DesktopShellViewModelTest::exposesSemanticCandidateOrchestrationMetadata() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    for (int i = 0; i < 8; ++i) {
+        QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("view semantic candidate %1 %2")
+                                                  .arg(i)
+                                                  .arg(QString(90, QLatin1Char('v')))));
+    }
+    fixture.viewModel.remember(QStringLiteral("view.candidate"),
+                               QStringLiteral("qml safe metadata"));
+
+    QVERIFY(fixture.viewModel.semanticCandidateStatus() == QStringLiteral("Ready") ||
+            fixture.viewModel.semanticCandidateStatus() == QStringLiteral("Truncated"));
+    QVERIFY(fixture.viewModel.semanticCandidateCount() >=
+            fixture.viewModel.semanticCandidateSelectedCount());
+    QVERIFY(fixture.viewModel.semanticCandidateSelectedCount() >= 4);
+    QVERIFY(fixture.viewModel.semanticCandidateExcludedCount() >= 1);
+    QVERIFY(fixture.viewModel.semanticCandidateBudgetSummary().contains(QStringLiteral("3200")));
+    QVERIFY(fixture.viewModel.semanticCandidateArbitrationSummary().contains(
+        QStringLiteral("Deterministic source order")));
+    QVERIFY(fixture.viewModel.semanticCandidateParticipationSummaries()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Committed Memory")));
+    QCOMPARE(fixture.viewModel.hybridRetrievalStatus(), QStringLiteral("Deterministic Only"));
+    QVERIFY(fixture.viewModel.hybridRetrievalReadiness().contains(
+        QStringLiteral("semantic retrieval is disabled")));
+    QVERIFY(fixture.viewModel.hybridRetrievalReadinessChecks().contains(
+        QStringLiteral("Prompt mutation from semantic candidates: disabled")));
+    QVERIFY(metaObject->indexOfProperty("semanticCandidateSummary") >= 0);
+    QVERIFY(metaObject->indexOfProperty("hybridRetrievalSummary") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("semanticCandidateContent"), -1);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

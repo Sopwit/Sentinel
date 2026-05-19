@@ -256,6 +256,20 @@ hash/token-count vectors, in-memory insert/search/remove, deterministic scoring,
 calls, cloud/API keys, filesystem writes, downloads, plugins/tools, or system execution. Retrieval
 planning and prompt assembly remain deterministic and unchanged; semantic metadata does not alter
 source priority, prompt context, ranking, or injection.
+Phase 16.34 through Phase 16.36 add semantic candidate orchestration metadata:
+`SemanticCandidate`, `SemanticCandidateSource`, `SemanticCandidateSelection`,
+`SemanticCandidateBudget`, `SemanticCandidateWindow`, `SemanticCandidateArbitration`,
+`SemanticCandidateSummary`, `SemanticCandidateStatus`, `SemanticCandidatePolicy`,
+`HybridRetrievalStatus`, and `HybridRetrievalPolicy`. Candidate orchestration derives
+deterministic local metadata from recent conversation windows, deterministic summaries, committed
+memory, runtime metadata, orchestration metadata, and a disabled future semantic/vector source.
+Arbitration uses fixed ordering, deterministic budgeting, exclusion/truncation metadata, source
+isolation, and existing chronology guarantees for conversation-derived sources. Hybrid readiness
+reports deterministic retrieval as authoritative and semantic retrieval disabled. Prompt assembly
+continues to consume only deterministic retrieval-planning selections; semantic candidates do not
+mutate prompts, inject payloads, expose raw vectors/scores, call providers/models, activate vector
+databases, run transformer inference, use cloud/API keys, execute plugins/tools, or expand
+filesystem/system authority.
 
 ## Future Components
 
