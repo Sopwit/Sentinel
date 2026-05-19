@@ -77,6 +77,22 @@ ScrollView {
                                + " indexed items"
                         Layout.fillWidth: true
                     }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Candidate Orchestration"
+                        value: memoryPage.viewModel.semanticCandidateStatus + " - "
+                               + memoryPage.viewModel.semanticCandidateSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Hybrid Retrieval"
+                        value: memoryPage.viewModel.hybridRetrievalStatus + " - "
+                               + memoryPage.viewModel.hybridRetrievalReadiness
+                        Layout.fillWidth: true
+                    }
                 }
             }
 

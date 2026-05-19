@@ -281,6 +281,29 @@ ranking, semantic prompt injection, real embedding providers, vector databases, 
 calls, filesystem writes, downloads, plugins/tools, and system execution remain later explicit
 phase gates.
 
+Phase 16.34 through Phase 16.36 add semantic candidate orchestration metadata on top of the
+existing deterministic context sources:
+
+- `SemanticCandidate`, `SemanticCandidateSource`, `SemanticCandidateSelection`,
+  `SemanticCandidateBudget`, `SemanticCandidateWindow`, `SemanticCandidateArbitration`,
+  `SemanticCandidateSummary`, `SemanticCandidateStatus`, `SemanticCandidatePolicy`,
+  `HybridRetrievalStatus`, and `HybridRetrievalPolicy` are value-only readiness records.
+- Candidate sources cover recent conversation windows, deterministic summaries, committed
+  key-value memory, runtime metadata, orchestration metadata, and a disabled future semantic/vector
+  source placeholder.
+- Arbitration is deterministic: fixed source order, character budgeting, exclusion/truncation
+  metadata, source isolation, and conversation-source chronology preservation.
+- Hybrid readiness states that deterministic retrieval remains authoritative. The semantic path is
+  disabled and cannot inject into prompts.
+- `ApplicationController` and `DesktopShellViewModel` expose only safe counts, statuses, budget
+  summaries, arbitration summaries, participation summaries, readiness checks, and disabled state.
+- Prompt context injection still consumes only deterministic `RetrievalPlanningResult` selections.
+  Semantic candidate orchestration does not mutate prompts or expose raw semantic/vector payloads.
+
+Future semantic activation must be a separate phase gate that wires a real ranker/index behind the
+existing interfaces, keeps deterministic fallback authoritative, preserves source separation, and
+adds tests before any semantic candidate can affect prompt assembly.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.

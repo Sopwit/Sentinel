@@ -2423,6 +2423,92 @@ QStringList ApplicationController::semanticRetrievalReadinessChecks() const {
         VectorIndexStatus::NotConfigured, vectorIndexedItemCount());
 }
 
+SemanticCandidatePolicy ApplicationController::semanticCandidatePolicy() const {
+    SemanticCandidatePolicy policy = semanticCandidatePolicy_;
+    policy.maxCharacters = promptContextInjectionPolicy_.maxCharacters;
+    return policy;
+}
+
+SemanticCandidateArbitration ApplicationController::semanticCandidateArbitration() const {
+    return semanticCandidateArbitrationForPrompt({});
+}
+
+QString ApplicationController::semanticCandidateStatus() const {
+    return semanticCandidateStatusName(semanticCandidateArbitration().status);
+}
+
+QString ApplicationController::semanticCandidateSummary() const {
+    return semanticCandidateArbitration().summary;
+}
+
+QString ApplicationController::semanticCandidateBudgetSummary() const {
+    return semanticCandidateArbitration().budgetSummary;
+}
+
+QString ApplicationController::semanticCandidateArbitrationSummary() const {
+    const auto arbitration = semanticCandidateArbitration();
+    return QStringLiteral("%1 %2").arg(arbitration.orderingSummary, arbitration.exclusionSummary);
+}
+
+int ApplicationController::semanticCandidateCount() const {
+    return semanticCandidateArbitration().candidates.size();
+}
+
+int ApplicationController::semanticCandidateSelectedCount() const {
+    return semanticCandidateArbitration().selectedCandidates.size();
+}
+
+int ApplicationController::semanticCandidateExcludedCount() const {
+    int count = 0;
+    for (const auto& candidate : semanticCandidateArbitration().candidates) {
+        if (!candidate.selected) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+int ApplicationController::semanticCandidateTruncatedCount() const {
+    int count = 0;
+    for (const auto& candidate : semanticCandidateArbitration().candidates) {
+        if (candidate.truncated) {
+            ++count;
+        }
+    }
+    return count;
+}
+
+QStringList ApplicationController::semanticCandidateParticipationSummaries() const {
+    return sentinel::core::semanticCandidateParticipationSummaries(semanticCandidateArbitration());
+}
+
+HybridRetrievalPolicy ApplicationController::hybridRetrievalPolicy() const {
+    return hybridRetrievalPolicy_;
+}
+
+HybridRetrievalReadiness ApplicationController::hybridRetrievalReadinessResult() const {
+    return sentinel::core::hybridRetrievalReadiness(hybridRetrievalPolicy_,
+                                                    semanticCandidateArbitration());
+}
+
+QString ApplicationController::hybridRetrievalStatus() const {
+    return hybridRetrievalStatusName(hybridRetrievalReadinessResult().status);
+}
+
+QString ApplicationController::hybridRetrievalReadiness() const {
+    return QStringLiteral(
+        "Ready metadata only; semantic retrieval is disabled and deterministic retrieval remains "
+        "authoritative.");
+}
+
+QString ApplicationController::hybridRetrievalSummary() const {
+    return hybridRetrievalReadinessResult().summary;
+}
+
+QStringList ApplicationController::hybridRetrievalReadinessChecks() const {
+    return hybridRetrievalReadinessResult().checks;
+}
+
 bool ApplicationController::localInferenceStreamingEnabled() const {
     return localInferenceStreamingEnabled_;
 }
@@ -3601,6 +3687,45 @@ ApplicationController::retrievalPlanningForPrompt(const QString& prompt) const {
     policy.includeRuntimeMetadata = contextAssemblyPolicy_.includeRuntimeMetadataContext;
     policy.includeOrchestration = contextAssemblyPolicy_.includeOrchestrationContext;
     return planRetrieval(retrievalCandidatesForPrompt(prompt), policy);
+}
+
+QList<SemanticCandidate>
+ApplicationController::semanticCandidatesForPrompt(const QString& prompt) const {
+    QList<SemanticCandidate> candidates;
+    const auto retrievalCandidates = retrievalCandidatesForPrompt(prompt);
+    candidates.reserve(retrievalCandidates.size() + 1);
+    int index = 0;
+    for (const auto& retrievalCandidate : retrievalCandidates) {
+        candidates.append(SemanticCandidate{
+            semanticCandidateSourceForContextSource(retrievalCandidate.source),
+            QStringLiteral("deterministic-%1").arg(index),
+            retrievalCandidate.title,
+            retrievalCandidate.content,
+            retrievalCandidate.originalSize,
+        });
+        ++index;
+    }
+
+    candidates.append(SemanticCandidate{
+        SemanticCandidateSource::FutureSemanticVector,
+        QStringLiteral("future-semantic-vector-candidates"),
+        QStringLiteral("Future Semantic/Vector Candidates"),
+        {},
+        0,
+        0,
+        SemanticCandidateSelection::Excluded,
+        false,
+        false,
+        QStringLiteral("Semantic/vector candidate path disabled"),
+        QStringLiteral("Future semantic/vector candidates are disabled."),
+    });
+    return candidates;
+}
+
+SemanticCandidateArbitration
+ApplicationController::semanticCandidateArbitrationForPrompt(const QString& prompt) const {
+    return orchestrateSemanticCandidates(semanticCandidatesForPrompt(prompt),
+                                         semanticCandidatePolicy());
 }
 
 QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QString& prompt) const {

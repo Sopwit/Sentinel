@@ -2,6 +2,40 @@
 
 ## Completed / Stable
 
+### Phase 16.34-16.36: Semantic Candidate Orchestration Foundation
+
+Completed. Adds semantic candidate orchestration metadata without enabling semantic retrieval.
+
+Scope:
+
+- Added value-only semantic candidate orchestration records for candidates, sources, selection,
+  budgeting, windows, arbitration, summaries, status, policy, and hybrid retrieval readiness.
+- Candidate orchestration derives deterministic local metadata from recent conversation windows,
+  deterministic summaries, committed memory, runtime metadata, orchestration metadata, and a
+  disabled future semantic/vector source placeholder.
+- Arbitration uses fixed source ordering, deterministic character budgeting, deterministic
+  exclusion/truncation metadata, source isolation, and chronology preservation inside
+  conversation-derived sources.
+- Hybrid retrieval readiness reports that deterministic retrieval remains authoritative while the
+  semantic path, semantic prompt injection, provider/model calls, and vector database activation
+  remain disabled.
+- Controller and desktop view model expose only QML-safe status, readiness, candidate counts,
+  budget summaries, arbitration summaries, participation summaries, and disabled/enabled state.
+- Memory and Settings show compact semantic orchestration and hybrid retrieval readiness copy that
+  clearly states semantic retrieval is not active.
+- Prompt assembly remains unchanged. Semantic candidates are not injected into prompts, do not
+  alter retrieval planning, and do not expose raw semantic/vector payloads.
+- Tests cover deterministic candidate lifecycle metadata, arbitration ordering, budgeting, source
+  isolation, chronology preservation, prompt non-mutation, QML-safe exposure, and hybrid disabled
+  readiness without real Ollama/provider/vector DB requirements.
+
+Known limitation:
+
+- Semantic retrieval remains disabled. There are no real embeddings, transformer inference,
+  semantic ranking/search, vector database integrations, cloud/API keys, provider/model calls,
+  filesystem/system actions, plugins/tools, semantic prompt injection, raw vector payloads, or
+  runtime authority expansion.
+
 ### Phase 16.31-16.33: Embedding And Vector Abstraction Foundation
 
 Completed. Adds semantic retrieval readiness abstractions without enabling semantic retrieval.

@@ -386,6 +386,31 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(int vectorIndexedItemCount READ vectorIndexedItemCount CONSTANT)
     Q_PROPERTY(
         QStringList semanticRetrievalReadinessChecks READ semanticRetrievalReadinessChecks CONSTANT)
+    Q_PROPERTY(
+        QString semanticCandidateStatus READ semanticCandidateStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticCandidateSummary READ semanticCandidateSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticCandidateBudgetSummary READ semanticCandidateBudgetSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticCandidateArbitrationSummary READ semanticCandidateArbitrationSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int semanticCandidateCount READ semanticCandidateCount NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int semanticCandidateSelectedCount READ semanticCandidateSelectedCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int semanticCandidateExcludedCount READ semanticCandidateExcludedCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int semanticCandidateTruncatedCount READ semanticCandidateTruncatedCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticCandidateParticipationSummaries READ
+                   semanticCandidateParticipationSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(
+        QString hybridRetrievalStatus READ hybridRetrievalStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString hybridRetrievalReadiness READ hybridRetrievalReadiness NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(
+        QString hybridRetrievalSummary READ hybridRetrievalSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList hybridRetrievalReadinessChecks READ hybridRetrievalReadinessChecks NOTIFY
+                   contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -903,6 +928,23 @@ public:
     QString vectorIndexSummary() const;
     int vectorIndexedItemCount() const;
     QStringList semanticRetrievalReadinessChecks() const;
+    SemanticCandidatePolicy semanticCandidatePolicy() const;
+    SemanticCandidateArbitration semanticCandidateArbitration() const;
+    QString semanticCandidateStatus() const;
+    QString semanticCandidateSummary() const;
+    QString semanticCandidateBudgetSummary() const;
+    QString semanticCandidateArbitrationSummary() const;
+    int semanticCandidateCount() const;
+    int semanticCandidateSelectedCount() const;
+    int semanticCandidateExcludedCount() const;
+    int semanticCandidateTruncatedCount() const;
+    QStringList semanticCandidateParticipationSummaries() const;
+    HybridRetrievalPolicy hybridRetrievalPolicy() const;
+    HybridRetrievalReadiness hybridRetrievalReadinessResult() const;
+    QString hybridRetrievalStatus() const;
+    QString hybridRetrievalReadiness() const;
+    QString hybridRetrievalSummary() const;
+    QStringList hybridRetrievalReadinessChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;
@@ -1144,6 +1186,8 @@ private:
     ConversationSummaryResult conversationSummaryForPrompt(const QString& prompt) const;
     QList<RetrievalCandidate> retrievalCandidatesForPrompt(const QString& prompt) const;
     RetrievalPlanningResult retrievalPlanningForPrompt(const QString& prompt) const;
+    QList<SemanticCandidate> semanticCandidatesForPrompt(const QString& prompt) const;
+    SemanticCandidateArbitration semanticCandidateArbitrationForPrompt(const QString& prompt) const;
     QList<PromptContextBlock> promptContextBlocks(const QString& prompt) const;
     PromptContextInjectionResult preparePromptContextInjection(const QString& prompt) const;
     void finishLocalInferenceRequest(const QString& requestId,
@@ -1229,6 +1273,8 @@ private:
     ConversationSummaryPolicy conversationSummaryPolicy_;
     RetrievalPlanningPolicy retrievalPlanningPolicy_;
     SemanticRetrievalPolicy semanticRetrievalPolicy_;
+    SemanticCandidatePolicy semanticCandidatePolicy_;
+    HybridRetrievalPolicy hybridRetrievalPolicy_;
     PromptContextInjectionPolicy promptContextInjectionPolicy_;
     PromptContextInjectionResult latestPromptContextInjectionResult_;
     std::unique_ptr<ChatSession> chatSession_;

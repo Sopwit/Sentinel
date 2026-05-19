@@ -6,6 +6,8 @@
 
 #include <cstdint>
 
+#include "sentinel/core/ContextAssembly.h"
+
 namespace sentinel::core {
 
 enum class EmbeddingProviderStatus : std::uint8_t {
@@ -29,9 +31,42 @@ enum class SemanticRetrievalStatus : std::uint8_t {
     ReadyMetadataOnly,
 };
 
+enum class SemanticCandidateSource : std::uint8_t {
+    RecentConversation,
+    DeterministicSummary,
+    CommittedMemory,
+    RuntimeMetadata,
+    OrchestrationMetadata,
+    FutureSemanticVector,
+};
+
+enum class SemanticCandidateSelection : std::uint8_t {
+    NotEvaluated,
+    Selected,
+    Excluded,
+    Truncated,
+};
+
+enum class SemanticCandidateStatus : std::uint8_t {
+    Disabled,
+    Empty,
+    Ready,
+    Truncated,
+};
+
+enum class HybridRetrievalStatus : std::uint8_t {
+    DeterministicOnly,
+    SemanticDisabled,
+    ReadyMetadataOnly,
+};
+
 QString embeddingProviderStatusName(EmbeddingProviderStatus status);
 QString vectorIndexStatusName(VectorIndexStatus status);
 QString semanticRetrievalStatusName(SemanticRetrievalStatus status);
+QString semanticCandidateSourceName(SemanticCandidateSource source);
+QString semanticCandidateSelectionName(SemanticCandidateSelection selection);
+QString semanticCandidateStatusName(SemanticCandidateStatus status);
+QString hybridRetrievalStatusName(HybridRetrievalStatus status);
 
 struct EmbeddingVector {
     QList<double> values;
@@ -117,6 +152,99 @@ struct SemanticRetrievalPolicy {
         "only.");
 };
 
+struct SemanticCandidatePolicy {
+    bool enabled = true;
+    bool deterministicOnly = true;
+    bool semanticRankingEnabled = false;
+    bool vectorCandidatesEnabled = false;
+    bool promptMutationEnabled = false;
+    bool preserveSourceIsolation = true;
+    bool preserveChronology = true;
+    int maxCharacters = 3200;
+    QString status = QStringLiteral("Metadata Only");
+    QString summary = QStringLiteral(
+        "Semantic candidate orchestration is deterministic metadata only; semantic retrieval is "
+        "disabled.");
+};
+
+struct SemanticCandidateBudget {
+    int maxCharacters = 3200;
+    int estimatedCharacters = 0;
+    int allocatedCharacters = 0;
+    int includedCharacters = 0;
+    int remainingCharacters = 3200;
+    QString summary = QStringLiteral("0 of 3200 candidate characters selected.");
+};
+
+struct SemanticCandidate {
+    SemanticCandidateSource source = SemanticCandidateSource::RecentConversation;
+    QString id;
+    QString title;
+    QString content;
+    int originalSize = 0;
+    int selectedSize = 0;
+    SemanticCandidateSelection selection = SemanticCandidateSelection::NotEvaluated;
+    bool selected = false;
+    bool truncated = false;
+    QString exclusionReason;
+    QString summary;
+};
+
+struct SemanticCandidateWindow {
+    int candidateCount = 0;
+    int selectedCandidateCount = 0;
+    int excludedCandidateCount = 0;
+    int truncatedCandidateCount = 0;
+    QString chronologySummary =
+        QStringLiteral("Chronology is preserved inside deterministic conversation sources.");
+};
+
+struct SemanticCandidateArbitration {
+    SemanticCandidateStatus status = SemanticCandidateStatus::Empty;
+    SemanticCandidateBudget budget;
+    QList<SemanticCandidate> candidates;
+    QList<SemanticCandidate> selectedCandidates;
+    QString orderingSummary =
+        QStringLiteral("Deterministic source order: recent conversation, summaries, committed "
+                       "memory, runtime metadata, orchestration metadata, future semantic "
+                       "candidates.");
+    QString budgetSummary = QStringLiteral("0 candidate characters selected.");
+    QString exclusionSummary = QStringLiteral("No semantic candidates excluded.");
+    QString summary = QStringLiteral("No semantic candidate arbitration has run.");
+};
+
+struct SemanticCandidateSummary {
+    SemanticCandidateSource source = SemanticCandidateSource::RecentConversation;
+    int candidateCount = 0;
+    int selectedCount = 0;
+    int excludedCount = 0;
+    int truncatedCount = 0;
+    int includedCharacters = 0;
+    QString summary = QStringLiteral("No candidate participation.");
+};
+
+struct HybridRetrievalPolicy {
+    bool deterministicRetrievalAuthoritative = true;
+    bool semanticPathEnabled = false;
+    bool semanticPromptInjectionEnabled = false;
+    QString status = QStringLiteral("Deterministic Authoritative");
+    QString summary = QStringLiteral(
+        "Hybrid retrieval is prepared as metadata only. Deterministic retrieval remains "
+        "authoritative and semantic retrieval is disabled.");
+};
+
+struct HybridRetrievalReadiness {
+    HybridRetrievalStatus status = HybridRetrievalStatus::SemanticDisabled;
+    HybridRetrievalPolicy policy;
+    SemanticCandidateStatus candidateStatus = SemanticCandidateStatus::Empty;
+    int deterministicCandidateCount = 0;
+    int semanticCandidateCount = 0;
+    int selectedCandidateCount = 0;
+    QString summary =
+        QStringLiteral("Hybrid retrieval metadata is available; semantic retrieval is disabled.");
+    QStringList checks;
+};
+
 class IEmbeddingProvider {
 public:
     virtual ~IEmbeddingProvider() = default;
@@ -180,5 +308,13 @@ private:
 QStringList semanticRetrievalReadinessChecks(const SemanticRetrievalPolicy& policy,
                                              EmbeddingProviderStatus providerStatus,
                                              VectorIndexStatus indexStatus, int indexedItemCount);
+SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source);
+SemanticCandidateArbitration
+orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,
+                              const SemanticCandidatePolicy& policy);
+QStringList
+semanticCandidateParticipationSummaries(const SemanticCandidateArbitration& arbitration);
+HybridRetrievalReadiness hybridRetrievalReadiness(const HybridRetrievalPolicy& policy,
+                                                  const SemanticCandidateArbitration& arbitration);
 
 } // namespace sentinel::core

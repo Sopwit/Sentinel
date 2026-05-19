@@ -333,6 +333,15 @@ active. The UI must not add semantic search controls, embedding/vector debug UI,
 display, vector score display, provider setup, vector database setup, prompt payload display,
 filesystem/system actions, tools/plugins, or broad redesign.
 
+Phase 16.34 through Phase 16.36 add compact semantic candidate orchestration and hybrid retrieval
+readiness status. Memory and Settings may show candidate status, candidate counts, budget summary,
+arbitration summary, participation summaries, and hybrid deterministic+semantic readiness. The
+copy must make clear that semantic retrieval is not active and deterministic retrieval remains
+authoritative. The UI must not add semantic search controls, rank controls, embedding/vector debug
+UI, raw vector or score display, raw candidate payload display, prompt payload display, provider
+setup, vector database setup, filesystem/system actions, tools/plugins, debug console UI, or broad
+redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

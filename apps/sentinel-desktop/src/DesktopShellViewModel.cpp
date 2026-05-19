@@ -1104,6 +1104,58 @@ QStringList DesktopShellViewModel::semanticRetrievalReadinessChecks() const {
     return controller_.semanticRetrievalReadinessChecks();
 }
 
+QString DesktopShellViewModel::semanticCandidateStatus() const {
+    return controller_.semanticCandidateStatus();
+}
+
+QString DesktopShellViewModel::semanticCandidateSummary() const {
+    return controller_.semanticCandidateSummary();
+}
+
+QString DesktopShellViewModel::semanticCandidateBudgetSummary() const {
+    return controller_.semanticCandidateBudgetSummary();
+}
+
+QString DesktopShellViewModel::semanticCandidateArbitrationSummary() const {
+    return controller_.semanticCandidateArbitrationSummary();
+}
+
+int DesktopShellViewModel::semanticCandidateCount() const {
+    return controller_.semanticCandidateCount();
+}
+
+int DesktopShellViewModel::semanticCandidateSelectedCount() const {
+    return controller_.semanticCandidateSelectedCount();
+}
+
+int DesktopShellViewModel::semanticCandidateExcludedCount() const {
+    return controller_.semanticCandidateExcludedCount();
+}
+
+int DesktopShellViewModel::semanticCandidateTruncatedCount() const {
+    return controller_.semanticCandidateTruncatedCount();
+}
+
+QStringList DesktopShellViewModel::semanticCandidateParticipationSummaries() const {
+    return controller_.semanticCandidateParticipationSummaries();
+}
+
+QString DesktopShellViewModel::hybridRetrievalStatus() const {
+    return controller_.hybridRetrievalStatus();
+}
+
+QString DesktopShellViewModel::hybridRetrievalReadiness() const {
+    return controller_.hybridRetrievalReadiness();
+}
+
+QString DesktopShellViewModel::hybridRetrievalSummary() const {
+    return controller_.hybridRetrievalSummary();
+}
+
+QStringList DesktopShellViewModel::hybridRetrievalReadinessChecks() const {
+    return controller_.hybridRetrievalReadinessChecks();
+}
+
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
     return controller_.localInferenceStreamingEnabled();
 }
