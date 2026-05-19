@@ -4,6 +4,60 @@
 
 namespace sentinel::core {
 
+namespace {
+
+MemoryReviewState targetStateForAction(MemoryCandidateReviewAction action) {
+    switch (action) {
+    case MemoryCandidateReviewAction::Approve:
+        return MemoryReviewState::Approved;
+    case MemoryCandidateReviewAction::Reject:
+        return MemoryReviewState::Rejected;
+    case MemoryCandidateReviewAction::ResetToPending:
+        return MemoryReviewState::PendingReview;
+    case MemoryCandidateReviewAction::Archive:
+        return MemoryReviewState::Archived;
+    }
+
+    return MemoryReviewState::PendingReview;
+}
+
+bool transitionAllowed(MemoryReviewState currentState, MemoryCandidateReviewAction action) {
+    if (currentState == MemoryReviewState::Archived) {
+        return false;
+    }
+
+    switch (action) {
+    case MemoryCandidateReviewAction::Approve:
+    case MemoryCandidateReviewAction::Reject:
+        return currentState == MemoryReviewState::PendingReview;
+    case MemoryCandidateReviewAction::ResetToPending:
+        return currentState == MemoryReviewState::Approved ||
+               currentState == MemoryReviewState::Rejected;
+    case MemoryCandidateReviewAction::Archive:
+        return currentState == MemoryReviewState::Approved ||
+               currentState == MemoryReviewState::Rejected;
+    }
+
+    return false;
+}
+
+QString defaultDecisionReason(MemoryCandidateReviewAction action) {
+    switch (action) {
+    case MemoryCandidateReviewAction::Approve:
+        return QStringLiteral("Approved by user review metadata.");
+    case MemoryCandidateReviewAction::Reject:
+        return QStringLiteral("Rejected by user review metadata.");
+    case MemoryCandidateReviewAction::ResetToPending:
+        return QStringLiteral("Reset to pending review metadata.");
+    case MemoryCandidateReviewAction::Archive:
+        return QStringLiteral("Archived after review metadata.");
+    }
+
+    return QStringLiteral("Reviewed by user metadata.");
+}
+
+} // namespace
+
 MemoryCandidate InMemoryMemoryCandidateStore::createCandidate(MemoryCandidate candidate) {
     if (candidate.id.trimmed().isEmpty()) {
         candidate.id = QStringLiteral("memory-candidate-%1").arg(nextCandidateNumber_++);
@@ -17,6 +71,8 @@ MemoryCandidate InMemoryMemoryCandidateStore::createCandidate(MemoryCandidate ca
     candidate.reviewState = MemoryReviewState::PendingReview;
     candidate.reviewedAtUtc = {};
     candidate.reviewSummary = QStringLiteral("Pending user review.");
+    candidate.reviewerSummary = {};
+    candidate.decisionReason = {};
 
     candidates_.insert(candidate.id, candidate);
     if (!candidateOrder_.contains(candidate.id)) {
@@ -37,19 +93,54 @@ QList<MemoryCandidate> InMemoryMemoryCandidateStore::candidates() const {
     return records;
 }
 
-bool InMemoryMemoryCandidateStore::setReviewState(const MemoryCandidateId& id,
-                                                  MemoryReviewState state,
-                                                  const QString& reviewSummary) {
+MemoryCandidateReviewResult InMemoryMemoryCandidateStore::reviewCandidate(
+    const MemoryCandidateId& id, MemoryCandidateReviewAction action, const QString& reviewerSummary,
+    const QString& decisionReason) {
+    MemoryCandidateReviewResult result;
+    result.candidateId = id.trimmed();
+    result.action = action;
+    result.newState = targetStateForAction(action);
+    result.reviewerSummary = reviewerSummary.trimmed().isEmpty()
+                                 ? QStringLiteral("Reviewer: User review")
+                                 : reviewerSummary.trimmed();
+    result.decisionReason = decisionReason.trimmed().isEmpty() ? defaultDecisionReason(action)
+                                                               : decisionReason.trimmed();
+
     auto it = candidates_.find(id.trimmed());
     if (it == candidates_.end()) {
-        return false;
+        result.status = QStringLiteral("Refused");
+        result.summary = QStringLiteral("%1 refused: memory candidate was not found.")
+                             .arg(memoryCandidateReviewActionName(action));
+        return result;
     }
 
-    it->reviewState = state;
-    it->reviewedAtUtc = QDateTime::currentDateTimeUtc();
-    it->reviewSummary =
-        reviewSummary.trimmed().isEmpty() ? memoryReviewStateName(state) : reviewSummary.trimmed();
-    return true;
+    result.previousState = it->reviewState;
+    result.sourceSummary = it->sourceSummary.trimmed().isEmpty()
+                               ? memoryCandidateSourceName(it->source)
+                               : it->sourceSummary.trimmed();
+    if (!transitionAllowed(it->reviewState, action)) {
+        result.status = QStringLiteral("Refused");
+        result.summary = QStringLiteral("%1 refused: candidate is %2.")
+                             .arg(memoryCandidateReviewActionName(action),
+                                  memoryReviewStateName(it->reviewState));
+        return result;
+    }
+
+    result.accepted = true;
+    result.status = QStringLiteral("Accepted");
+    result.reviewedAtUtc = QDateTime::currentDateTimeUtc();
+    result.summary = QStringLiteral("%1 accepted: %2 -> %3. %4 %5")
+                         .arg(memoryCandidateReviewActionName(action),
+                              memoryReviewStateName(result.previousState),
+                              memoryReviewStateName(result.newState), result.sourceSummary,
+                              result.decisionReason);
+
+    it->reviewState = result.newState;
+    it->reviewedAtUtc = result.reviewedAtUtc;
+    it->reviewSummary = result.summary;
+    it->reviewerSummary = result.reviewerSummary;
+    it->decisionReason = result.decisionReason;
+    return result;
 }
 
 } // namespace sentinel::core

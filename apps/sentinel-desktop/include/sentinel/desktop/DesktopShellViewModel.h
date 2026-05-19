@@ -427,7 +427,40 @@ class DesktopShellViewModel final : public QObject {
                    memoryCandidatesChanged)
     Q_PROPERTY(int rejectedMemoryCandidateCount READ rejectedMemoryCandidateCount NOTIFY
                    memoryCandidatesChanged)
+    Q_PROPERTY(int archivedMemoryCandidateCount READ archivedMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(
+        QStringList memoryCandidateIds READ memoryCandidateIds NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCandidateReviewStates READ memoryCandidateReviewStates NOTIFY
+                   memoryCandidatesChanged)
     Q_PROPERTY(QStringList memoryCandidateSummaries READ memoryCandidateSummaries NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList pendingMemoryCandidateSummaries READ pendingMemoryCandidateSummaries
+                   NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QStringList approvedMemoryCandidateSummaries READ approvedMemoryCandidateSummaries
+                   NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QStringList rejectedMemoryCandidateSummaries READ rejectedMemoryCandidateSummaries
+                   NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QStringList archivedMemoryCandidateSummaries READ archivedMemoryCandidateSummaries
+                   NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QString lastMemoryCandidateReviewStatus READ lastMemoryCandidateReviewStatus NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QString lastMemoryCandidateReviewSummary READ lastMemoryCandidateReviewSummary NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QString memoryCommitReadinessStatus READ memoryCommitReadinessStatus NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QString memoryCommitReadinessSummary READ memoryCommitReadinessSummary NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCommitReadinessChecks READ memoryCommitReadinessChecks NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(int memoryCommitPlanCount READ memoryCommitPlanCount NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QString memoryCommitTargetSummary READ memoryCommitTargetSummary NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCommitCandidateSummaries READ memoryCommitCandidateSummaries NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(
+        QString lastMemoryCommitStatus READ lastMemoryCommitStatus NOTIFY memoryCandidatesChanged)
+    Q_PROPERTY(QString lastMemoryCommitResultSummary READ lastMemoryCommitResultSummary NOTIFY
                    memoryCandidatesChanged)
     Q_PROPERTY(QString memoryMaintenanceStatus READ memoryMaintenanceStatus NOTIFY
                    maintenanceStatusChanged)
@@ -720,7 +753,24 @@ public:
     int pendingMemoryCandidateCount() const;
     int approvedMemoryCandidateCount() const;
     int rejectedMemoryCandidateCount() const;
+    int archivedMemoryCandidateCount() const;
+    QStringList memoryCandidateIds() const;
+    QStringList memoryCandidateReviewStates() const;
     QStringList memoryCandidateSummaries() const;
+    QStringList pendingMemoryCandidateSummaries() const;
+    QStringList approvedMemoryCandidateSummaries() const;
+    QStringList rejectedMemoryCandidateSummaries() const;
+    QStringList archivedMemoryCandidateSummaries() const;
+    QString lastMemoryCandidateReviewStatus() const;
+    QString lastMemoryCandidateReviewSummary() const;
+    QString memoryCommitReadinessStatus() const;
+    QString memoryCommitReadinessSummary() const;
+    QStringList memoryCommitReadinessChecks() const;
+    int memoryCommitPlanCount() const;
+    QString memoryCommitTargetSummary() const;
+    QStringList memoryCommitCandidateSummaries() const;
+    QString lastMemoryCommitStatus() const;
+    QString lastMemoryCommitResultSummary() const;
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     QString currentModeName() const;
@@ -751,6 +801,9 @@ public:
     Q_INVOKABLE QString createMemoryCandidateFromConversationText(const QString& text);
     Q_INVOKABLE bool approveMemoryCandidate(const QString& candidateId);
     Q_INVOKABLE bool rejectMemoryCandidate(const QString& candidateId);
+    Q_INVOKABLE bool resetMemoryCandidate(const QString& candidateId);
+    Q_INVOKABLE bool archiveMemoryCandidate(const QString& candidateId);
+    Q_INVOKABLE bool requestMemoryCandidateCommit(const QString& candidateId);
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();

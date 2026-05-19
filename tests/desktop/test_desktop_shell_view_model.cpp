@@ -1570,12 +1570,33 @@ void DesktopShellViewModelTest::exposesMemoryCandidateMetadata() {
     QCOMPARE(fixture.viewModel.memoryCandidateCount(), 1);
     QCOMPARE(fixture.viewModel.pendingMemoryCandidateCount(), 1);
     QCOMPARE(fixture.viewModel.approvedMemoryCandidateCount(), 0);
+    QCOMPARE(fixture.viewModel.archivedMemoryCandidateCount(), 0);
+    QCOMPARE(fixture.viewModel.memoryCandidateIds(), QStringList{id});
+    QCOMPARE(fixture.viewModel.memoryCandidateReviewStates(),
+             QStringList{QStringLiteral("Pending Review")});
     QVERIFY(fixture.viewModel.memoryCandidateSummaries().first().contains(
         QStringLiteral("Pending Review")));
     QVERIFY(fixture.viewModel.approveMemoryCandidate(id));
     QCOMPARE(fixture.viewModel.pendingMemoryCandidateCount(), 0);
     QCOMPARE(fixture.viewModel.approvedMemoryCandidateCount(), 1);
-    QCOMPARE(spy.count(), 2);
+    QCOMPARE(fixture.viewModel.lastMemoryCandidateReviewStatus(), QStringLiteral("Accepted"));
+    QVERIFY(
+        fixture.viewModel.lastMemoryCandidateReviewSummary().contains(QStringLiteral("Approve")));
+    QCOMPARE(fixture.viewModel.memoryCommitPlanCount(), 1);
+    QCOMPARE(fixture.viewModel.memoryCommitReadinessStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.memoryCommitReadinessSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(
+        fixture.viewModel.memoryCommitTargetSummary().contains(QStringLiteral("Key-value Memory")));
+    QVERIFY(fixture.viewModel.memoryCommitCandidateSummaries().first().contains(id));
+    QVERIFY(!fixture.viewModel.requestMemoryCandidateCommit(id));
+    QCOMPARE(fixture.viewModel.lastMemoryCommitStatus(), QStringLiteral("Refused"));
+    QVERIFY(fixture.viewModel.lastMemoryCommitResultSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(fixture.viewModel.resetMemoryCandidate(id));
+    QCOMPARE(fixture.viewModel.pendingMemoryCandidateCount(), 1);
+    QCOMPARE(fixture.viewModel.approvedMemoryCandidateCount(), 0);
+    QVERIFY(fixture.viewModel.pendingMemoryCandidateSummaries().first().contains(
+        QStringLiteral("Pending Review")));
+    QCOMPARE(spy.count(), 4);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

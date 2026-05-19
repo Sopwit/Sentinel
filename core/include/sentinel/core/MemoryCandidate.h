@@ -5,6 +5,7 @@
 #include <QDateTime>
 #include <QList>
 #include <QString>
+#include <QStringList>
 
 #include <cstdint>
 
@@ -34,6 +35,14 @@ enum class MemoryReviewState : std::uint8_t {
     PendingReview,
     Approved,
     Rejected,
+    Archived,
+};
+
+enum class MemoryCandidateReviewAction : std::uint8_t {
+    Approve,
+    Reject,
+    ResetToPending,
+    Archive,
 };
 
 enum class MemoryCapturePolicy : std::uint8_t {
@@ -42,11 +51,28 @@ enum class MemoryCapturePolicy : std::uint8_t {
     Disabled,
 };
 
+enum class MemoryCommitTarget : std::uint8_t {
+    KeyValueMemory,
+};
+
+enum class MemoryCommitReadinessStatus : std::uint8_t {
+    Disabled,
+    Ready,
+    PendingReview,
+    Rejected,
+    Archived,
+    MissingCandidate,
+    StoreUnavailable,
+};
+
 QString memoryCandidateSourceName(MemoryCandidateSource source);
 QString memoryCandidateCategoryName(MemoryCandidateCategory category);
 QString memoryCandidateConfidenceName(MemoryCandidateConfidence confidence);
 QString memoryReviewStateName(MemoryReviewState state);
+QString memoryCandidateReviewActionName(MemoryCandidateReviewAction action);
 QString memoryCapturePolicyName(MemoryCapturePolicy policy);
+QString memoryCommitTargetName(MemoryCommitTarget target);
+QString memoryCommitReadinessStatusName(MemoryCommitReadinessStatus status);
 
 struct MemoryCandidate {
     MemoryCandidateId id;
@@ -60,6 +86,8 @@ struct MemoryCandidate {
     QString excerpt;
     QString sourceSummary = QStringLiteral("Conversation text metadata only.");
     QString reviewSummary = QStringLiteral("Pending user review.");
+    QString reviewerSummary;
+    QString decisionReason;
     QDateTime createdAtUtc;
     QDateTime reviewedAtUtc;
 };
@@ -72,10 +100,67 @@ struct MemoryCandidateSummary {
     QString confidence;
     QString retention;
     QString source;
+    QString reviewedAt;
+    QString reviewer;
     QString summary;
 };
 
 MemoryCandidateSummary memoryCandidateSummary(const MemoryCandidate& candidate);
+
+struct MemoryCandidateReviewResult {
+    bool accepted = false;
+    MemoryCandidateId candidateId;
+    MemoryCandidateReviewAction action = MemoryCandidateReviewAction::Approve;
+    MemoryReviewState previousState = MemoryReviewState::PendingReview;
+    MemoryReviewState newState = MemoryReviewState::PendingReview;
+    QDateTime reviewedAtUtc;
+    QString reviewerSummary;
+    QString sourceSummary;
+    QString decisionReason;
+    QString status;
+    QString summary;
+};
+
+struct MemoryCommitPolicy {
+    bool commitEnabled = false;
+    MemoryCommitTarget target = MemoryCommitTarget::KeyValueMemory;
+    QString status = QStringLiteral("Disabled");
+    QString summary =
+        QStringLiteral("Memory commit is disabled by default and requires a future explicit gate.");
+};
+
+struct MemoryCommitPlan {
+    MemoryCandidateId candidateId;
+    MemoryCommitTarget target = MemoryCommitTarget::KeyValueMemory;
+    QString key;
+    QString valuePreview;
+    QString targetSummary;
+    QString summary;
+};
+
+struct MemoryCommitReadiness {
+    bool ready = false;
+    MemoryCandidateId candidateId;
+    MemoryCommitReadinessStatus status = MemoryCommitReadinessStatus::Disabled;
+    MemoryCommitPlan plan;
+    QString summary;
+    QStringList checks;
+};
+
+struct MemoryCommitResult {
+    bool accepted = false;
+    MemoryCandidateId candidateId;
+    MemoryCommitTarget target = MemoryCommitTarget::KeyValueMemory;
+    QDateTime requestedAtUtc;
+    QString status;
+    QString summary;
+};
+
+MemoryCommitPlan memoryCommitPlanForCandidate(const MemoryCandidate& candidate,
+                                              MemoryCommitTarget target);
+MemoryCommitReadiness memoryCommitReadinessForCandidate(const MemoryCandidate* candidate,
+                                                        bool memoryStoreAvailable,
+                                                        const MemoryCommitPolicy& policy);
 
 class IMemoryCandidateStore {
 public:
@@ -83,8 +168,10 @@ public:
 
     virtual MemoryCandidate createCandidate(MemoryCandidate candidate) = 0;
     virtual QList<MemoryCandidate> candidates() const = 0;
-    virtual bool setReviewState(const MemoryCandidateId& id, MemoryReviewState state,
-                                const QString& reviewSummary) = 0;
+    virtual MemoryCandidateReviewResult reviewCandidate(const MemoryCandidateId& id,
+                                                        MemoryCandidateReviewAction action,
+                                                        const QString& reviewerSummary,
+                                                        const QString& decisionReason) = 0;
 };
 
 } // namespace sentinel::core

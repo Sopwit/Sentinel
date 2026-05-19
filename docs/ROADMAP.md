@@ -1703,25 +1703,55 @@ Still out of scope:
   transcript search, cloud/API keys, model management actions, tools/plugins, filesystem/system
   actions, and voice execution changes.
 
-## Phase 16.0-16.3: Controlled Semantic Memory Foundation
+## Phase 16.0-16.6: Controlled Semantic Memory Foundation And Review Flow
 
-Completed. Prepared semantic memory architecture with reviewable metadata-only candidates.
+Completed. Prepared semantic memory architecture with reviewable metadata-only candidates and a
+guarded review lifecycle.
 
 Delivered:
 
 - `MemoryCandidate` value types and `IMemoryCandidateStore`.
 - `InMemoryMemoryCandidateStore` for deterministic non-persistent candidate storage.
-- Controller/view-model candidate counts and QML-safe summary exposure.
-- Compact read-only Memory page candidate section.
-- Tests for pending defaults, approve/reject review metadata, deterministic summaries, no
-  key-value memory mutation, QML-safe exposure, and clear-chat preserving approved candidate
-  metadata.
+- `MemoryCandidateReviewResult` plus reviewed timestamp, reviewer/source summary, and decision
+  reason metadata.
+- Controller/view-model candidate ids, states, counts, state-filtered summaries, last review
+  result, and QML-safe action exposure.
+- Compact Memory page candidate section with Approve, Reject, and Reset controls.
+- Tests for pending defaults, approve/reject/reset/archive review metadata, invalid transition
+  refusal, deterministic counts/summaries, no key-value memory mutation, QML-safe exposure, and
+  clear-chat preserving approved candidate metadata.
 
 Still out of scope:
 
 - Embeddings, vector DB, semantic search, automatic memory capture, autonomous long-term memory
   writes, cloud sync, provider/model calls, filesystem/system actions, tools/plugins, and durable
   candidate persistence.
+- Approved candidates are reviewed metadata only; committing them into long-term memory remains out
+  of scope.
+
+## Phase 16.7-16.9: Approved Memory Commit Planning
+
+Completed. Added commit-planning metadata for reviewed memory candidates while keeping actual
+memory mutation disabled.
+
+Delivered:
+
+- `MemoryCommitPlan`, `MemoryCommitTarget`, `MemoryCommitReadiness`, `MemoryCommitResult`, and
+  `MemoryCommitPolicy`.
+- Deterministic approved-candidate to key-value-memory plan summaries.
+- Readiness reasons for pending, rejected, archived, missing, store-unavailable, and
+  policy-disabled commit states.
+- Controller/view-model exposure for commit readiness status, checks, plan count, target summary,
+  per-candidate plan summaries, and last commit result.
+- Compact Memory page readiness visibility that states Approved is not Committed and commit is
+  future-gated.
+- Tests proving default commit requests refuse safely and do not mutate key-value memory.
+
+Still out of scope:
+
+- Actual commit execution, automatic memory writes, semantic memory persistence, embeddings, vector
+  DB, semantic search, provider/model calls, cloud sync, filesystem/system actions, tools/plugins,
+  and durable candidate storage.
 
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 

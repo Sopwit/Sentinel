@@ -79,19 +79,120 @@ ScrollView {
                         value: memoryPage.viewModel.memoryCandidateCount + " total / "
                                + memoryPage.viewModel.pendingMemoryCandidateCount + " pending / "
                                + memoryPage.viewModel.approvedMemoryCandidateCount + " approved / "
-                               + memoryPage.viewModel.rejectedMemoryCandidateCount + " rejected"
+                               + memoryPage.viewModel.rejectedMemoryCandidateCount + " rejected / "
+                               + memoryPage.viewModel.archivedMemoryCandidateCount + " archived"
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Last Review"
+                        value: memoryPage.viewModel.lastMemoryCandidateReviewStatus + " - "
+                               + memoryPage.viewModel.lastMemoryCandidateReviewSummary
+                        Layout.fillWidth: true
+                    }
+
+                    Label {
+                        text: "Approved means reviewed metadata, not committed long-term memory."
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Commit Readiness"
+                        value: memoryPage.viewModel.memoryCommitReadinessStatus + " - "
+                               + memoryPage.viewModel.memoryCommitReadinessSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Commit Target"
+                        value: memoryPage.viewModel.memoryCommitPlanCount + " planned / "
+                               + memoryPage.viewModel.memoryCommitTargetSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Last Commit"
+                        value: memoryPage.viewModel.lastMemoryCommitStatus + " - "
+                               + memoryPage.viewModel.lastMemoryCommitResultSummary
                         Layout.fillWidth: true
                     }
 
                     Repeater {
-                        model: memoryPage.viewModel.memoryCandidateSummaries
+                        model: memoryPage.viewModel.memoryCommitReadinessChecks
 
-                        InfoRow {
+                        Label {
                             required property string modelData
-                            compact: memoryPage.compact
-                            label: "Candidate"
-                            value: modelData
+                            text: modelData
+                            color: SentinelTheme.textMuted
+                            wrapMode: Text.WordWrap
                             Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
+                        model: memoryPage.viewModel.memoryCandidateIds
+
+                        ColumnLayout {
+                            required property int index
+                            required property string modelData
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceXs
+
+                            readonly property string candidateId: modelData
+                            readonly property string candidateState: memoryPage.viewModel.memoryCandidateReviewStates[index]
+                            readonly property string candidateSummary: memoryPage.viewModel.memoryCandidateSummaries[index]
+                            readonly property string commitSummary: memoryPage.viewModel.memoryCommitCandidateSummaries[index]
+
+                            InfoRow {
+                                compact: memoryPage.compact
+                                label: "Candidate"
+                                value: candidateSummary
+                                Layout.fillWidth: true
+                            }
+
+                            InfoRow {
+                                compact: memoryPage.compact
+                                label: "Commit Plan"
+                                value: commitSummary
+                                Layout.fillWidth: true
+                            }
+
+                            RowLayout {
+                                visible: candidateState !== "Archived"
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceXs
+
+                                SentinelButton {
+                                    text: "Approve"
+                                    enabled: candidateState === "Pending Review"
+                                    Layout.preferredWidth: 96
+                                    onClicked: memoryPage.viewModel.approveMemoryCandidate(candidateId)
+                                }
+
+                                SentinelButton {
+                                    text: "Reject"
+                                    enabled: candidateState === "Pending Review"
+                                    Layout.preferredWidth: 96
+                                    onClicked: memoryPage.viewModel.rejectMemoryCandidate(candidateId)
+                                }
+
+                                SentinelButton {
+                                    text: "Reset"
+                                    enabled: candidateState === "Approved" || candidateState === "Rejected"
+                                    Layout.preferredWidth: 96
+                                    onClicked: memoryPage.viewModel.resetMemoryCandidate(candidateId)
+                                }
+
+                                Item {
+                                    Layout.fillWidth: true
+                                }
+                            }
                         }
                     }
 

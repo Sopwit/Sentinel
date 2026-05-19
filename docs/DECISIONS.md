@@ -274,9 +274,13 @@ Runtime behavior:
 - The default implementation is `InMemoryMemoryCandidateStore`; no durable semantic memory store
   exists yet.
 - Candidates created from conversation text metadata default to Pending Review.
-- Approve/reject actions update review metadata only.
+- Approve/reject/reset/archive actions update review metadata only and return
+  `MemoryCandidateReviewResult` summaries.
+- Reviewed timestamp, reviewer/source summary, and decision reason fields describe the review
+  lifecycle; they are not committed memory payloads.
 - Approved candidate metadata is not automatically committed to `IMemoryStore` or any semantic
   database.
+- Approved means reviewed candidate metadata. Committed memory remains a separate future phase gate.
 - Clear Chat does not clear approved candidate metadata unless a later phase explicitly scopes
   that lifecycle.
 
@@ -284,6 +288,38 @@ Out of scope:
 
 - Embeddings, vector database, semantic search, automatic memory writes, cloud sync, model/provider
   calls, filesystem/system actions, tools/plugins, and automatic capture toggles.
+
+## 10.1 Approved Memory Commit Planning
+
+Decision: Approved memory candidates may produce explicit commit-planning metadata, but actual
+commit execution remains disabled by default and future-gated.
+
+Reason: The app needs a clear candidate -> approved -> committed vocabulary before any long-term
+memory mutation is enabled. Approval should never be mistaken for storage.
+
+Runtime behavior:
+
+- `MemoryCommitPlan`, `MemoryCommitTarget`, `MemoryCommitReadiness`, `MemoryCommitResult`, and
+  `MemoryCommitPolicy` describe commit intent and safety status only.
+- The only current target vocabulary is key-value memory through the existing `IMemoryStore`
+  boundary.
+- Approved candidates produce deterministic key/value plan summaries.
+- Pending, rejected, archived, missing, and store-unavailable candidates cannot commit.
+- The default policy disables commit. `requestMemoryCandidateCommit()` refuses and does not call
+  `IMemoryStore::put()`.
+- QML receives strings, string lists, and counts only.
+
+Future explicit commit requirements:
+
+- A later phase must explicitly enable the policy gate, define confirmation UX, add mutation tests,
+  and preserve the separation between candidate metadata, key-value memory, chat history, and
+  semantic memory metadata before any commit can write to `IMemoryStore`.
+
+Out of scope:
+
+- Automatic memory writes, autonomous memory mutation, embeddings, vector DB, semantic search,
+  provider/model calls, cloud sync, filesystem/system actions, tools/plugins, and durable semantic
+  memory persistence.
 
 Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
 confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
