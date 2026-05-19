@@ -1753,6 +1753,32 @@ Still out of scope:
   DB, semantic search, provider/model calls, cloud sync, filesystem/system actions, tools/plugins,
   and durable candidate storage.
 
+## Phase 16.10-16.12: Explicit Memory Commit Boundary
+
+Completed. Enabled an explicit user-controlled Commit action from approved memory candidates into
+the existing local key-value memory store.
+
+Delivered:
+
+- `MemoryCommitStatus`, `MemoryCommitConflictPolicy`, committed timestamp/key summaries, and
+  accepted/refused `MemoryCommitResult` metadata.
+- Sanitized deterministic commit keys derived from candidate category, title, and id.
+- Commit execution only for Approved candidates, only through the explicit user action, and only
+  when the key-value memory store is available.
+- Commit values store reviewed candidate content only; source/review metadata remains in result
+  and committed-candidate summaries because `IMemoryStore` has no metadata fields.
+- Default duplicate-key conflict policy refuses existing keys. Overwrite remains unavailable.
+- Approval remains review-only and never commits automatically.
+- Memory page shows Commit only for approved candidates and keeps Approve/Commit labels distinct.
+- Tests cover successful approved commit, non-approved refusal, duplicate refusal, no auto-commit,
+  committed status/result exposure, clear-chat preserving committed memory, and view-model exposure.
+
+Still out of scope:
+
+- Embeddings, vector DB, semantic search, provider/model calls, cloud/API keys, tools/plugins,
+  filesystem/system actions beyond the existing memory store, autonomous memory mutation, overwrite
+  UI, and durable candidate storage.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

@@ -63,6 +63,18 @@ enum class MemoryCommitReadinessStatus : std::uint8_t {
     Archived,
     MissingCandidate,
     StoreUnavailable,
+    AlreadyCommitted,
+};
+
+enum class MemoryCommitStatus : std::uint8_t {
+    NotCommitted,
+    Committed,
+    Refused,
+};
+
+enum class MemoryCommitConflictPolicy : std::uint8_t {
+    Refuse,
+    Overwrite,
 };
 
 QString memoryCandidateSourceName(MemoryCandidateSource source);
@@ -73,6 +85,8 @@ QString memoryCandidateReviewActionName(MemoryCandidateReviewAction action);
 QString memoryCapturePolicyName(MemoryCapturePolicy policy);
 QString memoryCommitTargetName(MemoryCommitTarget target);
 QString memoryCommitReadinessStatusName(MemoryCommitReadinessStatus status);
+QString memoryCommitStatusName(MemoryCommitStatus status);
+QString memoryCommitConflictPolicyName(MemoryCommitConflictPolicy policy);
 
 struct MemoryCandidate {
     MemoryCandidateId id;
@@ -88,8 +102,12 @@ struct MemoryCandidate {
     QString reviewSummary = QStringLiteral("Pending user review.");
     QString reviewerSummary;
     QString decisionReason;
+    MemoryCommitStatus commitStatus = MemoryCommitStatus::NotCommitted;
+    QString committedKey;
+    QString commitSummary = QStringLiteral("Not committed.");
     QDateTime createdAtUtc;
     QDateTime reviewedAtUtc;
+    QDateTime committedAtUtc;
 };
 
 struct MemoryCandidateSummary {
@@ -102,6 +120,9 @@ struct MemoryCandidateSummary {
     QString source;
     QString reviewedAt;
     QString reviewer;
+    QString commitStatus;
+    QString committedAt;
+    QString committedKey;
     QString summary;
 };
 
@@ -122,11 +143,12 @@ struct MemoryCandidateReviewResult {
 };
 
 struct MemoryCommitPolicy {
-    bool commitEnabled = false;
+    bool explicitUserCommitAllowed = true;
     MemoryCommitTarget target = MemoryCommitTarget::KeyValueMemory;
-    QString status = QStringLiteral("Disabled");
-    QString summary =
-        QStringLiteral("Memory commit is disabled by default and requires a future explicit gate.");
+    MemoryCommitConflictPolicy conflictPolicy = MemoryCommitConflictPolicy::Refuse;
+    QString status = QStringLiteral("Explicit User Action");
+    QString summary = QStringLiteral(
+        "Memory commit requires an approved candidate and an explicit user Commit action.");
 };
 
 struct MemoryCommitPlan {
@@ -151,7 +173,10 @@ struct MemoryCommitResult {
     bool accepted = false;
     MemoryCandidateId candidateId;
     MemoryCommitTarget target = MemoryCommitTarget::KeyValueMemory;
+    MemoryCommitStatus commitStatus = MemoryCommitStatus::NotCommitted;
     QDateTime requestedAtUtc;
+    QDateTime committedAtUtc;
+    QString committedKey;
     QString status;
     QString summary;
 };
@@ -172,6 +197,7 @@ public:
                                                         MemoryCandidateReviewAction action,
                                                         const QString& reviewerSummary,
                                                         const QString& decisionReason) = 0;
+    virtual bool recordCommitResult(const MemoryCommitResult& result) = 0;
 };
 
 } // namespace sentinel::core

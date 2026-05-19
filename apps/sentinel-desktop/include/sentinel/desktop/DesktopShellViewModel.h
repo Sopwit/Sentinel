@@ -429,9 +429,13 @@ class DesktopShellViewModel final : public QObject {
                    memoryCandidatesChanged)
     Q_PROPERTY(int archivedMemoryCandidateCount READ archivedMemoryCandidateCount NOTIFY
                    memoryCandidatesChanged)
+    Q_PROPERTY(int committedMemoryCandidateCount READ committedMemoryCandidateCount NOTIFY
+                   memoryCandidatesChanged)
     Q_PROPERTY(
         QStringList memoryCandidateIds READ memoryCandidateIds NOTIFY memoryCandidatesChanged)
     Q_PROPERTY(QStringList memoryCandidateReviewStates READ memoryCandidateReviewStates NOTIFY
+                   memoryCandidatesChanged)
+    Q_PROPERTY(QStringList memoryCandidateCommitStatuses READ memoryCandidateCommitStatuses NOTIFY
                    memoryCandidatesChanged)
     Q_PROPERTY(QStringList memoryCandidateSummaries READ memoryCandidateSummaries NOTIFY
                    memoryCandidatesChanged)
@@ -754,8 +758,10 @@ public:
     int approvedMemoryCandidateCount() const;
     int rejectedMemoryCandidateCount() const;
     int archivedMemoryCandidateCount() const;
+    int committedMemoryCandidateCount() const;
     QStringList memoryCandidateIds() const;
     QStringList memoryCandidateReviewStates() const;
+    QStringList memoryCandidateCommitStatuses() const;
     QStringList memoryCandidateSummaries() const;
     QStringList pendingMemoryCandidateSummaries() const;
     QStringList approvedMemoryCandidateSummaries() const;

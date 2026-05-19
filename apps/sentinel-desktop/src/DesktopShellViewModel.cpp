@@ -1247,12 +1247,20 @@ int DesktopShellViewModel::archivedMemoryCandidateCount() const {
     return controller_.archivedMemoryCandidateCount();
 }
 
+int DesktopShellViewModel::committedMemoryCandidateCount() const {
+    return controller_.committedMemoryCandidateCount();
+}
+
 QStringList DesktopShellViewModel::memoryCandidateIds() const {
     return controller_.memoryCandidateIds();
 }
 
 QStringList DesktopShellViewModel::memoryCandidateReviewStates() const {
     return controller_.memoryCandidateReviewStates();
+}
+
+QStringList DesktopShellViewModel::memoryCandidateCommitStatuses() const {
+    return controller_.memoryCandidateCommitStatuses();
 }
 
 QStringList DesktopShellViewModel::memoryCandidateSummaries() const {

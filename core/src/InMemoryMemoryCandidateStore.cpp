@@ -73,6 +73,10 @@ MemoryCandidate InMemoryMemoryCandidateStore::createCandidate(MemoryCandidate ca
     candidate.reviewSummary = QStringLiteral("Pending user review.");
     candidate.reviewerSummary = {};
     candidate.decisionReason = {};
+    candidate.commitStatus = MemoryCommitStatus::NotCommitted;
+    candidate.committedKey = {};
+    candidate.commitSummary = QStringLiteral("Not committed.");
+    candidate.committedAtUtc = {};
 
     candidates_.insert(candidate.id, candidate);
     if (!candidateOrder_.contains(candidate.id)) {
@@ -118,6 +122,12 @@ MemoryCandidateReviewResult InMemoryMemoryCandidateStore::reviewCandidate(
     result.sourceSummary = it->sourceSummary.trimmed().isEmpty()
                                ? memoryCandidateSourceName(it->source)
                                : it->sourceSummary.trimmed();
+    if (it->commitStatus == MemoryCommitStatus::Committed) {
+        result.status = QStringLiteral("Refused");
+        result.summary = QStringLiteral("%1 refused: candidate is already committed.")
+                             .arg(memoryCandidateReviewActionName(action));
+        return result;
+    }
     if (!transitionAllowed(it->reviewState, action)) {
         result.status = QStringLiteral("Refused");
         result.summary = QStringLiteral("%1 refused: candidate is %2.")
@@ -141,6 +151,23 @@ MemoryCandidateReviewResult InMemoryMemoryCandidateStore::reviewCandidate(
     it->reviewerSummary = result.reviewerSummary;
     it->decisionReason = result.decisionReason;
     return result;
+}
+
+bool InMemoryMemoryCandidateStore::recordCommitResult(const MemoryCommitResult& result) {
+    auto it = candidates_.find(result.candidateId.trimmed());
+    if (it == candidates_.end()) {
+        return false;
+    }
+
+    if (!result.accepted || result.commitStatus != MemoryCommitStatus::Committed) {
+        return false;
+    }
+
+    it->commitStatus = result.commitStatus;
+    it->committedAtUtc = result.committedAtUtc;
+    it->committedKey = result.committedKey;
+    it->commitSummary = result.summary;
+    return true;
 }
 
 } // namespace sentinel::core

@@ -14,6 +14,7 @@ public:
                                                 MemoryCandidateReviewAction action,
                                                 const QString& reviewerSummary,
                                                 const QString& decisionReason) override;
+    bool recordCommitResult(const MemoryCommitResult& result) override;
 
 private:
     QMap<MemoryCandidateId, MemoryCandidate> candidates_;

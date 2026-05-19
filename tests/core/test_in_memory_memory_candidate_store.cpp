@@ -12,6 +12,8 @@ using sentinel::core::memoryCandidateSummary;
 using sentinel::core::MemoryCommitPolicy;
 using sentinel::core::memoryCommitReadinessForCandidate;
 using sentinel::core::memoryCommitReadinessStatusName;
+using sentinel::core::MemoryCommitResult;
+using sentinel::core::MemoryCommitStatus;
 using sentinel::core::MemoryReviewState;
 
 class InMemoryMemoryCandidateStoreTest final : public QObject {
@@ -24,6 +26,7 @@ private slots:
     void archivesReviewedCandidatesAsTerminalMetadata();
     void returnsDeterministicSummaries();
     void returnsCommitReadinessMetadata();
+    void recordsCommittedCandidateMetadata();
 };
 
 void InMemoryMemoryCandidateStoreTest::createsCandidateWithDeterministicIdAndPendingReview() {
@@ -124,7 +127,8 @@ void InMemoryMemoryCandidateStoreTest::returnsDeterministicSummaries() {
     QCOMPARE(summary.summary,
              QStringLiteral("Project fact / Pending Review / Project Context / High / "
                             "Conversation Text / "
-                            "Not reviewed / Reviewer: User review"));
+                            "Not reviewed / Reviewer: User review / Not Committed / "
+                            "No committed key"));
 }
 
 void InMemoryMemoryCandidateStoreTest::returnsCommitReadinessMetadata() {
@@ -141,11 +145,31 @@ void InMemoryMemoryCandidateStoreTest::returnsCommitReadinessMetadata() {
     const auto approved = store.candidates().first();
     const auto readiness = memoryCommitReadinessForCandidate(&approved, true, MemoryCommitPolicy{});
 
-    QCOMPARE(memoryCommitReadinessStatusName(readiness.status), QStringLiteral("Disabled"));
+    QCOMPARE(memoryCommitReadinessStatusName(readiness.status), QStringLiteral("Ready"));
     QCOMPARE(readiness.plan.candidateId, QStringLiteral("memory-candidate-1"));
-    QCOMPARE(readiness.plan.key, QStringLiteral("memory-candidate-1"));
+    QCOMPARE(readiness.plan.key,
+             QStringLiteral("memory.semantic.conversation-memory-candidate.memory-candidate-1"));
     QVERIFY(readiness.plan.summary.contains(QStringLiteral("Key-value Memory")));
-    QVERIFY(readiness.summary.contains(QStringLiteral("disabled")));
+    QVERIFY(readiness.summary.contains(QStringLiteral("explicit user action")));
+}
+
+void InMemoryMemoryCandidateStoreTest::recordsCommittedCandidateMetadata() {
+    InMemoryMemoryCandidateStore store;
+    const auto created = store.createCandidate(MemoryCandidate{});
+
+    MemoryCommitResult result;
+    result.accepted = true;
+    result.candidateId = created.id;
+    result.commitStatus = MemoryCommitStatus::Committed;
+    result.committedAtUtc = QDateTime::currentDateTimeUtc();
+    result.committedKey = QStringLiteral("memory.semantic.test.memory-candidate-1");
+    result.summary = QStringLiteral("Committed for test.");
+
+    QVERIFY(store.recordCommitResult(result));
+    const auto candidate = store.candidates().first();
+    QCOMPARE(candidate.commitStatus, MemoryCommitStatus::Committed);
+    QCOMPARE(candidate.committedKey, result.committedKey);
+    QCOMPARE(candidate.commitSummary, result.summary);
 }
 
 QTEST_MAIN(InMemoryMemoryCandidateStoreTest)

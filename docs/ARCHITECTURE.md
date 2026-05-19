@@ -128,6 +128,25 @@ Phase 16.7 through Phase 16.9 add commit-planning metadata on top of approved ca
 - `DesktopShellViewModel` exposes only QML-safe commit readiness strings, checks, counts, target
   summaries, per-candidate plan summaries, and last-result strings.
 
+Phase 16.10 through Phase 16.12 add the explicit user-controlled memory commit boundary:
+
+- `MemoryCommitStatus`, `MemoryCommitConflictPolicy`, and `MemoryCommitResult` describe committed
+  state, duplicate-key behavior, committed key, timestamp, status, and summary.
+- The default policy allows only explicit user commit actions and refuses existing keys. There is
+  no automatic commit during approval and no autonomous memory mutation.
+- Commit keys are sanitized deterministic key-value memory keys derived from candidate category,
+  title, and id.
+- `ApplicationController::requestMemoryCandidateCommit()` commits only approved candidates, only
+  when the key-value memory store is available, and only when the explicit policy gate allows the
+  user action.
+- Pending, rejected, archived, missing, store-unavailable, already-committed, and duplicate-key
+  requests refuse safely before calling `IMemoryStore::put()`.
+- The committed key-value value is the reviewed candidate content only. Source/review metadata is
+  retained in the commit result and candidate committed summary because `IMemoryStore` stores only
+  exact key/value pairs.
+- `IMemoryCandidateStore` records committed candidate metadata separately from the key-value memory
+  entry so QML can show committed status, committed key, timestamp summary, and committed count.
+
 This foundation deliberately does not add embeddings, a vector database, semantic search,
 autonomous capture, model/provider calls, cloud sync, tool/plugin authority, filesystem/system
 authority, or automatic writes to long-term memory.

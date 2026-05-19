@@ -292,7 +292,7 @@ Out of scope:
 ## 10.1 Approved Memory Commit Planning
 
 Decision: Approved memory candidates may produce explicit commit-planning metadata, but actual
-commit execution remains disabled by default and future-gated.
+commit execution was disabled by default and future-gated in Phase 16.7-16.9.
 
 Reason: The app needs a clear candidate -> approved -> committed vocabulary before any long-term
 memory mutation is enabled. Approval should never be mistaken for storage.
@@ -305,21 +305,49 @@ Runtime behavior:
   boundary.
 - Approved candidates produce deterministic key/value plan summaries.
 - Pending, rejected, archived, missing, and store-unavailable candidates cannot commit.
-- The default policy disables commit. `requestMemoryCandidateCommit()` refuses and does not call
-  `IMemoryStore::put()`.
 - QML receives strings, string lists, and counts only.
 
-Future explicit commit requirements:
+Phase 16.10-16.12 follow-up from this planning decision:
 
-- A later phase must explicitly enable the policy gate, define confirmation UX, add mutation tests,
-  and preserve the separation between candidate metadata, key-value memory, chat history, and
-  semantic memory metadata before any commit can write to `IMemoryStore`.
+- The explicit policy gate, narrow Commit action, mutation tests, duplicate-key refusal, and
+  candidate/key-value/chat separation are now implemented.
 
 Out of scope:
 
 - Automatic memory writes, autonomous memory mutation, embeddings, vector DB, semantic search,
   provider/model calls, cloud sync, filesystem/system actions, tools/plugins, and durable semantic
   memory persistence.
+
+## 10.2 Explicit User-Controlled Memory Commit
+
+Decision: Approved memory candidates may be committed to local key-value memory only through an
+explicit user Commit action.
+
+Reason: Approval is a review decision. Commit is a separate local storage mutation and must remain
+visible, user-controlled, and test-covered.
+
+Runtime behavior:
+
+- `MemoryCommitStatus`, `MemoryCommitConflictPolicy`, and `MemoryCommitResult` record committed
+  state, conflict policy, committed key, timestamp, status, and summary.
+- The default commit policy allows explicit user action and refuses existing keys. Overwrite is not
+  enabled.
+- Commit keys are sanitized deterministic keys derived from candidate category, title, and id.
+- `requestMemoryCandidateCommit()` writes to `IMemoryStore` only after the candidate is Approved,
+  the store is available, the explicit policy allows the action, and duplicate-key checks pass.
+- Pending, rejected, archived, missing, store-unavailable, already-committed, and duplicate-key
+  requests refuse before storage mutation.
+- The key-value memory value is reviewed candidate content only. Source/review metadata is exposed
+  in the result and candidate committed summary because the current memory store supports exact
+  key/value entries only.
+- Clear Chat does not clear committed key-value memory.
+- QML receives only strings, string lists, booleans, and counts.
+
+Out of scope:
+
+- Automatic commit on approval, autonomous memory mutation, overwrite UI, embeddings, vector DB,
+  semantic search, provider/model calls, cloud/API keys, tools/plugins, filesystem/system actions
+  beyond the existing memory store, and durable candidate persistence.
 
 Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
 confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
