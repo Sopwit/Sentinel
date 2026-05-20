@@ -399,6 +399,49 @@ Phase 17.10 through Phase 17.12 add a disabled-by-default local vector persisten
   count, and checks. It does not persist raw vectors, expose filesystem paths, alter
   deterministic retrieval planning, mutate prompt assembly, or inject semantic prompt context.
 
+Phase 17.13 through Phase 17.15 add controlled bounded local semantic search:
+
+- `SemanticSearchPolicy`, `SemanticSearchStatus`, `SemanticSearchResult`,
+  `SemanticSearchCandidate`, `SemanticSearchBudget`, `SemanticSearchSession`,
+  `SemanticSearchReadiness`, and `SemanticSearchArbitrationSummary` describe search lifecycle and
+  hybrid arbitration metadata.
+- `LocalVectorPersistenceIndex` may search only its local persisted entry summaries. It does not
+  index the filesystem, ingest in the background, call cloud/API/vector providers, or download
+  providers.
+- Search requires local-only deterministic policy gates, successful isolated embedding runtime
+  output metadata, a non-stale request id, a non-busy session, bounded timeout metadata, bounded
+  candidate count, and stable similarity/tie handling.
+- Semantic candidates remain non-authoritative. They can expose bounded match metadata and hybrid
+  arbitration summaries only.
+- Deterministic retrieval planning remains the final authority. Semantic search cannot mutate
+  `RetrievalPlanningResult`, `PromptContextBlock` values, prompt assembly, prompt injection, or
+  deterministic ranking.
+- Empty indexes, disabled persistence, stale requests, busy sessions, timeouts, and any policy
+  request for prompt/retrieval authority resolve to safe deterministic statuses.
+- QML receives only readiness, runtime state, counts, summaries, and checks. Raw vectors, provider
+  handles, paths, prompt payloads, and debug payload dumps remain unavailable.
+
+Phase 17.16 through Phase 17.18 add the bounded hybrid retrieval bridge:
+
+- `HybridRetrievalBridgePolicy`, `HybridRetrievalBridgeStatus`,
+  `HybridRetrievalBridgeResult`, `HybridBridgeCandidate`, `HybridBridgeBudget`,
+  `HybridBridgeReadiness`, `HybridBridgeArbitration`, and `HybridBridgeSourceSummary` describe
+  bridge metadata only.
+- The bridge may read `RetrievalPlanningResult` selected candidates and `SemanticSearchResult`
+  candidates. It produces bounded merged metadata, arbitration summaries, source participation
+  summaries, and deterministic fallback summaries.
+- Bridge ordering is deterministic-first. Deterministic retrieval candidates occupy capacity
+  before semantic candidates, deterministic candidates win all ties, and semantic candidates may
+  only fill unused bounded metadata capacity.
+- The bridge cannot mutate `RetrievalPlanningResult`, create or mutate `PromptContextBlock`
+  values, alter prompt assembly, inject prompt content, or override deterministic retrieval
+  authority.
+- Disabled, empty, stale, busy, timeout, and refused semantic sources keep deterministic retrieval
+  fully functional through explicit fallback metadata.
+- QML receives only bridge status, readiness, candidate counts, source/arbitration/fallback
+  summaries, and checks. Raw vectors, raw prompt payloads, provider handles, filesystem paths, and
+  debug dumps remain unavailable.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.

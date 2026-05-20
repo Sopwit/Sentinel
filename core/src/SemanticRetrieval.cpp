@@ -327,6 +327,48 @@ QString vectorPersistenceReadinessName(VectorPersistenceReadiness readiness) {
     return QStringLiteral("Disabled");
 }
 
+QString semanticSearchStatusName(SemanticSearchStatus status) {
+    switch (status) {
+    case SemanticSearchStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticSearchStatus::Empty:
+        return QStringLiteral("Empty");
+    case SemanticSearchStatus::Ready:
+        return QStringLiteral("Ready");
+    case SemanticSearchStatus::TimedOut:
+        return QStringLiteral("Timed Out");
+    case SemanticSearchStatus::Stale:
+        return QStringLiteral("Stale");
+    case SemanticSearchStatus::Busy:
+        return QStringLiteral("Busy");
+    case SemanticSearchStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString hybridRetrievalBridgeStatusName(HybridRetrievalBridgeStatus status) {
+    switch (status) {
+    case HybridRetrievalBridgeStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case HybridRetrievalBridgeStatus::DeterministicOnly:
+        return QStringLiteral("Deterministic Only");
+    case HybridRetrievalBridgeStatus::Ready:
+        return QStringLiteral("Ready");
+    case HybridRetrievalBridgeStatus::TimedOut:
+        return QStringLiteral("Timed Out");
+    case HybridRetrievalBridgeStatus::Stale:
+        return QStringLiteral("Stale");
+    case HybridRetrievalBridgeStatus::Busy:
+        return QStringLiteral("Busy");
+    case HybridRetrievalBridgeStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source) {
     switch (source) {
     case ContextAssemblySourceKind::Conversation:
@@ -811,6 +853,390 @@ VectorPersistenceResult LocalVectorPersistenceIndex::acceptIsolatedEmbeddingResu
     result.readiness = VectorPersistenceReadiness::Ready;
     result.summary = lifecycle_.summary;
     return finalize(result);
+}
+
+SemanticSearchReadiness semanticSearchReadiness(const VectorPersistencePolicy& persistencePolicy,
+                                                int indexedItemCount, const QString& query,
+                                                const EmbeddingGenerationResult& queryEmbedding,
+                                                const SemanticSearchPolicy& policy,
+                                                const SemanticSearchSession& session) {
+    SemanticSearchReadiness readiness;
+    readiness.checks = {
+        QStringLiteral("Local-only semantic search: %1")
+            .arg(policy.localOnly ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Deterministic scoring: %1")
+            .arg(policy.deterministic ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Indexed local vector persistence entries: %1").arg(indexedItemCount),
+        QStringLiteral("Isolated embedding output required: %1")
+            .arg(policy.isolatedEmbeddingOutputsOnly ? QStringLiteral("yes")
+                                                     : QStringLiteral("no")),
+        QStringLiteral("Filesystem indexing: disabled"),
+        QStringLiteral("Background ingestion: disabled"),
+        QStringLiteral("Cloud/API/vector providers: blocked"),
+        QStringLiteral("Provider downloads: blocked"),
+        QStringLiteral("Semantic prompt authority: disabled"),
+        QStringLiteral("Retrieval planning mutation: disabled"),
+    };
+
+    const bool stale = !session.activeRequestId.trimmed().isEmpty() &&
+                       session.activeRequestId.trimmed() != session.requestId.trimmed();
+    if (!policy.enabled || !persistencePolicy.enabled) {
+        readiness.status = SemanticSearchStatus::Disabled;
+        readiness.summary =
+            QStringLiteral("Bounded local semantic search is disabled or has no active local "
+                           "vector persistence lifecycle.");
+        return readiness;
+    }
+    if (session.busy) {
+        readiness.status = SemanticSearchStatus::Busy;
+        readiness.summary = QStringLiteral("Semantic search session is busy.");
+        return readiness;
+    }
+    if (stale || session.requestId.trimmed().isEmpty()) {
+        readiness.status = SemanticSearchStatus::Stale;
+        readiness.summary = QStringLiteral("Semantic search request is stale or invalid.");
+        return readiness;
+    }
+    if (!policy.localOnly || !policy.deterministic || !policy.isolatedEmbeddingOutputsOnly ||
+        policy.filesystemIndexingEnabled || policy.backgroundIngestionEnabled ||
+        policy.cloudProvidersAllowed || policy.providerDownloadsAllowed || policy.authoritative ||
+        policy.promptMutationEnabled || policy.retrievalPlanningMutationEnabled ||
+        !persistencePolicy.localOnly || persistencePolicy.filesystemScanningEnabled ||
+        persistencePolicy.backgroundIngestionEnabled ||
+        persistencePolicy.cloudVectorServicesAllowed ||
+        persistencePolicy.semanticRetrievalAuthorityEnabled ||
+        persistencePolicy.promptMutationEnabled) {
+        readiness.status = SemanticSearchStatus::Refused;
+        readiness.summary =
+            QStringLiteral("Semantic search refused by local-only non-authoritative policy gates.");
+        return readiness;
+    }
+    if (query.trimmed().isEmpty()) {
+        readiness.status = SemanticSearchStatus::Empty;
+        readiness.summary = QStringLiteral("Semantic search query is empty.");
+        return readiness;
+    }
+    if (queryEmbedding.status != EmbeddingRuntimeStatus::Succeeded ||
+        queryEmbedding.readiness != EmbeddingGenerationReadiness::Ready ||
+        queryEmbedding.generatedVectorCount <= 0) {
+        readiness.status = SemanticSearchStatus::Refused;
+        readiness.summary = QStringLiteral(
+            "Semantic search requires successful isolated embedding runtime output.");
+        return readiness;
+    }
+    if (indexedItemCount <= 0) {
+        readiness.status = SemanticSearchStatus::Empty;
+        readiness.summary = QStringLiteral("Local semantic search index is empty.");
+        return readiness;
+    }
+
+    readiness.ready = true;
+    readiness.status = SemanticSearchStatus::Ready;
+    readiness.summary =
+        QStringLiteral("Bounded local semantic search is ready for non-authoritative candidates.");
+    return readiness;
+}
+
+SemanticSearchReadiness LocalVectorPersistenceIndex::semanticSearchReadiness(
+    const QString& query, const EmbeddingGenerationResult& queryEmbedding,
+    const SemanticSearchPolicy& policy, const SemanticSearchSession& session) const {
+    return sentinel::core::semanticSearchReadiness(policy_, itemSummaries_.size(), query,
+                                                   queryEmbedding, policy, session);
+}
+
+SemanticSearchResult LocalVectorPersistenceIndex::searchLocalSemanticCandidates(
+    const QString& query, const EmbeddingGenerationResult& queryEmbeddingResult,
+    const SemanticSearchPolicy& policy, const SemanticSearchSession& session) const {
+    SemanticSearchResult result;
+    result.policy = policy;
+    result.session = session;
+    result.session.timeoutMs = std::max(0, session.timeoutMs);
+    result.budget.maxCandidates = std::max(0, policy.maxCandidates);
+    result.budget.timeoutMs = result.session.timeoutMs;
+    result.budget.elapsedMs = std::max(0, session.simulatedExecutionMs);
+    result.budget.minimumSimilarity = std::clamp(policy.minimumSimilarity, 0.0, 1.0);
+    result.readiness = semanticSearchReadiness(query, queryEmbeddingResult, policy, session);
+    result.status = result.readiness.status;
+    result.checks = result.readiness.checks;
+
+    if (!result.readiness.ready) {
+        result.failureReason = result.readiness.summary;
+        result.summary = result.failureReason;
+        return result;
+    }
+    if (result.budget.elapsedMs > result.budget.timeoutMs) {
+        result.status = SemanticSearchStatus::TimedOut;
+        result.failureReason = QStringLiteral("Bounded semantic search timed out after %1 ms.")
+                                   .arg(result.budget.timeoutMs);
+        result.summary = result.failureReason;
+        return result;
+    }
+
+    const auto queryTokens = normalizedTokens(query);
+    QList<SemanticSearchCandidate> candidates;
+    candidates.reserve(itemSummaries_.size());
+    for (int i = 0; i < itemSummaries_.size(); ++i) {
+        const auto item = itemSummaries_.at(i).simplified();
+        const auto itemTokens = normalizedTokens(item);
+        if (itemTokens.isEmpty()) {
+            continue;
+        }
+        int overlap = 0;
+        for (const auto& token : queryTokens) {
+            if (itemTokens.contains(token)) {
+                ++overlap;
+            }
+        }
+        const int denominator =
+            std::max(1, static_cast<int>(queryTokens.size() + itemTokens.size()) - overlap);
+        double similarity =
+            std::clamp(static_cast<double>(overlap) / static_cast<double>(denominator), 0.0, 1.0);
+        if (queryTokens.isEmpty()) {
+            similarity = 0.0;
+        }
+        if (similarity < result.budget.minimumSimilarity) {
+            continue;
+        }
+
+        SemanticSearchCandidate candidate;
+        candidate.id = QStringLiteral("local-vector-%1").arg(i);
+        candidate.summary = item.left(160);
+        candidate.similarity = similarity;
+        candidate.tieBreakKey = item;
+        candidates.append(candidate);
+    }
+
+    std::stable_sort(candidates.begin(), candidates.end(),
+                     [](const SemanticSearchCandidate& left, const SemanticSearchCandidate& right) {
+                         if (left.similarity != right.similarity) {
+                             return left.similarity > right.similarity;
+                         }
+                         return left.tieBreakKey < right.tieBreakKey;
+                     });
+
+    result.budget.evaluatedItemCount = itemSummaries_.size();
+    for (int i = 0; i < candidates.size() && i < result.budget.maxCandidates; ++i) {
+        auto candidate = candidates.at(i);
+        candidate.rank = i + 1;
+        result.candidates.append(candidate);
+    }
+    result.budget.returnedCandidateCount = result.candidates.size();
+    result.budget.summary =
+        QStringLiteral("%1 bounded semantic candidates returned from %2 local vector persistence "
+                       "entries within %3 ms budget.")
+            .arg(result.budget.returnedCandidateCount)
+            .arg(result.budget.evaluatedItemCount)
+            .arg(result.budget.timeoutMs);
+    result.arbitration.semanticCandidateCount = result.budget.returnedCandidateCount;
+    result.arbitration.exposedCandidateCount = result.budget.returnedCandidateCount;
+    result.arbitration.summary =
+        QStringLiteral("%1 semantic metadata candidates exposed for hybrid arbitration; "
+                       "deterministic retrieval remains authoritative.")
+            .arg(result.budget.returnedCandidateCount);
+    result.arbitration.checks = {
+        QStringLiteral("Deterministic retrieval authoritative: yes"),
+        QStringLiteral("Semantic candidate prompt authority: no"),
+        QStringLiteral("RetrievalPlanningResult mutation: no"),
+        QStringLiteral("PromptContextBlocks mutation: no"),
+        QStringLiteral("Tie handling: similarity then local summary"),
+    };
+    result.accepted = true;
+    result.status =
+        result.candidates.isEmpty() ? SemanticSearchStatus::Empty : SemanticSearchStatus::Ready;
+    result.summary =
+        result.candidates.isEmpty()
+            ? QStringLiteral("Bounded semantic search found no local candidate metadata.")
+            : QStringLiteral("Bounded semantic search returned %1 non-authoritative local "
+                             "candidate metadata matches.")
+                  .arg(result.candidates.size());
+    return result;
+}
+
+SemanticSearchArbitrationSummary
+semanticSearchArbitrationSummary(const SemanticSearchResult& searchResult,
+                                 const SemanticCandidateArbitration& deterministicArbitration) {
+    auto summary = searchResult.arbitration;
+    summary.deterministicCandidateCount = deterministicArbitration.selectedCandidates.size();
+    summary.semanticCandidateCount = searchResult.candidates.size();
+    summary.exposedCandidateCount = searchResult.candidates.size();
+    summary.deterministicAuthoritative = true;
+    summary.semanticPromptAuthority = false;
+    summary.summary =
+        QStringLiteral("Hybrid arbitration boundary: %1 deterministic candidates remain final "
+                       "authority; %2 semantic candidates are metadata-only.")
+            .arg(summary.deterministicCandidateCount)
+            .arg(summary.semanticCandidateCount);
+    if (summary.checks.isEmpty()) {
+        summary.checks = {
+            QStringLiteral("Deterministic retrieval authoritative: yes"),
+            QStringLiteral("Semantic prompt authority: no"),
+            QStringLiteral("RetrievalPlanningResult mutation: no"),
+            QStringLiteral("PromptContextBlocks mutation: no"),
+            QStringLiteral("Semantic candidates cannot override deterministic ranking"),
+        };
+    }
+    return summary;
+}
+
+HybridRetrievalBridgeResult
+hybridRetrievalBridge(const RetrievalPlanningResult& deterministicPlanning,
+                      const SemanticSearchResult& semanticSearchResult,
+                      const HybridRetrievalBridgePolicy& policy) {
+    HybridRetrievalBridgeResult result;
+    result.policy = policy;
+    result.budget.maxMergedCandidates = std::max(0, policy.maxMergedCandidates);
+    result.budget.deterministicCandidateCount = deterministicPlanning.selectedCandidates.size();
+    result.budget.semanticCandidateCount = semanticSearchResult.candidates.size();
+    result.budget.timeoutMs = std::max(0, policy.timeoutMs);
+    result.budget.elapsedMs = semanticSearchResult.budget.elapsedMs;
+    result.sourceSummary.deterministicCandidateCount = result.budget.deterministicCandidateCount;
+    result.sourceSummary.semanticCandidateCount = result.budget.semanticCandidateCount;
+    result.sourceSummary.semanticSourceEmpty = semanticSearchResult.candidates.isEmpty();
+    result.readiness.checks = {
+        QStringLiteral("Deterministic retrieval final authority: %1")
+            .arg(policy.deterministicRetrievalAuthoritative ? QStringLiteral("yes")
+                                                            : QStringLiteral("no")),
+        QStringLiteral("Semantic candidates advisory only: %1")
+            .arg(policy.semanticCandidatesAdvisoryOnly ? QStringLiteral("yes")
+                                                       : QStringLiteral("no")),
+        QStringLiteral("Deterministic tie wins: %1")
+            .arg(policy.deterministicWinsTies ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("RetrievalPlanningResult mutation: no"),
+        QStringLiteral("PromptContextBlocks mutation: no"),
+        QStringLiteral("Prompt content injection: disabled"),
+        QStringLiteral("Raw vectors exposed: no"),
+        QStringLiteral("Provider handles exposed: no"),
+    };
+    result.checks = result.readiness.checks;
+
+    if (!policy.enabled) {
+        result.status = HybridRetrievalBridgeStatus::Disabled;
+        result.readiness.status = result.status;
+        result.failureReason = QStringLiteral("Hybrid retrieval bridge is disabled.");
+        result.summary = result.failureReason;
+        return result;
+    }
+    if (!policy.deterministicRetrievalAuthoritative || !policy.semanticCandidatesAdvisoryOnly ||
+        !policy.deterministicWinsTies || policy.promptMutationEnabled ||
+        policy.retrievalPlanningMutationEnabled || policy.promptContextMutationEnabled) {
+        result.status = HybridRetrievalBridgeStatus::Refused;
+        result.readiness.status = result.status;
+        result.failureReason =
+            QStringLiteral("Hybrid retrieval bridge refused by deterministic authority gates.");
+        result.summary = result.failureReason;
+        return result;
+    }
+    if (semanticSearchResult.status == SemanticSearchStatus::Busy) {
+        result.status = HybridRetrievalBridgeStatus::Busy;
+        result.readiness.status = result.status;
+        result.failureReason = QStringLiteral("Hybrid retrieval bridge semantic source is busy.");
+        result.summary = result.failureReason;
+        return result;
+    }
+    if (semanticSearchResult.status == SemanticSearchStatus::Stale) {
+        result.status = HybridRetrievalBridgeStatus::Stale;
+        result.readiness.status = result.status;
+        result.failureReason =
+            QStringLiteral("Hybrid retrieval bridge ignored a stale semantic source.");
+        result.summary = result.failureReason;
+        return result;
+    }
+    if (semanticSearchResult.status == SemanticSearchStatus::TimedOut ||
+        result.budget.elapsedMs > result.budget.timeoutMs) {
+        result.status = HybridRetrievalBridgeStatus::TimedOut;
+        result.readiness.status = result.status;
+        result.failureReason =
+            QStringLiteral("Hybrid retrieval bridge timed out and kept deterministic fallback.");
+        result.summary = result.failureReason;
+        result.fallbackSummary =
+            QStringLiteral("Semantic bridge timed out; deterministic retrieval remains available.");
+        return result;
+    }
+
+    result.readiness.ready = true;
+    result.accepted = true;
+    const int capacity = result.budget.maxMergedCandidates;
+    int rank = 1;
+    for (int i = 0;
+         i < deterministicPlanning.selectedCandidates.size() && result.candidates.size() < capacity;
+         ++i) {
+        const auto& candidate = deterministicPlanning.selectedCandidates.at(i);
+        result.candidates.append(HybridBridgeCandidate{
+            QStringLiteral("deterministic-%1").arg(i),
+            contextAssemblySourceKindName(candidate.source),
+            candidate.title,
+            candidate.truncated ? QStringLiteral("%1 (truncated)").arg(candidate.title)
+                                : candidate.title,
+            rank++,
+            true,
+            false,
+            QStringLiteral("Selected by deterministic retrieval planning."),
+        });
+    }
+    result.sourceSummary.deterministicSelectedCount = result.candidates.size();
+
+    const bool semanticUsable = semanticSearchResult.status == SemanticSearchStatus::Ready;
+    if (semanticUsable) {
+        for (int i = 0;
+             i < semanticSearchResult.candidates.size() && result.candidates.size() < capacity;
+             ++i) {
+            const auto& candidate = semanticSearchResult.candidates.at(i);
+            result.candidates.append(HybridBridgeCandidate{
+                candidate.id,
+                QStringLiteral("Semantic Advisory"),
+                QStringLiteral("Semantic Candidate %1").arg(candidate.rank),
+                candidate.summary,
+                rank++,
+                false,
+                true,
+                QStringLiteral("Filled unused bridge capacity without prompt authority."),
+            });
+            ++result.budget.semanticFillCount;
+        }
+    }
+
+    result.budget.mergedCandidateCount = result.candidates.size();
+    result.sourceSummary.semanticFilledCount = result.budget.semanticFillCount;
+    result.status = result.budget.semanticFillCount > 0
+                        ? HybridRetrievalBridgeStatus::Ready
+                        : HybridRetrievalBridgeStatus::DeterministicOnly;
+    result.readiness.status = result.status;
+    result.readiness.summary =
+        result.status == HybridRetrievalBridgeStatus::Ready
+            ? QStringLiteral("Hybrid retrieval bridge produced bounded advisory metadata.")
+            : QStringLiteral("Hybrid retrieval bridge is using deterministic fallback only.");
+    result.budget.summary =
+        QStringLiteral("%1 bridge candidates merged: %2 deterministic, %3 semantic advisory "
+                       "within %4 candidate capacity.")
+            .arg(result.budget.mergedCandidateCount)
+            .arg(result.sourceSummary.deterministicSelectedCount)
+            .arg(result.budget.semanticFillCount)
+            .arg(result.budget.maxMergedCandidates);
+    result.sourceSummary.summary =
+        QStringLiteral("%1 deterministic candidates participated; %2 semantic candidates "
+                       "available; %3 filled unused bridge slots.")
+            .arg(result.budget.deterministicCandidateCount)
+            .arg(result.budget.semanticCandidateCount)
+            .arg(result.budget.semanticFillCount);
+    result.arbitration.summary =
+        QStringLiteral("Deterministic-first bridge arbitration selected %1 metadata candidates; "
+                       "semantic candidates filled %2 unused slots and remain non-authoritative.")
+            .arg(result.budget.mergedCandidateCount)
+            .arg(result.budget.semanticFillCount);
+    result.arbitration.fallbackSummary =
+        result.budget.semanticFillCount == 0
+            ? QStringLiteral("Semantic source unavailable or empty; deterministic fallback used.")
+            : QStringLiteral(
+                  "Deterministic retrieval stayed first; semantic metadata was advisory.");
+    result.arbitration.checks = result.checks;
+    result.summary =
+        result.status == HybridRetrievalBridgeStatus::Ready
+            ? QStringLiteral("Hybrid bridge ready: deterministic authority preserved with bounded "
+                             "semantic advisory fill.")
+            : QStringLiteral("Hybrid bridge deterministic fallback: semantic source did not add "
+                             "advisory candidates.");
+    result.fallbackSummary = result.arbitration.fallbackSummary;
+    return result;
 }
 
 QStringList semanticRetrievalReadinessChecks(const SemanticRetrievalPolicy& policy,

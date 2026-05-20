@@ -152,6 +152,26 @@ enum class VectorPersistenceReadiness : std::uint8_t {
     Refused,
 };
 
+enum class SemanticSearchStatus : std::uint8_t {
+    Disabled,
+    Empty,
+    Ready,
+    TimedOut,
+    Stale,
+    Busy,
+    Refused,
+};
+
+enum class HybridRetrievalBridgeStatus : std::uint8_t {
+    Disabled,
+    DeterministicOnly,
+    Ready,
+    TimedOut,
+    Stale,
+    Busy,
+    Refused,
+};
+
 QString embeddingProviderStatusName(EmbeddingProviderStatus status);
 QString vectorIndexStatusName(VectorIndexStatus status);
 QString semanticRetrievalStatusName(SemanticRetrievalStatus status);
@@ -171,6 +191,8 @@ QString embeddingGenerationReadinessName(EmbeddingGenerationReadiness readiness)
 QString vectorPersistenceStatusName(VectorPersistenceStatus status);
 QString vectorPersistenceHealthName(VectorPersistenceHealth health);
 QString vectorPersistenceReadinessName(VectorPersistenceReadiness readiness);
+QString semanticSearchStatusName(SemanticSearchStatus status);
+QString hybridRetrievalBridgeStatusName(HybridRetrievalBridgeStatus status);
 
 struct EmbeddingVector {
     QList<double> values;
@@ -532,6 +554,163 @@ struct VectorPersistenceResult {
     QStringList checks;
 };
 
+struct SemanticSearchPolicy {
+    bool enabled = true;
+    bool localOnly = true;
+    bool deterministic = true;
+    bool isolatedEmbeddingOutputsOnly = true;
+    bool filesystemIndexingEnabled = false;
+    bool backgroundIngestionEnabled = false;
+    bool cloudProvidersAllowed = false;
+    bool providerDownloadsAllowed = false;
+    bool authoritative = false;
+    bool promptMutationEnabled = false;
+    bool retrievalPlanningMutationEnabled = false;
+    int maxCandidates = 4;
+    double minimumSimilarity = 0.0;
+    QString summary = QStringLiteral(
+        "Bounded local semantic search may return non-authoritative candidate metadata only.");
+};
+
+struct SemanticSearchBudget {
+    int maxCandidates = 4;
+    int evaluatedItemCount = 0;
+    int returnedCandidateCount = 0;
+    int timeoutMs = 1000;
+    int elapsedMs = 0;
+    double minimumSimilarity = 0.0;
+    QString summary = QStringLiteral("0 bounded semantic candidates returned.");
+};
+
+struct SemanticSearchSession {
+    QString activeRequestId;
+    QString requestId = QStringLiteral("semantic-search-1");
+    bool busy = false;
+    int timeoutMs = 1000;
+    int simulatedExecutionMs = 0;
+    QString summary = QStringLiteral("No bounded semantic search session is active.");
+};
+
+struct SemanticSearchReadiness {
+    bool ready = false;
+    SemanticSearchStatus status = SemanticSearchStatus::Disabled;
+    QString summary = QStringLiteral("Bounded local semantic search is not ready.");
+    QStringList checks;
+};
+
+struct SemanticSearchCandidate {
+    QString id;
+    QString summary;
+    double similarity = 0.0;
+    int rank = 0;
+    QString tieBreakKey;
+};
+
+struct SemanticSearchArbitrationSummary {
+    int deterministicCandidateCount = 0;
+    int semanticCandidateCount = 0;
+    int exposedCandidateCount = 0;
+    bool deterministicAuthoritative = true;
+    bool semanticPromptAuthority = false;
+    QString summary = QStringLiteral(
+        "Deterministic retrieval remains authoritative; semantic candidates are metadata only.");
+    QStringList checks;
+};
+
+struct SemanticSearchResult {
+    bool accepted = false;
+    SemanticSearchStatus status = SemanticSearchStatus::Disabled;
+    SemanticSearchPolicy policy;
+    SemanticSearchBudget budget;
+    SemanticSearchSession session;
+    SemanticSearchReadiness readiness;
+    SemanticSearchArbitrationSummary arbitration;
+    QList<SemanticSearchCandidate> candidates;
+    QString summary = QStringLiteral("Bounded local semantic search did not run.");
+    QString failureReason;
+    QStringList checks;
+};
+
+struct HybridRetrievalBridgePolicy {
+    bool enabled = true;
+    bool deterministicRetrievalAuthoritative = true;
+    bool semanticCandidatesAdvisoryOnly = true;
+    bool deterministicWinsTies = true;
+    bool promptMutationEnabled = false;
+    bool retrievalPlanningMutationEnabled = false;
+    bool promptContextMutationEnabled = false;
+    int maxMergedCandidates = 6;
+    int timeoutMs = 1000;
+    QString summary = QStringLiteral(
+        "Hybrid retrieval bridge may expose bounded metadata only; deterministic retrieval "
+        "remains final authority.");
+};
+
+struct HybridBridgeBudget {
+    int maxMergedCandidates = 6;
+    int deterministicCandidateCount = 0;
+    int semanticCandidateCount = 0;
+    int mergedCandidateCount = 0;
+    int semanticFillCount = 0;
+    int timeoutMs = 1000;
+    int elapsedMs = 0;
+    QString summary = QStringLiteral("0 bounded bridge candidates merged.");
+};
+
+struct HybridBridgeReadiness {
+    bool ready = false;
+    HybridRetrievalBridgeStatus status = HybridRetrievalBridgeStatus::Disabled;
+    QString summary = QStringLiteral("Hybrid retrieval bridge is not ready.");
+    QStringList checks;
+};
+
+struct HybridBridgeCandidate {
+    QString id;
+    QString source;
+    QString title;
+    QString summary;
+    int rank = 0;
+    bool deterministic = true;
+    bool semanticAdvisory = false;
+    QString arbitrationReason;
+};
+
+struct HybridBridgeSourceSummary {
+    int deterministicCandidateCount = 0;
+    int semanticCandidateCount = 0;
+    int deterministicSelectedCount = 0;
+    int semanticFilledCount = 0;
+    bool semanticSourceEmpty = true;
+    QString summary = QStringLiteral("No hybrid bridge source participation.");
+};
+
+struct HybridBridgeArbitration {
+    QString orderingSummary = QStringLiteral(
+        "Bridge ordering is deterministic-first; semantic candidates may only fill unused "
+        "bounded capacity.");
+    QString fallbackSummary =
+        QStringLiteral("Deterministic retrieval fallback is available and authoritative.");
+    QString tieSummary = QStringLiteral("Deterministic candidates win all bridge ties.");
+    QString summary = QStringLiteral("No hybrid bridge arbitration has run.");
+    QStringList checks;
+};
+
+struct HybridRetrievalBridgeResult {
+    bool accepted = false;
+    HybridRetrievalBridgeStatus status = HybridRetrievalBridgeStatus::Disabled;
+    HybridRetrievalBridgePolicy policy;
+    HybridBridgeBudget budget;
+    HybridBridgeReadiness readiness;
+    HybridBridgeArbitration arbitration;
+    HybridBridgeSourceSummary sourceSummary;
+    QList<HybridBridgeCandidate> candidates;
+    QString summary = QStringLiteral("Hybrid retrieval bridge did not run.");
+    QString fallbackSummary =
+        QStringLiteral("Deterministic retrieval remains fully available without semantic search.");
+    QString failureReason;
+    QStringList checks;
+};
+
 struct SemanticProviderPolicy {
     bool disabledByDefault = true;
     bool allowFakeInMemoryProvider = false;
@@ -664,12 +843,19 @@ public:
     acceptIsolatedEmbeddingResult(const EmbeddingGenerationResult& generationResult,
                                   const QStringList& itemSummaries,
                                   const VectorPersistenceSession& session);
+    SemanticSearchResult searchLocalSemanticCandidates(
+        const QString& query, const EmbeddingGenerationResult& queryEmbeddingResult,
+        const SemanticSearchPolicy& policy, const SemanticSearchSession& session) const;
 
 private:
     VectorPersistenceResult baseResult(const VectorPersistenceSession& session) const;
     VectorPersistenceResult validateSession(const VectorPersistenceSession& session) const;
     void refreshBudget();
     VectorPersistenceResult finalize(VectorPersistenceResult result) const;
+    SemanticSearchReadiness semanticSearchReadiness(const QString& query,
+                                                    const EmbeddingGenerationResult& queryEmbedding,
+                                                    const SemanticSearchPolicy& policy,
+                                                    const SemanticSearchSession& session) const;
 
     VectorPersistencePolicy policy_;
     VectorPersistenceBudget budget_;
@@ -682,6 +868,18 @@ QStringList semanticRetrievalReadinessChecks(const SemanticRetrievalPolicy& poli
                                              VectorIndexStatus indexStatus, int indexedItemCount);
 VectorPersistenceReadiness vectorPersistenceReadiness(const VectorPersistencePolicy& policy,
                                                       const VectorPersistenceSession& session);
+SemanticSearchReadiness semanticSearchReadiness(const VectorPersistencePolicy& persistencePolicy,
+                                                int indexedItemCount, const QString& query,
+                                                const EmbeddingGenerationResult& queryEmbedding,
+                                                const SemanticSearchPolicy& policy,
+                                                const SemanticSearchSession& session);
+SemanticSearchArbitrationSummary
+semanticSearchArbitrationSummary(const SemanticSearchResult& searchResult,
+                                 const SemanticCandidateArbitration& deterministicArbitration);
+HybridRetrievalBridgeResult
+hybridRetrievalBridge(const RetrievalPlanningResult& deterministicPlanning,
+                      const SemanticSearchResult& semanticSearchResult,
+                      const HybridRetrievalBridgePolicy& policy);
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source);
 SemanticCandidateArbitration
 orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,

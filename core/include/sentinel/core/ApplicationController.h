@@ -444,6 +444,42 @@ class ApplicationController final : public QObject {
                    embeddingRuntimeRequirementSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList embeddingRuntimeConstraintSummaries READ
                    embeddingRuntimeConstraintSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSearchStatus READ semanticSearchStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(
+        QString semanticSearchReadiness READ semanticSearchReadiness NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(
+        QString semanticSearchSummary READ semanticSearchSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSearchBudgetSummary READ semanticSearchBudgetSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSearchRuntimeState READ semanticSearchRuntimeState NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int semanticSearchCandidateCount READ semanticSearchCandidateCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSearchArbitrationSummary READ semanticSearchArbitrationSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticSearchCandidateSummaries READ semanticSearchCandidateSummaries
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(
+        QStringList semanticSearchChecks READ semanticSearchChecks NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString hybridBridgeStatus READ hybridBridgeStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(
+        QString hybridBridgeReadiness READ hybridBridgeReadiness NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString hybridBridgeSummary READ hybridBridgeSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString hybridBridgeBudgetSummary READ hybridBridgeBudgetSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString hybridBridgeSourceSummary READ hybridBridgeSourceSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString hybridBridgeArbitrationSummary READ hybridBridgeArbitrationSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString hybridBridgeFallbackSummary READ hybridBridgeFallbackSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int hybridBridgeCandidateCount READ hybridBridgeCandidateCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int hybridBridgeSemanticFillCount READ hybridBridgeSemanticFillCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList hybridBridgeCandidateSummaries READ hybridBridgeCandidateSummaries NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList hybridBridgeChecks READ hybridBridgeChecks NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -1020,6 +1056,30 @@ public:
     QString vectorPersistenceBoundedState() const;
     int vectorPersistenceIndexedItemCount() const;
     QStringList vectorPersistenceChecks() const;
+    SemanticSearchPolicy semanticSearchPolicy() const;
+    SemanticSearchResult semanticSearchResult() const;
+    QString semanticSearchStatus() const;
+    QString semanticSearchReadiness() const;
+    QString semanticSearchSummary() const;
+    QString semanticSearchBudgetSummary() const;
+    QString semanticSearchRuntimeState() const;
+    int semanticSearchCandidateCount() const;
+    QString semanticSearchArbitrationSummary() const;
+    QStringList semanticSearchCandidateSummaries() const;
+    QStringList semanticSearchChecks() const;
+    HybridRetrievalBridgePolicy hybridRetrievalBridgePolicy() const;
+    HybridRetrievalBridgeResult hybridRetrievalBridgeResult() const;
+    QString hybridBridgeStatus() const;
+    QString hybridBridgeReadiness() const;
+    QString hybridBridgeSummary() const;
+    QString hybridBridgeBudgetSummary() const;
+    QString hybridBridgeSourceSummary() const;
+    QString hybridBridgeArbitrationSummary() const;
+    QString hybridBridgeFallbackSummary() const;
+    int hybridBridgeCandidateCount() const;
+    int hybridBridgeSemanticFillCount() const;
+    QStringList hybridBridgeCandidateSummaries() const;
+    QStringList hybridBridgeChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;
@@ -1349,6 +1409,8 @@ private:
     RetrievalPlanningPolicy retrievalPlanningPolicy_;
     SemanticRetrievalPolicy semanticRetrievalPolicy_;
     VectorPersistencePolicy vectorPersistencePolicy_;
+    SemanticSearchPolicy semanticSearchPolicy_;
+    HybridRetrievalBridgePolicy hybridRetrievalBridgePolicy_;
     SemanticProviderPolicy semanticProviderPolicy_;
     SemanticProviderMode selectedSemanticProviderMode_ = SemanticProviderMode::Disabled;
     SemanticCandidatePolicy semanticCandidatePolicy_;

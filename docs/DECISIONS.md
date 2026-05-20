@@ -2164,3 +2164,60 @@ Boundary rules:
 - Future semantic retrieval activation still requires a separate phase gate for indexing policy,
   vector storage migration/refresh, fallback behavior, privacy/safety checks, prompt authority,
   and QML non-exposure tests.
+
+## 88. Controlled Semantic Search Is Non-authoritative
+
+Decision: Activate only bounded local semantic candidate search over local vector persistence
+entries, and keep deterministic retrieval as the only prompt authority.
+
+Reason: Hybrid orchestration needs real search lifecycle signals before semantic retrieval can be
+considered for future authority. That validation can be done safely if semantic search returns
+metadata only and cannot affect retrieval planning or prompt assembly.
+
+Boundary rules:
+
+- `SemanticSearchPolicy`, `SemanticSearchStatus`, `SemanticSearchResult`,
+  `SemanticSearchCandidate`, `SemanticSearchBudget`, `SemanticSearchSession`,
+  `SemanticSearchReadiness`, and `SemanticSearchArbitrationSummary` describe local search metadata
+  and arbitration summaries only.
+- Search may read only local vector persistence entries and may require isolated embedding runtime
+  output metadata. It must not scan filesystems, start background ingestion, call cloud/API/vector
+  providers, or download providers.
+- Runtime behavior is bounded by candidate count, timeout metadata, similarity range, stale
+  request protection, busy-state refusal, and deterministic tie handling.
+- Semantic search may produce candidate metadata, bounded similarity matches, and hybrid
+  arbitration summaries. It must not alter `RetrievalPlanningResult`, `PromptContextBlock` values,
+  prompt assembly, prompt injection, or deterministic source ranking.
+- Empty indexes and disabled persistence are safe fallback states. Future authority activation
+  requires a separate explicit phase with indexing policy, privacy/safety gates, fallback tests,
+  prompt authority review, and continued QML non-exposure guarantees.
+
+## 89. Hybrid Retrieval Bridge Is Advisory Metadata Only
+
+Decision: Add a bounded hybrid retrieval bridge that reads deterministic retrieval candidates and
+semantic search candidates, but keeps deterministic retrieval as the final authority.
+
+Reason: The system needs a concrete bridge lifecycle before semantic candidates can be evaluated
+beside deterministic retrieval. That bridge must be testable without giving semantic search prompt
+authority or mutation rights.
+
+Boundary rules:
+
+- `HybridRetrievalBridgePolicy`, `HybridRetrievalBridgeStatus`,
+  `HybridRetrievalBridgeResult`, `HybridBridgeCandidate`, `HybridBridgeBudget`,
+  `HybridBridgeReadiness`, `HybridBridgeArbitration`, and `HybridBridgeSourceSummary` are
+  metadata-only records.
+- Bridge arbitration is deterministic-first. Deterministic retrieval candidates fill bridge
+  capacity first, deterministic candidates win all ties/conflicts, and semantic candidates may
+  only fill unused bounded metadata capacity.
+- Semantic candidates are advisory only. They cannot override deterministic source priority,
+  selected retrieval candidates, prompt context blocks, prompt assembly, prompt injection, or
+  deterministic fallback behavior.
+- Disabled, empty, stale, busy, timeout, and refused semantic sources resolve to deterministic
+  fallback summaries. Deterministic retrieval must remain fully functional without semantic search.
+- QML may expose status, readiness, candidate counts, deterministic-vs-semantic participation,
+  arbitration summaries, fallback summaries, and checks only. Raw vectors, prompt payloads,
+  provider handles, filesystem paths, and debug dumps remain hidden.
+- Future semantic-authority activation requires a separate explicit phase with indexing policy,
+  privacy/safety gates, prompt-authority review, deterministic fallback tests, mutation tests, and
+  QML non-exposure tests.

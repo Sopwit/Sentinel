@@ -1288,6 +1288,86 @@ QStringList DesktopShellViewModel::vectorPersistenceChecks() const {
     return controller_.vectorPersistenceChecks();
 }
 
+QString DesktopShellViewModel::semanticSearchStatus() const {
+    return controller_.semanticSearchStatus();
+}
+
+QString DesktopShellViewModel::semanticSearchReadiness() const {
+    return controller_.semanticSearchReadiness();
+}
+
+QString DesktopShellViewModel::semanticSearchSummary() const {
+    return controller_.semanticSearchSummary();
+}
+
+QString DesktopShellViewModel::semanticSearchBudgetSummary() const {
+    return controller_.semanticSearchBudgetSummary();
+}
+
+QString DesktopShellViewModel::semanticSearchRuntimeState() const {
+    return controller_.semanticSearchRuntimeState();
+}
+
+int DesktopShellViewModel::semanticSearchCandidateCount() const {
+    return controller_.semanticSearchCandidateCount();
+}
+
+QString DesktopShellViewModel::semanticSearchArbitrationSummary() const {
+    return controller_.semanticSearchArbitrationSummary();
+}
+
+QStringList DesktopShellViewModel::semanticSearchCandidateSummaries() const {
+    return controller_.semanticSearchCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::semanticSearchChecks() const {
+    return controller_.semanticSearchChecks();
+}
+
+QString DesktopShellViewModel::hybridBridgeStatus() const {
+    return controller_.hybridBridgeStatus();
+}
+
+QString DesktopShellViewModel::hybridBridgeReadiness() const {
+    return controller_.hybridBridgeReadiness();
+}
+
+QString DesktopShellViewModel::hybridBridgeSummary() const {
+    return controller_.hybridBridgeSummary();
+}
+
+QString DesktopShellViewModel::hybridBridgeBudgetSummary() const {
+    return controller_.hybridBridgeBudgetSummary();
+}
+
+QString DesktopShellViewModel::hybridBridgeSourceSummary() const {
+    return controller_.hybridBridgeSourceSummary();
+}
+
+QString DesktopShellViewModel::hybridBridgeArbitrationSummary() const {
+    return controller_.hybridBridgeArbitrationSummary();
+}
+
+QString DesktopShellViewModel::hybridBridgeFallbackSummary() const {
+    return controller_.hybridBridgeFallbackSummary();
+}
+
+int DesktopShellViewModel::hybridBridgeCandidateCount() const {
+    return controller_.hybridBridgeCandidateCount();
+}
+
+int DesktopShellViewModel::hybridBridgeSemanticFillCount() const {
+    return controller_.hybridBridgeSemanticFillCount();
+}
+
+QStringList DesktopShellViewModel::hybridBridgeCandidateSummaries() const {
+    return controller_.hybridBridgeCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::hybridBridgeChecks() const {
+    return controller_.hybridBridgeChecks();
+}
+
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
     return controller_.localInferenceStreamingEnabled();
 }

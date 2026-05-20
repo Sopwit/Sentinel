@@ -1911,6 +1911,36 @@ void DesktopShellViewModelTest::exposesVectorPersistenceMetadata() {
     QCOMPARE(metaObject->indexOfProperty("vectorPersistencePath"), -1);
     QCOMPARE(metaObject->indexOfProperty("vectorPersistenceRawVectors"), -1);
     QCOMPARE(metaObject->indexOfProperty("vectorPersistenceDebugPayload"), -1);
+
+    QCOMPARE(fixture.viewModel.semanticSearchStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.semanticSearchCandidateCount(), 0);
+    QVERIFY(fixture.viewModel.semanticSearchSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(fixture.viewModel.semanticSearchRuntimeState().contains(QStringLiteral("local-only")));
+    QVERIFY(fixture.viewModel.semanticSearchArbitrationSummary().contains(
+        QStringLiteral("deterministic candidates remain final authority")));
+    QVERIFY(fixture.viewModel.semanticSearchChecks().contains(
+        QStringLiteral("Filesystem indexing: disabled")));
+    QVERIFY(metaObject->indexOfProperty("semanticSearchStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("semanticSearchCandidateCount") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("semanticSearchRawVectors"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticSearchDebugPayload"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticSearchPromptPayload"), -1);
+
+    QCOMPARE(fixture.viewModel.hybridBridgeStatus(), QStringLiteral("Deterministic Only"));
+    QCOMPARE(fixture.viewModel.hybridBridgeSemanticFillCount(), 0);
+    QVERIFY(fixture.viewModel.hybridBridgeReadiness().contains(
+        QStringLiteral("deterministic fallback")));
+    QVERIFY(fixture.viewModel.hybridBridgeBudgetSummary().contains(
+        QStringLiteral("bridge candidates")));
+    QVERIFY(
+        fixture.viewModel.hybridBridgeFallbackSummary().contains(QStringLiteral("deterministic")));
+    QVERIFY(fixture.viewModel.hybridBridgeChecks().contains(
+        QStringLiteral("Prompt content injection: disabled")));
+    QVERIFY(metaObject->indexOfProperty("hybridBridgeStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("hybridBridgeCandidateCount") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("hybridBridgeRawVectors"), -1);
+    QCOMPARE(metaObject->indexOfProperty("hybridBridgePromptPayload"), -1);
+    QCOMPARE(metaObject->indexOfProperty("hybridBridgeFilesystemPath"), -1);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

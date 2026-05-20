@@ -2,6 +2,7 @@
 
 #include <QtTest>
 
+using sentinel::core::ContextAssemblySourceKind;
 using sentinel::core::EmbeddingDocument;
 using sentinel::core::EmbeddingGenerationPolicy;
 using sentinel::core::EmbeddingGenerationReadiness;
@@ -16,11 +17,20 @@ using sentinel::core::EmbeddingRuntimeStatus;
 using sentinel::core::FakeEmbeddingProvider;
 using sentinel::core::FakeVectorIndex;
 using sentinel::core::generateIsolatedEmbeddings;
+using sentinel::core::hybridRetrievalBridge;
+using sentinel::core::HybridRetrievalBridgePolicy;
+using sentinel::core::HybridRetrievalBridgeStatus;
 using sentinel::core::HybridRetrievalPolicy;
 using sentinel::core::hybridRetrievalReadiness;
 using sentinel::core::HybridRetrievalStatus;
 using sentinel::core::LocalVectorPersistenceIndex;
 using sentinel::core::orchestrateSemanticCandidates;
+using sentinel::core::planRetrieval;
+using sentinel::core::RetrievalCandidate;
+using sentinel::core::RetrievalPlanningPolicy;
+using sentinel::core::RetrievalPlanningResult;
+using sentinel::core::RetrievalPlanningStatus;
+using sentinel::core::RetrievalSourcePriority;
 using sentinel::core::selectSemanticProvider;
 using sentinel::core::semanticActivationReadiness;
 using sentinel::core::SemanticArbitrationPolicy;
@@ -33,6 +43,10 @@ using sentinel::core::SemanticCandidateStatus;
 using sentinel::core::SemanticProviderMode;
 using sentinel::core::SemanticProviderPolicy;
 using sentinel::core::SemanticProviderReadiness;
+using sentinel::core::SemanticSearchPolicy;
+using sentinel::core::SemanticSearchResult;
+using sentinel::core::SemanticSearchSession;
+using sentinel::core::SemanticSearchStatus;
 using sentinel::core::simulateSemanticArbitration;
 using sentinel::core::VectorPersistenceBudget;
 using sentinel::core::VectorPersistenceHealth;
@@ -63,11 +77,50 @@ private slots:
     void vectorPersistenceLifecycleIsExplicitAndEmptySafe();
     void vectorPersistenceAcceptsOnlyIsolatedEmbeddingOutputs();
     void vectorPersistenceRejectsStaleBusyAndBoundedOverflow();
+    void semanticSearchOrdersCandidatesDeterministicallyAndBoundsResults();
+    void semanticSearchHandlesTimeoutStaleBusyAndEmptyIndex();
+    void semanticSearchEnforcesLocalOnlyNonAuthoritativePolicy();
+    void hybridBridgePreservesDeterministicAuthorityAndBounds();
+    void hybridBridgeFallsBackForDisabledStaleBusyAndTimeoutSemanticSources();
+    void hybridBridgeRefusesPromptOrPlanningMutationAuthority();
     void defaultSemanticProviderSelectionIsDisabled();
     void fakeProviderSelectionIsMetadataOnly();
     void localOllamaProviderIsPlannedButInactive();
     void activationReadinessRefusesByDefault();
 };
+
+namespace {
+
+RetrievalPlanningResult deterministicPlanningForBridge() {
+    return planRetrieval(
+        QList<RetrievalCandidate>{
+            {ContextAssemblySourceKind::Conversation, RetrievalSourcePriority::RecentConversation,
+             QStringLiteral("Recent Conversation"),
+             QStringLiteral("deterministic recent conversation")},
+            {ContextAssemblySourceKind::CommittedMemory, RetrievalSourcePriority::CommittedMemory,
+             QStringLiteral("Committed Memory"), QStringLiteral("deterministic committed memory")},
+        },
+        RetrievalPlanningPolicy{});
+}
+
+SemanticSearchResult semanticSearchResultForBridge(SemanticSearchStatus status) {
+    SemanticSearchResult result;
+    result.status = status;
+    result.accepted = status == SemanticSearchStatus::Ready;
+    result.budget.elapsedMs = status == SemanticSearchStatus::TimedOut ? 1500 : 10;
+    result.budget.returnedCandidateCount = status == SemanticSearchStatus::Ready ? 2 : 0;
+    if (status == SemanticSearchStatus::Ready) {
+        result.candidates = {
+            {QStringLiteral("semantic-a"), QStringLiteral("semantic advisory alpha"), 0.91, 1,
+             QStringLiteral("a")},
+            {QStringLiteral("semantic-b"), QStringLiteral("semantic advisory beta"), 0.88, 2,
+             QStringLiteral("b")},
+        };
+    }
+    return result;
+}
+
+} // namespace
 
 void SemanticRetrievalTest::fakeEmbeddingGenerationIsDeterministic() {
     FakeEmbeddingProvider provider{8};
@@ -486,6 +539,197 @@ void SemanticRetrievalTest::vectorPersistenceRejectsStaleBusyAndBoundedOverflow(
     QCOMPARE(limited.status, VectorPersistenceStatus::LimitReached);
     QCOMPARE(limited.snapshot.indexedItemCount, 1);
     QVERIFY(limited.summary.contains(QStringLiteral("1 rejected")));
+}
+
+void SemanticRetrievalTest::semanticSearchOrdersCandidatesDeterministicallyAndBoundsResults() {
+    VectorPersistencePolicy persistencePolicy;
+    persistencePolicy.enabled = true;
+    persistencePolicy.disabledByDefault = false;
+    LocalVectorPersistenceIndex index{persistencePolicy};
+    index.create(VectorPersistenceSession{});
+
+    EmbeddingGenerationResult generated;
+    generated.status = EmbeddingRuntimeStatus::Succeeded;
+    generated.readiness = EmbeddingGenerationReadiness::Ready;
+    generated.generatedVectorCount = 3;
+    index.acceptIsolatedEmbeddingResult(generated,
+                                        {QStringLiteral("beta alpha memory"),
+                                         QStringLiteral("alpha beta memory"),
+                                         QStringLiteral("alpha unrelated")},
+                                        VectorPersistenceSession{});
+
+    SemanticSearchPolicy policy;
+    policy.maxCandidates = 2;
+    const auto first = index.searchLocalSemanticCandidates(QStringLiteral("alpha beta"), generated,
+                                                           policy, SemanticSearchSession{});
+    const auto second = index.searchLocalSemanticCandidates(QStringLiteral("alpha beta"), generated,
+                                                            policy, SemanticSearchSession{});
+
+    QCOMPARE(first.status, SemanticSearchStatus::Ready);
+    QCOMPARE(first.candidates.size(), 2);
+    QCOMPARE(first.candidates.at(0).summary, QStringLiteral("alpha beta memory"));
+    QCOMPARE(first.candidates.at(1).summary, QStringLiteral("beta alpha memory"));
+    QCOMPARE(first.candidates.at(0).rank, 1);
+    QCOMPARE(first.candidates.at(1).rank, 2);
+    QCOMPARE(first.candidates.at(0).summary, second.candidates.at(0).summary);
+    QVERIFY(first.budget.summary.contains(QStringLiteral("2 bounded semantic candidates")));
+    QVERIFY(first.arbitration.summary.contains(QStringLiteral("deterministic retrieval remains")));
+}
+
+void SemanticRetrievalTest::semanticSearchHandlesTimeoutStaleBusyAndEmptyIndex() {
+    VectorPersistencePolicy persistencePolicy;
+    persistencePolicy.enabled = true;
+    persistencePolicy.disabledByDefault = false;
+    LocalVectorPersistenceIndex emptyIndex{persistencePolicy};
+    emptyIndex.create(VectorPersistenceSession{});
+
+    EmbeddingGenerationResult generated;
+    generated.status = EmbeddingRuntimeStatus::Succeeded;
+    generated.readiness = EmbeddingGenerationReadiness::Ready;
+    generated.generatedVectorCount = 1;
+
+    const auto empty = emptyIndex.searchLocalSemanticCandidates(
+        QStringLiteral("alpha"), generated, SemanticSearchPolicy{}, SemanticSearchSession{});
+    QCOMPARE(empty.status, SemanticSearchStatus::Empty);
+    QVERIFY(empty.summary.contains(QStringLiteral("empty")));
+
+    LocalVectorPersistenceIndex index{persistencePolicy};
+    index.create(VectorPersistenceSession{});
+    index.acceptIsolatedEmbeddingResult(generated, {QStringLiteral("alpha beta")},
+                                        VectorPersistenceSession{});
+
+    SemanticSearchSession timeout;
+    timeout.timeoutMs = 5;
+    timeout.simulatedExecutionMs = 10;
+    QCOMPARE(index
+                 .searchLocalSemanticCandidates(QStringLiteral("alpha"), generated,
+                                                SemanticSearchPolicy{}, timeout)
+                 .status,
+             SemanticSearchStatus::TimedOut);
+
+    SemanticSearchSession stale;
+    stale.activeRequestId = QStringLiteral("old");
+    stale.requestId = QStringLiteral("new");
+    QCOMPARE(index
+                 .searchLocalSemanticCandidates(QStringLiteral("alpha"), generated,
+                                                SemanticSearchPolicy{}, stale)
+                 .status,
+             SemanticSearchStatus::Stale);
+
+    SemanticSearchSession busy;
+    busy.busy = true;
+    QCOMPARE(index
+                 .searchLocalSemanticCandidates(QStringLiteral("alpha"), generated,
+                                                SemanticSearchPolicy{}, busy)
+                 .status,
+             SemanticSearchStatus::Busy);
+}
+
+void SemanticRetrievalTest::semanticSearchEnforcesLocalOnlyNonAuthoritativePolicy() {
+    VectorPersistencePolicy persistencePolicy;
+    persistencePolicy.enabled = true;
+    persistencePolicy.disabledByDefault = false;
+    LocalVectorPersistenceIndex index{persistencePolicy};
+    index.create(VectorPersistenceSession{});
+
+    EmbeddingGenerationResult generated;
+    generated.status = EmbeddingRuntimeStatus::Succeeded;
+    generated.readiness = EmbeddingGenerationReadiness::Ready;
+    generated.generatedVectorCount = 1;
+    index.acceptIsolatedEmbeddingResult(generated, {QStringLiteral("alpha beta")},
+                                        VectorPersistenceSession{});
+
+    SemanticSearchPolicy policy;
+    policy.cloudProvidersAllowed = true;
+    auto refused = index.searchLocalSemanticCandidates(QStringLiteral("alpha"), generated, policy,
+                                                       SemanticSearchSession{});
+    QCOMPARE(refused.status, SemanticSearchStatus::Refused);
+    QVERIFY(refused.checks.contains(QStringLiteral("Cloud/API/vector providers: blocked")));
+
+    policy = SemanticSearchPolicy{};
+    policy.authoritative = true;
+    refused = index.searchLocalSemanticCandidates(QStringLiteral("alpha"), generated, policy,
+                                                  SemanticSearchSession{});
+    QCOMPARE(refused.status, SemanticSearchStatus::Refused);
+
+    EmbeddingGenerationResult notGenerated;
+    refused = index.searchLocalSemanticCandidates(QStringLiteral("alpha"), notGenerated,
+                                                  SemanticSearchPolicy{}, SemanticSearchSession{});
+    QCOMPARE(refused.status, SemanticSearchStatus::Refused);
+    QVERIFY(refused.summary.contains(QStringLiteral("isolated embedding")));
+}
+
+void SemanticRetrievalTest::hybridBridgePreservesDeterministicAuthorityAndBounds() {
+    HybridRetrievalBridgePolicy policy;
+    policy.maxMergedCandidates = 3;
+    const auto planning = deterministicPlanningForBridge();
+    const auto result = hybridRetrievalBridge(
+        planning, semanticSearchResultForBridge(SemanticSearchStatus::Ready), policy);
+
+    QCOMPARE(result.status, HybridRetrievalBridgeStatus::Ready);
+    QCOMPARE(result.candidates.size(), 3);
+    QCOMPARE(result.budget.semanticFillCount, 1);
+    QCOMPARE(result.candidates.at(0).deterministic, true);
+    QCOMPARE(result.candidates.at(1).deterministic, true);
+    QCOMPARE(result.candidates.at(2).semanticAdvisory, true);
+    QCOMPARE(result.candidates.at(0).title, QStringLiteral("Recent Conversation"));
+    QVERIFY(result.arbitration.summary.contains(QStringLiteral("Deterministic-first")));
+    QVERIFY(result.checks.contains(QStringLiteral("RetrievalPlanningResult mutation: no")));
+    QCOMPARE(planning.selectedCandidateCount, 2);
+}
+
+void SemanticRetrievalTest::hybridBridgeFallsBackForDisabledStaleBusyAndTimeoutSemanticSources() {
+    const auto planning = deterministicPlanningForBridge();
+
+    auto disabled = hybridRetrievalBridge(
+        planning, semanticSearchResultForBridge(SemanticSearchStatus::Disabled),
+        HybridRetrievalBridgePolicy{});
+    QCOMPARE(disabled.status, HybridRetrievalBridgeStatus::DeterministicOnly);
+    QCOMPARE(disabled.budget.semanticFillCount, 0);
+    QVERIFY(disabled.fallbackSummary.contains(QStringLiteral("Semantic source unavailable")));
+
+    auto empty =
+        hybridRetrievalBridge(planning, semanticSearchResultForBridge(SemanticSearchStatus::Empty),
+                              HybridRetrievalBridgePolicy{});
+    QCOMPARE(empty.status, HybridRetrievalBridgeStatus::DeterministicOnly);
+
+    auto stale =
+        hybridRetrievalBridge(planning, semanticSearchResultForBridge(SemanticSearchStatus::Stale),
+                              HybridRetrievalBridgePolicy{});
+    QCOMPARE(stale.status, HybridRetrievalBridgeStatus::Stale);
+
+    auto busy =
+        hybridRetrievalBridge(planning, semanticSearchResultForBridge(SemanticSearchStatus::Busy),
+                              HybridRetrievalBridgePolicy{});
+    QCOMPARE(busy.status, HybridRetrievalBridgeStatus::Busy);
+
+    HybridRetrievalBridgePolicy timeoutPolicy;
+    timeoutPolicy.timeoutMs = 1000;
+    auto timedOut = hybridRetrievalBridge(
+        planning, semanticSearchResultForBridge(SemanticSearchStatus::TimedOut), timeoutPolicy);
+    QCOMPARE(timedOut.status, HybridRetrievalBridgeStatus::TimedOut);
+    QVERIFY(timedOut.fallbackSummary.contains(QStringLiteral("deterministic retrieval remains")));
+}
+
+void SemanticRetrievalTest::hybridBridgeRefusesPromptOrPlanningMutationAuthority() {
+    const auto planning = deterministicPlanningForBridge();
+    HybridRetrievalBridgePolicy policy;
+    policy.promptMutationEnabled = true;
+    auto refused = hybridRetrievalBridge(
+        planning, semanticSearchResultForBridge(SemanticSearchStatus::Ready), policy);
+    QCOMPARE(refused.status, HybridRetrievalBridgeStatus::Refused);
+
+    policy = HybridRetrievalBridgePolicy{};
+    policy.retrievalPlanningMutationEnabled = true;
+    refused = hybridRetrievalBridge(
+        planning, semanticSearchResultForBridge(SemanticSearchStatus::Ready), policy);
+    QCOMPARE(refused.status, HybridRetrievalBridgeStatus::Refused);
+
+    policy = HybridRetrievalBridgePolicy{};
+    policy.deterministicRetrievalAuthoritative = false;
+    refused = hybridRetrievalBridge(
+        planning, semanticSearchResultForBridge(SemanticSearchStatus::Ready), policy);
+    QCOMPARE(refused.status, HybridRetrievalBridgeStatus::Refused);
 }
 
 void SemanticRetrievalTest::defaultSemanticProviderSelectionIsDisabled() {

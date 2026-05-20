@@ -753,6 +753,8 @@ private slots:
     void semanticArbitrationSimulationExposesSafeMetadata();
     void isolatedEmbeddingRuntimeExposureIsBoundedAndDisabledByDefault();
     void vectorPersistenceExposureIsDisabledAndDoesNotMutatePlanningOrPrompt();
+    void semanticSearchExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
+    void hybridBridgeExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
     void semanticCandidateOrchestrationDoesNotMutatePrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
@@ -4207,6 +4209,68 @@ void ApplicationControllerTest::
     const auto planningAfter = controller->retrievalPlanningResult();
     const auto promptAfter = controller->latestPromptContextInjectionResult();
     QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
+    QCOMPARE(controller->semanticRetrievalEnabled(), false);
+}
+
+void ApplicationControllerTest::semanticSearchExposureIsBoundedAndDoesNotMutatePlanningOrPrompt() {
+    const auto controller = makeController();
+    const auto planningBefore = controller->retrievalPlanningResult();
+    const auto promptBefore = controller->latestPromptContextInjectionResult();
+
+    QCOMPARE(controller->semanticSearchStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->semanticSearchCandidateCount(), 0);
+    QVERIFY(controller->semanticSearchReadiness().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->semanticSearchSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->semanticSearchRuntimeState().contains(QStringLiteral("local-only")));
+    QVERIFY(controller->semanticSearchBudgetSummary().contains(
+        QStringLiteral("0 bounded semantic candidates")));
+    QVERIFY(controller->semanticSearchArbitrationSummary().contains(
+        QStringLiteral("deterministic candidates remain final authority")));
+    QVERIFY(controller->semanticSearchChecks().contains(
+        QStringLiteral("Filesystem indexing: disabled")));
+    QVERIFY(controller->semanticSearchChecks().contains(
+        QStringLiteral("Semantic prompt authority: disabled")));
+    QVERIFY(controller->semanticSearchChecks().contains(
+        QStringLiteral("RetrievalPlanningResult mutation: no")));
+
+    const auto planningAfter = controller->retrievalPlanningResult();
+    const auto promptAfter = controller->latestPromptContextInjectionResult();
+    QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
+    QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
+    QCOMPARE(controller->semanticRetrievalEnabled(), false);
+}
+
+void ApplicationControllerTest::hybridBridgeExposureIsBoundedAndDoesNotMutatePlanningOrPrompt() {
+    const auto controller = makeController();
+    controller->sendMessage(QStringLiteral("hybrid bridge deterministic context"));
+    controller->remember(QStringLiteral("hybrid.bridge"),
+                         QStringLiteral("deterministic memory authority"));
+    const auto planningBefore = controller->retrievalPlanningResult();
+    const auto promptBefore = controller->latestPromptContextInjectionResult();
+
+    QCOMPARE(controller->hybridBridgeStatus(), QStringLiteral("Deterministic Only"));
+    QVERIFY(controller->hybridBridgeReadiness().contains(QStringLiteral("deterministic fallback")));
+    QVERIFY(controller->hybridBridgeSummary().contains(QStringLiteral("deterministic fallback")));
+    QVERIFY(controller->hybridBridgeBudgetSummary().contains(QStringLiteral("bridge candidates")));
+    QVERIFY(controller->hybridBridgeSourceSummary().contains(QStringLiteral("deterministic")));
+    QVERIFY(controller->hybridBridgeArbitrationSummary().contains(
+        QStringLiteral("Deterministic-first")));
+    QVERIFY(controller->hybridBridgeFallbackSummary().contains(QStringLiteral("deterministic")));
+    QVERIFY(controller->hybridBridgeCandidateCount() >= 1);
+    QCOMPARE(controller->hybridBridgeSemanticFillCount(), 0);
+    QVERIFY(controller->hybridBridgeChecks().contains(
+        QStringLiteral("RetrievalPlanningResult mutation: no")));
+    QVERIFY(controller->hybridBridgeChecks().contains(
+        QStringLiteral("PromptContextBlocks mutation: no")));
+    QVERIFY(controller->hybridBridgeChecks().contains(
+        QStringLiteral("Prompt content injection: disabled")));
+
+    const auto planningAfter = controller->retrievalPlanningResult();
+    const auto promptAfter = controller->latestPromptContextInjectionResult();
+    QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
     QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
     QCOMPARE(controller->semanticRetrievalEnabled(), false);
 }

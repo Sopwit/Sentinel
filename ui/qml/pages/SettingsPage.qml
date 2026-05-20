@@ -569,6 +569,42 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Semantic Search"
+                    value: settingsPage.viewModel.semanticSearchStatus
+                           + " / "
+                           + settingsPage.viewModel.semanticSearchReadiness
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Semantic Search Bounds"
+                    value: settingsPage.viewModel.semanticSearchBudgetSummary
+                           + " / "
+                           + settingsPage.viewModel.semanticSearchArbitrationSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Hybrid Bridge"
+                    value: settingsPage.viewModel.hybridBridgeStatus
+                           + " / "
+                           + settingsPage.viewModel.hybridBridgeReadiness
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Bridge Arbitration"
+                    value: settingsPage.viewModel.hybridBridgeBudgetSummary
+                           + " / "
+                           + settingsPage.viewModel.hybridBridgeFallbackSummary
+                    Layout.fillWidth: true
+                }
+
                 SentinelButton {
                     text: settingsPage.showAdvancedContextDetails ? "Hide Advanced Details"
                                                                   : "Show Advanced Details"
@@ -656,6 +692,32 @@ ScrollView {
 
                 Repeater {
                     model: settingsPage.viewModel.vectorPersistenceChecks
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.semanticSearchChecks
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.hybridBridgeChecks
 
                     Label {
                         required property string modelData
