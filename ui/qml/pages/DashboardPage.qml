@@ -12,6 +12,12 @@ ScrollView {
     readonly property string runtimeStatusText: dashboardPage.viewModel.ollamaHealthStatus
                                                 + " / "
                                                 + dashboardPage.viewModel.localInferenceRuntimeState
+    readonly property bool runtimeReady: dashboardPage.viewModel.ollamaHealthStatus === "Available"
+                                  || dashboardPage.viewModel.ollamaHealthStatus === "Ready"
+                                  || dashboardPage.viewModel.selectedLocalModelStatus === "Available"
+                                  || dashboardPage.viewModel.selectedLocalModelStatus === "Fallback"
+    readonly property bool streamingActive: dashboardPage.viewModel.localInferenceStreamingText.length > 0
+                                            || dashboardPage.viewModel.localInferenceRuntimeState === "Streaming"
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -46,8 +52,10 @@ ScrollView {
                     Layout.fillWidth: true
                     implicitHeight: stateColumn.implicitHeight + dashboardPage.panelPadding * 2
                     color: SentinelTheme.modePanelColor(dashboardPage.viewModel.currentModeName)
-                    border.color: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.10)
-                    bracketColor: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.20)
+                    border.color: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.13)
+                    bracketColor: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.24)
+                    edgeLightColor: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.38)
+                    edgeLightOpacity: 0.22
                     bracketSize: 9
 
                     ColumnLayout {
@@ -64,6 +72,27 @@ ScrollView {
                             font.pixelSize: SentinelTheme.fontTiny
                             font.letterSpacing: 2.2
                             elide: Text.ElideRight
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            RuntimeBadge {
+                                label: "LOCAL"
+                                value: dashboardPage.runtimeReady ? "ready" : "unavailable"
+                                accent: dashboardPage.runtimeReady ? SentinelTheme.accent : SentinelTheme.textMuted
+                                active: dashboardPage.runtimeReady
+                                muted: !dashboardPage.runtimeReady
+                            }
+
+                            RuntimeBadge {
+                                label: "STREAM"
+                                value: dashboardPage.streamingActive ? "active" : "inactive"
+                                accent: SentinelTheme.accentSecondary
+                                active: dashboardPage.streamingActive
+                                muted: !dashboardPage.streamingActive
+                            }
                         }
 
                         InfoRow {

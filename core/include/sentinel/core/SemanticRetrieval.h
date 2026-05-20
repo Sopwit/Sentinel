@@ -60,6 +60,48 @@ enum class HybridRetrievalStatus : std::uint8_t {
     ReadyMetadataOnly,
 };
 
+enum class SemanticArbitrationStatus : std::uint8_t {
+    Disabled,
+    Empty,
+    Simulated,
+};
+
+enum class SemanticProviderMode : std::uint8_t {
+    Disabled,
+    FakeInMemory,
+    LocalOllamaEmbeddings,
+    LocalFileVectorIndex,
+};
+
+enum class SemanticProviderReadiness : std::uint8_t {
+    Disabled,
+    Planned,
+    ReadyMetadataOnly,
+    Blocked,
+};
+
+enum class SemanticProviderHealth : std::uint8_t {
+    NotChecked,
+    MetadataOnly,
+    Blocked,
+};
+
+enum class SemanticProviderCapability : std::uint8_t {
+    LocalOnly,
+    FakeInMemory,
+    EmbeddingGeneration,
+    VectorIndexing,
+    MetadataOnlyHealth,
+    PromptMutationBlocked,
+    VectorWritesBlocked,
+};
+
+enum class EmbeddingRuntimeReadiness : std::uint8_t {
+    NotConfigured,
+    Planned,
+    Blocked,
+};
+
 QString embeddingProviderStatusName(EmbeddingProviderStatus status);
 QString vectorIndexStatusName(VectorIndexStatus status);
 QString semanticRetrievalStatusName(SemanticRetrievalStatus status);
@@ -67,6 +109,12 @@ QString semanticCandidateSourceName(SemanticCandidateSource source);
 QString semanticCandidateSelectionName(SemanticCandidateSelection selection);
 QString semanticCandidateStatusName(SemanticCandidateStatus status);
 QString hybridRetrievalStatusName(HybridRetrievalStatus status);
+QString semanticArbitrationStatusName(SemanticArbitrationStatus status);
+QString semanticProviderModeName(SemanticProviderMode mode);
+QString semanticProviderReadinessName(SemanticProviderReadiness readiness);
+QString semanticProviderHealthName(SemanticProviderHealth health);
+QString semanticProviderCapabilityName(SemanticProviderCapability capability);
+QString embeddingRuntimeReadinessName(EmbeddingRuntimeReadiness readiness);
 
 struct EmbeddingVector {
     QList<double> values;
@@ -245,6 +293,125 @@ struct HybridRetrievalReadiness {
     QStringList checks;
 };
 
+struct SemanticArbitrationPolicy {
+    bool simulationEnabled = true;
+    bool deterministicRetrievalAuthoritative = true;
+    bool semanticRetrievalEnabled = false;
+    bool promptMutationEnabled = false;
+    bool realEmbeddingScoringEnabled = false;
+    int maxRankedCandidates = 6;
+    QString status = QStringLiteral("Simulation Only");
+    QString summary = QStringLiteral(
+        "Semantic arbitration is simulated deterministically; deterministic retrieval remains "
+        "authoritative.");
+};
+
+struct SemanticCandidateScore {
+    QString candidateId;
+    SemanticCandidateSource source = SemanticCandidateSource::RecentConversation;
+    int simulatedScore = 0;
+    int sourceRank = 0;
+    QString tieBreakKey;
+    QString summary;
+};
+
+struct SemanticBudgetSummary {
+    int evaluatedCandidateCount = 0;
+    int rankedCandidateCount = 0;
+    int deterministicSelectedCandidateCount = 0;
+    int semanticSelectedCandidateCount = 0;
+    int estimatedCharacters = 0;
+    int selectedCharacters = 0;
+    QString summary = QStringLiteral("No simulated semantic arbitration budget.");
+};
+
+struct SemanticArbitrationResult {
+    SemanticArbitrationStatus status = SemanticArbitrationStatus::Empty;
+    SemanticArbitrationPolicy policy;
+    SemanticBudgetSummary budget;
+    QList<SemanticCandidateScore> candidateScores;
+    QString readiness = QStringLiteral("Semantic simulation ready metadata only.");
+    QString summary = QStringLiteral("No simulated semantic arbitration has run.");
+    QStringList selectionSummaries;
+    QStringList checks;
+};
+
+struct EmbeddingRuntimeBudget {
+    int estimatedEmbeddingJobs = 0;
+    int estimatedIndexableItems = 0;
+    int estimatedRuntimeMemoryMb = 0;
+    int estimatedIndexStorageMb = 0;
+    int estimatedStartupSeconds = 0;
+    QString summary = QStringLiteral("Embedding runtime cost is not configured.");
+};
+
+struct EmbeddingRuntimePlan {
+    EmbeddingRuntimeReadiness readiness = EmbeddingRuntimeReadiness::NotConfigured;
+    EmbeddingRuntimeBudget budget;
+    bool localOnly = true;
+    bool indexingEnabled = false;
+    bool filesystemIndexingEnabled = false;
+    bool ollamaEmbeddingCallsEnabled = false;
+    QString summary = QStringLiteral(
+        "Embedding runtime planning is metadata only; no embedding runtime is configured.");
+    QStringList requirements;
+    QStringList constraints;
+};
+
+struct SemanticProviderPolicy {
+    bool disabledByDefault = true;
+    bool allowFakeInMemoryProvider = false;
+    bool allowLocalOllamaEmbeddingsProvider = false;
+    bool allowLocalFileVectorIndex = false;
+    bool allowRealEmbeddingCalls = false;
+    bool allowVectorIndexWrites = false;
+    bool allowSemanticPromptInjection = false;
+    bool localOnly = true;
+    QString status = QStringLiteral("Disabled By Default");
+    QString summary = QStringLiteral(
+        "Semantic provider selection is planning metadata only; activation is refused by "
+        "default.");
+};
+
+struct SemanticProviderDescriptor {
+    SemanticProviderMode mode = SemanticProviderMode::Disabled;
+    QString name = QStringLiteral("Disabled");
+    QString summary = QStringLiteral("Semantic retrieval provider is disabled.");
+    SemanticProviderReadiness readiness = SemanticProviderReadiness::Disabled;
+    SemanticProviderHealth health = SemanticProviderHealth::NotChecked;
+    QList<SemanticProviderCapability> capabilities;
+    QStringList capabilitySummaries;
+    QStringList requiredActivationSteps;
+};
+
+struct SemanticProviderSelection {
+    SemanticProviderMode mode = SemanticProviderMode::Disabled;
+    SemanticProviderDescriptor descriptor;
+    SemanticProviderReadiness readiness = SemanticProviderReadiness::Disabled;
+    SemanticProviderHealth health = SemanticProviderHealth::NotChecked;
+    bool selected = false;
+    bool active = false;
+    QString disabledReason = QStringLiteral("Semantic retrieval is disabled by default.");
+    QString summary = QStringLiteral("Selected semantic provider: Disabled.");
+    QStringList requiredActivationSteps;
+    QStringList capabilitySummaries;
+};
+
+struct SemanticActivationReadiness {
+    bool ready = false;
+    SemanticProviderMode providerMode = SemanticProviderMode::Disabled;
+    QString status = QStringLiteral("Refused");
+    QString summary = QStringLiteral("Semantic activation is refused by default.");
+    QStringList checks;
+    QStringList requiredSteps;
+};
+
+struct SemanticActivationResult {
+    bool accepted = false;
+    SemanticActivationReadiness readiness;
+    QString summary = QStringLiteral("Semantic activation did not run.");
+};
+
 class IEmbeddingProvider {
 public:
     virtual ~IEmbeddingProvider() = default;
@@ -316,5 +483,17 @@ QStringList
 semanticCandidateParticipationSummaries(const SemanticCandidateArbitration& arbitration);
 HybridRetrievalReadiness hybridRetrievalReadiness(const HybridRetrievalPolicy& policy,
                                                   const SemanticCandidateArbitration& arbitration);
+SemanticArbitrationResult
+simulateSemanticArbitration(const SemanticCandidateArbitration& arbitration,
+                            const SemanticArbitrationPolicy& policy);
+EmbeddingRuntimePlan embeddingRuntimePlan(const SemanticArbitrationResult& arbitration);
+QList<SemanticProviderDescriptor>
+plannedSemanticProviderDescriptors(const SemanticProviderPolicy& policy);
+SemanticProviderSelection selectSemanticProvider(SemanticProviderMode mode,
+                                                 const SemanticProviderPolicy& policy);
+SemanticActivationReadiness semanticActivationReadiness(const SemanticProviderSelection& selection,
+                                                        const SemanticProviderPolicy& policy);
+SemanticActivationResult semanticActivationResult(const SemanticProviderSelection& selection,
+                                                  const SemanticProviderPolicy& policy);
 
 } // namespace sentinel::core

@@ -11,6 +11,14 @@ ShellPanel {
     readonly property bool activityActive: viewModel.localInferenceBusy
                                            || viewModel.localInferenceStreamingText.length > 0
                                            || viewModel.voicePipelineStatus !== "Idle"
+    readonly property bool streamingActive: viewModel.localInferenceStreamingText.length > 0
+                                            || viewModel.localInferenceRuntimeState === "Streaming"
+    readonly property bool runtimeReady: viewModel.ollamaHealthStatus === "Available"
+                                  || viewModel.ollamaHealthStatus === "Ready"
+                                  || viewModel.selectedLocalModelStatus === "Available"
+                                  || viewModel.selectedLocalModelStatus === "Fallback"
+    readonly property bool contextActive: viewModel.contextAssemblyAvailableSourceCount > 0
+    readonly property bool retrievalActive: viewModel.retrievalPlanningSelectedSourceCount > 0
     readonly property string topLeftStatusText: "OLLAMA / "
                                                 + presence.viewModel.ollamaHealthStatus
                                                 + "\nMODE / "
@@ -64,22 +72,69 @@ ShellPanel {
             readonly property real safeHeight: Math.max(1, height)
             readonly property real safeSize: Math.max(1, Math.min(safeWidth, safeHeight))
 
-            Rectangle {
+            GlowSurface {
                 anchors.centerIn: parent
                 width: Math.min(scene.safeWidth * 0.88, presence.compact ? 390 : 620)
                 height: width
-                radius: width / 2
-                color: SentinelTheme.withAlpha(presence.secondaryAccent, presence.activityActive ? 0.060 : 0.026)
-                border.color: SentinelTheme.withAlpha(presence.modeAccent, 0.050)
+                accent: presence.modeAccent
+                secondaryAccent: presence.secondaryAccent
+                active: presence.activityActive || presence.contextActive || presence.retrievalActive
+                glowScale: SentinelTheme.modeGlowScale(presence.viewModel.currentModeName)
             }
 
             SentinelOrb {
                 viewModel: presence.viewModel
                 compact: presence.compact
-                active: presence.activityActive
+                active: presence.activityActive || presence.contextActive || presence.retrievalActive
                 width: Math.min(scene.safeWidth * 0.70, scene.safeHeight * 0.86, presence.compact ? 320 : 500)
                 height: width
                 anchors.centerIn: parent
+            }
+
+            Flow {
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: presence.compact ? SentinelTheme.spaceLg : SentinelTheme.space2Xl
+                width: Math.min(parent.width * 0.88, presence.compact ? 360 : 560)
+                spacing: SentinelTheme.spaceSm
+
+                RuntimeBadge {
+                    label: "RETRIEVAL"
+                    value: presence.retrievalActive ? "deterministic authority" : "standing by"
+                    accent: SentinelTheme.success
+                    active: presence.retrievalActive
+                }
+
+                RuntimeBadge {
+                    label: "CONTEXT"
+                    value: presence.contextActive ? presence.viewModel.contextAssemblyAvailableSourceCount + " sources" : "not assembled"
+                    accent: SentinelTheme.accentTertiary
+                    active: presence.contextActive
+                    muted: !presence.contextActive
+                }
+
+                RuntimeBadge {
+                    label: "SEMANTIC"
+                    value: "disabled by policy"
+                    accent: SentinelTheme.warning
+                    muted: true
+                }
+
+                RuntimeBadge {
+                    label: "RUNTIME"
+                    value: presence.runtimeReady ? "local ready" : "local unavailable"
+                    accent: presence.runtimeReady ? SentinelTheme.accent : SentinelTheme.textMuted
+                    active: presence.runtimeReady
+                    muted: !presence.runtimeReady
+                }
+
+                RuntimeBadge {
+                    label: "STREAM"
+                    value: presence.streamingActive ? "active" : "inactive"
+                    accent: SentinelTheme.accentSecondary
+                    active: presence.streamingActive
+                    muted: !presence.streamingActive
+                }
             }
 
             Label {
@@ -106,6 +161,7 @@ ShellPanel {
             Label {
                 anchors.left: parent.left
                 anchors.bottom: parent.bottom
+                anchors.bottomMargin: presence.compact ? 0 : SentinelTheme.spaceXs
                 text: "MODEL / " + presence.viewModel.selectedLocalModelStatus
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontTiny
@@ -115,6 +171,7 @@ ShellPanel {
             Label {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
+                anchors.bottomMargin: presence.compact ? 0 : SentinelTheme.spaceXs
                 text: "VOICE / " + presence.viewModel.voiceReadinessStatus
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignRight

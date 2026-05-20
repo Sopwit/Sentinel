@@ -21,11 +21,18 @@ ShellPanel {
     readonly property string runtimeStatusText: chatPanel.viewModel.ollamaHealthStatus
                                                 + " / "
                                                 + chatPanel.viewModel.localInferenceRuntimeState
+    readonly property bool retrievalActive: chatPanel.viewModel.retrievalPlanningSelectedSourceCount > 0
+    readonly property bool contextActive: chatPanel.viewModel.contextAssemblyAvailableSourceCount > 0
+    readonly property bool streamingActive: chatPanel.viewModel.localInferenceStreamingText.length > 0
+                                            || chatPanel.viewModel.localInferenceRuntimeState === "Streaming"
+    readonly property bool semanticDisabled: !chatPanel.viewModel.semanticRetrievalEnabled
     property string renameStatusText: ""
 
-    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.038)
-    border.color: SentinelTheme.withAlpha(modeAccent, 0.095)
-    bracketColor: SentinelTheme.withAlpha(modeAccent, 0.22)
+    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.046)
+    border.color: SentinelTheme.withAlpha(modeAccent, 0.13)
+    bracketColor: SentinelTheme.withAlpha(modeAccent, 0.28)
+    edgeLightColor: SentinelTheme.withAlpha(modeAccent, 0.42)
+    edgeLightOpacity: 0.24
     bracketSize: 12
 
     ColumnLayout {
@@ -42,7 +49,24 @@ ShellPanel {
                 Layout.preferredHeight: 6
                 radius: 3
                 color: chatPanel.modeAccent
-                opacity: 0.9
+                opacity: chatPanel.viewModel.localInferenceBusy || chatPanel.streamingActive ? 1.0 : 0.72
+
+                SequentialAnimation on scale {
+                    loops: Animation.Infinite
+                    running: chatPanel.visible && (chatPanel.viewModel.localInferenceBusy || chatPanel.streamingActive)
+
+                    NumberAnimation {
+                        from: 0.82
+                        to: 1.20
+                        duration: SentinelTheme.durationAmbient
+                        easing.type: Easing.InOutSine
+                    }
+                    NumberAnimation {
+                        to: 0.82
+                        duration: SentinelTheme.durationAmbient
+                        easing.type: Easing.InOutSine
+                    }
+                }
             }
 
             ColumnLayout {
@@ -67,11 +91,68 @@ ShellPanel {
             }
         }
 
+        Flow {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            StatusChip {
+                label: "Context injection"
+                value: chatPanel.viewModel.promptContextInjectionEnabled ? "on" : "off"
+                accent: chatPanel.viewModel.promptContextInjectionEnabled ? SentinelTheme.success
+                                                                           : SentinelTheme.textMuted
+                muted: !chatPanel.viewModel.promptContextInjectionEnabled
+                active: chatPanel.contextActive && chatPanel.viewModel.promptContextInjectionEnabled
+                selected: chatPanel.contextActive
+            }
+
+            StatusChip {
+                label: "Retrieval"
+                value: chatPanel.viewModel.retrievalPlanningSelectedSourceCount + " sources"
+                accent: SentinelTheme.success
+                active: chatPanel.retrievalActive
+                selected: true
+            }
+
+            StatusChip {
+                label: "Window"
+                value: chatPanel.viewModel.conversationWindowIncludedMessageCount
+                       + " in / "
+                       + chatPanel.viewModel.conversationWindowOmittedMessageCount
+                       + " out"
+                accent: SentinelTheme.accentSecondary
+                selected: chatPanel.viewModel.conversationWindowIncludedMessageCount > 0
+            }
+
+            StatusChip {
+                label: "Summary"
+                value: chatPanel.viewModel.conversationSummaryBlockCount + " blocks"
+                accent: SentinelTheme.accent
+                muted: chatPanel.viewModel.conversationSummaryBlockCount === 0
+                selected: chatPanel.viewModel.conversationSummaryBlockCount > 0
+            }
+
+            StatusChip {
+                label: "Semantic"
+                value: "disabled"
+                accent: SentinelTheme.warning
+                muted: true
+                selected: chatPanel.semanticDisabled
+            }
+
+            StatusChip {
+                label: "Stream"
+                value: chatPanel.streamingActive ? "active" : "inactive"
+                accent: SentinelTheme.accentSecondary
+                active: chatPanel.streamingActive
+                muted: !chatPanel.streamingActive
+            }
+        }
+
         Rectangle {
             Layout.fillWidth: true
             radius: SentinelTheme.radiusMd
-            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
-            border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10)
+            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.032)
+            border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.13)
             implicitHeight: conversationBrowserColumn.implicitHeight + SentinelTheme.spaceMd
 
             ColumnLayout {
@@ -333,7 +414,8 @@ ShellPanel {
                 InfoRow {
                     compact: true
                     label: "Context"
-                    value: chatPanel.viewModel.promptContextInjectionStatus
+                    value: (chatPanel.viewModel.promptContextInjectionEnabled ? "On / " : "Off / ")
+                           + chatPanel.viewModel.promptContextInjectionStatus
                            + " / "
                            + chatPanel.viewModel.promptContextInjectedBlockCount
                            + (chatPanel.viewModel.promptContextInjectedBlockCount === 1 ? " block / " : " blocks / ")
@@ -374,6 +456,13 @@ ShellPanel {
                            + " sources / "
                            + chatPanel.viewModel.retrievalPlanningExcludedCandidateCount
                            + " excluded"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: true
+                    label: "Sources"
+                    value: chatPanel.viewModel.retrievalPlanningSourceSummary
                     Layout.fillWidth: true
                 }
 

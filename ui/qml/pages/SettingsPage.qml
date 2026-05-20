@@ -8,6 +8,7 @@ ScrollView {
     required property var viewModel
     readonly property bool compact: width < 760
     readonly property int panelPadding: SentinelTheme.spaceLg
+    property bool showAdvancedContextDetails: false
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -256,6 +257,38 @@ ScrollView {
                     onToggled: settingsPage.viewModel.promptContextInjectionEnabled = checked
                 }
 
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm
+
+                    StatusChip {
+                        label: "Prompt context"
+                        value: settingsPage.viewModel.promptContextInjectionEnabled ? "opt-in on"
+                                                                                     : "opt-in off"
+                        accent: settingsPage.viewModel.promptContextInjectionEnabled ? SentinelTheme.success
+                                                                                     : SentinelTheme.textMuted
+                        muted: !settingsPage.viewModel.promptContextInjectionEnabled
+                    }
+
+                    StatusChip {
+                        label: "Retrieval"
+                        value: "deterministic"
+                        accent: SentinelTheme.accentTertiary
+                    }
+
+                    StatusChip {
+                        label: "Semantic"
+                        value: "disabled"
+                        accent: SentinelTheme.warning
+                    }
+
+                    StatusChip {
+                        label: "Summary"
+                        value: settingsPage.viewModel.conversationSummaryStatus
+                        accent: SentinelTheme.accent
+                    }
+                }
+
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Chat Routing"
@@ -280,7 +313,11 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Context"
-                    value: settingsPage.viewModel.promptContextInjectionStatus + " / " + settingsPage.viewModel.promptContextInjectionSummary
+                    value: (settingsPage.viewModel.promptContextInjectionEnabled ? "On / " : "Off / ")
+                           + settingsPage.viewModel.promptContextInjectionStatus
+                           + " / "
+                           + settingsPage.viewModel.promptContextInjectedBlockCount
+                           + " blocks"
                     Layout.fillWidth: true
                 }
 
@@ -364,6 +401,44 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                Flow {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm
+
+                    StatusChip {
+                        label: "Semantic retrieval"
+                        value: "disabled"
+                        accent: SentinelTheme.warning
+                    }
+
+                    StatusChip {
+                        label: "Provider"
+                        value: settingsPage.viewModel.semanticProviderMode
+                        accent: SentinelTheme.textMuted
+                        muted: true
+                    }
+
+                    StatusChip {
+                        label: "Vector index"
+                        value: settingsPage.viewModel.vectorIndexedItemCount + " indexed"
+                        accent: SentinelTheme.textMuted
+                        muted: true
+                    }
+
+                    StatusChip {
+                        label: "Authority"
+                        value: "deterministic"
+                        accent: SentinelTheme.success
+                    }
+
+                    StatusChip {
+                        label: "Arbitration"
+                        value: settingsPage.viewModel.semanticArbitrationStatus
+                        accent: SentinelTheme.textMuted
+                        muted: true
+                    }
+                }
+
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Semantic Retrieval"
@@ -375,20 +450,35 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Embedding Provider"
-                    value: settingsPage.viewModel.embeddingProviderReadiness
+                    label: "Selected Provider"
+                    value: settingsPage.viewModel.selectedSemanticProviderName
                            + " / "
-                           + settingsPage.viewModel.embeddingProviderSummary
+                           + settingsPage.viewModel.semanticProviderReadiness
+                           + " / "
+                           + settingsPage.viewModel.semanticProviderHealth
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Vector Index"
-                    value: settingsPage.viewModel.vectorIndexReadiness
+                    label: "Provider Capabilities"
+                    value: settingsPage.viewModel.semanticProviderCapabilitySummaries.join(", ")
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Activation Readiness"
+                    value: settingsPage.viewModel.semanticActivationReadiness
                            + " / "
-                           + settingsPage.viewModel.vectorIndexedItemCount
-                           + " indexed items"
+                           + settingsPage.viewModel.semanticActivationSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Activation Steps"
+                    value: settingsPage.viewModel.semanticActivationRequiredSteps.join(" / ")
                     Layout.fillWidth: true
                 }
 
@@ -422,11 +512,37 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Arbitration Simulation"
+                    value: settingsPage.viewModel.semanticArbitrationReadiness
+                           + " / "
+                           + settingsPage.viewModel.semanticArbitrationBudgetSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Embedding Runtime"
+                    value: settingsPage.viewModel.embeddingRuntimeReadiness
+                           + " / "
+                           + settingsPage.viewModel.embeddingRuntimeSummary
+                    Layout.fillWidth: true
+                }
+
+                SentinelButton {
+                    text: settingsPage.showAdvancedContextDetails ? "Hide Advanced Details"
+                                                                  : "Show Advanced Details"
+                    Layout.preferredWidth: 190
+                    onClicked: settingsPage.showAdvancedContextDetails = !settingsPage.showAdvancedContextDetails
+                }
+
                 Repeater {
                     model: settingsPage.viewModel.semanticRetrievalReadinessChecks
 
                     Label {
                         required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
                         text: modelData
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
@@ -439,6 +555,33 @@ ScrollView {
 
                     Label {
                         required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.semanticArbitrationChecks
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.embeddingRuntimeConstraintSummaries
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
                         text: modelData
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
@@ -451,6 +594,7 @@ ScrollView {
 
                     Label {
                         required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
                         text: modelData
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap

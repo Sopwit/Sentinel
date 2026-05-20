@@ -2,6 +2,149 @@
 
 ## Completed / Stable
 
+### Phase 17.4-17.6: Hybrid Arbitration Simulation And Embedding Runtime Planning
+
+Completed. Adds deterministic semantic arbitration simulation and local embedding runtime
+planning metadata without enabling semantic retrieval.
+
+Scope:
+
+- Added semantic arbitration policy, status, result, simulated score, budget, and selection
+  summaries plus embedding runtime plan, budget, and readiness metadata.
+- Simulated scoring is deterministic metadata only. It uses local candidate metadata, fixed source
+  weights, bounded content-size buckets, stable source ordering, and candidate-id tie handling.
+- Deterministic retrieval remains the final prompt authority. Simulated semantic rankings cannot
+  create prompt blocks, change retrieval planning, or mutate prompt assembly.
+- Embedding runtime planning exposes estimated jobs/items, rough memory/storage cost, local-only
+  requirements, and disabled constraints for future activation.
+- Memory and Settings show compact arbitration/runtime readiness without raw vectors, raw score
+  payloads, provider handles, index handles, or activation controls.
+
+Known limitation:
+
+- Semantic retrieval is still disabled. There are no real embeddings, vector DB writes, filesystem
+  indexing, Ollama embedding calls, provider/model inference, semantic prompt injection, cloud/API
+  keys, tools/plugins, autonomous actions, or prompt mutation.
+
+### Phase 17.0-17.3: Semantic Provider Planning And Local Selection
+
+Completed. Adds real semantic retrieval activation planning metadata without activating semantic
+ranking, embedding calls, vector writes, or prompt injection.
+
+Scope:
+
+- Added semantic provider planning records for descriptors, selection, readiness, health,
+  capabilities, policy, activation readiness, and activation results.
+- Supported planned provider modes are Disabled, Fake/InMemory test provider, Local Ollama
+  embeddings provider, and Local file/vector index.
+- The desktop default selection is Disabled. Activation readiness refuses by default and reports
+  required later-phase steps.
+- Local Ollama embeddings and local file/vector index modes are planned-only and inactive. No
+  Ollama embedding request, vector database write, filesystem scan, download, cloud/API-key
+  behavior, tool/plugin action, or system action is introduced.
+- Deterministic retrieval remains authoritative, and prompt assembly still consumes only the
+  existing deterministic retrieval-planning result.
+- Controller and desktop view model expose QML-safe selected provider, mode, readiness, health,
+  capability summaries, activation readiness, activation summary, and required steps.
+- Memory and Settings show compact Semantic Provider readiness without activation controls.
+
+Known limitation:
+
+- Semantic retrieval remains disabled. Phase 17.0-17.3 prepares local-only activation gates only;
+  no semantic ranking/search, semantic prompt injection, durable vector index, real embedding
+  provider execution, or prompt mutation is enabled.
+
+### Phase 16.43-16.45: Futuristic Runtime Surface Polish
+
+Completed. Polishes the existing runtime presentation into a more cinematic local AI operating
+layer while leaving backend behavior unchanged.
+
+Scope:
+
+- Added reusable QML presentation components for layered radial glow, lightweight status pulses,
+  and compact runtime badges.
+- Refined the Home runtime surface with layered glow depth, a smoother orbital core, reduced
+  particle count, idle breathing motion, and compact runtime-state badges.
+- Added subtle visual states for deterministic retrieval authority, context assembly availability,
+  semantic retrieval disabled policy, local runtime ready/unavailable, and streaming active/inactive.
+- Polished context/retrieval chips with stable sizing, hover glow, soft color transitions, and
+  low-amplitude pulse indicators.
+- Improved translucent panel hierarchy with soft edge lighting across chat, runtime, and memory
+  surfaces.
+- No controller, provider, model, retrieval, prompt assembly, semantic, vector, filesystem,
+  plugin, tool, microphone, playback, or runtime authority behavior was changed.
+
+Motion and performance constraints:
+
+- Motion uses declarative opacity, scale, rotation, and color animations only.
+- Particle count remains bounded and lower than the previous home surface.
+- Animations are slow, subtle, and limited to presentation items; they do not allocate timers,
+  trigger layout churn, or move large page layouts.
+
+Known limitation:
+
+- This is presentation polish only. Deterministic retrieval remains authoritative, semantic
+  retrieval remains disabled, real provider/model/tool execution is unchanged, and QML continues
+  to consume summary/count/status metadata only.
+
+### Phase 16.40-16.42: Runtime UX And Context Visibility Polish
+
+Completed. Polishes the existing Memory, Chat, and Settings presentation for the current
+memory/context/retrieval runtime without expanding backend behavior.
+
+Scope:
+
+- Added compact context status chips and clearer status rows for prompt injection, deterministic
+  retrieval, conversation windowing, deterministic summaries, and disabled semantic retrieval.
+- Added a Memory context-pipeline surface that separates committed key-value memory, literal
+  recall, context assembly, retrieval planning, semantic readiness, and memory-candidate review
+  metadata.
+- Updated Chat to show a compact context status near the live surface: context injection on/off,
+  selected retrieval source count, conversation window in/out status, summary block status, and
+  semantic disabled state.
+- Reduced Settings noise by foregrounding concise status chips and keeping semantic/hybrid
+  readiness checks behind an advanced-details toggle.
+- No controller, provider, model, retrieval, prompt assembly, semantic, vector, filesystem,
+  plugin, or tool behavior was changed.
+
+Known limitation:
+
+- This is UI visibility polish only. Semantic retrieval remains disabled, deterministic retrieval
+  remains authoritative, prompt context injection remains opt-in, and QML still exposes only
+  summary/count/status metadata.
+
+### Phase 16.37-16.39: Semantic Retrieval Activation Readiness Checkpoint
+
+Completed. Checkpoints the full Phase 16 memory/context/retrieval architecture before any real
+semantic retrieval activation.
+
+Scope:
+
+- Added `docs/PHASE_16_MEMORY_CONTEXT_CHECKPOINT.md`.
+- Audited the memory candidate lifecycle, explicit commit boundary, literal local recall, context
+  assembly, opt-in prompt injection, conversation windows, deterministic summaries, retrieval
+  planning, embedding/vector abstractions, semantic candidate orchestration, hybrid readiness, UI
+  exposure, and documentation consistency.
+- Confirmed deterministic retrieval planning remains authoritative for prompt context selection.
+- Confirmed semantic retrieval remains disabled: no runtime embedding provider, no runtime vector
+  index, no indexed semantic items, no semantic ranking/search, and no vector database activation.
+- Confirmed semantic candidates do not mutate prompts and do not feed prompt context injection.
+- Confirmed committed key-value memory is the only memory source that recall and prompt injection
+  may read.
+- Confirmed prompt context injection remains opt-in and runs only after existing local inference
+  gates.
+- Confirmed QML exposure remains summary/count/status/readiness-only, with no raw vectors, scores,
+  prompt payloads, provider/index handles, or private semantic candidate payloads.
+- No additional QA tests were required because existing focused tests already cover these
+  checkpoint guarantees.
+
+Known limitation:
+
+- Real semantic retrieval activation remains future-gated. Phase 17 must separately scope and test
+  a concrete embedding provider, vector index, indexing policy, deterministic fallback behavior,
+  privacy/safety gates, and QML non-exposure guarantees before semantic candidates can influence
+  prompts.
+
 ### Phase 16.34-16.36: Semantic Candidate Orchestration Foundation
 
 Completed. Adds semantic candidate orchestration metadata without enabling semantic retrieval.

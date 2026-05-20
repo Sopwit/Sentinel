@@ -130,6 +130,96 @@ QString hybridRetrievalStatusName(HybridRetrievalStatus status) {
     return QStringLiteral("Semantic Disabled");
 }
 
+QString semanticArbitrationStatusName(SemanticArbitrationStatus status) {
+    switch (status) {
+    case SemanticArbitrationStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticArbitrationStatus::Empty:
+        return QStringLiteral("Empty");
+    case SemanticArbitrationStatus::Simulated:
+        return QStringLiteral("Simulated");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString semanticProviderModeName(SemanticProviderMode mode) {
+    switch (mode) {
+    case SemanticProviderMode::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticProviderMode::FakeInMemory:
+        return QStringLiteral("Fake/InMemory");
+    case SemanticProviderMode::LocalOllamaEmbeddings:
+        return QStringLiteral("Local Ollama Embeddings");
+    case SemanticProviderMode::LocalFileVectorIndex:
+        return QStringLiteral("Local File/Vector Index");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString semanticProviderReadinessName(SemanticProviderReadiness readiness) {
+    switch (readiness) {
+    case SemanticProviderReadiness::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticProviderReadiness::Planned:
+        return QStringLiteral("Planned");
+    case SemanticProviderReadiness::ReadyMetadataOnly:
+        return QStringLiteral("Ready Metadata Only");
+    case SemanticProviderReadiness::Blocked:
+        return QStringLiteral("Blocked");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString semanticProviderHealthName(SemanticProviderHealth health) {
+    switch (health) {
+    case SemanticProviderHealth::NotChecked:
+        return QStringLiteral("Not Checked");
+    case SemanticProviderHealth::MetadataOnly:
+        return QStringLiteral("Metadata Only");
+    case SemanticProviderHealth::Blocked:
+        return QStringLiteral("Blocked");
+    }
+
+    return QStringLiteral("Not Checked");
+}
+
+QString semanticProviderCapabilityName(SemanticProviderCapability capability) {
+    switch (capability) {
+    case SemanticProviderCapability::LocalOnly:
+        return QStringLiteral("Local only");
+    case SemanticProviderCapability::FakeInMemory:
+        return QStringLiteral("Fake/InMemory test provider");
+    case SemanticProviderCapability::EmbeddingGeneration:
+        return QStringLiteral("Embedding generation planned");
+    case SemanticProviderCapability::VectorIndexing:
+        return QStringLiteral("Vector indexing planned");
+    case SemanticProviderCapability::MetadataOnlyHealth:
+        return QStringLiteral("Metadata-only health/readiness");
+    case SemanticProviderCapability::PromptMutationBlocked:
+        return QStringLiteral("Prompt mutation blocked");
+    case SemanticProviderCapability::VectorWritesBlocked:
+        return QStringLiteral("Vector writes blocked");
+    }
+
+    return QStringLiteral("Metadata-only health/readiness");
+}
+
+QString embeddingRuntimeReadinessName(EmbeddingRuntimeReadiness readiness) {
+    switch (readiness) {
+    case EmbeddingRuntimeReadiness::NotConfigured:
+        return QStringLiteral("Not Configured");
+    case EmbeddingRuntimeReadiness::Planned:
+        return QStringLiteral("Planned");
+    case EmbeddingRuntimeReadiness::Blocked:
+        return QStringLiteral("Blocked");
+    }
+
+    return QStringLiteral("Not Configured");
+}
+
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source) {
     switch (source) {
     case ContextAssemblySourceKind::Conversation:
@@ -607,6 +697,334 @@ HybridRetrievalReadiness hybridRetrievalReadiness(const HybridRetrievalPolicy& p
         QStringLiteral("Prompt mutation from semantic candidates: disabled"),
     };
     return readiness;
+}
+
+SemanticArbitrationResult
+simulateSemanticArbitration(const SemanticCandidateArbitration& arbitration,
+                            const SemanticArbitrationPolicy& policy) {
+    SemanticArbitrationResult result;
+    result.policy = policy;
+    result.budget.deterministicSelectedCandidateCount = arbitration.selectedCandidates.size();
+    result.budget.semanticSelectedCandidateCount = 0;
+    result.budget.evaluatedCandidateCount = arbitration.selectedCandidates.size();
+    result.budget.estimatedCharacters = arbitration.budget.estimatedCharacters;
+    result.budget.selectedCharacters = arbitration.budget.includedCharacters;
+
+    if (!policy.simulationEnabled) {
+        result.status = SemanticArbitrationStatus::Disabled;
+        result.summary = QStringLiteral("Semantic arbitration simulation is disabled.");
+        return result;
+    }
+
+    if (arbitration.selectedCandidates.isEmpty()) {
+        result.status = SemanticArbitrationStatus::Empty;
+        result.summary =
+            QStringLiteral("Semantic arbitration simulation found no deterministic candidates.");
+        result.checks = {
+            QStringLiteral("Deterministic retrieval authoritative: yes"),
+            QStringLiteral("Real embeddings: disabled"),
+            QStringLiteral("Prompt mutation: disabled"),
+        };
+        return result;
+    }
+
+    const auto sourceRank = [](SemanticCandidateSource source) {
+        switch (source) {
+        case SemanticCandidateSource::RecentConversation:
+            return 10;
+        case SemanticCandidateSource::DeterministicSummary:
+            return 20;
+        case SemanticCandidateSource::CommittedMemory:
+            return 30;
+        case SemanticCandidateSource::RuntimeMetadata:
+            return 40;
+        case SemanticCandidateSource::OrchestrationMetadata:
+            return 50;
+        case SemanticCandidateSource::FutureSemanticVector:
+            return 60;
+        }
+        return 99;
+    };
+
+    QList<SemanticCandidateScore> scores;
+    scores.reserve(arbitration.selectedCandidates.size());
+    for (const auto& candidate : arbitration.selectedCandidates) {
+        SemanticCandidateScore score;
+        score.candidateId = candidate.id;
+        score.source = candidate.source;
+        score.sourceRank = sourceRank(candidate.source);
+        score.tieBreakKey = candidate.id;
+        const int lengthBucket = std::min(candidate.selectedSize, 500) / 10;
+        const int sourceWeight = 700 - (score.sourceRank * 5);
+        score.simulatedScore = sourceWeight + lengthBucket;
+        score.summary = QStringLiteral("%1 / rank simulation / %2")
+                            .arg(candidate.title.isEmpty() ? candidate.id : candidate.title,
+                                 semanticCandidateSourceName(candidate.source));
+        scores.append(score);
+    }
+
+    std::stable_sort(scores.begin(), scores.end(),
+                     [](const SemanticCandidateScore& left, const SemanticCandidateScore& right) {
+                         if (left.simulatedScore != right.simulatedScore) {
+                             return left.simulatedScore > right.simulatedScore;
+                         }
+                         if (left.sourceRank != right.sourceRank) {
+                             return left.sourceRank < right.sourceRank;
+                         }
+                         return left.tieBreakKey < right.tieBreakKey;
+                     });
+
+    const int limit = std::max(0, policy.maxRankedCandidates);
+    for (int i = 0; i < scores.size() && i < limit; ++i) {
+        const auto& score = scores.at(i);
+        result.candidateScores.append(score);
+        result.selectionSummaries.append(
+            QStringLiteral("%1. %2 / simulated ranking metadata / tie %3")
+                .arg(i + 1)
+                .arg(semanticCandidateSourceName(score.source))
+                .arg(score.tieBreakKey));
+    }
+
+    result.status = SemanticArbitrationStatus::Simulated;
+    result.budget.rankedCandidateCount = result.candidateScores.size();
+    result.budget.summary =
+        QStringLiteral("%1 deterministic candidates evaluated; %2 simulated rankings retained; "
+                       "%3 chars selected by deterministic retrieval; 0 semantic candidates "
+                       "selected.")
+            .arg(result.budget.evaluatedCandidateCount)
+            .arg(result.budget.rankedCandidateCount)
+            .arg(result.budget.selectedCharacters);
+    result.readiness =
+        QStringLiteral("Ready metadata only; simulated semantic ranking cannot change prompts.");
+    result.summary =
+        QStringLiteral("Semantic arbitration simulation ranked %1 deterministic candidates. "
+                       "Deterministic retrieval remains final authority.")
+            .arg(result.budget.rankedCandidateCount);
+    result.checks = {
+        QStringLiteral("Deterministic retrieval authoritative: %1")
+            .arg(policy.deterministicRetrievalAuthoritative ? QStringLiteral("yes")
+                                                            : QStringLiteral("no")),
+        QStringLiteral("Semantic retrieval enabled: no"),
+        QStringLiteral("Real embeddings: disabled"),
+        QStringLiteral("Vector search: disabled"),
+        QStringLiteral("Provider/model inference: disabled"),
+        QStringLiteral("Prompt mutation: disabled"),
+        QStringLiteral("Tie handling: simulated score, source rank, candidate id"),
+    };
+    return result;
+}
+
+EmbeddingRuntimePlan embeddingRuntimePlan(const SemanticArbitrationResult& arbitration) {
+    EmbeddingRuntimePlan plan;
+    plan.readiness = EmbeddingRuntimeReadiness::Blocked;
+    plan.budget.estimatedEmbeddingJobs = arbitration.budget.evaluatedCandidateCount;
+    plan.budget.estimatedIndexableItems = arbitration.budget.evaluatedCandidateCount;
+    plan.budget.estimatedRuntimeMemoryMb =
+        arbitration.budget.evaluatedCandidateCount == 0
+            ? 0
+            : std::max(64, arbitration.budget.evaluatedCandidateCount * 4);
+    plan.budget.estimatedIndexStorageMb =
+        arbitration.budget.evaluatedCandidateCount == 0
+            ? 0
+            : std::max(1, (arbitration.budget.evaluatedCandidateCount + 31) / 32);
+    plan.budget.estimatedStartupSeconds = arbitration.budget.evaluatedCandidateCount == 0 ? 0 : 2;
+    plan.budget.summary =
+        QStringLiteral("%1 planned embedding jobs, %2 planned indexable items, ~%3 MB runtime "
+                       "memory, ~%4 MB index storage.")
+            .arg(plan.budget.estimatedEmbeddingJobs)
+            .arg(plan.budget.estimatedIndexableItems)
+            .arg(plan.budget.estimatedRuntimeMemoryMb)
+            .arg(plan.budget.estimatedIndexStorageMb);
+    plan.summary =
+        QStringLiteral("Embedding runtime planning is blocked until a later local-only activation "
+                       "phase; no embeddings, indexing, or Ollama calls run.");
+    plan.requirements = {
+        QStringLiteral("Explicit local embedding provider gate"),
+        QStringLiteral("Committed-memory-only indexing policy"),
+        QStringLiteral("App-owned local vector index boundary"),
+        QStringLiteral("Deterministic fallback to retrieval planning"),
+        QStringLiteral("Prompt-injection approval gate"),
+    };
+    plan.constraints = {
+        QStringLiteral("Local-only semantic runtime"),
+        QStringLiteral("No cloud/API keys"),
+        QStringLiteral("No filesystem indexing while disabled"),
+        QStringLiteral("No Ollama embedding calls while disabled"),
+        QStringLiteral("No vector database writes while disabled"),
+    };
+    return plan;
+}
+
+QList<SemanticProviderDescriptor>
+plannedSemanticProviderDescriptors(const SemanticProviderPolicy& policy) {
+    auto makeDescriptor = [](SemanticProviderMode mode, QString name, QString summary,
+                             SemanticProviderReadiness readiness,
+                             QList<SemanticProviderCapability> capabilities,
+                             QStringList requiredSteps) -> SemanticProviderDescriptor {
+        SemanticProviderDescriptor descriptor;
+        descriptor.mode = mode;
+        descriptor.name = std::move(name);
+        descriptor.summary = std::move(summary);
+        descriptor.readiness = readiness;
+        descriptor.health = readiness == SemanticProviderReadiness::ReadyMetadataOnly
+                                ? SemanticProviderHealth::MetadataOnly
+                                : SemanticProviderHealth::NotChecked;
+        descriptor.capabilities = std::move(capabilities);
+        for (const auto capability : descriptor.capabilities) {
+            descriptor.capabilitySummaries.append(semanticProviderCapabilityName(capability));
+        }
+        descriptor.requiredActivationSteps = std::move(requiredSteps);
+        return descriptor;
+    };
+
+    QList<SemanticProviderDescriptor> descriptors;
+    descriptors.append(makeDescriptor(
+        SemanticProviderMode::Disabled, QStringLiteral("Disabled"),
+        QStringLiteral("Semantic retrieval remains disabled and deterministic retrieval is "
+                       "authoritative."),
+        SemanticProviderReadiness::Disabled,
+        {SemanticProviderCapability::PromptMutationBlocked,
+         SemanticProviderCapability::VectorWritesBlocked},
+        {QStringLiteral("Choose an explicit local semantic provider in a later phase."),
+         QStringLiteral("Keep deterministic retrieval as fallback and prompt authority.")}));
+    descriptors.append(makeDescriptor(
+        SemanticProviderMode::FakeInMemory, QStringLiteral("Fake/InMemory test provider"),
+        QStringLiteral("Deterministic fake embeddings and in-memory vector index for tests only."),
+        policy.allowFakeInMemoryProvider ? SemanticProviderReadiness::ReadyMetadataOnly
+                                         : SemanticProviderReadiness::Planned,
+        {SemanticProviderCapability::LocalOnly, SemanticProviderCapability::FakeInMemory,
+         SemanticProviderCapability::EmbeddingGeneration,
+         SemanticProviderCapability::VectorIndexing, SemanticProviderCapability::MetadataOnlyHealth,
+         SemanticProviderCapability::PromptMutationBlocked},
+        {QStringLiteral("Limit use to isolated tests."),
+         QStringLiteral("Do not feed fake semantic results into prompt assembly.")}));
+    descriptors.append(makeDescriptor(
+        SemanticProviderMode::LocalOllamaEmbeddings,
+        QStringLiteral("Local Ollama embeddings provider"),
+        QStringLiteral("Planned local Ollama embeddings provider; no embedding requests are made."),
+        policy.allowLocalOllamaEmbeddingsProvider ? SemanticProviderReadiness::ReadyMetadataOnly
+                                                  : SemanticProviderReadiness::Planned,
+        {SemanticProviderCapability::LocalOnly, SemanticProviderCapability::EmbeddingGeneration,
+         SemanticProviderCapability::MetadataOnlyHealth,
+         SemanticProviderCapability::PromptMutationBlocked,
+         SemanticProviderCapability::VectorWritesBlocked},
+        {QStringLiteral("Add an explicit local embedding model selection gate."),
+         QStringLiteral("Add loopback-only embedding request tests."),
+         QStringLiteral("Keep semantic prompt injection disabled until separately approved.")}));
+    descriptors.append(makeDescriptor(
+        SemanticProviderMode::LocalFileVectorIndex, QStringLiteral("Local file/vector index"),
+        QStringLiteral("Planned local vector index boundary; no vector database writes are made."),
+        policy.allowLocalFileVectorIndex ? SemanticProviderReadiness::ReadyMetadataOnly
+                                         : SemanticProviderReadiness::Planned,
+        {SemanticProviderCapability::LocalOnly, SemanticProviderCapability::VectorIndexing,
+         SemanticProviderCapability::MetadataOnlyHealth,
+         SemanticProviderCapability::PromptMutationBlocked,
+         SemanticProviderCapability::VectorWritesBlocked},
+        {QStringLiteral("Define an app-owned semantic index path in a later phase."),
+         QStringLiteral("Add explicit indexing and refresh policy for committed memory only."),
+         QStringLiteral("Prove vector writes never occur while disabled.")}));
+    return descriptors;
+}
+
+SemanticProviderSelection selectSemanticProvider(SemanticProviderMode mode,
+                                                 const SemanticProviderPolicy& policy) {
+    SemanticProviderSelection selection;
+    const auto descriptors = plannedSemanticProviderDescriptors(policy);
+    for (const auto& descriptor : descriptors) {
+        if (descriptor.mode == mode) {
+            selection.descriptor = descriptor;
+            break;
+        }
+    }
+    if (selection.descriptor.name.isEmpty()) {
+        selection.descriptor = descriptors.first();
+    }
+
+    selection.mode = selection.descriptor.mode;
+    selection.readiness = selection.descriptor.readiness;
+    selection.health = selection.descriptor.health;
+    selection.selected = true;
+    selection.active = false;
+    selection.requiredActivationSteps = selection.descriptor.requiredActivationSteps;
+    selection.capabilitySummaries = selection.descriptor.capabilitySummaries;
+
+    const bool fakeAllowed =
+        selection.mode == SemanticProviderMode::FakeInMemory && policy.allowFakeInMemoryProvider;
+    const bool ollamaAllowed = selection.mode == SemanticProviderMode::LocalOllamaEmbeddings &&
+                               policy.allowLocalOllamaEmbeddingsProvider;
+    const bool fileIndexAllowed = selection.mode == SemanticProviderMode::LocalFileVectorIndex &&
+                                  policy.allowLocalFileVectorIndex;
+    if (selection.mode == SemanticProviderMode::Disabled || policy.disabledByDefault) {
+        selection.disabledReason = QStringLiteral("Semantic retrieval is disabled by default.");
+    } else if (!(fakeAllowed || ollamaAllowed || fileIndexAllowed)) {
+        selection.disabledReason =
+            QStringLiteral("Selected semantic provider is planned but not activation-approved.");
+    } else if (!policy.allowRealEmbeddingCalls &&
+               selection.mode != SemanticProviderMode::FakeInMemory) {
+        selection.disabledReason =
+            QStringLiteral("Real embedding calls are disabled by semantic provider policy.");
+    } else if (!policy.allowVectorIndexWrites &&
+               selection.mode == SemanticProviderMode::LocalFileVectorIndex) {
+        selection.disabledReason =
+            QStringLiteral("Vector index writes are disabled by semantic provider policy.");
+    } else {
+        selection.disabledReason =
+            QStringLiteral("Provider readiness is metadata-only; semantic ranking remains off.");
+    }
+
+    selection.summary =
+        QStringLiteral("Selected semantic provider: %1 / %2 / %3.")
+            .arg(selection.descriptor.name, semanticProviderReadinessName(selection.readiness),
+                 selection.disabledReason);
+    return selection;
+}
+
+SemanticActivationReadiness semanticActivationReadiness(const SemanticProviderSelection& selection,
+                                                        const SemanticProviderPolicy& policy) {
+    SemanticActivationReadiness readiness;
+    readiness.providerMode = selection.mode;
+    readiness.requiredSteps = selection.requiredActivationSteps;
+    readiness.checks = {
+        QStringLiteral("Disabled by default: %1")
+            .arg(policy.disabledByDefault ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Selected provider: %1").arg(semanticProviderModeName(selection.mode)),
+        QStringLiteral("Provider readiness: %1")
+            .arg(semanticProviderReadinessName(selection.readiness)),
+        QStringLiteral("Provider health: %1").arg(semanticProviderHealthName(selection.health)),
+        QStringLiteral("Real embedding calls allowed: %1")
+            .arg(policy.allowRealEmbeddingCalls ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Vector index writes allowed: %1")
+            .arg(policy.allowVectorIndexWrites ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Semantic prompt injection allowed: %1")
+            .arg(policy.allowSemanticPromptInjection ? QStringLiteral("yes")
+                                                     : QStringLiteral("no")),
+        QStringLiteral("Deterministic retrieval authoritative: yes"),
+    };
+
+    readiness.ready = !policy.disabledByDefault &&
+                      selection.readiness == SemanticProviderReadiness::ReadyMetadataOnly &&
+                      selection.mode == SemanticProviderMode::FakeInMemory &&
+                      policy.allowFakeInMemoryProvider && !policy.allowSemanticPromptInjection;
+    readiness.status =
+        readiness.ready ? QStringLiteral("Metadata Ready") : QStringLiteral("Refused");
+    readiness.summary =
+        readiness.ready
+            ? QStringLiteral("Semantic provider metadata is ready for isolated fake tests only; "
+                             "semantic ranking and prompt injection remain disabled.")
+            : QStringLiteral("Semantic activation refused: %1").arg(selection.disabledReason);
+    return readiness;
+}
+
+SemanticActivationResult semanticActivationResult(const SemanticProviderSelection& selection,
+                                                  const SemanticProviderPolicy& policy) {
+    SemanticActivationResult result;
+    result.readiness = semanticActivationReadiness(selection, policy);
+    result.accepted = false;
+    result.summary =
+        QStringLiteral("%1 No semantic ranking, embedding calls, vector writes, or prompt mutation "
+                       "were started.")
+            .arg(result.readiness.summary);
+    return result;
 }
 
 } // namespace sentinel::core

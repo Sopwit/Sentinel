@@ -270,6 +270,36 @@ continues to consume only deterministic retrieval-planning selections; semantic 
 mutate prompts, inject payloads, expose raw vectors/scores, call providers/models, activate vector
 databases, run transformer inference, use cloud/API keys, execute plugins/tools, or expand
 filesystem/system authority.
+Phase 16.37 through Phase 16.39 checkpoint the full memory/context/retrieval architecture before
+semantic activation. The checkpoint confirms candidate review/commit/recall boundaries, opt-in
+prompt context injection, bounded conversation windows, deterministic summaries, deterministic
+retrieval planning, embedding/vector interfaces, semantic candidate orchestration, hybrid
+readiness, and QML-safe exposure remain separate. Deterministic retrieval remains authoritative;
+semantic retrieval remains disabled; semantic candidates do not mutate prompts; and Phase 17
+semantic activation requires a separate concrete provider/indexing/ranking scope with tests for
+fallback behavior, privacy/safety gates, committed-memory authority, and QML non-exposure.
+Phase 17.0 through Phase 17.3 add semantic provider planning and local selection metadata:
+`SemanticProviderDescriptor`, `SemanticProviderSelection`, `SemanticProviderReadiness`,
+`SemanticProviderHealth`, `SemanticProviderCapability`, `SemanticProviderPolicy`,
+`SemanticActivationReadiness`, and `SemanticActivationResult`. Supported planned modes are
+Disabled, Fake/InMemory test provider, Local Ollama embeddings provider, and Local file/vector
+index. The desktop default remains Disabled, activation readiness refuses by default, and local
+Ollama/file-index providers are planned-only. Deterministic retrieval remains authoritative and
+prompt assembly is unchanged. No real embedding calls, vector DB writes, semantic ranking/search,
+semantic prompt injection, cloud/API keys, downloads, filesystem scans, tools/plugins, system
+actions, or prompt mutation are introduced.
+Phase 17.4 through Phase 17.6 add safe hybrid retrieval arbitration simulation and embedding
+runtime planning metadata: `SemanticArbitrationPolicy`, `SemanticArbitrationStatus`,
+`SemanticArbitrationResult`, `SemanticCandidateScore`, `SemanticBudgetSummary`,
+`EmbeddingRuntimePlan`, `EmbeddingRuntimeBudget`, and `EmbeddingRuntimeReadiness`. Simulated
+scoring is deterministic metadata only, using fixed source weights, bounded size buckets, stable
+source ordering, and candidate-id tie handling. Deterministic retrieval remains the final
+prompt-context authority; simulated semantic rankings expose readiness/future-selection summaries
+only and cannot mutate `RetrievalPlanningResult`, create prompt blocks, or alter prompt injection.
+Embedding runtime planning estimates future local jobs/items and rough memory/storage cost while
+reporting local-only requirements and disabled constraints. No embeddings, vector search/vector DB
+writes, filesystem indexing, Ollama embedding calls, provider/model inference, cloud/API keys,
+tools/plugins, autonomous actions, or prompt mutation are introduced.
 
 ## Future Components
 

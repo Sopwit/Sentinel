@@ -33,6 +33,7 @@ QtObject {
     readonly property color accentBorderSubtle: "#ffffff0d"
     readonly property color accentBorderSoft: "#9bdfff1a"
     readonly property color focusBorder: "#ffd27aaa"
+    readonly property color success: "#9ff0d0"
     readonly property color successBorder: "#9ff0d033"
     readonly property color errorBorder: "#d66b6b66"
     readonly property color separator: "#ffffff0f"

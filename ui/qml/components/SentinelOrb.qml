@@ -10,6 +10,7 @@ Item {
     property bool compact: width < 360
     property bool active: false
     readonly property real safeSize: Math.max(1, Math.min(width, height))
+    readonly property int particleCount: orb.compact ? 72 : 108
 
     implicitWidth: compact ? 320 : 520
     implicitHeight: implicitWidth
@@ -21,6 +22,13 @@ Item {
         radius: width / 2
         color: SentinelTheme.withAlpha(orb.accent, (orb.active ? 0.050 : 0.030) * orb.glowScale)
         border.color: SentinelTheme.withAlpha(orb.accent, orb.active ? 0.055 : 0.028)
+
+        Behavior on color {
+            ColorAnimation {
+                duration: SentinelTheme.durationSlow
+                easing.type: SentinelTheme.easingStandard
+            }
+        }
     }
 
     Rectangle {
@@ -43,7 +51,7 @@ Item {
             from: 0
             to: 360
             duration: orb.viewModel.currentModeName === "Tactical Mode" ? 14000 : SentinelTheme.durationOrbit
-            running: orb.visible && orb.active
+            running: orb.visible
         }
 
         Repeater {
@@ -83,12 +91,12 @@ Item {
             loops: Animation.Infinite
             from: 0
             to: 360
-            duration: SentinelTheme.durationOrbit * 0.86
-            running: orb.visible && orb.active
+            duration: SentinelTheme.durationOrbit * (orb.active ? 0.86 : 1.28)
+            running: orb.visible
         }
 
         Repeater {
-            model: orb.compact ? 90 : 150
+            model: orb.particleCount
 
             Rectangle {
                 required property int index
@@ -120,7 +128,7 @@ Item {
             from: 360
             to: 0
             duration: SentinelTheme.durationOrbit * 0.72
-            running: orb.visible && orb.active
+            running: orb.visible
         }
 
         Rectangle {
@@ -153,15 +161,15 @@ Item {
         SequentialAnimation on scale {
             id: coreBreath
             loops: Animation.Infinite
-            running: orb.visible && orb.active
+            running: orb.visible
             NumberAnimation {
-                from: 0.96
-                to: 1.045
+                from: orb.active ? 0.96 : 0.985
+                to: orb.active ? 1.045 : 1.015
                 duration: SentinelTheme.durationAmbient
                 easing.type: Easing.InOutSine
             }
             NumberAnimation {
-                to: 0.96
+                to: orb.active ? 0.96 : 0.985
                 duration: SentinelTheme.durationAmbient
                 easing.type: Easing.InOutSine
             }

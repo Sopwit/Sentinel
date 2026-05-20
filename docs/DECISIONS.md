@@ -2023,3 +2023,83 @@ Boundary rules:
   affect source priority, ranking, selected context, prompt injection, or raw prompt exposure.
 - QML receives only safe strings, counts, booleans, and checks. Raw vectors, scores, providers,
   index handles, and private prompt payloads are not exposed.
+
+## 83. Semantic Activation Requires A Separate Phase Gate
+
+Decision: Phase 16 closes with semantic retrieval disabled and deterministic retrieval
+authoritative.
+
+Reason: The architecture now has memory candidates, committed memory recall, opt-in context
+injection, retrieval planning, embedding/vector interfaces, and semantic candidate orchestration.
+Activating semantic retrieval would change prompt authority and therefore needs its own scoped
+phase, implementation, and tests.
+
+Boundary rules:
+
+- Deterministic retrieval planning remains the authoritative prompt-context selector.
+- Semantic candidate orchestration is readiness metadata only and must not create
+  `PromptContextBlock` values or mutate prompts.
+- Runtime embedding provider and vector index readiness remain Not Configured until a later phase
+  wires concrete implementations behind `IEmbeddingProvider` and `IVectorIndex`.
+- Committed key-value memory remains authoritative. Pending, rejected, archived, and merely
+  approved candidates must not participate in recall or prompt injection.
+- Prompt context injection remains opt-in and runs only after existing local inference gates.
+- QML exposure remains limited to safe summaries, statuses, counts, booleans, string lists, and
+  readiness checks.
+- Raw vectors, scores, provider/index handles, private prompt payloads, and raw semantic candidate
+  content must not be exposed to QML.
+- Phase 17 semantic activation requires explicit indexing policy, deterministic fallback behavior,
+  privacy/safety gates, and tests proving no cloud/API-key, tool/plugin, filesystem/system, or
+  unauthorized prompt-injection authority is introduced.
+
+## 84. Phase 17 Starts With Provider Selection Metadata
+
+Decision: Semantic activation planning begins with local provider/index selection metadata and
+safety gates, while real semantic retrieval remains disabled.
+
+Reason: The next risk is not ranking quality; it is choosing which local semantic provider/index
+path can become active without weakening deterministic retrieval authority, prompt safety, or QML
+exposure boundaries.
+
+Boundary rules:
+
+- Provider planning uses `SemanticProviderDescriptor`, `SemanticProviderSelection`,
+  `SemanticProviderReadiness`, `SemanticProviderHealth`, `SemanticProviderCapability`,
+  `SemanticProviderPolicy`, `SemanticActivationReadiness`, and `SemanticActivationResult`.
+- Supported planned modes are Disabled, Fake/InMemory test provider, Local Ollama embeddings
+  provider, and Local file/vector index.
+- Disabled is the desktop default. Activation readiness refuses by default.
+- Local Ollama embeddings and local file/vector index are planned-only until a later explicit
+  phase enables real embedding calls or vector writes.
+- Fake/InMemory remains an isolated deterministic test path and must not feed prompt assembly.
+- Deterministic retrieval remains authoritative, and current prompt assembly remains unchanged.
+- No cloud/API keys, downloads, filesystem scans, tool/plugin actions, system actions, vector
+  database writes, semantic prompt injection, or prompt mutation are authorized by provider
+  selection metadata.
+- QML may show selected provider name/mode, readiness, health, capabilities, activation
+  readiness, and required steps only. Raw config paths, provider handles, index handles, vectors,
+  scores, and prompt payloads remain hidden.
+
+## 85. Semantic Arbitration Simulation Before Semantic Retrieval
+
+Decision: Add deterministic semantic arbitration simulation and embedding runtime planning before
+any real semantic retrieval activation.
+
+Reason: Hybrid retrieval needs predictable arbitration, cost/readiness vocabulary, and prompt
+authority guarantees before semantic ranking can safely influence context selection.
+
+Boundary rules:
+
+- `SemanticArbitrationPolicy`, `SemanticArbitrationStatus`, `SemanticArbitrationResult`,
+  `SemanticCandidateScore`, `SemanticBudgetSummary`, `EmbeddingRuntimePlan`,
+  `EmbeddingRuntimeBudget`, and `EmbeddingRuntimeReadiness` are metadata-only records.
+- Simulated scores are deterministic local metadata. Ordering uses simulated score, source rank,
+  and candidate id for tie handling.
+- Deterministic retrieval planning remains authoritative. Semantic simulation cannot create
+  `PromptContextBlock` values, change `RetrievalPlanningResult`, or mutate prompts.
+- Embedding runtime planning may estimate future local cost and requirements only. It must not
+  call Ollama embeddings, generate vectors, write vector indexes, scan filesystems, download
+  models, use cloud/API keys, or execute providers/tools/plugins.
+- QML may show compact readiness, budget, checks, requirements, and selection summaries only. Raw
+  vectors, raw score payloads, provider/index handles, paths, prompt payloads, and activation
+  controls remain hidden.

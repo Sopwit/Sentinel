@@ -8,6 +8,8 @@ ScrollView {
     required property var viewModel
     readonly property bool compact: width < 720
     readonly property int panelPadding: SentinelTheme.spaceLg
+    readonly property bool retrievalActive: viewModel.retrievalPlanningSelectedSourceCount > 0
+    readonly property bool contextActive: viewModel.contextAssemblyAvailableSourceCount > 0
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -31,6 +33,10 @@ ScrollView {
             ShellPanel {
                 width: parent.width
                 implicitHeight: memoryStatusColumn.implicitHeight + memoryPage.panelPadding * 2
+                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.040)
+                border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
+                bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.24)
+                edgeLightColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.36)
 
                 ColumnLayout {
                     id: memoryStatusColumn
@@ -61,37 +67,168 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
-                    InfoRow {
-                        compact: memoryPage.compact
-                        label: "Embeddings"
-                        value: memoryPage.viewModel.embeddingProviderReadiness + " - "
-                               + memoryPage.viewModel.embeddingProviderSummary
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+
+                        StatusChip {
+                            label: "Deterministic retrieval"
+                            value: "active"
+                            accent: SentinelTheme.success
+                            active: memoryPage.retrievalActive
+                            selected: true
+                        }
+
+                        StatusChip {
+                            label: "Semantic retrieval"
+                            value: "disabled"
+                            accent: SentinelTheme.warning
+                            muted: true
+                            selected: true
+                        }
+
+                        StatusChip {
+                            label: "Prompt injection"
+                            value: memoryPage.viewModel.promptContextInjectionEnabled ? "opt-in on"
+                                                                                      : "opt-in off"
+                            accent: memoryPage.viewModel.promptContextInjectionEnabled ? SentinelTheme.success
+                                                                                       : SentinelTheme.textMuted
+                            muted: !memoryPage.viewModel.promptContextInjectionEnabled
+                            active: memoryPage.viewModel.promptContextInjectionEnabled && memoryPage.contextActive
+                        }
+
+                        StatusChip {
+                            label: "Vector index"
+                            value: memoryPage.viewModel.vectorIndexedItemCount + " items"
+                            accent: SentinelTheme.accentSecondary
+                            muted: true
+                        }
+
+                        StatusChip {
+                            label: "Arbitration"
+                            value: memoryPage.viewModel.semanticArbitrationStatus
+                            accent: SentinelTheme.textMuted
+                            muted: true
+                        }
+                    }
+                }
+            }
+
+            ShellPanel {
+                width: parent.width
+                implicitHeight: contextPipelineColumn.implicitHeight + memoryPage.panelPadding * 2
+                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.034)
+                border.color: SentinelTheme.withAlpha(SentinelTheme.accentTertiary, 0.13)
+                bracketColor: SentinelTheme.withAlpha(SentinelTheme.accentTertiary, 0.24)
+                edgeLightColor: SentinelTheme.withAlpha(SentinelTheme.accentTertiary, 0.34)
+
+                ColumnLayout {
+                    id: contextPipelineColumn
+                    x: memoryPage.panelPadding
+                    y: memoryPage.panelPadding
+                    width: parent.width - memoryPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: "Context Pipeline"
+                        subtitle: "Committed memory feeds deterministic recall, assembly, and retrieval planning. Semantic retrieval remains disabled."
                         Layout.fillWidth: true
                     }
 
-                    InfoRow {
-                        compact: memoryPage.compact
-                        label: "Vector Index"
-                        value: memoryPage.viewModel.vectorIndexReadiness + " / "
-                               + memoryPage.viewModel.vectorIndexedItemCount
-                               + " indexed items"
+                    GridLayout {
                         Layout.fillWidth: true
+                        columns: memoryPage.compact ? 1 : 2
+                        columnSpacing: SentinelTheme.spaceSm
+                        rowSpacing: SentinelTheme.spaceSm
+
+                        InfoRow {
+                            compact: true
+                            label: "Committed Memory"
+                            value: memoryPage.viewModel.memoryEntryCount + " key-value entries"
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Recall"
+                            value: memoryPage.viewModel.memoryRecallStatus + " / "
+                                   + memoryPage.viewModel.memoryRecallResultCount + " matches"
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Context Assembly"
+                            value: memoryPage.viewModel.contextAssemblyStatus + " / "
+                                   + memoryPage.viewModel.contextAssemblyAvailableSourceCount
+                                   + " sources / "
+                                   + memoryPage.viewModel.contextAssemblyCandidateBlockCount
+                                   + " blocks"
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Retrieval Planning"
+                            value: memoryPage.viewModel.retrievalPlanningStatus + " / "
+                                   + memoryPage.viewModel.retrievalPlanningSelectedSourceCount
+                                   + " selected sources / deterministic"
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Semantic Readiness"
+                            value: memoryPage.viewModel.semanticRetrievalStatus + " / "
+                                   + memoryPage.viewModel.selectedSemanticProviderName + " / "
+                                   + memoryPage.viewModel.semanticActivationReadiness
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Provider Capability"
+                            value: memoryPage.viewModel.semanticProviderReadiness + " / "
+                                   + memoryPage.viewModel.semanticProviderCapabilitySummaries.join(", ")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Candidate Boundary"
+                            value: memoryPage.viewModel.memoryCandidateCount
+                                   + " candidates / "
+                                   + memoryPage.viewModel.committedMemoryCandidateCount
+                                   + " committed candidates / approval is not storage"
+                            Layout.fillWidth: true
+                        }
                     }
 
-                    InfoRow {
-                        compact: memoryPage.compact
-                        label: "Candidate Orchestration"
-                        value: memoryPage.viewModel.semanticCandidateStatus + " - "
-                               + memoryPage.viewModel.semanticCandidateSummary
+                    Flow {
                         Layout.fillWidth: true
-                    }
+                        spacing: SentinelTheme.spaceSm
 
-                    InfoRow {
-                        compact: memoryPage.compact
-                        label: "Hybrid Retrieval"
-                        value: memoryPage.viewModel.hybridRetrievalStatus + " - "
-                               + memoryPage.viewModel.hybridRetrievalReadiness
-                        Layout.fillWidth: true
+                        StatusChip {
+                            label: "Candidates"
+                            value: "review metadata"
+                            accent: SentinelTheme.accentSecondary
+                            selected: memoryPage.viewModel.memoryCandidateCount > 0
+                        }
+
+                        StatusChip {
+                            label: "Committed"
+                            value: "local key-value memory"
+                            accent: SentinelTheme.success
+                            selected: memoryPage.viewModel.memoryEntryCount > 0
+                        }
+
+                        StatusChip {
+                            label: "Semantic path"
+                            value: memoryPage.viewModel.semanticProviderMode
+                            accent: SentinelTheme.warning
+                            muted: true
+                            selected: true
+                        }
                     }
                 }
             }
@@ -277,6 +414,22 @@ ScrollView {
                                + " excluded / "
                                + memoryPage.viewModel.retrievalPlanningSelectedCandidateCount
                                + " blocks"
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Semantic Arbitration"
+                        value: memoryPage.viewModel.semanticArbitrationStatus + " - "
+                               + memoryPage.viewModel.semanticArbitrationSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Embedding Runtime"
+                        value: memoryPage.viewModel.embeddingRuntimeReadiness + " - "
+                               + memoryPage.viewModel.embeddingRuntimeBudgetSummary
                         Layout.fillWidth: true
                     }
                 }
