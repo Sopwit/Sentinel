@@ -83,7 +83,9 @@ private slots:
     void exposesConversationSummaryMetadata();
     void exposesRetrievalPlanningMetadata();
     void exposesSemanticVectorReadinessMetadata();
+    void exposesSemanticProviderPlanningMetadata();
     void exposesSemanticCandidateOrchestrationMetadata();
+    void exposesSemanticArbitrationAndRuntimePlanningMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1773,6 +1775,29 @@ void DesktopShellViewModelTest::exposesSemanticVectorReadinessMetadata() {
     QCOMPARE(metaObject->indexOfProperty("embeddingVector"), -1);
 }
 
+void DesktopShellViewModelTest::exposesSemanticProviderPlanningMetadata() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    QCOMPARE(fixture.viewModel.semanticProviderMode(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.selectedSemanticProviderName(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.semanticProviderReadiness(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.semanticProviderHealth(), QStringLiteral("Not Checked"));
+    QCOMPARE(fixture.viewModel.semanticActivationReadiness(), QStringLiteral("Refused"));
+    QVERIFY(fixture.viewModel.semanticProviderStatusSummary().contains(
+        QStringLiteral("Selected semantic provider: Disabled")));
+    QVERIFY(fixture.viewModel.semanticActivationSummary().contains(
+        QStringLiteral("Semantic activation refused")));
+    QVERIFY(fixture.viewModel.semanticProviderCapabilitySummaries().contains(
+        QStringLiteral("Vector writes blocked")));
+    QVERIFY(fixture.viewModel.semanticActivationRequiredSteps()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("deterministic retrieval")));
+    QVERIFY(metaObject->indexOfProperty("selectedSemanticProviderName") >= 0);
+    QVERIFY(metaObject->indexOfProperty("semanticActivationSummary") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("semanticProviderConfigPath"), -1);
+}
+
 void DesktopShellViewModelTest::exposesSemanticCandidateOrchestrationMetadata() {
     ViewModelFixture fixture;
     const auto metaObject = fixture.viewModel.metaObject();
@@ -1805,6 +1830,41 @@ void DesktopShellViewModelTest::exposesSemanticCandidateOrchestrationMetadata() 
     QVERIFY(metaObject->indexOfProperty("semanticCandidateSummary") >= 0);
     QVERIFY(metaObject->indexOfProperty("hybridRetrievalSummary") >= 0);
     QCOMPARE(metaObject->indexOfProperty("semanticCandidateContent"), -1);
+}
+
+void DesktopShellViewModelTest::exposesSemanticArbitrationAndRuntimePlanningMetadata() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    for (int i = 0; i < 6; ++i) {
+        QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("view semantic arbitration %1 %2")
+                                                  .arg(i)
+                                                  .arg(QString(90, QLatin1Char('s')))));
+    }
+    fixture.viewModel.remember(QStringLiteral("view.arbitration"),
+                               QStringLiteral("runtime planning metadata"));
+
+    QCOMPARE(fixture.viewModel.semanticArbitrationStatus(), QStringLiteral("Simulated"));
+    QVERIFY(fixture.viewModel.semanticArbitrationReadiness().contains(
+        QStringLiteral("cannot change prompts")));
+    QVERIFY(fixture.viewModel.semanticArbitrationSummary().contains(
+        QStringLiteral("Deterministic retrieval remains final authority")));
+    QVERIFY(fixture.viewModel.semanticArbitrationBudgetSummary().contains(
+        QStringLiteral("0 semantic candidates selected")));
+    QVERIFY(!fixture.viewModel.semanticArbitrationSelectionSummaries().isEmpty());
+    QVERIFY(fixture.viewModel.semanticArbitrationChecks().contains(
+        QStringLiteral("Provider/model inference: disabled")));
+    QCOMPARE(fixture.viewModel.embeddingRuntimeReadiness(), QStringLiteral("Blocked"));
+    QVERIFY(fixture.viewModel.embeddingRuntimeBudgetSummary().contains(
+        QStringLiteral("planned embedding jobs")));
+    QVERIFY(fixture.viewModel.embeddingRuntimeRequirementSummaries().contains(
+        QStringLiteral("Explicit local embedding provider gate")));
+    QVERIFY(fixture.viewModel.embeddingRuntimeConstraintSummaries().contains(
+        QStringLiteral("No filesystem indexing while disabled")));
+    QVERIFY(metaObject->indexOfProperty("semanticArbitrationSummary") >= 0);
+    QVERIFY(metaObject->indexOfProperty("embeddingRuntimeSummary") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("semanticCandidateScorePayload"), -1);
+    QCOMPARE(metaObject->indexOfProperty("embeddingRuntimePath"), -1);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

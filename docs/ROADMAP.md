@@ -239,6 +239,54 @@ Still out of scope:
   actions, tools/plugins, subprocess launch, UI redesign, autonomous loops, and broad model
   management.
 
+## Phase 17.0-17.3: Semantic Provider Planning And Local Selection
+
+Completed. Prepared local-only semantic retrieval activation metadata without enabling semantic
+retrieval.
+
+Delivered:
+
+- Semantic provider descriptors, selection metadata, readiness/health/capability summaries,
+  activation policy, activation readiness, and refused activation result records.
+- Planned provider modes: Disabled, Fake/InMemory test provider, Local Ollama embeddings provider,
+  and Local file/vector index.
+- Disabled remains the desktop default. Activation readiness refuses by default and reports the
+  required steps for a later explicit activation phase.
+- Controller/view-model/QML exposure for selected provider name/mode, capability summaries,
+  disabled-by-default state, and activation readiness.
+- Tests proving default disabled selection, fake metadata selection, planned inactive Ollama
+  readiness, refused activation, deterministic retrieval stability, prompt stability, and
+  QML-safe exposure.
+
+Still out of scope:
+
+- Semantic ranking/search, real embedding calls, vector database writes, prompt mutation, semantic
+  prompt injection, cloud/API keys, downloads, filesystem scans, tools/plugins, and system actions.
+
+## Phase 17.4-17.6: Hybrid Arbitration Simulation And Embedding Runtime Planning
+
+Completed. Added safe semantic arbitration simulation metadata and local embedding runtime
+planning without enabling semantic retrieval.
+
+Delivered:
+
+- Metadata records for semantic arbitration policy/status/result, simulated candidate scores,
+  arbitration budget summaries, embedding runtime plan/budget/readiness, and compact future
+  selection summaries.
+- Deterministic simulated scoring with fixed source weights, bounded length buckets, stable source
+  order, and candidate-id tie behavior.
+- Controller/view-model/QML exposure for simulated arbitration readiness, budget summary,
+  selection summaries, embedding runtime readiness, estimated runtime cost, local-only
+  requirements, and disabled constraints.
+- Tests proving deterministic scoring, stable ordering, deterministic tie handling, no retrieval
+  planning mutation, prompt stability, runtime planning summaries, and QML-safe exposure.
+
+Still out of scope:
+
+- Real embeddings, vector search, vector database writes, filesystem indexing, Ollama embedding
+  calls, provider/model inference, semantic prompt injection, cloud/API keys, tools/plugins,
+  autonomous actions, and prompt mutation.
+
 ## Phase 15.8: Async Local Runtime Worker Foundation
 
 Completed. Local Ollama chat inference now crosses an async worker boundary before real
@@ -1982,6 +2030,28 @@ Still out of scope:
 - Real embeddings, semantic ranking/search, vector DB activation, transformer inference,
   provider/model calls, cloud/API keys, semantic prompt injection, raw semantic/vector payload UI,
   plugins/tools, filesystem/system actions, broad redesign, and runtime authority expansion.
+
+## Phase 16.37-16.39: Semantic Retrieval Activation Readiness Checkpoint
+
+Completed. Closed Phase 16 with an architecture checkpoint before any real semantic retrieval
+activation.
+
+Delivered:
+
+- Added `docs/PHASE_16_MEMORY_CONTEXT_CHECKPOINT.md`.
+- Audited the complete memory/context/retrieval path from memory candidates through hybrid
+  readiness metadata.
+- Confirmed deterministic retrieval remains authoritative and semantic retrieval remains disabled.
+- Confirmed semantic candidates do not mutate prompts and prompt context injection remains opt-in.
+- Confirmed QML exposes only safe summaries, statuses, counts, and readiness checks.
+- Confirmed existing QA coverage already covers the checkpoint guarantees, so no redundant tests
+  were added.
+
+Still out of scope:
+
+- Real embeddings, vector database integration, semantic ranking/search activation, semantic
+  prompt injection, provider/model calls, cloud/API keys, plugins/tools, filesystem/system actions,
+  raw vector/score/prompt UI, broad redesign, and runtime authority expansion.
 
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 

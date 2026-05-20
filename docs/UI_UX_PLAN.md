@@ -342,6 +342,57 @@ UI, raw vector or score display, raw candidate payload display, prompt payload d
 setup, vector database setup, filesystem/system actions, tools/plugins, debug console UI, or broad
 redesign.
 
+Phase 16.37 through Phase 16.39 is a readiness checkpoint. UI work is limited to keeping existing
+Memory, Chat, and Settings surfaces truthful: deterministic retrieval authoritative, semantic
+retrieval disabled, prompt context injection opt-in, and semantic/vector exposure summary-only. It
+must not add activation toggles, search/rank controls, vector database setup, provider setup, raw
+candidate payloads, raw vectors, vector scores, prompt payload display, filesystem/system actions,
+tools/plugins, debug console UI, or broad redesign.
+
+Phase 16.40 through Phase 16.42 polishes runtime UX and context visibility without changing
+runtime behavior. Memory may show a clearer context pipeline across committed memory, literal
+recall, context assembly, retrieval planning, and semantic readiness, with memory candidates
+visually separated from committed key-value memory. Chat may show compact chips/status rows for
+context injection on/off, selected retrieval source count, conversation-window status, summary
+status, and semantic disabled state. Settings may keep advanced semantic/hybrid readiness details
+available but visually secondary. This remains UI visibility polish only: no semantic activation,
+embeddings/vector database setup, provider/model calls, cloud/API keys, tools/plugins,
+filesystem/system actions, raw prompt payloads, raw vectors, vector scores, debug console UI, or
+broad redesign.
+
+Phase 16.43 through Phase 16.45 polishes the runtime surface into a restrained futuristic local AI
+operating layer. Home may use layered radial glow, a smoother orbital core, compact runtime
+badges, idle breathing motion, and subtle state emphasis for deterministic retrieval authority,
+context assembly availability, semantic retrieval disabled policy, local runtime availability,
+and streaming activity. Chat and Memory may use animated chips, soft edge lighting, and improved
+translucent hierarchy to separate the chat panel, runtime surface, memory/retrieval panels, and
+dock. This is presentation-only: no retrieval authority change, no semantic activation, no
+embeddings/vector database setup, no provider/model calls, no cloud/API keys, no filesystem or
+system actions, no tools/plugins, no microphone/playback changes, and no broad navigation
+redesign.
+
+Motion philosophy for this phase is cinematic but quiet. Prefer declarative opacity, scale,
+rotation, border/color transitions, and slow pulse animations. Avoid aggressive animation, layout
+translation, resize-driven effects, custom shaders, blur-heavy surfaces, expensive timers, and
+high particle counts. Status components should reserve stable dimensions so hover, active, and
+selection states do not resize surrounding layouts. The surface should remain smooth on Fedora KDE
+Plasma and macOS Apple Silicon.
+
+Phase 17.0 through Phase 17.3 add compact Semantic Provider readiness visibility. Memory and
+Settings may show selected semantic provider, provider mode, readiness, health, capability
+summaries, activation readiness, disabled-by-default state, and required activation steps. This is
+status/readiness only: no activation button, provider setup flow, embedding/vector debug UI, raw
+vectors, scores, raw prompt payloads, config paths, cloud/API-key setup, downloads, filesystem
+scans, tools/plugins, system actions, semantic prompt injection, or broad redesign.
+
+Phase 17.4 through Phase 17.6 add compact semantic arbitration simulation and embedding runtime
+planning visibility. Memory and Settings may show simulated semantic readiness, arbitration
+readiness, future hybrid retrieval summaries, embedding runtime readiness, estimated runtime
+budget, local-only requirements, and disabled constraints. The UI must stay summary-only: no raw
+vectors, raw score payload dumps, rank controls, provider setup, vector database setup, filesystem
+indexing controls, Ollama embedding controls, prompt payload display, tools/plugins, autonomous
+actions, or broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

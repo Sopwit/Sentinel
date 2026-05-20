@@ -354,6 +354,17 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString vectorIndexReadiness READ vectorIndexReadiness CONSTANT)
     Q_PROPERTY(QString vectorIndexSummary READ vectorIndexSummary CONSTANT)
     Q_PROPERTY(int vectorIndexedItemCount READ vectorIndexedItemCount CONSTANT)
+    Q_PROPERTY(QString semanticProviderMode READ semanticProviderMode CONSTANT)
+    Q_PROPERTY(QString selectedSemanticProviderName READ selectedSemanticProviderName CONSTANT)
+    Q_PROPERTY(QString semanticProviderReadiness READ semanticProviderReadiness CONSTANT)
+    Q_PROPERTY(QString semanticProviderHealth READ semanticProviderHealth CONSTANT)
+    Q_PROPERTY(QString semanticProviderStatusSummary READ semanticProviderStatusSummary CONSTANT)
+    Q_PROPERTY(QString semanticActivationReadiness READ semanticActivationReadiness CONSTANT)
+    Q_PROPERTY(QString semanticActivationSummary READ semanticActivationSummary CONSTANT)
+    Q_PROPERTY(QStringList semanticProviderCapabilitySummaries READ
+                   semanticProviderCapabilitySummaries CONSTANT)
+    Q_PROPERTY(
+        QStringList semanticActivationRequiredSteps READ semanticActivationRequiredSteps CONSTANT)
     Q_PROPERTY(
         QStringList semanticRetrievalReadinessChecks READ semanticRetrievalReadinessChecks CONSTANT)
     Q_PROPERTY(
@@ -381,6 +392,28 @@ class DesktopShellViewModel final : public QObject {
         QString hybridRetrievalSummary READ hybridRetrievalSummary NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList hybridRetrievalReadinessChecks READ hybridRetrievalReadinessChecks NOTIFY
                    contextAssemblyChanged)
+    Q_PROPERTY(QString semanticArbitrationStatus READ semanticArbitrationStatus NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticArbitrationReadiness READ semanticArbitrationReadiness NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticArbitrationSummary READ semanticArbitrationSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticArbitrationBudgetSummary READ semanticArbitrationBudgetSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticArbitrationSelectionSummaries READ
+                   semanticArbitrationSelectionSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticArbitrationChecks READ semanticArbitrationChecks NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString embeddingRuntimeReadiness READ embeddingRuntimeReadiness NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(
+        QString embeddingRuntimeSummary READ embeddingRuntimeSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString embeddingRuntimeBudgetSummary READ embeddingRuntimeBudgetSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList embeddingRuntimeRequirementSummaries READ
+                   embeddingRuntimeRequirementSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList embeddingRuntimeConstraintSummaries READ
+                   embeddingRuntimeConstraintSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -860,6 +893,15 @@ public:
     QString vectorIndexReadiness() const;
     QString vectorIndexSummary() const;
     int vectorIndexedItemCount() const;
+    QString semanticProviderMode() const;
+    QString selectedSemanticProviderName() const;
+    QString semanticProviderReadiness() const;
+    QString semanticProviderHealth() const;
+    QString semanticProviderStatusSummary() const;
+    QString semanticActivationReadiness() const;
+    QString semanticActivationSummary() const;
+    QStringList semanticProviderCapabilitySummaries() const;
+    QStringList semanticActivationRequiredSteps() const;
     QStringList semanticRetrievalReadinessChecks() const;
     QString semanticCandidateStatus() const;
     QString semanticCandidateSummary() const;
@@ -874,6 +916,17 @@ public:
     QString hybridRetrievalReadiness() const;
     QString hybridRetrievalSummary() const;
     QStringList hybridRetrievalReadinessChecks() const;
+    QString semanticArbitrationStatus() const;
+    QString semanticArbitrationReadiness() const;
+    QString semanticArbitrationSummary() const;
+    QString semanticArbitrationBudgetSummary() const;
+    QStringList semanticArbitrationSelectionSummaries() const;
+    QStringList semanticArbitrationChecks() const;
+    QString embeddingRuntimeReadiness() const;
+    QString embeddingRuntimeSummary() const;
+    QString embeddingRuntimeBudgetSummary() const;
+    QStringList embeddingRuntimeRequirementSummaries() const;
+    QStringList embeddingRuntimeConstraintSummaries() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;

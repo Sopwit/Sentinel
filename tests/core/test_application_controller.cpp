@@ -748,7 +748,9 @@ private slots:
     void retrievalPlanningFeedsPromptContextWithoutMixingSources();
     void retrievalPlanningDoesNotMutateState();
     void semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt();
+    void semanticProviderPlanningExposesDisabledSelection();
     void semanticCandidateOrchestrationExposesSafeMetadata();
+    void semanticArbitrationSimulationExposesSafeMetadata();
     void semanticCandidateOrchestrationDoesNotMutatePrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
@@ -4069,6 +4071,25 @@ void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOr
     QVERIFY(!prompt.contains(QStringLiteral("score")));
 }
 
+void ApplicationControllerTest::semanticProviderPlanningExposesDisabledSelection() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->semanticProviderMode(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->selectedSemanticProviderName(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->semanticProviderReadiness(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->semanticProviderHealth(), QStringLiteral("Not Checked"));
+    QCOMPARE(controller->semanticActivationReadiness(), QStringLiteral("Refused"));
+    QVERIFY(controller->semanticProviderStatusSummary().contains(
+        QStringLiteral("Selected semantic provider: Disabled")));
+    QVERIFY(controller->semanticActivationSummary().contains(
+        QStringLiteral("Semantic activation refused")));
+    QVERIFY(controller->semanticProviderCapabilitySummaries().contains(
+        QStringLiteral("Prompt mutation blocked")));
+    QVERIFY(controller->semanticActivationRequiredSteps()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("deterministic retrieval")));
+}
+
 void ApplicationControllerTest::semanticCandidateOrchestrationExposesSafeMetadata() {
     const auto controller = makeController();
     for (int i = 0; i < 8; ++i) {
@@ -4098,6 +4119,43 @@ void ApplicationControllerTest::semanticCandidateOrchestrationExposesSafeMetadat
         QStringLiteral("Vector database activation: disabled")));
 }
 
+void ApplicationControllerTest::semanticArbitrationSimulationExposesSafeMetadata() {
+    const auto controller = makeController();
+    for (int i = 0; i < 6; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("semantic arbitration marker %1 %2")
+                                            .arg(i)
+                                            .arg(QString(80, QLatin1Char('a')))));
+    }
+    controller->remember(QStringLiteral("arbitration.local"), QStringLiteral("metadata only"));
+
+    const auto planningBefore = controller->retrievalPlanningResult();
+    const auto simulated = controller->semanticArbitrationResult();
+    const auto planningAfter = controller->retrievalPlanningResult();
+
+    QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(controller->semanticArbitrationStatus(), QStringLiteral("Simulated"));
+    QVERIFY(controller->semanticArbitrationReadiness().contains(QStringLiteral("cannot change "
+                                                                               "prompts")));
+    QVERIFY(controller->semanticArbitrationSummary().contains(
+        QStringLiteral("Deterministic retrieval remains final authority")));
+    QVERIFY(controller->semanticArbitrationBudgetSummary().contains(
+        QStringLiteral("0 semantic candidates selected")));
+    QVERIFY(!controller->semanticArbitrationSelectionSummaries().isEmpty());
+    QVERIFY(controller->semanticArbitrationChecks().contains(
+        QStringLiteral("Real embeddings: disabled")));
+    QVERIFY(controller->semanticArbitrationChecks().contains(
+        QStringLiteral("Vector search: disabled")));
+    QCOMPARE(simulated.budget.semanticSelectedCandidateCount, 0);
+    QCOMPARE(controller->embeddingRuntimeReadiness(), QStringLiteral("Blocked"));
+    QVERIFY(controller->embeddingRuntimeSummary().contains(QStringLiteral("no embeddings")));
+    QVERIFY(controller->embeddingRuntimeBudgetSummary().contains(
+        QStringLiteral("planned embedding jobs")));
+    QVERIFY(controller->embeddingRuntimeRequirementSummaries().contains(
+        QStringLiteral("Committed-memory-only indexing policy")));
+    QVERIFY(controller->embeddingRuntimeConstraintSummaries().contains(
+        QStringLiteral("No Ollama embedding calls while disabled")));
+}
+
 void ApplicationControllerTest::semanticCandidateOrchestrationDoesNotMutatePrompt() {
     auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
     auto* fakeClientPtr = fakeClient.get();
@@ -4123,6 +4181,8 @@ void ApplicationControllerTest::semanticCandidateOrchestrationDoesNotMutatePromp
     QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Future Semantic/Vector")));
     QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("SemanticCandidate")));
     QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Hybrid retrieval")));
+    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("simulated score")));
+    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Embedding runtime")));
 }
 
 void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandidates() {

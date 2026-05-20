@@ -304,6 +304,63 @@ Future semantic activation must be a separate phase gate that wires a real ranke
 existing interfaces, keeps deterministic fallback authoritative, preserves source separation, and
 adds tests before any semantic candidate can affect prompt assembly.
 
+Phase 16.37 through Phase 16.39 checkpoint the full Phase 16 memory/context/retrieval architecture:
+
+- Memory candidates, review metadata, explicit commit, literal recall, context assembly, prompt
+  injection, conversation windows, deterministic summaries, retrieval planning, embedding/vector
+  abstractions, semantic candidate orchestration, hybrid readiness, and QML exposure were audited
+  together.
+- Deterministic retrieval planning remains the only authoritative selector for prompt context.
+- Semantic candidate orchestration remains disabled readiness metadata and does not feed
+  `PromptContextBlock` creation or prompt injection.
+- Runtime semantic readiness remains Not Configured for embedding providers and vector indexes,
+  with zero indexed items.
+- QML exposure remains limited to safe strings, string lists, booleans, counts, and readiness
+  checks.
+- The checkpoint is recorded in `docs/PHASE_16_MEMORY_CONTEXT_CHECKPOINT.md` and does not add
+  embeddings, vector databases, semantic ranking/search, provider/model calls, API keys,
+  tools/plugins, filesystem/system authority, semantic prompt injection, or runtime authority
+  expansion.
+
+Phase 17.0 through Phase 17.3 add semantic provider planning and local provider selection metadata:
+
+- `SemanticProviderDescriptor`, `SemanticProviderSelection`, `SemanticProviderReadiness`,
+  `SemanticProviderHealth`, `SemanticProviderCapability`, `SemanticProviderPolicy`,
+  `SemanticActivationReadiness`, and `SemanticActivationResult` describe future semantic
+  activation gates.
+- Planned provider modes are Disabled, Fake/InMemory test provider, Local Ollama embeddings
+  provider, and Local file/vector index.
+- The desktop runtime selects Disabled by default. Activation readiness reports Refused and lists
+  later-phase requirements.
+- Local Ollama embeddings and local file/vector index are planned-only descriptors. They do not
+  issue embedding requests, create/write vector indexes, scan filesystems, download models, call
+  cloud APIs, use API keys, execute tools/plugins, or mutate prompts.
+- Deterministic retrieval planning remains the authoritative prompt-context selector. Semantic
+  provider readiness cannot influence prompt assembly in this phase.
+- `ApplicationController` and `DesktopShellViewModel` expose only QML-safe provider mode/name,
+  readiness, health, capability summaries, activation readiness, activation summary, and required
+  activation steps. Raw config paths, vectors, scores, provider handles, index handles, and prompt
+  payloads remain unexposed.
+
+Phase 17.4 through Phase 17.6 add safe hybrid retrieval arbitration simulation and embedding
+runtime planning:
+
+- `SemanticArbitrationPolicy`, `SemanticArbitrationStatus`, `SemanticArbitrationResult`,
+  `SemanticCandidateScore`, and `SemanticBudgetSummary` describe simulated future semantic
+  ranking over existing deterministic candidate metadata.
+- The simulation is deterministic and local: fixed source weights, bounded content-size buckets,
+  stable source ordering, and candidate-id tie handling. It does not generate embeddings, search a
+  vector index, call providers/models, or inspect the filesystem.
+- `EmbeddingRuntimePlan`, `EmbeddingRuntimeBudget`, and `EmbeddingRuntimeReadiness` describe
+  future local embedding runtime requirements, estimated jobs/items, rough memory/storage cost,
+  and activation blockers.
+- Deterministic `RetrievalPlanningResult` remains the only source consumed by
+  `PromptContextBlock` creation. Simulated semantic rankings are exposed only as summaries and
+  checks and cannot alter prompt context injection.
+- QML exposure remains compact status/readiness metadata only. Raw vectors, raw score payloads,
+  candidate payload dumps, index paths, provider handles, prompt payloads, and activation controls
+  remain unexposed.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.

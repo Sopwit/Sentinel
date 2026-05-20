@@ -11,6 +11,30 @@ Rectangle {
     property color bracketColor: SentinelTheme.accentBorder
     property bool showBrackets: true
     property int bracketSize: 12
+    property color edgeLightColor: bracketColor
+    property real edgeLightOpacity: 0.18
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.leftMargin: SentinelTheme.spaceLg
+        anchors.rightMargin: SentinelTheme.spaceLg
+        height: 1
+        color: panel.edgeLightColor
+        opacity: panel.edgeLightOpacity
+    }
+
+    Rectangle {
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.leftMargin: SentinelTheme.space2Xl
+        anchors.rightMargin: SentinelTheme.space2Xl
+        height: 1
+        color: panel.edgeLightColor
+        opacity: panel.edgeLightOpacity * 0.46
+    }
 
     Rectangle {
         visible: panel.showBrackets

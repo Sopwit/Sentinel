@@ -2417,6 +2417,56 @@ int ApplicationController::vectorIndexedItemCount() const {
     return 0;
 }
 
+SemanticProviderPolicy ApplicationController::semanticProviderPolicy() const {
+    return semanticProviderPolicy_;
+}
+
+SemanticProviderSelection ApplicationController::semanticProviderSelection() const {
+    return sentinel::core::selectSemanticProvider(selectedSemanticProviderMode_,
+                                                  semanticProviderPolicy_);
+}
+
+SemanticActivationReadiness ApplicationController::semanticActivationReadinessResult() const {
+    return sentinel::core::semanticActivationReadiness(semanticProviderSelection(),
+                                                       semanticProviderPolicy_);
+}
+
+QString ApplicationController::semanticProviderMode() const {
+    return semanticProviderModeName(semanticProviderSelection().mode);
+}
+
+QString ApplicationController::selectedSemanticProviderName() const {
+    return semanticProviderSelection().descriptor.name;
+}
+
+QString ApplicationController::semanticProviderReadiness() const {
+    return semanticProviderReadinessName(semanticProviderSelection().readiness);
+}
+
+QString ApplicationController::semanticProviderHealth() const {
+    return semanticProviderHealthName(semanticProviderSelection().health);
+}
+
+QString ApplicationController::semanticProviderStatusSummary() const {
+    return semanticProviderSelection().summary;
+}
+
+QString ApplicationController::semanticActivationReadiness() const {
+    return semanticActivationReadinessResult().status;
+}
+
+QString ApplicationController::semanticActivationSummary() const {
+    return semanticActivationReadinessResult().summary;
+}
+
+QStringList ApplicationController::semanticProviderCapabilitySummaries() const {
+    return semanticProviderSelection().capabilitySummaries;
+}
+
+QStringList ApplicationController::semanticActivationRequiredSteps() const {
+    return semanticActivationReadinessResult().requiredSteps;
+}
+
 QStringList ApplicationController::semanticRetrievalReadinessChecks() const {
     return sentinel::core::semanticRetrievalReadinessChecks(
         semanticRetrievalPolicy_, EmbeddingProviderStatus::NotConfigured,
@@ -2507,6 +2557,63 @@ QString ApplicationController::hybridRetrievalSummary() const {
 
 QStringList ApplicationController::hybridRetrievalReadinessChecks() const {
     return hybridRetrievalReadinessResult().checks;
+}
+
+SemanticArbitrationPolicy ApplicationController::semanticArbitrationPolicy() const {
+    return semanticArbitrationPolicy_;
+}
+
+SemanticArbitrationResult ApplicationController::semanticArbitrationResult() const {
+    return sentinel::core::simulateSemanticArbitration(semanticCandidateArbitration(),
+                                                       semanticArbitrationPolicy_);
+}
+
+QString ApplicationController::semanticArbitrationStatus() const {
+    return semanticArbitrationStatusName(semanticArbitrationResult().status);
+}
+
+QString ApplicationController::semanticArbitrationReadiness() const {
+    return semanticArbitrationResult().readiness;
+}
+
+QString ApplicationController::semanticArbitrationSummary() const {
+    return semanticArbitrationResult().summary;
+}
+
+QString ApplicationController::semanticArbitrationBudgetSummary() const {
+    return semanticArbitrationResult().budget.summary;
+}
+
+QStringList ApplicationController::semanticArbitrationSelectionSummaries() const {
+    return semanticArbitrationResult().selectionSummaries;
+}
+
+QStringList ApplicationController::semanticArbitrationChecks() const {
+    return semanticArbitrationResult().checks;
+}
+
+EmbeddingRuntimePlan ApplicationController::embeddingRuntimePlanResult() const {
+    return sentinel::core::embeddingRuntimePlan(semanticArbitrationResult());
+}
+
+QString ApplicationController::embeddingRuntimeReadiness() const {
+    return embeddingRuntimeReadinessName(embeddingRuntimePlanResult().readiness);
+}
+
+QString ApplicationController::embeddingRuntimeSummary() const {
+    return embeddingRuntimePlanResult().summary;
+}
+
+QString ApplicationController::embeddingRuntimeBudgetSummary() const {
+    return embeddingRuntimePlanResult().budget.summary;
+}
+
+QStringList ApplicationController::embeddingRuntimeRequirementSummaries() const {
+    return embeddingRuntimePlanResult().requirements;
+}
+
+QStringList ApplicationController::embeddingRuntimeConstraintSummaries() const {
+    return embeddingRuntimePlanResult().constraints;
 }
 
 bool ApplicationController::localInferenceStreamingEnabled() const {

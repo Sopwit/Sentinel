@@ -61,8 +61,10 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/Atmosphere.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/ActiveAgentsPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStreamPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/GlowSurface.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeBadge.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelDock.qml
@@ -70,6 +72,8 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusChip.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusPulse.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml
@@ -84,8 +88,10 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/Main.qml PROPERTIES QT_RE
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/Atmosphere.qml PROPERTIES QT_RESOURCE_ALIAS Atmosphere.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ActiveAgentsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ActiveAgentsPanel.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStreamPanel.qml PROPERTIES QT_RESOURCE_ALIAS CognitionStreamPanel.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/GlowSurface.qml PROPERTIES QT_RESOURCE_ALIAS GlowSurface.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS HeaderBar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml PROPERTIES QT_RESOURCE_ALIAS InfoRow.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeBadge.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeBadge.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml PROPERTIES QT_RESOURCE_ALIAS SectionTitle.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml PROPERTIES QT_RESOURCE_ALIAS SentinelButton.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelDock.qml PROPERTIES QT_RESOURCE_ALIAS SentinelDock.qml)
@@ -93,6 +99,8 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qm
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTelemetry.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTextField.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml PROPERTIES QT_RESOURCE_ALIAS ShellPanel.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusChip.qml PROPERTIES QT_RESOURCE_ALIAS StatusChip.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusPulse.qml PROPERTIES QT_RESOURCE_ALIAS StatusPulse.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml PROPERTIES QT_RESOURCE_ALIAS StatusBar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml PROPERTIES QT_RESOURCE_ALIAS WorkspacePresence.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTheme.qml QT_QML_SINGLETON_TYPE TRUE)
