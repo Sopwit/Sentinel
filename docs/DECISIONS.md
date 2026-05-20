@@ -379,6 +379,38 @@ Out of scope:
   provider/model calls, cloud/API keys, semantic prompt injection, filesystem/system actions,
   tools/plugins, raw vector/score UI, and runtime authority expansion.
 
+## 10.4 Isolated Embedding Runtime Before Semantic Authority
+
+Decision: Local embedding generation may run only as an isolated readiness-validation path and
+must not grant semantic retrieval authority.
+
+Reason: The app needs to validate future local embedding runtime behavior without allowing
+embeddings to affect prompts, retrieval ranking, memory persistence, vector storage, filesystem
+indexing, or background work.
+
+Runtime behavior:
+
+- `EmbeddingRuntimeStatus`, `EmbeddingRuntimeHealth`, `EmbeddingRuntimeSession`,
+  `EmbeddingGenerationResult`, `EmbeddingGenerationPolicy`, `EmbeddingGenerationReadiness`, and
+  `EmbeddingIsolationPolicy` describe the isolated path.
+- Generation is allowed only when local-only mode, explicit semantic readiness, local/fake
+  provider scope, no cloud providers, no filesystem indexing, no prompt integration, no retrieval
+  ranking mutation, no automatic memory writes, no vector persistence, and no background indexing
+  gates all pass.
+- Fake/InMemory generation is allowed for deterministic tests. Local Ollama embeddings remain a
+  local-only readiness/runtime path, not an active semantic retrieval provider.
+- Timeout, stale request, busy session, provider failure, and policy refusal are explicit result
+  states.
+- QML receives status, health, readiness, bounded session state, counts, and checks only. Raw
+  vectors, provider payloads, debug dumps, vector scores, provider handles, and index handles are
+  not exposed.
+
+Out of scope:
+
+- Semantic retrieval activation, semantic prompt injection, vector database persistence, automatic
+  ranking mutation, prompt assembly mutation, automatic memory writes, filesystem indexing,
+  cloud/API keys, provider downloads, autonomous actions, tools/plugins, and background jobs.
+
 Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
 confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
 path is non-mutating instead of enabling deletion.
@@ -2103,3 +2135,32 @@ Boundary rules:
 - QML may show compact readiness, budget, checks, requirements, and selection summaries only. Raw
   vectors, raw score payloads, provider/index handles, paths, prompt payloads, and activation
   controls remain hidden.
+
+## 86. Local Vector Persistence Does Not Grant Retrieval Authority
+
+Decision: Add local vector persistence lifecycle metadata and a bounded local foundation while
+keeping semantic retrieval disabled and deterministic retrieval authoritative.
+
+Reason: A future semantic path needs explicit index lifecycle vocabulary before any index can
+participate in retrieval. The lifecycle can be tested safely now if it accepts only isolated
+embedding runtime output metadata and remains disconnected from ranking and prompt assembly.
+
+Boundary rules:
+
+- `VectorPersistencePolicy`, `VectorPersistenceStatus`, `VectorPersistenceHealth`,
+  `VectorPersistenceReadiness`, `VectorPersistenceSession`, `VectorPersistenceBudget`,
+  `VectorPersistenceResult`, `VectorIndexLifecycle`, and `VectorIndexSnapshotSummary` describe
+  local lifecycle state only.
+- Vector persistence is disabled by default in the desktop runtime and remains local-only,
+  deterministic, bounded, and isolated.
+- Lifecycle operations are explicit create, reset, and clear. There is no automatic indexing,
+  filesystem scanning, background ingestion, semantic retrieval authority, prompt mutation,
+  automatic memory conversion, cloud/API provider, or external vector service.
+- The accept path may consume only successful isolated embedding runtime output metadata plus
+  deterministic local summaries. Raw vectors are not exposed to QML and do not alter retrieval
+  planning, ranking, prompt context injection, or memory storage.
+- Empty indexes, stale sessions, busy sessions, and bounded-limit overflow are safe deterministic
+  outcomes.
+- Future semantic retrieval activation still requires a separate phase gate for indexing policy,
+  vector storage migration/refresh, fallback behavior, privacy/safety checks, prompt authority,
+  and QML non-exposure tests.

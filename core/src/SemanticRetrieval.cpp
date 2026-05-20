@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <utility>
 
 namespace sentinel::core {
 namespace {
@@ -218,6 +219,112 @@ QString embeddingRuntimeReadinessName(EmbeddingRuntimeReadiness readiness) {
     }
 
     return QStringLiteral("Not Configured");
+}
+
+QString embeddingRuntimeStatusName(EmbeddingRuntimeStatus status) {
+    switch (status) {
+    case EmbeddingRuntimeStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case EmbeddingRuntimeStatus::Ready:
+        return QStringLiteral("Ready");
+    case EmbeddingRuntimeStatus::Running:
+        return QStringLiteral("Running");
+    case EmbeddingRuntimeStatus::Succeeded:
+        return QStringLiteral("Succeeded");
+    case EmbeddingRuntimeStatus::Failed:
+        return QStringLiteral("Failed");
+    case EmbeddingRuntimeStatus::TimedOut:
+        return QStringLiteral("Timed Out");
+    case EmbeddingRuntimeStatus::Stale:
+        return QStringLiteral("Stale");
+    case EmbeddingRuntimeStatus::Busy:
+        return QStringLiteral("Busy");
+    case EmbeddingRuntimeStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString embeddingRuntimeHealthName(EmbeddingRuntimeHealth health) {
+    switch (health) {
+    case EmbeddingRuntimeHealth::NotChecked:
+        return QStringLiteral("Not Checked");
+    case EmbeddingRuntimeHealth::LocalOnlyReady:
+        return QStringLiteral("Local Only Ready");
+    case EmbeddingRuntimeHealth::Blocked:
+        return QStringLiteral("Blocked");
+    case EmbeddingRuntimeHealth::Failed:
+        return QStringLiteral("Failed");
+    }
+
+    return QStringLiteral("Not Checked");
+}
+
+QString embeddingGenerationReadinessName(EmbeddingGenerationReadiness readiness) {
+    switch (readiness) {
+    case EmbeddingGenerationReadiness::Refused:
+        return QStringLiteral("Refused");
+    case EmbeddingGenerationReadiness::Ready:
+        return QStringLiteral("Ready");
+    }
+
+    return QStringLiteral("Refused");
+}
+
+QString vectorPersistenceStatusName(VectorPersistenceStatus status) {
+    switch (status) {
+    case VectorPersistenceStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case VectorPersistenceStatus::Empty:
+        return QStringLiteral("Empty");
+    case VectorPersistenceStatus::Ready:
+        return QStringLiteral("Ready");
+    case VectorPersistenceStatus::Created:
+        return QStringLiteral("Created");
+    case VectorPersistenceStatus::Reset:
+        return QStringLiteral("Reset");
+    case VectorPersistenceStatus::Cleared:
+        return QStringLiteral("Cleared");
+    case VectorPersistenceStatus::Refused:
+        return QStringLiteral("Refused");
+    case VectorPersistenceStatus::Busy:
+        return QStringLiteral("Busy");
+    case VectorPersistenceStatus::Stale:
+        return QStringLiteral("Stale");
+    case VectorPersistenceStatus::LimitReached:
+        return QStringLiteral("Limit Reached");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString vectorPersistenceHealthName(VectorPersistenceHealth health) {
+    switch (health) {
+    case VectorPersistenceHealth::NotChecked:
+        return QStringLiteral("Not Checked");
+    case VectorPersistenceHealth::LocalOnlyReady:
+        return QStringLiteral("Local Only Ready");
+    case VectorPersistenceHealth::Empty:
+        return QStringLiteral("Empty");
+    case VectorPersistenceHealth::Blocked:
+        return QStringLiteral("Blocked");
+    }
+
+    return QStringLiteral("Not Checked");
+}
+
+QString vectorPersistenceReadinessName(VectorPersistenceReadiness readiness) {
+    switch (readiness) {
+    case VectorPersistenceReadiness::Disabled:
+        return QStringLiteral("Disabled");
+    case VectorPersistenceReadiness::Ready:
+        return QStringLiteral("Ready");
+    case VectorPersistenceReadiness::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
 }
 
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source) {
@@ -441,6 +548,271 @@ VectorSearchResult FakeVectorIndex::search(const VectorSearchQuery& query) const
     return result;
 }
 
+LocalVectorPersistenceIndex::LocalVectorPersistenceIndex(VectorPersistencePolicy policy,
+                                                         VectorPersistenceBudget budget)
+    : policy_(std::move(policy)), budget_(std::move(budget)) {
+    budget_.maxIndexedItems = std::max(0, budget_.maxIndexedItems);
+    refreshBudget();
+    if (!policy_.enabled) {
+        lifecycle_.status = VectorPersistenceStatus::Disabled;
+        lifecycle_.lastAction = QStringLiteral("Disabled");
+        lifecycle_.summary =
+            QStringLiteral("Local vector persistence is disabled; no index metadata is active.");
+    }
+}
+
+VectorPersistencePolicy LocalVectorPersistenceIndex::policy() const {
+    return policy_;
+}
+
+VectorPersistenceBudget LocalVectorPersistenceIndex::budget() const {
+    return budget_;
+}
+
+VectorIndexLifecycle LocalVectorPersistenceIndex::lifecycle() const {
+    return lifecycle_;
+}
+
+VectorIndexSnapshotSummary LocalVectorPersistenceIndex::snapshot() const {
+    VectorIndexSnapshotSummary summary;
+    summary.status = lifecycle_.status;
+    summary.health = !policy_.enabled
+                         ? VectorPersistenceHealth::Blocked
+                         : (itemSummaries_.isEmpty() ? VectorPersistenceHealth::Empty
+                                                     : VectorPersistenceHealth::LocalOnlyReady);
+    summary.indexedItemCount = itemSummaries_.size();
+    summary.lifecycleRevision = lifecycle_.revision;
+    summary.boundedState =
+        QStringLiteral("local-only / %1 / %2 of %3 indexed items / semantic retrieval disabled")
+            .arg(policy_.enabled ? QStringLiteral("enabled metadata")
+                                 : QStringLiteral("disabled by default"))
+            .arg(summary.indexedItemCount)
+            .arg(budget_.maxIndexedItems);
+    summary.summary = QStringLiteral("Vector index snapshot: %1, revision %2, %3 indexed item(s).")
+                          .arg(vectorPersistenceStatusName(summary.status))
+                          .arg(summary.lifecycleRevision)
+                          .arg(summary.indexedItemCount);
+    summary.checks = {
+        QStringLiteral("Local-only vector persistence: %1")
+            .arg(policy_.localOnly ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Disabled by default: %1")
+            .arg(policy_.disabledByDefault ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Automatic indexing: disabled"),
+        QStringLiteral("Filesystem scanning: disabled"),
+        QStringLiteral("Background ingestion: disabled"),
+        QStringLiteral("Semantic retrieval authority: disabled"),
+        QStringLiteral("Prompt mutation: disabled"),
+        QStringLiteral("Cloud/API/vector services: blocked"),
+    };
+    return summary;
+}
+
+int LocalVectorPersistenceIndex::itemCount() const {
+    return itemSummaries_.size();
+}
+
+VectorPersistenceResult
+LocalVectorPersistenceIndex::baseResult(const VectorPersistenceSession& session) const {
+    VectorPersistenceResult result;
+    result.policy = policy_;
+    result.session = session;
+    result.budget = budget_;
+    result.lifecycle = lifecycle_;
+    result.snapshot = snapshot();
+    result.checks = result.snapshot.checks;
+    return result;
+}
+
+VectorPersistenceResult
+LocalVectorPersistenceIndex::validateSession(const VectorPersistenceSession& session) const {
+    auto result = baseResult(session);
+    result.readiness = vectorPersistenceReadiness(policy_, session);
+    if (!policy_.enabled) {
+        result.status = VectorPersistenceStatus::Disabled;
+        result.health = VectorPersistenceHealth::Blocked;
+        result.failureReason = QStringLiteral("Local vector persistence is disabled by default.");
+        result.summary = result.failureReason;
+        return result;
+    }
+    if (result.readiness == VectorPersistenceReadiness::Refused) {
+        result.status =
+            session.busy ? VectorPersistenceStatus::Busy : VectorPersistenceStatus::Stale;
+        result.health = VectorPersistenceHealth::Blocked;
+        result.failureReason =
+            session.busy ? QStringLiteral("Vector persistence session is busy.")
+                         : QStringLiteral("Vector persistence session is stale or invalid.");
+        result.summary = result.failureReason;
+        return result;
+    }
+    return result;
+}
+
+void LocalVectorPersistenceIndex::refreshBudget() {
+    budget_.indexedItemCount = itemSummaries_.size();
+    budget_.remainingItemCount = std::max(0, budget_.maxIndexedItems - budget_.indexedItemCount);
+    budget_.summary = QStringLiteral("%1 of %2 local vector metadata items indexed; %3 remaining.")
+                          .arg(budget_.indexedItemCount)
+                          .arg(budget_.maxIndexedItems)
+                          .arg(budget_.remainingItemCount);
+}
+
+VectorPersistenceResult
+LocalVectorPersistenceIndex::finalize(VectorPersistenceResult result) const {
+    const auto requestedItemCount = result.budget.requestedItemCount;
+    const auto acceptedItemCount = result.budget.acceptedItemCount;
+    const auto rejectedItemCount = result.budget.rejectedItemCount;
+    result.policy = policy_;
+    result.budget = budget_;
+    result.budget.requestedItemCount = requestedItemCount;
+    result.budget.acceptedItemCount = acceptedItemCount;
+    result.budget.rejectedItemCount = rejectedItemCount;
+    result.lifecycle = lifecycle_;
+    result.snapshot = snapshot();
+    result.checks = result.snapshot.checks;
+    return result;
+}
+
+VectorPersistenceResult
+LocalVectorPersistenceIndex::create(const VectorPersistenceSession& session) {
+    auto result = validateSession(session);
+    if (result.readiness != VectorPersistenceReadiness::Ready) {
+        return result;
+    }
+
+    lifecycle_.created = true;
+    lifecycle_.revision += 1;
+    lifecycle_.status =
+        itemSummaries_.isEmpty() ? VectorPersistenceStatus::Empty : VectorPersistenceStatus::Ready;
+    lifecycle_.lastAction = QStringLiteral("Create");
+    lifecycle_.summary =
+        QStringLiteral("Local vector index metadata created at revision %1 with %2 indexed items.")
+            .arg(lifecycle_.revision)
+            .arg(itemSummaries_.size());
+
+    result.accepted = true;
+    result.status = VectorPersistenceStatus::Created;
+    result.health = itemSummaries_.isEmpty() ? VectorPersistenceHealth::Empty
+                                             : VectorPersistenceHealth::LocalOnlyReady;
+    result.readiness = VectorPersistenceReadiness::Ready;
+    result.summary = lifecycle_.summary;
+    return finalize(result);
+}
+
+VectorPersistenceResult
+LocalVectorPersistenceIndex::reset(const VectorPersistenceSession& session) {
+    auto result = validateSession(session);
+    if (result.readiness != VectorPersistenceReadiness::Ready) {
+        return result;
+    }
+
+    itemSummaries_.clear();
+    refreshBudget();
+    lifecycle_.created = true;
+    lifecycle_.revision += 1;
+    lifecycle_.status = VectorPersistenceStatus::Reset;
+    lifecycle_.lastAction = QStringLiteral("Reset");
+    lifecycle_.summary =
+        QStringLiteral("Local vector index metadata reset at revision %1; index is empty.")
+            .arg(lifecycle_.revision);
+
+    result.accepted = true;
+    result.status = VectorPersistenceStatus::Reset;
+    result.health = VectorPersistenceHealth::Empty;
+    result.readiness = VectorPersistenceReadiness::Ready;
+    result.summary = lifecycle_.summary;
+    return finalize(result);
+}
+
+VectorPersistenceResult
+LocalVectorPersistenceIndex::clear(const VectorPersistenceSession& session) {
+    auto result = validateSession(session);
+    if (result.readiness != VectorPersistenceReadiness::Ready) {
+        return result;
+    }
+
+    itemSummaries_.clear();
+    refreshBudget();
+    lifecycle_.created = false;
+    lifecycle_.revision += 1;
+    lifecycle_.status = VectorPersistenceStatus::Cleared;
+    lifecycle_.lastAction = QStringLiteral("Clear");
+    lifecycle_.summary =
+        QStringLiteral("Local vector index metadata cleared at revision %1; no index is active.")
+            .arg(lifecycle_.revision);
+
+    result.accepted = true;
+    result.status = VectorPersistenceStatus::Cleared;
+    result.health = VectorPersistenceHealth::Empty;
+    result.readiness = VectorPersistenceReadiness::Ready;
+    result.summary = lifecycle_.summary;
+    return finalize(result);
+}
+
+VectorPersistenceResult LocalVectorPersistenceIndex::acceptIsolatedEmbeddingResult(
+    const EmbeddingGenerationResult& generationResult, const QStringList& itemSummaries,
+    const VectorPersistenceSession& session) {
+    auto result = validateSession(session);
+    if (result.readiness != VectorPersistenceReadiness::Ready) {
+        return result;
+    }
+    if (!lifecycle_.created) {
+        result.status = VectorPersistenceStatus::Refused;
+        result.health = VectorPersistenceHealth::Blocked;
+        result.readiness = VectorPersistenceReadiness::Refused;
+        result.failureReason =
+            QStringLiteral("Vector index metadata must be explicitly created before accepting "
+                           "isolated embedding output metadata.");
+        result.summary = result.failureReason;
+        return finalize(result);
+    }
+    if (generationResult.status != EmbeddingRuntimeStatus::Succeeded ||
+        generationResult.readiness != EmbeddingGenerationReadiness::Ready ||
+        generationResult.generatedVectorCount <= 0) {
+        result.status = VectorPersistenceStatus::Refused;
+        result.health = VectorPersistenceHealth::Blocked;
+        result.readiness = VectorPersistenceReadiness::Refused;
+        result.failureReason =
+            QStringLiteral("Only successful isolated embedding runtime outputs are accepted.");
+        result.summary = result.failureReason;
+        return finalize(result);
+    }
+
+    result.budget.requestedItemCount = itemSummaries.size();
+    for (const auto& summary : itemSummaries) {
+        if (itemSummaries_.size() >= budget_.maxIndexedItems) {
+            ++result.budget.rejectedItemCount;
+            continue;
+        }
+        const auto normalized = summary.simplified();
+        if (normalized.isEmpty()) {
+            ++result.budget.rejectedItemCount;
+            continue;
+        }
+        itemSummaries_.append(normalized.left(160));
+        ++result.budget.acceptedItemCount;
+    }
+
+    std::stable_sort(itemSummaries_.begin(), itemSummaries_.end());
+    refreshBudget();
+    lifecycle_.revision += 1;
+    lifecycle_.status = result.budget.rejectedItemCount > 0 ? VectorPersistenceStatus::LimitReached
+                                                            : VectorPersistenceStatus::Ready;
+    lifecycle_.lastAction = QStringLiteral("Accept Isolated Embedding Output");
+    lifecycle_.summary =
+        QStringLiteral("Accepted %1 isolated embedding output metadata item(s); %2 rejected by "
+                       "bounded local vector persistence limits.")
+            .arg(result.budget.acceptedItemCount)
+            .arg(result.budget.rejectedItemCount);
+
+    result.accepted = result.budget.acceptedItemCount > 0;
+    result.status = lifecycle_.status;
+    result.health = itemSummaries_.isEmpty() ? VectorPersistenceHealth::Empty
+                                             : VectorPersistenceHealth::LocalOnlyReady;
+    result.readiness = VectorPersistenceReadiness::Ready;
+    result.summary = lifecycle_.summary;
+    return finalize(result);
+}
+
 QStringList semanticRetrievalReadinessChecks(const SemanticRetrievalPolicy& policy,
                                              EmbeddingProviderStatus providerStatus,
                                              VectorIndexStatus indexStatus, int indexedItemCount) {
@@ -459,6 +831,23 @@ QStringList semanticRetrievalReadinessChecks(const SemanticRetrievalPolicy& poli
         QStringLiteral("Raw vectors exposed to QML: %1")
             .arg(policy.exposeRawVectorsToQml ? QStringLiteral("yes") : QStringLiteral("no")),
     };
+}
+
+VectorPersistenceReadiness vectorPersistenceReadiness(const VectorPersistencePolicy& policy,
+                                                      const VectorPersistenceSession& session) {
+    if (!policy.enabled) {
+        return VectorPersistenceReadiness::Disabled;
+    }
+    const bool blocked = !policy.localOnly || !policy.isolatedEmbeddingOutputsOnly ||
+                         policy.automaticIndexingEnabled || policy.filesystemScanningEnabled ||
+                         policy.backgroundIngestionEnabled ||
+                         policy.semanticRetrievalAuthorityEnabled || policy.promptMutationEnabled ||
+                         policy.automaticMemoryConversionEnabled ||
+                         policy.cloudVectorServicesAllowed || session.busy ||
+                         session.requestId.trimmed().isEmpty() ||
+                         (!session.activeRequestId.trimmed().isEmpty() &&
+                          session.activeRequestId.trimmed() != session.requestId.trimmed());
+    return blocked ? VectorPersistenceReadiness::Refused : VectorPersistenceReadiness::Ready;
 }
 
 SemanticCandidateArbitration
@@ -853,6 +1242,149 @@ EmbeddingRuntimePlan embeddingRuntimePlan(const SemanticArbitrationResult& arbit
         QStringLiteral("No vector database writes while disabled"),
     };
     return plan;
+}
+
+EmbeddingGenerationReadiness
+embeddingGenerationReadiness(const EmbeddingIsolationPolicy& isolationPolicy,
+                             const EmbeddingGenerationPolicy& generationPolicy,
+                             const EmbeddingRuntimeSession& session,
+                             EmbeddingProviderStatus providerStatus) {
+    const bool providerAllowed =
+        (generationPolicy.providerMode == SemanticProviderMode::FakeInMemory &&
+         generationPolicy.allowFakeInMemoryProvider) ||
+        (generationPolicy.providerMode == SemanticProviderMode::LocalOllamaEmbeddings &&
+         generationPolicy.allowLocalOllamaEmbeddingsProvider);
+    const bool blockedBehavior =
+        !isolationPolicy.localOnlyMode ||
+        !isolationPolicy.explicitSemanticEnableReadinessSatisfied ||
+        !isolationPolicy.noCloudProviders || isolationPolicy.filesystemIndexingEnabled ||
+        isolationPolicy.automaticPromptIntegrationEnabled ||
+        isolationPolicy.retrievalRankingMutationEnabled ||
+        isolationPolicy.automaticMemoryWritesEnabled || isolationPolicy.vectorPersistenceEnabled ||
+        isolationPolicy.backgroundIndexingEnabled || generationPolicy.realCloudProvidersAllowed ||
+        generationPolicy.providerMode == SemanticProviderMode::Disabled ||
+        generationPolicy.providerMode == SemanticProviderMode::LocalFileVectorIndex ||
+        providerStatus != EmbeddingProviderStatus::Ready || !providerAllowed || session.busy ||
+        generationPolicy.requestId.trimmed().isEmpty() ||
+        (!session.activeRequestId.trimmed().isEmpty() &&
+         session.activeRequestId.trimmed() != generationPolicy.requestId.trimmed());
+
+    return blockedBehavior ? EmbeddingGenerationReadiness::Refused
+                           : EmbeddingGenerationReadiness::Ready;
+}
+
+EmbeddingGenerationResult generateIsolatedEmbeddings(
+    const IEmbeddingProvider& provider, const QList<EmbeddingDocument>& documents,
+    const EmbeddingIsolationPolicy& isolationPolicy,
+    const EmbeddingGenerationPolicy& generationPolicy, const EmbeddingRuntimeSession& session) {
+    EmbeddingGenerationResult result;
+    result.session = session;
+    result.session.timeoutMs = std::max(0, generationPolicy.timeoutMs);
+    result.session.activeRequestId = generationPolicy.requestId.trimmed();
+    result.checks = {
+        QStringLiteral("Local-only mode: %1")
+            .arg(isolationPolicy.localOnlyMode ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Explicit semantic readiness gate: %1")
+            .arg(isolationPolicy.explicitSemanticEnableReadinessSatisfied ? QStringLiteral("yes")
+                                                                          : QStringLiteral("no")),
+        QStringLiteral("Cloud/API providers: %1")
+            .arg(isolationPolicy.noCloudProviders && !generationPolicy.realCloudProvidersAllowed
+                     ? QStringLiteral("blocked")
+                     : QStringLiteral("allowed")),
+        QStringLiteral("Filesystem indexing: disabled"),
+        QStringLiteral("Prompt integration: disabled"),
+        QStringLiteral("Retrieval ranking mutation: disabled"),
+        QStringLiteral("Automatic memory writes: disabled"),
+        QStringLiteral("Vector DB persistence: disabled"),
+        QStringLiteral("Background indexing jobs: disabled"),
+    };
+
+    const auto readiness =
+        embeddingGenerationReadiness(isolationPolicy, generationPolicy, session, provider.status());
+    result.readiness = readiness;
+
+    if (session.busy) {
+        result.status = EmbeddingRuntimeStatus::Busy;
+        result.health = EmbeddingRuntimeHealth::Blocked;
+        result.failureReason = QStringLiteral("Embedding runtime session is already busy.");
+        result.summary = result.failureReason;
+        return result;
+    }
+
+    if (!session.activeRequestId.trimmed().isEmpty() &&
+        session.activeRequestId.trimmed() != generationPolicy.requestId.trimmed()) {
+        result.status = EmbeddingRuntimeStatus::Stale;
+        result.health = EmbeddingRuntimeHealth::Blocked;
+        result.failureReason =
+            QStringLiteral("Embedding request is stale and cannot update runtime state.");
+        result.summary = result.failureReason;
+        return result;
+    }
+
+    if (readiness != EmbeddingGenerationReadiness::Ready) {
+        result.status = EmbeddingRuntimeStatus::Refused;
+        result.health = EmbeddingRuntimeHealth::Blocked;
+        result.failureReason =
+            QStringLiteral("Isolated embedding generation refused by local-only policy gates.");
+        result.summary = result.failureReason;
+        return result;
+    }
+
+    const int timeoutMs = std::max(0, generationPolicy.timeoutMs);
+    const int elapsedMs = std::max(0, generationPolicy.simulatedExecutionMs);
+    result.elapsedMs = elapsedMs;
+    if (elapsedMs > timeoutMs) {
+        result.status = EmbeddingRuntimeStatus::TimedOut;
+        result.health = EmbeddingRuntimeHealth::Failed;
+        result.failureReason =
+            QStringLiteral("Isolated embedding generation timed out after %1 ms.").arg(timeoutMs);
+        result.summary = result.failureReason;
+        return result;
+    }
+
+    QList<EmbeddingDocument> boundedDocuments;
+    const int maxDocuments = std::max(0, generationPolicy.maxDocuments);
+    const int maxCharacters = std::max(0, generationPolicy.maxDocumentCharacters);
+    for (const auto& document : documents) {
+        if (boundedDocuments.size() >= maxDocuments) {
+            break;
+        }
+        EmbeddingDocument bounded = document;
+        bounded.id = bounded.id.trimmed();
+        bounded.text = bounded.text.trimmed();
+        if (bounded.id.isEmpty() || bounded.text.isEmpty()) {
+            continue;
+        }
+        if (bounded.text.size() > maxCharacters) {
+            bounded.text = bounded.text.left(maxCharacters).trimmed();
+        }
+        result.session.boundedCharacterCount += bounded.text.size();
+        boundedDocuments.append(bounded);
+    }
+    result.session.boundedDocumentCount = boundedDocuments.size();
+
+    const auto embeddingResult =
+        provider.embed(EmbeddingRequest{boundedDocuments, provider.policy()});
+    result.generatedDocumentCount = embeddingResult.documentCount;
+    result.generatedVectorCount = embeddingResult.vectors.size();
+    if (embeddingResult.status != EmbeddingProviderStatus::Ready ||
+        result.generatedDocumentCount != boundedDocuments.size()) {
+        result.status = EmbeddingRuntimeStatus::Failed;
+        result.health = EmbeddingRuntimeHealth::Failed;
+        result.failureReason = QStringLiteral("Embedding provider failed isolated generation.");
+        result.summary = result.failureReason;
+        return result;
+    }
+
+    result.status = EmbeddingRuntimeStatus::Succeeded;
+    result.health = EmbeddingRuntimeHealth::LocalOnlyReady;
+    result.summary =
+        QStringLiteral("Generated %1 isolated local %2 for readiness validation only; retrieval, "
+                       "prompts, memory, and vector persistence were unchanged.")
+            .arg(result.generatedVectorCount)
+            .arg(result.generatedVectorCount == 1 ? QStringLiteral("embedding")
+                                                  : QStringLiteral("embeddings"));
+    return result;
 }
 
 QList<SemanticProviderDescriptor>

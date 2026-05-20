@@ -86,6 +86,8 @@ private slots:
     void exposesSemanticProviderPlanningMetadata();
     void exposesSemanticCandidateOrchestrationMetadata();
     void exposesSemanticArbitrationAndRuntimePlanningMetadata();
+    void exposesIsolatedEmbeddingRuntimeMetadata();
+    void exposesVectorPersistenceMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1865,6 +1867,50 @@ void DesktopShellViewModelTest::exposesSemanticArbitrationAndRuntimePlanningMeta
     QVERIFY(metaObject->indexOfProperty("embeddingRuntimeSummary") >= 0);
     QCOMPARE(metaObject->indexOfProperty("semanticCandidateScorePayload"), -1);
     QCOMPARE(metaObject->indexOfProperty("embeddingRuntimePath"), -1);
+}
+
+void DesktopShellViewModelTest::exposesIsolatedEmbeddingRuntimeMetadata() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    QCOMPARE(fixture.viewModel.isolatedEmbeddingRuntimeStatus(), QStringLiteral("Refused"));
+    QCOMPARE(fixture.viewModel.isolatedEmbeddingRuntimeHealth(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.isolatedEmbeddingRuntimeReadiness(), QStringLiteral("Refused"));
+    QVERIFY(fixture.viewModel.isolatedEmbeddingRuntimeSummary().contains(
+        QStringLiteral("readiness metadata only")));
+    QVERIFY(fixture.viewModel.isolatedEmbeddingRuntimeBoundedState().contains(
+        QStringLiteral("no vectors persisted")));
+    QVERIFY(fixture.viewModel.isolatedEmbeddingRuntimeChecks().contains(
+        QStringLiteral("Filesystem indexing: disabled")));
+    QVERIFY(fixture.viewModel.isolatedEmbeddingRuntimeChecks().contains(
+        QStringLiteral("Background indexing jobs: disabled")));
+    QVERIFY(metaObject->indexOfProperty("isolatedEmbeddingRuntimeStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("isolatedEmbeddingRuntimeBoundedState") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("isolatedEmbeddingVectorPayload"), -1);
+    QCOMPARE(metaObject->indexOfProperty("isolatedEmbeddingDebugPayload"), -1);
+}
+
+void DesktopShellViewModelTest::exposesVectorPersistenceMetadata() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    QCOMPARE(fixture.viewModel.vectorPersistenceStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.vectorPersistenceHealth(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.vectorPersistenceReadiness(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.vectorPersistenceIndexedItemCount(), 0);
+    QVERIFY(fixture.viewModel.vectorPersistenceSummary().contains(
+        QStringLiteral("disabled by default")));
+    QVERIFY(
+        fixture.viewModel.vectorPersistenceBoundedState().contains(QStringLiteral("local-only")));
+    QVERIFY(fixture.viewModel.vectorPersistenceChecks().contains(
+        QStringLiteral("Automatic indexing: disabled")));
+    QVERIFY(fixture.viewModel.vectorPersistenceChecks().contains(
+        QStringLiteral("Cloud/API/vector services: blocked")));
+    QVERIFY(metaObject->indexOfProperty("vectorPersistenceStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("vectorPersistenceIndexedItemCount") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("vectorPersistencePath"), -1);
+    QCOMPARE(metaObject->indexOfProperty("vectorPersistenceRawVectors"), -1);
+    QCOMPARE(metaObject->indexOfProperty("vectorPersistenceDebugPayload"), -1);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

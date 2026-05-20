@@ -2616,6 +2616,112 @@ QStringList ApplicationController::embeddingRuntimeConstraintSummaries() const {
     return embeddingRuntimePlanResult().constraints;
 }
 
+EmbeddingGenerationResult ApplicationController::isolatedEmbeddingRuntimeResult() const {
+    EmbeddingGenerationResult result;
+    EmbeddingIsolationPolicy isolationPolicy;
+    EmbeddingGenerationPolicy generationPolicy;
+    EmbeddingRuntimeSession session;
+
+    generationPolicy.providerMode = selectedSemanticProviderMode_;
+    generationPolicy.allowFakeInMemoryProvider = semanticProviderPolicy_.allowFakeInMemoryProvider;
+    generationPolicy.allowLocalOllamaEmbeddingsProvider =
+        semanticProviderPolicy_.allowLocalOllamaEmbeddingsProvider;
+    generationPolicy.realCloudProvidersAllowed = false;
+    result.readiness = sentinel::core::embeddingGenerationReadiness(
+        isolationPolicy, generationPolicy, session, EmbeddingProviderStatus::NotConfigured);
+    result.status = EmbeddingRuntimeStatus::Refused;
+    result.health = EmbeddingRuntimeHealth::Blocked;
+    result.summary =
+        QStringLiteral("Isolated embedding runtime is available as readiness metadata only. No "
+                       "embedding test has run in the desktop controller.");
+    result.failureReason =
+        QStringLiteral("Explicit local-only semantic readiness and a local/fake provider are not "
+                       "active in the desktop runtime.");
+    result.checks = {
+        QStringLiteral("Local-only mode: yes"),
+        QStringLiteral("Explicit semantic readiness gate: no"),
+        QStringLiteral("Provider mode: %1")
+            .arg(semanticProviderModeName(selectedSemanticProviderMode_)),
+        QStringLiteral("Cloud/API providers: blocked"),
+        QStringLiteral("Filesystem indexing: disabled"),
+        QStringLiteral("Prompt integration: disabled"),
+        QStringLiteral("Retrieval ranking mutation: disabled"),
+        QStringLiteral("Automatic memory writes: disabled"),
+        QStringLiteral("Vector DB persistence: disabled"),
+        QStringLiteral("Background indexing jobs: disabled"),
+    };
+    return result;
+}
+
+QString ApplicationController::isolatedEmbeddingRuntimeStatus() const {
+    return embeddingRuntimeStatusName(isolatedEmbeddingRuntimeResult().status);
+}
+
+QString ApplicationController::isolatedEmbeddingRuntimeHealth() const {
+    return embeddingRuntimeHealthName(isolatedEmbeddingRuntimeResult().health);
+}
+
+QString ApplicationController::isolatedEmbeddingRuntimeReadiness() const {
+    return embeddingGenerationReadinessName(isolatedEmbeddingRuntimeResult().readiness);
+}
+
+QString ApplicationController::isolatedEmbeddingRuntimeSummary() const {
+    return isolatedEmbeddingRuntimeResult().summary;
+}
+
+QString ApplicationController::isolatedEmbeddingRuntimeBoundedState() const {
+    const auto result = isolatedEmbeddingRuntimeResult();
+    return QStringLiteral("local-only / timeout %1 ms / %2 bounded docs / %3 chars / no vectors "
+                          "persisted")
+        .arg(result.session.timeoutMs)
+        .arg(result.session.boundedDocumentCount)
+        .arg(result.session.boundedCharacterCount);
+}
+
+QStringList ApplicationController::isolatedEmbeddingRuntimeChecks() const {
+    return isolatedEmbeddingRuntimeResult().checks;
+}
+
+VectorPersistencePolicy ApplicationController::vectorPersistencePolicy() const {
+    return vectorPersistencePolicy_;
+}
+
+VectorIndexSnapshotSummary ApplicationController::vectorIndexSnapshotSummary() const {
+    LocalVectorPersistenceIndex index{vectorPersistencePolicy_};
+    return index.snapshot();
+}
+
+QString ApplicationController::vectorPersistenceStatus() const {
+    return vectorPersistenceStatusName(vectorIndexSnapshotSummary().status);
+}
+
+QString ApplicationController::vectorPersistenceHealth() const {
+    return vectorPersistenceHealthName(vectorIndexSnapshotSummary().health);
+}
+
+QString ApplicationController::vectorPersistenceReadiness() const {
+    return vectorPersistenceReadinessName(sentinel::core::vectorPersistenceReadiness(
+        vectorPersistencePolicy_, VectorPersistenceSession{}));
+}
+
+QString ApplicationController::vectorPersistenceSummary() const {
+    return QStringLiteral(
+        "Local vector persistence is disabled by default. Lifecycle metadata is local-only, "
+        "bounded, isolated, and cannot change retrieval planning or prompt assembly.");
+}
+
+QString ApplicationController::vectorPersistenceBoundedState() const {
+    return vectorIndexSnapshotSummary().boundedState;
+}
+
+int ApplicationController::vectorPersistenceIndexedItemCount() const {
+    return vectorIndexSnapshotSummary().indexedItemCount;
+}
+
+QStringList ApplicationController::vectorPersistenceChecks() const {
+    return vectorIndexSnapshotSummary().checks;
+}
+
 bool ApplicationController::localInferenceStreamingEnabled() const {
     return localInferenceStreamingEnabled_;
 }

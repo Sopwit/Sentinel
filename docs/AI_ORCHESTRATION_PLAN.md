@@ -300,6 +300,31 @@ Embedding runtime planning estimates future local jobs/items and rough memory/st
 reporting local-only requirements and disabled constraints. No embeddings, vector search/vector DB
 writes, filesystem indexing, Ollama embedding calls, provider/model inference, cloud/API keys,
 tools/plugins, autonomous actions, or prompt mutation are introduced.
+Phase 17.7 through Phase 17.9 add an isolated local embedding runtime activation foundation:
+`EmbeddingRuntimeStatus`, `EmbeddingRuntimeHealth`, `EmbeddingRuntimeSession`,
+`EmbeddingGenerationResult`, `EmbeddingGenerationPolicy`, `EmbeddingGenerationReadiness`, and
+`EmbeddingIsolationPolicy`. Isolated generation is permitted only when local-only mode, explicit
+semantic readiness, local/fake provider scope, no cloud providers, no filesystem indexing, no
+automatic prompt integration, no retrieval ranking mutation, no automatic memory writes, no vector
+persistence, and no background indexing gates pass. Fake/InMemory generation is available for
+deterministic readiness tests; Local Ollama embeddings remain bounded local-only readiness/runtime
+planning and are not wired into semantic retrieval authority. Timeout, stale request, busy state,
+provider failure, and refusal outcomes are explicit metadata. Deterministic retrieval and prompt
+assembly remain unchanged, and no semantic retrieval, vector search, vector DB write, semantic
+prompt injection, cloud/API key, provider download, autonomous action, tool/plugin behavior,
+filesystem indexing, or background job is introduced.
+Phase 17.10 through Phase 17.12 add local vector persistence lifecycle metadata:
+`VectorPersistencePolicy`, `VectorPersistenceStatus`, `VectorPersistenceHealth`,
+`VectorPersistenceReadiness`, `VectorPersistenceSession`, `VectorPersistenceBudget`,
+`VectorPersistenceResult`, `VectorIndexLifecycle`, and `VectorIndexSnapshotSummary`.
+`LocalVectorPersistenceIndex` provides explicit create/reset/clear lifecycle metadata and bounded
+acceptance of successful isolated embedding runtime output metadata only. It is local-only,
+deterministic, isolated, and disabled by default. Empty indexes, stale sessions, busy sessions,
+bounded overflow, and stable snapshots are deterministic outcomes. The desktop runtime exposes
+summary/count/readiness metadata only and does not enable automatic indexing, filesystem scanning,
+background ingestion, semantic retrieval authority, ranking changes, prompt mutation, automatic
+memory conversion, cloud/API/vector services, tools/plugins, autonomous actions, or semantic prompt
+injection.
 
 ## Future Components
 

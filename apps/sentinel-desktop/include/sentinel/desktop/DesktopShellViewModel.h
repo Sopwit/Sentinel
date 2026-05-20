@@ -414,6 +414,32 @@ class DesktopShellViewModel final : public QObject {
                    embeddingRuntimeRequirementSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList embeddingRuntimeConstraintSummaries READ
                    embeddingRuntimeConstraintSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString isolatedEmbeddingRuntimeStatus READ isolatedEmbeddingRuntimeStatus NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString isolatedEmbeddingRuntimeHealth READ isolatedEmbeddingRuntimeHealth NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString isolatedEmbeddingRuntimeReadiness READ isolatedEmbeddingRuntimeReadiness
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString isolatedEmbeddingRuntimeSummary READ isolatedEmbeddingRuntimeSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString isolatedEmbeddingRuntimeBoundedState READ
+                   isolatedEmbeddingRuntimeBoundedState NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList isolatedEmbeddingRuntimeChecks READ isolatedEmbeddingRuntimeChecks NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(
+        QString vectorPersistenceStatus READ vectorPersistenceStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(
+        QString vectorPersistenceHealth READ vectorPersistenceHealth NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString vectorPersistenceReadiness READ vectorPersistenceReadiness NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString vectorPersistenceSummary READ vectorPersistenceSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString vectorPersistenceBoundedState READ vectorPersistenceBoundedState NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int vectorPersistenceIndexedItemCount READ vectorPersistenceIndexedItemCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList vectorPersistenceChecks READ vectorPersistenceChecks NOTIFY
+                   contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -927,6 +953,19 @@ public:
     QString embeddingRuntimeBudgetSummary() const;
     QStringList embeddingRuntimeRequirementSummaries() const;
     QStringList embeddingRuntimeConstraintSummaries() const;
+    QString isolatedEmbeddingRuntimeStatus() const;
+    QString isolatedEmbeddingRuntimeHealth() const;
+    QString isolatedEmbeddingRuntimeReadiness() const;
+    QString isolatedEmbeddingRuntimeSummary() const;
+    QString isolatedEmbeddingRuntimeBoundedState() const;
+    QStringList isolatedEmbeddingRuntimeChecks() const;
+    QString vectorPersistenceStatus() const;
+    QString vectorPersistenceHealth() const;
+    QString vectorPersistenceReadiness() const;
+    QString vectorPersistenceSummary() const;
+    QString vectorPersistenceBoundedState() const;
+    int vectorPersistenceIndexedItemCount() const;
+    QStringList vectorPersistenceChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;

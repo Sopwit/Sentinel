@@ -530,6 +530,45 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Isolated Embedding Test"
+                    value: settingsPage.viewModel.isolatedEmbeddingRuntimeStatus
+                           + " / "
+                           + settingsPage.viewModel.isolatedEmbeddingRuntimeHealth
+                           + " / "
+                           + settingsPage.viewModel.isolatedEmbeddingRuntimeSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Embedding Runtime Bounds"
+                    value: settingsPage.viewModel.isolatedEmbeddingRuntimeBoundedState
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Vector Persistence"
+                    value: settingsPage.viewModel.vectorPersistenceStatus
+                           + " / "
+                           + settingsPage.viewModel.vectorPersistenceHealth
+                           + " / "
+                           + settingsPage.viewModel.vectorPersistenceSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Vector Index Lifecycle"
+                    value: settingsPage.viewModel.vectorPersistenceBoundedState
+                           + " / "
+                           + settingsPage.viewModel.vectorPersistenceIndexedItemCount
+                           + " indexed"
+                    Layout.fillWidth: true
+                }
+
                 SentinelButton {
                     text: settingsPage.showAdvancedContextDetails ? "Hide Advanced Details"
                                                                   : "Show Advanced Details"
@@ -591,6 +630,32 @@ ScrollView {
 
                 Repeater {
                     model: settingsPage.viewModel.semanticCandidateParticipationSummaries
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.isolatedEmbeddingRuntimeChecks
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.vectorPersistenceChecks
 
                     Label {
                         required property string modelData

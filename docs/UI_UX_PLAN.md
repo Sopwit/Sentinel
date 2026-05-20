@@ -393,6 +393,21 @@ vectors, raw score payload dumps, rank controls, provider setup, vector database
 indexing controls, Ollama embedding controls, prompt payload display, tools/plugins, autonomous
 actions, or broad redesign.
 
+Phase 17.7 through Phase 17.9 add compact isolated embedding runtime readiness visibility. Memory
+and Settings may show isolated runtime readiness, last isolated embedding test status, provider
+health, local-only bounded state, timeout/busy/stale/refusal summaries, and safety checks. The UI
+must stay read-only and summary-only: no raw vectors, no debug payload dumps, no rank controls, no
+semantic search controls, no activation button, no provider setup, no filesystem indexing
+controls, no vector database controls, no prompt payload display, no cloud/API-key setup, no
+downloads, no tools/plugins, no autonomous actions, and no broad redesign.
+
+Phase 17.10 through Phase 17.12 add compact local vector persistence readiness visibility. Memory
+and Settings may show vector persistence readiness, index lifecycle status, bounded/local-only
+state, disabled-by-default state, indexed item count, and safety checks. The UI must stay
+summary-only and must not show raw vectors, filesystem paths, index handles, debug payload dumps,
+semantic search controls, activation controls, automatic indexing controls, filesystem scanning
+controls, cloud/API setup, downloads, tools/plugins, autonomous actions, or a broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no
