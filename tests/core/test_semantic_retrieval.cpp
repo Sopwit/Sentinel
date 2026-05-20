@@ -3,14 +3,23 @@
 #include <QtTest>
 
 using sentinel::core::EmbeddingDocument;
+using sentinel::core::EmbeddingGenerationPolicy;
+using sentinel::core::EmbeddingGenerationReadiness;
+using sentinel::core::EmbeddingGenerationResult;
+using sentinel::core::EmbeddingIsolationPolicy;
 using sentinel::core::EmbeddingRequest;
+using sentinel::core::EmbeddingRuntimeHealth;
 using sentinel::core::embeddingRuntimePlan;
 using sentinel::core::EmbeddingRuntimeReadiness;
+using sentinel::core::EmbeddingRuntimeSession;
+using sentinel::core::EmbeddingRuntimeStatus;
 using sentinel::core::FakeEmbeddingProvider;
 using sentinel::core::FakeVectorIndex;
+using sentinel::core::generateIsolatedEmbeddings;
 using sentinel::core::HybridRetrievalPolicy;
 using sentinel::core::hybridRetrievalReadiness;
 using sentinel::core::HybridRetrievalStatus;
+using sentinel::core::LocalVectorPersistenceIndex;
 using sentinel::core::orchestrateSemanticCandidates;
 using sentinel::core::selectSemanticProvider;
 using sentinel::core::semanticActivationReadiness;
@@ -25,6 +34,12 @@ using sentinel::core::SemanticProviderMode;
 using sentinel::core::SemanticProviderPolicy;
 using sentinel::core::SemanticProviderReadiness;
 using sentinel::core::simulateSemanticArbitration;
+using sentinel::core::VectorPersistenceBudget;
+using sentinel::core::VectorPersistenceHealth;
+using sentinel::core::VectorPersistencePolicy;
+using sentinel::core::VectorPersistenceReadiness;
+using sentinel::core::VectorPersistenceSession;
+using sentinel::core::VectorPersistenceStatus;
 using sentinel::core::VectorSearchQuery;
 
 class SemanticRetrievalTest final : public QObject {
@@ -41,6 +56,13 @@ private slots:
     void arbitrationSimulationScoresDeterministically();
     void arbitrationSimulationUsesStableTieHandling();
     void embeddingRuntimePlanSummarizesLocalOnlyBlockedReadiness();
+    void isolatedEmbeddingGenerationSucceedsWithFakeProvider();
+    void isolatedEmbeddingGenerationRefusesNonLocalPolicy();
+    void isolatedEmbeddingGenerationTimesOutDeterministically();
+    void isolatedEmbeddingGenerationRejectsStaleAndBusyRequests();
+    void vectorPersistenceLifecycleIsExplicitAndEmptySafe();
+    void vectorPersistenceAcceptsOnlyIsolatedEmbeddingOutputs();
+    void vectorPersistenceRejectsStaleBusyAndBoundedOverflow();
     void defaultSemanticProviderSelectionIsDisabled();
     void fakeProviderSelectionIsMetadataOnly();
     void localOllamaProviderIsPlannedButInactive();
@@ -284,6 +306,186 @@ void SemanticRetrievalTest::embeddingRuntimePlanSummarizesLocalOnlyBlockedReadin
     QVERIFY(plan.requirements.contains(QStringLiteral("Explicit local embedding provider gate")));
     QVERIFY(plan.constraints.contains(QStringLiteral("No cloud/API keys")));
     QVERIFY(plan.constraints.contains(QStringLiteral("No vector database writes while disabled")));
+}
+
+void SemanticRetrievalTest::isolatedEmbeddingGenerationSucceedsWithFakeProvider() {
+    FakeEmbeddingProvider provider{8};
+    EmbeddingIsolationPolicy isolation;
+    isolation.explicitSemanticEnableReadinessSatisfied = true;
+    EmbeddingGenerationPolicy policy;
+    policy.providerMode = SemanticProviderMode::FakeInMemory;
+    policy.allowFakeInMemoryProvider = true;
+    policy.requestId = QStringLiteral("request-ok");
+
+    const auto result = generateIsolatedEmbeddings(
+        provider,
+        QList<EmbeddingDocument>{
+            {QStringLiteral("doc-a"), QStringLiteral("local readiness text"), {}, {}},
+        },
+        isolation, policy, EmbeddingRuntimeSession{});
+
+    QCOMPARE(result.readiness, EmbeddingGenerationReadiness::Ready);
+    QCOMPARE(result.status, EmbeddingRuntimeStatus::Succeeded);
+    QCOMPARE(result.health, EmbeddingRuntimeHealth::LocalOnlyReady);
+    QCOMPARE(result.generatedVectorCount, 1);
+    QCOMPARE(result.session.boundedDocumentCount, 1);
+    QVERIFY(result.summary.contains(QStringLiteral("readiness validation only")));
+    QVERIFY(result.checks.contains(QStringLiteral("Prompt integration: disabled")));
+    QVERIFY(result.checks.contains(QStringLiteral("Vector DB persistence: disabled")));
+}
+
+void SemanticRetrievalTest::isolatedEmbeddingGenerationRefusesNonLocalPolicy() {
+    FakeEmbeddingProvider provider{8};
+    EmbeddingIsolationPolicy isolation;
+    isolation.localOnlyMode = false;
+    isolation.explicitSemanticEnableReadinessSatisfied = true;
+    EmbeddingGenerationPolicy policy;
+    policy.providerMode = SemanticProviderMode::FakeInMemory;
+    policy.allowFakeInMemoryProvider = true;
+
+    const auto result = generateIsolatedEmbeddings(
+        provider,
+        QList<EmbeddingDocument>{
+            {QStringLiteral("doc-a"), QStringLiteral("local readiness text"), {}, {}},
+        },
+        isolation, policy, EmbeddingRuntimeSession{});
+
+    QCOMPARE(result.readiness, EmbeddingGenerationReadiness::Refused);
+    QCOMPARE(result.status, EmbeddingRuntimeStatus::Refused);
+    QCOMPARE(result.health, EmbeddingRuntimeHealth::Blocked);
+    QCOMPARE(result.generatedVectorCount, 0);
+    QVERIFY(result.failureReason.contains(QStringLiteral("local-only policy gates")));
+}
+
+void SemanticRetrievalTest::isolatedEmbeddingGenerationTimesOutDeterministically() {
+    FakeEmbeddingProvider provider{8};
+    EmbeddingIsolationPolicy isolation;
+    isolation.explicitSemanticEnableReadinessSatisfied = true;
+    EmbeddingGenerationPolicy policy;
+    policy.providerMode = SemanticProviderMode::FakeInMemory;
+    policy.allowFakeInMemoryProvider = true;
+    policy.timeoutMs = 5;
+    policy.simulatedExecutionMs = 10;
+
+    const auto result = generateIsolatedEmbeddings(
+        provider,
+        QList<EmbeddingDocument>{
+            {QStringLiteral("doc-a"), QStringLiteral("local readiness text"), {}, {}},
+        },
+        isolation, policy, EmbeddingRuntimeSession{});
+
+    QCOMPARE(result.status, EmbeddingRuntimeStatus::TimedOut);
+    QCOMPARE(result.health, EmbeddingRuntimeHealth::Failed);
+    QCOMPARE(result.generatedVectorCount, 0);
+    QVERIFY(result.summary.contains(QStringLiteral("timed out")));
+}
+
+void SemanticRetrievalTest::isolatedEmbeddingGenerationRejectsStaleAndBusyRequests() {
+    FakeEmbeddingProvider provider{8};
+    EmbeddingIsolationPolicy isolation;
+    isolation.explicitSemanticEnableReadinessSatisfied = true;
+    EmbeddingGenerationPolicy policy;
+    policy.providerMode = SemanticProviderMode::FakeInMemory;
+    policy.allowFakeInMemoryProvider = true;
+    policy.requestId = QStringLiteral("new-request");
+
+    EmbeddingRuntimeSession staleSession;
+    staleSession.activeRequestId = QStringLiteral("old-request");
+    const auto stale = generateIsolatedEmbeddings(provider, {}, isolation, policy, staleSession);
+    QCOMPARE(stale.status, EmbeddingRuntimeStatus::Stale);
+    QCOMPARE(stale.generatedVectorCount, 0);
+
+    EmbeddingRuntimeSession busySession;
+    busySession.busy = true;
+    const auto busy = generateIsolatedEmbeddings(provider, {}, isolation, policy, busySession);
+    QCOMPARE(busy.status, EmbeddingRuntimeStatus::Busy);
+    QCOMPARE(busy.generatedVectorCount, 0);
+}
+
+void SemanticRetrievalTest::vectorPersistenceLifecycleIsExplicitAndEmptySafe() {
+    VectorPersistencePolicy disabledPolicy;
+    LocalVectorPersistenceIndex disabledIndex{disabledPolicy};
+    QCOMPARE(disabledIndex.snapshot().status, VectorPersistenceStatus::Disabled);
+    QCOMPARE(disabledIndex.create(VectorPersistenceSession{}).readiness,
+             VectorPersistenceReadiness::Disabled);
+
+    VectorPersistencePolicy policy;
+    policy.enabled = true;
+    policy.disabledByDefault = false;
+    LocalVectorPersistenceIndex index{policy};
+
+    const auto created = index.create(VectorPersistenceSession{});
+    QCOMPARE(created.status, VectorPersistenceStatus::Created);
+    QCOMPARE(created.health, VectorPersistenceHealth::Empty);
+    QCOMPARE(index.itemCount(), 0);
+    QVERIFY(created.snapshot.summary.contains(QStringLiteral("0 indexed")));
+
+    const auto reset = index.reset(VectorPersistenceSession{});
+    QCOMPARE(reset.status, VectorPersistenceStatus::Reset);
+    QCOMPARE(reset.snapshot.indexedItemCount, 0);
+    QVERIFY(reset.summary.contains(QStringLiteral("empty")));
+
+    const auto cleared = index.clear(VectorPersistenceSession{});
+    QCOMPARE(cleared.status, VectorPersistenceStatus::Cleared);
+    QCOMPARE(cleared.snapshot.indexedItemCount, 0);
+    QVERIFY(cleared.snapshot.boundedState.contains(QStringLiteral("semantic retrieval disabled")));
+}
+
+void SemanticRetrievalTest::vectorPersistenceAcceptsOnlyIsolatedEmbeddingOutputs() {
+    VectorPersistencePolicy policy;
+    policy.enabled = true;
+    policy.disabledByDefault = false;
+    LocalVectorPersistenceIndex index{policy};
+
+    EmbeddingGenerationResult notGenerated;
+    const auto refused = index.acceptIsolatedEmbeddingResult(
+        notGenerated, {QStringLiteral("doc-a")}, VectorPersistenceSession{});
+    QCOMPARE(refused.status, VectorPersistenceStatus::Refused);
+    QCOMPARE(refused.readiness, VectorPersistenceReadiness::Refused);
+
+    index.create(VectorPersistenceSession{});
+    EmbeddingGenerationResult generated;
+    generated.status = EmbeddingRuntimeStatus::Succeeded;
+    generated.readiness = EmbeddingGenerationReadiness::Ready;
+    generated.generatedVectorCount = 2;
+
+    const auto accepted = index.acceptIsolatedEmbeddingResult(
+        generated, {QStringLiteral("doc-b"), QStringLiteral("doc-a")}, VectorPersistenceSession{});
+    QCOMPARE(accepted.status, VectorPersistenceStatus::Ready);
+    QCOMPARE(accepted.snapshot.indexedItemCount, 2);
+    QCOMPARE(index.itemCount(), 2);
+    QVERIFY(accepted.checks.contains(QStringLiteral("Prompt mutation: disabled")));
+    QVERIFY(accepted.checks.contains(QStringLiteral("Cloud/API/vector services: blocked")));
+}
+
+void SemanticRetrievalTest::vectorPersistenceRejectsStaleBusyAndBoundedOverflow() {
+    VectorPersistencePolicy policy;
+    policy.enabled = true;
+    policy.disabledByDefault = false;
+    VectorPersistenceBudget budget;
+    budget.maxIndexedItems = 1;
+    LocalVectorPersistenceIndex index{policy, budget};
+
+    VectorPersistenceSession stale;
+    stale.activeRequestId = QStringLiteral("old");
+    stale.requestId = QStringLiteral("new");
+    QCOMPARE(index.create(stale).status, VectorPersistenceStatus::Stale);
+
+    VectorPersistenceSession busy;
+    busy.busy = true;
+    QCOMPARE(index.create(busy).status, VectorPersistenceStatus::Busy);
+
+    index.create(VectorPersistenceSession{});
+    EmbeddingGenerationResult generated;
+    generated.status = EmbeddingRuntimeStatus::Succeeded;
+    generated.readiness = EmbeddingGenerationReadiness::Ready;
+    generated.generatedVectorCount = 2;
+
+    const auto limited = index.acceptIsolatedEmbeddingResult(
+        generated, {QStringLiteral("doc-a"), QStringLiteral("doc-b")}, VectorPersistenceSession{});
+    QCOMPARE(limited.status, VectorPersistenceStatus::LimitReached);
+    QCOMPARE(limited.snapshot.indexedItemCount, 1);
+    QVERIFY(limited.summary.contains(QStringLiteral("1 rejected")));
 }
 
 void SemanticRetrievalTest::defaultSemanticProviderSelectionIsDisabled() {

@@ -287,6 +287,58 @@ Still out of scope:
   calls, provider/model inference, semantic prompt injection, cloud/API keys, tools/plugins,
   autonomous actions, and prompt mutation.
 
+## Phase 17.7-17.9: Isolated Local Embedding Runtime Activation Foundation
+
+Completed. Added an isolated local embedding generation foundation for readiness validation only.
+
+Delivered:
+
+- Runtime metadata records for status, health, session, generation policy, generation result,
+  isolation policy, and generation readiness.
+- Deterministic fake-provider isolated generation tests with no cloud provider, no API key, no
+  vector database, and no filesystem indexing.
+- Policy gates that require local-only mode, explicit semantic readiness, local/fake provider
+  scope, blocked cloud providers, disabled filesystem indexing, disabled prompt integration,
+  disabled retrieval ranking mutation, disabled automatic memory writes, disabled vector
+  persistence, and disabled background indexing.
+- Bounded runtime outcomes for success, failure, deterministic timeout, stale request, busy
+  session, and policy refusal.
+- Controller/view-model/QML exposure for readiness, last isolated test status, provider health,
+  local-only bounded state, and safety checks.
+
+Still out of scope:
+
+- Semantic retrieval activation, vector search, vector database persistence, semantic prompt
+  injection, retrieval ranking mutation, prompt assembly mutation, automatic memory writes,
+  filesystem indexing, cloud/API providers or keys, provider downloads, autonomous actions, tools,
+  and plugins.
+
+## Phase 17.10-17.12: Local Vector Persistence Foundation
+
+Completed. Added disabled-by-default local vector persistence lifecycle infrastructure.
+
+Delivered:
+
+- `VectorPersistencePolicy`, `VectorPersistenceStatus`, `VectorPersistenceHealth`,
+  `VectorPersistenceReadiness`, `VectorPersistenceSession`, `VectorPersistenceBudget`,
+  `VectorPersistenceResult`, `VectorIndexLifecycle`, and `VectorIndexSnapshotSummary`.
+- A local-only deterministic lifecycle helper with explicit create, reset, clear, and bounded
+  acceptance of successful isolated embedding runtime output metadata.
+- Stable empty-index, stale-session, busy-state, bounded-limit, lifecycle revision, and snapshot
+  summaries.
+- Controller/view-model/QML exposure for readiness, lifecycle status, bounded/local-only state,
+  disabled-by-default state, indexed item count, and safety checks.
+- Tests proving deterministic lifecycle behavior, create/reset/clear, empty-index handling,
+  stale/busy refusal, bounded overflow, unchanged retrieval planning, unchanged prompt assembly,
+  and QML-safe exposure.
+
+Still out of scope:
+
+- Semantic retrieval activation, semantic ranking/search, semantic prompt injection, automatic
+  indexing, filesystem scanning, background ingestion, automatic memory conversion, retrieval
+  planning mutation, prompt assembly mutation, cloud/API/vector services, raw vector UI, paths,
+  debug payloads, autonomous actions, tools, and plugins.
+
 ## Phase 15.8: Async Local Runtime Worker Foundation
 
 Completed. Local Ollama chat inference now crosses an async worker boundary before real

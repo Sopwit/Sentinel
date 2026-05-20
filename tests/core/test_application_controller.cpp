@@ -751,6 +751,8 @@ private slots:
     void semanticProviderPlanningExposesDisabledSelection();
     void semanticCandidateOrchestrationExposesSafeMetadata();
     void semanticArbitrationSimulationExposesSafeMetadata();
+    void isolatedEmbeddingRuntimeExposureIsBoundedAndDisabledByDefault();
+    void vectorPersistenceExposureIsDisabledAndDoesNotMutatePlanningOrPrompt();
     void semanticCandidateOrchestrationDoesNotMutatePrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
@@ -4154,6 +4156,59 @@ void ApplicationControllerTest::semanticArbitrationSimulationExposesSafeMetadata
         QStringLiteral("Committed-memory-only indexing policy")));
     QVERIFY(controller->embeddingRuntimeConstraintSummaries().contains(
         QStringLiteral("No Ollama embedding calls while disabled")));
+}
+
+void ApplicationControllerTest::isolatedEmbeddingRuntimeExposureIsBoundedAndDisabledByDefault() {
+    const auto controller = makeController();
+    const auto planningBefore = controller->retrievalPlanningResult();
+    const auto promptBefore = controller->latestPromptContextInjectionResult();
+
+    QCOMPARE(controller->isolatedEmbeddingRuntimeStatus(), QStringLiteral("Refused"));
+    QCOMPARE(controller->isolatedEmbeddingRuntimeHealth(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->isolatedEmbeddingRuntimeReadiness(), QStringLiteral("Refused"));
+    QVERIFY(controller->isolatedEmbeddingRuntimeSummary().contains(
+        QStringLiteral("readiness metadata only")));
+    QVERIFY(controller->isolatedEmbeddingRuntimeBoundedState().contains(
+        QStringLiteral("no vectors persisted")));
+    QVERIFY(controller->isolatedEmbeddingRuntimeChecks().contains(
+        QStringLiteral("Prompt integration: disabled")));
+    QVERIFY(controller->isolatedEmbeddingRuntimeChecks().contains(
+        QStringLiteral("Retrieval ranking mutation: disabled")));
+    QVERIFY(controller->isolatedEmbeddingRuntimeChecks().contains(
+        QStringLiteral("Vector DB persistence: disabled")));
+
+    const auto planningAfter = controller->retrievalPlanningResult();
+    const auto promptAfter = controller->latestPromptContextInjectionResult();
+    QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
+}
+
+void ApplicationControllerTest::
+    vectorPersistenceExposureIsDisabledAndDoesNotMutatePlanningOrPrompt() {
+    const auto controller = makeController();
+    const auto planningBefore = controller->retrievalPlanningResult();
+    const auto promptBefore = controller->latestPromptContextInjectionResult();
+
+    QCOMPARE(controller->vectorPersistenceStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->vectorPersistenceHealth(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->vectorPersistenceReadiness(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->vectorPersistenceIndexedItemCount(), 0);
+    QVERIFY(controller->vectorPersistenceSummary().contains(QStringLiteral("disabled by default")));
+    QVERIFY(controller->vectorPersistenceBoundedState().contains(QStringLiteral("local-only")));
+    QVERIFY(controller->vectorPersistenceChecks().contains(
+        QStringLiteral("Automatic indexing: disabled")));
+    QVERIFY(controller->vectorPersistenceChecks().contains(
+        QStringLiteral("Filesystem scanning: disabled")));
+    QVERIFY(controller->vectorPersistenceChecks().contains(
+        QStringLiteral("Semantic retrieval authority: disabled")));
+    QVERIFY(controller->vectorPersistenceChecks().contains(
+        QStringLiteral("Prompt mutation: disabled")));
+
+    const auto planningAfter = controller->retrievalPlanningResult();
+    const auto promptAfter = controller->latestPromptContextInjectionResult();
+    QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
+    QCOMPARE(controller->semanticRetrievalEnabled(), false);
 }
 
 void ApplicationControllerTest::semanticCandidateOrchestrationDoesNotMutatePrompt() {

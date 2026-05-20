@@ -102,6 +102,56 @@ enum class EmbeddingRuntimeReadiness : std::uint8_t {
     Blocked,
 };
 
+enum class EmbeddingRuntimeStatus : std::uint8_t {
+    Disabled,
+    Ready,
+    Running,
+    Succeeded,
+    Failed,
+    TimedOut,
+    Stale,
+    Busy,
+    Refused,
+};
+
+enum class EmbeddingRuntimeHealth : std::uint8_t {
+    NotChecked,
+    LocalOnlyReady,
+    Blocked,
+    Failed,
+};
+
+enum class EmbeddingGenerationReadiness : std::uint8_t {
+    Refused,
+    Ready,
+};
+
+enum class VectorPersistenceStatus : std::uint8_t {
+    Disabled,
+    Empty,
+    Ready,
+    Created,
+    Reset,
+    Cleared,
+    Refused,
+    Busy,
+    Stale,
+    LimitReached,
+};
+
+enum class VectorPersistenceHealth : std::uint8_t {
+    NotChecked,
+    LocalOnlyReady,
+    Empty,
+    Blocked,
+};
+
+enum class VectorPersistenceReadiness : std::uint8_t {
+    Disabled,
+    Ready,
+    Refused,
+};
+
 QString embeddingProviderStatusName(EmbeddingProviderStatus status);
 QString vectorIndexStatusName(VectorIndexStatus status);
 QString semanticRetrievalStatusName(SemanticRetrievalStatus status);
@@ -115,6 +165,12 @@ QString semanticProviderReadinessName(SemanticProviderReadiness readiness);
 QString semanticProviderHealthName(SemanticProviderHealth health);
 QString semanticProviderCapabilityName(SemanticProviderCapability capability);
 QString embeddingRuntimeReadinessName(EmbeddingRuntimeReadiness readiness);
+QString embeddingRuntimeStatusName(EmbeddingRuntimeStatus status);
+QString embeddingRuntimeHealthName(EmbeddingRuntimeHealth health);
+QString embeddingGenerationReadinessName(EmbeddingGenerationReadiness readiness);
+QString vectorPersistenceStatusName(VectorPersistenceStatus status);
+QString vectorPersistenceHealthName(VectorPersistenceHealth health);
+QString vectorPersistenceReadinessName(VectorPersistenceReadiness readiness);
 
 struct EmbeddingVector {
     QList<double> values;
@@ -358,6 +414,124 @@ struct EmbeddingRuntimePlan {
     QStringList constraints;
 };
 
+struct EmbeddingIsolationPolicy {
+    bool localOnlyMode = true;
+    bool explicitSemanticEnableReadinessSatisfied = false;
+    bool noCloudProviders = true;
+    bool filesystemIndexingEnabled = false;
+    bool automaticPromptIntegrationEnabled = false;
+    bool retrievalRankingMutationEnabled = false;
+    bool automaticMemoryWritesEnabled = false;
+    bool vectorPersistenceEnabled = false;
+    bool backgroundIndexingEnabled = false;
+    QString summary =
+        QStringLiteral("Embedding generation is isolated, local-only readiness validation.");
+};
+
+struct EmbeddingGenerationPolicy {
+    SemanticProviderMode providerMode = SemanticProviderMode::Disabled;
+    bool allowFakeInMemoryProvider = false;
+    bool allowLocalOllamaEmbeddingsProvider = false;
+    bool realCloudProvidersAllowed = false;
+    int timeoutMs = 1000;
+    int simulatedExecutionMs = 0;
+    int maxDocuments = 4;
+    int maxDocumentCharacters = 2048;
+    QString requestId = QStringLiteral("embedding-test-1");
+    QString summary = QStringLiteral(
+        "Isolated embedding test generation is disabled unless local readiness gates pass.");
+};
+
+struct EmbeddingRuntimeSession {
+    QString activeRequestId;
+    bool busy = false;
+    int timeoutMs = 1000;
+    int boundedDocumentCount = 0;
+    int boundedCharacterCount = 0;
+    QString summary = QStringLiteral("No isolated embedding runtime session is active.");
+};
+
+struct EmbeddingGenerationResult {
+    EmbeddingRuntimeStatus status = EmbeddingRuntimeStatus::Disabled;
+    EmbeddingRuntimeHealth health = EmbeddingRuntimeHealth::NotChecked;
+    EmbeddingGenerationReadiness readiness = EmbeddingGenerationReadiness::Refused;
+    EmbeddingRuntimeSession session;
+    int generatedDocumentCount = 0;
+    int generatedVectorCount = 0;
+    int elapsedMs = 0;
+    QString summary = QStringLiteral("No isolated embedding generation has run.");
+    QString failureReason;
+    QStringList checks;
+};
+
+struct VectorPersistencePolicy {
+    bool enabled = false;
+    bool localOnly = true;
+    bool disabledByDefault = true;
+    bool isolatedEmbeddingOutputsOnly = true;
+    bool automaticIndexingEnabled = false;
+    bool filesystemScanningEnabled = false;
+    bool backgroundIngestionEnabled = false;
+    bool semanticRetrievalAuthorityEnabled = false;
+    bool promptMutationEnabled = false;
+    bool automaticMemoryConversionEnabled = false;
+    bool cloudVectorServicesAllowed = false;
+    QString summary = QStringLiteral(
+        "Local vector persistence is disabled by default and isolated from retrieval authority.");
+};
+
+struct VectorPersistenceSession {
+    QString activeRequestId;
+    QString requestId = QStringLiteral("vector-persistence-1");
+    bool busy = false;
+    int lifecycleRevision = 0;
+    QString summary = QStringLiteral("No vector persistence session is active.");
+};
+
+struct VectorPersistenceBudget {
+    int maxIndexedItems = 16;
+    int indexedItemCount = 0;
+    int requestedItemCount = 0;
+    int acceptedItemCount = 0;
+    int rejectedItemCount = 0;
+    int remainingItemCount = 16;
+    QString summary = QStringLiteral("0 of 16 local vector metadata items indexed.");
+};
+
+struct VectorIndexLifecycle {
+    bool created = false;
+    int revision = 0;
+    VectorPersistenceStatus status = VectorPersistenceStatus::Disabled;
+    QString lastAction = QStringLiteral("Disabled");
+    QString summary =
+        QStringLiteral("Vector index lifecycle metadata is disabled and not created.");
+};
+
+struct VectorIndexSnapshotSummary {
+    VectorPersistenceStatus status = VectorPersistenceStatus::Disabled;
+    VectorPersistenceHealth health = VectorPersistenceHealth::NotChecked;
+    int indexedItemCount = 0;
+    int lifecycleRevision = 0;
+    QString boundedState = QStringLiteral("local-only / disabled / 0 indexed items");
+    QString summary = QStringLiteral("No local vector index snapshot is active.");
+    QStringList checks;
+};
+
+struct VectorPersistenceResult {
+    bool accepted = false;
+    VectorPersistenceStatus status = VectorPersistenceStatus::Disabled;
+    VectorPersistenceHealth health = VectorPersistenceHealth::NotChecked;
+    VectorPersistenceReadiness readiness = VectorPersistenceReadiness::Disabled;
+    VectorPersistencePolicy policy;
+    VectorPersistenceSession session;
+    VectorPersistenceBudget budget;
+    VectorIndexLifecycle lifecycle;
+    VectorIndexSnapshotSummary snapshot;
+    QString summary = QStringLiteral("Vector persistence did not run.");
+    QString failureReason;
+    QStringList checks;
+};
+
 struct SemanticProviderPolicy {
     bool disabledByDefault = true;
     bool allowFakeInMemoryProvider = false;
@@ -472,9 +646,42 @@ private:
     QList<Entry> entries_;
 };
 
+class LocalVectorPersistenceIndex final {
+public:
+    explicit LocalVectorPersistenceIndex(VectorPersistencePolicy policy = {},
+                                         VectorPersistenceBudget budget = {});
+
+    VectorPersistencePolicy policy() const;
+    VectorPersistenceBudget budget() const;
+    VectorIndexLifecycle lifecycle() const;
+    VectorIndexSnapshotSummary snapshot() const;
+    int itemCount() const;
+
+    VectorPersistenceResult create(const VectorPersistenceSession& session);
+    VectorPersistenceResult reset(const VectorPersistenceSession& session);
+    VectorPersistenceResult clear(const VectorPersistenceSession& session);
+    VectorPersistenceResult
+    acceptIsolatedEmbeddingResult(const EmbeddingGenerationResult& generationResult,
+                                  const QStringList& itemSummaries,
+                                  const VectorPersistenceSession& session);
+
+private:
+    VectorPersistenceResult baseResult(const VectorPersistenceSession& session) const;
+    VectorPersistenceResult validateSession(const VectorPersistenceSession& session) const;
+    void refreshBudget();
+    VectorPersistenceResult finalize(VectorPersistenceResult result) const;
+
+    VectorPersistencePolicy policy_;
+    VectorPersistenceBudget budget_;
+    VectorIndexLifecycle lifecycle_;
+    QStringList itemSummaries_;
+};
+
 QStringList semanticRetrievalReadinessChecks(const SemanticRetrievalPolicy& policy,
                                              EmbeddingProviderStatus providerStatus,
                                              VectorIndexStatus indexStatus, int indexedItemCount);
+VectorPersistenceReadiness vectorPersistenceReadiness(const VectorPersistencePolicy& policy,
+                                                      const VectorPersistenceSession& session);
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source);
 SemanticCandidateArbitration
 orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,
@@ -487,6 +694,15 @@ SemanticArbitrationResult
 simulateSemanticArbitration(const SemanticCandidateArbitration& arbitration,
                             const SemanticArbitrationPolicy& policy);
 EmbeddingRuntimePlan embeddingRuntimePlan(const SemanticArbitrationResult& arbitration);
+EmbeddingGenerationReadiness
+embeddingGenerationReadiness(const EmbeddingIsolationPolicy& isolationPolicy,
+                             const EmbeddingGenerationPolicy& generationPolicy,
+                             const EmbeddingRuntimeSession& session,
+                             EmbeddingProviderStatus providerStatus);
+EmbeddingGenerationResult generateIsolatedEmbeddings(
+    const IEmbeddingProvider& provider, const QList<EmbeddingDocument>& documents,
+    const EmbeddingIsolationPolicy& isolationPolicy,
+    const EmbeddingGenerationPolicy& generationPolicy, const EmbeddingRuntimeSession& session);
 QList<SemanticProviderDescriptor>
 plannedSemanticProviderDescriptors(const SemanticProviderPolicy& policy);
 SemanticProviderSelection selectSemanticProvider(SemanticProviderMode mode,

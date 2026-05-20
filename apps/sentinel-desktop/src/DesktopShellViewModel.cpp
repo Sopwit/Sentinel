@@ -1236,6 +1236,58 @@ QStringList DesktopShellViewModel::embeddingRuntimeConstraintSummaries() const {
     return controller_.embeddingRuntimeConstraintSummaries();
 }
 
+QString DesktopShellViewModel::isolatedEmbeddingRuntimeStatus() const {
+    return controller_.isolatedEmbeddingRuntimeStatus();
+}
+
+QString DesktopShellViewModel::isolatedEmbeddingRuntimeHealth() const {
+    return controller_.isolatedEmbeddingRuntimeHealth();
+}
+
+QString DesktopShellViewModel::isolatedEmbeddingRuntimeReadiness() const {
+    return controller_.isolatedEmbeddingRuntimeReadiness();
+}
+
+QString DesktopShellViewModel::isolatedEmbeddingRuntimeSummary() const {
+    return controller_.isolatedEmbeddingRuntimeSummary();
+}
+
+QString DesktopShellViewModel::isolatedEmbeddingRuntimeBoundedState() const {
+    return controller_.isolatedEmbeddingRuntimeBoundedState();
+}
+
+QStringList DesktopShellViewModel::isolatedEmbeddingRuntimeChecks() const {
+    return controller_.isolatedEmbeddingRuntimeChecks();
+}
+
+QString DesktopShellViewModel::vectorPersistenceStatus() const {
+    return controller_.vectorPersistenceStatus();
+}
+
+QString DesktopShellViewModel::vectorPersistenceHealth() const {
+    return controller_.vectorPersistenceHealth();
+}
+
+QString DesktopShellViewModel::vectorPersistenceReadiness() const {
+    return controller_.vectorPersistenceReadiness();
+}
+
+QString DesktopShellViewModel::vectorPersistenceSummary() const {
+    return controller_.vectorPersistenceSummary();
+}
+
+QString DesktopShellViewModel::vectorPersistenceBoundedState() const {
+    return controller_.vectorPersistenceBoundedState();
+}
+
+int DesktopShellViewModel::vectorPersistenceIndexedItemCount() const {
+    return controller_.vectorPersistenceIndexedItemCount();
+}
+
+QStringList DesktopShellViewModel::vectorPersistenceChecks() const {
+    return controller_.vectorPersistenceChecks();
+}
+
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
     return controller_.localInferenceStreamingEnabled();
 }

@@ -432,6 +432,24 @@ ScrollView {
                                + memoryPage.viewModel.embeddingRuntimeBudgetSummary
                         Layout.fillWidth: true
                     }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Isolated Embedding Test"
+                        value: memoryPage.viewModel.isolatedEmbeddingRuntimeStatus + " - "
+                               + memoryPage.viewModel.isolatedEmbeddingRuntimeBoundedState
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Vector Persistence"
+                        value: memoryPage.viewModel.vectorPersistenceReadiness + " - "
+                               + memoryPage.viewModel.vectorPersistenceBoundedState + " / "
+                               + memoryPage.viewModel.vectorPersistenceIndexedItemCount
+                               + " indexed"
+                        Layout.fillWidth: true
+                    }
                 }
             }
 

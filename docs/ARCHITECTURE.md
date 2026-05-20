@@ -361,6 +361,44 @@ runtime planning:
   candidate payload dumps, index paths, provider handles, prompt payloads, and activation controls
   remain unexposed.
 
+Phase 17.7 through Phase 17.9 add an isolated local embedding runtime activation foundation:
+
+- `EmbeddingRuntimeStatus`, `EmbeddingRuntimeHealth`, `EmbeddingRuntimeSession`,
+  `EmbeddingGenerationResult`, `EmbeddingGenerationPolicy`, `EmbeddingGenerationReadiness`, and
+  `EmbeddingIsolationPolicy` describe bounded readiness-test execution.
+- Isolated generation is permitted only when local-only mode, explicit semantic enable readiness,
+  local/fake provider scope, no cloud providers, no filesystem indexing, no automatic prompt
+  integration, no retrieval ranking mutation, no automatic memory writes, no vector persistence,
+  and no background indexing gates all pass.
+- Fake/InMemory embeddings can be generated through the isolated helper for deterministic tests.
+  Local Ollama embeddings may be represented as a future local-only readiness/runtime path, but no
+  desktop semantic retrieval route calls Ollama embeddings.
+- Timeout, stale-request, busy-state, provider failure, and policy-refusal outcomes are explicit
+  metadata. Result exposure reports counts, summaries, checks, health, and bounded session state
+  only.
+- Deterministic retrieval planning remains authoritative. Isolated embedding generation does not
+  mutate prompt assembly, retrieval planning, retrieval ranking, key-value memory, vector indexes,
+  filesystem indexes, or background jobs.
+- QML receives readiness/status/health/bounds/check summaries only. Raw vectors, raw provider
+  payloads, raw scores, debug dumps, provider handles, and index handles remain unexposed.
+
+Phase 17.10 through Phase 17.12 add a disabled-by-default local vector persistence foundation:
+
+- `VectorPersistencePolicy`, `VectorPersistenceStatus`, `VectorPersistenceHealth`,
+  `VectorPersistenceReadiness`, `VectorPersistenceSession`, `VectorPersistenceBudget`,
+  `VectorPersistenceResult`, `VectorIndexLifecycle`, and `VectorIndexSnapshotSummary` describe
+  lifecycle metadata and stable local snapshots.
+- `LocalVectorPersistenceIndex` is a deterministic local lifecycle helper for explicit create,
+  reset, clear, and bounded acceptance of successful isolated embedding runtime output metadata.
+- The policy is local-only, isolated, bounded, and disabled by default. It refuses automatic
+  indexing, filesystem scanning, background ingestion, semantic retrieval authority, prompt
+  mutation, automatic memory conversion, cloud/API providers, and external vector services.
+- Empty indexes are valid safe states. Stale request ids and busy sessions refuse before state
+  mutation. Bounded limits produce stable limit summaries.
+- The desktop controller exposes only disabled readiness, lifecycle status, bounded state, item
+  count, and checks. It does not persist raw vectors, expose filesystem paths, alter
+  deterministic retrieval planning, mutate prompt assembly, or inject semantic prompt context.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.

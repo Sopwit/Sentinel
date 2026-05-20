@@ -2,6 +2,60 @@
 
 ## Completed / Stable
 
+### Phase 17.10-17.12: Local Vector Persistence Foundation
+
+Completed. Adds disabled-by-default local vector persistence lifecycle metadata and a bounded
+local index foundation without giving semantic retrieval prompt authority.
+
+Scope:
+
+- Added vector persistence policy, status, health, readiness, session, budget, result, lifecycle,
+  and snapshot summary records.
+- Added a local-only deterministic vector persistence lifecycle helper with explicit create,
+  reset, clear, and isolated embedding-output acceptance paths.
+- Persistence remains disabled by default in the desktop runtime. No automatic indexing,
+  filesystem scanning, background ingestion, semantic retrieval authority, prompt mutation,
+  automatic memory conversion, cloud/API provider, or external vector service is introduced.
+- Lifecycle operations include empty-index handling, bounded item limits, stable summaries, stale
+  session protection, and busy-state protection.
+- Memory and Settings expose compact readiness, lifecycle status, bounded/local-only state,
+  disabled-by-default state, and indexed item count without raw vectors, paths, or debug payloads.
+
+Known limitation:
+
+- Semantic retrieval remains disabled and deterministic retrieval remains authoritative. The
+  vector persistence foundation stores only bounded local metadata in tests and is not wired into
+  retrieval planning, ranking, prompt assembly, memory conversion, filesystem indexing, or
+  background jobs.
+
+### Phase 17.7-17.9: Isolated Local Embedding Runtime Activation Foundation
+
+Completed. Adds isolated local embedding generation metadata and bounded test execution helpers for
+readiness validation only, without enabling semantic retrieval authority.
+
+Scope:
+
+- Added embedding runtime status, health, session, generation result, generation policy,
+  generation readiness, and isolation policy records.
+- Isolated generation is allowed only when local-only mode, explicit semantic readiness, local/fake
+  provider scope, no cloud providers, no filesystem indexing, no prompt integration, no ranking
+  mutation, no automatic memory writes, no vector persistence, and no background indexing gates all
+  pass.
+- Fake/InMemory generation can run through the isolated helper for deterministic tests. Local
+  Ollama embeddings remain a bounded local-only readiness path and are not wired into desktop
+  semantic retrieval.
+- Runtime metadata reports refused, succeeded, failed, timed out, stale, and busy states with
+  deterministic timeout and request-id/session checks.
+- Memory and Settings expose compact isolated runtime readiness, last-test status, health, and
+  local-only bounded state without raw vectors or debug payloads.
+
+Known limitation:
+
+- Semantic retrieval remains disabled. Isolated generation does not mutate prompt assembly,
+  retrieval planning, retrieval ranking, memory stores, vector databases, filesystem indexes, or
+  background jobs. No cloud/API provider, API key, provider download, autonomous action, tool, or
+  plugin behavior is introduced.
+
 ### Phase 17.4-17.6: Hybrid Arbitration Simulation And Embedding Runtime Planning
 
 Completed. Adds deterministic semantic arbitration simulation and local embedding runtime
