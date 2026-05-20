@@ -408,6 +408,21 @@ summary-only and must not show raw vectors, filesystem paths, index handles, deb
 semantic search controls, activation controls, automatic indexing controls, filesystem scanning
 controls, cloud/API setup, downloads, tools/plugins, autonomous actions, or a broad redesign.
 
+Phase 17.13 through Phase 17.15 add compact bounded semantic search visibility. Memory and Settings
+may show semantic search readiness, local-only runtime state, candidate count, bounded search
+summary, hybrid arbitration summary, and safety checks. Semantic search remains
+non-authoritative: the UI must not expose semantic prompt-injection controls, ranking override
+controls, filesystem indexing controls, background ingestion controls, cloud/API provider setup,
+provider downloads, raw vectors, prompt payloads, debug payload dumps, tools/plugins, autonomous
+actions, or a broad redesign.
+
+Phase 17.16 through Phase 17.18 add compact hybrid bridge visibility. Memory and Settings may show
+bridge readiness/status, deterministic-vs-semantic participation, bounded candidate counts,
+arbitration summaries, fallback status, and local-only/non-authoritative checks. The UI must not
+show raw vectors, raw prompt payloads, provider handles, filesystem paths, debug dumps, semantic
+prompt authority controls, ranking override controls, filesystem indexing controls, cloud/API
+setup, tools/plugins, autonomous actions, or a broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

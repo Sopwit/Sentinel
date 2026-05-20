@@ -450,6 +450,26 @@ ScrollView {
                                + " indexed"
                         Layout.fillWidth: true
                     }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Semantic Search"
+                        value: memoryPage.viewModel.semanticSearchStatus + " - "
+                               + memoryPage.viewModel.semanticSearchRuntimeState + " / "
+                               + memoryPage.viewModel.semanticSearchCandidateCount
+                               + " candidates"
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Hybrid Bridge"
+                        value: memoryPage.viewModel.hybridBridgeStatus + " - "
+                               + memoryPage.viewModel.hybridBridgeFallbackSummary + " / "
+                               + memoryPage.viewModel.hybridBridgeCandidateCount
+                               + " metadata candidates"
+                        Layout.fillWidth: true
+                    }
                 }
             }
 

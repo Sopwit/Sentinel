@@ -325,6 +325,38 @@ summary/count/readiness metadata only and does not enable automatic indexing, fi
 background ingestion, semantic retrieval authority, ranking changes, prompt mutation, automatic
 memory conversion, cloud/API/vector services, tools/plugins, autonomous actions, or semantic prompt
 injection.
+Phase 17.13 through Phase 17.15 add controlled local semantic search activation for readiness
+validation and hybrid orchestration testing. `SemanticSearchPolicy`, `SemanticSearchStatus`,
+`SemanticSearchResult`, `SemanticSearchCandidate`, `SemanticSearchBudget`,
+`SemanticSearchSession`, `SemanticSearchReadiness`, and `SemanticSearchArbitrationSummary` model
+a bounded local candidate-search lifecycle. Search reads only local vector persistence entries,
+requires local-only deterministic policy gates and isolated embedding runtime output metadata, and
+is bounded by candidate count, timeout metadata, similarity range, stale request protection,
+busy-state refusal, and deterministic tie handling. Semantic results can produce candidate
+metadata, bounded similarity matches, and hybrid arbitration summaries only. Deterministic
+retrieval remains authoritative; semantic search does not mutate retrieval planning, prompt
+context blocks, prompt assembly, prompt injection, or deterministic ranking. Empty indexes and
+disabled persistence are safe fallbacks. Filesystem indexing, background ingestion, cloud/API or
+external vector providers, provider downloads, autonomous actions, tools/plugins, semantic prompt
+authority, raw vector UI, and debug payload dumps remain out of scope. Future authority activation
+requires a separate phase with explicit indexing policy, privacy/safety review, fallback behavior,
+prompt-authority tests, and QML non-exposure guarantees.
+Phase 17.16 through Phase 17.18 add the bounded hybrid retrieval bridge foundation.
+`HybridRetrievalBridgePolicy`, `HybridRetrievalBridgeStatus`, `HybridRetrievalBridgeResult`,
+`HybridBridgeCandidate`, `HybridBridgeBudget`, `HybridBridgeReadiness`,
+`HybridBridgeArbitration`, and `HybridBridgeSourceSummary` let orchestration read deterministic
+retrieval planning output and semantic search candidates as metadata. The bridge produces bounded
+merged candidate metadata, deterministic-first arbitration summaries, source participation
+summaries, and deterministic fallback summaries only. Deterministic retrieval remains final
+authority; semantic candidates are advisory, deterministic candidates win ties/conflicts, and
+semantic candidates may only fill unused bounded bridge capacity. Disabled, empty, stale, busy,
+timeout, and refused semantic sources keep deterministic retrieval fully functional. The bridge
+does not mutate `RetrievalPlanningResult`, create or mutate `PromptContextBlock` values, inject
+prompt content, override deterministic ranking, index filesystems, call cloud/API/vector
+providers, execute tools/plugins, or expose raw vectors, prompt payloads, provider handles,
+filesystem paths, or debug dumps. Future semantic-authority activation requires a separate phase
+with indexing policy, privacy/safety gates, fallback tests, mutation tests, prompt-authority
+review, and QML non-exposure guarantees.
 
 ## Future Components
 

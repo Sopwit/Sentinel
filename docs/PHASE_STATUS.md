@@ -2,6 +2,62 @@
 
 ## Completed / Stable
 
+### Phase 17.16-17.18: Hybrid Retrieval Bridge Foundation
+
+Completed. Adds a bounded, non-authoritative bridge that can read deterministic retrieval planning
+and semantic search candidate metadata while leaving deterministic retrieval as the final prompt
+authority.
+
+Scope:
+
+- Added hybrid bridge policy, status, result, candidate, budget, readiness, arbitration, and source
+  summary records.
+- Bridge arbitration is deterministic-first. Selected deterministic retrieval candidates occupy
+  bridge capacity first; semantic candidates may only fill unused bounded metadata capacity.
+- Deterministic candidates win all bridge ties and conflicts. Semantic candidates remain advisory
+  and cannot override deterministic source priority, ranking, or prompt-context selection.
+- Disabled, empty, stale, busy, timeout, and refused semantic sources fall back to deterministic
+  retrieval summaries without mutating retrieval planning or prompt context blocks.
+- Memory and Settings expose compact bridge readiness/status, deterministic-vs-semantic
+  participation counts, arbitration summaries, fallback summaries, and local-only
+  non-authoritative checks without raw vectors, prompt payloads, provider handles, filesystem
+  paths, or debug dumps.
+
+Known limitation:
+
+- The bridge is metadata-only. It does not grant semantic prompt authority, inject semantic
+  content, index filesystems, call cloud/API/vector providers, execute tools/plugins, or mutate
+  deterministic retrieval. Future semantic-authority activation still requires a separate phase
+  with explicit indexing policy, privacy/safety gates, deterministic fallback tests, prompt
+  authority review, and QML non-exposure guarantees.
+
+### Phase 17.13-17.15: Controlled Local Semantic Search Activation
+
+Completed. Adds bounded local semantic candidate search for readiness validation and hybrid
+orchestration testing while keeping deterministic retrieval authoritative.
+
+Scope:
+
+- Added semantic search policy, status, readiness, session, budget, candidate, result, and hybrid
+  arbitration summary records.
+- Added a local-only deterministic search path over local vector persistence entries only.
+- Search is bounded by candidate count, timeout metadata, request/session state, isolated
+  embedding-output readiness, and normalized similarity scoring.
+- Semantic candidates are metadata-only. They can expose bounded match summaries and arbitration
+  summaries, but cannot mutate retrieval planning, prompt context blocks, prompt assembly, or
+  deterministic ranking.
+- Empty indexes, stale requests, busy sessions, timeout, disabled persistence, and non-local or
+  authoritative policy attempts resolve to safe deterministic statuses.
+- Memory and Settings expose compact readiness/runtime state, candidate counts, bounded search
+  summaries, arbitration boundaries, and local-only/non-authoritative checks without raw vectors
+  or debug payloads.
+
+Known limitation:
+
+- Semantic search is non-authoritative and readiness-oriented. It does not index files, ingest in
+  the background, call cloud/API/vector providers, download providers, inject prompt content,
+  override deterministic retrieval, or activate real semantic prompt authority.
+
 ### Phase 17.10-17.12: Local Vector Persistence Foundation
 
 Completed. Adds disabled-by-default local vector persistence lifecycle metadata and a bounded

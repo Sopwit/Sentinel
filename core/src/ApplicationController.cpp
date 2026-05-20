@@ -2722,6 +2722,134 @@ QStringList ApplicationController::vectorPersistenceChecks() const {
     return vectorIndexSnapshotSummary().checks;
 }
 
+SemanticSearchPolicy ApplicationController::semanticSearchPolicy() const {
+    return semanticSearchPolicy_;
+}
+
+SemanticSearchResult ApplicationController::semanticSearchResult() const {
+    LocalVectorPersistenceIndex index{vectorPersistencePolicy_};
+    SemanticSearchSession session;
+    session.requestId = QStringLiteral("semantic-search-desktop-readiness");
+    session.timeoutMs = 1000;
+    return index.searchLocalSemanticCandidates(QStringLiteral("desktop semantic readiness"),
+                                               isolatedEmbeddingRuntimeResult(),
+                                               semanticSearchPolicy_, session);
+}
+
+QString ApplicationController::semanticSearchStatus() const {
+    return semanticSearchStatusName(semanticSearchResult().status);
+}
+
+QString ApplicationController::semanticSearchReadiness() const {
+    return semanticSearchResult().readiness.summary;
+}
+
+QString ApplicationController::semanticSearchSummary() const {
+    return semanticSearchResult().summary;
+}
+
+QString ApplicationController::semanticSearchBudgetSummary() const {
+    return semanticSearchResult().budget.summary;
+}
+
+QString ApplicationController::semanticSearchRuntimeState() const {
+    const auto result = semanticSearchResult();
+    return QStringLiteral("local-only / timeout %1 ms / %2 candidates / non-authoritative")
+        .arg(result.budget.timeoutMs)
+        .arg(result.budget.returnedCandidateCount);
+}
+
+int ApplicationController::semanticSearchCandidateCount() const {
+    return semanticSearchResult().candidates.size();
+}
+
+QString ApplicationController::semanticSearchArbitrationSummary() const {
+    return sentinel::core::semanticSearchArbitrationSummary(semanticSearchResult(),
+                                                            semanticCandidateArbitration())
+        .summary;
+}
+
+QStringList ApplicationController::semanticSearchCandidateSummaries() const {
+    QStringList summaries;
+    for (const auto& candidate : semanticSearchResult().candidates) {
+        summaries.append(QStringLiteral("%1. %2 / similarity %3")
+                             .arg(candidate.rank)
+                             .arg(candidate.summary)
+                             .arg(candidate.similarity, 0, 'f', 3));
+    }
+    return summaries;
+}
+
+QStringList ApplicationController::semanticSearchChecks() const {
+    const auto result = semanticSearchResult();
+    auto checks = result.checks;
+    checks.append(
+        sentinel::core::semanticSearchArbitrationSummary(result, semanticCandidateArbitration())
+            .checks);
+    return checks;
+}
+
+HybridRetrievalBridgePolicy ApplicationController::hybridRetrievalBridgePolicy() const {
+    return hybridRetrievalBridgePolicy_;
+}
+
+HybridRetrievalBridgeResult ApplicationController::hybridRetrievalBridgeResult() const {
+    return sentinel::core::hybridRetrievalBridge(retrievalPlanningResult(), semanticSearchResult(),
+                                                 hybridRetrievalBridgePolicy_);
+}
+
+QString ApplicationController::hybridBridgeStatus() const {
+    return hybridRetrievalBridgeStatusName(hybridRetrievalBridgeResult().status);
+}
+
+QString ApplicationController::hybridBridgeReadiness() const {
+    return hybridRetrievalBridgeResult().readiness.summary;
+}
+
+QString ApplicationController::hybridBridgeSummary() const {
+    return hybridRetrievalBridgeResult().summary;
+}
+
+QString ApplicationController::hybridBridgeBudgetSummary() const {
+    return hybridRetrievalBridgeResult().budget.summary;
+}
+
+QString ApplicationController::hybridBridgeSourceSummary() const {
+    return hybridRetrievalBridgeResult().sourceSummary.summary;
+}
+
+QString ApplicationController::hybridBridgeArbitrationSummary() const {
+    return hybridRetrievalBridgeResult().arbitration.summary;
+}
+
+QString ApplicationController::hybridBridgeFallbackSummary() const {
+    return hybridRetrievalBridgeResult().fallbackSummary;
+}
+
+int ApplicationController::hybridBridgeCandidateCount() const {
+    return hybridRetrievalBridgeResult().candidates.size();
+}
+
+int ApplicationController::hybridBridgeSemanticFillCount() const {
+    return hybridRetrievalBridgeResult().budget.semanticFillCount;
+}
+
+QStringList ApplicationController::hybridBridgeCandidateSummaries() const {
+    QStringList summaries;
+    for (const auto& candidate : hybridRetrievalBridgeResult().candidates) {
+        summaries.append(QStringLiteral("%1. %2 / %3 / %4")
+                             .arg(candidate.rank)
+                             .arg(candidate.deterministic ? QStringLiteral("deterministic")
+                                                          : QStringLiteral("semantic advisory"))
+                             .arg(candidate.source, candidate.title));
+    }
+    return summaries;
+}
+
+QStringList ApplicationController::hybridBridgeChecks() const {
+    return hybridRetrievalBridgeResult().checks;
+}
+
 bool ApplicationController::localInferenceStreamingEnabled() const {
     return localInferenceStreamingEnabled_;
 }

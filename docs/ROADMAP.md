@@ -339,6 +339,65 @@ Still out of scope:
   planning mutation, prompt assembly mutation, cloud/API/vector services, raw vector UI, paths,
   debug payloads, autonomous actions, tools, and plugins.
 
+## Phase 17.13-17.15: Controlled Local Semantic Search Activation
+
+Completed. Enabled a bounded local semantic candidate-search foundation for readiness validation
+and hybrid orchestration testing.
+
+Delivered:
+
+- `SemanticSearchPolicy`, `SemanticSearchStatus`, `SemanticSearchResult`,
+  `SemanticSearchCandidate`, `SemanticSearchBudget`, `SemanticSearchSession`,
+  `SemanticSearchReadiness`, and `SemanticSearchArbitrationSummary`.
+- Local-only deterministic search over local vector persistence entries only, gated by successful
+  isolated embedding runtime output metadata.
+- Bounded candidate count, bounded timeout metadata, bounded similarity scores, stale request
+  protection, busy-state refusal, stable tie handling, and safe empty-index behavior.
+- Hybrid arbitration summaries that report semantic candidates as metadata-only while deterministic
+  retrieval remains final prompt authority.
+- Controller/view-model/QML exposure for readiness, runtime state, candidate counts, bounded
+  summaries, arbitration boundaries, and safety checks.
+- Tests for deterministic candidate ordering, limits, timeout, stale/busy handling, empty index,
+  local-only/non-authoritative enforcement, unchanged retrieval planning and prompt assembly, and
+  QML-safe exposure.
+
+Still out of scope:
+
+- Semantic prompt authority, semantic prompt injection, retrieval-planning mutation, prompt block
+  mutation, deterministic ranking override, filesystem indexing, background ingestion, cloud/API
+  providers, provider downloads, autonomous actions, tools, plugins, raw vectors, and debug payload
+  dumps.
+
+## Phase 17.16-17.18: Hybrid Retrieval Bridge Foundation
+
+Completed. Added bounded bridge metadata that lets deterministic retrieval planning optionally
+consume semantic candidate suggestions without making semantic retrieval authoritative.
+
+Delivered:
+
+- `HybridRetrievalBridgePolicy`, `HybridRetrievalBridgeStatus`,
+  `HybridRetrievalBridgeResult`, `HybridBridgeCandidate`, `HybridBridgeBudget`,
+  `HybridBridgeReadiness`, `HybridBridgeArbitration`, and `HybridBridgeSourceSummary`.
+- Deterministic-first bridge arbitration: deterministic retrieval candidates fill bridge capacity
+  first, semantic candidates can only fill unused bounded metadata capacity, and deterministic
+  candidates win ties/conflicts.
+- Safe deterministic fallback for disabled, empty, stale, busy, timed-out, or refused semantic
+  sources.
+- Explicit non-mutation checks for `RetrievalPlanningResult`, `PromptContextBlock` values, prompt
+  assembly, and semantic prompt authority.
+- Controller/view-model/QML exposure for bridge status, readiness, candidate counts,
+  deterministic-vs-semantic participation, arbitration summaries, fallback summaries, and checks.
+- Tests for deterministic authority preservation, semantic-disabled fallback, bounded candidate
+  limits, stable ordering, stale/busy/timeout behavior, no prompt/retrieval mutation, and
+  controller/view-model exposure.
+
+Still out of scope:
+
+- Semantic prompt authority, semantic prompt injection, deterministic ranking override, filesystem
+  indexing, background ingestion, cloud/API/vector providers, provider downloads, autonomous
+  actions, tools/plugins, raw vectors, raw prompt payloads, provider handles, filesystem paths, and
+  debug dumps.
+
 ## Phase 15.8: Async Local Runtime Worker Foundation
 
 Completed. Local Ollama chat inference now crosses an async worker boundary before real
