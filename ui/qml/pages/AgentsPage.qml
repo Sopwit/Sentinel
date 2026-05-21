@@ -51,14 +51,44 @@ ShellPanel {
 
             InfoRow {
                 compact: agentsPage.compact
-                label: "Task Count"
-                value: agentsPage.viewModel.agentTaskRuntimeTaskCount.toString()
+                label: "Queued Tasks"
+                value: agentsPage.viewModel.agentTaskQueueCount.toString()
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Planned / Active"
+                value: agentsPage.viewModel.agentTaskQueuePlannedCount.toString()
+                       + " / "
+                       + agentsPage.viewModel.agentTaskQueueActiveCount.toString()
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Blocked"
+                value: agentsPage.viewModel.agentTaskQueueBlockedCount.toString()
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Completed / Refused"
+                value: agentsPage.viewModel.agentTaskQueueCompletedCount.toString()
+                       + " / "
+                       + agentsPage.viewModel.agentTaskQueueRefusedCount.toString()
             }
 
             InfoRow {
                 compact: agentsPage.compact
                 label: "Latest Task"
                 value: agentsPage.viewModel.latestAgentTaskSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Lifecycle"
+                value: agentsPage.viewModel.latestAgentTaskLifecycleSummary
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }

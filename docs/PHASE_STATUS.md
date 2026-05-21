@@ -2,6 +2,30 @@
 
 ## Completed / Stable
 
+### Phase 18.4-18.6: Agent Task Queue And Lifecycle Metadata
+
+Completed. Adds deterministic queue and lifecycle metadata on top of the Phase 18 agent task
+runtime foundation without enabling execution.
+
+Scope:
+
+- Added `AgentTaskQueue`, `AgentTaskQueueStatus`, `AgentTaskQueueSummary`,
+  `AgentTaskLifecycle`, `AgentTaskLifecycleEvent`, `AgentTaskQueuePolicy`, and
+  `AgentTaskQueueResult`.
+- Static agent task runtime now keeps a deterministic in-memory metadata queue ordered by
+  priority, queue sequence, and task id.
+- Tasks can be queued, listed, marked planned, blocked, completed as metadata, or refused. Every
+  lifecycle transition records ordered metadata only.
+- Execution attempts continue to be refused safely and `executionAttempted` remains false.
+- Controller, desktop view model, and Agents page expose queue count, planned/active/blocked/
+  completed/refused counts, latest lifecycle summary, and QML-safe task summaries.
+
+Known limitation:
+
+- The queue has no real execution loop, worker, scheduler, tool/plugin authority, filesystem or
+  shell action, provider/model call, approval flow, or autonomous behavior. Future execution
+  requires a separate explicit phase.
+
 ### Phase 18.0-18.3: Agent Task Runtime Foundation
 
 Completed. Adds the agent task runtime foundation as deterministic metadata/readiness

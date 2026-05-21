@@ -157,11 +157,12 @@ Phase 6.4 adds text-only agent registry visibility. Agent panels may show static
 state summaries, and preferred-agent metadata, but must not expose autonomous toggles, execution
 buttons, setup controls, tool controls, provider calls, or background-worker controls.
 
-Phase 18.0 through Phase 18.3 add compact agent task runtime readiness visibility to Agents.
-The surface may show task runtime status, task count, latest task summary, runtime boundary
-summary, and ordered trace summaries. It must remain read-only and must not add execution buttons,
-approval controls, tool/plugin UI, filesystem or shell controls, autonomous toggles, cloud setup,
-or a broad redesign.
+Phase 18.0 through Phase 18.6 add compact agent task runtime and queue readiness visibility to
+Agents. The surface may show task runtime status, queue count, planned/active/blocked/completed/
+refused counts, latest task summary, latest lifecycle summary, runtime boundary summary, and
+ordered trace summaries. It must remain read-only and must not add execution buttons, approval
+controls, tool/plugin UI, filesystem or shell controls, autonomous toggles, cloud setup, or a
+broad redesign.
 
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic

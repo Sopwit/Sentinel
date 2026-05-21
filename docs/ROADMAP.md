@@ -281,6 +281,29 @@ Still out of scope:
   background workers, cloud/API keys, provider/model execution, autonomous loops, semantic
   authority expansion, and broad UI redesign.
 
+## Phase 18.4-18.6: Agent Task Queue And Lifecycle Metadata
+
+Completed. Added deterministic task queue and lifecycle metadata without expanding runtime
+authority.
+
+Delivered:
+
+- Value-only queue, queue status, queue summary, lifecycle, lifecycle event, queue policy, and
+  queue result records.
+- Static metadata queue ordered by priority, queue sequence, and task id.
+- Metadata-only transitions for queued, planned, blocked, completed-as-metadata, and refused
+  tasks.
+- Controller/view-model exposure for queue counts, planned/active/blocked/completed/refused
+  counts, latest lifecycle summary, and QML-safe task summaries.
+- Compact read-only Agents page queue/readiness metadata with no execution, approval, tool,
+  plugin, shell, filesystem, or background-worker controls.
+
+Still out of scope:
+
+- Real task execution, autonomous loops, background workers, approval flows, tools/plugins,
+  filesystem or system actions, shell/subprocess execution, provider/model calls, cloud/API keys,
+  and broad UI redesign.
+
 Still out of scope:
 
 - Semantic ranking/search, real embedding calls, vector database writes, prompt mutation, semantic

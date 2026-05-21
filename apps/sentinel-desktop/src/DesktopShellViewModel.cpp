@@ -373,8 +373,40 @@ int DesktopShellViewModel::agentTaskRuntimeTaskCount() const {
     return controller_.agentTaskRuntimeTaskCount();
 }
 
+int DesktopShellViewModel::agentTaskQueueCount() const {
+    return controller_.agentTaskQueueCount();
+}
+
+int DesktopShellViewModel::agentTaskQueueActiveCount() const {
+    return controller_.agentTaskQueueActiveCount();
+}
+
+int DesktopShellViewModel::agentTaskQueuePlannedCount() const {
+    return controller_.agentTaskQueuePlannedCount();
+}
+
+int DesktopShellViewModel::agentTaskQueueBlockedCount() const {
+    return controller_.agentTaskQueueBlockedCount();
+}
+
+int DesktopShellViewModel::agentTaskQueueCompletedCount() const {
+    return controller_.agentTaskQueueCompletedCount();
+}
+
+int DesktopShellViewModel::agentTaskQueueRefusedCount() const {
+    return controller_.agentTaskQueueRefusedCount();
+}
+
 QString DesktopShellViewModel::latestAgentTaskSummary() const {
     return controller_.latestAgentTaskSummary();
+}
+
+QString DesktopShellViewModel::latestAgentTaskLifecycleSummary() const {
+    return controller_.latestAgentTaskLifecycleSummary();
+}
+
+QStringList DesktopShellViewModel::agentTaskQueueSummaries() const {
+    return controller_.agentTaskQueueSummaries();
 }
 
 QStringList DesktopShellViewModel::agentTaskTraceSummaries() const {

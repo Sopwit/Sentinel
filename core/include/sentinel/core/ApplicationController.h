@@ -139,7 +139,15 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString agentTaskRuntimeStatus READ agentTaskRuntimeStatus CONSTANT)
     Q_PROPERTY(QString agentTaskRuntimeSummary READ agentTaskRuntimeSummary CONSTANT)
     Q_PROPERTY(int agentTaskRuntimeTaskCount READ agentTaskRuntimeTaskCount CONSTANT)
+    Q_PROPERTY(int agentTaskQueueCount READ agentTaskQueueCount CONSTANT)
+    Q_PROPERTY(int agentTaskQueueActiveCount READ agentTaskQueueActiveCount CONSTANT)
+    Q_PROPERTY(int agentTaskQueuePlannedCount READ agentTaskQueuePlannedCount CONSTANT)
+    Q_PROPERTY(int agentTaskQueueBlockedCount READ agentTaskQueueBlockedCount CONSTANT)
+    Q_PROPERTY(int agentTaskQueueCompletedCount READ agentTaskQueueCompletedCount CONSTANT)
+    Q_PROPERTY(int agentTaskQueueRefusedCount READ agentTaskQueueRefusedCount CONSTANT)
     Q_PROPERTY(QString latestAgentTaskSummary READ latestAgentTaskSummary CONSTANT)
+    Q_PROPERTY(QString latestAgentTaskLifecycleSummary READ latestAgentTaskLifecycleSummary CONSTANT)
+    Q_PROPERTY(QStringList agentTaskQueueSummaries READ agentTaskQueueSummaries CONSTANT)
     Q_PROPERTY(QStringList agentTaskTraceSummaries READ agentTaskTraceSummaries CONSTANT)
     Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
     Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
@@ -819,7 +827,15 @@ public:
     QString agentTaskRuntimeStatus() const;
     QString agentTaskRuntimeSummary() const;
     int agentTaskRuntimeTaskCount() const;
+    int agentTaskQueueCount() const;
+    int agentTaskQueueActiveCount() const;
+    int agentTaskQueuePlannedCount() const;
+    int agentTaskQueueBlockedCount() const;
+    int agentTaskQueueCompletedCount() const;
+    int agentTaskQueueRefusedCount() const;
     QString latestAgentTaskSummary() const;
+    QString latestAgentTaskLifecycleSummary() const;
+    QStringList agentTaskQueueSummaries() const;
     QStringList agentTaskTraceSummaries() const;
     QString localRuntimeStatus() const;
     QString localRuntimeHealth() const;

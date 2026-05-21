@@ -352,10 +352,18 @@ void DesktopShellViewModelTest::exposesAgentTaskRuntimeMetadata() {
 
     QCOMPARE(fixture.viewModel.agentTaskRuntimeStatus(), QStringLiteral("Refusing Execution"));
     QCOMPARE(fixture.viewModel.agentTaskRuntimeTaskCount(), 6);
+    QCOMPARE(fixture.viewModel.agentTaskQueueCount(), 6);
+    QCOMPARE(fixture.viewModel.agentTaskQueuePlannedCount(), 6);
+    QCOMPARE(fixture.viewModel.agentTaskQueueActiveCount(), 0);
+    QCOMPARE(fixture.viewModel.agentTaskQueueBlockedCount(), 0);
+    QCOMPARE(fixture.viewModel.agentTaskQueueCompletedCount(), 0);
+    QCOMPARE(fixture.viewModel.agentTaskQueueRefusedCount(), 0);
     QVERIFY(
         fixture.viewModel.agentTaskRuntimeSummary().contains(QStringLiteral("metadata planning")));
     QVERIFY(fixture.viewModel.latestAgentTaskSummary().contains(
         QStringLiteral("Prepare Export Action")));
+    QVERIFY(fixture.viewModel.latestAgentTaskLifecycleSummary().contains(QStringLiteral("queued")));
+    QCOMPARE(fixture.viewModel.agentTaskQueueSummaries().size(), 6);
     QCOMPARE(fixture.viewModel.agentTaskTraceSummaries().size(), 3);
     QVERIFY(fixture.viewModel.agentTaskTraceSummaries().last().contains(
         QStringLiteral("Execution Boundary")));
@@ -1125,7 +1133,15 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("agentTaskRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("agentTaskRuntimeSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("agentTaskRuntimeTaskCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentTaskQueueCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentTaskQueueActiveCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentTaskQueuePlannedCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentTaskQueueBlockedCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentTaskQueueCompletedCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentTaskQueueRefusedCount"), QByteArrayLiteral("int")},
         {QStringLiteral("latestAgentTaskSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("latestAgentTaskLifecycleSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("agentTaskQueueSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("agentTaskTraceSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("localRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeHealth"), QByteArrayLiteral("QString")},

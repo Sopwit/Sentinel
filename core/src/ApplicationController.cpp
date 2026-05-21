@@ -1121,11 +1121,52 @@ int ApplicationController::agentTaskRuntimeTaskCount() const {
     return agentTaskRuntime_ ? agentTaskRuntime_->runtimeStatus().taskCount : 0;
 }
 
+int ApplicationController::agentTaskQueueCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->queue().summary.totalCount : 0;
+}
+
+int ApplicationController::agentTaskQueueActiveCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->queue().summary.activeCount : 0;
+}
+
+int ApplicationController::agentTaskQueuePlannedCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->queue().summary.plannedCount : 0;
+}
+
+int ApplicationController::agentTaskQueueBlockedCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->queue().summary.blockedCount : 0;
+}
+
+int ApplicationController::agentTaskQueueCompletedCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->queue().summary.completedCount : 0;
+}
+
+int ApplicationController::agentTaskQueueRefusedCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->queue().summary.refusedCount : 0;
+}
+
 QString ApplicationController::latestAgentTaskSummary() const {
     if (!agentTaskRuntime_ || agentTaskRuntime_->tasks().isEmpty()) {
         return QStringLiteral("No agent task metadata available.");
     }
     return agentTaskSummary(agentTaskRuntime_->tasks().last());
+}
+
+QString ApplicationController::latestAgentTaskLifecycleSummary() const {
+    if (!agentTaskRuntime_) {
+        return QStringLiteral("No agent task lifecycle metadata available.");
+    }
+
+    const auto latest = agentTaskRuntime_->queue().summary.latestLifecycleSummary;
+    return latest.isEmpty() ? QStringLiteral("No agent task lifecycle metadata available.")
+                            : latest;
+}
+
+QStringList ApplicationController::agentTaskQueueSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return agentTaskQueueTaskSummaries(agentTaskRuntime_->queue());
 }
 
 QStringList ApplicationController::agentTaskTraceSummaries() const {
