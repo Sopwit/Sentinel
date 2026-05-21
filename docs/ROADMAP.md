@@ -2448,6 +2448,40 @@ Still out of scope:
   filesystem scanning, downloads, cloud/API calls, background workers, path pickers, start/stop
   controls, microphone controls, playback controls, and autonomous voice loops.
 
+## Phase 18.19-18.21: Whisper STT Local Runtime Foundation
+
+Completed. Added a controlled Whisper transcription boundary for future local audio-file STT
+without enabling real transcription.
+
+Delivered:
+
+- Value-only Whisper transcription policy, status, request, result, session, budget, readiness,
+  safety, fallback, and trace records.
+- `IWhisperTranscriptionClient`, `NullWhisperTranscriptionClient`, and a bounded
+  `LocalWhisperTranscriptionClient` skeleton that validates metadata and refuses before
+  subprocess execution.
+- Deterministic refusal for disabled default state, missing binary/model/audio metadata,
+  unsafe/non-local path-style input, invalid timeout budget, and runtime privilege requests.
+- Safety summaries preserving `executionAttempted = false` and blocking microphone capture,
+  playback, streaming STT, subprocess execution, cloud/API calls, downloads, filesystem scanning,
+  prompt injection, and automatic chat send.
+- QML-safe Settings and Agents exposure for compact STT status, readiness, last-result, fallback,
+  safety, and trace summaries with no record button, file picker, live microphone UI, or enabled
+  transcribe action.
+
+Future activation flow:
+
+- A later controlled audio-file transcription phase must explicitly enable bounded execution and
+  tests.
+- A later microphone/live STT phase must separately define permission prompts, capture lifecycle,
+  cancellation, UI controls, and privacy/safety tests.
+
+Still out of scope:
+
+- Real STT inference, Whisper subprocess execution, microphone capture, live recording, audio
+  playback, streaming, cloud/API calls, downloads, filesystem scanning, prompt injection,
+  automatic chat send, path/file picker UI, and autonomous voice loops.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

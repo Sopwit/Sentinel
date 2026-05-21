@@ -341,6 +341,18 @@ class DesktopShellViewModel final : public QObject {
                    voiceConfigurationChanged)
     Q_PROPERTY(QString whisperRuntimePathSummary READ whisperRuntimePathSummary NOTIFY
                    voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionStatus READ whisperTranscriptionStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionReadinessSummary READ
+                   whisperTranscriptionReadinessSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionLastSummary READ whisperTranscriptionLastSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionFallbackSummary READ
+                   whisperTranscriptionFallbackSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionSafetySummary READ whisperTranscriptionSafetySummary
+                   NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList whisperTranscriptionTraceSummaries READ
+                   whisperTranscriptionTraceSummaries NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString piperRuntimeStatus READ piperRuntimeStatus NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString piperRuntimeReadinessSummary READ piperRuntimeReadinessSummary NOTIFY
                    voiceConfigurationChanged)
@@ -1107,6 +1119,12 @@ public:
     QString whisperRuntimeStatus() const;
     QString whisperRuntimeReadinessSummary() const;
     QString whisperRuntimePathSummary() const;
+    QString whisperTranscriptionStatus() const;
+    QString whisperTranscriptionReadinessSummary() const;
+    QString whisperTranscriptionLastSummary() const;
+    QString whisperTranscriptionFallbackSummary() const;
+    QString whisperTranscriptionSafetySummary() const;
+    QStringList whisperTranscriptionTraceSummaries() const;
     QString piperRuntimeStatus() const;
     QString piperRuntimeReadinessSummary() const;
     QString piperRuntimePathSummary() const;

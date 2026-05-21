@@ -2,6 +2,33 @@
 
 ## Completed / Stable
 
+### Phase 18.19-18.21: Whisper STT Local Runtime Foundation
+
+Completed. Adds a controlled Whisper speech-to-text runtime boundary for future local audio-file
+transcription without enabling microphone capture, live recording, playback, streaming STT, or
+Whisper subprocess execution.
+
+Scope:
+
+- Added Whisper transcription policy/status/request/result/session/budget/readiness/safety/
+  fallback/trace metadata plus `IWhisperTranscriptionClient`.
+- Added `NullWhisperTranscriptionClient` and a bounded `LocalWhisperTranscriptionClient` skeleton
+  that validates metadata and refuses before execution.
+- Default behavior is disabled. Missing binary, missing model, missing audio, unsafe/non-local
+  path-style input, invalid timeout budget, and runtime privilege requests produce deterministic
+  refusal/fallback metadata.
+- Safety reports keep `executionAttempted = false` and block subprocess execution, microphone
+  capture, playback, streaming, cloud calls, downloads, filesystem scanning, prompt injection, and
+  automatic chat send.
+- Controller, desktop view model, Settings, and Agents expose QML-safe Whisper STT status,
+  readiness, last-result, fallback, safety, and trace summaries only.
+
+Known limitation:
+
+- The boundary does not transcribe audio yet. A future controlled audio-file transcription phase
+  must explicitly enable execution gates, and any later microphone/live STT phase must separately
+  define capture permissions, lifecycle, UI controls, and tests.
+
 ### Phase 18.16-18.18: Voice Runtime Permission And Path Configuration Foundation
 
 Completed. Adds deterministic local-only voice runtime readiness metadata for future Piper and

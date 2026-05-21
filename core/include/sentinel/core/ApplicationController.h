@@ -40,6 +40,7 @@
 #include "sentinel/core/RuntimeSafety.h"
 #include "sentinel/core/SemanticRetrieval.h"
 #include "sentinel/core/Voice.h"
+#include "sentinel/core/WhisperTranscription.h"
 
 #include <QObject>
 #include <QStringList>
@@ -350,6 +351,18 @@ class ApplicationController final : public QObject {
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString whisperPreparationReadinessSummary READ whisperPreparationReadinessSummary
                    NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionStatus READ whisperTranscriptionStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionReadinessSummary READ
+                   whisperTranscriptionReadinessSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionLastSummary READ whisperTranscriptionLastSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionFallbackSummary READ
+                   whisperTranscriptionFallbackSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionSafetySummary READ whisperTranscriptionSafetySummary
+                   NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList whisperTranscriptionTraceSummaries READ
+                   whisperTranscriptionTraceSummaries NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
@@ -1043,6 +1056,12 @@ public:
     QString whisperRuntimeStatus() const;
     QString whisperRuntimeReadinessSummary() const;
     QString whisperRuntimePathSummary() const;
+    QString whisperTranscriptionStatus() const;
+    QString whisperTranscriptionReadinessSummary() const;
+    QString whisperTranscriptionLastSummary() const;
+    QString whisperTranscriptionFallbackSummary() const;
+    QString whisperTranscriptionSafetySummary() const;
+    QStringList whisperTranscriptionTraceSummaries() const;
     QString piperRuntimeStatus() const;
     QString piperRuntimeReadinessSummary() const;
     QString piperRuntimePathSummary() const;
@@ -1518,6 +1537,9 @@ private:
     WhisperRuntimeDescriptor currentWhisperRuntimeDescriptor() const;
     PiperRuntimeDescriptor currentPiperRuntimeDescriptor() const;
     VoiceRuntimeReadinessReport currentVoiceRuntimeReadinessReport() const;
+    WhisperTranscriptionConfig currentWhisperTranscriptionConfig() const;
+    WhisperTranscriptionRequest currentWhisperTranscriptionRequest() const;
+    WhisperTranscriptionReadiness currentWhisperTranscriptionReadiness() const;
 
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
@@ -1551,6 +1573,7 @@ private:
     std::unique_ptr<IVoiceRuntimeCoordinator> voiceRuntimeCoordinator_;
     std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment_;
     std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider_;
+    std::unique_ptr<IWhisperTranscriptionClient> whisperTranscriptionClient_;
     std::unique_ptr<IMemoryStore> memoryStore_;
     std::unique_ptr<IMemoryCandidateStore> memoryCandidateStore_;
     MemoryCandidateReviewResult latestMemoryCandidateReviewResult_;
@@ -1618,6 +1641,7 @@ private:
     LocalInferenceStreamResult latestLocalInferenceStreamResult_;
     bool piperFileOutputExecutionEnabled_ = false;
     PiperTtsResult latestPiperTtsResult_;
+    WhisperTranscriptionResult latestWhisperTranscriptionResult_;
     QString piperBinaryPath_;
     QString piperModelPath_;
     QString whisperBinaryPath_;

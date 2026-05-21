@@ -187,6 +187,13 @@ disabled by default, not actively running, and readiness-only states clear. The 
 start/stop buttons, microphone controls, playback controls, activation toggles, downloads, path
 pickers, provider setup, tool/plugin controls, autonomous toggles, cloud setup, or a redesign.
 
+Phase 18.19 through Phase 18.21 add compact Whisper STT boundary visibility to Settings and
+Agents. The surface may show Whisper transcription status, readiness, last-result summary,
+fallback summary, safety summary, and trace summaries. It must remain summary-only and must not
+add a record button, live microphone UI, file picker, enabled transcribe action, playback control,
+prompt-injection control, automatic-chat-send control, subprocess control, cloud setup, or a
+redesign.
+
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool
