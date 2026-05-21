@@ -1864,6 +1864,67 @@ VoicePipelineResult ApplicationController::currentVoicePipelineResult() const {
                : VoicePipelineResult{};
 }
 
+VoicePipelineSessionResult ApplicationController::currentVoicePipelineSessionResult() const {
+    const auto whisperReadiness = currentWhisperTranscriptionReadiness();
+    VoicePipelineSessionReadiness transcription;
+    transcription.step = VoicePipelineSessionStep::TranscriptionReadiness;
+    transcription.ready = whisperReadiness.ready;
+    transcription.status = whisperReadiness.ready
+        ? VoicePipelineSessionStatus::ReadyMetadata
+        : (whisperReadiness.status == WhisperTranscriptionStatus::UnsafePath ||
+           whisperReadiness.status == WhisperTranscriptionStatus::Refused ||
+           whisperReadiness.status == WhisperTranscriptionStatus::SafetyBlocked
+               ? VoicePipelineSessionStatus::Refused
+               : VoicePipelineSessionStatus::Blocked);
+    transcription.summary =
+        whisperReadiness.ready
+            ? QStringLiteral("Whisper transcription readiness is available as metadata only; "
+                             "Whisper execution, microphone capture, prompt injection, and chat "
+                             "auto-send remain disabled.")
+            : QStringLiteral("Whisper transcription readiness blocks the voice pipeline: %1. No "
+                             "Whisper execution, microphone capture, transcript injection, or "
+                             "chat auto-send occurs.")
+                  .arg(whisperTranscriptionStatusName(whisperReadiness.status));
+
+    const auto chatStatus = localChatInferenceStatus();
+    VoicePipelineSessionReadiness chat;
+    chat.step = VoicePipelineSessionStep::ChatInferenceReadiness;
+    chat.ready = chatStatus == QStringLiteral("Enabled");
+    chat.status = chat.ready ? VoicePipelineSessionStatus::ReadyMetadata
+                             : (chatStatus == QStringLiteral("Blocked") ||
+                                        chatStatus == QStringLiteral("Invalid Model")
+                                    ? VoicePipelineSessionStatus::Refused
+                                    : VoicePipelineSessionStatus::Blocked);
+    chat.summary =
+        chat.ready
+            ? QStringLiteral("Local chat inference readiness is available for guarded metadata "
+                             "orchestration only; voice never auto-sends a transcript.")
+            : QStringLiteral("Local chat inference readiness blocks the voice pipeline: %1. %2")
+                  .arg(chatStatus, localChatInferenceSummary());
+
+    const auto piperReadiness = currentPiperSynthesisReadiness();
+    VoicePipelineSessionReadiness synthesis;
+    synthesis.step = VoicePipelineSessionStep::SynthesisReadiness;
+    synthesis.ready = piperReadiness.ready;
+    synthesis.status = piperReadiness.ready
+        ? VoicePipelineSessionStatus::ReadyMetadata
+        : (piperReadiness.status == PiperSynthesisStatus::UnsafePath ||
+           piperReadiness.status == PiperSynthesisStatus::Refused ||
+           piperReadiness.status == PiperSynthesisStatus::SafetyBlocked
+               ? VoicePipelineSessionStatus::Refused
+               : VoicePipelineSessionStatus::Blocked);
+    synthesis.summary =
+        piperReadiness.ready
+            ? QStringLiteral("Piper synthesis readiness is available as metadata only; Piper "
+                             "execution and playback remain disabled.")
+            : QStringLiteral("Piper synthesis readiness blocks the voice pipeline: %1. No Piper "
+                             "execution, audio generation, playback, or chat/audio injection "
+                             "occurs.")
+                  .arg(piperSynthesisStatusName(piperReadiness.status));
+
+    return buildVoicePipelineSessionResult(transcription, chat, synthesis);
+}
+
 VoiceRuntimeSummary ApplicationController::currentVoiceRuntimeSummary() const {
     return voiceRuntimeCoordinator_ ? voiceRuntimeCoordinator_->runtimeSummary()
                                     : VoiceRuntimeSummary{};
@@ -1891,6 +1952,46 @@ QString ApplicationController::voicePipelineSummary() const {
 
 QStringList ApplicationController::voicePipelineTraceSummaries() const {
     return sentinel::core::voicePipelineTraceSummaries(currentVoicePipelineResult().traces);
+}
+
+QString ApplicationController::voicePipelineSessionStatus() const {
+    return voicePipelineSessionStatusName(currentVoicePipelineSessionResult().status);
+}
+
+QString ApplicationController::voicePipelineSessionSummary() const {
+    return voicePipelineSessionSummaryText(currentVoicePipelineSessionResult().summary);
+}
+
+QStringList ApplicationController::voicePipelineSessionStageReadinessSummaries() const {
+    return voicePipelineSessionStepSummaries(currentVoicePipelineSessionResult().steps);
+}
+
+QStringList ApplicationController::voicePipelineSessionTraceSummaries() const {
+    return sentinel::core::voicePipelineSessionTraceSummaries(
+        currentVoicePipelineSessionResult().traces);
+}
+
+QString ApplicationController::voicePipelineSessionFallbackSummary() const {
+    return sentinel::core::voicePipelineSessionFallbackSummary(
+        currentVoicePipelineSessionResult().fallback);
+}
+
+QString ApplicationController::voicePipelineSessionSafetySummary() const {
+    return sentinel::core::voicePipelineSessionSafetySummary(
+        currentVoicePipelineSessionResult().safetyReport);
+}
+
+QStringList ApplicationController::voicePipelineSessionSafetyChecks() const {
+    return sentinel::core::voicePipelineSessionSafetyChecks(
+        currentVoicePipelineSessionResult().safetyReport);
+}
+
+int ApplicationController::voicePipelineSessionReadyStageCount() const {
+    return currentVoicePipelineSessionResult().summary.readyStageCount;
+}
+
+int ApplicationController::voicePipelineSessionBlockedStageCount() const {
+    return currentVoicePipelineSessionResult().summary.blockedStageCount;
 }
 
 QString ApplicationController::voiceRuntimeStatus() const {

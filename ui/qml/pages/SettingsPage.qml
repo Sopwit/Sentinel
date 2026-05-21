@@ -1027,6 +1027,20 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
+                    label: "Voice Pipeline"
+                    value: settingsPage.viewModel.voicePipelineSessionStatus + " / " + settingsPage.viewModel.voicePipelineSessionSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Pipeline Safety"
+                    value: settingsPage.viewModel.voicePipelineSessionSafetySummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
                     label: "Configured / Missing"
                     value: settingsPage.viewModel.voiceRuntimeConfiguredCount.toString()
                            + " / "

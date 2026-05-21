@@ -1309,6 +1309,31 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QVERIFY(controller.voicePipelineTraceSummaries()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("transcribing-placeholder")));
+    const auto chatCountBeforeVoicePipeline = controller.chatHistory().size();
+    const auto voiceSession = controller.currentVoicePipelineSessionResult();
+    QCOMPARE(voiceSession.executionAttempted, false);
+    QVERIFY(!voiceSession.safetyReport.executionAttempted);
+    QVERIFY(!voiceSession.safetyReport.microphoneCaptureAllowed);
+    QVERIFY(!voiceSession.safetyReport.audioPlaybackAllowed);
+    QVERIFY(!voiceSession.safetyReport.whisperExecutionAllowed);
+    QVERIFY(!voiceSession.safetyReport.piperExecutionAllowed);
+    QCOMPARE(controller.chatHistory().size(), chatCountBeforeVoicePipeline);
+    QCOMPARE(controller.voicePipelineSessionStatus(), QStringLiteral("fallback"));
+    QVERIFY(controller.voicePipelineSessionSummary().contains(QStringLiteral("execution attempted: no")));
+    QCOMPARE(controller.voicePipelineSessionStageReadinessSummaries().size(), 5);
+    QVERIFY(controller.voicePipelineSessionStageReadinessSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("transcription-readiness")));
+    QVERIFY(controller.voicePipelineSessionTraceSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("no transcript")));
+    QVERIFY(controller.voicePipelineSessionFallbackSummary().contains(
+        QStringLiteral("no chat send")));
+    QVERIFY(controller.voicePipelineSessionSafetySummary().contains(
+        QStringLiteral("no-execution guarantees")));
+    QCOMPARE(controller.voicePipelineSessionSafetyChecks().size(), 8);
+    QCOMPARE(controller.voicePipelineSessionReadyStageCount(), 2);
+    QCOMPARE(controller.voicePipelineSessionBlockedStageCount(), 2);
     QCOMPARE(controller.voiceRuntimeStatus(), QStringLiteral("Unavailable"));
     QVERIFY(controller.voiceRuntimeSummary().contains(QStringLiteral("microphone disabled")));
     QCOMPARE(controller.voiceRuntimeCheckSummaries().size(), 7);

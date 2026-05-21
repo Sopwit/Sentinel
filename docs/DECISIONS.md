@@ -2538,6 +2538,39 @@ Boundary rules:
 - Future controlled synthesis and future playback/audio-device support require separate explicit
   phases with permission, sandbox, lifecycle, UI, and regression tests.
 
+## 99. Voice Pipeline Session Orchestration Is Readiness Metadata Only
+
+Decision: Phase 18.25 through Phase 18.27 add deterministic voice pipeline session orchestration
+metadata that composes Whisper STT readiness, local chat inference readiness, and Piper TTS
+readiness without enabling voice execution.
+
+Reason: The app now has separate readiness foundations for voice runtime configuration, Whisper
+STT, local chat inference, and Piper TTS. A future voice feature needs an ordered session lifecycle
+and safe failure visibility before any microphone, playback, or executable STT/TTS work can be
+considered.
+
+Boundary rules:
+
+- `VoicePipelineSession`, id/status/policy/result/step/trace/budget/readiness/safety/fallback/
+  summary records are value metadata.
+- The deterministic lifecycle is prepare, await audio input, transcription readiness, chat
+  inference readiness, synthesis readiness, and completion/refusal/fallback.
+- Missing Whisper readiness blocks transcription. Missing local chat/model readiness blocks
+  inference. Missing Piper readiness blocks synthesis.
+- Unsafe stage transitions become refused/fallback metadata only.
+- `ApplicationController` derives the session from existing readiness/status values and does not
+  invoke Whisper, Piper, local inference workers, chat send, transcript injection, playback, or
+  subprocess execution.
+- `executionAttempted` remains false. Microphone capture, playback, Whisper execution, Piper
+  execution, subprocess execution, voice chat auto-send, transcript auto-injection, background
+  workers, and autonomous loops are blocked.
+- Controller and view-model exposure remains QML-safe strings, counts, and string lists. No raw
+  filesystem paths, client/provider handles, transcript payloads, audio paths, or runtime objects
+  are exposed.
+- Future controlled audio-file STT, controlled synthesis, and live voice phases require separate
+  explicit scopes, permission/sandbox gates, lifecycle ownership, UI controls, and regression
+  tests.
+
 ## 94. Agent Task Queue Is Metadata-Only
 
 Decision: Phase 18.4 through Phase 18.6 add an agent task queue and lifecycle read model, but the

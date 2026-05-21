@@ -110,6 +110,48 @@ QString voicePipelineStatusName(VoicePipelineStatus status) {
     return QStringLiteral("pending");
 }
 
+QString voicePipelineSessionStatusName(VoicePipelineSessionStatus status) {
+    switch (status) {
+    case VoicePipelineSessionStatus::Disabled:
+        return QStringLiteral("disabled");
+    case VoicePipelineSessionStatus::ReadyMetadata:
+        return QStringLiteral("ready-metadata");
+    case VoicePipelineSessionStatus::Blocked:
+        return QStringLiteral("blocked");
+    case VoicePipelineSessionStatus::Refused:
+        return QStringLiteral("refused");
+    case VoicePipelineSessionStatus::Fallback:
+        return QStringLiteral("fallback");
+    case VoicePipelineSessionStatus::Completed:
+        return QStringLiteral("completed");
+    }
+
+    return QStringLiteral("disabled");
+}
+
+QString voicePipelineSessionStepName(VoicePipelineSessionStep step) {
+    switch (step) {
+    case VoicePipelineSessionStep::Prepare:
+        return QStringLiteral("prepare");
+    case VoicePipelineSessionStep::AwaitAudioInput:
+        return QStringLiteral("await-audio-input");
+    case VoicePipelineSessionStep::TranscriptionReadiness:
+        return QStringLiteral("transcription-readiness");
+    case VoicePipelineSessionStep::ChatInferenceReadiness:
+        return QStringLiteral("chat-inference-readiness");
+    case VoicePipelineSessionStep::SynthesisReadiness:
+        return QStringLiteral("synthesis-readiness");
+    case VoicePipelineSessionStep::Completion:
+        return QStringLiteral("completion");
+    case VoicePipelineSessionStep::Refusal:
+        return QStringLiteral("refusal");
+    case VoicePipelineSessionStep::Fallback:
+        return QStringLiteral("fallback");
+    }
+
+    return QStringLiteral("prepare");
+}
+
 QString voiceBinaryStatusName(VoiceBinaryStatus status) {
     switch (status) {
     case VoiceBinaryStatus::Missing:
@@ -395,6 +437,252 @@ QString safeVoicePipelineSummary(const VoicePipelineResult& result) {
     return QStringLiteral("Voice pipeline %1 (%2 traces).")
         .arg(voicePipelineStatusName(result.status))
         .arg(result.traces.size());
+}
+
+QString voicePipelineSessionReadinessSummary(
+    const VoicePipelineSessionReadiness& readiness) {
+    const auto summary = readiness.summary.trimmed().isEmpty()
+                             ? QStringLiteral("No voice pipeline readiness metadata available.")
+                             : readiness.summary.trimmed();
+    return QStringLiteral("%1 [%2]: %3")
+        .arg(voicePipelineSessionStepName(readiness.step),
+             voicePipelineSessionStatusName(readiness.status), summary);
+}
+
+QString voicePipelineSessionStepSummary(const VoicePipelineSessionStepRecord& step) {
+    const auto summary = step.summary.trimmed().isEmpty()
+                             ? QStringLiteral("No voice pipeline step metadata available.")
+                             : step.summary.trimmed();
+    return QStringLiteral("%1 [%2]: %3")
+        .arg(voicePipelineSessionStepName(step.step),
+             voicePipelineSessionStatusName(step.status), summary);
+}
+
+QStringList voicePipelineSessionStepSummaries(
+    const QList<VoicePipelineSessionStepRecord>& steps) {
+    QStringList summaries;
+    for (const auto& step : steps) {
+        summaries.append(voicePipelineSessionStepSummary(step));
+    }
+    return summaries;
+}
+
+QString voicePipelineSessionTraceSummary(const VoicePipelineSessionTrace& trace) {
+    const auto summary = trace.summary.trimmed().isEmpty()
+                             ? QStringLiteral("No voice pipeline trace metadata available.")
+                             : trace.summary.trimmed();
+    return QStringLiteral("%1. %2 [%3]: %4")
+        .arg(trace.sequence)
+        .arg(voicePipelineSessionStepName(trace.step),
+             voicePipelineSessionStatusName(trace.status), summary);
+}
+
+QStringList voicePipelineSessionTraceSummaries(
+    const QList<VoicePipelineSessionTrace>& traces) {
+    QStringList summaries;
+    for (const auto& trace : traces) {
+        summaries.append(voicePipelineSessionTraceSummary(trace));
+    }
+    return summaries;
+}
+
+QString voicePipelineSessionSafetySummary(const VoicePipelineSessionSafetyReport& report) {
+    if (!report.summary.trimmed().isEmpty()) {
+        return report.summary.trimmed();
+    }
+
+    return QStringLiteral("Voice pipeline session safety status: %1.").arg(report.status);
+}
+
+QStringList voicePipelineSessionSafetyChecks(const VoicePipelineSessionSafetyReport& report) {
+    if (!report.checks.isEmpty()) {
+        return report.checks;
+    }
+
+    return {
+        QStringLiteral("Execution attempted: no"),
+        QStringLiteral("Microphone capture: blocked"),
+        QStringLiteral("Audio playback: blocked"),
+        QStringLiteral("Whisper execution: blocked"),
+        QStringLiteral("Piper execution: blocked"),
+        QStringLiteral("Subprocess execution: blocked"),
+        QStringLiteral("Voice chat auto-send and transcript auto-injection: blocked"),
+        QStringLiteral("Background workers and autonomous loops: blocked"),
+    };
+}
+
+QString voicePipelineSessionFallbackSummary(const VoicePipelineSessionFallback& fallback) {
+    if (!fallback.summary.trimmed().isEmpty()) {
+        return fallback.summary.trimmed();
+    }
+
+    return QStringLiteral("Voice pipeline session fallback is metadata only.");
+}
+
+QString voicePipelineSessionSummaryText(const VoicePipelineSessionSummary& summary) {
+    if (!summary.summary.trimmed().isEmpty()) {
+        return summary.summary.trimmed();
+    }
+
+    return QStringLiteral("%1 voice pipeline session: %2 ready, %3 blocked, %4 refused, %5 "
+                          "traces.")
+        .arg(voicePipelineSessionStatusName(summary.status))
+        .arg(summary.readyStageCount)
+        .arg(summary.blockedStageCount)
+        .arg(summary.refusedStageCount)
+        .arg(summary.traceCount);
+}
+
+VoicePipelineSessionSafetyReport voicePipelineSessionSafetyReport(
+    const VoicePipelineSessionPolicy& policy) {
+    VoicePipelineSessionSafetyReport report;
+    const auto blocked = !policy.enabled || !policy.metadataOnly || !policy.localOnly ||
+                         policy.microphoneCaptureAllowed || policy.audioPlaybackAllowed ||
+                         policy.whisperExecutionAllowed || policy.piperExecutionAllowed ||
+                         policy.subprocessExecutionAllowed || policy.voiceChatAutoSendAllowed ||
+                         policy.transcriptAutoInjectionAllowed || policy.backgroundWorkersAllowed ||
+                         policy.autonomousLoopsAllowed;
+    report.status = blocked ? QStringLiteral("Blocked") : QStringLiteral("Metadata Only");
+    report.summary =
+        QStringLiteral("Voice pipeline session safety preserves no-execution guarantees: "
+                       "execution attempted: no; microphone capture, playback, Whisper, Piper, "
+                       "subprocesses, voice chat auto-send, transcript injection, background "
+                       "workers, and autonomous loops are blocked.");
+    report.executionAllowed = false;
+    report.executionAttempted = false;
+    report.microphoneCaptureAllowed = false;
+    report.audioPlaybackAllowed = false;
+    report.whisperExecutionAllowed = false;
+    report.piperExecutionAllowed = false;
+    report.subprocessExecutionAllowed = false;
+    report.voiceChatAutoSendAllowed = false;
+    report.transcriptAutoInjectionAllowed = false;
+    report.backgroundWorkersAllowed = false;
+    report.autonomousLoopsAllowed = false;
+    report.checks = voicePipelineSessionSafetyChecks(report);
+    return report;
+}
+
+VoicePipelineSessionResult buildVoicePipelineSessionResult(
+    const VoicePipelineSessionReadiness& transcriptionReadiness,
+    const VoicePipelineSessionReadiness& chatInferenceReadiness,
+    const VoicePipelineSessionReadiness& synthesisReadiness,
+    const VoicePipelineSessionPolicy& policy,
+    const VoicePipelineSessionBudget& budget) {
+    VoicePipelineSessionResult result;
+    result.session.policy = policy;
+    result.session.budget = budget;
+    result.safetyReport = voicePipelineSessionSafetyReport(policy);
+    result.executionAttempted = false;
+
+    const auto appendStep = [&result](VoicePipelineSessionStep step,
+                                      VoicePipelineSessionStatus status, bool ready,
+                                      const QString& summary) {
+        result.steps.append(VoicePipelineSessionStepRecord{step, status, ready, summary});
+        result.traces.append(VoicePipelineSessionTrace{
+            static_cast<int>(result.traces.size() + 1), step, status, summary});
+    };
+    const auto appendReadiness = [&appendStep](const VoicePipelineSessionReadiness& readiness) {
+        appendStep(readiness.step, readiness.status, readiness.ready, readiness.summary);
+    };
+
+    appendStep(VoicePipelineSessionStep::Prepare, VoicePipelineSessionStatus::ReadyMetadata, true,
+               QStringLiteral("Prepare records deterministic local metadata only; no devices, "
+                              "files, providers, models, workers, or subprocesses are started."));
+    appendStep(VoicePipelineSessionStep::AwaitAudioInput,
+               VoicePipelineSessionStatus::ReadyMetadata, true,
+               QStringLiteral("Await audio input is readiness metadata only; microphone capture "
+                              "and live voice activation remain disabled."));
+
+    auto terminalStatus = VoicePipelineSessionStatus::Completed;
+    QString terminalSummary;
+    appendReadiness(transcriptionReadiness);
+    if (!transcriptionReadiness.ready) {
+        terminalStatus = transcriptionReadiness.status == VoicePipelineSessionStatus::Refused
+                             ? VoicePipelineSessionStatus::Refused
+                             : VoicePipelineSessionStatus::Fallback;
+        terminalSummary = QStringLiteral("Voice pipeline stopped at transcription readiness; "
+                                         "Whisper is not executed and no transcript is injected.");
+    } else {
+        appendReadiness(chatInferenceReadiness);
+        if (!chatInferenceReadiness.ready) {
+            terminalStatus = chatInferenceReadiness.status == VoicePipelineSessionStatus::Refused
+                                 ? VoicePipelineSessionStatus::Refused
+                                 : VoicePipelineSessionStatus::Fallback;
+            terminalSummary =
+                QStringLiteral("Voice pipeline stopped at chat inference readiness; no voice "
+                               "transcript is sent to chat and no model request is started.");
+        } else {
+            appendReadiness(synthesisReadiness);
+            if (!synthesisReadiness.ready) {
+                terminalStatus = synthesisReadiness.status == VoicePipelineSessionStatus::Refused
+                                     ? VoicePipelineSessionStatus::Refused
+                                     : VoicePipelineSessionStatus::Fallback;
+                terminalSummary =
+                    QStringLiteral("Voice pipeline stopped at synthesis readiness; Piper is not "
+                                   "executed and no audio playback is performed.");
+            }
+        }
+    }
+
+    if (terminalStatus == VoicePipelineSessionStatus::Completed) {
+        appendStep(VoicePipelineSessionStep::Completion, VoicePipelineSessionStatus::Completed,
+                   true,
+                   QStringLiteral("Voice pipeline completed readiness orchestration metadata "
+                                  "only; no STT, chat auto-send, TTS, playback, or subprocess "
+                                  "execution occurred."));
+        result.status = VoicePipelineSessionStatus::Completed;
+    } else {
+        appendStep(VoicePipelineSessionStep::Refusal, VoicePipelineSessionStatus::Refused, false,
+                   terminalSummary);
+        appendStep(VoicePipelineSessionStep::Fallback, VoicePipelineSessionStatus::Fallback, false,
+                   QStringLiteral("Fallback metadata selected: no audio input, no transcript, no "
+                                  "chat mutation, no synthesis, and no playback."));
+        result.status = terminalStatus;
+        result.fallback.status = VoicePipelineSessionStatus::Fallback;
+        result.fallback.summary =
+            QStringLiteral("%1 Fallback is no transcript, no chat send, no synthesis, and no "
+                           "playback.")
+                .arg(terminalSummary);
+    }
+
+    int readyCount = 0;
+    int blockedCount = 0;
+    int refusedCount = 0;
+    for (const auto& step : result.steps) {
+        if (step.ready) {
+            ++readyCount;
+        }
+        if (step.status == VoicePipelineSessionStatus::Blocked ||
+            step.status == VoicePipelineSessionStatus::Fallback) {
+            ++blockedCount;
+        }
+        if (step.status == VoicePipelineSessionStatus::Refused) {
+            ++refusedCount;
+        }
+    }
+
+    result.session.status = result.status;
+    result.session.summary =
+        QStringLiteral("Voice pipeline session %1: local-only, disabled by default, metadata-only, "
+                       "execution attempted: no.")
+            .arg(voicePipelineSessionStatusName(result.status));
+    result.summary.status = result.status;
+    result.summary.readyStageCount = readyCount;
+    result.summary.blockedStageCount = blockedCount;
+    result.summary.refusedStageCount = refusedCount;
+    result.summary.traceCount = result.traces.size();
+    result.summary.summary =
+        QStringLiteral("%1 voice pipeline session: %2 ready stages, %3 blocked/fallback stages, "
+                       "%4 refused stages, %5 traces; execution attempted: no; microphone, "
+                       "playback, Whisper, Piper, subprocesses, chat auto-send, transcript "
+                       "injection, background workers, and autonomous loops are disabled.")
+            .arg(voicePipelineSessionStatusName(result.status))
+            .arg(readyCount)
+            .arg(blockedCount)
+            .arg(refusedCount)
+            .arg(result.traces.size());
+    return result;
 }
 
 QString voiceBinaryDescriptorSummary(const VoiceBinaryDescriptor& descriptor) {

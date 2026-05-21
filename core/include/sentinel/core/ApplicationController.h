@@ -284,6 +284,24 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString voicePipelineStatus READ voicePipelineStatus CONSTANT)
     Q_PROPERTY(QString voicePipelineSummary READ voicePipelineSummary CONSTANT)
     Q_PROPERTY(QStringList voicePipelineTraceSummaries READ voicePipelineTraceSummaries CONSTANT)
+    Q_PROPERTY(QString voicePipelineSessionStatus READ voicePipelineSessionStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString voicePipelineSessionSummary READ voicePipelineSessionSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QStringList voicePipelineSessionStageReadinessSummaries READ
+                   voicePipelineSessionStageReadinessSummaries NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList voicePipelineSessionTraceSummaries READ
+                   voicePipelineSessionTraceSummaries NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString voicePipelineSessionFallbackSummary READ
+                   voicePipelineSessionFallbackSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString voicePipelineSessionSafetySummary READ voicePipelineSessionSafetySummary
+                   NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList voicePipelineSessionSafetyChecks READ voicePipelineSessionSafetyChecks
+                   NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(int voicePipelineSessionReadyStageCount READ voicePipelineSessionReadyStageCount
+                   NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(int voicePipelineSessionBlockedStageCount READ voicePipelineSessionBlockedStageCount
+                   NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString voiceRuntimeStatus READ voiceRuntimeStatus CONSTANT)
     Q_PROPERTY(QString voiceRuntimeSummary READ voiceRuntimeSummary CONSTANT)
     Q_PROPERTY(QStringList voiceRuntimeCheckSummaries READ voiceRuntimeCheckSummaries CONSTANT)
@@ -1002,6 +1020,7 @@ public:
     QString speechToTextSummary() const;
     VoiceSession currentVoiceSession() const;
     VoicePipelineResult currentVoicePipelineResult() const;
+    VoicePipelineSessionResult currentVoicePipelineSessionResult() const;
     VoiceRuntimeSummary currentVoiceRuntimeSummary() const;
     QString voiceSessionId() const;
     QString voiceSessionStatus() const;
@@ -1009,6 +1028,15 @@ public:
     QString voicePipelineStatus() const;
     QString voicePipelineSummary() const;
     QStringList voicePipelineTraceSummaries() const;
+    QString voicePipelineSessionStatus() const;
+    QString voicePipelineSessionSummary() const;
+    QStringList voicePipelineSessionStageReadinessSummaries() const;
+    QStringList voicePipelineSessionTraceSummaries() const;
+    QString voicePipelineSessionFallbackSummary() const;
+    QString voicePipelineSessionSafetySummary() const;
+    QStringList voicePipelineSessionSafetyChecks() const;
+    int voicePipelineSessionReadyStageCount() const;
+    int voicePipelineSessionBlockedStageCount() const;
     QString voiceRuntimeStatus() const;
     QString voiceRuntimeSummary() const;
     QStringList voiceRuntimeCheckSummaries() const;

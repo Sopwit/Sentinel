@@ -224,6 +224,135 @@ struct VoicePipelineResult {
     QList<VoicePipelineTrace> traces;
 };
 
+struct VoicePipelineSessionId {
+    QString value = QStringLiteral("voice-pipeline-session-1");
+};
+
+enum class VoicePipelineSessionStatus : std::uint8_t {
+    Disabled,
+    ReadyMetadata,
+    Blocked,
+    Refused,
+    Fallback,
+    Completed,
+};
+
+QString voicePipelineSessionStatusName(VoicePipelineSessionStatus status);
+
+enum class VoicePipelineSessionStep : std::uint8_t {
+    Prepare,
+    AwaitAudioInput,
+    TranscriptionReadiness,
+    ChatInferenceReadiness,
+    SynthesisReadiness,
+    Completion,
+    Refusal,
+    Fallback,
+};
+
+QString voicePipelineSessionStepName(VoicePipelineSessionStep step);
+
+struct VoicePipelineSessionPolicy {
+    bool enabled = false;
+    bool metadataOnly = true;
+    bool localOnly = true;
+    bool disabledByDefault = true;
+    bool microphoneCaptureAllowed = false;
+    bool audioPlaybackAllowed = false;
+    bool whisperExecutionAllowed = false;
+    bool piperExecutionAllowed = false;
+    bool subprocessExecutionAllowed = false;
+    bool voiceChatAutoSendAllowed = false;
+    bool transcriptAutoInjectionAllowed = false;
+    bool backgroundWorkersAllowed = false;
+    bool autonomousLoopsAllowed = false;
+    QString summary = QStringLiteral(
+        "Voice pipeline session policy is disabled, local-only, and metadata-only.");
+};
+
+struct VoicePipelineSessionBudget {
+    int maxStepCount = 8;
+    int maxTraceCount = 8;
+    int maxSummaryCharacters = 260;
+    QString summary = QStringLiteral(
+        "Voice pipeline session metadata is bounded to 8 steps, 8 traces, and 260 summary "
+        "characters.");
+};
+
+struct VoicePipelineSessionReadiness {
+    VoicePipelineSessionStep step = VoicePipelineSessionStep::Prepare;
+    VoicePipelineSessionStatus status = VoicePipelineSessionStatus::Disabled;
+    bool ready = false;
+    QString summary;
+};
+
+struct VoicePipelineSessionStepRecord {
+    VoicePipelineSessionStep step = VoicePipelineSessionStep::Prepare;
+    VoicePipelineSessionStatus status = VoicePipelineSessionStatus::Disabled;
+    bool ready = false;
+    QString summary;
+};
+
+struct VoicePipelineSessionTrace {
+    int sequence = 0;
+    VoicePipelineSessionStep step = VoicePipelineSessionStep::Prepare;
+    VoicePipelineSessionStatus status = VoicePipelineSessionStatus::Disabled;
+    QString summary;
+};
+
+struct VoicePipelineSessionSafetyReport {
+    QString status = QStringLiteral("Blocked");
+    QString summary = QStringLiteral(
+        "Voice pipeline session execution is blocked by default.");
+    bool executionAllowed = false;
+    bool executionAttempted = false;
+    bool microphoneCaptureAllowed = false;
+    bool audioPlaybackAllowed = false;
+    bool whisperExecutionAllowed = false;
+    bool piperExecutionAllowed = false;
+    bool subprocessExecutionAllowed = false;
+    bool voiceChatAutoSendAllowed = false;
+    bool transcriptAutoInjectionAllowed = false;
+    bool backgroundWorkersAllowed = false;
+    bool autonomousLoopsAllowed = false;
+    QStringList checks;
+};
+
+struct VoicePipelineSessionFallback {
+    VoicePipelineSessionStatus status = VoicePipelineSessionStatus::Fallback;
+    QString summary = QStringLiteral(
+        "Voice pipeline fallback is no audio input, no transcript, no chat send, and no "
+        "playback.");
+};
+
+struct VoicePipelineSessionSummary {
+    VoicePipelineSessionStatus status = VoicePipelineSessionStatus::Disabled;
+    int readyStageCount = 0;
+    int blockedStageCount = 0;
+    int refusedStageCount = 0;
+    int traceCount = 0;
+    QString summary = QStringLiteral("Voice pipeline session is disabled metadata only.");
+};
+
+struct VoicePipelineSession {
+    VoicePipelineSessionId id;
+    VoicePipelineSessionStatus status = VoicePipelineSessionStatus::Disabled;
+    VoicePipelineSessionPolicy policy;
+    VoicePipelineSessionBudget budget;
+    QString summary = QStringLiteral("Voice pipeline session is disabled metadata only.");
+};
+
+struct VoicePipelineSessionResult {
+    VoicePipelineSession session;
+    VoicePipelineSessionStatus status = VoicePipelineSessionStatus::Disabled;
+    QList<VoicePipelineSessionStepRecord> steps;
+    QList<VoicePipelineSessionTrace> traces;
+    VoicePipelineSessionSafetyReport safetyReport;
+    VoicePipelineSessionFallback fallback;
+    VoicePipelineSessionSummary summary;
+    bool executionAttempted = false;
+};
+
 struct VoiceBinaryDescriptor {
     QString id;
     QString name;
@@ -382,6 +511,25 @@ QStringList voiceRuntimeCheckSummaries(const VoiceRuntimeSummary& summary);
 QString voicePipelineTraceSummary(const VoicePipelineTrace& trace);
 QStringList voicePipelineTraceSummaries(const QList<VoicePipelineTrace>& traces);
 QString safeVoicePipelineSummary(const VoicePipelineResult& result);
+QString voicePipelineSessionReadinessSummary(const VoicePipelineSessionReadiness& readiness);
+QString voicePipelineSessionStepSummary(const VoicePipelineSessionStepRecord& step);
+QStringList voicePipelineSessionStepSummaries(
+    const QList<VoicePipelineSessionStepRecord>& steps);
+QString voicePipelineSessionTraceSummary(const VoicePipelineSessionTrace& trace);
+QStringList voicePipelineSessionTraceSummaries(
+    const QList<VoicePipelineSessionTrace>& traces);
+QString voicePipelineSessionSafetySummary(const VoicePipelineSessionSafetyReport& report);
+QStringList voicePipelineSessionSafetyChecks(const VoicePipelineSessionSafetyReport& report);
+QString voicePipelineSessionFallbackSummary(const VoicePipelineSessionFallback& fallback);
+QString voicePipelineSessionSummaryText(const VoicePipelineSessionSummary& summary);
+VoicePipelineSessionSafetyReport voicePipelineSessionSafetyReport(
+    const VoicePipelineSessionPolicy& policy = VoicePipelineSessionPolicy{});
+VoicePipelineSessionResult buildVoicePipelineSessionResult(
+    const VoicePipelineSessionReadiness& transcriptionReadiness,
+    const VoicePipelineSessionReadiness& chatInferenceReadiness,
+    const VoicePipelineSessionReadiness& synthesisReadiness,
+    const VoicePipelineSessionPolicy& policy = VoicePipelineSessionPolicy{},
+    const VoicePipelineSessionBudget& budget = VoicePipelineSessionBudget{});
 QString voiceBinaryDescriptorSummary(const VoiceBinaryDescriptor& descriptor);
 QStringList voiceBinaryDescriptorSummaries(const QList<VoiceBinaryDescriptor>& descriptors);
 QString voiceModelDescriptorSummary(const VoiceModelDescriptor& descriptor);

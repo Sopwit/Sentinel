@@ -851,6 +851,42 @@ QStringList DesktopShellViewModel::voicePipelineTraceSummaries() const {
     return controller_.voicePipelineTraceSummaries();
 }
 
+QString DesktopShellViewModel::voicePipelineSessionStatus() const {
+    return controller_.voicePipelineSessionStatus();
+}
+
+QString DesktopShellViewModel::voicePipelineSessionSummary() const {
+    return controller_.voicePipelineSessionSummary();
+}
+
+QStringList DesktopShellViewModel::voicePipelineSessionStageReadinessSummaries() const {
+    return controller_.voicePipelineSessionStageReadinessSummaries();
+}
+
+QStringList DesktopShellViewModel::voicePipelineSessionTraceSummaries() const {
+    return controller_.voicePipelineSessionTraceSummaries();
+}
+
+QString DesktopShellViewModel::voicePipelineSessionFallbackSummary() const {
+    return controller_.voicePipelineSessionFallbackSummary();
+}
+
+QString DesktopShellViewModel::voicePipelineSessionSafetySummary() const {
+    return controller_.voicePipelineSessionSafetySummary();
+}
+
+QStringList DesktopShellViewModel::voicePipelineSessionSafetyChecks() const {
+    return controller_.voicePipelineSessionSafetyChecks();
+}
+
+int DesktopShellViewModel::voicePipelineSessionReadyStageCount() const {
+    return controller_.voicePipelineSessionReadyStageCount();
+}
+
+int DesktopShellViewModel::voicePipelineSessionBlockedStageCount() const {
+    return controller_.voicePipelineSessionBlockedStageCount();
+}
+
 QString DesktopShellViewModel::voiceRuntimeStatus() const {
     return controller_.voiceRuntimeStatus();
 }

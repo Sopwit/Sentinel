@@ -677,6 +677,23 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
     QVERIFY(fixture.viewModel.voicePipelineTraceSummaries()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("synthesis-placeholder")));
+    QCOMPARE(fixture.viewModel.voicePipelineSessionStatus(), QStringLiteral("fallback"));
+    QVERIFY(fixture.viewModel.voicePipelineSessionSummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QCOMPARE(fixture.viewModel.voicePipelineSessionStageReadinessSummaries().size(), 5);
+    QVERIFY(fixture.viewModel.voicePipelineSessionStageReadinessSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("transcription-readiness")));
+    QVERIFY(fixture.viewModel.voicePipelineSessionTraceSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Fallback metadata selected")));
+    QVERIFY(fixture.viewModel.voicePipelineSessionFallbackSummary().contains(
+        QStringLiteral("no playback")));
+    QVERIFY(fixture.viewModel.voicePipelineSessionSafetySummary().contains(
+        QStringLiteral("no-execution guarantees")));
+    QCOMPARE(fixture.viewModel.voicePipelineSessionSafetyChecks().size(), 8);
+    QCOMPARE(fixture.viewModel.voicePipelineSessionReadyStageCount(), 2);
+    QCOMPARE(fixture.viewModel.voicePipelineSessionBlockedStageCount(), 2);
     QCOMPARE(fixture.viewModel.voiceRuntimeStatus(), QStringLiteral("Unavailable"));
     QVERIFY(fixture.viewModel.voiceRuntimeSummary().contains(QStringLiteral("playback disabled")));
     QCOMPARE(fixture.viewModel.voiceRuntimeCheckSummaries().size(), 7);
@@ -1327,6 +1344,16 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("voicePipelineStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("voicePipelineSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("voicePipelineTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voicePipelineSessionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voicePipelineSessionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voicePipelineSessionStageReadinessSummaries"),
+         QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voicePipelineSessionTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voicePipelineSessionFallbackSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voicePipelineSessionSafetySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("voicePipelineSessionSafetyChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("voicePipelineSessionReadyStageCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("voicePipelineSessionBlockedStageCount"), QByteArrayLiteral("int")},
         {QStringLiteral("voiceRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceRuntimeSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceRuntimeCheckSummaries"), QByteArrayLiteral("QStringList")},
@@ -1567,6 +1594,11 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("voiceSession"),
         QStringLiteral("voicePipelineResult"),
         QStringLiteral("voicePipelineTrace"),
+        QStringLiteral("voicePipelineSession"),
+        QStringLiteral("voicePipelineSessionResult"),
+        QStringLiteral("voicePipelineSessionReadiness"),
+        QStringLiteral("voicePipelineSessionTrace"),
+        QStringLiteral("voicePipelineSessionSafetyReport"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),
