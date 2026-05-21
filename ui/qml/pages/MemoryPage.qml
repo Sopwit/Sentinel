@@ -480,6 +480,17 @@ ScrollView {
                                + " approved supplements"
                         Layout.fillWidth: true
                     }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Supplement Assembly"
+                        value: memoryPage.viewModel.semanticSupplementAssemblyStatus + " - "
+                               + memoryPage.viewModel.semanticSupplementAssemblyBudgetSummary
+                               + " / "
+                               + memoryPage.viewModel.semanticSupplementAssemblyBlockCount
+                               + " metadata blocks"
+                        Layout.fillWidth: true
+                    }
                 }
             }
 

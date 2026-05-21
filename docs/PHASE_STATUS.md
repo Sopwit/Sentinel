@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 17.22-17.24: Semantic Supplement Prompt Assembly Readiness
+
+Completed. Adds a disabled-by-default semantic supplement assembly layer that can prepare accepted
+semantic supplements as bounded metadata for future prompt assembly tests without changing live
+prompt behavior.
+
+Scope:
+
+- Added semantic supplement block, bundle, assembly policy/status/result, budget, readiness, and
+  safety-report records.
+- Assembly reads `SemanticAcceptanceResult` only and can produce a separate bounded supplement
+  bundle when an explicit test-only policy gate is enabled.
+- Default desktop policy is disabled. Live prompt inclusion remains blocked, and existing prompt
+  context injection still consumes only deterministic retrieval-planning selections.
+- Runtime protections cover count budgets, character budgets, deterministic ordering,
+  deterministic truncation, disabled fallback, empty fallback, stale/busy/timed-out/refused
+  fallback, and safety report checks.
+- Memory and Settings expose compact readiness/status, supplement block count, budget summary,
+  safety summary, disabled-by-default state, and non-authoritative checks without raw prompt
+  blocks, vectors, scores, provider handles, filesystem paths, or debug dumps.
+
+Known limitation:
+
+- Semantic supplements have no live prompt authority. The layer does not mutate
+  `PromptContextBlock`, `RetrievalPlanningResult`, deterministic context order, conversation
+  windows, summaries, committed memory, runtime metadata, or live provider prompts. Future
+  semantic prompt activation still requires a separate phase with explicit prompt-authority
+  policy, privacy/safety review, deterministic fallback tests, QML non-exposure guarantees, and
+  live prompt inclusion tests.
+
 ### Phase 17.19-17.21: Deterministic Semantic Acceptance Layer
 
 Completed. Adds bounded hybrid acceptance metadata that can approve a small subset of semantic

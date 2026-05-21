@@ -623,6 +623,24 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Supplement Assembly"
+                    value: settingsPage.viewModel.semanticSupplementAssemblyStatus
+                           + " / "
+                           + settingsPage.viewModel.semanticSupplementAssemblyReadiness
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Supplement Bounds"
+                    value: settingsPage.viewModel.semanticSupplementAssemblyBudgetSummary
+                           + " / "
+                           + settingsPage.viewModel.semanticSupplementAssemblySafetySummary
+                    Layout.fillWidth: true
+                }
+
                 SentinelButton {
                     text: settingsPage.showAdvancedContextDetails ? "Hide Advanced Details"
                                                                   : "Show Advanced Details"
@@ -749,6 +767,19 @@ ScrollView {
 
                 Repeater {
                     model: settingsPage.viewModel.semanticAcceptanceChecks
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.semanticSupplementAssemblyChecks
 
                     Label {
                         required property string modelData

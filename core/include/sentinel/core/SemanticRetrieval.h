@@ -182,6 +182,17 @@ enum class SemanticAcceptanceStatus : std::uint8_t {
     Refused,
 };
 
+enum class SemanticSupplementAssemblyStatus : std::uint8_t {
+    Disabled,
+    Empty,
+    Ready,
+    Truncated,
+    TimedOut,
+    Stale,
+    Busy,
+    Refused,
+};
+
 QString embeddingProviderStatusName(EmbeddingProviderStatus status);
 QString vectorIndexStatusName(VectorIndexStatus status);
 QString semanticRetrievalStatusName(SemanticRetrievalStatus status);
@@ -204,6 +215,7 @@ QString vectorPersistenceReadinessName(VectorPersistenceReadiness readiness);
 QString semanticSearchStatusName(SemanticSearchStatus status);
 QString hybridRetrievalBridgeStatusName(HybridRetrievalBridgeStatus status);
 QString semanticAcceptanceStatusName(SemanticAcceptanceStatus status);
+QString semanticSupplementAssemblyStatusName(SemanticSupplementAssemblyStatus status);
 
 struct EmbeddingVector {
     QList<double> values;
@@ -820,6 +832,118 @@ struct SemanticAcceptanceResult {
     QStringList checks;
 };
 
+struct SemanticSupplementBlock {
+    QString id;
+    QString title;
+    QString summary;
+    int rank = 0;
+    int estimatedCharacters = 0;
+    int includedCharacters = 0;
+    bool truncated = false;
+    bool semantic = true;
+    bool supplementalOnly = true;
+    bool nonAuthoritative = true;
+};
+
+struct SemanticSupplementBundle {
+    QList<SemanticSupplementBlock> blocks;
+    int blockCount = 0;
+    int estimatedCharacters = 0;
+    int includedCharacters = 0;
+    int truncatedBlockCount = 0;
+    bool empty = true;
+    bool separateFromDeterministicContext = true;
+    QString summary = QStringLiteral("No semantic supplement bundle assembled.");
+};
+
+struct SemanticSupplementAssemblyPolicy {
+    bool enabled = false;
+    bool allowTestOnlyAssembly = false;
+    bool includeInLivePrompt = false;
+    bool deterministicRetrievalAuthoritative = true;
+    bool semanticSupplementsOnly = true;
+    bool separateFromDeterministicContext = true;
+    bool promptContextMutationEnabled = false;
+    bool retrievalPlanningMutationEnabled = false;
+    bool deterministicContextReplacementEnabled = false;
+    bool deterministicContextReorderingEnabled = false;
+    bool conversationWindowOverrideEnabled = false;
+    bool summariesOverrideEnabled = false;
+    bool committedMemoryOverrideEnabled = false;
+    bool runtimeMetadataOverrideEnabled = false;
+    bool exposeRawVectors = false;
+    bool exposeScores = false;
+    bool exposeProviderHandles = false;
+    bool exposeFilesystemPaths = false;
+    bool exposeDebugDumps = false;
+    int maxSupplementBlocks = 2;
+    int maxCharacters = 640;
+    int timeoutMs = 1000;
+    QString summary = QStringLiteral(
+        "Semantic supplement assembly is disabled by default and cannot affect live prompts.");
+};
+
+struct SemanticSupplementBudget {
+    int maxSupplementBlocks = 2;
+    int maxCharacters = 640;
+    int acceptedCandidateCount = 0;
+    int assembledBlockCount = 0;
+    int estimatedCharacters = 0;
+    int includedCharacters = 0;
+    int truncatedBlockCount = 0;
+    int timeoutMs = 1000;
+    int elapsedMs = 0;
+    QString summary = QStringLiteral("0 semantic supplement characters assembled.");
+};
+
+struct SemanticSupplementReadiness {
+    bool ready = false;
+    SemanticSupplementAssemblyStatus status = SemanticSupplementAssemblyStatus::Disabled;
+    QString summary = QStringLiteral("Semantic supplement assembly is disabled.");
+    QStringList checks;
+};
+
+struct SemanticSupplementSafetyReport {
+    bool safe = true;
+    bool disabledByDefault = true;
+    bool nonAuthoritative = true;
+    bool deterministicRetrievalAuthoritative = true;
+    bool separateFromDeterministicContext = true;
+    bool promptMutationBlocked = true;
+    bool promptContextMutationBlocked = true;
+    bool retrievalPlanningMutationBlocked = true;
+    bool deterministicContextReplacementBlocked = true;
+    bool deterministicContextReorderingBlocked = true;
+    bool conversationWindowOverrideBlocked = true;
+    bool summariesOverrideBlocked = true;
+    bool committedMemoryOverrideBlocked = true;
+    bool runtimeMetadataOverrideBlocked = true;
+    bool rawVectorsBlocked = true;
+    bool scoresBlocked = true;
+    bool providerHandlesBlocked = true;
+    bool filesystemPathsBlocked = true;
+    bool debugDumpsBlocked = true;
+    QString summary = QStringLiteral(
+        "Semantic supplements are non-authoritative and cannot mutate live prompt context.");
+    QStringList checks;
+};
+
+struct SemanticSupplementAssemblyResult {
+    bool assembled = false;
+    SemanticSupplementAssemblyStatus status = SemanticSupplementAssemblyStatus::Disabled;
+    SemanticSupplementAssemblyPolicy policy;
+    SemanticSupplementBundle bundle;
+    SemanticSupplementBudget budget;
+    SemanticSupplementReadiness readiness;
+    SemanticSupplementSafetyReport safety;
+    QString summary = QStringLiteral("Semantic supplement assembly is disabled.");
+    QString fallbackSummary =
+        QStringLiteral("Semantic supplement assembly disabled; deterministic prompt behavior "
+                       "unchanged.");
+    QString failureReason;
+    QStringList checks;
+};
+
 struct SemanticProviderPolicy {
     bool disabledByDefault = true;
     bool allowFakeInMemoryProvider = false;
@@ -993,6 +1117,9 @@ SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deter
                                             const HybridRetrievalBridgeResult& bridgeResult,
                                             const SemanticSearchResult& semanticSearchResult,
                                             const SemanticAcceptancePolicy& policy);
+SemanticSupplementAssemblyResult
+assembleSemanticSupplements(const SemanticAcceptanceResult& acceptanceResult,
+                            const SemanticSupplementAssemblyPolicy& policy);
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source);
 SemanticCandidateArbitration
 orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,

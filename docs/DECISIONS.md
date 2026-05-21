@@ -2252,3 +2252,35 @@ Boundary rules:
 - Future semantic-authority activation requires a separate explicit phase with indexing policy,
   privacy/safety gates, prompt-authority review, deterministic fallback tests, mutation tests, and
   QML non-exposure tests.
+
+## 91. Semantic Supplement Assembly Has No Prompt Authority
+
+Decision: Accepted semantic candidates may be prepared as a separate bounded supplement metadata
+bundle, but semantic supplement assembly is disabled by default and cannot affect live prompts.
+
+Reason: The application needs a safe bridge between semantic acceptance and future prompt assembly
+without allowing semantic retrieval to replace deterministic context or silently mutate provider
+requests.
+
+Boundary rules:
+
+- `SemanticSupplementBlock`, `SemanticSupplementBundle`,
+  `SemanticSupplementAssemblyPolicy`, `SemanticSupplementAssemblyStatus`,
+  `SemanticSupplementAssemblyResult`, `SemanticSupplementBudget`,
+  `SemanticSupplementReadiness`, and `SemanticSupplementSafetyReport` are value-only records.
+- Assembly reads `SemanticAcceptanceResult` and produces supplement metadata only when an explicit
+  test-only assembly gate is enabled. The desktop default remains disabled.
+- Live prompt inclusion is blocked. Existing prompt context injection remains unchanged and still
+  consumes deterministic retrieval-planning selections only.
+- Semantic supplements stay separate from deterministic context blocks. They cannot replace
+  deterministic context, reorder deterministic context, override conversation windows, override
+  deterministic summaries, override committed memory, or override runtime metadata.
+- Runtime protections include bounded block count, bounded character budget, deterministic
+  ordering, deterministic truncation, disabled fallback, empty fallback, stale/busy/timed-out/
+  refused fallback, and safety-report checks.
+- QML may expose readiness/status, supplement block count, budget summary, safety summary, and
+  checks only. Raw prompt blocks, raw vectors, raw scores, provider handles, filesystem paths, and
+  debug dumps remain hidden.
+- Future semantic prompt activation requires a separate explicit phase with prompt-authority
+  policy, privacy/safety gates, deterministic fallback tests, live prompt inclusion tests,
+  mutation tests, and QML non-exposure tests.

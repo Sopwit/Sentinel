@@ -390,6 +390,29 @@ QString semanticAcceptanceStatusName(SemanticAcceptanceStatus status) {
     return QStringLiteral("Disabled");
 }
 
+QString semanticSupplementAssemblyStatusName(SemanticSupplementAssemblyStatus status) {
+    switch (status) {
+    case SemanticSupplementAssemblyStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticSupplementAssemblyStatus::Empty:
+        return QStringLiteral("Empty");
+    case SemanticSupplementAssemblyStatus::Ready:
+        return QStringLiteral("Ready");
+    case SemanticSupplementAssemblyStatus::Truncated:
+        return QStringLiteral("Truncated");
+    case SemanticSupplementAssemblyStatus::TimedOut:
+        return QStringLiteral("Timed Out");
+    case SemanticSupplementAssemblyStatus::Stale:
+        return QStringLiteral("Stale");
+    case SemanticSupplementAssemblyStatus::Busy:
+        return QStringLiteral("Busy");
+    case SemanticSupplementAssemblyStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source) {
     switch (source) {
     case ContextAssemblySourceKind::Conversation:
@@ -1466,6 +1489,241 @@ SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deter
         QStringLiteral("Accepted semantic supplements cannot replace deterministic candidates."),
         result.fallback.summary,
     };
+    return result;
+}
+
+SemanticSupplementAssemblyResult
+assembleSemanticSupplements(const SemanticAcceptanceResult& acceptanceResult,
+                            const SemanticSupplementAssemblyPolicy& policy) {
+    SemanticSupplementAssemblyResult result;
+    result.policy = policy;
+    result.budget.maxSupplementBlocks = std::max(0, policy.maxSupplementBlocks);
+    result.budget.maxCharacters = std::max(0, policy.maxCharacters);
+    result.budget.acceptedCandidateCount = acceptanceResult.acceptedCandidates.size();
+    result.budget.timeoutMs = std::max(0, policy.timeoutMs);
+    result.budget.elapsedMs = acceptanceResult.budget.elapsedMs;
+
+    result.safety.disabledByDefault = !policy.enabled;
+    result.safety.deterministicRetrievalAuthoritative = policy.deterministicRetrievalAuthoritative;
+    result.safety.separateFromDeterministicContext = policy.separateFromDeterministicContext;
+    result.safety.promptMutationBlocked = !policy.includeInLivePrompt;
+    result.safety.promptContextMutationBlocked = !policy.promptContextMutationEnabled;
+    result.safety.retrievalPlanningMutationBlocked = !policy.retrievalPlanningMutationEnabled;
+    result.safety.deterministicContextReplacementBlocked =
+        !policy.deterministicContextReplacementEnabled;
+    result.safety.deterministicContextReorderingBlocked =
+        !policy.deterministicContextReorderingEnabled;
+    result.safety.conversationWindowOverrideBlocked = !policy.conversationWindowOverrideEnabled;
+    result.safety.summariesOverrideBlocked = !policy.summariesOverrideEnabled;
+    result.safety.committedMemoryOverrideBlocked = !policy.committedMemoryOverrideEnabled;
+    result.safety.runtimeMetadataOverrideBlocked = !policy.runtimeMetadataOverrideEnabled;
+    result.safety.rawVectorsBlocked = !policy.exposeRawVectors;
+    result.safety.scoresBlocked = !policy.exposeScores;
+    result.safety.providerHandlesBlocked = !policy.exposeProviderHandles;
+    result.safety.filesystemPathsBlocked = !policy.exposeFilesystemPaths;
+    result.safety.debugDumpsBlocked = !policy.exposeDebugDumps;
+    result.safety.safe =
+        result.safety.nonAuthoritative && result.safety.deterministicRetrievalAuthoritative &&
+        result.safety.separateFromDeterministicContext && result.safety.promptMutationBlocked &&
+        result.safety.promptContextMutationBlocked &&
+        result.safety.retrievalPlanningMutationBlocked &&
+        result.safety.deterministicContextReplacementBlocked &&
+        result.safety.deterministicContextReorderingBlocked &&
+        result.safety.conversationWindowOverrideBlocked && result.safety.summariesOverrideBlocked &&
+        result.safety.committedMemoryOverrideBlocked &&
+        result.safety.runtimeMetadataOverrideBlocked && result.safety.rawVectorsBlocked &&
+        result.safety.scoresBlocked && result.safety.providerHandlesBlocked &&
+        result.safety.filesystemPathsBlocked && result.safety.debugDumpsBlocked;
+    result.safety.checks = {
+        QStringLiteral("Deterministic retrieval authoritative: %1")
+            .arg(result.safety.deterministicRetrievalAuthoritative ? QStringLiteral("yes")
+                                                                   : QStringLiteral("no")),
+        QStringLiteral("Semantic supplements non-authoritative: yes"),
+        QStringLiteral("Separate from deterministic context blocks: %1")
+            .arg(result.safety.separateFromDeterministicContext ? QStringLiteral("yes")
+                                                                : QStringLiteral("no")),
+        QStringLiteral("Live prompt inclusion: blocked"),
+        QStringLiteral("PromptContextBlock mutation: no"),
+        QStringLiteral("RetrievalPlanningResult mutation: no"),
+        QStringLiteral("Deterministic context replacement: no"),
+        QStringLiteral("Deterministic context reordering: no"),
+        QStringLiteral("Conversation window override: no"),
+        QStringLiteral("Summary block override: no"),
+        QStringLiteral("Committed memory override: no"),
+        QStringLiteral("Runtime metadata override: no"),
+        QStringLiteral("Raw vectors exposed: no"),
+        QStringLiteral("Raw scores exposed: no"),
+        QStringLiteral("Provider handles exposed: no"),
+        QStringLiteral("Filesystem paths exposed: no"),
+        QStringLiteral("Debug dumps exposed: no"),
+    };
+    result.checks = result.safety.checks;
+    result.readiness.checks = result.checks;
+
+    const auto fallback = [&](SemanticSupplementAssemblyStatus status, const QString& reason,
+                              const QString& summary) {
+        result.status = status;
+        result.readiness.status = status;
+        result.failureReason = reason;
+        result.summary = reason;
+        result.fallbackSummary = summary;
+        result.readiness.summary = summary;
+        result.bundle.summary = summary;
+        result.budget.summary =
+            QStringLiteral("0 of %1 semantic supplement characters assembled from %2 accepted "
+                           "candidates.")
+                .arg(result.budget.maxCharacters)
+                .arg(result.budget.acceptedCandidateCount);
+    };
+
+    if (!policy.enabled) {
+        fallback(SemanticSupplementAssemblyStatus::Disabled,
+                 QStringLiteral("Semantic supplement assembly is disabled."),
+                 QStringLiteral("Semantic supplement assembly disabled; deterministic prompt "
+                                "behavior unchanged."));
+        return result;
+    }
+    if (!policy.allowTestOnlyAssembly || policy.includeInLivePrompt ||
+        !policy.deterministicRetrievalAuthoritative || !policy.semanticSupplementsOnly ||
+        !policy.separateFromDeterministicContext || policy.promptContextMutationEnabled ||
+        policy.retrievalPlanningMutationEnabled || policy.deterministicContextReplacementEnabled ||
+        policy.deterministicContextReorderingEnabled || policy.conversationWindowOverrideEnabled ||
+        policy.summariesOverrideEnabled || policy.committedMemoryOverrideEnabled ||
+        policy.runtimeMetadataOverrideEnabled || policy.exposeRawVectors || policy.exposeScores ||
+        policy.exposeProviderHandles || policy.exposeFilesystemPaths || policy.exposeDebugDumps ||
+        !result.safety.safe) {
+        fallback(SemanticSupplementAssemblyStatus::Refused,
+                 QStringLiteral("Semantic supplement assembly refused by prompt authority gates."),
+                 QStringLiteral("Semantic supplement assembly refused; deterministic prompt "
+                                "context remains authoritative and unchanged."));
+        return result;
+    }
+    if (acceptanceResult.status == SemanticAcceptanceStatus::Busy) {
+        fallback(SemanticSupplementAssemblyStatus::Busy,
+                 QStringLiteral("Semantic supplement assembly skipped because acceptance is busy."),
+                 QStringLiteral("Busy semantic state ignored; deterministic prompt behavior "
+                                "unchanged."));
+        return result;
+    }
+    if (acceptanceResult.status == SemanticAcceptanceStatus::Stale) {
+        fallback(SemanticSupplementAssemblyStatus::Stale,
+                 QStringLiteral("Semantic supplement assembly ignored stale acceptance state."),
+                 QStringLiteral("Stale semantic state ignored; deterministic prompt behavior "
+                                "unchanged."));
+        return result;
+    }
+    if (acceptanceResult.status == SemanticAcceptanceStatus::TimedOut ||
+        result.budget.elapsedMs > result.budget.timeoutMs) {
+        fallback(SemanticSupplementAssemblyStatus::TimedOut,
+                 QStringLiteral("Semantic supplement assembly timed out."),
+                 QStringLiteral("Timed-out semantic state ignored; deterministic prompt behavior "
+                                "unchanged."));
+        return result;
+    }
+    if (acceptanceResult.status == SemanticAcceptanceStatus::Refused) {
+        fallback(SemanticSupplementAssemblyStatus::Refused,
+                 QStringLiteral("Semantic supplement assembly refused errored acceptance state."),
+                 QStringLiteral("Semantic error fallback active; deterministic prompt behavior "
+                                "unchanged."));
+        return result;
+    }
+    if (acceptanceResult.acceptedCandidates.isEmpty() ||
+        acceptanceResult.status != SemanticAcceptanceStatus::Ready) {
+        fallback(SemanticSupplementAssemblyStatus::Empty,
+                 QStringLiteral("No accepted semantic supplements are available for assembly."),
+                 QStringLiteral("Empty semantic supplement fallback; deterministic prompt behavior "
+                                "unchanged."));
+        result.readiness.ready = true;
+        return result;
+    }
+
+    auto candidates = acceptanceResult.acceptedCandidates;
+    std::sort(candidates.begin(), candidates.end(),
+              [](const SemanticAcceptedCandidate& left, const SemanticAcceptedCandidate& right) {
+                  if (left.deterministicOffsetRank != right.deterministicOffsetRank) {
+                      return left.deterministicOffsetRank < right.deterministicOffsetRank;
+                  }
+                  if (left.supplementRank != right.supplementRank) {
+                      return left.supplementRank < right.supplementRank;
+                  }
+                  return left.id < right.id;
+              });
+
+    int remainingCharacters = result.budget.maxCharacters;
+    const int blockLimit = result.budget.maxSupplementBlocks;
+    int rank = 1;
+    for (const auto& candidate : candidates) {
+        if (result.bundle.blocks.size() >= blockLimit || remainingCharacters <= 0) {
+            break;
+        }
+        const auto normalizedSummary = candidate.summary.simplified();
+        const int estimatedCharacters = normalizedSummary.size();
+        const int includedCharacters = std::min(estimatedCharacters, remainingCharacters);
+        const bool truncated = includedCharacters < estimatedCharacters;
+        result.bundle.blocks.append(SemanticSupplementBlock{
+            candidate.id,
+            candidate.title,
+            normalizedSummary.left(includedCharacters),
+            rank,
+            estimatedCharacters,
+            includedCharacters,
+            truncated,
+            true,
+            true,
+            true,
+        });
+        result.budget.estimatedCharacters += estimatedCharacters;
+        result.budget.includedCharacters += includedCharacters;
+        if (truncated) {
+            ++result.budget.truncatedBlockCount;
+        }
+        remainingCharacters -= includedCharacters;
+        ++rank;
+    }
+
+    result.bundle.blockCount = result.bundle.blocks.size();
+    result.bundle.estimatedCharacters = result.budget.estimatedCharacters;
+    result.bundle.includedCharacters = result.budget.includedCharacters;
+    result.bundle.truncatedBlockCount = result.budget.truncatedBlockCount;
+    result.bundle.empty = result.bundle.blocks.isEmpty();
+    result.budget.assembledBlockCount = result.bundle.blockCount;
+    result.assembled = result.bundle.blockCount > 0;
+    result.readiness.ready = true;
+    result.status = result.budget.truncatedBlockCount > 0 ||
+                            result.bundle.blockCount < acceptanceResult.acceptedCandidates.size()
+                        ? SemanticSupplementAssemblyStatus::Truncated
+                        : SemanticSupplementAssemblyStatus::Ready;
+    result.readiness.status = result.status;
+    if (!result.assembled) {
+        fallback(SemanticSupplementAssemblyStatus::Empty,
+                 QStringLiteral("Semantic supplement assembly produced an empty bundle."),
+                 QStringLiteral("Empty semantic supplement fallback; deterministic prompt behavior "
+                                "unchanged."));
+        result.readiness.ready = true;
+        return result;
+    }
+
+    result.budget.summary =
+        QStringLiteral("%1 of %2 semantic supplement blocks assembled, using %3 of %4 characters; "
+                       "%5 blocks truncated.")
+            .arg(result.bundle.blockCount)
+            .arg(result.budget.maxSupplementBlocks)
+            .arg(result.budget.includedCharacters)
+            .arg(result.budget.maxCharacters)
+            .arg(result.budget.truncatedBlockCount);
+    result.bundle.summary =
+        QStringLiteral("%1 bounded semantic supplement metadata blocks assembled separately from "
+                       "deterministic prompt context.")
+            .arg(result.bundle.blockCount);
+    result.readiness.summary =
+        QStringLiteral("Semantic supplement assembly ready for test-only bounded metadata.");
+    result.summary =
+        QStringLiteral("Semantic supplement assembly prepared %1 non-authoritative blocks for a "
+                       "separate test-only bundle; live prompt behavior is unchanged.")
+            .arg(result.bundle.blockCount);
+    result.fallbackSummary =
+        QStringLiteral("Deterministic prompt context remains authoritative; semantic supplements "
+                       "are separate metadata only.");
     return result;
 }
 

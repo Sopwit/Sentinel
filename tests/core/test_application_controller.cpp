@@ -756,6 +756,7 @@ private slots:
     void semanticSearchExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
     void hybridBridgeExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
     void semanticAcceptanceExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
+    void semanticSupplementAssemblyExposureIsDisabledAndDoesNotMutatePlanningOrPrompt();
     void semanticCandidateOrchestrationDoesNotMutatePrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
@@ -4312,6 +4313,38 @@ void ApplicationControllerTest::
     QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
     QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
     QCOMPARE(controller->semanticRetrievalEnabled(), false);
+}
+
+void ApplicationControllerTest::
+    semanticSupplementAssemblyExposureIsDisabledAndDoesNotMutatePlanningOrPrompt() {
+    const auto controller = makeController();
+    controller->sendMessage(QStringLiteral("semantic supplement assembly deterministic context"));
+    controller->remember(QStringLiteral("semantic.supplement"),
+                         QStringLiteral("deterministic memory remains authoritative"));
+    const auto planningBefore = controller->retrievalPlanningResult();
+    const auto promptBefore = controller->latestPromptContextInjectionResult();
+
+    QCOMPARE(controller->semanticSupplementAssemblyStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->semanticSupplementAssemblyBlockCount(), 0);
+    QVERIFY(controller->semanticSupplementAssemblySummary().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->semanticSupplementAssemblyBudgetSummary().contains(QStringLiteral("0 of")));
+    QVERIFY(controller->semanticSupplementAssemblySafetySummary().contains(
+        QStringLiteral("non-authoritative")));
+    QVERIFY(controller->semanticSupplementAssemblyChecks().contains(
+        QStringLiteral("Live prompt inclusion: blocked")));
+    QVERIFY(controller->semanticSupplementAssemblyChecks().contains(
+        QStringLiteral("PromptContextBlock mutation: no")));
+    QVERIFY(controller->semanticSupplementAssemblyChecks().contains(
+        QStringLiteral("RetrievalPlanningResult mutation: no")));
+    QVERIFY(controller->semanticSupplementAssemblyChecks().contains(
+        QStringLiteral("Deterministic context replacement: no")));
+
+    const auto planningAfter = controller->retrievalPlanningResult();
+    const auto promptAfter = controller->latestPromptContextInjectionResult();
+    QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
+    QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
+    QCOMPARE(promptAfter.status, promptBefore.status);
 }
 
 void ApplicationControllerTest::semanticCandidateOrchestrationDoesNotMutatePrompt() {

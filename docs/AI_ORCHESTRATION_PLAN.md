@@ -373,6 +373,24 @@ vectors/prompt payloads, index filesystems, call cloud/API/vector providers, exe
 or grant semantic prompt authority. Future semantic-authority activation still requires a separate
 phase with indexing policy, privacy/safety gates, prompt-authority review, fallback tests,
 mutation tests, and QML non-exposure guarantees.
+Phase 17.22 through Phase 17.24 add semantic supplement prompt assembly readiness metadata:
+`SemanticSupplementBlock`, `SemanticSupplementBundle`, `SemanticSupplementAssemblyPolicy`,
+`SemanticSupplementAssemblyStatus`, `SemanticSupplementAssemblyResult`,
+`SemanticSupplementBudget`, `SemanticSupplementReadiness`, and
+`SemanticSupplementSafetyReport`. Assembly reads accepted semantic supplements and can prepare a
+separate bounded metadata bundle only through an explicit test-only policy gate. The desktop
+default is disabled, live prompt inclusion remains blocked, and prompt assembly continues to use
+deterministic retrieval context only. Supplement metadata is count bounded, character-budgeted,
+deterministically ordered, deterministically truncated, non-authoritative, and separated from
+deterministic context blocks. Disabled, empty, stale, busy, timed-out, and refused semantic states
+fall back to unchanged deterministic prompt behavior. Assembly does not mutate
+`RetrievalPlanningResult`, create or mutate `PromptContextBlock` values, replace or reorder
+deterministic context, override conversation windows, override summaries, override committed
+memory, override runtime metadata, expose raw prompt blocks/vectors/scores/provider handles/
+filesystem paths/debug dumps, index filesystems, call cloud/API/vector providers, execute
+tools/plugins, or grant semantic prompt authority. Future semantic prompt activation still
+requires a separate phase with prompt-authority policy, privacy/safety gates, live prompt
+inclusion tests, deterministic fallback tests, mutation tests, and QML non-exposure guarantees.
 
 ## Future Components
 

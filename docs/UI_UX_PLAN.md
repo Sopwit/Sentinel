@@ -432,6 +432,14 @@ handles, filesystem paths, debug dumps, semantic prompt authority controls, rank
 controls, filesystem indexing controls, cloud/API setup, tools/plugins, autonomous actions, or a
 broad redesign.
 
+Phase 17.22 through Phase 17.24 add compact semantic supplement assembly readiness visibility.
+Memory and Settings may show assembly readiness/status, supplement metadata block count, budget
+summary, safety report summary, disabled-by-default state, and non-authoritative state. The UI
+must present this as separate test-readiness metadata, not live prompt content. It must not show
+raw prompt blocks, raw vectors, raw scores, provider handles, filesystem paths, debug dumps,
+semantic prompt authority controls, ranking override controls, filesystem indexing controls,
+cloud/API setup, tools/plugins, autonomous actions, or a broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

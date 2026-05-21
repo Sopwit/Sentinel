@@ -88,6 +88,7 @@ private slots:
     void exposesSemanticArbitrationAndRuntimePlanningMetadata();
     void exposesIsolatedEmbeddingRuntimeMetadata();
     void exposesVectorPersistenceMetadata();
+    void exposesSemanticSupplementAssemblyMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1955,6 +1956,32 @@ void DesktopShellViewModelTest::exposesVectorPersistenceMetadata() {
     QCOMPARE(metaObject->indexOfProperty("semanticAcceptanceRawVectors"), -1);
     QCOMPARE(metaObject->indexOfProperty("semanticAcceptancePromptPayload"), -1);
     QCOMPARE(metaObject->indexOfProperty("semanticAcceptanceFilesystemPath"), -1);
+}
+
+void DesktopShellViewModelTest::exposesSemanticSupplementAssemblyMetadata() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    QCOMPARE(fixture.viewModel.semanticSupplementAssemblyStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.semanticSupplementAssemblyBlockCount(), 0);
+    QVERIFY(fixture.viewModel.semanticSupplementAssemblyReadiness().contains(
+        QStringLiteral("disabled")));
+    QVERIFY(fixture.viewModel.semanticSupplementAssemblyBudgetSummary().contains(
+        QStringLiteral("0 of")));
+    QVERIFY(fixture.viewModel.semanticSupplementAssemblySafetySummary().contains(
+        QStringLiteral("non-authoritative")));
+    QVERIFY(fixture.viewModel.semanticSupplementAssemblyChecks().contains(
+        QStringLiteral("Live prompt inclusion: blocked")));
+    QVERIFY(fixture.viewModel.semanticSupplementAssemblyChecks().contains(
+        QStringLiteral("Provider handles exposed: no")));
+    QVERIFY(metaObject->indexOfProperty("semanticSupplementAssemblyStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("semanticSupplementAssemblyBlockCount") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyPromptBlock"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyRawVectors"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyRawScores"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyProviderHandle"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyFilesystemPath"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyDebugDump"), -1);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {
