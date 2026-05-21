@@ -1279,6 +1279,74 @@ QStringList ApplicationController::agentCapabilitySafetySummaries() const {
     return sentinel::core::agentCapabilitySafetySummaries(agentTaskRuntime_->capabilityRegistry());
 }
 
+QString ApplicationController::toolContractRegistryStatus() const {
+    if (!agentTaskRuntime_) {
+        return toolContractRegistryStatusName(ToolContractRegistryStatus::RefusingUnsafeContracts);
+    }
+    return toolContractRegistryStatusName(agentTaskRuntime_->toolContractRegistry().status);
+}
+
+QString ApplicationController::toolContractRegistrySummary() const {
+    if (!agentTaskRuntime_) {
+        return QStringLiteral("No tool contract registry metadata available.");
+    }
+    return agentTaskRuntime_->toolContractRegistry().summary.summary;
+}
+
+int ApplicationController::toolContractCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->toolContractRegistry().summary.totalCount : 0;
+}
+
+int ApplicationController::toolContractEnabledCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->toolContractRegistry().summary.enabledCount : 0;
+}
+
+int ApplicationController::toolContractDisabledCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->toolContractRegistry().summary.disabledCount : 0;
+}
+
+int ApplicationController::toolContractRestrictedCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->toolContractRegistry().summary.restrictedCount
+                             : 0;
+}
+
+QStringList ApplicationController::toolContractSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::toolContractSummaries(agentTaskRuntime_->toolContractRegistry());
+}
+
+QStringList ApplicationController::toolContractPermissionSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::toolContractPermissionSummaries(
+        agentTaskRuntime_->toolContractRegistry());
+}
+
+QStringList ApplicationController::toolContractSandboxSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::toolContractSandboxSummaries(agentTaskRuntime_->toolContractRegistry());
+}
+
+QStringList ApplicationController::toolContractReadinessSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::toolContractReadinessSummaries(
+        agentTaskRuntime_->toolContractRegistry());
+}
+
+QStringList ApplicationController::toolContractSafetySummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::toolContractSafetySummaries(agentTaskRuntime_->toolContractRegistry());
+}
+
 QString ApplicationController::localRuntimeStatus() const {
     if (!localRuntime_) {
         return localRuntimeStatusName(LocalRuntimeStatus::Unavailable);

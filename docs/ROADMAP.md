@@ -349,6 +349,32 @@ Still out of scope:
 - Tools, plugins, filesystem actions, shell/subprocess execution, provider/model calls, cloud/API
   calls, approval flows, autonomous loops, and any runtime permission grant.
 
+## Phase 18.13-18.15: Tool Contract And Permission Foundation
+
+Completed. Added deterministic, metadata-only tool contract records for future tool/runtime
+boundaries.
+
+Delivered:
+
+- Value-only tool contract id, type, status, scope, policy, permission, sandbox, restriction,
+  readiness, safety, registry status, and registry summary records.
+- Deterministic local metadata contracts for conversation summary, memory inspection, retrieval
+  preparation, semantic supplement preparation, voice response preparation, and export
+  preparation.
+- Permission metadata for local-only, approval-required, sandbox-required, read-only, disabled,
+  refused, future filesystem access, future subprocess execution, future plugin runtime, and
+  future export action states.
+- Sandbox readiness summaries for not-required, required-metadata, and denied states without
+  starting any sandbox or runtime.
+- Controller, desktop view-model, and Agents page visibility for contract counts, summaries,
+  permission summaries, sandbox summaries, readiness summaries, and safety summaries.
+
+Still out of scope:
+
+- Real tools, plugin loading, filesystem actions, subprocess execution, export execution,
+  approval flows, sandbox implementation, provider/model calls, cloud/API calls, autonomous loops,
+  and any runtime permission grant.
+
 Still out of scope:
 
 - Semantic ranking/search, real embedding calls, vector database writes, prompt mutation, semantic

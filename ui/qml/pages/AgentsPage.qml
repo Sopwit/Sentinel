@@ -155,6 +155,31 @@ ShellPanel {
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Tool Contracts"
+                value: agentsPage.viewModel.toolContractRegistryStatus
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Contracts"
+                value: agentsPage.viewModel.toolContractEnabledCount.toString()
+                       + " enabled / "
+                       + agentsPage.viewModel.toolContractDisabledCount.toString()
+                       + " disabled / "
+                       + agentsPage.viewModel.toolContractRestrictedCount.toString()
+                       + " restricted"
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Contract Summary"
+                value: agentsPage.viewModel.toolContractRegistrySummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
         }
 
         ColumnLayout {
@@ -228,6 +253,66 @@ ShellPanel {
                     required property string modelData
                     compact: agentsPage.compact
                     label: "Capability Safety"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.toolContractSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: modelData.indexOf("[Enabled Metadata") >= 0 ? "Tool Contract" : "Restricted Tool"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.toolContractPermissionSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Contract Permission"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.toolContractSandboxSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Contract Sandbox"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.toolContractReadinessSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Contract Readiness"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.toolContractSafetySummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Contract Safety"
                     value: modelData
                     Layout.fillWidth: true
                 }

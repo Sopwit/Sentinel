@@ -481,6 +481,50 @@ QStringList DesktopShellViewModel::agentCapabilitySafetySummaries() const {
     return controller_.agentCapabilitySafetySummaries();
 }
 
+QString DesktopShellViewModel::toolContractRegistryStatus() const {
+    return controller_.toolContractRegistryStatus();
+}
+
+QString DesktopShellViewModel::toolContractRegistrySummary() const {
+    return controller_.toolContractRegistrySummary();
+}
+
+int DesktopShellViewModel::toolContractCount() const {
+    return controller_.toolContractCount();
+}
+
+int DesktopShellViewModel::toolContractEnabledCount() const {
+    return controller_.toolContractEnabledCount();
+}
+
+int DesktopShellViewModel::toolContractDisabledCount() const {
+    return controller_.toolContractDisabledCount();
+}
+
+int DesktopShellViewModel::toolContractRestrictedCount() const {
+    return controller_.toolContractRestrictedCount();
+}
+
+QStringList DesktopShellViewModel::toolContractSummaries() const {
+    return controller_.toolContractSummaries();
+}
+
+QStringList DesktopShellViewModel::toolContractPermissionSummaries() const {
+    return controller_.toolContractPermissionSummaries();
+}
+
+QStringList DesktopShellViewModel::toolContractSandboxSummaries() const {
+    return controller_.toolContractSandboxSummaries();
+}
+
+QStringList DesktopShellViewModel::toolContractReadinessSummaries() const {
+    return controller_.toolContractReadinessSummaries();
+}
+
+QStringList DesktopShellViewModel::toolContractSafetySummaries() const {
+    return controller_.toolContractSafetySummaries();
+}
+
 QString DesktopShellViewModel::localRuntimeStatus() const {
     return controller_.localRuntimeStatus();
 }
