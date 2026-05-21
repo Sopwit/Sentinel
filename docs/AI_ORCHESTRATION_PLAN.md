@@ -278,6 +278,16 @@ readiness, and QML-safe exposure remain separate. Deterministic retrieval remain
 semantic retrieval remains disabled; semantic candidates do not mutate prompts; and Phase 17
 semantic activation requires a separate concrete provider/indexing/ranking scope with tests for
 fallback behavior, privacy/safety gates, committed-memory authority, and QML non-exposure.
+Phase 18.0 through Phase 18.3 add the agent task runtime foundation:
+`AgentTask`, ids, type/status/priority/source enums, plans, steps, results, traces, safety policy,
+runtime status, `IAgentTaskRuntime`, and `StaticAgentTaskRuntime`. The runtime creates
+deterministic local metadata for tasks such as summarizing conversation, inspecting memory status,
+planning responses, preparing retrieval context, preparing voice responses, and preparing export
+actions. It refuses execution by design and does not call tools, plugins, providers, models,
+filesystems, shell/subprocesses, background workers, cloud/API services, or autonomous loops.
+Controller/view-model exposure remains QML-safe strings, counts, and lists only. Future tool
+runtime activation must pass through a separate explicit phase with permission, safety, approval,
+sandbox, and UI controls.
 Phase 17.0 through Phase 17.3 add semantic provider planning and local selection metadata:
 `SemanticProviderDescriptor`, `SemanticProviderSelection`, `SemanticProviderReadiness`,
 `SemanticProviderHealth`, `SemanticProviderCapability`, `SemanticProviderPolicy`,

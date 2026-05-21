@@ -61,6 +61,7 @@ These files bind to `shellViewModel`. They should not own business rules, provid
 - Chat history behavior is hidden behind `IChatHistoryStore`.
 - Future plugin behavior starts at `IPlugin`.
 - Context construction starts at `IContextEngine`.
+- Agent task orchestration starts at `IAgentTaskRuntime` and remains metadata-only.
 - UI code does not call network APIs or own business rules.
 
 ## Memory Storage Contract
@@ -90,6 +91,21 @@ Phase 6.5 adds memory taxonomy metadata separately from this storage contract:
 Phase 6.7 readiness diagnostics inspect existing orchestration metadata only. They do not read
 storage paths, scan files, query memory stores, build embeddings, run semantic search, mutate
 memory, or perform provider/model/tool execution.
+
+Phase 18.0 through Phase 18.3 add an agent task runtime boundary beside the earlier agent and
+runtime metadata layers:
+
+- `AgentTaskRuntime.h` defines value-only task ids, types, statuses, priorities, sources, plans,
+  steps, results, traces, safety policy, and runtime status records.
+- `IAgentTaskRuntime` is the task orchestration boundary.
+- `StaticAgentTaskRuntime` creates deterministic local metadata tasks and refuses execution by
+  design.
+- Task examples are metadata only: summarize conversation, inspect memory status, plan response,
+  prepare retrieval context, prepare voice response, and prepare export action.
+- The boundary does not execute tools, plugins, filesystem actions, shell/subprocess commands,
+  provider/model calls, cloud/API calls, background workers, or autonomous loops.
+- `ApplicationController` and `DesktopShellViewModel` expose only strings, counts, and string
+  lists for runtime status, task count, latest task summary, and trace summaries.
 
 Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit
 review flow beside, not inside, the existing memory contracts:

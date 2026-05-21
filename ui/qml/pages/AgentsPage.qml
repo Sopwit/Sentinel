@@ -42,6 +42,51 @@ ShellPanel {
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Task Runtime"
+                value: agentsPage.viewModel.agentTaskRuntimeStatus
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Task Count"
+                value: agentsPage.viewModel.agentTaskRuntimeTaskCount.toString()
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Latest Task"
+                value: agentsPage.viewModel.latestAgentTaskSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Runtime Boundary"
+                value: agentsPage.viewModel.agentTaskRuntimeSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceXs
+
+            Repeater {
+                model: agentsPage.viewModel.agentTaskTraceSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Task Trace"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
         }
 
         ActiveAgentsPanel {

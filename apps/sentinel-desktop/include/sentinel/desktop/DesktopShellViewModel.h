@@ -105,6 +105,11 @@ class DesktopShellViewModel final : public QObject {
                    orchestrationSnapshotChanged)
     Q_PROPERTY(QStringList orchestrationDiagnostics READ orchestrationDiagnostics NOTIFY
                    orchestrationSnapshotChanged)
+    Q_PROPERTY(QString agentTaskRuntimeStatus READ agentTaskRuntimeStatus CONSTANT)
+    Q_PROPERTY(QString agentTaskRuntimeSummary READ agentTaskRuntimeSummary CONSTANT)
+    Q_PROPERTY(int agentTaskRuntimeTaskCount READ agentTaskRuntimeTaskCount CONSTANT)
+    Q_PROPERTY(QString latestAgentTaskSummary READ latestAgentTaskSummary CONSTANT)
+    Q_PROPERTY(QStringList agentTaskTraceSummaries READ agentTaskTraceSummaries CONSTANT)
     Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
     Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
     Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary CONSTANT)
@@ -852,6 +857,11 @@ public:
     QString orchestrationReadinessStatus() const;
     QString orchestrationReadinessSummary() const;
     QStringList orchestrationDiagnostics() const;
+    QString agentTaskRuntimeStatus() const;
+    QString agentTaskRuntimeSummary() const;
+    int agentTaskRuntimeTaskCount() const;
+    QString latestAgentTaskSummary() const;
+    QStringList agentTaskTraceSummaries() const;
     QString localRuntimeStatus() const;
     QString localRuntimeHealth() const;
     QString localRuntimeSummary() const;

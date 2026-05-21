@@ -258,6 +258,29 @@ Delivered:
   readiness, refused activation, deterministic retrieval stability, prompt stability, and
   QML-safe exposure.
 
+## Phase 18.0-18.3: Agent Task Runtime Foundation
+
+Completed. Prepared agent/task orchestration architecture without executing tools, filesystem
+actions, shell commands, plugins, subprocesses, cloud/API calls, or autonomous actions.
+
+Delivered:
+
+- Value-only `AgentTask` records, ids, type/status/priority/source enums, plans, steps, results,
+  traces, safety policy, and runtime status metadata.
+- `IAgentTaskRuntime` with deterministic `StaticAgentTaskRuntime`.
+- Static metadata tasks for conversation summarization, memory status inspection, response
+  planning, retrieval-context preparation, voice-response preparation, and export-action
+  preparation.
+- Controller/view-model exposure for task runtime status, task count, latest task summary, and
+  trace summaries.
+- Compact read-only Agents page status with no execution buttons or approval/tool controls.
+
+Still out of scope:
+
+- Real task execution, tools/plugins, filesystem or system actions, shell/subprocess execution,
+  background workers, cloud/API keys, provider/model execution, autonomous loops, semantic
+  authority expansion, and broad UI redesign.
+
 Still out of scope:
 
 - Semantic ranking/search, real embedding calls, vector database writes, prompt mutation, semantic

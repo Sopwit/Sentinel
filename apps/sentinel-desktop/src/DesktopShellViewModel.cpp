@@ -361,6 +361,26 @@ QStringList DesktopShellViewModel::orchestrationDiagnostics() const {
     return controller_.orchestrationDiagnostics();
 }
 
+QString DesktopShellViewModel::agentTaskRuntimeStatus() const {
+    return controller_.agentTaskRuntimeStatus();
+}
+
+QString DesktopShellViewModel::agentTaskRuntimeSummary() const {
+    return controller_.agentTaskRuntimeSummary();
+}
+
+int DesktopShellViewModel::agentTaskRuntimeTaskCount() const {
+    return controller_.agentTaskRuntimeTaskCount();
+}
+
+QString DesktopShellViewModel::latestAgentTaskSummary() const {
+    return controller_.latestAgentTaskSummary();
+}
+
+QStringList DesktopShellViewModel::agentTaskTraceSummaries() const {
+    return controller_.agentTaskTraceSummaries();
+}
+
 QString DesktopShellViewModel::localRuntimeStatus() const {
     return controller_.localRuntimeStatus();
 }
