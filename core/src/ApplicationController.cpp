@@ -2381,6 +2381,80 @@ QString ApplicationController::whisperPreparationReadinessSummary() const {
         .arg(combinedBlockedReasons(validations));
 }
 
+WhisperRuntimeDescriptor ApplicationController::currentWhisperRuntimeDescriptor() const {
+    return whisperRuntimeDescriptorFromConfiguration(whisperBinaryPath_, whisperModelPath_);
+}
+
+PiperRuntimeDescriptor ApplicationController::currentPiperRuntimeDescriptor() const {
+    return piperRuntimeDescriptorFromConfiguration(piperBinaryPath_, piperModelPath_);
+}
+
+VoiceRuntimeReadinessReport ApplicationController::currentVoiceRuntimeReadinessReport() const {
+    return voiceRuntimeReadinessReport(currentWhisperRuntimeDescriptor(),
+                                       currentPiperRuntimeDescriptor());
+}
+
+QString ApplicationController::voiceRuntimeReadinessSummary() const {
+    return voiceRuntimeReadinessSummaryText(currentVoiceRuntimeReadinessReport());
+}
+
+QString ApplicationController::voiceRuntimeHealth() const {
+    return voiceRuntimeHealthName(currentVoiceRuntimeReadinessReport().health);
+}
+
+int ApplicationController::voiceRuntimeConfiguredCount() const {
+    return currentVoiceRuntimeReadinessReport().configuredCount;
+}
+
+int ApplicationController::voiceRuntimeMissingCount() const {
+    return currentVoiceRuntimeReadinessReport().missingCount;
+}
+
+int ApplicationController::voiceRuntimeRefusedCount() const {
+    return currentVoiceRuntimeReadinessReport().refusedCount;
+}
+
+QString ApplicationController::voiceRuntimePermissionFoundationSummary() const {
+    return sentinel::core::voiceRuntimePermissionFoundationSummary();
+}
+
+QString ApplicationController::voiceRuntimeSandboxSummary() const {
+    return sentinel::core::voiceRuntimeSandboxSummary(currentVoiceRuntimeReadinessReport());
+}
+
+QString ApplicationController::voiceRuntimeSafetyReportSummary() const {
+    return voiceRuntimeSafetySummaryText(
+        voiceRuntimeSafetyReportForReadiness(currentVoiceRuntimeReadinessReport()));
+}
+
+QStringList ApplicationController::voiceRuntimeReadinessChecks() const {
+    return sentinel::core::voiceRuntimeReadinessChecks(currentVoiceRuntimeReadinessReport());
+}
+
+QString ApplicationController::whisperRuntimeStatus() const {
+    return whisperRuntimeStatusName(currentWhisperRuntimeDescriptor().status);
+}
+
+QString ApplicationController::whisperRuntimeReadinessSummary() const {
+    return whisperRuntimeDescriptorSummary(currentWhisperRuntimeDescriptor());
+}
+
+QString ApplicationController::whisperRuntimePathSummary() const {
+    return whisperRuntimePathSummaryText(currentWhisperRuntimeDescriptor().pathSummary);
+}
+
+QString ApplicationController::piperRuntimeStatus() const {
+    return piperRuntimeStatusName(currentPiperRuntimeDescriptor().status);
+}
+
+QString ApplicationController::piperRuntimeReadinessSummary() const {
+    return piperRuntimeDescriptorSummary(currentPiperRuntimeDescriptor());
+}
+
+QString ApplicationController::piperRuntimePathSummary() const {
+    return piperRuntimePathSummaryText(currentPiperRuntimeDescriptor().pathSummary);
+}
+
 bool ApplicationController::localChatInferenceEnabled() const {
     return localChatInferenceEnabled_;
 }

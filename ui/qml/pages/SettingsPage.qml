@@ -1020,6 +1020,24 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
+                    label: "Runtime"
+                    value: settingsPage.viewModel.voiceRuntimeReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Configured / Missing"
+                    value: settingsPage.viewModel.voiceRuntimeConfiguredCount.toString()
+                           + " / "
+                           + settingsPage.viewModel.voiceRuntimeMissingCount.toString()
+                           + " refused "
+                           + settingsPage.viewModel.voiceRuntimeRefusedCount.toString()
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
                     label: "Piper TTS"
                     value: settingsPage.viewModel.piperFileOutputReadinessStatus + " / " + settingsPage.viewModel.piperFileOutputReadinessSummary
                     Layout.fillWidth: true
@@ -1074,6 +1092,20 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Piper Runtime"
+                    value: settingsPage.viewModel.piperRuntimeReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Whisper Runtime"
+                    value: settingsPage.viewModel.whisperRuntimeReadinessSummary
+                    Layout.fillWidth: true
+                }
+
                 Repeater {
                     model: settingsPage.viewModel.voiceConfigurationStatusBadges
 
@@ -1117,7 +1149,14 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Safety"
-                    value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / " + settingsPage.viewModel.voiceRuntimeSafetySummary
+                    value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / " + settingsPage.viewModel.voiceRuntimeSafetySummary + " / " + settingsPage.viewModel.voiceRuntimeSafetyReportSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Sandbox"
+                    value: settingsPage.viewModel.voiceRuntimeSandboxSummary
                     Layout.fillWidth: true
                 }
             }

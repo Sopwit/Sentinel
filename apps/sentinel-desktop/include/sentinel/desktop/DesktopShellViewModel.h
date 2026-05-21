@@ -319,6 +319,33 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString whisperPreparationReadinessSummary READ whisperPreparationReadinessSummary
                    NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString voiceRuntimeReadinessSummary READ voiceRuntimeReadinessSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString voiceRuntimeHealth READ voiceRuntimeHealth NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(int voiceRuntimeConfiguredCount READ voiceRuntimeConfiguredCount NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(int voiceRuntimeMissingCount READ voiceRuntimeMissingCount NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(int voiceRuntimeRefusedCount READ voiceRuntimeRefusedCount NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString voiceRuntimePermissionFoundationSummary READ
+                   voiceRuntimePermissionFoundationSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString voiceRuntimeSandboxSummary READ voiceRuntimeSandboxSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString voiceRuntimeSafetyReportSummary READ voiceRuntimeSafetyReportSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QStringList voiceRuntimeReadinessChecks READ voiceRuntimeReadinessChecks NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperRuntimeStatus READ whisperRuntimeStatus NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperRuntimeReadinessSummary READ whisperRuntimeReadinessSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperRuntimePathSummary READ whisperRuntimePathSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperRuntimeStatus READ piperRuntimeStatus NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString piperRuntimeReadinessSummary READ piperRuntimeReadinessSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperRuntimePathSummary READ piperRuntimePathSummary NOTIFY
+                   voiceConfigurationChanged)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceStatus READ localChatInferenceStatus NOTIFY
@@ -1068,6 +1095,21 @@ public:
     QString piperFileOutputAudioPathSummary() const;
     QString whisperPreparationReadinessStatus() const;
     QString whisperPreparationReadinessSummary() const;
+    QString voiceRuntimeReadinessSummary() const;
+    QString voiceRuntimeHealth() const;
+    int voiceRuntimeConfiguredCount() const;
+    int voiceRuntimeMissingCount() const;
+    int voiceRuntimeRefusedCount() const;
+    QString voiceRuntimePermissionFoundationSummary() const;
+    QString voiceRuntimeSandboxSummary() const;
+    QString voiceRuntimeSafetyReportSummary() const;
+    QStringList voiceRuntimeReadinessChecks() const;
+    QString whisperRuntimeStatus() const;
+    QString whisperRuntimeReadinessSummary() const;
+    QString whisperRuntimePathSummary() const;
+    QString piperRuntimeStatus() const;
+    QString piperRuntimeReadinessSummary() const;
+    QString piperRuntimePathSummary() const;
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;

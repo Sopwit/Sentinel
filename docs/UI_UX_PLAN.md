@@ -180,6 +180,13 @@ distinct as restricted metadata. The UI must not add execute buttons, approval U
 controls, tool/plugin controls, filesystem or shell controls, autonomous toggles, cloud setup, or a
 broad redesign.
 
+Phase 18.16 through Phase 18.18 add compact voice runtime readiness visibility to Settings and
+Agents. The surface may show Piper/Whisper runtime readiness, configured/missing/refused counts,
+permission summaries, sandbox summaries, and runtime safety summaries. Copy must make local-only,
+disabled by default, not actively running, and readiness-only states clear. The UI must not add
+start/stop buttons, microphone controls, playback controls, activation toggles, downloads, path
+pickers, provider setup, tool/plugin controls, autonomous toggles, cloud setup, or a redesign.
+
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool

@@ -2415,6 +2415,39 @@ Still out of scope:
   prompt injection, provider/model calls, cloud/API keys, plugins/tools, filesystem/system actions,
   raw vector/score/prompt UI, broad redesign, and runtime authority expansion.
 
+## Phase 18.16-18.18: Voice Runtime Permission And Path Configuration Foundation
+
+Completed. Added local-only readiness metadata for future Piper/Whisper STT/TTS activation without
+starting voice runtimes.
+
+Delivered:
+
+- Value-only voice runtime policy, status, readiness, health, sandbox, restriction, budget,
+  readiness-report, and safety-report metadata.
+- Piper and Whisper runtime descriptors, status/readiness records, configuration summaries, and
+  path summaries.
+- Deterministic configured/missing/refused counts for Piper binary/model and Whisper binary/model
+  configuration.
+- Unsafe or non-local path-style values are refused before readiness can become ready metadata.
+- QML-safe controller and desktop view-model exposure for readiness summaries, configured/missing
+  counts, permission/sandbox summaries, and runtime safety summaries.
+- Compact Settings and Agents readiness visibility that states local-only, disabled by default,
+  not actively running, and readiness-only.
+- Tests for deterministic readiness behavior, invalid configuration refusal, local-only
+  enforcement, `executionAttempted = false`, controller exposure, and QML-safe view-model
+  properties.
+
+Future activation flow:
+
+- A later explicit phase must add separate permission prompts, sandbox implementation, Piper and
+  Whisper execution clients, microphone/playback lifecycle, and UI controls before STT/TTS can run.
+
+Still out of scope:
+
+- Piper/Whisper inference, subprocess execution, microphone capture, audio playback, streaming,
+  filesystem scanning, downloads, cloud/API calls, background workers, path pickers, start/stop
+  controls, microphone controls, playback controls, and autonomous voice loops.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

@@ -140,6 +140,146 @@ QString voiceModelStatusName(VoiceModelStatus status) {
     return QStringLiteral("Unavailable");
 }
 
+QString voiceRuntimeStatusName(VoiceRuntimeStatus status) {
+    switch (status) {
+    case VoiceRuntimeStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case VoiceRuntimeStatus::ReadyMetadata:
+        return QStringLiteral("Ready Metadata");
+    case VoiceRuntimeStatus::MissingConfiguration:
+        return QStringLiteral("Missing Configuration");
+    case VoiceRuntimeStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString voiceRuntimeReadinessName(VoiceRuntimeReadiness readiness) {
+    switch (readiness) {
+    case VoiceRuntimeReadiness::Disabled:
+        return QStringLiteral("Disabled");
+    case VoiceRuntimeReadiness::ReadyMetadata:
+        return QStringLiteral("Ready Metadata");
+    case VoiceRuntimeReadiness::MissingConfiguration:
+        return QStringLiteral("Missing Configuration");
+    case VoiceRuntimeReadiness::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString voiceRuntimeHealthName(VoiceRuntimeHealth health) {
+    switch (health) {
+    case VoiceRuntimeHealth::HealthyMetadata:
+        return QStringLiteral("Healthy Metadata");
+    case VoiceRuntimeHealth::DegradedMetadata:
+        return QStringLiteral("Degraded Metadata");
+    case VoiceRuntimeHealth::Blocked:
+        return QStringLiteral("Blocked");
+    }
+
+    return QStringLiteral("Blocked");
+}
+
+QString voiceRuntimeSandboxName(VoiceRuntimeSandbox sandbox) {
+    switch (sandbox) {
+    case VoiceRuntimeSandbox::NotRequired:
+        return QStringLiteral("Not Required");
+    case VoiceRuntimeSandbox::RequiredMetadata:
+        return QStringLiteral("Required Metadata");
+    case VoiceRuntimeSandbox::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Required Metadata");
+}
+
+QString whisperRuntimeStatusName(WhisperRuntimeStatus status) {
+    switch (status) {
+    case WhisperRuntimeStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case WhisperRuntimeStatus::ReadyMetadata:
+        return QStringLiteral("Ready Metadata");
+    case WhisperRuntimeStatus::MissingConfiguration:
+        return QStringLiteral("Missing Configuration");
+    case WhisperRuntimeStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString whisperRuntimeReadinessName(WhisperRuntimeReadiness readiness) {
+    switch (readiness) {
+    case WhisperRuntimeReadiness::Disabled:
+        return QStringLiteral("Disabled");
+    case WhisperRuntimeReadiness::ReadyMetadata:
+        return QStringLiteral("Ready Metadata");
+    case WhisperRuntimeReadiness::MissingConfiguration:
+        return QStringLiteral("Missing Configuration");
+    case WhisperRuntimeReadiness::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString piperRuntimeStatusName(PiperRuntimeStatus status) {
+    switch (status) {
+    case PiperRuntimeStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case PiperRuntimeStatus::ReadyMetadata:
+        return QStringLiteral("Ready Metadata");
+    case PiperRuntimeStatus::MissingConfiguration:
+        return QStringLiteral("Missing Configuration");
+    case PiperRuntimeStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString piperRuntimeReadinessName(PiperRuntimeReadiness readiness) {
+    switch (readiness) {
+    case PiperRuntimeReadiness::Disabled:
+        return QStringLiteral("Disabled");
+    case PiperRuntimeReadiness::ReadyMetadata:
+        return QStringLiteral("Ready Metadata");
+    case PiperRuntimeReadiness::MissingConfiguration:
+        return QStringLiteral("Missing Configuration");
+    case PiperRuntimeReadiness::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+namespace {
+
+bool configured(const QString& path) {
+    return !path.trimmed().isEmpty();
+}
+
+bool unsafeVoiceRuntimePath(const QString& path) {
+    const auto trimmed = path.trimmed();
+    if (trimmed.isEmpty()) {
+        return false;
+    }
+
+    const auto lower = trimmed.toLower();
+    return lower.contains(QStringLiteral("://")) || lower.startsWith(QStringLiteral("\\\\"));
+}
+
+QString configuredMissingSummary(bool binaryConfigured, bool modelConfigured) {
+    return QStringLiteral("%1 configured, %2 missing")
+        .arg((binaryConfigured ? 1 : 0) + (modelConfigured ? 1 : 0))
+        .arg((binaryConfigured ? 0 : 1) + (modelConfigured ? 0 : 1));
+}
+
+} // namespace
+
 QString voiceProviderDescriptorSummary(const VoiceProviderDescriptor& descriptor) {
     return QStringLiteral("%1: %2 / %3. %4")
         .arg(descriptor.name, voiceProviderStatusName(descriptor.status),
@@ -347,6 +487,237 @@ QStringList voiceRuntimeSafetyCheckSummaries(const VoiceRuntimeSafetyReport& rep
         QStringLiteral("Cloud: %1")
             .arg(report.cloudAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
     };
+}
+
+WhisperRuntimeDescriptor whisperRuntimeDescriptorFromConfiguration(const QString& binaryPath,
+                                                                   const QString& modelPath) {
+    const auto binaryConfigured = configured(binaryPath);
+    const auto modelConfigured = configured(modelPath);
+    const auto refused = unsafeVoiceRuntimePath(binaryPath) || unsafeVoiceRuntimePath(modelPath);
+    const auto complete = binaryConfigured && modelConfigured && !refused;
+
+    WhisperRuntimePathSummary pathSummary;
+    pathSummary.binaryConfigured = binaryConfigured;
+    pathSummary.modelConfigured = modelConfigured;
+    pathSummary.localOnlyPathConfigured =
+        (binaryConfigured || modelConfigured) && !refused;
+    pathSummary.refused = refused;
+    pathSummary.configuredCount = (binaryConfigured ? 1 : 0) + (modelConfigured ? 1 : 0);
+    pathSummary.missingCount = 2 - pathSummary.configuredCount;
+    pathSummary.summary = refused
+        ? QStringLiteral("Whisper path summary: refused unsafe/non-local configuration; raw paths "
+                         "are not exposed.")
+        : QStringLiteral("Whisper path summary: %1; local-only path configured: %2.")
+              .arg(configuredMissingSummary(binaryConfigured, modelConfigured),
+                   pathSummary.localOnlyPathConfigured ? QStringLiteral("yes")
+                                                       : QStringLiteral("no"));
+
+    WhisperRuntimeConfiguration configuration;
+    configuration.binaryConfigured = binaryConfigured;
+    configuration.modelConfigured = modelConfigured;
+    configuration.localOnlyPathConfigured = pathSummary.localOnlyPathConfigured;
+    configuration.disabled = true;
+    configuration.refused = refused;
+    configuration.sandboxRequired = true;
+    configuration.futureMicrophoneAccess = true;
+    configuration.futureTranscriptionRuntime = true;
+    configuration.executionAttempted = false;
+    configuration.summary = refused
+        ? QStringLiteral("Whisper configuration refused unsafe/non-local paths before runtime "
+                         "activation.")
+        : QStringLiteral("Whisper configuration is local-only metadata, disabled by default, and "
+                         "prepared for future transcription activation only.");
+
+    const auto status = refused ? WhisperRuntimeStatus::Refused
+                                : (complete ? WhisperRuntimeStatus::ReadyMetadata
+                                            : WhisperRuntimeStatus::MissingConfiguration);
+    const auto readiness = refused ? WhisperRuntimeReadiness::Refused
+                                   : (complete ? WhisperRuntimeReadiness::ReadyMetadata
+                                               : WhisperRuntimeReadiness::MissingConfiguration);
+
+    WhisperRuntimeDescriptor descriptor;
+    descriptor.status = status;
+    descriptor.readiness = readiness;
+    descriptor.configuration = configuration;
+    descriptor.pathSummary = pathSummary;
+    descriptor.summary =
+        QStringLiteral("Whisper runtime [%1/%2]: local-only, disabled by default, not actively "
+                       "running, readiness-only; execution attempted: no.")
+            .arg(whisperRuntimeStatusName(status), whisperRuntimeReadinessName(readiness));
+    return descriptor;
+}
+
+PiperRuntimeDescriptor piperRuntimeDescriptorFromConfiguration(const QString& binaryPath,
+                                                              const QString& modelPath) {
+    const auto binaryConfigured = configured(binaryPath);
+    const auto modelConfigured = configured(modelPath);
+    const auto refused = unsafeVoiceRuntimePath(binaryPath) || unsafeVoiceRuntimePath(modelPath);
+    const auto complete = binaryConfigured && modelConfigured && !refused;
+
+    PiperRuntimePathSummary pathSummary;
+    pathSummary.binaryConfigured = binaryConfigured;
+    pathSummary.modelConfigured = modelConfigured;
+    pathSummary.localOnlyPathConfigured =
+        (binaryConfigured || modelConfigured) && !refused;
+    pathSummary.refused = refused;
+    pathSummary.configuredCount = (binaryConfigured ? 1 : 0) + (modelConfigured ? 1 : 0);
+    pathSummary.missingCount = 2 - pathSummary.configuredCount;
+    pathSummary.summary = refused
+        ? QStringLiteral("Piper path summary: refused unsafe/non-local configuration; raw paths "
+                         "are not exposed.")
+        : QStringLiteral("Piper path summary: %1; local-only path configured: %2.")
+              .arg(configuredMissingSummary(binaryConfigured, modelConfigured),
+                   pathSummary.localOnlyPathConfigured ? QStringLiteral("yes")
+                                                       : QStringLiteral("no"));
+
+    PiperRuntimeConfiguration configuration;
+    configuration.binaryConfigured = binaryConfigured;
+    configuration.modelConfigured = modelConfigured;
+    configuration.localOnlyPathConfigured = pathSummary.localOnlyPathConfigured;
+    configuration.disabled = true;
+    configuration.refused = refused;
+    configuration.sandboxRequired = true;
+    configuration.futureAudioPlayback = true;
+    configuration.futureSynthesisRuntime = true;
+    configuration.executionAttempted = false;
+    configuration.summary = refused
+        ? QStringLiteral("Piper configuration refused unsafe/non-local paths before runtime "
+                         "activation.")
+        : QStringLiteral("Piper configuration is local-only metadata, disabled by default, and "
+                         "prepared for future synthesis activation only.");
+
+    const auto status = refused ? PiperRuntimeStatus::Refused
+                                : (complete ? PiperRuntimeStatus::ReadyMetadata
+                                            : PiperRuntimeStatus::MissingConfiguration);
+    const auto readiness = refused ? PiperRuntimeReadiness::Refused
+                                   : (complete ? PiperRuntimeReadiness::ReadyMetadata
+                                               : PiperRuntimeReadiness::MissingConfiguration);
+
+    PiperRuntimeDescriptor descriptor;
+    descriptor.status = status;
+    descriptor.readiness = readiness;
+    descriptor.configuration = configuration;
+    descriptor.pathSummary = pathSummary;
+    descriptor.summary =
+        QStringLiteral("Piper runtime [%1/%2]: local-only, disabled by default, not actively "
+                       "running, readiness-only; execution attempted: no.")
+            .arg(piperRuntimeStatusName(status), piperRuntimeReadinessName(readiness));
+    return descriptor;
+}
+
+VoiceRuntimeReadinessReport voiceRuntimeReadinessReport(
+    const WhisperRuntimeDescriptor& whisper, const PiperRuntimeDescriptor& piper) {
+    const auto configuredCount = whisper.pathSummary.configuredCount + piper.pathSummary.configuredCount;
+    const auto missingCount = whisper.pathSummary.missingCount + piper.pathSummary.missingCount;
+    const auto refusedCount = (whisper.configuration.refused ? 1 : 0) +
+                              (piper.configuration.refused ? 1 : 0);
+
+    VoiceRuntimeReadinessReport report;
+    report.configuredCount = configuredCount;
+    report.missingCount = missingCount;
+    report.refusedCount = refusedCount;
+    report.localOnly = true;
+    report.disabledByDefault = true;
+    report.executionAttempted = false;
+    report.sandbox = refusedCount > 0 ? VoiceRuntimeSandbox::Refused
+                                      : VoiceRuntimeSandbox::RequiredMetadata;
+    report.readiness = refusedCount > 0
+        ? VoiceRuntimeReadiness::Refused
+        : (missingCount == 0 ? VoiceRuntimeReadiness::ReadyMetadata
+                             : VoiceRuntimeReadiness::MissingConfiguration);
+    report.health = refusedCount > 0
+        ? VoiceRuntimeHealth::Blocked
+        : (missingCount == 0 ? VoiceRuntimeHealth::HealthyMetadata
+                             : VoiceRuntimeHealth::DegradedMetadata);
+    report.summary =
+        QStringLiteral("%1 voice runtime readiness: %2 configured, %3 missing, %4 refused; "
+                       "local-only, disabled by default, not actively running, readiness-only, "
+                       "execution attempted: no.")
+            .arg(voiceRuntimeReadinessName(report.readiness))
+            .arg(configuredCount)
+            .arg(missingCount)
+            .arg(refusedCount);
+    report.checks = {
+        whisperRuntimeDescriptorSummary(whisper),
+        piperRuntimeDescriptorSummary(piper),
+        voiceRuntimePermissionFoundationSummary(),
+        voiceRuntimeSandboxSummary(report),
+        QStringLiteral("No subprocess execution, inference, microphone capture, playback, "
+                       "streaming, downloads, cloud/API calls, filesystem scanning, or "
+                       "background workers are started."),
+    };
+    return report;
+}
+
+QString whisperRuntimeDescriptorSummary(const WhisperRuntimeDescriptor& descriptor) {
+    return QStringLiteral("%1: %2 / %3. %4 %5 %6")
+        .arg(descriptor.name, whisperRuntimeStatusName(descriptor.status),
+             whisperRuntimeReadinessName(descriptor.readiness), descriptor.pathSummary.summary,
+             descriptor.configuration.summary, descriptor.summary);
+}
+
+QString whisperRuntimePathSummaryText(const WhisperRuntimePathSummary& summary) {
+    return summary.summary;
+}
+
+QString piperRuntimeDescriptorSummary(const PiperRuntimeDescriptor& descriptor) {
+    return QStringLiteral("%1: %2 / %3. %4 %5 %6")
+        .arg(descriptor.name, piperRuntimeStatusName(descriptor.status),
+             piperRuntimeReadinessName(descriptor.readiness), descriptor.pathSummary.summary,
+             descriptor.configuration.summary, descriptor.summary);
+}
+
+QString piperRuntimePathSummaryText(const PiperRuntimePathSummary& summary) {
+    return summary.summary;
+}
+
+QString voiceRuntimeReadinessSummaryText(const VoiceRuntimeReadinessReport& report) {
+    return report.summary;
+}
+
+QStringList voiceRuntimeReadinessChecks(const VoiceRuntimeReadinessReport& report) {
+    return report.checks;
+}
+
+QString voiceRuntimePermissionFoundationSummary() {
+    return QStringLiteral("Voice runtime permissions: local-only metadata, disabled, sandbox-"
+                          "required; future microphone access, future audio playback, future "
+                          "transcription runtime, and future synthesis runtime are not grants.");
+}
+
+QString voiceRuntimeSandboxSummary(const VoiceRuntimeReadinessReport& report) {
+    return QStringLiteral("Voice runtime sandbox: %1; sandbox requirements are summarized only "
+                          "and grant no filesystem, subprocess, microphone, or playback access.")
+        .arg(voiceRuntimeSandboxName(report.sandbox));
+}
+
+VoiceRuntimeSafetyReport voiceRuntimeSafetyReportForReadiness(
+    const VoiceRuntimeReadinessReport& report) {
+    VoiceRuntimeSafetyReport safety;
+    safety.status = report.readiness == VoiceRuntimeReadiness::Refused
+        ? QStringLiteral("Refused")
+        : QStringLiteral("Blocked");
+    safety.summary =
+        QStringLiteral("Voice runtime safety preserves no-runtime-execution guarantees: "
+                       "execution attempted: no; configured/missing/refused metadata only.");
+    safety.executionAllowed = false;
+    safety.executionAttempted = false;
+    safety.microphoneAllowed = false;
+    safety.playbackAllowed = false;
+    safety.processExecutionAllowed = false;
+    safety.filesystemWideScanAllowed = false;
+    safety.downloadsAllowed = false;
+    safety.cloudAllowed = false;
+    safety.checks = {
+        QStringLiteral("Execution attempted: no"),
+        QStringLiteral("Subprocess execution: blocked"),
+        QStringLiteral("Inference: blocked"),
+        QStringLiteral("Microphone capture: blocked"),
+        QStringLiteral("Audio playback: blocked"),
+        QStringLiteral("Filesystem scanning: blocked"),
+        QStringLiteral("Downloads/cloud/API calls/background workers: blocked"),
+    };
+    return safety;
 }
 
 VoiceProviderDescriptor NullTextToSpeechProvider::descriptor() const {

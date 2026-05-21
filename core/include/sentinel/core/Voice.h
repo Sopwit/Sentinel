@@ -92,6 +92,76 @@ enum class VoiceModelStatus : std::uint8_t {
 
 QString voiceModelStatusName(VoiceModelStatus status);
 
+enum class VoiceRuntimeStatus : std::uint8_t {
+    Disabled,
+    ReadyMetadata,
+    MissingConfiguration,
+    Refused,
+};
+
+QString voiceRuntimeStatusName(VoiceRuntimeStatus status);
+
+enum class VoiceRuntimeReadiness : std::uint8_t {
+    Disabled,
+    ReadyMetadata,
+    MissingConfiguration,
+    Refused,
+};
+
+QString voiceRuntimeReadinessName(VoiceRuntimeReadiness readiness);
+
+enum class VoiceRuntimeHealth : std::uint8_t {
+    HealthyMetadata,
+    DegradedMetadata,
+    Blocked,
+};
+
+QString voiceRuntimeHealthName(VoiceRuntimeHealth health);
+
+enum class VoiceRuntimeSandbox : std::uint8_t {
+    NotRequired,
+    RequiredMetadata,
+    Refused,
+};
+
+QString voiceRuntimeSandboxName(VoiceRuntimeSandbox sandbox);
+
+enum class WhisperRuntimeStatus : std::uint8_t {
+    Disabled,
+    ReadyMetadata,
+    MissingConfiguration,
+    Refused,
+};
+
+QString whisperRuntimeStatusName(WhisperRuntimeStatus status);
+
+enum class WhisperRuntimeReadiness : std::uint8_t {
+    Disabled,
+    ReadyMetadata,
+    MissingConfiguration,
+    Refused,
+};
+
+QString whisperRuntimeReadinessName(WhisperRuntimeReadiness readiness);
+
+enum class PiperRuntimeStatus : std::uint8_t {
+    Disabled,
+    ReadyMetadata,
+    MissingConfiguration,
+    Refused,
+};
+
+QString piperRuntimeStatusName(PiperRuntimeStatus status);
+
+enum class PiperRuntimeReadiness : std::uint8_t {
+    Disabled,
+    ReadyMetadata,
+    MissingConfiguration,
+    Refused,
+};
+
+QString piperRuntimeReadinessName(PiperRuntimeReadiness readiness);
+
 struct VoiceProviderDescriptor {
     QString id;
     QString name;
@@ -181,10 +251,38 @@ struct VoiceRuntimePermission {
     QString summary;
 };
 
+struct VoiceRuntimePolicy {
+    bool metadataOnly = true;
+    bool localOnly = true;
+    bool disabledByDefault = true;
+    bool executionAllowed = false;
+    bool microphoneAllowed = false;
+    bool playbackAllowed = false;
+    bool transcriptionRuntimeAllowed = false;
+    bool synthesisRuntimeAllowed = false;
+    QString summary = QStringLiteral(
+        "Voice runtime policy is local-only metadata; STT/TTS execution is disabled by default.");
+};
+
+struct VoiceRuntimeRestriction {
+    QString summary;
+    bool restricted = true;
+};
+
+struct VoiceRuntimeBudget {
+    int maxRuntimeDescriptors = 2;
+    int maxPathSummaries = 4;
+    int maxPermissionSummaries = 8;
+    QString summary = QStringLiteral(
+        "Voice runtime readiness is bounded to 2 runtime descriptors, 4 path summaries, and 8 "
+        "permission summaries.");
+};
+
 struct VoiceRuntimeSafetyReport {
     QString status = QStringLiteral("Blocked");
     QString summary = QStringLiteral("Voice runtime execution is blocked by default.");
     bool executionAllowed = false;
+    bool executionAttempted = false;
     bool microphoneAllowed = false;
     bool playbackAllowed = false;
     bool processExecutionAllowed = false;
@@ -192,6 +290,86 @@ struct VoiceRuntimeSafetyReport {
     bool downloadsAllowed = false;
     bool cloudAllowed = false;
     QStringList checks;
+};
+
+struct VoiceRuntimeReadinessReport {
+    VoiceRuntimeReadiness readiness = VoiceRuntimeReadiness::Disabled;
+    VoiceRuntimeHealth health = VoiceRuntimeHealth::Blocked;
+    VoiceRuntimeSandbox sandbox = VoiceRuntimeSandbox::RequiredMetadata;
+    int configuredCount = 0;
+    int missingCount = 4;
+    int refusedCount = 0;
+    bool localOnly = true;
+    bool disabledByDefault = true;
+    bool executionAttempted = false;
+    QString summary = QStringLiteral("Voice runtime readiness is disabled metadata only.");
+    QStringList checks;
+};
+
+struct WhisperRuntimePathSummary {
+    bool binaryConfigured = false;
+    bool modelConfigured = false;
+    bool localOnlyPathConfigured = false;
+    bool refused = false;
+    int configuredCount = 0;
+    int missingCount = 2;
+    QString summary = QStringLiteral("Whisper paths are missing.");
+};
+
+struct WhisperRuntimeConfiguration {
+    bool binaryConfigured = false;
+    bool modelConfigured = false;
+    bool localOnlyPathConfigured = false;
+    bool disabled = true;
+    bool refused = false;
+    bool sandboxRequired = true;
+    bool futureMicrophoneAccess = true;
+    bool futureTranscriptionRuntime = true;
+    bool executionAttempted = false;
+    QString summary;
+};
+
+struct WhisperRuntimeDescriptor {
+    QString id = QStringLiteral("whisper-runtime");
+    QString name = QStringLiteral("Whisper Runtime");
+    WhisperRuntimeStatus status = WhisperRuntimeStatus::Disabled;
+    WhisperRuntimeReadiness readiness = WhisperRuntimeReadiness::Disabled;
+    WhisperRuntimeConfiguration configuration;
+    WhisperRuntimePathSummary pathSummary;
+    QString summary;
+};
+
+struct PiperRuntimePathSummary {
+    bool binaryConfigured = false;
+    bool modelConfigured = false;
+    bool localOnlyPathConfigured = false;
+    bool refused = false;
+    int configuredCount = 0;
+    int missingCount = 2;
+    QString summary = QStringLiteral("Piper paths are missing.");
+};
+
+struct PiperRuntimeConfiguration {
+    bool binaryConfigured = false;
+    bool modelConfigured = false;
+    bool localOnlyPathConfigured = false;
+    bool disabled = true;
+    bool refused = false;
+    bool sandboxRequired = true;
+    bool futureAudioPlayback = true;
+    bool futureSynthesisRuntime = true;
+    bool executionAttempted = false;
+    QString summary;
+};
+
+struct PiperRuntimeDescriptor {
+    QString id = QStringLiteral("piper-runtime");
+    QString name = QStringLiteral("Piper Runtime");
+    PiperRuntimeStatus status = PiperRuntimeStatus::Disabled;
+    PiperRuntimeReadiness readiness = PiperRuntimeReadiness::Disabled;
+    PiperRuntimeConfiguration configuration;
+    PiperRuntimePathSummary pathSummary;
+    QString summary;
 };
 
 QString voiceProviderDescriptorSummary(const VoiceProviderDescriptor& descriptor);
@@ -212,6 +390,22 @@ QString voiceRuntimePermissionSummary(const VoiceRuntimePermission& permission);
 QStringList voiceRuntimePermissionSummaries(const QList<VoiceRuntimePermission>& permissions);
 QString voiceRuntimeSafetySummaryText(const VoiceRuntimeSafetyReport& report);
 QStringList voiceRuntimeSafetyCheckSummaries(const VoiceRuntimeSafetyReport& report);
+WhisperRuntimeDescriptor whisperRuntimeDescriptorFromConfiguration(const QString& binaryPath,
+                                                                   const QString& modelPath);
+PiperRuntimeDescriptor piperRuntimeDescriptorFromConfiguration(const QString& binaryPath,
+                                                              const QString& modelPath);
+VoiceRuntimeReadinessReport voiceRuntimeReadinessReport(
+    const WhisperRuntimeDescriptor& whisper, const PiperRuntimeDescriptor& piper);
+QString whisperRuntimeDescriptorSummary(const WhisperRuntimeDescriptor& descriptor);
+QString whisperRuntimePathSummaryText(const WhisperRuntimePathSummary& summary);
+QString piperRuntimeDescriptorSummary(const PiperRuntimeDescriptor& descriptor);
+QString piperRuntimePathSummaryText(const PiperRuntimePathSummary& summary);
+QString voiceRuntimeReadinessSummaryText(const VoiceRuntimeReadinessReport& report);
+QStringList voiceRuntimeReadinessChecks(const VoiceRuntimeReadinessReport& report);
+QString voiceRuntimePermissionFoundationSummary();
+QString voiceRuntimeSandboxSummary(const VoiceRuntimeReadinessReport& report);
+VoiceRuntimeSafetyReport voiceRuntimeSafetyReportForReadiness(
+    const VoiceRuntimeReadinessReport& report);
 
 class ITextToSpeechProvider {
 public:

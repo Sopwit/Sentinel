@@ -16,6 +16,10 @@ using sentinel::core::PiperTtsConfig;
 using sentinel::core::PiperTtsRequest;
 using sentinel::core::PiperTtsResult;
 using sentinel::core::PiperTtsStatus;
+using sentinel::core::piperRuntimeDescriptorFromConfiguration;
+using sentinel::core::piperRuntimeDescriptorSummary;
+using sentinel::core::PiperRuntimeReadiness;
+using sentinel::core::PiperRuntimeStatus;
 using sentinel::core::piperTtsStatusName;
 using sentinel::core::safePiperTtsResultSummary;
 using sentinel::core::safeVoicePipelineSummary;
@@ -37,10 +41,19 @@ using sentinel::core::voicePipelineTraceSummaries;
 using sentinel::core::VoiceProviderStatus;
 using sentinel::core::voiceProviderStatusName;
 using sentinel::core::VoiceRequest;
+using sentinel::core::voiceRuntimeReadinessChecks;
+using sentinel::core::voiceRuntimeReadinessReport;
+using sentinel::core::VoiceRuntimeReadiness;
+using sentinel::core::voiceRuntimeReadinessSummaryText;
 using sentinel::core::VoiceRuntimeMode;
 using sentinel::core::voiceRuntimeModeName;
+using sentinel::core::voiceRuntimeSafetyReportForReadiness;
 using sentinel::core::VoiceSessionState;
 using sentinel::core::voiceSessionStateName;
+using sentinel::core::whisperRuntimeDescriptorFromConfiguration;
+using sentinel::core::whisperRuntimeDescriptorSummary;
+using sentinel::core::WhisperRuntimeReadiness;
+using sentinel::core::WhisperRuntimeStatus;
 
 namespace {
 
@@ -187,6 +200,8 @@ private slots:
     void nullVoiceRuntimeEnvironmentReportsMissingOwnershipMetadata();
     void staticVoiceRuntimeEnvironmentUsesInjectedMetadataOnly();
     void voiceRuntimeSafetyBlocksExecutionByDefault();
+    void voiceRuntimeConfigurationReportsMissingAndReadyMetadata();
+    void voiceRuntimeConfigurationRefusesUnsafeNonLocalPaths();
     void nullPiperTtsClientRefusesWithoutSideEffects();
     void piperTextToSpeechProviderRefusesMissingBinaryAndModel();
     void piperTextToSpeechProviderReportsSafetyBlockedMetadata();
@@ -379,6 +394,7 @@ void VoiceTest::voiceRuntimeSafetyBlocksExecutionByDefault() {
 
     QCOMPARE(report.status, QStringLiteral("Blocked"));
     QVERIFY(!report.executionAllowed);
+    QVERIFY(!report.executionAttempted);
     QVERIFY(!report.microphoneAllowed);
     QVERIFY(!report.playbackAllowed);
     QVERIFY(!report.processExecutionAllowed);
@@ -388,6 +404,59 @@ void VoiceTest::voiceRuntimeSafetyBlocksExecutionByDefault() {
     QCOMPARE(report.checks.size(), 7);
     QVERIFY(report.summary.contains(QStringLiteral("Piper")));
     QVERIFY(report.summary.contains(QStringLiteral("Whisper")));
+}
+
+void VoiceTest::voiceRuntimeConfigurationReportsMissingAndReadyMetadata() {
+    const auto missingWhisper = whisperRuntimeDescriptorFromConfiguration({}, {});
+    const auto missingPiper = piperRuntimeDescriptorFromConfiguration({}, {});
+    const auto missingReport = voiceRuntimeReadinessReport(missingWhisper, missingPiper);
+
+    QCOMPARE(missingWhisper.status, WhisperRuntimeStatus::MissingConfiguration);
+    QCOMPARE(missingPiper.status, PiperRuntimeStatus::MissingConfiguration);
+    QCOMPARE(missingReport.readiness, VoiceRuntimeReadiness::MissingConfiguration);
+    QCOMPARE(missingReport.configuredCount, 0);
+    QCOMPARE(missingReport.missingCount, 4);
+    QCOMPARE(missingReport.refusedCount, 0);
+    QVERIFY(!missingReport.executionAttempted);
+    QVERIFY(voiceRuntimeReadinessSummaryText(missingReport).contains(
+        QStringLiteral("execution attempted: no")));
+
+    const auto readyWhisper =
+        whisperRuntimeDescriptorFromConfiguration(QStringLiteral("/local/bin/whisper"),
+                                                  QStringLiteral("/local/models/whisper.bin"));
+    const auto readyPiper =
+        piperRuntimeDescriptorFromConfiguration(QStringLiteral("/local/bin/piper"),
+                                                QStringLiteral("/local/models/voice.onnx"));
+    const auto readyReport = voiceRuntimeReadinessReport(readyWhisper, readyPiper);
+
+    QCOMPARE(readyWhisper.readiness, WhisperRuntimeReadiness::ReadyMetadata);
+    QCOMPARE(readyPiper.readiness, PiperRuntimeReadiness::ReadyMetadata);
+    QCOMPARE(readyReport.readiness, VoiceRuntimeReadiness::ReadyMetadata);
+    QCOMPARE(readyReport.configuredCount, 4);
+    QCOMPARE(readyReport.missingCount, 0);
+    QCOMPARE(readyReport.refusedCount, 0);
+    QVERIFY(whisperRuntimeDescriptorSummary(readyWhisper).contains(QStringLiteral("local-only")));
+    QVERIFY(piperRuntimeDescriptorSummary(readyPiper).contains(QStringLiteral("local-only")));
+    QVERIFY(!voiceRuntimeSafetyReportForReadiness(readyReport).executionAllowed);
+    QVERIFY(!voiceRuntimeSafetyReportForReadiness(readyReport).executionAttempted);
+}
+
+void VoiceTest::voiceRuntimeConfigurationRefusesUnsafeNonLocalPaths() {
+    const auto whisper = whisperRuntimeDescriptorFromConfiguration(
+        QStringLiteral("https://example.invalid/whisper"), QStringLiteral("/local/model.bin"));
+    const auto piper = piperRuntimeDescriptorFromConfiguration(
+        QStringLiteral("/local/bin/piper"), QStringLiteral("file://voice.onnx"));
+    const auto report = voiceRuntimeReadinessReport(whisper, piper);
+    const auto checks = voiceRuntimeReadinessChecks(report).join(QStringLiteral(" "));
+
+    QCOMPARE(whisper.status, WhisperRuntimeStatus::Refused);
+    QCOMPARE(piper.status, PiperRuntimeStatus::Refused);
+    QCOMPARE(report.readiness, VoiceRuntimeReadiness::Refused);
+    QCOMPARE(report.refusedCount, 2);
+    QVERIFY(checks.contains(QStringLiteral("unsafe/non-local")));
+    QVERIFY(!checks.contains(QStringLiteral("https://example.invalid")));
+    QVERIFY(!checks.contains(QStringLiteral("file://voice.onnx")));
+    QVERIFY(!voiceRuntimeSafetyReportForReadiness(report).executionAttempted);
 }
 
 void VoiceTest::nullPiperTtsClientRefusesWithoutSideEffects() {
