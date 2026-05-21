@@ -1041,6 +1041,20 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
+                    label: "Audio File"
+                    value: settingsPage.viewModel.audioFileSessionStatus + " / " + settingsPage.viewModel.audioFileSessionReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Audio Safety"
+                    value: settingsPage.viewModel.audioFileSessionSafetySummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
                     label: "Configured / Missing"
                     value: settingsPage.viewModel.voiceRuntimeConfiguredCount.toString()
                            + " / "
@@ -1118,6 +1132,17 @@ ScrollView {
                     label: "STT Fallback"
                     value: settingsPage.viewModel.whisperTranscriptionFallbackSummary
                     Layout.fillWidth: true
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.audioFileSupportedExtensionSummaries
+
+                    InfoRow {
+                        compact: settingsPage.compact
+                        label: "Audio Ext"
+                        value: modelData
+                        Layout.fillWidth: true
+                    }
                 }
 
                 Repeater {

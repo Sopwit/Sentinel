@@ -270,6 +270,26 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(int voicePipelineSessionBlockedStageCount READ voicePipelineSessionBlockedStageCount
                    NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString audioFileSessionStatus READ audioFileSessionStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString audioFileSessionSummary READ audioFileSessionSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString audioFileSessionReadinessSummary READ
+                   audioFileSessionReadinessSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList audioFileValidationSummaries READ audioFileValidationSummaries NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QStringList audioFileSupportedExtensionSummaries READ
+                   audioFileSupportedExtensionSummaries CONSTANT)
+    Q_PROPERTY(QString audioFileSessionFallbackSummary READ audioFileSessionFallbackSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString audioFileSessionSafetySummary READ audioFileSessionSafetySummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QStringList audioFileSessionSafetyChecks READ audioFileSessionSafetyChecks NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QStringList audioFileSessionRefusalSummaries READ
+                   audioFileSessionRefusalSummaries NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList audioFileTraceSummaries READ audioFileTraceSummaries NOTIFY
+                   voiceConfigurationChanged)
     Q_PROPERTY(QString voiceRuntimeStatus READ voiceRuntimeStatus CONSTANT)
     Q_PROPERTY(QString voiceRuntimeSummary READ voiceRuntimeSummary CONSTANT)
     Q_PROPERTY(QStringList voiceRuntimeCheckSummaries READ voiceRuntimeCheckSummaries CONSTANT)
@@ -1099,6 +1119,16 @@ public:
     QStringList voicePipelineSessionSafetyChecks() const;
     int voicePipelineSessionReadyStageCount() const;
     int voicePipelineSessionBlockedStageCount() const;
+    QString audioFileSessionStatus() const;
+    QString audioFileSessionSummary() const;
+    QString audioFileSessionReadinessSummary() const;
+    QStringList audioFileValidationSummaries() const;
+    QStringList audioFileSupportedExtensionSummaries() const;
+    QString audioFileSessionFallbackSummary() const;
+    QString audioFileSessionSafetySummary() const;
+    QStringList audioFileSessionSafetyChecks() const;
+    QStringList audioFileSessionRefusalSummaries() const;
+    QStringList audioFileTraceSummaries() const;
     QString voiceRuntimeStatus() const;
     QString voiceRuntimeSummary() const;
     QStringList voiceRuntimeCheckSummaries() const;

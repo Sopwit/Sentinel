@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 18.28-18.30: Controlled Audio-File Session Foundation
+
+Completed. Adds deterministic metadata-only audio-file session modeling for future controlled
+offline STT ingestion without enabling file loading, decoding, transcription, playback, or
+execution.
+
+Scope:
+
+- Added value-only audio file session id/status/policy/result/readiness/safety/fallback/summary,
+  descriptor, validation/status/restriction/budget, and trace metadata.
+- Supported future extension metadata is deterministic and ordered for wav, mp3, flac, and ogg.
+- Validation metadata reports local-only, supported/unsupported extension, empty-file,
+  oversized-file, refused-path, sandbox-required, future-transcription-ready, and
+  disabled-by-policy states.
+- Unsafe or non-local path-style values are refused without exposing raw paths to QML.
+- Empty, oversized, sandbox-required, and disabled states produce deterministic fallback metadata.
+- Safety reports preserve `executionAttempted = false` and block file loading, waveform decoding,
+  transcription, playback, microphone capture, subprocess execution, filesystem scanning,
+  automatic ingestion, autonomous loops, and cloud/API calls.
+- Controller, desktop view model, Settings, Agents, and the existing Chat status line expose only
+  QML-safe status strings, summaries, counts, validation/refusal lists, supported-extension
+  summaries, trace summaries, fallback summaries, and safety summaries.
+
+Known limitation:
+
+- This phase does not add upload controls, file pickers, real file reads, waveform decoding,
+  Whisper execution, transcript creation, playback, microphone capture, filesystem scanning,
+  subprocesses, cloud calls, or automatic ingestion. Future controlled transcription and live
+  microphone phases must be scoped separately.
+
 ### Phase 18.25-18.27: Voice Pipeline Session Orchestration Foundation
 
 Completed. Adds deterministic voice pipeline session orchestration metadata that composes Whisper

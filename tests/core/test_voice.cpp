@@ -1,4 +1,5 @@
 #include "sentinel/core/PiperTts.h"
+#include "sentinel/core/AudioFileSession.h"
 #include "sentinel/core/Voice.h"
 #include "sentinel/core/WhisperTranscription.h"
 
@@ -8,6 +9,17 @@
 #include <QtTest>
 
 using sentinel::core::buildVoiceReadinessReport;
+using sentinel::core::AudioFileDescriptor;
+using sentinel::core::AudioFileSessionPolicy;
+using sentinel::core::AudioFileSessionStatus;
+using sentinel::core::AudioFileValidationStatus;
+using sentinel::core::audioFileSessionRefusalSummaries;
+using sentinel::core::audioFileSessionSafetyChecks;
+using sentinel::core::audioFileSessionStatusName;
+using sentinel::core::audioFileTraceSummaries;
+using sentinel::core::audioFileValidationSummaries;
+using sentinel::core::buildAudioFileSessionResult;
+using sentinel::core::supportedAudioFileExtensionSummaries;
 using sentinel::core::NullPiperTtsClient;
 using sentinel::core::NullSpeechToTextProvider;
 using sentinel::core::NullTextToSpeechProvider;
@@ -228,6 +240,10 @@ private slots:
     void staticVoiceRuntimeCoordinatorReportsBlockedAndErrorMetadata();
     void voicePipelineSessionOrchestratesReadinessDeterministically();
     void voicePipelineSessionBlocksMissingStagesAndFallsBackWithoutExecution();
+    void audioFileSessionOrdersValidationMetadataDeterministically();
+    void audioFileSessionReportsSupportedAndUnsupportedExtensionMetadata();
+    void audioFileSessionRefusesUnsafePathWithoutExposingRawPath();
+    void audioFileSessionFallsBackForEmptyAndOversizedMetadataWithoutExecution();
     void nullVoiceRuntimeEnvironmentReportsMissingOwnershipMetadata();
     void staticVoiceRuntimeEnvironmentUsesInjectedMetadataOnly();
     void voiceRuntimeSafetyBlocksExecutionByDefault();
@@ -451,6 +467,99 @@ void VoiceTest::voicePipelineSessionBlocksMissingStagesAndFallsBackWithoutExecut
                 .contains(QStringLiteral("Missing Piper readiness")));
     QVERIFY(!missingPiper.safetyReport.voiceChatAutoSendAllowed);
     QVERIFY(!missingPiper.safetyReport.transcriptAutoInjectionAllowed);
+}
+
+void VoiceTest::audioFileSessionOrdersValidationMetadataDeterministically() {
+    AudioFileSessionPolicy policy;
+    policy.enabled = true;
+    const auto result = buildAudioFileSessionResult(
+        AudioFileDescriptor{QStringLiteral("/local/audio/sample.wav"), {}, 1024, true, true},
+        policy);
+
+    QCOMPARE(result.status, AudioFileSessionStatus::Fallback);
+    QCOMPARE(result.executionAttempted, false);
+    QVERIFY(!result.safetyReport.executionAttempted);
+    QCOMPARE(result.validations.at(0).status, AudioFileValidationStatus::LocalOnly);
+    QCOMPARE(result.validations.at(1).status, AudioFileValidationStatus::SandboxRequired);
+    QCOMPARE(result.validations.at(2).status, AudioFileValidationStatus::SupportedExtension);
+    QCOMPARE(result.traces.at(0).sequence, 1);
+    QVERIFY(audioFileTraceSummaries(result.traces)
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("sandbox-required")));
+    QVERIFY(result.summary.summary.contains(QStringLiteral("execution attempted: no")));
+}
+
+void VoiceTest::audioFileSessionReportsSupportedAndUnsupportedExtensionMetadata() {
+    AudioFileSessionPolicy policy;
+    policy.enabled = true;
+
+    const auto ready = buildAudioFileSessionResult(
+        AudioFileDescriptor{QStringLiteral("/local/audio/sample.flac"), {}, 4096, false, true},
+        policy);
+    QCOMPARE(ready.status, AudioFileSessionStatus::ReadyMetadata);
+    QCOMPARE(audioFileSessionStatusName(ready.status), QStringLiteral("ready-metadata"));
+    QVERIFY(audioFileValidationSummaries(ready.validations)
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("supported-extension")));
+    QVERIFY(audioFileValidationSummaries(ready.validations)
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("future-transcription-ready")));
+    QCOMPARE(supportedAudioFileExtensionSummaries().size(), 4);
+    QVERIFY(supportedAudioFileExtensionSummaries().join(QStringLiteral(" ")).contains(
+        QStringLiteral("ogg")));
+
+    const auto unsupported = buildAudioFileSessionResult(
+        AudioFileDescriptor{QStringLiteral("/local/audio/sample.aac"), {}, 4096, false, true},
+        policy);
+    QCOMPARE(unsupported.status, AudioFileSessionStatus::Refused);
+    QVERIFY(audioFileSessionRefusalSummaries(unsupported)
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("unsupported-extension")));
+}
+
+void VoiceTest::audioFileSessionRefusesUnsafePathWithoutExposingRawPath() {
+    AudioFileSessionPolicy policy;
+    policy.enabled = true;
+    const auto result = buildAudioFileSessionResult(
+        AudioFileDescriptor{QStringLiteral("https://example.invalid/audio.wav"), {}, 4096, false,
+                            true},
+        policy);
+
+    QCOMPARE(result.status, AudioFileSessionStatus::Refused);
+    const auto refusals = audioFileSessionRefusalSummaries(result).join(QStringLiteral(" "));
+    QVERIFY(refusals.contains(QStringLiteral("refused-path")));
+    QVERIFY(refusals.contains(QStringLiteral("raw path value is not exposed")));
+    QVERIFY(!refusals.contains(QStringLiteral("https://example.invalid")));
+    QVERIFY(!audioFileValidationSummaries(result.validations)
+                 .join(QStringLiteral(" "))
+                 .contains(QStringLiteral("https://example.invalid")));
+    QVERIFY(!result.executionAttempted);
+}
+
+void VoiceTest::audioFileSessionFallsBackForEmptyAndOversizedMetadataWithoutExecution() {
+    AudioFileSessionPolicy policy;
+    policy.enabled = true;
+
+    const auto empty = buildAudioFileSessionResult(
+        AudioFileDescriptor{QStringLiteral("/local/audio/empty.wav"), {}, 0, false, true}, policy);
+    QCOMPARE(empty.status, AudioFileSessionStatus::Fallback);
+    QVERIFY(audioFileSessionRefusalSummaries(empty)
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("empty-file")));
+    QVERIFY(!empty.safetyReport.fileLoadingAllowed);
+    QVERIFY(!empty.safetyReport.transcriptionAllowed);
+    QVERIFY(!empty.safetyReport.playbackAllowed);
+
+    const auto oversized = buildAudioFileSessionResult(
+        AudioFileDescriptor{QStringLiteral("/local/audio/large.mp3"), {},
+                            51LL * 1024LL * 1024LL, false, true},
+        policy);
+    QCOMPARE(oversized.status, AudioFileSessionStatus::Fallback);
+    QVERIFY(audioFileSessionRefusalSummaries(oversized)
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("oversized-file")));
+    QCOMPARE(audioFileSessionSafetyChecks(oversized.safetyReport).size(), 8);
+    QVERIFY(!oversized.executionAttempted);
 }
 
 void VoiceTest::nullVoiceRuntimeEnvironmentReportsMissingOwnershipMetadata() {

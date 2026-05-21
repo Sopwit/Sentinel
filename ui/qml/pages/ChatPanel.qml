@@ -20,6 +20,8 @@ ShellPanel {
                                                + chatPanel.viewModel.localInferenceStreamStatus
                                                + " / Voice "
                                                + chatPanel.viewModel.voicePipelineSessionStatus
+                                               + " / Audio "
+                                               + chatPanel.viewModel.audioFileSessionStatus
     readonly property string runtimeStatusText: chatPanel.viewModel.ollamaHealthStatus
                                                 + " / "
                                                 + chatPanel.viewModel.localInferenceRuntimeState

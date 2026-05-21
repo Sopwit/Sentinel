@@ -2558,6 +2558,38 @@ Still out of scope:
   auto-send from voice, transcript auto-injection, audio generation, background workers,
   autonomous loops, record/speak/play controls, and voice activation.
 
+## Phase 18.28-18.30: Controlled Audio-File Session Foundation
+
+Completed. Added deterministic audio-file session readiness metadata for future controlled
+offline STT ingestion without enabling file access or audio execution.
+
+Delivered:
+
+- Value-only `AudioFileSession`, id/status/policy/result/readiness/safety/fallback/summary,
+  descriptor, validation/status/restriction/budget, and trace metadata.
+- Deterministic validation ordering for local-only policy, sandbox requirement, unsafe path-style
+  refusal, supported/unsupported extension, empty-file, oversized-file, and
+  future-transcription-ready metadata.
+- Supported future extension summaries for wav, mp3, flac, and ogg.
+- Unsafe/non-local path-style refusal metadata that does not expose raw paths to QML.
+- Empty/oversized/sandbox-required/disabled fallback metadata with `executionAttempted = false`.
+- Compact Settings, Agents, and Chat read-only visibility with no upload button, file picker,
+  playback controls, or redesign.
+
+Future activation flow:
+
+- A later controlled transcription phase must define explicit file selection, app-owned path
+  handling, sandbox/permission gates, bounded file reads, Whisper execution gates, transcript
+  ownership, and fallback behavior.
+- A later live microphone phase must separately define capture permissions, recording lifecycle,
+  cancellation, privacy, playback interaction, and UI controls.
+
+Still out of scope:
+
+- Real file loading, waveform decoding, transcription, playback, microphone capture, subprocess
+  execution, filesystem scanning, automatic ingestion, cloud/API calls, upload controls, file
+  pickers, and autonomous loops.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.
