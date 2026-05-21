@@ -9,6 +9,7 @@ Item {
     property real glowScale: SentinelTheme.modeGlowScale(viewModel.currentModeName)
     property bool compact: width < 360
     property bool active: false
+    property bool reducedMotion: false
     readonly property real safeSize: Math.max(1, Math.min(width, height))
     readonly property int particleCount: orb.compact ? 72 : 108
 
@@ -51,7 +52,7 @@ Item {
             from: 0
             to: 360
             duration: orb.viewModel.currentModeName === "Tactical Mode" ? 14000 : SentinelTheme.durationOrbit
-            running: orb.visible
+            running: orb.visible && !orb.reducedMotion
         }
 
         Repeater {
@@ -92,7 +93,7 @@ Item {
             from: 0
             to: 360
             duration: SentinelTheme.durationOrbit * (orb.active ? 0.86 : 1.28)
-            running: orb.visible
+            running: orb.visible && !orb.reducedMotion
         }
 
         Repeater {
@@ -128,7 +129,7 @@ Item {
             from: 360
             to: 0
             duration: SentinelTheme.durationOrbit * 0.72
-            running: orb.visible
+            running: orb.visible && !orb.reducedMotion
         }
 
         Rectangle {
@@ -161,7 +162,7 @@ Item {
         SequentialAnimation on scale {
             id: coreBreath
             loops: Animation.Infinite
-            running: orb.visible
+            running: orb.visible && !orb.reducedMotion
             NumberAnimation {
                 from: orb.active ? 0.96 : 0.985
                 to: orb.active ? 1.045 : 1.015

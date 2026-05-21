@@ -259,6 +259,35 @@ Out of scope:
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent
 delete disabled until a later explicit destructive phase.
 
+## 10. Product UI Synchronization And Developer Mode
+
+Decision: Treat Phase 19 as a UI presentation synchronization pass over the existing local runtime
+state, not as a runtime authority phase.
+
+Reason: The backend exposes substantial metadata and a controlled local Ollama chat path, while
+the desktop UI had drifted toward a diagnostics dashboard. The product needs a clear assistant
+entry point without weakening the existing execution, provider, tool, semantic, or voice
+boundaries.
+
+Runtime behavior:
+
+- Home is the primary chat surface and calls only the existing controller/view-model send path.
+- The right-side AI Bridge remains a secondary chat and transcript surface.
+- Send controls appear only when local chat inference is explicitly enabled and a local Ollama
+  model is available.
+- Developer Mode is persisted in settings and reveals advanced metadata only.
+- Developer Mode does not alter runtime permission policy, safety policy, provider routing, tool
+  contracts, agent behavior, voice readiness, semantic authority, or execution gates.
+- Mode selection affects presentation density and diagnostic visibility only.
+- Local Ollama loopback remains the only current inference endpoint. No cloud provider or external
+  API key configuration is active.
+
+Out of scope:
+
+- External API providers, cloud routing, model downloads/deletes, tool/plugin execution, approval
+  workflows, autonomous loops, microphone capture, playback, Whisper/Piper execution, subprocess
+  launch, filesystem scanning, and semantic authority expansion.
+
 Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
 confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
 path is non-mutating instead of enabling deletion.
@@ -2598,6 +2627,38 @@ Boundary rules:
   objects are exposed.
 - Future controlled transcription and future live microphone phases require separate explicit
   scopes with permission, sandbox, lifecycle, UI, and regression tests.
+
+## 101. Phase 18 Agent/Voice Checkpoint Preserves No-Execution Boundaries
+
+Decision: Close Phase 18 with the agent task runtime, capability registry, tool contracts, voice
+runtime readiness, Whisper STT, Piper TTS, voice pipeline sessions, and audio-file sessions still
+metadata-only.
+
+Reason: Phase 18 introduced several adjacent foundations for future agent/tool/voice runtime
+work. Before Phase 19, the project needs an explicit checkpoint proving those foundations did not
+combine into implicit execution authority.
+
+Boundary rules:
+
+- `IAgentTaskRuntime` remains task orchestration metadata only. Queue, lifecycle, planning,
+  arbitration, refusal, capability, and trace records do not execute or schedule work.
+- Tool contracts remain permission/sandbox metadata only. They are not grants, executors,
+  approval flows, sandbox implementations, plugin hosts, filesystem adapters, subprocess
+  boundaries, or export actions.
+- Voice runtime readiness remains path/permission/session metadata only. It is not a Piper or
+  Whisper launcher, model loader, microphone permission flow, playback system, or filesystem
+  scanner.
+- Whisper and Piper client skeletons validate metadata and refuse before execution.
+- Voice pipeline sessions compose existing readiness values only and do not call STT/TTS clients,
+  local inference workers, chat send, transcript injection, playback, or subprocess execution.
+- Audio-file sessions validate descriptor metadata only and do not read files, decode waveforms,
+  transcribe, play audio, scan filesystems, or ingest automatically.
+- `executionAttempted` remains false across agent/task/planning/capability/tool/voice/Whisper/
+  Piper/pipeline/audio-file paths.
+- No microphone capture, playback, subprocess execution, filesystem scanning, cloud/API calls,
+  tools/plugins, autonomous loops, real STT inference, or real TTS inference are authorized.
+- Future Phase 19 work must preserve this posture or explicitly scope and test a controlled
+  authority change.
 
 ## 94. Agent Task Queue Is Metadata-Only
 

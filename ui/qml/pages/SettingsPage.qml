@@ -8,6 +8,7 @@ ScrollView {
     required property var viewModel
     readonly property bool compact: width < 760
     readonly property int panelPadding: SentinelTheme.spaceLg
+    readonly property bool developerMode: viewModel.developerModeEnabled
     property bool showAdvancedContextDetails: false
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
@@ -87,6 +88,21 @@ ScrollView {
                         value: "Memory " + settingsPage.viewModel.memoryStatus + " / Chat " + settingsPage.viewModel.chatHistoryStatus
                         Layout.fillWidth: true
                     }
+
+                    CheckBox {
+                        Layout.fillWidth: true
+                        text: "Developer Mode"
+                        checked: settingsPage.viewModel.developerModeEnabled
+                        onToggled: settingsPage.viewModel.developerModeEnabled = checked
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "Developer Mode only reveals advanced metadata. It does not enable tools, voice execution, cloud providers, or runtime authority."
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
+                    }
                 }
             }
 
@@ -103,7 +119,7 @@ ScrollView {
 
                 SectionTitle {
                     title: "Local AI / Ollama"
-                    subtitle: "Loopback-only health and discovery metadata."
+                    subtitle: "Local Ollama only. No cloud provider active."
                     Layout.fillWidth: true
                 }
 
@@ -137,7 +153,14 @@ ScrollView {
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Why unavailable"
+                    label: "Provider"
+                    value: "Local Ollama only / No cloud provider active"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Availability"
                     value: settingsPage.viewModel.ollamaModelCount > 0 ? settingsPage.viewModel.ollamaHealthSummary : "Start Ollama and install/select a local model."
                     Layout.fillWidth: true
                 }
@@ -231,7 +254,7 @@ ScrollView {
                     spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
-                    title: "Streaming / Chat"
+                    title: "Chat"
                     subtitle: "Explicit local chat routing controls."
                     Layout.fillWidth: true
                 }
@@ -260,6 +283,7 @@ ScrollView {
                 CheckBox {
                     Layout.fillWidth: true
                     text: "Semantic supplemental prompt inclusion"
+                    visible: settingsPage.developerMode
                     checked: settingsPage.viewModel.semanticPromptInclusionEnabled
                     onToggled: settingsPage.viewModel.semanticPromptInclusionEnabled = checked
                 }
@@ -287,6 +311,7 @@ ScrollView {
                         label: "Semantic"
                         value: "disabled"
                         accent: SentinelTheme.warning
+                        visible: settingsPage.developerMode
                     }
 
                     StatusChip {
@@ -331,6 +356,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Semantic Inclusion"
+                    visible: settingsPage.developerMode
                     value: (settingsPage.viewModel.semanticPromptInclusionEnabled ? "On / " : "Off / ")
                            + settingsPage.viewModel.semanticPromptInclusionStatus
                            + " / "
@@ -342,6 +368,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Window"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationWindowStatus
                            + " / "
                            + settingsPage.viewModel.conversationWindowBudgetSummary
@@ -351,6 +378,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Truncation"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationWindowIncludedMessageCount
                            + " included / "
                            + settingsPage.viewModel.conversationWindowOmittedMessageCount
@@ -363,6 +391,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Summary"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationSummaryStatus
                            + " / "
                            + settingsPage.viewModel.conversationSummaryBlockCount
@@ -375,6 +404,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Summary Budget"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationSummaryBudgetSummary
                     Layout.fillWidth: true
                 }
@@ -382,6 +412,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Retrieval"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.retrievalPlanningStatus
                            + " / "
                            + settingsPage.viewModel.retrievalPlanningBudgetSummary
@@ -391,6 +422,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Retrieval Sources"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.retrievalPlanningSelectedSourceCount
                            + " selected / "
                            + settingsPage.viewModel.retrievalPlanningExcludedSourceCount
@@ -404,6 +436,7 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                visible: settingsPage.developerMode
                 implicitHeight: settingsPage.sectionHeight(semanticContent)
 
                 ColumnLayout {
@@ -415,7 +448,7 @@ ScrollView {
 
                 SectionTitle {
                     title: "Semantic / Vector Readiness"
-                    subtitle: "Abstraction metadata only. Semantic retrieval is not active."
+                    subtitle: "Developer metadata only. Semantic retrieval is not active by default."
                     Layout.fillWidth: true
                 }
 
@@ -885,8 +918,8 @@ ScrollView {
                     spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
-                    title: "Voice Configuration"
-                    subtitle: "Local paths with immediate readiness validation."
+                    title: "Voice Setup"
+                    subtitle: "Prepared metadata only. No microphone, playback, STT, or TTS execution."
                     Layout.fillWidth: true
                 }
 
@@ -1014,20 +1047,41 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Readiness"
-                    value: settingsPage.viewModel.voiceConfigurationReadinessSummary
+                    value: settingsPage.viewModel.voiceReadinessStatus
+                           + " / "
+                           + settingsPage.viewModel.voiceConfigurationReadinessSummary
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Runtime"
-                    value: settingsPage.viewModel.voiceRuntimeReadinessSummary
+                    label: "Whisper"
+                    value: settingsPage.viewModel.whisperTranscriptionStatus
+                           + " / "
+                           + settingsPage.viewModel.whisperTranscriptionReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Piper"
+                    value: settingsPage.viewModel.piperSynthesisStatus
+                           + " / "
+                           + settingsPage.viewModel.piperSynthesisReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "State"
+                    value: "Voice is prepared / disabled / not active"
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Voice Pipeline"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.voicePipelineSessionStatus + " / " + settingsPage.viewModel.voicePipelineSessionSummary
                     Layout.fillWidth: true
                 }
@@ -1035,6 +1089,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Pipeline Safety"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.voicePipelineSessionSafetySummary
                     Layout.fillWidth: true
                 }
@@ -1042,31 +1097,15 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Audio File"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.audioFileSessionStatus + " / " + settingsPage.viewModel.audioFileSessionReadinessSummary
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Audio Safety"
-                    value: settingsPage.viewModel.audioFileSessionSafetySummary
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: settingsPage.compact
-                    label: "Configured / Missing"
-                    value: settingsPage.viewModel.voiceRuntimeConfiguredCount.toString()
-                           + " / "
-                           + settingsPage.viewModel.voiceRuntimeMissingCount.toString()
-                           + " refused "
-                           + settingsPage.viewModel.voiceRuntimeRefusedCount.toString()
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: settingsPage.compact
                     label: "Piper TTS"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.piperFileOutputReadinessStatus + " / " + settingsPage.viewModel.piperFileOutputReadinessSummary
                     Layout.fillWidth: true
                 }
@@ -1074,6 +1113,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Piper Synthesis"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.piperSynthesisStatus + " / " + settingsPage.viewModel.piperSynthesisReadinessSummary
                     Layout.fillWidth: true
                 }
@@ -1081,6 +1121,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "TTS Result"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.piperSynthesisLastSummary
                     Layout.fillWidth: true
                 }
@@ -1088,6 +1129,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "TTS Fallback"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.piperSynthesisFallbackSummary
                     Layout.fillWidth: true
                 }
@@ -1095,6 +1137,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Whisper STT"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.whisperPreparationReadinessStatus + " / " + settingsPage.viewModel.whisperPreparationReadinessSummary
                     Layout.fillWidth: true
                 }
@@ -1102,6 +1145,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Piper Runtime"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.piperRuntimeReadinessSummary
                     Layout.fillWidth: true
                 }
@@ -1109,6 +1153,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Whisper Runtime"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.whisperRuntimeReadinessSummary
                     Layout.fillWidth: true
                 }
@@ -1116,6 +1161,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Whisper STT Runtime"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.whisperTranscriptionStatus + " / " + settingsPage.viewModel.whisperTranscriptionReadinessSummary
                     Layout.fillWidth: true
                 }
@@ -1123,6 +1169,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "STT Result"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.whisperTranscriptionLastSummary
                     Layout.fillWidth: true
                 }
@@ -1130,6 +1177,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "STT Fallback"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.whisperTranscriptionFallbackSummary
                     Layout.fillWidth: true
                 }
@@ -1140,6 +1188,7 @@ ScrollView {
                     InfoRow {
                         compact: settingsPage.compact
                         label: "Audio Ext"
+                        visible: settingsPage.developerMode
                         value: modelData
                         Layout.fillWidth: true
                     }
@@ -1151,6 +1200,7 @@ ScrollView {
                     InfoRow {
                         compact: settingsPage.compact
                         label: "Status"
+                        visible: settingsPage.developerMode
                         value: modelData
                         Layout.fillWidth: true
                     }
@@ -1162,6 +1212,7 @@ ScrollView {
                     InfoRow {
                         compact: settingsPage.compact
                         label: "Check"
+                        visible: settingsPage.developerMode
                         value: modelData
                         Layout.fillWidth: true
                     }
@@ -1173,6 +1224,7 @@ ScrollView {
                     InfoRow {
                         compact: settingsPage.compact
                         label: "Hint"
+                        visible: settingsPage.developerMode
                         value: modelData
                         Layout.fillWidth: true
                     }
@@ -1181,6 +1233,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Execution"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.voiceRuntimeExecutionAllowed ? "Enabled by policy" : "Disabled. No microphone, playback, Piper, or Whisper execution is available here."
                     Layout.fillWidth: true
                 }
@@ -1188,6 +1241,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Safety"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / " + settingsPage.viewModel.voiceRuntimeSafetySummary + " / " + settingsPage.viewModel.voiceRuntimeSafetyReportSummary + " / " + settingsPage.viewModel.piperSynthesisSafetySummary + " / " + settingsPage.viewModel.whisperTranscriptionSafetySummary
                     Layout.fillWidth: true
                 }
@@ -1195,6 +1249,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Sandbox"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.voiceRuntimeSandboxSummary
                     Layout.fillWidth: true
                 }
@@ -1203,6 +1258,7 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                visible: settingsPage.developerMode
                 implicitHeight: settingsPage.sectionHeight(safetyContent)
 
                 ColumnLayout {
@@ -1213,7 +1269,7 @@ ScrollView {
                     spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
-                    title: "Safety / Diagnostics"
+                    title: "Developer Diagnostics"
                     subtitle: "Read-only metadata for runtime boundaries."
                     Layout.fillWidth: true
                 }
@@ -1274,7 +1330,7 @@ ScrollView {
                     spacing: SentinelTheme.spaceSm
 
                 SectionTitle {
-                    title: "Local Data"
+                    title: "Privacy / Local Data"
                     subtitle: "Settings, memory, and chat history remain separate."
                     Layout.fillWidth: true
                 }
@@ -1312,6 +1368,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Transcript Browser"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationBrowserStatus
                            + " / "
                            + settingsPage.viewModel.conversationBrowserSummaryText
@@ -1340,6 +1397,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Multi-conversation readiness"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationCurrentStorageMode
                            + " -> "
                            + settingsPage.viewModel.conversationFutureStorageMode
@@ -1353,6 +1411,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Conversation Store"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationStoreStatus
                            + " / "
                            + settingsPage.viewModel.conversationStoreConversationCount
@@ -1377,6 +1436,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Delete Policy"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationDeletePolicyStatus
                            + " / "
                            + settingsPage.viewModel.conversationDeletePolicySummary
@@ -1386,6 +1446,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Delete Readiness"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationDeleteReadinessStatus
                            + " / "
                            + settingsPage.viewModel.conversationDeleteReadinessSummary
@@ -1395,6 +1456,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Schema plan"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationSchemaStatusSummary
                     Layout.fillWidth: true
                 }

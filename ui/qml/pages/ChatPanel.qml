@@ -10,6 +10,16 @@ ShellPanel {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property bool modelReady: viewModel.selectedLocalModelStatus === "Available"
                                       || viewModel.selectedLocalModelStatus === "Fallback"
+    readonly property bool chatReady: viewModel.localChatInferenceEnabled && modelReady
+    readonly property string sendDisabledReason: viewModel.activeConversationArchived
+                                                 ? viewModel.activeConversationStateSummary
+                                                 : !viewModel.localChatInferenceEnabled
+                                                   ? "Enable Local chat inference in Settings."
+                                                   : !modelReady
+                                                     ? "Select an available local Ollama model."
+                                                     : viewModel.localInferenceBusy
+                                                       ? "Sentinel is responding."
+                                                       : ""
     readonly property int contentPadding: compact ? SentinelTheme.spaceMd : SentinelTheme.space2Xl
     readonly property int cardPadding: SentinelTheme.spaceMd
     readonly property string bridgeStatusText: "Model "
@@ -480,8 +490,8 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    visible: !chatPanel.modelReady
-                    text: "Start Ollama and install/select a local model."
+                    visible: !chatPanel.chatReady || chatPanel.viewModel.activeConversationArchived
+                    text: chatPanel.sendDisabledReason + " Local Ollama only. No cloud provider active."
                     color: SentinelTheme.warning
                     font.pixelSize: SentinelTheme.fontSmall
                     wrapMode: Text.WordWrap
@@ -642,7 +652,9 @@ ShellPanel {
                 Layout.fillWidth: true
                 Layout.columnSpan: chatPanel.compact ? 2 : 1
                 placeholderText: chatPanel.viewModel.activeConversationArchived ? "Unarchive this conversation to send" : chatPanel.modelReady ? "Message Sentinel" : "Local model setup required for Ollama chat"
-                enabled: !chatPanel.viewModel.localInferenceBusy && !chatPanel.viewModel.activeConversationArchived
+                enabled: chatPanel.chatReady
+                         && !chatPanel.viewModel.localInferenceBusy
+                         && !chatPanel.viewModel.activeConversationArchived
                 onAccepted: {
                     if (sendButton.enabled)
                         sendButton.clicked()
@@ -652,6 +664,7 @@ ShellPanel {
             SentinelButton {
                 id: sendButton
                 text: "Send"
+                visible: chatPanel.chatReady
                 enabled: chatInput.text.trim().length > 0
                          && !chatPanel.viewModel.localInferenceBusy
                          && !chatPanel.viewModel.activeConversationArchived

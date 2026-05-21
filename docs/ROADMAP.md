@@ -2590,6 +2590,63 @@ Still out of scope:
   execution, filesystem scanning, automatic ingestion, cloud/API calls, upload controls, file
   pickers, and autonomous loops.
 
+## Phase 18.31-18.33: Agent/Voice Runtime Checkpoint
+
+Completed. Checkpointed the full Phase 18 agent/tool/voice architecture without adding execution
+authority.
+
+Delivered:
+
+- Added `docs/PHASE_18_AGENT_VOICE_CHECKPOINT.md`.
+- Audited agent task runtime, task queue/lifecycle metadata, planning session/arbitration/refusal
+  metadata, capability registry, tool contract/permission/sandbox metadata, Whisper STT, Piper
+  TTS, voice pipeline sessions, controlled audio-file sessions, controller/view-model exposure,
+  Agents/Settings/Chat status exposure, and docs consistency.
+- Confirmed `executionAttempted = false` across agent/task/planning/capability/tool/voice/
+  Whisper/Piper/pipeline/audio-file paths.
+- Confirmed voice runtime remains readiness/session metadata only and Whisper/Piper/audio-file
+  paths do not perform real inference or audio/file I/O.
+- Confirmed no microphone capture, playback, subprocess execution, filesystem scanning, cloud/API
+  calls, tools/plugins, autonomous loops, real STT inference, or real TTS inference were added.
+- Reused existing focused QA coverage for the checkpoint invariants; no redundant tests were
+  added.
+
+Phase 19 readiness:
+
+- Phase 19 may proceed only by preserving the metadata-only posture or explicitly scoping and
+  testing a controlled authority change for one domain at a time.
+
+Still out of scope:
+
+- Real tool execution, plugin loading, filesystem actions, shell/subprocess execution,
+  controlled audio-file STT, live microphone STT, TTS synthesis, playback, cloud/API calls,
+  autonomous loops, broad UI redesign, and unscoped runtime authority expansion.
+
+## Phase 19.0-19.3: Product UI/UX Synchronization Pass
+
+Completed. Aligns the frontend with the current local-only runtime posture.
+
+Delivered:
+
+- Home-first local assistant surface with a floating prompt input, compact recent messages,
+  compact streaming state, and concise disabled reasons.
+- Existing Chat/AI Bridge preserved as a secondary live surface.
+- Settings simplified into user-facing sections, with persisted Developer Mode revealing advanced
+  metadata only.
+- Agents rebuilt as metadata-only cards for registry, task runtime, queue, planning, capabilities,
+  and tool contracts with no execution or approval controls.
+- Bottom status strip reserved above the dock zone.
+- Mode selection now changes UI density, diagnostic visibility, and Focus-mode motion, without
+  changing backend authority or safety policy.
+- Voice and provider copy clarified: Whisper/Piper are readiness-only, local Ollama is the only
+  active provider path, and no cloud provider is active.
+
+Still out of scope:
+
+- Cloud/API providers and API keys, tool/plugin execution, autonomous agents, microphone capture,
+  playback, real STT/TTS execution, model management actions, subprocess launch, filesystem
+  scanning, semantic authority expansion, and broad backend refactors.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

@@ -28,6 +28,8 @@ class AppSettings final : public QObject {
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionEnabledChanged)
     Q_PROPERTY(bool semanticPromptInclusionEnabled READ semanticPromptInclusionEnabled WRITE
                    setSemanticPromptInclusionEnabled NOTIFY semanticPromptInclusionEnabledChanged)
+    Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
+                   NOTIFY developerModeEnabledChanged)
     Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
                    piperBinaryPathChanged)
     Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
@@ -66,6 +68,8 @@ public:
     void setPromptContextInjectionEnabled(bool enabled);
     bool semanticPromptInclusionEnabled() const;
     void setSemanticPromptInclusionEnabled(bool enabled);
+    bool developerModeEnabled() const;
+    void setDeveloperModeEnabled(bool enabled);
     QString piperBinaryPath() const;
     void setPiperBinaryPath(const QString& path);
     QString piperModelPath() const;
@@ -87,6 +91,7 @@ signals:
     void localInferenceStreamingEnabledChanged();
     void promptContextInjectionEnabledChanged();
     void semanticPromptInclusionEnabledChanged();
+    void developerModeEnabledChanged();
     void piperBinaryPathChanged();
     void piperModelPathChanged();
     void whisperBinaryPathChanged();
@@ -103,6 +108,7 @@ private:
     static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
     static constexpr auto promptContextInjectionEnabledKey = "promptContextInjectionEnabled";
     static constexpr auto semanticPromptInclusionEnabledKey = "semanticPromptInclusionEnabled";
+    static constexpr auto developerModeEnabledKey = "developerModeEnabled";
     static constexpr auto piperBinaryPathKey = "piperBinaryPath";
     static constexpr auto piperModelPathKey = "piperModelPath";
     static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";

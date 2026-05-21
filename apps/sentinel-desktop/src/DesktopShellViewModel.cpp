@@ -79,6 +79,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::themeNameChanged);
     connect(&settings_, &core::AppSettings::configurationProfileChanged, this,
             &DesktopShellViewModel::configurationProfileChanged);
+    connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
+            &DesktopShellViewModel::developerModeChanged);
     connect(&settings_, &core::AppSettings::routingModeNameChanged, this,
             &DesktopShellViewModel::modelRoutingChanged);
     connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this,
@@ -2443,6 +2445,14 @@ QString DesktopShellViewModel::configurationProfile() const {
 
 void DesktopShellViewModel::setConfigurationProfile(const QString& configurationProfile) {
     settings_.setConfigurationProfile(configurationProfile);
+}
+
+bool DesktopShellViewModel::developerModeEnabled() const {
+    return settings_.developerModeEnabled();
+}
+
+void DesktopShellViewModel::setDeveloperModeEnabled(bool enabled) {
+    settings_.setDeveloperModeEnabled(enabled);
 }
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {

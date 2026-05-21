@@ -18,6 +18,11 @@ ScrollView {
                                   || dashboardPage.viewModel.selectedLocalModelStatus === "Fallback"
     readonly property bool streamingActive: dashboardPage.viewModel.localInferenceStreamingText.length > 0
                                             || dashboardPage.viewModel.localInferenceRuntimeState === "Streaming"
+    readonly property bool companionMode: dashboardPage.viewModel.currentModeName === "Companion Mode"
+    readonly property bool focusMode: dashboardPage.viewModel.currentModeName === "Focus Mode"
+    readonly property bool telemetryMode: dashboardPage.viewModel.currentModeName === "Mission Mode"
+                                          || dashboardPage.viewModel.currentModeName === "System Mode"
+                                          || dashboardPage.viewModel.currentModeName === "Tactical Mode"
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -34,17 +39,34 @@ ScrollView {
             columnSpacing: SentinelTheme.spaceLg
             rowSpacing: SentinelTheme.spaceLg
 
-            WorkspacePresence {
-                viewModel: dashboardPage.viewModel
-                compact: dashboardPage.compact
+            ColumnLayout {
                 Layout.fillWidth: true
-                Layout.columnSpan: dashboardPage.wideLayout ? 8 : 1
-                Layout.preferredHeight: dashboardPage.compact ? 300 : 420
-                Layout.maximumHeight: dashboardPage.compact ? 360 : 520
+                Layout.columnSpan: dashboardPage.wideLayout && !dashboardPage.focusMode ? 8 : 1
+                spacing: dashboardPage.focusMode ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
+
+                WorkspacePresence {
+                    viewModel: dashboardPage.viewModel
+                    compact: dashboardPage.compact || dashboardPage.focusMode
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: dashboardPage.focusMode
+                                            ? 250
+                                            : dashboardPage.compact ? 260 : 360
+                    Layout.maximumHeight: dashboardPage.focusMode
+                                          ? 300
+                                          : dashboardPage.compact ? 320 : 430
+                }
+
+                HomeChatSurface {
+                    viewModel: dashboardPage.viewModel
+                    compact: dashboardPage.compact || dashboardPage.focusMode
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: dashboardPage.focusMode ? 250 : 330
+                }
             }
 
             ColumnLayout {
                 Layout.fillWidth: true
+                visible: !dashboardPage.focusMode
                 Layout.columnSpan: dashboardPage.wideLayout ? 4 : 1
                 spacing: SentinelTheme.spaceLg
 
@@ -121,6 +143,7 @@ ScrollView {
                             label: "Streaming"
                             value: dashboardPage.viewModel.localInferenceStreamStatus
                             Layout.fillWidth: true
+                            visible: !dashboardPage.companionMode || dashboardPage.streamingActive
                         }
 
                         InfoRow {
@@ -152,15 +175,33 @@ ScrollView {
                         InfoRow {
                             compact: true
                             label: "Voice"
-                            value: dashboardPage.viewModel.voiceReadinessStatus + " / " + dashboardPage.viewModel.piperTtsStatus
+                            value: dashboardPage.viewModel.voiceReadinessStatus
+                                   + " / Whisper "
+                                   + dashboardPage.viewModel.whisperTranscriptionStatus
+                                   + " / Piper "
+                                   + dashboardPage.viewModel.piperSynthesisStatus
                             Layout.fillWidth: true
+                            visible: !dashboardPage.companionMode || dashboardPage.telemetryMode
                         }
 
                         InfoRow {
                             compact: true
                             label: "Agents"
-                            value: dashboardPage.viewModel.registeredAgentCount + " registered"
+                            value: dashboardPage.telemetryMode
+                                   ? dashboardPage.viewModel.agentTaskRuntimeStatus
+                                     + " / "
+                                     + dashboardPage.viewModel.agentTaskQueueCount
+                                     + " queued"
+                                   : dashboardPage.viewModel.registeredAgentCount + " registered metadata"
                             Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Provider"
+                            value: "Local Ollama only / No cloud provider active"
+                            Layout.fillWidth: true
+                            visible: dashboardPage.telemetryMode
                         }
                     }
                 }

@@ -216,6 +216,29 @@ state in its existing status line. The UI must not add an upload button, file pi
 control, transcription action, microphone control, subprocess control, cloud setup, automatic
 ingestion control, or a redesign.
 
+Phase 18.31 through Phase 18.33 checkpoint the agent/tool/voice UI surface. Agents, Settings, and
+Chat may keep the compact read-only status rows for agent task runtime, queue/planning,
+capability registry, tool contracts, voice runtime readiness, Whisper/Piper readiness, voice
+pipeline sessions, and audio-file sessions. The UI must continue to present these as metadata
+only and must not add execute, approve, enable-tool, plugin, shell, filesystem, upload, record,
+speak, play, voice-loop, microphone, playback, cloud setup, or autonomous controls.
+
+Phase 19.0 through Phase 19.3 is a product UI/UX synchronization pass. Home becomes the primary
+assistant surface with a floating local chat input, recent message preview, compact streaming
+state, and clear disabled reasons. Send is visible only when explicit local chat inference is
+enabled and a selected/fallback local Ollama model is available. The right-side AI Bridge remains
+available but is no longer the only chat input. Settings defaults to user-facing sections only:
+General, Local AI/Ollama, Model Selection, Chat, Voice Setup, and Privacy/Local Data. Persisted
+Developer Mode reveals semantic/vector internals, retrieval budgets, arbitration, tool contracts,
+agent traces, voice pipeline traces, and raw diagnostics; it does not grant runtime authority.
+Agents should read as a metadata-only runtime status surface with cards/chips for Agent Registry,
+Task Runtime, Task Queue, Planning Sessions, Capability Registry, and Tool Contracts, and no
+execute, approval, sandbox, tool-runtime, plugin, filesystem, shell, or autonomous controls. Mode
+selection is presentation-only: Companion reduces diagnostics, Focus compacts the UI and reduces
+motion, and Mission/System/Tactical foreground more telemetry. Voice copy should say prepared,
+disabled, or not active, with Whisper/Piper ready or missing summaries only in normal mode.
+Provider copy should state Local Ollama only and no cloud provider active.
+
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool

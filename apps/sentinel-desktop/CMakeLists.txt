@@ -63,6 +63,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStreamPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/GlowSurface.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/HomeChatSurface.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeBadge.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml
@@ -90,6 +91,7 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ActiveAgentsPa
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStreamPanel.qml PROPERTIES QT_RESOURCE_ALIAS CognitionStreamPanel.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/GlowSurface.qml PROPERTIES QT_RESOURCE_ALIAS GlowSurface.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS HeaderBar.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HomeChatSurface.qml PROPERTIES QT_RESOURCE_ALIAS HomeChatSurface.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml PROPERTIES QT_RESOURCE_ALIAS InfoRow.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeBadge.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeBadge.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml PROPERTIES QT_RESOURCE_ALIAS SectionTitle.qml)

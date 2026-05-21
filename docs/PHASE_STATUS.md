@@ -2,6 +2,75 @@
 
 ## Completed / Stable
 
+### Phase 19.0-19.3: Product UI/UX Synchronization Pass
+
+Completed. Aligns the desktop UI with the current local-runtime state without expanding backend
+authority.
+
+Scope:
+
+- Home now presents the primary assistant surface with a floating local chat input, compact recent
+  transcript preview, local streaming status, and concise disabled reasons.
+- Chat send controls are visible only when explicit local chat inference is enabled and a local
+  Ollama model is available. Sending still uses the existing chat path only.
+- Settings now defaults to a compact user-facing view for General, Local AI/Ollama, Model
+  Selection, Chat, Voice Setup, and Privacy/Local Data.
+- Added persisted Developer Mode as a visibility-only setting. It reveals advanced semantic,
+  retrieval, arbitration, tool, agent, voice-pipeline, and raw diagnostics metadata but grants no
+  runtime authority.
+- Agents now presents metadata-only sections for Agent Registry, Task Runtime, Task Queue,
+  Planning Sessions, Capability Registry, and Tool Contracts with cards/chips and no execute,
+  approval, tool-runtime, plugin, shell, or filesystem controls.
+- Bottom status content is reserved above the centered dock zone; only the dock and Settings
+  button remain in the bottom dock area.
+- Mode selection now changes presentation density: Companion reduces diagnostics, Focus compacts
+  the Home surface and reduces motion, and Mission/System/Tactical foreground more telemetry.
+- Voice UI copy is concise in normal mode and reports prepared/disabled/not-active readiness for
+  Whisper and Piper without microphone, playback, STT, or TTS controls.
+- Provider posture is explicit: Local Ollama only, with no active cloud provider or external API
+  key configuration.
+
+Known limitation:
+
+- Phase 19 does not add cloud/API providers, model management actions, tools/plugins, autonomous
+  execution, microphone capture, playback, Whisper/Piper execution, filesystem scanning, shell or
+  subprocess authority, or new semantic authority.
+
+### Phase 18.31-18.33: Agent/Voice Runtime Checkpoint
+
+Completed. Audits and checkpoints the full Phase 18 agent, tool, and voice runtime foundation
+without expanding execution authority.
+
+Scope:
+
+- Added `docs/PHASE_18_AGENT_VOICE_CHECKPOINT.md`.
+- Audited agent task runtime, queue/lifecycle metadata, planning session/arbitration/refusal
+  metadata, capability registry, tool contract/permission/sandbox metadata, Whisper STT
+  foundation, Piper TTS foundation, voice pipeline session orchestration, controlled audio-file
+  session readiness, controller/view-model exposure, Agents/Settings/Chat UI status exposure, and
+  docs consistency.
+- Confirmed agent runtime remains metadata-only and does not start workers, approval flows,
+  tools/plugins, filesystem actions, shell/subprocess execution, provider/model calls, cloud/API
+  calls, or autonomous loops.
+- Confirmed tool contracts remain permission/sandbox metadata only and do not grant tool runtime,
+  plugin, filesystem, subprocess, export, or sandbox authority.
+- Confirmed voice runtime remains readiness/session metadata only. Whisper/Piper clients refuse
+  before execution, voice pipeline orchestration composes readiness only, and audio-file sessions
+  validate descriptor metadata only.
+- Confirmed `executionAttempted = false` across agent/task/planning/capability/tool/voice/
+  Whisper/Piper/pipeline/audio-file paths.
+- Confirmed no microphone capture, playback, subprocess execution, filesystem scanning, cloud/API
+  calls, tools/plugins, autonomous loops, real STT inference, or real TTS inference were added.
+- Existing focused tests already cover the checkpoint invariants, so no redundant QA tests were
+  added.
+
+Known limitation:
+
+- Phase 18 closes with real tool execution, controlled audio-file STT, live microphone STT, TTS
+  synthesis, playback, subprocesses, filesystem scanning, plugins, cloud/API calls, and
+  autonomous loops still unauthorized. Phase 19 must preserve this posture or explicitly scope and
+  test a controlled authority change.
+
 ### Phase 18.28-18.30: Controlled Audio-File Session Foundation
 
 Completed. Adds deterministic metadata-only audio-file session modeling for future controlled

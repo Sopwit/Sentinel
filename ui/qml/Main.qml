@@ -15,6 +15,10 @@ ApplicationWindow {
     property var viewModel: shellViewModel
     readonly property bool compactLayout: root.width < 1080
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
+    readonly property int dockZoneHeight: (compactLayout ? 58 : 62)
+                                          + (compactLayout ? SentinelTheme.spaceMd
+                                                           : SentinelTheme.spaceXl)
+                                          + SentinelTheme.spaceLg
 
     function currentPageIndex() {
         if (root.viewModel.currentPage === "Dashboard")
@@ -37,7 +41,7 @@ ApplicationWindow {
         anchors.leftMargin: SentinelTheme.pageMargin(root.width)
         anchors.rightMargin: SentinelTheme.pageMargin(root.width)
         anchors.topMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
-        anchors.bottomMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
+        anchors.bottomMargin: root.dockZoneHeight
         spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
 
         RowLayout {

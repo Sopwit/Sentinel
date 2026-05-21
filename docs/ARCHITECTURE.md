@@ -209,6 +209,52 @@ STT ingestion:
   summaries, validation/refusal lists, trace summaries, supported-extension summaries, fallback,
   and safety checks. The UI adds no upload button, file picker, playback control, or redesign.
 
+Phase 18.31 through Phase 18.33 checkpoint the completed Phase 18 agent/tool/voice foundation:
+
+- `docs/PHASE_18_AGENT_VOICE_CHECKPOINT.md` records the audit of agent task runtime, queue/
+  lifecycle metadata, planning sessions, capability registry, tool contracts, Whisper STT, Piper
+  TTS, voice pipeline sessions, audio-file sessions, controller/view-model exposure, and
+  Agents/Settings/Chat status surfaces.
+- Agent runtime remains metadata-only through `IAgentTaskRuntime`; task queue, lifecycle,
+  planning, arbitration, refusal, capability, and trace records do not start workers, schedulers,
+  approval flows, tools/plugins, filesystem actions, shell/subprocess execution, provider/model
+  calls, cloud/API calls, or autonomous loops.
+- Tool contracts remain permission/sandbox metadata only. They are not grants, executors,
+  sandbox implementations, plugin hosts, filesystem adapters, subprocess boundaries, or export
+  actions.
+- Voice runtime remains readiness/session metadata only. Whisper and Piper clients refuse before
+  execution; voice pipeline sessions compose readiness only; audio-file sessions validate
+  descriptor metadata only.
+- `executionAttempted` remains false across agent/task/planning/capability/tool/voice/Whisper/
+  Piper/pipeline/audio-file paths.
+- No microphone capture, playback, subprocess execution, filesystem scanning, cloud/API calls,
+  tools/plugins, autonomous loops, real STT inference, or real TTS inference are active.
+- Phase 19 may proceed only by preserving these guarantees or by explicitly scoping and testing a
+  controlled authority change.
+
+Phase 19.0 through Phase 19.3 synchronize the product UI with the current backend/runtime state:
+
+- Home is the primary local assistant surface. It exposes a floating prompt input, compact recent
+  transcript preview, and streaming status using `DesktopShellViewModel` and the existing
+  `sendMessage` path only.
+- The right-side AI Bridge remains available on Home but is no longer the only visible chat input.
+- Send controls are presented only when explicit local chat inference is enabled and a selected or
+  fallback local Ollama model is available. Disabled states summarize the missing local condition.
+- Settings separates normal user configuration from advanced runtime metadata through persisted
+  Developer Mode. Developer Mode is a visibility boundary only and is not connected to runtime
+  permission, safety, provider, tool, voice, or agent authority.
+- Normal Settings surfaces General, Local AI/Ollama, Model Selection, Chat, Voice Setup, and
+  Privacy/Local Data. Semantic/vector internals, retrieval budgets, arbitration, tool contracts,
+  agent traces, voice pipeline traces, and raw readiness diagnostics remain visible only in
+  Developer Mode.
+- Agents presents metadata-only Agent Registry, Task Runtime, Task Queue, Planning Sessions,
+  Capability Registry, and Tool Contracts sections. No execute, approval, sandbox, tool runtime,
+  plugin, filesystem, shell, or autonomous controls are added.
+- Mode selection affects UI presentation only: Companion reduces diagnostics, Focus compacts the
+  Home surface and reduces motion, and Mission/System/Tactical foreground additional telemetry.
+- Provider posture is local-only: local Ollama loopback is the only current inference endpoint,
+  and no cloud/API provider or key configuration is active.
+
 Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit
 review flow beside, not inside, the existing memory contracts:
 
@@ -1124,9 +1170,9 @@ Current behavior:
   speak buttons, play buttons, record buttons, playback controls, downloads, or path pickers exist.
 - No microphone access, audio playback, Piper execution, Whisper execution, live STT,
   filesystem-wide scan, model downloads, cloud calls, API keys, prompt injection, automatic chat
-  send, automatic audio injection, or autonomous voice
-  loop is present. Piper execution is limited to explicit local file-output synthesis after all
-  gates pass and remains disabled by default.
+  send, automatic audio injection, or autonomous voice loop is present. The historical Piper
+  file-output path is currently disabled/readiness-only compatibility metadata and refuses without
+  subprocess execution, file output, or playback.
 
 Phase 18.19-18.21 Whisper STT foundation:
 

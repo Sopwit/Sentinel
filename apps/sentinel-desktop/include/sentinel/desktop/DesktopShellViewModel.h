@@ -925,6 +925,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString themeName READ themeName WRITE setThemeName NOTIFY themeNameChanged)
     Q_PROPERTY(QString configurationProfile READ configurationProfile WRITE setConfigurationProfile
                    NOTIFY configurationProfileChanged)
+    Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
+                   NOTIFY developerModeChanged)
 
 public:
     DesktopShellViewModel(core::ApplicationController& controller, core::ModeManager& modeManager,
@@ -1494,6 +1496,8 @@ public:
     void setThemeName(const QString& themeName);
     QString configurationProfile() const;
     void setConfigurationProfile(const QString& configurationProfile);
+    bool developerModeEnabled() const;
+    void setDeveloperModeEnabled(bool enabled);
 
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
@@ -1532,6 +1536,7 @@ signals:
     void memoryEntriesChanged();
     void themeNameChanged();
     void configurationProfileChanged();
+    void developerModeChanged();
     void currentPageChanged();
     void maintenanceStatusChanged();
     void agentStatusChanged();
