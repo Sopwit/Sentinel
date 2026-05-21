@@ -130,6 +130,31 @@ ShellPanel {
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Capability Registry"
+                value: agentsPage.viewModel.agentCapabilityRegistryStatus
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Capabilities"
+                value: agentsPage.viewModel.agentCapabilityEnabledCount.toString()
+                       + " enabled / "
+                       + agentsPage.viewModel.agentCapabilityDisabledCount.toString()
+                       + " disabled / "
+                       + agentsPage.viewModel.agentCapabilityRestrictedCount.toString()
+                       + " restricted"
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Registry Summary"
+                value: agentsPage.viewModel.agentCapabilityRegistrySummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
         }
 
         ColumnLayout {
@@ -167,6 +192,42 @@ ShellPanel {
                     required property string modelData
                     compact: agentsPage.compact
                     label: "Refusal"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.agentCapabilitySummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: modelData.indexOf("[Enabled Metadata") >= 0 ? "Capability" : "Restricted Capability"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.agentCapabilityReadinessSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Capability Readiness"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.agentCapabilitySafetySummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Capability Safety"
                     value: modelData
                     Layout.fillWidth: true
                 }

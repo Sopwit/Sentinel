@@ -377,9 +377,24 @@ void DesktopShellViewModelTest::exposesAgentTaskRuntimeMetadata() {
     QCOMPARE(fixture.viewModel.agentPlanningRefusalSummaries().size(), 0);
     QVERIFY(fixture.viewModel.agentPlanningFallbackSummary().contains(
         QStringLiteral("No planning fallback")));
+    QCOMPARE(fixture.viewModel.agentCapabilityRegistryStatus(),
+             QStringLiteral("Refusing Unsafe Capabilities"));
+    QCOMPARE(fixture.viewModel.agentCapabilityCount(), 9);
+    QCOMPARE(fixture.viewModel.agentCapabilityEnabledCount(), 6);
+    QCOMPARE(fixture.viewModel.agentCapabilityDisabledCount(), 2);
+    QCOMPARE(fixture.viewModel.agentCapabilityRestrictedCount(), 3);
+    QVERIFY(fixture.viewModel.agentCapabilityRegistrySummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QCOMPARE(fixture.viewModel.agentCapabilitySummaries().size(), 9);
+    QVERIFY(fixture.viewModel.agentCapabilitySummaries().at(7).contains(
+        QStringLiteral("Shell Execution")));
+    QCOMPARE(fixture.viewModel.agentCapabilityReadinessSummaries().size(), 9);
+    QCOMPARE(fixture.viewModel.agentCapabilitySafetySummaries().size(), 9);
     QVERIFY(metaObject->indexOfProperty("agentTaskRuntimeStatus") >= 0);
     QVERIFY(metaObject->indexOfProperty("agentPlanningSessionStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("agentCapabilityRegistryStatus") >= 0);
     QCOMPARE(metaObject->indexOfProperty("agentTaskRawPayload"), -1);
+    QCOMPARE(metaObject->indexOfProperty("agentCapabilityRawPayload"), -1);
 }
 
 void DesktopShellViewModelTest::exposesLocalRuntimeMetadata() {
@@ -1162,6 +1177,15 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("agentPlanningArbitrationSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("agentPlanningRefusalSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("agentPlanningFallbackSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("agentCapabilityRegistryStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("agentCapabilityRegistrySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("agentCapabilityCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentCapabilityEnabledCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentCapabilityDisabledCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentCapabilityRestrictedCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentCapabilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("agentCapabilityReadinessSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("agentCapabilitySafetySummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("localRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeHealth"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeSummary"), QByteArrayLiteral("QString")},

@@ -92,14 +92,15 @@ Phase 6.7 readiness diagnostics inspect existing orchestration metadata only. Th
 storage paths, scan files, query memory stores, build embeddings, run semantic search, mutate
 memory, or perform provider/model/tool execution.
 
-Phase 18.0 through Phase 18.9 add an agent task runtime, queue, lifecycle, and planning-session
-metadata boundary beside the
+Phase 18.0 through Phase 18.12 add an agent task runtime, queue, lifecycle, planning-session,
+and capability-registry metadata boundary beside the
 earlier agent and runtime metadata layers:
 
 - `AgentTaskRuntime.h` defines value-only task ids, types, statuses, priorities, sources, plans,
   steps, results, traces, lifecycle events, queue policy, queue summaries, planning sessions,
-  planning candidates, arbitration/refusal/fallback metadata, safety reports, and runtime status
-  records.
+  planning candidates, arbitration/refusal/fallback metadata, capability ids/types/status/scope/
+  policy/requirements/restrictions/readiness/safety reports, registry status/summaries, and
+  runtime status records.
 - `IAgentTaskRuntime` is the task orchestration boundary.
 - `StaticAgentTaskRuntime` creates deterministic local metadata tasks, keeps an in-memory queue
   ordered by priority, queue sequence, and task id, records lifecycle transitions, derives bounded
@@ -111,11 +112,17 @@ earlier agent and runtime metadata layers:
 - Planning sessions select candidates deterministically from the queue, apply candidate/step/
   summary budgets, refuse unsafe planning candidates as metadata, and report deterministic
   fallback summaries when budget or safety gates block a candidate.
+- The capability registry exposes deterministic local metadata capabilities for conversation
+  summarization, memory inspection, retrieval preparation, semantic supplement preparation, export
+  preparation, and voice response preparation.
+- Future filesystem access, shell execution, and plugin runtime capabilities remain disabled or
+  refused and expose safe readiness/safety summaries only.
 - The boundary does not execute tools, plugins, filesystem actions, shell/subprocess commands,
   provider/model calls, cloud/API calls, background workers, or autonomous loops.
 - `ApplicationController` and `DesktopShellViewModel` expose only strings, counts, and string
   lists for runtime status, queue counts, latest task/lifecycle summaries, task summaries, trace
   summaries, planning status/counts, arbitration summaries, refusal summaries, and fallback
+  summaries, plus capability counts, capability summaries, readiness summaries, and safety
   summaries.
 
 Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit

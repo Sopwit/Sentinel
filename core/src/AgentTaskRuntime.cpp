@@ -91,6 +91,10 @@ QString boundedSummary(QString summary, int maxCharacters) {
     return summary.left(maxCharacters - 3).trimmed() + QStringLiteral("...");
 }
 
+bool capabilityIsRestricted(AgentCapabilityStatus status) {
+    return status == AgentCapabilityStatus::Disabled || status == AgentCapabilityStatus::Refused;
+}
+
 } // namespace
 
 QString agentTaskTypeName(AgentTaskType type) {
@@ -193,6 +197,68 @@ QString agentPlanningSessionStatusName(AgentPlanningSessionStatus status) {
         return QStringLiteral("Bounded");
     case AgentPlanningSessionStatus::Refused:
         return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Ready");
+}
+
+QString agentCapabilityTypeName(AgentCapabilityType type) {
+    switch (type) {
+    case AgentCapabilityType::ConversationSummarization:
+        return QStringLiteral("Conversation Summarization");
+    case AgentCapabilityType::MemoryInspection:
+        return QStringLiteral("Memory Inspection");
+    case AgentCapabilityType::RetrievalPreparation:
+        return QStringLiteral("Retrieval Preparation");
+    case AgentCapabilityType::SemanticSupplementPreparation:
+        return QStringLiteral("Semantic Supplement Preparation");
+    case AgentCapabilityType::ExportPreparation:
+        return QStringLiteral("Export Preparation");
+    case AgentCapabilityType::VoiceResponsePreparation:
+        return QStringLiteral("Voice Response Preparation");
+    case AgentCapabilityType::FilesystemAccess:
+        return QStringLiteral("Filesystem Access");
+    case AgentCapabilityType::ShellExecution:
+        return QStringLiteral("Shell Execution");
+    case AgentCapabilityType::PluginRuntime:
+        return QStringLiteral("Plugin Runtime");
+    }
+
+    return QStringLiteral("Conversation Summarization");
+}
+
+QString agentCapabilityStatusName(AgentCapabilityStatus status) {
+    switch (status) {
+    case AgentCapabilityStatus::EnabledMetadata:
+        return QStringLiteral("Enabled Metadata");
+    case AgentCapabilityStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case AgentCapabilityStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString agentCapabilityScopeName(AgentCapabilityScope scope) {
+    switch (scope) {
+    case AgentCapabilityScope::LocalMetadata:
+        return QStringLiteral("Local Metadata");
+    case AgentCapabilityScope::FutureRuntime:
+        return QStringLiteral("Future Runtime");
+    }
+
+    return QStringLiteral("Local Metadata");
+}
+
+QString agentCapabilityRegistryStatusName(AgentCapabilityRegistryStatus status) {
+    switch (status) {
+    case AgentCapabilityRegistryStatus::Ready:
+        return QStringLiteral("Ready");
+    case AgentCapabilityRegistryStatus::Restricted:
+        return QStringLiteral("Restricted");
+    case AgentCapabilityRegistryStatus::RefusingUnsafeCapabilities:
+        return QStringLiteral("Refusing Unsafe Capabilities");
     }
 
     return QStringLiteral("Ready");
@@ -302,6 +368,55 @@ QString agentPlanningFallbackSummary(const AgentPlanningSession& session) {
     return session.result.fallback.summary.isEmpty()
         ? QStringLiteral("No planning fallback required.")
         : session.result.fallback.summary;
+}
+
+AgentCapabilitySummary agentCapabilitySummary(const AgentCapability& capability) {
+    return AgentCapabilitySummary{
+        capability.id.value,
+        capability.type,
+        capability.status,
+        capability.scope,
+        capabilityIsRestricted(capability.status),
+        capability.safetyReport.executionAttempted,
+        capability.summary,
+        capability.readiness.summary,
+        capability.safetyReport.summary,
+    };
+}
+
+QString agentCapabilitySummaryText(const AgentCapability& capability) {
+    return QStringLiteral("%1. %2 [%3/%4]: %5")
+        .arg(capability.order)
+        .arg(agentCapabilityTypeName(capability.type), agentCapabilityStatusName(capability.status),
+             agentCapabilityScopeName(capability.scope), capability.summary);
+}
+
+QStringList agentCapabilitySummaries(const AgentCapabilityRegistry& registry) {
+    QStringList summaries;
+    for (const auto& capability : registry.capabilities) {
+        summaries.append(agentCapabilitySummaryText(capability));
+    }
+    return summaries;
+}
+
+QStringList agentCapabilityReadinessSummaries(const AgentCapabilityRegistry& registry) {
+    QStringList summaries;
+    for (const auto& capability : registry.capabilities) {
+        summaries.append(QStringLiteral("%1: %2")
+                             .arg(agentCapabilityTypeName(capability.type),
+                                  capability.readiness.summary));
+    }
+    return summaries;
+}
+
+QStringList agentCapabilitySafetySummaries(const AgentCapabilityRegistry& registry) {
+    QStringList summaries;
+    for (const auto& capability : registry.capabilities) {
+        summaries.append(QStringLiteral("%1: %2")
+                             .arg(agentCapabilityTypeName(capability.type),
+                                  capability.safetyReport.summary));
+    }
+    return summaries;
 }
 
 StaticAgentTaskRuntime::StaticAgentTaskRuntime() {
@@ -526,6 +641,93 @@ AgentPlanningSession StaticAgentTaskRuntime::planningSession() const {
     };
 }
 
+AgentCapabilityRegistry StaticAgentTaskRuntime::capabilityRegistry() const {
+    QList<AgentCapability> capabilities{
+        makeCapability(AgentCapabilityType::ConversationSummarization,
+                       AgentCapabilityStatus::EnabledMetadata,
+                       AgentCapabilityScope::LocalMetadata, 1,
+                       QStringLiteral("Prepare deterministic conversation summary metadata.")),
+        makeCapability(AgentCapabilityType::MemoryInspection, AgentCapabilityStatus::EnabledMetadata,
+                       AgentCapabilityScope::LocalMetadata, 2,
+                       QStringLiteral("Inspect memory status summaries without private payloads.")),
+        makeCapability(AgentCapabilityType::RetrievalPreparation,
+                       AgentCapabilityStatus::EnabledMetadata,
+                       AgentCapabilityScope::LocalMetadata, 3,
+                       QStringLiteral("Prepare deterministic retrieval metadata.")),
+        makeCapability(AgentCapabilityType::SemanticSupplementPreparation,
+                       AgentCapabilityStatus::EnabledMetadata,
+                       AgentCapabilityScope::LocalMetadata, 4,
+                       QStringLiteral("Prepare bounded semantic supplement readiness metadata.")),
+        makeCapability(AgentCapabilityType::ExportPreparation, AgentCapabilityStatus::EnabledMetadata,
+                       AgentCapabilityScope::LocalMetadata, 5,
+                       QStringLiteral("Prepare export readiness metadata without writing files.")),
+        makeCapability(AgentCapabilityType::VoiceResponsePreparation,
+                       AgentCapabilityStatus::EnabledMetadata,
+                       AgentCapabilityScope::LocalMetadata, 6,
+                       QStringLiteral("Prepare voice response metadata without audio execution.")),
+        makeCapability(AgentCapabilityType::FilesystemAccess, AgentCapabilityStatus::Disabled,
+                       AgentCapabilityScope::FutureRuntime, 7,
+                       QStringLiteral("Future filesystem access remains disabled.")),
+        makeCapability(AgentCapabilityType::ShellExecution, AgentCapabilityStatus::Refused,
+                       AgentCapabilityScope::FutureRuntime, 8,
+                       QStringLiteral("Future shell execution is refused by policy.")),
+        makeCapability(AgentCapabilityType::PluginRuntime, AgentCapabilityStatus::Disabled,
+                       AgentCapabilityScope::FutureRuntime, 9,
+                       QStringLiteral("Future plugin runtime remains disabled.")),
+    };
+
+    int enabledCount = 0;
+    int disabledCount = 0;
+    int restrictedCount = 0;
+    int refusedCount = 0;
+    for (const auto& capability : capabilities) {
+        if (capability.status == AgentCapabilityStatus::EnabledMetadata) {
+            ++enabledCount;
+        }
+        if (capability.status == AgentCapabilityStatus::Disabled) {
+            ++disabledCount;
+        }
+        if (capability.status == AgentCapabilityStatus::Refused) {
+            ++refusedCount;
+        }
+        if (capabilityIsRestricted(capability.status)) {
+            ++restrictedCount;
+        }
+    }
+
+    const auto status = refusedCount > 0
+        ? AgentCapabilityRegistryStatus::RefusingUnsafeCapabilities
+        : (restrictedCount > 0 ? AgentCapabilityRegistryStatus::Restricted
+                               : AgentCapabilityRegistryStatus::Ready);
+    const AgentCapabilityRegistrySummary summary{
+        status,
+        static_cast<int>(capabilities.size()),
+        enabledCount,
+        disabledCount,
+        restrictedCount,
+        refusedCount,
+        false,
+        QStringLiteral("%1 capability registry: %2 total, %3 enabled metadata, %4 disabled, %5 "
+                       "restricted, %6 refused; execution attempted: no.")
+            .arg(agentCapabilityRegistryStatusName(status))
+            .arg(capabilities.size())
+            .arg(enabledCount)
+            .arg(disabledCount)
+            .arg(restrictedCount)
+            .arg(refusedCount),
+    };
+
+    return AgentCapabilityRegistry{
+        status,
+        capabilities,
+        summary,
+        QStringLiteral("Capability safety is metadata-only; unsafe runtime capabilities are "
+                       "disabled or refused before execution."),
+        QStringLiteral("Capability readiness is local-only metadata; future runtime capabilities "
+                       "require a later explicit phase."),
+    };
+}
+
 AgentTask StaticAgentTaskRuntime::makeTask(AgentTaskType type, AgentTaskSource source,
                                            AgentTaskPriority priority, const QString& summary) {
     const auto id = AgentTaskId{QStringLiteral("agent-task-%1").arg(nextTaskSequence_++)};
@@ -643,6 +845,58 @@ AgentPlanningCandidate StaticAgentTaskRuntime::planningCandidateForTask(const Ag
         refusalSummary,
     };
     return candidate;
+}
+
+AgentCapability StaticAgentTaskRuntime::makeCapability(AgentCapabilityType type,
+                                                       AgentCapabilityStatus status,
+                                                       AgentCapabilityScope scope, int order,
+                                                       const QString& summary) const {
+    const auto restricted = capabilityIsRestricted(status);
+    const auto refused = status == AgentCapabilityStatus::Refused;
+    const auto id = AgentCapabilityId{QStringLiteral("agent-capability-%1").arg(order)};
+    const auto readinessSummary = status == AgentCapabilityStatus::EnabledMetadata
+        ? QStringLiteral("Ready as metadata only; no execution authority is granted.")
+        : QStringLiteral("%1 remains unavailable until a later explicit runtime phase.")
+              .arg(agentCapabilityTypeName(type));
+    const auto safetySummary = restricted
+        ? QStringLiteral("%1 is %2 and exposes refusal metadata only; execution attempted: no.")
+              .arg(agentCapabilityTypeName(type), agentCapabilityStatusName(status).toLower())
+        : QStringLiteral("%1 passed metadata-only safety checks; execution attempted: no.")
+              .arg(agentCapabilityTypeName(type));
+
+    AgentCapability capability;
+    capability.id = id;
+    capability.type = type;
+    capability.status = status;
+    capability.scope = scope;
+    capability.order = order;
+    capability.summary = summary;
+    capability.policy = AgentCapabilityPolicy{};
+    capability.requirements = {
+        AgentCapabilityRequirement{QStringLiteral("Local metadata boundary present."), true},
+        AgentCapabilityRequirement{QStringLiteral("Runtime execution phase not active."), true},
+    };
+    capability.restrictions = {
+        AgentCapabilityRestriction{
+            QStringLiteral("No tools, plugins, filesystem actions, shell execution, cloud calls, "
+                           "or autonomous loops."),
+            true},
+        AgentCapabilityRestriction{
+            restricted ? QStringLiteral("Capability is disabled/refused by current policy.")
+                       : QStringLiteral("Capability may expose summaries only."),
+            restricted},
+    };
+    capability.readiness = AgentCapabilityReadiness{!restricted, refused, readinessSummary};
+    capability.safetyReport = AgentCapabilitySafetyReport{
+        !refused,
+        false,
+        restricted,
+        restricted ? QStringLiteral("%1 refused/disabled at capability registry boundary.")
+                         .arg(agentCapabilityTypeName(type))
+                   : QString(),
+        safetySummary,
+    };
+    return capability;
 }
 
 AgentTaskQueueSummary StaticAgentTaskRuntime::queueSummary() const {

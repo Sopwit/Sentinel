@@ -165,6 +165,13 @@ counts, arbitration summaries, refusal summaries, and deterministic fallback sum
 remain read-only and must not add execution buttons, approval controls, tool/plugin UI,
 filesystem or shell controls, autonomous toggles, cloud setup, or a broad redesign.
 
+Phase 18.10 through Phase 18.12 add compact capability-registry visibility to Agents. The surface
+may show capability registry status, enabled/disabled/restricted counts, capability summaries,
+readiness summaries, and safety summaries. Disabled and refused future runtime capabilities should
+be visibly distinct as restricted metadata. The UI must not add enable buttons, execute buttons,
+approval workflows, tool/plugin controls, filesystem or shell controls, autonomous toggles, cloud
+setup, or a broad redesign.
+
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool

@@ -65,6 +65,39 @@ enum class AgentPlanningSessionStatus : std::uint8_t {
     Refused,
 };
 
+struct AgentCapabilityId {
+    QString value;
+};
+
+enum class AgentCapabilityType : std::uint8_t {
+    ConversationSummarization,
+    MemoryInspection,
+    RetrievalPreparation,
+    SemanticSupplementPreparation,
+    ExportPreparation,
+    VoiceResponsePreparation,
+    FilesystemAccess,
+    ShellExecution,
+    PluginRuntime,
+};
+
+enum class AgentCapabilityStatus : std::uint8_t {
+    EnabledMetadata,
+    Disabled,
+    Refused,
+};
+
+enum class AgentCapabilityScope : std::uint8_t {
+    LocalMetadata,
+    FutureRuntime,
+};
+
+enum class AgentCapabilityRegistryStatus : std::uint8_t {
+    Ready,
+    Restricted,
+    RefusingUnsafeCapabilities,
+};
+
 QString agentTaskTypeName(AgentTaskType type);
 QString agentTaskStatusName(AgentTaskStatus status);
 QString agentTaskPriorityName(AgentTaskPriority priority);
@@ -72,6 +105,10 @@ QString agentTaskSourceName(AgentTaskSource source);
 QString agentTaskRuntimeStateName(AgentTaskRuntimeState state);
 QString agentTaskQueueStatusName(AgentTaskQueueStatus status);
 QString agentPlanningSessionStatusName(AgentPlanningSessionStatus status);
+QString agentCapabilityTypeName(AgentCapabilityType type);
+QString agentCapabilityStatusName(AgentCapabilityStatus status);
+QString agentCapabilityScopeName(AgentCapabilityScope scope);
+QString agentCapabilityRegistryStatusName(AgentCapabilityRegistryStatus status);
 
 struct AgentTaskStep {
     int order = 0;
@@ -283,6 +320,89 @@ struct AgentPlanningSession {
     AgentPlanningSessionSummary summary;
 };
 
+struct AgentCapabilityRequirement {
+    QString summary;
+    bool satisfied = true;
+};
+
+struct AgentCapabilityRestriction {
+    QString summary;
+    bool restricted = false;
+};
+
+struct AgentCapabilityPolicy {
+    bool localOnly = true;
+    bool metadataOnly = true;
+    bool executionAllowed = false;
+    bool toolExecutionAllowed = false;
+    bool filesystemActionsAllowed = false;
+    bool shellExecutionAllowed = false;
+    bool pluginExecutionAllowed = false;
+    bool cloudCallsAllowed = false;
+    QString summary = QStringLiteral(
+        "Agent capability is metadata-only; execution, tools, filesystem actions, shell, "
+        "plugins, and cloud calls are blocked.");
+};
+
+struct AgentCapabilityReadiness {
+    bool ready = true;
+    bool refused = false;
+    QString summary;
+};
+
+struct AgentCapabilitySafetyReport {
+    bool safe = true;
+    bool executionAttempted = false;
+    bool restricted = false;
+    QString refusalSummary;
+    QString summary;
+};
+
+struct AgentCapabilitySummary {
+    QString id;
+    AgentCapabilityType type = AgentCapabilityType::ConversationSummarization;
+    AgentCapabilityStatus status = AgentCapabilityStatus::Disabled;
+    AgentCapabilityScope scope = AgentCapabilityScope::LocalMetadata;
+    bool restricted = false;
+    bool executionAttempted = false;
+    QString summary;
+    QString readinessSummary;
+    QString safetySummary;
+};
+
+struct AgentCapability {
+    AgentCapabilityId id;
+    AgentCapabilityType type = AgentCapabilityType::ConversationSummarization;
+    AgentCapabilityStatus status = AgentCapabilityStatus::Disabled;
+    AgentCapabilityScope scope = AgentCapabilityScope::LocalMetadata;
+    int order = 0;
+    QString summary;
+    AgentCapabilityPolicy policy;
+    QList<AgentCapabilityRequirement> requirements;
+    QList<AgentCapabilityRestriction> restrictions;
+    AgentCapabilityReadiness readiness;
+    AgentCapabilitySafetyReport safetyReport;
+};
+
+struct AgentCapabilityRegistrySummary {
+    AgentCapabilityRegistryStatus status = AgentCapabilityRegistryStatus::Ready;
+    int totalCount = 0;
+    int enabledCount = 0;
+    int disabledCount = 0;
+    int restrictedCount = 0;
+    int refusedCount = 0;
+    bool executionAttempted = false;
+    QString summary;
+};
+
+struct AgentCapabilityRegistry {
+    AgentCapabilityRegistryStatus status = AgentCapabilityRegistryStatus::Ready;
+    QList<AgentCapability> capabilities;
+    AgentCapabilityRegistrySummary summary;
+    QString safetySummary;
+    QString readinessSummary;
+};
+
 QString agentTaskSummary(const AgentTask& task);
 QString agentTaskTraceSummary(const AgentTaskTrace& trace);
 QStringList agentTaskTraceSummaries(const QList<AgentTaskTrace>& traces);
@@ -295,6 +415,11 @@ QStringList agentPlanningCandidateSummaries(const AgentPlanningSession& session)
 QStringList agentPlanningRefusalSummaries(const AgentPlanningSession& session);
 QStringList agentPlanningArbitrationSummaries(const AgentPlanningSession& session);
 QString agentPlanningFallbackSummary(const AgentPlanningSession& session);
+AgentCapabilitySummary agentCapabilitySummary(const AgentCapability& capability);
+QString agentCapabilitySummaryText(const AgentCapability& capability);
+QStringList agentCapabilitySummaries(const AgentCapabilityRegistry& registry);
+QStringList agentCapabilityReadinessSummaries(const AgentCapabilityRegistry& registry);
+QStringList agentCapabilitySafetySummaries(const AgentCapabilityRegistry& registry);
 
 class IAgentTaskRuntime {
 public:
@@ -314,6 +439,7 @@ public:
     virtual AgentTaskPlan planTask(const AgentTask& task) const = 0;
     virtual AgentTaskResult refuseExecution(const AgentTask& task) const = 0;
     virtual AgentPlanningSession planningSession() const = 0;
+    virtual AgentCapabilityRegistry capabilityRegistry() const = 0;
 };
 
 class StaticAgentTaskRuntime final : public IAgentTaskRuntime {
@@ -334,6 +460,7 @@ public:
     AgentTaskPlan planTask(const AgentTask& task) const override;
     AgentTaskResult refuseExecution(const AgentTask& task) const override;
     AgentPlanningSession planningSession() const override;
+    AgentCapabilityRegistry capabilityRegistry() const override;
 
 private:
     AgentTask makeTask(AgentTaskType type, AgentTaskSource source, AgentTaskPriority priority,
@@ -341,6 +468,9 @@ private:
     AgentTaskQueueResult updateTaskStatus(const AgentTaskId& id, AgentTaskStatus status,
                                           const QString& summary, bool accepted);
     AgentPlanningCandidate planningCandidateForTask(const AgentTask& task, int order) const;
+    AgentCapability makeCapability(AgentCapabilityType type, AgentCapabilityStatus status,
+                                   AgentCapabilityScope scope, int order,
+                                   const QString& summary) const;
     AgentTaskQueueSummary queueSummary() const;
     QList<AgentTask> orderedTasks() const;
 

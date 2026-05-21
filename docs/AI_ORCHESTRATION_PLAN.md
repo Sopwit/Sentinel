@@ -296,6 +296,18 @@ filesystems, shell/subprocesses, background workers, cloud/API services, or auto
 Controller/view-model exposure remains QML-safe strings, counts, and lists only. Future tool
 runtime activation must pass through a separate explicit phase with permission, safety, approval,
 sandbox, and UI controls.
+Phase 18.10 through Phase 18.12 add deterministic agent capability-registry metadata:
+`AgentCapability`, `AgentCapabilityId`, `AgentCapabilityType`, `AgentCapabilityStatus`,
+`AgentCapabilityScope`, `AgentCapabilityPolicy`, `AgentCapabilitySummary`,
+`AgentCapabilityRequirement`, `AgentCapabilityRestriction`, `AgentCapabilityReadiness`,
+`AgentCapabilitySafetyReport`, `AgentCapabilityRegistry`, `AgentCapabilityRegistryStatus`, and
+`AgentCapabilityRegistrySummary`. Enabled metadata capabilities describe conversation
+summarization, memory inspection, retrieval preparation, semantic supplement preparation, export
+preparation, and voice response preparation. Future filesystem access, shell execution, and
+plugin runtime capabilities remain disabled or refused and expose safe readiness/safety/refusal
+summaries only. The registry is local-only metadata, `executionAttempted` remains false, and it
+does not grant tools, plugins, filesystem actions, shell/subprocess execution, provider/model
+calls, cloud/API calls, approval flows, background workers, or autonomous loops.
 Phase 17.0 through Phase 17.3 add semantic provider planning and local selection metadata:
 `SemanticProviderDescriptor`, `SemanticProviderSelection`, `SemanticProviderReadiness`,
 `SemanticProviderHealth`, `SemanticProviderCapability`, `SemanticProviderPolicy`,

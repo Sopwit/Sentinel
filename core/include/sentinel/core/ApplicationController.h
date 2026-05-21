@@ -160,6 +160,17 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QStringList agentPlanningRefusalSummaries READ agentPlanningRefusalSummaries
                    CONSTANT)
     Q_PROPERTY(QString agentPlanningFallbackSummary READ agentPlanningFallbackSummary CONSTANT)
+    Q_PROPERTY(QString agentCapabilityRegistryStatus READ agentCapabilityRegistryStatus CONSTANT)
+    Q_PROPERTY(QString agentCapabilityRegistrySummary READ agentCapabilityRegistrySummary CONSTANT)
+    Q_PROPERTY(int agentCapabilityCount READ agentCapabilityCount CONSTANT)
+    Q_PROPERTY(int agentCapabilityEnabledCount READ agentCapabilityEnabledCount CONSTANT)
+    Q_PROPERTY(int agentCapabilityDisabledCount READ agentCapabilityDisabledCount CONSTANT)
+    Q_PROPERTY(int agentCapabilityRestrictedCount READ agentCapabilityRestrictedCount CONSTANT)
+    Q_PROPERTY(QStringList agentCapabilitySummaries READ agentCapabilitySummaries CONSTANT)
+    Q_PROPERTY(QStringList agentCapabilityReadinessSummaries READ agentCapabilityReadinessSummaries
+                   CONSTANT)
+    Q_PROPERTY(QStringList agentCapabilitySafetySummaries READ agentCapabilitySafetySummaries
+                   CONSTANT)
     Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
     Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
     Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary CONSTANT)
@@ -856,6 +867,15 @@ public:
     QStringList agentPlanningArbitrationSummaries() const;
     QStringList agentPlanningRefusalSummaries() const;
     QString agentPlanningFallbackSummary() const;
+    QString agentCapabilityRegistryStatus() const;
+    QString agentCapabilityRegistrySummary() const;
+    int agentCapabilityCount() const;
+    int agentCapabilityEnabledCount() const;
+    int agentCapabilityDisabledCount() const;
+    int agentCapabilityRestrictedCount() const;
+    QStringList agentCapabilitySummaries() const;
+    QStringList agentCapabilityReadinessSummaries() const;
+    QStringList agentCapabilitySafetySummaries() const;
     QString localRuntimeStatus() const;
     QString localRuntimeHealth() const;
     QString localRuntimeSummary() const;

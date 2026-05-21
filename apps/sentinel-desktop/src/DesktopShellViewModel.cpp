@@ -445,6 +445,42 @@ QString DesktopShellViewModel::agentPlanningFallbackSummary() const {
     return controller_.agentPlanningFallbackSummary();
 }
 
+QString DesktopShellViewModel::agentCapabilityRegistryStatus() const {
+    return controller_.agentCapabilityRegistryStatus();
+}
+
+QString DesktopShellViewModel::agentCapabilityRegistrySummary() const {
+    return controller_.agentCapabilityRegistrySummary();
+}
+
+int DesktopShellViewModel::agentCapabilityCount() const {
+    return controller_.agentCapabilityCount();
+}
+
+int DesktopShellViewModel::agentCapabilityEnabledCount() const {
+    return controller_.agentCapabilityEnabledCount();
+}
+
+int DesktopShellViewModel::agentCapabilityDisabledCount() const {
+    return controller_.agentCapabilityDisabledCount();
+}
+
+int DesktopShellViewModel::agentCapabilityRestrictedCount() const {
+    return controller_.agentCapabilityRestrictedCount();
+}
+
+QStringList DesktopShellViewModel::agentCapabilitySummaries() const {
+    return controller_.agentCapabilitySummaries();
+}
+
+QStringList DesktopShellViewModel::agentCapabilityReadinessSummaries() const {
+    return controller_.agentCapabilityReadinessSummaries();
+}
+
+QStringList DesktopShellViewModel::agentCapabilitySafetySummaries() const {
+    return controller_.agentCapabilitySafetySummaries();
+}
+
 QString DesktopShellViewModel::localRuntimeStatus() const {
     return controller_.localRuntimeStatus();
 }
