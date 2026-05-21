@@ -869,6 +869,13 @@ execution, or arbitrary export paths:
   synthesis-readiness, completion/refusal/fallback traces and blocks at the first missing or
   unsafe stage. It performs no microphone capture, playback, Whisper/Piper execution,
   subprocesses, chat auto-send, transcript injection, background work, or autonomous loop.
+- Phase 18.28 through Phase 18.30 add controlled audio-file session metadata for future offline
+  STT ingestion. It validates local-only path-style metadata, supported future extensions
+  wav/mp3/flac/ogg, declared empty/oversized files, sandbox-required state, and disabled policy
+  deterministically. Unsafe/non-local path-style values are refused without exposing raw paths;
+  empty/oversized/sandbox-required states fall back without side effects. It performs no file
+  loading, waveform decoding, transcription, playback, microphone capture, filesystem scanning,
+  subprocess execution, automatic ingestion, cloud/API call, or autonomous loop.
 - `docs/PHASE_13_CHECKPOINT.md` records the Phase 13 Voice/Piper review, confirms the TTS path as
   `text -> Piper provider -> gated file-output metadata`, and marks Phase 14 ready only for
   explicit planning or configuration-readiness work unless a later phase separately authorizes

@@ -1925,6 +1925,10 @@ VoicePipelineSessionResult ApplicationController::currentVoicePipelineSessionRes
     return buildVoicePipelineSessionResult(transcription, chat, synthesis);
 }
 
+AudioFileSessionResult ApplicationController::currentAudioFileSessionResult() const {
+    return buildAudioFileSessionResult();
+}
+
 VoiceRuntimeSummary ApplicationController::currentVoiceRuntimeSummary() const {
     return voiceRuntimeCoordinator_ ? voiceRuntimeCoordinator_->runtimeSummary()
                                     : VoiceRuntimeSummary{};
@@ -1992,6 +1996,51 @@ int ApplicationController::voicePipelineSessionReadyStageCount() const {
 
 int ApplicationController::voicePipelineSessionBlockedStageCount() const {
     return currentVoicePipelineSessionResult().summary.blockedStageCount;
+}
+
+QString ApplicationController::audioFileSessionStatus() const {
+    return audioFileSessionStatusName(currentAudioFileSessionResult().status);
+}
+
+QString ApplicationController::audioFileSessionSummary() const {
+    return audioFileSessionSummaryText(currentAudioFileSessionResult().summary);
+}
+
+QString ApplicationController::audioFileSessionReadinessSummary() const {
+    return sentinel::core::audioFileSessionReadinessSummary(
+        currentAudioFileSessionResult().readiness);
+}
+
+QStringList ApplicationController::audioFileValidationSummaries() const {
+    return sentinel::core::audioFileValidationSummaries(
+        currentAudioFileSessionResult().validations);
+}
+
+QStringList ApplicationController::audioFileSupportedExtensionSummaries() const {
+    return sentinel::core::supportedAudioFileExtensionSummaries();
+}
+
+QString ApplicationController::audioFileSessionFallbackSummary() const {
+    return sentinel::core::audioFileSessionFallbackSummary(
+        currentAudioFileSessionResult().fallback);
+}
+
+QString ApplicationController::audioFileSessionSafetySummary() const {
+    return sentinel::core::audioFileSessionSafetySummary(
+        currentAudioFileSessionResult().safetyReport);
+}
+
+QStringList ApplicationController::audioFileSessionSafetyChecks() const {
+    return sentinel::core::audioFileSessionSafetyChecks(
+        currentAudioFileSessionResult().safetyReport);
+}
+
+QStringList ApplicationController::audioFileSessionRefusalSummaries() const {
+    return sentinel::core::audioFileSessionRefusalSummaries(currentAudioFileSessionResult());
+}
+
+QStringList ApplicationController::audioFileTraceSummaries() const {
+    return sentinel::core::audioFileTraceSummaries(currentAudioFileSessionResult().traces);
 }
 
 QString ApplicationController::voiceRuntimeStatus() const {

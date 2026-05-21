@@ -189,6 +189,26 @@ top of existing Whisper STT, local chat inference, and Piper TTS readiness:
   and safety summaries. No raw filesystem paths, provider/client objects, transcript payloads, or
   runtime handles are exposed.
 
+Phase 18.28 through Phase 18.30 add a controlled audio-file session foundation for future offline
+STT ingestion:
+
+- `AudioFileSession` metadata describes local-only, disabled-by-default audio-file readiness
+  without reading files, decoding waveforms, transcribing, playing audio, scanning the filesystem,
+  launching subprocesses, or calling cloud/API services.
+- `AudioFileDescriptor` carries path-style and declared-size metadata only. Unsafe/non-local
+  path-style values are refused as summaries, and raw path values are not exposed to QML.
+- `AudioFileValidation` records deterministic validation states for local-only, supported/
+  unsupported extension, empty-file, oversized-file, refused-path, sandbox-required,
+  future-transcription-ready, and disabled-by-policy.
+- Supported future extension metadata is wav, mp3, flac, and ogg. Unsupported extensions produce
+  refusal metadata; empty/oversized/sandbox-required states produce fallback metadata.
+- Safety reports preserve `executionAttempted = false` and block file loading, waveform decoding,
+  transcription, playback, microphone capture, subprocess execution, filesystem scanning,
+  automatic ingestion, autonomous loops, and cloud/API calls.
+- `ApplicationController` and `DesktopShellViewModel` expose only QML-safe status strings,
+  summaries, validation/refusal lists, trace summaries, supported-extension summaries, fallback,
+  and safety checks. The UI adds no upload button, file picker, playback control, or redesign.
+
 Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit
 review flow beside, not inside, the existing memory contracts:
 

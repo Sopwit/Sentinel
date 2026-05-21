@@ -694,6 +694,26 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
     QCOMPARE(fixture.viewModel.voicePipelineSessionSafetyChecks().size(), 8);
     QCOMPARE(fixture.viewModel.voicePipelineSessionReadyStageCount(), 2);
     QCOMPARE(fixture.viewModel.voicePipelineSessionBlockedStageCount(), 2);
+    QCOMPARE(fixture.viewModel.audioFileSessionStatus(), QStringLiteral("disabled"));
+    QVERIFY(fixture.viewModel.audioFileSessionSummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QVERIFY(fixture.viewModel.audioFileSessionReadinessSummary().contains(
+        QStringLiteral("supported extensions wav/mp3/flac/ogg")));
+    QVERIFY(fixture.viewModel.audioFileValidationSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("disabled-by-policy")));
+    QCOMPARE(fixture.viewModel.audioFileSupportedExtensionSummaries().size(), 4);
+    QVERIFY(fixture.viewModel.audioFileSessionFallbackSummary().contains(
+        QStringLiteral("no file loading")));
+    QVERIFY(fixture.viewModel.audioFileSessionSafetySummary().contains(
+        QStringLiteral("no-execution guarantees")));
+    QCOMPARE(fixture.viewModel.audioFileSessionSafetyChecks().size(), 8);
+    QVERIFY(fixture.viewModel.audioFileSessionRefusalSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("disabled-by-policy")));
+    QVERIFY(fixture.viewModel.audioFileTraceSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("no file")));
     QCOMPARE(fixture.viewModel.voiceRuntimeStatus(), QStringLiteral("Unavailable"));
     QVERIFY(fixture.viewModel.voiceRuntimeSummary().contains(QStringLiteral("playback disabled")));
     QCOMPARE(fixture.viewModel.voiceRuntimeCheckSummaries().size(), 7);
@@ -1354,6 +1374,16 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("voicePipelineSessionSafetyChecks"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("voicePipelineSessionReadyStageCount"), QByteArrayLiteral("int")},
         {QStringLiteral("voicePipelineSessionBlockedStageCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("audioFileSessionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("audioFileSessionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("audioFileSessionReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("audioFileValidationSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("audioFileSupportedExtensionSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("audioFileSessionFallbackSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("audioFileSessionSafetySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("audioFileSessionSafetyChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("audioFileSessionRefusalSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("audioFileTraceSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("voiceRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceRuntimeSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceRuntimeCheckSummaries"), QByteArrayLiteral("QStringList")},
@@ -1599,6 +1629,12 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("voicePipelineSessionReadiness"),
         QStringLiteral("voicePipelineSessionTrace"),
         QStringLiteral("voicePipelineSessionSafetyReport"),
+        QStringLiteral("audioFileSession"),
+        QStringLiteral("audioFileSessionResult"),
+        QStringLiteral("audioFileDescriptor"),
+        QStringLiteral("audioFileValidation"),
+        QStringLiteral("audioFileTrace"),
+        QStringLiteral("audioFileSessionSafetyReport"),
         QStringLiteral("agentRegistry"),
         QStringLiteral("agentDescriptors"),
         QStringLiteral("taskPlanner"),

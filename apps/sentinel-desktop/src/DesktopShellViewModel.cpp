@@ -887,6 +887,46 @@ int DesktopShellViewModel::voicePipelineSessionBlockedStageCount() const {
     return controller_.voicePipelineSessionBlockedStageCount();
 }
 
+QString DesktopShellViewModel::audioFileSessionStatus() const {
+    return controller_.audioFileSessionStatus();
+}
+
+QString DesktopShellViewModel::audioFileSessionSummary() const {
+    return controller_.audioFileSessionSummary();
+}
+
+QString DesktopShellViewModel::audioFileSessionReadinessSummary() const {
+    return controller_.audioFileSessionReadinessSummary();
+}
+
+QStringList DesktopShellViewModel::audioFileValidationSummaries() const {
+    return controller_.audioFileValidationSummaries();
+}
+
+QStringList DesktopShellViewModel::audioFileSupportedExtensionSummaries() const {
+    return controller_.audioFileSupportedExtensionSummaries();
+}
+
+QString DesktopShellViewModel::audioFileSessionFallbackSummary() const {
+    return controller_.audioFileSessionFallbackSummary();
+}
+
+QString DesktopShellViewModel::audioFileSessionSafetySummary() const {
+    return controller_.audioFileSessionSafetySummary();
+}
+
+QStringList DesktopShellViewModel::audioFileSessionSafetyChecks() const {
+    return controller_.audioFileSessionSafetyChecks();
+}
+
+QStringList DesktopShellViewModel::audioFileSessionRefusalSummaries() const {
+    return controller_.audioFileSessionRefusalSummaries();
+}
+
+QStringList DesktopShellViewModel::audioFileTraceSummaries() const {
+    return controller_.audioFileTraceSummaries();
+}
+
 QString DesktopShellViewModel::voiceRuntimeStatus() const {
     return controller_.voiceRuntimeStatus();
 }

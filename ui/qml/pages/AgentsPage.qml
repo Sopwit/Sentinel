@@ -235,6 +235,12 @@ ShellPanel {
 
             InfoRow {
                 compact: agentsPage.compact
+                label: "Audio File"
+                value: agentsPage.viewModel.audioFileSessionStatus
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
                 label: "STT Boundary"
                 value: agentsPage.viewModel.whisperTranscriptionReadinessSummary
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
@@ -377,6 +383,18 @@ ShellPanel {
                     required property string modelData
                     compact: agentsPage.compact
                     label: "Contract Readiness"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.audioFileValidationSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Audio File"
                     value: modelData
                     Layout.fillWidth: true
                 }

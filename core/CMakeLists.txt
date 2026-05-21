@@ -1,6 +1,7 @@
 add_library(sentinel_core STATIC
     include/sentinel/core/AppMetadata.h
     include/sentinel/core/AppSettings.h
+    include/sentinel/core/AudioFileSession.h
     include/sentinel/core/AgentActivityLog.h
     include/sentinel/core/AgentMetadata.h
     include/sentinel/core/AgentPipelineResult.h
@@ -87,6 +88,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/WhisperTranscription.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
+    src/AudioFileSession.cpp
     src/AgentActivityLog.cpp
     src/AgentRuntimeContext.cpp
     src/AgentTaskRuntime.cpp

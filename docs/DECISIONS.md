@@ -2571,6 +2571,34 @@ Boundary rules:
   explicit scopes, permission/sandbox gates, lifecycle ownership, UI controls, and regression
   tests.
 
+## 100. Controlled Audio-File Sessions Are Metadata Only
+
+Decision: Phase 18.28 through Phase 18.30 add deterministic audio-file session and validation
+metadata for future controlled offline STT ingestion without enabling file loading, decoding,
+transcription, playback, or runtime execution.
+
+Reason: Whisper STT readiness and voice pipeline orchestration need a safe file-session boundary
+before any later phase can authorize controlled local audio-file transcription. The desktop UI can
+show readiness/refusal/fallback state now without gaining file input authority.
+
+Boundary rules:
+
+- `AudioFileSession`, id/status/policy/result/readiness/safety/fallback/summary, descriptor,
+  validation/status/restriction/budget, and trace records are value metadata.
+- Supported future extensions are wav, mp3, flac, and ogg. Unsupported extensions become
+  deterministic refusal metadata.
+- Unsafe or non-local path-style values are refused before any file access and raw path values are
+  not exposed to QML.
+- Empty, oversized, sandbox-required, and disabled states become deterministic fallback metadata.
+- `executionAttempted` remains false. File loading, waveform decoding, transcription, playback,
+  microphone capture, subprocess execution, filesystem scanning, automatic ingestion, autonomous
+  loops, and cloud/API calls are blocked.
+- Controller and view-model exposure remains QML-safe strings and string lists only. No raw
+  filesystem paths, file handles, waveform data, transcripts, provider/client handles, or runtime
+  objects are exposed.
+- Future controlled transcription and future live microphone phases require separate explicit
+  scopes with permission, sandbox, lifecycle, UI, and regression tests.
+
 ## 94. Agent Task Queue Is Metadata-Only
 
 Decision: Phase 18.4 through Phase 18.6 add an agent task queue and lifecycle read model, but the
