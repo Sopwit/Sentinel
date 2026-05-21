@@ -442,6 +442,30 @@ Phase 17.16 through Phase 17.18 add the bounded hybrid retrieval bridge:
   summaries, and checks. Raw vectors, raw prompt payloads, provider handles, filesystem paths, and
   debug dumps remain unavailable.
 
+Phase 17.19 through Phase 17.21 add deterministic semantic acceptance:
+
+- `SemanticAcceptancePolicy`, `SemanticAcceptanceStatus`, `SemanticAcceptanceResult`,
+  `SemanticAcceptedCandidate`, `SemanticAcceptanceBudget`, `SemanticAcceptanceReadiness`,
+  `SemanticAcceptanceArbitration`, `SemanticAcceptanceFallback`, and
+  `SemanticAcceptanceSourceSummary` describe bounded supplemental acceptance metadata.
+- Acceptance reads `RetrievalPlanningResult`, `HybridRetrievalBridgeResult`, and
+  `SemanticSearchResult` values. Deterministic retrieval candidates remain primary; semantic
+  candidates may be approved only as bounded supplements after deterministic candidates have
+  occupied primary order.
+- Approval gates require deterministic retrieval authority, semantic-supplement-only behavior,
+  deterministic conflict wins, blocked prompt mutation, blocked retrieval-planning mutation,
+  blocked prompt-context mutation, and unchanged source priority.
+- Runtime protections cover disabled semantic sources, semantic errors/refusals, stale requests,
+  busy sessions, timeout metadata, count budgets, supplement-character budgets, deterministic tie
+  handling, and deterministic-only fallback mode.
+- Accepted supplements remain explicitly semantic, local-only, non-authoritative, and summary-only.
+  Acceptance cannot mutate `RetrievalPlanningResult`, create or mutate `PromptContextBlock`
+  values, change deterministic ordering, replace deterministic candidates, alter retrieval source
+  priority, or inject prompt content.
+- QML receives only status/readiness, approved supplement counts, source participation,
+  arbitration/fallback summaries, bounded budget state, and safety checks. Raw vectors, raw prompt
+  payloads, provider handles, filesystem paths, and debug dumps remain unavailable.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.

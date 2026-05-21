@@ -476,6 +476,28 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QStringList hybridBridgeCandidateSummaries READ hybridBridgeCandidateSummaries NOTIFY
                    contextAssemblyChanged)
     Q_PROPERTY(QStringList hybridBridgeChecks READ hybridBridgeChecks NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticAcceptanceStatus READ semanticAcceptanceStatus NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticAcceptanceReadiness READ semanticAcceptanceReadiness NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticAcceptanceSummary READ semanticAcceptanceSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticAcceptanceBudgetSummary READ semanticAcceptanceBudgetSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticAcceptanceSourceSummary READ semanticAcceptanceSourceSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticAcceptanceArbitrationSummary READ
+                   semanticAcceptanceArbitrationSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticAcceptanceFallbackSummary READ semanticAcceptanceFallbackSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int semanticAcceptanceAcceptedCount READ semanticAcceptanceAcceptedCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int semanticAcceptanceBudgetCharacters READ semanticAcceptanceBudgetCharacters NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticAcceptanceCandidateSummaries READ
+                   semanticAcceptanceCandidateSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticAcceptanceChecks READ semanticAcceptanceChecks NOTIFY
+                   contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -1022,6 +1044,17 @@ public:
     int hybridBridgeSemanticFillCount() const;
     QStringList hybridBridgeCandidateSummaries() const;
     QStringList hybridBridgeChecks() const;
+    QString semanticAcceptanceStatus() const;
+    QString semanticAcceptanceReadiness() const;
+    QString semanticAcceptanceSummary() const;
+    QString semanticAcceptanceBudgetSummary() const;
+    QString semanticAcceptanceSourceSummary() const;
+    QString semanticAcceptanceArbitrationSummary() const;
+    QString semanticAcceptanceFallbackSummary() const;
+    int semanticAcceptanceAcceptedCount() const;
+    int semanticAcceptanceBudgetCharacters() const;
+    QStringList semanticAcceptanceCandidateSummaries() const;
+    QStringList semanticAcceptanceChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;

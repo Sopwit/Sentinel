@@ -398,6 +398,36 @@ Still out of scope:
   actions, tools/plugins, raw vectors, raw prompt payloads, provider handles, filesystem paths, and
   debug dumps.
 
+## Phase 17.19-17.21: Deterministic Semantic Acceptance Layer
+
+Completed. Added bounded deterministic acceptance for semantic advisory candidates.
+
+Delivered:
+
+- `SemanticAcceptancePolicy`, `SemanticAcceptanceStatus`, `SemanticAcceptanceResult`,
+  `SemanticAcceptedCandidate`, `SemanticAcceptanceBudget`, `SemanticAcceptanceReadiness`,
+  `SemanticAcceptanceArbitration`, `SemanticAcceptanceFallback`, and
+  `SemanticAcceptanceSourceSummary`.
+- Deterministic approval gates over retrieval planning, hybrid bridge metadata, and semantic
+  search metadata.
+- Supplemental-only acceptance: deterministic candidates stay primary, semantic candidates can
+  only fill unused supplement capacity, and deterministic retrieval wins conflicts.
+- Bounded acceptance count, bounded supplement-character budget, deterministic ordering, timeout,
+  stale, busy, disabled, semantic-error, and deterministic-only fallback metadata.
+- Controller/view-model/QML exposure for readiness/status, approved supplement counts,
+  deterministic-vs-semantic participation, fallback state, arbitration summaries, bounded budgets,
+  and local-only/non-authoritative checks.
+- Tests proving deterministic authority, supplement-only behavior, stable ordering, limits,
+  fallback states, mutation blocking, no prompt/retrieval mutation, no deterministic replacement,
+  and controller exposure.
+
+Still out of scope:
+
+- Semantic prompt authority, raw semantic/vector prompt payloads, retrieval-planning mutation,
+  prompt block mutation, deterministic candidate replacement, source-priority mutation,
+  filesystem indexing, cloud/API/vector providers, autonomous actions, tools/plugins, provider
+  handles, filesystem paths, and debug dumps.
+
 ## Phase 15.8: Async Local Runtime Worker Foundation
 
 Completed. Local Ollama chat inference now crosses an async worker boundary before real

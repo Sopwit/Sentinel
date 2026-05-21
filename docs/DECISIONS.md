@@ -2221,3 +2221,34 @@ Boundary rules:
 - Future semantic-authority activation requires a separate explicit phase with indexing policy,
   privacy/safety gates, prompt-authority review, deterministic fallback tests, mutation tests, and
   QML non-exposure tests.
+
+## 90. Semantic Acceptance Is Bounded And Supplemental Only
+
+Decision: Allow deterministic gates to approve a tightly bounded subset of semantic advisory
+candidates as retrieval supplements, while keeping deterministic retrieval authoritative.
+
+Reason: Hybrid retrieval needs a testable acceptance lifecycle before semantic candidates can ever
+participate near prompt context. The safe step is bounded supplemental approval metadata that
+cannot replace deterministic candidates or mutate prompt construction.
+
+Boundary rules:
+
+- `SemanticAcceptancePolicy`, `SemanticAcceptanceStatus`, `SemanticAcceptanceResult`,
+  `SemanticAcceptedCandidate`, `SemanticAcceptanceBudget`, `SemanticAcceptanceReadiness`,
+  `SemanticAcceptanceArbitration`, `SemanticAcceptanceFallback`, and
+  `SemanticAcceptanceSourceSummary` are value-only records.
+- Acceptance may read `RetrievalPlanningResult`, `HybridRetrievalBridgeResult`, and
+  `SemanticSearchResult`. It must not mutate those inputs, create or mutate
+  `PromptContextBlock` values, change deterministic candidate ordering, or alter retrieval source
+  priority.
+- Deterministic retrieval candidates remain primary and win all conflicts. Accepted semantic
+  candidates are explicitly semantic, supplemental-only, local-only, non-authoritative, count
+  bounded, and character-budgeted.
+- Disabled semantic search, semantic errors/refusals, stale requests, busy state, timeouts, empty
+  semantic results, and exhausted supplement capacity resolve to deterministic fallback summaries.
+- QML may expose status/readiness, approved supplement counts, source participation,
+  arbitration/fallback summaries, bounded budget state, and safety checks only. Raw vectors,
+  prompt payloads, provider handles, filesystem paths, and debug dumps remain hidden.
+- Future semantic-authority activation requires a separate explicit phase with indexing policy,
+  privacy/safety gates, prompt-authority review, deterministic fallback tests, mutation tests, and
+  QML non-exposure tests.

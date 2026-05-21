@@ -172,6 +172,16 @@ enum class HybridRetrievalBridgeStatus : std::uint8_t {
     Refused,
 };
 
+enum class SemanticAcceptanceStatus : std::uint8_t {
+    Disabled,
+    DeterministicOnly,
+    Ready,
+    TimedOut,
+    Stale,
+    Busy,
+    Refused,
+};
+
 QString embeddingProviderStatusName(EmbeddingProviderStatus status);
 QString vectorIndexStatusName(VectorIndexStatus status);
 QString semanticRetrievalStatusName(SemanticRetrievalStatus status);
@@ -193,6 +203,7 @@ QString vectorPersistenceHealthName(VectorPersistenceHealth health);
 QString vectorPersistenceReadinessName(VectorPersistenceReadiness readiness);
 QString semanticSearchStatusName(SemanticSearchStatus status);
 QString hybridRetrievalBridgeStatusName(HybridRetrievalBridgeStatus status);
+QString semanticAcceptanceStatusName(SemanticAcceptanceStatus status);
 
 struct EmbeddingVector {
     QList<double> values;
@@ -711,6 +722,104 @@ struct HybridRetrievalBridgeResult {
     QStringList checks;
 };
 
+struct SemanticAcceptancePolicy {
+    bool enabled = true;
+    bool deterministicRetrievalAuthoritative = true;
+    bool semanticSupplementsOnly = true;
+    bool deterministicWinsConflicts = true;
+    bool promptMutationEnabled = false;
+    bool retrievalPlanningMutationEnabled = false;
+    bool promptContextMutationEnabled = false;
+    bool retrievalSourcePriorityMutationEnabled = false;
+    int maxAcceptedSupplements = 2;
+    int maxSupplementCharacters = 640;
+    int maxTotalRetrievalSupplements = 6;
+    int timeoutMs = 1000;
+    QString summary = QStringLiteral(
+        "Semantic acceptance may approve bounded semantic supplements only; deterministic "
+        "retrieval remains authoritative.");
+};
+
+struct SemanticAcceptanceBudget {
+    int maxAcceptedSupplements = 2;
+    int maxSupplementCharacters = 640;
+    int maxTotalRetrievalSupplements = 6;
+    int deterministicCandidateCount = 0;
+    int semanticCandidateCount = 0;
+    int bridgeSemanticFillCount = 0;
+    int acceptedSupplementCount = 0;
+    int acceptedSupplementCharacters = 0;
+    int remainingSupplementSlots = 0;
+    int timeoutMs = 1000;
+    int elapsedMs = 0;
+    QString summary = QStringLiteral("0 bounded semantic supplements accepted.");
+};
+
+struct SemanticAcceptanceReadiness {
+    bool ready = false;
+    SemanticAcceptanceStatus status = SemanticAcceptanceStatus::Disabled;
+    QString summary = QStringLiteral("Semantic acceptance is not ready.");
+    QStringList checks;
+};
+
+struct SemanticAcceptedCandidate {
+    QString id;
+    QString source = QStringLiteral("Semantic Supplemental");
+    QString title;
+    QString summary;
+    int supplementRank = 0;
+    int deterministicOffsetRank = 0;
+    int estimatedCharacters = 0;
+    bool semantic = true;
+    bool supplementalOnly = true;
+    QString acceptanceReason;
+};
+
+struct SemanticAcceptanceArbitration {
+    QString orderingSummary = QStringLiteral(
+        "Deterministic retrieval candidates remain primary; accepted semantic supplements follow "
+        "deterministic ordering.");
+    QString conflictSummary =
+        QStringLiteral("Deterministic retrieval wins all acceptance conflicts.");
+    QString tieSummary = QStringLiteral("Semantic ties are handled by bridge order, rank, and id.");
+    QString summary = QStringLiteral("No semantic acceptance arbitration has run.");
+    QStringList checks;
+};
+
+struct SemanticAcceptanceFallback {
+    bool deterministicOnly = true;
+    QString state = QStringLiteral("Deterministic Only");
+    QString summary =
+        QStringLiteral("Deterministic retrieval fallback is authoritative and available.");
+    QStringList summaries;
+};
+
+struct SemanticAcceptanceSourceSummary {
+    int deterministicCandidateCount = 0;
+    int semanticCandidateCount = 0;
+    int bridgeCandidateCount = 0;
+    int bridgeSemanticFillCount = 0;
+    int acceptedSupplementCount = 0;
+    bool localOnly = true;
+    bool semanticAuthoritative = false;
+    QString summary = QStringLiteral("No semantic acceptance source participation.");
+};
+
+struct SemanticAcceptanceResult {
+    bool accepted = false;
+    SemanticAcceptanceStatus status = SemanticAcceptanceStatus::Disabled;
+    SemanticAcceptancePolicy policy;
+    SemanticAcceptanceBudget budget;
+    SemanticAcceptanceReadiness readiness;
+    SemanticAcceptanceArbitration arbitration;
+    SemanticAcceptanceFallback fallback;
+    SemanticAcceptanceSourceSummary sourceSummary;
+    QList<SemanticAcceptedCandidate> acceptedCandidates;
+    QString summary = QStringLiteral("Semantic acceptance did not run.");
+    QString failureReason;
+    QStringList checks;
+};
+
 struct SemanticProviderPolicy {
     bool disabledByDefault = true;
     bool allowFakeInMemoryProvider = false;
@@ -880,6 +989,10 @@ HybridRetrievalBridgeResult
 hybridRetrievalBridge(const RetrievalPlanningResult& deterministicPlanning,
                       const SemanticSearchResult& semanticSearchResult,
                       const HybridRetrievalBridgePolicy& policy);
+SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deterministicPlanning,
+                                            const HybridRetrievalBridgeResult& bridgeResult,
+                                            const SemanticSearchResult& semanticSearchResult,
+                                            const SemanticAcceptancePolicy& policy);
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source);
 SemanticCandidateArbitration
 orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,

@@ -2,6 +2,38 @@
 
 ## Completed / Stable
 
+### Phase 17.19-17.21: Deterministic Semantic Acceptance Layer
+
+Completed. Adds bounded hybrid acceptance metadata that can approve a small subset of semantic
+advisory candidates as retrieval supplements while preserving deterministic retrieval as the final
+authority.
+
+Scope:
+
+- Added semantic acceptance policy, status, result, accepted-candidate, budget, readiness,
+  arbitration, fallback, and source-summary records.
+- Acceptance reads deterministic `RetrievalPlanningResult`, `HybridRetrievalBridgeResult`, and
+  `SemanticSearchResult` metadata, then approves only bounded semantic supplements that pass
+  deterministic gates.
+- Deterministic retrieval candidates remain primary and win all conflicts. Accepted semantic
+  candidates are supplemental-only, explicitly marked semantic, ordered after deterministic
+  candidates, and constrained by supplement count and character budgets.
+- Disabled, stale, busy, timed-out, refused, empty, or capacity-exhausted semantic sources expose
+  deterministic-only fallback summaries without mutating retrieval planning or prompt context.
+- Memory and Settings expose compact acceptance status/readiness, approved supplement counts,
+  deterministic-vs-semantic participation, fallback state, arbitration summaries, bounded budget,
+  and local-only non-authoritative checks without raw vectors, prompt payloads, provider handles,
+  filesystem paths, or debug dumps.
+
+Known limitation:
+
+- Acceptance does not grant semantic prompt authority. It does not mutate
+  `RetrievalPlanningResult`, create or mutate `PromptContextBlock` values, inject prompts, replace
+  deterministic candidates, alter source priority, index filesystems, call cloud/API/vector
+  providers, or execute tools/plugins. Future semantic-authority activation still requires a
+  separate phase with indexing policy, privacy/safety gates, prompt-authority review,
+  deterministic fallback tests, and QML non-exposure guarantees.
+
 ### Phase 17.16-17.18: Hybrid Retrieval Bridge Foundation
 
 Completed. Adds a bounded, non-authoritative bridge that can read deterministic retrieval planning

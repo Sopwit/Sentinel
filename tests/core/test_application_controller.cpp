@@ -755,6 +755,7 @@ private slots:
     void vectorPersistenceExposureIsDisabledAndDoesNotMutatePlanningOrPrompt();
     void semanticSearchExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
     void hybridBridgeExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
+    void semanticAcceptanceExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
     void semanticCandidateOrchestrationDoesNotMutatePrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
@@ -4266,6 +4267,44 @@ void ApplicationControllerTest::hybridBridgeExposureIsBoundedAndDoesNotMutatePla
         QStringLiteral("PromptContextBlocks mutation: no")));
     QVERIFY(controller->hybridBridgeChecks().contains(
         QStringLiteral("Prompt content injection: disabled")));
+
+    const auto planningAfter = controller->retrievalPlanningResult();
+    const auto promptAfter = controller->latestPromptContextInjectionResult();
+    QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
+    QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
+    QCOMPARE(controller->semanticRetrievalEnabled(), false);
+}
+
+void ApplicationControllerTest::
+    semanticAcceptanceExposureIsBoundedAndDoesNotMutatePlanningOrPrompt() {
+    const auto controller = makeController();
+    controller->sendMessage(QStringLiteral("semantic acceptance deterministic context"));
+    controller->remember(QStringLiteral("semantic.acceptance"),
+                         QStringLiteral("deterministic memory authority"));
+    const auto planningBefore = controller->retrievalPlanningResult();
+    const auto promptBefore = controller->latestPromptContextInjectionResult();
+
+    QCOMPARE(controller->semanticAcceptanceStatus(), QStringLiteral("Deterministic Only"));
+    QVERIFY(controller->semanticAcceptanceReadiness().contains(QStringLiteral("not ready")) ||
+            controller->semanticAcceptanceReadiness().contains(QStringLiteral("Semantic")));
+    QVERIFY(controller->semanticAcceptanceSummary().contains(QStringLiteral("deterministic")));
+    QVERIFY(controller->semanticAcceptanceBudgetSummary().contains(
+        QStringLiteral("semantic supplements")));
+    QVERIFY(
+        controller->semanticAcceptanceSourceSummary().contains(QStringLiteral("deterministic")));
+    QVERIFY(
+        controller->semanticAcceptanceArbitrationSummary().contains(QStringLiteral("acceptance")));
+    QVERIFY(
+        controller->semanticAcceptanceFallbackSummary().contains(QStringLiteral("deterministic")));
+    QCOMPARE(controller->semanticAcceptanceAcceptedCount(), 0);
+    QVERIFY(controller->semanticAcceptanceBudgetCharacters() > 0);
+    QVERIFY(controller->semanticAcceptanceChecks().contains(
+        QStringLiteral("RetrievalPlanningResult mutation: no")));
+    QVERIFY(controller->semanticAcceptanceChecks().contains(
+        QStringLiteral("PromptContextBlocks mutation: no")));
+    QVERIFY(controller->semanticAcceptanceChecks().contains(
+        QStringLiteral("Deterministic candidate replacement: no")));
 
     const auto planningAfter = controller->retrievalPlanningResult();
     const auto promptAfter = controller->latestPromptContextInjectionResult();
