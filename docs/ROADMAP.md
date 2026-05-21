@@ -304,6 +304,29 @@ Still out of scope:
   filesystem or system actions, shell/subprocess execution, provider/model calls, cloud/API keys,
   and broad UI redesign.
 
+## Phase 18.7-18.9: Agent Planning Session And Safety Arbitration Foundation
+
+Completed. Added bounded planning-session and safety arbitration metadata without expanding
+runtime authority.
+
+Delivered:
+
+- Value-only planning session, session id/status/summary/policy, result, candidate, budget,
+  arbitration, refusal, safety-report, and fallback records.
+- Deterministic planning candidates derived from the ordered task queue.
+- Candidate, step, and summary budgets with deterministic omitted-candidate fallback summaries.
+- Refusal metadata for unsafe plans, with safe blocked/refused summaries exposed to QML.
+- Controller/view-model exposure for planning status, candidate/refusal counts, arbitration
+  summaries, refusal summaries, and fallback summary.
+- Compact read-only Agents page planning/arbitration visibility with no execution, approval,
+  tool, plugin, shell, filesystem, or background-worker controls.
+
+Still out of scope:
+
+- Autonomous execution, approval workflows, tools/plugins, filesystem or system actions,
+  shell/subprocess execution, background workers, provider/model calls, cloud/API keys, and broad
+  UI redesign.
+
 Still out of scope:
 
 - Semantic ranking/search, real embedding calls, vector database writes, prompt mutation, semantic

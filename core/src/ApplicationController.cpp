@@ -1176,6 +1176,56 @@ QStringList ApplicationController::agentTaskTraceSummaries() const {
     return sentinel::core::agentTaskTraceSummaries(agentTaskRuntime_->tasks().last().traces);
 }
 
+QString ApplicationController::agentPlanningSessionStatus() const {
+    if (!agentTaskRuntime_) {
+        return agentPlanningSessionStatusName(AgentPlanningSessionStatus::Refused);
+    }
+    return agentPlanningSessionStatusName(agentTaskRuntime_->planningSession().status);
+}
+
+QString ApplicationController::agentPlanningSessionSummary() const {
+    if (!agentTaskRuntime_) {
+        return QStringLiteral("No agent planning session metadata available.");
+    }
+    return agentTaskRuntime_->planningSession().summary.summary;
+}
+
+int ApplicationController::agentPlanningCandidateCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->planningSession().summary.candidateCount : 0;
+}
+
+int ApplicationController::agentPlanningRefusedCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->planningSession().summary.refusedCount : 0;
+}
+
+QStringList ApplicationController::agentPlanningCandidateSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::agentPlanningCandidateSummaries(agentTaskRuntime_->planningSession());
+}
+
+QStringList ApplicationController::agentPlanningArbitrationSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::agentPlanningArbitrationSummaries(agentTaskRuntime_->planningSession());
+}
+
+QStringList ApplicationController::agentPlanningRefusalSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::agentPlanningRefusalSummaries(agentTaskRuntime_->planningSession());
+}
+
+QString ApplicationController::agentPlanningFallbackSummary() const {
+    if (!agentTaskRuntime_) {
+        return QStringLiteral("No planning fallback metadata available.");
+    }
+    return sentinel::core::agentPlanningFallbackSummary(agentTaskRuntime_->planningSession());
+}
+
 QString ApplicationController::localRuntimeStatus() const {
     if (!localRuntime_) {
         return localRuntimeStatusName(LocalRuntimeStatus::Unavailable);

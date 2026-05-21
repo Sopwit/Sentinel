@@ -2,6 +2,33 @@
 
 ## Completed / Stable
 
+### Phase 18.7-18.9: Agent Planning Session And Safety Arbitration Foundation
+
+Completed. Adds bounded agent planning-session and safety arbitration metadata on top of the
+Phase 18 task queue without enabling execution.
+
+Scope:
+
+- Added `AgentPlanningSession`, `AgentPlanningSessionId`, `AgentPlanningSessionStatus`,
+  `AgentPlanningSessionSummary`, `AgentPlanningSessionPolicy`, `AgentPlanningResult`,
+  `AgentPlanningCandidate`, `AgentPlanningBudget`, `AgentPlanningArbitration`,
+  `AgentPlanningRefusal`, `AgentPlanningSafetyReport`, and `AgentPlanningFallback`.
+- Planning sessions derive deterministic local metadata from the ordered task queue and stay
+  bounded by candidate, step, and summary budgets.
+- Arbitration selects candidates by priority, queue sequence, and task id. Budget overflow uses a
+  deterministic fallback summary.
+- Unsafe planning candidates are refused as safe metadata with exposed refusal summaries.
+- `executionAttempted` remains false. Planning does not start tools, plugins, filesystem actions,
+  shell/subprocess execution, background workers, cloud/API calls, provider/model calls, or
+  autonomous loops.
+- Controller, desktop view model, and Agents page expose QML-safe planning status, counts,
+  arbitration summaries, refusal summaries, and fallback summary.
+
+Known limitation:
+
+- Planning sessions are not an executor, scheduler, approval workflow, or tool runtime. Future
+  execution authority still requires a separate explicit phase.
+
 ### Phase 18.4-18.6: Agent Task Queue And Lifecycle Metadata
 
 Completed. Adds deterministic queue and lifecycle metadata on top of the Phase 18 agent task

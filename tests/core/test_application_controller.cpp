@@ -1004,6 +1004,15 @@ void ApplicationControllerTest::exposesAgentTaskRuntimeMetadata() {
     QCOMPARE(controller->agentTaskTraceSummaries().size(), 3);
     QVERIFY(controller->agentTaskTraceSummaries().last().contains(
         QStringLiteral("Execution Boundary")));
+    QCOMPARE(controller->agentPlanningSessionStatus(), QStringLiteral("Ready"));
+    QCOMPARE(controller->agentPlanningCandidateCount(), 6);
+    QCOMPARE(controller->agentPlanningRefusedCount(), 0);
+    QVERIFY(controller->agentPlanningSessionSummary().contains(QStringLiteral("execution "
+                                                                               "attempted: no")));
+    QCOMPARE(controller->agentPlanningCandidateSummaries().size(), 6);
+    QCOMPARE(controller->agentPlanningArbitrationSummaries().size(), 6);
+    QVERIFY(controller->agentPlanningFallbackSummary().contains(QStringLiteral("No planning "
+                                                                               "fallback")));
 }
 
 void ApplicationControllerTest::exposesLocalRuntimeMetadata() {

@@ -100,6 +100,36 @@ ShellPanel {
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Planning Session"
+                value: agentsPage.viewModel.agentPlanningSessionStatus
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Plans / Refused"
+                value: agentsPage.viewModel.agentPlanningCandidateCount.toString()
+                       + " / "
+                       + agentsPage.viewModel.agentPlanningRefusedCount.toString()
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Planning Summary"
+                value: agentsPage.viewModel.agentPlanningSessionSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Planning Fallback"
+                value: agentsPage.viewModel.agentPlanningFallbackSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
         }
 
         ColumnLayout {
@@ -113,6 +143,30 @@ ShellPanel {
                     required property string modelData
                     compact: agentsPage.compact
                     label: "Task Trace"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.agentPlanningArbitrationSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Arbitration"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.agentPlanningRefusalSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Refusal"
                     value: modelData
                     Layout.fillWidth: true
                 }
