@@ -42,9 +42,12 @@ void InMemoryToolRegistryTest::registersAndFindsToolById() {
     QVERIFY(registry.registerTool(makeTool(QStringLiteral("tool-a"), QStringLiteral("Tool A"))));
     const auto found = registry.findToolById(QStringLiteral("tool-a"));
 
-    QVERIFY(found.has_value());
-    QCOMPARE(found->id, QStringLiteral("tool-a"));
-    QCOMPARE(found->name, QStringLiteral("Tool A"));
+    if (!found.has_value()) {
+        QFAIL("Expected tool-a to be registered.");
+    }
+    const auto& tool = *found;
+    QCOMPARE(tool.id, QStringLiteral("tool-a"));
+    QCOMPARE(tool.name, QStringLiteral("Tool A"));
 }
 
 void InMemoryToolRegistryTest::trimsToolIdsOnRegistrationAndLookup() {
@@ -54,8 +57,11 @@ void InMemoryToolRegistryTest::trimsToolIdsOnRegistrationAndLookup() {
         registry.registerTool(makeTool(QStringLiteral("  tool-a  "), QStringLiteral("Tool A"))));
 
     const auto found = registry.findToolById(QStringLiteral(" tool-a "));
-    QVERIFY(found.has_value());
-    QCOMPARE(found->id, QStringLiteral("tool-a"));
+    if (!found.has_value()) {
+        QFAIL("Expected trimmed tool-a lookup to succeed.");
+    }
+    const auto& tool = *found;
+    QCOMPARE(tool.id, QStringLiteral("tool-a"));
 }
 
 void InMemoryToolRegistryTest::rejectsBlankIds() {
@@ -116,15 +122,18 @@ void InMemoryToolRegistryTest::preservesDescriptorMetadata() {
     }));
 
     const auto found = registry.findToolById(QStringLiteral("tool-a"));
-    QVERIFY(found.has_value());
-    QCOMPARE(found->description, QStringLiteral("Detailed metadata"));
-    QCOMPARE(found->riskLevel, ToolRiskLevel::Medium);
-    QCOMPARE(found->executionMode, ToolExecutionMode::MetadataOnly);
-    QCOMPARE(found->parameters.size(), 2);
-    QCOMPARE(found->parameters.first().id, QStringLiteral("topic"));
-    QVERIFY(found->parameters.first().required);
-    QCOMPARE(found->parameters.last().id, QStringLiteral("style"));
-    QVERIFY(!found->parameters.last().required);
+    if (!found.has_value()) {
+        QFAIL("Expected tool-a metadata lookup to succeed.");
+    }
+    const auto& tool = *found;
+    QCOMPARE(tool.description, QStringLiteral("Detailed metadata"));
+    QCOMPARE(tool.riskLevel, ToolRiskLevel::Medium);
+    QCOMPARE(tool.executionMode, ToolExecutionMode::MetadataOnly);
+    QCOMPARE(tool.parameters.size(), 2);
+    QCOMPARE(tool.parameters.first().id, QStringLiteral("topic"));
+    QVERIFY(tool.parameters.first().required);
+    QCOMPARE(tool.parameters.last().id, QStringLiteral("style"));
+    QVERIFY(!tool.parameters.last().required);
 }
 
 QTEST_MAIN(InMemoryToolRegistryTest)

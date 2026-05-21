@@ -888,6 +888,8 @@ QString DesktopShellViewModel::whisperPreparationReadinessSummary() const {
     return controller_.whisperPreparationReadinessSummary();
 }
 
+// QML-facing convenience API keeps explicit path arguments to avoid a larger invokable contract
+// change. NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void DesktopShellViewModel::applyVoiceConfigurationPaths(const QString& piperBinaryPath,
                                                          const QString& piperModelPath,
                                                          const QString& whisperBinaryPath,

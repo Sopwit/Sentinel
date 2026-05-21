@@ -9,7 +9,7 @@ bool InMemoryToolRegistry::registerTool(ToolDescriptor descriptor) {
     }
 
     descriptor.id = id;
-    toolsById_.insert(id, std::move(descriptor));
+    toolsById_.insert(id, descriptor);
     return true;
 }
 

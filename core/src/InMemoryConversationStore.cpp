@@ -64,7 +64,7 @@ bool InMemoryConversationStore::appendMessage(const ConversationMessageRecord& m
               });
     messagesByConversation_.insert(conversation->id, conversationMessages);
 
-    conversation->messageCount = conversationMessages.size();
+    conversation->messageCount = static_cast<int>(conversationMessages.size());
     conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
     conversation->summary = QStringLiteral("%1 (%2 %3)")
                                 .arg(conversation->title)

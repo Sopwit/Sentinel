@@ -30,10 +30,8 @@ bool transitionAllowed(MemoryReviewState currentState, MemoryCandidateReviewActi
     case MemoryCandidateReviewAction::Approve:
     case MemoryCandidateReviewAction::Reject:
         return currentState == MemoryReviewState::PendingReview;
-    case MemoryCandidateReviewAction::ResetToPending:
-        return currentState == MemoryReviewState::Approved ||
-               currentState == MemoryReviewState::Rejected;
     case MemoryCandidateReviewAction::Archive:
+    case MemoryCandidateReviewAction::ResetToPending:
         return currentState == MemoryReviewState::Approved ||
                currentState == MemoryReviewState::Rejected;
     }

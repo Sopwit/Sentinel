@@ -17,7 +17,7 @@ QString JsonSettingsStore::value(const QString& key, const QString& defaultValue
 }
 
 void JsonSettingsStore::setValue(QString key, QString value) {
-    values_.insert(std::move(key), std::move(value));
+    values_.insert(key, value);
     save();
 }
 

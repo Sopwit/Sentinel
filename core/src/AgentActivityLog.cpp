@@ -25,7 +25,7 @@ void AgentActivityLog::clear() {
 }
 
 int AgentActivityLog::count() const {
-    return entries_.size();
+    return static_cast<int>(entries_.size());
 }
 
 QString AgentActivityLog::latestSummary() const {

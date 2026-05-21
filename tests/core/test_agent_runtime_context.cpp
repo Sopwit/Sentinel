@@ -12,7 +12,7 @@ private slots:
     void clearsContextWithoutChangingSessionId();
 };
 
-static sentinel::core::AgentPipelineResult makePipelineResult(QStringList toolIds) {
+static sentinel::core::AgentPipelineResult makePipelineResult(const QStringList& toolIds) {
     QList<sentinel::core::PlannedToolInvocation> invocations;
     for (const auto& toolId : toolIds) {
         invocations.append(sentinel::core::PlannedToolInvocation{

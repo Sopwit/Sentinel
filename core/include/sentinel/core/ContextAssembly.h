@@ -52,6 +52,7 @@ enum class RetrievalPlanningStatus : std::uint8_t {
 };
 
 enum class RetrievalSourcePriority : std::uint8_t {
+    None = 0,
     RecentConversation = 1,
     ConversationSummary = 2,
     CommittedMemory = 3,

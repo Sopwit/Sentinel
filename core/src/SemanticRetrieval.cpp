@@ -9,6 +9,10 @@
 namespace sentinel::core {
 namespace {
 
+int toInt(qsizetype value) {
+    return static_cast<int>(value);
+}
+
 QStringList normalizedTokens(const QString& text) {
     QString normalized;
     normalized.reserve(text.size());
@@ -543,7 +547,7 @@ EmbeddingVector FakeEmbeddingProvider::embedText(const QString& text) const {
 
     const auto tokens = normalizedTokens(text);
     for (int index = 0; index < tokens.size(); ++index) {
-        const auto token = tokens.at(index);
+        const auto& token = tokens.at(index);
         const auto digest = stableDigest(QStringLiteral("%1:%2").arg(token).arg(index));
         const auto bucket = static_cast<unsigned char>(digest.at(0)) % policy_.dimensions;
         const auto sign = (static_cast<unsigned char>(digest.at(1)) % 2) == 0 ? 1.0 : -1.0;
@@ -583,7 +587,7 @@ EmbeddingResult FakeEmbeddingProvider::embed(const EmbeddingRequest& request) co
         result.vectors.append(embedText(document.text));
     }
 
-    result.documentCount = result.documents.size();
+    result.documentCount = toInt(result.documents.size());
     result.summary = QStringLiteral("Generated %1 deterministic fake %2 with %3 dimensions.")
                          .arg(result.documentCount)
                          .arg(result.documentCount == 1 ? QStringLiteral("embedding")
@@ -611,7 +615,7 @@ VectorIndexPolicy FakeVectorIndex::policy() const {
 }
 
 int FakeVectorIndex::itemCount() const {
-    return entries_.size();
+    return toInt(entries_.size());
 }
 
 bool FakeVectorIndex::upsert(const EmbeddingDocument& document, const EmbeddingVector& vector) {
@@ -676,7 +680,7 @@ VectorSearchResult FakeVectorIndex::search(const VectorSearchQuery& query) const
     VectorSearchResult result;
     result.policy = policy_;
     result.status = status();
-    result.indexedItemCount = entries_.size();
+    result.indexedItemCount = toInt(entries_.size());
 
     QList<VectorSearchCandidate> candidates;
     candidates.reserve(entries_.size());
@@ -709,7 +713,7 @@ VectorSearchResult FakeVectorIndex::search(const VectorSearchQuery& query) const
         result.candidates.append(candidate);
     }
 
-    result.resultCount = result.candidates.size();
+    result.resultCount = toInt(result.candidates.size());
     result.summary =
         QStringLiteral("Vector search returned %1 of %2 indexed %3.")
             .arg(result.resultCount)
@@ -750,7 +754,7 @@ VectorIndexSnapshotSummary LocalVectorPersistenceIndex::snapshot() const {
                          ? VectorPersistenceHealth::Blocked
                          : (itemSummaries_.isEmpty() ? VectorPersistenceHealth::Empty
                                                      : VectorPersistenceHealth::LocalOnlyReady);
-    summary.indexedItemCount = itemSummaries_.size();
+    summary.indexedItemCount = toInt(itemSummaries_.size());
     summary.lifecycleRevision = lifecycle_.revision;
     summary.boundedState =
         QStringLiteral("local-only / %1 / %2 of %3 indexed items / semantic retrieval disabled")
@@ -778,7 +782,7 @@ VectorIndexSnapshotSummary LocalVectorPersistenceIndex::snapshot() const {
 }
 
 int LocalVectorPersistenceIndex::itemCount() const {
-    return itemSummaries_.size();
+    return toInt(itemSummaries_.size());
 }
 
 VectorPersistenceResult
@@ -818,7 +822,7 @@ LocalVectorPersistenceIndex::validateSession(const VectorPersistenceSession& ses
 }
 
 void LocalVectorPersistenceIndex::refreshBudget() {
-    budget_.indexedItemCount = itemSummaries_.size();
+    budget_.indexedItemCount = toInt(itemSummaries_.size());
     budget_.remainingItemCount = std::max(0, budget_.maxIndexedItems - budget_.indexedItemCount);
     budget_.summary = QStringLiteral("%1 of %2 local vector metadata items indexed; %3 remaining.")
                           .arg(budget_.indexedItemCount)
@@ -947,7 +951,7 @@ VectorPersistenceResult LocalVectorPersistenceIndex::acceptIsolatedEmbeddingResu
         return finalize(result);
     }
 
-    result.budget.requestedItemCount = itemSummaries.size();
+    result.budget.requestedItemCount = toInt(itemSummaries.size());
     for (const auto& summary : itemSummaries) {
         if (itemSummaries_.size() >= budget_.maxIndexedItems) {
             ++result.budget.rejectedItemCount;
@@ -1068,7 +1072,7 @@ SemanticSearchReadiness semanticSearchReadiness(const VectorPersistencePolicy& p
 SemanticSearchReadiness LocalVectorPersistenceIndex::semanticSearchReadiness(
     const QString& query, const EmbeddingGenerationResult& queryEmbedding,
     const SemanticSearchPolicy& policy, const SemanticSearchSession& session) const {
-    return sentinel::core::semanticSearchReadiness(policy_, itemSummaries_.size(), query,
+    return sentinel::core::semanticSearchReadiness(policy_, toInt(itemSummaries_.size()), query,
                                                    queryEmbedding, policy, session);
 }
 
@@ -1142,13 +1146,13 @@ SemanticSearchResult LocalVectorPersistenceIndex::searchLocalSemanticCandidates(
                          return left.tieBreakKey < right.tieBreakKey;
                      });
 
-    result.budget.evaluatedItemCount = itemSummaries_.size();
+    result.budget.evaluatedItemCount = toInt(itemSummaries_.size());
     for (int i = 0; i < candidates.size() && i < result.budget.maxCandidates; ++i) {
         auto candidate = candidates.at(i);
         candidate.rank = i + 1;
         result.candidates.append(candidate);
     }
-    result.budget.returnedCandidateCount = result.candidates.size();
+    result.budget.returnedCandidateCount = toInt(result.candidates.size());
     result.budget.summary =
         QStringLiteral("%1 bounded semantic candidates returned from %2 local vector persistence "
                        "entries within %3 ms budget.")
@@ -1184,9 +1188,9 @@ SemanticSearchArbitrationSummary
 semanticSearchArbitrationSummary(const SemanticSearchResult& searchResult,
                                  const SemanticCandidateArbitration& deterministicArbitration) {
     auto summary = searchResult.arbitration;
-    summary.deterministicCandidateCount = deterministicArbitration.selectedCandidates.size();
-    summary.semanticCandidateCount = searchResult.candidates.size();
-    summary.exposedCandidateCount = searchResult.candidates.size();
+    summary.deterministicCandidateCount = toInt(deterministicArbitration.selectedCandidates.size());
+    summary.semanticCandidateCount = toInt(searchResult.candidates.size());
+    summary.exposedCandidateCount = toInt(searchResult.candidates.size());
     summary.deterministicAuthoritative = true;
     summary.semanticPromptAuthority = false;
     summary.summary =
@@ -1213,8 +1217,9 @@ hybridRetrievalBridge(const RetrievalPlanningResult& deterministicPlanning,
     HybridRetrievalBridgeResult result;
     result.policy = policy;
     result.budget.maxMergedCandidates = std::max(0, policy.maxMergedCandidates);
-    result.budget.deterministicCandidateCount = deterministicPlanning.selectedCandidates.size();
-    result.budget.semanticCandidateCount = semanticSearchResult.candidates.size();
+    result.budget.deterministicCandidateCount =
+        toInt(deterministicPlanning.selectedCandidates.size());
+    result.budget.semanticCandidateCount = toInt(semanticSearchResult.candidates.size());
     result.budget.timeoutMs = std::max(0, policy.timeoutMs);
     result.budget.elapsedMs = semanticSearchResult.budget.elapsedMs;
     result.sourceSummary.deterministicCandidateCount = result.budget.deterministicCandidateCount;
@@ -1301,7 +1306,7 @@ hybridRetrievalBridge(const RetrievalPlanningResult& deterministicPlanning,
             QStringLiteral("Selected by deterministic retrieval planning."),
         });
     }
-    result.sourceSummary.deterministicSelectedCount = result.candidates.size();
+    result.sourceSummary.deterministicSelectedCount = toInt(result.candidates.size());
 
     const bool semanticUsable = semanticSearchResult.status == SemanticSearchStatus::Ready;
     if (semanticUsable) {
@@ -1323,7 +1328,7 @@ hybridRetrievalBridge(const RetrievalPlanningResult& deterministicPlanning,
         }
     }
 
-    result.budget.mergedCandidateCount = result.candidates.size();
+    result.budget.mergedCandidateCount = toInt(result.candidates.size());
     result.sourceSummary.semanticFilledCount = result.budget.semanticFillCount;
     result.status = result.budget.semanticFillCount > 0
                         ? HybridRetrievalBridgeStatus::Ready
@@ -1376,8 +1381,9 @@ SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deter
     result.budget.maxAcceptedSupplements = std::max(0, policy.maxAcceptedSupplements);
     result.budget.maxSupplementCharacters = std::max(0, policy.maxSupplementCharacters);
     result.budget.maxTotalRetrievalSupplements = std::max(0, policy.maxTotalRetrievalSupplements);
-    result.budget.deterministicCandidateCount = deterministicPlanning.selectedCandidates.size();
-    result.budget.semanticCandidateCount = semanticSearchResult.candidates.size();
+    result.budget.deterministicCandidateCount =
+        toInt(deterministicPlanning.selectedCandidates.size());
+    result.budget.semanticCandidateCount = toInt(semanticSearchResult.candidates.size());
     result.budget.bridgeSemanticFillCount = bridgeResult.budget.semanticFillCount;
     result.budget.timeoutMs = std::max(0, policy.timeoutMs);
     result.budget.elapsedMs =
@@ -1386,7 +1392,7 @@ SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deter
         0, result.budget.maxTotalRetrievalSupplements - result.budget.deterministicCandidateCount);
     result.sourceSummary.deterministicCandidateCount = result.budget.deterministicCandidateCount;
     result.sourceSummary.semanticCandidateCount = result.budget.semanticCandidateCount;
-    result.sourceSummary.bridgeCandidateCount = bridgeResult.candidates.size();
+    result.sourceSummary.bridgeCandidateCount = toInt(bridgeResult.candidates.size());
     result.sourceSummary.bridgeSemanticFillCount = result.budget.bridgeSemanticFillCount;
     result.readiness.checks = {
         QStringLiteral("Deterministic retrieval authoritative: %1")
@@ -1505,7 +1511,7 @@ SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deter
         if (!candidate.semanticAdvisory || result.acceptedCandidates.size() >= supplementLimit) {
             continue;
         }
-        const int estimatedCharacters = candidate.summary.size();
+        const int estimatedCharacters = toInt(candidate.summary.size());
         if (result.budget.acceptedSupplementCharacters + estimatedCharacters >
             result.budget.maxSupplementCharacters) {
             break;
@@ -1527,7 +1533,7 @@ SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deter
         result.budget.acceptedSupplementCharacters += estimatedCharacters;
     }
 
-    result.budget.acceptedSupplementCount = result.acceptedCandidates.size();
+    result.budget.acceptedSupplementCount = toInt(result.acceptedCandidates.size());
     result.sourceSummary.acceptedSupplementCount = result.budget.acceptedSupplementCount;
     result.accepted = result.budget.acceptedSupplementCount > 0;
     if (!result.accepted) {
@@ -1583,7 +1589,7 @@ assembleSemanticSupplements(const SemanticAcceptanceResult& acceptanceResult,
     result.policy = policy;
     result.budget.maxSupplementBlocks = std::max(0, policy.maxSupplementBlocks);
     result.budget.maxCharacters = std::max(0, policy.maxCharacters);
-    result.budget.acceptedCandidateCount = acceptanceResult.acceptedCandidates.size();
+    result.budget.acceptedCandidateCount = toInt(acceptanceResult.acceptedCandidates.size());
     result.budget.timeoutMs = std::max(0, policy.timeoutMs);
     result.budget.elapsedMs = acceptanceResult.budget.elapsedMs;
 
@@ -1741,7 +1747,7 @@ assembleSemanticSupplements(const SemanticAcceptanceResult& acceptanceResult,
             break;
         }
         const auto normalizedSummary = candidate.summary.simplified();
-        const int estimatedCharacters = normalizedSummary.size();
+        const int estimatedCharacters = toInt(normalizedSummary.size());
         const int includedCharacters = std::min(estimatedCharacters, remainingCharacters);
         const bool truncated = includedCharacters < estimatedCharacters;
         result.bundle.blocks.append(SemanticSupplementBlock{
@@ -1765,7 +1771,7 @@ assembleSemanticSupplements(const SemanticAcceptanceResult& acceptanceResult,
         ++rank;
     }
 
-    result.bundle.blockCount = result.bundle.blocks.size();
+    result.bundle.blockCount = toInt(result.bundle.blocks.size());
     result.bundle.estimatedCharacters = result.budget.estimatedCharacters;
     result.bundle.includedCharacters = result.budget.includedCharacters;
     result.bundle.truncatedBlockCount = result.budget.truncatedBlockCount;
@@ -2258,7 +2264,7 @@ includeSemanticPromptSupplements(const PromptContextInjectionResult& determinist
             continue;
         }
 
-        const int estimatedCharacters = sanitizedSummary.size();
+        const int estimatedCharacters = toInt(sanitizedSummary.size());
         const int includedCharacters = std::min(estimatedCharacters, remainingCharacters);
         const auto includedSummary = sanitizedSummary.left(includedCharacters).trimmed();
         if (includedSummary.isEmpty()) {
@@ -2267,12 +2273,12 @@ includeSemanticPromptSupplements(const PromptContextInjectionResult& determinist
 
         const bool truncated = includedCharacters < estimatedCharacters || block.truncated;
         result.budget.estimatedCharacters += estimatedCharacters;
-        result.budget.includedCharacters += includedSummary.size();
+        result.budget.includedCharacters += toInt(includedSummary.size());
         result.budget.includedSupplementBlocks += 1;
         if (truncated) {
             ++result.budget.truncatedBlockCount;
         }
-        remainingCharacters -= includedSummary.size();
+        remainingCharacters -= toInt(includedSummary.size());
         blockTexts.append(QStringLiteral("--- Semantic Supplement %1: %2 ---\n%3")
                               .arg(rank)
                               .arg(block.title.trimmed().isEmpty()
@@ -2410,7 +2416,7 @@ orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,
                       : item.id.trimmed();
         item.title = item.title.simplified();
         item.content = item.content.trimmed();
-        item.originalSize = item.content.size();
+        item.originalSize = toInt(item.content.size());
         item.selectedSize = 0;
         item.selected = false;
         item.truncated = false;
@@ -2474,7 +2480,7 @@ orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,
             item.truncated = true;
         }
 
-        item.selectedSize = item.content.size();
+        item.selectedSize = toInt(item.content.size());
         if (item.selectedSize <= 0) {
             item.selection = SemanticCandidateSelection::Excluded;
             item.exclusionReason = QStringLiteral("Semantic candidate budget exhausted");
@@ -2597,9 +2603,9 @@ HybridRetrievalReadiness hybridRetrievalReadiness(const HybridRetrievalPolicy& p
     HybridRetrievalReadiness readiness;
     readiness.policy = policy;
     readiness.candidateStatus = arbitration.status;
-    readiness.deterministicCandidateCount = arbitration.selectedCandidates.size();
+    readiness.deterministicCandidateCount = toInt(arbitration.selectedCandidates.size());
     readiness.semanticCandidateCount = 0;
-    readiness.selectedCandidateCount = arbitration.selectedCandidates.size();
+    readiness.selectedCandidateCount = toInt(arbitration.selectedCandidates.size());
     readiness.status = policy.semanticPathEnabled ? HybridRetrievalStatus::ReadyMetadataOnly
                                                   : HybridRetrievalStatus::SemanticDisabled;
     if (policy.deterministicRetrievalAuthoritative && !policy.semanticPathEnabled) {
@@ -2630,9 +2636,10 @@ simulateSemanticArbitration(const SemanticCandidateArbitration& arbitration,
                             const SemanticArbitrationPolicy& policy) {
     SemanticArbitrationResult result;
     result.policy = policy;
-    result.budget.deterministicSelectedCandidateCount = arbitration.selectedCandidates.size();
+    result.budget.deterministicSelectedCandidateCount =
+        toInt(arbitration.selectedCandidates.size());
     result.budget.semanticSelectedCandidateCount = 0;
-    result.budget.evaluatedCandidateCount = arbitration.selectedCandidates.size();
+    result.budget.evaluatedCandidateCount = toInt(arbitration.selectedCandidates.size());
     result.budget.estimatedCharacters = arbitration.budget.estimatedCharacters;
     result.budget.selectedCharacters = arbitration.budget.includedCharacters;
 
@@ -2712,7 +2719,7 @@ simulateSemanticArbitration(const SemanticCandidateArbitration& arbitration,
     }
 
     result.status = SemanticArbitrationStatus::Simulated;
-    result.budget.rankedCandidateCount = result.candidateScores.size();
+    result.budget.rankedCandidateCount = toInt(result.candidateScores.size());
     result.budget.summary =
         QStringLiteral("%1 deterministic candidates evaluated; %2 simulated rankings retained; "
                        "%3 chars selected by deterministic retrieval; 0 semantic candidates "
@@ -2895,15 +2902,15 @@ EmbeddingGenerationResult generateIsolatedEmbeddings(
         if (bounded.text.size() > maxCharacters) {
             bounded.text = bounded.text.left(maxCharacters).trimmed();
         }
-        result.session.boundedCharacterCount += bounded.text.size();
+        result.session.boundedCharacterCount += toInt(bounded.text.size());
         boundedDocuments.append(bounded);
     }
-    result.session.boundedDocumentCount = boundedDocuments.size();
+    result.session.boundedDocumentCount = toInt(boundedDocuments.size());
 
     const auto embeddingResult =
         provider.embed(EmbeddingRequest{boundedDocuments, provider.policy()});
     result.generatedDocumentCount = embeddingResult.documentCount;
-    result.generatedVectorCount = embeddingResult.vectors.size();
+    result.generatedVectorCount = toInt(embeddingResult.vectors.size());
     if (embeddingResult.status != EmbeddingProviderStatus::Ready ||
         result.generatedDocumentCount != boundedDocuments.size()) {
         result.status = EmbeddingRuntimeStatus::Failed;

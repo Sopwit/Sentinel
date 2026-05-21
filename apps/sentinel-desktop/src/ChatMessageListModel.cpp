@@ -5,7 +5,7 @@ namespace sentinel::desktop {
 ChatMessageListModel::ChatMessageListModel(QObject* parent) : QAbstractListModel(parent) {}
 
 int ChatMessageListModel::rowCount(const QModelIndex& parent) const {
-    return parent.isValid() ? 0 : messages_.size();
+    return parent.isValid() ? 0 : static_cast<int>(messages_.size());
 }
 
 QVariant ChatMessageListModel::data(const QModelIndex& index, int role) const {

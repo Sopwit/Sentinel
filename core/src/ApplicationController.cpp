@@ -30,6 +30,10 @@ namespace sentinel::core {
 
 namespace {
 
+int toInt(qsizetype value) {
+    return static_cast<int>(value);
+}
+
 AgentActivityStatus planActivityStatus(ToolInvocationPlanStatus status) {
     return status == ToolInvocationPlanStatus::Planned ? AgentActivityStatus::Completed
                                                        : AgentActivityStatus::Blocked;
@@ -2536,11 +2540,11 @@ QString ApplicationController::semanticCandidateArbitrationSummary() const {
 }
 
 int ApplicationController::semanticCandidateCount() const {
-    return semanticCandidateArbitration().candidates.size();
+    return toInt(semanticCandidateArbitration().candidates.size());
 }
 
 int ApplicationController::semanticCandidateSelectedCount() const {
-    return semanticCandidateArbitration().selectedCandidates.size();
+    return toInt(semanticCandidateArbitration().selectedCandidates.size());
 }
 
 int ApplicationController::semanticCandidateExcludedCount() const {
@@ -2795,7 +2799,7 @@ QString ApplicationController::semanticSearchRuntimeState() const {
 }
 
 int ApplicationController::semanticSearchCandidateCount() const {
-    return semanticSearchResult().candidates.size();
+    return toInt(semanticSearchResult().candidates.size());
 }
 
 QString ApplicationController::semanticSearchArbitrationSummary() const {
@@ -2892,7 +2896,7 @@ QString ApplicationController::semanticAcceptanceFallbackSummary() const {
 }
 
 int ApplicationController::semanticAcceptanceAcceptedCount() const {
-    return semanticAcceptanceResult().acceptedCandidates.size();
+    return toInt(semanticAcceptanceResult().acceptedCandidates.size());
 }
 
 int ApplicationController::semanticAcceptanceBudgetCharacters() const {
@@ -3041,7 +3045,7 @@ QString ApplicationController::hybridBridgeFallbackSummary() const {
 }
 
 int ApplicationController::hybridBridgeCandidateCount() const {
-    return hybridRetrievalBridgeResult().candidates.size();
+    return toInt(hybridRetrievalBridgeResult().candidates.size());
 }
 
 int ApplicationController::hybridBridgeSemanticFillCount() const {
@@ -3308,7 +3312,7 @@ QString ApplicationController::conversationStoreStatus() const {
 }
 
 int ApplicationController::conversationStoreConversationCount() const {
-    return conversationStore_ ? conversationStore_->listConversations().size() : 0;
+    return conversationStore_ ? toInt(conversationStore_->listConversations().size()) : 0;
 }
 
 QString ApplicationController::activeConversationSummary() const {
@@ -3810,7 +3814,7 @@ int ApplicationController::memoryCandidateCountForState(MemoryReviewState state)
 }
 
 int ApplicationController::memoryCandidateCount() const {
-    return memoryCandidates().size();
+    return toInt(memoryCandidates().size());
 }
 
 int ApplicationController::pendingMemoryCandidateCount() const {
@@ -4036,11 +4040,11 @@ ApplicationController::contextAssemblySource(ContextAssemblySourceKind kind) con
     case ContextAssemblySourceKind::Conversation: {
         int estimatedSize = 0;
         for (const auto& message : chatSession_->messages()) {
-            estimatedSize += message.content.simplified().size();
+            estimatedSize += toInt(message.content.simplified().size());
         }
         return makeContextAssemblySource(kind, contextAssemblyPolicy_.includeConversationContext,
                                          !chatSession_->messages().isEmpty(),
-                                         chatSession_->messages().size(), estimatedSize,
+                                         toInt(chatSession_->messages().size()), estimatedSize,
                                          QStringLiteral("%1 active transcript messages available.")
                                              .arg(chatSession_->messages().size()));
     }
@@ -4048,7 +4052,7 @@ ApplicationController::contextAssemblySource(ContextAssemblySourceKind kind) con
         const auto summary = conversationSummaryResult();
         return makeContextAssemblySource(
             kind, contextAssemblyPolicy_.includeConversationContext, !summary.blocks.isEmpty(),
-            summary.blocks.size(), summary.budget.includedCharacters,
+            toInt(summary.blocks.size()), summary.budget.includedCharacters,
             QStringLiteral("%1 deterministic local summary blocks available.")
                 .arg(summary.blocks.size()));
     }
@@ -4056,25 +4060,27 @@ ApplicationController::contextAssemblySource(ContextAssemblySourceKind kind) con
         const auto entries = currentMemoryEntries();
         int estimatedSize = 0;
         for (const auto& entry : entries) {
-            estimatedSize += entry.first.simplified().size() + entry.second.simplified().size();
+            estimatedSize +=
+                toInt(entry.first.simplified().size() + entry.second.simplified().size());
         }
         return makeContextAssemblySource(
             kind, contextAssemblyPolicy_.includeCommittedMemoryContext, !entries.isEmpty(),
-            entries.size(), estimatedSize,
+            toInt(entries.size()), estimatedSize,
             QStringLiteral("%1 committed key-value memory entries available.").arg(entries.size()));
     }
     case ContextAssemblySourceKind::RuntimeMetadata: {
         const auto runtimeSummary = conversationRuntimeSummary();
         return makeContextAssemblySource(
             kind, contextAssemblyPolicy_.includeRuntimeMetadataContext,
-            !runtimeSummary.trimmed().isEmpty(), 1, runtimeSummary.simplified().size(),
+            !runtimeSummary.trimmed().isEmpty(), 1, toInt(runtimeSummary.simplified().size()),
             QStringLiteral("Conversation runtime metadata is available."));
     }
     case ContextAssemblySourceKind::Orchestration: {
         const auto orchestrationSummary = orchestrationSnapshotSummary();
         return makeContextAssemblySource(
             kind, contextAssemblyPolicy_.includeOrchestrationContext,
-            !orchestrationSummary.trimmed().isEmpty(), 1, orchestrationSummary.simplified().size(),
+            !orchestrationSummary.trimmed().isEmpty(), 1,
+            toInt(orchestrationSummary.simplified().size()),
             QStringLiteral("Orchestration snapshot metadata is available."));
     }
     }
@@ -4412,7 +4418,7 @@ QStringList ApplicationController::contextAssemblyReadinessChecks() const {
 }
 
 int ApplicationController::memoryEntryCount() const {
-    return currentMemoryEntries().size();
+    return toInt(currentMemoryEntries().size());
 }
 
 bool ApplicationController::memoryKeyExists(const QString& key) const {
@@ -4485,7 +4491,8 @@ bool ApplicationController::searchConversation(const QString& query) {
     const auto trimmed = query.trimmed();
     latestConversationSearchSummary_ = ConversationSearchSummary{};
     latestConversationSearchSummary_.query.text = trimmed;
-    latestConversationSearchSummary_.transcriptMessageCount = chatSession_->messages().size();
+    latestConversationSearchSummary_.transcriptMessageCount =
+        toInt(chatSession_->messages().size());
 
     if (trimmed.isEmpty()) {
         latestConversationSearchSummary_.summary =
@@ -4516,7 +4523,8 @@ bool ApplicationController::searchConversation(const QString& query) {
     }
 
     latestConversationSearchSummary_.status = ConversationSearchStatus::Completed;
-    latestConversationSearchSummary_.resultCount = latestConversationSearchSummary_.results.size();
+    latestConversationSearchSummary_.resultCount =
+        toInt(latestConversationSearchSummary_.results.size());
     latestConversationSearchSummary_.summary =
         latestConversationSearchSummary_.resultCount == 0
             ? QStringLiteral("No in-memory transcript matches for \"%1\".").arg(trimmed)
@@ -4624,7 +4632,7 @@ bool ApplicationController::exportTranscript(const QString& format) {
     latestConversationExportResult_.status = QStringLiteral("Succeeded");
     latestConversationExportResult_.outputPath = outputPath;
     latestConversationExportResult_.outputFileName = QFileInfo(outputPath).fileName();
-    latestConversationExportResult_.messageCount = messages.size();
+    latestConversationExportResult_.messageCount = toInt(messages.size());
     latestConversationExportResult_.exportedAtUtc = exportedAt;
     latestConversationExportResult_.summary =
         QStringLiteral("%1 transcript export saved %2 messages to %3.")
@@ -5750,7 +5758,8 @@ void ApplicationController::refreshConversationHistorySummary() {
 
 void ApplicationController::resetConversationSearchSummary() {
     latestConversationSearchSummary_ = ConversationSearchSummary{};
-    latestConversationSearchSummary_.transcriptMessageCount = chatSession_->messages().size();
+    latestConversationSearchSummary_.transcriptMessageCount =
+        toInt(chatSession_->messages().size());
 }
 
 void ApplicationController::setConversationExportDirectory(const QString& directoryPath) {
@@ -5966,12 +5975,12 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
 }
 
 QString ApplicationController::effectiveLocalModel(const QString& requestedModel) const {
-    const auto explicitModel = requestedModel.trimmed();
+    auto explicitModel = requestedModel.trimmed();
     if (!explicitModel.isEmpty()) {
         return explicitModel;
     }
 
-    const auto selectedModel = selectedLocalModel_.trimmed();
+    auto selectedModel = selectedLocalModel_.trimmed();
     if (!selectedModel.isEmpty()) {
         return selectedModel;
     }
@@ -6089,7 +6098,7 @@ bool ApplicationController::clearChat() {
     }
     conversationHistorySummary_.lastRestoredStatus =
         QStringLiteral("Current transcript reset after clear.");
-    latestConversationClearResult_.remainingMessageCount = chatSession_->messages().size();
+    latestConversationClearResult_.remainingMessageCount = toInt(chatSession_->messages().size());
     resetConversationRuntimeState();
     conversationStateGraph_.reset();
     refreshConversationHistorySummary();

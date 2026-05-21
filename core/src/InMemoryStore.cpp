@@ -3,7 +3,7 @@
 namespace sentinel::core {
 
 void InMemoryStore::put(QString key, QString value) {
-    entries_.insert(std::move(key), std::move(value));
+    entries_.insert(key, value);
 }
 
 QString InMemoryStore::get(const QString& key) const {
