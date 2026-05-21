@@ -141,6 +141,22 @@ void AppSettings::setPromptContextInjectionEnabled(bool enabled) {
     emit promptContextInjectionEnabledChanged();
 }
 
+bool AppSettings::semanticPromptInclusionEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(semanticPromptInclusionEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setSemanticPromptInclusionEnabled(bool enabled) {
+    if (enabled == semanticPromptInclusionEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(semanticPromptInclusionEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit semanticPromptInclusionEnabledChanged();
+}
+
 QString AppSettings::piperBinaryPath() const {
     return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
                   : QString();

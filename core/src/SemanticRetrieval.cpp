@@ -22,6 +22,29 @@ QByteArray stableDigest(const QString& value) {
     return QCryptographicHash::hash(value.toUtf8(), QCryptographicHash::Sha256);
 }
 
+QString sanitizedSemanticPromptText(const QString& text) {
+    QStringList retained;
+    const auto parts = text.simplified().split(QLatin1Char(';'), Qt::SkipEmptyParts);
+    for (const auto& part : parts) {
+        const auto normalized = part.trimmed();
+        const auto lowered = normalized.toLower();
+        if (lowered.contains(QStringLiteral("vector:")) ||
+            lowered.contains(QStringLiteral("vector=")) ||
+            lowered.contains(QStringLiteral("embedding:")) ||
+            lowered.contains(QStringLiteral("embedding=")) ||
+            lowered.contains(QStringLiteral("score:")) ||
+            lowered.contains(QStringLiteral("score=")) ||
+            lowered.contains(QStringLiteral("provider handle")) ||
+            lowered.contains(QStringLiteral("filesystem path")) ||
+            lowered.contains(QStringLiteral("debug payload")) ||
+            lowered.contains(QStringLiteral("debug dump"))) {
+            continue;
+        }
+        retained.append(normalized);
+    }
+    return retained.join(QStringLiteral("; ")).trimmed();
+}
+
 } // namespace
 
 QString embeddingProviderStatusName(EmbeddingProviderStatus status) {
@@ -407,6 +430,67 @@ QString semanticSupplementAssemblyStatusName(SemanticSupplementAssemblyStatus st
     case SemanticSupplementAssemblyStatus::Busy:
         return QStringLiteral("Busy");
     case SemanticSupplementAssemblyStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString semanticPromptAuthorityStatusName(SemanticPromptAuthorityStatus status) {
+    switch (status) {
+    case SemanticPromptAuthorityStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticPromptAuthorityStatus::Denied:
+        return QStringLiteral("Denied");
+    case SemanticPromptAuthorityStatus::WouldIncludeMetadataOnly:
+        return QStringLiteral("Would Include Metadata Only");
+    case SemanticPromptAuthorityStatus::SafetyBlocked:
+        return QStringLiteral("Safety Blocked");
+    case SemanticPromptAuthorityStatus::TimedOut:
+        return QStringLiteral("Timed Out");
+    case SemanticPromptAuthorityStatus::Stale:
+        return QStringLiteral("Stale");
+    case SemanticPromptAuthorityStatus::Busy:
+        return QStringLiteral("Busy");
+    case SemanticPromptAuthorityStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
+QString semanticPromptAuthorityDecisionName(SemanticPromptAuthorityDecision decision) {
+    switch (decision) {
+    case SemanticPromptAuthorityDecision::Denied:
+        return QStringLiteral("Denied");
+    case SemanticPromptAuthorityDecision::WouldIncludeMetadataOnly:
+        return QStringLiteral("Would Include Metadata Only");
+    }
+
+    return QStringLiteral("Denied");
+}
+
+QString semanticPromptInclusionStatusName(SemanticPromptInclusionStatus status) {
+    switch (status) {
+    case SemanticPromptInclusionStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticPromptInclusionStatus::Denied:
+        return QStringLiteral("Denied");
+    case SemanticPromptInclusionStatus::Included:
+        return QStringLiteral("Included");
+    case SemanticPromptInclusionStatus::Truncated:
+        return QStringLiteral("Truncated");
+    case SemanticPromptInclusionStatus::SafetyBlocked:
+        return QStringLiteral("Safety Blocked");
+    case SemanticPromptInclusionStatus::Empty:
+        return QStringLiteral("Empty");
+    case SemanticPromptInclusionStatus::TimedOut:
+        return QStringLiteral("Timed Out");
+    case SemanticPromptInclusionStatus::Stale:
+        return QStringLiteral("Stale");
+    case SemanticPromptInclusionStatus::Busy:
+        return QStringLiteral("Busy");
+    case SemanticPromptInclusionStatus::Refused:
         return QStringLiteral("Refused");
     }
 
@@ -1724,6 +1808,545 @@ assembleSemanticSupplements(const SemanticAcceptanceResult& acceptanceResult,
     result.fallbackSummary =
         QStringLiteral("Deterministic prompt context remains authoritative; semantic supplements "
                        "are separate metadata only.");
+    return result;
+}
+
+SemanticPromptAuthorityResult
+evaluateSemanticPromptAuthority(const SemanticSupplementAssemblyResult& assemblyResult,
+                                const SemanticPromptAuthorityPolicy& policy) {
+    SemanticPromptAuthorityResult result;
+    result.policy = policy;
+    result.wouldIncludeBlockCount = assemblyResult.bundle.blockCount;
+    result.wouldIncludeCharacters = assemblyResult.bundle.includedCharacters;
+
+    result.safety.deterministicRetrievalAuthoritative =
+        policy.deterministicRetrievalAuthoritative &&
+        assemblyResult.safety.deterministicRetrievalAuthoritative;
+    result.safety.semanticSearchLocalOnly = policy.semanticSearchLocalOnly;
+    result.safety.acceptedByDeterministicLayer =
+        !assemblyResult.bundle.blocks.isEmpty() &&
+        assemblyResult.status != SemanticSupplementAssemblyStatus::Disabled &&
+        assemblyResult.status != SemanticSupplementAssemblyStatus::Refused;
+    result.safety.boundedSupplementBundle =
+        !assemblyResult.bundle.blocks.isEmpty() &&
+        assemblyResult.bundle.blockCount <= assemblyResult.budget.maxSupplementBlocks &&
+        assemblyResult.bundle.includedCharacters <= assemblyResult.budget.maxCharacters;
+    result.safety.promptInjectionExplicitlyEnabled = policy.promptInjectionExplicitlyEnabled;
+    result.safety.policyExplicitlyAllows = policy.semanticPromptAuthorityAllowed;
+    result.safety.livePromptMutationBlocked = !policy.includeInLivePrompt;
+    result.safety.semanticAuthorityEscalationBlocked =
+        policy.semanticSupplementsOnly && assemblyResult.safety.nonAuthoritative;
+    result.safety.supplementsRemainSupplemental =
+        policy.semanticSupplementsOnly && assemblyResult.safety.nonAuthoritative;
+    result.safety.clearlyDelimitedSupplements = policy.clearlyDelimitedSupplements;
+    result.safety.rawPromptPayloadsBlocked = !policy.exposeRawPromptPayloads;
+    result.safety.rawSupplementBlocksBlocked = !policy.exposeRawSupplementBlocks;
+    result.safety.rawVectorsBlocked = !policy.exposeRawVectors;
+    result.safety.scoresBlocked = !policy.exposeScores;
+    result.safety.filesystemPathsBlocked = !policy.exposeFilesystemPaths;
+    result.safety.providerHandlesBlocked = !policy.exposeProviderHandles;
+    result.safety.debugDumpsBlocked = !policy.exposeDebugDumps;
+    result.safety.safe =
+        result.safety.deterministicRetrievalAuthoritative &&
+        result.safety.semanticSearchLocalOnly && result.safety.acceptedByDeterministicLayer &&
+        result.safety.boundedSupplementBundle &&
+        (!policy.requireSafetyReportPass || assemblyResult.safety.safe) &&
+        result.safety.promptInjectionExplicitlyEnabled && result.safety.policyExplicitlyAllows &&
+        result.safety.livePromptMutationBlocked &&
+        result.safety.semanticAuthorityEscalationBlocked &&
+        result.safety.supplementsRemainSupplemental && result.safety.clearlyDelimitedSupplements &&
+        result.safety.rawPromptPayloadsBlocked && result.safety.rawSupplementBlocksBlocked &&
+        result.safety.rawVectorsBlocked && result.safety.scoresBlocked &&
+        result.safety.filesystemPathsBlocked && result.safety.providerHandlesBlocked &&
+        result.safety.debugDumpsBlocked;
+    result.safety.summary =
+        result.safety.safe
+            ? QStringLiteral(
+                  "Semantic prompt authority safety passes for test-only metadata; live prompt "
+                  "mutation remains blocked.")
+            : QStringLiteral(
+                  "Semantic prompt authority safety did not pass; deterministic-only fallback is "
+                  "active.");
+    result.safety.checks = {
+        QStringLiteral("Deterministic retrieval authoritative: %1")
+            .arg(result.safety.deterministicRetrievalAuthoritative ? QStringLiteral("yes")
+                                                                   : QStringLiteral("no")),
+        QStringLiteral("Semantic search local-only: %1")
+            .arg(result.safety.semanticSearchLocalOnly ? QStringLiteral("yes")
+                                                       : QStringLiteral("no")),
+        QStringLiteral("Accepted by deterministic acceptance layer: %1")
+            .arg(result.safety.acceptedByDeterministicLayer ? QStringLiteral("yes")
+                                                            : QStringLiteral("no")),
+        QStringLiteral("Supplement bundle bounded: %1")
+            .arg(result.safety.boundedSupplementBundle ? QStringLiteral("yes")
+                                                       : QStringLiteral("no")),
+        QStringLiteral("Prompt injection setting explicitly enabled: %1")
+            .arg(result.safety.promptInjectionExplicitlyEnabled ? QStringLiteral("yes")
+                                                                : QStringLiteral("no")),
+        QStringLiteral("Semantic prompt authority policy allows inclusion: %1")
+            .arg(result.safety.policyExplicitlyAllows ? QStringLiteral("yes")
+                                                      : QStringLiteral("no")),
+        QStringLiteral("Assembly safety report passes: %1")
+            .arg(assemblyResult.safety.safe ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Live prompt mutation: blocked"),
+        QStringLiteral("Semantic supplements remain supplemental: %1")
+            .arg(result.safety.supplementsRemainSupplemental ? QStringLiteral("yes")
+                                                             : QStringLiteral("no")),
+        QStringLiteral("Semantic authority escalation: blocked"),
+        QStringLiteral("Raw prompt payloads exposed: no"),
+        QStringLiteral("Raw supplement blocks exposed: no"),
+        QStringLiteral("Raw vectors exposed: no"),
+        QStringLiteral("Raw scores exposed: no"),
+        QStringLiteral("Filesystem paths exposed: no"),
+        QStringLiteral("Provider handles exposed: no"),
+        QStringLiteral("Debug dumps exposed: no"),
+        QStringLiteral("PromptContextBlock mutation: no"),
+        QStringLiteral("RetrievalPlanningResult mutation: no"),
+    };
+    result.checks = result.safety.checks;
+    result.readiness.checks = result.checks;
+
+    const auto deny = [&](SemanticPromptAuthorityStatus status, const QString& reason,
+                          const QString& fallbackState) {
+        result.status = status;
+        result.decision = SemanticPromptAuthorityDecision::Denied;
+        result.allowed = false;
+        result.wouldInclude = false;
+        result.livePromptMutationAllowed = false;
+        result.failureReason = reason;
+        result.summary = reason;
+        result.readiness.status = status;
+        result.readiness.ready = false;
+        result.readiness.summary = fallbackState;
+        result.fallback.state = semanticPromptAuthorityStatusName(status);
+        result.fallback.summary = fallbackState;
+        result.fallback.summaries = {
+            fallbackState,
+            QStringLiteral("Deterministic retrieval remains authoritative."),
+            QStringLiteral("Default prompt assembly is unchanged."),
+        };
+        result.audit.decisionSummary =
+            QStringLiteral("%1 / %2").arg(semanticPromptAuthorityDecisionName(result.decision),
+                                          semanticPromptAuthorityStatusName(status));
+        result.audit.denialReason = reason;
+        result.audit.readinessSummary = result.readiness.summary;
+        result.audit.safetySummary = result.safety.summary;
+        result.audit.fallbackSummary = result.fallback.summary;
+        result.audit.reasons = result.fallback.summaries;
+    };
+
+    if (!policy.enabled) {
+        deny(SemanticPromptAuthorityStatus::Disabled,
+             QStringLiteral("Semantic prompt authority policy is disabled."),
+             QStringLiteral("Disabled fallback active; deterministic prompt assembly remains "
+                            "unchanged."));
+        return result;
+    }
+    if (assemblyResult.status == SemanticSupplementAssemblyStatus::Busy) {
+        deny(SemanticPromptAuthorityStatus::Busy,
+             QStringLiteral("Semantic prompt authority skipped because supplement assembly is "
+                            "busy."),
+             QStringLiteral("Busy semantic state ignored; deterministic-only fallback active."));
+        return result;
+    }
+    if (assemblyResult.status == SemanticSupplementAssemblyStatus::Stale) {
+        deny(SemanticPromptAuthorityStatus::Stale,
+             QStringLiteral("Semantic prompt authority ignored stale supplement assembly."),
+             QStringLiteral("Stale semantic state ignored; deterministic-only fallback active."));
+        return result;
+    }
+    if (assemblyResult.status == SemanticSupplementAssemblyStatus::TimedOut ||
+        assemblyResult.budget.elapsedMs > policy.timeoutMs) {
+        deny(SemanticPromptAuthorityStatus::TimedOut,
+             QStringLiteral("Semantic prompt authority timed out."),
+             QStringLiteral(
+                 "Timed-out semantic state ignored; deterministic-only fallback active."));
+        return result;
+    }
+    if (assemblyResult.status == SemanticSupplementAssemblyStatus::Refused) {
+        deny(SemanticPromptAuthorityStatus::Refused,
+             QStringLiteral("Semantic prompt authority refused supplement assembly state."),
+             QStringLiteral("Refused semantic state ignored; deterministic-only fallback active."));
+        return result;
+    }
+    if (!policy.allowTestOnlyWouldIncludeMetadata || policy.includeInLivePrompt ||
+        !policy.promptInjectionExplicitlyEnabled || !policy.semanticPromptAuthorityAllowed ||
+        !policy.deterministicRetrievalAuthoritative || !policy.semanticSupplementsOnly ||
+        !policy.semanticSearchLocalOnly || !policy.clearlyDelimitedSupplements ||
+        policy.exposeRawPromptPayloads || policy.exposeRawSupplementBlocks ||
+        policy.exposeRawVectors || policy.exposeScores || policy.exposeFilesystemPaths ||
+        policy.exposeProviderHandles || policy.exposeDebugDumps) {
+        deny(SemanticPromptAuthorityStatus::Denied,
+             QStringLiteral("Semantic prompt authority denied by policy gate."),
+             QStringLiteral("Policy fallback active; deterministic prompt assembly remains "
+                            "unchanged."));
+        return result;
+    }
+    if (policy.requireAcceptedSupplements &&
+        (assemblyResult.bundle.blocks.isEmpty() ||
+         (assemblyResult.status != SemanticSupplementAssemblyStatus::Ready &&
+          assemblyResult.status != SemanticSupplementAssemblyStatus::Truncated))) {
+        deny(SemanticPromptAuthorityStatus::Denied,
+             QStringLiteral("Semantic prompt authority denied because no accepted bounded "
+                            "supplements are ready."),
+             QStringLiteral("Deterministic-only fallback active; no semantic supplement metadata "
+                            "would be included."));
+        return result;
+    }
+    if (!result.safety.safe) {
+        deny(SemanticPromptAuthorityStatus::SafetyBlocked,
+             QStringLiteral("Semantic prompt authority blocked by safety report."),
+             QStringLiteral("Safety-report fallback active; deterministic prompt assembly remains "
+                            "unchanged."));
+        return result;
+    }
+
+    result.status = SemanticPromptAuthorityStatus::WouldIncludeMetadataOnly;
+    result.decision = SemanticPromptAuthorityDecision::WouldIncludeMetadataOnly;
+    result.allowed = true;
+    result.wouldInclude = true;
+    result.livePromptMutationAllowed = false;
+    result.failureReason.clear();
+    result.readiness.status = result.status;
+    result.readiness.ready = true;
+    result.readiness.summary =
+        QStringLiteral("Semantic prompt authority is ready only for test-only would-include "
+                       "metadata; live prompt inclusion remains blocked.");
+    result.fallback.state = QStringLiteral("Deterministic Only");
+    result.fallback.summary =
+        QStringLiteral("Deterministic fallback remains available and authoritative.");
+    result.fallback.summaries = {
+        result.fallback.summary,
+        QStringLiteral("Semantic supplements remain supplemental and delimited."),
+        QStringLiteral("Default prompt assembly is unchanged."),
+    };
+    result.audit.decisionSummary =
+        QStringLiteral("Would include %1 semantic supplement metadata blocks in a test-only "
+                       "decision; live prompt mutation is blocked.")
+            .arg(result.wouldIncludeBlockCount);
+    result.audit.denialReason.clear();
+    result.audit.readinessSummary = result.readiness.summary;
+    result.audit.safetySummary = result.safety.summary;
+    result.audit.fallbackSummary = result.fallback.summary;
+    result.audit.reasons = result.fallback.summaries;
+    result.summary =
+        QStringLiteral("Semantic prompt authority would include %1 bounded supplemental metadata "
+                       "blocks only in a test-only path; default prompt assembly is unchanged.")
+            .arg(result.wouldIncludeBlockCount);
+    return result;
+}
+
+SemanticPromptInclusionResult
+includeSemanticPromptSupplements(const PromptContextInjectionResult& deterministicPrompt,
+                                 const SemanticSupplementAssemblyResult& assemblyResult,
+                                 const SemanticPromptAuthorityResult& authorityResult,
+                                 const SemanticPromptInclusionPolicy& policy) {
+    SemanticPromptInclusionResult result;
+    result.policy = policy;
+    result.enabled = policy.enabled;
+    result.originalPrompt = deterministicPrompt.prompt;
+    result.prompt = deterministicPrompt.prompt;
+    result.budget.maxSupplementBlocks = std::max(0, policy.maxSupplementBlocks);
+    result.budget.maxCharacters = std::max(0, policy.maxCharacters);
+    result.budget.availableSupplementBlocks = assemblyResult.bundle.blockCount;
+    result.budget.timeoutMs = std::max(0, policy.timeoutMs);
+    result.budget.elapsedMs = assemblyResult.budget.elapsedMs;
+
+    result.safety.contextInjectionEnabled = policy.contextInjectionEnabled;
+    result.safety.authorityApproved = authorityResult.allowed && authorityResult.wouldInclude;
+    result.safety.boundedAssembly =
+        !assemblyResult.bundle.blocks.isEmpty() &&
+        assemblyResult.bundle.blockCount <= assemblyResult.budget.maxSupplementBlocks &&
+        assemblyResult.bundle.includedCharacters <= assemblyResult.budget.maxCharacters;
+    result.safety.localOnlyMode = policy.localOnlyMode;
+    result.safety.deterministicRetrievalAuthoritative =
+        policy.deterministicRetrievalAuthoritative &&
+        authorityResult.safety.deterministicRetrievalAuthoritative &&
+        assemblyResult.safety.deterministicRetrievalAuthoritative;
+    result.safety.supplementalOnly = policy.supplementalOnly &&
+                                     authorityResult.safety.supplementsRemainSupplemental &&
+                                     assemblyResult.safety.nonAuthoritative;
+    result.safety.clearlyDelimited =
+        policy.clearlyDelimitedSupplements && authorityResult.safety.clearlyDelimitedSupplements;
+    result.safety.deterministicContextReplacementBlocked =
+        !policy.deterministicContextReplacementEnabled;
+    result.safety.deterministicContextReorderingBlocked =
+        !policy.deterministicContextReorderingEnabled;
+    result.safety.committedMemoryOverrideBlocked = !policy.committedMemoryOverrideEnabled;
+    result.safety.summariesOverrideBlocked = !policy.summariesOverrideEnabled;
+    result.safety.conversationWindowOverrideBlocked = !policy.conversationWindowOverrideEnabled;
+    result.safety.runtimeMetadataOverrideBlocked = !policy.runtimeMetadataOverrideEnabled;
+    result.safety.rawPromptPayloadsBlocked = !policy.exposeRawPromptPayloads;
+    result.safety.rawVectorsBlocked = !policy.exposeRawVectors;
+    result.safety.scoresBlocked = !policy.exposeScores;
+    result.safety.providerHandlesBlocked = !policy.exposeProviderHandles;
+    result.safety.filesystemPathsBlocked = !policy.exposeFilesystemPaths;
+    result.safety.debugDumpsBlocked = !policy.exposeDebugDumps;
+    result.safety.safe =
+        result.safety.contextInjectionEnabled &&
+        (!policy.requireAuthorityApproval || result.safety.authorityApproved) &&
+        (!policy.requireBoundedAssembly || result.safety.boundedAssembly) &&
+        (!policy.requireSafetyReportPass ||
+         (assemblyResult.safety.safe && authorityResult.safety.safe)) &&
+        result.safety.localOnlyMode && result.safety.deterministicRetrievalAuthoritative &&
+        result.safety.supplementalOnly && result.safety.clearlyDelimited &&
+        result.safety.deterministicContextReplacementBlocked &&
+        result.safety.deterministicContextReorderingBlocked &&
+        result.safety.committedMemoryOverrideBlocked && result.safety.summariesOverrideBlocked &&
+        result.safety.conversationWindowOverrideBlocked &&
+        result.safety.runtimeMetadataOverrideBlocked && result.safety.rawPromptPayloadsBlocked &&
+        result.safety.rawVectorsBlocked && result.safety.scoresBlocked &&
+        result.safety.providerHandlesBlocked && result.safety.filesystemPathsBlocked &&
+        result.safety.debugDumpsBlocked;
+    result.safety.summary =
+        result.safety.safe
+            ? QStringLiteral("Semantic prompt inclusion safety passed for local supplemental "
+                             "context.")
+            : QStringLiteral("Semantic prompt inclusion safety did not pass; deterministic-only "
+                             "fallback is active.");
+    result.safety.checks = {
+        QStringLiteral("Context injection enabled: %1")
+            .arg(result.safety.contextInjectionEnabled ? QStringLiteral("yes")
+                                                       : QStringLiteral("no")),
+        QStringLiteral("Semantic prompt authority approved: %1")
+            .arg(result.safety.authorityApproved ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Semantic supplement assembly bounded: %1")
+            .arg(result.safety.boundedAssembly ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Local-only mode: %1")
+            .arg(result.safety.localOnlyMode ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Deterministic retrieval authoritative: %1")
+            .arg(result.safety.deterministicRetrievalAuthoritative ? QStringLiteral("yes")
+                                                                   : QStringLiteral("no")),
+        QStringLiteral("Semantic supplements supplemental-only: %1")
+            .arg(result.safety.supplementalOnly ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Semantic supplements clearly delimited: %1")
+            .arg(result.safety.clearlyDelimited ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Deterministic context replacement: no"),
+        QStringLiteral("Deterministic context reordering: no"),
+        QStringLiteral("Committed memory override: no"),
+        QStringLiteral("Summary block override: no"),
+        QStringLiteral("Conversation window override: no"),
+        QStringLiteral("Runtime metadata override: no"),
+        QStringLiteral("Raw prompt payloads exposed: no"),
+        QStringLiteral("Raw vectors exposed: no"),
+        QStringLiteral("Raw scores exposed: no"),
+        QStringLiteral("Provider handles exposed: no"),
+        QStringLiteral("Filesystem paths exposed: no"),
+        QStringLiteral("Debug dumps exposed: no"),
+    };
+    result.checks = result.safety.checks;
+
+    const auto fallback = [&](SemanticPromptInclusionStatus status, const QString& reason,
+                              const QString& summary) {
+        result.status = status;
+        result.included = false;
+        result.failureReason = reason;
+        result.summary = reason;
+        result.fallback.deterministicOnly = true;
+        result.fallback.state = semanticPromptInclusionStatusName(status);
+        result.fallback.summary = summary;
+        result.fallback.summaries = {
+            summary,
+            QStringLiteral("Deterministic retrieval remains final prompt authority."),
+            QStringLiteral("Semantic supplements did not replace or reorder deterministic "
+                           "context."),
+        };
+        result.audit.stateSummary = semanticPromptInclusionStatusName(status);
+        result.audit.decisionSummary = reason;
+        result.audit.fallbackSummary = summary;
+        result.audit.budgetSummary = result.budget.summary;
+        result.audit.reasons = result.fallback.summaries;
+        result.semanticBlockSummary = QStringLiteral("No semantic supplemental block included.");
+    };
+
+    result.budget.summary =
+        QStringLiteral("0 of %1 semantic supplement characters included from %2 available "
+                       "blocks.")
+            .arg(result.budget.maxCharacters)
+            .arg(result.budget.availableSupplementBlocks);
+
+    if (!policy.enabled) {
+        fallback(SemanticPromptInclusionStatus::Disabled,
+                 QStringLiteral("Semantic prompt inclusion is disabled."),
+                 QStringLiteral("Disabled fallback active; deterministic-only prompt assembly "
+                                "remains unchanged."));
+        return result;
+    }
+    if (!policy.contextInjectionEnabled ||
+        deterministicPrompt.status == PromptContextInjectionStatus::Disabled) {
+        fallback(SemanticPromptInclusionStatus::Disabled,
+                 QStringLiteral("Semantic prompt inclusion requires context injection to be "
+                                "enabled."),
+                 QStringLiteral("Context-injection fallback active; deterministic-only prompt "
+                                "assembly remains unchanged."));
+        return result;
+    }
+    if (assemblyResult.status == SemanticSupplementAssemblyStatus::Busy ||
+        authorityResult.status == SemanticPromptAuthorityStatus::Busy) {
+        fallback(SemanticPromptInclusionStatus::Busy,
+                 QStringLiteral("Semantic prompt inclusion skipped because semantic state is "
+                                "busy."),
+                 QStringLiteral("Busy semantic state ignored; deterministic-only prompt active."));
+        return result;
+    }
+    if (assemblyResult.status == SemanticSupplementAssemblyStatus::Stale ||
+        authorityResult.status == SemanticPromptAuthorityStatus::Stale) {
+        fallback(SemanticPromptInclusionStatus::Stale,
+                 QStringLiteral("Semantic prompt inclusion ignored stale semantic state."),
+                 QStringLiteral("Stale semantic state ignored; deterministic-only prompt active."));
+        return result;
+    }
+    if (assemblyResult.status == SemanticSupplementAssemblyStatus::TimedOut ||
+        authorityResult.status == SemanticPromptAuthorityStatus::TimedOut ||
+        assemblyResult.budget.elapsedMs > result.budget.timeoutMs) {
+        fallback(
+            SemanticPromptInclusionStatus::TimedOut,
+            QStringLiteral("Semantic prompt inclusion timed out."),
+            QStringLiteral("Timed-out semantic state ignored; deterministic-only prompt active."));
+        return result;
+    }
+    if (assemblyResult.status == SemanticSupplementAssemblyStatus::Refused ||
+        authorityResult.status == SemanticPromptAuthorityStatus::Refused) {
+        fallback(SemanticPromptInclusionStatus::Refused,
+                 QStringLiteral("Semantic prompt inclusion refused semantic state."),
+                 QStringLiteral("Refused semantic state ignored; deterministic-only prompt "
+                                "active."));
+        return result;
+    }
+    if (assemblyResult.bundle.blocks.isEmpty()) {
+        fallback(SemanticPromptInclusionStatus::Empty,
+                 QStringLiteral("Semantic prompt inclusion found no supplement blocks."),
+                 QStringLiteral("Empty semantic supplement fallback; deterministic-only prompt "
+                                "active."));
+        return result;
+    }
+    if (!result.safety.safe || !assemblyResult.safety.safe || !authorityResult.safety.safe) {
+        fallback(SemanticPromptInclusionStatus::SafetyBlocked,
+                 QStringLiteral("Semantic prompt inclusion blocked by safety report."),
+                 QStringLiteral("Safety-report fallback active; deterministic-only prompt "
+                                "assembly remains unchanged."));
+        return result;
+    }
+    if (!authorityResult.allowed || !authorityResult.wouldInclude) {
+        fallback(SemanticPromptInclusionStatus::Denied,
+                 QStringLiteral("Semantic prompt inclusion denied by authority policy."),
+                 QStringLiteral("Authority-policy fallback active; deterministic-only prompt "
+                                "assembly remains unchanged."));
+        return result;
+    }
+
+    auto blocks = assemblyResult.bundle.blocks;
+    std::sort(blocks.begin(), blocks.end(),
+              [](const SemanticSupplementBlock& left, const SemanticSupplementBlock& right) {
+                  if (left.rank != right.rank) {
+                      return left.rank < right.rank;
+                  }
+                  return left.id < right.id;
+              });
+
+    QStringList blockTexts;
+    int remainingCharacters = result.budget.maxCharacters;
+    int rank = 1;
+    for (const auto& block : blocks) {
+        if (result.budget.includedSupplementBlocks >= result.budget.maxSupplementBlocks ||
+            remainingCharacters <= 0) {
+            break;
+        }
+
+        const auto sanitizedSummary = sanitizedSemanticPromptText(block.summary);
+        if (sanitizedSummary.isEmpty()) {
+            continue;
+        }
+
+        const int estimatedCharacters = sanitizedSummary.size();
+        const int includedCharacters = std::min(estimatedCharacters, remainingCharacters);
+        const auto includedSummary = sanitizedSummary.left(includedCharacters).trimmed();
+        if (includedSummary.isEmpty()) {
+            continue;
+        }
+
+        const bool truncated = includedCharacters < estimatedCharacters || block.truncated;
+        result.budget.estimatedCharacters += estimatedCharacters;
+        result.budget.includedCharacters += includedSummary.size();
+        result.budget.includedSupplementBlocks += 1;
+        if (truncated) {
+            ++result.budget.truncatedBlockCount;
+        }
+        remainingCharacters -= includedSummary.size();
+        blockTexts.append(QStringLiteral("--- Semantic Supplement %1: %2 ---\n%3")
+                              .arg(rank)
+                              .arg(block.title.trimmed().isEmpty()
+                                       ? QStringLiteral("Supplemental Local Context")
+                                       : block.title.trimmed(),
+                                   includedSummary));
+        ++rank;
+    }
+
+    if (blockTexts.isEmpty()) {
+        fallback(SemanticPromptInclusionStatus::Empty,
+                 QStringLiteral("Semantic prompt inclusion produced an empty supplement block."),
+                 QStringLiteral("Empty semantic supplement fallback; deterministic-only prompt "
+                                "active."));
+        return result;
+    }
+
+    const auto semanticBlock =
+        QStringLiteral("%1\n%2\n%3\n%4")
+            .arg(policy.delimiterStart,
+                 QStringLiteral("Supplemental only. Deterministic context above remains "
+                                "authoritative."),
+                 blockTexts.join(QStringLiteral("\n")), policy.delimiterEnd);
+    const auto userPromptMarker = QStringLiteral("\n\nUser prompt:\n");
+    const auto markerIndex = deterministicPrompt.prompt.indexOf(userPromptMarker);
+    if (markerIndex < 0) {
+        fallback(SemanticPromptInclusionStatus::Denied,
+                 QStringLiteral("Semantic prompt inclusion requires an existing deterministic "
+                                "context prompt boundary."),
+                 QStringLiteral("Prompt-boundary fallback active; deterministic-only prompt "
+                                "assembly remains unchanged."));
+        return result;
+    }
+
+    result.prompt = QStringLiteral("%1\n\n%2%3")
+                        .arg(deterministicPrompt.prompt.left(markerIndex), semanticBlock,
+                             deterministicPrompt.prompt.mid(markerIndex));
+    result.included = true;
+    result.status = result.budget.truncatedBlockCount > 0 ||
+                            result.budget.includedSupplementBlocks < blocks.size()
+                        ? SemanticPromptInclusionStatus::Truncated
+                        : SemanticPromptInclusionStatus::Included;
+    result.failureReason.clear();
+    result.fallback.deterministicOnly = false;
+    result.fallback.state = QStringLiteral("Deterministic Authority Preserved");
+    result.fallback.summary =
+        QStringLiteral("Semantic supplements included as bounded non-authoritative context; "
+                       "deterministic retrieval remains final authority.");
+    result.fallback.summaries = {
+        result.fallback.summary,
+        QStringLiteral("Semantic supplements cannot replace deterministic context."),
+        QStringLiteral("Semantic supplements cannot reorder deterministic context."),
+    };
+    result.budget.summary =
+        QStringLiteral("%1 of %2 semantic supplement blocks included, using %3 of %4 characters; "
+                       "%5 blocks truncated.")
+            .arg(result.budget.includedSupplementBlocks)
+            .arg(result.budget.maxSupplementBlocks)
+            .arg(result.budget.includedCharacters)
+            .arg(result.budget.maxCharacters)
+            .arg(result.budget.truncatedBlockCount);
+    result.semanticBlockSummary =
+        QStringLiteral("%1 non-authoritative semantic supplement blocks included after "
+                       "deterministic context.")
+            .arg(result.budget.includedSupplementBlocks);
+    result.summary =
+        QStringLiteral("Semantic prompt inclusion appended %1 supplemental blocks after "
+                       "deterministic context; deterministic retrieval remains authoritative.")
+            .arg(result.budget.includedSupplementBlocks);
+    result.audit.stateSummary = semanticPromptInclusionStatusName(result.status);
+    result.audit.decisionSummary = result.summary;
+    result.audit.fallbackSummary = result.fallback.summary;
+    result.audit.budgetSummary = result.budget.summary;
+    result.audit.reasons = result.fallback.summaries;
     return result;
 }
 

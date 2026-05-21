@@ -491,6 +491,26 @@ ScrollView {
                                + " metadata blocks"
                         Layout.fillWidth: true
                     }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Prompt Authority"
+                        value: memoryPage.viewModel.semanticPromptAuthorityStatus + " - "
+                               + memoryPage.viewModel.semanticPromptAuthorityAuditSummary
+                               + " / non-authoritative"
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Prompt Inclusion"
+                        value: memoryPage.viewModel.semanticPromptInclusionStatus + " - "
+                               + memoryPage.viewModel.semanticPromptInclusionFallbackSummary
+                               + " / "
+                               + memoryPage.viewModel.semanticPromptInclusionIncludedCount
+                               + " included supplements"
+                        Layout.fillWidth: true
+                    }
                 }
             }
 

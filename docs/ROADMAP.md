@@ -457,6 +457,81 @@ Still out of scope:
   vectors/scores, provider handles, filesystem paths, debug dumps, filesystem indexing,
   cloud/API/vector providers, autonomous actions, tools/plugins, and broad UI redesign.
 
+## Phase 17.25-17.27: Semantic Prompt Authority Policy Foundation
+
+Completed. Added the disabled-by-default policy gate for future semantic prompt inclusion
+decisions.
+
+Delivered:
+
+- `SemanticPromptAuthorityPolicy`, `SemanticPromptAuthorityStatus`,
+  `SemanticPromptAuthorityResult`, `SemanticPromptAuthorityReadiness`,
+  `SemanticPromptAuthorityDecision`, `SemanticPromptAuthoritySafetyReport`,
+  `SemanticPromptAuthorityFallback`, and `SemanticPromptAuthorityAuditSummary`.
+- Default Disabled/Denied authority posture with deterministic-only fallback and audit summaries.
+- Evaluation over `SemanticSupplementAssemblyResult` only, with no mutation of
+  `PromptContextBlock`, `RetrievalPlanningResult`, or default prompt assembly.
+- Test-only "would include metadata" readiness when local-only semantic search, deterministic
+  acceptance, bounded bundles, explicit prompt-injection enablement, explicit policy allow, and a
+  passing safety report all hold.
+- Controller/view-model/QML exposure for compact status, decision, readiness, safety, fallback,
+  audit, block count, and checks.
+
+Still out of scope:
+
+- Live semantic prompt injection, semantic authority escalation, raw prompt or supplement block
+  display, raw vectors/scores, filesystem indexing, cloud/API/vector providers, provider handles,
+  debug dumps, autonomous actions, tools/plugins, and broad UI redesign.
+
+## Phase 17.28-17.30: Controlled Semantic Prompt Inclusion
+
+Completed. Added the disabled-by-default live inclusion gate for bounded semantic supplements.
+
+Delivered:
+
+- `SemanticPromptInclusionPolicy`, `SemanticPromptInclusionStatus`,
+  `SemanticPromptInclusionResult`, `SemanticPromptInclusionBudget`,
+  `SemanticPromptInclusionSafetyReport`, `SemanticPromptInclusionFallback`, and
+  `SemanticPromptInclusionAuditSummary`.
+- Inclusion activates only when context injection is enabled, semantic prompt authority approves,
+  supplement assembly is bounded and safe, local-only mode is active, and safety passes.
+- Semantic supplements, when active, are appended after deterministic context in a separate
+  supplemental/non-authoritative block with deterministic count and character budgets.
+- Disabled, denied, unsafe, empty, stale, busy, timeout, and refused states fall back to the exact
+  deterministic-only prompt.
+- Controller/view-model/QML exposure for inclusion enabled/status, included count, budget,
+  fallback, audit, and deterministic-authority-preserved summaries without exposing raw prompt or
+  supplement payloads.
+
+Still out of scope:
+
+- Filesystem indexing, cloud/API/vector providers, raw vectors/scores, raw prompt display,
+  provider handles, debug dumps, autonomous actions, tools/plugins, deterministic context
+  replacement/reordering, and broad UI redesign.
+
+## Phase 17.31-17.33: Semantic Retrieval And Prompt Inclusion Checkpoint
+
+Completed. Audited the complete Phase 17 semantic retrieval and controlled inclusion architecture
+without adding feature expansion.
+
+Delivered:
+
+- Added `docs/PHASE_17_SEMANTIC_CHECKPOINT.md`.
+- Confirmed deterministic retrieval remains the final prompt authority.
+- Confirmed semantic inclusion is disabled by default, explicit opt-in, bounded, local-only, and
+  policy-gated.
+- Confirmed semantic supplement inclusion falls back to deterministic-only prompts for disabled,
+  denied, unsafe, empty, stale, busy, timed-out, and refused semantic states.
+- Confirmed QML exposure remains status/count/summary/check metadata only, with no raw prompts,
+  supplement content, vectors, scores, provider handles, filesystem paths, or debug dumps.
+- Confirmed existing focused tests cover the checkpoint guarantees, so no redundant QA tests were
+  added.
+
+Still out of scope:
+
+- Filesystem indexing, cloud/API/vector provider activation, provider downloads, tools/plugins,
+  autonomous actions, prompt-authority expansion, raw semantic payload UI, and broad UI redesign.
+
 ## Phase 15.8: Async Local Runtime Worker Foundation
 
 Completed. Local Ollama chat inference now crosses an async worker boundary before real

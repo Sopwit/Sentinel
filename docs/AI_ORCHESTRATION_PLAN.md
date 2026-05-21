@@ -391,6 +391,43 @@ filesystem paths/debug dumps, index filesystems, call cloud/API/vector providers
 tools/plugins, or grant semantic prompt authority. Future semantic prompt activation still
 requires a separate phase with prompt-authority policy, privacy/safety gates, live prompt
 inclusion tests, deterministic fallback tests, mutation tests, and QML non-exposure guarantees.
+Phase 17.25 through Phase 17.27 add the semantic prompt authority policy foundation:
+`SemanticPromptAuthorityPolicy`, `SemanticPromptAuthorityStatus`,
+`SemanticPromptAuthorityResult`, `SemanticPromptAuthorityReadiness`,
+`SemanticPromptAuthorityDecision`, `SemanticPromptAuthoritySafetyReport`,
+`SemanticPromptAuthorityFallback`, and `SemanticPromptAuthorityAuditSummary`. The policy reads
+`SemanticSupplementAssemblyResult` only and denies by default. A test-only "would include metadata"
+decision requires local-only semantic search, deterministic semantic acceptance, a bounded
+supplement bundle, explicit prompt-injection enablement, explicit authority-policy allow, and a
+passing safety report. Disabled, stale, busy, timed-out, refused, unsafe, or unbounded states emit
+deterministic-only fallback and audit summaries. Live prompt mutation remains blocked, default
+prompt assembly is unchanged, and deterministic retrieval remains authoritative. QML receives only
+status, decision, safety, readiness, fallback, audit, counts, and checks; it does not receive raw
+prompts, supplement blocks, vectors, scores, provider handles, filesystem paths, or debug dumps.
+Phase 17.28 through Phase 17.30 add controlled semantic prompt inclusion:
+`SemanticPromptInclusionPolicy`, `SemanticPromptInclusionStatus`,
+`SemanticPromptInclusionResult`, `SemanticPromptInclusionBudget`,
+`SemanticPromptInclusionSafetyReport`, `SemanticPromptInclusionFallback`, and
+`SemanticPromptInclusionAuditSummary`. Inclusion is disabled by default and can append semantic
+supplements only after deterministic prompt context injection, only when semantic prompt authority
+approves, supplement assembly is bounded and safe, local-only mode is active, and safety passes.
+The semantic block is clearly delimited as supplemental/non-authoritative and sits after
+deterministic context blocks before the user prompt. Deterministic retrieval remains final
+authority; semantic supplements cannot replace or reorder deterministic context, override
+committed memory, override summaries, override conversation windows, or override runtime metadata.
+Disabled, denied, unsafe, empty, stale, busy, timed-out, and refused states fall back to the exact
+deterministic-only prompt. QML receives only enabled/status, included count, budget, fallback,
+audit, authority-preserved state, and checks; it does not receive raw prompts, supplement content,
+vectors, scores, provider handles, filesystem paths, or debug dumps.
+
+Phase 17.31 through Phase 17.33 checkpoint the full Phase 17 semantic architecture. The audit
+confirms deterministic retrieval remains final prompt authority, semantic inclusion remains
+disabled by default and explicit opt-in, semantic supplements are bounded/local-only/policy-gated
+and clearly delimited, and all disabled/denied/unsafe/empty/stale/busy/timed-out/refused semantic
+states fall back to deterministic-only prompts. QML exposure remains compact metadata only, with no
+raw prompts, supplement content, vectors, scores, provider handles, filesystem paths, or debug
+dumps. The checkpoint does not add filesystem indexing, cloud/API/vector provider activation,
+provider downloads, tools/plugins, autonomous actions, or runtime authority expansion.
 
 ## Future Components
 

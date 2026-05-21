@@ -26,6 +26,8 @@ class AppSettings final : public QObject {
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceStreamingEnabledChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionEnabledChanged)
+    Q_PROPERTY(bool semanticPromptInclusionEnabled READ semanticPromptInclusionEnabled WRITE
+                   setSemanticPromptInclusionEnabled NOTIFY semanticPromptInclusionEnabledChanged)
     Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
                    piperBinaryPathChanged)
     Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
@@ -62,6 +64,8 @@ public:
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
+    bool semanticPromptInclusionEnabled() const;
+    void setSemanticPromptInclusionEnabled(bool enabled);
     QString piperBinaryPath() const;
     void setPiperBinaryPath(const QString& path);
     QString piperModelPath() const;
@@ -82,6 +86,7 @@ signals:
     void localChatInferenceEnabledChanged();
     void localInferenceStreamingEnabledChanged();
     void promptContextInjectionEnabledChanged();
+    void semanticPromptInclusionEnabledChanged();
     void piperBinaryPathChanged();
     void piperModelPathChanged();
     void whisperBinaryPathChanged();
@@ -97,6 +102,7 @@ private:
     static constexpr auto localChatInferenceEnabledKey = "localChatInferenceEnabled";
     static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
     static constexpr auto promptContextInjectionEnabledKey = "promptContextInjectionEnabled";
+    static constexpr auto semanticPromptInclusionEnabledKey = "semanticPromptInclusionEnabled";
     static constexpr auto piperBinaryPathKey = "piperBinaryPath";
     static constexpr auto piperModelPathKey = "piperModelPath";
     static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";

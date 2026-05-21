@@ -2,6 +2,92 @@
 
 ## Completed / Stable
 
+### Phase 17.31-17.33: Semantic Retrieval And Prompt Inclusion Checkpoint
+
+Completed. Checkpoints the full Phase 17 semantic architecture after controlled prompt inclusion
+without expanding runtime authority.
+
+Scope:
+
+- Added `docs/PHASE_17_SEMANTIC_CHECKPOINT.md`.
+- Audited semantic provider planning, isolated embedding runtime metadata, vector persistence,
+  bounded semantic search, hybrid bridge arbitration, semantic acceptance, supplement assembly,
+  prompt authority policy, controlled inclusion, AppSettings persistence, controller prompt
+  assembly, desktop view-model exposure, and Memory/Settings status surfaces.
+- Confirmed deterministic retrieval remains the final prompt authority.
+- Confirmed semantic inclusion is disabled by default and explicit opt-in.
+- Confirmed semantic supplements are local-only, bounded, policy-gated, supplemental, clearly
+  delimited, and appended only after deterministic context when every safety gate passes.
+- Confirmed disabled/denied/unsafe/empty/stale/busy/timed-out/refused semantic states fall back to
+  deterministic-only prompts.
+- Confirmed QML exposure remains compact status/count/summary/check metadata only, with no raw
+  prompts, raw supplement blocks, vectors, scores, provider handles, filesystem paths, or debug
+  payloads.
+- Confirmed no filesystem indexing, cloud/API/vector provider activation, tools/plugins,
+  autonomous actions, or prompt-authority expansion was introduced.
+
+Known limitation:
+
+- Phase 17 closes with semantic systems still bounded and default-disabled. Any Phase 18 semantic
+  expansion must preserve deterministic fallback behavior, local-only/provider boundaries, and QML
+  non-exposure guarantees or explicitly scope and test a policy change.
+
+### Phase 17.28-17.30: Controlled Semantic Prompt Inclusion
+
+Completed. Adds disabled-by-default live inclusion metadata and a narrow prompt assembly step that
+can append semantic supplements only after deterministic context when every local safety and
+authority gate passes.
+
+Scope:
+
+- Added semantic prompt inclusion policy, status, result, budget, safety-report, fallback, and
+  audit-summary records.
+- Inclusion remains disabled by default and falls back to deterministic-only prompt assembly unless
+  context injection is enabled, semantic prompt authority approves, supplement assembly is bounded
+  and safe, local-only mode is active, and the inclusion safety report passes.
+- When included, semantic supplements are appended as a separate clearly delimited
+  supplemental/non-authoritative block after deterministic context and before the user prompt.
+- Deterministic retrieval ordering, committed memory authority, conversation windows, summaries,
+  and runtime metadata remain unchanged and cannot be replaced, reordered, or overridden by
+  semantic supplements.
+- Memory and Settings expose compact inclusion enabled/status, included count, budget, fallback,
+  audit, and deterministic-authority-preserved summaries without raw prompts, raw supplement
+  blocks, vectors, scores, provider handles, filesystem paths, or debug dumps.
+
+Known limitation:
+
+- Desktop semantic search, assembly, authority, and inclusion policies still default to disabled,
+  so default local prompt assembly remains deterministic-only. No filesystem indexing,
+  cloud/API/vector provider, autonomous action, tool/plugin, or raw prompt exposure is added.
+
+### Phase 17.25-17.27: Semantic Prompt Authority Policy Foundation
+
+Completed. Adds the policy gate that evaluates whether bounded semantic supplement metadata would
+ever be eligible for prompt inclusion, while keeping live semantic prompt injection disabled by
+default.
+
+Scope:
+
+- Added semantic prompt authority policy, status, result, readiness, decision, safety-report,
+  fallback, and audit-summary records.
+- Authority evaluation reads `SemanticSupplementAssemblyResult` only and defaults to
+  Disabled/Denied with deterministic-only fallback metadata.
+- Inclusion can only reach a test-only "would include metadata" decision when semantic search is
+  local-only, supplements came through deterministic acceptance, the bundle is bounded, prompt
+  injection is explicitly enabled, the policy explicitly allows authority, and safety passes.
+- Even in the allowed-readiness path, semantic supplements remain supplemental,
+  non-authoritative, clearly delimited metadata. Live prompt mutation remains blocked.
+- Memory and Settings expose compact status, decision, readiness, fallback, safety, and audit
+  summaries without raw prompts, supplement blocks, vectors, scores, provider handles, filesystem
+  paths, or debug dumps.
+
+Known limitation:
+
+- Semantic prompt authority still does not mutate live prompts. Default prompt assembly remains
+  unchanged and deterministic retrieval remains authoritative. Future activation requires a
+  separate phase with explicit live-inclusion scope, privacy/safety review, deterministic fallback
+  tests, and continued QML non-exposure guarantees.
+
 ### Phase 17.22-17.24: Semantic Supplement Prompt Assembly Readiness
 
 Completed. Adds a disabled-by-default semantic supplement assembly layer that can prepare accepted

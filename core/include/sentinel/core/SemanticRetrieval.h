@@ -193,6 +193,35 @@ enum class SemanticSupplementAssemblyStatus : std::uint8_t {
     Refused,
 };
 
+enum class SemanticPromptAuthorityStatus : std::uint8_t {
+    Disabled,
+    Denied,
+    WouldIncludeMetadataOnly,
+    SafetyBlocked,
+    TimedOut,
+    Stale,
+    Busy,
+    Refused,
+};
+
+enum class SemanticPromptAuthorityDecision : std::uint8_t {
+    Denied,
+    WouldIncludeMetadataOnly,
+};
+
+enum class SemanticPromptInclusionStatus : std::uint8_t {
+    Disabled,
+    Denied,
+    Included,
+    Truncated,
+    SafetyBlocked,
+    Empty,
+    TimedOut,
+    Stale,
+    Busy,
+    Refused,
+};
+
 QString embeddingProviderStatusName(EmbeddingProviderStatus status);
 QString vectorIndexStatusName(VectorIndexStatus status);
 QString semanticRetrievalStatusName(SemanticRetrievalStatus status);
@@ -216,6 +245,9 @@ QString semanticSearchStatusName(SemanticSearchStatus status);
 QString hybridRetrievalBridgeStatusName(HybridRetrievalBridgeStatus status);
 QString semanticAcceptanceStatusName(SemanticAcceptanceStatus status);
 QString semanticSupplementAssemblyStatusName(SemanticSupplementAssemblyStatus status);
+QString semanticPromptAuthorityStatusName(SemanticPromptAuthorityStatus status);
+QString semanticPromptAuthorityDecisionName(SemanticPromptAuthorityDecision decision);
+QString semanticPromptInclusionStatusName(SemanticPromptInclusionStatus status);
 
 struct EmbeddingVector {
     QList<double> values;
@@ -944,6 +976,200 @@ struct SemanticSupplementAssemblyResult {
     QStringList checks;
 };
 
+struct SemanticPromptAuthorityPolicy {
+    bool enabled = false;
+    bool promptInjectionExplicitlyEnabled = false;
+    bool semanticPromptAuthorityAllowed = false;
+    bool allowTestOnlyWouldIncludeMetadata = false;
+    bool includeInLivePrompt = false;
+    bool deterministicRetrievalAuthoritative = true;
+    bool semanticSupplementsOnly = true;
+    bool semanticSearchLocalOnly = true;
+    bool requireAcceptedSupplements = true;
+    bool requireBoundedBundle = true;
+    bool requireSafetyReportPass = true;
+    bool clearlyDelimitedSupplements = true;
+    bool exposeRawPromptPayloads = false;
+    bool exposeRawSupplementBlocks = false;
+    bool exposeRawVectors = false;
+    bool exposeScores = false;
+    bool exposeFilesystemPaths = false;
+    bool exposeProviderHandles = false;
+    bool exposeDebugDumps = false;
+    int timeoutMs = 1000;
+    QString summary = QStringLiteral(
+        "Semantic prompt authority is disabled by default and denies live prompt inclusion.");
+};
+
+struct SemanticPromptAuthorityReadiness {
+    bool ready = false;
+    SemanticPromptAuthorityStatus status = SemanticPromptAuthorityStatus::Disabled;
+    QString summary = QStringLiteral("Semantic prompt authority is disabled.");
+    QStringList checks;
+};
+
+struct SemanticPromptAuthoritySafetyReport {
+    bool safe = false;
+    bool deterministicRetrievalAuthoritative = true;
+    bool semanticSearchLocalOnly = true;
+    bool acceptedByDeterministicLayer = false;
+    bool boundedSupplementBundle = false;
+    bool promptInjectionExplicitlyEnabled = false;
+    bool policyExplicitlyAllows = false;
+    bool livePromptMutationBlocked = true;
+    bool semanticAuthorityEscalationBlocked = true;
+    bool supplementsRemainSupplemental = true;
+    bool clearlyDelimitedSupplements = true;
+    bool rawPromptPayloadsBlocked = true;
+    bool rawSupplementBlocksBlocked = true;
+    bool rawVectorsBlocked = true;
+    bool scoresBlocked = true;
+    bool filesystemPathsBlocked = true;
+    bool providerHandlesBlocked = true;
+    bool debugDumpsBlocked = true;
+    QString summary = QStringLiteral("Semantic prompt authority safety has not passed.");
+    QStringList checks;
+};
+
+struct SemanticPromptAuthorityFallback {
+    bool deterministicOnly = true;
+    QString state = QStringLiteral("Disabled");
+    QString summary = QStringLiteral(
+        "Semantic prompt authority disabled; deterministic prompt assembly remains unchanged.");
+    QStringList summaries;
+};
+
+struct SemanticPromptAuthorityAuditSummary {
+    QString decisionSummary = QStringLiteral("Denied by default.");
+    QString denialReason = QStringLiteral("Semantic prompt authority is disabled.");
+    QString readinessSummary = QStringLiteral("Disabled/default-denied.");
+    QString safetySummary = QStringLiteral("Safety report not applied.");
+    QString fallbackSummary =
+        QStringLiteral("Deterministic-only prompt fallback remains authoritative.");
+    QStringList reasons;
+};
+
+struct SemanticPromptAuthorityResult {
+    bool allowed = false;
+    bool wouldInclude = false;
+    bool livePromptMutationAllowed = false;
+    SemanticPromptAuthorityStatus status = SemanticPromptAuthorityStatus::Disabled;
+    SemanticPromptAuthorityDecision decision = SemanticPromptAuthorityDecision::Denied;
+    SemanticPromptAuthorityPolicy policy;
+    SemanticPromptAuthorityReadiness readiness;
+    SemanticPromptAuthoritySafetyReport safety;
+    SemanticPromptAuthorityFallback fallback;
+    SemanticPromptAuthorityAuditSummary audit;
+    int wouldIncludeBlockCount = 0;
+    int wouldIncludeCharacters = 0;
+    QString summary = QStringLiteral("Semantic prompt authority is disabled.");
+    QString failureReason = QStringLiteral("Semantic prompt authority is disabled.");
+    QStringList checks;
+};
+
+struct SemanticPromptInclusionPolicy {
+    bool enabled = false;
+    bool contextInjectionEnabled = false;
+    bool localOnlyMode = true;
+    bool deterministicRetrievalAuthoritative = true;
+    bool requireAuthorityApproval = true;
+    bool requireBoundedAssembly = true;
+    bool requireSafetyReportPass = true;
+    bool clearlyDelimitedSupplements = true;
+    bool supplementalOnly = true;
+    bool deterministicContextReplacementEnabled = false;
+    bool deterministicContextReorderingEnabled = false;
+    bool committedMemoryOverrideEnabled = false;
+    bool summariesOverrideEnabled = false;
+    bool conversationWindowOverrideEnabled = false;
+    bool runtimeMetadataOverrideEnabled = false;
+    bool exposeRawPromptPayloads = false;
+    bool exposeRawVectors = false;
+    bool exposeScores = false;
+    bool exposeProviderHandles = false;
+    bool exposeFilesystemPaths = false;
+    bool exposeDebugDumps = false;
+    int maxSupplementBlocks = 2;
+    int maxCharacters = 640;
+    int timeoutMs = 1000;
+    QString delimiterStart = QStringLiteral("[Semantic Supplemental Context - Non-Authoritative]");
+    QString delimiterEnd = QStringLiteral("[/Semantic Supplemental Context]");
+    QString summary = QStringLiteral(
+        "Semantic prompt inclusion is disabled by default and requires explicit approval.");
+};
+
+struct SemanticPromptInclusionBudget {
+    int maxSupplementBlocks = 2;
+    int maxCharacters = 640;
+    int availableSupplementBlocks = 0;
+    int includedSupplementBlocks = 0;
+    int estimatedCharacters = 0;
+    int includedCharacters = 0;
+    int truncatedBlockCount = 0;
+    int timeoutMs = 1000;
+    int elapsedMs = 0;
+    QString summary = QStringLiteral("0 semantic supplement characters included.");
+};
+
+struct SemanticPromptInclusionSafetyReport {
+    bool safe = false;
+    bool contextInjectionEnabled = false;
+    bool authorityApproved = false;
+    bool boundedAssembly = false;
+    bool localOnlyMode = true;
+    bool deterministicRetrievalAuthoritative = true;
+    bool supplementalOnly = true;
+    bool clearlyDelimited = true;
+    bool deterministicContextReplacementBlocked = true;
+    bool deterministicContextReorderingBlocked = true;
+    bool committedMemoryOverrideBlocked = true;
+    bool summariesOverrideBlocked = true;
+    bool conversationWindowOverrideBlocked = true;
+    bool runtimeMetadataOverrideBlocked = true;
+    bool rawPromptPayloadsBlocked = true;
+    bool rawVectorsBlocked = true;
+    bool scoresBlocked = true;
+    bool providerHandlesBlocked = true;
+    bool filesystemPathsBlocked = true;
+    bool debugDumpsBlocked = true;
+    QString summary = QStringLiteral("Semantic prompt inclusion safety has not passed.");
+    QStringList checks;
+};
+
+struct SemanticPromptInclusionFallback {
+    bool deterministicOnly = true;
+    QString state = QStringLiteral("Disabled");
+    QString summary = QStringLiteral(
+        "Semantic prompt inclusion disabled; deterministic-only prompt assembly remains active.");
+    QStringList summaries;
+};
+
+struct SemanticPromptInclusionAuditSummary {
+    QString stateSummary = QStringLiteral("Semantic prompt inclusion disabled.");
+    QString decisionSummary = QStringLiteral("Denied by default.");
+    QString fallbackSummary =
+        QStringLiteral("Deterministic retrieval remains final prompt authority.");
+    QString budgetSummary = QStringLiteral("0 semantic supplement characters included.");
+    QStringList reasons;
+};
+
+struct SemanticPromptInclusionResult {
+    bool included = false;
+    bool enabled = false;
+    SemanticPromptInclusionStatus status = SemanticPromptInclusionStatus::Disabled;
+    SemanticPromptInclusionPolicy policy;
+    SemanticPromptInclusionBudget budget;
+    SemanticPromptInclusionSafetyReport safety;
+    SemanticPromptInclusionFallback fallback;
+    SemanticPromptInclusionAuditSummary audit;
+    QString originalPrompt;
+    QString prompt;
+    QString semanticBlockSummary = QStringLiteral("No semantic supplemental block included.");
+    QString summary = QStringLiteral("Semantic prompt inclusion is disabled.");
+    QString failureReason = QStringLiteral("Semantic prompt inclusion is disabled.");
+    QStringList checks;
+};
+
 struct SemanticProviderPolicy {
     bool disabledByDefault = true;
     bool allowFakeInMemoryProvider = false;
@@ -1120,6 +1346,14 @@ SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deter
 SemanticSupplementAssemblyResult
 assembleSemanticSupplements(const SemanticAcceptanceResult& acceptanceResult,
                             const SemanticSupplementAssemblyPolicy& policy);
+SemanticPromptAuthorityResult
+evaluateSemanticPromptAuthority(const SemanticSupplementAssemblyResult& assemblyResult,
+                                const SemanticPromptAuthorityPolicy& policy);
+SemanticPromptInclusionResult
+includeSemanticPromptSupplements(const PromptContextInjectionResult& deterministicPrompt,
+                                 const SemanticSupplementAssemblyResult& assemblyResult,
+                                 const SemanticPromptAuthorityResult& authorityResult,
+                                 const SemanticPromptInclusionPolicy& policy);
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source);
 SemanticCandidateArbitration
 orchestrateSemanticCandidates(const QList<SemanticCandidate>& candidates,

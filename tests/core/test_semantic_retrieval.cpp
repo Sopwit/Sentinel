@@ -15,6 +15,7 @@ using sentinel::core::embeddingRuntimePlan;
 using sentinel::core::EmbeddingRuntimeReadiness;
 using sentinel::core::EmbeddingRuntimeSession;
 using sentinel::core::EmbeddingRuntimeStatus;
+using sentinel::core::evaluateSemanticPromptAuthority;
 using sentinel::core::FakeEmbeddingProvider;
 using sentinel::core::FakeVectorIndex;
 using sentinel::core::generateIsolatedEmbeddings;
@@ -24,6 +25,7 @@ using sentinel::core::HybridRetrievalBridgeStatus;
 using sentinel::core::HybridRetrievalPolicy;
 using sentinel::core::hybridRetrievalReadiness;
 using sentinel::core::HybridRetrievalStatus;
+using sentinel::core::includeSemanticPromptSupplements;
 using sentinel::core::LocalVectorPersistenceIndex;
 using sentinel::core::orchestrateSemanticCandidates;
 using sentinel::core::planRetrieval;
@@ -45,6 +47,11 @@ using sentinel::core::SemanticCandidatePolicy;
 using sentinel::core::SemanticCandidateSelection;
 using sentinel::core::SemanticCandidateSource;
 using sentinel::core::SemanticCandidateStatus;
+using sentinel::core::SemanticPromptAuthorityDecision;
+using sentinel::core::SemanticPromptAuthorityPolicy;
+using sentinel::core::SemanticPromptAuthorityStatus;
+using sentinel::core::SemanticPromptInclusionPolicy;
+using sentinel::core::SemanticPromptInclusionStatus;
 using sentinel::core::SemanticProviderMode;
 using sentinel::core::SemanticProviderPolicy;
 using sentinel::core::SemanticProviderReadiness;
@@ -97,6 +104,13 @@ private slots:
     void semanticSupplementAssemblyBuildsBoundedSeparateMetadata();
     void semanticSupplementAssemblyOrdersAndTruncatesDeterministically();
     void semanticSupplementAssemblyRefusesPromptAuthorityAndStaleState();
+    void semanticPromptAuthorityDefaultsToDeniedDisabledFallback();
+    void semanticPromptAuthorityAllowsReadinessMetadataOnly();
+    void semanticPromptAuthoritySafetyReportBlocksUnsafeInclusion();
+    void semanticPromptInclusionDisabledLeavesPromptUnchanged();
+    void semanticPromptInclusionAppendsDelimitedBlockAfterDeterministicContext();
+    void semanticPromptInclusionBoundsAndTruncatesDeterministically();
+    void semanticPromptInclusionFallsBackForDeniedUnsafeTimeoutStaleAndEmpty();
     void defaultSemanticProviderSelectionIsDisabled();
     void fakeProviderSelectionIsMetadataOnly();
     void localOllamaProviderIsPlannedButInactive();
@@ -132,6 +146,40 @@ SemanticSearchResult semanticSearchResultForBridge(SemanticSearchStatus status) 
         };
     }
     return result;
+}
+
+sentinel::core::SemanticSupplementAssemblyResult readySemanticAssemblyForInclusion() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+    const auto acceptance =
+        semanticAcceptance(planning, bridge, search, SemanticAcceptancePolicy{});
+
+    SemanticSupplementAssemblyPolicy assemblyPolicy;
+    assemblyPolicy.enabled = true;
+    assemblyPolicy.allowTestOnlyAssembly = true;
+    return assembleSemanticSupplements(acceptance, assemblyPolicy);
+}
+
+SemanticPromptAuthorityPolicy allowingAuthorityPolicy() {
+    SemanticPromptAuthorityPolicy policy;
+    policy.enabled = true;
+    policy.promptInjectionExplicitlyEnabled = true;
+    policy.semanticPromptAuthorityAllowed = true;
+    policy.allowTestOnlyWouldIncludeMetadata = true;
+    return policy;
+}
+
+sentinel::core::PromptContextInjectionResult deterministicPromptForInclusion() {
+    return sentinel::core::injectPromptContext(
+        QStringLiteral("question"),
+        QList<sentinel::core::PromptContextBlock>{
+            {ContextAssemblySourceKind::Conversation, QStringLiteral("Conversation"),
+             QStringLiteral("deterministic conversation")},
+            {ContextAssemblySourceKind::CommittedMemory, QStringLiteral("Committed Memory"),
+             QStringLiteral("deterministic memory")},
+        },
+        sentinel::core::PromptContextInjectionPolicy{true, 2000});
 }
 
 } // namespace
@@ -928,6 +976,225 @@ void SemanticRetrievalTest::semanticSupplementAssemblyRefusesPromptAuthorityAndS
     result = assembleSemanticSupplements(staleAcceptance, policy);
     QCOMPARE(result.status, SemanticSupplementAssemblyStatus::Stale);
     QVERIFY(result.fallbackSummary.contains(QStringLiteral("deterministic prompt behavior")));
+}
+
+void SemanticRetrievalTest::semanticPromptAuthorityDefaultsToDeniedDisabledFallback() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+    const auto acceptance =
+        semanticAcceptance(planning, bridge, search, SemanticAcceptancePolicy{});
+
+    SemanticSupplementAssemblyPolicy assemblyPolicy;
+    assemblyPolicy.enabled = true;
+    assemblyPolicy.allowTestOnlyAssembly = true;
+    const auto assembly = assembleSemanticSupplements(acceptance, assemblyPolicy);
+    const auto result = evaluateSemanticPromptAuthority(assembly, SemanticPromptAuthorityPolicy{});
+
+    QCOMPARE(result.status, SemanticPromptAuthorityStatus::Disabled);
+    QCOMPARE(result.decision, SemanticPromptAuthorityDecision::Denied);
+    QCOMPARE(result.allowed, false);
+    QCOMPARE(result.wouldInclude, false);
+    QCOMPARE(result.livePromptMutationAllowed, false);
+    QVERIFY(result.fallback.summary.contains(QStringLiteral("deterministic prompt assembly")));
+    QVERIFY(result.audit.denialReason.contains(QStringLiteral("disabled")));
+    QVERIFY(result.checks.contains(QStringLiteral("Live prompt mutation: blocked")));
+    QVERIFY(result.checks.contains(QStringLiteral("PromptContextBlock mutation: no")));
+    QVERIFY(result.checks.contains(QStringLiteral("RetrievalPlanningResult mutation: no")));
+    QCOMPARE(planning.selectedCandidateCount, 2);
+}
+
+void SemanticRetrievalTest::semanticPromptAuthorityAllowsReadinessMetadataOnly() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+    const auto acceptance =
+        semanticAcceptance(planning, bridge, search, SemanticAcceptancePolicy{});
+
+    SemanticSupplementAssemblyPolicy assemblyPolicy;
+    assemblyPolicy.enabled = true;
+    assemblyPolicy.allowTestOnlyAssembly = true;
+    const auto assembly = assembleSemanticSupplements(acceptance, assemblyPolicy);
+
+    SemanticPromptAuthorityPolicy policy;
+    policy.enabled = true;
+    policy.promptInjectionExplicitlyEnabled = true;
+    policy.semanticPromptAuthorityAllowed = true;
+    policy.allowTestOnlyWouldIncludeMetadata = true;
+    const auto result = evaluateSemanticPromptAuthority(assembly, policy);
+
+    QCOMPARE(result.status, SemanticPromptAuthorityStatus::WouldIncludeMetadataOnly);
+    QCOMPARE(result.decision, SemanticPromptAuthorityDecision::WouldIncludeMetadataOnly);
+    QCOMPARE(result.allowed, true);
+    QCOMPARE(result.wouldInclude, true);
+    QCOMPARE(result.livePromptMutationAllowed, false);
+    QCOMPARE(result.wouldIncludeBlockCount, assembly.bundle.blockCount);
+    QVERIFY(result.summary.contains(QStringLiteral("test-only")));
+    QVERIFY(
+        result.readiness.summary.contains(QStringLiteral("live prompt inclusion remains blocked")));
+    QVERIFY(result.checks.contains(
+        QStringLiteral("Semantic prompt authority policy allows inclusion: yes")));
+    QCOMPARE(planning.selectedCandidateCount, 2);
+}
+
+void SemanticRetrievalTest::semanticPromptAuthoritySafetyReportBlocksUnsafeInclusion() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+    const auto acceptance =
+        semanticAcceptance(planning, bridge, search, SemanticAcceptancePolicy{});
+
+    SemanticSupplementAssemblyPolicy assemblyPolicy;
+    assemblyPolicy.enabled = true;
+    assemblyPolicy.allowTestOnlyAssembly = true;
+    auto assembly = assembleSemanticSupplements(acceptance, assemblyPolicy);
+    assembly.safety.safe = false;
+
+    SemanticPromptAuthorityPolicy policy;
+    policy.enabled = true;
+    policy.promptInjectionExplicitlyEnabled = true;
+    policy.semanticPromptAuthorityAllowed = true;
+    policy.allowTestOnlyWouldIncludeMetadata = true;
+    const auto result = evaluateSemanticPromptAuthority(assembly, policy);
+
+    QCOMPARE(result.status, SemanticPromptAuthorityStatus::SafetyBlocked);
+    QCOMPARE(result.decision, SemanticPromptAuthorityDecision::Denied);
+    QCOMPARE(result.allowed, false);
+    QCOMPARE(result.wouldInclude, false);
+    QVERIFY(result.audit.denialReason.contains(QStringLiteral("safety")));
+    QVERIFY(result.fallback.summary.contains(QStringLiteral("Safety-report fallback")));
+    QCOMPARE(planning.selectedCandidateCount, 2);
+}
+
+void SemanticRetrievalTest::semanticPromptInclusionDisabledLeavesPromptUnchanged() {
+    const auto deterministicPrompt = deterministicPromptForInclusion();
+    const auto assembly = readySemanticAssemblyForInclusion();
+    const auto authority = evaluateSemanticPromptAuthority(assembly, allowingAuthorityPolicy());
+
+    const auto result = includeSemanticPromptSupplements(deterministicPrompt, assembly, authority,
+                                                         SemanticPromptInclusionPolicy{});
+
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::Disabled);
+    QCOMPARE(result.prompt, deterministicPrompt.prompt);
+    QCOMPARE(result.included, false);
+    QCOMPARE(result.budget.includedSupplementBlocks, 0);
+    QVERIFY(result.fallback.summary.contains(QStringLiteral("deterministic-only")));
+}
+
+void SemanticRetrievalTest::
+    semanticPromptInclusionAppendsDelimitedBlockAfterDeterministicContext() {
+    const auto deterministicPrompt = deterministicPromptForInclusion();
+    auto assembly = readySemanticAssemblyForInclusion();
+    assembly.bundle.blocks[0].summary.append(
+        QStringLiteral("; score: 0.91; vector: [1, 2]; debug payload: hidden"));
+    const auto authority = evaluateSemanticPromptAuthority(assembly, allowingAuthorityPolicy());
+
+    SemanticPromptInclusionPolicy policy;
+    policy.enabled = true;
+    policy.contextInjectionEnabled = true;
+    const auto result =
+        includeSemanticPromptSupplements(deterministicPrompt, assembly, authority, policy);
+
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::Included);
+    QCOMPARE(result.included, true);
+    QCOMPARE(result.budget.includedSupplementBlocks, assembly.bundle.blockCount);
+    QVERIFY(result.prompt.contains(
+        QStringLiteral("[Semantic Supplemental Context - Non-Authoritative]")));
+    QVERIFY(result.prompt.contains(QStringLiteral("Supplemental only.")));
+    QVERIFY(result.prompt.indexOf(QStringLiteral("--- Conversation ---")) <
+            result.prompt.indexOf(QStringLiteral("[Semantic Supplemental Context")));
+    QVERIFY(result.prompt.indexOf(QStringLiteral("[/Semantic Supplemental Context]")) <
+            result.prompt.indexOf(QStringLiteral("User prompt:")));
+    QVERIFY(result.prompt.indexOf(QStringLiteral("--- Conversation ---")) <
+            result.prompt.indexOf(QStringLiteral("--- Committed Memory ---")));
+    QVERIFY(result.prompt.contains(QStringLiteral("deterministic memory")));
+    QVERIFY(!result.prompt.contains(QStringLiteral("score:")));
+    QVERIFY(!result.prompt.contains(QStringLiteral("vector:")));
+    QVERIFY(!result.prompt.contains(QStringLiteral("debug payload")));
+    QVERIFY(
+        result.summary.contains(QStringLiteral("deterministic retrieval remains authoritative")));
+}
+
+void SemanticRetrievalTest::semanticPromptInclusionBoundsAndTruncatesDeterministically() {
+    const auto deterministicPrompt = deterministicPromptForInclusion();
+    const auto assembly = readySemanticAssemblyForInclusion();
+    const auto authority = evaluateSemanticPromptAuthority(assembly, allowingAuthorityPolicy());
+
+    SemanticPromptInclusionPolicy policy;
+    policy.enabled = true;
+    policy.contextInjectionEnabled = true;
+    policy.maxSupplementBlocks = 1;
+    policy.maxCharacters = 10;
+
+    const auto result =
+        includeSemanticPromptSupplements(deterministicPrompt, assembly, authority, policy);
+
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::Truncated);
+    QCOMPARE(result.budget.includedSupplementBlocks, 1);
+    QCOMPARE(result.budget.includedCharacters, 10);
+    QCOMPARE(result.budget.truncatedBlockCount, 1);
+    QVERIFY(result.prompt.contains(QStringLiteral("semantic a")));
+    QVERIFY(!result.prompt.contains(QStringLiteral("semantic advisory beta")));
+}
+
+void SemanticRetrievalTest::semanticPromptInclusionFallsBackForDeniedUnsafeTimeoutStaleAndEmpty() {
+    const auto deterministicPrompt = deterministicPromptForInclusion();
+    const auto assembly = readySemanticAssemblyForInclusion();
+    const auto authority = evaluateSemanticPromptAuthority(assembly, allowingAuthorityPolicy());
+
+    SemanticPromptInclusionPolicy policy;
+    policy.enabled = true;
+    policy.contextInjectionEnabled = true;
+
+    auto deniedAuthority = authority;
+    deniedAuthority.allowed = false;
+    deniedAuthority.wouldInclude = false;
+    auto result =
+        includeSemanticPromptSupplements(deterministicPrompt, assembly, deniedAuthority, policy);
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::SafetyBlocked);
+    QCOMPARE(result.prompt, deterministicPrompt.prompt);
+
+    auto unsafeAssembly = assembly;
+    unsafeAssembly.safety.safe = false;
+    result =
+        includeSemanticPromptSupplements(deterministicPrompt, unsafeAssembly, authority, policy);
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::SafetyBlocked);
+    QCOMPARE(result.prompt, deterministicPrompt.prompt);
+
+    auto timedOutAssembly = assembly;
+    timedOutAssembly.budget.elapsedMs = 2000;
+    result =
+        includeSemanticPromptSupplements(deterministicPrompt, timedOutAssembly, authority, policy);
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::TimedOut);
+    QCOMPARE(result.prompt, deterministicPrompt.prompt);
+
+    auto staleAssembly = assembly;
+    staleAssembly.status = SemanticSupplementAssemblyStatus::Stale;
+    result =
+        includeSemanticPromptSupplements(deterministicPrompt, staleAssembly, authority, policy);
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::Stale);
+    QCOMPARE(result.prompt, deterministicPrompt.prompt);
+
+    auto busyAssembly = assembly;
+    busyAssembly.status = SemanticSupplementAssemblyStatus::Busy;
+    result = includeSemanticPromptSupplements(deterministicPrompt, busyAssembly, authority, policy);
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::Busy);
+    QCOMPARE(result.prompt, deterministicPrompt.prompt);
+
+    auto refusedAssembly = assembly;
+    refusedAssembly.status = SemanticSupplementAssemblyStatus::Refused;
+    result =
+        includeSemanticPromptSupplements(deterministicPrompt, refusedAssembly, authority, policy);
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::Refused);
+    QCOMPARE(result.prompt, deterministicPrompt.prompt);
+
+    auto emptyAssembly = assembly;
+    emptyAssembly.bundle.blocks.clear();
+    emptyAssembly.bundle.blockCount = 0;
+    result =
+        includeSemanticPromptSupplements(deterministicPrompt, emptyAssembly, authority, policy);
+    QCOMPARE(result.status, SemanticPromptInclusionStatus::Empty);
+    QCOMPARE(result.prompt, deterministicPrompt.prompt);
 }
 
 void SemanticRetrievalTest::defaultSemanticProviderSelectionIsDisabled() {

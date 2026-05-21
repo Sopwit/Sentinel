@@ -731,6 +731,9 @@ ApplicationController::ApplicationController(
     resetConversationSearchSummary();
     refreshLatestTaskPlan();
     refreshConversationSession();
+    latestSemanticPromptInclusionResult_ = sentinel::core::includeSemanticPromptSupplements(
+        latestPromptContextInjectionResult_, semanticSupplementAssemblyResult(),
+        semanticPromptAuthorityResult(), semanticPromptInclusionPolicy());
 }
 
 QString ApplicationController::providerName() const {
@@ -2189,6 +2192,7 @@ void ApplicationController::setPromptContextInjectionEnabled(bool enabled) {
 
     promptContextInjectionEnabled_ = enabled;
     promptContextInjectionPolicy_.enabled = enabled;
+    semanticPromptInclusionPolicy_.contextInjectionEnabled = enabled;
     promptContextInjectionPolicy_.status =
         enabled ? QStringLiteral("Enabled") : QStringLiteral("Disabled");
     promptContextInjectionPolicy_.summary =
@@ -2198,6 +2202,7 @@ void ApplicationController::setPromptContextInjectionEnabled(bool enabled) {
                                  "without assembled memory/context.");
     if (!enabled) {
         latestPromptContextInjectionResult_ = PromptContextInjectionResult{};
+        latestSemanticPromptInclusionResult_ = SemanticPromptInclusionResult{};
     } else {
         latestPromptContextInjectionResult_ = PromptContextInjectionResult{};
         latestPromptContextInjectionResult_.policy = promptContextInjectionPolicy_;
@@ -2206,11 +2211,41 @@ void ApplicationController::setPromptContextInjectionEnabled(bool enabled) {
             QStringLiteral("Prompt context injection is enabled; no local prompt has been "
                            "assembled yet.");
     }
+    latestSemanticPromptInclusionResult_ = sentinel::core::includeSemanticPromptSupplements(
+        latestPromptContextInjectionResult_, semanticSupplementAssemblyResult(),
+        semanticPromptAuthorityResult(), semanticPromptInclusionPolicy());
     emit promptContextInjectionChanged();
 }
 
 PromptContextInjectionResult ApplicationController::latestPromptContextInjectionResult() const {
     return latestPromptContextInjectionResult_;
+}
+
+bool ApplicationController::semanticPromptInclusionEnabled() const {
+    return semanticPromptInclusionPolicy_.enabled;
+}
+
+void ApplicationController::setSemanticPromptInclusionEnabled(bool enabled) {
+    if (enabled == semanticPromptInclusionPolicy_.enabled) {
+        return;
+    }
+
+    semanticPromptInclusionPolicy_.enabled = enabled;
+    semanticPromptInclusionPolicy_.contextInjectionEnabled = promptContextInjectionEnabled_;
+    latestSemanticPromptInclusionResult_ = sentinel::core::includeSemanticPromptSupplements(
+        latestPromptContextInjectionResult_, semanticSupplementAssemblyResult(),
+        semanticPromptAuthorityResult(), semanticPromptInclusionPolicy());
+    emit promptContextInjectionChanged();
+}
+
+SemanticPromptInclusionPolicy ApplicationController::semanticPromptInclusionPolicy() const {
+    auto policy = semanticPromptInclusionPolicy_;
+    policy.contextInjectionEnabled = promptContextInjectionEnabled_;
+    return policy;
+}
+
+SemanticPromptInclusionResult ApplicationController::latestSemanticPromptInclusionResult() const {
+    return latestSemanticPromptInclusionResult_;
 }
 
 QString ApplicationController::promptContextInjectionStatus() const {
@@ -2819,6 +2854,15 @@ SemanticSupplementAssemblyResult ApplicationController::semanticSupplementAssemb
                                                        semanticSupplementAssemblyPolicy_);
 }
 
+SemanticPromptAuthorityPolicy ApplicationController::semanticPromptAuthorityPolicy() const {
+    return semanticPromptAuthorityPolicy_;
+}
+
+SemanticPromptAuthorityResult ApplicationController::semanticPromptAuthorityResult() const {
+    return sentinel::core::evaluateSemanticPromptAuthority(semanticSupplementAssemblyResult(),
+                                                           semanticPromptAuthorityPolicy_);
+}
+
 QString ApplicationController::semanticAcceptanceStatus() const {
     return semanticAcceptanceStatusName(semanticAcceptanceResult().status);
 }
@@ -2900,6 +2944,72 @@ int ApplicationController::semanticSupplementAssemblyBudgetCharacters() const {
 
 QStringList ApplicationController::semanticSupplementAssemblyChecks() const {
     return semanticSupplementAssemblyResult().checks;
+}
+
+QString ApplicationController::semanticPromptAuthorityStatus() const {
+    return semanticPromptAuthorityStatusName(semanticPromptAuthorityResult().status);
+}
+
+QString ApplicationController::semanticPromptAuthorityDecisionSummary() const {
+    return semanticPromptAuthorityResult().audit.decisionSummary;
+}
+
+QString ApplicationController::semanticPromptAuthoritySafetySummary() const {
+    return semanticPromptAuthorityResult().safety.summary;
+}
+
+QString ApplicationController::semanticPromptAuthorityReadinessSummary() const {
+    return semanticPromptAuthorityResult().readiness.summary;
+}
+
+QString ApplicationController::semanticPromptAuthorityFallbackSummary() const {
+    return semanticPromptAuthorityResult().fallback.summary;
+}
+
+QString ApplicationController::semanticPromptAuthorityAuditSummary() const {
+    const auto result = semanticPromptAuthorityResult();
+    return result.audit.denialReason.isEmpty() ? result.audit.decisionSummary
+                                               : result.audit.denialReason;
+}
+
+int ApplicationController::semanticPromptAuthorityWouldIncludeBlockCount() const {
+    return semanticPromptAuthorityResult().wouldIncludeBlockCount;
+}
+
+QStringList ApplicationController::semanticPromptAuthorityChecks() const {
+    return semanticPromptAuthorityResult().checks;
+}
+
+QString ApplicationController::semanticPromptInclusionStatus() const {
+    return semanticPromptInclusionStatusName(latestSemanticPromptInclusionResult_.status);
+}
+
+QString ApplicationController::semanticPromptInclusionSummary() const {
+    return latestSemanticPromptInclusionResult_.summary;
+}
+
+int ApplicationController::semanticPromptInclusionIncludedCount() const {
+    return latestSemanticPromptInclusionResult_.budget.includedSupplementBlocks;
+}
+
+QString ApplicationController::semanticPromptInclusionBudgetSummary() const {
+    return latestSemanticPromptInclusionResult_.budget.summary;
+}
+
+QString ApplicationController::semanticPromptInclusionFallbackSummary() const {
+    return latestSemanticPromptInclusionResult_.fallback.summary;
+}
+
+QString ApplicationController::semanticPromptInclusionAuditSummary() const {
+    return latestSemanticPromptInclusionResult_.audit.decisionSummary;
+}
+
+bool ApplicationController::semanticPromptInclusionDeterministicAuthorityPreserved() const {
+    return latestSemanticPromptInclusionResult_.safety.deterministicRetrievalAuthoritative;
+}
+
+QStringList ApplicationController::semanticPromptInclusionChecks() const {
+    return latestSemanticPromptInclusionResult_.checks;
 }
 
 QString ApplicationController::hybridBridgeStatus() const {
@@ -4192,8 +4302,16 @@ QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QStri
 }
 
 PromptContextInjectionResult
-ApplicationController::preparePromptContextInjection(const QString& prompt) const {
-    return injectPromptContext(prompt, promptContextBlocks(prompt), promptContextInjectionPolicy_);
+ApplicationController::preparePromptContextInjection(const QString& prompt) {
+    auto result =
+        injectPromptContext(prompt, promptContextBlocks(prompt), promptContextInjectionPolicy_);
+    const auto assembly = semanticSupplementAssemblyResult();
+    const auto authority =
+        sentinel::core::evaluateSemanticPromptAuthority(assembly, semanticPromptAuthorityPolicy_);
+    latestSemanticPromptInclusionResult_ = sentinel::core::includeSemanticPromptSupplements(
+        result, assembly, authority, semanticPromptInclusionPolicy());
+    result.prompt = latestSemanticPromptInclusionResult_.prompt;
+    return result;
 }
 
 QString ApplicationController::memoryRecallPolicyStatus() const {

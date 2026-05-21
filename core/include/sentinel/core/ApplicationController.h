@@ -947,6 +947,10 @@ public:
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
     PromptContextInjectionResult latestPromptContextInjectionResult() const;
+    bool semanticPromptInclusionEnabled() const;
+    void setSemanticPromptInclusionEnabled(bool enabled);
+    SemanticPromptInclusionPolicy semanticPromptInclusionPolicy() const;
+    SemanticPromptInclusionResult latestSemanticPromptInclusionResult() const;
     QString promptContextInjectionStatus() const;
     QString promptContextInjectionSummary() const;
     int promptContextInjectedBlockCount() const;
@@ -1073,6 +1077,8 @@ public:
     SemanticAcceptanceResult semanticAcceptanceResult() const;
     SemanticSupplementAssemblyPolicy semanticSupplementAssemblyPolicy() const;
     SemanticSupplementAssemblyResult semanticSupplementAssemblyResult() const;
+    SemanticPromptAuthorityPolicy semanticPromptAuthorityPolicy() const;
+    SemanticPromptAuthorityResult semanticPromptAuthorityResult() const;
     QString semanticAcceptanceStatus() const;
     QString semanticAcceptanceReadiness() const;
     QString semanticAcceptanceSummary() const;
@@ -1092,6 +1098,22 @@ public:
     int semanticSupplementAssemblyBlockCount() const;
     int semanticSupplementAssemblyBudgetCharacters() const;
     QStringList semanticSupplementAssemblyChecks() const;
+    QString semanticPromptAuthorityStatus() const;
+    QString semanticPromptAuthorityDecisionSummary() const;
+    QString semanticPromptAuthoritySafetySummary() const;
+    QString semanticPromptAuthorityReadinessSummary() const;
+    QString semanticPromptAuthorityFallbackSummary() const;
+    QString semanticPromptAuthorityAuditSummary() const;
+    int semanticPromptAuthorityWouldIncludeBlockCount() const;
+    QStringList semanticPromptAuthorityChecks() const;
+    QString semanticPromptInclusionStatus() const;
+    QString semanticPromptInclusionSummary() const;
+    int semanticPromptInclusionIncludedCount() const;
+    QString semanticPromptInclusionBudgetSummary() const;
+    QString semanticPromptInclusionFallbackSummary() const;
+    QString semanticPromptInclusionAuditSummary() const;
+    bool semanticPromptInclusionDeterministicAuthorityPreserved() const;
+    QStringList semanticPromptInclusionChecks() const;
     QString hybridBridgeStatus() const;
     QString hybridBridgeReadiness() const;
     QString hybridBridgeSummary() const;
@@ -1347,7 +1369,7 @@ private:
     QList<SemanticCandidate> semanticCandidatesForPrompt(const QString& prompt) const;
     SemanticCandidateArbitration semanticCandidateArbitrationForPrompt(const QString& prompt) const;
     QList<PromptContextBlock> promptContextBlocks(const QString& prompt) const;
-    PromptContextInjectionResult preparePromptContextInjection(const QString& prompt) const;
+    PromptContextInjectionResult preparePromptContextInjection(const QString& prompt);
     void finishLocalInferenceRequest(const QString& requestId,
                                      const LocalInferenceResponse& response);
     void updateLocalInferenceStreamRequest(const QString& requestId,
@@ -1436,6 +1458,8 @@ private:
     HybridRetrievalBridgePolicy hybridRetrievalBridgePolicy_;
     SemanticAcceptancePolicy semanticAcceptancePolicy_;
     SemanticSupplementAssemblyPolicy semanticSupplementAssemblyPolicy_;
+    SemanticPromptAuthorityPolicy semanticPromptAuthorityPolicy_;
+    SemanticPromptInclusionPolicy semanticPromptInclusionPolicy_;
     SemanticProviderPolicy semanticProviderPolicy_;
     SemanticProviderMode selectedSemanticProviderMode_ = SemanticProviderMode::Disabled;
     SemanticCandidatePolicy semanticCandidatePolicy_;
@@ -1443,6 +1467,7 @@ private:
     SemanticArbitrationPolicy semanticArbitrationPolicy_;
     PromptContextInjectionPolicy promptContextInjectionPolicy_;
     PromptContextInjectionResult latestPromptContextInjectionResult_;
+    SemanticPromptInclusionResult latestSemanticPromptInclusionResult_;
     std::unique_ptr<ChatSession> chatSession_;
     std::unique_ptr<IChatHistoryStore> chatHistoryStore_;
     std::unique_ptr<IConversationStore> conversationStore_;

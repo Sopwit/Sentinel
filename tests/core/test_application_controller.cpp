@@ -757,6 +757,7 @@ private slots:
     void hybridBridgeExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
     void semanticAcceptanceExposureIsBoundedAndDoesNotMutatePlanningOrPrompt();
     void semanticSupplementAssemblyExposureIsDisabledAndDoesNotMutatePlanningOrPrompt();
+    void semanticPromptAuthorityExposureIsDefaultDeniedAndDoesNotMutatePrompt();
     void semanticCandidateOrchestrationDoesNotMutatePrompt();
     void promptContextInjectionDoesNotMutateMemoryOrCandidates();
     void promptContextInjectionRespectsSafetyGateBeforeAssembly();
@@ -4338,6 +4339,54 @@ void ApplicationControllerTest::
         QStringLiteral("RetrievalPlanningResult mutation: no")));
     QVERIFY(controller->semanticSupplementAssemblyChecks().contains(
         QStringLiteral("Deterministic context replacement: no")));
+
+    const auto planningAfter = controller->retrievalPlanningResult();
+    const auto promptAfter = controller->latestPromptContextInjectionResult();
+    QCOMPARE(planningAfter.selectedCandidateCount, planningBefore.selectedCandidateCount);
+    QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
+    QCOMPARE(promptAfter.injectedBlockCount, promptBefore.injectedBlockCount);
+    QCOMPARE(promptAfter.status, promptBefore.status);
+}
+
+void ApplicationControllerTest::
+    semanticPromptAuthorityExposureIsDefaultDeniedAndDoesNotMutatePrompt() {
+    const auto controller = makeController();
+    controller->sendMessage(QStringLiteral("semantic prompt authority deterministic context"));
+    controller->remember(QStringLiteral("semantic.authority"),
+                         QStringLiteral("deterministic retrieval remains authoritative"));
+    const auto planningBefore = controller->retrievalPlanningResult();
+    const auto promptBefore = controller->latestPromptContextInjectionResult();
+
+    QCOMPARE(controller->semanticPromptAuthorityStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->semanticPromptAuthorityWouldIncludeBlockCount(), 0);
+    QCOMPARE(controller->semanticPromptInclusionEnabled(), false);
+    QCOMPARE(controller->semanticPromptInclusionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(controller->semanticPromptInclusionIncludedCount(), 0);
+    QVERIFY(
+        controller->semanticPromptAuthorityDecisionSummary().contains(QStringLiteral("Denied")));
+    QVERIFY(controller->semanticPromptAuthoritySafetySummary().contains(
+        QStringLiteral("deterministic-only fallback")));
+    QVERIFY(controller->semanticPromptAuthorityFallbackSummary().contains(
+        QStringLiteral("deterministic prompt assembly remains unchanged")));
+    QVERIFY(controller->semanticPromptAuthorityAuditSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->semanticPromptAuthorityChecks().contains(
+        QStringLiteral("Live prompt mutation: blocked")));
+    QVERIFY(controller->semanticPromptAuthorityChecks().contains(
+        QStringLiteral("PromptContextBlock mutation: no")));
+    QVERIFY(controller->semanticPromptAuthorityChecks().contains(
+        QStringLiteral("RetrievalPlanningResult mutation: no")));
+    QVERIFY(controller->semanticPromptAuthorityChecks().contains(
+        QStringLiteral("Provider handles exposed: no")));
+    QVERIFY(controller->semanticPromptInclusionSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->semanticPromptInclusionBudgetSummary().contains(QStringLiteral("0 of")));
+    QVERIFY(controller->semanticPromptInclusionFallbackSummary().contains(
+        QStringLiteral("deterministic-only prompt assembly")));
+    QVERIFY(controller->semanticPromptInclusionAuditSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->semanticPromptInclusionDeterministicAuthorityPreserved());
+    QVERIFY(controller->semanticPromptInclusionChecks().contains(
+        QStringLiteral("Deterministic retrieval authoritative: yes")));
+    QVERIFY(controller->semanticPromptInclusionChecks().contains(
+        QStringLiteral("Raw prompt payloads exposed: no")));
 
     const auto planningAfter = controller->retrievalPlanningResult();
     const auto promptAfter = controller->latestPromptContextInjectionResult();
