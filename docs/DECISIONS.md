@@ -2372,3 +2372,24 @@ Boundary rules:
   paths, and debug dumps remain hidden.
 - The checkpoint does not authorize filesystem indexing, cloud/API/vector provider activation,
   provider downloads, tools/plugins, autonomous actions, or runtime authority expansion.
+
+## 94. Agent Task Runtime Is Metadata-Only
+
+Decision: Agent task orchestration starts as a metadata-only runtime boundary through
+`IAgentTaskRuntime`.
+
+Reason: Sentinel needs task planning/readiness visibility before any future tool or autonomous
+runtime authority is introduced. Keeping tasks value-only allows controller and QML exposure to
+stabilize without permitting execution.
+
+Boundary rules:
+
+- `AgentTask`, task ids, type/status/priority/source enums, plans, steps, results, traces, safety
+  policy, and runtime status are value records.
+- `StaticAgentTaskRuntime` creates deterministic local task metadata and ordered traces.
+- Execution is refused by design and `AgentTaskResult::executionAttempted` remains false.
+- Safety policy blocks tools, plugins, filesystem/system actions, shell/subprocess execution,
+  cloud/API calls, background workers, and autonomous loops.
+- QML receives only status strings, counts, latest summaries, and trace summaries.
+- Any real tool/task runtime must arrive in a separate phase behind explicit permission, safety,
+  approval, sandbox, and UI boundaries.

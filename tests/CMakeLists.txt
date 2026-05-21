@@ -29,6 +29,7 @@ add_sentinel_core_test(test_in_memory_tool_registry core/test_in_memory_tool_reg
 add_sentinel_core_test(test_agent_activity_log core/test_agent_activity_log.cpp)
 add_sentinel_core_test(test_agent_pipeline_result core/test_agent_pipeline_result.cpp)
 add_sentinel_core_test(test_agent_runtime_context core/test_agent_runtime_context.cpp)
+add_sentinel_core_test(test_agent_task_runtime core/test_agent_task_runtime.cpp)
 add_sentinel_core_test(test_orchestration_snapshot core/test_orchestration_snapshot.cpp)
 add_sentinel_core_test(test_static_orchestration_diagnostics
                        core/test_static_orchestration_diagnostics.cpp)

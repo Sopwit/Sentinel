@@ -3,6 +3,7 @@
 #include "sentinel/core/AgentActivityLog.h"
 #include "sentinel/core/AgentPipelineResult.h"
 #include "sentinel/core/AgentRuntimeContext.h"
+#include "sentinel/core/AgentTaskRuntime.h"
 #include "sentinel/core/ChatSession.h"
 #include "sentinel/core/ContextAssembly.h"
 #include "sentinel/core/ConversationHistoryMetadata.h"
@@ -135,6 +136,11 @@ class ApplicationController final : public QObject {
                    orchestrationSnapshotChanged)
     Q_PROPERTY(QStringList orchestrationDiagnostics READ orchestrationDiagnostics NOTIFY
                    orchestrationSnapshotChanged)
+    Q_PROPERTY(QString agentTaskRuntimeStatus READ agentTaskRuntimeStatus CONSTANT)
+    Q_PROPERTY(QString agentTaskRuntimeSummary READ agentTaskRuntimeSummary CONSTANT)
+    Q_PROPERTY(int agentTaskRuntimeTaskCount READ agentTaskRuntimeTaskCount CONSTANT)
+    Q_PROPERTY(QString latestAgentTaskSummary READ latestAgentTaskSummary CONSTANT)
+    Q_PROPERTY(QStringList agentTaskTraceSummaries READ agentTaskTraceSummaries CONSTANT)
     Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
     Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
     Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary CONSTANT)
@@ -746,7 +752,8 @@ public:
         std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment = nullptr,
         std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider = nullptr,
         std::unique_ptr<ILocalInferenceWorker> localInferenceWorker = nullptr,
-        std::unique_ptr<IConversationStore> conversationStore = nullptr, QObject* parent = nullptr);
+        std::unique_ptr<IConversationStore> conversationStore = nullptr,
+        std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime = nullptr, QObject* parent = nullptr);
 
     QString providerName() const;
     QString providerStatus() const;
@@ -809,6 +816,11 @@ public:
     QString orchestrationReadinessStatus() const;
     QString orchestrationReadinessSummary() const;
     QStringList orchestrationDiagnostics() const;
+    QString agentTaskRuntimeStatus() const;
+    QString agentTaskRuntimeSummary() const;
+    int agentTaskRuntimeTaskCount() const;
+    QString latestAgentTaskSummary() const;
+    QStringList agentTaskTraceSummaries() const;
     QString localRuntimeStatus() const;
     QString localRuntimeHealth() const;
     QString localRuntimeSummary() const;
@@ -1427,6 +1439,7 @@ private:
     std::unique_ptr<IRuntimeSafetyPolicy> runtimeSafetyPolicy_;
     std::unique_ptr<IRuntimePipeline> runtimePipeline_;
     std::unique_ptr<IExecutionLifecycle> executionLifecycle_;
+    std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime_;
     std::unique_ptr<ExecutionCoordinator> executionCoordinator_;
     std::unique_ptr<ILocalRuntimeAdapter> localRuntimeAdapter_;
     std::unique_ptr<IProviderRuntimeBridge> providerRuntimeBridge_;

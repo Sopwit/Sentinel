@@ -2,6 +2,32 @@
 
 ## Completed / Stable
 
+### Phase 18.0-18.3: Agent Task Runtime Foundation
+
+Completed. Adds the agent task runtime foundation as deterministic metadata/readiness
+infrastructure without granting execution authority.
+
+Scope:
+
+- Added `AgentTask`, `AgentTaskId`, task type/status/priority/source enums, task plans, steps,
+  results, traces, safety policy, and runtime status records.
+- Added `IAgentTaskRuntime` and `StaticAgentTaskRuntime`.
+- The static runtime seeds deterministic metadata tasks for summarizing conversation, inspecting
+  memory status, planning response, preparing retrieval context, preparing voice response, and
+  preparing export action.
+- Runtime results always refuse execution and record ordered trace summaries at the execution
+  boundary.
+- Controller and desktop view model expose only QML-safe active status, task count, latest task
+  summary, runtime summary, and latest trace summaries.
+- Agents page shows compact read-only task runtime readiness/status with no execution, approval,
+  tool, plugin, filesystem, shell, or cloud controls.
+
+Known limitation:
+
+- Phase 18 starts from the documented clang-tidy-clean Phase 17.31-17.33 checkpoint and preserves
+  the no-execution posture. Future tool/task execution requires a separate explicit runtime phase
+  with permission, safety, approval, and UI scope.
+
 ### Phase 17.31-17.33: Semantic Retrieval And Prompt Inclusion Checkpoint
 
 Completed. Checkpoints the full Phase 17 semantic architecture after controlled prompt inclusion

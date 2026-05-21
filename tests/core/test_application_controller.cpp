@@ -620,6 +620,7 @@ private slots:
     void exposesMemoryCatalogMetadata();
     void exposesOrchestrationSnapshotMetadata();
     void exposesOrchestrationReadinessDiagnostics();
+    void exposesAgentTaskRuntimeMetadata();
     void exposesLocalRuntimeMetadata();
     void exposesOllamaRuntimeBoundaryMetadata();
     void exposesLocalInferenceBoundaryMetadata();
@@ -983,6 +984,18 @@ void ApplicationControllerTest::exposesOrchestrationReadinessDiagnostics() {
         QStringLiteral("Info: Cloud Providers - Cloud provider metadata remains not configured.")));
     QVERIFY(controller->orchestrationDiagnostics().contains(
         QStringLiteral("Info: Execution Capability - Execution capability remains disabled.")));
+}
+
+void ApplicationControllerTest::exposesAgentTaskRuntimeMetadata() {
+    const auto controller = makeController();
+
+    QCOMPARE(controller->agentTaskRuntimeStatus(), QStringLiteral("Refusing Execution"));
+    QCOMPARE(controller->agentTaskRuntimeTaskCount(), 6);
+    QVERIFY(controller->agentTaskRuntimeSummary().contains(QStringLiteral("refuses execution")));
+    QVERIFY(controller->latestAgentTaskSummary().contains(QStringLiteral("Prepare Export Action")));
+    QCOMPARE(controller->agentTaskTraceSummaries().size(), 3);
+    QVERIFY(controller->agentTaskTraceSummaries().last().contains(
+        QStringLiteral("Execution Boundary")));
 }
 
 void ApplicationControllerTest::exposesLocalRuntimeMetadata() {

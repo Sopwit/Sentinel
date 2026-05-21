@@ -615,7 +615,8 @@ ApplicationController::ApplicationController(
     std::unique_ptr<IVoiceRuntimeEnvironment> voiceRuntimeEnvironment,
     std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider,
     std::unique_ptr<ILocalInferenceWorker> localInferenceWorker,
-    std::unique_ptr<IConversationStore> conversationStore, QObject* parent)
+    std::unique_ptr<IConversationStore> conversationStore,
+    std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
@@ -647,6 +648,8 @@ ApplicationController::ApplicationController(
                                        : std::make_unique<StaticRuntimePipeline>()),
       executionLifecycle_(executionLifecycle ? std::move(executionLifecycle)
                                              : std::make_unique<StaticExecutionLifecycle>()),
+      agentTaskRuntime_(agentTaskRuntime ? std::move(agentTaskRuntime)
+                                         : std::make_unique<StaticAgentTaskRuntime>()),
       executionCoordinator_(executionCoordinator ? std::move(executionCoordinator)
                                                  : std::make_unique<ExecutionCoordinator>()),
       localRuntimeAdapter_(localRuntimeAdapter ? std::move(localRuntimeAdapter)
@@ -1098,6 +1101,38 @@ QString ApplicationController::orchestrationReadinessSummary() const {
 
 QStringList ApplicationController::orchestrationDiagnostics() const {
     return orchestrationDiagnosticSummaries(currentOrchestrationReadinessReport());
+}
+
+QString ApplicationController::agentTaskRuntimeStatus() const {
+    if (!agentTaskRuntime_) {
+        return agentTaskRuntimeStateName(AgentTaskRuntimeState::RefusingExecution);
+    }
+    return agentTaskRuntimeStateName(agentTaskRuntime_->runtimeStatus().state);
+}
+
+QString ApplicationController::agentTaskRuntimeSummary() const {
+    if (!agentTaskRuntime_) {
+        return QStringLiteral("No agent task runtime boundary available.");
+    }
+    return agentTaskRuntime_->runtimeStatus().summary;
+}
+
+int ApplicationController::agentTaskRuntimeTaskCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->runtimeStatus().taskCount : 0;
+}
+
+QString ApplicationController::latestAgentTaskSummary() const {
+    if (!agentTaskRuntime_ || agentTaskRuntime_->tasks().isEmpty()) {
+        return QStringLiteral("No agent task metadata available.");
+    }
+    return agentTaskSummary(agentTaskRuntime_->tasks().last());
+}
+
+QStringList ApplicationController::agentTaskTraceSummaries() const {
+    if (!agentTaskRuntime_ || agentTaskRuntime_->tasks().isEmpty()) {
+        return {};
+    }
+    return sentinel::core::agentTaskTraceSummaries(agentTaskRuntime_->tasks().last().traces);
 }
 
 QString ApplicationController::localRuntimeStatus() const {
