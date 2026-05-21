@@ -92,20 +92,25 @@ Phase 6.7 readiness diagnostics inspect existing orchestration metadata only. Th
 storage paths, scan files, query memory stores, build embeddings, run semantic search, mutate
 memory, or perform provider/model/tool execution.
 
-Phase 18.0 through Phase 18.3 add an agent task runtime boundary beside the earlier agent and
-runtime metadata layers:
+Phase 18.0 through Phase 18.6 add an agent task runtime and queue metadata boundary beside the
+earlier agent and runtime metadata layers:
 
 - `AgentTaskRuntime.h` defines value-only task ids, types, statuses, priorities, sources, plans,
-  steps, results, traces, safety policy, and runtime status records.
+  steps, results, traces, lifecycle events, queue policy, queue summaries, safety policy, and
+  runtime status records.
 - `IAgentTaskRuntime` is the task orchestration boundary.
-- `StaticAgentTaskRuntime` creates deterministic local metadata tasks and refuses execution by
-  design.
+- `StaticAgentTaskRuntime` creates deterministic local metadata tasks, keeps an in-memory queue
+  ordered by priority, queue sequence, and task id, records lifecycle transitions, and refuses
+  execution by design.
 - Task examples are metadata only: summarize conversation, inspect memory status, plan response,
   prepare retrieval context, prepare voice response, and prepare export action.
+- Tasks may be queued, listed, marked planned, blocked, completed as metadata, or refused. These
+  transitions update metadata only and never start workers.
 - The boundary does not execute tools, plugins, filesystem actions, shell/subprocess commands,
   provider/model calls, cloud/API calls, background workers, or autonomous loops.
 - `ApplicationController` and `DesktopShellViewModel` expose only strings, counts, and string
-  lists for runtime status, task count, latest task summary, and trace summaries.
+  lists for runtime status, queue counts, latest task/lifecycle summaries, task summaries, and
+  trace summaries.
 
 Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit
 review flow beside, not inside, the existing memory contracts:

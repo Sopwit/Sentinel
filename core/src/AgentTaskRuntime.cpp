@@ -34,6 +34,38 @@ AgentTaskTrace traceFor(int order, const QString& stage, AgentTaskStatus status,
     return AgentTaskTrace{order, stage, status, summary};
 }
 
+int priorityRank(AgentTaskPriority priority) {
+    switch (priority) {
+    case AgentTaskPriority::High:
+        return 0;
+    case AgentTaskPriority::Normal:
+        return 1;
+    case AgentTaskPriority::Low:
+        return 2;
+    }
+
+    return 1;
+}
+
+QString defaultTransitionSummary(AgentTaskStatus status) {
+    switch (status) {
+    case AgentTaskStatus::Queued:
+        return QStringLiteral("Task queued as deterministic metadata.");
+    case AgentTaskStatus::Planned:
+        return QStringLiteral("Task marked planned as metadata.");
+    case AgentTaskStatus::Active:
+        return QStringLiteral("Task marked active as metadata only.");
+    case AgentTaskStatus::Blocked:
+        return QStringLiteral("Task blocked before execution.");
+    case AgentTaskStatus::CompletedMetadata:
+        return QStringLiteral("Task completed as metadata without execution.");
+    case AgentTaskStatus::Refused:
+        return QStringLiteral("Task refused at the no-execution boundary.");
+    }
+
+    return QStringLiteral("Task lifecycle updated.");
+}
+
 } // namespace
 
 QString agentTaskTypeName(AgentTaskType type) {
@@ -57,8 +89,16 @@ QString agentTaskTypeName(AgentTaskType type) {
 
 QString agentTaskStatusName(AgentTaskStatus status) {
     switch (status) {
+    case AgentTaskStatus::Queued:
+        return QStringLiteral("Queued");
     case AgentTaskStatus::Planned:
         return QStringLiteral("Planned");
+    case AgentTaskStatus::Active:
+        return QStringLiteral("Active");
+    case AgentTaskStatus::Blocked:
+        return QStringLiteral("Blocked");
+    case AgentTaskStatus::CompletedMetadata:
+        return QStringLiteral("Completed Metadata");
     case AgentTaskStatus::Refused:
         return QStringLiteral("Refused");
     }
@@ -107,6 +147,19 @@ QString agentTaskRuntimeStateName(AgentTaskRuntimeState state) {
     return QStringLiteral("Ready");
 }
 
+QString agentTaskQueueStatusName(AgentTaskQueueStatus status) {
+    switch (status) {
+    case AgentTaskQueueStatus::Ready:
+        return QStringLiteral("Ready");
+    case AgentTaskQueueStatus::Empty:
+        return QStringLiteral("Empty");
+    case AgentTaskQueueStatus::RefusingExecution:
+        return QStringLiteral("Refusing Execution");
+    }
+
+    return QStringLiteral("Ready");
+}
+
 QString agentTaskSummary(const AgentTask& task) {
     return QStringLiteral("%1 [%2/%3]: %4")
         .arg(agentTaskTypeName(task.type), agentTaskStatusName(task.status),
@@ -131,6 +184,50 @@ QStringList agentTaskTraceSummaries(const QList<AgentTaskTrace>& traces) {
     QStringList summaries;
     for (const auto& trace : ordered) {
         summaries.append(agentTaskTraceSummary(trace));
+    }
+    return summaries;
+}
+
+QString agentTaskLifecycleEventSummary(const AgentTaskLifecycleEvent& event) {
+    return QStringLiteral("%1. %2 [%3]: %4")
+        .arg(event.order)
+        .arg(event.taskId, agentTaskStatusName(event.status),
+             event.summary.isEmpty() ? defaultTransitionSummary(event.status) : event.summary);
+}
+
+QStringList agentTaskLifecycleSummaries(const AgentTaskLifecycle& lifecycle) {
+    auto ordered = lifecycle.events;
+    std::sort(ordered.begin(), ordered.end(),
+              [](const AgentTaskLifecycleEvent& left, const AgentTaskLifecycleEvent& right) {
+                  if (left.order == right.order) {
+                      return left.taskId < right.taskId;
+                  }
+                  return left.order < right.order;
+              });
+
+    QStringList summaries;
+    for (const auto& event : ordered) {
+        summaries.append(agentTaskLifecycleEventSummary(event));
+    }
+    return summaries;
+}
+
+QString agentTaskQueueSummaryText(const AgentTaskQueueSummary& summary) {
+    return QStringLiteral(
+               "%1 queue: %2 total, %3 active, %4 planned, %5 blocked, %6 completed, %7 refused.")
+        .arg(agentTaskQueueStatusName(summary.status))
+        .arg(summary.totalCount)
+        .arg(summary.activeCount)
+        .arg(summary.plannedCount)
+        .arg(summary.blockedCount)
+        .arg(summary.completedCount)
+        .arg(summary.refusedCount);
+}
+
+QStringList agentTaskQueueTaskSummaries(const AgentTaskQueue& queue) {
+    QStringList summaries;
+    for (const auto& task : queue.tasks) {
+        summaries.append(agentTaskSummary(task));
     }
     return summaries;
 }
@@ -172,7 +269,17 @@ AgentTaskRuntimeStatus StaticAgentTaskRuntime::runtimeStatus() const {
 }
 
 QList<AgentTask> StaticAgentTaskRuntime::tasks() const {
-    return tasks_;
+    return orderedTasks();
+}
+
+AgentTaskQueue StaticAgentTaskRuntime::queue() const {
+    const auto summary = queueSummary();
+    return AgentTaskQueue{
+        summary.status,
+        orderedTasks(),
+        AgentTaskQueuePolicy{},
+        summary,
+    };
 }
 
 AgentTask StaticAgentTaskRuntime::createTask(AgentTaskType type, AgentTaskSource source,
@@ -181,6 +288,35 @@ AgentTask StaticAgentTaskRuntime::createTask(AgentTaskType type, AgentTaskSource
                          summary.trimmed().isEmpty() ? defaultTaskSummary(type) : summary);
     tasks_.append(task);
     return task;
+}
+
+AgentTaskQueueResult StaticAgentTaskRuntime::markTaskPlanned(const AgentTaskId& id) {
+    return updateTaskStatus(id, AgentTaskStatus::Planned,
+                            QStringLiteral("Task marked planned as metadata only."), true);
+}
+
+AgentTaskQueueResult StaticAgentTaskRuntime::markTaskBlocked(const AgentTaskId& id,
+                                                             const QString& reason) {
+    const auto summary = reason.trimmed().isEmpty()
+        ? QStringLiteral("Task blocked before execution.")
+        : QStringLiteral("Task blocked before execution: %1").arg(reason.trimmed());
+    return updateTaskStatus(id, AgentTaskStatus::Blocked, summary, true);
+}
+
+AgentTaskQueueResult StaticAgentTaskRuntime::completeTaskAsMetadata(const AgentTaskId& id,
+                                                                    const QString& summary) {
+    const auto resultSummary = summary.trimmed().isEmpty()
+        ? QStringLiteral("Task completed as metadata without execution.")
+        : summary.trimmed();
+    return updateTaskStatus(id, AgentTaskStatus::CompletedMetadata, resultSummary, true);
+}
+
+AgentTaskQueueResult StaticAgentTaskRuntime::refuseTask(const AgentTaskId& id,
+                                                        const QString& reason) {
+    const auto summary = reason.trimmed().isEmpty()
+        ? QStringLiteral("Task refused at the no-execution boundary.")
+        : QStringLiteral("Task refused at the no-execution boundary: %1").arg(reason.trimmed());
+    return updateTaskStatus(id, AgentTaskStatus::Refused, summary, true);
 }
 
 AgentTaskPlan StaticAgentTaskRuntime::planTask(const AgentTask& task) const {
@@ -217,15 +353,26 @@ AgentTask StaticAgentTaskRuntime::makeTask(AgentTaskType type, AgentTaskSource s
     AgentTask task;
     task.id = id;
     task.type = type;
-    task.status = AgentTaskStatus::Planned;
+    task.status = AgentTaskStatus::Queued;
     task.priority = priority;
     task.source = source;
+    task.queueOrder = nextTaskSequence_ - 1;
     task.summary = summary;
     task.safetyPolicy = AgentTaskSafetyPolicy{};
     task.plan = planTask(task);
     task.result = refuseExecution(task);
+    task.lifecycle = AgentTaskLifecycle{
+        task.id.value,
+        QList<AgentTaskLifecycleEvent>{
+            AgentTaskLifecycleEvent{nextLifecycleSequence_++, task.id.value,
+                                    AgentTaskStatus::Queued,
+                                    QStringLiteral("%1 task queued as metadata from %2.")
+                                        .arg(agentTaskTypeName(type), agentTaskSourceName(source))},
+        },
+        QStringLiteral("%1 task queued as metadata.").arg(agentTaskTypeName(type)),
+    };
     task.traces = {
-        traceFor(1, QStringLiteral("Task Created"), AgentTaskStatus::Planned,
+        traceFor(1, QStringLiteral("Task Queued"), AgentTaskStatus::Queued,
                  QStringLiteral("%1 task metadata created from %2.")
                      .arg(agentTaskTypeName(type), agentTaskSourceName(source))),
         traceFor(2, QStringLiteral("Plan Prepared"), AgentTaskStatus::Planned, task.plan.summary),
@@ -233,6 +380,95 @@ AgentTask StaticAgentTaskRuntime::makeTask(AgentTaskType type, AgentTaskSource s
                  task.result.summary),
     };
     return task;
+}
+
+AgentTaskQueueResult StaticAgentTaskRuntime::updateTaskStatus(const AgentTaskId& id,
+                                                              AgentTaskStatus status,
+                                                              const QString& summary,
+                                                              bool accepted) {
+    for (auto& task : tasks_) {
+        if (task.id.value != id.value) {
+            continue;
+        }
+
+        task.status = status;
+        task.lifecycle.events.append(AgentTaskLifecycleEvent{
+            nextLifecycleSequence_++, task.id.value, status,
+            summary.trimmed().isEmpty() ? defaultTransitionSummary(status) : summary.trimmed()});
+        task.lifecycle.summary = QStringLiteral("%1 [%2]: %3")
+                                     .arg(task.id.value, agentTaskStatusName(status),
+                                          task.lifecycle.events.last().summary);
+        task.traces.append(traceFor(task.traces.size() + 1, QStringLiteral("Lifecycle Update"),
+                                    status, task.lifecycle.events.last().summary));
+        if (status == AgentTaskStatus::Refused) {
+            task.result = refuseExecution(task);
+        }
+        return AgentTaskQueueResult{status, task.id.value, task.lifecycle.events.last().summary,
+                                    accepted, false};
+    }
+
+    return AgentTaskQueueResult{
+        AgentTaskStatus::Refused,
+        id.value,
+        QStringLiteral("Task id not found; queue request refused without execution."),
+        false,
+        false,
+    };
+}
+
+AgentTaskQueueSummary StaticAgentTaskRuntime::queueSummary() const {
+    AgentTaskQueueSummary summary;
+    summary.status =
+        tasks_.isEmpty() ? AgentTaskQueueStatus::Empty : AgentTaskQueueStatus::RefusingExecution;
+    summary.totalCount = static_cast<int>(tasks_.size());
+
+    int latestOrder = -1;
+    for (const auto& task : tasks_) {
+        switch (task.status) {
+        case AgentTaskStatus::Queued:
+        case AgentTaskStatus::Planned:
+            ++summary.plannedCount;
+            break;
+        case AgentTaskStatus::Active:
+            ++summary.activeCount;
+            break;
+        case AgentTaskStatus::Blocked:
+            ++summary.blockedCount;
+            break;
+        case AgentTaskStatus::CompletedMetadata:
+            ++summary.completedCount;
+            break;
+        case AgentTaskStatus::Refused:
+            ++summary.refusedCount;
+            break;
+        }
+
+        for (const auto& event : task.lifecycle.events) {
+            if (event.order > latestOrder) {
+                latestOrder = event.order;
+                summary.latestLifecycleSummary = agentTaskLifecycleEventSummary(event);
+            }
+        }
+    }
+
+    summary.summary = agentTaskQueueSummaryText(summary);
+    return summary;
+}
+
+QList<AgentTask> StaticAgentTaskRuntime::orderedTasks() const {
+    auto ordered = tasks_;
+    std::sort(ordered.begin(), ordered.end(), [](const AgentTask& left, const AgentTask& right) {
+        const auto leftPriority = priorityRank(left.priority);
+        const auto rightPriority = priorityRank(right.priority);
+        if (leftPriority != rightPriority) {
+            return leftPriority < rightPriority;
+        }
+        if (left.queueOrder != right.queueOrder) {
+            return left.queueOrder < right.queueOrder;
+        }
+        return left.id.value < right.id.value;
+    });
+    return ordered;
 }
 
 } // namespace sentinel::core

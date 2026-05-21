@@ -991,8 +991,16 @@ void ApplicationControllerTest::exposesAgentTaskRuntimeMetadata() {
 
     QCOMPARE(controller->agentTaskRuntimeStatus(), QStringLiteral("Refusing Execution"));
     QCOMPARE(controller->agentTaskRuntimeTaskCount(), 6);
+    QCOMPARE(controller->agentTaskQueueCount(), 6);
+    QCOMPARE(controller->agentTaskQueuePlannedCount(), 6);
+    QCOMPARE(controller->agentTaskQueueActiveCount(), 0);
+    QCOMPARE(controller->agentTaskQueueBlockedCount(), 0);
+    QCOMPARE(controller->agentTaskQueueCompletedCount(), 0);
+    QCOMPARE(controller->agentTaskQueueRefusedCount(), 0);
     QVERIFY(controller->agentTaskRuntimeSummary().contains(QStringLiteral("refuses execution")));
     QVERIFY(controller->latestAgentTaskSummary().contains(QStringLiteral("Prepare Export Action")));
+    QVERIFY(controller->latestAgentTaskLifecycleSummary().contains(QStringLiteral("queued")));
+    QCOMPARE(controller->agentTaskQueueSummaries().size(), 6);
     QCOMPARE(controller->agentTaskTraceSummaries().size(), 3);
     QVERIFY(controller->agentTaskTraceSummaries().last().contains(
         QStringLiteral("Execution Boundary")));

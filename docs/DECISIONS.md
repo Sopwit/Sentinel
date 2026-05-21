@@ -2373,6 +2373,26 @@ Boundary rules:
 - The checkpoint does not authorize filesystem indexing, cloud/API/vector provider activation,
   provider downloads, tools/plugins, autonomous actions, or runtime authority expansion.
 
+## 94. Agent Task Queue Is Metadata-Only
+
+Decision: Phase 18.4 through Phase 18.6 add an agent task queue and lifecycle read model, but the
+queue is not an executor or scheduler.
+
+Reason: The Agents surface needs deterministic task readiness and lifecycle visibility before any
+future execution phase. That visibility must not create implicit authority to run tools, spawn
+workers, touch the filesystem, call providers, or loop autonomously.
+
+Boundary rules:
+
+- Queue ordering is deterministic by priority, queue sequence, and task id.
+- Lifecycle transitions are metadata-only: queued, planned, blocked, completed as metadata, and
+  refused.
+- Execution attempts are refused safely and keep `executionAttempted` false.
+- There are no execution buttons, approval controls, tool/plugin controls, shell controls,
+  filesystem controls, background workers, or autonomous loops.
+- QML may expose only counts, task summaries, latest lifecycle summaries, and ordered trace
+  summaries.
+
 ## 94. Agent Task Runtime Is Metadata-Only
 
 Decision: Agent task orchestration starts as a metadata-only runtime boundary through
