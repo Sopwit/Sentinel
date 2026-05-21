@@ -2810,6 +2810,15 @@ SemanticAcceptanceResult ApplicationController::semanticAcceptanceResult() const
                                               semanticAcceptancePolicy_);
 }
 
+SemanticSupplementAssemblyPolicy ApplicationController::semanticSupplementAssemblyPolicy() const {
+    return semanticSupplementAssemblyPolicy_;
+}
+
+SemanticSupplementAssemblyResult ApplicationController::semanticSupplementAssemblyResult() const {
+    return sentinel::core::assembleSemanticSupplements(semanticAcceptanceResult(),
+                                                       semanticSupplementAssemblyPolicy_);
+}
+
 QString ApplicationController::semanticAcceptanceStatus() const {
     return semanticAcceptanceStatusName(semanticAcceptanceResult().status);
 }
@@ -2859,6 +2868,38 @@ QStringList ApplicationController::semanticAcceptanceCandidateSummaries() const 
 
 QStringList ApplicationController::semanticAcceptanceChecks() const {
     return semanticAcceptanceResult().checks;
+}
+
+QString ApplicationController::semanticSupplementAssemblyStatus() const {
+    return semanticSupplementAssemblyStatusName(semanticSupplementAssemblyResult().status);
+}
+
+QString ApplicationController::semanticSupplementAssemblyReadiness() const {
+    return semanticSupplementAssemblyResult().readiness.summary;
+}
+
+QString ApplicationController::semanticSupplementAssemblySummary() const {
+    return semanticSupplementAssemblyResult().summary;
+}
+
+QString ApplicationController::semanticSupplementAssemblyBudgetSummary() const {
+    return semanticSupplementAssemblyResult().budget.summary;
+}
+
+QString ApplicationController::semanticSupplementAssemblySafetySummary() const {
+    return semanticSupplementAssemblyResult().safety.summary;
+}
+
+int ApplicationController::semanticSupplementAssemblyBlockCount() const {
+    return semanticSupplementAssemblyResult().bundle.blockCount;
+}
+
+int ApplicationController::semanticSupplementAssemblyBudgetCharacters() const {
+    return semanticSupplementAssemblyResult().budget.maxCharacters;
+}
+
+QStringList ApplicationController::semanticSupplementAssemblyChecks() const {
+    return semanticSupplementAssemblyResult().checks;
 }
 
 QString ApplicationController::hybridBridgeStatus() const {

@@ -428,6 +428,35 @@ Still out of scope:
   filesystem indexing, cloud/API/vector providers, autonomous actions, tools/plugins, provider
   handles, filesystem paths, and debug dumps.
 
+## Phase 17.22-17.24: Semantic Supplement Prompt Assembly Readiness
+
+Completed. Prepared accepted semantic supplements for future safe prompt assembly without granting
+semantic prompt authority.
+
+Delivered:
+
+- `SemanticSupplementBlock`, `SemanticSupplementBundle`,
+  `SemanticSupplementAssemblyPolicy`, `SemanticSupplementAssemblyStatus`,
+  `SemanticSupplementAssemblyResult`, `SemanticSupplementBudget`,
+  `SemanticSupplementReadiness`, and `SemanticSupplementSafetyReport`.
+- Disabled-by-default assembly that reads `SemanticAcceptanceResult` and returns safe fallback
+  metadata unless a guarded test-only assembly policy is explicitly enabled.
+- Separate bounded supplement metadata bundles with deterministic ordering and deterministic
+  truncation.
+- Authority checks proving supplements cannot mutate `PromptContextBlock`, mutate
+  `RetrievalPlanningResult`, replace/reorder deterministic context, override conversation
+  windows/summaries/committed memory/runtime metadata, or enter live prompts.
+- Controller/view-model/QML exposure for readiness/status, supplement count, budget summary,
+  safety summary, disabled-by-default state, and non-authoritative checks.
+- Tests for disabled fallback, bounded assembly, deterministic ordering/truncation, prompt
+  behavior stability, deterministic context separation, and controller/view-model exposure.
+
+Still out of scope:
+
+- Live semantic prompt authority, semantic prompt injection, raw prompt block display, raw
+  vectors/scores, provider handles, filesystem paths, debug dumps, filesystem indexing,
+  cloud/API/vector providers, autonomous actions, tools/plugins, and broad UI redesign.
+
 ## Phase 15.8: Async Local Runtime Worker Foundation
 
 Completed. Local Ollama chat inference now crosses an async worker boundary before real

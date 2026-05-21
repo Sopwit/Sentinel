@@ -2,6 +2,7 @@
 
 #include <QtTest>
 
+using sentinel::core::assembleSemanticSupplements;
 using sentinel::core::ContextAssemblySourceKind;
 using sentinel::core::EmbeddingDocument;
 using sentinel::core::EmbeddingGenerationPolicy;
@@ -34,6 +35,7 @@ using sentinel::core::RetrievalSourcePriority;
 using sentinel::core::selectSemanticProvider;
 using sentinel::core::semanticAcceptance;
 using sentinel::core::SemanticAcceptancePolicy;
+using sentinel::core::SemanticAcceptanceResult;
 using sentinel::core::SemanticAcceptanceStatus;
 using sentinel::core::semanticActivationReadiness;
 using sentinel::core::SemanticArbitrationPolicy;
@@ -50,6 +52,8 @@ using sentinel::core::SemanticSearchPolicy;
 using sentinel::core::SemanticSearchResult;
 using sentinel::core::SemanticSearchSession;
 using sentinel::core::SemanticSearchStatus;
+using sentinel::core::SemanticSupplementAssemblyPolicy;
+using sentinel::core::SemanticSupplementAssemblyStatus;
 using sentinel::core::simulateSemanticArbitration;
 using sentinel::core::VectorPersistenceBudget;
 using sentinel::core::VectorPersistenceHealth;
@@ -89,6 +93,10 @@ private slots:
     void semanticAcceptanceApprovesBoundedSupplementsOnly();
     void semanticAcceptanceFallsBackForDisabledErrorTimeoutStaleAndBusy();
     void semanticAcceptanceRefusesAuthorityMutationAndPreservesInputs();
+    void semanticSupplementAssemblyDisabledReturnsSafeFallback();
+    void semanticSupplementAssemblyBuildsBoundedSeparateMetadata();
+    void semanticSupplementAssemblyOrdersAndTruncatesDeterministically();
+    void semanticSupplementAssemblyRefusesPromptAuthorityAndStaleState();
     void defaultSemanticProviderSelectionIsDisabled();
     void fakeProviderSelectionIsMetadataOnly();
     void localOllamaProviderIsPlannedButInactive();
@@ -823,6 +831,103 @@ void SemanticRetrievalTest::semanticAcceptanceRefusesAuthorityMutationAndPreserv
     QCOMPARE(planning.selectedCandidates.at(0).title, QStringLiteral("Recent Conversation"));
     QCOMPARE(search.candidates.size(), 2);
     QCOMPARE(bridge.candidates.at(0).deterministic, true);
+}
+
+void SemanticRetrievalTest::semanticSupplementAssemblyDisabledReturnsSafeFallback() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+    const auto acceptance =
+        semanticAcceptance(planning, bridge, search, SemanticAcceptancePolicy{});
+
+    const auto result = assembleSemanticSupplements(acceptance, SemanticSupplementAssemblyPolicy{});
+
+    QCOMPARE(result.status, SemanticSupplementAssemblyStatus::Disabled);
+    QCOMPARE(result.bundle.blockCount, 0);
+    QCOMPARE(result.assembled, false);
+    QVERIFY(result.fallbackSummary.contains(QStringLiteral("deterministic prompt behavior")));
+    QVERIFY(result.checks.contains(QStringLiteral("Live prompt inclusion: blocked")));
+    QVERIFY(result.checks.contains(QStringLiteral("RetrievalPlanningResult mutation: no")));
+    QVERIFY(result.checks.contains(QStringLiteral("PromptContextBlock mutation: no")));
+    QCOMPARE(planning.selectedCandidateCount, 2);
+}
+
+void SemanticRetrievalTest::semanticSupplementAssemblyBuildsBoundedSeparateMetadata() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+    const auto acceptance =
+        semanticAcceptance(planning, bridge, search, SemanticAcceptancePolicy{});
+
+    SemanticSupplementAssemblyPolicy policy;
+    policy.enabled = true;
+    policy.allowTestOnlyAssembly = true;
+    policy.maxSupplementBlocks = 2;
+    policy.maxCharacters = 128;
+    const auto result = assembleSemanticSupplements(acceptance, policy);
+
+    QCOMPARE(result.status, SemanticSupplementAssemblyStatus::Ready);
+    QCOMPARE(result.bundle.blockCount, 2);
+    QCOMPARE(result.bundle.separateFromDeterministicContext, true);
+    QCOMPARE(result.bundle.blocks.at(0).semantic, true);
+    QCOMPARE(result.bundle.blocks.at(0).supplementalOnly, true);
+    QCOMPARE(result.bundle.blocks.at(0).nonAuthoritative, true);
+    QVERIFY(result.summary.contains(QStringLiteral("live prompt behavior is unchanged")));
+    QVERIFY(result.safety.summary.contains(QStringLiteral("non-authoritative")));
+    QCOMPARE(planning.selectedCandidateCount, 2);
+}
+
+void SemanticRetrievalTest::semanticSupplementAssemblyOrdersAndTruncatesDeterministically() {
+    SemanticAcceptanceResult acceptance;
+    acceptance.status = SemanticAcceptanceStatus::Ready;
+    acceptance.budget.elapsedMs = 10;
+    acceptance.acceptedCandidates = {
+        {QStringLiteral("semantic-b"), QStringLiteral("Semantic Supplemental"),
+         QStringLiteral("Beta"), QStringLiteral("bbbbbbbbbbbbbbbbbbbb"), 2, 4, 20, true, true,
+         QStringLiteral("accepted")},
+        {QStringLiteral("semantic-a"), QStringLiteral("Semantic Supplemental"),
+         QStringLiteral("Alpha"), QStringLiteral("aaaaaaaaaaaaaaaaaaaa"), 1, 3, 20, true, true,
+         QStringLiteral("accepted")},
+    };
+
+    SemanticSupplementAssemblyPolicy policy;
+    policy.enabled = true;
+    policy.allowTestOnlyAssembly = true;
+    policy.maxSupplementBlocks = 2;
+    policy.maxCharacters = 25;
+    const auto result = assembleSemanticSupplements(acceptance, policy);
+
+    QCOMPARE(result.status, SemanticSupplementAssemblyStatus::Truncated);
+    QCOMPARE(result.bundle.blockCount, 2);
+    QCOMPARE(result.bundle.blocks.at(0).id, QStringLiteral("semantic-a"));
+    QCOMPARE(result.bundle.blocks.at(1).id, QStringLiteral("semantic-b"));
+    QCOMPARE(result.bundle.truncatedBlockCount, 1);
+    QCOMPARE(result.budget.includedCharacters, 25);
+}
+
+void SemanticRetrievalTest::semanticSupplementAssemblyRefusesPromptAuthorityAndStaleState() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+    const auto acceptance =
+        semanticAcceptance(planning, bridge, search, SemanticAcceptancePolicy{});
+
+    SemanticSupplementAssemblyPolicy policy;
+    policy.enabled = true;
+    policy.allowTestOnlyAssembly = true;
+    policy.includeInLivePrompt = true;
+    auto result = assembleSemanticSupplements(acceptance, policy);
+    QCOMPARE(result.status, SemanticSupplementAssemblyStatus::Refused);
+    QCOMPARE(result.bundle.blockCount, 0);
+
+    policy = SemanticSupplementAssemblyPolicy{};
+    policy.enabled = true;
+    policy.allowTestOnlyAssembly = true;
+    SemanticAcceptanceResult staleAcceptance;
+    staleAcceptance.status = SemanticAcceptanceStatus::Stale;
+    result = assembleSemanticSupplements(staleAcceptance, policy);
+    QCOMPARE(result.status, SemanticSupplementAssemblyStatus::Stale);
+    QVERIFY(result.fallbackSummary.contains(QStringLiteral("deterministic prompt behavior")));
 }
 
 void SemanticRetrievalTest::defaultSemanticProviderSelectionIsDisabled() {

@@ -1412,6 +1412,38 @@ QStringList DesktopShellViewModel::semanticAcceptanceChecks() const {
     return controller_.semanticAcceptanceChecks();
 }
 
+QString DesktopShellViewModel::semanticSupplementAssemblyStatus() const {
+    return controller_.semanticSupplementAssemblyStatus();
+}
+
+QString DesktopShellViewModel::semanticSupplementAssemblyReadiness() const {
+    return controller_.semanticSupplementAssemblyReadiness();
+}
+
+QString DesktopShellViewModel::semanticSupplementAssemblySummary() const {
+    return controller_.semanticSupplementAssemblySummary();
+}
+
+QString DesktopShellViewModel::semanticSupplementAssemblyBudgetSummary() const {
+    return controller_.semanticSupplementAssemblyBudgetSummary();
+}
+
+QString DesktopShellViewModel::semanticSupplementAssemblySafetySummary() const {
+    return controller_.semanticSupplementAssemblySafetySummary();
+}
+
+int DesktopShellViewModel::semanticSupplementAssemblyBlockCount() const {
+    return controller_.semanticSupplementAssemblyBlockCount();
+}
+
+int DesktopShellViewModel::semanticSupplementAssemblyBudgetCharacters() const {
+    return controller_.semanticSupplementAssemblyBudgetCharacters();
+}
+
+QStringList DesktopShellViewModel::semanticSupplementAssemblyChecks() const {
+    return controller_.semanticSupplementAssemblyChecks();
+}
+
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
     return controller_.localInferenceStreamingEnabled();
 }

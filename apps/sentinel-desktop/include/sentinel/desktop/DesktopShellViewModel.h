@@ -498,6 +498,22 @@ class DesktopShellViewModel final : public QObject {
                    semanticAcceptanceCandidateSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList semanticAcceptanceChecks READ semanticAcceptanceChecks NOTIFY
                    contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSupplementAssemblyStatus READ semanticSupplementAssemblyStatus NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSupplementAssemblyReadiness READ semanticSupplementAssemblyReadiness
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSupplementAssemblySummary READ semanticSupplementAssemblySummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSupplementAssemblyBudgetSummary READ
+                   semanticSupplementAssemblyBudgetSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticSupplementAssemblySafetySummary READ
+                   semanticSupplementAssemblySafetySummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int semanticSupplementAssemblyBlockCount READ semanticSupplementAssemblyBlockCount
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int semanticSupplementAssemblyBudgetCharacters READ
+                   semanticSupplementAssemblyBudgetCharacters NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticSupplementAssemblyChecks READ semanticSupplementAssemblyChecks
+                   NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -1055,6 +1071,14 @@ public:
     int semanticAcceptanceBudgetCharacters() const;
     QStringList semanticAcceptanceCandidateSummaries() const;
     QStringList semanticAcceptanceChecks() const;
+    QString semanticSupplementAssemblyStatus() const;
+    QString semanticSupplementAssemblyReadiness() const;
+    QString semanticSupplementAssemblySummary() const;
+    QString semanticSupplementAssemblyBudgetSummary() const;
+    QString semanticSupplementAssemblySafetySummary() const;
+    int semanticSupplementAssemblyBlockCount() const;
+    int semanticSupplementAssemblyBudgetCharacters() const;
+    QStringList semanticSupplementAssemblyChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;

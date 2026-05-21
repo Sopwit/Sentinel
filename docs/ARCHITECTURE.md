@@ -466,6 +466,27 @@ Phase 17.19 through Phase 17.21 add deterministic semantic acceptance:
   arbitration/fallback summaries, bounded budget state, and safety checks. Raw vectors, raw prompt
   payloads, provider handles, filesystem paths, and debug dumps remain unavailable.
 
+Phase 17.22 through Phase 17.24 add semantic supplement prompt assembly readiness:
+
+- `SemanticSupplementBlock`, `SemanticSupplementBundle`,
+  `SemanticSupplementAssemblyPolicy`, `SemanticSupplementAssemblyStatus`,
+  `SemanticSupplementAssemblyResult`, `SemanticSupplementBudget`,
+  `SemanticSupplementReadiness`, and `SemanticSupplementSafetyReport` describe a future prompt
+  supplement lifecycle.
+- Assembly reads `SemanticAcceptanceResult` and, only when explicitly enabled for test-only
+  assembly, produces a separate bounded metadata bundle from accepted semantic supplements.
+- The desktop policy is disabled by default. Live prompt inclusion is blocked, so default prompt
+  assembly and local Ollama prompt behavior are unchanged.
+- Supplement bundles are separate from deterministic context blocks. They cannot replace,
+  reorder, or override deterministic retrieval context, conversation windows, deterministic
+  summaries, committed memory, runtime metadata, or orchestration metadata.
+- Runtime protections include bounded supplement count, bounded character budget, deterministic
+  ordering, deterministic truncation, disabled/empty fallback, stale/busy/timed-out/refused
+  fallback, and safety-report checks.
+- QML receives only supplement assembly status/readiness, block count, budget summary, safety
+  summary, and checks. It does not receive raw prompt blocks, vectors, scores, provider handles,
+  filesystem paths, or debug dumps.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.
