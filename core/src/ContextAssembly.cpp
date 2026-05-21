@@ -4,6 +4,14 @@
 
 namespace sentinel::core {
 
+namespace {
+
+int toInt(qsizetype value) {
+    return static_cast<int>(value);
+}
+
+} // namespace
+
 QString contextAssemblyStatusName(ContextAssemblyStatus status) {
     switch (status) {
     case ContextAssemblyStatus::NotPlanned:
@@ -100,6 +108,8 @@ QString retrievalPlanningStatusName(RetrievalPlanningStatus status) {
 
 QString retrievalSourcePriorityName(RetrievalSourcePriority priority) {
     switch (priority) {
+    case RetrievalSourcePriority::None:
+        return QStringLiteral("None");
     case RetrievalSourcePriority::RecentConversation:
         return QStringLiteral("1 Recent Conversation");
     case RetrievalSourcePriority::ConversationSummary:
@@ -230,7 +240,7 @@ assembleConversationWindow(const QList<ConversationWindowMessage>& messages,
     result.budget.maxCharacters = std::max(0, policy.maxCharacters);
     result.budget.remainingCharacters = result.budget.maxCharacters;
     result.summary.budget = result.budget;
-    result.summary.totalMessageCount = messages.size();
+    result.summary.totalMessageCount = toInt(messages.size());
 
     if (!policy.enabled) {
         result.status = ConversationWindowStatus::Disabled;
@@ -259,7 +269,7 @@ assembleConversationWindow(const QList<ConversationWindowMessage>& messages,
         result.budget.estimatedCharacters += candidate.originalSize;
     }
 
-    result.summary.candidateMessageCount = candidates.size();
+    result.summary.candidateMessageCount = toInt(candidates.size());
     int remaining = result.budget.maxCharacters;
 
     QList<ConversationWindowMessage> includedNewestFirst;
@@ -280,7 +290,7 @@ assembleConversationWindow(const QList<ConversationWindowMessage>& messages,
         }
 
         const auto includedLine = QStringLiteral("%1: %2").arg(included.role, included.content);
-        included.includedSize = includedLine.size();
+        included.includedSize = toInt(includedLine.size());
         if (included.includedSize <= 0 || included.content.isEmpty()) {
             continue;
         }
@@ -289,7 +299,7 @@ assembleConversationWindow(const QList<ConversationWindowMessage>& messages,
         includedNewestFirst.append(included);
     }
 
-    result.summary.includedMessageCount = includedNewestFirst.size();
+    result.summary.includedMessageCount = toInt(includedNewestFirst.size());
     result.summary.omittedMessageCount =
         result.summary.candidateMessageCount - result.summary.includedMessageCount;
 
@@ -365,7 +375,7 @@ assembleConversationSummary(const QList<ConversationWindowMessage>& messages,
     result.policy = policy;
     result.budget.maxCharacters = std::max(0, policy.maxCharacters);
     result.budget.remainingCharacters = result.budget.maxCharacters;
-    result.window.totalMessageCount = messages.size();
+    result.window.totalMessageCount = toInt(messages.size());
 
     if (!policy.enabled) {
         result.status = ConversationSummaryStatus::Disabled;
@@ -463,7 +473,7 @@ assembleConversationSummary(const QList<ConversationWindowMessage>& messages,
                          .arg(roleSummaries.isEmpty() ? QStringLiteral("roles unavailable")
                                                       : roleSummaries.join(QStringLiteral(", ")))
                          .arg(lines.join(QStringLiteral("\n")));
-        block.originalSize = block.text.size();
+        block.originalSize = toInt(block.text.size());
 
         if (block.text.size() > remaining) {
             block.text = block.text.left(remaining).trimmed();
@@ -471,7 +481,7 @@ assembleConversationSummary(const QList<ConversationWindowMessage>& messages,
             ++result.budget.truncatedBlockCount;
         }
 
-        block.includedSize = block.text.size();
+        block.includedSize = toInt(block.text.size());
         if (block.includedSize <= 0) {
             break;
         }
@@ -483,11 +493,11 @@ assembleConversationSummary(const QList<ConversationWindowMessage>& messages,
         result.window.summarizedMessageCount += block.messageCount;
     }
 
-    result.window.blockCount = result.blocks.size();
+    result.window.blockCount = toInt(result.blocks.size());
     result.window.omittedFromSummaryCount =
-        candidates.size() - result.window.summarizedMessageCount;
+        toInt(candidates.size()) - result.window.summarizedMessageCount;
     result.budget.remainingCharacters = std::max(0, remaining);
-    result.budget.blockCount = result.blocks.size();
+    result.budget.blockCount = toInt(result.blocks.size());
     result.budget.summary =
         QStringLiteral("%1 of %2 estimated summary characters included within %3 character "
                        "budget across %4 %5.")
@@ -555,7 +565,7 @@ PromptContextInjectionResult injectPromptContext(const QString& prompt,
         block.title = block.title.trimmed().isEmpty() ? contextAssemblySourceKindName(block.source)
                                                       : block.title.trimmed();
         block.content = normalized;
-        block.originalSize = normalized.size();
+        block.originalSize = toInt(normalized.size());
         result.bundle.originalSize += block.originalSize;
 
         if (block.content.size() > remaining) {
@@ -564,7 +574,7 @@ PromptContextInjectionResult injectPromptContext(const QString& prompt,
             result.bundle.truncated = true;
         }
 
-        block.injectedSize = block.content.size();
+        block.injectedSize = toInt(block.content.size());
         if (block.injectedSize <= 0) {
             continue;
         }
@@ -591,7 +601,7 @@ PromptContextInjectionResult injectPromptContext(const QString& prompt,
         QStringLiteral("%1\n\nUser prompt:\n%2").arg(result.bundle.text, prompt.trimmed());
     result.status = result.bundle.truncated ? PromptContextInjectionStatus::Truncated
                                             : PromptContextInjectionStatus::Injected;
-    result.injectedBlockCount = result.bundle.blocks.size();
+    result.injectedBlockCount = toInt(result.bundle.blocks.size());
     result.injectedCharacterCount = result.bundle.injectedSize;
     result.sourceSummary = sourceNames.join(QStringLiteral(", "));
     result.sizeSummary =
@@ -666,7 +676,7 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
         item.title = item.title.simplified();
         item.content = item.content.trimmed();
         item.priority = retrievalSourcePriorityForKind(item.source);
-        item.originalSize = item.content.size();
+        item.originalSize = toInt(item.content.size());
         item.selectedSize = 0;
         item.selected = false;
         item.truncated = false;
@@ -721,7 +731,7 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
             ++result.truncatedCandidateCount;
         }
 
-        item.selectedSize = item.content.size();
+        item.selectedSize = toInt(item.content.size());
         if (item.selectedSize <= 0) {
             item.exclusionReason = QStringLiteral("Retrieval budget exhausted");
             ++result.excludedCandidateCount;
@@ -737,7 +747,7 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
         result.candidates.append(item);
     }
 
-    result.candidateCount = result.candidates.size();
+    result.candidateCount = toInt(result.candidates.size());
     result.budget.remainingCharacters = std::max(0, remaining);
     result.budget.summary =
         QStringLiteral("%1 of %2 estimated retrieval characters selected within %3 character "

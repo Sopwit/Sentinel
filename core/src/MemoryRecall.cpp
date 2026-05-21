@@ -21,6 +21,10 @@ QString memoryRecallStatusName(MemoryRecallStatus status) {
 
 namespace {
 
+int toInt(qsizetype value) {
+    return static_cast<int>(value);
+}
+
 QString previewValue(const QString& value) {
     const auto simplified = value.simplified();
     return simplified.isEmpty() ? QStringLiteral("Empty value") : simplified.left(160);
@@ -36,7 +40,7 @@ MemoryRecallSummary memoryRecallSummaryForEntries(const MemoryRecallQuery& query
     summary.query.text = query.text.trimmed();
     summary.query.includeKeys = query.includeKeys;
     summary.query.includeValues = query.includeValues;
-    summary.memoryEntryCount = entries.size();
+    summary.memoryEntryCount = toInt(entries.size());
     summary.checks.append(QStringLiteral("Source: local key-value memory store"));
     summary.checks.append(QStringLiteral("Matching: literal key/value contains"));
     summary.checks.append(QStringLiteral("Semantic recall: disabled"));
@@ -65,7 +69,7 @@ MemoryRecallSummary memoryRecallSummaryForEntries(const MemoryRecallQuery& query
     }
 
     const auto caseSensitivity = Qt::CaseInsensitive;
-    const int maxResults = policy.maxResults <= 0 ? entries.size() : policy.maxResults;
+    const int maxResults = policy.maxResults <= 0 ? toInt(entries.size()) : policy.maxResults;
     for (const auto& entry : entries) {
         const bool keyMatch =
             query.includeKeys && entry.first.indexOf(summary.query.text, 0, caseSensitivity) >= 0;
@@ -90,7 +94,7 @@ MemoryRecallSummary memoryRecallSummaryForEntries(const MemoryRecallQuery& query
     }
 
     summary.status = MemoryRecallStatus::Completed;
-    summary.resultCount = summary.results.size();
+    summary.resultCount = toInt(summary.results.size());
     summary.summary = summary.resultCount == 0
                           ? QStringLiteral("No committed local memory entries matched \"%1\".")
                                 .arg(summary.query.text)

@@ -7,7 +7,7 @@ QString InMemorySettingsStore::value(const QString& key, const QString& defaultV
 }
 
 void InMemorySettingsStore::setValue(QString key, QString value) {
-    values_.insert(std::move(key), std::move(value));
+    values_.insert(key, value);
 }
 
 } // namespace sentinel::core

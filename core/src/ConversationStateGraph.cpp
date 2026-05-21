@@ -41,9 +41,8 @@ bool isConversationTransitionAllowed(ConversationState from, ConversationState t
         return to == ConversationState::Responding;
     case ConversationState::Responding:
         return to == ConversationState::Completed;
-    case ConversationState::Completed:
-        return to == ConversationState::Idle || to == ConversationState::Listening;
     case ConversationState::Error:
+    case ConversationState::Completed:
         return to == ConversationState::Idle || to == ConversationState::Listening;
     }
 

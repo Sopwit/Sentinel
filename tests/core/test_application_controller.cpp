@@ -23,6 +23,7 @@
 #include <QTimer>
 #include <QtTest>
 
+#include <cstdint>
 #include <memory>
 
 using sentinel::core::ApplicationController;
@@ -351,7 +352,7 @@ private:
 
 class AsyncLocalInferenceWorker final : public ILocalInferenceWorker {
 public:
-    enum class Mode {
+    enum class Mode : std::uint8_t {
         Success,
         TimeoutError,
     };
@@ -534,7 +535,7 @@ private:
 
 class FakePiperTtsClient final : public sentinel::core::IPiperTtsClient {
 public:
-    enum class Mode {
+    enum class Mode : std::uint8_t {
         Success,
         Failure,
         Timeout,

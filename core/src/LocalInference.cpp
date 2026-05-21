@@ -897,8 +897,9 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
                                           "chunk(s) ignored.")
                                .arg(result.malformedChunkCount)
                          : QStringLiteral("Local Ollama streaming completed.");
-    result.traces.append(trace(result.traces.size() + 1, QStringLiteral("Stream Generation"),
-                               QStringLiteral("Completed"), result.summary));
+    result.traces.append(trace(static_cast<int>(result.traces.size()) + 1,
+                               QStringLiteral("Stream Generation"), QStringLiteral("Completed"),
+                               result.summary));
     return result;
 }
 
