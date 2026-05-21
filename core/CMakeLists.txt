@@ -84,6 +84,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ToolInvocationPlan.h
     include/sentinel/core/ToolSandbox.h
     include/sentinel/core/Voice.h
+    include/sentinel/core/WhisperTranscription.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
     src/AgentActivityLog.cpp
@@ -134,6 +135,7 @@ add_library(sentinel_core STATIC
     src/StaticSandboxPolicy.cpp
     src/StaticTaskPlanner.cpp
     src/Voice.cpp
+    src/WhisperTranscription.cpp
 )
 
 target_include_directories(sentinel_core

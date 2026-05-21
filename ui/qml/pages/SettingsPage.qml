@@ -1106,6 +1106,27 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Whisper STT Runtime"
+                    value: settingsPage.viewModel.whisperTranscriptionStatus + " / " + settingsPage.viewModel.whisperTranscriptionReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "STT Result"
+                    value: settingsPage.viewModel.whisperTranscriptionLastSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "STT Fallback"
+                    value: settingsPage.viewModel.whisperTranscriptionFallbackSummary
+                    Layout.fillWidth: true
+                }
+
                 Repeater {
                     model: settingsPage.viewModel.voiceConfigurationStatusBadges
 
@@ -1149,7 +1170,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Safety"
-                    value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / " + settingsPage.viewModel.voiceRuntimeSafetySummary + " / " + settingsPage.viewModel.voiceRuntimeSafetyReportSummary
+                    value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / " + settingsPage.viewModel.voiceRuntimeSafetySummary + " / " + settingsPage.viewModel.voiceRuntimeSafetyReportSummary + " / " + settingsPage.viewModel.whisperTranscriptionSafetySummary
                     Layout.fillWidth: true
                 }
 

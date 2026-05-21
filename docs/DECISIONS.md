@@ -2483,6 +2483,31 @@ Boundary rules:
 - Future STT/TTS activation requires a separate explicit phase with permission prompts, sandbox
   implementation, runtime clients, audio lifecycle, UI controls, and tests.
 
+## 97. Whisper STT Runtime Starts As A Non-Executing Audio-File Boundary
+
+Decision: Phase 18.19 through Phase 18.21 add a Whisper transcription client boundary and
+request/result metadata for future local audio-file STT, while keeping Whisper execution disabled.
+
+Reason: Whisper STT needs a controlled runtime contract for binary/model/audio metadata, timeout
+fallbacks, safety reporting, and QML summaries before Sentinel can safely allow any local
+transcription process or audio input lifecycle.
+
+Boundary rules:
+
+- `WhisperTranscriptionPolicy`, status, request, result, session, budget, readiness, safety,
+  fallback, and trace records are value metadata.
+- `IWhisperTranscriptionClient` owns the future low-level STT client boundary.
+- `NullWhisperTranscriptionClient` refuses without side effects. `LocalWhisperTranscriptionClient`
+  is a bounded skeleton that validates metadata and refuses before subprocess execution.
+- Missing binary, missing model, missing audio, unsafe/non-local paths, invalid timeout budget, and
+  runtime privilege requests produce deterministic refusal/fallback metadata.
+- `executionAttempted` remains false for results, sessions, traces, and safety reports.
+- No microphone capture, live recording, audio playback, streaming STT, subprocess execution,
+  cloud/API calls, downloads, filesystem scanning, prompt injection, automatic chat send, file
+  picker, record button, enabled transcribe button, or autonomous voice loop is added.
+- Future controlled audio-file transcription and future microphone/live STT require separate
+  explicit phases with permission, sandbox, lifecycle, UI, and regression tests.
+
 ## 94. Agent Task Queue Is Metadata-Only
 
 Decision: Phase 18.4 through Phase 18.6 add an agent task queue and lifecycle read model, but the

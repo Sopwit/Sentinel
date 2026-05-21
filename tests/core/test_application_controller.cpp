@@ -1361,6 +1361,18 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QCOMPARE(controller.piperTtsFileOutputStatus(), QStringLiteral("Disabled"));
     QVERIFY(controller.piperTtsFileOutputSummary().contains(
         QStringLiteral("No playback or microphone access")));
+    QCOMPARE(controller.whisperTranscriptionStatus(), QStringLiteral("Disabled"));
+    QVERIFY(controller.whisperTranscriptionReadinessSummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QVERIFY(controller.whisperTranscriptionLastSummary().contains(
+        QStringLiteral("No Whisper transcription request")));
+    QVERIFY(controller.whisperTranscriptionFallbackSummary().contains(
+        QStringLiteral("no transcript")));
+    QVERIFY(controller.whisperTranscriptionSafetySummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QVERIFY(controller.whisperTranscriptionTraceSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("No microphone capture")));
 }
 
 void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
@@ -1404,6 +1416,11 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
     QCOMPARE(controller.voiceRuntimeRefusedCount(), 0);
     QCOMPARE(controller.piperRuntimeStatus(), QStringLiteral("Ready Metadata"));
     QCOMPARE(controller.whisperRuntimeStatus(), QStringLiteral("Ready Metadata"));
+    QCOMPARE(controller.whisperTranscriptionStatus(), QStringLiteral("Missing Binary"));
+    QVERIFY(controller.whisperTranscriptionReadinessSummary().contains(
+        QStringLiteral("2 configured, 1 missing")));
+    QVERIFY(controller.whisperTranscriptionSafetySummary().contains(
+        QStringLiteral("automatic chat send")));
     QVERIFY(controller.piperRuntimeReadinessSummary().contains(QStringLiteral("disabled by default")));
     QVERIFY(controller.whisperRuntimeReadinessSummary().contains(
         QStringLiteral("readiness-only")));

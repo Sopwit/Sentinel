@@ -680,6 +680,7 @@ ApplicationController::ApplicationController(
               ? std::move(piperTextToSpeechProvider)
               : std::make_unique<PiperTextToSpeechProvider>(
                     defaultDisabledPiperTtsConfig(), std::make_unique<ProcessPiperTtsClient>())),
+      whisperTranscriptionClient_(std::make_unique<LocalWhisperTranscriptionClient>()),
       memoryStore_(std::move(memoryStore)),
       memoryCandidateStore_(std::make_unique<InMemoryMemoryCandidateStore>()),
       chatSession_(chatSession ? std::move(chatSession)
@@ -2441,6 +2442,62 @@ QString ApplicationController::whisperRuntimeReadinessSummary() const {
 
 QString ApplicationController::whisperRuntimePathSummary() const {
     return whisperRuntimePathSummaryText(currentWhisperRuntimeDescriptor().pathSummary);
+}
+
+WhisperTranscriptionConfig ApplicationController::currentWhisperTranscriptionConfig() const {
+    return configuredWhisperTranscriptionConfig(whisperBinaryPath_, whisperModelPath_);
+}
+
+WhisperTranscriptionRequest ApplicationController::currentWhisperTranscriptionRequest() const {
+    return WhisperTranscriptionRequest{};
+}
+
+WhisperTranscriptionReadiness ApplicationController::currentWhisperTranscriptionReadiness() const {
+    return whisperTranscriptionReadiness(currentWhisperTranscriptionConfig(),
+                                         currentWhisperTranscriptionRequest());
+}
+
+QString ApplicationController::whisperTranscriptionStatus() const {
+    const auto status = currentWhisperTranscriptionReadiness().status;
+    return whisperTranscriptionStatusName(status);
+}
+
+QString ApplicationController::whisperTranscriptionReadinessSummary() const {
+    return sentinel::core::whisperTranscriptionReadinessSummary(
+        currentWhisperTranscriptionReadiness());
+}
+
+QString ApplicationController::whisperTranscriptionLastSummary() const {
+    if (latestWhisperTranscriptionResult_.status == WhisperTranscriptionStatus::Disabled &&
+        latestWhisperTranscriptionResult_.traces.isEmpty()) {
+        return QStringLiteral("No Whisper transcription request has run. No transcript is "
+                              "injected into chat.");
+    }
+    if (!latestWhisperTranscriptionResult_.summary.trimmed().isEmpty()) {
+        return safeWhisperTranscriptionResultSummary(latestWhisperTranscriptionResult_);
+    }
+    return QStringLiteral("No Whisper transcription request has run. No transcript is injected "
+                          "into chat.");
+}
+
+QString ApplicationController::whisperTranscriptionFallbackSummary() const {
+    if (!latestWhisperTranscriptionResult_.fallback.summary.trimmed().isEmpty()) {
+        return latestWhisperTranscriptionResult_.fallback.summary;
+    }
+    return QStringLiteral("Whisper transcription fallback is no transcript; audio-file "
+                          "transcription is not enabled.");
+}
+
+QString ApplicationController::whisperTranscriptionSafetySummary() const {
+    return sentinel::core::whisperTranscriptionSafetySummary(
+        whisperTranscriptionSafetyReport(currentWhisperTranscriptionConfig().policy));
+}
+
+QStringList ApplicationController::whisperTranscriptionTraceSummaries() const {
+    if (!latestWhisperTranscriptionResult_.traces.isEmpty()) {
+        return latestWhisperTranscriptionResult_.traces;
+    }
+    return currentWhisperTranscriptionReadiness().checks;
 }
 
 QString ApplicationController::piperRuntimeStatus() const {

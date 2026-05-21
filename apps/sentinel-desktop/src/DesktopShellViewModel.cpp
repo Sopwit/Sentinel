@@ -1100,6 +1100,30 @@ QString DesktopShellViewModel::whisperRuntimePathSummary() const {
     return controller_.whisperRuntimePathSummary();
 }
 
+QString DesktopShellViewModel::whisperTranscriptionStatus() const {
+    return controller_.whisperTranscriptionStatus();
+}
+
+QString DesktopShellViewModel::whisperTranscriptionReadinessSummary() const {
+    return controller_.whisperTranscriptionReadinessSummary();
+}
+
+QString DesktopShellViewModel::whisperTranscriptionLastSummary() const {
+    return controller_.whisperTranscriptionLastSummary();
+}
+
+QString DesktopShellViewModel::whisperTranscriptionFallbackSummary() const {
+    return controller_.whisperTranscriptionFallbackSummary();
+}
+
+QString DesktopShellViewModel::whisperTranscriptionSafetySummary() const {
+    return controller_.whisperTranscriptionSafetySummary();
+}
+
+QStringList DesktopShellViewModel::whisperTranscriptionTraceSummaries() const {
+    return controller_.whisperTranscriptionTraceSummaries();
+}
+
 QString DesktopShellViewModel::piperRuntimeStatus() const {
     return controller_.piperRuntimeStatus();
 }

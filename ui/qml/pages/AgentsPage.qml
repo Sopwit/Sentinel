@@ -205,6 +205,20 @@ ShellPanel {
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Whisper STT"
+                value: agentsPage.viewModel.whisperTranscriptionStatus
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "STT Boundary"
+                value: agentsPage.viewModel.whisperTranscriptionReadinessSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
         }
 
         ColumnLayout {
@@ -350,6 +364,18 @@ ShellPanel {
                     required property string modelData
                     compact: agentsPage.compact
                     label: "Voice Runtime"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.whisperTranscriptionTraceSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "STT Trace"
                     value: modelData
                     Layout.fillWidth: true
                 }

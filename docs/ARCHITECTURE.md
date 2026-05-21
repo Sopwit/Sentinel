@@ -156,6 +156,21 @@ layer on top of the existing voice boundaries:
   summaries. QML receives no raw runtime objects and the UI adds no start/stop, microphone,
   playback, or activation controls.
 
+Phase 18.19 through Phase 18.21 add a Whisper STT local runtime foundation behind a new
+transcription client boundary:
+
+- `WhisperTranscription.h` defines value-only transcription policy/status/request/result/session/
+  budget/readiness/safety/fallback/trace metadata and the `IWhisperTranscriptionClient` boundary.
+- `NullWhisperTranscriptionClient` is the disabled default refusal client. The optional local
+  client skeleton validates configured binary/model/audio metadata and refuses before execution.
+- The boundary is for future local audio-file transcription only. It does not capture microphones,
+  perform live recording, play audio, stream STT, call cloud APIs, download models, scan the
+  filesystem, inject transcripts into prompts, or send chat messages automatically.
+- Unsafe or non-local path-style input is refused before readiness can become accepted metadata.
+  QML receives summaries/counts/lists only and receives no raw provider/client/runtime objects.
+- Whisper transcription safety preserves `executionAttempted = false`; subprocess execution
+  remains blocked until a later explicit execution phase.
+
 Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit
 review flow beside, not inside, the existing memory contracts:
 
@@ -995,6 +1010,13 @@ Separation:
   `PiperTextToSpeechProvider` model a safe Piper TTS boundary. `ProcessPiperTtsClient` is the
   controlled local file-output client and is reachable only after provider policy accepts every
   file-output gate.
+- `WhisperTranscriptionPolicy`, `WhisperTranscriptionStatus`, `WhisperTranscriptionRequest`,
+  `WhisperTranscriptionResult`, `WhisperTranscriptionSession`,
+  `WhisperTranscriptionBudget`, `WhisperTranscriptionReadiness`,
+  `WhisperTranscriptionSafetyReport`, `WhisperTranscriptionFallback`,
+  `WhisperTranscriptionTrace`, `IWhisperTranscriptionClient`,
+  `NullWhisperTranscriptionClient`, and `LocalWhisperTranscriptionClient` model the future
+  Whisper STT audio-file transcription boundary. The local client is a non-executing skeleton.
 - `ApplicationController` exposes voice readiness, runtime, session, pipeline, and trace
   summaries plus binary/model/environment/permission/safety and Piper TTS readiness summaries
   only, including Piper file-output status, output path summary metadata, local voice
@@ -1034,6 +1056,9 @@ Current behavior:
 - Whisper STT preparation reports Ready only when the configured Whisper binary exists as an
   executable file and the configured model folder or model file exists and is readable. No Whisper
   adapter or execution path is added.
+- Whisper transcription readiness additionally models a future local audio-file request. Missing
+  binary, model, or audio metadata and unsafe/non-local path-style input are refused before any
+  execution boundary. No transcript is injected into chat.
 - Piper TTS is disabled/not configured by default. Missing or invalid binary/model paths produce
   deterministic refusal before any client boundary can run.
 - Controlled Piper file output is disabled by default through a persisted opt-in setting. It is
@@ -1056,9 +1081,19 @@ Current behavior:
 - Settings shows compact voice configuration text fields plus voice readiness/runtime/session/
   pipeline metadata, but no voice controls, setup actions, speak buttons, record buttons, playback
   controls, downloads, or path pickers exist.
-- No microphone access, audio playback, Whisper execution, filesystem-wide scan, model downloads,
-  cloud calls, API keys, or autonomous voice loop is present. Piper execution is limited to
-  explicit local file-output synthesis after all gates pass and remains disabled by default.
+- No microphone access, audio playback, Whisper execution, live STT, filesystem-wide scan, model
+  downloads, cloud calls, API keys, prompt injection, automatic chat send, or autonomous voice
+  loop is present. Piper execution is limited to explicit local file-output synthesis after all
+  gates pass and remains disabled by default.
+
+Phase 18.19-18.21 Whisper STT foundation:
+
+- Settings and Agents show compact Whisper STT status/readiness/result/fallback/safety/trace
+  summaries.
+- There is no record button, no file picker, no enabled transcribe button, and no microphone or
+  live-listening UI.
+- Future controlled audio-file transcription must explicitly enable a bounded local execution
+  gate. Future microphone/live STT must be a separate permission and lifecycle phase.
 
 Future Piper/Whisper integration should happen only through these provider interfaces and the
 runtime coordinator/environment boundaries after a later explicit phase defines audio device

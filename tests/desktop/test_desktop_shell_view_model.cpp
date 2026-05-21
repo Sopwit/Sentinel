@@ -717,6 +717,18 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
     QCOMPARE(fixture.viewModel.piperTtsFileOutputStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.viewModel.piperTtsFileOutputSummary().contains(
         QStringLiteral("No playback or microphone access")));
+    QCOMPARE(fixture.viewModel.whisperTranscriptionStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.whisperTranscriptionReadinessSummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QVERIFY(fixture.viewModel.whisperTranscriptionLastSummary().contains(
+        QStringLiteral("No Whisper transcription request")));
+    QVERIFY(fixture.viewModel.whisperTranscriptionFallbackSummary().contains(
+        QStringLiteral("no transcript")));
+    QVERIFY(fixture.viewModel.whisperTranscriptionSafetySummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QVERIFY(fixture.viewModel.whisperTranscriptionTraceSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("No microphone capture")));
 }
 
 void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
@@ -803,6 +815,9 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
     QCOMPARE(fixture.viewModel.whisperPreparationReadinessStatus(), QStringLiteral("Blocked"));
     QVERIFY(fixture.viewModel.whisperPreparationReadinessSummary().contains(
         QStringLiteral("Whisper binary path is not executable")));
+    QCOMPARE(fixture.viewModel.whisperTranscriptionStatus(), QStringLiteral("Missing Binary"));
+    QVERIFY(fixture.viewModel.whisperTranscriptionReadinessSummary().contains(
+        QStringLiteral("2 configured, 1 missing")));
     QVERIFY(fixture.viewModel.piperTtsSummary().contains(QStringLiteral("safety policy")));
     QVERIFY(!fixture.viewModel.piperTtsReady());
 }
@@ -1347,6 +1362,12 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("whisperRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("whisperRuntimeReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("whisperRuntimePathSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("whisperTranscriptionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("whisperTranscriptionReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("whisperTranscriptionLastSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("whisperTranscriptionFallbackSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("whisperTranscriptionSafetySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("whisperTranscriptionTraceSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("piperRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("piperRuntimeReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("piperRuntimePathSummary"), QByteArrayLiteral("QString")},

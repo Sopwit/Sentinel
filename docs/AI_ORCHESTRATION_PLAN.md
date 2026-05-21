@@ -319,6 +319,18 @@ refused, unsafe scopes are denied, sandbox requirements are summarized only, and
 `executionAttempted` remains false. The boundary does not start a tool runtime, sandbox,
 filesystem action, subprocess, plugin, export, provider/model call, cloud/API call, approval flow,
 background worker, or autonomous loop.
+Phase 18.19 through Phase 18.21 add a controlled Whisper STT local runtime foundation:
+`WhisperTranscriptionPolicy`, `WhisperTranscriptionStatus`, `WhisperTranscriptionRequest`,
+`WhisperTranscriptionResult`, `WhisperTranscriptionSession`, `WhisperTranscriptionBudget`,
+`WhisperTranscriptionReadiness`, `WhisperTranscriptionSafetyReport`,
+`WhisperTranscriptionFallback`, `WhisperTranscriptionTrace`, and
+`IWhisperTranscriptionClient`. The null client and local client skeleton refuse deterministically
+before execution. Missing binary/model/audio metadata, unsafe/non-local path-style input, timeout
+fallbacks, and runtime privilege requests produce safe summaries while `executionAttempted`
+remains false. This is future local audio-file transcription metadata only: no microphone capture,
+live recording, playback, streaming STT, subprocess execution, cloud/API call, download,
+filesystem scan, prompt injection, automatic chat send, file picker, record button, or autonomous
+voice loop is introduced.
 Phase 17.0 through Phase 17.3 add semantic provider planning and local selection metadata:
 `SemanticProviderDescriptor`, `SemanticProviderSelection`, `SemanticProviderReadiness`,
 `SemanticProviderHealth`, `SemanticProviderCapability`, `SemanticProviderPolicy`,
@@ -830,6 +842,12 @@ execution, or arbitrary export paths:
   download assets, call cloud/API services, start subprocesses, or create background workers.
   Future STT/TTS activation must add explicit permission prompts, sandbox implementation, runtime
   clients, audio lifecycle ownership, UI controls, and tests in a separate phase.
+- Phase 18.19 through Phase 18.21 add the first Whisper STT client boundary for future local
+  audio-file transcription. It exposes only disabled/readiness/refusal/fallback/safety/trace
+  metadata, refuses missing or unsafe binary/model/audio input, and keeps microphone capture,
+  playback, streaming STT, subprocess execution, prompt injection, and automatic chat send out of
+  scope. A later audio-file transcription phase and a later microphone/live STT phase must be
+  scoped separately.
 - `docs/PHASE_13_CHECKPOINT.md` records the Phase 13 Voice/Piper review, confirms the TTS path as
   `text -> Piper provider -> gated file-output metadata`, and marks Phase 14 ready only for
   explicit planning or configuration-readiness work unless a later phase separately authorizes
