@@ -133,6 +133,29 @@ earlier agent and runtime metadata layers:
   summaries, plus capability and tool-contract counts, summaries, permission summaries, sandbox
   summaries, readiness summaries, and safety summaries.
 
+Phase 18.16 through Phase 18.18 add a voice runtime permission and path-configuration readiness
+layer on top of the existing voice boundaries:
+
+- `Voice.h` defines value-only voice runtime policy/status/readiness/health/sandbox/restriction/
+  budget/readiness-report and safety-report metadata, plus Piper and Whisper runtime descriptors,
+  configuration records, and path summaries.
+- Piper and Whisper readiness uses configured/missing/refused counts and local-only path-style
+  checks only. Unsafe or non-local path-style values are refused as metadata. Raw configured paths
+  are not exposed by the new readiness summaries.
+- Piper and Whisper remain disabled by default and not actively running. Readiness may say
+  `Ready Metadata` only when binary and model path values are configured and local-only; this is
+  not an execution grant.
+- Permission and sandbox summaries label local-only, disabled, sandbox-required, future
+  microphone access, future audio playback, future transcription runtime, and future synthesis
+  runtime as metadata only.
+- Safety reports preserve `executionAttempted = false` and block subprocess execution, inference,
+  microphone capture, playback, streaming, filesystem scanning, downloads, cloud/API calls, and
+  background workers.
+- `ApplicationController` and `DesktopShellViewModel` expose QML-safe readiness summaries, runtime
+  health, configured/missing/refused counts, permission summaries, sandbox summaries, and safety
+  summaries. QML receives no raw runtime objects and the UI adds no start/stop, microphone,
+  playback, or activation controls.
+
 Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit
 review flow beside, not inside, the existing memory contracts:
 

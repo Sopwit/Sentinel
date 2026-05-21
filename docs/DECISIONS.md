@@ -2453,6 +2453,36 @@ Boundary rules:
 - QML may expose only status strings, counts, candidate summaries, arbitration summaries, refusal
   summaries, and fallback summaries.
 
+## 96. Voice Runtime Readiness Is Permission And Path Metadata Only
+
+Decision: Phase 18.16 through Phase 18.18 model Piper and Whisper runtime readiness with
+deterministic local-only metadata, not runtime activation.
+
+Reason: Future STT/TTS activation needs explicit permission, sandbox, path-readiness, and safety
+vocabulary before Sentinel can safely open microphones, play audio, run local binaries, load voice
+models, or add voice controls.
+
+Boundary rules:
+
+- `VoiceRuntimePolicy`, `VoiceRuntimeStatus`, `VoiceRuntimeReadiness`, `VoiceRuntimeHealth`,
+  `VoiceRuntimeSandbox`, `VoiceRuntimeRestriction`, `VoiceRuntimeBudget`,
+  `VoiceRuntimeReadinessReport`, and `VoiceRuntimeSafetyReport` remain value-only records.
+- `WhisperRuntimeDescriptor`, `WhisperRuntimeStatus`, `WhisperRuntimeReadiness`,
+  `WhisperRuntimeConfiguration`, and `WhisperRuntimePathSummary` describe future STT readiness.
+- `PiperRuntimeDescriptor`, `PiperRuntimeStatus`, `PiperRuntimeReadiness`,
+  `PiperRuntimeConfiguration`, and `PiperRuntimePathSummary` describe future TTS readiness.
+- Readiness reports only configured/missing/refused counts and safe summaries. Unsafe or non-local
+  path-style values are refused, and raw configured paths are not exposed by the new readiness
+  summaries.
+- Local-only, disabled, sandbox-required, future microphone access, future audio playback, future
+  transcription runtime, and future synthesis runtime labels are metadata only and grant no
+  authority.
+- `executionAttempted` remains false. No Piper/Whisper inference, subprocess execution,
+  microphone capture, playback, streaming, filesystem scanning, downloads, cloud/API calls,
+  background workers, path picker, start/stop control, or autonomous voice loop is added.
+- Future STT/TTS activation requires a separate explicit phase with permission prompts, sandbox
+  implementation, runtime clients, audio lifecycle, UI controls, and tests.
+
 ## 94. Agent Task Queue Is Metadata-Only
 
 Decision: Phase 18.4 through Phase 18.6 add an agent task queue and lifecycle read model, but the

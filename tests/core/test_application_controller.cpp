@@ -1337,6 +1337,20 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QVERIFY(controller.voiceRuntimeSafetySummary().contains(QStringLiteral("blocks execution")));
     QCOMPARE(controller.voiceRuntimeSafetyChecks().size(), 7);
     QVERIFY(!controller.voiceRuntimeExecutionAllowed());
+    QVERIFY(controller.voiceRuntimeReadinessSummary().contains(
+        QStringLiteral("Missing Configuration voice runtime readiness")));
+    QCOMPARE(controller.voiceRuntimeConfiguredCount(), 0);
+    QCOMPARE(controller.voiceRuntimeMissingCount(), 4);
+    QCOMPARE(controller.voiceRuntimeRefusedCount(), 0);
+    QCOMPARE(controller.voiceRuntimeHealth(), QStringLiteral("Degraded Metadata"));
+    QVERIFY(controller.voiceRuntimePermissionFoundationSummary().contains(
+        QStringLiteral("future microphone access")));
+    QVERIFY(controller.voiceRuntimeSandboxSummary().contains(QStringLiteral("Required Metadata")));
+    QVERIFY(controller.voiceRuntimeSafetyReportSummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QCOMPARE(controller.voiceRuntimeReadinessChecks().size(), 5);
+    QVERIFY(controller.piperRuntimePathSummary().contains(QStringLiteral("2 missing")));
+    QVERIFY(controller.whisperRuntimePathSummary().contains(QStringLiteral("2 missing")));
     QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Disabled"));
     QVERIFY(controller.piperTtsSummary().contains(QStringLiteral("disabled by default")));
     QCOMPARE(controller.piperTtsReadinessChecks().size(), 9);
@@ -1385,6 +1399,14 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
 
     QCOMPARE(spy.count(), 4);
     QCOMPARE(controller.voiceRuntimeEnvironmentStatus(), QStringLiteral("Configured Metadata"));
+    QCOMPARE(controller.voiceRuntimeConfiguredCount(), 4);
+    QCOMPARE(controller.voiceRuntimeMissingCount(), 0);
+    QCOMPARE(controller.voiceRuntimeRefusedCount(), 0);
+    QCOMPARE(controller.piperRuntimeStatus(), QStringLiteral("Ready Metadata"));
+    QCOMPARE(controller.whisperRuntimeStatus(), QStringLiteral("Ready Metadata"));
+    QVERIFY(controller.piperRuntimeReadinessSummary().contains(QStringLiteral("disabled by default")));
+    QVERIFY(controller.whisperRuntimeReadinessSummary().contains(
+        QStringLiteral("readiness-only")));
     QVERIFY(controller.voiceConfigurationReadinessSummary().contains(
         QStringLiteral("Piper file-output TTS: Ready")));
     QVERIFY(controller.voiceConfigurationReadinessSummary().contains(
@@ -1450,6 +1472,15 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
     QVERIFY(controller.piperFileOutputReadinessSummary().contains(
         QStringLiteral("Piper binary path is missing")));
     QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Missing Binary"));
+
+    controller.setWhisperBinaryPath(QStringLiteral("https://example.invalid/whisper"));
+    QCOMPARE(controller.whisperRuntimeStatus(), QStringLiteral("Refused"));
+    QCOMPARE(controller.voiceRuntimeRefusedCount(), 1);
+    QVERIFY(controller.whisperRuntimeReadinessSummary().contains(QStringLiteral("unsafe/non-local")));
+    QVERIFY(!controller.whisperRuntimeReadinessSummary().contains(
+        QStringLiteral("https://example.invalid")));
+    QVERIFY(!controller.voiceRuntimeSafetyReportSummary().contains(
+        QStringLiteral("https://example.invalid")));
 }
 
 void ApplicationControllerTest::piperFileOutputExecutionRequiresExplicitOptIn() {

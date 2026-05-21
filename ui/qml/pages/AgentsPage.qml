@@ -180,6 +180,31 @@ ShellPanel {
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Voice Runtime"
+                value: agentsPage.viewModel.voiceRuntimeHealth
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Voice Config"
+                value: agentsPage.viewModel.voiceRuntimeConfiguredCount.toString()
+                       + " configured / "
+                       + agentsPage.viewModel.voiceRuntimeMissingCount.toString()
+                       + " missing / "
+                       + agentsPage.viewModel.voiceRuntimeRefusedCount.toString()
+                       + " refused"
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Voice Readiness"
+                value: agentsPage.viewModel.voiceRuntimeReadinessSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
         }
 
         ColumnLayout {
@@ -313,6 +338,18 @@ ShellPanel {
                     required property string modelData
                     compact: agentsPage.compact
                     label: "Contract Safety"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.voiceRuntimeReadinessChecks
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Voice Runtime"
                     value: modelData
                     Layout.fillWidth: true
                 }

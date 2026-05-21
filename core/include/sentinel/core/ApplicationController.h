@@ -1031,6 +1031,21 @@ public:
     QString piperFileOutputAudioPathSummary() const;
     QString whisperPreparationReadinessStatus() const;
     QString whisperPreparationReadinessSummary() const;
+    QString voiceRuntimeReadinessSummary() const;
+    QString voiceRuntimeHealth() const;
+    int voiceRuntimeConfiguredCount() const;
+    int voiceRuntimeMissingCount() const;
+    int voiceRuntimeRefusedCount() const;
+    QString voiceRuntimePermissionFoundationSummary() const;
+    QString voiceRuntimeSandboxSummary() const;
+    QString voiceRuntimeSafetyReportSummary() const;
+    QStringList voiceRuntimeReadinessChecks() const;
+    QString whisperRuntimeStatus() const;
+    QString whisperRuntimeReadinessSummary() const;
+    QString whisperRuntimePathSummary() const;
+    QString piperRuntimeStatus() const;
+    QString piperRuntimeReadinessSummary() const;
+    QString piperRuntimePathSummary() const;
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;
@@ -1500,6 +1515,9 @@ private:
     ContextAssemblySource contextAssemblySource(ContextAssemblySourceKind kind) const;
     MemoryCandidate memoryCandidateFromConversationText(const QString& text) const;
     bool reviewMemoryCandidate(const QString& candidateId, MemoryCandidateReviewAction action);
+    WhisperRuntimeDescriptor currentWhisperRuntimeDescriptor() const;
+    PiperRuntimeDescriptor currentPiperRuntimeDescriptor() const;
+    VoiceRuntimeReadinessReport currentVoiceRuntimeReadinessReport() const;
 
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;

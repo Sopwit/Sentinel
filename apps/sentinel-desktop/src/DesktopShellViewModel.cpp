@@ -1052,6 +1052,66 @@ QString DesktopShellViewModel::whisperPreparationReadinessSummary() const {
     return controller_.whisperPreparationReadinessSummary();
 }
 
+QString DesktopShellViewModel::voiceRuntimeReadinessSummary() const {
+    return controller_.voiceRuntimeReadinessSummary();
+}
+
+QString DesktopShellViewModel::voiceRuntimeHealth() const {
+    return controller_.voiceRuntimeHealth();
+}
+
+int DesktopShellViewModel::voiceRuntimeConfiguredCount() const {
+    return controller_.voiceRuntimeConfiguredCount();
+}
+
+int DesktopShellViewModel::voiceRuntimeMissingCount() const {
+    return controller_.voiceRuntimeMissingCount();
+}
+
+int DesktopShellViewModel::voiceRuntimeRefusedCount() const {
+    return controller_.voiceRuntimeRefusedCount();
+}
+
+QString DesktopShellViewModel::voiceRuntimePermissionFoundationSummary() const {
+    return controller_.voiceRuntimePermissionFoundationSummary();
+}
+
+QString DesktopShellViewModel::voiceRuntimeSandboxSummary() const {
+    return controller_.voiceRuntimeSandboxSummary();
+}
+
+QString DesktopShellViewModel::voiceRuntimeSafetyReportSummary() const {
+    return controller_.voiceRuntimeSafetyReportSummary();
+}
+
+QStringList DesktopShellViewModel::voiceRuntimeReadinessChecks() const {
+    return controller_.voiceRuntimeReadinessChecks();
+}
+
+QString DesktopShellViewModel::whisperRuntimeStatus() const {
+    return controller_.whisperRuntimeStatus();
+}
+
+QString DesktopShellViewModel::whisperRuntimeReadinessSummary() const {
+    return controller_.whisperRuntimeReadinessSummary();
+}
+
+QString DesktopShellViewModel::whisperRuntimePathSummary() const {
+    return controller_.whisperRuntimePathSummary();
+}
+
+QString DesktopShellViewModel::piperRuntimeStatus() const {
+    return controller_.piperRuntimeStatus();
+}
+
+QString DesktopShellViewModel::piperRuntimeReadinessSummary() const {
+    return controller_.piperRuntimeReadinessSummary();
+}
+
+QString DesktopShellViewModel::piperRuntimePathSummary() const {
+    return controller_.piperRuntimePathSummary();
+}
+
 // QML-facing convenience API keeps explicit path arguments to avoid a larger invokable contract
 // change. NOLINTNEXTLINE(bugprone-easily-swappable-parameters)
 void DesktopShellViewModel::applyVoiceConfigurationPaths(const QString& piperBinaryPath,

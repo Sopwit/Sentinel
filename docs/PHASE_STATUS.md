@@ -2,6 +2,37 @@
 
 ## Completed / Stable
 
+### Phase 18.16-18.18: Voice Runtime Permission And Path Configuration Foundation
+
+Completed. Adds deterministic local-only voice runtime readiness metadata for future Piper and
+Whisper activation without enabling voice inference or audio I/O.
+
+Scope:
+
+- Added voice runtime policy/status/readiness/health/sandbox/restriction/budget/readiness and
+  safety-report metadata beside the existing voice provider and environment boundaries.
+- Added Piper and Whisper runtime descriptors, status/readiness records, configuration summaries,
+  and path summaries that report configured/missing/refused counts without exposing raw paths in
+  readiness summaries.
+- Unsafe or non-local path-style configuration is refused before activation metadata is marked
+  ready.
+- Missing or partial Piper/Whisper configuration produces safe missing-configuration readiness.
+- Permission summaries explicitly label local-only, disabled-by-default, sandbox-required, future
+  microphone access, future audio playback, future transcription runtime, and future synthesis
+  runtime as metadata only.
+- Safety summaries preserve `executionAttempted = false` and state that no subprocess execution,
+  inference, microphone capture, playback, streaming, filesystem scanning, downloads, cloud/API
+  calls, or background workers are started.
+- Controller, desktop view model, Settings, and Agents expose compact QML-safe readiness,
+  configured/missing/refused counts, permission summaries, sandbox summaries, and runtime safety
+  summaries.
+
+Known limitation:
+
+- The readiness layer is not a Piper/Whisper launcher, model loader, microphone permission flow,
+  playback system, filesystem scanner, path picker, downloader, sandbox implementation, or voice
+  activation control. Future STT/TTS activation still requires a separate explicit phase.
+
 ### Phase 18.13-18.15: Tool Contract And Permission Foundation
 
 Completed. Adds deterministic metadata-only tool contract records beside the Phase 18 capability

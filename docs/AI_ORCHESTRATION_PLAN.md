@@ -821,6 +821,15 @@ execution, or arbitrary export paths:
   configured model paths. The validation and hints do not execute binaries, load models, inspect
   model contents, recurse through directories, auto-write settings, download assets, open audio
   devices, call cloud services, or start background work.
+- Phase 18.16 through Phase 18.18 add a readiness-only voice runtime permission/path layer for
+  future Piper and Whisper activation. Piper/Whisper descriptors report configured/missing/refused
+  counts, local-only path-style readiness, disabled-by-default state, sandbox-required metadata,
+  future microphone/playback labels, future transcription/synthesis runtime labels, and safety
+  summaries. Unsafe or non-local path-style configuration is refused. The layer does not run
+  Piper or Whisper, load models, open microphones, play audio, stream, scan the filesystem,
+  download assets, call cloud/API services, start subprocesses, or create background workers.
+  Future STT/TTS activation must add explicit permission prompts, sandbox implementation, runtime
+  clients, audio lifecycle ownership, UI controls, and tests in a separate phase.
 - `docs/PHASE_13_CHECKPOINT.md` records the Phase 13 Voice/Piper review, confirms the TTS path as
   `text -> Piper provider -> gated file-output metadata`, and marks Phase 14 ready only for
   explicit planning or configuration-readiness work unless a later phase separately authorizes
