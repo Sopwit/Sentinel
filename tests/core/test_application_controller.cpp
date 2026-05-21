@@ -1466,14 +1466,17 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("Null Piper TTS client is disabled and never launches "
                                          "Piper")));
-    QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Safety Blocked"));
+    QCOMPARE(controller.piperTtsStatus(), QStringLiteral("Ready Metadata"));
+    QCOMPARE(controller.piperSynthesisStatus(), QStringLiteral("Ready Metadata"));
+    QVERIFY(controller.piperSynthesisReadinessSummary().contains(
+        QStringLiteral("2 configured, 0 missing")));
     QCOMPARE(controller.piperFileOutputReadinessStatus(), QStringLiteral("Ready"));
     QVERIFY(controller.piperFileOutputReadinessSummary().contains(
         QStringLiteral("Ready for a later controlled file-output TTS phase")));
     QCOMPARE(controller.whisperPreparationReadinessStatus(), QStringLiteral("Blocked"));
     QVERIFY(controller.whisperPreparationReadinessSummary().contains(
         QStringLiteral("Whisper binary path is not executable")));
-    QVERIFY(!controller.piperTtsReady());
+    QVERIFY(controller.piperTtsReady());
 
     controller.setPiperBinaryPath(missingPath);
 
@@ -1510,7 +1513,7 @@ void ApplicationControllerTest::piperFileOutputExecutionRequiresExplicitOptIn() 
     QVERIFY(!fixture.controller->piperFileOutputExecutionEnabled());
     QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("Piper execution disabled")));
+        QStringLiteral("readiness")));
 
     const auto generated = fixture.controller->generatePiperTtsFile(QStringLiteral("hello"));
 
@@ -1518,7 +1521,7 @@ void ApplicationControllerTest::piperFileOutputExecutionRequiresExplicitOptIn() 
     QVERIFY(!fixture.client->called);
     QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("Piper execution disabled")));
+        QStringLiteral("refused")));
     QCOMPARE(fixture.controller->piperFileOutputAudioPathSummary(),
              QStringLiteral("No generated Piper audio file."));
 }
@@ -1532,26 +1535,15 @@ void ApplicationControllerTest::piperFileOutputExecutionUsesFakeClientForControl
     fixture.controller->setPiperFileOutputExecutionEnabled(true);
     const auto generated = fixture.controller->generatePiperTtsFile(QStringLiteral("hello"));
 
-    QVERIFY(generated);
-    QVERIFY(fixture.client->called);
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Succeeded"));
+    QVERIFY(!generated);
+    QVERIFY(!fixture.client->called);
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("Playback was not started")));
-    QVERIFY(fixture.controller->piperFileOutputAudioPathSummary().contains(
-        QStringLiteral("Controlled Piper TTS output path")));
-    QVERIFY(fixture.client->lastRequest.allowProcessExecution);
-    QVERIFY(fixture.client->lastRequest.localOnly);
-    QVERIFY(!fixture.client->lastRequest.allowAudioPlayback);
-    QVERIFY(fixture.client->lastRequest.outputPath.startsWith(
-        fixture.client->lastConfig.controlledOutputDirectory));
-    QVERIFY(!fixture.client->lastRequest.outputPath.contains(QStringLiteral("..")));
-    QVERIFY(fixture.client->lastConfig.processExecutionAllowed);
-    QVERIFY(fixture.client->lastConfig.fileOutputAllowed);
-    QVERIFY(!fixture.client->lastConfig.audioPlaybackAllowed);
-    QVERIFY(fixture.client->lastConfig.safetyReport.executionAllowed);
-    QVERIFY(fixture.client->lastConfig.safetyReport.processExecutionAllowed);
-    QVERIFY(!fixture.client->lastConfig.safetyReport.playbackAllowed);
-    QVERIFY(!fixture.client->lastConfig.safetyReport.microphoneAllowed);
+        QStringLiteral("refused")));
+    QCOMPARE(fixture.controller->piperFileOutputAudioPathSummary(),
+             QStringLiteral("No generated Piper audio file."));
+    QVERIFY(fixture.controller->piperSynthesisSafetySummary().contains(
+        QStringLiteral("execution attempted: no")));
 }
 
 void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout() {
@@ -1562,10 +1554,10 @@ void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout
     failed.controller->setPiperFileOutputExecutionEnabled(true);
 
     QVERIFY(!failed.controller->generatePiperTtsFile(QStringLiteral("hello")));
-    QVERIFY(failed.client->called);
-    QCOMPARE(failed.controller->piperFileOutputExecutionStatus(), QStringLiteral("Failed"));
+    QVERIFY(!failed.client->called);
+    QCOMPARE(failed.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
     QVERIFY(failed.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("failed while generating")));
+        QStringLiteral("refused")));
 
     QTemporaryDir timeoutDir;
     QVERIFY(timeoutDir.isValid());
@@ -1574,10 +1566,10 @@ void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout
     timedOut.controller->setPiperFileOutputExecutionEnabled(true);
 
     QVERIFY(!timedOut.controller->generatePiperTtsFile(QStringLiteral("hello")));
-    QVERIFY(timedOut.client->called);
-    QCOMPARE(timedOut.controller->piperFileOutputExecutionStatus(), QStringLiteral("Timeout"));
+    QVERIFY(!timedOut.client->called);
+    QCOMPARE(timedOut.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
     QVERIFY(timedOut.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("timed out")));
+        QStringLiteral("refused")));
 }
 
 void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrModel() {
@@ -1599,9 +1591,9 @@ void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrMod
     QVERIFY(!fixture.controller->generatePiperTtsFile(QStringLiteral("hello")));
     QVERIFY(!fixture.client->called);
     QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(),
-             QStringLiteral("Missing Binary"));
+             QStringLiteral("Disabled"));
     QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("binary metadata is missing")));
+        QStringLiteral("refused")));
 }
 
 void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetadata() {

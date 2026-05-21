@@ -717,6 +717,18 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
     QCOMPARE(fixture.viewModel.piperTtsFileOutputStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.viewModel.piperTtsFileOutputSummary().contains(
         QStringLiteral("No playback or microphone access")));
+    QCOMPARE(fixture.viewModel.piperSynthesisStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.piperSynthesisReadinessSummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QVERIFY(fixture.viewModel.piperSynthesisLastSummary().contains(
+        QStringLiteral("No Piper synthesis request")));
+    QVERIFY(fixture.viewModel.piperSynthesisFallbackSummary().contains(
+        QStringLiteral("no audio")));
+    QVERIFY(fixture.viewModel.piperSynthesisSafetySummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QVERIFY(fixture.viewModel.piperSynthesisTraceSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("No subprocess execution")));
     QCOMPARE(fixture.viewModel.whisperTranscriptionStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.viewModel.whisperTranscriptionReadinessSummary().contains(
         QStringLiteral("execution attempted: no")));
@@ -794,22 +806,22 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
             fixture.viewModel.voiceConfigurationHintSummaries()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("no executable found in known Homebrew/local locations")));
-    QCOMPARE(fixture.viewModel.piperTtsStatus(), QStringLiteral("Safety Blocked"));
+    QCOMPARE(fixture.viewModel.piperTtsStatus(), QStringLiteral("Ready Metadata"));
     QCOMPARE(fixture.viewModel.piperFileOutputReadinessStatus(), QStringLiteral("Ready"));
     QVERIFY(fixture.viewModel.piperFileOutputReadinessSummary().contains(
         QStringLiteral("Ready for a later controlled file-output TTS phase")));
     QVERIFY(!fixture.viewModel.piperFileOutputExecutionEnabled());
     QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.viewModel.piperFileOutputExecutionSummary().contains(
-        QStringLiteral("Piper execution disabled")));
+        QStringLiteral("readiness")));
 
     fixture.viewModel.setPiperFileOutputExecutionEnabled(true);
 
-    QVERIFY(fixture.settings.piperFileOutputExecutionEnabled());
-    QVERIFY(fixture.viewModel.piperFileOutputExecutionEnabled());
-    QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Ready"));
+    QVERIFY(!fixture.settings.piperFileOutputExecutionEnabled());
+    QVERIFY(!fixture.viewModel.piperFileOutputExecutionEnabled());
+    QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.viewModel.piperFileOutputExecutionSummary().contains(
-        QStringLiteral("explicit controlled file output")));
+        QStringLiteral("readiness")));
     QCOMPARE(fixture.viewModel.piperFileOutputAudioPathSummary(),
              QStringLiteral("No generated Piper audio file."));
     QCOMPARE(fixture.viewModel.whisperPreparationReadinessStatus(), QStringLiteral("Blocked"));
@@ -818,8 +830,11 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
     QCOMPARE(fixture.viewModel.whisperTranscriptionStatus(), QStringLiteral("Missing Binary"));
     QVERIFY(fixture.viewModel.whisperTranscriptionReadinessSummary().contains(
         QStringLiteral("2 configured, 1 missing")));
-    QVERIFY(fixture.viewModel.piperTtsSummary().contains(QStringLiteral("safety policy")));
-    QVERIFY(!fixture.viewModel.piperTtsReady());
+    QCOMPARE(fixture.viewModel.piperSynthesisStatus(), QStringLiteral("Ready Metadata"));
+    QVERIFY(fixture.viewModel.piperSynthesisReadinessSummary().contains(
+        QStringLiteral("2 configured, 0 missing")));
+    QVERIFY(fixture.viewModel.piperTtsSummary().contains(QStringLiteral("metadata")));
+    QVERIFY(fixture.viewModel.piperTtsReady());
 }
 
 void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
@@ -1337,6 +1352,12 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("piperTtsReady"), QByteArrayLiteral("bool")},
         {QStringLiteral("piperTtsFileOutputStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("piperTtsFileOutputSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperSynthesisStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperSynthesisReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperSynthesisLastSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperSynthesisFallbackSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperSynthesisSafetySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("piperSynthesisTraceSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("voiceConfigurationSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("voiceConfigurationReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceConfigurationStatusBadges"), QByteArrayLiteral("QStringList")},

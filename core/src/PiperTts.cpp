@@ -2,7 +2,6 @@
 
 #include <QDir>
 #include <QFileInfo>
-#include <QProcess>
 #include <QStandardPaths>
 
 #include <utility>
@@ -14,6 +13,15 @@ namespace {
 bool hasConfiguredPath(const QString& path) {
     const auto trimmed = path.trimmed();
     return !trimmed.isEmpty() && trimmed != QStringLiteral("not configured");
+}
+
+bool unsafeLocalPath(const QString& path) {
+    const auto trimmed = path.trimmed();
+    if (trimmed.isEmpty()) {
+        return false;
+    }
+    const auto lower = trimmed.toLower();
+    return lower.contains(QStringLiteral("://")) || lower.startsWith(QStringLiteral("\\\\"));
 }
 
 QString normalizedAbsolutePath(const QString& path) {
@@ -28,6 +36,16 @@ bool isExistingExecutableFile(const QString& path) {
 bool isExistingReadableFile(const QString& path) {
     const QFileInfo info(path);
     return info.exists() && info.isFile() && info.isReadable();
+}
+
+QString safeConfiguredPathSummary(const QString& label, const QString& path) {
+    if (!hasConfiguredPath(path)) {
+        return QStringLiteral("%1: missing").arg(label);
+    }
+    if (unsafeLocalPath(path)) {
+        return QStringLiteral("%1: refused unsafe/non-local path metadata").arg(label);
+    }
+    return QStringLiteral("%1: configured local metadata").arg(label);
 }
 
 bool isControlledOutputPath(const QString& outputPath, const QString& outputDirectory) {
@@ -63,10 +81,69 @@ QString outputPathSummary(const QString& path, const PiperTtsConfig& config) {
         return QStringLiteral("Output path refused because it is outside the controlled Piper TTS "
                               "output directory.");
     }
-    return QStringLiteral("Controlled Piper TTS output path: %1").arg(path);
+    return QStringLiteral("Controlled Piper TTS output path metadata accepted.");
+}
+
+PiperSynthesisResult refusedSynthesisResult(PiperSynthesisStatus status,
+                                            const QString& reason,
+                                            const PiperSynthesisRequest& request,
+                                            const PiperSynthesisConfig& config,
+                                            const QStringList& traces) {
+    const auto safety = piperSynthesisSafetyReport(config.policy);
+    PiperSynthesisResult result;
+    result.status = status;
+    result.success = false;
+    result.audioSummary = QStringLiteral("No audio produced or played.");
+    result.timeoutMs = request.timeoutMs > 0 ? request.timeoutMs : config.budget.timeoutMs;
+    result.executionAttempted = false;
+    result.session = PiperSynthesisSession{
+        QStringLiteral("piper-synthesis-session-1"),
+        status,
+        true,
+        false,
+        QStringLiteral("Piper synthesis session refused before execution."),
+    };
+    result.fallback = PiperSynthesisFallback{
+        status,
+        reason,
+        QStringLiteral("Piper synthesis fallback: %1; no audio was produced, played, streamed, "
+                       "or injected.")
+            .arg(reason),
+    };
+    result.safetyReport = safety;
+    result.summary = QStringLiteral("Piper synthesis %1: %2. No subprocess, playback, live "
+                                    "streaming, microphone capture, cloud call, or chat/audio "
+                                    "injection occurred.")
+                         .arg(piperSynthesisStatusName(status), reason);
+    result.traces = traces;
+    return result;
 }
 
 } // namespace
+
+QString piperSynthesisStatusName(PiperSynthesisStatus status) {
+    switch (status) {
+    case PiperSynthesisStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case PiperSynthesisStatus::NotConfigured:
+        return QStringLiteral("Not Configured");
+    case PiperSynthesisStatus::MissingBinary:
+        return QStringLiteral("Missing Binary");
+    case PiperSynthesisStatus::MissingModel:
+        return QStringLiteral("Missing Model");
+    case PiperSynthesisStatus::UnsafePath:
+        return QStringLiteral("Unsafe Path");
+    case PiperSynthesisStatus::SafetyBlocked:
+        return QStringLiteral("Safety Blocked");
+    case PiperSynthesisStatus::Refused:
+        return QStringLiteral("Refused");
+    case PiperSynthesisStatus::ReadyMetadata:
+        return QStringLiteral("Ready Metadata");
+    case PiperSynthesisStatus::Timeout:
+        return QStringLiteral("Timeout");
+    }
+    return QStringLiteral("Disabled");
+}
 
 QString piperTtsStatusName(PiperTtsStatus status) {
     switch (status) {
@@ -99,9 +176,233 @@ QString piperTtsStatusName(PiperTtsStatus status) {
     return QStringLiteral("Disabled");
 }
 
+QString piperSynthesisReadinessSummary(const PiperSynthesisReadiness& readiness) {
+    return readiness.summary;
+}
+
+QString piperSynthesisSafetySummary(const PiperSynthesisSafetyReport& report) {
+    return report.summary;
+}
+
+QString safePiperSynthesisResultSummary(const PiperSynthesisResult& result) {
+    return result.summary.trimmed().isEmpty()
+               ? QStringLiteral("Piper synthesis %1.")
+                     .arg(piperSynthesisStatusName(result.status))
+               : result.summary.trimmed();
+}
+
+QStringList piperSynthesisTraceSummaries(const QList<PiperSynthesisTrace>& traces) {
+    QStringList summaries;
+    for (const auto& item : traces) {
+        summaries.append(QStringLiteral("%1 [%2]: %3 Execution attempted: %4")
+                             .arg(item.stage, piperSynthesisStatusName(item.status), item.summary,
+                                  item.executionAttempted ? QStringLiteral("yes")
+                                                          : QStringLiteral("no")));
+    }
+    return summaries;
+}
+
+PiperSynthesisSafetyReport piperSynthesisSafetyReport(const PiperSynthesisPolicy& policy) {
+    PiperSynthesisSafetyReport report;
+    report.status = QStringLiteral("Blocked");
+    report.summary =
+        QStringLiteral("Piper TTS safety blocks subprocess execution, audio playback, live voice "
+                       "streaming, microphone capture, cloud calls, downloads, filesystem "
+                       "scanning, and automatic chat/audio injection; execution attempted: no.");
+    report.safe = policy.localOnly && !policy.processExecutionAllowed &&
+                  !policy.audioPlaybackAllowed && !policy.liveStreamingAllowed &&
+                  !policy.microphoneCaptureAllowed && !policy.cloudAllowed &&
+                  !policy.downloadsAllowed && !policy.filesystemScanAllowed &&
+                  !policy.automaticChatInjectionAllowed;
+    report.executionAttempted = false;
+    report.processExecutionAllowed = policy.processExecutionAllowed;
+    report.audioPlaybackAllowed = policy.audioPlaybackAllowed;
+    report.liveStreamingAllowed = policy.liveStreamingAllowed;
+    report.microphoneCaptureAllowed = policy.microphoneCaptureAllowed;
+    report.cloudAllowed = policy.cloudAllowed;
+    report.downloadsAllowed = policy.downloadsAllowed;
+    report.filesystemScanAllowed = policy.filesystemScanAllowed;
+    report.automaticChatInjectionAllowed = policy.automaticChatInjectionAllowed;
+    report.checks = {
+        QStringLiteral("Execution attempted: no"),
+        QStringLiteral("Subprocess execution: blocked"),
+        QStringLiteral("Audio playback: blocked"),
+        QStringLiteral("Live voice streaming: blocked"),
+        QStringLiteral("Microphone capture: blocked"),
+        QStringLiteral("Cloud/download/filesystem scan: blocked"),
+        QStringLiteral("Automatic chat/audio injection: blocked"),
+    };
+    return report;
+}
+
+PiperSynthesisConfig defaultDisabledPiperSynthesisConfig() {
+    PiperSynthesisConfig config;
+    config.policy = PiperSynthesisPolicy{};
+    config.budget = PiperSynthesisBudget{};
+    config.binary = VoiceBinaryDescriptor{
+        QStringLiteral("piper-binary"),
+        QStringLiteral("Piper Binary"),
+        VoiceCapability::TextToSpeech,
+        VoiceBinaryStatus::Missing,
+        QStringLiteral("not configured"),
+        false,
+        QStringLiteral("Piper binary path is not configured; Sentinel will not execute Piper."),
+    };
+    config.model = VoiceModelDescriptor{
+        QStringLiteral("piper-model"),
+        QStringLiteral("Piper Voice Model"),
+        VoiceCapability::TextToSpeech,
+        VoiceModelStatus::Missing,
+        QStringLiteral("not configured"),
+        false,
+        QStringLiteral("Piper voice model path is not configured or loaded."),
+    };
+    config.summary =
+        QStringLiteral("Piper synthesis is disabled and exposes readiness metadata only.");
+    return config;
+}
+
+PiperSynthesisConfig configuredPiperSynthesisConfig(const QString& binaryPath,
+                                                    const QString& modelPath) {
+    auto config = defaultDisabledPiperSynthesisConfig();
+    config.policy.enabled = hasConfiguredPath(binaryPath) || hasConfiguredPath(modelPath);
+    config.binary.status = isExistingExecutableFile(binaryPath) ? VoiceBinaryStatus::PresentMetadata
+                                                                : VoiceBinaryStatus::Missing;
+    config.binary.expectedPath =
+        hasConfiguredPath(binaryPath) ? binaryPath.trimmed() : QStringLiteral("not configured");
+    config.binary.executableAllowed = false;
+    config.binary.summary =
+        QStringLiteral("Piper binary metadata is checked for future local TTS only.");
+    config.model.status = isExistingReadableFile(modelPath) ? VoiceModelStatus::PresentMetadata
+                                                            : VoiceModelStatus::Missing;
+    config.model.expectedPath =
+        hasConfiguredPath(modelPath) ? modelPath.trimmed() : QStringLiteral("not configured");
+    config.model.loadAllowed = false;
+    config.model.summary =
+        QStringLiteral("Piper voice model metadata is checked for future local TTS only.");
+    config.summary =
+        QStringLiteral("Piper synthesis configuration is local-only readiness metadata; "
+                       "execution and playback remain disabled.");
+    return config;
+}
+
+PiperSynthesisReadiness piperSynthesisReadiness(const PiperSynthesisConfig& config,
+                                                const PiperSynthesisRequest& request) {
+    const auto binaryConfigured = hasConfiguredPath(config.binary.expectedPath);
+    const auto modelConfigured = hasConfiguredPath(config.model.expectedPath);
+    const auto unsafe = unsafeLocalPath(config.binary.expectedPath) ||
+                        unsafeLocalPath(config.model.expectedPath) || !request.localOnly;
+
+    PiperSynthesisReadiness readiness;
+    readiness.configuredCount = (binaryConfigured ? 1 : 0) + (modelConfigured ? 1 : 0);
+    readiness.missingCount = 2 - readiness.configuredCount;
+    readiness.refusedCount = unsafe ? 1 : 0;
+    readiness.localOnly = request.localOnly && config.policy.localOnly;
+    readiness.executionAttempted = false;
+
+    if (!config.policy.enabled) {
+        readiness.status = PiperSynthesisStatus::Disabled;
+    } else if (unsafe) {
+        readiness.status = PiperSynthesisStatus::UnsafePath;
+    } else if (!binaryConfigured || config.binary.status != VoiceBinaryStatus::PresentMetadata) {
+        readiness.status = PiperSynthesisStatus::MissingBinary;
+    } else if (!modelConfigured || config.model.status != VoiceModelStatus::PresentMetadata) {
+        readiness.status = PiperSynthesisStatus::MissingModel;
+    } else {
+        readiness.status = PiperSynthesisStatus::ReadyMetadata;
+        readiness.ready = true;
+    }
+
+    readiness.summary =
+        QStringLiteral("Piper TTS synthesis readiness: %1; %2 configured, %3 missing, %4 refused; "
+                       "local-only metadata; execution attempted: no.")
+            .arg(piperSynthesisStatusName(readiness.status))
+            .arg(readiness.configuredCount)
+            .arg(readiness.missingCount)
+            .arg(readiness.refusedCount);
+    readiness.checks = {
+        safeConfiguredPathSummary(QStringLiteral("Piper binary"), config.binary.expectedPath),
+        safeConfiguredPathSummary(QStringLiteral("Piper voice model"), config.model.expectedPath),
+        QStringLiteral("No subprocess execution, audio playback, live voice streaming, "
+                       "microphone capture, cloud call, download, filesystem scan, or automatic "
+                       "chat/audio injection."),
+    };
+    return readiness;
+}
+
+PiperSynthesisStatus NullPiperSynthesisClient::status() const {
+    return PiperSynthesisStatus::Disabled;
+}
+
+QString NullPiperSynthesisClient::statusSummary() const {
+    return QStringLiteral("Null Piper synthesis client is disabled and never launches Piper, "
+                          "writes audio, plays audio, streams voice, or injects chat.");
+}
+
+PiperSynthesisResult NullPiperSynthesisClient::synthesize(
+    const PiperSynthesisRequest& request, const PiperSynthesisConfig& config) {
+    Q_UNUSED(config);
+    return refusedSynthesisResult(
+        PiperSynthesisStatus::Disabled,
+        QStringLiteral("disabled by default"),
+        request,
+        defaultDisabledPiperSynthesisConfig(),
+        {QStringLiteral("Null Piper synthesis client refused without side effects.")});
+}
+
+PiperSynthesisStatus LocalPiperSynthesisClient::status() const {
+    return PiperSynthesisStatus::ReadyMetadata;
+}
+
+QString LocalPiperSynthesisClient::statusSummary() const {
+    return QStringLiteral("Local Piper synthesis client is a bounded non-executing skeleton; it "
+                          "validates metadata and refuses before subprocess start.");
+}
+
+PiperSynthesisResult LocalPiperSynthesisClient::synthesize(
+    const PiperSynthesisRequest& request, const PiperSynthesisConfig& config) {
+    const auto readiness = piperSynthesisReadiness(config, request);
+    QStringList traces = {
+        QStringLiteral("Request metadata accepted for validation only."),
+        QStringLiteral("Readiness: %1").arg(piperSynthesisReadinessSummary(readiness)),
+    };
+
+    if (request.timeoutMs <= 0) {
+        traces.append(QStringLiteral("Timeout metadata fallback selected before execution."));
+        return refusedSynthesisResult(PiperSynthesisStatus::Timeout,
+                                      QStringLiteral("timeout budget invalid"), request, config,
+                                      traces);
+    }
+    if (readiness.status != PiperSynthesisStatus::ReadyMetadata) {
+        return refusedSynthesisResult(readiness.status, piperSynthesisStatusName(readiness.status),
+                                      request, config, traces);
+    }
+    if (request.text.trimmed().isEmpty()) {
+        return refusedSynthesisResult(PiperSynthesisStatus::Refused,
+                                      QStringLiteral("empty synthesis text"), request, config,
+                                      traces);
+    }
+    if (request.allowAudioPlayback || request.allowLiveStreaming ||
+        request.allowMicrophoneCapture || request.allowCloud ||
+        request.allowAutomaticChatInjection || !request.allowProcessExecution ||
+        config.policy.processExecutionAllowed) {
+        traces.append(QStringLiteral("Safety policy refused runtime privileges."));
+        return refusedSynthesisResult(PiperSynthesisStatus::SafetyBlocked,
+                                      QStringLiteral("runtime execution remains out of scope"),
+                                      request, config, traces);
+    }
+
+    traces.append(QStringLiteral("Local Piper skeleton reached the execution boundary and refused "
+                                 "without launching a subprocess."));
+    return refusedSynthesisResult(PiperSynthesisStatus::Refused,
+                                  QStringLiteral("Piper synthesis execution phase not enabled"),
+                                  request, config, traces);
+}
+
 QString piperVoiceModelDescriptorSummary(const PiperVoiceModelDescriptor& descriptor) {
-    const auto path = hasConfiguredPath(descriptor.expectedPath) ? descriptor.expectedPath.trimmed()
-                                                                 : QStringLiteral("not configured");
+    const auto path = hasConfiguredPath(descriptor.expectedPath)
+                          ? QStringLiteral("configured local metadata")
+                          : QStringLiteral("not configured");
     const auto summary = descriptor.summary.trimmed().isEmpty()
                              ? QStringLiteral("No Piper voice model metadata available.")
                              : descriptor.summary.trimmed();
@@ -144,11 +445,11 @@ QStringList piperTtsConfigCheckSummaries(const PiperTtsConfig& config) {
             .arg(config.processExecutionAllowed ? QStringLiteral("Allowed")
                                                 : QStringLiteral("Blocked")),
         QStringLiteral("File output: %1")
-            .arg(config.fileOutputAllowed ? QStringLiteral("Allowed to controlled directory")
+            .arg(config.fileOutputAllowed ? QStringLiteral("Refused in readiness-only phase")
                                           : QStringLiteral("Blocked")),
         QStringLiteral("Output directory: %1")
             .arg(hasConfiguredPath(config.controlledOutputDirectory)
-                     ? normalizedAbsolutePath(config.controlledOutputDirectory)
+                     ? QStringLiteral("configured app-controlled metadata")
                      : QStringLiteral("not configured")),
         QStringLiteral("Audio playback: %1")
             .arg(config.audioPlaybackAllowed ? QStringLiteral("Allowed")
@@ -182,102 +483,6 @@ PiperTtsResult NullPiperTtsClient::synthesize(const PiperTtsRequest& request,
         QStringLiteral("Piper TTS is disabled: no Piper subprocess, audio file, or playback was "
                        "created."),
         {QStringLiteral("Null Piper client refused synthesis without side effects.")},
-    };
-}
-
-PiperTtsStatus ProcessPiperTtsClient::status() const {
-    return PiperTtsStatus::Configured;
-}
-
-QString ProcessPiperTtsClient::statusSummary() const {
-    return QStringLiteral("Process Piper TTS client can write a local file only when the provider "
-                          "has already accepted all safety gates.");
-}
-
-PiperTtsResult ProcessPiperTtsClient::synthesize(const PiperTtsRequest& request,
-                                                 const PiperTtsConfig& config) {
-    const auto outputPath = controlledOutputPath(request, config);
-    QDir outputDir(config.controlledOutputDirectory);
-    if (!outputDir.exists() && !outputDir.mkpath(QStringLiteral("."))) {
-        return PiperTtsResult{
-            PiperTtsStatus::Failed,
-            false,
-            outputPath,
-            outputPathSummary(outputPath, config),
-            request.timeoutMs,
-            -1,
-            QStringLiteral("Unable to create controlled Piper TTS output directory."),
-            QStringLiteral("Piper TTS failed before process start because the controlled output "
-                           "directory could not be created."),
-            {QStringLiteral("Controlled output directory creation failed.")},
-        };
-    }
-
-    QProcess process;
-    process.setProgram(config.binary.expectedPath);
-    process.setArguments({QStringLiteral("--model"), config.voiceModel.expectedPath,
-                          QStringLiteral("--output_file"), outputPath});
-    process.setProcessChannelMode(QProcess::SeparateChannels);
-    process.start();
-    if (!process.waitForStarted(request.timeoutMs)) {
-        return PiperTtsResult{
-            PiperTtsStatus::Failed,
-            false,
-            outputPath,
-            outputPathSummary(outputPath, config),
-            request.timeoutMs,
-            -1,
-            process.errorString(),
-            QStringLiteral("Piper TTS failed to start within the configured boundary."),
-            {QStringLiteral("Piper process start failed.")},
-        };
-    }
-
-    process.write(request.text.toUtf8());
-    process.closeWriteChannel();
-    if (!process.waitForFinished(request.timeoutMs)) {
-        process.kill();
-        process.waitForFinished(1000);
-        return PiperTtsResult{
-            PiperTtsStatus::Timeout,
-            false,
-            outputPath,
-            outputPathSummary(outputPath, config),
-            request.timeoutMs,
-            -1,
-            process.errorString(),
-            QStringLiteral("Piper TTS timed out before file-output synthesis completed."),
-            {QStringLiteral("Piper process timed out and was terminated.")},
-        };
-    }
-
-    const auto exitCode = process.exitCode();
-    if (process.exitStatus() != QProcess::NormalExit || exitCode != 0) {
-        const auto stderrText = QString::fromUtf8(process.readAllStandardError()).trimmed();
-        return PiperTtsResult{
-            PiperTtsStatus::Failed,
-            false,
-            outputPath,
-            outputPathSummary(outputPath, config),
-            request.timeoutMs,
-            exitCode,
-            stderrText.isEmpty() ? process.errorString() : stderrText.left(240),
-            QStringLiteral("Piper TTS failed while generating the controlled output file."),
-            {QStringLiteral("Piper process exited with failure metadata.")},
-        };
-    }
-
-    return PiperTtsResult{
-        PiperTtsStatus::Succeeded,
-        true,
-        outputPath,
-        outputPathSummary(outputPath, config),
-        request.timeoutMs,
-        exitCode,
-        {},
-        QStringLiteral("Piper TTS generated a local controlled audio file. Playback was not "
-                       "started."),
-        {QStringLiteral("Piper process completed local file-output synthesis only.")},
     };
 }
 
@@ -342,18 +547,18 @@ QString PiperTextToSpeechProvider::piperStatusSummary() const {
                               "or not configured.");
     case PiperTtsStatus::SafetyBlocked:
         return QStringLiteral("Piper TTS is blocked by voice runtime safety policy; process "
-                              "execution or controlled file output is not currently allowed.");
+                              "execution, file output, and playback are not currently allowed.");
     case PiperTtsStatus::Refused:
         return QStringLiteral("Piper TTS refused synthesis before execution.");
     case PiperTtsStatus::Running:
         return QStringLiteral("Piper TTS file output is running.");
     case PiperTtsStatus::Configured:
-        return QStringLiteral("Piper TTS is configured for explicit local file output only. "
-                              "Playback and microphone access remain disabled.");
+        return QStringLiteral("Piper TTS metadata is configured for a future controlled synthesis "
+                              "phase. Execution and playback remain disabled.");
     case PiperTtsStatus::ReadyMetadata:
         return QStringLiteral("Piper TTS metadata is present for controlled file output.");
     case PiperTtsStatus::Succeeded:
-        return QStringLiteral("Piper TTS file output succeeded. Playback was not started.");
+        return QStringLiteral("Piper TTS success is unavailable in this readiness-only phase.");
     case PiperTtsStatus::Failed:
         return QStringLiteral("Piper TTS file output failed.");
     case PiperTtsStatus::Timeout:
@@ -421,7 +626,7 @@ PiperTtsResult PiperTextToSpeechProvider::synthesizePiper(const PiperTtsRequest&
         };
     }
 
-    if (!request.localOnly || request.allowAudioPlayback || !request.allowProcessExecution) {
+    if (!request.localOnly || request.allowAudioPlayback || request.allowProcessExecution) {
         return PiperTtsResult{
             PiperTtsStatus::Refused,
             false,
@@ -430,8 +635,8 @@ PiperTtsResult PiperTextToSpeechProvider::synthesizePiper(const PiperTtsRequest&
             request.timeoutMs,
             -1,
             {},
-            QStringLiteral("Piper TTS refused request policy: file output must be local-only, "
-                           "explicitly process-allowed, and playback-disabled."),
+            QStringLiteral("Piper TTS refused request policy: synthesis is local-only metadata; "
+                           "process execution and playback are disabled."),
             {QStringLiteral("Piper request policy gate refused synthesis.")},
         };
     }
@@ -451,10 +656,19 @@ PiperTtsResult PiperTextToSpeechProvider::synthesizePiper(const PiperTtsRequest&
         };
     }
 
-    PiperTtsRequest acceptedRequest = request;
-    acceptedRequest.outputPath = outputPath;
-    acceptedRequest.timeoutMs = request.timeoutMs > 0 ? request.timeoutMs : config_.timeoutMs;
-    return client_->synthesize(acceptedRequest, config_);
+    Q_UNUSED(outputPath);
+    return PiperTtsResult{
+        PiperTtsStatus::Refused,
+        false,
+        {},
+        QStringLiteral("No Piper audio output path produced."),
+        request.timeoutMs > 0 ? request.timeoutMs : config_.timeoutMs,
+        -1,
+        {},
+        QStringLiteral("Piper TTS refused before execution; no subprocess, audio file, or "
+                       "playback was created."),
+        {QStringLiteral("Piper provider refused at readiness-only synthesis boundary.")},
+    };
 }
 
 const PiperTtsConfig& PiperTextToSpeechProvider::config() const {
@@ -491,15 +705,15 @@ PiperTtsStatus PiperTextToSpeechProvider::evaluateStatus() const {
         return PiperTtsStatus::NotConfigured;
     }
 
-    if (!config_.safetyReport.executionAllowed || !config_.safetyReport.processExecutionAllowed ||
-        !config_.processExecutionAllowed || !config_.fileOutputAllowed ||
+    if (config_.safetyReport.executionAllowed || config_.safetyReport.processExecutionAllowed ||
+        config_.processExecutionAllowed || config_.fileOutputAllowed ||
         config_.audioPlaybackAllowed || config_.safetyReport.playbackAllowed ||
         config_.safetyReport.microphoneAllowed || config_.safetyReport.cloudAllowed ||
         config_.safetyReport.downloadsAllowed || config_.safetyReport.filesystemWideScanAllowed) {
         return PiperTtsStatus::SafetyBlocked;
     }
 
-    return PiperTtsStatus::Configured;
+    return PiperTtsStatus::ReadyMetadata;
 }
 
 PiperTtsConfig defaultDisabledPiperTtsConfig() {

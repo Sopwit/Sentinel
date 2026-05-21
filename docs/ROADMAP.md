@@ -1037,8 +1037,8 @@ Delivered:
   model, app-controlled output directory, explicit process permission, local-only request posture,
   playback disabled, microphone disabled, no downloads, no cloud/API-key behavior, and no
   filesystem-wide scans.
-- `ProcessPiperTtsClient` as the real local file-output client behind `IPiperTtsClient`, plus
-  deterministic fake-client test coverage.
+- Historical process-backed file-output client coverage, now superseded by the Phase 18.22-18.24
+  non-executing Piper synthesis boundary.
 - Controller/view-model QML-safe Piper file-output status and summary exposure.
 - Settings readiness visibility only; no speak/play control, path picker, or model picker.
 
@@ -2048,11 +2048,16 @@ Still out of scope:
 Completed. Added explicit, policy-gated Piper TTS file generation to an app-controlled cache/temp
 path.
 
-Delivered:
+Current status: Superseded by Phase 18.22-18.24. The active desktop Piper path is now
+readiness/synthesis metadata only; the legacy file-output opt-in/generation path is disabled and
+refuses without subprocess execution, file output, or playback.
+
+Historical delivered scope:
 
 - Persisted Piper file-output execution opt-in, disabled by default.
-- Explicit Generate TTS File action gated by the opt-in, configured executable Piper binary,
-  configured readable `.onnx` model, local-only request, and provider safety policy.
+- Explicit file generation action gated by the opt-in, configured executable Piper binary,
+  configured readable `.onnx` model, local-only request, and provider safety policy. Current
+  Phase 18.22-18.24 behavior has removed this active action.
 - Controlled output path generation inside the app cache/temp directory only.
 - Execution status metadata for disabled, blocked/safety-blocked, missing binary, missing model,
   running, succeeded, failed, and timeout states.
@@ -2481,6 +2486,43 @@ Still out of scope:
 - Real STT inference, Whisper subprocess execution, microphone capture, live recording, audio
   playback, streaming, cloud/API calls, downloads, filesystem scanning, prompt injection,
   automatic chat send, path/file picker UI, and autonomous voice loops.
+
+## Phase 18.22-18.24: Piper TTS Local Runtime Foundation
+
+Completed. Added a controlled Piper synthesis boundary for future local TTS without enabling real
+synthesis or playback.
+
+Delivered:
+
+- Value-only Piper synthesis policy, status, request, result, session, budget, readiness, safety,
+  fallback, and trace records.
+- `IPiperSynthesisClient`, `NullPiperSynthesisClient`, and a bounded
+  `LocalPiperSynthesisClient` skeleton that validates metadata and refuses before subprocess
+  execution.
+- Deterministic refusal for disabled default state, missing binary/model metadata,
+  unsafe/non-local path-style configuration, invalid timeout budget, empty text, and runtime
+  privilege requests.
+- Safety summaries preserving `executionAttempted = false` and blocking playback, live voice
+  streaming, microphone capture, subprocess execution, cloud/API calls, downloads, filesystem
+  scanning, and automatic chat/audio injection.
+- Legacy Piper file-output UI and controller paths reduced to disabled/readiness-only compatibility
+  metadata with no opt-in, no generate action, no output path exposure, and no file writes.
+- QML-safe Settings and Agents exposure for compact TTS status, readiness, last-result, fallback,
+  safety, and trace summaries.
+
+Future activation flow:
+
+- A later controlled synthesis phase must explicitly enable bounded text-to-audio execution and
+  tests.
+- A later playback/audio-device phase must separately define playback permissions, device
+  lifecycle, cancellation, UI controls, and privacy/safety tests.
+
+Still out of scope:
+
+- Real TTS inference, Piper subprocess execution, audio-file generation, playback, live voice
+  streaming, microphone capture, cloud/API calls, downloads, filesystem scanning, automatic chat
+  injection, automatic audio injection, speak/play controls, path/file picker UI, and autonomous
+  voice loops.
 
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 

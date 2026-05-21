@@ -519,23 +519,21 @@ bool hasConfiguredVoicePaths(const QString& piperBinaryPath, const QString& pipe
 
 VoiceRuntimeSafetyReport controlledPiperFileOutputSafetyReport(bool executionAllowed) {
     VoiceRuntimeSafetyReport report;
-    report.status = executionAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked");
+    Q_UNUSED(executionAllowed);
+    report.status = QStringLiteral("Blocked");
     report.summary =
-        executionAllowed
-            ? QStringLiteral("Voice runtime safety allows explicit local Piper file output only.")
-            : QStringLiteral("Voice runtime safety blocks Piper file output by default.");
-    report.executionAllowed = executionAllowed;
-    report.processExecutionAllowed = executionAllowed;
+        QStringLiteral("Voice runtime safety blocks Piper synthesis, file output, subprocess "
+                       "execution, and playback in this readiness-only phase.");
+    report.executionAllowed = false;
+    report.processExecutionAllowed = false;
     report.microphoneAllowed = false;
     report.playbackAllowed = false;
     report.filesystemWideScanAllowed = false;
     report.downloadsAllowed = false;
     report.cloudAllowed = false;
     report.checks = {
-        QStringLiteral("Execution: %1")
-            .arg(executionAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
-        QStringLiteral("Process execution: %1")
-            .arg(executionAllowed ? QStringLiteral("Allowed") : QStringLiteral("Blocked")),
+        QStringLiteral("Execution: Blocked"),
+        QStringLiteral("Process execution: Blocked"),
         QStringLiteral("Microphone: Blocked"),
         QStringLiteral("Playback: Blocked"),
         QStringLiteral("Filesystem-wide scan: Blocked"),
@@ -558,8 +556,9 @@ PiperTtsConfig configuredPiperTtsConfig(const QString& piperBinaryPath,
 
     config.enabled =
         hasConfiguredVoicePath(piperBinaryPath) || hasConfiguredVoicePath(piperModelPath);
-    config.processExecutionAllowed = executionAllowed;
-    config.fileOutputAllowed = executionAllowed;
+    Q_UNUSED(executionAllowed);
+    config.processExecutionAllowed = false;
+    config.fileOutputAllowed = false;
     config.audioPlaybackAllowed = false;
     config.binary = binary;
     config.voiceModel = PiperVoiceModelDescriptor{
@@ -574,12 +573,9 @@ PiperTtsConfig configuredPiperTtsConfig(const QString& piperBinaryPath,
     };
     config.safetyReport = controlledPiperFileOutputSafetyReport(executionAllowed);
     config.summary = config.enabled
-                         ? executionAllowed
-                               ? QStringLiteral("Piper path configuration is enabled for explicit "
-                                                "controlled file output only.")
-                               : QStringLiteral("Piper path configuration is stored as metadata "
-                                                "only; Piper execution and playback remain "
-                                                "blocked.")
+                         ? QStringLiteral("Piper path configuration is stored as metadata only; "
+                                          "Piper synthesis execution, file output, and playback "
+                                          "remain blocked.")
                          : QStringLiteral("Piper TTS adapter is disabled and not configured; it "
                                           "exposes readiness metadata only.");
     return config;
@@ -679,7 +675,8 @@ ApplicationController::ApplicationController(
           piperTextToSpeechProvider
               ? std::move(piperTextToSpeechProvider)
               : std::make_unique<PiperTextToSpeechProvider>(
-                    defaultDisabledPiperTtsConfig(), std::make_unique<ProcessPiperTtsClient>())),
+                    defaultDisabledPiperTtsConfig(), std::make_unique<NullPiperTtsClient>())),
+      piperSynthesisClient_(std::make_unique<LocalPiperSynthesisClient>()),
       whisperTranscriptionClient_(std::make_unique<LocalWhisperTranscriptionClient>()),
       memoryStore_(std::move(memoryStore)),
       memoryCandidateStore_(std::make_unique<InMemoryMemoryCandidateStore>()),
@@ -2065,11 +2062,11 @@ bool ApplicationController::piperTtsReady() const {
         PiperTextToSpeechProvider provider{
             configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_),
             std::make_unique<NullPiperTtsClient>()};
-        return provider.status() == PiperTtsStatus::Configured;
+        return provider.status() == PiperTtsStatus::ReadyMetadata;
     }
 
     return piperTextToSpeechProvider_ &&
-           piperTextToSpeechProvider_->status() == PiperTtsStatus::Configured;
+           piperTextToSpeechProvider_->status() == PiperTtsStatus::ReadyMetadata;
 }
 
 QString ApplicationController::piperTtsFileOutputStatus() const {
@@ -2095,6 +2092,60 @@ QString ApplicationController::piperTtsFileOutputSummary() const {
     return piperTextToSpeechProvider_
                ? piperTextToSpeechProvider_->fileOutputSummary()
                : QStringLiteral("No Piper TTS file-output metadata available.");
+}
+
+PiperSynthesisConfig ApplicationController::currentPiperSynthesisConfig() const {
+    return configuredPiperSynthesisConfig(piperBinaryPath_, piperModelPath_);
+}
+
+PiperSynthesisRequest ApplicationController::currentPiperSynthesisRequest() const {
+    return PiperSynthesisRequest{};
+}
+
+PiperSynthesisReadiness ApplicationController::currentPiperSynthesisReadiness() const {
+    return piperSynthesisReadiness(currentPiperSynthesisConfig(),
+                                   currentPiperSynthesisRequest());
+}
+
+QString ApplicationController::piperSynthesisStatus() const {
+    return piperSynthesisStatusName(currentPiperSynthesisReadiness().status);
+}
+
+QString ApplicationController::piperSynthesisReadinessSummary() const {
+    return sentinel::core::piperSynthesisReadinessSummary(currentPiperSynthesisReadiness());
+}
+
+QString ApplicationController::piperSynthesisLastSummary() const {
+    if (latestPiperSynthesisResult_.status == PiperSynthesisStatus::Disabled &&
+        latestPiperSynthesisResult_.traces.isEmpty()) {
+        return QStringLiteral("No Piper synthesis request has run. No audio is produced, played, "
+                              "or injected.");
+    }
+    if (!latestPiperSynthesisResult_.summary.trimmed().isEmpty()) {
+        return safePiperSynthesisResultSummary(latestPiperSynthesisResult_);
+    }
+    return QStringLiteral("No Piper synthesis request has run. No audio is produced, played, or "
+                          "injected.");
+}
+
+QString ApplicationController::piperSynthesisFallbackSummary() const {
+    if (!latestPiperSynthesisResult_.fallback.summary.trimmed().isEmpty()) {
+        return latestPiperSynthesisResult_.fallback.summary;
+    }
+    return QStringLiteral("Piper synthesis fallback is no audio; local synthesis execution is not "
+                          "enabled.");
+}
+
+QString ApplicationController::piperSynthesisSafetySummary() const {
+    return sentinel::core::piperSynthesisSafetySummary(
+        piperSynthesisSafetyReport(currentPiperSynthesisConfig().policy));
+}
+
+QStringList ApplicationController::piperSynthesisTraceSummaries() const {
+    if (!latestPiperSynthesisResult_.traces.isEmpty()) {
+        return latestPiperSynthesisResult_.traces;
+    }
+    return currentPiperSynthesisReadiness().checks;
 }
 
 QString ApplicationController::piperBinaryPath() const {
@@ -2250,53 +2301,36 @@ bool ApplicationController::piperFileOutputExecutionEnabled() const {
 }
 
 void ApplicationController::setPiperFileOutputExecutionEnabled(bool enabled) {
-    if (enabled == piperFileOutputExecutionEnabled_) {
+    Q_UNUSED(enabled);
+    if (!piperFileOutputExecutionEnabled_) {
         return;
     }
 
-    piperFileOutputExecutionEnabled_ = enabled;
-    if (!enabled && latestPiperTtsResult_.status == PiperTtsStatus::Running) {
-        latestPiperTtsResult_ = PiperTtsResult{
-            PiperTtsStatus::Disabled,
-            false,
-            {},
-            {},
-            0,
-            -1,
-            {},
-            QStringLiteral("Piper execution disabled."),
-            {QStringLiteral("Piper execution opt-in was disabled.")},
-        };
-    }
+    piperFileOutputExecutionEnabled_ = false;
+    latestPiperTtsResult_ = PiperTtsResult{
+        PiperTtsStatus::Disabled,
+        false,
+        {},
+        {},
+        0,
+        -1,
+        {},
+        QStringLiteral("Piper file-output execution is disabled in this readiness-only phase."),
+        {QStringLiteral("Piper execution opt-in was refused.")},
+    };
     emit voiceConfigurationChanged();
 }
 
 QString ApplicationController::piperFileOutputExecutionStatus() const {
-    if (!piperFileOutputExecutionEnabled_) {
-        return QStringLiteral("Disabled");
-    }
-    if (latestPiperTtsResult_.status == PiperTtsStatus::Disabled &&
-        latestPiperTtsResult_.summary.trimmed().isEmpty()) {
-        return piperFileOutputReadinessStatus() == QStringLiteral("Ready")
-                   ? QStringLiteral("Ready")
-                   : piperFileOutputReadinessStatus();
-    }
-    return piperTtsStatusName(latestPiperTtsResult_.status);
+    return QStringLiteral("Disabled");
 }
 
 QString ApplicationController::piperFileOutputExecutionSummary() const {
-    if (!piperFileOutputExecutionEnabled_) {
-        return QStringLiteral("Piper execution disabled. Enable controlled file-output execution "
-                              "and use Generate TTS File to write a local file.");
-    }
     if (!latestPiperTtsResult_.summary.trimmed().isEmpty()) {
         return safePiperTtsResultSummary(latestPiperTtsResult_);
     }
-    if (piperFileOutputReadinessStatus() != QStringLiteral("Ready")) {
-        return piperFileOutputReadinessSummary();
-    }
-    return QStringLiteral("Piper execution is enabled for explicit controlled file output only. "
-                          "No playback or microphone access is available.");
+    return QStringLiteral("Piper file-output execution is disabled. Phase 18 Piper TTS exposes "
+                          "readiness, safety, fallback, and trace metadata only.");
 }
 
 QString ApplicationController::piperFileOutputAudioPathSummary() const {
@@ -2310,48 +2344,21 @@ QString ApplicationController::piperFileOutputAudioPathSummary() const {
 }
 
 bool ApplicationController::generatePiperTtsFile(const QString& text) {
-    if (!piperFileOutputExecutionEnabled_) {
-        latestPiperTtsResult_ = PiperTtsResult{
-            PiperTtsStatus::Disabled,
-            false,
-            {},
-            {},
-            0,
-            -1,
-            {},
-            QStringLiteral("Piper execution disabled."),
-            {QStringLiteral("Piper file-output generation refused because opt-in is disabled.")},
-        };
-        emit voiceConfigurationChanged();
-        return false;
-    }
-
-    auto config = configuredPiperTtsConfig(piperBinaryPath_, piperModelPath_, true);
-    piperTextToSpeechProvider_->setConfig(std::move(config));
+    Q_UNUSED(text);
     latestPiperTtsResult_ = PiperTtsResult{
-        PiperTtsStatus::Running,
+        PiperTtsStatus::Refused,
         false,
         {},
         {},
-        piperTextToSpeechProvider_->config().timeoutMs,
+        0,
         -1,
         {},
-        QStringLiteral("Piper TTS file output is running."),
-        {QStringLiteral("Explicit user action requested controlled Piper file output.")},
+        QStringLiteral("Piper file-output generation refused: no subprocess execution, audio "
+                       "file creation, or playback is enabled in this phase."),
+        {QStringLiteral("Piper file-output generation refused without side effects.")},
     };
     emit voiceConfigurationChanged();
-
-    latestPiperTtsResult_ = piperTextToSpeechProvider_->synthesizePiper(PiperTtsRequest{
-        text,
-        {},
-        {},
-        true,
-        true,
-        false,
-        piperTextToSpeechProvider_->config().timeoutMs,
-    });
-    emit voiceConfigurationChanged();
-    return latestPiperTtsResult_.success;
+    return false;
 }
 
 QString ApplicationController::whisperPreparationReadinessStatus() const {

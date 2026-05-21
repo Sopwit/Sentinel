@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 18.22-18.24: Piper TTS Local Runtime Foundation
+
+Completed. Adds a readiness-first Piper synthesis boundary for future local text-to-speech
+without enabling playback, live voice streaming, audio-file generation, or Piper subprocess
+execution.
+
+Historical scope:
+
+- Added Piper synthesis policy/status/request/result/session/budget/readiness/safety/fallback/
+  trace metadata plus `IPiperSynthesisClient`.
+- Added `NullPiperSynthesisClient` and a bounded `LocalPiperSynthesisClient` skeleton that
+  validates binary/model/text metadata and refuses before execution.
+- Default behavior is disabled. Missing binary, missing model, unsafe/non-local path-style
+  configuration, invalid timeout budget, empty text, and runtime privilege requests produce
+  deterministic refusal/fallback metadata.
+- Safety reports keep `executionAttempted = false` and block subprocess execution, playback,
+  live voice streaming, microphone capture, cloud calls, downloads, filesystem scanning, and
+  automatic chat/audio injection.
+- The legacy Piper file-output surface is now compatibility/readiness metadata only; persisted
+  file-output opt-in is reset to disabled and generation requests refuse without reaching a
+  client or writing audio.
+- Controller, desktop view model, Settings, and Agents expose QML-safe Piper synthesis status,
+  readiness, last-result, fallback, safety, and trace summaries only.
+
+Known limitation:
+
+- The boundary does not synthesize or play audio yet. A future controlled synthesis phase must
+  explicitly enable bounded execution gates, and any later playback/audio-device phase must
+  separately define device permissions, lifecycle, UI controls, and tests.
+
 ### Phase 18.19-18.21: Whisper STT Local Runtime Foundation
 
 Completed. Adds a controlled Whisper speech-to-text runtime boundary for future local audio-file
@@ -1300,6 +1330,10 @@ Completed. Enables explicit, policy-gated Piper TTS file generation to an app-co
 cache/temp path while keeping execution disabled by default and keeping playback/microphone
 behavior out of scope.
 
+Current status: Superseded by Phase 18.22-18.24. The active desktop Piper path is now
+readiness/synthesis metadata only; the legacy file-output opt-in/generation path is disabled and
+refuses without subprocess execution, file output, or playback.
+
 Scope:
 
 - Added a persisted opt-in setting for controlled Piper file-output execution. The default remains
@@ -1307,14 +1341,13 @@ Scope:
 - Piper can run only from an explicit user action after the opt-in is enabled, the configured Piper
   binary is executable, the configured `.onnx` model is readable, local-only/process/file-output
   gates pass, and the output path is generated inside the controlled app cache/temp directory.
-- `ProcessPiperTtsClient` is reachable through `PiperTextToSpeechProvider` only after the
-  controller applies the explicit execution policy; fake clients remain injectable for
-  deterministic tests.
+- A process-backed Piper client was reachable only after the controller applied the explicit
+  execution policy; current Phase 18.22-18.24 behavior has removed that active subprocess path.
 - Status metadata now reports disabled, blocked/safety-blocked, missing binary, missing model,
   running, succeeded, failed, and timeout states plus the generated audio path summary when
   available.
-- Settings shows the Piper execution opt-in, an explicit Generate TTS File action, execution
-  status, and generated file path summary. No playback control is exposed.
+- Settings previously showed a Piper execution opt-in and Generate TTS File action; current
+  Settings exposes Piper synthesis readiness/status/fallback/safety summaries only.
 - Tests cover disabled defaults, opt-in gating, blocked/invalid paths, fake success, failure,
   timeout, controlled output path metadata, QML-safe exposure, persistence, and no real Piper
   requirement.
@@ -1468,8 +1501,9 @@ Scope:
   and is executable, the voice model exists and is readable, the output path is inside the
   app-controlled output directory, process execution is allowed by request/config/safety policy,
   playback and microphone remain blocked, and the request is local-only.
-- Added `ProcessPiperTtsClient` behind `IPiperTtsClient`; it writes only to the accepted
-  controlled output file and does not play audio.
+- Historical implementation note: this phase added a process-backed Piper client for controlled
+  file output. Phase 18.22-18.24 removed that active subprocess client from current desktop
+  behavior.
 - The default Piper adapter remains disabled/not configured and refuses before any client boundary.
 - `ApplicationController` and `DesktopShellViewModel` expose QML-safe Piper file-output status and
   summary metadata.

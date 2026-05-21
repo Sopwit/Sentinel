@@ -214,8 +214,22 @@ ShellPanel {
 
             InfoRow {
                 compact: agentsPage.compact
+                label: "Piper TTS"
+                value: agentsPage.viewModel.piperSynthesisStatus
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
                 label: "STT Boundary"
                 value: agentsPage.viewModel.whisperTranscriptionReadinessSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "TTS Boundary"
+                value: agentsPage.viewModel.piperSynthesisReadinessSummary
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
@@ -376,6 +390,18 @@ ShellPanel {
                     required property string modelData
                     compact: agentsPage.compact
                     label: "STT Trace"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.piperSynthesisTraceSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "TTS Trace"
                     value: modelData
                     Layout.fillWidth: true
                 }

@@ -24,8 +24,8 @@ voice architecture.
 - `IPiperTtsClient` owns the low-level Piper client boundary.
 - `NullPiperTtsClient` is deterministic and never writes files, plays audio, downloads assets, or
   launches Piper.
-- `ProcessPiperTtsClient` is the controlled local file-output client and is reachable only after
-  the provider accepts every file-output gate.
+- Historical note: a controlled local file-output client existed in Phase 13. Phase 18.22-18.24
+  supersedes current behavior with a non-executing Piper synthesis boundary.
 - `ISpeechToTextProvider` remains backed by the null STT provider; no Whisper adapter exists yet.
 - `IVoiceRuntimeEnvironment` reports binary/model/permission/safety metadata for Piper and
   Whisper readiness without probing broadly or enabling voice runtime authority.
@@ -39,15 +39,11 @@ voice architecture.
 The current TTS path is:
 
 ```text
-text -> Piper provider -> gated file-output metadata
+text/config metadata -> Piper synthesis readiness -> deterministic refusal/fallback metadata
 ```
 
-The provider may reach `ProcessPiperTtsClient` only when all configured gates pass: Piper is
-explicitly enabled, the binary path exists and is executable, the voice model path exists and is
-readable, file output is allowed, the output path is inside the controlled output directory, the
-request is local-only, process execution is explicitly allowed, playback remains disabled,
-microphone access remains disabled, downloads remain blocked, cloud/API-key behavior remains
-blocked, and filesystem-wide scans remain blocked.
+Current desktop builds do not reach a Piper process client. Future controlled synthesis and future
+playback/audio-device support require separate explicit phases.
 
 The default app configuration does not pass these gates. By default, Piper remains disabled/not
 configured and the provider refuses before the client boundary.
