@@ -367,7 +367,18 @@ void DesktopShellViewModelTest::exposesAgentTaskRuntimeMetadata() {
     QCOMPARE(fixture.viewModel.agentTaskTraceSummaries().size(), 3);
     QVERIFY(fixture.viewModel.agentTaskTraceSummaries().last().contains(
         QStringLiteral("Execution Boundary")));
+    QCOMPARE(fixture.viewModel.agentPlanningSessionStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.agentPlanningCandidateCount(), 6);
+    QCOMPARE(fixture.viewModel.agentPlanningRefusedCount(), 0);
+    QVERIFY(fixture.viewModel.agentPlanningSessionSummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QCOMPARE(fixture.viewModel.agentPlanningCandidateSummaries().size(), 6);
+    QCOMPARE(fixture.viewModel.agentPlanningArbitrationSummaries().size(), 6);
+    QCOMPARE(fixture.viewModel.agentPlanningRefusalSummaries().size(), 0);
+    QVERIFY(fixture.viewModel.agentPlanningFallbackSummary().contains(
+        QStringLiteral("No planning fallback")));
     QVERIFY(metaObject->indexOfProperty("agentTaskRuntimeStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("agentPlanningSessionStatus") >= 0);
     QCOMPARE(metaObject->indexOfProperty("agentTaskRawPayload"), -1);
 }
 
@@ -1143,6 +1154,14 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("latestAgentTaskLifecycleSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("agentTaskQueueSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("agentTaskTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("agentPlanningSessionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("agentPlanningSessionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("agentPlanningCandidateCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentPlanningRefusedCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("agentPlanningCandidateSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("agentPlanningArbitrationSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("agentPlanningRefusalSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("agentPlanningFallbackSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeHealth"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeSummary"), QByteArrayLiteral("QString")},

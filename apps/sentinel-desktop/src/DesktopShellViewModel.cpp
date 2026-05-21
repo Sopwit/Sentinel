@@ -413,6 +413,38 @@ QStringList DesktopShellViewModel::agentTaskTraceSummaries() const {
     return controller_.agentTaskTraceSummaries();
 }
 
+QString DesktopShellViewModel::agentPlanningSessionStatus() const {
+    return controller_.agentPlanningSessionStatus();
+}
+
+QString DesktopShellViewModel::agentPlanningSessionSummary() const {
+    return controller_.agentPlanningSessionSummary();
+}
+
+int DesktopShellViewModel::agentPlanningCandidateCount() const {
+    return controller_.agentPlanningCandidateCount();
+}
+
+int DesktopShellViewModel::agentPlanningRefusedCount() const {
+    return controller_.agentPlanningRefusedCount();
+}
+
+QStringList DesktopShellViewModel::agentPlanningCandidateSummaries() const {
+    return controller_.agentPlanningCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::agentPlanningArbitrationSummaries() const {
+    return controller_.agentPlanningArbitrationSummaries();
+}
+
+QStringList DesktopShellViewModel::agentPlanningRefusalSummaries() const {
+    return controller_.agentPlanningRefusalSummaries();
+}
+
+QString DesktopShellViewModel::agentPlanningFallbackSummary() const {
+    return controller_.agentPlanningFallbackSummary();
+}
+
 QString DesktopShellViewModel::localRuntimeStatus() const {
     return controller_.localRuntimeStatus();
 }

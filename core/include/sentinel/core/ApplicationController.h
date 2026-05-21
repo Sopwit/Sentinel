@@ -149,6 +149,17 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString latestAgentTaskLifecycleSummary READ latestAgentTaskLifecycleSummary CONSTANT)
     Q_PROPERTY(QStringList agentTaskQueueSummaries READ agentTaskQueueSummaries CONSTANT)
     Q_PROPERTY(QStringList agentTaskTraceSummaries READ agentTaskTraceSummaries CONSTANT)
+    Q_PROPERTY(QString agentPlanningSessionStatus READ agentPlanningSessionStatus CONSTANT)
+    Q_PROPERTY(QString agentPlanningSessionSummary READ agentPlanningSessionSummary CONSTANT)
+    Q_PROPERTY(int agentPlanningCandidateCount READ agentPlanningCandidateCount CONSTANT)
+    Q_PROPERTY(int agentPlanningRefusedCount READ agentPlanningRefusedCount CONSTANT)
+    Q_PROPERTY(QStringList agentPlanningCandidateSummaries READ agentPlanningCandidateSummaries
+                   CONSTANT)
+    Q_PROPERTY(QStringList agentPlanningArbitrationSummaries READ
+                   agentPlanningArbitrationSummaries CONSTANT)
+    Q_PROPERTY(QStringList agentPlanningRefusalSummaries READ agentPlanningRefusalSummaries
+                   CONSTANT)
+    Q_PROPERTY(QString agentPlanningFallbackSummary READ agentPlanningFallbackSummary CONSTANT)
     Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
     Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
     Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary CONSTANT)
@@ -837,6 +848,14 @@ public:
     QString latestAgentTaskLifecycleSummary() const;
     QStringList agentTaskQueueSummaries() const;
     QStringList agentTaskTraceSummaries() const;
+    QString agentPlanningSessionStatus() const;
+    QString agentPlanningSessionSummary() const;
+    int agentPlanningCandidateCount() const;
+    int agentPlanningRefusedCount() const;
+    QStringList agentPlanningCandidateSummaries() const;
+    QStringList agentPlanningArbitrationSummaries() const;
+    QStringList agentPlanningRefusalSummaries() const;
+    QString agentPlanningFallbackSummary() const;
     QString localRuntimeStatus() const;
     QString localRuntimeHealth() const;
     QString localRuntimeSummary() const;

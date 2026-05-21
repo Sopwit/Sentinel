@@ -2373,6 +2373,30 @@ Boundary rules:
 - The checkpoint does not authorize filesystem indexing, cloud/API/vector provider activation,
   provider downloads, tools/plugins, autonomous actions, or runtime authority expansion.
 
+## 95. Agent Planning Sessions Are Metadata-Only
+
+Decision: Phase 18.7 through Phase 18.9 add bounded planning-session, arbitration, refusal,
+safety-report, and fallback records to `IAgentTaskRuntime`, but planning sessions are not an
+executor, approval flow, scheduler, or tool runtime.
+
+Reason: The Agents surface needs safe visibility into how future task plans would be ordered and
+refused before any execution authority exists. Planning must remain deterministic, local-only, and
+bounded so it cannot become implicit autonomous behavior.
+
+Boundary rules:
+
+- Planning candidates are derived from the deterministic task queue and ordered by priority, queue
+  sequence, and task id.
+- Candidate count, step count, and summary length budgets bound the planning session.
+- Unsafe planning candidates become refusal metadata with safe summaries; blocked reasons are
+  exposed without raw private payloads.
+- Budget overflow uses deterministic fallback metadata.
+- `executionAttempted` remains false for planning results and task results.
+- There are no tools/plugins, filesystem/system actions, shell/subprocess execution, provider or
+  model calls, cloud/API calls, background workers, approval controls, or autonomous loops.
+- QML may expose only status strings, counts, candidate summaries, arbitration summaries, refusal
+  summaries, and fallback summaries.
+
 ## 94. Agent Task Queue Is Metadata-Only
 
 Decision: Phase 18.4 through Phase 18.6 add an agent task queue and lifecycle read model, but the

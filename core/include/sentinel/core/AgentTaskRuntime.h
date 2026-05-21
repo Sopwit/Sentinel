@@ -55,12 +55,23 @@ enum class AgentTaskQueueStatus : std::uint8_t {
     RefusingExecution,
 };
 
+struct AgentPlanningSessionId {
+    QString value;
+};
+
+enum class AgentPlanningSessionStatus : std::uint8_t {
+    Ready,
+    Bounded,
+    Refused,
+};
+
 QString agentTaskTypeName(AgentTaskType type);
 QString agentTaskStatusName(AgentTaskStatus status);
 QString agentTaskPriorityName(AgentTaskPriority priority);
 QString agentTaskSourceName(AgentTaskSource source);
 QString agentTaskRuntimeStateName(AgentTaskRuntimeState state);
 QString agentTaskQueueStatusName(AgentTaskQueueStatus status);
+QString agentPlanningSessionStatusName(AgentPlanningSessionStatus status);
 
 struct AgentTaskStep {
     int order = 0;
@@ -172,6 +183,106 @@ struct AgentTaskRuntimeStatus {
     AgentTaskSafetyPolicy safetyPolicy;
 };
 
+struct AgentPlanningBudget {
+    int maxCandidates = 6;
+    int maxStepsPerCandidate = 3;
+    int maxSummaryCharacters = 240;
+    QString summary = QStringLiteral(
+        "Planning budget is bounded to 6 candidates, 3 metadata steps per candidate, and 240 "
+        "summary characters.");
+};
+
+struct AgentPlanningSessionPolicy {
+    bool enabled = true;
+    bool localOnly = true;
+    bool deterministicOrdering = true;
+    bool executionAllowed = false;
+    bool toolExecutionAllowed = false;
+    bool filesystemActionsAllowed = false;
+    bool shellExecutionAllowed = false;
+    bool pluginExecutionAllowed = false;
+    bool cloudCallsAllowed = false;
+    bool backgroundWorkersAllowed = false;
+    AgentPlanningBudget budget;
+    QString summary = QStringLiteral(
+        "Agent planning sessions are local metadata only; execution, tools, plugins, filesystem "
+        "actions, shell, cloud calls, and background workers are blocked.");
+};
+
+struct AgentPlanningSafetyReport {
+    bool safe = true;
+    bool localOnly = true;
+    bool executionAttempted = false;
+    bool toolExecutionBlocked = true;
+    bool filesystemActionsBlocked = true;
+    bool shellExecutionBlocked = true;
+    bool pluginExecutionBlocked = true;
+    bool cloudCallsBlocked = true;
+    bool backgroundWorkersBlocked = true;
+    QString summary = QStringLiteral("Planning candidate passed metadata-only safety checks.");
+};
+
+struct AgentPlanningRefusal {
+    QString candidateId;
+    QString reason;
+    QString safeSummary;
+};
+
+struct AgentPlanningCandidate {
+    QString id;
+    QString taskId;
+    AgentTaskType taskType = AgentTaskType::PlanResponse;
+    AgentTaskSource source = AgentTaskSource::DesktopReadiness;
+    AgentTaskPriority priority = AgentTaskPriority::Normal;
+    int order = 0;
+    QString summary;
+    QStringList stepSummaries;
+    AgentPlanningSafetyReport safetyReport;
+    bool refused = false;
+    AgentPlanningRefusal refusal;
+};
+
+struct AgentPlanningArbitration {
+    int selectedCount = 0;
+    int refusedCount = 0;
+    int omittedCount = 0;
+    QString summary;
+    QStringList summaries;
+};
+
+struct AgentPlanningFallback {
+    bool used = false;
+    QString reason;
+    QString summary;
+};
+
+struct AgentPlanningResult {
+    AgentPlanningSessionStatus status = AgentPlanningSessionStatus::Ready;
+    QList<AgentPlanningCandidate> candidates;
+    AgentPlanningArbitration arbitration;
+    QList<AgentPlanningRefusal> refusals;
+    AgentPlanningSafetyReport safetyReport;
+    AgentPlanningFallback fallback;
+    bool executionAttempted = false;
+    QString summary;
+};
+
+struct AgentPlanningSessionSummary {
+    AgentPlanningSessionStatus status = AgentPlanningSessionStatus::Ready;
+    int candidateCount = 0;
+    int refusedCount = 0;
+    int fallbackCount = 0;
+    QString summary;
+};
+
+struct AgentPlanningSession {
+    AgentPlanningSessionId id;
+    AgentPlanningSessionStatus status = AgentPlanningSessionStatus::Ready;
+    AgentPlanningSessionPolicy policy;
+    AgentPlanningResult result;
+    AgentPlanningSessionSummary summary;
+};
+
 QString agentTaskSummary(const AgentTask& task);
 QString agentTaskTraceSummary(const AgentTaskTrace& trace);
 QStringList agentTaskTraceSummaries(const QList<AgentTaskTrace>& traces);
@@ -179,6 +290,11 @@ QString agentTaskLifecycleEventSummary(const AgentTaskLifecycleEvent& event);
 QStringList agentTaskLifecycleSummaries(const AgentTaskLifecycle& lifecycle);
 QString agentTaskQueueSummaryText(const AgentTaskQueueSummary& summary);
 QStringList agentTaskQueueTaskSummaries(const AgentTaskQueue& queue);
+QString agentPlanningCandidateSummary(const AgentPlanningCandidate& candidate);
+QStringList agentPlanningCandidateSummaries(const AgentPlanningSession& session);
+QStringList agentPlanningRefusalSummaries(const AgentPlanningSession& session);
+QStringList agentPlanningArbitrationSummaries(const AgentPlanningSession& session);
+QString agentPlanningFallbackSummary(const AgentPlanningSession& session);
 
 class IAgentTaskRuntime {
 public:
@@ -197,6 +313,7 @@ public:
     virtual AgentTaskQueueResult refuseTask(const AgentTaskId& id, const QString& reason) = 0;
     virtual AgentTaskPlan planTask(const AgentTask& task) const = 0;
     virtual AgentTaskResult refuseExecution(const AgentTask& task) const = 0;
+    virtual AgentPlanningSession planningSession() const = 0;
 };
 
 class StaticAgentTaskRuntime final : public IAgentTaskRuntime {
@@ -216,12 +333,14 @@ public:
     AgentTaskQueueResult refuseTask(const AgentTaskId& id, const QString& reason) override;
     AgentTaskPlan planTask(const AgentTask& task) const override;
     AgentTaskResult refuseExecution(const AgentTask& task) const override;
+    AgentPlanningSession planningSession() const override;
 
 private:
     AgentTask makeTask(AgentTaskType type, AgentTaskSource source, AgentTaskPriority priority,
                        const QString& summary);
     AgentTaskQueueResult updateTaskStatus(const AgentTaskId& id, AgentTaskStatus status,
                                           const QString& summary, bool accepted);
+    AgentPlanningCandidate planningCandidateForTask(const AgentTask& task, int order) const;
     AgentTaskQueueSummary queueSummary() const;
     QList<AgentTask> orderedTasks() const;
 

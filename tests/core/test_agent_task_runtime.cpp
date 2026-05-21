@@ -10,6 +10,7 @@ using sentinel::core::agentTaskStatusName;
 using sentinel::core::AgentTaskLifecycle;
 using sentinel::core::AgentTaskLifecycleEvent;
 using sentinel::core::agentTaskLifecycleSummaries;
+using sentinel::core::agentPlanningSessionStatusName;
 using sentinel::core::AgentTaskTrace;
 using sentinel::core::agentTaskTraceSummaries;
 using sentinel::core::AgentTaskType;
@@ -25,6 +26,9 @@ private slots:
     void refusesExecutionWithoutSideEffects();
     void ordersTraceSummariesDeterministically();
     void ordersLifecycleSummariesDeterministically();
+    void createsDeterministicPlanningSession();
+    void boundsPlanningBudgetDeterministically();
+    void refusesUnsafePlanningMetadata();
 };
 
 void AgentTaskRuntimeTest::createsDeterministicMetadataTasks() {
@@ -143,6 +147,51 @@ void AgentTaskRuntimeTest::ordersLifecycleSummariesDeterministically() {
     QVERIFY(summaries.at(0).startsWith(QStringLiteral("1. agent-task-test")));
     QVERIFY(summaries.at(1).contains(QStringLiteral("[Planned]")));
     QVERIFY(summaries.at(2).contains(QStringLiteral("[Completed Metadata]")));
+}
+
+void AgentTaskRuntimeTest::createsDeterministicPlanningSession() {
+    StaticAgentTaskRuntime runtime;
+
+    const auto session = runtime.planningSession();
+    QCOMPARE(session.id.value, QStringLiteral("agent-planning-session-local"));
+    QCOMPARE(agentPlanningSessionStatusName(session.status), QStringLiteral("Ready"));
+    QCOMPARE(session.summary.candidateCount, 6);
+    QCOMPARE(session.summary.refusedCount, 0);
+    QCOMPARE(session.result.executionAttempted, false);
+    QCOMPARE(session.result.candidates.at(0).taskType, AgentTaskType::PlanResponse);
+    QCOMPARE(session.result.candidates.at(1).taskType, AgentTaskType::PrepareRetrievalContext);
+    QVERIFY(session.result.arbitration.summary.contains(QStringLiteral("priority/queue/id")));
+    QCOMPARE(session.result.fallback.used, false);
+}
+
+void AgentTaskRuntimeTest::boundsPlanningBudgetDeterministically() {
+    StaticAgentTaskRuntime runtime;
+    runtime.createTask(AgentTaskType::PrepareRetrievalContext,
+                       AgentTaskSource::ConversationMetadata, AgentTaskPriority::High,
+                       QStringLiteral("Extra retrieval preparation metadata."));
+
+    const auto session = runtime.planningSession();
+    QCOMPARE(session.status, sentinel::core::AgentPlanningSessionStatus::Bounded);
+    QCOMPARE(session.summary.candidateCount, 6);
+    QCOMPARE(session.result.arbitration.omittedCount, 1);
+    QCOMPARE(session.result.fallback.used, true);
+    QVERIFY(session.result.fallback.summary.contains(QStringLiteral("omitted")));
+    QCOMPARE(session.result.executionAttempted, false);
+}
+
+void AgentTaskRuntimeTest::refusesUnsafePlanningMetadata() {
+    StaticAgentTaskRuntime runtime;
+    runtime.createTask(AgentTaskType::PlanResponse, AgentTaskSource::DesktopReadiness,
+                       AgentTaskPriority::High,
+                       QStringLiteral("Attempt shell execution with a tool plugin."));
+
+    const auto session = runtime.planningSession();
+    QCOMPARE(session.status, sentinel::core::AgentPlanningSessionStatus::Refused);
+    QCOMPARE(session.summary.refusedCount, 1);
+    QCOMPARE(session.result.refusals.size(), 1);
+    QVERIFY(session.result.refusals.first().safeSummary.contains(QStringLiteral("refused")));
+    QVERIFY(session.result.safetyReport.summary.contains(QStringLiteral("refused")));
+    QCOMPARE(session.result.executionAttempted, false);
 }
 
 QTEST_MAIN(AgentTaskRuntimeTest)

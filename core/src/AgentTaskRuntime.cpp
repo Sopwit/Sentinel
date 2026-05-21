@@ -66,6 +66,31 @@ QString defaultTransitionSummary(AgentTaskStatus status) {
     return QStringLiteral("Task lifecycle updated.");
 }
 
+bool containsUnsafePlanningIntent(const QString& text) {
+    const auto lowered = text.toLower();
+    const QStringList blockedTerms{
+        QStringLiteral("execute"),   QStringLiteral("tool"),       QStringLiteral("plugin"),
+        QStringLiteral("filesystem"), QStringLiteral("file system"), QStringLiteral("shell"),
+        QStringLiteral("subprocess"), QStringLiteral("background"), QStringLiteral("cloud"),
+        QStringLiteral("api call"),   QStringLiteral("network"),
+    };
+
+    for (const auto& term : blockedTerms) {
+        if (lowered.contains(term)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+QString boundedSummary(QString summary, int maxCharacters) {
+    summary = summary.simplified();
+    if (maxCharacters <= 0 || summary.size() <= maxCharacters) {
+        return summary;
+    }
+    return summary.left(maxCharacters - 3).trimmed() + QStringLiteral("...");
+}
+
 } // namespace
 
 QString agentTaskTypeName(AgentTaskType type) {
@@ -160,6 +185,19 @@ QString agentTaskQueueStatusName(AgentTaskQueueStatus status) {
     return QStringLiteral("Ready");
 }
 
+QString agentPlanningSessionStatusName(AgentPlanningSessionStatus status) {
+    switch (status) {
+    case AgentPlanningSessionStatus::Ready:
+        return QStringLiteral("Ready");
+    case AgentPlanningSessionStatus::Bounded:
+        return QStringLiteral("Bounded");
+    case AgentPlanningSessionStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Ready");
+}
+
 QString agentTaskSummary(const AgentTask& task) {
     return QStringLiteral("%1 [%2/%3]: %4")
         .arg(agentTaskTypeName(task.type), agentTaskStatusName(task.status),
@@ -230,6 +268,40 @@ QStringList agentTaskQueueTaskSummaries(const AgentTaskQueue& queue) {
         summaries.append(agentTaskSummary(task));
     }
     return summaries;
+}
+
+QString agentPlanningCandidateSummary(const AgentPlanningCandidate& candidate) {
+    const auto status = candidate.refused ? QStringLiteral("Refused") : QStringLiteral("Planned");
+    return QStringLiteral("%1. %2 [%3/%4]: %5")
+        .arg(candidate.order)
+        .arg(agentTaskTypeName(candidate.taskType), status, agentTaskPriorityName(candidate.priority),
+             candidate.summary);
+}
+
+QStringList agentPlanningCandidateSummaries(const AgentPlanningSession& session) {
+    QStringList summaries;
+    for (const auto& candidate : session.result.candidates) {
+        summaries.append(agentPlanningCandidateSummary(candidate));
+    }
+    return summaries;
+}
+
+QStringList agentPlanningRefusalSummaries(const AgentPlanningSession& session) {
+    QStringList summaries;
+    for (const auto& refusal : session.result.refusals) {
+        summaries.append(refusal.safeSummary);
+    }
+    return summaries;
+}
+
+QStringList agentPlanningArbitrationSummaries(const AgentPlanningSession& session) {
+    return session.result.arbitration.summaries;
+}
+
+QString agentPlanningFallbackSummary(const AgentPlanningSession& session) {
+    return session.result.fallback.summary.isEmpty()
+        ? QStringLiteral("No planning fallback required.")
+        : session.result.fallback.summary;
 }
 
 StaticAgentTaskRuntime::StaticAgentTaskRuntime() {
@@ -347,6 +419,113 @@ AgentTaskResult StaticAgentTaskRuntime::refuseExecution(const AgentTask& task) c
     };
 }
 
+AgentPlanningSession StaticAgentTaskRuntime::planningSession() const {
+    const AgentPlanningSessionPolicy policy;
+    const auto ordered = orderedTasks();
+    const auto candidateLimit = std::max(0, policy.budget.maxCandidates);
+    const auto selectedCount = std::min(static_cast<int>(ordered.size()), candidateLimit);
+    const auto omittedCount = static_cast<int>(ordered.size()) - selectedCount;
+
+    QList<AgentPlanningCandidate> candidates;
+    QList<AgentPlanningRefusal> refusals;
+    QStringList arbitrationSummaries;
+
+    for (int index = 0; index < selectedCount; ++index) {
+        auto candidate = planningCandidateForTask(ordered.at(index), index + 1);
+        if (candidate.refused) {
+            refusals.append(candidate.refusal);
+        }
+        arbitrationSummaries.append(QStringLiteral("%1 selected by priority/queue/id order.")
+                                        .arg(candidate.id));
+        candidates.append(candidate);
+    }
+
+    const auto refusedCount = static_cast<int>(refusals.size());
+    AgentPlanningSessionStatus status = AgentPlanningSessionStatus::Ready;
+    if (refusedCount > 0) {
+        status = AgentPlanningSessionStatus::Refused;
+    } else if (omittedCount > 0) {
+        status = AgentPlanningSessionStatus::Bounded;
+    }
+
+    AgentPlanningFallback fallback;
+    if (omittedCount > 0) {
+        fallback.used = true;
+        fallback.reason = QStringLiteral("candidate budget exhausted");
+        fallback.summary =
+            QStringLiteral("%1 planning candidate(s) omitted after deterministic budget limit.")
+                .arg(omittedCount);
+    } else if (refusedCount > 0) {
+        fallback.used = true;
+        fallback.reason = QStringLiteral("unsafe candidate refused");
+        fallback.summary =
+            QStringLiteral("%1 unsafe planning candidate(s) refused; metadata-only fallback "
+                           "preserved.")
+                .arg(refusedCount);
+    } else {
+        fallback.summary = QStringLiteral("No planning fallback required.");
+    }
+
+    const AgentPlanningArbitration arbitration{
+        selectedCount,
+        refusedCount,
+        omittedCount,
+        QStringLiteral("Planning arbitration selected %1 candidate(s), refused %2, omitted %3 by "
+                       "deterministic priority/queue/id order.")
+            .arg(selectedCount)
+            .arg(refusedCount)
+            .arg(omittedCount),
+        arbitrationSummaries,
+    };
+
+    const AgentPlanningSafetyReport safetyReport{
+        refusedCount == 0,
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        refusedCount == 0
+            ? QStringLiteral("Planning session passed metadata-only safety checks.")
+            : QStringLiteral("Planning session refused unsafe metadata before execution."),
+    };
+
+    const AgentPlanningResult result{
+        status,
+        candidates,
+        arbitration,
+        refusals,
+        safetyReport,
+        fallback,
+        false,
+        QStringLiteral("%1 planning session: %2 candidate(s), %3 refused, %4 omitted; execution "
+                       "attempted: no.")
+            .arg(agentPlanningSessionStatusName(status))
+            .arg(selectedCount)
+            .arg(refusedCount)
+            .arg(omittedCount),
+    };
+
+    const AgentPlanningSessionSummary summary{
+        status,
+        selectedCount,
+        refusedCount,
+        fallback.used ? 1 : 0,
+        result.summary,
+    };
+
+    return AgentPlanningSession{
+        AgentPlanningSessionId{QStringLiteral("agent-planning-session-local")},
+        status,
+        policy,
+        result,
+        summary,
+    };
+}
+
 AgentTask StaticAgentTaskRuntime::makeTask(AgentTaskType type, AgentTaskSource source,
                                            AgentTaskPriority priority, const QString& summary) {
     const auto id = AgentTaskId{QStringLiteral("agent-task-%1").arg(nextTaskSequence_++)};
@@ -414,6 +593,56 @@ AgentTaskQueueResult StaticAgentTaskRuntime::updateTaskStatus(const AgentTaskId&
         false,
         false,
     };
+}
+
+AgentPlanningCandidate StaticAgentTaskRuntime::planningCandidateForTask(const AgentTask& task,
+                                                                        int order) const {
+    const AgentPlanningSessionPolicy policy;
+    const auto summary =
+        boundedSummary(task.summary.isEmpty() ? defaultTaskSummary(task.type) : task.summary,
+                       policy.budget.maxSummaryCharacters);
+    const auto unsafe = containsUnsafePlanningIntent(summary);
+    const auto candidateId = QStringLiteral("agent-planning-candidate-%1").arg(order);
+    const auto refusalSummary = unsafe
+        ? QStringLiteral("%1 refused: planning request mentions blocked execution authority.")
+              .arg(candidateId)
+        : QString();
+
+    AgentPlanningCandidate candidate;
+    candidate.id = candidateId;
+    candidate.taskId = task.id.value;
+    candidate.taskType = task.type;
+    candidate.source = task.source;
+    candidate.priority = task.priority;
+    candidate.order = order;
+    candidate.summary = summary;
+    candidate.stepSummaries = {
+        QStringLiteral("Classify %1 as %2 metadata.")
+            .arg(task.id.value, agentTaskSourceName(task.source)),
+        QStringLiteral("Prepare bounded %1 plan metadata.")
+            .arg(agentTaskTypeName(task.type).toLower()),
+        QStringLiteral("Stop at the no-execution planning boundary."),
+    };
+    candidate.safetyReport = AgentPlanningSafetyReport{
+        !unsafe,
+        true,
+        false,
+        true,
+        true,
+        true,
+        true,
+        true,
+        true,
+        unsafe ? QStringLiteral("Planning candidate refused before execution authority.")
+               : QStringLiteral("Planning candidate passed metadata-only safety checks."),
+    };
+    candidate.refused = unsafe;
+    candidate.refusal = AgentPlanningRefusal{
+        candidateId,
+        unsafe ? QStringLiteral("blocked execution authority") : QString(),
+        refusalSummary,
+    };
+    return candidate;
 }
 
 AgentTaskQueueSummary StaticAgentTaskRuntime::queueSummary() const {
