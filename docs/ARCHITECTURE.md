@@ -171,6 +171,24 @@ transcription client boundary:
 - Whisper transcription safety preserves `executionAttempted = false`; subprocess execution
   remains blocked until a later explicit execution phase.
 
+Phase 18.25 through Phase 18.27 add a deterministic voice pipeline session orchestration layer on
+top of existing Whisper STT, local chat inference, and Piper TTS readiness:
+
+- `VoicePipelineSession` metadata describes the current safe voice-session lifecycle: prepare,
+  await audio input, transcription readiness, chat inference readiness, synthesis readiness, and
+  completion/refusal/fallback.
+- `ApplicationController` composes existing readiness/status values only. It does not call the
+  Whisper or Piper clients, does not send chat from voice, and does not inject transcripts.
+- Missing Whisper readiness blocks transcription. Missing local chat/model readiness blocks
+  inference. Missing Piper readiness blocks synthesis. Unsafe states become refused/fallback
+  metadata.
+- Safety reports preserve `executionAttempted = false` and block microphone capture, playback,
+  Whisper execution, Piper execution, subprocesses, chat auto-send, transcript injection,
+  background workers, and autonomous loops.
+- QML receives only status strings, counts, stage summaries, trace summaries, fallback summaries,
+  and safety summaries. No raw filesystem paths, provider/client objects, transcript payloads, or
+  runtime handles are exposed.
+
 Phase 16.0 through Phase 16.6 add a controlled semantic memory candidate foundation and explicit
 review flow beside, not inside, the existing memory contracts:
 

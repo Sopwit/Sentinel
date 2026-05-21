@@ -2,6 +2,35 @@
 
 ## Completed / Stable
 
+### Phase 18.25-18.27: Voice Pipeline Session Orchestration Foundation
+
+Completed. Adds deterministic voice pipeline session orchestration metadata that composes Whisper
+STT readiness, local chat inference readiness, and Piper TTS readiness without enabling audio or
+runtime execution.
+
+Scope:
+
+- Added value-only voice pipeline session id/status/policy/result/step/trace/budget/readiness/
+  safety/fallback/summary metadata.
+- The session lifecycle is deterministic: prepare, await audio input, transcription readiness,
+  chat inference readiness, synthesis readiness, then completion or refusal/fallback metadata.
+- Missing Whisper readiness blocks the transcription stage. Missing or blocked local chat/model
+  readiness blocks inference. Missing Piper readiness blocks synthesis.
+- Unsafe or unavailable stages become refused/fallback metadata with no side effects.
+- Safety reports preserve `executionAttempted = false` and block microphone capture, playback,
+  Whisper execution, Piper execution, subprocess execution, voice chat auto-send, transcript
+  injection, background workers, and autonomous loops.
+- Controller, desktop view model, Settings, Agents, and the existing Chat status line expose only
+  QML-safe strings, counts, and string lists for session status, stage readiness, traces,
+  fallback, safety, and current session summary.
+
+Known limitation:
+
+- This phase does not add microphone capture, audio-file STT, chat auto-send from voice, Piper
+  synthesis, audio generation, playback, subprocess execution, background workers, or voice
+  activation controls. Future controlled audio-file STT, controlled synthesis, and live voice
+  phases must be scoped separately.
+
 ### Phase 18.22-18.24: Piper TTS Local Runtime Foundation
 
 Completed. Adds a readiness-first Piper synthesis boundary for future local text-to-speech

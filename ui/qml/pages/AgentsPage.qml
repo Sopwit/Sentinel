@@ -208,6 +208,21 @@ ShellPanel {
 
             InfoRow {
                 compact: agentsPage.compact
+                label: "Voice Pipeline"
+                value: agentsPage.viewModel.voicePipelineSessionStatus
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Pipeline Stages"
+                value: agentsPage.viewModel.voicePipelineSessionReadyStageCount.toString()
+                       + " ready / "
+                       + agentsPage.viewModel.voicePipelineSessionBlockedStageCount.toString()
+                       + " blocked"
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
                 label: "Whisper STT"
                 value: agentsPage.viewModel.whisperTranscriptionStatus
             }
@@ -230,6 +245,14 @@ ShellPanel {
                 compact: agentsPage.compact
                 label: "TTS Boundary"
                 value: agentsPage.viewModel.piperSynthesisReadinessSummary
+                Layout.columnSpan: agentsPage.compact ? 1 : 2
+                Layout.fillWidth: true
+            }
+
+            InfoRow {
+                compact: agentsPage.compact
+                label: "Pipeline Summary"
+                value: agentsPage.viewModel.voicePipelineSessionSummary
                 Layout.columnSpan: agentsPage.compact ? 1 : 2
                 Layout.fillWidth: true
             }
@@ -354,6 +377,30 @@ ShellPanel {
                     required property string modelData
                     compact: agentsPage.compact
                     label: "Contract Readiness"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.voicePipelineSessionStageReadinessSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Voice Stage"
+                    value: modelData
+                    Layout.fillWidth: true
+                }
+            }
+
+            Repeater {
+                model: agentsPage.viewModel.voicePipelineSessionTraceSummaries
+
+                InfoRow {
+                    required property string modelData
+                    compact: agentsPage.compact
+                    label: "Voice Trace"
                     value: modelData
                     Layout.fillWidth: true
                 }

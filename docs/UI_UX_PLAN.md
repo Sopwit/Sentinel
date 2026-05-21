@@ -200,6 +200,14 @@ summary, safety summary, and trace summaries. It must remain summary-only and mu
 button, play button, audio output control, live voice streaming UI, file-output generation action,
 prompt/chat/audio injection control, subprocess control, cloud setup, or a redesign.
 
+Phase 18.25 through Phase 18.27 add compact voice pipeline session visibility across existing
+read-only surfaces. Settings and Agents may show the voice pipeline session status, ready/blocked
+stage counts, stage readiness summaries, trace summaries, fallback summary, and safety summary.
+The Chat panel may include the disabled/readiness voice pipeline state in its existing status
+line. The UI must not add a record button, speak button, play button, voice activation button,
+voice loop control, file picker, transcript injection control, subprocess control, cloud setup, or
+a redesign.
+
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool

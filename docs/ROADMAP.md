@@ -2524,6 +2524,40 @@ Still out of scope:
   injection, automatic audio injection, speak/play controls, path/file picker UI, and autonomous
   voice loops.
 
+## Phase 18.25-18.27: Voice Pipeline Session Orchestration Foundation
+
+Completed. Added deterministic voice-session orchestration metadata across Whisper STT readiness,
+local chat inference readiness, and Piper TTS readiness without enabling audio I/O or execution.
+
+Delivered:
+
+- Value-only voice pipeline session id/status/policy/result/step/trace/budget/readiness/safety/
+  fallback/summary metadata.
+- Ordered lifecycle metadata for prepare, await audio input, transcription readiness, chat
+  inference readiness, synthesis readiness, completion, refusal, and fallback.
+- Stage blocking rules: missing Whisper readiness blocks transcription, missing local chat/model
+  readiness blocks inference, and missing Piper readiness blocks synthesis.
+- Refusal/fallback metadata for unsafe stage transitions with `executionAttempted = false`.
+- QML-safe controller and view-model exposure for session status, stage readiness summaries, trace
+  summaries, fallback/safety summaries, ready/blocked counts, and current session summary.
+- Compact Settings, Agents, and Chat status visibility with no record, speak, play, activation, or
+  voice-loop controls.
+
+Future activation flow:
+
+- A later controlled audio-file STT phase must define bounded file input, sandboxing, execution
+  gates, and transcript handling.
+- A later controlled synthesis phase must define bounded Piper execution and generated-audio
+  ownership.
+- A later live voice phase must separately define microphone permission, capture lifecycle,
+  playback lifecycle, cancellation, privacy, and UI controls.
+
+Still out of scope:
+
+- Microphone capture, playback, Whisper execution, Piper execution, subprocess execution, chat
+  auto-send from voice, transcript auto-injection, audio generation, background workers,
+  autonomous loops, record/speak/play controls, and voice activation.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

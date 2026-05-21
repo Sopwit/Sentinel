@@ -46,6 +46,14 @@ using sentinel::core::voiceModelDescriptorSummaries;
 using sentinel::core::VoiceModelStatus;
 using sentinel::core::VoicePipelineStage;
 using sentinel::core::voicePipelineStageName;
+using sentinel::core::VoicePipelineSessionReadiness;
+using sentinel::core::buildVoicePipelineSessionResult;
+using sentinel::core::voicePipelineSessionStatusName;
+using sentinel::core::VoicePipelineSessionStatus;
+using sentinel::core::VoicePipelineSessionStep;
+using sentinel::core::voicePipelineSessionStepName;
+using sentinel::core::voicePipelineSessionStepSummaries;
+using sentinel::core::voicePipelineSessionTraceSummaries;
 using sentinel::core::VoicePipelineStatus;
 using sentinel::core::voicePipelineStatusName;
 using sentinel::core::voicePipelineTraceSummaries;
@@ -218,6 +226,8 @@ private slots:
     void readinessReportStaysMetadataOnly();
     void staticVoiceRuntimeCoordinatorCompletesDeterministicPipeline();
     void staticVoiceRuntimeCoordinatorReportsBlockedAndErrorMetadata();
+    void voicePipelineSessionOrchestratesReadinessDeterministically();
+    void voicePipelineSessionBlocksMissingStagesAndFallsBackWithoutExecution();
     void nullVoiceRuntimeEnvironmentReportsMissingOwnershipMetadata();
     void staticVoiceRuntimeEnvironmentUsesInjectedMetadataOnly();
     void voiceRuntimeSafetyBlocksExecutionByDefault();
@@ -357,6 +367,90 @@ void VoiceTest::staticVoiceRuntimeCoordinatorReportsBlockedAndErrorMetadata() {
     QVERIFY(voicePipelineTraceSummaries(error.traces)
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("without runtime execution")));
+}
+
+void VoiceTest::voicePipelineSessionOrchestratesReadinessDeterministically() {
+    const auto ready = [](VoicePipelineSessionStep step, const QString& summary) {
+        return VoicePipelineSessionReadiness{step, VoicePipelineSessionStatus::ReadyMetadata, true,
+                                             summary};
+    };
+
+    const auto result = buildVoicePipelineSessionResult(
+        ready(VoicePipelineSessionStep::TranscriptionReadiness,
+              QStringLiteral("Whisper ready metadata only.")),
+        ready(VoicePipelineSessionStep::ChatInferenceReadiness,
+              QStringLiteral("Local chat ready metadata only.")),
+        ready(VoicePipelineSessionStep::SynthesisReadiness,
+              QStringLiteral("Piper ready metadata only.")));
+
+    QCOMPARE(result.status, VoicePipelineSessionStatus::Completed);
+    QCOMPARE(voicePipelineSessionStatusName(result.status), QStringLiteral("completed"));
+    QCOMPARE(result.executionAttempted, false);
+    QVERIFY(!result.safetyReport.executionAttempted);
+    QVERIFY(!result.safetyReport.microphoneCaptureAllowed);
+    QVERIFY(!result.safetyReport.audioPlaybackAllowed);
+    QVERIFY(!result.safetyReport.whisperExecutionAllowed);
+    QVERIFY(!result.safetyReport.piperExecutionAllowed);
+    QVERIFY(!result.safetyReport.subprocessExecutionAllowed);
+    QCOMPARE(result.traces.size(), 6);
+    QCOMPARE(result.traces.at(0).step, VoicePipelineSessionStep::Prepare);
+    QCOMPARE(result.traces.at(1).step, VoicePipelineSessionStep::AwaitAudioInput);
+    QCOMPARE(result.traces.at(2).step, VoicePipelineSessionStep::TranscriptionReadiness);
+    QCOMPARE(result.traces.at(3).step, VoicePipelineSessionStep::ChatInferenceReadiness);
+    QCOMPARE(result.traces.at(4).step, VoicePipelineSessionStep::SynthesisReadiness);
+    QCOMPARE(result.traces.at(5).step, VoicePipelineSessionStep::Completion);
+    QCOMPARE(voicePipelineSessionStepName(result.traces.at(2).step),
+             QStringLiteral("transcription-readiness"));
+    QVERIFY(voicePipelineSessionTraceSummaries(result.traces)
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("no STT")));
+    QVERIFY(result.summary.summary.contains(QStringLiteral("execution attempted: no")));
+}
+
+void VoiceTest::voicePipelineSessionBlocksMissingStagesAndFallsBackWithoutExecution() {
+    const auto ready = [](VoicePipelineSessionStep step) {
+        return VoicePipelineSessionReadiness{
+            step, VoicePipelineSessionStatus::ReadyMetadata, true,
+            QStringLiteral("Ready metadata only; execution remains disabled.")};
+    };
+    const auto blocked = [](VoicePipelineSessionStep step, const QString& summary) {
+        return VoicePipelineSessionReadiness{step, VoicePipelineSessionStatus::Blocked, false,
+                                             summary};
+    };
+
+    const auto missingWhisper = buildVoicePipelineSessionResult(
+        blocked(VoicePipelineSessionStep::TranscriptionReadiness,
+                QStringLiteral("Missing Whisper readiness blocks transcription.")),
+        ready(VoicePipelineSessionStep::ChatInferenceReadiness),
+        ready(VoicePipelineSessionStep::SynthesisReadiness));
+    QCOMPARE(missingWhisper.status, VoicePipelineSessionStatus::Fallback);
+    QCOMPARE(missingWhisper.traces.at(2).step, VoicePipelineSessionStep::TranscriptionReadiness);
+    QCOMPARE(missingWhisper.traces.at(3).step, VoicePipelineSessionStep::Refusal);
+    QVERIFY(missingWhisper.fallback.summary.contains(QStringLiteral("no transcript")));
+    QVERIFY(!missingWhisper.executionAttempted);
+
+    const auto missingChat = buildVoicePipelineSessionResult(
+        ready(VoicePipelineSessionStep::TranscriptionReadiness),
+        blocked(VoicePipelineSessionStep::ChatInferenceReadiness,
+                QStringLiteral("Missing local chat/model readiness blocks inference.")),
+        ready(VoicePipelineSessionStep::SynthesisReadiness));
+    QCOMPARE(missingChat.status, VoicePipelineSessionStatus::Fallback);
+    QCOMPARE(missingChat.traces.at(3).step, VoicePipelineSessionStep::ChatInferenceReadiness);
+    QVERIFY(missingChat.fallback.summary.contains(QStringLiteral("no chat send")));
+
+    const auto missingPiper = buildVoicePipelineSessionResult(
+        ready(VoicePipelineSessionStep::TranscriptionReadiness),
+        ready(VoicePipelineSessionStep::ChatInferenceReadiness),
+        blocked(VoicePipelineSessionStep::SynthesisReadiness,
+                QStringLiteral("Missing Piper readiness blocks synthesis.")));
+    QCOMPARE(missingPiper.status, VoicePipelineSessionStatus::Fallback);
+    QCOMPARE(missingPiper.traces.at(4).step, VoicePipelineSessionStep::SynthesisReadiness);
+    QVERIFY(missingPiper.fallback.summary.contains(QStringLiteral("no synthesis")));
+    QVERIFY(voicePipelineSessionStepSummaries(missingPiper.steps)
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("Missing Piper readiness")));
+    QVERIFY(!missingPiper.safetyReport.voiceChatAutoSendAllowed);
+    QVERIFY(!missingPiper.safetyReport.transcriptAutoInjectionAllowed);
 }
 
 void VoiceTest::nullVoiceRuntimeEnvironmentReportsMissingOwnershipMetadata() {

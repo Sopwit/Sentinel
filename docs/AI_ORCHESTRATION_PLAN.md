@@ -98,7 +98,15 @@ Piper file-output execution, but Phase 18.22 through Phase 18.24 supersede that 
 the current Piper path is readiness/synthesis metadata only and refuses before subprocess
 execution, file output, or playback. Playback, microphone access, Whisper execution, downloads,
 cloud/API keys,
-filesystem-wide scans, and autonomous voice loops remain out of scope. Phase 15.7 stabilizes
+filesystem-wide scans, and autonomous voice loops remain out of scope. Phase 18.25 through Phase
+18.27 add deterministic voice pipeline session orchestration metadata over Whisper STT readiness,
+local chat inference readiness, and Piper TTS readiness. The lifecycle records prepare, await
+audio input, transcription readiness, chat inference readiness, synthesis readiness, and
+completion/refusal/fallback as metadata only. Missing Whisper readiness blocks transcription,
+missing local chat/model readiness blocks inference, and missing Piper readiness blocks synthesis.
+The session does not capture microphones, play audio, execute Whisper or Piper, launch
+subprocesses, auto-send chat from voice, inject transcripts, start background workers, or run
+autonomous loops. Phase 15.7 stabilizes
 controlled local Ollama reliability before additional voice/STT work: health, discovery,
 generation, and streaming requests carry timeout metadata; failures are categorized into
 not-running, endpoint-unreachable, missing/invalid model, timeout, malformed response, interrupted
@@ -855,6 +863,12 @@ execution, or arbitrary export paths:
   streaming, microphone capture, subprocess execution, automatic chat/audio injection, and audio
   file generation out of scope. A later controlled synthesis phase and a later playback/audio
   device phase must be scoped separately.
+- Phase 18.25 through Phase 18.27 add a voice pipeline session orchestration read model over
+  Whisper STT readiness, local chat inference readiness, and Piper TTS readiness. It emits ordered
+  prepare, await-audio-input, transcription-readiness, chat-inference-readiness,
+  synthesis-readiness, completion/refusal/fallback traces and blocks at the first missing or
+  unsafe stage. It performs no microphone capture, playback, Whisper/Piper execution,
+  subprocesses, chat auto-send, transcript injection, background work, or autonomous loop.
 - `docs/PHASE_13_CHECKPOINT.md` records the Phase 13 Voice/Piper review, confirms the TTS path as
   `text -> Piper provider -> gated file-output metadata`, and marks Phase 14 ready only for
   explicit planning or configuration-readiness work unless a later phase separately authorizes
