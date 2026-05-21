@@ -327,6 +327,28 @@ Still out of scope:
   shell/subprocess execution, background workers, provider/model calls, cloud/API keys, and broad
   UI redesign.
 
+## Phase 18.10-18.12: Agent Capability Registry Foundation
+
+Completed. Added deterministic, metadata-only capability registry records for future agent runtime
+capabilities.
+
+Delivered:
+
+- Value-only capability id, type, status, scope, policy, requirement, restriction, readiness,
+  safety, registry status, and registry summary records.
+- Deterministic local metadata capabilities for conversation summarization, memory inspection,
+  retrieval preparation, semantic supplement preparation, export preparation, and voice response
+  preparation.
+- Future filesystem access, shell execution, and plugin runtime entries that remain disabled or
+  refused with safe summaries.
+- Controller, desktop view-model, and Agents page visibility for counts, summaries, readiness, and
+  safety metadata.
+
+Still out of scope:
+
+- Tools, plugins, filesystem actions, shell/subprocess execution, provider/model calls, cloud/API
+  calls, approval flows, autonomous loops, and any runtime permission grant.
+
 Still out of scope:
 
 - Semantic ranking/search, real embedding calls, vector database writes, prompt mutation, semantic

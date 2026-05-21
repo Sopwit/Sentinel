@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 18.10-18.12: Agent Capability Registry Foundation
+
+Completed. Adds deterministic agent capability-registry metadata beside the Phase 18 task queue
+and planning-session boundary without enabling runtime execution.
+
+Scope:
+
+- Added `AgentCapability`, `AgentCapabilityId`, `AgentCapabilityType`,
+  `AgentCapabilityStatus`, `AgentCapabilityScope`, `AgentCapabilityPolicy`,
+  `AgentCapabilitySummary`, `AgentCapabilityRequirement`, `AgentCapabilityRestriction`,
+  `AgentCapabilityReadiness`, `AgentCapabilitySafetyReport`, `AgentCapabilityRegistry`,
+  `AgentCapabilityRegistryStatus`, and `AgentCapabilityRegistrySummary`.
+- Static capability metadata is ordered deterministically and local-only.
+- Enabled metadata capabilities cover conversation summarization, memory inspection, retrieval
+  preparation, semantic supplement preparation, export preparation, and voice response
+  preparation.
+- Future filesystem access, shell execution, and plugin runtime capabilities remain disabled or
+  refused and expose safe restriction/refusal summaries only.
+- `executionAttempted` remains false. The registry does not start tools, plugins, filesystem
+  actions, shell/subprocess execution, background workers, cloud/API calls, provider/model calls,
+  or autonomous loops.
+- Controller, desktop view model, and Agents page expose QML-safe capability counts, summaries,
+  readiness summaries, and safety summaries with no enable/execute buttons or approval workflow.
+
+Known limitation:
+
+- The registry is not a runtime permission grant, executor, plugin host, filesystem adapter, or
+  shell boundary. Future activation requires a separate explicit phase with permission, safety,
+  approval, sandbox, and UI scope.
+
 ### Phase 18.7-18.9: Agent Planning Session And Safety Arbitration Foundation
 
 Completed. Adds bounded agent planning-session and safety arbitration metadata on top of the

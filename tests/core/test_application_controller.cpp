@@ -1013,6 +1013,22 @@ void ApplicationControllerTest::exposesAgentTaskRuntimeMetadata() {
     QCOMPARE(controller->agentPlanningArbitrationSummaries().size(), 6);
     QVERIFY(controller->agentPlanningFallbackSummary().contains(QStringLiteral("No planning "
                                                                                "fallback")));
+    QCOMPARE(controller->agentCapabilityRegistryStatus(),
+             QStringLiteral("Refusing Unsafe Capabilities"));
+    QCOMPARE(controller->agentCapabilityCount(), 9);
+    QCOMPARE(controller->agentCapabilityEnabledCount(), 6);
+    QCOMPARE(controller->agentCapabilityDisabledCount(), 2);
+    QCOMPARE(controller->agentCapabilityRestrictedCount(), 3);
+    QVERIFY(controller->agentCapabilityRegistrySummary().contains(QStringLiteral("execution "
+                                                                                 "attempted: no")));
+    QCOMPARE(controller->agentCapabilitySummaries().size(), 9);
+    QVERIFY(controller->agentCapabilitySummaries().at(7).contains(QStringLiteral("Shell "
+                                                                                 "Execution")));
+    QCOMPARE(controller->agentCapabilityReadinessSummaries().size(), 9);
+    QCOMPARE(controller->agentCapabilitySafetySummaries().size(), 9);
+    QVERIFY(controller->agentCapabilitySafetySummaries().at(7).contains(QStringLiteral("execution "
+                                                                                       "attempted: "
+                                                                                       "no")));
 }
 
 void ApplicationControllerTest::exposesLocalRuntimeMetadata() {

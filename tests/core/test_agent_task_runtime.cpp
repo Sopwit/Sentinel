@@ -11,6 +11,8 @@ using sentinel::core::AgentTaskLifecycle;
 using sentinel::core::AgentTaskLifecycleEvent;
 using sentinel::core::agentTaskLifecycleSummaries;
 using sentinel::core::agentPlanningSessionStatusName;
+using sentinel::core::agentCapabilityRegistryStatusName;
+using sentinel::core::agentCapabilitySummaries;
 using sentinel::core::AgentTaskTrace;
 using sentinel::core::agentTaskTraceSummaries;
 using sentinel::core::AgentTaskType;
@@ -29,6 +31,9 @@ private slots:
     void createsDeterministicPlanningSession();
     void boundsPlanningBudgetDeterministically();
     void refusesUnsafePlanningMetadata();
+    void createsDeterministicCapabilityRegistry();
+    void keepsDisabledAndRestrictedCapabilitiesNonExecutable();
+    void exposesCapabilityReadinessAndSafetySummaries();
 };
 
 void AgentTaskRuntimeTest::createsDeterministicMetadataTasks() {
@@ -192,6 +197,63 @@ void AgentTaskRuntimeTest::refusesUnsafePlanningMetadata() {
     QVERIFY(session.result.refusals.first().safeSummary.contains(QStringLiteral("refused")));
     QVERIFY(session.result.safetyReport.summary.contains(QStringLiteral("refused")));
     QCOMPARE(session.result.executionAttempted, false);
+}
+
+void AgentTaskRuntimeTest::createsDeterministicCapabilityRegistry() {
+    StaticAgentTaskRuntime runtime;
+
+    const auto registry = runtime.capabilityRegistry();
+    QCOMPARE(agentCapabilityRegistryStatusName(registry.status),
+             QStringLiteral("Refusing Unsafe Capabilities"));
+    QCOMPARE(registry.summary.totalCount, 9);
+    QCOMPARE(registry.summary.enabledCount, 6);
+    QCOMPARE(registry.summary.disabledCount, 2);
+    QCOMPARE(registry.summary.restrictedCount, 3);
+    QCOMPARE(registry.summary.refusedCount, 1);
+    QCOMPARE(registry.summary.executionAttempted, false);
+    QCOMPARE(registry.capabilities.at(0).type,
+             sentinel::core::AgentCapabilityType::ConversationSummarization);
+    QCOMPARE(registry.capabilities.at(6).type,
+             sentinel::core::AgentCapabilityType::FilesystemAccess);
+    QCOMPARE(registry.capabilities.at(7).type,
+             sentinel::core::AgentCapabilityType::ShellExecution);
+    QCOMPARE(registry.capabilities.at(8).type,
+             sentinel::core::AgentCapabilityType::PluginRuntime);
+}
+
+void AgentTaskRuntimeTest::keepsDisabledAndRestrictedCapabilitiesNonExecutable() {
+    StaticAgentTaskRuntime runtime;
+    const auto registry = runtime.capabilityRegistry();
+
+    for (const auto& capability : registry.capabilities) {
+        QCOMPARE(capability.policy.executionAllowed, false);
+        QCOMPARE(capability.policy.toolExecutionAllowed, false);
+        QCOMPARE(capability.policy.filesystemActionsAllowed, false);
+        QCOMPARE(capability.policy.shellExecutionAllowed, false);
+        QCOMPARE(capability.policy.pluginExecutionAllowed, false);
+        QCOMPARE(capability.policy.cloudCallsAllowed, false);
+        QCOMPARE(capability.safetyReport.executionAttempted, false);
+        if (capability.type == sentinel::core::AgentCapabilityType::ShellExecution) {
+            QCOMPARE(capability.status, sentinel::core::AgentCapabilityStatus::Refused);
+            QCOMPARE(capability.readiness.refused, true);
+            QVERIFY(capability.safetyReport.refusalSummary.contains(QStringLiteral("refused")));
+        }
+    }
+}
+
+void AgentTaskRuntimeTest::exposesCapabilityReadinessAndSafetySummaries() {
+    StaticAgentTaskRuntime runtime;
+    const auto registry = runtime.capabilityRegistry();
+
+    const auto summaries = agentCapabilitySummaries(registry);
+    QCOMPARE(summaries.size(), 9);
+    QVERIFY(summaries.first().startsWith(QStringLiteral("1. Conversation Summarization")));
+    QVERIFY(summaries.at(6).contains(QStringLiteral("[Disabled/Future Runtime]")));
+    QVERIFY(summaries.at(7).contains(QStringLiteral("[Refused/Future Runtime]")));
+    QCOMPARE(sentinel::core::agentCapabilityReadinessSummaries(registry).size(), 9);
+    QCOMPARE(sentinel::core::agentCapabilitySafetySummaries(registry).size(), 9);
+    QVERIFY(registry.readinessSummary.contains(QStringLiteral("local-only metadata")));
+    QVERIFY(registry.safetySummary.contains(QStringLiteral("disabled or refused")));
 }
 
 QTEST_MAIN(AgentTaskRuntimeTest)

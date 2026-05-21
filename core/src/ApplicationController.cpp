@@ -1226,6 +1226,59 @@ QString ApplicationController::agentPlanningFallbackSummary() const {
     return sentinel::core::agentPlanningFallbackSummary(agentTaskRuntime_->planningSession());
 }
 
+QString ApplicationController::agentCapabilityRegistryStatus() const {
+    if (!agentTaskRuntime_) {
+        return agentCapabilityRegistryStatusName(
+            AgentCapabilityRegistryStatus::RefusingUnsafeCapabilities);
+    }
+    return agentCapabilityRegistryStatusName(agentTaskRuntime_->capabilityRegistry().status);
+}
+
+QString ApplicationController::agentCapabilityRegistrySummary() const {
+    if (!agentTaskRuntime_) {
+        return QStringLiteral("No agent capability registry metadata available.");
+    }
+    return agentTaskRuntime_->capabilityRegistry().summary.summary;
+}
+
+int ApplicationController::agentCapabilityCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->capabilityRegistry().summary.totalCount : 0;
+}
+
+int ApplicationController::agentCapabilityEnabledCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->capabilityRegistry().summary.enabledCount : 0;
+}
+
+int ApplicationController::agentCapabilityDisabledCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->capabilityRegistry().summary.disabledCount : 0;
+}
+
+int ApplicationController::agentCapabilityRestrictedCount() const {
+    return agentTaskRuntime_ ? agentTaskRuntime_->capabilityRegistry().summary.restrictedCount : 0;
+}
+
+QStringList ApplicationController::agentCapabilitySummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::agentCapabilitySummaries(agentTaskRuntime_->capabilityRegistry());
+}
+
+QStringList ApplicationController::agentCapabilityReadinessSummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::agentCapabilityReadinessSummaries(
+        agentTaskRuntime_->capabilityRegistry());
+}
+
+QStringList ApplicationController::agentCapabilitySafetySummaries() const {
+    if (!agentTaskRuntime_) {
+        return {};
+    }
+    return sentinel::core::agentCapabilitySafetySummaries(agentTaskRuntime_->capabilityRegistry());
+}
+
 QString ApplicationController::localRuntimeStatus() const {
     if (!localRuntime_) {
         return localRuntimeStatusName(LocalRuntimeStatus::Unavailable);

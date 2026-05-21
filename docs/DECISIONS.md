@@ -259,6 +259,31 @@ Out of scope:
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent
 delete disabled until a later explicit destructive phase.
 
+## 10. Agent Capability Registry Boundary
+
+Decision: Represent future agent capabilities as deterministic value-only registry metadata until
+a later explicit runtime phase grants authority.
+
+Reason: The desktop alpha needs visibility into planned agent capability categories without
+creating hidden execution paths, approval flows, or tool/plugin/filesystem/shell access.
+
+Runtime behavior:
+
+- `AgentCapabilityRegistry` lives behind `IAgentTaskRuntime` beside task queue and planning
+  session metadata.
+- Local metadata capabilities may report readiness for conversation summarization, memory
+  inspection, retrieval preparation, semantic supplement preparation, export preparation, and voice
+  response preparation.
+- Future filesystem access, shell execution, and plugin runtime entries remain disabled or refused
+  and expose safe restriction/refusal summaries only.
+- `executionAttempted` remains false for registry and capability safety reports.
+- QML receives only counts, strings, and string lists through the controller/view-model boundary.
+
+Out of scope:
+
+- Runtime permission grants, tools, plugins, filesystem actions, shell/subprocess execution,
+  provider/model calls, cloud/API calls, autonomous loops, and approval workflows.
+
 Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
 confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
 path is non-mutating instead of enabling deletion.
