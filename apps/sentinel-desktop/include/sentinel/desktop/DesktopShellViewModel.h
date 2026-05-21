@@ -285,6 +285,18 @@ class DesktopShellViewModel final : public QObject {
                    voiceConfigurationChanged)
     Q_PROPERTY(QString piperTtsFileOutputSummary READ piperTtsFileOutputSummary NOTIFY
                    voiceConfigurationChanged)
+    Q_PROPERTY(QString piperSynthesisStatus READ piperSynthesisStatus NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperSynthesisReadinessSummary READ piperSynthesisReadinessSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperSynthesisLastSummary READ piperSynthesisLastSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperSynthesisFallbackSummary READ piperSynthesisFallbackSummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString piperSynthesisSafetySummary READ piperSynthesisSafetySummary NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QStringList piperSynthesisTraceSummaries READ piperSynthesisTraceSummaries NOTIFY
+                   voiceConfigurationChanged)
     Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
@@ -1085,6 +1097,12 @@ public:
     bool piperTtsReady() const;
     QString piperTtsFileOutputStatus() const;
     QString piperTtsFileOutputSummary() const;
+    QString piperSynthesisStatus() const;
+    QString piperSynthesisReadinessSummary() const;
+    QString piperSynthesisLastSummary() const;
+    QString piperSynthesisFallbackSummary() const;
+    QString piperSynthesisSafetySummary() const;
+    QStringList piperSynthesisTraceSummaries() const;
     QString piperBinaryPath() const;
     void setPiperBinaryPath(const QString& path);
     QString piperModelPath() const;

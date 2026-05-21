@@ -1007,9 +1007,14 @@ Separation:
   Whisper binary/model ownership and safety posture without execution.
 - `PiperTtsConfig`, `PiperVoiceModelDescriptor`, `PiperTtsRequest`, `PiperTtsResult`,
   `PiperTtsStatus`, `IPiperTtsClient`, `NullPiperTtsClient`, and
-  `PiperTextToSpeechProvider` model a safe Piper TTS boundary. `ProcessPiperTtsClient` is the
-  controlled local file-output client and is reachable only after provider policy accepts every
-  file-output gate.
+  `PiperTextToSpeechProvider` remain as compatibility/readiness metadata for the older file-output
+  surface. They refuse before execution in the current phase.
+- `PiperSynthesisPolicy`, `PiperSynthesisStatus`, `PiperSynthesisRequest`,
+  `PiperSynthesisResult`, `PiperSynthesisSession`, `PiperSynthesisBudget`,
+  `PiperSynthesisReadiness`, `PiperSynthesisSafetyReport`, `PiperSynthesisFallback`,
+  `PiperSynthesisTrace`, `IPiperSynthesisClient`, `NullPiperSynthesisClient`, and
+  `LocalPiperSynthesisClient` model the future Piper TTS synthesis boundary. The local client is a
+  non-executing skeleton.
 - `WhisperTranscriptionPolicy`, `WhisperTranscriptionStatus`, `WhisperTranscriptionRequest`,
   `WhisperTranscriptionResult`, `WhisperTranscriptionSession`,
   `WhisperTranscriptionBudget`, `WhisperTranscriptionReadiness`,
@@ -1018,10 +1023,10 @@ Separation:
   `NullWhisperTranscriptionClient`, and `LocalWhisperTranscriptionClient` model the future
   Whisper STT audio-file transcription boundary. The local client is a non-executing skeleton.
 - `ApplicationController` exposes voice readiness, runtime, session, pipeline, and trace
-  summaries plus binary/model/environment/permission/safety and Piper TTS readiness summaries
-  only, including Piper file-output status, output path summary metadata, local voice
-  configuration summaries, exact validation rows, Ready/Blocked/Missing preparation status, and
-  controlled execution status/audio-path summaries.
+  summaries plus binary/model/environment/permission/safety and Piper/Whisper readiness summaries
+  only, including local voice configuration summaries, exact validation rows, Ready/Blocked/
+  Missing preparation status, and Piper synthesis status/readiness/result/fallback/safety/trace
+  summaries.
 - `DesktopShellViewModel` exposes QML-safe strings, string lists, and booleans only. Voice
   configuration setters persist path strings and the Piper file-output opt-in through
   `AppSettings`; QML does not receive provider, process, filesystem, audio-device, or model
@@ -1060,29 +1065,28 @@ Current behavior:
   binary, model, or audio metadata and unsafe/non-local path-style input are refused before any
   execution boundary. No transcript is injected into chat.
 - Piper TTS is disabled/not configured by default. Missing or invalid binary/model paths produce
-  deterministic refusal before any client boundary can run.
-- Controlled Piper file output is disabled by default through a persisted opt-in setting. It is
-  available only from an explicit user action when the opt-in is enabled, the Piper binary exists
-  and is executable, the voice model exists and is readable, the output path is generated inside
-  the app-controlled cache/temp output directory, process execution is allowed by
-  request/config/safety policy, playback and microphone access are blocked, and the request is
-  local-only.
-- `NullPiperTtsClient` refuses synthesis without writing files, playing audio, downloading assets,
-  loading models, scanning broadly, or launching a subprocess.
-- `ProcessPiperTtsClient` may launch Piper only through that accepted file-output boundary and
-  writes to the controlled cache/temp output file. It does not play audio, open microphones,
-  download models, call cloud providers, read API keys, or scan the filesystem broadly.
-- Piper execution status metadata is exposed as disabled, blocked/safety-blocked, missing binary,
-  missing model, running, succeeded, failed, or timeout. Successful results expose only a generated
-  file path summary, not playback controls or process internals.
-- The current TTS path is `text -> Piper provider -> gated file-output metadata`.
+  deterministic refusal before any execution boundary can run.
+- Piper synthesis readiness may report `Ready Metadata` only when the configured Piper binary and
+  voice model are local path-style values that pass exact metadata checks. This is not an
+  execution grant.
+- `NullPiperSynthesisClient` refuses without side effects. `LocalPiperSynthesisClient` validates
+  metadata and then refuses before subprocess execution.
+- The legacy Piper file-output opt-in and generation action are non-operational compatibility
+  paths in the current phase. They remain disabled/readiness-only and refuse without writing an
+  audio file or reaching a process client.
+- Piper synthesis status metadata is exposed as disabled, missing, unsafe, safety-blocked,
+  refused, ready metadata, or timeout. No raw filesystem paths are exposed through the new
+  readiness/safety summaries.
+- The current TTS path is `text/config metadata -> Piper synthesis readiness -> deterministic
+  refusal/fallback metadata`.
 - Voice runtime safety blocks execution by default and denies microphone, playback, process
   execution, filesystem-wide scan, download, and cloud/API-key behavior.
 - Settings shows compact voice configuration text fields plus voice readiness/runtime/session/
-  pipeline metadata, but no voice controls, setup actions, speak buttons, record buttons, playback
-  controls, downloads, or path pickers exist.
-- No microphone access, audio playback, Whisper execution, live STT, filesystem-wide scan, model
-  downloads, cloud calls, API keys, prompt injection, automatic chat send, or autonomous voice
+  pipeline metadata and Piper/Whisper readiness summaries, but no voice controls, setup actions,
+  speak buttons, play buttons, record buttons, playback controls, downloads, or path pickers exist.
+- No microphone access, audio playback, Piper execution, Whisper execution, live STT,
+  filesystem-wide scan, model downloads, cloud calls, API keys, prompt injection, automatic chat
+  send, automatic audio injection, or autonomous voice
   loop is present. Piper execution is limited to explicit local file-output synthesis after all
   gates pass and remains disabled by default.
 
@@ -1151,15 +1155,12 @@ Phase 15.1-15.3 voice refinement:
 
 Phase 15.4-15.6 controlled Piper execution:
 
-- Settings adds a persisted controlled Piper file-output opt-in and an explicit Generate TTS File
-  action. The default state clearly reports Piper execution disabled.
-- The controller applies configured Piper paths to the real process client only when the opt-in and
-  explicit action are both present; otherwise execution is refused before reaching the process
-  client.
-- Generated audio files are written only to the controlled app cache/temp output directory. QML
-  receives status and path summary metadata only.
-- Playback, microphone input, Whisper execution, arbitrary output paths, downloads, cloud/API keys,
-  filesystem-wide scans, and autonomous voice loops remain future work.
+- Historical note: Phase 15.4-15.6 previously described a controlled Piper file-output path.
+  Phase 18.22-18.24 supersedes that active behavior. Current desktop builds expose Piper
+  readiness/synthesis metadata only; the opt-in/generation path is disabled and refuses without
+  subprocess execution, file output, or playback.
+- Future controlled synthesis and future playback/audio-device support require separate explicit
+  phases.
 
 Current local AI user flow:
 

@@ -194,6 +194,12 @@ add a record button, live microphone UI, file picker, enabled transcribe action,
 prompt-injection control, automatic-chat-send control, subprocess control, cloud setup, or a
 redesign.
 
+Phase 18.22 through Phase 18.24 add compact Piper TTS synthesis-boundary visibility to Settings
+and Agents. The surface may show Piper synthesis status, readiness, last-result summary, fallback
+summary, safety summary, and trace summaries. It must remain summary-only and must not add a speak
+button, play button, audio output control, live voice streaming UI, file-output generation action,
+prompt/chat/audio injection control, subprocess control, cloud setup, or a redesign.
+
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool
@@ -256,6 +262,10 @@ a disabled-by-default opt-in, an explicit Generate TTS File action, clear execut
 generated file path summary. The UI must not expose playback, microphone recording, Whisper
 execution, arbitrary output paths, downloads, cloud/API-key setup, broad filesystem scans, or an
 autonomous voice loop.
+
+Phase 18.22 through Phase 18.24 supersede the active Piper file-output UI posture: Settings no
+longer exposes the opt-in or Generate TTS File action. Piper appears as readiness/synthesis
+metadata only until a later controlled synthesis phase explicitly reintroduces execution.
 
 Phase 15.7 stabilizes local Ollama reliability without a broad redesign. Chat may disable the
 input and Send button while local inference is active and may show concise inference failure
@@ -546,8 +556,8 @@ Current UI work remains presentation and metadata visibility only:
 - no real tool execution
 - no approval UX that triggers autonomous actions
 - no sandbox runtime
-- no filesystem/system actions beyond controlled app-owned transcript export, Piper file output,
-  and explicit local key-value memory commit
+- no filesystem/system actions beyond controlled app-owned transcript export and explicit local
+  key-value memory commit
 - no particle systems or assistant-face rendering
 
 Manual visual QA expectations are tracked in `docs/UI_QA_CHECKLIST.md`.

@@ -115,7 +115,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.setPiperModelPath(settings_.piperModelPath());
     controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
     controller_.setWhisperModelPath(settings_.whisperModelPath());
-    controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
+    if (settings_.piperFileOutputExecutionEnabled()) {
+        settings_.setPiperFileOutputExecutionEnabled(false);
+    }
+    controller_.setPiperFileOutputExecutionEnabled(false);
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -948,6 +951,30 @@ QString DesktopShellViewModel::piperTtsFileOutputSummary() const {
     return controller_.piperTtsFileOutputSummary();
 }
 
+QString DesktopShellViewModel::piperSynthesisStatus() const {
+    return controller_.piperSynthesisStatus();
+}
+
+QString DesktopShellViewModel::piperSynthesisReadinessSummary() const {
+    return controller_.piperSynthesisReadinessSummary();
+}
+
+QString DesktopShellViewModel::piperSynthesisLastSummary() const {
+    return controller_.piperSynthesisLastSummary();
+}
+
+QString DesktopShellViewModel::piperSynthesisFallbackSummary() const {
+    return controller_.piperSynthesisFallbackSummary();
+}
+
+QString DesktopShellViewModel::piperSynthesisSafetySummary() const {
+    return controller_.piperSynthesisSafetySummary();
+}
+
+QStringList DesktopShellViewModel::piperSynthesisTraceSummaries() const {
+    return controller_.piperSynthesisTraceSummaries();
+}
+
 QString DesktopShellViewModel::piperBinaryPath() const {
     return controller_.piperBinaryPath();
 }
@@ -1025,7 +1052,8 @@ bool DesktopShellViewModel::piperFileOutputExecutionEnabled() const {
 }
 
 void DesktopShellViewModel::setPiperFileOutputExecutionEnabled(bool enabled) {
-    settings_.setPiperFileOutputExecutionEnabled(enabled);
+    Q_UNUSED(enabled);
+    settings_.setPiperFileOutputExecutionEnabled(false);
     if (controller_.piperFileOutputExecutionEnabled() !=
         settings_.piperFileOutputExecutionEnabled()) {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());

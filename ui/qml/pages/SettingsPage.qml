@@ -1043,45 +1043,24 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
-                CheckBox {
-                    Layout.fillWidth: true
-                    text: "Controlled Piper file output"
-                    checked: settingsPage.viewModel.piperFileOutputExecutionEnabled
-                    onToggled: settingsPage.viewModel.piperFileOutputExecutionEnabled = checked
-                }
-
-                GridLayout {
-                    Layout.fillWidth: true
-                    columns: settingsPage.compact ? 1 : 2
-                    columnSpacing: SentinelTheme.spaceSm
-                    rowSpacing: SentinelTheme.spaceSm
-
-                    SentinelTextField {
-                        id: piperTtsTextField
-                        Layout.fillWidth: true
-                        placeholderText: "Text for generated TTS file"
-                    }
-
-                    SentinelButton {
-                        text: "Generate TTS File"
-                        enabled: settingsPage.viewModel.piperFileOutputExecutionEnabled
-                                 && settingsPage.viewModel.piperFileOutputReadinessStatus === "Ready"
-                        Layout.fillWidth: true
-                        onClicked: settingsPage.viewModel.generatePiperTtsFile(piperTtsTextField.text)
-                    }
-                }
-
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "TTS File"
-                    value: settingsPage.viewModel.piperFileOutputExecutionStatus + " / " + settingsPage.viewModel.piperFileOutputExecutionSummary
+                    label: "Piper Synthesis"
+                    value: settingsPage.viewModel.piperSynthesisStatus + " / " + settingsPage.viewModel.piperSynthesisReadinessSummary
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: settingsPage.compact
-                    label: "Output"
-                    value: settingsPage.viewModel.piperFileOutputAudioPathSummary
+                    label: "TTS Result"
+                    value: settingsPage.viewModel.piperSynthesisLastSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "TTS Fallback"
+                    value: settingsPage.viewModel.piperSynthesisFallbackSummary
                     Layout.fillWidth: true
                 }
 
@@ -1170,7 +1149,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Safety"
-                    value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / " + settingsPage.viewModel.voiceRuntimeSafetySummary + " / " + settingsPage.viewModel.voiceRuntimeSafetyReportSummary + " / " + settingsPage.viewModel.whisperTranscriptionSafetySummary
+                    value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / " + settingsPage.viewModel.voiceRuntimeSafetySummary + " / " + settingsPage.viewModel.voiceRuntimeSafetyReportSummary + " / " + settingsPage.viewModel.piperSynthesisSafetySummary + " / " + settingsPage.viewModel.whisperTranscriptionSafetySummary
                     Layout.fillWidth: true
                 }
 
