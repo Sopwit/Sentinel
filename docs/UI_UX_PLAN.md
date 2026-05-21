@@ -172,6 +172,14 @@ be visibly distinct as restricted metadata. The UI must not add enable buttons, 
 approval workflows, tool/plugin controls, filesystem or shell controls, autonomous toggles, cloud
 setup, or a broad redesign.
 
+Phase 18.13 through Phase 18.15 add compact tool-contract visibility to Agents. The surface may
+show tool contract registry status, enabled/disabled/restricted counts, contract summaries,
+permission summaries, sandbox summaries, readiness summaries, and safety summaries. Disabled and
+refused future filesystem, subprocess, plugin, and export action contracts should be visibly
+distinct as restricted metadata. The UI must not add execute buttons, approval UI, sandbox
+controls, tool/plugin controls, filesystem or shell controls, autonomous toggles, cloud setup, or a
+broad redesign.
+
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool

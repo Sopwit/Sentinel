@@ -69,6 +69,10 @@ struct AgentCapabilityId {
     QString value;
 };
 
+struct ToolContractId {
+    QString value;
+};
+
 enum class AgentCapabilityType : std::uint8_t {
     ConversationSummarization,
     MemoryInspection,
@@ -98,6 +102,56 @@ enum class AgentCapabilityRegistryStatus : std::uint8_t {
     RefusingUnsafeCapabilities,
 };
 
+enum class ToolContractType : std::uint8_t {
+    ConversationSummary,
+    MemoryInspection,
+    RetrievalPreparation,
+    SemanticSupplementPreparation,
+    VoiceResponsePreparation,
+    ExportPreparation,
+    FutureFilesystemAccess,
+    FutureSubprocessExecution,
+    FuturePluginRuntime,
+    FutureExportAction,
+};
+
+enum class ToolContractStatus : std::uint8_t {
+    EnabledMetadata,
+    Disabled,
+    Refused,
+};
+
+enum class ToolContractScope : std::uint8_t {
+    LocalMetadata,
+    FutureRuntime,
+    UnsafeRuntime,
+};
+
+enum class ToolContractPermission : std::uint8_t {
+    LocalOnly,
+    ApprovalRequired,
+    SandboxRequired,
+    ReadOnly,
+    Disabled,
+    Refused,
+    FutureFilesystemAccess,
+    FutureSubprocessExecution,
+    FuturePluginRuntime,
+    FutureExportAction,
+};
+
+enum class ToolContractSandbox : std::uint8_t {
+    NotRequired,
+    RequiredMetadata,
+    Denied,
+};
+
+enum class ToolContractRegistryStatus : std::uint8_t {
+    Ready,
+    Restricted,
+    RefusingUnsafeContracts,
+};
+
 QString agentTaskTypeName(AgentTaskType type);
 QString agentTaskStatusName(AgentTaskStatus status);
 QString agentTaskPriorityName(AgentTaskPriority priority);
@@ -109,6 +163,12 @@ QString agentCapabilityTypeName(AgentCapabilityType type);
 QString agentCapabilityStatusName(AgentCapabilityStatus status);
 QString agentCapabilityScopeName(AgentCapabilityScope scope);
 QString agentCapabilityRegistryStatusName(AgentCapabilityRegistryStatus status);
+QString toolContractTypeName(ToolContractType type);
+QString toolContractStatusName(ToolContractStatus status);
+QString toolContractScopeName(ToolContractScope scope);
+QString toolContractPermissionName(ToolContractPermission permission);
+QString toolContractSandboxName(ToolContractSandbox sandbox);
+QString toolContractRegistryStatusName(ToolContractRegistryStatus status);
 
 struct AgentTaskStep {
     int order = 0;
@@ -403,6 +463,91 @@ struct AgentCapabilityRegistry {
     QString readinessSummary;
 };
 
+struct ToolContractPolicy {
+    bool localOnly = true;
+    bool metadataOnly = true;
+    bool executionAllowed = false;
+    bool toolRuntimeAllowed = false;
+    bool filesystemActionsAllowed = false;
+    bool subprocessExecutionAllowed = false;
+    bool pluginRuntimeAllowed = false;
+    bool cloudCallsAllowed = false;
+    QString summary = QStringLiteral(
+        "Tool contract is metadata-only; execution, tool runtime, filesystem actions, "
+        "subprocesses, plugins, and cloud calls are blocked.");
+};
+
+struct ToolContractRestriction {
+    QString summary;
+    bool restricted = false;
+};
+
+struct ToolContractSafetyReport {
+    bool safe = true;
+    bool executionAttempted = false;
+    bool restricted = false;
+    bool unsafeScopeDenied = false;
+    QString refusalSummary;
+    QString summary;
+};
+
+struct ToolContractReadiness {
+    bool ready = true;
+    bool sandboxRequired = false;
+    bool refused = false;
+    QString summary;
+};
+
+struct ToolContractSummary {
+    QString id;
+    ToolContractType type = ToolContractType::ConversationSummary;
+    ToolContractStatus status = ToolContractStatus::Disabled;
+    ToolContractScope scope = ToolContractScope::LocalMetadata;
+    bool restricted = false;
+    bool executionAttempted = false;
+    QString summary;
+    QString permissionSummary;
+    QString sandboxSummary;
+    QString readinessSummary;
+    QString safetySummary;
+};
+
+struct ToolContract {
+    ToolContractId id;
+    ToolContractType type = ToolContractType::ConversationSummary;
+    ToolContractStatus status = ToolContractStatus::Disabled;
+    ToolContractScope scope = ToolContractScope::LocalMetadata;
+    int order = 0;
+    QString summary;
+    ToolContractPolicy policy;
+    QList<ToolContractPermission> permissions;
+    ToolContractSandbox sandbox = ToolContractSandbox::NotRequired;
+    QList<ToolContractRestriction> restrictions;
+    ToolContractSafetyReport safetyReport;
+    ToolContractReadiness readiness;
+};
+
+struct ToolContractRegistrySummary {
+    ToolContractRegistryStatus status = ToolContractRegistryStatus::Ready;
+    int totalCount = 0;
+    int enabledCount = 0;
+    int disabledCount = 0;
+    int restrictedCount = 0;
+    int refusedCount = 0;
+    bool executionAttempted = false;
+    QString summary;
+};
+
+struct ToolContractRegistry {
+    ToolContractRegistryStatus status = ToolContractRegistryStatus::Ready;
+    QList<ToolContract> contracts;
+    ToolContractRegistrySummary summary;
+    QString permissionSummary;
+    QString sandboxSummary;
+    QString readinessSummary;
+    QString safetySummary;
+};
+
 QString agentTaskSummary(const AgentTask& task);
 QString agentTaskTraceSummary(const AgentTaskTrace& trace);
 QStringList agentTaskTraceSummaries(const QList<AgentTaskTrace>& traces);
@@ -420,6 +565,15 @@ QString agentCapabilitySummaryText(const AgentCapability& capability);
 QStringList agentCapabilitySummaries(const AgentCapabilityRegistry& registry);
 QStringList agentCapabilityReadinessSummaries(const AgentCapabilityRegistry& registry);
 QStringList agentCapabilitySafetySummaries(const AgentCapabilityRegistry& registry);
+ToolContractSummary toolContractSummary(const ToolContract& contract);
+QString toolContractSummaryText(const ToolContract& contract);
+QString toolContractPermissionSummary(const ToolContract& contract);
+QString toolContractSandboxSummary(const ToolContract& contract);
+QStringList toolContractSummaries(const ToolContractRegistry& registry);
+QStringList toolContractPermissionSummaries(const ToolContractRegistry& registry);
+QStringList toolContractSandboxSummaries(const ToolContractRegistry& registry);
+QStringList toolContractReadinessSummaries(const ToolContractRegistry& registry);
+QStringList toolContractSafetySummaries(const ToolContractRegistry& registry);
 
 class IAgentTaskRuntime {
 public:
@@ -440,6 +594,7 @@ public:
     virtual AgentTaskResult refuseExecution(const AgentTask& task) const = 0;
     virtual AgentPlanningSession planningSession() const = 0;
     virtual AgentCapabilityRegistry capabilityRegistry() const = 0;
+    virtual ToolContractRegistry toolContractRegistry() const = 0;
 };
 
 class StaticAgentTaskRuntime final : public IAgentTaskRuntime {
@@ -461,6 +616,7 @@ public:
     AgentTaskResult refuseExecution(const AgentTask& task) const override;
     AgentPlanningSession planningSession() const override;
     AgentCapabilityRegistry capabilityRegistry() const override;
+    ToolContractRegistry toolContractRegistry() const override;
 
 private:
     AgentTask makeTask(AgentTaskType type, AgentTaskSource source, AgentTaskPriority priority,
@@ -471,6 +627,10 @@ private:
     AgentCapability makeCapability(AgentCapabilityType type, AgentCapabilityStatus status,
                                    AgentCapabilityScope scope, int order,
                                    const QString& summary) const;
+    ToolContract makeToolContract(ToolContractType type, ToolContractStatus status,
+                                  ToolContractScope scope, int order, const QString& summary,
+                                  QList<ToolContractPermission> permissions,
+                                  ToolContractSandbox sandbox) const;
     AgentTaskQueueSummary queueSummary() const;
     QList<AgentTask> orderedTasks() const;
 

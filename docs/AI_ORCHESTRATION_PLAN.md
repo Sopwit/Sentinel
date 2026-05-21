@@ -308,6 +308,17 @@ plugin runtime capabilities remain disabled or refused and expose safe readiness
 summaries only. The registry is local-only metadata, `executionAttempted` remains false, and it
 does not grant tools, plugins, filesystem actions, shell/subprocess execution, provider/model
 calls, cloud/API calls, approval flows, background workers, or autonomous loops.
+Phase 18.13 through Phase 18.15 add deterministic tool contract and permission metadata:
+`ToolContract`, `ToolContractId`, `ToolContractType`, `ToolContractStatus`, `ToolContractScope`,
+`ToolContractPolicy`, `ToolContractPermission`, `ToolContractSandbox`,
+`ToolContractRestriction`, `ToolContractSafetyReport`, `ToolContractReadiness`,
+`ToolContractSummary`, `ToolContractRegistry`, `ToolContractRegistryStatus`, and
+`ToolContractRegistrySummary`. Enabled contracts are local-only/read-only metadata. Future
+filesystem access, subprocess execution, plugin runtime, and export actions remain disabled or
+refused, unsafe scopes are denied, sandbox requirements are summarized only, and
+`executionAttempted` remains false. The boundary does not start a tool runtime, sandbox,
+filesystem action, subprocess, plugin, export, provider/model call, cloud/API call, approval flow,
+background worker, or autonomous loop.
 Phase 17.0 through Phase 17.3 add semantic provider planning and local selection metadata:
 `SemanticProviderDescriptor`, `SemanticProviderSelection`, `SemanticProviderReadiness`,
 `SemanticProviderHealth`, `SemanticProviderCapability`, `SemanticProviderPolicy`,

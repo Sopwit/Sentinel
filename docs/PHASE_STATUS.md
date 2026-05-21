@@ -2,6 +2,42 @@
 
 ## Completed / Stable
 
+### Phase 18.13-18.15: Tool Contract And Permission Foundation
+
+Completed. Adds deterministic metadata-only tool contract records beside the Phase 18 capability
+registry without enabling any tool runtime or execution authority.
+
+Scope:
+
+- Added `ToolContract`, `ToolContractId`, `ToolContractType`, `ToolContractStatus`,
+  `ToolContractScope`, `ToolContractPolicy`, `ToolContractPermission`, `ToolContractSandbox`,
+  `ToolContractRestriction`, `ToolContractSafetyReport`, `ToolContractReadiness`,
+  `ToolContractSummary`, `ToolContractRegistry`, `ToolContractRegistryStatus`, and
+  `ToolContractRegistrySummary`.
+- Static tool contracts are ordered deterministically and local-only where enabled.
+- Enabled metadata contracts cover conversation summary, memory inspection, retrieval
+  preparation, semantic supplement preparation, voice response preparation, and export
+  preparation.
+- Permission metadata exposes local-only, read-only, approval-required, sandbox-required,
+  disabled, refused, future filesystem access, future subprocess execution, future plugin
+  runtime, and future export action labels.
+- Future filesystem access, subprocess execution, plugin runtime, and export action contracts
+  remain disabled or refused and expose safe restriction/refusal summaries only.
+- Sandbox readiness is summarized as metadata. Required or denied sandbox states do not start
+  filesystem, subprocess, plugin, export, or tool runtime behavior.
+- `executionAttempted` remains false. The registry does not start tools, plugins, filesystem
+  actions, subprocesses, background workers, cloud/API calls, provider/model calls, approval
+  workflows, or autonomous loops.
+- Controller, desktop view model, and Agents page expose QML-safe contract counts, summaries,
+  permission summaries, sandbox summaries, readiness summaries, and safety summaries with no
+  execute buttons or approval UI.
+
+Known limitation:
+
+- Tool contracts are not permission grants, executors, plugin hosts, filesystem adapters,
+  subprocess boundaries, approval workflows, or sandbox implementations. Future activation
+  requires a separate explicit phase.
+
 ### Phase 18.10-18.12: Agent Capability Registry Foundation
 
 Completed. Adds deterministic agent capability-registry metadata beside the Phase 18 task queue

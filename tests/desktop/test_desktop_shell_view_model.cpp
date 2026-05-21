@@ -390,11 +390,32 @@ void DesktopShellViewModelTest::exposesAgentTaskRuntimeMetadata() {
         QStringLiteral("Shell Execution")));
     QCOMPARE(fixture.viewModel.agentCapabilityReadinessSummaries().size(), 9);
     QCOMPARE(fixture.viewModel.agentCapabilitySafetySummaries().size(), 9);
+    QCOMPARE(fixture.viewModel.toolContractRegistryStatus(),
+             QStringLiteral("Refusing Unsafe Contracts"));
+    QCOMPARE(fixture.viewModel.toolContractCount(), 10);
+    QCOMPARE(fixture.viewModel.toolContractEnabledCount(), 6);
+    QCOMPARE(fixture.viewModel.toolContractDisabledCount(), 3);
+    QCOMPARE(fixture.viewModel.toolContractRestrictedCount(), 4);
+    QVERIFY(fixture.viewModel.toolContractRegistrySummary().contains(
+        QStringLiteral("execution attempted: no")));
+    QCOMPARE(fixture.viewModel.toolContractSummaries().size(), 10);
+    QVERIFY(fixture.viewModel.toolContractSummaries().at(7).contains(
+        QStringLiteral("Future Subprocess Execution")));
+    QCOMPARE(fixture.viewModel.toolContractPermissionSummaries().size(), 10);
+    QCOMPARE(fixture.viewModel.toolContractSandboxSummaries().size(), 10);
+    QCOMPARE(fixture.viewModel.toolContractReadinessSummaries().size(), 10);
+    QCOMPARE(fixture.viewModel.toolContractSafetySummaries().size(), 10);
+    QVERIFY(fixture.viewModel.toolContractPermissionSummaries().at(6).contains(
+        QStringLiteral("future filesystem access")));
+    QVERIFY(fixture.viewModel.toolContractSandboxSummaries().at(7).contains(
+        QStringLiteral("Denied")));
     QVERIFY(metaObject->indexOfProperty("agentTaskRuntimeStatus") >= 0);
     QVERIFY(metaObject->indexOfProperty("agentPlanningSessionStatus") >= 0);
     QVERIFY(metaObject->indexOfProperty("agentCapabilityRegistryStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("toolContractRegistryStatus") >= 0);
     QCOMPARE(metaObject->indexOfProperty("agentTaskRawPayload"), -1);
     QCOMPARE(metaObject->indexOfProperty("agentCapabilityRawPayload"), -1);
+    QCOMPARE(metaObject->indexOfProperty("toolContractRawPayload"), -1);
 }
 
 void DesktopShellViewModelTest::exposesLocalRuntimeMetadata() {
@@ -1186,6 +1207,17 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("agentCapabilitySummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("agentCapabilityReadinessSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("agentCapabilitySafetySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("toolContractRegistryStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("toolContractRegistrySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("toolContractCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("toolContractEnabledCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("toolContractDisabledCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("toolContractRestrictedCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("toolContractSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("toolContractPermissionSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("toolContractSandboxSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("toolContractReadinessSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("toolContractSafetySummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("localRuntimeStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeHealth"), QByteArrayLiteral("QString")},
         {QStringLiteral("localRuntimeSummary"), QByteArrayLiteral("QString")},

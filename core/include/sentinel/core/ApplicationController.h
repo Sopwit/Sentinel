@@ -171,6 +171,19 @@ class ApplicationController final : public QObject {
                    CONSTANT)
     Q_PROPERTY(QStringList agentCapabilitySafetySummaries READ agentCapabilitySafetySummaries
                    CONSTANT)
+    Q_PROPERTY(QString toolContractRegistryStatus READ toolContractRegistryStatus CONSTANT)
+    Q_PROPERTY(QString toolContractRegistrySummary READ toolContractRegistrySummary CONSTANT)
+    Q_PROPERTY(int toolContractCount READ toolContractCount CONSTANT)
+    Q_PROPERTY(int toolContractEnabledCount READ toolContractEnabledCount CONSTANT)
+    Q_PROPERTY(int toolContractDisabledCount READ toolContractDisabledCount CONSTANT)
+    Q_PROPERTY(int toolContractRestrictedCount READ toolContractRestrictedCount CONSTANT)
+    Q_PROPERTY(QStringList toolContractSummaries READ toolContractSummaries CONSTANT)
+    Q_PROPERTY(QStringList toolContractPermissionSummaries READ toolContractPermissionSummaries
+                   CONSTANT)
+    Q_PROPERTY(QStringList toolContractSandboxSummaries READ toolContractSandboxSummaries CONSTANT)
+    Q_PROPERTY(QStringList toolContractReadinessSummaries READ toolContractReadinessSummaries
+                   CONSTANT)
+    Q_PROPERTY(QStringList toolContractSafetySummaries READ toolContractSafetySummaries CONSTANT)
     Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
     Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
     Q_PROPERTY(QString localRuntimeSummary READ localRuntimeSummary CONSTANT)
@@ -876,6 +889,17 @@ public:
     QStringList agentCapabilitySummaries() const;
     QStringList agentCapabilityReadinessSummaries() const;
     QStringList agentCapabilitySafetySummaries() const;
+    QString toolContractRegistryStatus() const;
+    QString toolContractRegistrySummary() const;
+    int toolContractCount() const;
+    int toolContractEnabledCount() const;
+    int toolContractDisabledCount() const;
+    int toolContractRestrictedCount() const;
+    QStringList toolContractSummaries() const;
+    QStringList toolContractPermissionSummaries() const;
+    QStringList toolContractSandboxSummaries() const;
+    QStringList toolContractReadinessSummaries() const;
+    QStringList toolContractSafetySummaries() const;
     QString localRuntimeStatus() const;
     QString localRuntimeHealth() const;
     QString localRuntimeSummary() const;

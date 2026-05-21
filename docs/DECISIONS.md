@@ -259,6 +259,28 @@ Out of scope:
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent
 delete disabled until a later explicit destructive phase.
 
+Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
+confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
+path is non-mutating instead of enabling deletion.
+
+Runtime behavior:
+
+- `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult` expose
+  value-only status.
+- `ApplicationController::requestPermanentDeleteConversation()` refuses and does not call
+  `IConversationStore::deleteConversation()`.
+- `SQLiteConversationStore::deleteConversation()` remains soft metadata only for future readiness:
+  deleted conversations are hidden from normal list/load APIs, while stored message rows remain in
+  the database.
+- Archived conversations are visible and loadable, but new sends are blocked until unarchived.
+- Switching conversations invalidates active async request ids so stale completions cannot mutate
+  the newly active transcript.
+
+Out of scope:
+
+- Permanent delete execution, cloud sync, import/export workflow changes, semantic/vector memory,
+  model/voice/tool/plugin changes, broad UI redesign, and runtime authority expansion.
+
 ## 10. Agent Capability Registry Boundary
 
 Decision: Represent future agent capabilities as deterministic value-only registry metadata until
@@ -284,27 +306,36 @@ Out of scope:
 - Runtime permission grants, tools, plugins, filesystem actions, shell/subprocess execution,
   provider/model calls, cloud/API calls, autonomous loops, and approval workflows.
 
-Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
-confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
-path is non-mutating instead of enabling deletion.
+## 10.1 Tool Contracts Are Permission Metadata Only
+
+Decision: Represent future tools through deterministic `ToolContractRegistry` metadata before any
+tool runtime, permission grant, sandbox implementation, approval workflow, filesystem adapter,
+subprocess boundary, plugin host, or export action exists.
+
+Reason: The Agents surface needs visibility into future tool categories and their permission/
+sandbox posture without implying that the desktop app can execute tools or request approval.
 
 Runtime behavior:
 
-- `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult` expose
-  value-only status.
-- `ApplicationController::requestPermanentDeleteConversation()` refuses and does not call
-  `IConversationStore::deleteConversation()`.
-- `SQLiteConversationStore::deleteConversation()` remains soft metadata only for future readiness:
-  deleted conversations are hidden from normal list/load APIs, while stored message rows remain in
-  the database.
-- Archived conversations are visible and loadable, but new sends are blocked until unarchived.
-- Switching conversations invalidates active async request ids so stale completions cannot mutate
-  the newly active transcript.
+- `ToolContractRegistry` lives behind `IAgentTaskRuntime` beside the task queue, planning session,
+  and capability registry metadata.
+- Enabled contracts are local-only, read-only metadata contracts for conversation summary, memory
+  inspection, retrieval preparation, semantic supplement preparation, voice response preparation,
+  and export preparation.
+- Permission labels are summaries only: local-only, approval-required, sandbox-required,
+  read-only, disabled, refused, future filesystem access, future subprocess execution, future
+  plugin runtime, and future export action.
+- Sandbox labels summarize readiness only: not required, required metadata, or denied.
+- Future filesystem, subprocess, plugin, and export action contracts remain disabled or refused.
+  Unsafe scopes are denied and expose refusal metadata.
+- `executionAttempted` remains false for registry and contract safety reports.
+- QML receives only counts, strings, and string lists through the controller/view-model boundary.
 
 Out of scope:
 
-- Permanent delete execution, cloud sync, import/export workflow changes, semantic/vector memory,
-  model/voice/tool/plugin changes, broad UI redesign, and runtime authority expansion.
+- Tool execution, plugin loading, filesystem actions, subprocess execution, export execution,
+  sandbox enforcement, approval UI, provider/model calls, cloud/API calls, autonomous loops, and
+  runtime permission grants.
 
 ## 10. Controlled Semantic Memory Candidates
 

@@ -13,6 +13,8 @@ using sentinel::core::agentTaskLifecycleSummaries;
 using sentinel::core::agentPlanningSessionStatusName;
 using sentinel::core::agentCapabilityRegistryStatusName;
 using sentinel::core::agentCapabilitySummaries;
+using sentinel::core::toolContractRegistryStatusName;
+using sentinel::core::toolContractSummaries;
 using sentinel::core::AgentTaskTrace;
 using sentinel::core::agentTaskTraceSummaries;
 using sentinel::core::AgentTaskType;
@@ -34,6 +36,9 @@ private slots:
     void createsDeterministicCapabilityRegistry();
     void keepsDisabledAndRestrictedCapabilitiesNonExecutable();
     void exposesCapabilityReadinessAndSafetySummaries();
+    void createsDeterministicToolContractRegistry();
+    void exposesToolContractPermissionAndSandboxMetadata();
+    void refusesUnsafeToolContractScopesWithoutExecution();
 };
 
 void AgentTaskRuntimeTest::createsDeterministicMetadataTasks() {
@@ -254,6 +259,73 @@ void AgentTaskRuntimeTest::exposesCapabilityReadinessAndSafetySummaries() {
     QCOMPARE(sentinel::core::agentCapabilitySafetySummaries(registry).size(), 9);
     QVERIFY(registry.readinessSummary.contains(QStringLiteral("local-only metadata")));
     QVERIFY(registry.safetySummary.contains(QStringLiteral("disabled or refused")));
+}
+
+void AgentTaskRuntimeTest::createsDeterministicToolContractRegistry() {
+    StaticAgentTaskRuntime runtime;
+
+    const auto registry = runtime.toolContractRegistry();
+    QCOMPARE(toolContractRegistryStatusName(registry.status),
+             QStringLiteral("Refusing Unsafe Contracts"));
+    QCOMPARE(registry.summary.totalCount, 10);
+    QCOMPARE(registry.summary.enabledCount, 6);
+    QCOMPARE(registry.summary.disabledCount, 3);
+    QCOMPARE(registry.summary.restrictedCount, 4);
+    QCOMPARE(registry.summary.refusedCount, 1);
+    QCOMPARE(registry.summary.executionAttempted, false);
+    QCOMPARE(registry.contracts.at(0).type, sentinel::core::ToolContractType::ConversationSummary);
+    QCOMPARE(registry.contracts.at(6).type,
+             sentinel::core::ToolContractType::FutureFilesystemAccess);
+    QCOMPARE(registry.contracts.at(7).type,
+             sentinel::core::ToolContractType::FutureSubprocessExecution);
+    QCOMPARE(registry.contracts.at(9).type, sentinel::core::ToolContractType::FutureExportAction);
+
+    const auto summaries = toolContractSummaries(registry);
+    QCOMPARE(summaries.size(), 10);
+    QVERIFY(summaries.at(0).startsWith(QStringLiteral("1. Conversation Summary")));
+    QVERIFY(summaries.at(7).contains(QStringLiteral("[Refused/Unsafe Runtime]")));
+}
+
+void AgentTaskRuntimeTest::exposesToolContractPermissionAndSandboxMetadata() {
+    StaticAgentTaskRuntime runtime;
+    const auto registry = runtime.toolContractRegistry();
+
+    QCOMPARE(sentinel::core::toolContractPermissionSummaries(registry).size(), 10);
+    QCOMPARE(sentinel::core::toolContractSandboxSummaries(registry).size(), 10);
+    QCOMPARE(sentinel::core::toolContractReadinessSummaries(registry).size(), 10);
+    QCOMPARE(sentinel::core::toolContractSafetySummaries(registry).size(), 10);
+    QVERIFY(sentinel::core::toolContractPermissionSummaries(registry)
+                .at(6)
+                .contains(QStringLiteral("future filesystem access")));
+    QVERIFY(sentinel::core::toolContractPermissionSummaries(registry)
+                .at(7)
+                .contains(QStringLiteral("future subprocess execution")));
+    QVERIFY(sentinel::core::toolContractSandboxSummaries(registry)
+                .at(7)
+                .contains(QStringLiteral("Denied")));
+    QVERIFY(registry.permissionSummary.contains(QStringLiteral("approval-required")));
+    QVERIFY(registry.sandboxSummary.contains(QStringLiteral("no filesystem")));
+}
+
+void AgentTaskRuntimeTest::refusesUnsafeToolContractScopesWithoutExecution() {
+    StaticAgentTaskRuntime runtime;
+    const auto registry = runtime.toolContractRegistry();
+
+    for (const auto& contract : registry.contracts) {
+        QCOMPARE(contract.policy.executionAllowed, false);
+        QCOMPARE(contract.policy.toolRuntimeAllowed, false);
+        QCOMPARE(contract.policy.filesystemActionsAllowed, false);
+        QCOMPARE(contract.policy.subprocessExecutionAllowed, false);
+        QCOMPARE(contract.policy.pluginRuntimeAllowed, false);
+        QCOMPARE(contract.policy.cloudCallsAllowed, false);
+        QCOMPARE(contract.safetyReport.executionAttempted, false);
+        if (contract.type == sentinel::core::ToolContractType::FutureSubprocessExecution) {
+            QCOMPARE(contract.status, sentinel::core::ToolContractStatus::Refused);
+            QCOMPARE(contract.scope, sentinel::core::ToolContractScope::UnsafeRuntime);
+            QVERIFY(contract.safetyReport.unsafeScopeDenied);
+            QVERIFY(contract.safetyReport.refusalSummary.contains(QStringLiteral("refused")));
+        }
+    }
 }
 
 QTEST_MAIN(AgentTaskRuntimeTest)

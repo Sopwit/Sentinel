@@ -1029,6 +1029,26 @@ void ApplicationControllerTest::exposesAgentTaskRuntimeMetadata() {
     QVERIFY(controller->agentCapabilitySafetySummaries().at(7).contains(QStringLiteral("execution "
                                                                                        "attempted: "
                                                                                        "no")));
+    QCOMPARE(controller->toolContractRegistryStatus(), QStringLiteral("Refusing Unsafe Contracts"));
+    QCOMPARE(controller->toolContractCount(), 10);
+    QCOMPARE(controller->toolContractEnabledCount(), 6);
+    QCOMPARE(controller->toolContractDisabledCount(), 3);
+    QCOMPARE(controller->toolContractRestrictedCount(), 4);
+    QVERIFY(controller->toolContractRegistrySummary().contains(QStringLiteral("execution "
+                                                                              "attempted: no")));
+    QCOMPARE(controller->toolContractSummaries().size(), 10);
+    QVERIFY(controller->toolContractSummaries().at(7).contains(QStringLiteral("Future Subprocess "
+                                                                              "Execution")));
+    QCOMPARE(controller->toolContractPermissionSummaries().size(), 10);
+    QCOMPARE(controller->toolContractSandboxSummaries().size(), 10);
+    QCOMPARE(controller->toolContractReadinessSummaries().size(), 10);
+    QCOMPARE(controller->toolContractSafetySummaries().size(), 10);
+    QVERIFY(controller->toolContractPermissionSummaries().at(6).contains(
+        QStringLiteral("future filesystem access")));
+    QVERIFY(controller->toolContractSandboxSummaries().at(7).contains(QStringLiteral("Denied")));
+    QVERIFY(controller->toolContractSafetySummaries().at(7).contains(QStringLiteral("execution "
+                                                                                    "attempted: "
+                                                                                    "no")));
 }
 
 void ApplicationControllerTest::exposesLocalRuntimeMetadata() {
