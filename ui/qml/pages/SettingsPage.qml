@@ -605,6 +605,24 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Semantic Acceptance"
+                    value: settingsPage.viewModel.semanticAcceptanceStatus
+                           + " / "
+                           + settingsPage.viewModel.semanticAcceptanceReadiness
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Acceptance Bounds"
+                    value: settingsPage.viewModel.semanticAcceptanceBudgetSummary
+                           + " / "
+                           + settingsPage.viewModel.semanticAcceptanceFallbackSummary
+                    Layout.fillWidth: true
+                }
+
                 SentinelButton {
                     text: settingsPage.showAdvancedContextDetails ? "Hide Advanced Details"
                                                                   : "Show Advanced Details"
@@ -718,6 +736,19 @@ ScrollView {
 
                 Repeater {
                     model: settingsPage.viewModel.hybridBridgeChecks
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.semanticAcceptanceChecks
 
                     Label {
                         required property string modelData

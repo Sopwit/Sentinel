@@ -423,6 +423,15 @@ show raw vectors, raw prompt payloads, provider handles, filesystem paths, debug
 prompt authority controls, ranking override controls, filesystem indexing controls, cloud/API
 setup, tools/plugins, autonomous actions, or a broad redesign.
 
+Phase 17.19 through Phase 17.21 add compact semantic acceptance visibility. Memory and Settings
+may show acceptance readiness/status, approved supplement counts, deterministic-vs-semantic
+participation, fallback state, arbitration summaries, bounded supplement budget, and
+local-only/non-authoritative checks. Accepted semantic candidates must be presented as bounded
+supplements, not prompt authority. The UI must not show raw vectors, raw prompt payloads, provider
+handles, filesystem paths, debug dumps, semantic prompt authority controls, ranking override
+controls, filesystem indexing controls, cloud/API setup, tools/plugins, autonomous actions, or a
+broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

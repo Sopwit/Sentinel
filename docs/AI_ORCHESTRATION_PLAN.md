@@ -357,6 +357,22 @@ providers, execute tools/plugins, or expose raw vectors, prompt payloads, provid
 filesystem paths, or debug dumps. Future semantic-authority activation requires a separate phase
 with indexing policy, privacy/safety gates, fallback tests, mutation tests, prompt-authority
 review, and QML non-exposure guarantees.
+Phase 17.19 through Phase 17.21 add deterministic semantic acceptance metadata:
+`SemanticAcceptancePolicy`, `SemanticAcceptanceStatus`, `SemanticAcceptanceResult`,
+`SemanticAcceptedCandidate`, `SemanticAcceptanceBudget`, `SemanticAcceptanceReadiness`,
+`SemanticAcceptanceArbitration`, `SemanticAcceptanceFallback`, and
+`SemanticAcceptanceSourceSummary`. Acceptance reads deterministic retrieval planning, hybrid
+bridge metadata, and semantic search metadata, then approves only bounded semantic supplements that
+pass deterministic gates. Deterministic retrieval remains primary and authoritative; semantic
+supplements are explicitly marked semantic, local-only, non-authoritative, count bounded,
+character-budgeted, and ordered after deterministic candidates. Disabled, empty, stale, busy,
+timed-out, refused, errored, or capacity-exhausted semantic sources resolve to deterministic-only
+fallback summaries. Acceptance does not mutate `RetrievalPlanningResult`, create or mutate
+`PromptContextBlock` values, replace deterministic candidates, alter source priority, expose raw
+vectors/prompt payloads, index filesystems, call cloud/API/vector providers, execute tools/plugins,
+or grant semantic prompt authority. Future semantic-authority activation still requires a separate
+phase with indexing policy, privacy/safety gates, prompt-authority review, fallback tests,
+mutation tests, and QML non-exposure guarantees.
 
 ## Future Components
 

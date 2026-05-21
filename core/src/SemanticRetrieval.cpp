@@ -369,6 +369,27 @@ QString hybridRetrievalBridgeStatusName(HybridRetrievalBridgeStatus status) {
     return QStringLiteral("Disabled");
 }
 
+QString semanticAcceptanceStatusName(SemanticAcceptanceStatus status) {
+    switch (status) {
+    case SemanticAcceptanceStatus::Disabled:
+        return QStringLiteral("Disabled");
+    case SemanticAcceptanceStatus::DeterministicOnly:
+        return QStringLiteral("Deterministic Only");
+    case SemanticAcceptanceStatus::Ready:
+        return QStringLiteral("Ready");
+    case SemanticAcceptanceStatus::TimedOut:
+        return QStringLiteral("Timed Out");
+    case SemanticAcceptanceStatus::Stale:
+        return QStringLiteral("Stale");
+    case SemanticAcceptanceStatus::Busy:
+        return QStringLiteral("Busy");
+    case SemanticAcceptanceStatus::Refused:
+        return QStringLiteral("Refused");
+    }
+
+    return QStringLiteral("Disabled");
+}
+
 SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblySourceKind source) {
     switch (source) {
     case ContextAssemblySourceKind::Conversation:
@@ -1236,6 +1257,215 @@ hybridRetrievalBridge(const RetrievalPlanningResult& deterministicPlanning,
             : QStringLiteral("Hybrid bridge deterministic fallback: semantic source did not add "
                              "advisory candidates.");
     result.fallbackSummary = result.arbitration.fallbackSummary;
+    return result;
+}
+
+SemanticAcceptanceResult semanticAcceptance(const RetrievalPlanningResult& deterministicPlanning,
+                                            const HybridRetrievalBridgeResult& bridgeResult,
+                                            const SemanticSearchResult& semanticSearchResult,
+                                            const SemanticAcceptancePolicy& policy) {
+    SemanticAcceptanceResult result;
+    result.policy = policy;
+    result.budget.maxAcceptedSupplements = std::max(0, policy.maxAcceptedSupplements);
+    result.budget.maxSupplementCharacters = std::max(0, policy.maxSupplementCharacters);
+    result.budget.maxTotalRetrievalSupplements = std::max(0, policy.maxTotalRetrievalSupplements);
+    result.budget.deterministicCandidateCount = deterministicPlanning.selectedCandidates.size();
+    result.budget.semanticCandidateCount = semanticSearchResult.candidates.size();
+    result.budget.bridgeSemanticFillCount = bridgeResult.budget.semanticFillCount;
+    result.budget.timeoutMs = std::max(0, policy.timeoutMs);
+    result.budget.elapsedMs =
+        std::max(semanticSearchResult.budget.elapsedMs, bridgeResult.budget.elapsedMs);
+    result.budget.remainingSupplementSlots = std::max(
+        0, result.budget.maxTotalRetrievalSupplements - result.budget.deterministicCandidateCount);
+    result.sourceSummary.deterministicCandidateCount = result.budget.deterministicCandidateCount;
+    result.sourceSummary.semanticCandidateCount = result.budget.semanticCandidateCount;
+    result.sourceSummary.bridgeCandidateCount = bridgeResult.candidates.size();
+    result.sourceSummary.bridgeSemanticFillCount = result.budget.bridgeSemanticFillCount;
+    result.readiness.checks = {
+        QStringLiteral("Deterministic retrieval authoritative: %1")
+            .arg(policy.deterministicRetrievalAuthoritative ? QStringLiteral("yes")
+                                                            : QStringLiteral("no")),
+        QStringLiteral("Semantic supplements only: %1")
+            .arg(policy.semanticSupplementsOnly ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("Deterministic conflicts win: %1")
+            .arg(policy.deterministicWinsConflicts ? QStringLiteral("yes") : QStringLiteral("no")),
+        QStringLiteral("RetrievalPlanningResult mutation: no"),
+        QStringLiteral("PromptContextBlocks mutation: no"),
+        QStringLiteral("Deterministic candidate replacement: no"),
+        QStringLiteral("Retrieval source priority mutation: no"),
+        QStringLiteral("Prompt content injection: disabled"),
+        QStringLiteral("Raw vectors exposed: no"),
+        QStringLiteral("Provider handles exposed: no"),
+    };
+    result.checks = result.readiness.checks;
+    result.arbitration.checks = result.checks;
+
+    const auto deterministicFallback = [&](SemanticAcceptanceStatus status, const QString& reason,
+                                           const QString& fallbackSummary) {
+        result.status = status;
+        result.readiness.status = status;
+        result.failureReason = reason;
+        result.summary = reason;
+        result.fallback.state = semanticAcceptanceStatusName(status);
+        result.fallback.summary = fallbackSummary;
+        result.fallback.summaries = {
+            QStringLiteral("%1 deterministic retrieval candidates remain primary.")
+                .arg(result.budget.deterministicCandidateCount),
+            fallbackSummary,
+        };
+        result.sourceSummary.summary =
+            QStringLiteral("%1 deterministic candidates available; %2 semantic candidates "
+                           "received; 0 accepted supplements.")
+                .arg(result.budget.deterministicCandidateCount)
+                .arg(result.budget.semanticCandidateCount);
+    };
+
+    if (!policy.enabled) {
+        deterministicFallback(
+            SemanticAcceptanceStatus::Disabled, QStringLiteral("Semantic acceptance is disabled."),
+            QStringLiteral("Semantic acceptance disabled; deterministic-only fallback active."));
+        return result;
+    }
+    if (!policy.deterministicRetrievalAuthoritative || !policy.semanticSupplementsOnly ||
+        !policy.deterministicWinsConflicts || policy.promptMutationEnabled ||
+        policy.retrievalPlanningMutationEnabled || policy.promptContextMutationEnabled ||
+        policy.retrievalSourcePriorityMutationEnabled) {
+        deterministicFallback(
+            SemanticAcceptanceStatus::Refused,
+            QStringLiteral("Semantic acceptance refused by deterministic authority gates."),
+            QStringLiteral("Semantic acceptance refused; deterministic retrieval remains "
+                           "authoritative."));
+        return result;
+    }
+    if (semanticSearchResult.status == SemanticSearchStatus::Busy ||
+        bridgeResult.status == HybridRetrievalBridgeStatus::Busy) {
+        deterministicFallback(
+            SemanticAcceptanceStatus::Busy,
+            QStringLiteral("Semantic acceptance skipped because semantic retrieval is busy."),
+            QStringLiteral("Busy semantic source ignored; deterministic-only fallback active."));
+        return result;
+    }
+    if (semanticSearchResult.status == SemanticSearchStatus::Stale ||
+        bridgeResult.status == HybridRetrievalBridgeStatus::Stale) {
+        deterministicFallback(
+            SemanticAcceptanceStatus::Stale,
+            QStringLiteral("Semantic acceptance ignored a stale semantic source."),
+            QStringLiteral("Stale semantic source ignored; deterministic-only fallback active."));
+        return result;
+    }
+    if (semanticSearchResult.status == SemanticSearchStatus::TimedOut ||
+        bridgeResult.status == HybridRetrievalBridgeStatus::TimedOut ||
+        result.budget.elapsedMs > result.budget.timeoutMs) {
+        deterministicFallback(
+            SemanticAcceptanceStatus::TimedOut,
+            QStringLiteral("Semantic acceptance timed out before approving supplements."),
+            QStringLiteral("Semantic acceptance timed out; deterministic-only fallback active."));
+        return result;
+    }
+    if (semanticSearchResult.status == SemanticSearchStatus::Refused ||
+        bridgeResult.status == HybridRetrievalBridgeStatus::Refused) {
+        deterministicFallback(
+            SemanticAcceptanceStatus::Refused,
+            QStringLiteral("Semantic acceptance refused an errored semantic source."),
+            QStringLiteral("Semantic error fallback active; deterministic retrieval remains "
+                           "authoritative."));
+        return result;
+    }
+    if (semanticSearchResult.status != SemanticSearchStatus::Ready ||
+        bridgeResult.status != HybridRetrievalBridgeStatus::Ready ||
+        result.budget.remainingSupplementSlots == 0) {
+        deterministicFallback(
+            SemanticAcceptanceStatus::DeterministicOnly,
+            QStringLiteral(
+                "Semantic acceptance found no approved supplement capacity; deterministic "
+                "retrieval remains primary."),
+            QStringLiteral("Semantic source disabled, empty, or capacity exhausted; "
+                           "deterministic-only fallback active."));
+        result.readiness.ready = true;
+        return result;
+    }
+
+    result.readiness.ready = true;
+    result.status = SemanticAcceptanceStatus::Ready;
+    result.readiness.status = result.status;
+    result.readiness.summary =
+        QStringLiteral("Semantic acceptance ready for bounded supplemental candidates.");
+
+    const int supplementLimit =
+        std::min(result.budget.maxAcceptedSupplements, result.budget.remainingSupplementSlots);
+    int supplementRank = 1;
+    for (const auto& candidate : bridgeResult.candidates) {
+        if (!candidate.semanticAdvisory || result.acceptedCandidates.size() >= supplementLimit) {
+            continue;
+        }
+        const int estimatedCharacters = candidate.summary.size();
+        if (result.budget.acceptedSupplementCharacters + estimatedCharacters >
+            result.budget.maxSupplementCharacters) {
+            break;
+        }
+        result.acceptedCandidates.append(SemanticAcceptedCandidate{
+            candidate.id,
+            QStringLiteral("Semantic Supplemental"),
+            candidate.title,
+            candidate.summary,
+            supplementRank,
+            result.budget.deterministicCandidateCount + supplementRank,
+            estimatedCharacters,
+            true,
+            true,
+            QStringLiteral(
+                "Approved through deterministic acceptance gates as a bounded supplement."),
+        });
+        ++supplementRank;
+        result.budget.acceptedSupplementCharacters += estimatedCharacters;
+    }
+
+    result.budget.acceptedSupplementCount = result.acceptedCandidates.size();
+    result.sourceSummary.acceptedSupplementCount = result.budget.acceptedSupplementCount;
+    result.accepted = result.budget.acceptedSupplementCount > 0;
+    if (!result.accepted) {
+        result.status = SemanticAcceptanceStatus::DeterministicOnly;
+        result.readiness.status = result.status;
+        result.summary =
+            QStringLiteral("Semantic acceptance deterministic fallback: supplement budget left no "
+                           "accepted semantic candidates.");
+        result.fallback.summary =
+            QStringLiteral("Semantic supplement budget exhausted; deterministic retrieval remains "
+                           "authoritative.");
+    } else {
+        result.summary =
+            QStringLiteral("Semantic acceptance approved %1 bounded supplemental candidates while "
+                           "preserving deterministic retrieval authority.")
+                .arg(result.budget.acceptedSupplementCount);
+        result.fallback.deterministicOnly = false;
+        result.fallback.state = QStringLiteral("Bounded Semantic Supplements");
+        result.fallback.summary =
+            QStringLiteral("Deterministic retrieval remains primary; semantic supplements are "
+                           "bounded and non-authoritative.");
+    }
+    result.budget.summary =
+        QStringLiteral("%1 of %2 semantic supplements accepted, using %3 of %4 supplement "
+                       "characters after %5 deterministic candidates.")
+            .arg(result.budget.acceptedSupplementCount)
+            .arg(result.budget.maxAcceptedSupplements)
+            .arg(result.budget.acceptedSupplementCharacters)
+            .arg(result.budget.maxSupplementCharacters)
+            .arg(result.budget.deterministicCandidateCount);
+    result.sourceSummary.summary =
+        QStringLiteral("%1 deterministic candidates primary; %2 semantic candidates available; "
+                       "%3 accepted bounded supplements; local-only and non-authoritative.")
+            .arg(result.budget.deterministicCandidateCount)
+            .arg(result.budget.semanticCandidateCount)
+            .arg(result.budget.acceptedSupplementCount);
+    result.arbitration.summary =
+        QStringLiteral("Deterministic acceptance arbitration approved %1 semantic supplements "
+                       "only after deterministic retrieval occupied primary order.")
+            .arg(result.budget.acceptedSupplementCount);
+    result.fallback.summaries = {
+        QStringLiteral("Deterministic retrieval wins all conflicts."),
+        QStringLiteral("Accepted semantic supplements cannot replace deterministic candidates."),
+        result.fallback.summary,
+    };
     return result;
 }
 

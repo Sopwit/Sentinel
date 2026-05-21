@@ -1368,6 +1368,50 @@ QStringList DesktopShellViewModel::hybridBridgeChecks() const {
     return controller_.hybridBridgeChecks();
 }
 
+QString DesktopShellViewModel::semanticAcceptanceStatus() const {
+    return controller_.semanticAcceptanceStatus();
+}
+
+QString DesktopShellViewModel::semanticAcceptanceReadiness() const {
+    return controller_.semanticAcceptanceReadiness();
+}
+
+QString DesktopShellViewModel::semanticAcceptanceSummary() const {
+    return controller_.semanticAcceptanceSummary();
+}
+
+QString DesktopShellViewModel::semanticAcceptanceBudgetSummary() const {
+    return controller_.semanticAcceptanceBudgetSummary();
+}
+
+QString DesktopShellViewModel::semanticAcceptanceSourceSummary() const {
+    return controller_.semanticAcceptanceSourceSummary();
+}
+
+QString DesktopShellViewModel::semanticAcceptanceArbitrationSummary() const {
+    return controller_.semanticAcceptanceArbitrationSummary();
+}
+
+QString DesktopShellViewModel::semanticAcceptanceFallbackSummary() const {
+    return controller_.semanticAcceptanceFallbackSummary();
+}
+
+int DesktopShellViewModel::semanticAcceptanceAcceptedCount() const {
+    return controller_.semanticAcceptanceAcceptedCount();
+}
+
+int DesktopShellViewModel::semanticAcceptanceBudgetCharacters() const {
+    return controller_.semanticAcceptanceBudgetCharacters();
+}
+
+QStringList DesktopShellViewModel::semanticAcceptanceCandidateSummaries() const {
+    return controller_.semanticAcceptanceCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::semanticAcceptanceChecks() const {
+    return controller_.semanticAcceptanceChecks();
+}
+
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {
     return controller_.localInferenceStreamingEnabled();
 }

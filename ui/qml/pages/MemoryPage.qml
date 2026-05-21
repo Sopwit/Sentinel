@@ -470,6 +470,16 @@ ScrollView {
                                + " metadata candidates"
                         Layout.fillWidth: true
                     }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Semantic Acceptance"
+                        value: memoryPage.viewModel.semanticAcceptanceStatus + " - "
+                               + memoryPage.viewModel.semanticAcceptanceFallbackSummary + " / "
+                               + memoryPage.viewModel.semanticAcceptanceAcceptedCount
+                               + " approved supplements"
+                        Layout.fillWidth: true
+                    }
                 }
             }
 

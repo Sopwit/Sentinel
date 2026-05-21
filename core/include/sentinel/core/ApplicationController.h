@@ -1069,6 +1069,19 @@ public:
     QStringList semanticSearchChecks() const;
     HybridRetrievalBridgePolicy hybridRetrievalBridgePolicy() const;
     HybridRetrievalBridgeResult hybridRetrievalBridgeResult() const;
+    SemanticAcceptancePolicy semanticAcceptancePolicy() const;
+    SemanticAcceptanceResult semanticAcceptanceResult() const;
+    QString semanticAcceptanceStatus() const;
+    QString semanticAcceptanceReadiness() const;
+    QString semanticAcceptanceSummary() const;
+    QString semanticAcceptanceBudgetSummary() const;
+    QString semanticAcceptanceSourceSummary() const;
+    QString semanticAcceptanceArbitrationSummary() const;
+    QString semanticAcceptanceFallbackSummary() const;
+    int semanticAcceptanceAcceptedCount() const;
+    int semanticAcceptanceBudgetCharacters() const;
+    QStringList semanticAcceptanceCandidateSummaries() const;
+    QStringList semanticAcceptanceChecks() const;
     QString hybridBridgeStatus() const;
     QString hybridBridgeReadiness() const;
     QString hybridBridgeSummary() const;
@@ -1411,6 +1424,7 @@ private:
     VectorPersistencePolicy vectorPersistencePolicy_;
     SemanticSearchPolicy semanticSearchPolicy_;
     HybridRetrievalBridgePolicy hybridRetrievalBridgePolicy_;
+    SemanticAcceptancePolicy semanticAcceptancePolicy_;
     SemanticProviderPolicy semanticProviderPolicy_;
     SemanticProviderMode selectedSemanticProviderMode_ = SemanticProviderMode::Disabled;
     SemanticCandidatePolicy semanticCandidatePolicy_;

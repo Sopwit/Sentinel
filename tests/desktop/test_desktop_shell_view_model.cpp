@@ -1941,6 +1941,20 @@ void DesktopShellViewModelTest::exposesVectorPersistenceMetadata() {
     QCOMPARE(metaObject->indexOfProperty("hybridBridgeRawVectors"), -1);
     QCOMPARE(metaObject->indexOfProperty("hybridBridgePromptPayload"), -1);
     QCOMPARE(metaObject->indexOfProperty("hybridBridgeFilesystemPath"), -1);
+
+    QCOMPARE(fixture.viewModel.semanticAcceptanceStatus(), QStringLiteral("Deterministic Only"));
+    QCOMPARE(fixture.viewModel.semanticAcceptanceAcceptedCount(), 0);
+    QVERIFY(fixture.viewModel.semanticAcceptanceBudgetSummary().contains(
+        QStringLiteral("semantic supplements")));
+    QVERIFY(fixture.viewModel.semanticAcceptanceFallbackSummary().contains(
+        QStringLiteral("deterministic")));
+    QVERIFY(fixture.viewModel.semanticAcceptanceChecks().contains(
+        QStringLiteral("Deterministic candidate replacement: no")));
+    QVERIFY(metaObject->indexOfProperty("semanticAcceptanceStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("semanticAcceptanceAcceptedCount") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("semanticAcceptanceRawVectors"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticAcceptancePromptPayload"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticAcceptanceFilesystemPath"), -1);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

@@ -32,6 +32,9 @@ using sentinel::core::RetrievalPlanningResult;
 using sentinel::core::RetrievalPlanningStatus;
 using sentinel::core::RetrievalSourcePriority;
 using sentinel::core::selectSemanticProvider;
+using sentinel::core::semanticAcceptance;
+using sentinel::core::SemanticAcceptancePolicy;
+using sentinel::core::SemanticAcceptanceStatus;
 using sentinel::core::semanticActivationReadiness;
 using sentinel::core::SemanticArbitrationPolicy;
 using sentinel::core::SemanticArbitrationStatus;
@@ -83,6 +86,9 @@ private slots:
     void hybridBridgePreservesDeterministicAuthorityAndBounds();
     void hybridBridgeFallsBackForDisabledStaleBusyAndTimeoutSemanticSources();
     void hybridBridgeRefusesPromptOrPlanningMutationAuthority();
+    void semanticAcceptanceApprovesBoundedSupplementsOnly();
+    void semanticAcceptanceFallsBackForDisabledErrorTimeoutStaleAndBusy();
+    void semanticAcceptanceRefusesAuthorityMutationAndPreservesInputs();
     void defaultSemanticProviderSelectionIsDisabled();
     void fakeProviderSelectionIsMetadataOnly();
     void localOllamaProviderIsPlannedButInactive();
@@ -730,6 +736,93 @@ void SemanticRetrievalTest::hybridBridgeRefusesPromptOrPlanningMutationAuthority
     refused = hybridRetrievalBridge(
         planning, semanticSearchResultForBridge(SemanticSearchStatus::Ready), policy);
     QCOMPARE(refused.status, HybridRetrievalBridgeStatus::Refused);
+}
+
+void SemanticRetrievalTest::semanticAcceptanceApprovesBoundedSupplementsOnly() {
+    SemanticAcceptancePolicy policy;
+    policy.maxAcceptedSupplements = 1;
+    policy.maxSupplementCharacters = 128;
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+    const auto result = semanticAcceptance(planning, bridge, search, policy);
+
+    QCOMPARE(result.status, SemanticAcceptanceStatus::Ready);
+    QCOMPARE(result.acceptedCandidates.size(), 1);
+    QCOMPARE(result.budget.acceptedSupplementCount, 1);
+    QCOMPARE(result.acceptedCandidates.at(0).semantic, true);
+    QCOMPARE(result.acceptedCandidates.at(0).supplementalOnly, true);
+    QCOMPARE(result.acceptedCandidates.at(0).deterministicOffsetRank,
+             planning.selectedCandidates.size() + 1);
+    QVERIFY(result.summary.contains(QStringLiteral("supplemental")));
+    QVERIFY(result.arbitration.summary.contains(QStringLiteral("Deterministic acceptance")));
+    QVERIFY(result.checks.contains(QStringLiteral("Deterministic candidate replacement: no")));
+    QCOMPARE(planning.selectedCandidateCount, 2);
+    QCOMPARE(planning.selectedCandidates.at(0).title, QStringLiteral("Recent Conversation"));
+}
+
+void SemanticRetrievalTest::semanticAcceptanceFallsBackForDisabledErrorTimeoutStaleAndBusy() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto readySearch = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto readyBridge =
+        hybridRetrievalBridge(planning, readySearch, HybridRetrievalBridgePolicy{});
+
+    SemanticAcceptancePolicy disabledPolicy;
+    disabledPolicy.enabled = false;
+    auto result = semanticAcceptance(planning, readyBridge, readySearch, disabledPolicy);
+    QCOMPARE(result.status, SemanticAcceptanceStatus::Disabled);
+    QCOMPARE(result.acceptedCandidates.size(), 0);
+    QVERIFY(result.fallback.summary.contains(QStringLiteral("disabled")));
+
+    auto staleSearch = semanticSearchResultForBridge(SemanticSearchStatus::Stale);
+    auto staleBridge = hybridRetrievalBridge(planning, staleSearch, HybridRetrievalBridgePolicy{});
+    result = semanticAcceptance(planning, staleBridge, staleSearch, SemanticAcceptancePolicy{});
+    QCOMPARE(result.status, SemanticAcceptanceStatus::Stale);
+
+    auto busySearch = semanticSearchResultForBridge(SemanticSearchStatus::Busy);
+    auto busyBridge = hybridRetrievalBridge(planning, busySearch, HybridRetrievalBridgePolicy{});
+    result = semanticAcceptance(planning, busyBridge, busySearch, SemanticAcceptancePolicy{});
+    QCOMPARE(result.status, SemanticAcceptanceStatus::Busy);
+
+    auto timeoutSearch = semanticSearchResultForBridge(SemanticSearchStatus::TimedOut);
+    auto timeoutBridge =
+        hybridRetrievalBridge(planning, timeoutSearch, HybridRetrievalBridgePolicy{});
+    result = semanticAcceptance(planning, timeoutBridge, timeoutSearch, SemanticAcceptancePolicy{});
+    QCOMPARE(result.status, SemanticAcceptanceStatus::TimedOut);
+    QVERIFY(result.fallback.summary.contains(QStringLiteral("timed out")));
+
+    auto refusedSearch = semanticSearchResultForBridge(SemanticSearchStatus::Refused);
+    auto refusedBridge =
+        hybridRetrievalBridge(planning, refusedSearch, HybridRetrievalBridgePolicy{});
+    result = semanticAcceptance(planning, refusedBridge, refusedSearch, SemanticAcceptancePolicy{});
+    QCOMPARE(result.status, SemanticAcceptanceStatus::Refused);
+    QVERIFY(result.fallback.summary.contains(QStringLiteral("Semantic error")));
+}
+
+void SemanticRetrievalTest::semanticAcceptanceRefusesAuthorityMutationAndPreservesInputs() {
+    const auto planning = deterministicPlanningForBridge();
+    const auto search = semanticSearchResultForBridge(SemanticSearchStatus::Ready);
+    const auto bridge = hybridRetrievalBridge(planning, search, HybridRetrievalBridgePolicy{});
+
+    SemanticAcceptancePolicy policy;
+    policy.promptMutationEnabled = true;
+    auto result = semanticAcceptance(planning, bridge, search, policy);
+    QCOMPARE(result.status, SemanticAcceptanceStatus::Refused);
+
+    policy = SemanticAcceptancePolicy{};
+    policy.retrievalPlanningMutationEnabled = true;
+    result = semanticAcceptance(planning, bridge, search, policy);
+    QCOMPARE(result.status, SemanticAcceptanceStatus::Refused);
+
+    policy = SemanticAcceptancePolicy{};
+    policy.deterministicRetrievalAuthoritative = false;
+    result = semanticAcceptance(planning, bridge, search, policy);
+    QCOMPARE(result.status, SemanticAcceptanceStatus::Refused);
+
+    QCOMPARE(planning.selectedCandidateCount, 2);
+    QCOMPARE(planning.selectedCandidates.at(0).title, QStringLiteral("Recent Conversation"));
+    QCOMPARE(search.candidates.size(), 2);
+    QCOMPARE(bridge.candidates.at(0).deterministic, true);
 }
 
 void SemanticRetrievalTest::defaultSemanticProviderSelectionIsDisabled() {

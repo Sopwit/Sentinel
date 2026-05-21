@@ -2798,6 +2798,69 @@ HybridRetrievalBridgeResult ApplicationController::hybridRetrievalBridgeResult()
                                                  hybridRetrievalBridgePolicy_);
 }
 
+SemanticAcceptancePolicy ApplicationController::semanticAcceptancePolicy() const {
+    return semanticAcceptancePolicy_;
+}
+
+SemanticAcceptanceResult ApplicationController::semanticAcceptanceResult() const {
+    const auto searchResult = semanticSearchResult();
+    const auto bridgeResult = sentinel::core::hybridRetrievalBridge(
+        retrievalPlanningResult(), searchResult, hybridRetrievalBridgePolicy_);
+    return sentinel::core::semanticAcceptance(retrievalPlanningResult(), bridgeResult, searchResult,
+                                              semanticAcceptancePolicy_);
+}
+
+QString ApplicationController::semanticAcceptanceStatus() const {
+    return semanticAcceptanceStatusName(semanticAcceptanceResult().status);
+}
+
+QString ApplicationController::semanticAcceptanceReadiness() const {
+    return semanticAcceptanceResult().readiness.summary;
+}
+
+QString ApplicationController::semanticAcceptanceSummary() const {
+    return semanticAcceptanceResult().summary;
+}
+
+QString ApplicationController::semanticAcceptanceBudgetSummary() const {
+    return semanticAcceptanceResult().budget.summary;
+}
+
+QString ApplicationController::semanticAcceptanceSourceSummary() const {
+    return semanticAcceptanceResult().sourceSummary.summary;
+}
+
+QString ApplicationController::semanticAcceptanceArbitrationSummary() const {
+    return semanticAcceptanceResult().arbitration.summary;
+}
+
+QString ApplicationController::semanticAcceptanceFallbackSummary() const {
+    return semanticAcceptanceResult().fallback.summary;
+}
+
+int ApplicationController::semanticAcceptanceAcceptedCount() const {
+    return semanticAcceptanceResult().acceptedCandidates.size();
+}
+
+int ApplicationController::semanticAcceptanceBudgetCharacters() const {
+    return semanticAcceptanceResult().budget.maxSupplementCharacters;
+}
+
+QStringList ApplicationController::semanticAcceptanceCandidateSummaries() const {
+    QStringList summaries;
+    for (const auto& candidate : semanticAcceptanceResult().acceptedCandidates) {
+        summaries.append(QStringLiteral("%1. semantic supplement / %2 / %3 chars")
+                             .arg(candidate.supplementRank)
+                             .arg(candidate.title)
+                             .arg(candidate.estimatedCharacters));
+    }
+    return summaries;
+}
+
+QStringList ApplicationController::semanticAcceptanceChecks() const {
+    return semanticAcceptanceResult().checks;
+}
+
 QString ApplicationController::hybridBridgeStatus() const {
     return hybridRetrievalBridgeStatusName(hybridRetrievalBridgeResult().status);
 }
