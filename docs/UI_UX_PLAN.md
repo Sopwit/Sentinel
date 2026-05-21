@@ -440,6 +440,29 @@ raw prompt blocks, raw vectors, raw scores, provider handles, filesystem paths, 
 semantic prompt authority controls, ranking override controls, filesystem indexing controls,
 cloud/API setup, tools/plugins, autonomous actions, or a broad redesign.
 
+Phase 17.25 through Phase 17.27 add compact semantic prompt authority policy visibility. Memory
+and Settings may show authority status, decision summary, readiness summary, safety summary,
+disabled/default-denied state, deterministic fallback summary, audit summary, and
+non-authoritative state. This remains status-only: no activation controls, raw prompt display, raw
+supplement block display, raw vectors/scores, filesystem paths, provider handles, debug dumps,
+semantic ranking override controls, filesystem indexing controls, cloud/API setup, tools/plugins,
+autonomous actions, or broad redesign.
+
+Phase 17.28 through Phase 17.30 add compact controlled semantic prompt inclusion visibility.
+Settings may expose the explicit semantic supplemental prompt inclusion toggle alongside local
+context injection, plus inclusion status, included supplement count, budget summary, fallback/audit
+summary, and deterministic-authority-preserved state. Memory may show the same compact status and
+included count. The UI must not display raw prompt text, raw supplement content, vectors, scores,
+provider handles, filesystem paths, debug payloads, ranking override controls, filesystem indexing
+controls, cloud/API setup, tools/plugins, autonomous actions, or broad redesign.
+
+Phase 17.31 through Phase 17.33 checkpoint the semantic UI surface. Memory and Settings may keep
+the compact semantic provider/search/bridge/acceptance/assembly/authority/inclusion status rows,
+but the UI must continue to present them as bounded local status metadata. Semantic inclusion stays
+disabled by default and explicit opt-in. The UI must not add raw prompt viewers, semantic payload
+viewers, vector/score displays, filesystem indexing controls, cloud/API setup, provider download
+controls, tools/plugins, autonomous actions, ranking override controls, or broad redesign.
+
 Settings may show current storage mode (`Single Transcript`), future mode (`Multi Conversation`),
 migration readiness (`Not Started`), migration status summary (`Not Started / Planned`), and a
 schema status summary. This remains planning-only metadata: no schema migration, no

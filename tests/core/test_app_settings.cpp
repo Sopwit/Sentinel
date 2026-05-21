@@ -29,6 +29,7 @@ private slots:
     void persistsLocalChatInferenceOptIn();
     void persistsLocalInferenceStreamingOptIn();
     void persistsPromptContextInjectionOptIn();
+    void persistsSemanticPromptInclusionOptIn();
     void persistsVoiceConfigurationPaths();
     void persistsPiperFileOutputExecutionOptIn();
     void persistsLocalAiRuntimeSettingsThroughJsonStore();
@@ -47,6 +48,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(!settings->localChatInferenceEnabled());
     QVERIFY(!settings->localInferenceStreamingEnabled());
     QVERIFY(!settings->promptContextInjectionEnabled());
+    QVERIFY(!settings->semanticPromptInclusionEnabled());
     QVERIFY(settings->piperBinaryPath().isEmpty());
     QVERIFY(settings->piperModelPath().isEmpty());
     QVERIFY(settings->whisperBinaryPath().isEmpty());
@@ -228,6 +230,25 @@ void AppSettingsTest::persistsPromptContextInjectionOptIn() {
     QCOMPARE(spy.count(), 2);
 }
 
+void AppSettingsTest::persistsSemanticPromptInclusionOptIn() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::semanticPromptInclusionEnabledChanged);
+
+    QVERIFY(!settings->semanticPromptInclusionEnabled());
+
+    settings->setSemanticPromptInclusionEnabled(true);
+
+    QVERIFY(settings->semanticPromptInclusionEnabled());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setSemanticPromptInclusionEnabled(true);
+    QCOMPARE(spy.count(), 1);
+
+    settings->setSemanticPromptInclusionEnabled(false);
+    QVERIFY(!settings->semanticPromptInclusionEnabled());
+    QCOMPARE(spy.count(), 2);
+}
+
 void AppSettingsTest::persistsVoiceConfigurationPaths() {
     const auto settings = makeSettings();
     QSignalSpy piperBinarySpy(settings.get(), &AppSettings::piperBinaryPathChanged);
@@ -280,6 +301,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setLocalChatInferenceEnabled(true);
         settings.setLocalInferenceStreamingEnabled(true);
         settings.setPromptContextInjectionEnabled(true);
+        settings.setSemanticPromptInclusionEnabled(true);
         settings.setPiperBinaryPath(QStringLiteral("/opt/piper/piper"));
         settings.setPiperModelPath(QStringLiteral("/opt/piper/model.onnx"));
         settings.setWhisperBinaryPath(QStringLiteral("/opt/whisper/whisper"));
@@ -293,6 +315,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QVERIFY(reloaded.localChatInferenceEnabled());
     QVERIFY(reloaded.localInferenceStreamingEnabled());
     QVERIFY(reloaded.promptContextInjectionEnabled());
+    QVERIFY(reloaded.semanticPromptInclusionEnabled());
     QCOMPARE(reloaded.piperBinaryPath(), QStringLiteral("/opt/piper/piper"));
     QCOMPARE(reloaded.piperModelPath(), QStringLiteral("/opt/piper/model.onnx"));
     QCOMPARE(reloaded.whisperBinaryPath(), QStringLiteral("/opt/whisper/whisper"));

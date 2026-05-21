@@ -514,6 +514,41 @@ class DesktopShellViewModel final : public QObject {
                    semanticSupplementAssemblyBudgetCharacters NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList semanticSupplementAssemblyChecks READ semanticSupplementAssemblyChecks
                    NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptAuthorityStatus READ semanticPromptAuthorityStatus NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptAuthorityDecisionSummary READ
+                   semanticPromptAuthorityDecisionSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptAuthoritySafetySummary READ
+                   semanticPromptAuthoritySafetySummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptAuthorityReadinessSummary READ
+                   semanticPromptAuthorityReadinessSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptAuthorityFallbackSummary READ
+                   semanticPromptAuthorityFallbackSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptAuthorityAuditSummary READ semanticPromptAuthorityAuditSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int semanticPromptAuthorityWouldIncludeBlockCount READ
+                   semanticPromptAuthorityWouldIncludeBlockCount NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticPromptAuthorityChecks READ semanticPromptAuthorityChecks NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(bool semanticPromptInclusionEnabled READ semanticPromptInclusionEnabled WRITE
+                   setSemanticPromptInclusionEnabled NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptInclusionStatus READ semanticPromptInclusionStatus NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptInclusionSummary READ semanticPromptInclusionSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int semanticPromptInclusionIncludedCount READ semanticPromptInclusionIncludedCount
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptInclusionBudgetSummary READ
+                   semanticPromptInclusionBudgetSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptInclusionFallbackSummary READ
+                   semanticPromptInclusionFallbackSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString semanticPromptInclusionAuditSummary READ semanticPromptInclusionAuditSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(
+        bool semanticPromptInclusionDeterministicAuthorityPreserved READ
+            semanticPromptInclusionDeterministicAuthorityPreserved NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList semanticPromptInclusionChecks READ semanticPromptInclusionChecks NOTIFY
+                   contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -1079,6 +1114,24 @@ public:
     int semanticSupplementAssemblyBlockCount() const;
     int semanticSupplementAssemblyBudgetCharacters() const;
     QStringList semanticSupplementAssemblyChecks() const;
+    QString semanticPromptAuthorityStatus() const;
+    QString semanticPromptAuthorityDecisionSummary() const;
+    QString semanticPromptAuthoritySafetySummary() const;
+    QString semanticPromptAuthorityReadinessSummary() const;
+    QString semanticPromptAuthorityFallbackSummary() const;
+    QString semanticPromptAuthorityAuditSummary() const;
+    int semanticPromptAuthorityWouldIncludeBlockCount() const;
+    QStringList semanticPromptAuthorityChecks() const;
+    bool semanticPromptInclusionEnabled() const;
+    void setSemanticPromptInclusionEnabled(bool enabled);
+    QString semanticPromptInclusionStatus() const;
+    QString semanticPromptInclusionSummary() const;
+    int semanticPromptInclusionIncludedCount() const;
+    QString semanticPromptInclusionBudgetSummary() const;
+    QString semanticPromptInclusionFallbackSummary() const;
+    QString semanticPromptInclusionAuditSummary() const;
+    bool semanticPromptInclusionDeterministicAuthorityPreserved() const;
+    QStringList semanticPromptInclusionChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
     bool localInferenceBusy() const;

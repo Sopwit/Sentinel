@@ -259,6 +259,28 @@ Out of scope:
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent
 delete disabled until a later explicit destructive phase.
 
+Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
+confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
+path is non-mutating instead of enabling deletion.
+
+Runtime behavior:
+
+- `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult` expose
+  value-only status.
+- `ApplicationController::requestPermanentDeleteConversation()` refuses and does not call
+  `IConversationStore::deleteConversation()`.
+- `SQLiteConversationStore::deleteConversation()` remains soft metadata only for future readiness:
+  deleted conversations are hidden from normal list/load APIs, while stored message rows remain in
+  the database.
+- Archived conversations are visible and loadable, but new sends are blocked until unarchived.
+- Switching conversations invalidates active async request ids so stale completions cannot mutate
+  the newly active transcript.
+
+Out of scope:
+
+- Permanent delete execution, cloud sync, import/export workflow changes, semantic/vector memory,
+  model/voice/tool/plugin changes, broad UI redesign, and runtime authority expansion.
+
 ## 10. Controlled Semantic Memory Candidates
 
 Decision: Semantic memory begins as reviewable candidate metadata, separate from key-value memory,
@@ -411,27 +433,36 @@ Out of scope:
   ranking mutation, prompt assembly mutation, automatic memory writes, filesystem indexing,
   cloud/API keys, provider downloads, autonomous actions, tools/plugins, and background jobs.
 
-Reason: Multi-conversation browsing is active, but destructive deletion needs a separate phase gate,
-confirmation UX, mutation tests, and migration/retention decisions. Current QA should prove the
-path is non-mutating instead of enabling deletion.
+## 10.5 Semantic Prompt Authority Default-Deny Policy
+
+Decision: Semantic supplements may not enter live prompts unless a future phase explicitly
+activates a separate prompt authority policy. The current authority policy is disabled and denies
+by default.
+
+Reason: Accepted semantic supplements and supplement assembly are readiness metadata. A separate
+authority gate is required before semantic metadata can ever influence prompt construction.
 
 Runtime behavior:
 
-- `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and `ConversationDeleteResult` expose
-  value-only status.
-- `ApplicationController::requestPermanentDeleteConversation()` refuses and does not call
-  `IConversationStore::deleteConversation()`.
-- `SQLiteConversationStore::deleteConversation()` remains soft metadata only for future readiness:
-  deleted conversations are hidden from normal list/load APIs, while stored message rows remain in
-  the database.
-- Archived conversations are visible and loadable, but new sends are blocked until unarchived.
-- Switching conversations invalidates active async request ids so stale completions cannot mutate
-  the newly active transcript.
+- `SemanticPromptAuthorityPolicy`, `SemanticPromptAuthorityStatus`,
+  `SemanticPromptAuthorityResult`, `SemanticPromptAuthorityReadiness`,
+  `SemanticPromptAuthorityDecision`, `SemanticPromptAuthoritySafetyReport`,
+  `SemanticPromptAuthorityFallback`, and `SemanticPromptAuthorityAuditSummary` describe the gate.
+- The evaluator reads `SemanticSupplementAssemblyResult` and emits Disabled/Denied by default.
+- A test-only "would include metadata" decision requires local-only semantic search,
+  deterministic acceptance, bounded supplement assembly, explicit prompt-injection enablement,
+  explicit authority-policy allow, and a passing safety report.
+- Disabled, stale, busy, refused, timed-out, unsafe, or unbounded states fall back to
+  deterministic-only prompt behavior and produce audit reasons.
+- Live prompt mutation remains blocked, and deterministic retrieval remains authoritative.
+- QML receives only summaries, counts, statuses, decisions, checks, fallback, safety, and audit
+  text. It does not receive raw prompts, raw supplement blocks, vectors, scores, filesystem paths,
+  provider handles, or debug dumps.
 
 Out of scope:
 
-- Permanent delete execution, cloud sync, import/export workflow changes, semantic/vector memory,
-  model/voice/tool/plugin changes, broad UI redesign, and runtime authority expansion.
+- Live semantic prompt injection, semantic authority escalation, cloud/API/vector providers,
+  filesystem indexing, autonomous actions, tools/plugins, and prompt payload display.
 
 ## 10. AI Context Layer
 
@@ -2284,3 +2315,60 @@ Boundary rules:
 - Future semantic prompt activation requires a separate explicit phase with prompt-authority
   policy, privacy/safety gates, deterministic fallback tests, live prompt inclusion tests,
   mutation tests, and QML non-exposure tests.
+
+## 92. Semantic Prompt Inclusion Is Controlled And Supplemental
+
+Decision: Semantic supplements may enter local prompt assembly only through an explicit
+disabled-by-default inclusion gate, after deterministic context, and only when semantic authority
+and safety reports approve the bounded local supplement bundle.
+
+Reason: Phase 17 needs a live inclusion path without weakening deterministic retrieval authority
+or exposing raw semantic internals to QML.
+
+Boundary rules:
+
+- `SemanticPromptInclusionPolicy`, `SemanticPromptInclusionStatus`,
+  `SemanticPromptInclusionResult`, `SemanticPromptInclusionBudget`,
+  `SemanticPromptInclusionSafetyReport`, `SemanticPromptInclusionFallback`, and
+  `SemanticPromptInclusionAuditSummary` are value records for the inclusion gate.
+- Inclusion is disabled by default and requires prompt context injection enablement, semantic
+  prompt authority approval, bounded/safe supplement assembly, local-only mode, and a passing
+  inclusion safety report.
+- Included semantic content is appended after deterministic context blocks as a clearly delimited
+  supplemental/non-authoritative block. Deterministic context ordering is preserved.
+- Semantic supplements cannot replace deterministic context, reorder deterministic context,
+  override committed memory, override conversation windows, override deterministic summaries, or
+  override runtime metadata.
+- Disabled, denied, unsafe, empty, stale, busy, timed-out, and refused semantic states return the
+  exact deterministic-only prompt and audit the fallback.
+- QML may expose enabled/status, included count, budget, fallback, audit, authority-preserved
+  state, and checks only. Raw prompt text, raw supplement blocks, vectors, scores, provider
+  handles, filesystem paths, and debug dumps remain hidden.
+
+## 93. Phase 17 Semantic Checkpoint Preserves Deterministic Authority
+
+Decision: Close Phase 17 with semantic retrieval and prompt inclusion bounded by deterministic
+authority, default-disabled inclusion, local-only policy, and QML non-exposure guarantees.
+
+Reason: Phase 17 introduced a controlled semantic prompt inclusion path. Before Phase 18, the
+project needs an explicit checkpoint proving that inclusion remains subordinate to deterministic
+retrieval and does not expand provider, filesystem, tool, plugin, or autonomous runtime authority.
+
+Boundary rules:
+
+- Deterministic retrieval planning remains the final prompt-context authority.
+- Semantic inclusion remains disabled by default in both settings persistence and inclusion
+  policy. Enabling it is explicit opt-in and still requires prompt context injection and semantic
+  authority approval.
+- Semantic supplements are supplemental-only, local-only, bounded by count and character budgets,
+  clearly delimited, and appended only after deterministic context.
+- Semantic supplements cannot replace deterministic context, reorder deterministic context,
+  override committed memory, override conversation windows, override deterministic summaries, or
+  override runtime metadata.
+- Disabled, denied, unsafe, empty, stale, busy, timed-out, and refused semantic states return
+  deterministic-only prompts.
+- QML may expose status, readiness, counts, budget, fallback, audit, authority-preserved state, and
+  checks only. Raw prompts, supplement content, vectors, scores, provider handles, filesystem
+  paths, and debug dumps remain hidden.
+- The checkpoint does not authorize filesystem indexing, cloud/API/vector provider activation,
+  provider downloads, tools/plugins, autonomous actions, or runtime authority expansion.

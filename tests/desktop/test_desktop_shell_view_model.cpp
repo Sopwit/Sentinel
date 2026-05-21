@@ -89,6 +89,7 @@ private slots:
     void exposesIsolatedEmbeddingRuntimeMetadata();
     void exposesVectorPersistenceMetadata();
     void exposesSemanticSupplementAssemblyMetadata();
+    void exposesSemanticPromptAuthorityMetadata();
     void exposesStartupLoadedMessages();
     void forwardsChatActions();
     void forwardsDeterministicAgentRequest();
@@ -1982,6 +1983,60 @@ void DesktopShellViewModelTest::exposesSemanticSupplementAssemblyMetadata() {
     QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyProviderHandle"), -1);
     QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyFilesystemPath"), -1);
     QCOMPARE(metaObject->indexOfProperty("semanticSupplementAssemblyDebugDump"), -1);
+}
+
+void DesktopShellViewModelTest::exposesSemanticPromptAuthorityMetadata() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    QCOMPARE(fixture.viewModel.semanticPromptAuthorityStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.semanticPromptAuthorityWouldIncludeBlockCount(), 0);
+    QVERIFY(fixture.viewModel.semanticPromptAuthorityDecisionSummary().contains(
+        QStringLiteral("Denied")));
+    QVERIFY(fixture.viewModel.semanticPromptAuthoritySafetySummary().contains(
+        QStringLiteral("deterministic-only fallback")));
+    QVERIFY(fixture.viewModel.semanticPromptAuthorityReadinessSummary().contains(
+        QStringLiteral("Disabled")));
+    QVERIFY(fixture.viewModel.semanticPromptAuthorityFallbackSummary().contains(
+        QStringLiteral("deterministic prompt assembly remains unchanged")));
+    QVERIFY(fixture.viewModel.semanticPromptAuthorityAuditSummary().contains(
+        QStringLiteral("disabled")));
+    QVERIFY(fixture.viewModel.semanticPromptAuthorityChecks().contains(
+        QStringLiteral("Semantic authority escalation: blocked")));
+    QVERIFY(fixture.viewModel.semanticPromptAuthorityChecks().contains(
+        QStringLiteral("Raw prompt payloads exposed: no")));
+    QCOMPARE(fixture.viewModel.semanticPromptInclusionEnabled(), false);
+    QCOMPARE(fixture.viewModel.semanticPromptInclusionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.semanticPromptInclusionIncludedCount(), 0);
+    QVERIFY(
+        fixture.viewModel.semanticPromptInclusionSummary().contains(QStringLiteral("disabled")));
+    QVERIFY(fixture.viewModel.semanticPromptInclusionBudgetSummary().contains(
+        QStringLiteral("0 semantic supplement characters")));
+    QVERIFY(fixture.viewModel.semanticPromptInclusionFallbackSummary().contains(
+        QStringLiteral("deterministic-only")));
+    QVERIFY(fixture.viewModel.semanticPromptInclusionAuditSummary().contains(
+        QStringLiteral("disabled")));
+    QVERIFY(fixture.viewModel.semanticPromptInclusionDeterministicAuthorityPreserved());
+    QVERIFY(fixture.viewModel.semanticPromptInclusionChecks().contains(
+        QStringLiteral("Raw prompt payloads exposed: no")));
+    QVERIFY(metaObject->indexOfProperty("semanticPromptAuthorityStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("semanticPromptAuthorityDecisionSummary") >= 0);
+    QVERIFY(metaObject->indexOfProperty("semanticPromptInclusionStatus") >= 0);
+    QVERIFY(metaObject->indexOfProperty("semanticPromptInclusionBudgetSummary") >= 0);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptAuthorityRawPrompt"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptAuthoritySupplementBlock"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptAuthorityRawVectors"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptAuthorityRawScores"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptAuthorityProviderHandle"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptAuthorityFilesystemPath"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptAuthorityDebugDump"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptInclusionRawPrompt"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptInclusionSupplementBlock"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptInclusionRawVectors"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptInclusionRawScores"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptInclusionProviderHandle"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptInclusionFilesystemPath"), -1);
+    QCOMPARE(metaObject->indexOfProperty("semanticPromptInclusionDebugDump"), -1);
 }
 
 void DesktopShellViewModelTest::exposesStartupLoadedMessages() {

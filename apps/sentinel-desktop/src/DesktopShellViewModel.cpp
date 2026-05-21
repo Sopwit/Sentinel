@@ -92,6 +92,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::promptContextInjectionEnabledChanged, this, [this]() {
         controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
     });
+    connect(&settings_, &core::AppSettings::semanticPromptInclusionEnabledChanged, this, [this]() {
+        controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
+    });
     connect(&settings_, &core::AppSettings::piperBinaryPathChanged, this,
             [this]() { controller_.setPiperBinaryPath(settings_.piperBinaryPath()); });
     connect(&settings_, &core::AppSettings::piperModelPathChanged, this,
@@ -107,6 +110,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
     controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
+    controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
     controller_.setPiperBinaryPath(settings_.piperBinaryPath());
     controller_.setPiperModelPath(settings_.piperModelPath());
     controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
@@ -1442,6 +1446,82 @@ int DesktopShellViewModel::semanticSupplementAssemblyBudgetCharacters() const {
 
 QStringList DesktopShellViewModel::semanticSupplementAssemblyChecks() const {
     return controller_.semanticSupplementAssemblyChecks();
+}
+
+QString DesktopShellViewModel::semanticPromptAuthorityStatus() const {
+    return controller_.semanticPromptAuthorityStatus();
+}
+
+QString DesktopShellViewModel::semanticPromptAuthorityDecisionSummary() const {
+    return controller_.semanticPromptAuthorityDecisionSummary();
+}
+
+QString DesktopShellViewModel::semanticPromptAuthoritySafetySummary() const {
+    return controller_.semanticPromptAuthoritySafetySummary();
+}
+
+QString DesktopShellViewModel::semanticPromptAuthorityReadinessSummary() const {
+    return controller_.semanticPromptAuthorityReadinessSummary();
+}
+
+QString DesktopShellViewModel::semanticPromptAuthorityFallbackSummary() const {
+    return controller_.semanticPromptAuthorityFallbackSummary();
+}
+
+QString DesktopShellViewModel::semanticPromptAuthorityAuditSummary() const {
+    return controller_.semanticPromptAuthorityAuditSummary();
+}
+
+int DesktopShellViewModel::semanticPromptAuthorityWouldIncludeBlockCount() const {
+    return controller_.semanticPromptAuthorityWouldIncludeBlockCount();
+}
+
+QStringList DesktopShellViewModel::semanticPromptAuthorityChecks() const {
+    return controller_.semanticPromptAuthorityChecks();
+}
+
+bool DesktopShellViewModel::semanticPromptInclusionEnabled() const {
+    return controller_.semanticPromptInclusionEnabled();
+}
+
+void DesktopShellViewModel::setSemanticPromptInclusionEnabled(bool enabled) {
+    settings_.setSemanticPromptInclusionEnabled(enabled);
+    if (controller_.semanticPromptInclusionEnabled() !=
+        settings_.semanticPromptInclusionEnabled()) {
+        controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
+    }
+}
+
+QString DesktopShellViewModel::semanticPromptInclusionStatus() const {
+    return controller_.semanticPromptInclusionStatus();
+}
+
+QString DesktopShellViewModel::semanticPromptInclusionSummary() const {
+    return controller_.semanticPromptInclusionSummary();
+}
+
+int DesktopShellViewModel::semanticPromptInclusionIncludedCount() const {
+    return controller_.semanticPromptInclusionIncludedCount();
+}
+
+QString DesktopShellViewModel::semanticPromptInclusionBudgetSummary() const {
+    return controller_.semanticPromptInclusionBudgetSummary();
+}
+
+QString DesktopShellViewModel::semanticPromptInclusionFallbackSummary() const {
+    return controller_.semanticPromptInclusionFallbackSummary();
+}
+
+QString DesktopShellViewModel::semanticPromptInclusionAuditSummary() const {
+    return controller_.semanticPromptInclusionAuditSummary();
+}
+
+bool DesktopShellViewModel::semanticPromptInclusionDeterministicAuthorityPreserved() const {
+    return controller_.semanticPromptInclusionDeterministicAuthorityPreserved();
+}
+
+QStringList DesktopShellViewModel::semanticPromptInclusionChecks() const {
+    return controller_.semanticPromptInclusionChecks();
 }
 
 bool DesktopShellViewModel::localInferenceStreamingEnabled() const {

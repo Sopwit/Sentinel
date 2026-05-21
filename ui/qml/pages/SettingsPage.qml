@@ -257,6 +257,13 @@ ScrollView {
                     onToggled: settingsPage.viewModel.promptContextInjectionEnabled = checked
                 }
 
+                CheckBox {
+                    Layout.fillWidth: true
+                    text: "Semantic supplemental prompt inclusion"
+                    checked: settingsPage.viewModel.semanticPromptInclusionEnabled
+                    onToggled: settingsPage.viewModel.semanticPromptInclusionEnabled = checked
+                }
+
                 Flow {
                     Layout.fillWidth: true
                     spacing: SentinelTheme.spaceSm
@@ -318,6 +325,17 @@ ScrollView {
                            + " / "
                            + settingsPage.viewModel.promptContextInjectedBlockCount
                            + " blocks"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Semantic Inclusion"
+                    value: (settingsPage.viewModel.semanticPromptInclusionEnabled ? "On / " : "Off / ")
+                           + settingsPage.viewModel.semanticPromptInclusionStatus
+                           + " / "
+                           + settingsPage.viewModel.semanticPromptInclusionIncludedCount
+                           + " supplements"
                     Layout.fillWidth: true
                 }
 
@@ -641,6 +659,42 @@ ScrollView {
                     Layout.fillWidth: true
                 }
 
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Prompt Authority"
+                    value: settingsPage.viewModel.semanticPromptAuthorityStatus
+                           + " / "
+                           + settingsPage.viewModel.semanticPromptAuthorityReadinessSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Authority Audit"
+                    value: settingsPage.viewModel.semanticPromptAuthorityDecisionSummary
+                           + " / "
+                           + settingsPage.viewModel.semanticPromptAuthorityFallbackSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Prompt Inclusion"
+                    value: settingsPage.viewModel.semanticPromptInclusionStatus
+                           + " / "
+                           + settingsPage.viewModel.semanticPromptInclusionBudgetSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: settingsPage.compact
+                    label: "Inclusion Audit"
+                    value: settingsPage.viewModel.semanticPromptInclusionFallbackSummary
+                           + " / deterministic authority "
+                           + (settingsPage.viewModel.semanticPromptInclusionDeterministicAuthorityPreserved ? "preserved" : "blocked")
+                    Layout.fillWidth: true
+                }
+
                 SentinelButton {
                     text: settingsPage.showAdvancedContextDetails ? "Hide Advanced Details"
                                                                   : "Show Advanced Details"
@@ -780,6 +834,32 @@ ScrollView {
 
                 Repeater {
                     model: settingsPage.viewModel.semanticSupplementAssemblyChecks
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.semanticPromptAuthorityChecks
+
+                    Label {
+                        required property string modelData
+                        visible: settingsPage.showAdvancedContextDetails
+                        text: modelData
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Repeater {
+                    model: settingsPage.viewModel.semanticPromptInclusionChecks
 
                     Label {
                         required property string modelData

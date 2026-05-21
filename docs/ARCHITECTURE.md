@@ -487,6 +487,66 @@ Phase 17.22 through Phase 17.24 add semantic supplement prompt assembly readines
   summary, and checks. It does not receive raw prompt blocks, vectors, scores, provider handles,
   filesystem paths, or debug dumps.
 
+Phase 17.25 through Phase 17.27 add the semantic prompt authority policy foundation:
+
+- `SemanticPromptAuthorityPolicy`, `SemanticPromptAuthorityStatus`,
+  `SemanticPromptAuthorityResult`, `SemanticPromptAuthorityReadiness`,
+  `SemanticPromptAuthorityDecision`, `SemanticPromptAuthoritySafetyReport`,
+  `SemanticPromptAuthorityFallback`, and `SemanticPromptAuthorityAuditSummary` describe the
+  authority gate for future semantic prompt inclusion.
+- The policy is disabled by default. The default result is Disabled/Denied and reports a
+  deterministic-only fallback.
+- Authority evaluation reads only `SemanticSupplementAssemblyResult`; it does not read raw prompt
+  payloads, raw supplement blocks, vector data, provider handles, filesystem paths, or debug dumps.
+- A test-only "would include metadata" decision requires local-only semantic search, deterministic
+  acceptance, a bounded supplement bundle, an explicitly enabled prompt-injection setting, an
+  explicit authority-policy allow flag, and a passing safety report.
+- Live prompt mutation remains blocked. Even an allowed-readiness decision is supplemental,
+  clearly delimited metadata only; deterministic retrieval remains authoritative and default
+  prompt assembly is unchanged.
+- Memory and Settings expose only compact status, decision, readiness, fallback, safety, audit,
+  count, and check summaries.
+
+Phase 17.28 through Phase 17.30 add controlled semantic prompt inclusion:
+
+- `SemanticPromptInclusionPolicy`, `SemanticPromptInclusionStatus`,
+  `SemanticPromptInclusionResult`, `SemanticPromptInclusionBudget`,
+  `SemanticPromptInclusionSafetyReport`, `SemanticPromptInclusionFallback`, and
+  `SemanticPromptInclusionAuditSummary` describe the live inclusion gate.
+- Inclusion is disabled by default. It can activate only when prompt context injection is enabled,
+  semantic prompt authority approves, semantic supplement assembly is bounded and safe, local-only
+  mode is active, and the inclusion safety report passes.
+- The inclusion step runs after deterministic prompt context injection. It appends a separate
+  clearly delimited semantic block after deterministic context blocks and before `User prompt:`.
+- The block is labeled supplemental/non-authoritative, count-bounded, character-budgeted,
+  deterministically ordered, and deterministically truncated.
+- Deterministic retrieval remains final authority. Semantic supplements cannot replace or reorder
+  deterministic context, override committed memory, override deterministic summaries, override the
+  conversation window, or override runtime metadata.
+- Disabled, denied, unsafe, empty, stale, busy, timed-out, and refused semantic states return the
+  exact deterministic-only prompt.
+- Controller/view-model/QML exposure is limited to enabled/status, included count, budget,
+  fallback, audit, authority-preserved state, and checks. Raw prompt text, raw supplement blocks,
+  vectors, scores, provider handles, filesystem paths, and debug payloads remain hidden.
+
+Phase 17.31 through Phase 17.33 checkpoint the Phase 17 semantic retrieval and prompt inclusion
+architecture:
+
+- `docs/PHASE_17_SEMANTIC_CHECKPOINT.md` records the audit.
+- Deterministic retrieval planning remains the final authority for prompt context selection.
+- Semantic inclusion remains disabled by default and explicit opt-in through AppSettings and the
+  inclusion policy.
+- Semantic supplements can enter prompts only after deterministic context, only as a clearly
+  delimited supplemental/non-authoritative block, and only when local-only, authority, assembly,
+  budget, and safety gates pass.
+- Disabled, denied, unsafe, empty, stale, busy, timed-out, and refused semantic states return
+  deterministic-only prompts.
+- QML remains limited to safe status, count, summary, fallback, audit, and check metadata. Raw
+  prompts, supplement payloads, vectors, scores, provider handles, filesystem paths, and debug
+  dumps are not exposed.
+- No filesystem indexing, cloud/API/vector provider activation, provider download, tool/plugin,
+  autonomous action, or runtime authority expansion is introduced by the checkpoint.
+
 ## Chat History Storage Contract
 
 `IChatHistoryStore` is the persistence boundary for ordered chat messages. It is separate from `IMemoryStore` and must not be used for key-value memory entries.
