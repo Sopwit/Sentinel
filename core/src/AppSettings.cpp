@@ -157,6 +157,22 @@ void AppSettings::setSemanticPromptInclusionEnabled(bool enabled) {
     emit semanticPromptInclusionEnabledChanged();
 }
 
+bool AppSettings::developerModeEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(developerModeEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setDeveloperModeEnabled(bool enabled) {
+    if (enabled == developerModeEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(developerModeEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit developerModeEnabledChanged();
+}
+
 QString AppSettings::piperBinaryPath() const {
     return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
                   : QString();

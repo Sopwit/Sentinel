@@ -224,6 +224,7 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QVERIFY(fixture.viewModel.availableModes().contains(QStringLiteral("Tactical Mode")));
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Dark"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
+    QVERIFY(!fixture.viewModel.developerModeEnabled());
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(fixture.viewModel.availablePages(),
              QStringList({QStringLiteral("Memory"), QStringLiteral("Dashboard"),
@@ -1348,6 +1349,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("modelManagementActionAvailability"), QByteArrayLiteral("QString")},
         {QStringLiteral("modelRecommendationSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("modelRequirementSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("developerModeEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("voiceRuntimeMode"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("voiceReadinessStatus"), QByteArrayLiteral("QString")},
@@ -1520,6 +1522,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
     };
 
     const QSet<QString> writableProperties{
+        QStringLiteral("developerModeEnabled"),
         QStringLiteral("piperFileOutputExecutionEnabled"),
         QStringLiteral("promptContextInjectionEnabled"),
     };
@@ -2477,6 +2480,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QSignalSpy inferenceSpy(&fixture.viewModel, &DesktopShellViewModel::localInferenceChanged);
     QSignalSpy contextInjectionSpy(&fixture.viewModel,
                                    &DesktopShellViewModel::promptContextInjectionChanged);
+    QSignalSpy developerModeSpy(&fixture.viewModel, &DesktopShellViewModel::developerModeChanged);
 
     fixture.viewModel.setThemeName(QStringLiteral("Sentinel Light"));
     fixture.viewModel.setConfigurationProfile(QStringLiteral("Phase 2 Shell"));
@@ -2484,6 +2488,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     fixture.viewModel.setLocalChatInferenceEnabled(true);
     fixture.viewModel.setLocalInferenceStreamingEnabled(true);
     fixture.viewModel.setPromptContextInjectionEnabled(true);
+    fixture.viewModel.setDeveloperModeEnabled(true);
 
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
@@ -2495,6 +2500,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QVERIFY(fixture.settings.localInferenceStreamingEnabled());
     QVERIFY(fixture.viewModel.promptContextInjectionEnabled());
     QVERIFY(fixture.settings.promptContextInjectionEnabled());
+    QVERIFY(fixture.viewModel.developerModeEnabled());
+    QVERIFY(fixture.settings.developerModeEnabled());
     QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Empty"));
     QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Enabled"));
     QCOMPARE(themeSpy.count(), 1);
@@ -2503,6 +2510,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(chatRoutingSpy.count(), 2);
     QCOMPARE(inferenceSpy.count(), 1);
     QCOMPARE(contextInjectionSpy.count(), 1);
+    QCOMPARE(developerModeSpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {

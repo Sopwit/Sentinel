@@ -7,6 +7,7 @@ Item {
     property color secondaryAccent: SentinelTheme.accentTertiary
     property bool active: false
     property real glowScale: 1.0
+    property bool reducedMotion: false
 
     implicitWidth: 420
     implicitHeight: 420
@@ -41,7 +42,7 @@ Item {
 
     SequentialAnimation {
         loops: Animation.Infinite
-        running: glow.visible
+        running: glow.visible && !glow.reducedMotion
 
         NumberAnimation {
             target: outerGlow

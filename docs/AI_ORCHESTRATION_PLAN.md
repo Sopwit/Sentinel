@@ -106,7 +106,16 @@ completion/refusal/fallback as metadata only. Missing Whisper readiness blocks t
 missing local chat/model readiness blocks inference, and missing Piper readiness blocks synthesis.
 The session does not capture microphones, play audio, execute Whisper or Piper, launch
 subprocesses, auto-send chat from voice, inject transcripts, start background workers, or run
-autonomous loops. Phase 15.7 stabilizes
+autonomous loops. Phase 18.28 through Phase 18.30 add controlled audio-file session metadata for
+future offline STT without file loading, waveform decoding, transcription, playback, filesystem
+scanning, subprocess execution, cloud/API calls, automatic ingestion, or autonomous loops. Phase
+18.31 through Phase 18.33 checkpoint the completed Phase 18 agent/tool/voice foundation and
+confirm `executionAttempted` remains false across those paths. Phase 19.0 through Phase 19.3
+synchronize the UI with that runtime posture: Home becomes the primary local Ollama chat surface,
+Settings gates advanced metadata behind Developer Mode, Agents presents metadata-only runtime
+sections, modes alter presentation density only, and no cloud/API provider, tools/plugins, voice
+execution, subprocess, filesystem, semantic-authority, or autonomous authority is added. Phase
+15.7 stabilizes
 controlled local Ollama reliability before additional voice/STT work: health, discovery,
 generation, and streaming requests carry timeout metadata; failures are categorized into
 not-running, endpoint-unreachable, missing/invalid model, timeout, malformed response, interrupted
@@ -876,6 +885,17 @@ execution, or arbitrary export paths:
   empty/oversized/sandbox-required states fall back without side effects. It performs no file
   loading, waveform decoding, transcription, playback, microphone capture, filesystem scanning,
   subprocess execution, automatic ingestion, cloud/API call, or autonomous loop.
+- Phase 18.31 through Phase 18.33 checkpoint the completed agent/tool/voice foundation in
+  `docs/PHASE_18_AGENT_VOICE_CHECKPOINT.md`. The audit confirms agent runtime, task queue,
+  planning/arbitration, capability registry, tool contracts, voice runtime readiness,
+  Whisper/Piper boundaries, voice pipeline orchestration, audio-file sessions, and QML exposure
+  remain metadata-only. `executionAttempted` remains false across these paths, and no microphone,
+  playback, subprocess, filesystem scanning, cloud/API, tools/plugins, autonomous loop, real STT,
+  or real TTS execution is authorized.
+- Phase 19.0 through Phase 19.3 is a UI synchronization pass only. Developer Mode reveals
+  advanced semantic, retrieval, arbitration, agent/tool, voice-pipeline, and raw readiness
+  metadata without changing permission or safety policy. Local Ollama loopback remains the only
+  current inference endpoint; external API providers and API keys remain future opt-in work.
 - `docs/PHASE_13_CHECKPOINT.md` records the Phase 13 Voice/Piper review, confirms the TTS path as
   `text -> Piper provider -> gated file-output metadata`, and marks Phase 14 ready only for
   explicit planning or configuration-readiness work unless a later phase separately authorizes

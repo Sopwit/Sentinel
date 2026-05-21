@@ -1,482 +1,480 @@
 import QtQuick
+import QtQuick.Controls.Basic
 import QtQuick.Layouts
 import Sentinel.Desktop
 
-ShellPanel {
+ScrollView {
     id: agentsPage
     required property var viewModel
-    readonly property bool compact: width < 760
+    readonly property bool compact: width < 820
+    readonly property bool developerMode: viewModel.developerModeEnabled
+    readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    readonly property int panelPadding: SentinelTheme.spaceLg
 
-    ColumnLayout {
-        anchors.fill: parent
-        anchors.margins: SentinelTheme.pageMargin(agentsPage.width)
-        spacing: SentinelTheme.contentSpacing(agentsPage.width)
+    clip: true
+    ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+    contentWidth: availableWidth
 
-        SectionTitle {
-            title: "Agent Metadata"
-            subtitle: "Read-only registry and activity metadata in a dedicated workspace."
-        }
+    function sectionHeight(content) {
+        return content.implicitHeight + panelPadding * 2
+    }
 
-        GridLayout {
-            Layout.fillWidth: true
-            columns: agentsPage.compact ? 1 : 2
-            columnSpacing: SentinelTheme.spaceSm
-            rowSpacing: SentinelTheme.spaceSm
+    Item {
+        width: agentsPage.availableWidth
+        implicitHeight: agentsColumn.implicitHeight
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Registered Agents"
-                value: agentsPage.viewModel.registeredAgentCount.toString()
+        Column {
+            id: agentsColumn
+            width: parent.width
+            spacing: SentinelTheme.spaceLg
+
+            SectionTitle {
+                width: parent.width
+                title: "Agents"
+                subtitle: "Metadata-only agent runtime. No execution, approvals, tools, plugins, shell, or autonomous controls are active."
             }
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Agent Activity"
-                value: agentsPage.viewModel.agentActivityCount.toString()
-            }
+            ShellPanel {
+                width: parent.width
+                implicitHeight: agentsPage.sectionHeight(registryContent)
+                border.color: SentinelTheme.withAlpha(agentsPage.modeAccent, 0.14)
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Current Agent"
-                value: agentsPage.viewModel.currentAgentSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
+                ColumnLayout {
+                    id: registryContent
+                    x: agentsPage.panelPadding
+                    y: agentsPage.panelPadding
+                    width: parent.width - agentsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceMd
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Task Runtime"
-                value: agentsPage.viewModel.agentTaskRuntimeStatus
-            }
+                    SectionTitle {
+                        title: "Agent Registry"
+                        subtitle: "Registered agent metadata only."
+                        Layout.fillWidth: true
+                    }
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Queued Tasks"
-                value: agentsPage.viewModel.agentTaskQueueCount.toString()
-            }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Planned / Active"
-                value: agentsPage.viewModel.agentTaskQueuePlannedCount.toString()
-                       + " / "
-                       + agentsPage.viewModel.agentTaskQueueActiveCount.toString()
-            }
+                        StatusChip {
+                            label: "Registered"
+                            value: agentsPage.viewModel.registeredAgentCount.toString()
+                            accent: agentsPage.modeAccent
+                            selected: true
+                        }
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Blocked"
-                value: agentsPage.viewModel.agentTaskQueueBlockedCount.toString()
-            }
+                        StatusChip {
+                            label: "Activity"
+                            value: agentsPage.viewModel.agentActivityCount.toString()
+                            accent: SentinelTheme.accentSecondary
+                            muted: agentsPage.viewModel.agentActivityCount === 0
+                        }
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Completed / Refused"
-                value: agentsPage.viewModel.agentTaskQueueCompletedCount.toString()
-                       + " / "
-                       + agentsPage.viewModel.agentTaskQueueRefusedCount.toString()
-            }
+                        StatusChip {
+                            label: "Authority"
+                            value: "metadata only"
+                            accent: SentinelTheme.textMuted
+                            muted: true
+                        }
+                    }
 
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Latest Task"
-                value: agentsPage.viewModel.latestAgentTaskSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Lifecycle"
-                value: agentsPage.viewModel.latestAgentTaskLifecycleSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Runtime Boundary"
-                value: agentsPage.viewModel.agentTaskRuntimeSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Planning Session"
-                value: agentsPage.viewModel.agentPlanningSessionStatus
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Plans / Refused"
-                value: agentsPage.viewModel.agentPlanningCandidateCount.toString()
-                       + " / "
-                       + agentsPage.viewModel.agentPlanningRefusedCount.toString()
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Planning Summary"
-                value: agentsPage.viewModel.agentPlanningSessionSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Planning Fallback"
-                value: agentsPage.viewModel.agentPlanningFallbackSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Capability Registry"
-                value: agentsPage.viewModel.agentCapabilityRegistryStatus
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Capabilities"
-                value: agentsPage.viewModel.agentCapabilityEnabledCount.toString()
-                       + " enabled / "
-                       + agentsPage.viewModel.agentCapabilityDisabledCount.toString()
-                       + " disabled / "
-                       + agentsPage.viewModel.agentCapabilityRestrictedCount.toString()
-                       + " restricted"
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Registry Summary"
-                value: agentsPage.viewModel.agentCapabilityRegistrySummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Tool Contracts"
-                value: agentsPage.viewModel.toolContractRegistryStatus
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Contracts"
-                value: agentsPage.viewModel.toolContractEnabledCount.toString()
-                       + " enabled / "
-                       + agentsPage.viewModel.toolContractDisabledCount.toString()
-                       + " disabled / "
-                       + agentsPage.viewModel.toolContractRestrictedCount.toString()
-                       + " restricted"
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Contract Summary"
-                value: agentsPage.viewModel.toolContractRegistrySummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Voice Runtime"
-                value: agentsPage.viewModel.voiceRuntimeHealth
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Voice Config"
-                value: agentsPage.viewModel.voiceRuntimeConfiguredCount.toString()
-                       + " configured / "
-                       + agentsPage.viewModel.voiceRuntimeMissingCount.toString()
-                       + " missing / "
-                       + agentsPage.viewModel.voiceRuntimeRefusedCount.toString()
-                       + " refused"
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Voice Readiness"
-                value: agentsPage.viewModel.voiceRuntimeReadinessSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Voice Pipeline"
-                value: agentsPage.viewModel.voicePipelineSessionStatus
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Pipeline Stages"
-                value: agentsPage.viewModel.voicePipelineSessionReadyStageCount.toString()
-                       + " ready / "
-                       + agentsPage.viewModel.voicePipelineSessionBlockedStageCount.toString()
-                       + " blocked"
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Whisper STT"
-                value: agentsPage.viewModel.whisperTranscriptionStatus
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Piper TTS"
-                value: agentsPage.viewModel.piperSynthesisStatus
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Audio File"
-                value: agentsPage.viewModel.audioFileSessionStatus
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "STT Boundary"
-                value: agentsPage.viewModel.whisperTranscriptionReadinessSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "TTS Boundary"
-                value: agentsPage.viewModel.piperSynthesisReadinessSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-
-            InfoRow {
-                compact: agentsPage.compact
-                label: "Pipeline Summary"
-                value: agentsPage.viewModel.voicePipelineSessionSummary
-                Layout.columnSpan: agentsPage.compact ? 1 : 2
-                Layout.fillWidth: true
-            }
-        }
-
-        ColumnLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceXs
-
-            Repeater {
-                model: agentsPage.viewModel.agentTaskTraceSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Task Trace"
-                    value: modelData
-                    Layout.fillWidth: true
+                    InfoRow {
+                        compact: agentsPage.compact
+                        label: "Current"
+                        value: agentsPage.viewModel.currentAgentSummary
+                        Layout.fillWidth: true
+                    }
                 }
             }
 
-            Repeater {
-                model: agentsPage.viewModel.agentPlanningArbitrationSummaries
+            GridLayout {
+                width: parent.width
+                columns: agentsPage.compact ? 1 : 2
+                columnSpacing: SentinelTheme.spaceLg
+                rowSpacing: SentinelTheme.spaceLg
 
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Arbitration"
-                    value: modelData
+                ShellPanel {
                     Layout.fillWidth: true
+                    implicitHeight: agentsPage.sectionHeight(taskRuntimeContent)
+
+                    ColumnLayout {
+                        id: taskRuntimeContent
+                        x: agentsPage.panelPadding
+                        y: agentsPage.panelPadding
+                        width: parent.width - agentsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: "Task Runtime"
+                            subtitle: "Static runtime state, no workers."
+                            Layout.fillWidth: true
+                        }
+
+                        StatusChip {
+                            label: "Runtime"
+                            value: agentsPage.viewModel.agentTaskRuntimeStatus
+                            accent: agentsPage.modeAccent
+                            selected: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Boundary"
+                            value: agentsPage.viewModel.agentTaskRuntimeSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Latest"
+                            value: agentsPage.viewModel.latestAgentTaskSummary
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    Layout.fillWidth: true
+                    implicitHeight: agentsPage.sectionHeight(taskQueueContent)
+
+                    ColumnLayout {
+                        id: taskQueueContent
+                        x: agentsPage.panelPadding
+                        y: agentsPage.panelPadding
+                        width: parent.width - agentsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: "Task Queue"
+                            subtitle: "Queued lifecycle metadata."
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: "Queued"
+                                value: agentsPage.viewModel.agentTaskQueueCount.toString()
+                                accent: agentsPage.modeAccent
+                                selected: true
+                            }
+
+                            StatusChip {
+                                label: "Planned"
+                                value: agentsPage.viewModel.agentTaskQueuePlannedCount.toString()
+                                accent: SentinelTheme.accentSecondary
+                            }
+
+                            StatusChip {
+                                label: "Blocked"
+                                value: agentsPage.viewModel.agentTaskQueueBlockedCount.toString()
+                                accent: SentinelTheme.warning
+                                muted: agentsPage.viewModel.agentTaskQueueBlockedCount === 0
+                            }
+
+                            StatusChip {
+                                label: "Refused"
+                                value: agentsPage.viewModel.agentTaskQueueRefusedCount.toString()
+                                accent: SentinelTheme.warning
+                                muted: agentsPage.viewModel.agentTaskQueueRefusedCount === 0
+                            }
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Lifecycle"
+                            value: agentsPage.viewModel.latestAgentTaskLifecycleSummary
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    Layout.fillWidth: true
+                    implicitHeight: agentsPage.sectionHeight(planningContent)
+
+                    ColumnLayout {
+                        id: planningContent
+                        x: agentsPage.panelPadding
+                        y: agentsPage.panelPadding
+                        width: parent.width - agentsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: "Planning Sessions"
+                            subtitle: "Safety arbitration metadata only."
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: "Status"
+                                value: agentsPage.viewModel.agentPlanningSessionStatus
+                                accent: agentsPage.modeAccent
+                                selected: true
+                            }
+
+                            StatusChip {
+                                label: "Candidates"
+                                value: agentsPage.viewModel.agentPlanningCandidateCount.toString()
+                                accent: SentinelTheme.accentSecondary
+                            }
+
+                            StatusChip {
+                                label: "Refused"
+                                value: agentsPage.viewModel.agentPlanningRefusedCount.toString()
+                                accent: SentinelTheme.warning
+                                muted: agentsPage.viewModel.agentPlanningRefusedCount === 0
+                            }
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Summary"
+                            value: agentsPage.viewModel.agentPlanningSessionSummary
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    Layout.fillWidth: true
+                    implicitHeight: agentsPage.sectionHeight(capabilityContent)
+
+                    ColumnLayout {
+                        id: capabilityContent
+                        x: agentsPage.panelPadding
+                        y: agentsPage.panelPadding
+                        width: parent.width - agentsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: "Capability Registry"
+                            subtitle: "Capabilities are labels, not grants."
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: "Enabled"
+                                value: agentsPage.viewModel.agentCapabilityEnabledCount.toString()
+                                accent: SentinelTheme.success
+                            }
+
+                            StatusChip {
+                                label: "Disabled"
+                                value: agentsPage.viewModel.agentCapabilityDisabledCount.toString()
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: "Restricted"
+                                value: agentsPage.viewModel.agentCapabilityRestrictedCount.toString()
+                                accent: SentinelTheme.warning
+                                muted: agentsPage.viewModel.agentCapabilityRestrictedCount === 0
+                            }
+                        }
+
+                        Repeater {
+                            model: Math.min(4, agentsPage.viewModel.agentCapabilitySummaries.length)
+
+                            InfoRow {
+                                required property int index
+                                compact: true
+                                label: "Capability"
+                                value: agentsPage.viewModel.agentCapabilitySummaries[index]
+                                Layout.fillWidth: true
+                            }
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    Layout.fillWidth: true
+                    implicitHeight: agentsPage.sectionHeight(toolContent)
+
+                    ColumnLayout {
+                        id: toolContent
+                        x: agentsPage.panelPadding
+                        y: agentsPage.panelPadding
+                        width: parent.width - agentsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: "Tool Contracts"
+                            subtitle: "Contracts describe future policy; they do not execute."
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: "Enabled"
+                                value: agentsPage.viewModel.toolContractEnabledCount.toString()
+                                accent: SentinelTheme.success
+                            }
+
+                            StatusChip {
+                                label: "Disabled"
+                                value: agentsPage.viewModel.toolContractDisabledCount.toString()
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: "Restricted"
+                                value: agentsPage.viewModel.toolContractRestrictedCount.toString()
+                                accent: SentinelTheme.warning
+                                muted: agentsPage.viewModel.toolContractRestrictedCount === 0
+                            }
+                        }
+
+                        Repeater {
+                            model: Math.min(4, agentsPage.viewModel.toolContractSummaries.length)
+
+                            InfoRow {
+                                required property int index
+                                compact: true
+                                label: "Contract"
+                                value: agentsPage.viewModel.toolContractSummaries[index]
+                                Layout.fillWidth: true
+                            }
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    Layout.fillWidth: true
+                    implicitHeight: agentsPage.sectionHeight(voiceContent)
+
+                    ColumnLayout {
+                        id: voiceContent
+                        x: agentsPage.panelPadding
+                        y: agentsPage.panelPadding
+                        width: parent.width - agentsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: "Voice Readiness"
+                            subtitle: "Prepared or missing only; no microphone or playback controls."
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Voice"
+                            value: agentsPage.viewModel.voiceReadinessStatus
+                                   + " / "
+                                   + agentsPage.viewModel.voiceRuntimeHealth
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Whisper"
+                            value: agentsPage.viewModel.whisperTranscriptionStatus
+                                   + " / "
+                                   + agentsPage.viewModel.whisperTranscriptionReadinessSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Piper"
+                            value: agentsPage.viewModel.piperSynthesisStatus
+                                   + " / "
+                                   + agentsPage.viewModel.piperSynthesisReadinessSummary
+                            Layout.fillWidth: true
+                        }
+                    }
                 }
             }
 
-            Repeater {
-                model: agentsPage.viewModel.agentPlanningRefusalSummaries
+            ShellPanel {
+                width: parent.width
+                visible: agentsPage.developerMode
+                implicitHeight: agentsPage.sectionHeight(developerContent)
 
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Refusal"
-                    value: modelData
-                    Layout.fillWidth: true
+                ColumnLayout {
+                    id: developerContent
+                    x: agentsPage.panelPadding
+                    y: agentsPage.panelPadding
+                    width: parent.width - agentsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: "Developer Metadata"
+                        subtitle: "Trace, arbitration, permission, sandbox, and voice pipeline summaries."
+                        Layout.fillWidth: true
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.agentTaskTraceSummaries
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Task Trace"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.agentPlanningArbitrationSummaries
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Arbitration"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.toolContractPermissionSummaries
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Permission"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.toolContractSandboxSummaries
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Sandbox"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.voicePipelineSessionStageReadinessSummaries
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Voice Stage"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
                 }
             }
-
-            Repeater {
-                model: agentsPage.viewModel.agentCapabilitySummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: modelData.indexOf("[Enabled Metadata") >= 0 ? "Capability" : "Restricted Capability"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.agentCapabilityReadinessSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Capability Readiness"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.agentCapabilitySafetySummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Capability Safety"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.toolContractSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: modelData.indexOf("[Enabled Metadata") >= 0 ? "Tool Contract" : "Restricted Tool"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.toolContractPermissionSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Contract Permission"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.toolContractSandboxSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Contract Sandbox"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.toolContractReadinessSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Contract Readiness"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.audioFileValidationSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Audio File"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.voicePipelineSessionStageReadinessSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Voice Stage"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.voicePipelineSessionTraceSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Voice Trace"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.toolContractSafetySummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Contract Safety"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.voiceRuntimeReadinessChecks
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "Voice Runtime"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.whisperTranscriptionTraceSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "STT Trace"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-
-            Repeater {
-                model: agentsPage.viewModel.piperSynthesisTraceSummaries
-
-                InfoRow {
-                    required property string modelData
-                    compact: agentsPage.compact
-                    label: "TTS Trace"
-                    value: modelData
-                    Layout.fillWidth: true
-                }
-            }
-        }
-
-        ActiveAgentsPanel {
-            viewModel: agentsPage.viewModel
-            Layout.fillWidth: true
-            Layout.fillHeight: true
         }
     }
 }
