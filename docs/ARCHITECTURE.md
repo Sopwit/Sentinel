@@ -184,23 +184,33 @@ not mutate transcripts, replace user/assistant messages, write committed memory,
 expose raw prompt/debug payloads, call providers/models, activate semantic/vector systems, index
 filesystems, call cloud APIs, or start background workers.
 
-## Explicit Summary Generation Preparation
+## Controlled Local Summary Generation
 
-Conversation summary generation is currently an explicit manual preparation pipeline, not an
-execution pipeline. `ConversationSummaryRequest`, `ConversationSummaryReadiness`,
+Conversation summary generation is an explicit manual foreground pipeline through the existing
+local inference boundary. `ConversationSummaryRequest`, `ConversationSummaryReadiness`,
 `ConversationSummarySegment`, `ConversationSummaryTrace`, `ConversationSummaryFallback`, and
 `ConversationSummaryPreview` extend the existing value-only summary records.
 
 Planning is deterministic over the active visible conversation only. It separates the retained
 recent window, older-window summary preparation, important user facts, repeated-turn exclusions,
 and system/runtime metadata exclusion. The controller refuses non-manual, background, inactive
-conversation, transcript-mutating, memory-writing, hidden-prompt, tool, and filesystem-authority
-requests before execution. Summary execution remains unavailable.
+conversation, archived conversation, busy generation, transcript-mutating, memory-writing,
+hidden-prompt, tool, filesystem-authority, missing-runtime, and missing-model requests before
+execution.
 
-Optional persistence stores only local summary metadata beside the conversation store: timestamp,
-source conversation id, covered message range, estimated reduction, readiness state, and a safe
-summary line. Raw prompts, hidden prompt templates, transcript replacements, generated summary
-text, committed memories, provider payloads, and runtime traces are not persisted.
+Execution uses only the local inference worker already used by local Ollama chat. Request ids and
+active conversation ids guard completions, so stale results after conversation switches or
+cancellation are suppressed. Generated text is sanitized, bounded by the summary budget, and
+refused when it contains hidden prompt/runtime/provider/tool/filesystem leakage terms.
+
+Persistence stores only safe local summary records beside the conversation store: sanitized
+summary text, timestamp, source conversation id, covered message range, estimated reduction, and
+readiness state. Raw prompts, hidden prompt templates, transcript replacements, committed
+memories, provider payloads, runtime internals, and traces are not persisted.
+
+When prompt context injection is explicitly enabled, the generated summary can participate as the
+existing Conversation Summary context candidate in deterministic source order. It does not replace
+transcript history and does not write memory.
 
 ## Intentional Boundaries
 

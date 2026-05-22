@@ -570,6 +570,8 @@ class ApplicationController final : public QObject {
                    NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationSummaryPersistenceSummary READ
                    conversationSummaryPersistenceSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryInjectionSummary READ
+                   conversationSummaryInjectionSummary NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QStringList conversationSummaryCandidateSegments READ
                    conversationSummaryCandidateSegments NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationSummaryGenerationTraceSummaries READ
@@ -1328,6 +1330,7 @@ public:
     QString conversationSummaryEstimatedCompressionGain() const;
     QString conversationSummaryPreviewSummary() const;
     QString conversationSummaryPersistenceSummary() const;
+    QString conversationSummaryInjectionSummary() const;
     QStringList conversationSummaryCandidateSegments() const;
     QStringList conversationSummaryGenerationTraceSummaries() const;
     SemanticRetrievalPolicy semanticRetrievalPolicy() const;
@@ -1722,6 +1725,13 @@ private:
     ConversationSummaryResult planConversationSummaryGenerationForActiveConversation(
         bool explicitUserAction) const;
     bool persistConversationSummaryMetadata(const ConversationSummaryResult& result);
+    bool startConversationSummaryInference(const ConversationSummaryResult& plannedResult);
+    void finishConversationSummaryInference(const QString& requestId,
+                                            const LocalInferenceResponse& response);
+    QString buildConversationSummaryPrompt(const ConversationSummaryResult& plannedResult) const;
+    QString sanitizeGeneratedConversationSummary(const QString& text) const;
+    ConversationSummaryResult blockedConversationSummaryResult(const QString& reason,
+                                                               const QString& fallback) const;
     QList<RetrievalCandidate> retrievalCandidatesForPrompt(const QString& prompt) const;
     RetrievalPlanningResult retrievalPlanningForPrompt(const QString& prompt) const;
     QList<SemanticCandidate> semanticCandidatesForPrompt(const QString& prompt) const;
@@ -1861,6 +1871,7 @@ private:
     bool localInferenceStreamingEnabled_ = false;
     bool localInferenceBusy_ = false;
     bool activeLocalInferenceIsChatRequest_ = false;
+    bool activeLocalInferenceIsSummaryRequest_ = false;
     quint64 localInferenceRequestSequence_ = 0;
     QString activeLocalInferenceRequestId_;
     QString activeLocalInferenceConversationId_;

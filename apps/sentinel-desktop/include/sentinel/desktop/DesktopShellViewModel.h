@@ -564,6 +564,8 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationSummaryPersistenceSummary READ
                    conversationSummaryPersistenceSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryInjectionSummary READ
+                   conversationSummaryInjectionSummary NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QStringList conversationSummaryCandidateSegments READ
                    conversationSummaryCandidateSegments NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationSummaryGenerationTraceSummaries READ
@@ -1377,6 +1379,7 @@ public:
     QString conversationSummaryEstimatedCompressionGain() const;
     QString conversationSummaryPreviewSummary() const;
     QString conversationSummaryPersistenceSummary() const;
+    QString conversationSummaryInjectionSummary() const;
     QStringList conversationSummaryCandidateSegments() const;
     QStringList conversationSummaryGenerationTraceSummaries() const;
     core::SemanticRetrievalPolicy semanticRetrievalPolicy() const;

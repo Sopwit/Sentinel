@@ -325,6 +325,24 @@ ShellPanel {
             elide: Text.ElideRight
         }
 
+        Label {
+            Layout.fillWidth: true
+            visible: homeChat.viewModel.conversationSummaryGenerationStatus === "Planned"
+                     || homeChat.viewModel.conversationSummaryAvailable
+                     || homeChat.viewModel.conversationSummaryGenerationStatus === "Blocked"
+            text: homeChat.viewModel.conversationSummaryGenerationStatus === "Planned"
+                  ? homeChat.viewModel.conversationSummaryReadinessSummary
+                  : (homeChat.viewModel.promptContextInjectionEnabled
+                     ? homeChat.viewModel.conversationSummaryInjectionSummary
+                     : homeChat.viewModel.conversationSummaryReadinessSummary)
+            color: homeChat.viewModel.conversationSummaryGenerationStatus === "Blocked"
+                   ? SentinelTheme.warning
+                   : SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
+            maximumLineCount: 2
+            wrapMode: Text.WordWrap
+        }
+
         Rectangle {
             Layout.fillWidth: true
             radius: SentinelTheme.radiusMd
@@ -373,17 +391,18 @@ ShellPanel {
                 }
 
                 Button {
-                    id: summaryPlaceholder
-                    visible: !homeChat.viewModel.conversationSummaryAvailable
+                    id: summaryAction
                     Layout.preferredWidth: 116
                     Layout.preferredHeight: 34
-                    text: "Generate Summary"
-                    enabled: false
+                    text: homeChat.viewModel.conversationSummaryAvailable ? "Summary Ready" : "Generate Summary"
+                    enabled: homeChat.viewModel.localChatSendAvailable && !homeChat.sendBusy
+                             && homeChat.viewModel.conversationSummaryGenerationStatus !== "Planned"
                     hoverEnabled: true
+                    onClicked: homeChat.viewModel.requestConversationSummaryGeneration()
 
                     contentItem: Text {
-                        text: summaryPlaceholder.text
-                        color: SentinelTheme.textMuted
+                        text: summaryAction.text
+                        color: summaryAction.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontTiny
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -392,8 +411,15 @@ ShellPanel {
 
                     background: Rectangle {
                         radius: 17
-                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
+                        color: InteractionTokens.surfaceColor(summaryAction.hovered, summaryAction.down,
+                                                               summaryAction.activeFocus,
+                                                               homeChat.modeAccent)
+                        border.color: homeChat.viewModel.conversationSummaryAvailable
+                                      ? SentinelTheme.withAlpha(SentinelTheme.success, 0.32)
+                                      : InteractionTokens.borderColor(summaryAction.activeFocus,
+                                                                       summaryAction.hovered,
+                                                                       false,
+                                                                       homeChat.modeAccent)
                     }
                 }
 

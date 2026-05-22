@@ -755,7 +755,8 @@ private slots:
     void retrievalPlanningDoesNotMutateState();
     void conversationCompressionReadinessPlansMetadataWithoutMutation();
     void manualSummaryGenerationIsBlockedAndDoesNotMutateTranscript();
-    void manualSummaryGenerationPersistsLocalMetadataOnly();
+    void manualSummaryGenerationFailureDoesNotPersistMetadata();
+    void manualSummaryGenerationPersistsSafeLocalSummary();
     void semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt();
     void semanticProviderPlanningExposesDisabledSelection();
     void semanticCandidateOrchestrationExposesSafeMetadata();
@@ -4383,7 +4384,7 @@ void ApplicationControllerTest::manualSummaryGenerationIsBlockedAndDoesNotMutate
 
     QCOMPARE(controller->conversationSummaryGenerationStatus(), QStringLiteral("Blocked"));
     QCOMPARE(controller->conversationSummaryAvailable(), false);
-    QVERIFY(controller->conversationSummaryBlockedReason().contains(QStringLiteral("unavailable")));
+    QVERIFY(!controller->conversationSummaryBlockedReason().trimmed().isEmpty());
     QVERIFY(controller->conversationSummaryEstimatedCompressionGain().contains(
         QStringLiteral("estimated gain")));
     QVERIFY(!controller->conversationSummaryCandidateSegments().isEmpty());
@@ -4393,7 +4394,7 @@ void ApplicationControllerTest::manualSummaryGenerationIsBlockedAndDoesNotMutate
     QCOMPARE(controller->chatMessages(), beforeTranscript);
 }
 
-void ApplicationControllerTest::manualSummaryGenerationPersistsLocalMetadataOnly() {
+void ApplicationControllerTest::manualSummaryGenerationFailureDoesNotPersistMetadata() {
     auto store = std::make_unique<sentinel::core::InMemoryConversationStore>();
     auto* storePtr = store.get();
     auto controller = makeControllerWithConversationStore(std::move(store));
@@ -4406,14 +4407,68 @@ void ApplicationControllerTest::manualSummaryGenerationPersistsLocalMetadataOnly
     QVERIFY(!controller->requestConversationSummaryGeneration());
 
     const auto metadata = storePtr->loadSummaryMetadata(controller->activeConversationId());
+    QVERIFY(metadata.conversationId.isEmpty());
+    QVERIFY(metadata.summaryText.isEmpty());
+    QCOMPARE(controller->conversationSummaryPersistenceSummary(),
+             QStringLiteral("No local summary metadata persisted."));
+}
+
+void ApplicationControllerTest::manualSummaryGenerationPersistsSafeLocalSummary() {
+    auto store = std::make_unique<sentinel::core::InMemoryConversationStore>();
+    auto* storePtr = store.get();
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient), nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, std::move(store));
+
+    for (int i = 0; i < 16; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("manual summary success %1 %2")
+                                            .arg(i)
+                                            .arg(QString(160, QLatin1Char('s')))));
+    }
+    controller->remember(QStringLiteral("summary.local"), QStringLiteral("unchanged"));
+    const auto beforeEntries = controller->memoryEntries();
+    const auto beforeMessages = controller->conversationHistoryMessageCount();
+    const auto beforeTranscript = controller->chatMessages();
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setLocalChatInferenceEnabled(true);
+
+    QVERIFY(controller->requestConversationSummaryGeneration());
+
+    const auto metadata = storePtr->loadSummaryMetadata(controller->activeConversationId());
     QCOMPARE(metadata.conversationId, controller->activeConversationId());
-    QCOMPARE(metadata.readinessState, QStringLiteral("Blocked"));
+    QCOMPARE(metadata.readinessState, QStringLiteral("Ready"));
+    QCOMPARE(metadata.summaryText, QStringLiteral("fake local completion"));
+    QVERIFY(metadata.summaryText.size() <= controller->conversationSummaryBudgetCharacters());
     QVERIFY(metadata.summaryTimestampUtc.isValid());
     QVERIFY(metadata.coveredFirstMessageId > 0);
     QVERIFY(metadata.coveredLastMessageId >= metadata.coveredFirstMessageId);
-    QVERIFY(metadata.estimatedReductionPercent >= 0);
-    QVERIFY(!metadata.summary.contains(QStringLiteral("[")));
-    QVERIFY(controller->conversationSummaryPersistenceSummary().contains(QStringLiteral("Blocked")));
+    QVERIFY(!metadata.summary.contains(QStringLiteral("[Conversation Summary]")));
+    QVERIFY(fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("Visible transcript:")));
+    QVERIFY(!fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("summary.local =")));
+    QCOMPARE(controller->memoryEntries(), beforeEntries);
+    QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
+    QCOMPARE(controller->chatMessages(), beforeTranscript);
+    QCOMPARE(controller->conversationSummaryGenerationStatus(), QStringLiteral("Ready"));
+    QVERIFY(controller->conversationSummaryPersistenceSummary().contains(QStringLiteral("Ready")));
+
+    controller->setPromptContextInjectionEnabled(true);
+    QVERIFY(controller->sendMessage(QStringLiteral("summary local followup")));
+    const auto prompt = fakeClientPtr->lastRequest.prompt;
+    const auto summaryStart = prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---"));
+    const auto memoryStart = prompt.indexOf(QStringLiteral("--- Committed Local Memory"));
+    QVERIFY(summaryStart >= 0);
+    QVERIFY(memoryStart > summaryStart);
+    QVERIFY(prompt.mid(summaryStart, memoryStart - summaryStart)
+                .contains(QStringLiteral("fake local completion")));
+    QVERIFY(controller->conversationSummaryInjectionSummary().contains(QStringLiteral("included")));
 }
 
 void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt() {

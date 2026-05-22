@@ -291,6 +291,23 @@ Guidelines:
   automatic memory writes, provider/cloud controls, tools/plugins, filesystem indexing, or
   autonomous generation.
 
+## Phase 31 Controlled Summary Execution Notes
+
+Phase 31.0 through Phase 31.12 enables the Chat Generate Summary action only as an explicit
+foreground local action when the active conversation and local Ollama readiness gates pass.
+
+Guidelines:
+
+- Chat may show Generate Summary, Summary Ready, loading, blocked/refused/error copy, and concise
+  summary-in-use copy when explicit context injection includes the generated summary.
+- Runtime/Memory normal mode may show summary metadata, persistence, and inclusion state.
+  Developer Mode may show bounded traces, segments, and budgets.
+- Settings should show summary injection enabled/disabled state in normal Chat/context copy.
+  Developer Mode may show deterministic summary budget/status details.
+- Summary UI must not show hidden prompts, raw prompt payloads, provider internals, filesystem
+  paths, transcript replacement previews, automatic memory write affordances, cloud/API controls,
+  tool/plugin activation, semantic/vector authority, or background/autonomous generation toggles.
+
 Phase 26.0 through Phase 26.8 improves local deterministic context visibility without adding
 background behavior or semantic authority.
 

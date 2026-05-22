@@ -259,29 +259,35 @@ Out of scope:
 
 ## 9.2.2 Explicit Summary Generation Preparation
 
-Decision: Summary generation preparation is controller-owned, manual-only, active-conversation-only
-metadata.
+Decision: Summary generation is controller-owned, manual-only, active-conversation-only local
+execution through the existing local inference boundary.
 
-Reason: Users need visible summary readiness and planning before any future summarization
-execution, but the app must not create summaries autonomously, alter transcripts, or write memory.
+Reason: Users need an explicit local compression aid for long conversations, but the app must not
+create summaries autonomously, alter transcripts, write memory, use cloud providers, expose hidden
+prompts, or expand runtime authority.
 
 Runtime behavior:
 
 - A summary request must carry explicit user action metadata and must target the active
   conversation.
-- Background requests, inactive conversation requests, transcript mutation, committed memory
-  writes, hidden prompt exposure, tools/plugins, filesystem authority, and runtime/system metadata
-  inclusion are refused before execution.
+- Background requests, inactive or archived conversation requests, busy generation, transcript
+  mutation, committed memory writes, hidden prompt exposure, tools/plugins, filesystem authority,
+  missing local runtime/model readiness, and runtime/system metadata inclusion are refused before
+  execution.
 - Planning emits deterministic segments for recent-window retention, older-window summary
   preparation, important facts, repeated turns, and system/runtime metadata exclusion.
-- Optional persistence stores only summary timestamp, source conversation id, covered message
-  range, estimated reduction, readiness state, and a safe summary line.
+- Execution uses only the existing local inference worker and local Ollama readiness path, with
+  request-id and active-conversation stale completion suppression.
+- Persistence stores only sanitized summary text, summary timestamp, source conversation id,
+  covered message range, estimated reduction, readiness state, and a safe summary line.
+- Explicit prompt context injection may include the generated summary as the deterministic
+  Conversation Summary candidate, preserving stable source ordering and transcript history.
 
 Out of scope:
 
-- Actual summarization execution, local/cloud provider calls, autonomous/background summaries,
-  hidden prompt persistence, transcript replacement, automatic memory writes, semantic/vector
-  authority, filesystem indexing, tools/plugins, subprocesses, and cloud/API providers.
+- Autonomous/background summaries, hidden prompt persistence, transcript replacement, automatic
+  memory writes, semantic/vector authority, filesystem indexing, tools/plugins, subprocess
+  expansion, and cloud/API providers.
 
 ## 9.3 Active Conversation Lifecycle And Switching
 

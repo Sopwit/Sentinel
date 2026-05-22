@@ -261,8 +261,9 @@ void SQLiteConversationStoreTest::persistsSummaryMetadataWithoutPromptText() {
         metadata.coveredFirstMessageId = 2;
         metadata.coveredLastMessageId = 18;
         metadata.estimatedReductionPercent = 74;
-        metadata.readinessState = QStringLiteral("Blocked");
-        metadata.summary = QStringLiteral("Blocked / messages 2-18 / 74% estimated reduction");
+        metadata.readinessState = QStringLiteral("Ready");
+        metadata.summaryText = QStringLiteral("Safe local generated summary.");
+        metadata.summary = QStringLiteral("Ready / messages 2-18 / 74% estimated reduction");
         QVERIFY(store.saveSummaryMetadata(metadata));
     }
 
@@ -273,7 +274,8 @@ void SQLiteConversationStoreTest::persistsSummaryMetadataWithoutPromptText() {
         QCOMPARE(loaded.coveredFirstMessageId, 2);
         QCOMPARE(loaded.coveredLastMessageId, 18);
         QCOMPARE(loaded.estimatedReductionPercent, 74);
-        QCOMPARE(loaded.readinessState, QStringLiteral("Blocked"));
+        QCOMPARE(loaded.readinessState, QStringLiteral("Ready"));
+        QCOMPARE(loaded.summaryText, QStringLiteral("Safe local generated summary."));
         QVERIFY(loaded.summaryTimestampUtc.isValid());
         QVERIFY(!loaded.summary.contains(QStringLiteral("[Conversation Summary]")));
     }
