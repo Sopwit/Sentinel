@@ -3736,8 +3736,23 @@ QString ApplicationController::chatHistoryStatus() const {
 }
 
 QList<ConversationRecord> ApplicationController::conversationRecords() const {
-    return conversationStore_ ? conversationStore_->listConversations()
-                              : QList<ConversationRecord>{};
+    auto records = conversationStore_ ? conversationStore_->listConversations()
+                                      : QList<ConversationRecord>{};
+    std::stable_sort(records.begin(), records.end(), [this](const auto& lhs, const auto& rhs) {
+        const auto rank = [this](const ConversationRecord& record) {
+            if (record.id == activeConversationId_) {
+                return 0;
+            }
+            return record.archived ? 2 : 1;
+        };
+        const auto lhsRank = rank(lhs);
+        const auto rhsRank = rank(rhs);
+        if (lhsRank != rhsRank) {
+            return lhsRank < rhsRank;
+        }
+        return lhs.updatedAtUtc > rhs.updatedAtUtc;
+    });
+    return records;
 }
 
 ConversationRecord ApplicationController::activeConversationRecord() const {

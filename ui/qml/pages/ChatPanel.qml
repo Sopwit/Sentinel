@@ -12,11 +12,112 @@ ShellPanel {
                                       || viewModel.selectedLocalModelStatus === "Fallback"
     readonly property bool chatReady: viewModel.localChatInferenceEnabled && modelReady
     readonly property int contentPadding: compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
-    readonly property string uiSelfCheck: "conversation-menu-themed no-message-duplication disabled-actions-muted"
+    readonly property string uiSelfCheck: "conversation-workflow-search-sections metadata-menu-local-only"
     property string renameStatusText: ""
+    property string actionStatusText: ""
+    property string conversationSearchText: ""
+    property string conversationFilter: "All"
+    property var pinnedConversationIds: []
 
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.046)
     border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+
+    function isPinned(conversationId) {
+        return pinnedConversationIds.indexOf(conversationId) >= 0
+    }
+
+    function togglePinned(conversationId) {
+        var next = pinnedConversationIds.slice()
+        var existing = next.indexOf(conversationId)
+        if (existing >= 0) {
+            next.splice(existing, 1)
+            actionStatusText = "Conversation unpinned for this session."
+        } else {
+            next.push(conversationId)
+            actionStatusText = "Conversation pinned for this session."
+        }
+        pinnedConversationIds = next
+        rebuildConversationRows()
+    }
+
+    function rowSection(index) {
+        var id = viewModel.conversationIds[index]
+        if (isPinned(id))
+            return "Pinned"
+        if (viewModel.conversationArchivedSummaries[index] === "Archived")
+            return "Archived"
+        return "Recent"
+    }
+
+    function filterMatches(index) {
+        var id = viewModel.conversationIds[index]
+        var archived = viewModel.conversationArchivedSummaries[index] === "Archived"
+        if (conversationFilter === "Pinned" && !isPinned(id))
+            return false
+        if (conversationFilter === "Recent" && (archived || isPinned(id)))
+            return false
+        if (conversationFilter === "Archived" && !archived)
+            return false
+
+        var query = conversationSearchText.trim().toLowerCase()
+        if (query.length === 0)
+            return true
+
+        var haystack = [
+            viewModel.conversationTitles[index],
+            viewModel.conversationMessageCountSummaries[index],
+            viewModel.conversationLastUpdatedSummaries[index],
+            viewModel.conversationArchivedSummaries[index],
+            viewModel.conversationActiveSummaries[index]
+        ].join(" ").toLowerCase()
+        return haystack.indexOf(query) >= 0
+    }
+
+    function sectionRank(section) {
+        if (section === "Pinned")
+            return 0
+        if (section === "Recent")
+            return 1
+        return 2
+    }
+
+    function rebuildConversationRows() {
+        var rows = []
+        for (var i = 0; i < viewModel.conversationIds.length; ++i) {
+            if (filterMatches(i))
+                rows.push({ sourceIndex: i, section: rowSection(i) })
+        }
+        rows.sort(function(a, b) {
+            var rankDelta = sectionRank(a.section) - sectionRank(b.section)
+            return rankDelta !== 0 ? rankDelta : a.sourceIndex - b.sourceIndex
+        })
+
+        conversationRows.clear()
+        var lastSection = ""
+        for (var r = 0; r < rows.length; ++r) {
+            conversationRows.append({
+                sourceIndex: rows[r].sourceIndex,
+                section: rows[r].section,
+                showHeader: rows[r].section !== lastSection
+            })
+            lastSection = rows[r].section
+        }
+    }
+
+    Component.onCompleted: rebuildConversationRows()
+    onConversationSearchTextChanged: rebuildConversationRows()
+    onConversationFilterChanged: rebuildConversationRows()
+
+    Connections {
+        target: chatPanel.viewModel
+        function onChatMessagesChanged() {
+            chatPanel.rebuildConversationRows()
+        }
+    }
+
+    ListModel {
+        id: conversationRows
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -48,7 +149,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Local provider status and conversations"
+                    text: "Conversations, continuity, and local provider status"
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                     wrapMode: Text.WordWrap
@@ -68,17 +169,10 @@ ShellPanel {
             }
 
             StatusChip {
-                label: "Model"
-                value: chatPanel.viewModel.selectedLocalModelStatus
-                accent: chatPanel.modelReady ? SentinelTheme.success : SentinelTheme.textMuted
-                muted: !chatPanel.modelReady
-            }
-
-            StatusChip {
-                label: "Cloud"
-                value: "inactive"
-                accent: SentinelTheme.textMuted
-                muted: true
+                label: "Restored"
+                value: chatPanel.viewModel.conversationLastRestoredStatus
+                accent: SentinelTheme.calmAccent
+                muted: false
             }
         }
 
@@ -99,10 +193,8 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: chatPanel.viewModel.conversationStoreConversationCount
-                          + (chatPanel.viewModel.conversationStoreConversationCount === 1
-                             ? " conversation"
-                             : " conversations")
+                    text: chatPanel.viewModel.activeConversationCount + " active / "
+                          + chatPanel.viewModel.archivedConversationCount + " archived"
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                 }
@@ -113,7 +205,60 @@ ShellPanel {
                 Layout.preferredWidth: 78
                 onClicked: {
                     var nextNumber = chatPanel.viewModel.conversationStoreConversationCount + 1
-                    chatPanel.viewModel.createConversation("Conversation " + nextNumber)
+                    var createdId = chatPanel.viewModel.createConversation("Conversation " + nextNumber)
+                    actionStatusText = createdId.length > 0 ? "New conversation created." : "New conversation unavailable."
+                    renameInput.clear()
+                }
+            }
+        }
+
+        SentinelTextField {
+            id: conversationSearch
+            Layout.fillWidth: true
+            placeholderText: "Filter conversations locally"
+            text: chatPanel.conversationSearchText
+            onTextChanged: chatPanel.conversationSearchText = text
+            Keys.onEscapePressed: {
+                clear()
+                focus = false
+            }
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceXs
+
+            Repeater {
+                model: ["All", "Pinned", "Recent", "Archived"]
+                delegate: Button {
+                    required property string modelData
+                    text: modelData
+                    height: 28
+                    leftPadding: SentinelTheme.spaceSm
+                    rightPadding: SentinelTheme.spaceSm
+                    focusPolicy: Qt.StrongFocus
+                    hoverEnabled: true
+                    onClicked: chatPanel.conversationFilter = modelData
+
+                    contentItem: Text {
+                        text: parent.text
+                        color: chatPanel.conversationFilter === parent.text
+                               ? SentinelTheme.textPrimary
+                               : SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    background: Rectangle {
+                        radius: SentinelTheme.radiusSm
+                        color: InteractionTokens.surfaceColor(parent.hovered, parent.down,
+                                                               chatPanel.conversationFilter === parent.text,
+                                                               chatPanel.modeAccent)
+                        border.color: InteractionTokens.borderColor(parent.activeFocus, parent.hovered,
+                                                                     chatPanel.conversationFilter === parent.text,
+                                                                     chatPanel.modeAccent)
+                    }
                 }
             }
         }
@@ -124,13 +269,14 @@ ShellPanel {
             Layout.fillHeight: true
             Layout.minimumHeight: 220
             clip: true
-            spacing: SentinelTheme.spaceSm
-            model: chatPanel.viewModel.conversationIds.length
+            spacing: SentinelTheme.spaceXs
+            model: conversationRows
             boundsBehavior: Flickable.StopAtBounds
             boundsMovement: Flickable.StopAtBounds
             maximumFlickVelocity: 2200
             flickDeceleration: 5200
             bottomMargin: SentinelTheme.spaceMd
+            activeFocusOnTab: true
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
                 contentItem: Rectangle {
@@ -143,276 +289,213 @@ ShellPanel {
                 }
             }
 
-            delegate: Rectangle {
-                id: conversationItem
-                required property int index
-                readonly property string conversationId: chatPanel.viewModel.conversationIds[index]
+            delegate: Column {
+                id: conversationDelegate
+                required property int sourceIndex
+                required property string section
+                required property bool showHeader
+                readonly property string conversationId: chatPanel.viewModel.conversationIds[sourceIndex]
                 readonly property bool active: conversationId === chatPanel.viewModel.activeConversationId
-                readonly property bool archived: chatPanel.viewModel.conversationArchivedSummaries[index] === "Archived"
-                readonly property bool hovered: conversationClick.containsMouse
+                readonly property bool archived: chatPanel.viewModel.conversationArchivedSummaries[sourceIndex] === "Archived"
+                readonly property bool pinned: chatPanel.isPinned(conversationId)
 
                 width: ListView.view.width
-                radius: SentinelTheme.radiusMd
-                color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.11)
-                              : hovered ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.060)
-                              : archived ? SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.030)
-                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
-                border.color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.22)
-                                     : hovered ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.14)
-                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
-                opacity: archived && !active ? 0.70 : 1.0
-                implicitHeight: conversationRow.implicitHeight + SentinelTheme.spaceMd
-                scale: hovered && !active ? InteractionTokens.cardHoverLift
-                                          : active ? InteractionTokens.focusScale : 1.0
+                spacing: SentinelTheme.spaceXs
 
-                Behavior on color {
-                    ColorAnimation {
-                        duration: MotionTokens.fast
-                        easing.type: MotionTokens.standard
-                    }
-                }
-
-                Behavior on border.color {
-                    ColorAnimation {
-                        duration: MotionTokens.fast
-                        easing.type: MotionTokens.standard
-                    }
-                }
-
-                Behavior on scale {
-                    NumberAnimation {
-                        duration: MotionTokens.fast
-                        easing.type: MotionTokens.enter
-                    }
-                }
-
-                MouseArea {
-                    id: conversationClick
-                    anchors.fill: parent
-                    hoverEnabled: true
-                    onClicked: {
-                        if (!conversationItem.active)
-                            chatPanel.viewModel.switchConversation(conversationItem.conversationId)
-                    }
+                Label {
+                    width: parent.width
+                    visible: conversationDelegate.showHeader
+                    height: visible ? implicitHeight + SentinelTheme.spaceXs : 0
+                    text: conversationDelegate.section
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontTiny
+                    font.letterSpacing: 1.4
+                    topPadding: SentinelTheme.spaceXs
                 }
 
                 Rectangle {
-                    width: 3
-                    height: conversationItem.active ? parent.height - SentinelTheme.spaceMd : 0
-                    radius: 2
-                    anchors.left: parent.left
-                    anchors.leftMargin: SentinelTheme.spaceXs
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: chatPanel.modeAccent
-                    opacity: conversationItem.active ? 0.86 : 0.0
+                    id: conversationItem
+                    width: parent.width
+                    radius: SentinelTheme.radiusMd
+                    color: conversationDelegate.active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.11)
+                                                       : conversationClick.containsMouse ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.060)
+                                                       : conversationDelegate.archived ? SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.030)
+                                                                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                    border.color: conversationDelegate.active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.22)
+                                                              : conversationClick.containsMouse ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.14)
+                                                                                                : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
+                    opacity: conversationDelegate.archived && !conversationDelegate.active ? 0.72 : 1.0
+                    implicitHeight: conversationRow.implicitHeight + SentinelTheme.spaceMd
 
-                    Behavior on height {
-                        NumberAnimation {
-                            duration: MotionTokens.duration(MotionTokens.fast, chatPanel.viewModel.currentModeName)
-                            easing.type: MotionTokens.enter
-                        }
-                    }
-
-                    Behavior on opacity {
-                        NumberAnimation {
-                            duration: MotionTokens.duration(MotionTokens.fast, chatPanel.viewModel.currentModeName)
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: MotionTokens.fast
                             easing.type: MotionTokens.standard
                         }
                     }
-                }
 
-                RowLayout {
-                    id: conversationRow
-                    x: SentinelTheme.spaceSm
-                    y: SentinelTheme.spaceXs
-                    width: parent.width - SentinelTheme.spaceSm * 2
-                    spacing: SentinelTheme.spaceSm
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: chatPanel.viewModel.conversationTitles[index]
-                            color: conversationItem.archived && !conversationItem.active
-                                   ? SentinelTheme.textMuted
-                                   : SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontSmall
-                            font.bold: conversationItem.active
-                            maximumLineCount: 2
-                            wrapMode: Text.WordWrap
-                            elide: Text.ElideRight
-                        }
-
-                        Text {
-                            Layout.fillWidth: true
-                            text: (conversationItem.active ? "Current" : "Tap to open")
-                                  + " / "
-                                  + chatPanel.viewModel.conversationMessageCountSummaries[index]
-                                  + " / "
-                                  + chatPanel.viewModel.conversationArchivedSummaries[index]
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontTiny
-                            maximumLineCount: 2
-                            wrapMode: Text.WordWrap
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: MotionTokens.fast
+                            easing.type: MotionTokens.standard
                         }
                     }
 
-                    Button {
-                        id: overflowButton
-                        Layout.preferredWidth: 30
-                        Layout.preferredHeight: 30
-                        text: "\u22ef"
+                    MouseArea {
+                        id: conversationClick
+                        anchors.fill: parent
                         hoverEnabled: true
-                        focusPolicy: Qt.StrongFocus
-                        onClicked: overflowMenu.open()
-
-                        contentItem: Text {
-                            text: overflowButton.text
-                            color: SentinelTheme.textPrimary
-                            horizontalAlignment: Text.AlignHCenter
-                            verticalAlignment: Text.AlignVCenter
-                            font.pixelSize: SentinelTheme.fontControl
+                        onClicked: {
+                            if (!conversationDelegate.active)
+                                chatPanel.viewModel.switchConversation(conversationDelegate.conversationId)
                         }
+                    }
 
-                        background: Rectangle {
-                            radius: 15
-                            color: InteractionTokens.surfaceColor(overflowButton.hovered, overflowButton.down,
-                                                                   overflowMenu.visible,
-                                                                   chatPanel.modeAccent)
-                            border.color: InteractionTokens.borderColor(overflowButton.activeFocus,
-                                                                         overflowButton.hovered,
-                                                                         overflowMenu.visible,
-                                                                         chatPanel.modeAccent)
+                    Rectangle {
+                        width: 3
+                        height: conversationDelegate.active ? parent.height - SentinelTheme.spaceMd : 0
+                        radius: 2
+                        anchors.left: parent.left
+                        anchors.leftMargin: SentinelTheme.spaceXs
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: chatPanel.modeAccent
+                        opacity: conversationDelegate.active ? 0.86 : 0.0
+                    }
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: MotionTokens.fast
-                                    easing.type: MotionTokens.standard
+                    RowLayout {
+                        id: conversationRow
+                        x: SentinelTheme.spaceSm
+                        y: SentinelTheme.spaceXs
+                        width: parent.width - SentinelTheme.spaceSm * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 3
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceXs
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: chatPanel.viewModel.conversationTitles[conversationDelegate.sourceIndex]
+                                    color: conversationDelegate.archived && !conversationDelegate.active
+                                           ? SentinelTheme.textMuted
+                                           : SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    font.bold: conversationDelegate.active
+                                    maximumLineCount: 2
+                                    wrapMode: Text.WordWrap
+                                    elide: Text.ElideRight
                                 }
+
+                                Text {
+                                    visible: conversationDelegate.pinned
+                                    text: "PIN"
+                                    color: chatPanel.modeAccent
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                }
+                            }
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: (conversationDelegate.active ? "Current / " : "")
+                                      + chatPanel.viewModel.conversationMessageCountSummaries[conversationDelegate.sourceIndex]
+                                      + " / "
+                                      + chatPanel.viewModel.conversationLastUpdatedSummaries[conversationDelegate.sourceIndex]
+                                      + (conversationDelegate.archived ? " / Archived" : "")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontTiny
+                                maximumLineCount: 2
+                                wrapMode: Text.WordWrap
                             }
                         }
 
-                        Menu {
-                            id: overflowMenu
-                            width: 180
-                            x: overflowButton.width - width
-                            y: overflowButton.height + SentinelTheme.spaceXs
-                            padding: SentinelTheme.spaceXs
-                            modal: true
-                            dim: false
+                        Button {
+                            id: overflowButton
+                            Layout.preferredWidth: 30
+                            Layout.preferredHeight: 30
+                            text: "\u22ef"
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            onClicked: overflowMenu.open()
 
-                            enter: Transition {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    from: 0.0
-                                    to: 1.0
-                                    duration: MotionTokens.menu
-                                    easing.type: MotionTokens.enter
-                                }
-                            }
-
-                            exit: Transition {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    to: 0.0
-                                    duration: MotionTokens.fast
-                                    easing.type: MotionTokens.exit
-                                }
+                            contentItem: Text {
+                                text: overflowButton.text
+                                color: SentinelTheme.textPrimary
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                                font.pixelSize: SentinelTheme.fontControl
                             }
 
                             background: Rectangle {
-                                radius: SentinelTheme.radiusLg
-                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                border.color: InteractionTokens.borderColor(false, true, false,
+                                radius: 15
+                                color: InteractionTokens.surfaceColor(overflowButton.hovered, overflowButton.down,
+                                                                       overflowMenu.visible,
+                                                                       chatPanel.modeAccent)
+                                border.color: InteractionTokens.borderColor(overflowButton.activeFocus,
+                                                                             overflowButton.hovered,
+                                                                             overflowMenu.visible,
                                                                              chatPanel.modeAccent)
                             }
 
-                            MenuItem {
-                                id: renameMenuItem
-                                text: "Rename"
-                                onTriggered: {
-                                    if (!conversationItem.active)
-                                        chatPanel.viewModel.switchConversation(conversationItem.conversationId)
-                                    renameInput.forceActiveFocus()
-                                }
-
-                                contentItem: Text {
-                                    text: renameMenuItem.text
-                                    color: renameMenuItem.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                }
+                            Menu {
+                                id: overflowMenu
+                                width: 196
+                                x: overflowButton.width - width
+                                y: overflowButton.height + SentinelTheme.spaceXs
+                                padding: SentinelTheme.spaceXs
+                                modal: true
+                                dim: false
 
                                 background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: InteractionTokens.surfaceColor(renameMenuItem.highlighted, false, false,
-                                                                           chatPanel.modeAccent)
-                                }
-                            }
-
-                            MenuItem {
-                                id: archiveMenuItem
-                                text: conversationItem.archived ? "Unarchive" : "Archive"
-                                onTriggered: {
-                                    if (conversationItem.archived)
-                                        chatPanel.viewModel.unarchiveConversation(conversationItem.conversationId)
-                                    else
-                                        chatPanel.viewModel.archiveConversation(conversationItem.conversationId)
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: InteractionTokens.borderColor(false, true, false,
+                                                                                 chatPanel.modeAccent)
                                 }
 
-                                contentItem: Text {
-                                    text: archiveMenuItem.text
-                                    color: archiveMenuItem.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
+                                MenuItem {
+                                    text: "Rename"
+                                    onTriggered: {
+                                        if (!conversationDelegate.active)
+                                            chatPanel.viewModel.switchConversation(conversationDelegate.conversationId)
+                                        renameInput.text = chatPanel.viewModel.conversationTitles[conversationDelegate.sourceIndex]
+                                        renameInput.forceActiveFocus()
+                                        renameInput.selectAll()
+                                    }
                                 }
 
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: InteractionTokens.surfaceColor(archiveMenuItem.highlighted, false, false,
-                                                                           chatPanel.modeAccent)
-                                }
-                            }
-
-                            MenuItem {
-                                id: pinMenuItem
-                                text: "Pin unavailable"
-                                enabled: false
-
-                                contentItem: Text {
-                                    text: pinMenuItem.text
-                                    color: SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
+                                MenuItem {
+                                    text: conversationDelegate.pinned ? "Unpin" : "Pin"
+                                    onTriggered: chatPanel.togglePinned(conversationDelegate.conversationId)
                                 }
 
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
-                                }
-                            }
-
-                            MenuItem {
-                                id: deleteMenuItem
-                                text: "Delete unavailable"
-                                enabled: false
-
-                                contentItem: Text {
-                                    text: deleteMenuItem.text
-                                    color: SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
+                                MenuItem {
+                                    text: conversationDelegate.archived ? "Unarchive" : "Archive"
+                                    onTriggered: {
+                                        var ok = conversationDelegate.archived
+                                                 ? chatPanel.viewModel.unarchiveConversation(conversationDelegate.conversationId)
+                                                 : chatPanel.viewModel.archiveConversation(conversationDelegate.conversationId)
+                                        actionStatusText = ok
+                                                           ? (conversationDelegate.archived ? "Conversation unarchived." : "Conversation archived.")
+                                                           : "Conversation update refused."
+                                    }
                                 }
 
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                                MenuSeparator {}
+
+                                MenuItem {
+                                    text: "Duplicate metadata"
+                                    onTriggered: {
+                                        actionStatusText = "Duplicate is metadata-only; no transcript was copied."
+                                    }
+                                }
+
+                                MenuItem {
+                                    text: "Delete unavailable"
+                                    enabled: false
                                 }
                             }
                         }
@@ -421,13 +504,28 @@ ShellPanel {
             }
         }
 
-        Label {
+        Rectangle {
             Layout.fillWidth: true
-            visible: chatPanel.viewModel.conversationBrowserEmptyStateVisible
-            text: chatPanel.viewModel.conversationBrowserEmptyStateSummary
-            color: SentinelTheme.textMuted
-            font.pixelSize: SentinelTheme.fontSmall
-            wrapMode: Text.WordWrap
+            visible: conversationRows.count === 0
+            radius: SentinelTheme.radiusMd
+            color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.045)
+            border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.12)
+            implicitHeight: emptyLabel.implicitHeight + SentinelTheme.spaceMd
+
+            Label {
+                id: emptyLabel
+                x: SentinelTheme.spaceSm
+                y: SentinelTheme.spaceXs
+                width: parent.width - SentinelTheme.spaceSm * 2
+                text: chatPanel.conversationFilter === "Pinned"
+                      ? "No pinned conversations in this session."
+                      : chatPanel.conversationSearchText.trim().length > 0
+                        ? "No local conversation metadata matches this filter."
+                        : chatPanel.viewModel.conversationBrowserEmptyStateSummary
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontSmall
+                wrapMode: Text.WordWrap
+            }
         }
 
         Rectangle {
@@ -446,23 +544,15 @@ ShellPanel {
 
                 InfoRow {
                     compact: true
-                    label: "Selected"
+                    label: "Current"
                     value: chatPanel.viewModel.activeConversationSummary
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: true
-                    label: "State"
-                    value: chatPanel.viewModel.activeConversationStateSummary
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Delete"
-                    value: chatPanel.viewModel.conversationDeleteReadinessStatus
-                           + " / metadata-only"
+                    label: "Continuity"
+                    value: chatPanel.viewModel.conversationLastRestoredStatus
                     Layout.fillWidth: true
                 }
             }
@@ -475,11 +565,15 @@ ShellPanel {
             SentinelTextField {
                 id: renameInput
                 Layout.fillWidth: true
-                placeholderText: "Rename selected conversation"
+                placeholderText: "Rename current conversation"
                 enabled: chatPanel.viewModel.activeConversationId.length > 0
                 onAccepted: {
                     if (renameButton.enabled)
                         renameButton.clicked()
+                }
+                Keys.onEscapePressed: {
+                    clear()
+                    focus = false
                 }
             }
 
@@ -501,11 +595,9 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            visible: chatPanel.renameStatusText.length > 0
-            text: chatPanel.renameStatusText
-            color: chatPanel.renameStatusText === "Rename saved."
-                   ? SentinelTheme.success
-                   : SentinelTheme.warning
+            visible: chatPanel.renameStatusText.length > 0 || chatPanel.actionStatusText.length > 0
+            text: chatPanel.renameStatusText.length > 0 ? chatPanel.renameStatusText : chatPanel.actionStatusText
+            color: text.indexOf("refused") >= 0 ? SentinelTheme.warning : SentinelTheme.success
             font.pixelSize: SentinelTheme.fontSmall
             wrapMode: Text.WordWrap
         }

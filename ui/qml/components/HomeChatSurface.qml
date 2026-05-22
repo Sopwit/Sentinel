@@ -39,6 +39,16 @@ ShellPanel {
         promptInput.forceActiveFocus()
     }
 
+    function sendComposerText() {
+        var prompt = promptInput.text.trim()
+        if (prompt.length === 0 || !sendButton.enabled)
+            return
+        homeChat.viewModel.sendMessage(promptInput.text)
+        promptInput.clear()
+        recentMessages.followNewMessages = true
+        homeChat.scrollToLatest(true)
+    }
+
     onStreamingActiveChanged: {
         if (!streamingActive)
             scrollToLatest(true)
@@ -59,9 +69,18 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Sentinel"
+                    text: homeChat.viewModel.conversationListCurrentTitle
                     color: SentinelTheme.textPrimary
                     font.pixelSize: homeChat.compact ? SentinelTheme.fontTitle : SentinelTheme.fontTitle + 2
+                    maximumLineCount: 1
+                    elide: Text.ElideRight
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: homeChat.viewModel.conversationLastRestoredStatus
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
                     maximumLineCount: 1
                     elide: Text.ElideRight
                 }
@@ -83,7 +102,7 @@ ShellPanel {
             Layout.minimumHeight: 210
             visible: true
             clip: true
-            spacing: SentinelTheme.spaceSm
+            spacing: homeChat.compact ? SentinelTheme.spaceSm : SentinelTheme.spaceMd
             model: homeChat.viewModel.chatMessages
             boundsBehavior: Flickable.StopAtBounds
             boundsMovement: Flickable.StopAtBounds
@@ -167,25 +186,69 @@ ShellPanel {
                     x: SentinelTheme.spaceSm
                     y: SentinelTheme.spaceSm
                     width: parent.width - SentinelTheme.spaceSm * 2
-                    spacing: 2
+                    spacing: SentinelTheme.spaceXs
 
-                    Label {
+                    RowLayout {
                         Layout.fillWidth: true
-                        text: recentMessage.messageRole === "user" ? "You" : "Sentinel"
-                        color: recentMessage.messageRole === "user"
-                               ? homeChat.modeAccent
-                               : SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontTiny
-                        elide: Text.ElideRight
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: recentMessage.messageRole === "user" ? "You" : "Sentinel"
+                            color: recentMessage.messageRole === "user"
+                                   ? homeChat.modeAccent
+                                   : SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontTiny
+                            elide: Text.ElideRight
+                        }
+
+                        Button {
+                            id: copyButton
+                            Layout.preferredWidth: 46
+                            Layout.preferredHeight: 24
+                            text: "Copy"
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            onClicked: {
+                                messageBody.forceActiveFocus()
+                                messageBody.selectAll()
+                                messageBody.copy()
+                                messageBody.deselect()
+                            }
+
+                            contentItem: Text {
+                                text: copyButton.text
+                                color: copyButton.enabled ? SentinelTheme.textMuted : SentinelTheme.textPlaceholder
+                                font.pixelSize: SentinelTheme.fontTiny
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusSm
+                                color: InteractionTokens.surfaceColor(copyButton.hovered, copyButton.down,
+                                                                       copyButton.activeFocus,
+                                                                       homeChat.modeAccent)
+                                border.color: InteractionTokens.borderColor(copyButton.activeFocus,
+                                                                             copyButton.hovered,
+                                                                             false,
+                                                                             homeChat.modeAccent)
+                            }
+                        }
                     }
 
-                    Label {
+                    TextEdit {
+                        id: messageBody
                         Layout.fillWidth: true
                         text: recentMessage.content
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
-                        maximumLineCount: 18
+                        readOnly: true
+                        selectByMouse: true
+                        selectByKeyboard: true
+                        textFormat: TextEdit.PlainText
+                        selectionColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.34)
+                        selectedTextColor: SentinelTheme.textPrimary
                     }
                 }
             }
@@ -194,7 +257,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             visible: homeChat.viewModel.conversationHistoryMessageCount <= 1
-            text: "Start a local conversation. Ollama only; no cloud provider is active."
+            text: "Start with a focused question, a draft to revise, or notes to organize. Local Ollama only; no cloud provider is active."
             color: SentinelTheme.textPrimary
             font.pixelSize: SentinelTheme.fontBody
             wrapMode: Text.WordWrap
@@ -234,34 +297,91 @@ ShellPanel {
             }
         }
 
-        RowLayout {
+        Rectangle {
             Layout.fillWidth: true
-            spacing: SentinelTheme.spaceSm
+            radius: SentinelTheme.radiusMd
+            color: promptInput.activeFocus
+                   ? SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.82)
+                   : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.68)
+            border.color: InteractionTokens.borderColor(promptInput.activeFocus, composerMouse.containsMouse,
+                                                         false, homeChat.modeAccent)
+            implicitHeight: Math.max(76, composerLayout.implicitHeight + SentinelTheme.spaceMd)
 
-            SentinelTextField {
-                id: promptInput
-                Layout.fillWidth: true
-                placeholderText: homeChat.chatReady ? "Type a prompt for Sentinel"
-                                                    : "Local provider chat is not ready"
-                enabled: homeChat.canSend
-                onAccepted: {
-                    if (sendButton.visible && sendButton.enabled)
-                        sendButton.clicked()
-                }
+            MouseArea {
+                id: composerMouse
+                anchors.fill: parent
+                hoverEnabled: true
+                acceptedButtons: Qt.NoButton
             }
 
-            SentinelButton {
-                id: sendButton
-                visible: homeChat.chatReady
-                text: "Send"
-                Layout.preferredWidth: 92
-                enabled: promptInput.text.trim().length > 0 && homeChat.canSend
-                opacity: enabled ? 1.0 : 0.58
-                onClicked: {
-                    homeChat.viewModel.sendMessage(promptInput.text)
-                    promptInput.clear()
-                    recentMessages.followNewMessages = true
-                    homeChat.scrollToLatest(true)
+            RowLayout {
+                id: composerLayout
+                x: SentinelTheme.spaceSm
+                y: SentinelTheme.spaceXs
+                width: parent.width - SentinelTheme.spaceSm * 2
+                spacing: SentinelTheme.spaceSm
+
+                Button {
+                    id: attachPlaceholder
+                    Layout.preferredWidth: 34
+                    Layout.preferredHeight: 34
+                    text: "+"
+                    enabled: false
+                    hoverEnabled: true
+
+                    contentItem: Text {
+                        text: attachPlaceholder.text
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontControl
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+
+                    background: Rectangle {
+                        radius: 17
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
+                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
+                    }
+                }
+
+                TextArea {
+                    id: promptInput
+                    Layout.fillWidth: true
+                    Layout.minimumHeight: 48
+                    Layout.maximumHeight: 126
+                    placeholderText: homeChat.chatReady ? "Ask Sentinel"
+                                                        : "Local provider chat is not ready"
+                    enabled: homeChat.canSend
+                    color: SentinelTheme.textPrimary
+                    placeholderTextColor: SentinelTheme.textPlaceholder
+                    wrapMode: TextEdit.WordWrap
+                    selectByMouse: true
+                    selectionColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.34)
+                    selectedTextColor: SentinelTheme.textPrimary
+                    background: Rectangle {
+                        color: "transparent"
+                    }
+                    Keys.onPressed: function(event) {
+                        if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                                && !(event.modifiers & Qt.ShiftModifier)) {
+                            homeChat.sendComposerText()
+                            event.accepted = true
+                        } else if (event.key === Qt.Key_Escape) {
+                            focus = false
+                            event.accepted = true
+                        }
+                    }
+                }
+
+                SentinelButton {
+                    id: sendButton
+                    visible: homeChat.chatReady
+                    text: "Send"
+                    Layout.preferredWidth: 82
+                    Layout.alignment: Qt.AlignBottom
+                    enabled: promptInput.text.trim().length > 0 && homeChat.canSend
+                    opacity: enabled ? 1.0 : 0.58
+                    onClicked: homeChat.sendComposerText()
                 }
             }
         }
