@@ -100,6 +100,11 @@ QtObject {
     readonly property int durationOrbit: 22000
     readonly property int easingStandard: Easing.InOutQuad
     readonly property int easingEmphasized: Easing.OutCubic
+    readonly property color calmAccent: accent
+    readonly property color calmAccentHover: accentHover
+    readonly property color calmAccentBorder: "#9bdfff30"
+    readonly property color calmFocusGlow: "#9bdfff52"
+    readonly property color cardShadow: "#0000004a"
 
     function pageMargin(width) {
         return width < breakpointCompact ? spaceMd : space2Xl

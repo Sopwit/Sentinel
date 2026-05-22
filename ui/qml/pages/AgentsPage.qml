@@ -10,6 +10,7 @@ ScrollView {
     readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
+    readonly property string uiSelfCheck: "developer-gated balanced-cards wrapped-contracts bottom-safe-scroll"
     property string selectedSection: "Overview"
     onDeveloperModeChanged: {
         if (!developerMode && selectedSection === "Developer")
@@ -18,10 +19,29 @@ ScrollView {
 
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+    ScrollBar.vertical: ScrollBar {
+        policy: ScrollBar.AsNeeded
+        contentItem: Rectangle {
+            implicitWidth: 4
+            radius: 2
+            color: SentinelTheme.withAlpha(agentsPage.modeAccent, parent.active ? 0.34 : 0.18)
+        }
+        background: Rectangle {
+            color: "transparent"
+        }
+    }
     contentWidth: availableWidth
 
     function sectionHeight(content) {
         return content.implicitHeight + panelPadding * 2
+    }
+
+    function metadataAccent(summary) {
+        var lower = summary.toLowerCase()
+        if (lower.indexOf("refused") >= 0 || lower.indexOf("blocked") >= 0
+                || lower.indexOf("restricted") >= 0 || lower.indexOf("disabled") >= 0)
+            return SentinelTheme.warning
+        return agentsPage.modeAccent
     }
 
     Item {
@@ -56,12 +76,14 @@ ScrollView {
                             Button {
                                 id: agentTabButton
                                 required property string modelData
+                                readonly property bool active: agentsPage.selectedSection === agentTabButton.modelData
                                 text: modelData
+                                hoverEnabled: true
                                 onClicked: agentsPage.selectedSection = modelData
 
                                 contentItem: Label {
                                     text: agentTabButton.text
-                                    color: agentsPage.selectedSection === agentTabButton.modelData
+                                    color: agentTabButton.active
                                            ? SentinelTheme.textPrimary
                                            : SentinelTheme.textMuted
                                     horizontalAlignment: Text.AlignHCenter
@@ -73,12 +95,26 @@ ScrollView {
                                     implicitWidth: 112
                                     implicitHeight: 32
                                     radius: 16
-                                    color: agentsPage.selectedSection === agentTabButton.modelData
-                                           ? SentinelTheme.withAlpha(agentsPage.modeAccent, 0.14)
-                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.035)
-                                    border.color: agentTabButton.activeFocus
-                                                  ? SentinelTheme.focusBorder
-                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.075)
+                                    color: InteractionTokens.surfaceColor(agentTabButton.hovered, agentTabButton.down,
+                                                                           agentTabButton.active,
+                                                                           agentsPage.modeAccent)
+                                    border.color: InteractionTokens.borderColor(agentTabButton.activeFocus, agentTabButton.hovered,
+                                                                                 agentTabButton.active,
+                                                                                 agentsPage.modeAccent)
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: MotionTokens.fast
+                                            easing.type: MotionTokens.standard
+                                        }
+                                    }
+
+                                    Behavior on border.color {
+                                        ColorAnimation {
+                                            duration: MotionTokens.fast
+                                            easing.type: MotionTokens.standard
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -145,6 +181,14 @@ ScrollView {
                         label: "Current"
                         value: agentsPage.viewModel.currentAgentSummary
                         Layout.fillWidth: true
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "Profiles are registered for visibility only. Nothing runs in the background."
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
                     }
                 }
             }
@@ -371,11 +415,47 @@ ScrollView {
                             Rectangle {
                                 id: capabilityRow
                                 required property int index
+                                readonly property color rowAccent: agentsPage.metadataAccent(
+                                    agentsPage.viewModel.agentCapabilitySummaries[index])
                                 Layout.fillWidth: true
                                 radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                color: SentinelTheme.withAlpha(capabilityRow.rowAccent,
+                                                               capabilityHover.containsMouse ? 0.060 : 0.034)
+                                border.color: SentinelTheme.withAlpha(capabilityRow.rowAccent,
+                                                                      capabilityHover.containsMouse ? 0.16 : 0.080)
                                 implicitHeight: capabilityText.implicitHeight + SentinelTheme.spaceSm
+                                scale: capabilityHover.containsMouse ? InteractionTokens.cardHoverLift : 1.0
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: MotionTokens.duration(MotionTokens.fast,
+                                                                        agentsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.standard
+                                    }
+                                }
+
+                                Behavior on border.color {
+                                    ColorAnimation {
+                                        duration: MotionTokens.duration(MotionTokens.fast,
+                                                                        agentsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.standard
+                                    }
+                                }
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: MotionTokens.duration(MotionTokens.fast,
+                                                                        agentsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.enter
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: capabilityHover
+                                    anchors.fill: parent
+                                    acceptedButtons: Qt.NoButton
+                                    hoverEnabled: true
+                                }
 
                                 Text {
                                     id: capabilityText
@@ -386,8 +466,7 @@ ScrollView {
                                     color: SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall
                                     wrapMode: Text.WordWrap
-                                    maximumLineCount: 3
-                                    elide: Text.ElideRight
+                                    maximumLineCount: 5
                                 }
                             }
                         }
@@ -446,11 +525,47 @@ ScrollView {
                             Rectangle {
                                 id: contractRow
                                 required property int index
+                                readonly property color rowAccent: agentsPage.metadataAccent(
+                                    agentsPage.viewModel.toolContractSummaries[index])
                                 Layout.fillWidth: true
                                 radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                color: SentinelTheme.withAlpha(contractRow.rowAccent,
+                                                               contractHover.containsMouse ? 0.060 : 0.034)
+                                border.color: SentinelTheme.withAlpha(contractRow.rowAccent,
+                                                                      contractHover.containsMouse ? 0.16 : 0.080)
                                 implicitHeight: contractText.implicitHeight + SentinelTheme.spaceSm
+                                scale: contractHover.containsMouse ? InteractionTokens.cardHoverLift : 1.0
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: MotionTokens.duration(MotionTokens.fast,
+                                                                        agentsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.standard
+                                    }
+                                }
+
+                                Behavior on border.color {
+                                    ColorAnimation {
+                                        duration: MotionTokens.duration(MotionTokens.fast,
+                                                                        agentsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.standard
+                                    }
+                                }
+
+                                Behavior on scale {
+                                    NumberAnimation {
+                                        duration: MotionTokens.duration(MotionTokens.fast,
+                                                                        agentsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.enter
+                                    }
+                                }
+
+                                MouseArea {
+                                    id: contractHover
+                                    anchors.fill: parent
+                                    acceptedButtons: Qt.NoButton
+                                    hoverEnabled: true
+                                }
 
                                 Text {
                                     id: contractText
@@ -461,8 +576,7 @@ ScrollView {
                                     color: SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall
                                     wrapMode: Text.WordWrap
-                                    maximumLineCount: 3
-                                    elide: Text.ElideRight
+                                    maximumLineCount: 5
                                 }
                             }
                         }
@@ -530,7 +644,7 @@ ScrollView {
                     spacing: SentinelTheme.spaceSm
 
                     SectionTitle {
-                        title: "Task Runtime"
+                        title: "Task Traces"
                         subtitle: "Read-only traces and latest task metadata."
                         Layout.fillWidth: true
                     }
@@ -589,7 +703,7 @@ ScrollView {
                     }
 
                     SectionTitle {
-                        title: "Capability Registry"
+                        title: "Capability Readiness"
                         subtitle: "Capabilities are descriptive metadata, not grants."
                         Layout.fillWidth: true
                     }
@@ -650,6 +764,11 @@ ScrollView {
                         }
                     }
                 }
+            }
+
+            Item {
+                width: parent.width
+                height: SentinelTheme.space2Xl
             }
         }
     }

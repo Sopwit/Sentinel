@@ -15,6 +15,7 @@ ShellPanel {
                                     && !viewModel.activeConversationArchived
     readonly property bool streamingActive: viewModel.localInferenceStreamingText.length > 0
                                             || viewModel.localInferenceRuntimeState === "Streaming"
+    readonly property string uiSelfCheck: "chat-scroll-safe-area composer-visible no-bridge-duplication"
     readonly property string disabledReason: viewModel.activeConversationArchived
                                              ? viewModel.activeConversationStateSummary
                                              : !viewModel.localChatInferenceEnabled
@@ -28,6 +29,20 @@ ShellPanel {
     radius: SentinelTheme.radiusPanel
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.58)
     border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+
+    function scrollToLatest(force) {
+        if (force || recentMessages.followNewMessages)
+            Qt.callLater(recentMessages.positionViewAtEnd)
+    }
+
+    function focusComposer() {
+        promptInput.forceActiveFocus()
+    }
+
+    onStreamingActiveChanged: {
+        if (!streamingActive)
+            scrollToLatest(true)
+    }
 
     ColumnLayout {
         anchors.fill: parent
@@ -62,6 +77,7 @@ ShellPanel {
 
         ListView {
             id: recentMessages
+            property bool followNewMessages: true
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumHeight: 210
@@ -70,9 +86,42 @@ ShellPanel {
             spacing: SentinelTheme.spaceSm
             model: homeChat.viewModel.chatMessages
             boundsBehavior: Flickable.StopAtBounds
-            bottomMargin: SentinelTheme.spaceXs
-            onCountChanged: Qt.callLater(positionViewAtEnd)
+            boundsMovement: Flickable.StopAtBounds
+            maximumFlickVelocity: 2200
+            flickDeceleration: 5200
+            bottomMargin: SentinelTheme.spaceMd
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
+                contentItem: Rectangle {
+                    implicitWidth: 4
+                    radius: 2
+                    color: SentinelTheme.withAlpha(homeChat.modeAccent, parent.active ? 0.34 : 0.18)
+                }
+                background: Rectangle {
+                    color: "transparent"
+                }
+            }
+            onCountChanged: homeChat.scrollToLatest(false)
             Component.onCompleted: Qt.callLater(positionViewAtEnd)
+            onMovementEnded: followNewMessages = atYEnd || contentHeight <= height
+            onFlickEnded: followNewMessages = atYEnd || contentHeight <= height
+
+            add: Transition {
+                NumberAnimation {
+                    property: "opacity"
+                    from: 0.0
+                    to: 1.0
+                    duration: MotionTokens.duration(MotionTokens.message, homeChat.viewModel.currentModeName)
+                    easing.type: MotionTokens.enter
+                }
+                NumberAnimation {
+                    property: "scale"
+                    from: 0.985
+                    to: 1.0
+                    duration: MotionTokens.duration(MotionTokens.message, homeChat.viewModel.currentModeName)
+                    easing.type: MotionTokens.enter
+                }
+            }
 
             delegate: Rectangle {
                 id: recentMessage
@@ -86,12 +135,32 @@ ShellPanel {
                 visible: displayable
                 radius: SentinelTheme.radiusMd
                 color: messageRole === "user"
-                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.085)
+                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.105)
                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
                 border.color: SentinelTheme.withAlpha(messageRole === "user"
                                                       ? homeChat.modeAccent
                                                       : SentinelTheme.textPrimary,
-                                                      0.07)
+                                                      messageRole === "user" ? 0.13 : 0.07)
+                opacity: 1.0
+                scale: 1.0
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: MotionTokens.normal
+                        easing.type: MotionTokens.standard
+                    }
+                }
+
+                Rectangle {
+                    width: 3
+                    height: parent.height - SentinelTheme.spaceSm
+                    radius: 2
+                    anchors.left: parent.left
+                    anchors.leftMargin: SentinelTheme.spaceXs
+                    anchors.verticalCenter: parent.verticalCenter
+                    visible: recentMessage.messageRole !== "user"
+                    color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.42)
+                }
 
                 ColumnLayout {
                     id: recentMessageColumn
@@ -125,10 +194,19 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             visible: homeChat.viewModel.conversationHistoryMessageCount <= 1
-            text: "No conversation yet. Local Ollama only; no cloud provider is active."
-            color: SentinelTheme.textMuted
+            text: "Start a local conversation. Ollama only; no cloud provider is active."
+            color: SentinelTheme.textPrimary
             font.pixelSize: SentinelTheme.fontBody
             wrapMode: Text.WordWrap
+            leftPadding: SentinelTheme.spaceMd
+            rightPadding: SentinelTheme.spaceMd
+            topPadding: SentinelTheme.spaceSm
+            bottomPadding: SentinelTheme.spaceSm
+            background: Rectangle {
+                radius: SentinelTheme.radiusMd
+                color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.045)
+                border.color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
+            }
         }
 
         Rectangle {
@@ -178,9 +256,12 @@ ShellPanel {
                 text: "Send"
                 Layout.preferredWidth: 92
                 enabled: promptInput.text.trim().length > 0 && homeChat.canSend
+                opacity: enabled ? 1.0 : 0.58
                 onClicked: {
                     homeChat.viewModel.sendMessage(promptInput.text)
                     promptInput.clear()
+                    recentMessages.followNewMessages = true
+                    homeChat.scrollToLatest(true)
                 }
             }
         }

@@ -13,6 +13,28 @@ Rectangle {
     property int bracketSize: 12
     property color edgeLightColor: bracketColor
     property real edgeLightOpacity: 0.0
+    property bool hoverDepth: false
+
+    Behavior on color {
+        ColorAnimation {
+            duration: MotionTokens.normal
+            easing.type: MotionTokens.standard
+        }
+    }
+
+    Behavior on border.color {
+        ColorAnimation {
+            duration: MotionTokens.normal
+            easing.type: MotionTokens.standard
+        }
+    }
+
+    Behavior on opacity {
+        NumberAnimation {
+            duration: MotionTokens.fast
+            easing.type: MotionTokens.standard
+        }
+    }
 
     Rectangle {
         anchors.left: parent.left

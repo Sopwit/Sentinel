@@ -9,10 +9,13 @@ Item {
     readonly property bool compact: width < 820
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property bool developerMode: viewModel.developerModeEnabled
+    readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap bottom-safe-scroll"
     readonly property var categories: developerMode
                                     ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Developer"]
                                     : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data"]
     property string activeCategory: "General"
+    property bool programmaticScroll: false
 
     function sectionHeight(content) {
         return content.implicitHeight + panelPadding * 2
@@ -37,8 +40,10 @@ Item {
     function jumpTo(category) {
         activeCategory = category
         var target = sectionFor(category)
-        settingsFlick.contentY = Math.max(0, Math.min(target.y - SentinelTheme.spaceSm,
+        programmaticScroll = true
+        settingsFlick.contentY = Math.max(0, Math.min(target.y,
                                                       settingsFlick.contentHeight - settingsFlick.height))
+        scrollSettledTimer.restart()
     }
 
     function voiceReadinessLine() {
@@ -60,7 +65,7 @@ Item {
         spacing: SentinelTheme.spaceLg
 
         ShellPanel {
-            Layout.preferredWidth: settingsPage.compact ? 144 : 172
+            Layout.preferredWidth: settingsPage.compact ? 132 : 172
             Layout.fillHeight: true
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.036)
             border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
@@ -85,15 +90,18 @@ Item {
                     Button {
                         id: navButton
                         required property string modelData
+                        readonly property bool active: settingsPage.activeCategory === navButton.modelData
                         Layout.fillWidth: true
                         Layout.preferredHeight: 34
                         text: modelData
                         hoverEnabled: true
+                        focusPolicy: Qt.StrongFocus
                         onClicked: settingsPage.jumpTo(modelData)
 
                         contentItem: Text {
                             text: navButton.text
-                            color: settingsPage.activeCategory === navButton.modelData
+                            leftPadding: SentinelTheme.spaceMd
+                            color: navButton.active
                                    ? SentinelTheme.textPrimary
                                    : SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall
@@ -104,14 +112,49 @@ Item {
 
                         background: Rectangle {
                             radius: SentinelTheme.radiusMd
-                            color: settingsPage.activeCategory === navButton.modelData
-                                   ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName), 0.11)
-                                   : navButton.hovered
-                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
-                                     : "transparent"
-                            border.color: navButton.activeFocus
-                                          ? SentinelTheme.focusBorder
-                                          : "transparent"
+                            color: InteractionTokens.surfaceColor(navButton.hovered, navButton.down, navButton.active,
+                                                                   settingsPage.modeAccent)
+                            border.color: InteractionTokens.borderColor(navButton.activeFocus, navButton.hovered,
+                                                                         navButton.active,
+                                                                         settingsPage.modeAccent)
+
+                            Rectangle {
+                                width: 3
+                                height: navButton.active ? parent.height - SentinelTheme.spaceSm : 0
+                                radius: 2
+                                anchors.left: parent.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                color: settingsPage.modeAccent
+                                opacity: navButton.active ? 0.86 : 0.0
+
+                                Behavior on height {
+                                    NumberAnimation {
+                                        duration: MotionTokens.fast
+                                        easing.type: MotionTokens.enter
+                                    }
+                                }
+
+                                Behavior on opacity {
+                                    NumberAnimation {
+                                        duration: MotionTokens.fast
+                                        easing.type: MotionTokens.standard
+                                    }
+                                }
+                            }
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: MotionTokens.fast
+                                    easing.type: MotionTokens.standard
+                                }
+                            }
+
+                            Behavior on border.color {
+                                ColorAnimation {
+                                    duration: MotionTokens.fast
+                                    easing.type: MotionTokens.standard
+                                }
+                            }
                         }
                     }
                 }
@@ -126,9 +169,32 @@ Item {
             contentWidth: width
             contentHeight: settingsColumn.implicitHeight
             boundsBehavior: Flickable.StopAtBounds
-            ScrollBar.vertical: ScrollBar {}
+            boundsMovement: Flickable.StopAtBounds
+            maximumFlickVelocity: 2200
+            flickDeceleration: 5200
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
+                contentItem: Rectangle {
+                    implicitWidth: 4
+                    radius: 2
+                    color: SentinelTheme.withAlpha(settingsPage.modeAccent, parent.active ? 0.34 : 0.18)
+                }
+                background: Rectangle {
+                    color: "transparent"
+                }
+            }
+
+            Behavior on contentY {
+                enabled: settingsPage.programmaticScroll
+                NumberAnimation {
+                    duration: MotionTokens.duration(MotionTokens.slow, settingsPage.viewModel.currentModeName)
+                    easing.type: MotionTokens.enter
+                }
+            }
 
             onContentYChanged: {
+                if (settingsPage.programmaticScroll)
+                    return
                 var y = contentY + Math.min(settingsFlick.height * 0.36, 180)
                 var atBottom = contentY + settingsFlick.height >= settingsFlick.contentHeight - SentinelTheme.spaceSm
                 if (developerMode && (y >= developerSection.y || atBottom))
@@ -145,6 +211,12 @@ Item {
                     activeCategory = "Local AI"
                 else
                     activeCategory = "General"
+            }
+
+            Timer {
+                id: scrollSettledTimer
+                interval: MotionTokens.slow + 30
+                onTriggered: settingsPage.programmaticScroll = false
             }
 
             Column {
@@ -184,6 +256,14 @@ Item {
                             Layout.fillWidth: true
                         }
 
+                        Label {
+                            Layout.fillWidth: true
+                            text: "Settings are explicit and local. Disabled runtime features stay inactive until a later phase enables them."
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontSmall
+                            wrapMode: Text.WordWrap
+                        }
+
                         Rectangle {
                             Layout.fillWidth: true
                             radius: SentinelTheme.radiusMd
@@ -221,6 +301,7 @@ Item {
                                 Switch {
                                     id: developerSwitch
                                     checked: settingsPage.viewModel.developerModeEnabled
+                                    hoverEnabled: true
                                     onToggled: settingsPage.viewModel.developerModeEnabled = checked
 
                                     indicator: Rectangle {
@@ -230,11 +311,27 @@ Item {
                                         y: parent.height / 2 - height / 2
                                         radius: height / 2
                                         color: developerSwitch.checked
-                                               ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName), 0.18)
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
                                                : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
                                         border.color: developerSwitch.activeFocus
-                                                      ? SentinelTheme.focusBorder
+                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                      : developerSwitch.hovered
+                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
                                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                        Behavior on color {
+                                            ColorAnimation {
+                                                duration: MotionTokens.fast
+                                                easing.type: MotionTokens.standard
+                                            }
+                                        }
+
+                                        Behavior on border.color {
+                                            ColorAnimation {
+                                                duration: MotionTokens.fast
+                                                easing.type: MotionTokens.standard
+                                            }
+                                        }
 
                                         Rectangle {
                                             x: developerSwitch.checked ? parent.width - width - 3 : 3
@@ -243,8 +340,22 @@ Item {
                                             height: 18
                                             radius: 9
                                             color: developerSwitch.checked
-                                                   ? SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName)
+                                                   ? settingsPage.modeAccent
                                                    : SentinelTheme.textMuted
+
+                                            Behavior on x {
+                                                NumberAnimation {
+                                                    duration: MotionTokens.fast
+                                                    easing.type: MotionTokens.enter
+                                                }
+                                            }
+
+                                            Behavior on color {
+                                                ColorAnimation {
+                                                    duration: MotionTokens.fast
+                                                    easing.type: MotionTokens.standard
+                                                }
+                                            }
                                         }
                                     }
                                 }
@@ -338,6 +449,7 @@ Item {
                             id: modelCombo
                             Layout.fillWidth: true
                             enabled: settingsPage.viewModel.ollamaModelCount > 0
+                            hoverEnabled: true
                             model: settingsPage.viewModel.ollamaModelNames
                             currentIndex: settingsPage.viewModel.ollamaModelNames.indexOf(settingsPage.viewModel.selectedLocalModel)
                             displayText: currentIndex >= 0 ? currentText
@@ -359,9 +471,10 @@ Item {
                             background: Rectangle {
                                 radius: SentinelTheme.radiusMd
                                 color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                border.color: modelCombo.activeFocus
-                                              ? SentinelTheme.focusBorder
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.085)
+                                border.color: InteractionTokens.borderColor(modelCombo.activeFocus,
+                                                                             modelCombo.hovered,
+                                                                             modelCombo.popup.visible,
+                                                                             settingsPage.modeAccent)
                             }
 
                             delegate: ItemDelegate {
@@ -375,20 +488,42 @@ Item {
                                     color: modelOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                     font.pixelSize: SentinelTheme.fontSmall
                                     verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 2
                                 }
 
                                 background: Rectangle {
-                                    color: modelOption.highlighted
-                                           ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName), 0.10)
-                                           : "transparent"
+                                    color: InteractionTokens.surfaceColor(modelOption.highlighted, false, false,
+                                                                           settingsPage.modeAccent)
                                 }
                             }
 
                             popup.background: Rectangle {
                                 radius: SentinelTheme.radiusLg
                                 color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.095)
+                                border.color: InteractionTokens.borderColor(false, true, false,
+                                                                             settingsPage.modeAccent)
+                            }
+
+                            popup.enter: Transition {
+                                NumberAnimation {
+                                    property: "opacity"
+                                    from: 0.0
+                                    to: 1.0
+                                    duration: MotionTokens.duration(MotionTokens.menu,
+                                                                    settingsPage.viewModel.currentModeName)
+                                    easing.type: MotionTokens.enter
+                                }
+                            }
+
+                            popup.exit: Transition {
+                                NumberAnimation {
+                                    property: "opacity"
+                                    to: 0.0
+                                    duration: MotionTokens.duration(MotionTokens.fast,
+                                                                    settingsPage.viewModel.currentModeName)
+                                    easing.type: MotionTokens.exit
+                                }
                             }
                         }
 
@@ -430,6 +565,7 @@ Item {
                             id: localChatToggle
                             Layout.fillWidth: true
                             text: "Local chat inference"
+                            hoverEnabled: true
                             leftPadding: localChatToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.localChatInferenceEnabled
                             onToggled: settingsPage.viewModel.localChatInferenceEnabled = checked
@@ -438,6 +574,7 @@ Item {
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontBody
                                 verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.WordWrap
                             }
                             indicator: Rectangle {
                                 implicitWidth: 18
@@ -446,18 +583,26 @@ Item {
                                 y: parent.height / 2 - height / 2
                                 radius: SentinelTheme.radiusSm
                                 color: localChatToggle.checked
-                                       ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.16)
+                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                                border.color: localChatToggle.activeFocus
-                                              ? SentinelTheme.focusBorder
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                border.color: InteractionTokens.borderColor(localChatToggle.activeFocus,
+                                                                             localChatToggle.hovered,
+                                                                             localChatToggle.checked,
+                                                                             settingsPage.modeAccent)
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 8
                                     height: 8
                                     radius: 4
                                     visible: localChatToggle.checked
-                                    color: SentinelTheme.accent
+                                    color: settingsPage.modeAccent
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: MotionTokens.fast
+                                        easing.type: MotionTokens.standard
+                                    }
                                 }
                             }
                         }
@@ -466,6 +611,7 @@ Item {
                             id: streamingToggle
                             Layout.fillWidth: true
                             text: "Local response streaming"
+                            hoverEnabled: true
                             leftPadding: streamingToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.localInferenceStreamingEnabled
                             onToggled: settingsPage.viewModel.localInferenceStreamingEnabled = checked
@@ -474,6 +620,7 @@ Item {
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontBody
                                 verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.WordWrap
                             }
                             indicator: Rectangle {
                                 implicitWidth: 18
@@ -482,18 +629,26 @@ Item {
                                 y: parent.height / 2 - height / 2
                                 radius: SentinelTheme.radiusSm
                                 color: streamingToggle.checked
-                                       ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.16)
+                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                                border.color: streamingToggle.activeFocus
-                                              ? SentinelTheme.focusBorder
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                border.color: InteractionTokens.borderColor(streamingToggle.activeFocus,
+                                                                             streamingToggle.hovered,
+                                                                             streamingToggle.checked,
+                                                                             settingsPage.modeAccent)
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 8
                                     height: 8
                                     radius: 4
                                     visible: streamingToggle.checked
-                                    color: SentinelTheme.accent
+                                    color: settingsPage.modeAccent
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: MotionTokens.fast
+                                        easing.type: MotionTokens.standard
+                                    }
                                 }
                             }
                         }
@@ -502,6 +657,7 @@ Item {
                             id: contextToggle
                             Layout.fillWidth: true
                             text: "Use local memory/context in chat"
+                            hoverEnabled: true
                             leftPadding: contextToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.promptContextInjectionEnabled
                             onToggled: settingsPage.viewModel.promptContextInjectionEnabled = checked
@@ -510,7 +666,7 @@ Item {
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontBody
                                 verticalAlignment: Text.AlignVCenter
-                                elide: Text.ElideRight
+                                wrapMode: Text.WordWrap
                             }
                             indicator: Rectangle {
                                 implicitWidth: 18
@@ -519,18 +675,26 @@ Item {
                                 y: parent.height / 2 - height / 2
                                 radius: SentinelTheme.radiusSm
                                 color: contextToggle.checked
-                                       ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.16)
+                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                                border.color: contextToggle.activeFocus
-                                              ? SentinelTheme.focusBorder
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                border.color: InteractionTokens.borderColor(contextToggle.activeFocus,
+                                                                             contextToggle.hovered,
+                                                                             contextToggle.checked,
+                                                                             settingsPage.modeAccent)
                                 Rectangle {
                                     anchors.centerIn: parent
                                     width: 8
                                     height: 8
                                     radius: 4
                                     visible: contextToggle.checked
-                                    color: SentinelTheme.accent
+                                    color: settingsPage.modeAccent
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: MotionTokens.fast
+                                        easing.type: MotionTokens.standard
+                                    }
                                 }
                             }
                         }
@@ -578,8 +742,10 @@ Item {
                             rowSpacing: SentinelTheme.spaceSm
 
                             Label {
+                                Layout.fillWidth: true
                                 text: "Piper binary"
                                 color: SentinelTheme.textMuted
+                                wrapMode: Text.WordWrap
                             }
 
                             SentinelTextField {
@@ -591,8 +757,10 @@ Item {
                             }
 
                             Label {
+                                Layout.fillWidth: true
                                 text: "Piper model"
                                 color: SentinelTheme.textMuted
+                                wrapMode: Text.WordWrap
                             }
 
                             SentinelTextField {
@@ -604,8 +772,10 @@ Item {
                             }
 
                             Label {
+                                Layout.fillWidth: true
                                 text: "Whisper binary"
                                 color: SentinelTheme.textMuted
+                                wrapMode: Text.WordWrap
                             }
 
                             SentinelTextField {
@@ -617,8 +787,10 @@ Item {
                             }
 
                             Label {
+                                Layout.fillWidth: true
                                 text: "Whisper model"
                                 color: SentinelTheme.textMuted
+                                wrapMode: Text.WordWrap
                             }
 
                             SentinelTextField {
@@ -642,6 +814,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Readiness"
                             value: settingsPage.voiceReadinessLine()
                             Layout.fillWidth: true
@@ -649,6 +822,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Whisper"
                             value: settingsPage.viewModel.whisperTranscriptionStatus
                                    + " / "
@@ -658,6 +832,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Piper"
                             value: settingsPage.viewModel.piperSynthesisStatus
                                    + " / "
@@ -704,6 +879,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Active Conversation"
                             value: settingsPage.viewModel.activeConversationSummary
                                    + " / "
@@ -831,6 +1007,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Runtime Safety"
                             value: settingsPage.viewModel.runtimeSafetyDecision + " / "
                                    + settingsPage.viewModel.runtimeSafetySummary
@@ -839,6 +1016,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Permissions"
                             value: settingsPage.viewModel.runtimePermissionDecision + " / "
                                    + settingsPage.viewModel.runtimePermissionSummary
@@ -853,6 +1031,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Pipeline"
                             value: settingsPage.viewModel.voicePipelineSessionStatus + " / "
                                    + settingsPage.viewModel.voicePipelineSessionSummary
@@ -861,6 +1040,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Safety"
                             value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / "
                                    + settingsPage.viewModel.voiceRuntimeSafetySummary
@@ -869,6 +1049,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            valueMaximumLineCount: 8
                             label: "Audio File"
                             value: settingsPage.viewModel.audioFileSessionStatus + " / "
                                    + settingsPage.viewModel.audioFileSessionReadinessSummary
@@ -876,41 +1057,120 @@ Item {
                         }
                     }
                 }
+
+                Item {
+                    width: parent.width
+                    height: SentinelTheme.space2Xl
+                }
             }
         }
     }
 
-    Dialog {
+    SentinelOverlayModal {
         id: clearMemoryDialog
-        title: "Clear local memory?"
-        modal: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        anchors.centerIn: parent
+        preferredWidth: 420
+        preferredHeight: 210
+        accent: settingsPage.modeAccent
+        modeName: settingsPage.viewModel.currentModeName
 
-        Label {
-            text: "This clears local memory entries only. Settings are kept."
-            color: SentinelTheme.textPrimary
-            wrapMode: Text.WordWrap
-            width: 320
+        contentItem: ColumnLayout {
+            anchors.fill: parent
+            spacing: SentinelTheme.spaceMd
+            anchors.margins: SentinelTheme.spaceLg
+
+            Label {
+                Layout.fillWidth: true
+                text: "Clear local memory?"
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontCard
+                font.bold: true
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: "This clears local memory entries only. Settings are kept."
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+                font.pixelSize: SentinelTheme.fontBody
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: SentinelTheme.spaceSm
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                SentinelButton {
+                    text: "Cancel"
+                    Layout.preferredWidth: 96
+                    onClicked: clearMemoryDialog.close()
+                }
+
+                SentinelButton {
+                    text: "Clear"
+                    Layout.preferredWidth: 96
+                    onClicked: {
+                        settingsPage.viewModel.clearMemory()
+                        clearMemoryDialog.close()
+                    }
+                }
+            }
         }
-
-        onAccepted: settingsPage.viewModel.clearMemory()
     }
 
-    Dialog {
+    SentinelOverlayModal {
         id: clearChatDialog
-        title: "Clear chat history?"
-        modal: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        anchors.centerIn: parent
+        preferredWidth: 460
+        preferredHeight: 230
+        accent: settingsPage.modeAccent
+        modeName: settingsPage.viewModel.currentModeName
 
-        Label {
-            text: "This clears the runtime transcript and persisted local chat history when available, then restores the single initial system message. Settings and memory are kept."
-            color: SentinelTheme.textPrimary
-            wrapMode: Text.WordWrap
-            width: 360
+        contentItem: ColumnLayout {
+            anchors.fill: parent
+            spacing: SentinelTheme.spaceMd
+            anchors.margins: SentinelTheme.spaceLg
+
+            Label {
+                Layout.fillWidth: true
+                text: "Clear chat history?"
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontCard
+                font.bold: true
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: "This clears the runtime transcript and persisted local chat history when available, then restores the single initial system message. Settings and memory are kept."
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+                font.pixelSize: SentinelTheme.fontBody
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: SentinelTheme.spaceSm
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                SentinelButton {
+                    text: "Cancel"
+                    Layout.preferredWidth: 96
+                    onClicked: clearChatDialog.close()
+                }
+
+                SentinelButton {
+                    text: "Clear"
+                    Layout.preferredWidth: 96
+                    onClicked: {
+                        settingsPage.viewModel.clearChat()
+                        clearChatDialog.close()
+                    }
+                }
+            }
         }
-
-        onAccepted: settingsPage.viewModel.clearChat()
     }
 }

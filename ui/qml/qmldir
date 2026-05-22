@@ -1,11 +1,14 @@
 module Sentinel.Desktop
 
 singleton SentinelTheme 1.0 theme/SentinelTheme.qml
+singleton MotionTokens 1.0 theme/MotionTokens.qml
+singleton InteractionTokens 1.0 theme/InteractionTokens.qml
 
 Main 1.0 Main.qml
 
 ActiveAgentsPanel 1.0 components/ActiveAgentsPanel.qml
 Atmosphere 1.0 components/Atmosphere.qml
+CommandPalette 1.0 components/CommandPalette.qml
 CognitionStreamPanel 1.0 components/CognitionStreamPanel.qml
 GlowSurface 1.0 components/GlowSurface.qml
 HeaderBar 1.0 components/HeaderBar.qml
@@ -15,6 +18,7 @@ RuntimeBadge 1.0 components/RuntimeBadge.qml
 SectionTitle 1.0 components/SectionTitle.qml
 SentinelButton 1.0 components/SentinelButton.qml
 SentinelDock 1.0 components/SentinelDock.qml
+SentinelOverlayModal 1.0 components/SentinelOverlayModal.qml
 SentinelOrb 1.0 components/SentinelOrb.qml
 SentinelTelemetry 1.0 components/SentinelTelemetry.qml
 SentinelTextField 1.0 components/SentinelTextField.qml

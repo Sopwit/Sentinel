@@ -11,6 +11,7 @@ ScrollView {
     readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property bool retrievalActive: viewModel.retrievalPlanningSelectedSourceCount > 0
     readonly property bool contextActive: viewModel.contextAssemblyAvailableSourceCount > 0
+    readonly property string uiSelfCheck: "developer-gated grouped-diagnostics bottom-safe-scroll"
     property string selectedSection: "Overview"
     onDeveloperModeChanged: {
         if (!developerMode && selectedSection === "Developer")
@@ -18,6 +19,18 @@ ScrollView {
     }
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
+    ScrollBar.vertical: ScrollBar {
+        policy: ScrollBar.AsNeeded
+        contentItem: Rectangle {
+            implicitWidth: 4
+            radius: 2
+            color: SentinelTheme.withAlpha(SentinelTheme.modeAccent(memoryPage.viewModel.currentModeName),
+                                           parent.active ? 0.34 : 0.18)
+        }
+        background: Rectangle {
+            color: "transparent"
+        }
+    }
 
     contentWidth: availableWidth
 
@@ -53,12 +66,14 @@ ScrollView {
                             Button {
                                 id: memoryTabButton
                                 required property string modelData
+                                readonly property bool active: memoryPage.selectedSection === memoryTabButton.modelData
                                 text: modelData
+                                hoverEnabled: true
                                 onClicked: memoryPage.selectedSection = modelData
 
                                 contentItem: Label {
                                     text: memoryTabButton.text
-                                    color: memoryPage.selectedSection === memoryTabButton.modelData
+                                    color: memoryTabButton.active
                                            ? SentinelTheme.textPrimary
                                            : SentinelTheme.textMuted
                                     horizontalAlignment: Text.AlignHCenter
@@ -71,12 +86,26 @@ ScrollView {
                                     implicitWidth: 112
                                     implicitHeight: 32
                                     radius: 16
-                                    color: memoryPage.selectedSection === memoryTabButton.modelData
-                                           ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(memoryPage.viewModel.currentModeName), 0.14)
-                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.035)
-                                    border.color: memoryTabButton.activeFocus
-                                                  ? SentinelTheme.focusBorder
-                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.075)
+                                    color: InteractionTokens.surfaceColor(memoryTabButton.hovered, memoryTabButton.down,
+                                                                           memoryTabButton.active,
+                                                                           SentinelTheme.modeAccent(memoryPage.viewModel.currentModeName))
+                                    border.color: InteractionTokens.borderColor(memoryTabButton.activeFocus, memoryTabButton.hovered,
+                                                                                 memoryTabButton.active,
+                                                                                 SentinelTheme.modeAccent(memoryPage.viewModel.currentModeName))
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: MotionTokens.fast
+                                            easing.type: MotionTokens.standard
+                                        }
+                                    }
+
+                                    Behavior on border.color {
+                                        ColorAnimation {
+                                            duration: MotionTokens.fast
+                                            easing.type: MotionTokens.standard
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -84,7 +113,7 @@ ScrollView {
 
                     Label {
                         Layout.fillWidth: true
-                        visible: !memoryPage.developerMode
+                        visible: false
                         text: "Developer metadata is hidden. Enable Developer Mode in Settings to view read-only internals."
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
@@ -150,6 +179,15 @@ ScrollView {
                         }
 
                     }
+
+                    Label {
+                        Layout.fillWidth: true
+                        visible: memoryPage.viewModel.memoryEntryCount === 0
+                        text: "Memory is empty until you save a local key-value note."
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
+                    }
                 }
             }
 
@@ -164,10 +202,10 @@ ScrollView {
                     x: memoryPage.panelPadding
                     y: memoryPage.panelPadding
                     width: parent.width - memoryPage.panelPadding * 2
-                    spacing: SentinelTheme.spaceSm
+                    spacing: SentinelTheme.spaceMd
 
                     SectionTitle {
-                        title: "Context Pipeline"
+                        title: "Developer Context"
                         subtitle: "Committed memory feeds deterministic recall, assembly, and retrieval planning. Semantic retrieval remains disabled."
                         Layout.fillWidth: true
                     }
@@ -222,11 +260,12 @@ ScrollView {
                             Layout.fillWidth: true
                         }
 
-                        InfoRow {
-                            compact: true
-                            label: "Provider Capability"
-                            value: memoryPage.viewModel.semanticProviderReadiness + " / "
-                                   + memoryPage.viewModel.semanticProviderCapabilitySummaries.join(", ")
+                    InfoRow {
+                        compact: true
+                        valueMaximumLineCount: 8
+                        label: "Provider Capability"
+                        value: memoryPage.viewModel.semanticProviderReadiness + " / "
+                               + memoryPage.viewModel.semanticProviderCapabilitySummaries.join(", ")
                             Layout.fillWidth: true
                         }
 
@@ -373,10 +412,10 @@ ScrollView {
                     x: memoryPage.panelPadding
                     y: memoryPage.panelPadding
                     width: parent.width - memoryPage.panelPadding * 2
-                    spacing: SentinelTheme.spaceSm
+                    spacing: SentinelTheme.spaceMd
 
                     SectionTitle {
-                        title: "Context Assembly"
+                        title: "Context"
                         subtitle: "Planning metadata only. Prompt assembly and automatic attachment remain disabled."
                         Layout.fillWidth: true
                     }
@@ -425,8 +464,7 @@ ScrollView {
                             text: modelData
                             color: SentinelTheme.textMuted
                             wrapMode: Text.WordWrap
-                            maximumLineCount: 3
-                            elide: Text.ElideRight
+                            maximumLineCount: 5
                             Layout.fillWidth: true
                         }
                     }
@@ -794,6 +832,10 @@ ScrollView {
                 clip: true
                 spacing: SentinelTheme.spaceSm
                 model: memoryPage.viewModel.memoryEntries
+                boundsBehavior: Flickable.StopAtBounds
+                boundsMovement: Flickable.StopAtBounds
+                maximumFlickVelocity: 2200
+                flickDeceleration: 5200
 
                 delegate: Rectangle {
                     id: memoryDelegate
@@ -823,6 +865,11 @@ ScrollView {
                 text: "No saved key-value memory yet. Store saves local memory only; it does not call a model, use cloud, or extract automatically."
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignHCenter
+            }
+
+            Item {
+                width: parent.width
+                height: SentinelTheme.space2Xl
             }
         }
     }

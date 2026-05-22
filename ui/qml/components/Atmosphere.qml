@@ -35,25 +35,6 @@ Item {
             y: (index * 61) % Math.max(1, atmosphere.height)
             color: SentinelTheme.withAlpha(atmosphere.accentColor, 0.18)
             opacity: modeName === "Minimal Mode" ? 0.18 : 0.58
-
-            SequentialAnimation on y {
-                loops: Animation.Infinite
-                running: atmosphere.visible
-                PauseAnimation {
-                    duration: index * 35
-                }
-                NumberAnimation {
-                    from: (index * 61) % Math.max(1, atmosphere.height)
-                    to: ((index * 61) % Math.max(1, atmosphere.height)) - 14
-                    duration: 2600 + (index % 6) * 420
-                    easing.type: Easing.InOutSine
-                }
-                NumberAnimation {
-                    to: (index * 61) % Math.max(1, atmosphere.height)
-                    duration: 2600 + (index % 6) * 420
-                    easing.type: Easing.InOutSine
-                }
-            }
         }
     }
 
