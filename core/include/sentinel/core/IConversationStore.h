@@ -56,8 +56,8 @@ inline QString conversationRecordSummary(const ConversationRecord& record) {
         .arg(record.messageCount)
         .arg(record.messageCount == 1 ? QStringLiteral("message") : QStringLiteral("messages"))
         .arg(record.archived ? QStringLiteral("Archived")
-                             : record.pinned ? QStringLiteral("Pinned")
-                                             : QStringLiteral("Active"));
+             : record.pinned ? QStringLiteral("Pinned")
+                             : QStringLiteral("Active"));
 }
 
 struct ConversationMessageRecord {

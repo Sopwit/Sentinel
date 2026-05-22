@@ -51,8 +51,7 @@ WhisperTranscriptionTrace trace(const QString& stage, WhisperTranscriptionStatus
     return WhisperTranscriptionTrace{stage, status, false, summary};
 }
 
-WhisperTranscriptionResult refusedResult(WhisperTranscriptionStatus status,
-                                         const QString& reason,
+WhisperTranscriptionResult refusedResult(WhisperTranscriptionStatus status, const QString& reason,
                                          const WhisperTranscriptionRequest& request,
                                          const WhisperTranscriptionConfig& config,
                                          const QStringList& traces) {
@@ -114,39 +113,34 @@ QString whisperTranscriptionStatusName(WhisperTranscriptionStatus status) {
     return QStringLiteral("Disabled");
 }
 
-QString whisperTranscriptionReadinessSummary(
-    const WhisperTranscriptionReadiness& readiness) {
+QString whisperTranscriptionReadinessSummary(const WhisperTranscriptionReadiness& readiness) {
     return readiness.summary;
 }
 
-QString whisperTranscriptionSafetySummary(
-    const WhisperTranscriptionSafetyReport& report) {
+QString whisperTranscriptionSafetySummary(const WhisperTranscriptionSafetyReport& report) {
     return report.summary;
 }
 
-QString safeWhisperTranscriptionResultSummary(
-    const WhisperTranscriptionResult& result) {
+QString safeWhisperTranscriptionResultSummary(const WhisperTranscriptionResult& result) {
     return result.summary.trimmed().isEmpty()
                ? QStringLiteral("Whisper transcription %1.")
                      .arg(whisperTranscriptionStatusName(result.status))
                : result.summary.trimmed();
 }
 
-QStringList whisperTranscriptionTraceSummaries(
-    const QList<WhisperTranscriptionTrace>& traces) {
+QStringList whisperTranscriptionTraceSummaries(const QList<WhisperTranscriptionTrace>& traces) {
     QStringList summaries;
     for (const auto& item : traces) {
-        summaries.append(QStringLiteral("%1 [%2]: %3 Execution attempted: %4")
-                             .arg(item.stage, whisperTranscriptionStatusName(item.status),
-                                  item.summary,
-                                  item.executionAttempted ? QStringLiteral("yes")
-                                                          : QStringLiteral("no")));
+        summaries.append(
+            QStringLiteral("%1 [%2]: %3 Execution attempted: %4")
+                .arg(item.stage, whisperTranscriptionStatusName(item.status), item.summary,
+                     item.executionAttempted ? QStringLiteral("yes") : QStringLiteral("no")));
     }
     return summaries;
 }
 
-WhisperTranscriptionSafetyReport whisperTranscriptionSafetyReport(
-    const WhisperTranscriptionPolicy& policy) {
+WhisperTranscriptionSafetyReport
+whisperTranscriptionSafetyReport(const WhisperTranscriptionPolicy& policy) {
     WhisperTranscriptionSafetyReport report;
     report.status = QStringLiteral("Blocked");
     report.summary =
@@ -202,8 +196,8 @@ WhisperTranscriptionConfig defaultDisabledWhisperTranscriptionConfig() {
         false,
         QStringLiteral("Whisper model path is not configured or loaded."),
     };
-    config.summary = QStringLiteral(
-        "Whisper transcription is disabled and exposes readiness metadata only.");
+    config.summary =
+        QStringLiteral("Whisper transcription is disabled and exposes readiness metadata only.");
     return config;
 }
 
@@ -231,8 +225,9 @@ WhisperTranscriptionConfig configuredWhisperTranscriptionConfig(const QString& b
     return config;
 }
 
-WhisperTranscriptionReadiness whisperTranscriptionReadiness(
-    const WhisperTranscriptionConfig& config, const WhisperTranscriptionRequest& request) {
+WhisperTranscriptionReadiness
+whisperTranscriptionReadiness(const WhisperTranscriptionConfig& config,
+                              const WhisperTranscriptionRequest& request) {
     const auto binaryConfigured = configuredPath(config.binary.expectedPath);
     const auto modelConfigured = configuredPath(config.model.expectedPath);
     const auto audioConfigured = configuredPath(request.audioPath);
@@ -295,12 +290,12 @@ QString NullWhisperTranscriptionClient::statusSummary() const {
                           "Whisper, reads audio, opens microphones, or sends transcripts.");
 }
 
-WhisperTranscriptionResult NullWhisperTranscriptionClient::transcribe(
-    const WhisperTranscriptionRequest& request, const WhisperTranscriptionConfig& config) {
+WhisperTranscriptionResult
+NullWhisperTranscriptionClient::transcribe(const WhisperTranscriptionRequest& request,
+                                           const WhisperTranscriptionConfig& config) {
     Q_UNUSED(config);
     return refusedResult(WhisperTranscriptionStatus::Disabled,
-                         QStringLiteral("disabled by default"),
-                         request,
+                         QStringLiteral("disabled by default"), request,
                          defaultDisabledWhisperTranscriptionConfig(),
                          {QStringLiteral("Null Whisper client refused transcription without side "
                                          "effects.")});
@@ -315,8 +310,9 @@ QString LocalWhisperTranscriptionClient::statusSummary() const {
                           "skeleton; it validates metadata and refuses before subprocess start.");
 }
 
-WhisperTranscriptionResult LocalWhisperTranscriptionClient::transcribe(
-    const WhisperTranscriptionRequest& request, const WhisperTranscriptionConfig& config) {
+WhisperTranscriptionResult
+LocalWhisperTranscriptionClient::transcribe(const WhisperTranscriptionRequest& request,
+                                            const WhisperTranscriptionConfig& config) {
     const auto readiness = whisperTranscriptionReadiness(config, request);
     QStringList traces = {
         QStringLiteral("Request metadata accepted for validation only."),
@@ -326,35 +322,25 @@ WhisperTranscriptionResult LocalWhisperTranscriptionClient::transcribe(
     if (request.timeoutMs <= 0) {
         traces.append(QStringLiteral("Timeout metadata fallback selected before execution."));
         return refusedResult(WhisperTranscriptionStatus::Timeout,
-                             QStringLiteral("timeout budget invalid"),
-                             request,
-                             config,
-                             traces);
+                             QStringLiteral("timeout budget invalid"), request, config, traces);
     }
     if (readiness.status != WhisperTranscriptionStatus::ReadyMetadata) {
-        return refusedResult(readiness.status,
-                             whisperTranscriptionStatusName(readiness.status),
-                             request,
-                             config,
-                             traces);
+        return refusedResult(readiness.status, whisperTranscriptionStatusName(readiness.status),
+                             request, config, traces);
     }
     if (request.allowMicrophoneCapture || request.allowAudioPlayback ||
         request.allowPromptInjection || request.allowAutomaticChatSend ||
         !request.allowProcessExecution || config.policy.processExecutionAllowed) {
         traces.append(QStringLiteral("Safety policy refused runtime privileges."));
         return refusedResult(WhisperTranscriptionStatus::SafetyBlocked,
-                             QStringLiteral("runtime execution remains out of scope"),
-                             request,
-                             config,
-                             traces);
+                             QStringLiteral("runtime execution remains out of scope"), request,
+                             config, traces);
     }
 
     traces.append(QStringLiteral("Local Whisper skeleton reached the execution boundary and "
                                  "refused without launching a subprocess."));
     return refusedResult(WhisperTranscriptionStatus::Refused,
-                         QStringLiteral("Whisper execution phase not enabled"),
-                         request,
-                         config,
+                         QStringLiteral("Whisper execution phase not enabled"), request, config,
                          traces);
 }
 

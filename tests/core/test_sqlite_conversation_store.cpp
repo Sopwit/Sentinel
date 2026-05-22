@@ -12,9 +12,9 @@ using sentinel::core::ChatMessage;
 using sentinel::core::ChatMessageStatus;
 using sentinel::core::ChatRole;
 using sentinel::core::ConversationMessageRecord;
-using sentinel::core::ConversationSummaryMetadataRecord;
 using sentinel::core::ConversationStoreErrorCode;
 using sentinel::core::ConversationStoreStatus;
+using sentinel::core::ConversationSummaryMetadataRecord;
 using sentinel::core::SQLiteChatHistoryStore;
 using sentinel::core::SQLiteConversationStore;
 
@@ -256,8 +256,7 @@ void SQLiteConversationStoreTest::persistsSummaryMetadataWithoutPromptText() {
         ConversationSummaryMetadataRecord metadata;
         metadata.conversationId = conversationId;
         metadata.summaryTimestampUtc =
-            QDateTime::fromString(QStringLiteral("2026-05-23T10:00:00.000Z"),
-                                  Qt::ISODateWithMs);
+            QDateTime::fromString(QStringLiteral("2026-05-23T10:00:00.000Z"), Qt::ISODateWithMs);
         metadata.coveredFirstMessageId = 2;
         metadata.coveredLastMessageId = 18;
         metadata.estimatedReductionPercent = 74;

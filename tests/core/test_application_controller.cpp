@@ -1018,7 +1018,7 @@ void ApplicationControllerTest::exposesAgentTaskRuntimeMetadata() {
     QCOMPARE(controller->agentPlanningCandidateCount(), 6);
     QCOMPARE(controller->agentPlanningRefusedCount(), 0);
     QVERIFY(controller->agentPlanningSessionSummary().contains(QStringLiteral("execution "
-                                                                               "attempted: no")));
+                                                                              "attempted: no")));
     QCOMPARE(controller->agentPlanningCandidateSummaries().size(), 6);
     QCOMPARE(controller->agentPlanningArbitrationSummaries().size(), 6);
     QVERIFY(controller->agentPlanningFallbackSummary().contains(QStringLiteral("No planning "
@@ -1329,7 +1329,8 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QVERIFY(!voiceSession.safetyReport.piperExecutionAllowed);
     QCOMPARE(controller.chatHistory().size(), chatCountBeforeVoicePipeline);
     QCOMPARE(controller.voicePipelineSessionStatus(), QStringLiteral("fallback"));
-    QVERIFY(controller.voicePipelineSessionSummary().contains(QStringLiteral("execution attempted: no")));
+    QVERIFY(controller.voicePipelineSessionSummary().contains(
+        QStringLiteral("execution attempted: no")));
     QCOMPARE(controller.voicePipelineSessionStageReadinessSummaries().size(), 5);
     QVERIFY(controller.voicePipelineSessionStageReadinessSummaries()
                 .join(QStringLiteral(" "))
@@ -1337,8 +1338,8 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QVERIFY(controller.voicePipelineSessionTraceSummaries()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("no transcript")));
-    QVERIFY(controller.voicePipelineSessionFallbackSummary().contains(
-        QStringLiteral("no chat send")));
+    QVERIFY(
+        controller.voicePipelineSessionFallbackSummary().contains(QStringLiteral("no chat send")));
     QVERIFY(controller.voicePipelineSessionSafetySummary().contains(
         QStringLiteral("no-execution guarantees")));
     QCOMPARE(controller.voicePipelineSessionSafetyChecks().size(), 8);
@@ -1401,8 +1402,8 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
         QStringLiteral("execution attempted: no")));
     QVERIFY(controller.whisperTranscriptionLastSummary().contains(
         QStringLiteral("No Whisper transcription request")));
-    QVERIFY(controller.whisperTranscriptionFallbackSummary().contains(
-        QStringLiteral("no transcript")));
+    QVERIFY(
+        controller.whisperTranscriptionFallbackSummary().contains(QStringLiteral("no transcript")));
     QVERIFY(controller.whisperTranscriptionSafetySummary().contains(
         QStringLiteral("execution attempted: no")));
     QVERIFY(controller.whisperTranscriptionTraceSummaries()
@@ -1456,9 +1457,9 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
         QStringLiteral("2 configured, 1 missing")));
     QVERIFY(controller.whisperTranscriptionSafetySummary().contains(
         QStringLiteral("automatic chat send")));
-    QVERIFY(controller.piperRuntimeReadinessSummary().contains(QStringLiteral("disabled by default")));
-    QVERIFY(controller.whisperRuntimeReadinessSummary().contains(
-        QStringLiteral("readiness-only")));
+    QVERIFY(
+        controller.piperRuntimeReadinessSummary().contains(QStringLiteral("disabled by default")));
+    QVERIFY(controller.whisperRuntimeReadinessSummary().contains(QStringLiteral("readiness-only")));
     QVERIFY(controller.voiceConfigurationReadinessSummary().contains(
         QStringLiteral("Piper file-output TTS: Ready")));
     QVERIFY(controller.voiceConfigurationReadinessSummary().contains(
@@ -1531,7 +1532,8 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
     controller.setWhisperBinaryPath(QStringLiteral("https://example.invalid/whisper"));
     QCOMPARE(controller.whisperRuntimeStatus(), QStringLiteral("Refused"));
     QCOMPARE(controller.voiceRuntimeRefusedCount(), 1);
-    QVERIFY(controller.whisperRuntimeReadinessSummary().contains(QStringLiteral("unsafe/non-local")));
+    QVERIFY(
+        controller.whisperRuntimeReadinessSummary().contains(QStringLiteral("unsafe/non-local")));
     QVERIFY(!controller.whisperRuntimeReadinessSummary().contains(
         QStringLiteral("https://example.invalid")));
     QVERIFY(!controller.voiceRuntimeSafetyReportSummary().contains(
@@ -1555,8 +1557,8 @@ void ApplicationControllerTest::piperFileOutputExecutionRequiresExplicitOptIn() 
     QVERIFY(!generated);
     QVERIFY(!fixture.client->called);
     QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
-    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("refused")));
+    QVERIFY(
+        fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
     QCOMPARE(fixture.controller->piperFileOutputAudioPathSummary(),
              QStringLiteral("No generated Piper audio file."));
 }
@@ -1573,8 +1575,8 @@ void ApplicationControllerTest::piperFileOutputExecutionUsesFakeClientForControl
     QVERIFY(!generated);
     QVERIFY(!fixture.client->called);
     QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
-    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("refused")));
+    QVERIFY(
+        fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
     QCOMPARE(fixture.controller->piperFileOutputAudioPathSummary(),
              QStringLiteral("No generated Piper audio file."));
     QVERIFY(fixture.controller->piperSynthesisSafetySummary().contains(
@@ -1591,8 +1593,8 @@ void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout
     QVERIFY(!failed.controller->generatePiperTtsFile(QStringLiteral("hello")));
     QVERIFY(!failed.client->called);
     QCOMPARE(failed.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
-    QVERIFY(failed.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("refused")));
+    QVERIFY(
+        failed.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
 
     QTemporaryDir timeoutDir;
     QVERIFY(timeoutDir.isValid());
@@ -1603,8 +1605,8 @@ void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout
     QVERIFY(!timedOut.controller->generatePiperTtsFile(QStringLiteral("hello")));
     QVERIFY(!timedOut.client->called);
     QCOMPARE(timedOut.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
-    QVERIFY(timedOut.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("refused")));
+    QVERIFY(
+        timedOut.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
 }
 
 void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrModel() {
@@ -1625,10 +1627,9 @@ void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrMod
 
     QVERIFY(!fixture.controller->generatePiperTtsFile(QStringLiteral("hello")));
     QVERIFY(!fixture.client->called);
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(),
-             QStringLiteral("Disabled"));
-    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("refused")));
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QVERIFY(
+        fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
 }
 
 void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetadata() {
@@ -4359,8 +4360,8 @@ void ApplicationControllerTest::conversationCompressionReadinessPlansMetadataWit
             controller->conversationCompressionStatus() == QStringLiteral("Approaching"));
     QVERIFY(controller->conversationCompressionCandidateCount() > 0);
     QVERIFY(controller->conversationCompressionSelectedCandidateCount() > 0);
-    QVERIFY(controller->conversationCompressionReadinessSummary().contains(
-        QStringLiteral("pressure")));
+    QVERIFY(
+        controller->conversationCompressionReadinessSummary().contains(QStringLiteral("pressure")));
     QVERIFY(controller->conversationCompressionTraceSummary().contains(QStringLiteral("selected")));
     QCOMPARE(controller->memoryEntries(), beforeEntries);
     QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);

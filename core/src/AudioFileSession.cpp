@@ -98,8 +98,8 @@ QStringList supportedAudioFileExtensions() {
 QStringList supportedAudioFileExtensionSummaries() {
     QStringList summaries;
     for (const auto& extension : supportedAudioFileExtensions()) {
-        summaries.append(QStringLiteral("%1: supported future offline STT metadata")
-                             .arg(extension));
+        summaries.append(
+            QStringLiteral("%1: supported future offline STT metadata").arg(extension));
     }
     return summaries;
 }
@@ -123,13 +123,12 @@ QStringList audioFileSessionSafetyChecks(const AudioFileSessionSafetyReport& rep
 
 AudioFileSessionSafetyReport audioFileSessionSafetyReport(const AudioFileSessionPolicy& policy) {
     AudioFileSessionSafetyReport report;
-    const auto metadataSafe = policy.metadataOnly && policy.localOnly &&
-                              !policy.fileLoadingAllowed && !policy.waveformDecodingAllowed &&
-                              !policy.transcriptionAllowed && !policy.playbackAllowed &&
-                              !policy.microphoneCaptureAllowed &&
-                              !policy.subprocessExecutionAllowed &&
-                              !policy.filesystemScanningAllowed &&
-                              !policy.automaticIngestionAllowed && !policy.cloudAllowed;
+    const auto metadataSafe =
+        policy.metadataOnly && policy.localOnly && !policy.fileLoadingAllowed &&
+        !policy.waveformDecodingAllowed && !policy.transcriptionAllowed &&
+        !policy.playbackAllowed && !policy.microphoneCaptureAllowed &&
+        !policy.subprocessExecutionAllowed && !policy.filesystemScanningAllowed &&
+        !policy.automaticIngestionAllowed && !policy.cloudAllowed;
     report.status = metadataSafe ? QStringLiteral("Metadata Only") : QStringLiteral("Blocked");
     report.summary =
         QStringLiteral("Audio file session safety preserves no-execution guarantees: execution "
@@ -164,8 +163,8 @@ AudioFileSessionResult buildAudioFileSessionResult(const AudioFileDescriptor& de
     const auto appendValidation = [&result](AudioFileValidationStatus status, bool accepted,
                                             const QString& summary) {
         result.validations.append(validation(status, accepted, summary));
-        result.traces.append(AudioFileTrace{static_cast<int>(result.traces.size() + 1), status,
-                                            false, summary});
+        result.traces.append(
+            AudioFileTrace{static_cast<int>(result.traces.size() + 1), status, false, summary});
     };
 
     const auto extension = extensionFromDescriptor(descriptor);
@@ -221,26 +220,24 @@ AudioFileSessionResult buildAudioFileSessionResult(const AudioFileDescriptor& de
                                         "fallback metadata is selected without reading the file."));
     }
 
-    const auto refused = std::any_of(result.validations.cbegin(), result.validations.cend(),
-                                    [](const AudioFileValidation& item) {
-                                        return item.status ==
-                                                   AudioFileValidationStatus::UnsupportedExtension ||
-                                               item.status == AudioFileValidationStatus::RefusedPath ||
-                                               (!item.accepted &&
-                                                item.status == AudioFileValidationStatus::LocalOnly);
-                                    });
-    const auto fallback = std::any_of(result.validations.cbegin(), result.validations.cend(),
-                                     [](const AudioFileValidation& item) {
-                                         return item.status == AudioFileValidationStatus::EmptyFile ||
-                                                item.status ==
-                                                    AudioFileValidationStatus::OversizedFile ||
-                                                item.status ==
-                                                    AudioFileValidationStatus::SandboxRequired ||
-                                                item.status ==
-                                                    AudioFileValidationStatus::DisabledByPolicy;
-                                     });
+    const auto refused = std::any_of(
+        result.validations.cbegin(), result.validations.cend(),
+        [](const AudioFileValidation& item) {
+            return item.status == AudioFileValidationStatus::UnsupportedExtension ||
+                   item.status == AudioFileValidationStatus::RefusedPath ||
+                   (!item.accepted && item.status == AudioFileValidationStatus::LocalOnly);
+        });
+    const auto fallback =
+        std::any_of(result.validations.cbegin(), result.validations.cend(),
+                    [](const AudioFileValidation& item) {
+                        return item.status == AudioFileValidationStatus::EmptyFile ||
+                               item.status == AudioFileValidationStatus::OversizedFile ||
+                               item.status == AudioFileValidationStatus::SandboxRequired ||
+                               item.status == AudioFileValidationStatus::DisabledByPolicy;
+                    });
     const auto extensionAccepted = std::any_of(
-        result.validations.cbegin(), result.validations.cend(), [](const AudioFileValidation& item) {
+        result.validations.cbegin(), result.validations.cend(),
+        [](const AudioFileValidation& item) {
             return item.status == AudioFileValidationStatus::SupportedExtension && item.accepted;
         });
 
@@ -273,14 +270,15 @@ AudioFileSessionResult buildAudioFileSessionResult(const AudioFileDescriptor& de
         if (item.status == AudioFileValidationStatus::SupportedExtension) {
             ++supportedCount;
         }
-        checks.append(QStringLiteral("%1: %2")
-                          .arg(audioFileValidationStatusName(item.status), item.summary));
+        checks.append(
+            QStringLiteral("%1: %2").arg(audioFileValidationStatusName(item.status), item.summary));
     }
 
-    result.status = !policy.enabled ? AudioFileSessionStatus::Disabled
-                                    : (refused ? AudioFileSessionStatus::Refused
-                                               : (fallback ? AudioFileSessionStatus::Fallback
-                                                           : AudioFileSessionStatus::ReadyMetadata));
+    result.status = !policy.enabled
+                        ? AudioFileSessionStatus::Disabled
+                        : (refused ? AudioFileSessionStatus::Refused
+                                   : (fallback ? AudioFileSessionStatus::Fallback
+                                               : AudioFileSessionStatus::ReadyMetadata));
     result.session.status = result.status;
     result.session.summary =
         QStringLiteral("Audio file session %1: local-only, disabled by default, metadata-only, "
@@ -332,15 +330,15 @@ QString audioFileSessionReadinessSummary(const AudioFileSessionReadiness& readin
     if (!readiness.summary.trimmed().isEmpty()) {
         return readiness.summary.trimmed();
     }
-    return QStringLiteral("Audio file readiness %1.").arg(
-        audioFileSessionStatusName(readiness.status));
+    return QStringLiteral("Audio file readiness %1.")
+        .arg(audioFileSessionStatusName(readiness.status));
 }
 
 QStringList audioFileValidationSummaries(const QList<AudioFileValidation>& validations) {
     QStringList summaries;
     for (const auto& item : validations) {
-        summaries.append(QStringLiteral("%1: %2")
-                             .arg(audioFileValidationStatusName(item.status), item.summary));
+        summaries.append(
+            QStringLiteral("%1: %2").arg(audioFileValidationStatusName(item.status), item.summary));
     }
     return summaries;
 }
@@ -371,8 +369,8 @@ QStringList audioFileSessionRefusalSummaries(const AudioFileSessionResult& resul
     QStringList summaries;
     for (const auto& item : result.validations) {
         if (!item.accepted) {
-            summaries.append(QStringLiteral("%1: %2")
-                                 .arg(audioFileValidationStatusName(item.status), item.summary));
+            summaries.append(QStringLiteral("%1: %2").arg(
+                audioFileValidationStatusName(item.status), item.summary));
         }
     }
     return summaries;

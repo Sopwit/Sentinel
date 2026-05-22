@@ -2,23 +2,23 @@
 
 #include <QtTest>
 
+using sentinel::core::agentCapabilityRegistryStatusName;
+using sentinel::core::agentCapabilitySummaries;
+using sentinel::core::agentPlanningSessionStatusName;
+using sentinel::core::AgentTaskLifecycle;
+using sentinel::core::AgentTaskLifecycleEvent;
+using sentinel::core::agentTaskLifecycleSummaries;
 using sentinel::core::AgentTaskPriority;
 using sentinel::core::agentTaskRuntimeStateName;
 using sentinel::core::AgentTaskSource;
 using sentinel::core::AgentTaskStatus;
 using sentinel::core::agentTaskStatusName;
-using sentinel::core::AgentTaskLifecycle;
-using sentinel::core::AgentTaskLifecycleEvent;
-using sentinel::core::agentTaskLifecycleSummaries;
-using sentinel::core::agentPlanningSessionStatusName;
-using sentinel::core::agentCapabilityRegistryStatusName;
-using sentinel::core::agentCapabilitySummaries;
-using sentinel::core::toolContractRegistryStatusName;
-using sentinel::core::toolContractSummaries;
 using sentinel::core::AgentTaskTrace;
 using sentinel::core::agentTaskTraceSummaries;
 using sentinel::core::AgentTaskType;
 using sentinel::core::StaticAgentTaskRuntime;
+using sentinel::core::toolContractRegistryStatusName;
+using sentinel::core::toolContractSummaries;
 
 class AgentTaskRuntimeTest final : public QObject {
     Q_OBJECT
@@ -77,10 +77,9 @@ void AgentTaskRuntimeTest::ordersQueueByPriorityTimeAndId() {
 
 void AgentTaskRuntimeTest::recordsLifecycleTransitions() {
     StaticAgentTaskRuntime runtime;
-    const auto task = runtime.createTask(AgentTaskType::PlanResponse,
-                                         AgentTaskSource::DesktopReadiness,
-                                         AgentTaskPriority::High,
-                                         QStringLiteral("Plan response metadata."));
+    const auto task =
+        runtime.createTask(AgentTaskType::PlanResponse, AgentTaskSource::DesktopReadiness,
+                           AgentTaskPriority::High, QStringLiteral("Plan response metadata."));
 
     const auto planned = runtime.markTaskPlanned(task.id);
     const auto blocked = runtime.markTaskBlocked(task.id, QStringLiteral("waiting on metadata"));
@@ -144,10 +143,10 @@ void AgentTaskRuntimeTest::ordersLifecycleSummariesDeterministically() {
             AgentTaskLifecycleEvent{3, QStringLiteral("agent-task-test"),
                                     AgentTaskStatus::CompletedMetadata,
                                     QStringLiteral("Completed.")},
-            AgentTaskLifecycleEvent{1, QStringLiteral("agent-task-test"),
-                                    AgentTaskStatus::Queued, QStringLiteral("Queued.")},
-            AgentTaskLifecycleEvent{2, QStringLiteral("agent-task-test"),
-                                    AgentTaskStatus::Planned, QStringLiteral("Planned.")},
+            AgentTaskLifecycleEvent{1, QStringLiteral("agent-task-test"), AgentTaskStatus::Queued,
+                                    QStringLiteral("Queued.")},
+            AgentTaskLifecycleEvent{2, QStringLiteral("agent-task-test"), AgentTaskStatus::Planned,
+                                    QStringLiteral("Planned.")},
         },
         QStringLiteral("Lifecycle summary."),
     };
@@ -220,10 +219,8 @@ void AgentTaskRuntimeTest::createsDeterministicCapabilityRegistry() {
              sentinel::core::AgentCapabilityType::ConversationSummarization);
     QCOMPARE(registry.capabilities.at(6).type,
              sentinel::core::AgentCapabilityType::FilesystemAccess);
-    QCOMPARE(registry.capabilities.at(7).type,
-             sentinel::core::AgentCapabilityType::ShellExecution);
-    QCOMPARE(registry.capabilities.at(8).type,
-             sentinel::core::AgentCapabilityType::PluginRuntime);
+    QCOMPARE(registry.capabilities.at(7).type, sentinel::core::AgentCapabilityType::ShellExecution);
+    QCOMPARE(registry.capabilities.at(8).type, sentinel::core::AgentCapabilityType::PluginRuntime);
 }
 
 void AgentTaskRuntimeTest::keepsDisabledAndRestrictedCapabilitiesNonExecutable() {
@@ -294,15 +291,12 @@ void AgentTaskRuntimeTest::exposesToolContractPermissionAndSandboxMetadata() {
     QCOMPARE(sentinel::core::toolContractSandboxSummaries(registry).size(), 10);
     QCOMPARE(sentinel::core::toolContractReadinessSummaries(registry).size(), 10);
     QCOMPARE(sentinel::core::toolContractSafetySummaries(registry).size(), 10);
-    QVERIFY(sentinel::core::toolContractPermissionSummaries(registry)
-                .at(6)
-                .contains(QStringLiteral("future filesystem access")));
-    QVERIFY(sentinel::core::toolContractPermissionSummaries(registry)
-                .at(7)
-                .contains(QStringLiteral("future subprocess execution")));
-    QVERIFY(sentinel::core::toolContractSandboxSummaries(registry)
-                .at(7)
-                .contains(QStringLiteral("Denied")));
+    QVERIFY(sentinel::core::toolContractPermissionSummaries(registry).at(6).contains(
+        QStringLiteral("future filesystem access")));
+    QVERIFY(sentinel::core::toolContractPermissionSummaries(registry).at(7).contains(
+        QStringLiteral("future subprocess execution")));
+    QVERIFY(sentinel::core::toolContractSandboxSummaries(registry).at(7).contains(
+        QStringLiteral("Denied")));
     QVERIFY(registry.permissionSummary.contains(QStringLiteral("approval-required")));
     QVERIFY(registry.sandboxSummary.contains(QStringLiteral("no filesystem")));
 }

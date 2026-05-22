@@ -84,8 +84,7 @@ QString outputPathSummary(const QString& path, const PiperTtsConfig& config) {
     return QStringLiteral("Controlled Piper TTS output path metadata accepted.");
 }
 
-PiperSynthesisResult refusedSynthesisResult(PiperSynthesisStatus status,
-                                            const QString& reason,
+PiperSynthesisResult refusedSynthesisResult(PiperSynthesisStatus status, const QString& reason,
                                             const PiperSynthesisRequest& request,
                                             const PiperSynthesisConfig& config,
                                             const QStringList& traces) {
@@ -186,18 +185,17 @@ QString piperSynthesisSafetySummary(const PiperSynthesisSafetyReport& report) {
 
 QString safePiperSynthesisResultSummary(const PiperSynthesisResult& result) {
     return result.summary.trimmed().isEmpty()
-               ? QStringLiteral("Piper synthesis %1.")
-                     .arg(piperSynthesisStatusName(result.status))
+               ? QStringLiteral("Piper synthesis %1.").arg(piperSynthesisStatusName(result.status))
                : result.summary.trimmed();
 }
 
 QStringList piperSynthesisTraceSummaries(const QList<PiperSynthesisTrace>& traces) {
     QStringList summaries;
     for (const auto& item : traces) {
-        summaries.append(QStringLiteral("%1 [%2]: %3 Execution attempted: %4")
-                             .arg(item.stage, piperSynthesisStatusName(item.status), item.summary,
-                                  item.executionAttempted ? QStringLiteral("yes")
-                                                          : QStringLiteral("no")));
+        summaries.append(
+            QStringLiteral("%1 [%2]: %3 Execution attempted: %4")
+                .arg(item.stage, piperSynthesisStatusName(item.status), item.summary,
+                     item.executionAttempted ? QStringLiteral("yes") : QStringLiteral("no")));
     }
     return summaries;
 }
@@ -339,13 +337,11 @@ QString NullPiperSynthesisClient::statusSummary() const {
                           "writes audio, plays audio, streams voice, or injects chat.");
 }
 
-PiperSynthesisResult NullPiperSynthesisClient::synthesize(
-    const PiperSynthesisRequest& request, const PiperSynthesisConfig& config) {
+PiperSynthesisResult NullPiperSynthesisClient::synthesize(const PiperSynthesisRequest& request,
+                                                          const PiperSynthesisConfig& config) {
     Q_UNUSED(config);
     return refusedSynthesisResult(
-        PiperSynthesisStatus::Disabled,
-        QStringLiteral("disabled by default"),
-        request,
+        PiperSynthesisStatus::Disabled, QStringLiteral("disabled by default"), request,
         defaultDisabledPiperSynthesisConfig(),
         {QStringLiteral("Null Piper synthesis client refused without side effects.")});
 }
@@ -359,8 +355,8 @@ QString LocalPiperSynthesisClient::statusSummary() const {
                           "validates metadata and refuses before subprocess start.");
 }
 
-PiperSynthesisResult LocalPiperSynthesisClient::synthesize(
-    const PiperSynthesisRequest& request, const PiperSynthesisConfig& config) {
+PiperSynthesisResult LocalPiperSynthesisClient::synthesize(const PiperSynthesisRequest& request,
+                                                           const PiperSynthesisConfig& config) {
     const auto readiness = piperSynthesisReadiness(config, request);
     QStringList traces = {
         QStringLiteral("Request metadata accepted for validation only."),

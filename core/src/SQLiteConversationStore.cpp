@@ -490,8 +490,7 @@ void SQLiteConversationStore::initializeSchema() {
     if (!query.exec(QStringLiteral("ALTER TABLE conversations ADD COLUMN pinned INTEGER NOT NULL "
                                    "DEFAULT 0"))) {
         const auto errorText = query.lastError().text();
-        if (!errorText.contains(QStringLiteral("duplicate column name"),
-                                Qt::CaseInsensitive)) {
+        if (!errorText.contains(QStringLiteral("duplicate column name"), Qt::CaseInsensitive)) {
             setLastError(ConversationStoreErrorCode::StorageFailure, errorText);
             return;
         }

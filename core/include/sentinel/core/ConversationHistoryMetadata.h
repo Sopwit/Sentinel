@@ -307,8 +307,7 @@ struct ConversationDeleteReadiness {
     ConversationDeletePolicy policy;
     bool available = false;
     QString status = QStringLiteral("Disabled");
-    QString summary =
-        QStringLiteral("Permanent delete is not enabled yet. Archive is available.");
+    QString summary = QStringLiteral("Permanent delete is not enabled yet. Archive is available.");
     QStringList checks{
         QStringLiteral("Policy: Archive first"),
         QStringLiteral("Permanent delete: Not enabled yet"),

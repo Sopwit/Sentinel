@@ -36,8 +36,8 @@ struct WhisperTranscriptionPolicy {
     bool filesystemScanAllowed = false;
     bool promptInjectionAllowed = false;
     bool automaticChatSendAllowed = false;
-    QString summary = QStringLiteral(
-        "Whisper transcription policy is disabled, local-only, and metadata-only.");
+    QString summary =
+        QStringLiteral("Whisper transcription policy is disabled, local-only, and metadata-only.");
 };
 
 struct WhisperTranscriptionBudget {
@@ -133,21 +133,18 @@ struct WhisperTranscriptionConfig {
     QString summary = QStringLiteral("Whisper transcription config is disabled.");
 };
 
-QString whisperTranscriptionReadinessSummary(
-    const WhisperTranscriptionReadiness& readiness);
-QString whisperTranscriptionSafetySummary(
-    const WhisperTranscriptionSafetyReport& report);
-QString safeWhisperTranscriptionResultSummary(
-    const WhisperTranscriptionResult& result);
-QStringList whisperTranscriptionTraceSummaries(
-    const QList<WhisperTranscriptionTrace>& traces);
+QString whisperTranscriptionReadinessSummary(const WhisperTranscriptionReadiness& readiness);
+QString whisperTranscriptionSafetySummary(const WhisperTranscriptionSafetyReport& report);
+QString safeWhisperTranscriptionResultSummary(const WhisperTranscriptionResult& result);
+QStringList whisperTranscriptionTraceSummaries(const QList<WhisperTranscriptionTrace>& traces);
 WhisperTranscriptionConfig defaultDisabledWhisperTranscriptionConfig();
 WhisperTranscriptionConfig configuredWhisperTranscriptionConfig(const QString& binaryPath,
                                                                 const QString& modelPath);
-WhisperTranscriptionReadiness whisperTranscriptionReadiness(
-    const WhisperTranscriptionConfig& config, const WhisperTranscriptionRequest& request);
-WhisperTranscriptionSafetyReport whisperTranscriptionSafetyReport(
-    const WhisperTranscriptionPolicy& policy);
+WhisperTranscriptionReadiness
+whisperTranscriptionReadiness(const WhisperTranscriptionConfig& config,
+                              const WhisperTranscriptionRequest& request);
+WhisperTranscriptionSafetyReport
+whisperTranscriptionSafetyReport(const WhisperTranscriptionPolicy& policy);
 
 class IWhisperTranscriptionClient {
 public:
@@ -155,9 +152,8 @@ public:
 
     virtual WhisperTranscriptionStatus status() const = 0;
     virtual QString statusSummary() const = 0;
-    virtual WhisperTranscriptionResult transcribe(
-        const WhisperTranscriptionRequest& request,
-        const WhisperTranscriptionConfig& config) = 0;
+    virtual WhisperTranscriptionResult transcribe(const WhisperTranscriptionRequest& request,
+                                                  const WhisperTranscriptionConfig& config) = 0;
 };
 
 class NullWhisperTranscriptionClient final : public IWhisperTranscriptionClient {

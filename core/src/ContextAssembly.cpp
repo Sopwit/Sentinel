@@ -1,8 +1,8 @@
 #include "sentinel/core/ContextAssembly.h"
 
-#include <algorithm>
 #include <QRegularExpression>
 #include <QSet>
+#include <algorithm>
 
 namespace sentinel::core {
 
@@ -756,24 +756,26 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
         item.truncated = false;
         item.exclusionReason.clear();
 
-        const bool sourceAllowed = (item.source == ContextAssemblySourceKind::Conversation &&
-                                    policy.includeRecentConversation) ||
-                                   (item.source == ContextAssemblySourceKind::ConversationSummary &&
-                                    policy.includeConversationSummary) ||
-                                   (item.source == ContextAssemblySourceKind::CommittedMemory &&
-                                    policy.includeCommittedMemory) ||
-                                   (item.source == ContextAssemblySourceKind::RuntimeMetadata &&
-                                    policy.includeRuntimeMetadata) ||
-                                   (item.source == ContextAssemblySourceKind::Orchestration &&
-                                    policy.includeOrchestration) ||
-                                   (item.source ==
-                                        ContextAssemblySourceKind::SelectedConversationMetadata &&
-                                    policy.includeSelectedConversationMetadata);
+        const bool sourceAllowed =
+            (item.source == ContextAssemblySourceKind::Conversation &&
+             policy.includeRecentConversation) ||
+            (item.source == ContextAssemblySourceKind::ConversationSummary &&
+             policy.includeConversationSummary) ||
+            (item.source == ContextAssemblySourceKind::CommittedMemory &&
+             policy.includeCommittedMemory) ||
+            (item.source == ContextAssemblySourceKind::RuntimeMetadata &&
+             policy.includeRuntimeMetadata) ||
+            (item.source == ContextAssemblySourceKind::Orchestration &&
+             policy.includeOrchestration) ||
+            (item.source == ContextAssemblySourceKind::SelectedConversationMetadata &&
+             policy.includeSelectedConversationMetadata);
 
         if (item.content.isEmpty()) {
-            item.exclusionReason = contextExclusionReasonName(ContextExclusionReason::EmptyCandidate);
+            item.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::EmptyCandidate);
         } else if (!sourceAllowed) {
-            item.exclusionReason = contextExclusionReasonName(ContextExclusionReason::SourceDisabled);
+            item.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::SourceDisabled);
         }
 
         normalized.append(item);
@@ -867,8 +869,10 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
     result.budgetSummary = result.budget.summary;
 
     QList<ContextAssemblySourceKind> sourceOrder{
-        ContextAssemblySourceKind::Conversation,    ContextAssemblySourceKind::ConversationSummary,
-        ContextAssemblySourceKind::CommittedMemory, ContextAssemblySourceKind::RuntimeMetadata,
+        ContextAssemblySourceKind::Conversation,
+        ContextAssemblySourceKind::ConversationSummary,
+        ContextAssemblySourceKind::CommittedMemory,
+        ContextAssemblySourceKind::RuntimeMetadata,
         ContextAssemblySourceKind::Orchestration,
         ContextAssemblySourceKind::SelectedConversationMetadata,
     };
@@ -967,23 +971,22 @@ QStringList retrievalCandidateTraceSummaries(const RetrievalPlanningResult& resu
     QStringList summaries;
     summaries.reserve(result.candidates.size());
     for (const auto& candidate : result.candidates) {
-        summaries.append(QStringLiteral("%1 / %2 / %3 chars / %4")
-                             .arg(candidate.selected ? QStringLiteral("included")
-                                                     : QStringLiteral("excluded"))
-                             .arg(contextAssemblySourceKindName(candidate.source))
-                             .arg(candidate.selected ? candidate.selectedSize
-                                                     : candidate.originalSize)
-                             .arg(candidate.selected
-                                      ? QStringLiteral("deterministic priority")
-                                      : candidate.exclusionReason.simplified()));
+        summaries.append(
+            QStringLiteral("%1 / %2 / %3 chars / %4")
+                .arg(candidate.selected ? QStringLiteral("included") : QStringLiteral("excluded"))
+                .arg(contextAssemblySourceKindName(candidate.source))
+                .arg(candidate.selected ? candidate.selectedSize : candidate.originalSize)
+                .arg(candidate.selected ? QStringLiteral("deterministic priority")
+                                        : candidate.exclusionReason.simplified()));
     }
     return summaries;
 }
 
-MemoryRelevanceSummary rankMemoryRelevance(
-    const QList<MemoryRelevanceCandidate>& candidates, const QString& prompt,
-    const QString& activeConversationTitle, const QString& recentConversationText,
-    const MemoryRelevancePolicy& policy) {
+MemoryRelevanceSummary rankMemoryRelevance(const QList<MemoryRelevanceCandidate>& candidates,
+                                           const QString& prompt,
+                                           const QString& activeConversationTitle,
+                                           const QString& recentConversationText,
+                                           const MemoryRelevancePolicy& policy) {
     MemoryRelevanceSummary summary;
     summary.policy = policy;
     summary.budget.maxCharacters = std::max(0, policy.maxCharacters);
@@ -1012,8 +1015,8 @@ MemoryRelevanceSummary rankMemoryRelevance(
 
         if (selection.candidate.key.trimmed().isEmpty() ||
             selection.candidate.value.trimmed().isEmpty()) {
-            selection.reason.exclusionReason = contextExclusionReasonName(
-                ContextExclusionReason::EmptyCandidate);
+            selection.reason.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::EmptyCandidate);
             evaluated.append(selection);
             continue;
         }
@@ -1027,7 +1030,8 @@ MemoryRelevanceSummary rankMemoryRelevance(
         selection.score.recentConversationTermOverlap = overlapCount(memoryTokens, recentTokens);
         selection.score.committedPriority = selection.candidate.committed ? 1 : 0;
         selection.score.pinnedPriority = selection.candidate.pinned ? 8 : 0;
-        selection.score.total = selection.score.keyOverlap * 40 + selection.score.valueOverlap * 24 +
+        selection.score.total = selection.score.keyOverlap * 40 +
+                                selection.score.valueOverlap * 24 +
                                 selection.score.activeConversationTitleOverlap * 18 +
                                 selection.score.recentConversationTermOverlap * 10 +
                                 selection.score.pinnedPriority + selection.score.committedPriority;
@@ -1052,18 +1056,19 @@ MemoryRelevanceSummary rankMemoryRelevance(
             selection.reason.includedReasons.append(QStringLiteral("committed memory priority"));
         }
 
-        const bool hasLiteralRelevance =
-            selection.score.keyOverlap > 0 || selection.score.valueOverlap > 0 ||
-            selection.score.activeConversationTitleOverlap > 0 ||
-            selection.score.recentConversationTermOverlap > 0;
+        const bool hasLiteralRelevance = selection.score.keyOverlap > 0 ||
+                                         selection.score.valueOverlap > 0 ||
+                                         selection.score.activeConversationTitleOverlap > 0 ||
+                                         selection.score.recentConversationTermOverlap > 0;
         if (!hasLiteralRelevance &&
             !(policy.includePinnedWithoutOverlap && selection.candidate.pinned)) {
             selection.reason.exclusionReason =
                 contextExclusionReasonName(ContextExclusionReason::NotRelevant);
         }
-        selection.reason.summary = !selection.reason.exclusionReason.isEmpty()
-                                       ? selection.reason.exclusionReason
-                                       : selection.reason.includedReasons.join(QStringLiteral(", "));
+        selection.reason.summary =
+            !selection.reason.exclusionReason.isEmpty()
+                ? selection.reason.exclusionReason
+                : selection.reason.includedReasons.join(QStringLiteral(", "));
         evaluated.append(selection);
     }
 
@@ -1195,8 +1200,8 @@ QStringList memoryRelevanceExclusionSummaries(const MemoryRelevanceSummary& summ
     QStringList lines;
     for (const auto& selection : summary.selections) {
         if (!selection.included) {
-            lines.append(QStringLiteral("%1 / %2")
-                             .arg(selection.candidate.key, selection.reason.exclusionReason));
+            lines.append(QStringLiteral("%1 / %2").arg(selection.candidate.key,
+                                                       selection.reason.exclusionReason));
         }
     }
     return lines;
@@ -1282,11 +1287,12 @@ QString salienceGroupName(SalienceBudgetGroup group) {
 
 } // namespace
 
-ConversationSalienceSummary rankConversationSalience(
-    const QList<ConversationSalienceCandidate>& candidates, const QString& explicitUserQuery,
-    const QString& activeConversationTitle, const QString& recentUserMessages,
-    const QString& recentAssistantMessages, const QString& committedMemoryText,
-    const ConversationSaliencePolicy& policy) {
+ConversationSalienceSummary
+rankConversationSalience(const QList<ConversationSalienceCandidate>& candidates,
+                         const QString& explicitUserQuery, const QString& activeConversationTitle,
+                         const QString& recentUserMessages, const QString& recentAssistantMessages,
+                         const QString& committedMemoryText,
+                         const ConversationSaliencePolicy& policy) {
     ConversationSalienceSummary summary;
     summary.policy = policy;
     summary.budget.maxCharacters = std::max(0, policy.maxCharacters);
@@ -1298,9 +1304,9 @@ ConversationSalienceSummary rankConversationSalience(
         summary.budget.maxCharacters * activePercent / totalPercent;
     summary.budget.committedMemoryBudget =
         summary.budget.maxCharacters * memoryPercent / totalPercent;
-    summary.budget.runtimeMetadataBudget =
-        summary.budget.maxCharacters - summary.budget.activeConversationBudget -
-        summary.budget.committedMemoryBudget;
+    summary.budget.runtimeMetadataBudget = summary.budget.maxCharacters -
+                                           summary.budget.activeConversationBudget -
+                                           summary.budget.committedMemoryBudget;
     summary.budget.remainingCharacters = summary.budget.maxCharacters;
     summary.budget.allocationSummary =
         QStringLiteral("Active conversation %1 chars / committed memory %2 chars / runtime "
@@ -1329,9 +1335,9 @@ ConversationSalienceSummary rankConversationSalience(
         selection.candidate.title = candidate.title.simplified();
         selection.candidate.content = candidate.content.simplified();
         selection.selectedText = selection.candidate.content;
-        selection.candidate.originalSize =
-            selection.candidate.originalSize > 0 ? selection.candidate.originalSize
-                                                : toInt(selection.selectedText.size());
+        selection.candidate.originalSize = selection.candidate.originalSize > 0
+                                               ? selection.candidate.originalSize
+                                               : toInt(selection.selectedText.size());
         summary.budget.estimatedCharacters += selection.candidate.originalSize;
 
         if (selection.candidate.content.trimmed().isEmpty()) {
@@ -1342,27 +1348,26 @@ ConversationSalienceSummary rankConversationSalience(
             continue;
         }
 
-        const auto candidateTokens =
-            literalTokens(QStringLiteral("%1 %2").arg(selection.candidate.title,
-                                                     selection.candidate.content));
+        const auto candidateTokens = literalTokens(
+            QStringLiteral("%1 %2").arg(selection.candidate.title, selection.candidate.content));
         selection.score.activeConversationTitleOverlap = overlapCount(candidateTokens, titleTokens);
         selection.score.recentUserMessageOverlap = overlapCount(candidateTokens, recentUserTokens);
         selection.score.recentAssistantMessageOverlap =
             overlapCount(candidateTokens, recentAssistantTokens);
         selection.score.pinnedConversationPriority = selection.candidate.pinned ? 14 : 0;
-        selection.score.committedMemoryOverlap = selection.candidate.committedMemory
-                                                    ? overlapCount(candidateTokens,
-                                                                   committedMemoryTokens)
-                                                    : 0;
+        selection.score.committedMemoryOverlap =
+            selection.candidate.committedMemory
+                ? overlapCount(candidateTokens, committedMemoryTokens)
+                : 0;
         selection.score.explicitQueryTermOverlap = overlapCount(candidateTokens, queryTokens);
         selection.score.recencyWeight = std::max(0, 8 - selection.candidate.recencyRank);
-        selection.score.total =
-            selection.score.explicitQueryTermOverlap * 42 +
-            selection.score.activeConversationTitleOverlap * 24 +
-            selection.score.recentUserMessageOverlap * 18 +
-            selection.score.recentAssistantMessageOverlap * 12 +
-            selection.score.committedMemoryOverlap * 10 +
-            selection.score.pinnedConversationPriority + selection.score.recencyWeight;
+        selection.score.total = selection.score.explicitQueryTermOverlap * 42 +
+                                selection.score.activeConversationTitleOverlap * 24 +
+                                selection.score.recentUserMessageOverlap * 18 +
+                                selection.score.recentAssistantMessageOverlap * 12 +
+                                selection.score.committedMemoryOverlap * 10 +
+                                selection.score.pinnedConversationPriority +
+                                selection.score.recencyWeight;
 
         if (selection.score.explicitQueryTermOverlap > 0) {
             selection.reason.includedReasons.append(QStringLiteral("explicit query literal terms"));
@@ -1392,9 +1397,10 @@ ConversationSalienceSummary rankConversationSalience(
             selection.reason.exclusionReason =
                 contextExclusionReasonName(ContextExclusionReason::NotRelevant);
         }
-        selection.reason.summary = !selection.reason.exclusionReason.isEmpty()
-                                       ? selection.reason.exclusionReason
-                                       : selection.reason.includedReasons.join(QStringLiteral(", "));
+        selection.reason.summary =
+            !selection.reason.exclusionReason.isEmpty()
+                ? selection.reason.exclusionReason
+                : selection.reason.includedReasons.join(QStringLiteral(", "));
         evaluated.append(selection);
     }
 
@@ -1448,7 +1454,8 @@ ConversationSalienceSummary rankConversationSalience(
         const auto group = salienceBudgetGroupForSource(selection.candidate.source);
         const auto groupRemaining =
             salienceGroupBudget(summary.budget, group) - salienceGroupUsed(summary.budget, group);
-        const auto totalRemaining = summary.budget.maxCharacters - summary.budget.includedCharacters;
+        const auto totalRemaining =
+            summary.budget.maxCharacters - summary.budget.includedCharacters;
         const auto allowed = std::min(groupRemaining, totalRemaining);
         if (allowed <= 0) {
             selection.reason.exclusionReason =
@@ -1548,18 +1555,18 @@ QStringList conversationSalienceExclusionSummaries(const ConversationSalienceSum
         if (!selection.included) {
             lines.append(QStringLiteral("%1 / %2 / %3")
                              .arg(contextAssemblySourceKindName(selection.candidate.source),
-                                  selection.candidate.title,
-                                  selection.reason.exclusionReason));
+                                  selection.candidate.title, selection.reason.exclusionReason));
         }
     }
     return lines;
 }
 
-ConversationCompressionSummary planConversationCompression(
-    const QList<ConversationWindowMessage>& messages,
-    const ConversationSummaryResult& existingSummary,
-    const ConversationSalienceSummary& salienceSummary, bool contextInjectionEnabled,
-    const ConversationCompressionPolicy& policy) {
+ConversationCompressionSummary
+planConversationCompression(const QList<ConversationWindowMessage>& messages,
+                            const ConversationSummaryResult& existingSummary,
+                            const ConversationSalienceSummary& salienceSummary,
+                            bool contextInjectionEnabled,
+                            const ConversationCompressionPolicy& policy) {
     ConversationCompressionSummary summary;
     summary.policy = policy;
     summary.budget.maxCandidateCharacters = std::max(0, policy.maxCandidateCharacters);
@@ -1572,8 +1579,7 @@ ConversationCompressionSummary planConversationCompression(
             QStringLiteral("Conversation compression readiness is disabled.");
         summary.summary = summary.readiness.summary;
         summary.fallback.reason = QStringLiteral("policy disabled");
-        summary.fallback.summary =
-            QStringLiteral("Compression planning disabled by local policy.");
+        summary.fallback.summary = QStringLiteral("Compression planning disabled by local policy.");
         return summary;
     }
 
@@ -1595,7 +1601,8 @@ ConversationCompressionSummary planConversationCompression(
         estimatedCharacters += toInt(content.size());
 
         const auto folded = content.toCaseFolded();
-        const auto userRole = message.role.compare(QStringLiteral("user"), Qt::CaseInsensitive) == 0;
+        const auto userRole =
+            message.role.compare(QStringLiteral("user"), Qt::CaseInsensitive) == 0;
         if (userRole && (folded.contains(QStringLiteral("prefer")) ||
                          folded.contains(QStringLiteral("remember")) ||
                          folded.contains(QStringLiteral("my ")))) {
@@ -1621,13 +1628,13 @@ ConversationCompressionSummary planConversationCompression(
     const auto messagePressure = policy.messageRequiredThreshold > 0
                                      ? candidateMessageCount * 100 / policy.messageRequiredThreshold
                                      : 0;
-    const auto tokenPressure =
-        policy.tokenRequiredThreshold > 0 ? estimatedTokens * 100 / policy.tokenRequiredThreshold
-                                          : 0;
-    const auto activePressure = policy.activeConversationRequiredThreshold > 0
-                                    ? estimatedCharacters * 100 /
-                                          policy.activeConversationRequiredThreshold
-                                    : 0;
+    const auto tokenPressure = policy.tokenRequiredThreshold > 0
+                                   ? estimatedTokens * 100 / policy.tokenRequiredThreshold
+                                   : 0;
+    const auto activePressure =
+        policy.activeConversationRequiredThreshold > 0
+            ? estimatedCharacters * 100 / policy.activeConversationRequiredThreshold
+            : 0;
     summary.budget.pressurePercent =
         std::min(100, std::max({characterPressure, messagePressure, tokenPressure, activePressure,
                                 summary.budget.saliencePressurePercent}));
@@ -1641,23 +1648,24 @@ ConversationCompressionSummary planConversationCompression(
     summary.readiness.saliencePressurePercent = summary.budget.saliencePressurePercent;
     summary.readiness.pressurePercent = summary.budget.pressurePercent;
 
-    const auto required = candidateMessageCount >= policy.messageRequiredThreshold ||
-                          estimatedCharacters >= policy.characterRequiredThreshold ||
-                          estimatedTokens >= policy.tokenRequiredThreshold ||
-                          estimatedCharacters >= policy.activeConversationRequiredThreshold ||
-                          summary.budget.saliencePressurePercent >=
-                              policy.saliencePressureRequiredThreshold;
-    const auto warning = candidateMessageCount >= policy.messageWarningThreshold ||
-                         estimatedCharacters >= policy.characterWarningThreshold ||
-                         estimatedTokens >= policy.tokenWarningThreshold ||
-                         estimatedCharacters >= policy.activeConversationWarningThreshold ||
-                         summary.budget.saliencePressurePercent >=
-                             policy.saliencePressureWarningThreshold;
+    const auto required =
+        candidateMessageCount >= policy.messageRequiredThreshold ||
+        estimatedCharacters >= policy.characterRequiredThreshold ||
+        estimatedTokens >= policy.tokenRequiredThreshold ||
+        estimatedCharacters >= policy.activeConversationRequiredThreshold ||
+        summary.budget.saliencePressurePercent >= policy.saliencePressureRequiredThreshold;
+    const auto warning =
+        candidateMessageCount >= policy.messageWarningThreshold ||
+        estimatedCharacters >= policy.characterWarningThreshold ||
+        estimatedTokens >= policy.tokenWarningThreshold ||
+        estimatedCharacters >= policy.activeConversationWarningThreshold ||
+        summary.budget.saliencePressurePercent >= policy.saliencePressureWarningThreshold;
     summary.status = required ? ConversationCompressionStatus::Needed
                               : (warning ? ConversationCompressionStatus::Approaching
                                          : ConversationCompressionStatus::NotNeeded);
     summary.readiness.status = summary.status;
-    summary.readiness.compressionUseful = summary.status != ConversationCompressionStatus::NotNeeded;
+    summary.readiness.compressionUseful =
+        summary.status != ConversationCompressionStatus::NotNeeded;
     summary.readiness.summary =
         QStringLiteral("%1: %2 messages / %3 chars / approx %4 tokens / pressure %5% / salience "
                        "%6% / context %7 / existing summary %8.")
@@ -1769,25 +1777,23 @@ ConversationCompressionSummary planConversationCompression(
             candidate.selectedCharacters =
                 std::min(candidate.estimatedCharacters, summary.budget.remainingCharacters);
             summary.budget.selectedCharacters += candidate.selectedCharacters;
-            summary.budget.remainingCharacters =
-                std::max(0, summary.budget.maxCandidateCharacters -
-                                summary.budget.selectedCharacters);
+            summary.budget.remainingCharacters = std::max(0, summary.budget.maxCandidateCharacters -
+                                                                 summary.budget.selectedCharacters);
             ++summary.selection.selectedCandidateCount;
         }
 
         if (candidate.excluded) {
             ++summary.selection.excludedCandidateCount;
         }
-        const auto line = QStringLiteral("%1 / %2 / %3 messages / %4 chars / %5")
-                              .arg(candidate.selected ? QStringLiteral("selected")
-                                                      : QStringLiteral("excluded"),
-                                   candidate.title)
-                              .arg(candidate.messageCount)
-                              .arg(candidate.selected ? candidate.selectedCharacters
-                                                      : candidate.estimatedCharacters)
-                              .arg(candidate.exclusionReason.isEmpty()
-                                       ? QStringLiteral("metadata only")
-                                       : candidate.exclusionReason);
+        const auto line =
+            QStringLiteral("%1 / %2 / %3 messages / %4 chars / %5")
+                .arg(candidate.selected ? QStringLiteral("selected") : QStringLiteral("excluded"),
+                     candidate.title)
+                .arg(candidate.messageCount)
+                .arg(candidate.selected ? candidate.selectedCharacters
+                                        : candidate.estimatedCharacters)
+                .arg(candidate.exclusionReason.isEmpty() ? QStringLiteral("metadata only")
+                                                         : candidate.exclusionReason);
         summary.trace.candidateSummaries.append(line);
         if (candidate.selected) {
             summary.trace.selectionSummaries.append(line);
@@ -1800,11 +1806,10 @@ ConversationCompressionSummary planConversationCompression(
         summary.status = ConversationCompressionStatus::Planned;
         summary.readiness.status = summary.status;
     }
-    summary.selection.summary =
-        QStringLiteral("%1 selected / %2 excluded / %3 candidates.")
-            .arg(summary.selection.selectedCandidateCount)
-            .arg(summary.selection.excludedCandidateCount)
-            .arg(summary.selection.candidateCount);
+    summary.selection.summary = QStringLiteral("%1 selected / %2 excluded / %3 candidates.")
+                                    .arg(summary.selection.selectedCandidateCount)
+                                    .arg(summary.selection.excludedCandidateCount)
+                                    .arg(summary.selection.candidateCount);
     summary.budget.summary =
         QStringLiteral("%1 of %2 compression candidate chars selected within %3 char metadata "
                        "budget; pressure %4%.")
@@ -1812,23 +1817,22 @@ ConversationCompressionSummary planConversationCompression(
             .arg(summary.budget.estimatedCharacters)
             .arg(summary.budget.maxCandidateCharacters)
             .arg(summary.budget.pressurePercent);
-    summary.trace.summary = QStringLiteral("%1 %2")
-                                .arg(summary.readiness.summary, summary.selection.summary);
-    summary.summary = QStringLiteral("Conversation compression %1. %2")
-                          .arg(conversationCompressionStatusName(summary.status),
-                               summary.selection.summary);
+    summary.trace.summary =
+        QStringLiteral("%1 %2").arg(summary.readiness.summary, summary.selection.summary);
+    summary.summary =
+        QStringLiteral("Conversation compression %1. %2")
+            .arg(conversationCompressionStatusName(summary.status), summary.selection.summary);
     return summary;
 }
 
-QStringList conversationCompressionCandidateSummaries(
-    const ConversationCompressionSummary& summary) {
+QStringList
+conversationCompressionCandidateSummaries(const ConversationCompressionSummary& summary) {
     QStringList lines;
     for (const auto& candidate : summary.selection.candidates) {
-        lines.append(QStringLiteral("%1 / %2 / %3")
-                         .arg(candidate.selected ? QStringLiteral("selected")
-                                                 : QStringLiteral("excluded"),
-                              candidate.title,
-                              candidate.summary));
+        lines.append(
+            QStringLiteral("%1 / %2 / %3")
+                .arg(candidate.selected ? QStringLiteral("selected") : QStringLiteral("excluded"),
+                     candidate.title, candidate.summary));
     }
     return lines;
 }
@@ -1837,10 +1841,11 @@ QStringList conversationCompressionTraceSummaries(const ConversationCompressionS
     return summary.trace.candidateSummaries;
 }
 
-ConversationSummaryResult planConversationSummaryGeneration(
-    const QList<ConversationWindowMessage>& messages,
-    const ConversationCompressionSummary& compressionSummary,
-    const ConversationSummaryRequest& request, const ConversationSummaryPolicy& policy) {
+ConversationSummaryResult
+planConversationSummaryGeneration(const QList<ConversationWindowMessage>& messages,
+                                  const ConversationCompressionSummary& compressionSummary,
+                                  const ConversationSummaryRequest& request,
+                                  const ConversationSummaryPolicy& policy) {
     ConversationSummaryResult result;
     result.policy = policy;
     result.request = request;
@@ -1895,8 +1900,9 @@ ConversationSummaryResult planConversationSummaryGeneration(
                      QStringLiteral("Transcript replacement is outside this phase."));
     }
     if (request.writeCommittedMemory || policy.automaticMemoryWriteAllowed) {
-        return block(QStringLiteral("Summary generation cannot write committed memory."),
-                     QStringLiteral("Memory writes require a separate explicit review/commit path."));
+        return block(
+            QStringLiteral("Summary generation cannot write committed memory."),
+            QStringLiteral("Memory writes require a separate explicit review/commit path."));
     }
     if (request.includeRuntimeMetadata || request.exposeHiddenPrompt || policy.toolsAllowed ||
         policy.filesystemAuthorityAllowed) {
@@ -1923,10 +1929,8 @@ ConversationSummaryResult planConversationSummaryGeneration(
         if (content.isEmpty()) {
             continue;
         }
-        visibleMessages.append(ConversationWindowMessage{message.originalIndex,
-                                                         message.role,
-                                                         content,
-                                                         toInt(content.size())});
+        visibleMessages.append(ConversationWindowMessage{message.originalIndex, message.role,
+                                                         content, toInt(content.size())});
     }
 
     if (visibleMessages.isEmpty()) {
@@ -2006,8 +2010,7 @@ ConversationSummaryResult planConversationSummaryGeneration(
 
     int selectedCount = 0;
     for (auto segment : segments) {
-        if (policy.maxSegments > 0 && selectedCount >= policy.maxSegments &&
-            !segment.excluded) {
+        if (policy.maxSegments > 0 && selectedCount >= policy.maxSegments && !segment.excluded) {
             segment.selected = false;
             segment.excluded = true;
             segment.exclusionReason = QStringLiteral("Summary segment limit reached");
@@ -2067,17 +2070,16 @@ ConversationSummaryResult planConversationSummaryGeneration(
             .arg(result.coveredLastMessageIndex)
             .arg(result.estimatedReductionPercent);
     result.readiness.available = policy.generationAvailable;
-    result.readiness.status =
-        policy.generationAvailable ? ConversationSummaryStatus::Planned : ConversationSummaryStatus::Blocked;
+    result.readiness.status = policy.generationAvailable ? ConversationSummaryStatus::Planned
+                                                         : ConversationSummaryStatus::Blocked;
     result.status = result.readiness.status;
     result.readiness.summary =
         policy.generationAvailable
             ? QStringLiteral("Manual local summary generation is ready for explicit foreground "
                              "execution.")
             : result.readiness.blockedReason;
-    result.summary =
-        QStringLiteral("Conversation summary generation %1. %2")
-            .arg(conversationSummaryStatusName(result.status), result.preview.summary);
+    result.summary = QStringLiteral("Conversation summary generation %1. %2")
+                         .arg(conversationSummaryStatusName(result.status), result.preview.summary);
     result.trace.summary =
         QStringLiteral("%1 %2").arg(result.readiness.summary, result.budget.summary);
     return result;
@@ -2086,15 +2088,14 @@ ConversationSummaryResult planConversationSummaryGeneration(
 QStringList conversationSummarySegmentSummaries(const ConversationSummaryResult& result) {
     QStringList lines;
     for (const auto& segment : result.segments) {
-        lines.append(QStringLiteral("%1 / %2 / messages %3-%4 / %5")
-                         .arg(segment.selected ? QStringLiteral("selected")
-                                               : QStringLiteral("excluded"),
-                              segment.title)
-                         .arg(segment.firstOriginalIndex)
-                         .arg(segment.lastOriginalIndex)
-                         .arg(segment.exclusionReason.isEmpty()
-                                  ? segment.summary
-                                  : segment.exclusionReason));
+        lines.append(
+            QStringLiteral("%1 / %2 / messages %3-%4 / %5")
+                .arg(segment.selected ? QStringLiteral("selected") : QStringLiteral("excluded"),
+                     segment.title)
+                .arg(segment.firstOriginalIndex)
+                .arg(segment.lastOriginalIndex)
+                .arg(segment.exclusionReason.isEmpty() ? segment.summary
+                                                       : segment.exclusionReason));
     }
     return lines;
 }

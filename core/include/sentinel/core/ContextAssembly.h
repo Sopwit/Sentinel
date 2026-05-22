@@ -460,8 +460,8 @@ struct MemoryRelevancePolicy {
     int maxCandidates = 6;
     bool includePinnedWithoutOverlap = true;
     QString status = QStringLiteral("Ready");
-    QString summary = QStringLiteral(
-        "Deterministic memory relevance uses literal local overlap only.");
+    QString summary =
+        QStringLiteral("Deterministic memory relevance uses literal local overlap only.");
 };
 
 struct MemoryRelevanceCandidate {
@@ -628,8 +628,8 @@ struct ConversationCompressionPolicy {
     int maxCandidateCharacters = 2400;
     int maxCandidates = 6;
     QString status = QStringLiteral("Ready");
-    QString summary = QStringLiteral(
-        "Conversation compression readiness is deterministic metadata only.");
+    QString summary =
+        QStringLiteral("Conversation compression readiness is deterministic metadata only.");
 };
 
 struct ConversationCompressionCandidate {
@@ -726,30 +726,34 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
                                       const RetrievalPlanningPolicy& policy);
 QStringList retrievalSourceSummaries(const RetrievalPlanningResult& result);
 QStringList retrievalCandidateTraceSummaries(const RetrievalPlanningResult& result);
-MemoryRelevanceSummary rankMemoryRelevance(
-    const QList<MemoryRelevanceCandidate>& candidates, const QString& prompt,
-    const QString& activeConversationTitle, const QString& recentConversationText,
-    const MemoryRelevancePolicy& policy);
+MemoryRelevanceSummary rankMemoryRelevance(const QList<MemoryRelevanceCandidate>& candidates,
+                                           const QString& prompt,
+                                           const QString& activeConversationTitle,
+                                           const QString& recentConversationText,
+                                           const MemoryRelevancePolicy& policy);
 QStringList memoryRelevanceTraceSummaries(const MemoryRelevanceSummary& summary);
 QStringList memoryRelevanceExclusionSummaries(const MemoryRelevanceSummary& summary);
-ConversationSalienceSummary rankConversationSalience(
-    const QList<ConversationSalienceCandidate>& candidates, const QString& explicitUserQuery,
-    const QString& activeConversationTitle, const QString& recentUserMessages,
-    const QString& recentAssistantMessages, const QString& committedMemoryText,
-    const ConversationSaliencePolicy& policy);
+ConversationSalienceSummary
+rankConversationSalience(const QList<ConversationSalienceCandidate>& candidates,
+                         const QString& explicitUserQuery, const QString& activeConversationTitle,
+                         const QString& recentUserMessages, const QString& recentAssistantMessages,
+                         const QString& committedMemoryText,
+                         const ConversationSaliencePolicy& policy);
 QStringList conversationSalienceTraceSummaries(const ConversationSalienceSummary& summary);
 QStringList conversationSalienceExclusionSummaries(const ConversationSalienceSummary& summary);
-ConversationCompressionSummary planConversationCompression(
-    const QList<ConversationWindowMessage>& messages,
-    const ConversationSummaryResult& existingSummary,
-    const ConversationSalienceSummary& salienceSummary, bool contextInjectionEnabled,
-    const ConversationCompressionPolicy& policy);
-ConversationSummaryResult planConversationSummaryGeneration(
-    const QList<ConversationWindowMessage>& messages,
-    const ConversationCompressionSummary& compressionSummary,
-    const ConversationSummaryRequest& request, const ConversationSummaryPolicy& policy);
-QStringList conversationCompressionCandidateSummaries(
-    const ConversationCompressionSummary& summary);
+ConversationCompressionSummary
+planConversationCompression(const QList<ConversationWindowMessage>& messages,
+                            const ConversationSummaryResult& existingSummary,
+                            const ConversationSalienceSummary& salienceSummary,
+                            bool contextInjectionEnabled,
+                            const ConversationCompressionPolicy& policy);
+ConversationSummaryResult
+planConversationSummaryGeneration(const QList<ConversationWindowMessage>& messages,
+                                  const ConversationCompressionSummary& compressionSummary,
+                                  const ConversationSummaryRequest& request,
+                                  const ConversationSummaryPolicy& policy);
+QStringList
+conversationCompressionCandidateSummaries(const ConversationCompressionSummary& summary);
 QStringList conversationCompressionTraceSummaries(const ConversationCompressionSummary& summary);
 QStringList conversationSummarySegmentSummaries(const ConversationSummaryResult& result);
 QStringList conversationSummaryTraceSummaries(const ConversationSummaryResult& result);
