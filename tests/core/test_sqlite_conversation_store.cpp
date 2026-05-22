@@ -24,6 +24,7 @@ private slots:
     void startsEmptyAndInitializesSchema();
     void createsListsAndLoadsConversation();
     void appendsAndLoadsMessagesInDeterministicOrder();
+    void pinsAndUnpinsConversationMetadata();
     void persistsConversationsAcrossInstances();
     void blocksAppendingToArchivedConversation();
     void softDeleteHidesConversation();
@@ -65,7 +66,7 @@ void SQLiteConversationStoreTest::startsEmptyAndInitializesSchema() {
     SQLiteConversationStore store(databasePath(dir));
 
     QCOMPARE(store.status(), ConversationStoreStatus::Ready);
-    QCOMPARE(store.schemaVersion(), 1);
+    QCOMPARE(store.schemaVersion(), 2);
     QVERIFY(store.listConversations().isEmpty());
 }
 
@@ -106,6 +107,33 @@ void SQLiteConversationStoreTest::appendsAndLoadsMessagesInDeterministicOrder() 
     QCOMPARE(messages.at(2).messageId, 3);
     QCOMPARE(messages.at(1).content, QStringLiteral("second"));
     QCOMPARE(store.listConversations().first().messageCount, 3);
+}
+
+void SQLiteConversationStoreTest::pinsAndUnpinsConversationMetadata() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto path = databasePath(dir);
+    QString conversationId;
+
+    {
+        SQLiteConversationStore store(path);
+        const auto conversation = store.createConversation(QStringLiteral("Pinned"));
+        conversationId = conversation.id;
+
+        QVERIFY(store.pinConversation(conversationId));
+        QCOMPARE(store.listConversations().first().pinned, true);
+
+        QVERIFY(store.unpinConversation(conversationId));
+        QCOMPARE(store.listConversations().first().pinned, false);
+
+        QVERIFY(store.pinConversation(conversationId));
+    }
+
+    SQLiteConversationStore reloaded(path);
+    const auto conversations = reloaded.listConversations();
+    QCOMPARE(conversations.size(), 1);
+    QCOMPARE(conversations.first().id, conversationId);
+    QCOMPARE(conversations.first().pinned, true);
 }
 
 void SQLiteConversationStoreTest::persistsConversationsAcrossInstances() {
@@ -240,7 +268,7 @@ void SQLiteConversationStoreTest::doesNotMigrateOrClearSingleTranscriptStore() {
 
     {
         SQLiteConversationStore conversationStore(conversationPath);
-        QCOMPARE(conversationStore.schemaVersion(), 1);
+        QCOMPARE(conversationStore.schemaVersion(), 2);
         QVERIFY(conversationStore.listConversations().isEmpty());
     }
 

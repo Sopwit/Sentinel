@@ -44,6 +44,7 @@ struct ConversationRecord {
     QDateTime createdAtUtc;
     QDateTime updatedAtUtc;
     bool archived = false;
+    bool pinned = false;
     bool deleted = false;
     int messageCount = 0;
     QString summary = QStringLiteral("Conversation metadata is not available.");
@@ -54,7 +55,9 @@ inline QString conversationRecordSummary(const ConversationRecord& record) {
         .arg(record.title)
         .arg(record.messageCount)
         .arg(record.messageCount == 1 ? QStringLiteral("message") : QStringLiteral("messages"))
-        .arg(record.archived ? QStringLiteral("Archived") : QStringLiteral("Active"));
+        .arg(record.archived ? QStringLiteral("Archived")
+                             : record.pinned ? QStringLiteral("Pinned")
+                                             : QStringLiteral("Active"));
 }
 
 struct ConversationMessageRecord {
@@ -77,6 +80,8 @@ public:
     virtual bool renameConversation(const QString& conversationId, const QString& title) = 0;
     virtual bool archiveConversation(const QString& conversationId) = 0;
     virtual bool unarchiveConversation(const QString& conversationId) = 0;
+    virtual bool pinConversation(const QString& conversationId) = 0;
+    virtual bool unpinConversation(const QString& conversationId) = 0;
     virtual bool deleteConversation(const QString& conversationId) = 0;
 
     virtual ConversationStoreStatus status() const {

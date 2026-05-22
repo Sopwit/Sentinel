@@ -16,6 +16,8 @@ public:
     bool renameConversation(const QString& conversationId, const QString& title) override;
     bool archiveConversation(const QString& conversationId) override;
     bool unarchiveConversation(const QString& conversationId) override;
+    bool pinConversation(const QString& conversationId) override;
+    bool unpinConversation(const QString& conversationId) override;
     bool deleteConversation(const QString& conversationId) override;
     ConversationStoreError lastError() const override;
 

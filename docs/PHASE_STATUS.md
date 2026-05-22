@@ -2,6 +2,35 @@
 
 ## Completed / Stable
 
+### Phase 24.0-24.6: Conversation Persistence Completion
+
+Completed. Turns the remaining conversation workflow placeholders into safe local persistent
+features while preserving local-only storage and existing no-cloud/no-tool/no-autonomous-execution
+boundaries.
+
+Scope:
+
+- Added persistent local pinned conversation metadata to `IConversationStore` and
+  `SQLiteConversationStore`; pin/unpin survives controller and app restarts.
+- Conversation ordering is deterministic: non-archived pinned conversations first, non-archived
+  recent conversations next, archived conversations separated last, with stable updated-time/title/id
+  tie handling. Active conversations remain visually highlighted by the UI.
+- Added safe local duplicate through the controller/view-model boundary. Duplicates use
+  deterministic `Original title Copy` titles and copy locally stored transcript messages when the
+  current conversation store supports message loading/appending.
+- Kept permanent delete disabled and non-mutating. Delete readiness and disabled UI copy now state:
+  "Permanent delete is not enabled yet. Archive is available."
+- Updated the conversation overflow menu to use real local actions for Rename, Pin/Unpin,
+  Duplicate, Archive/Unarchive, and a disabled permanent-delete item.
+- Exposed only QML-safe pinned, duplicate-result, and delete-readiness summaries through
+  `DesktopShellViewModel`.
+
+Known limitation:
+
+- This phase does not add cloud sync, filesystem import/export changes, permanent destructive
+  delete, semantic/vector conversation search, background indexing, autonomous agents, tool/plugin
+  execution, STT/TTS changes, or provider/model authority changes.
+
 ### Phase 23.0-23.12: Conversation Workflow And Productivity UX Refinement
 
 Completed. Turns the conversation experience into a calmer productivity-oriented workflow while

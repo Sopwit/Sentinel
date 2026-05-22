@@ -264,6 +264,18 @@ struct ConversationExportResult {
     QString summary = QStringLiteral("Transcript export has not run.");
 };
 
+struct ConversationDuplicateResult {
+    bool accepted = false;
+    bool copiedMessages = false;
+    QString status = QStringLiteral("Not Run");
+    QString sourceConversationId;
+    QString duplicateConversationId;
+    QString duplicateTitle;
+    int copiedMessageCount = 0;
+    QString limitationSummary;
+    QString summary = QStringLiteral("Conversation duplicate has not run.");
+};
+
 enum class ConversationDeletePolicyStatus {
     DisabledByDefault,
 };
@@ -296,10 +308,10 @@ struct ConversationDeleteReadiness {
     bool available = false;
     QString status = QStringLiteral("Disabled");
     QString summary =
-        QStringLiteral("Permanent delete is disabled. Archive or unarchive conversations instead.");
+        QStringLiteral("Permanent delete is not enabled yet. Archive is available.");
     QStringList checks{
         QStringLiteral("Policy: Archive first"),
-        QStringLiteral("Permanent delete: Disabled by default"),
+        QStringLiteral("Permanent delete: Not enabled yet"),
         QStringLiteral("Storage mutation: Refused"),
         QStringLiteral("UI: No destructive delete control"),
     };

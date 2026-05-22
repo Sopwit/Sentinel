@@ -47,6 +47,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::conversationSearchChanged);
     connect(&controller_, &core::ApplicationController::conversationExportChanged, this,
             &DesktopShellViewModel::conversationExportChanged);
+    connect(&controller_, &core::ApplicationController::conversationDuplicateChanged, this,
+            &DesktopShellViewModel::conversationDuplicateChanged);
     connect(&controller_, &core::ApplicationController::conversationDeleteChanged, this,
             &DesktopShellViewModel::conversationDeleteChanged);
     connect(&controller_, &core::ApplicationController::memoryCandidatesChanged, this,
@@ -2012,6 +2014,10 @@ QStringList DesktopShellViewModel::conversationArchivedSummaries() const {
     return controller_.conversationArchivedSummaries();
 }
 
+QStringList DesktopShellViewModel::conversationPinnedSummaries() const {
+    return controller_.conversationPinnedSummaries();
+}
+
 int DesktopShellViewModel::activeConversationCount() const {
     return controller_.activeConversationCount();
 }
@@ -2170,6 +2176,14 @@ int DesktopShellViewModel::conversationExportLastMessageCount() const {
 
 QString DesktopShellViewModel::conversationExportLastTimestamp() const {
     return controller_.conversationExportLastTimestamp();
+}
+
+QString DesktopShellViewModel::conversationDuplicateLastStatus() const {
+    return controller_.conversationDuplicateLastStatus();
+}
+
+QString DesktopShellViewModel::conversationDuplicateLastResultSummary() const {
+    return controller_.conversationDuplicateLastResultSummary();
 }
 
 bool DesktopShellViewModel::conversationDeleteAvailable() const {
@@ -2506,6 +2520,18 @@ bool DesktopShellViewModel::switchConversation(const QString& conversationId) {
 bool DesktopShellViewModel::renameConversation(const QString& conversationId,
                                                const QString& title) {
     return controller_.renameConversation(conversationId, title);
+}
+
+bool DesktopShellViewModel::pinConversation(const QString& conversationId) {
+    return controller_.pinConversation(conversationId);
+}
+
+bool DesktopShellViewModel::unpinConversation(const QString& conversationId) {
+    return controller_.unpinConversation(conversationId);
+}
+
+QString DesktopShellViewModel::duplicateConversation(const QString& conversationId) {
+    return controller_.duplicateConversation(conversationId);
 }
 
 bool DesktopShellViewModel::archiveConversation(const QString& conversationId) {

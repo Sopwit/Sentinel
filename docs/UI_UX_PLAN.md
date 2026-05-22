@@ -208,6 +208,25 @@ Guidelines:
   conversation continuity can use the existing settings store and QML-safe conversation metadata,
   but must not start provider calls, background restoration work, scans, or indexing.
 
+## Phase 24 Conversation Persistence Notes
+
+Phase 24.0 through Phase 24.6 completes the safe local persistence pieces behind the conversation
+workflow UI.
+
+Guidelines:
+
+- Conversation rows should rely on persisted controller/view-model metadata for pinned state. No
+  session-local pin arrays or mock pin actions should remain in QML.
+- Ordering should stay section-oriented and deterministic: pinned, recent, then archived. The
+  active row is a visual highlight, not a separate storage category.
+- Duplicate is a real local action. It should create `Original title Copy` and report the
+  controller duplicate summary. When transcript messages are copied, the UI should not describe the
+  action as metadata-only.
+- Permanent delete remains disabled. Disabled menu copy should state "Permanent delete is not
+  enabled yet. Archive is available." and must not call any destructive store operation.
+- The overflow menu should remain compact and use only actions backed by controller/view-model
+  methods: Rename, Pin/Unpin, Duplicate, Archive/Unarchive, and disabled Delete.
+
 ## Future Assistant Visuals
 
 Future assistant visuals may include subtle status presence, listening/thinking indicators, and

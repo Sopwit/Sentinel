@@ -23,6 +23,8 @@ public:
     bool renameConversation(const QString& conversationId, const QString& title) override;
     bool archiveConversation(const QString& conversationId) override;
     bool unarchiveConversation(const QString& conversationId) override;
+    bool pinConversation(const QString& conversationId) override;
+    bool unpinConversation(const QString& conversationId) override;
     bool deleteConversation(const QString& conversationId) override;
     ConversationStoreStatus status() const override;
     ConversationStoreError lastError() const override;
@@ -35,11 +37,12 @@ private:
     bool conversationExists(const QString& conversationId) const;
     bool conversationArchived(const QString& conversationId) const;
     bool updateConversationMetadata(const QString& conversationId, bool archived, bool deleted);
+    bool updatePinnedMetadata(const QString& conversationId, bool pinned);
     void open();
     void initializeSchema();
     void setLastError(ConversationStoreErrorCode code, const QString& summary) const;
 
-    static constexpr int currentSchemaVersion = 1;
+    static constexpr int currentSchemaVersion = 2;
 
     QString databasePath_;
     QString connectionName_;

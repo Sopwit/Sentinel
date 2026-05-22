@@ -3739,18 +3739,25 @@ QList<ConversationRecord> ApplicationController::conversationRecords() const {
     auto records = conversationStore_ ? conversationStore_->listConversations()
                                       : QList<ConversationRecord>{};
     std::stable_sort(records.begin(), records.end(), [this](const auto& lhs, const auto& rhs) {
-        const auto rank = [this](const ConversationRecord& record) {
-            if (record.id == activeConversationId_) {
-                return 0;
+        const auto rank = [](const ConversationRecord& record) {
+            if (record.archived) {
+                return 2;
             }
-            return record.archived ? 2 : 1;
+            return record.pinned ? 0 : 1;
         };
         const auto lhsRank = rank(lhs);
         const auto rhsRank = rank(rhs);
         if (lhsRank != rhsRank) {
             return lhsRank < rhsRank;
         }
-        return lhs.updatedAtUtc > rhs.updatedAtUtc;
+        if (lhs.updatedAtUtc != rhs.updatedAtUtc) {
+            return lhs.updatedAtUtc > rhs.updatedAtUtc;
+        }
+        const auto titleCompare = QString::localeAwareCompare(lhs.title, rhs.title);
+        if (titleCompare != 0) {
+            return titleCompare < 0;
+        }
+        return lhs.id < rhs.id;
     });
     return records;
 }
@@ -3972,6 +3979,14 @@ QStringList ApplicationController::conversationArchivedSummaries() const {
     QStringList summaries;
     for (const auto& record : conversationRecords()) {
         summaries.append(record.archived ? QStringLiteral("Archived") : QStringLiteral("Active"));
+    }
+    return summaries;
+}
+
+QStringList ApplicationController::conversationPinnedSummaries() const {
+    QStringList summaries;
+    for (const auto& record : conversationRecords()) {
+        summaries.append(record.pinned ? QStringLiteral("Pinned") : QStringLiteral("Unpinned"));
     }
     return summaries;
 }
@@ -4218,6 +4233,10 @@ ConversationExportResult ApplicationController::latestConversationExportResult()
     return latestConversationExportResult_;
 }
 
+ConversationDuplicateResult ApplicationController::latestConversationDuplicateResult() const {
+    return latestConversationDuplicateResult_;
+}
+
 bool ApplicationController::conversationExportAvailable() const {
     return conversationExportReadiness_.available;
 }
@@ -4258,6 +4277,14 @@ QString ApplicationController::conversationExportLastTimestamp() const {
                : latestConversationExportResult_.exportedAtUtc;
 }
 
+QString ApplicationController::conversationDuplicateLastStatus() const {
+    return latestConversationDuplicateResult_.status;
+}
+
+QString ApplicationController::conversationDuplicateLastResultSummary() const {
+    return latestConversationDuplicateResult_.summary;
+}
+
 ConversationDeletePolicy ApplicationController::conversationDeletePolicy() const {
     return conversationDeletePolicy_;
 }
@@ -4267,8 +4294,8 @@ ConversationDeleteReadiness ApplicationController::conversationDeleteReadiness()
     readiness.policy = conversationDeletePolicy_;
     if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
         readiness.summary =
-            QStringLiteral("Permanent delete is disabled and the conversation store is "
-                           "unavailable.");
+            QStringLiteral("Permanent delete is not enabled yet. Archive is available when the "
+                           "conversation store is ready.");
         readiness.checks.append(QStringLiteral("Store: Unavailable"));
     } else {
         readiness.checks.append(QStringLiteral("Store: Ready for archive/unarchive only"));
@@ -5202,9 +5229,9 @@ bool ApplicationController::requestPermanentDeleteConversation(const QString& co
     latestConversationDeleteResult_.conversationId = conversationId.trimmed();
     latestConversationDeleteResult_.status = QStringLiteral("Refused");
     latestConversationDeleteResult_.refusalSummary =
-        QStringLiteral("Permanent delete is disabled by the archive-first conversation policy.");
+        QStringLiteral("Permanent delete is not enabled yet. Archive is available.");
     latestConversationDeleteResult_.summary =
-        QStringLiteral("Permanent delete refused: archive or unarchive conversations instead.");
+        QStringLiteral("Permanent delete is not enabled yet. Archive is available.");
     emit conversationDeleteChanged();
     return false;
 }
@@ -5286,6 +5313,114 @@ bool ApplicationController::renameConversation(const QString& conversationId,
         emit chatMessagesChanged();
     }
     return renamed;
+}
+
+bool ApplicationController::pinConversation(const QString& conversationId) {
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        return false;
+    }
+    const auto pinned = conversationStore_->pinConversation(conversationId.trimmed());
+    if (pinned) {
+        emit chatMessagesChanged();
+    }
+    return pinned;
+}
+
+bool ApplicationController::unpinConversation(const QString& conversationId) {
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        return false;
+    }
+    const auto unpinned = conversationStore_->unpinConversation(conversationId.trimmed());
+    if (unpinned) {
+        emit chatMessagesChanged();
+    }
+    return unpinned;
+}
+
+QString ApplicationController::duplicateConversation(const QString& conversationId) {
+    latestConversationDuplicateResult_ = ConversationDuplicateResult{};
+    const auto trimmedId = conversationId.trimmed();
+    latestConversationDuplicateResult_.sourceConversationId = trimmedId;
+
+    if (trimmedId.isEmpty() || !conversationStore_ ||
+        conversationStore_->status() != ConversationStoreStatus::Ready) {
+        latestConversationDuplicateResult_.status = QStringLiteral("Refused");
+        latestConversationDuplicateResult_.limitationSummary =
+            QStringLiteral("Conversation store is unavailable.");
+        latestConversationDuplicateResult_.summary =
+            QStringLiteral("Duplicate refused: conversation store is unavailable.");
+        emit conversationDuplicateChanged();
+        return {};
+    }
+
+    ConversationRecord source;
+    for (const auto& record : conversationStore_->listConversations()) {
+        if (record.id == trimmedId && !record.deleted) {
+            source = record;
+            break;
+        }
+    }
+    if (source.id.isEmpty()) {
+        latestConversationDuplicateResult_.status = QStringLiteral("Refused");
+        latestConversationDuplicateResult_.limitationSummary =
+            QStringLiteral("Source conversation was not found.");
+        latestConversationDuplicateResult_.summary =
+            QStringLiteral("Duplicate refused: source conversation was not found.");
+        emit conversationDuplicateChanged();
+        return {};
+    }
+
+    const auto duplicateTitle = QStringLiteral("%1 Copy").arg(source.title.trimmed().isEmpty()
+                                                                 ? QStringLiteral("Untitled Conversation")
+                                                                 : source.title.trimmed());
+    const auto duplicate = conversationStore_->createConversation(duplicateTitle);
+    if (duplicate.id.isEmpty()) {
+        latestConversationDuplicateResult_.status = QStringLiteral("Refused");
+        latestConversationDuplicateResult_.limitationSummary =
+            QStringLiteral("Conversation metadata could not be created.");
+        latestConversationDuplicateResult_.summary =
+            QStringLiteral("Duplicate refused: local conversation metadata could not be created.");
+        emit conversationDuplicateChanged();
+        return {};
+    }
+
+    const auto messages = conversationStore_->loadMessages(source.id);
+    int copiedCount = 0;
+    bool copyFailed = false;
+    for (const auto& message : messages) {
+        auto duplicateMessage = message;
+        duplicateMessage.conversationId = duplicate.id;
+        if (!conversationStore_->appendMessage(duplicateMessage)) {
+            copyFailed = true;
+            break;
+        }
+        ++copiedCount;
+    }
+
+    latestConversationDuplicateResult_.accepted = !copyFailed;
+    latestConversationDuplicateResult_.copiedMessages = !copyFailed;
+    latestConversationDuplicateResult_.status =
+        copyFailed ? QStringLiteral("Partial") : QStringLiteral("Succeeded");
+    latestConversationDuplicateResult_.duplicateConversationId = duplicate.id;
+    latestConversationDuplicateResult_.duplicateTitle = duplicate.title;
+    latestConversationDuplicateResult_.copiedMessageCount = copiedCount;
+    latestConversationDuplicateResult_.limitationSummary =
+        copyFailed ? QStringLiteral("Message copy stopped before all local messages were copied.")
+                   : QStringLiteral("Transcript messages copied locally.");
+    latestConversationDuplicateResult_.summary =
+        copyFailed
+            ? QStringLiteral("%1 created, but only %2 of %3 local messages copied.")
+                  .arg(duplicate.title)
+                  .arg(copiedCount)
+                  .arg(messages.size())
+            : QStringLiteral("%1 created with %2 copied local %3.")
+                  .arg(duplicate.title)
+                  .arg(copiedCount)
+                  .arg(copiedCount == 1 ? QStringLiteral("message") : QStringLiteral("messages"));
+
+    emit conversationDuplicateChanged();
+    emit chatMessagesChanged();
+    return duplicate.id;
 }
 
 bool ApplicationController::archiveConversation(const QString& conversationId) {

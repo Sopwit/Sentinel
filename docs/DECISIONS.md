@@ -246,13 +246,19 @@ Runtime behavior:
   newly selected conversation.
 - Rename/archive/unarchive are controller actions over `IConversationStore`; no permanent delete UI
   is exposed.
+- Pin/unpin are controller actions over persisted local `IConversationStore` metadata. Pin state is
+  local-only and has no cloud sync behavior.
+- Duplicate is a controller-owned local operation. It creates a deterministic `Original title Copy`
+  conversation and copies transcript messages through the conversation store when the current store
+  safely supports message load/append.
 - Archived conversations are visible and loadable, but sending into an archived active
   conversation is refused.
 - Phase 15.30 through Phase 15.32 keep archive as the primary safe removal flow. Delete readiness
   is metadata-only through `ConversationDeletePolicy`, `ConversationDeleteReadiness`, and
   `ConversationDeleteResult`.
-- Permanent delete is disabled by default. A delete request is a guarded refusal path that reports
-  status and does not call the store delete operation or mutate transcripts.
+- Permanent delete is not enabled yet. A delete request is a guarded refusal path that reports
+  status and does not call the store delete operation or mutate transcripts. Archive remains the
+  available safe removal flow.
 - Future permanent delete requires an explicit phase gate, destructive-mutation tests, guarded
   confirmation UI, and continued QML-safe status exposure before any destructive action is enabled.
 

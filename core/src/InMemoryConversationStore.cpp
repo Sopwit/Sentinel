@@ -157,6 +157,36 @@ bool InMemoryConversationStore::unarchiveConversation(const QString& conversatio
     return true;
 }
 
+bool InMemoryConversationStore::pinConversation(const QString& conversationId) {
+    auto* conversation = findConversation(conversationId);
+    if (!conversation || conversation->deleted) {
+        setLastError(ConversationStoreErrorCode::InvalidConversationId,
+                     QStringLiteral("Conversation does not exist."));
+        return false;
+    }
+
+    conversation->pinned = true;
+    conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
+    conversation->summary = conversationRecordSummary(*conversation);
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
+bool InMemoryConversationStore::unpinConversation(const QString& conversationId) {
+    auto* conversation = findConversation(conversationId);
+    if (!conversation || conversation->deleted) {
+        setLastError(ConversationStoreErrorCode::InvalidConversationId,
+                     QStringLiteral("Conversation does not exist."));
+        return false;
+    }
+
+    conversation->pinned = false;
+    conversation->updatedAtUtc = QDateTime::currentDateTimeUtc();
+    conversation->summary = conversationRecordSummary(*conversation);
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
 bool InMemoryConversationStore::deleteConversation(const QString& conversationId) {
     auto* conversation = findConversation(conversationId);
     if (!conversation) {

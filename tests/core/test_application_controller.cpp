@@ -653,6 +653,10 @@ private slots:
     void createsSwitchesRenamesArchivesAndUnarchivesConversations();
     void archivedActiveConversationBlocksSend();
     void archiveUnarchiveUpdatesBrowserSummaries();
+    void pinPersistsAcrossControllerRecreation();
+    void unpinPersistsAcrossControllerRecreation();
+    void duplicateConversationCopiesLocalMessages();
+    void conversationOrderingIsPinnedRecentArchivedDeterministic();
     void deleteReadinessIsDisabledByDefault();
     void deleteRequestRefusesSafelyWithoutMutation();
     void deleteRequestRefusesSafelyWithoutSQLiteMutation();
@@ -2109,6 +2113,95 @@ void ApplicationControllerTest::archiveUnarchiveUpdatesBrowserSummaries() {
     QVERIFY(controller.conversationArchivedSummaries().contains(QStringLiteral("Active")));
 }
 
+void ApplicationControllerTest::pinPersistsAcrossControllerRecreation() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto databasePath = dir.filePath(QStringLiteral("conversations.sqlite3"));
+    QString pinnedId;
+
+    {
+        auto controller = makeControllerWithConversationStore(
+            std::make_unique<SQLiteConversationStore>(databasePath));
+        pinnedId = controller->activeConversationId();
+
+        QVERIFY(controller->pinConversation(pinnedId));
+        QCOMPARE(controller->conversationPinnedSummaries().first(), QStringLiteral("Pinned"));
+    }
+
+    auto reloaded = makeControllerWithConversationStore(
+        std::make_unique<SQLiteConversationStore>(databasePath));
+    QCOMPARE(reloaded->activeConversationId(), pinnedId);
+    QCOMPARE(reloaded->conversationIds().first(), pinnedId);
+    QCOMPARE(reloaded->conversationPinnedSummaries().first(), QStringLiteral("Pinned"));
+}
+
+void ApplicationControllerTest::unpinPersistsAcrossControllerRecreation() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto databasePath = dir.filePath(QStringLiteral("conversations.sqlite3"));
+    QString conversationId;
+
+    {
+        auto controller = makeControllerWithConversationStore(
+            std::make_unique<SQLiteConversationStore>(databasePath));
+        conversationId = controller->activeConversationId();
+
+        QVERIFY(controller->pinConversation(conversationId));
+        QVERIFY(controller->unpinConversation(conversationId));
+        QCOMPARE(controller->conversationPinnedSummaries().first(), QStringLiteral("Unpinned"));
+    }
+
+    auto reloaded = makeControllerWithConversationStore(
+        std::make_unique<SQLiteConversationStore>(databasePath));
+    QCOMPARE(reloaded->conversationIds().first(), conversationId);
+    QCOMPARE(reloaded->conversationPinnedSummaries().first(), QStringLiteral("Unpinned"));
+}
+
+void ApplicationControllerTest::duplicateConversationCopiesLocalMessages() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    const auto sourceId = controller.activeConversationId();
+    QVERIFY(controller.sendMessage(QStringLiteral("duplicate source token")));
+
+    const auto duplicateId = controller.duplicateConversation(sourceId);
+
+    QVERIFY(!duplicateId.isEmpty());
+    QVERIFY(duplicateId != sourceId);
+    QCOMPARE(controller.conversationDuplicateLastStatus(), QStringLiteral("Succeeded"));
+    QVERIFY(controller.conversationDuplicateLastResultSummary().contains(
+        QStringLiteral("Current Transcript Copy")));
+    QVERIFY(controller.conversationTitles().contains(QStringLiteral("Current Transcript Copy")));
+    QCOMPARE(controller.activeConversationId(), sourceId);
+
+    QVERIFY(controller.switchConversation(duplicateId));
+    QCOMPARE(controller.chatHistory().size(), 3);
+    QCOMPARE(controller.chatHistory().at(1).content, QStringLiteral("duplicate source token"));
+}
+
+void ApplicationControllerTest::conversationOrderingIsPinnedRecentArchivedDeterministic() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    const auto firstId = controller.activeConversationId();
+    QVERIFY(controller.renameConversation(firstId, QStringLiteral("Recent A")));
+    const auto pinnedId = controller.createConversation(QStringLiteral("Pinned B"));
+    const auto archivedId = controller.createConversation(QStringLiteral("Archived C"));
+    QVERIFY(controller.pinConversation(pinnedId));
+    QVERIFY(controller.archiveConversation(archivedId));
+
+    const auto ids = controller.conversationIds();
+    const auto titles = controller.conversationTitles();
+    const auto pinned = controller.conversationPinnedSummaries();
+    const auto archived = controller.conversationArchivedSummaries();
+
+    QCOMPARE(ids.size(), 3);
+    QCOMPARE(ids.at(0), pinnedId);
+    QCOMPARE(pinned.at(0), QStringLiteral("Pinned"));
+    QCOMPARE(titles.at(1), QStringLiteral("Recent A"));
+    QCOMPARE(archived.at(1), QStringLiteral("Active"));
+    QCOMPARE(ids.at(2), archivedId);
+    QCOMPARE(archived.at(2), QStringLiteral("Archived"));
+}
+
 void ApplicationControllerTest::deleteReadinessIsDisabledByDefault() {
     ApplicationController controller{std::make_unique<LocalEchoProvider>(),
                                      std::make_unique<InMemoryStore>()};
@@ -2117,9 +2210,9 @@ void ApplicationControllerTest::deleteReadinessIsDisabledByDefault() {
     QCOMPARE(controller.conversationDeletePolicyStatus(), QStringLiteral("Disabled By Default"));
     QCOMPARE(controller.conversationDeleteReadinessStatus(), QStringLiteral("Disabled"));
     QVERIFY(controller.conversationDeleteReadinessSummary().contains(
-        QStringLiteral("Permanent delete is disabled")));
+        QStringLiteral("Permanent delete is not enabled yet")));
     QVERIFY(controller.conversationDeleteReadinessChecks().contains(
-        QStringLiteral("Permanent delete: Disabled by default")));
+        QStringLiteral("Permanent delete: Not enabled yet")));
 }
 
 void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutMutation() {
@@ -2133,7 +2226,8 @@ void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutMutation() {
     QVERIFY(!controller.requestPermanentDeleteConversation(firstId));
 
     QCOMPARE(controller.conversationDeleteLastStatus(), QStringLiteral("Refused"));
-    QVERIFY(controller.conversationDeleteLastResultSummary().contains(QStringLiteral("refused")));
+    QVERIFY(controller.conversationDeleteLastResultSummary().contains(
+        QStringLiteral("Permanent delete is not enabled yet")));
     QCOMPARE(controller.conversationStoreConversationCount(), beforeCount);
     QCOMPARE(controller.activeConversationId(), firstId);
     QCOMPARE(controller.chatHistory().size(), beforeMessages);
@@ -2157,8 +2251,8 @@ void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutSQLiteMutation(
         QVERIFY(!controller->requestPermanentDeleteConversation(firstId));
 
         QCOMPARE(controller->conversationDeleteLastStatus(), QStringLiteral("Refused"));
-        QVERIFY(
-            controller->conversationDeleteLastResultSummary().contains(QStringLiteral("refused")));
+        QVERIFY(controller->conversationDeleteLastResultSummary().contains(
+            QStringLiteral("Permanent delete is not enabled yet")));
         QCOMPARE(controller->conversationStoreConversationCount(), beforeCount);
         QCOMPARE(controller->activeConversationId(), firstId);
         QCOMPARE(controller->chatHistory().size(), beforeMessages);
