@@ -2870,6 +2870,7 @@ void ApplicationController::setPromptContextInjectionEnabled(bool enabled) {
         latestPromptContextInjectionResult_, semanticSupplementAssemblyResult(),
         semanticPromptAuthorityResult(), semanticPromptInclusionPolicy());
     emit promptContextInjectionChanged();
+    emit contextAssemblyChanged();
 }
 
 PromptContextInjectionResult ApplicationController::latestPromptContextInjectionResult() const {
@@ -2891,6 +2892,7 @@ void ApplicationController::setSemanticPromptInclusionEnabled(bool enabled) {
         latestPromptContextInjectionResult_, semanticSupplementAssemblyResult(),
         semanticPromptAuthorityResult(), semanticPromptInclusionPolicy());
     emit promptContextInjectionChanged();
+    emit contextAssemblyChanged();
 }
 
 SemanticPromptInclusionPolicy ApplicationController::semanticPromptInclusionPolicy() const {
@@ -3181,6 +3183,56 @@ QStringList ApplicationController::conversationSalienceTraceSummaries() const {
 QStringList ApplicationController::conversationSalienceExclusionSummaries() const {
     return sentinel::core::conversationSalienceExclusionSummaries(
         conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt));
+}
+
+ConversationCompressionSummary ApplicationController::conversationCompressionSummary() const {
+    return conversationCompressionSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt);
+}
+
+QString ApplicationController::conversationCompressionStatus() const {
+    return conversationCompressionStatusName(conversationCompressionSummary().status);
+}
+
+QString ApplicationController::conversationCompressionReadinessSummary() const {
+    return conversationCompressionSummary().readiness.summary;
+}
+
+QString ApplicationController::conversationCompressionPressureSummary() const {
+    const auto summary = conversationCompressionSummary();
+    return QStringLiteral("%1% pressure / %2 messages / %3 chars / approx %4 tokens")
+        .arg(summary.readiness.pressurePercent)
+        .arg(summary.readiness.messageCount)
+        .arg(summary.readiness.estimatedCharacters)
+        .arg(summary.readiness.estimatedTokens);
+}
+
+int ApplicationController::conversationCompressionCandidateCount() const {
+    return conversationCompressionSummary().selection.candidateCount;
+}
+
+int ApplicationController::conversationCompressionSelectedCandidateCount() const {
+    return conversationCompressionSummary().selection.selectedCandidateCount;
+}
+
+QString ApplicationController::conversationCompressionFallbackReason() const {
+    return conversationCompressionSummary().fallback.summary;
+}
+
+QString ApplicationController::conversationCompressionTraceSummary() const {
+    return conversationCompressionSummary().trace.summary;
+}
+
+QString ApplicationController::conversationCompressionBudgetSummary() const {
+    return conversationCompressionSummary().budget.summary;
+}
+
+QStringList ApplicationController::conversationCompressionCandidateSummaries() const {
+    return sentinel::core::conversationCompressionCandidateSummaries(
+        conversationCompressionSummary());
+}
+
+QStringList ApplicationController::conversationCompressionTraceSummaries() const {
+    return sentinel::core::conversationCompressionTraceSummaries(conversationCompressionSummary());
 }
 
 SemanticRetrievalPolicy ApplicationController::semanticRetrievalPolicy() const {
@@ -5191,6 +5243,34 @@ ApplicationController::conversationSalienceSummaryForPrompt(const QString& promp
         recentUserMessages.join(QStringLiteral("\n")),
         recentAssistantMessages.join(QStringLiteral("\n")),
         committedMemoryText.join(QStringLiteral("\n")), policy);
+}
+
+ConversationCompressionSummary
+ApplicationController::conversationCompressionSummaryForPrompt(const QString& prompt) const {
+    QList<ConversationWindowMessage> messages;
+    if (chatSession_) {
+        const auto promptText = prompt.simplified();
+        const auto& history = chatSession_->messages();
+        messages.reserve(history.size());
+        for (int i = 0; i < history.size(); ++i) {
+            const auto& message = history.at(i);
+            if (!promptText.isEmpty() && i == history.size() - 1 &&
+                message.role == ChatRole::User && message.content.simplified() == promptText) {
+                continue;
+            }
+            messages.append(ConversationWindowMessage{
+                i + 1,
+                chatRoleName(message.role),
+                message.content,
+                toInt(message.content.size()),
+            });
+        }
+    }
+
+    return planConversationCompression(messages, conversationSummaryForPrompt(prompt),
+                                       conversationSalienceSummaryForPrompt(prompt),
+                                       promptContextInjectionEnabled_,
+                                       conversationCompressionPolicy_);
 }
 
 QList<RetrievalCandidate>

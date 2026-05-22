@@ -1526,6 +1526,46 @@ QStringList DesktopShellViewModel::conversationSalienceExclusionSummaries() cons
     return controller_.conversationSalienceExclusionSummaries();
 }
 
+QString DesktopShellViewModel::conversationCompressionStatus() const {
+    return controller_.conversationCompressionStatus();
+}
+
+QString DesktopShellViewModel::conversationCompressionReadinessSummary() const {
+    return controller_.conversationCompressionReadinessSummary();
+}
+
+QString DesktopShellViewModel::conversationCompressionPressureSummary() const {
+    return controller_.conversationCompressionPressureSummary();
+}
+
+int DesktopShellViewModel::conversationCompressionCandidateCount() const {
+    return controller_.conversationCompressionCandidateCount();
+}
+
+int DesktopShellViewModel::conversationCompressionSelectedCandidateCount() const {
+    return controller_.conversationCompressionSelectedCandidateCount();
+}
+
+QString DesktopShellViewModel::conversationCompressionFallbackReason() const {
+    return controller_.conversationCompressionFallbackReason();
+}
+
+QString DesktopShellViewModel::conversationCompressionTraceSummary() const {
+    return controller_.conversationCompressionTraceSummary();
+}
+
+QString DesktopShellViewModel::conversationCompressionBudgetSummary() const {
+    return controller_.conversationCompressionBudgetSummary();
+}
+
+QStringList DesktopShellViewModel::conversationCompressionCandidateSummaries() const {
+    return controller_.conversationCompressionCandidateSummaries();
+}
+
+QStringList DesktopShellViewModel::conversationCompressionTraceSummaries() const {
+    return controller_.conversationCompressionTraceSummaries();
+}
+
 core::SemanticRetrievalPolicy DesktopShellViewModel::semanticRetrievalPolicy() const {
     return controller_.semanticRetrievalPolicy();
 }

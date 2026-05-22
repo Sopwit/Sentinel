@@ -18,12 +18,15 @@ using sentinel::core::ConversationSaliencePolicy;
 using sentinel::core::ConversationWindowMessage;
 using sentinel::core::ConversationWindowPolicy;
 using sentinel::core::ConversationWindowStatus;
+using sentinel::core::ConversationCompressionPolicy;
+using sentinel::core::ConversationCompressionStatus;
 using sentinel::core::makeContextAssemblySource;
 using sentinel::core::MemoryRelevanceCandidate;
 using sentinel::core::MemoryRelevancePolicy;
 using sentinel::core::planRetrieval;
 using sentinel::core::rankConversationSalience;
 using sentinel::core::rankMemoryRelevance;
+using sentinel::core::planConversationCompression;
 using sentinel::core::RetrievalCandidate;
 using sentinel::core::RetrievalPlanningPolicy;
 using sentinel::core::RetrievalPlanningStatus;
@@ -51,6 +54,9 @@ private slots:
     void conversationSalienceScoresDeterministically();
     void conversationSalienceAllocatesAdaptiveBudgetDeterministically();
     void conversationSalienceSuppressesDuplicatesAndReportsCounts();
+    void conversationCompressionDisabledAndLowPressureStayMetadataOnly();
+    void conversationCompressionPlansHighPressureCandidatesDeterministically();
+    void conversationCompressionEnforcesBudgetBounds();
 };
 
 void ContextAssemblyTest::createsDeterministicAssemblySummary() {
@@ -505,6 +511,85 @@ void ContextAssemblyTest::conversationSalienceSuppressesDuplicatesAndReportsCoun
     QVERIFY(sentinel::core::conversationSalienceExclusionSummaries(result)
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Empty candidate")));
+}
+
+void ContextAssemblyTest::conversationCompressionDisabledAndLowPressureStayMetadataOnly() {
+    ConversationCompressionPolicy disabledPolicy;
+    disabledPolicy.enabled = false;
+    const auto disabled = planConversationCompression({}, {}, {}, false, disabledPolicy);
+    QCOMPARE(disabled.status, ConversationCompressionStatus::Disabled);
+    QCOMPARE(disabled.selection.candidateCount, 0);
+
+    ConversationCompressionPolicy policy;
+    const auto low = planConversationCompression(
+        {
+            ConversationWindowMessage{1, QStringLiteral("User"), QStringLiteral("short note")},
+            ConversationWindowMessage{2, QStringLiteral("Assistant"), QStringLiteral("short reply")},
+        },
+        {}, {}, false, policy);
+
+    QCOMPARE(low.status, ConversationCompressionStatus::NotNeeded);
+    QCOMPARE(low.selection.candidateCount, 0);
+    QVERIFY(low.fallback.summary.contains(QStringLiteral("pressure is low")));
+    QVERIFY(low.readiness.summary.contains(QStringLiteral("context disabled")));
+}
+
+void ContextAssemblyTest::conversationCompressionPlansHighPressureCandidatesDeterministically() {
+    QList<ConversationWindowMessage> messages;
+    for (int i = 0; i < 32; ++i) {
+        const auto role = i % 2 == 0 ? QStringLiteral("User") : QStringLiteral("Assistant");
+        const auto body = i % 6 == 0
+                              ? QStringLiteral("remember my alpha preference repeated")
+                              : QStringLiteral("alpha transcript segment %1 %2")
+                                    .arg(i)
+                                    .arg(QString(220, QLatin1Char('x')));
+        messages.append(ConversationWindowMessage{i + 1, role, body});
+    }
+
+    ConversationSaliencePolicy saliencePolicy;
+    saliencePolicy.maxCharacters = 80;
+    const auto salience = rankConversationSalience(
+        {ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
+                                       QStringLiteral("Window"),
+                                       QString(80, QLatin1Char('a')), 0}},
+        QStringLiteral("alpha"), {}, QStringLiteral("alpha"), {}, {}, saliencePolicy);
+
+    ConversationCompressionPolicy policy;
+    const auto result = planConversationCompression(messages, {}, salience, true, policy);
+
+    QVERIFY(result.status == ConversationCompressionStatus::Planned ||
+            result.status == ConversationCompressionStatus::Needed);
+    QVERIFY(result.readiness.compressionUseful);
+    QVERIFY(result.selection.candidateCount >= 4);
+    QVERIFY(result.selection.selectedCandidateCount >= 2);
+    QCOMPARE(result.selection.candidates.at(0).kind, QStringLiteral("recent-window"));
+    QCOMPARE(result.selection.candidates.at(1).kind, QStringLiteral("older-segment"));
+    QVERIFY(result.selection.candidates.at(2).kind == QStringLiteral("high-salience-user-facts") ||
+            result.selection.candidates.at(2).kind == QStringLiteral("low-salience-repeated-turns"));
+    QVERIFY(result.trace.summary.contains(QStringLiteral("context enabled")));
+}
+
+void ContextAssemblyTest::conversationCompressionEnforcesBudgetBounds() {
+    QList<ConversationWindowMessage> messages;
+    for (int i = 0; i < 30; ++i) {
+        messages.append(ConversationWindowMessage{
+            i + 1,
+            QStringLiteral("User"),
+            QStringLiteral("remember my bounded compression preference %1 %2")
+                .arg(i)
+                .arg(QString(260, QLatin1Char('b'))),
+        });
+    }
+
+    ConversationCompressionPolicy policy;
+    policy.maxCandidateCharacters = 320;
+    policy.maxCandidates = 2;
+    const auto result = planConversationCompression(messages, {}, {}, true, policy);
+
+    QVERIFY(result.selection.selectedCandidateCount <= 2);
+    QVERIFY(result.budget.selectedCharacters <= policy.maxCandidateCharacters);
+    QVERIFY(result.budget.remainingCharacters >= 0);
+    QVERIFY(result.selection.excludedCandidateCount >= 1);
 }
 
 QTEST_MAIN(ContextAssemblyTest)

@@ -162,6 +162,28 @@ The context assembly path does not run semantic/vector search, embeddings, files
 background summarization, autonomous memory writes, tool/plugin execution, subprocesses, cloud/API
 calls, or provider discovery.
 
+## Conversation Compression Readiness
+
+Conversation compression is currently a deterministic metadata-readiness layer only.
+`ConversationCompressionPolicy`, `ConversationCompressionStatus`,
+`ConversationCompressionCandidate`, `ConversationCompressionBudget`,
+`ConversationCompressionReadiness`, `ConversationCompressionSelection`,
+`ConversationCompressionTrace`, `ConversationCompressionFallback`, and
+`ConversationCompressionSummary` describe pressure and candidate plans without generating a
+summary.
+
+Readiness uses local message count, estimated character/token pressure, active conversation
+length, prompt context injection enablement, existing deterministic summary availability, and
+conversation salience budget pressure. Candidate planning can mark recent conversation window,
+older conversation segment, high-salience user facts, low-salience repeated turns, and
+system/runtime metadata exclusion. Candidates are ordered deterministically and bounded by a local
+metadata budget.
+
+The controller and desktop view model expose only QML-safe summaries and counts. Compression does
+not mutate transcripts, replace user/assistant messages, write committed memory, alter prompts,
+expose raw prompt/debug payloads, call providers/models, activate semantic/vector systems, index
+filesystems, call cloud APIs, or start background workers.
+
 ## Intentional Boundaries
 
 - Chat provider behavior is hidden behind `IChatProvider`.

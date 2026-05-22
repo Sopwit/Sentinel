@@ -83,6 +83,7 @@ private slots:
     void exposesContextAssemblyMetadata();
     void exposesConversationWindowMetadata();
     void exposesConversationSummaryMetadata();
+    void exposesConversationCompressionMetadata();
     void exposesRetrievalPlanningMetadata();
     void exposesSemanticVectorReadinessMetadata();
     void exposesSemanticProviderPlanningMetadata();
@@ -1482,6 +1483,17 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("conversationSummaryOmittedMessageCount"), QByteArrayLiteral("int")},
         {QStringLiteral("conversationSummaryTruncatedBlockCount"), QByteArrayLiteral("int")},
         {QStringLiteral("conversationSummaryBlockSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationCompressionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationCompressionReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationCompressionPressureSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationCompressionCandidateCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationCompressionSelectedCandidateCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("conversationCompressionFallbackReason"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationCompressionTraceSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationCompressionBudgetSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationCompressionCandidateSummaries"),
+         QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationCompressionTraceSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("localInferenceBusy"), QByteArrayLiteral("bool")},
         {QStringLiteral("localInferenceRuntimeState"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceStatus"), QByteArrayLiteral("QString")},
@@ -2025,6 +2037,34 @@ void DesktopShellViewModelTest::exposesConversationSummaryMetadata() {
     QVERIFY(fixture.viewModel.conversationSummaryOmittedMessageCount() >= 0);
     QVERIFY(fixture.viewModel.conversationSummaryTruncatedBlockCount() >= 0);
     QVERIFY(!fixture.viewModel.conversationSummaryBlockSummaries().isEmpty());
+}
+
+void DesktopShellViewModelTest::exposesConversationCompressionMetadata() {
+    ViewModelFixture fixture;
+
+    QCOMPARE(fixture.viewModel.conversationCompressionStatus(), QStringLiteral("Not Needed"));
+    QCOMPARE(fixture.viewModel.conversationCompressionCandidateCount(), 0);
+
+    for (int i = 0; i < 18; ++i) {
+        QVERIFY(fixture.viewModel.sendMessage(
+            QStringLiteral("remember my compression marker %1 %2")
+                .arg(i)
+                .arg(QString(220, QLatin1Char('m')))));
+    }
+
+    QVERIFY(fixture.viewModel.conversationCompressionStatus() == QStringLiteral("Planned") ||
+            fixture.viewModel.conversationCompressionStatus() == QStringLiteral("Needed") ||
+            fixture.viewModel.conversationCompressionStatus() == QStringLiteral("Approaching"));
+    QVERIFY(fixture.viewModel.conversationCompressionReadinessSummary().contains(
+        QStringLiteral("pressure")));
+    QVERIFY(fixture.viewModel.conversationCompressionPressureSummary().contains(
+        QStringLiteral("messages")));
+    QVERIFY(fixture.viewModel.conversationCompressionCandidateCount() > 0);
+    QVERIFY(fixture.viewModel.conversationCompressionSelectedCandidateCount() > 0);
+    QVERIFY(fixture.viewModel.conversationCompressionBudgetSummary().contains(
+        QStringLiteral("compression candidate")));
+    QVERIFY(!fixture.viewModel.conversationCompressionCandidateSummaries().isEmpty());
+    QVERIFY(!fixture.viewModel.conversationCompressionTraceSummaries().isEmpty());
 }
 
 void DesktopShellViewModelTest::exposesRetrievalPlanningMetadata() {

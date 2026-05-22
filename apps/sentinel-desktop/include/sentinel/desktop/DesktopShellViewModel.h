@@ -530,6 +530,26 @@ class DesktopShellViewModel final : public QObject {
                    conversationSalienceTraceSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationSalienceExclusionSummaries READ
                    conversationSalienceExclusionSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationCompressionStatus READ conversationCompressionStatus NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString conversationCompressionReadinessSummary READ
+                   conversationCompressionReadinessSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationCompressionPressureSummary READ
+                   conversationCompressionPressureSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int conversationCompressionCandidateCount READ
+                   conversationCompressionCandidateCount NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int conversationCompressionSelectedCandidateCount READ
+                   conversationCompressionSelectedCandidateCount NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationCompressionFallbackReason READ
+                   conversationCompressionFallbackReason NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationCompressionTraceSummary READ
+                   conversationCompressionTraceSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationCompressionBudgetSummary READ
+                   conversationCompressionBudgetSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList conversationCompressionCandidateSummaries READ
+                   conversationCompressionCandidateSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList conversationCompressionTraceSummaries READ
+                   conversationCompressionTraceSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool semanticRetrievalEnabled READ semanticRetrievalEnabled CONSTANT)
     Q_PROPERTY(QString semanticRetrievalStatus READ semanticRetrievalStatus CONSTANT)
     Q_PROPERTY(QString semanticRetrievalSummary READ semanticRetrievalSummary CONSTANT)
@@ -1322,6 +1342,16 @@ public:
     int conversationSalienceTruncatedCount() const;
     QStringList conversationSalienceTraceSummaries() const;
     QStringList conversationSalienceExclusionSummaries() const;
+    QString conversationCompressionStatus() const;
+    QString conversationCompressionReadinessSummary() const;
+    QString conversationCompressionPressureSummary() const;
+    int conversationCompressionCandidateCount() const;
+    int conversationCompressionSelectedCandidateCount() const;
+    QString conversationCompressionFallbackReason() const;
+    QString conversationCompressionTraceSummary() const;
+    QString conversationCompressionBudgetSummary() const;
+    QStringList conversationCompressionCandidateSummaries() const;
+    QStringList conversationCompressionTraceSummaries() const;
     core::SemanticRetrievalPolicy semanticRetrievalPolicy() const;
     bool semanticRetrievalEnabled() const;
     QString semanticRetrievalStatus() const;
