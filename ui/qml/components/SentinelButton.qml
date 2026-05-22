@@ -6,8 +6,10 @@ Button {
 
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
-    opacity: enabled ? 1.0 : 0.48
+    opacity: enabled ? 1.0 : InteractionTokens.disabledOpacity
     implicitHeight: SentinelTheme.controlHeight
+    scale: down ? InteractionTokens.pressScale
+                : hovered || activeFocus ? InteractionTokens.focusScale : 1.0
 
     contentItem: Text {
         text: control.text
@@ -20,45 +22,44 @@ Button {
 
         Behavior on color {
             ColorAnimation {
-                duration: SentinelTheme.durationFast
-                easing.type: SentinelTheme.easingStandard
+                duration: MotionTokens.fast
+                easing.type: MotionTokens.standard
             }
         }
     }
 
     background: Rectangle {
         radius: SentinelTheme.radiusMd
-        color: control.down
-               ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.18)
-               : control.hovered || control.activeFocus
-                 ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.11)
-                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.052)
-        border.color: control.activeFocus
-                      ? SentinelTheme.focusBorder
-                      : control.hovered
-                        ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
-                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.080)
+        color: InteractionTokens.surfaceColor(control.hovered, control.down, false, SentinelTheme.calmAccent)
+        border.color: InteractionTokens.borderColor(control.activeFocus, control.hovered, false, SentinelTheme.calmAccent)
         border.width: 1
 
         Behavior on color {
             ColorAnimation {
-                duration: SentinelTheme.durationFast
-                easing.type: SentinelTheme.easingStandard
+                duration: MotionTokens.fast
+                easing.type: MotionTokens.standard
             }
         }
 
         Behavior on border.color {
             ColorAnimation {
-                duration: SentinelTheme.durationFast
-                easing.type: SentinelTheme.easingStandard
+                duration: MotionTokens.fast
+                easing.type: MotionTokens.standard
             }
         }
     }
 
     Behavior on opacity {
         NumberAnimation {
-            duration: SentinelTheme.durationFast
-            easing.type: SentinelTheme.easingStandard
+            duration: MotionTokens.fast
+            easing.type: MotionTokens.standard
+        }
+    }
+
+    Behavior on scale {
+        NumberAnimation {
+            duration: MotionTokens.fast
+            easing.type: MotionTokens.press
         }
     }
 }

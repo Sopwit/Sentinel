@@ -46,13 +46,13 @@ Item {
         anchors.centerIn: parent
         width: orb.safeSize * 0.90
         height: width
+        rotation: orb.active ? 8 : 0
 
-        RotationAnimation on rotation {
-            loops: Animation.Infinite
-            from: 0
-            to: 360
-            duration: orb.viewModel.currentModeName === "Tactical Mode" ? 14000 : SentinelTheme.durationOrbit
-            running: orb.visible && !orb.reducedMotion
+        Behavior on rotation {
+            NumberAnimation {
+                duration: MotionTokens.duration(MotionTokens.slow, orb.viewModel.currentModeName)
+                easing.type: MotionTokens.enter
+            }
         }
 
         Repeater {
@@ -87,13 +87,13 @@ Item {
         anchors.centerIn: parent
         width: orb.safeSize * 0.64
         height: width
+        rotation: orb.active ? -6 : 0
 
-        RotationAnimation on rotation {
-            loops: Animation.Infinite
-            from: 0
-            to: 360
-            duration: SentinelTheme.durationOrbit * (orb.active ? 0.86 : 1.28)
-            running: orb.visible && !orb.reducedMotion
+        Behavior on rotation {
+            NumberAnimation {
+                duration: MotionTokens.duration(MotionTokens.slow, orb.viewModel.currentModeName)
+                easing.type: MotionTokens.enter
+            }
         }
 
         Repeater {
@@ -123,13 +123,13 @@ Item {
         anchors.centerIn: parent
         width: orb.safeSize * 0.62
         height: width
+        rotation: orb.active ? 10 : 0
 
-        RotationAnimation on rotation {
-            loops: Animation.Infinite
-            from: 360
-            to: 0
-            duration: SentinelTheme.durationOrbit * 0.72
-            running: orb.visible && !orb.reducedMotion
+        Behavior on rotation {
+            NumberAnimation {
+                duration: MotionTokens.duration(MotionTokens.slow, orb.viewModel.currentModeName)
+                easing.type: MotionTokens.enter
+            }
         }
 
         Rectangle {
@@ -158,21 +158,12 @@ Item {
         radius: width / 2
         color: SentinelTheme.withAlpha(orb.accent, (orb.active ? 0.13 : 0.075) * orb.glowScale)
         border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+        scale: orb.active ? 1.018 : 1.0
 
-        SequentialAnimation on scale {
-            id: coreBreath
-            loops: Animation.Infinite
-            running: orb.visible && !orb.reducedMotion
+        Behavior on scale {
             NumberAnimation {
-                from: orb.active ? 0.96 : 0.985
-                to: orb.active ? 1.045 : 1.015
-                duration: SentinelTheme.durationAmbient
-                easing.type: Easing.InOutSine
-            }
-            NumberAnimation {
-                to: orb.active ? 0.96 : 0.985
-                duration: SentinelTheme.durationAmbient
-                easing.type: Easing.InOutSine
+                duration: MotionTokens.duration(MotionTokens.slow, orb.viewModel.currentModeName)
+                easing.type: MotionTokens.enter
             }
         }
 

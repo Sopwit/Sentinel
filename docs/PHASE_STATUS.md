@@ -2,6 +2,119 @@
 
 ## Completed / Stable
 
+### Phase 22.0-22.10: Desktop Productization And Native Application Refinement
+
+Completed. Turns the polished desktop shell into a more cohesive native application experience
+without expanding provider, tool, runtime, voice, filesystem, cloud, or autonomous authority.
+
+Scope:
+
+- Added a lightweight startup shell readiness state so the first render fades in consistently and
+  avoids visible layout popping during initial QML composition.
+- Added a shared dimmed modal shell with bounded opacity/scale transitions, escape/outside-click
+  closing, and consistent premium confirmation styling for local-data destructive prompts.
+- Added a metadata-only command palette on Ctrl/Cmd+K with searchable local navigation actions for
+  Home, Runtime/Memory, Agents, and Settings.
+- Added command-palette quick-action rows for Clear Chat History, Export Markdown, and Export JSON
+  as metadata-only disabled actions; they do not call export, clear, filesystem, plugin, tool, or
+  runtime execution paths.
+- Added safe local keyboard shortcuts for Ctrl/Cmd+1-4 navigation, Ctrl/Cmd+L composer focus,
+  Ctrl/Cmd+, Settings, and Esc overlay close behavior.
+- Improved compact desktop interaction quality with steadier first-shell appearance, composer
+  focus choreography, anchored conversation menus, consistent overlay dimming, calmer scroll bounds,
+  and concise first-use guidance on chat, conversations, memory, agents, and settings surfaces.
+
+Known limitation:
+
+- This phase does not add autonomous behavior, hidden background activity, background polling,
+  filesystem scanning, command-palette export/clear execution, plugin/runtime/tool execution,
+  subprocess launch, cloud/API calls, microphone capture, audio playback, STT/TTS activation, or
+  provider/model execution changes.
+
+### Phase 21.0-21.8: Cinematic Interaction Polish And Production UX Refinement
+
+Completed. Refines the Phase 20 UI foundation with subtle interaction choreography, improved
+scanability, and stricter idle-performance posture while preserving all runtime/no-execution
+boundaries.
+
+Scope:
+
+- Added tokenized page fade/translate choreography, richer dock hover/focus response, and a
+  smoother active dock indicator without changing page routing semantics.
+- Refined shared controls, chips, fields, scrollbars, and focus states around the existing motion
+  and interaction tokens.
+- Improved Home chat message appearance, empty-state composition, send-button state transition,
+  user/assistant message distinction, streaming/status readability, and scrollbar integration.
+- Improved AI Bridge conversation row hover/selection hierarchy, active-row emphasis, compact
+  list scrolling, and metadata-only selected-conversation status presentation.
+- Improved Runtime/Memory and Agents diagnostic readability with calmer scrollbars, clearer
+  grouped spacing, hoverable metadata rows, and stronger blocked/refused/restricted emphasis.
+- Improved Settings section hierarchy, compact rail behavior, toggle hover/focus feel, model
+  selector popup presentation, long-path field readability, and scroll integration.
+- Converted shared pulse/orb/glow/atmosphere visuals away from idle animation loops; motion now
+  remains event/state driven and limited to opacity, scale, translate, and color/border fades.
+
+Known limitation:
+
+- This phase does not add provider/cloud activation, model execution, tool/plugin execution,
+  autonomous behavior, microphone capture, playback, STT/TTS execution, filesystem scanning,
+  subprocesses, polling loops, or backend/runtime authority changes.
+
+### Phase 20.7-20.12: UI QA, Responsive Cleanup, And Text Overflow Pass
+
+Completed. Finishes the Phase 20 UI polish foundation with a focused QML QA pass and no runtime
+authority changes.
+
+Scope:
+
+- Removed avoidable value truncation in shared detail rows while keeping ellipsis for compact
+  chips, navigation labels, and one-line controls where wrapping would break layout.
+- Added explicit bottom breathing room to scrollable Home, Runtime/Memory, Agents, and Settings
+  content so final sections remain visible above the shell status and dock area.
+- Aligned remaining menu, model selector, checkbox, hover, focus, and active states with shared
+  interaction tokens and calm cyan/blue theme treatment.
+- Kept Home chatbot-first with the composer visible, chat list bottom-follow behavior after send
+  and streaming completion, and AI Bridge limited to provider/conversation metadata.
+- Kept Runtime/Memory and Agents Developer surfaces gated by Developer Mode, with wrapped
+  diagnostic rows and compact scrollable metadata walls.
+- Improved Settings category rail synchronization, exact section jumps, Developer gating, readable
+  voice/model detail rows, and preserved the premium Developer Mode switch styling.
+- Added lightweight QML `uiSelfCheck` metadata on polished UI surfaces for future visual QA hooks.
+
+Known limitation:
+
+- This phase does not add backend runtime authority, real tool execution, STT/TTS activation,
+  microphone capture, playback, subprocesses, filesystem scanning, cloud/API provider activation,
+  autonomous execution, or raw prompt/vector/debug payload exposure.
+
+### Phase 20.0-20.6: Premium Motion, Interaction, And Visual Polish Foundation
+
+Completed. Adds shared QML motion and interaction polish while preserving the current
+presentation-only Developer Mode and metadata-only runtime boundaries.
+
+Scope:
+
+- Added shared motion and interaction token singletons for safe durations, easing, reduced-motion
+  mode behavior, hover/press/focus/active opacity, and calm cyan/blue glass borders.
+- Refined shared controls and shell navigation so hover, press, focus, active, menu, and page
+  transitions use the premium cyan/blue accent instead of harsh debug-like outlines.
+- Home remains chatbot-first, fills the available center area, keeps the composer visible above
+  the dock/status zone, and scrolls new messages to the bottom unless the user has intentionally
+  scrolled up. Sending a message returns the chat to the latest message.
+- AI Bridge remains limited to provider/cloud status, compact conversations, selected
+  conversation actions, and disabled pin/delete metadata.
+- Runtime/Memory and Agents keep Developer tabs hidden unless Developer Mode is enabled, with
+  Developer content grouped into compact read-only metadata sections.
+- Settings keeps left category navigation, adds a smoother scroll-to-section behavior and a
+  premium active rail indicator, preserves the Developer section gate, and keeps the Developer
+  Mode switch presentation-only.
+
+Known limitation:
+
+- This phase does not add provider/cloud activation, model management execution, tool/plugin
+  execution, autonomous actions, microphone capture, playback, STT/TTS activation, filesystem
+  scanning, subprocesses, raw prompt/vector/debug payload exposure, or runtime authority changes.
+
 ### Phase 19.10-19.15: Full UI Refinement Pass
 
 Completed. Finishes the Phase 19 UI refinement pass without adding backend authority.

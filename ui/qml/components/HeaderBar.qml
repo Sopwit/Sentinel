@@ -150,14 +150,25 @@ ShellPanel {
 
                 background: Rectangle {
                     radius: 16
-                    color: modeButton.down || modePopup.opened
-                           ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.13)
-                           : modeButton.hovered
-                             ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.085)
-                             : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                    border.color: modeButton.activeFocus ? SentinelTheme.focusBorder
-                                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.080)
+                    color: InteractionTokens.surfaceColor(modeButton.hovered, modeButton.down,
+                                                           modePopup.opened, headerBar.modeAccent)
+                    border.color: InteractionTokens.borderColor(modeButton.activeFocus, modeButton.hovered,
+                                                                 modePopup.opened, headerBar.modeAccent)
                     border.width: 1
+
+                    Behavior on color {
+                        ColorAnimation {
+                            duration: MotionTokens.fast
+                            easing.type: MotionTokens.standard
+                        }
+                    }
+
+                    Behavior on border.color {
+                        ColorAnimation {
+                            duration: MotionTokens.fast
+                            easing.type: MotionTokens.standard
+                        }
+                    }
                 }
 
                 Popup {
@@ -168,11 +179,28 @@ ShellPanel {
                     focus: true
                     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
                     padding: SentinelTheme.spaceXs
+                    enter: Transition {
+                        NumberAnimation {
+                            property: "opacity"
+                            from: 0.0
+                            to: 1.0
+                            duration: MotionTokens.menu
+                            easing.type: MotionTokens.enter
+                        }
+                    }
+                    exit: Transition {
+                        NumberAnimation {
+                            property: "opacity"
+                            to: 0.0
+                            duration: MotionTokens.fast
+                            easing.type: MotionTokens.exit
+                        }
+                    }
 
                     background: Rectangle {
                         radius: SentinelTheme.radiusLg
                         color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.095)
+                        border.color: SentinelTheme.withAlpha(headerBar.modeAccent, 0.18)
                     }
 
                     contentItem: ColumnLayout {
@@ -218,11 +246,5 @@ ShellPanel {
         }
     }
 
-    Timer {
-        interval: 60000
-        repeat: true
-        running: true
-        triggeredOnStart: true
-        onTriggered: headerBar.now = new Date()
-    }
+    Component.onCompleted: headerBar.now = new Date()
 }

@@ -8,6 +8,7 @@ GridLayout {
     property string label: ""
     property string value: ""
     property bool compact: false
+    property int valueMaximumLineCount: compact ? 6 : 8
 
     Layout.fillWidth: true
     columns: infoRow.compact ? 1 : 2
@@ -29,7 +30,6 @@ GridLayout {
         color: SentinelTheme.textPrimary
         font.pixelSize: SentinelTheme.fontBody
         wrapMode: Text.WordWrap
-        maximumLineCount: infoRow.compact ? 3 : 4
-        elide: Text.ElideRight
+        maximumLineCount: infoRow.valueMaximumLineCount
     }
 }

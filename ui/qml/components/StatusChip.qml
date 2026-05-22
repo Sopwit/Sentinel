@@ -13,31 +13,32 @@ Rectangle {
 
     radius: SentinelTheme.radiusPill
     color: SentinelTheme.withAlpha(statusChip.accent,
-                                   statusChip.selected ? 0.105 : statusChip.muted ? 0.028 : 0.055)
+                                   statusChip.selected ? InteractionTokens.selectedOpacity
+                                                       : statusChip.muted ? 0.026 : 0.052)
     border.color: SentinelTheme.withAlpha(statusChip.selected ? statusChip.accent : SentinelTheme.textPrimary,
-                                          statusChip.selected ? 0.16 : statusChip.muted ? 0.045 : 0.075)
-    implicitWidth: Math.min(Math.max(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 96), 320)
+                                          statusChip.selected ? 0.20 : statusChip.muted ? 0.040 : 0.070)
+    implicitWidth: Math.min(Math.max(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 88), 420)
     implicitHeight: 28
-    scale: 1.0
+    scale: hoverArea.containsMouse && !statusChip.muted ? InteractionTokens.cardHoverLift : 1.0
 
     Behavior on color {
         ColorAnimation {
-            duration: SentinelTheme.durationNormal
-            easing.type: SentinelTheme.easingStandard
+            duration: MotionTokens.normal
+            easing.type: MotionTokens.standard
         }
     }
 
     Behavior on border.color {
         ColorAnimation {
-            duration: SentinelTheme.durationNormal
-            easing.type: SentinelTheme.easingStandard
+            duration: MotionTokens.normal
+            easing.type: MotionTokens.standard
         }
     }
 
     Behavior on scale {
         NumberAnimation {
-            duration: SentinelTheme.durationFast
-            easing.type: SentinelTheme.easingEmphasized
+            duration: MotionTokens.fast
+            easing.type: MotionTokens.enter
         }
     }
 
@@ -52,8 +53,8 @@ Rectangle {
 
         Behavior on border.color {
             ColorAnimation {
-                duration: SentinelTheme.durationNormal
-                easing.type: SentinelTheme.easingStandard
+                duration: MotionTokens.normal
+                easing.type: MotionTokens.standard
             }
         }
     }
@@ -61,7 +62,7 @@ Rectangle {
     Text {
         id: chipText
         anchors.centerIn: parent
-        width: Math.min(implicitWidth, statusChip.width - SentinelTheme.spaceMd * 2 - 12)
+        width: Math.min(implicitWidth, Math.max(0, statusChip.width - SentinelTheme.spaceMd * 2 - 12))
         text: statusChip.label.length > 0 ? statusChip.label + ": " + statusChip.value
                                           : statusChip.value
         color: statusChip.muted ? SentinelTheme.textMuted : SentinelTheme.textPrimary

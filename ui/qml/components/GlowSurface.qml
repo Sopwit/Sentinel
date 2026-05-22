@@ -20,6 +20,21 @@ Item {
         radius: width / 2
         color: SentinelTheme.withAlpha(glow.accent, (glow.active ? 0.060 : 0.028) * glow.glowScale)
         border.color: SentinelTheme.withAlpha(glow.accent, glow.active ? 0.050 : 0.026)
+        scale: glow.active ? 1.018 : 1.0
+
+        Behavior on color {
+            ColorAnimation {
+                duration: MotionTokens.normal
+                easing.type: MotionTokens.standard
+            }
+        }
+
+        Behavior on scale {
+            NumberAnimation {
+                duration: MotionTokens.duration(MotionTokens.slow, reducedMotion ? "Focus Mode" : "")
+                easing.type: MotionTokens.enter
+            }
+        }
     }
 
     Rectangle {
@@ -38,26 +53,5 @@ Item {
         radius: width / 2
         color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, glow.active ? 0.030 : 0.018)
         border.color: SentinelTheme.withAlpha(glow.accent, 0.10)
-    }
-
-    SequentialAnimation {
-        loops: Animation.Infinite
-        running: glow.visible && !glow.reducedMotion
-
-        NumberAnimation {
-            target: outerGlow
-            property: "scale"
-            from: 0.985
-            to: glow.active ? 1.030 : 1.012
-            duration: SentinelTheme.durationAmbient
-            easing.type: Easing.InOutSine
-        }
-        NumberAnimation {
-            target: outerGlow
-            property: "scale"
-            to: 0.985
-            duration: SentinelTheme.durationAmbient
-            easing.type: Easing.InOutSine
-        }
     }
 }

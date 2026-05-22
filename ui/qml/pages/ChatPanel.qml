@@ -12,6 +12,7 @@ ShellPanel {
                                       || viewModel.selectedLocalModelStatus === "Fallback"
     readonly property bool chatReady: viewModel.localChatInferenceEnabled && modelReady
     readonly property int contentPadding: compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
+    readonly property string uiSelfCheck: "conversation-menu-themed no-message-duplication disabled-actions-muted"
     property string renameStatusText: ""
 
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.046)
@@ -126,6 +127,21 @@ ShellPanel {
             spacing: SentinelTheme.spaceSm
             model: chatPanel.viewModel.conversationIds.length
             boundsBehavior: Flickable.StopAtBounds
+            boundsMovement: Flickable.StopAtBounds
+            maximumFlickVelocity: 2200
+            flickDeceleration: 5200
+            bottomMargin: SentinelTheme.spaceMd
+            ScrollBar.vertical: ScrollBar {
+                policy: ScrollBar.AsNeeded
+                contentItem: Rectangle {
+                    implicitWidth: 4
+                    radius: 2
+                    color: SentinelTheme.withAlpha(chatPanel.modeAccent, parent.active ? 0.34 : 0.18)
+                }
+                background: Rectangle {
+                    color: "transparent"
+                }
+            }
 
             delegate: Rectangle {
                 id: conversationItem
@@ -133,21 +149,76 @@ ShellPanel {
                 readonly property string conversationId: chatPanel.viewModel.conversationIds[index]
                 readonly property bool active: conversationId === chatPanel.viewModel.activeConversationId
                 readonly property bool archived: chatPanel.viewModel.conversationArchivedSummaries[index] === "Archived"
+                readonly property bool hovered: conversationClick.containsMouse
 
                 width: ListView.view.width
                 radius: SentinelTheme.radiusMd
-                color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10)
+                color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.11)
+                              : hovered ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.060)
                               : archived ? SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.030)
                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
-                border.color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.18)
-                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
+                border.color: active ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.22)
+                                     : hovered ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.14)
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
                 opacity: archived && !active ? 0.70 : 1.0
                 implicitHeight: conversationRow.implicitHeight + SentinelTheme.spaceMd
+                scale: hovered && !active ? InteractionTokens.cardHoverLift
+                                          : active ? InteractionTokens.focusScale : 1.0
+
+                Behavior on color {
+                    ColorAnimation {
+                        duration: MotionTokens.fast
+                        easing.type: MotionTokens.standard
+                    }
+                }
+
+                Behavior on border.color {
+                    ColorAnimation {
+                        duration: MotionTokens.fast
+                        easing.type: MotionTokens.standard
+                    }
+                }
+
+                Behavior on scale {
+                    NumberAnimation {
+                        duration: MotionTokens.fast
+                        easing.type: MotionTokens.enter
+                    }
+                }
 
                 MouseArea {
+                    id: conversationClick
                     anchors.fill: parent
-                    enabled: !conversationItem.active
-                    onClicked: chatPanel.viewModel.switchConversation(conversationItem.conversationId)
+                    hoverEnabled: true
+                    onClicked: {
+                        if (!conversationItem.active)
+                            chatPanel.viewModel.switchConversation(conversationItem.conversationId)
+                    }
+                }
+
+                Rectangle {
+                    width: 3
+                    height: conversationItem.active ? parent.height - SentinelTheme.spaceMd : 0
+                    radius: 2
+                    anchors.left: parent.left
+                    anchors.leftMargin: SentinelTheme.spaceXs
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: chatPanel.modeAccent
+                    opacity: conversationItem.active ? 0.86 : 0.0
+
+                    Behavior on height {
+                        NumberAnimation {
+                            duration: MotionTokens.duration(MotionTokens.fast, chatPanel.viewModel.currentModeName)
+                            easing.type: MotionTokens.enter
+                        }
+                    }
+
+                    Behavior on opacity {
+                        NumberAnimation {
+                            duration: MotionTokens.duration(MotionTokens.fast, chatPanel.viewModel.currentModeName)
+                            easing.type: MotionTokens.standard
+                        }
+                    }
                 }
 
                 RowLayout {
@@ -169,7 +240,8 @@ ShellPanel {
                                    : SentinelTheme.textPrimary
                             font.pixelSize: SentinelTheme.fontSmall
                             font.bold: conversationItem.active
-                            maximumLineCount: 1
+                            maximumLineCount: 2
+                            wrapMode: Text.WordWrap
                             elide: Text.ElideRight
                         }
 
@@ -182,8 +254,8 @@ ShellPanel {
                                   + chatPanel.viewModel.conversationArchivedSummaries[index]
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontTiny
-                            maximumLineCount: 1
-                            elide: Text.ElideRight
+                            maximumLineCount: 2
+                            wrapMode: Text.WordWrap
                         }
                     }
 
@@ -193,6 +265,7 @@ ShellPanel {
                         Layout.preferredHeight: 30
                         text: "\u22ef"
                         hoverEnabled: true
+                        focusPolicy: Qt.StrongFocus
                         onClicked: overflowMenu.open()
 
                         contentItem: Text {
@@ -205,23 +278,55 @@ ShellPanel {
 
                         background: Rectangle {
                             radius: 15
-                            color: overflowButton.hovered
-                                   ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.085)
-                                   : "transparent"
-                            border.color: overflowButton.activeFocus
-                                          ? SentinelTheme.focusBorder
-                                          : "transparent"
+                            color: InteractionTokens.surfaceColor(overflowButton.hovered, overflowButton.down,
+                                                                   overflowMenu.visible,
+                                                                   chatPanel.modeAccent)
+                            border.color: InteractionTokens.borderColor(overflowButton.activeFocus,
+                                                                         overflowButton.hovered,
+                                                                         overflowMenu.visible,
+                                                                         chatPanel.modeAccent)
+
+                            Behavior on color {
+                                ColorAnimation {
+                                    duration: MotionTokens.fast
+                                    easing.type: MotionTokens.standard
+                                }
+                            }
                         }
 
                         Menu {
                             id: overflowMenu
                             width: 180
+                            x: overflowButton.width - width
+                            y: overflowButton.height + SentinelTheme.spaceXs
                             padding: SentinelTheme.spaceXs
+                            modal: true
+                            dim: false
+
+                            enter: Transition {
+                                NumberAnimation {
+                                    property: "opacity"
+                                    from: 0.0
+                                    to: 1.0
+                                    duration: MotionTokens.menu
+                                    easing.type: MotionTokens.enter
+                                }
+                            }
+
+                            exit: Transition {
+                                NumberAnimation {
+                                    property: "opacity"
+                                    to: 0.0
+                                    duration: MotionTokens.fast
+                                    easing.type: MotionTokens.exit
+                                }
+                            }
 
                             background: Rectangle {
                                 radius: SentinelTheme.radiusLg
                                 color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.095)
+                                border.color: InteractionTokens.borderColor(false, true, false,
+                                                                             chatPanel.modeAccent)
                             }
 
                             MenuItem {
@@ -243,9 +348,8 @@ ShellPanel {
 
                                 background: Rectangle {
                                     radius: SentinelTheme.radiusMd
-                                    color: renameMenuItem.highlighted
-                                           ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10)
-                                           : "transparent"
+                                    color: InteractionTokens.surfaceColor(renameMenuItem.highlighted, false, false,
+                                                                           chatPanel.modeAccent)
                                 }
                             }
 
@@ -269,15 +373,14 @@ ShellPanel {
 
                                 background: Rectangle {
                                     radius: SentinelTheme.radiusMd
-                                    color: archiveMenuItem.highlighted
-                                           ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10)
-                                           : "transparent"
+                                    color: InteractionTokens.surfaceColor(archiveMenuItem.highlighted, false, false,
+                                                                           chatPanel.modeAccent)
                                 }
                             }
 
                             MenuItem {
                                 id: pinMenuItem
-                                text: "Pin disabled"
+                                text: "Pin unavailable"
                                 enabled: false
 
                                 contentItem: Text {
@@ -290,13 +393,13 @@ ShellPanel {
 
                                 background: Rectangle {
                                     radius: SentinelTheme.radiusMd
-                                    color: "transparent"
+                                    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
                                 }
                             }
 
                             MenuItem {
                                 id: deleteMenuItem
-                                text: "Delete disabled"
+                                text: "Delete unavailable"
                                 enabled: false
 
                                 contentItem: Text {
@@ -309,7 +412,7 @@ ShellPanel {
 
                                 background: Rectangle {
                                     radius: SentinelTheme.radiusMd
-                                    color: "transparent"
+                                    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
                                 }
                             }
                         }

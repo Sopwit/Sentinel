@@ -20,15 +20,15 @@ Rectangle {
 
     Behavior on color {
         ColorAnimation {
-            duration: SentinelTheme.durationNormal
-            easing.type: SentinelTheme.easingStandard
+            duration: MotionTokens.normal
+            easing.type: MotionTokens.standard
         }
     }
 
     Behavior on border.color {
         ColorAnimation {
-            duration: SentinelTheme.durationNormal
-            easing.type: SentinelTheme.easingStandard
+            duration: MotionTokens.normal
+            easing.type: MotionTokens.standard
         }
     }
 

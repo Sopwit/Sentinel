@@ -136,6 +136,51 @@ Motion should be quiet and functional:
 - Page transitions should be subtle and should not delay interaction.
 - Buttons should not imply execution capability when the underlying feature is metadata-only.
 
+## Phase 21 Interaction Polish Notes
+
+Phase 21.0 through Phase 21.8 refines production interaction quality without expanding runtime
+authority.
+
+Guidelines:
+
+- Page changes may use a short tokenized fade/translate entrance. Reduced-motion modes should
+  shorten or remove translation through `MotionTokens`.
+- Dock, card, chip, menu, field, and toggle feedback should use `InteractionTokens` and
+  `MotionTokens` rather than one-off timings.
+- Message and card entrances should be subtle and bounded to state changes. No idle animation,
+  autoplay ambient movement, continuous timer, polling loop, shader-heavy effect, particle-heavy
+  effect, or blur stack should be added.
+- Safe animated properties are opacity, scale, translate, color/border-color fades, and soft
+  presence fades. Avoid large layout movement and avoid motion that competes with reading.
+- Runtime/Memory, Agents, AI Bridge, and Settings developer sections remain read-only
+  metadata-only surfaces. Polish may improve hierarchy, spacing, focus, hover, scrollbars, and
+  blocked/refused/restricted emphasis, but must not add execution controls or backend authority.
+
+## Phase 22 Desktop Productization Notes
+
+Phase 22.0 through Phase 22.10 refines Sentinel as a native desktop application shell while
+preserving all local-only and metadata-only execution boundaries.
+
+Guidelines:
+
+- Startup should use lightweight shell readiness and short first-render opacity transitions to
+  avoid layout popping. Do not add splash processes, workers, polling loops, or continuous timers.
+- The command palette is a local shell affordance. It may navigate to Home, Runtime/Memory,
+  Agents, and Settings, but quick actions such as clear chat and export remain metadata-only in the
+  palette and must not perform filesystem access or destructive mutation from that surface.
+- Keyboard shortcuts should remain user-facing and safe: Ctrl/Cmd+K for the palette, Ctrl/Cmd+1-4
+  for page navigation, Ctrl/Cmd+L for the chat composer, Ctrl/Cmd+, for Settings, and Esc for
+  overlays. Do not add hidden developer shortcuts.
+- Overlays and confirmations should share dimming, bounded opacity/scale transitions, escape
+  handling, and outside-click dismissal where safe. They must prevent background interaction while
+  open and avoid motion that competes with reading.
+- Empty states should be concise and premium. They should clarify local-only behavior without
+  implying cloud, autonomous, provider, model, tool, voice, plugin, filesystem, or background
+  activity.
+- Scrollable surfaces should stop at bounds, keep scrollbars visually consistent, and remain
+  readable at compact widths. Long diagnostic rows should wrap within established metadata
+  components rather than exposing raw payloads.
+
 ## Future Assistant Visuals
 
 Future assistant visuals may include subtle status presence, listening/thinking indicators, and
@@ -293,6 +338,17 @@ left-side navigation with reliable scroll active-state sync. Bottom status value
 bound to `DesktopShellViewModel`/controller state, never mock text. Mode presentation may change
 density and telemetry visibility only, with no change to backend authority, safety, permissions,
 provider access, tool access, voice execution, or semantic authority.
+
+Phase 20.7 through Phase 20.12 completes the UI QA foundation after the shared motion and
+interaction-token work. Scrollable pages should include explicit bottom breathing room above the
+status/dock area. Detail rows should wrap long values instead of truncating them, while compact
+chips, dock labels, rail labels, and one-line selectors may still elide to preserve layout.
+Home must keep the composer visible and continue following new messages after sends and streaming
+completion. AI Bridge should remain a provider/conversation metadata panel and keep its menus
+styled with the app theme. Runtime/Memory and Agents Developer sections remain hidden unless
+Developer Mode is enabled and should group diagnostics into readable wrapped rows. Settings rail
+clicks should land on the exact section, scroll-based active-state sync should remain stable, and
+voice/model paths or summaries should stay readable without changing any backend authority.
 
 ## i18n Plan
 
