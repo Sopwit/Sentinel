@@ -181,6 +181,33 @@ Guidelines:
   readable at compact widths. Long diagnostic rows should wrap within established metadata
   components rather than exposing raw payloads.
 
+## Phase 23 Conversation Workflow Notes
+
+Phase 23.0 through Phase 23.12 refines conversation lifecycle, information architecture, and chat
+productivity UX without expanding runtime authority.
+
+Guidelines:
+
+- Conversation lists may provide local metadata filtering over already exposed conversation title,
+  message count, updated-time, active, pinned-session, and archived metadata. Filtering must remain
+  instant, local-only, and literal; do not add semantic search, embeddings, SQLite FTS, filesystem
+  indexing, cloud/provider search, or background workers.
+- Conversation rows should be compact and readable, with clear current selection, hover/focus
+  states, message count, updated-time metadata, and lightweight pinned/recent/archived section
+  headers. Pinned presentation is session-local until a later explicit storage phase adds a schema
+  field and tests.
+- Conversation menus should group lifecycle actions before metadata-only/disabled actions:
+  Rename, Pin/Unpin, Archive/Unarchive, Duplicate metadata, and disabled Delete. Duplicate remains
+  a non-mutating affordance until a later transcript-copy phase explicitly scopes storage behavior.
+- Chat messages should support comfortable reading, long-message wrapping, mouse selection, and
+  copy ergonomics without exposing raw prompt payloads beyond the visible local transcript.
+- The composer should feel desktop-native: multiline entry, Enter send, Shift+Enter newline,
+  Escape focus release, visible focus transition, and no active attachment/upload/runtime control
+  until a later file-ingestion phase explicitly scopes it.
+- Startup and restore states should tell the user where they are without jarring reset copy. Active
+  conversation continuity can use the existing settings store and QML-safe conversation metadata,
+  but must not start provider calls, background restoration work, scans, or indexing.
+
 ## Future Assistant Visuals
 
 Future assistant visuals may include subtle status presence, listening/thinking indicators, and

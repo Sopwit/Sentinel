@@ -81,6 +81,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::configurationProfileChanged);
     connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
             &DesktopShellViewModel::developerModeChanged);
+    connect(&settings_, &core::AppSettings::activeConversationIdChanged, this,
+            &DesktopShellViewModel::chatMessagesChanged);
     connect(&settings_, &core::AppSettings::routingModeNameChanged, this,
             &DesktopShellViewModel::modelRoutingChanged);
     connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this,
@@ -121,6 +123,12 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         settings_.setPiperFileOutputExecutionEnabled(false);
     }
     controller_.setPiperFileOutputExecutionEnabled(false);
+    if (!settings_.activeConversationId().isEmpty()) {
+        controller_.switchConversation(settings_.activeConversationId());
+    }
+    if (controller_.activeConversationId() != QStringLiteral("single-transcript")) {
+        settings_.setActiveConversationId(controller_.activeConversationId());
+    }
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -2480,11 +2488,19 @@ bool DesktopShellViewModel::requestConversationExport(const QString& format) {
 }
 
 QString DesktopShellViewModel::createConversation(const QString& title) {
-    return controller_.createConversation(title);
+    const auto conversationId = controller_.createConversation(title);
+    if (!conversationId.isEmpty()) {
+        settings_.setActiveConversationId(conversationId);
+    }
+    return conversationId;
 }
 
 bool DesktopShellViewModel::switchConversation(const QString& conversationId) {
-    return controller_.switchConversation(conversationId);
+    const auto switched = controller_.switchConversation(conversationId);
+    if (switched) {
+        settings_.setActiveConversationId(controller_.activeConversationId());
+    }
+    return switched;
 }
 
 bool DesktopShellViewModel::renameConversation(const QString& conversationId,
@@ -2493,11 +2509,19 @@ bool DesktopShellViewModel::renameConversation(const QString& conversationId,
 }
 
 bool DesktopShellViewModel::archiveConversation(const QString& conversationId) {
-    return controller_.archiveConversation(conversationId);
+    const auto archived = controller_.archiveConversation(conversationId);
+    if (archived) {
+        settings_.setActiveConversationId(controller_.activeConversationId());
+    }
+    return archived;
 }
 
 bool DesktopShellViewModel::unarchiveConversation(const QString& conversationId) {
-    return controller_.unarchiveConversation(conversationId);
+    const auto unarchived = controller_.unarchiveConversation(conversationId);
+    if (unarchived && conversationId == controller_.activeConversationId()) {
+        settings_.setActiveConversationId(controller_.activeConversationId());
+    }
+    return unarchived;
 }
 
 bool DesktopShellViewModel::requestPermanentDeleteConversation(const QString& conversationId) {

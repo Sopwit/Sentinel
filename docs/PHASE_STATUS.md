@@ -2,6 +2,40 @@
 
 ## Completed / Stable
 
+### Phase 23.0-23.12: Conversation Workflow And Productivity UX Refinement
+
+Completed. Turns the conversation experience into a calmer productivity-oriented workflow while
+preserving local-first behavior and existing runtime/no-autonomous-execution boundaries.
+
+Scope:
+
+- Improved conversation continuity by persisting the selected active conversation id through the
+  existing settings store and restoring it visually on startup when the stored conversation is
+  still available.
+- Reworked the AI Bridge conversation list with lightweight local-only filtering, section headers
+  for pinned, recent, and archived conversations, clearer current-row selection, inline message
+  count and updated-time metadata, and current/recent/archive visual ordering.
+- Added session-local pinned conversation presentation without adding a storage schema field,
+  background work, indexing, provider calls, semantic expansion, or filesystem scanning.
+- Improved the conversation overflow menu with Rename, Pin/Unpin, Archive/Unarchive, metadata-only
+  Duplicate, and disabled Delete entries grouped with clearer hierarchy.
+- Improved empty states for no conversations, no pinned conversations, and no local filter matches.
+- Improved Home chat productivity with active-conversation continuity text, calmer message rhythm,
+  selectable/copyable message bodies, better long-message wrapping, stable streaming presentation,
+  and concise first-use guidance.
+- Reworked the composer into a compact multiline surface with Enter to send, Shift+Enter for a new
+  line, Escape to release focus, visible focus state, and a disabled attachment placeholder that
+  performs no upload or runtime action.
+- Improved keyboard/focus behavior for conversation search, rename, row menus, message copy, and
+  composer focus release.
+
+Known limitation:
+
+- This phase does not add persistent pin storage, permanent delete, transcript duplication,
+  semantic/vector conversation search, filesystem indexing, cloud/provider search, autonomous
+  agents, tool/plugin execution, STT/TTS activation, microphone capture, playback, subprocess
+  execution, or hidden background behavior.
+
 ### Phase 22.0-22.10: Desktop Productization And Native Application Refinement
 
 Completed. Turns the polished desktop shell into a more cohesive native application experience

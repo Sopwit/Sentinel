@@ -248,4 +248,19 @@ void AppSettings::setPiperFileOutputExecutionEnabled(bool enabled) {
     emit piperFileOutputExecutionEnabledChanged();
 }
 
+QString AppSettings::activeConversationId() const {
+    return store_ ? store_->value(QString::fromLatin1(activeConversationIdKey), {}).trimmed()
+                  : QString();
+}
+
+void AppSettings::setActiveConversationId(const QString& conversationId) {
+    const auto normalized = conversationId.trimmed();
+    if (normalized == activeConversationId() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(activeConversationIdKey), normalized);
+    emit activeConversationIdChanged();
+}
+
 } // namespace sentinel::core
