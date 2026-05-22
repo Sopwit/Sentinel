@@ -15,6 +15,7 @@ class InMemoryConversationStoreTest final : public QObject {
 private slots:
     void createsListsAndLoadsConversation();
     void appendsAndLoadsMessagesInDeterministicOrder();
+    void pinsAndUnpinsConversationMetadata();
     void rejectsMissingConversation();
     void archivesAndDeletesWithoutRemovingOtherConversations();
 };
@@ -65,6 +66,17 @@ void InMemoryConversationStoreTest::appendsAndLoadsMessagesInDeterministicOrder(
     QCOMPARE(messages.at(1).messageId, 2);
     QCOMPARE(messages.at(2).messageId, 3);
     QCOMPARE(store.listConversations().first().messageCount, 3);
+}
+
+void InMemoryConversationStoreTest::pinsAndUnpinsConversationMetadata() {
+    InMemoryConversationStore store;
+    const auto conversation = store.createConversation(QStringLiteral("Pinned"));
+
+    QVERIFY(store.pinConversation(conversation.id));
+    QCOMPARE(store.listConversations().first().pinned, true);
+
+    QVERIFY(store.unpinConversation(conversation.id));
+    QCOMPARE(store.listConversations().first().pinned, false);
 }
 
 void InMemoryConversationStoreTest::rejectsMissingConversation() {

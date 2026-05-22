@@ -869,6 +869,24 @@ boundary:
 - Archived active conversations stay loadable and read-only for sending, with UI hint metadata
   explaining that the conversation must be unarchived before sending.
 
+Phase 24.0 through Phase 24.6 complete safe local conversation persistence:
+
+- `ConversationRecord` includes persisted pinned metadata. `IConversationStore` exposes
+  `pinConversation()` and `unpinConversation()` behind the same local store boundary.
+- `SQLiteConversationStore` schema version 2 adds the `pinned` column with a non-destructive
+  additive migration for existing local conversation databases.
+- `ApplicationController::conversationRecords()` returns deterministic browser ordering: pinned
+  non-archived records first, recent non-archived records next, and archived records last, with
+  updated-time/title/id tie handling.
+- `ApplicationController::duplicateConversation()` creates a local duplicate titled
+  `Original title Copy` and copies transcript messages through `IConversationStore` load/append
+  operations. It does not export files, import files, sync cloud state, or switch the active
+  conversation automatically.
+- Duplicate and pin results are exposed to QML as strings, counts, booleans, and string lists only.
+  Raw store objects and SQLite details remain unexposed.
+- Permanent delete remains disabled. The controller delete request path still refuses before
+  calling `IConversationStore::deleteConversation()` and reports the safe readiness copy.
+
 No cloud sync, import, permanent delete UI, multi-conversation export, vector/semantic search,
 tool/plugin/system execution, or Ollama safety policy change is introduced.
 

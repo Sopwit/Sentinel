@@ -17,35 +17,21 @@ ShellPanel {
     property string actionStatusText: ""
     property string conversationSearchText: ""
     property string conversationFilter: "All"
-    property var pinnedConversationIds: []
 
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.046)
     border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
 
     function isPinned(conversationId) {
-        return pinnedConversationIds.indexOf(conversationId) >= 0
-    }
-
-    function togglePinned(conversationId) {
-        var next = pinnedConversationIds.slice()
-        var existing = next.indexOf(conversationId)
-        if (existing >= 0) {
-            next.splice(existing, 1)
-            actionStatusText = "Conversation unpinned for this session."
-        } else {
-            next.push(conversationId)
-            actionStatusText = "Conversation pinned for this session."
-        }
-        pinnedConversationIds = next
-        rebuildConversationRows()
+        var index = viewModel.conversationIds.indexOf(conversationId)
+        return index >= 0 && viewModel.conversationPinnedSummaries[index] === "Pinned"
     }
 
     function rowSection(index) {
         var id = viewModel.conversationIds[index]
-        if (isPinned(id))
-            return "Pinned"
         if (viewModel.conversationArchivedSummaries[index] === "Archived")
             return "Archived"
+        if (isPinned(id))
+            return "Pinned"
         return "Recent"
     }
 
@@ -68,6 +54,7 @@ ShellPanel {
             viewModel.conversationMessageCountSummaries[index],
             viewModel.conversationLastUpdatedSummaries[index],
             viewModel.conversationArchivedSummaries[index],
+            viewModel.conversationPinnedSummaries[index],
             viewModel.conversationActiveSummaries[index]
         ].join(" ").toLowerCase()
         return haystack.indexOf(query) >= 0
@@ -442,7 +429,7 @@ ShellPanel {
 
                             Menu {
                                 id: overflowMenu
-                                width: 196
+                                width: 244
                                 x: overflowButton.width - width
                                 y: overflowButton.height + SentinelTheme.spaceXs
                                 padding: SentinelTheme.spaceXs
@@ -469,7 +456,14 @@ ShellPanel {
 
                                 MenuItem {
                                     text: conversationDelegate.pinned ? "Unpin" : "Pin"
-                                    onTriggered: chatPanel.togglePinned(conversationDelegate.conversationId)
+                                    onTriggered: {
+                                        var ok = conversationDelegate.pinned
+                                                 ? chatPanel.viewModel.unpinConversation(conversationDelegate.conversationId)
+                                                 : chatPanel.viewModel.pinConversation(conversationDelegate.conversationId)
+                                        actionStatusText = ok
+                                                           ? (conversationDelegate.pinned ? "Conversation unpinned." : "Conversation pinned.")
+                                                           : "Conversation pin update refused."
+                                    }
                                 }
 
                                 MenuItem {
@@ -487,15 +481,27 @@ ShellPanel {
                                 MenuSeparator {}
 
                                 MenuItem {
-                                    text: "Duplicate metadata"
+                                    text: "Duplicate"
                                     onTriggered: {
-                                        actionStatusText = "Duplicate is metadata-only; no transcript was copied."
+                                        var duplicateId = chatPanel.viewModel.duplicateConversation(
+                                            conversationDelegate.conversationId)
+                                        actionStatusText = duplicateId.length > 0
+                                                           ? chatPanel.viewModel.conversationDuplicateLastResultSummary
+                                                           : "Conversation duplicate refused."
                                     }
                                 }
 
                                 MenuItem {
-                                    text: "Delete unavailable"
+                                    id: deleteDisabledItem
+                                    text: "Permanent delete is not enabled yet. Archive is available."
                                     enabled: false
+
+                                    contentItem: Text {
+                                        text: deleteDisabledItem.text
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontTiny
+                                        wrapMode: Text.WordWrap
+                                    }
                                 }
                             }
                         }
@@ -518,7 +524,7 @@ ShellPanel {
                 y: SentinelTheme.spaceXs
                 width: parent.width - SentinelTheme.spaceSm * 2
                 text: chatPanel.conversationFilter === "Pinned"
-                      ? "No pinned conversations in this session."
+                      ? "No pinned conversations yet."
                       : chatPanel.conversationSearchText.trim().length > 0
                         ? "No local conversation metadata matches this filter."
                         : chatPanel.viewModel.conversationBrowserEmptyStateSummary

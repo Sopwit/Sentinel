@@ -72,8 +72,8 @@ ConversationRecord SQLiteConversationStore::createConversation(const QString& ti
 
     QSqlQuery query(database_);
     query.prepare(QStringLiteral("INSERT INTO conversations("
-                                 "id, title, created_at, updated_at, archived, deleted) "
-                                 "VALUES(?, ?, ?, ?, 0, 0)"));
+                                 "id, title, created_at, updated_at, archived, pinned, deleted) "
+                                 "VALUES(?, ?, ?, ?, 0, 0, 0)"));
     query.addBindValue(record.id);
     query.addBindValue(record.title);
     query.addBindValue(record.createdAtUtc.toString(Qt::ISODateWithMs));
@@ -97,7 +97,7 @@ QList<ConversationRecord> SQLiteConversationStore::listConversations() const {
 
     QSqlQuery query(database_);
     if (!query.exec(QStringLiteral("SELECT c.id, c.title, c.created_at, c.updated_at, "
-                                   "c.archived, c.deleted, COUNT(m.message_id) "
+                                   "c.archived, c.pinned, c.deleted, COUNT(m.message_id) "
                                    "FROM conversations c "
                                    "LEFT JOIN conversation_messages m ON m.conversation_id = c.id "
                                    "WHERE c.deleted = 0 "
@@ -114,8 +114,9 @@ QList<ConversationRecord> SQLiteConversationStore::listConversations() const {
         record.createdAtUtc = QDateTime::fromString(query.value(2).toString(), Qt::ISODateWithMs);
         record.updatedAtUtc = QDateTime::fromString(query.value(3).toString(), Qt::ISODateWithMs);
         record.archived = query.value(4).toBool();
-        record.deleted = query.value(5).toBool();
-        record.messageCount = query.value(6).toInt();
+        record.pinned = query.value(5).toBool();
+        record.deleted = query.value(6).toBool();
+        record.messageCount = query.value(7).toInt();
         record.summary = conversationRecordSummary(record);
         records.append(record);
     }
@@ -250,6 +251,14 @@ bool SQLiteConversationStore::unarchiveConversation(const QString& conversationI
     return updateConversationMetadata(conversationId, false, false);
 }
 
+bool SQLiteConversationStore::pinConversation(const QString& conversationId) {
+    return updatePinnedMetadata(conversationId, true);
+}
+
+bool SQLiteConversationStore::unpinConversation(const QString& conversationId) {
+    return updatePinnedMetadata(conversationId, false);
+}
+
 bool SQLiteConversationStore::deleteConversation(const QString& conversationId) {
     return updateConversationMetadata(conversationId, true, true);
 }
@@ -326,6 +335,33 @@ bool SQLiteConversationStore::updateConversationMetadata(const QString& conversa
     return true;
 }
 
+bool SQLiteConversationStore::updatePinnedMetadata(const QString& conversationId, bool pinned) {
+    if (!database_.isOpen()) {
+        setLastError(ConversationStoreErrorCode::Unavailable,
+                     QStringLiteral("SQLite conversation database is not open."));
+        return false;
+    }
+    if (!conversationExists(conversationId)) {
+        setLastError(ConversationStoreErrorCode::InvalidConversationId,
+                     QStringLiteral("Conversation does not exist."));
+        return false;
+    }
+
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral("UPDATE conversations SET pinned = ?, updated_at = ? "
+                                 "WHERE id = ? AND deleted = 0"));
+    query.addBindValue(boolText(pinned));
+    query.addBindValue(QDateTime::currentDateTimeUtc().toString(Qt::ISODateWithMs));
+    query.addBindValue(conversationId);
+    if (!query.exec()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+        return false;
+    }
+
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
 void SQLiteConversationStore::open() {
     const QFileInfo fileInfo(databasePath_);
     if (!fileInfo.dir().exists()) {
@@ -355,9 +391,20 @@ void SQLiteConversationStore::initializeSchema() {
                                    "created_at TEXT NOT NULL,"
                                    "updated_at TEXT NOT NULL,"
                                    "archived INTEGER NOT NULL DEFAULT 0,"
+                                   "pinned INTEGER NOT NULL DEFAULT 0,"
                                    "deleted INTEGER NOT NULL DEFAULT 0)"))) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return;
+    }
+
+    if (!query.exec(QStringLiteral("ALTER TABLE conversations ADD COLUMN pinned INTEGER NOT NULL "
+                                   "DEFAULT 0"))) {
+        const auto errorText = query.lastError().text();
+        if (!errorText.contains(QStringLiteral("duplicate column name"),
+                                Qt::CaseInsensitive)) {
+            setLastError(ConversationStoreErrorCode::StorageFailure, errorText);
+            return;
+        }
     }
 
     if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversation_messages("

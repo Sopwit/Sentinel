@@ -735,6 +735,8 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY chatMessagesChanged)
     Q_PROPERTY(QStringList conversationArchivedSummaries READ conversationArchivedSummaries NOTIFY
                    chatMessagesChanged)
+    Q_PROPERTY(QStringList conversationPinnedSummaries READ conversationPinnedSummaries NOTIFY
+                   chatMessagesChanged)
     Q_PROPERTY(int activeConversationCount READ activeConversationCount NOTIFY chatMessagesChanged)
     Q_PROPERTY(
         int archivedConversationCount READ archivedConversationCount NOTIFY chatMessagesChanged)
@@ -812,6 +814,10 @@ class DesktopShellViewModel final : public QObject {
                    conversationExportChanged)
     Q_PROPERTY(QString conversationExportLastTimestamp READ conversationExportLastTimestamp NOTIFY
                    conversationExportChanged)
+    Q_PROPERTY(QString conversationDuplicateLastStatus READ conversationDuplicateLastStatus NOTIFY
+                   conversationDuplicateChanged)
+    Q_PROPERTY(QString conversationDuplicateLastResultSummary READ
+                   conversationDuplicateLastResultSummary NOTIFY conversationDuplicateChanged)
     Q_PROPERTY(bool conversationDeleteAvailable READ conversationDeleteAvailable NOTIFY
                    conversationDeleteChanged)
     Q_PROPERTY(QString conversationDeletePolicyStatus READ conversationDeletePolicyStatus NOTIFY
@@ -1388,6 +1394,7 @@ public:
     QStringList conversationLastUpdatedSummaries() const;
     QStringList conversationMessageCountSummaries() const;
     QStringList conversationArchivedSummaries() const;
+    QStringList conversationPinnedSummaries() const;
     int activeConversationCount() const;
     int archivedConversationCount() const;
     int userCreatedConversationCount() const;
@@ -1428,6 +1435,8 @@ public:
     QString conversationExportLastFileName() const;
     int conversationExportLastMessageCount() const;
     QString conversationExportLastTimestamp() const;
+    QString conversationDuplicateLastStatus() const;
+    QString conversationDuplicateLastResultSummary() const;
     bool conversationDeleteAvailable() const;
     QString conversationDeletePolicyStatus() const;
     QString conversationDeletePolicySummary() const;
@@ -1509,6 +1518,9 @@ public:
     Q_INVOKABLE QString createConversation(const QString& title);
     Q_INVOKABLE bool switchConversation(const QString& conversationId);
     Q_INVOKABLE bool renameConversation(const QString& conversationId, const QString& title);
+    Q_INVOKABLE bool pinConversation(const QString& conversationId);
+    Q_INVOKABLE bool unpinConversation(const QString& conversationId);
+    Q_INVOKABLE QString duplicateConversation(const QString& conversationId);
     Q_INVOKABLE bool archiveConversation(const QString& conversationId);
     Q_INVOKABLE bool unarchiveConversation(const QString& conversationId);
     Q_INVOKABLE bool requestPermanentDeleteConversation(const QString& conversationId);
@@ -1552,6 +1564,7 @@ signals:
     void conversationRuntimeChanged();
     void conversationSearchChanged();
     void conversationExportChanged();
+    void conversationDuplicateChanged();
     void conversationDeleteChanged();
     void memoryCandidatesChanged();
     void memoryRecallChanged();

@@ -71,6 +71,7 @@ private slots:
     void exposesChatHistoryStatus();
     void exposesConversationStoreReadinessMetadata();
     void forwardsConversationBrowserActions();
+    void exposesPersistentPinAndDuplicateConversationActions();
     void exposesConversationDeleteReadinessMetadata();
     void exposesConversationHistorySummaryMetadata();
     void exposesConversationBrowserMetadata();
@@ -1511,6 +1512,9 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("conversationExportLastFileName"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationExportLastMessageCount"), QByteArrayLiteral("int")},
         {QStringLiteral("conversationExportLastTimestamp"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationPinnedSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationDuplicateLastStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationDuplicateLastResultSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("memoryRecallPolicyStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("memoryRecallPolicySummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("memoryRecallQueryText"), QByteArrayLiteral("QString")},
@@ -1699,6 +1703,29 @@ void DesktopShellViewModelTest::forwardsConversationBrowserActions() {
     QCOMPARE(fixture.viewModel.activeConversationId(), firstId);
 }
 
+void DesktopShellViewModelTest::exposesPersistentPinAndDuplicateConversationActions() {
+    ViewModelFixture fixture;
+
+    const auto sourceId = fixture.viewModel.activeConversationId();
+    QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("view model duplicate token")));
+
+    QVERIFY(fixture.viewModel.pinConversation(sourceId));
+    QCOMPARE(fixture.viewModel.conversationPinnedSummaries().first(), QStringLiteral("Pinned"));
+
+    QVERIFY(fixture.viewModel.unpinConversation(sourceId));
+    QCOMPARE(fixture.viewModel.conversationPinnedSummaries().first(), QStringLiteral("Unpinned"));
+
+    const auto duplicateId = fixture.viewModel.duplicateConversation(sourceId);
+    QVERIFY(!duplicateId.isEmpty());
+    QCOMPARE(fixture.viewModel.conversationDuplicateLastStatus(), QStringLiteral("Succeeded"));
+    QVERIFY(fixture.viewModel.conversationDuplicateLastResultSummary().contains(
+        QStringLiteral("Current Transcript Copy")));
+    QVERIFY(fixture.viewModel.conversationTitles().contains(
+        QStringLiteral("Current Transcript Copy")));
+    QVERIFY(fixture.viewModel.switchConversation(duplicateId));
+    QCOMPARE(fixture.viewModel.conversationHistoryMessageCount(), 3);
+}
+
 void DesktopShellViewModelTest::exposesConversationDeleteReadinessMetadata() {
     ViewModelFixture fixture;
     QSignalSpy deleteSpy(&fixture.viewModel, &DesktopShellViewModel::conversationDeleteChanged);
@@ -1712,9 +1739,9 @@ void DesktopShellViewModelTest::exposesConversationDeleteReadinessMetadata() {
         QStringLiteral("Archive remains the supported safe removal flow")));
     QCOMPARE(fixture.viewModel.conversationDeleteReadinessStatus(), QStringLiteral("Disabled"));
     QVERIFY(fixture.viewModel.conversationDeleteReadinessSummary().contains(
-        QStringLiteral("Permanent delete is disabled")));
+        QStringLiteral("Permanent delete is not enabled yet")));
     QVERIFY(fixture.viewModel.conversationDeleteReadinessChecks().contains(
-        QStringLiteral("Permanent delete: Disabled by default")));
+        QStringLiteral("Permanent delete: Not enabled yet")));
     QVERIFY(fixture.viewModel.activeConversationStateSummary().contains(
         QStringLiteral("sending is available")));
     QCOMPARE(fixture.viewModel.activeConversationCount(), 1);
@@ -1729,7 +1756,7 @@ void DesktopShellViewModelTest::exposesConversationDeleteReadinessMetadata() {
     QCOMPARE(deleteSpy.size(), 1);
     QCOMPARE(fixture.viewModel.conversationDeleteLastStatus(), QStringLiteral("Refused"));
     QVERIFY(fixture.viewModel.conversationDeleteLastResultSummary().contains(
-        QStringLiteral("refused")));
+        QStringLiteral("Permanent delete is not enabled yet")));
     QCOMPARE(fixture.viewModel.activeConversationId(), activeId);
     QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 1);
 }
