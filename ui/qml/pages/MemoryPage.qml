@@ -247,7 +247,16 @@ ScrollView {
                             label: "Retrieval Planning"
                             value: memoryPage.viewModel.retrievalPlanningStatus + " / "
                                    + memoryPage.viewModel.retrievalPlanningSelectedSourceCount
-                                   + " selected sources / deterministic"
+                                   + " selected sources / "
+                                   + memoryPage.viewModel.retrievalPlanningExcludedCandidateCount
+                                   + " excluded"
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: "Context Budget"
+                            value: memoryPage.viewModel.contextBudgetUsageSummary
                             Layout.fillWidth: true
                         }
 
@@ -258,7 +267,17 @@ ScrollView {
                                    + memoryPage.viewModel.selectedSemanticProviderName + " / "
                                    + memoryPage.viewModel.semanticActivationReadiness
                             Layout.fillWidth: true
-                        }
+                    }
+
+                    InfoRow {
+                        compact: true
+                        valueMaximumLineCount: 8
+                        label: "Context Trace"
+                        value: memoryPage.viewModel.contextAssemblyTraceSummaries.length === 0
+                               ? "No prompt context assembled yet."
+                               : memoryPage.viewModel.contextAssemblyTraceSummaries.join(" / ")
+                        Layout.fillWidth: true
+                    }
 
                     InfoRow {
                         compact: true

@@ -21,6 +21,7 @@ using sentinel::core::planRetrieval;
 using sentinel::core::RetrievalCandidate;
 using sentinel::core::RetrievalPlanningPolicy;
 using sentinel::core::RetrievalPlanningStatus;
+using sentinel::core::retrievalCandidateTraceSummaries;
 using sentinel::core::retrievalSourceSummaries;
 
 class ContextAssemblyTest final : public QObject {
@@ -36,6 +37,8 @@ private slots:
     void retrievalPlanningSelectsSourcesByDeterministicPriority();
     void retrievalPlanningAllocatesBudgetAndTruncatesDeterministically();
     void retrievalPlanningPreservesChronologyWithinSource();
+    void retrievalPlanningSuppressesDuplicatesAndReportsReasons();
+    void retrievalPlanningEnforcesCandidateAndSourceLimits();
 };
 
 void ContextAssemblyTest::createsDeterministicAssemblySummary() {
@@ -264,6 +267,66 @@ void ContextAssemblyTest::retrievalPlanningPreservesChronologyWithinSource() {
     QCOMPARE(result.selectedCandidates.at(0).title, QStringLiteral("First"));
     QCOMPARE(result.selectedCandidates.at(1).title, QStringLiteral("Second"));
     QCOMPARE(result.selectedCandidates.at(2).source, ContextAssemblySourceKind::CommittedMemory);
+}
+
+void ContextAssemblyTest::retrievalPlanningSuppressesDuplicatesAndReportsReasons() {
+    RetrievalPlanningPolicy policy;
+    policy.maxCharacters = 100;
+
+    const auto result = planRetrieval(
+        {
+            RetrievalCandidate{ContextAssemblySourceKind::Conversation,
+                               {},
+                               QStringLiteral("First"),
+                               QStringLiteral("same content")},
+            RetrievalCandidate{ContextAssemblySourceKind::Conversation,
+                               {},
+                               QStringLiteral("Duplicate"),
+                               QStringLiteral("same content")},
+            RetrievalCandidate{ContextAssemblySourceKind::CommittedMemory,
+                               {},
+                               QStringLiteral("Empty"),
+                               QString()},
+        },
+        policy);
+
+    QCOMPARE(result.status, RetrievalPlanningStatus::Truncated);
+    QCOMPARE(result.selectedCandidateCount, 1);
+    QCOMPARE(result.excludedCandidateCount, 2);
+    const auto trace = retrievalCandidateTraceSummaries(result).join(QStringLiteral("\n"));
+    QVERIFY(trace.contains(QStringLiteral("Duplicate candidate")));
+    QVERIFY(trace.contains(QStringLiteral("Empty candidate")));
+}
+
+void ContextAssemblyTest::retrievalPlanningEnforcesCandidateAndSourceLimits() {
+    RetrievalPlanningPolicy policy;
+    policy.maxCharacters = 100;
+    policy.maxCandidates = 1;
+    policy.maxSources = 1;
+
+    const auto result = planRetrieval(
+        {
+            RetrievalCandidate{ContextAssemblySourceKind::Conversation,
+                               {},
+                               QStringLiteral("Conversation"),
+                               QStringLiteral("recent")},
+            RetrievalCandidate{ContextAssemblySourceKind::CommittedMemory,
+                               {},
+                               QStringLiteral("Memory"),
+                               QStringLiteral("memory")},
+            RetrievalCandidate{ContextAssemblySourceKind::RuntimeMetadata,
+                               {},
+                               QStringLiteral("Runtime"),
+                               QStringLiteral("runtime")},
+        },
+        policy);
+
+    QCOMPARE(result.status, RetrievalPlanningStatus::Truncated);
+    QCOMPARE(result.selectedCandidateCount, 1);
+    QCOMPARE(result.excludedCandidateCount, 2);
+    QVERIFY(retrievalCandidateTraceSummaries(result)
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Source count limit reached")));
 }
 
 QTEST_MAIN(ContextAssemblyTest)

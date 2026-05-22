@@ -20,7 +20,23 @@ enum class ContextAssemblySourceKind : std::uint8_t {
     CommittedMemory,
     RuntimeMetadata,
     Orchestration,
+    SelectedConversationMetadata,
 };
+
+using ContextSourceKind = ContextAssemblySourceKind;
+
+enum class ContextExclusionReason : std::uint8_t {
+    None,
+    EmptyCandidate,
+    SourceDisabled,
+    DuplicateCandidate,
+    BudgetExhausted,
+    SourceCountLimit,
+    CandidateCountLimit,
+    NotRelevant,
+};
+
+using ContextCandidateReason = ContextExclusionReason;
 
 enum class PromptContextInjectionStatus : std::uint8_t {
     Disabled,
@@ -58,6 +74,7 @@ enum class RetrievalSourcePriority : std::uint8_t {
     CommittedMemory = 3,
     RuntimeMetadata = 4,
     Orchestration = 5,
+    SelectedConversationMetadata = 6,
 };
 
 QString contextAssemblyStatusName(ContextAssemblyStatus status);
@@ -75,6 +92,7 @@ struct ContextAssemblyPolicy {
     bool includeCommittedMemoryContext = true;
     bool includeRuntimeMetadataContext = true;
     bool includeOrchestrationContext = true;
+    bool includeSelectedConversationMetadata = true;
     bool promptAssemblyEnabled = false;
     bool automaticAttachmentEnabled = false;
     QString status = QStringLiteral("Planning Only");
@@ -89,6 +107,7 @@ struct ContextAssemblyRequest {
     bool includeCommittedMemoryContext = true;
     bool includeRuntimeMetadataContext = true;
     bool includeOrchestrationContext = true;
+    bool includeSelectedConversationMetadata = true;
 };
 
 struct ContextAssemblySource {
@@ -260,15 +279,20 @@ struct ConversationSummaryResult {
 struct RetrievalPlanningPolicy {
     bool enabled = true;
     int maxCharacters = 3200;
+    int maxCandidates = 8;
+    int maxSources = 6;
     bool includeRecentConversation = true;
     bool includeConversationSummary = true;
     bool includeCommittedMemory = true;
     bool includeRuntimeMetadata = true;
     bool includeOrchestration = true;
+    bool includeSelectedConversationMetadata = true;
     QString status = QStringLiteral("Ready");
     QString summary = QStringLiteral(
         "Deterministic retrieval planning selects local context sources without semantic search.");
 };
+
+using ContextSelectionPolicy = RetrievalPlanningPolicy;
 
 struct RetrievalBudget {
     int maxCharacters = 3200;
@@ -278,6 +302,9 @@ struct RetrievalBudget {
     int remainingCharacters = 3200;
     QString summary = QStringLiteral("0 of 3200 retrieval characters selected.");
 };
+
+using ContextBudget = RetrievalBudget;
+using ContextBudgetUsage = RetrievalBudget;
 
 struct RetrievalCandidate {
     ContextAssemblySourceKind source = ContextAssemblySourceKind::Conversation;
@@ -290,6 +317,8 @@ struct RetrievalCandidate {
     bool truncated = false;
     QString exclusionReason;
 };
+
+using ContextCandidate = RetrievalCandidate;
 
 struct RetrievalSelectionSummary {
     ContextAssemblySourceKind source = ContextAssemblySourceKind::Conversation;
@@ -323,6 +352,16 @@ struct RetrievalPlanningResult {
     QStringList checks;
 };
 
+using ContextSelectionResult = RetrievalPlanningResult;
+
+struct ContextAssemblyTrace {
+    QStringList includedSummaries;
+    QStringList excludedSummaries;
+    QString summary = QStringLiteral("No context assembly trace has been generated.");
+};
+
+QString contextExclusionReasonName(ContextExclusionReason reason);
+
 ContextAssemblySource makeContextAssemblySource(ContextAssemblySourceKind kind, bool requested,
                                                 bool available, int blockCount, int estimatedSize,
                                                 const QString& summary);
@@ -345,5 +384,6 @@ QStringList conversationSummaryBlockSummaries(const ConversationSummaryResult& r
 RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidates,
                                       const RetrievalPlanningPolicy& policy);
 QStringList retrievalSourceSummaries(const RetrievalPlanningResult& result);
+QStringList retrievalCandidateTraceSummaries(const RetrievalPlanningResult& result);
 
 } // namespace sentinel::core

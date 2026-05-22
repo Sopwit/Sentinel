@@ -2,6 +2,33 @@
 
 ## Completed / Stable
 
+### Phase 26.0-26.8: Context Assembly And Retrieval Intelligence Foundation
+
+Completed. Improves deterministic local context selection, budgeting, traceability, and UI
+visibility without adding semantic authority, cloud/API providers, filesystem scanning, tools, or
+hidden background behavior.
+
+Scope:
+
+- Added value-only context selection aliases and metadata for source kind, candidate reasons,
+  budget usage, selection results, exclusion reasons, and safe assembly traces.
+- Retrieval planning now uses deterministic priority, stable tie-breaking, bounded character
+  budget, bounded candidate/source counts, duplicate suppression, and explicit exclusion reasons.
+- Prompt-time committed key-value memory is included only when deterministic literal/key metadata
+  overlaps the user prompt. Pending/rejected memory candidates remain excluded.
+- Added selected conversation metadata as a concise metadata-only local context source.
+- Prompt context injection still happens only through the existing explicit opt-in local context
+  path, before the user prompt, with compact delimiters and no raw prompt dump in UI.
+- Home shows concise context usage when injection is enabled. Runtime/Memory Developer view shows
+  source, budget, included/excluded, and safe trace summaries. Settings shows context enablement
+  and deterministic source count, with detailed budget visible only in Developer Mode.
+
+Known limitation:
+
+- This phase does not add semantic/vector search activation, embeddings, cloud/API calls,
+  filesystem indexing, tool/subprocess execution, autonomous memory writes, background
+  summarization, raw prompt display, or broader runtime authority.
+
 ### Phase 25.0-25.8: Local Chat Reliability, Ollama UX, And Runtime Status Hardening
 
 Completed. Hardens the local Ollama chat path so readiness, failures, and busy/stale request

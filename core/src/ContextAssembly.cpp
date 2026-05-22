@@ -1,6 +1,7 @@
 #include "sentinel/core/ContextAssembly.h"
 
 #include <algorithm>
+#include <QSet>
 
 namespace sentinel::core {
 
@@ -39,6 +40,8 @@ QString contextAssemblySourceKindName(ContextAssemblySourceKind kind) {
         return QStringLiteral("Runtime Metadata Context");
     case ContextAssemblySourceKind::Orchestration:
         return QStringLiteral("Orchestration Context");
+    case ContextAssemblySourceKind::SelectedConversationMetadata:
+        return QStringLiteral("Selected Conversation Metadata");
     }
 
     return QStringLiteral("Conversation Context");
@@ -120,6 +123,8 @@ QString retrievalSourcePriorityName(RetrievalSourcePriority priority) {
         return QStringLiteral("4 Runtime Metadata");
     case RetrievalSourcePriority::Orchestration:
         return QStringLiteral("5 Orchestration");
+    case RetrievalSourcePriority::SelectedConversationMetadata:
+        return QStringLiteral("6 Selected Conversation Metadata");
     }
 
     return QStringLiteral("1 Recent Conversation");
@@ -137,9 +142,34 @@ RetrievalSourcePriority retrievalSourcePriorityForKind(ContextAssemblySourceKind
         return RetrievalSourcePriority::RuntimeMetadata;
     case ContextAssemblySourceKind::Orchestration:
         return RetrievalSourcePriority::Orchestration;
+    case ContextAssemblySourceKind::SelectedConversationMetadata:
+        return RetrievalSourcePriority::SelectedConversationMetadata;
     }
 
     return RetrievalSourcePriority::RecentConversation;
+}
+
+QString contextExclusionReasonName(ContextExclusionReason reason) {
+    switch (reason) {
+    case ContextExclusionReason::None:
+        return QStringLiteral("Included");
+    case ContextExclusionReason::EmptyCandidate:
+        return QStringLiteral("Empty candidate");
+    case ContextExclusionReason::SourceDisabled:
+        return QStringLiteral("Source disabled by policy");
+    case ContextExclusionReason::DuplicateCandidate:
+        return QStringLiteral("Duplicate candidate");
+    case ContextExclusionReason::BudgetExhausted:
+        return QStringLiteral("Retrieval budget exhausted");
+    case ContextExclusionReason::SourceCountLimit:
+        return QStringLiteral("Source count limit reached");
+    case ContextExclusionReason::CandidateCountLimit:
+        return QStringLiteral("Candidate count limit reached");
+    case ContextExclusionReason::NotRelevant:
+        return QStringLiteral("No deterministic literal relevance");
+    }
+
+    return QStringLiteral("Excluded");
 }
 
 ContextAssemblySource makeContextAssemblySource(ContextAssemblySourceKind kind, bool requested,
@@ -691,12 +721,15 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
                                    (item.source == ContextAssemblySourceKind::RuntimeMetadata &&
                                     policy.includeRuntimeMetadata) ||
                                    (item.source == ContextAssemblySourceKind::Orchestration &&
-                                    policy.includeOrchestration);
+                                    policy.includeOrchestration) ||
+                                   (item.source ==
+                                        ContextAssemblySourceKind::SelectedConversationMetadata &&
+                                    policy.includeSelectedConversationMetadata);
 
         if (item.content.isEmpty()) {
-            item.exclusionReason = QStringLiteral("Empty candidate");
+            item.exclusionReason = contextExclusionReasonName(ContextExclusionReason::EmptyCandidate);
         } else if (!sourceAllowed) {
-            item.exclusionReason = QStringLiteral("Source disabled by policy");
+            item.exclusionReason = contextExclusionReasonName(ContextExclusionReason::SourceDisabled);
         }
 
         normalized.append(item);
@@ -708,6 +741,8 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
 
     result.candidates.reserve(normalized.size());
     int remaining = result.budget.maxCharacters;
+    QSet<QString> selectedFingerprints;
+    QSet<ContextAssemblySourceKind> selectedSources;
     for (auto item : normalized) {
         result.budget.estimatedCharacters += item.originalSize;
 
@@ -717,8 +752,35 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
             continue;
         }
 
+        const auto fingerprint = item.content.simplified().toCaseFolded();
+        if (selectedFingerprints.contains(fingerprint)) {
+            item.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::DuplicateCandidate);
+            ++result.excludedCandidateCount;
+            result.candidates.append(item);
+            continue;
+        }
+
+        if (policy.maxSources > 0 && !selectedSources.contains(item.source) &&
+            selectedSources.size() >= policy.maxSources) {
+            item.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::SourceCountLimit);
+            ++result.excludedCandidateCount;
+            result.candidates.append(item);
+            continue;
+        }
+
+        if (policy.maxCandidates > 0 && result.selectedCandidateCount >= policy.maxCandidates) {
+            item.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::CandidateCountLimit);
+            ++result.excludedCandidateCount;
+            result.candidates.append(item);
+            continue;
+        }
+
         if (remaining <= 0) {
-            item.exclusionReason = QStringLiteral("Retrieval budget exhausted");
+            item.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::BudgetExhausted);
             ++result.excludedCandidateCount;
             result.candidates.append(item);
             continue;
@@ -733,13 +795,16 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
 
         item.selectedSize = toInt(item.content.size());
         if (item.selectedSize <= 0) {
-            item.exclusionReason = QStringLiteral("Retrieval budget exhausted");
+            item.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::BudgetExhausted);
             ++result.excludedCandidateCount;
             result.candidates.append(item);
             continue;
         }
 
         item.selected = true;
+        selectedFingerprints.insert(fingerprint);
+        selectedSources.insert(item.source);
         remaining -= item.selectedSize;
         result.budget.includedCharacters += item.selectedSize;
         ++result.selectedCandidateCount;
@@ -761,6 +826,7 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
         ContextAssemblySourceKind::Conversation,    ContextAssemblySourceKind::ConversationSummary,
         ContextAssemblySourceKind::CommittedMemory, ContextAssemblySourceKind::RuntimeMetadata,
         ContextAssemblySourceKind::Orchestration,
+        ContextAssemblySourceKind::SelectedConversationMetadata,
     };
     QStringList selectedSourceNames;
     QStringList excludedSourceNames;
@@ -849,6 +915,23 @@ QStringList retrievalSourceSummaries(const RetrievalPlanningResult& result) {
     summaries.reserve(result.sourceSummaries.size());
     for (const auto& summary : result.sourceSummaries) {
         summaries.append(summary.summary);
+    }
+    return summaries;
+}
+
+QStringList retrievalCandidateTraceSummaries(const RetrievalPlanningResult& result) {
+    QStringList summaries;
+    summaries.reserve(result.candidates.size());
+    for (const auto& candidate : result.candidates) {
+        summaries.append(QStringLiteral("%1 / %2 / %3 chars / %4")
+                             .arg(candidate.selected ? QStringLiteral("included")
+                                                     : QStringLiteral("excluded"))
+                             .arg(contextAssemblySourceKindName(candidate.source))
+                             .arg(candidate.selected ? candidate.selectedSize
+                                                     : candidate.originalSize)
+                             .arg(candidate.selected
+                                      ? QStringLiteral("deterministic priority")
+                                      : candidate.exclusionReason.simplified()));
     }
     return summaries;
 }

@@ -315,6 +315,16 @@ ShellPanel {
             wrapMode: Text.WordWrap
         }
 
+        Label {
+            Layout.fillWidth: true
+            visible: homeChat.viewModel.promptContextInjectionEnabled
+            text: homeChat.viewModel.promptContextUsedSummary
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
+            maximumLineCount: 1
+            elide: Text.ElideRight
+        }
+
         Rectangle {
             Layout.fillWidth: true
             radius: SentinelTheme.radiusMd

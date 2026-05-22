@@ -4094,14 +4094,15 @@ void ApplicationControllerTest::enabledPromptContextInjectionIncludesDeterminist
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+    QVERIFY(controller->sendMessage(QStringLiteral("tone concise hello")));
 
     const auto prompt = fakeClientPtr->lastRequest.prompt;
     QVERIFY(prompt.startsWith(QStringLiteral("[Sentinel Local Context]")));
     QVERIFY(prompt.contains(QStringLiteral("--- Bounded Conversation History ---")));
     QVERIFY(prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
     QVERIFY(prompt.contains(QStringLiteral("preference.tone = Concise answers")));
-    QVERIFY(prompt.contains(QStringLiteral("[/Sentinel Local Context]\n\nUser prompt:\nhello")));
+    QVERIFY(prompt.contains(
+        QStringLiteral("[/Sentinel Local Context]\n\nUser prompt:\ntone concise hello")));
     QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Injected"));
     QVERIFY(controller->promptContextInjectedBlockCount() >= 3);
     QVERIFY(controller->promptContextSourceSummary().contains(QStringLiteral("Committed Memory")));
@@ -4129,7 +4130,7 @@ void ApplicationControllerTest::promptContextInjectionUsesOnlyCommittedMemory() 
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+    QVERIFY(controller->sendMessage(QStringLiteral("approved local committed hello")));
 
     const auto prompt = fakeClientPtr->lastRequest.prompt;
     QVERIFY(prompt.contains(QStringLiteral("approved.local = committed only")));
@@ -4178,7 +4179,7 @@ void ApplicationControllerTest::promptContextInjectionUsesBoundedRecentConversat
     controller->setPromptContextInjectionEnabled(true);
     controller->remember(QStringLiteral("stable.memory"), QStringLiteral("kept separate"));
 
-    QVERIFY(controller->sendMessage(QStringLiteral("final question")));
+    QVERIFY(controller->sendMessage(QStringLiteral("final question stable memory")));
 
     const auto prompt = fakeClientPtr->lastRequest.prompt;
     QVERIFY(prompt.contains(QStringLiteral("--- Bounded Conversation History ---")));
@@ -4224,7 +4225,7 @@ void ApplicationControllerTest::conversationSummaryUsesOlderWindowAndStaysSepara
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
-    QVERIFY(controller->sendMessage(QStringLiteral("summary final question")));
+    QVERIFY(controller->sendMessage(QStringLiteral("summary final question memory")));
 
     const auto prompt = fakeClientPtr->lastRequest.prompt;
     const auto summaryStart = prompt.indexOf(QStringLiteral("--- Older Conversation Summary ---"));
@@ -4290,7 +4291,7 @@ void ApplicationControllerTest::retrievalPlanningFeedsPromptContextWithoutMixing
     QVERIFY(planningBeforePrompt.selectedSourceCount >= 4);
     QCOMPARE(controller->retrievalPlanningReadiness(), QStringLiteral("Ready"));
 
-    QVERIFY(controller->sendMessage(QStringLiteral("retrieval final question")));
+    QVERIFY(controller->sendMessage(QStringLiteral("retrieval final question memory")));
 
     const auto prompt = fakeClientPtr->lastRequest.prompt;
     const auto windowStart = prompt.indexOf(QStringLiteral("--- Bounded Conversation History ---"));
@@ -4357,7 +4358,7 @@ void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOr
     QVERIFY(controller->semanticRetrievalReadinessChecks().contains(
         QStringLiteral("Raw vectors exposed to QML: no")));
 
-    QVERIFY(controller->sendMessage(QStringLiteral("semantic final question")));
+    QVERIFY(controller->sendMessage(QStringLiteral("semantic final question local deterministic")));
 
     const auto planningAfter = controller->retrievalPlanningResult();
     QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
@@ -4705,7 +4706,8 @@ void ApplicationControllerTest::semanticCandidateOrchestrationDoesNotMutatePromp
 
     const auto candidateStatusBefore = controller->semanticCandidateStatus();
 
-    QVERIFY(controller->sendMessage(QStringLiteral("semantic candidate question")));
+    QVERIFY(controller->sendMessage(
+        QStringLiteral("semantic candidate question prompt deterministic")));
 
     QCOMPARE(controller->semanticCandidateStatus(), candidateStatusBefore);
     QVERIFY(fakeClientPtr->lastRequest.prompt.contains(QStringLiteral("candidate.prompt = "
@@ -4736,7 +4738,7 @@ void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandi
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
-    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
+    QVERIFY(controller->sendMessage(QStringLiteral("stable local hello")));
 
     QCOMPARE(controller->memoryEntries(), beforeEntries);
     QCOMPARE(controller->memoryCandidateCount(), beforeCandidateCount);

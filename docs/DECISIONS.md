@@ -278,7 +278,34 @@ Out of scope:
 - Cloud sync, import, multi-conversation export, permanent delete UI, embeddings/vector DB,
   semantic memory, tools/plugins/system execution, and changes to Ollama/runtime safety policy.
 
-## 9.4 Conversation Delete Readiness Checkpoint
+## 9.4 Context Selection And Prompt Injection
+
+Decision: Keep prompt context selection deterministic, local, and controller-owned.
+
+Reason: Sentinel needs clearer local context quality and visibility without granting semantic,
+filesystem, cloud, tool, or background authority.
+
+Runtime behavior:
+
+- Context sources are classified as recent conversation window, deterministic conversation summary
+  metadata, committed key-value memory, runtime metadata, orchestration metadata, and selected
+  conversation metadata.
+- Selection uses fixed source priority, stable tie-breaking, bounded character budget, bounded
+  candidate/source counts, duplicate suppression, and explicit exclusion reasons.
+- Committed memory enters prompt-time context only when deterministic literal/key metadata overlaps
+  the user prompt. Pending/rejected memory candidates are never injected.
+- Injection remains disabled by default and only prepends a compact delimited local context block
+  through the existing explicit setting.
+- QML receives safe source, count, budget, and trace summaries only. Raw prompts, vector scores,
+  provider handles, and filesystem paths are not exposed.
+
+Out of scope:
+
+- Semantic/vector retrieval activation, embeddings, vector databases, filesystem indexing,
+  background summarization, autonomous memory writes, cloud/API calls, tools/plugins, subprocesses,
+  raw prompt dumps, and prompt mutation outside the existing explicit injection path.
+
+## 9.5 Conversation Delete Readiness Checkpoint
 
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent
 delete disabled until a later explicit destructive phase.

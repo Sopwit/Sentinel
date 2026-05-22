@@ -1,5 +1,17 @@
 # AI Orchestration Plan
 
+Phase 26.0 through Phase 26.8 improves context assembly and retrieval intelligence while
+preserving the existing local-first authority boundary. Deterministic context sources are recent
+conversation window, deterministic conversation summary metadata, committed key-value memory,
+runtime metadata, orchestration metadata, and selected conversation metadata. Selection uses fixed
+source priority, stable tie-breaking, bounded character budget, bounded candidate/source counts,
+duplicate suppression, and safe exclusion reasons. Committed memory is included in prompt-time
+context only when deterministic literal/key metadata overlaps the user prompt. Prompt injection
+remains explicit opt-in and uses the existing compact local context block before the user prompt.
+No semantic/vector search activation, embeddings, filesystem indexing, background summarization,
+autonomous memory writes, cloud/API calls, tools/plugins, subprocesses, raw prompt dumps, or
+prompt mutation outside the existing injection path is added.
+
 Phase 25.0 through Phase 25.8 hardens the active local Ollama chat path without expanding runtime
 authority. Local Ollama remains the only active inference provider; no cloud/API provider or API-key
 configuration is active. Send readiness is a controller-owned contract requiring local chat

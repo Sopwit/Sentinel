@@ -19,6 +19,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QRegularExpression>
 #include <QSaveFile>
 #include <QStandardPaths>
 #include <QTextStream>
@@ -112,6 +113,33 @@ QString localInferenceChatFailureMessage(const LocalInferenceResponse& response)
     }
 
     return safeLocalInferenceSummary(response);
+}
+
+QStringList literalContextTokens(const QString& text) {
+    QStringList tokens;
+    const auto parts = text.toCaseFolded().split(QRegularExpression(QStringLiteral("[^a-z0-9]+")),
+                                                 Qt::SkipEmptyParts);
+    for (const auto& part : parts) {
+        if (part.size() >= 3 && !tokens.contains(part)) {
+            tokens.append(part);
+        }
+    }
+    return tokens;
+}
+
+bool hasLiteralContextOverlap(const QString& prompt, const QString& key, const QString& value) {
+    const auto promptTokens = literalContextTokens(prompt);
+    if (promptTokens.isEmpty()) {
+        return false;
+    }
+
+    const auto candidateTokens = literalContextTokens(QStringLiteral("%1 %2").arg(key, value));
+    for (const auto& token : candidateTokens) {
+        if (promptTokens.contains(token)) {
+            return true;
+        }
+    }
+    return false;
 }
 
 QString conversationSearchPreview(const QString& content, int matchIndex, int queryLength) {
@@ -2895,6 +2923,46 @@ QString ApplicationController::promptContextSizeSummary() const {
     return latestPromptContextInjectionResult_.sizeSummary;
 }
 
+QString ApplicationController::promptContextUsedSummary() const {
+    if (!promptContextInjectionEnabled_) {
+        return QStringLiteral("Context used: disabled");
+    }
+    return QStringLiteral("Context used: %1 %2 / %3 chars")
+        .arg(latestPromptContextInjectionResult_.injectedBlockCount)
+        .arg(latestPromptContextInjectionResult_.injectedBlockCount == 1
+                 ? QStringLiteral("source")
+                 : QStringLiteral("sources"))
+        .arg(latestPromptContextInjectionResult_.injectedCharacterCount);
+}
+
+QString ApplicationController::contextBudgetUsageSummary() const {
+    if (latestPromptContextInjectionResult_.status == PromptContextInjectionStatus::Disabled) {
+        return QStringLiteral("0 of %1 context characters used.")
+            .arg(promptContextInjectionPolicy_.maxCharacters);
+    }
+    return latestPromptContextInjectionResult_.sizeSummary;
+}
+
+int ApplicationController::contextIncludedCandidateCount() const {
+    return latestPromptContextInjectionResult_.injectedBlockCount;
+}
+
+int ApplicationController::contextExcludedCandidateCount() const {
+    if (latestPromptContextInjectionResult_.originalPrompt.trimmed().isEmpty()) {
+        return 0;
+    }
+    return retrievalPlanningForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .excludedCandidateCount;
+}
+
+QStringList ApplicationController::contextAssemblyTraceSummaries() const {
+    if (latestPromptContextInjectionResult_.originalPrompt.trimmed().isEmpty()) {
+        return {};
+    }
+    return sentinel::core::retrievalCandidateTraceSummaries(
+        retrievalPlanningForPrompt(latestPromptContextInjectionResult_.originalPrompt));
+}
+
 QStringList ApplicationController::promptContextBlockSummaries() const {
     return sentinel::core::promptContextBlockSummaries(latestPromptContextInjectionResult_);
 }
@@ -4748,6 +4816,13 @@ ApplicationController::contextAssemblySource(ContextAssemblySourceKind kind) con
             toInt(orchestrationSummary.simplified().size()),
             QStringLiteral("Orchestration snapshot metadata is available."));
     }
+    case ContextAssemblySourceKind::SelectedConversationMetadata: {
+        const auto summary = activeConversationSummary();
+        return makeContextAssemblySource(
+            kind, contextAssemblyPolicy_.includeSelectedConversationMetadata,
+            !summary.trimmed().isEmpty(), 1, toInt(summary.simplified().size()),
+            QStringLiteral("Selected conversation metadata is available."));
+    }
     }
 
     return {};
@@ -4759,6 +4834,8 @@ ContextAssemblySummary ApplicationController::contextAssemblySummary() const {
     request.includeCommittedMemoryContext = contextAssemblyPolicy_.includeCommittedMemoryContext;
     request.includeRuntimeMetadataContext = contextAssemblyPolicy_.includeRuntimeMetadataContext;
     request.includeOrchestrationContext = contextAssemblyPolicy_.includeOrchestrationContext;
+    request.includeSelectedConversationMetadata =
+        contextAssemblyPolicy_.includeSelectedConversationMetadata;
     return contextAssemblySummaryForRequest(
         request,
         {
@@ -4767,6 +4844,7 @@ ContextAssemblySummary ApplicationController::contextAssemblySummary() const {
             contextAssemblySource(ContextAssemblySourceKind::CommittedMemory),
             contextAssemblySource(ContextAssemblySourceKind::RuntimeMetadata),
             contextAssemblySource(ContextAssemblySourceKind::Orchestration),
+            contextAssemblySource(ContextAssemblySourceKind::SelectedConversationMetadata),
         },
         contextAssemblyPolicy_);
 }
@@ -4863,6 +4941,10 @@ ApplicationController::retrievalCandidatesForPrompt(const QString& prompt) const
             if (entry.first.trimmed().isEmpty() || entry.second.trimmed().isEmpty()) {
                 continue;
             }
+            if (!prompt.trimmed().isEmpty() &&
+                !hasLiteralContextOverlap(prompt, entry.first, entry.second)) {
+                continue;
+            }
             lines.append(
                 QStringLiteral("%1 = %2").arg(entry.first.simplified(), entry.second.simplified()));
         }
@@ -4900,6 +4982,16 @@ ApplicationController::retrievalCandidatesForPrompt(const QString& prompt) const
         }
     }
 
+    const auto activeSummary = activeConversationSummary().simplified();
+    if (!activeSummary.isEmpty()) {
+        candidates.append(RetrievalCandidate{
+            ContextAssemblySourceKind::SelectedConversationMetadata,
+            retrievalSourcePriorityForKind(ContextAssemblySourceKind::SelectedConversationMetadata),
+            QStringLiteral("Selected Conversation Metadata"),
+            activeSummary,
+        });
+    }
+
     return candidates;
 }
 
@@ -4912,6 +5004,8 @@ ApplicationController::retrievalPlanningForPrompt(const QString& prompt) const {
     policy.includeCommittedMemory = contextAssemblyPolicy_.includeCommittedMemoryContext;
     policy.includeRuntimeMetadata = contextAssemblyPolicy_.includeRuntimeMetadataContext;
     policy.includeOrchestration = contextAssemblyPolicy_.includeOrchestrationContext;
+    policy.includeSelectedConversationMetadata =
+        contextAssemblyPolicy_.includeSelectedConversationMetadata;
     return planRetrieval(retrievalCandidatesForPrompt(prompt), policy);
 }
 
