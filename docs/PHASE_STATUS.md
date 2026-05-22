@@ -19,10 +19,22 @@ Scope:
 - Programmatic local-chat sends that fail readiness now refuse before appending a user message, so
   unreachable Ollama, no selected model, selected-model-missing, and invalid endpoint states do not
   create confusing transcript entries.
+- Added a deterministic send lifecycle exposed through QML-safe strings: idle, validating,
+  sending, streaming, completed, refused, failed, and cancelled. The lifecycle distinguishes
+  refusal before transcript mutation from accepted requests that later fail.
+- The composer clears only after a send is accepted. Empty prompts, archived conversations, busy
+  requests, invalid endpoints, unreachable Ollama, and missing/invalid model selections keep the
+  draft text intact and do not mutate the transcript.
 - Existing request-id guards, cancellation, busy reset, streaming preview cleanup, and
   conversation-switch stale-result protection remain in force. Streaming still appends one final
   assistant message on completion and one safe failure message on stream failure after a request
   has actually started.
+- Streaming preview remains transient and isolated from final transcript storage. Completion,
+  failure, cancellation, clear, and conversation switching clear the preview; final assistant
+  output is committed exactly once for the accepted request conversation.
+- Conversation switching cancels the active local request metadata, clears transient preview text,
+  and ignores stale async completions so final output cannot be written into the newly selected
+  conversation.
 - Developer Mode continues to expose detailed local inference traces and runtime summaries; normal
   UI shows concise guidance only and no raw payload dumps.
 

@@ -1459,6 +1459,8 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("localChatInferenceSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatSendAvailable"), QByteArrayLiteral("bool")},
         {QStringLiteral("localChatSendAvailabilitySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("chatSendLifecycleState"), QByteArrayLiteral("QString")},
+        {QStringLiteral("chatSendLifecycleSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("promptContextInjectionEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("promptContextInjectionStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("promptContextInjectionSummary"), QByteArrayLiteral("QString")},
@@ -2435,6 +2437,9 @@ void DesktopShellViewModelTest::ignoresBlankChatActions() {
 
     QVERIFY(!sent);
     QCOMPARE(fixture.viewModel.chatMessages()->rowCount(), 1);
+    QCOMPARE(fixture.viewModel.chatSendLifecycleState(), QStringLiteral("refused"));
+    QCOMPARE(fixture.viewModel.chatSendLifecycleSummary(),
+             QStringLiteral("Enter a prompt before sending."));
     QCOMPARE(spy.count(), 0);
 }
 

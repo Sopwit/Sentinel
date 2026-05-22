@@ -418,6 +418,10 @@ class DesktopShellViewModel final : public QObject {
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatSendAvailabilitySummary READ localChatSendAvailabilitySummary
                    NOTIFY localChatInferenceRoutingChanged)
+    Q_PROPERTY(QString chatSendLifecycleState READ chatSendLifecycleState NOTIFY
+                   localChatInferenceRoutingChanged)
+    Q_PROPERTY(QString chatSendLifecycleSummary READ chatSendLifecycleSummary NOTIFY
+                   localChatInferenceRoutingChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QString promptContextInjectionStatus READ promptContextInjectionStatus NOTIFY
@@ -1221,6 +1225,8 @@ public:
     QString localChatInferenceSummary() const;
     bool localChatSendAvailable() const;
     QString localChatSendAvailabilitySummary() const;
+    QString chatSendLifecycleState() const;
+    QString chatSendLifecycleSummary() const;
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
     QString promptContextInjectionStatus() const;

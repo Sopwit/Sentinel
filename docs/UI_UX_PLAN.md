@@ -237,16 +237,24 @@ Guidelines:
 
 - The composer should bind send availability to the controller/view-model readiness summary, not
   duplicate provider/model rules in QML.
+- The composer should also bind to the controller-owned send lifecycle: idle, validating, sending,
+  streaming, completed, refused, failed, and cancelled. Normal UI may show concise lifecycle copy
+  only when it affects actionability; Developer Mode may show state plus summary.
 - Send is available only when local chat is enabled, Ollama is reachable through the local loopback
   endpoint, an explicitly selected installed model is valid, the active conversation is not
   archived, and no request is already running.
 - Disabled composer copy should state the next action in plain language: enable local chat, start
   Ollama, select an installed model, choose a model that exists in Ollama, wait for the current
   response, or unarchive the conversation.
+- Refused sends keep the draft visible and do not append a user or assistant message. Accepted
+  sends may clear the composer after the controller accepts the prompt into the transcript.
 - Normal UI should stay concise and avoid raw request/response payloads. Developer Mode may expose
   lower-level local inference traces, stream status, latency, and runtime summaries.
 - Streaming preview remains transient. It may update while a stream is active, must clear on final
   completion/failure, and must not create duplicate assistant messages.
+- Chat scroll should follow new messages and streaming only while the user remains near the bottom.
+  Sending a prompt forces the new message into view; manual scroll-away pauses bottom-follow until
+  the user returns near the end.
 
 ## Future Assistant Visuals
 

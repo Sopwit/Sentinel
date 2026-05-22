@@ -163,6 +163,14 @@ Runtime behavior:
 - Runtime state tracks current graph state, current request id, active model, active route, active
   streaming flag, last successful response summary, last error/refusal summary, and last latency
   summary.
+- Chat send state is explicit and controller-owned: idle, validating, sending, streaming,
+  completed, refused, failed, and cancelled. QML receives state and summary strings only.
+- A refusal happens before transcript mutation. Empty prompts, archived conversations, duplicate
+  active requests, invalid endpoints, unreachable Ollama, missing model selection, and selected
+  model missing states do not add user prompts or fake assistant messages.
+- An accepted request may later fail. In that case the user prompt has already been committed, the
+  lifecycle becomes failed, streaming preview is cleared, and exactly one safe assistant error
+  message may be appended for that accepted request.
 - Conversation history UX metadata tracks only the active single transcript: persistence status,
   message counts, last save status, last restore status, and clear result summary.
 - Async local inference completions remain request-id guarded. Stale completions after metadata
@@ -244,6 +252,9 @@ Runtime behavior:
   runtime/search metadata, clears streaming preview text, and invalidates any active request id.
 - Stale async results are ignored by the request-id guard and cannot append assistant messages to a
   newly selected conversation.
+- Local inference requests also capture the active conversation id at acceptance time. If a result
+  arrives after the active conversation changed, the controller clears busy/preview metadata and
+  ignores the result instead of committing it to the wrong transcript.
 - Rename/archive/unarchive are controller actions over `IConversationStore`; no permanent delete UI
   is exposed.
 - Pin/unpin are controller actions over persisted local `IConversationStore` metadata. Pin state is

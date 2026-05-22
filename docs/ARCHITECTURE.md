@@ -107,6 +107,17 @@ stream status, and conversation runtime summaries. Failed readiness refuses befo
 mutation; started requests still use request-id guards so stale completions after cancellation,
 clear, or conversation switch are ignored.
 
+`ApplicationController` also owns a QML-safe send lifecycle:
+idle, validating, sending, streaming, completed, refused, failed, and cancelled. Refused means the
+prompt was not accepted and no transcript mutation occurred. Failed means a request was accepted
+and then produced a runtime/provider failure, so the user prompt remains in the transcript with one
+safe assistant error message.
+
+Streaming output is a transient preview only. It is read from local inference stream metadata while
+the active request is streaming, clears after completion/failure/cancel/switch, and is never copied
+separately into the transcript. Final assistant text is appended once from the completed response
+for the request id and active conversation id that started the request.
+
 ## Intentional Boundaries
 
 - Chat provider behavior is hidden behind `IChatProvider`.
