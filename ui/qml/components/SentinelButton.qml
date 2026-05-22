@@ -11,9 +11,9 @@ Button {
 
     contentItem: Text {
         text: control.text
-        color: control.down || control.hovered || control.activeFocus ? SentinelTheme.textOnAccent : SentinelTheme.textPrimary
+        color: control.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
         font.pixelSize: SentinelTheme.fontControl
-        font.bold: control.hovered || control.activeFocus
+        font.bold: false
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
@@ -28,8 +28,16 @@ Button {
 
     background: Rectangle {
         radius: SentinelTheme.radiusMd
-        color: control.down || control.hovered || control.activeFocus ? SentinelTheme.accentHover : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
-        border.color: control.activeFocus ? SentinelTheme.focusBorder : control.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.36) : SentinelTheme.accentBorderSubtle
+        color: control.down
+               ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.18)
+               : control.hovered || control.activeFocus
+                 ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.11)
+                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.052)
+        border.color: control.activeFocus
+                      ? SentinelTheme.focusBorder
+                      : control.hovered
+                        ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
+                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.080)
         border.width: 1
 
         Behavior on color {

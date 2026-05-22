@@ -172,10 +172,10 @@ ApplicationWindow {
             radius: width / 2
             color: settingsFab.down ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.26)
                                    : settingsFab.hovered
-                                     ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
+                                     ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.11)
                                      : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.88)
             border.color: settingsFab.activeFocus ? SentinelTheme.focusBorder
-                                                  : SentinelTheme.withAlpha(SentinelTheme.accent, 0.35)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.085)
             border.width: 1
         }
     }

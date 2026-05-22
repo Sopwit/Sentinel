@@ -2,6 +2,44 @@
 
 ## Completed / Stable
 
+### Phase 19.10-19.15: Full UI Refinement Pass
+
+Completed. Finishes the Phase 19 UI refinement pass without adding backend authority.
+
+Scope:
+
+- Removed remaining harsh accent treatment from shared fields, buttons, chips, dock states,
+  Settings navigation, the Settings floating button, and AI Bridge menus. Focus and active states
+  now use subdued glass/cyan styling; warning color remains reserved for real warning states.
+- Home remains chatbot-first with a cleaner assistant header, stable message scrolling, no
+  redundant runtime blocks, a calm input/send treatment, and provider wording that stays suitable
+  for future configured local providers.
+- AI Bridge remains a concise provider/conversation surface. Conversation rows are single-action
+  rows with compact one-line metadata, active-row highlighting, no inline switch/archive buttons,
+  and a styled overflow menu for rename, archive/unarchive, pin disabled, and delete disabled
+  metadata.
+- Runtime/Memory keeps Overview, Recall, Local Data, and Developer segmentation. Developer remains
+  hidden when Developer Mode is off, and normal Local Data copy clearly states that Store writes
+  local key/value memory only without model or cloud calls.
+- Agents keeps Overview, Tasks, Capabilities, and Developer segmentation. Developer remains hidden
+  when Developer Mode is off, warning accents are only shown for non-zero blocked/refused/
+  restricted states, and capability/tool contract rows are compact bounded summaries.
+- Settings keeps left-side category navigation with a calmer glass rail, compact single-line
+  category items, improved scroll-based active-category sync including the final Developer
+  section, custom glass controls for Developer Mode and chat toggles, styled model selection, and
+  concise voice readiness copy.
+- Header health and mode controls are smaller and stable, and the bottom status strip continues to
+  bind to `DesktopShellViewModel` state only.
+- Companion/Focus/Mission/System/Tactical mode behavior remains presentation-only and does not
+  change provider, model, memory, voice, tool, permission, safety, or runtime authority.
+
+Known limitation:
+
+- This phase does not add cloud/API providers, API keys, model management actions, tool/plugin
+  execution, autonomous actions, microphone capture, playback, STT/TTS activation, permanent
+  conversation delete, persistent pinning, semantic authority expansion, or backend permission
+  changes.
+
 ### Phase 19.7-19.9: Final UI Layout Polish, Navigation Cleanup, And Developer Surface Refinement
 
 Completed. Finalizes the Phase 19 product UI cleanup without changing backend authority.

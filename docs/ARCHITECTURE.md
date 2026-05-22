@@ -40,6 +40,10 @@ agent authority.
 
 Raw core objects are not exposed directly to QML.
 
+The bottom status strip is presentation-only and reads from `DesktopShellViewModel` properties
+backed by `ApplicationController`, `ModeManager`, and `AppSettings` state. It must not introduce
+mock values, local probes, permission changes, or direct runtime access.
+
 ## QML Structure
 
 The desktop shell is split into small QML components:

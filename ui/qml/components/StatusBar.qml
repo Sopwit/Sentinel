@@ -23,18 +23,24 @@ ShellPanel {
             text: statusBar.viewModel.ollamaHealthStatus
             color: SentinelTheme.textPrimary
             font.pixelSize: SentinelTheme.fontSmall
+            maximumLineCount: 1
+            elide: Text.ElideRight
         }
 
         Label {
             text: "Mode: " + statusBar.viewModel.currentModeName
             color: statusBar.modeAccent
             font.pixelSize: SentinelTheme.fontSmall
+            maximumLineCount: 1
+            elide: Text.ElideRight
         }
 
         Label {
             text: "Model: " + statusBar.viewModel.selectedLocalModelStatus
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
+            maximumLineCount: 1
+            elide: Text.ElideRight
         }
 
         Label {
@@ -42,6 +48,8 @@ ShellPanel {
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             visible: !statusBar.compact
+            maximumLineCount: 1
+            elide: Text.ElideRight
         }
 
         Label {
@@ -49,6 +57,8 @@ ShellPanel {
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             visible: !statusBar.compact
+            maximumLineCount: 1
+            elide: Text.ElideRight
         }
 
         Label {
@@ -56,6 +66,8 @@ ShellPanel {
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             visible: !statusBar.compact
+            maximumLineCount: 1
+            elide: Text.ElideRight
         }
 
         Item {

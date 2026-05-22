@@ -44,16 +44,17 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Ask Sentinel"
+                    text: "Sentinel"
                     color: SentinelTheme.textPrimary
                     font.pixelSize: homeChat.compact ? SentinelTheme.fontTitle : SentinelTheme.fontTitle + 2
-                    wrapMode: Text.WordWrap
+                    maximumLineCount: 1
+                    elide: Text.ElideRight
                 }
             }
 
             StatusChip {
                 label: "Provider"
-                value: "Local"
+                value: "local"
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
                 muted: !homeChat.chatReady
             }
@@ -69,6 +70,7 @@ ShellPanel {
             spacing: SentinelTheme.spaceSm
             model: homeChat.viewModel.chatMessages
             boundsBehavior: Flickable.StopAtBounds
+            bottomMargin: SentinelTheme.spaceXs
             onCountChanged: Qt.callLater(positionViewAtEnd)
             Component.onCompleted: Qt.callLater(positionViewAtEnd)
 
@@ -162,7 +164,7 @@ ShellPanel {
                 id: promptInput
                 Layout.fillWidth: true
                 placeholderText: homeChat.chatReady ? "Type a prompt for Sentinel"
-                                                    : "Local Ollama chat is not ready"
+                                                    : "Local provider chat is not ready"
                 enabled: homeChat.canSend
                 onAccepted: {
                     if (sendButton.visible && sendButton.enabled)

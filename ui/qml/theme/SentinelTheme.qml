@@ -32,7 +32,7 @@ QtObject {
     readonly property color accentBorder: "#c8ecff26"
     readonly property color accentBorderSubtle: "#ffffff0d"
     readonly property color accentBorderSoft: "#9bdfff1a"
-    readonly property color focusBorder: "#9bdfff99"
+    readonly property color focusBorder: "#9bdfff66"
     readonly property color success: "#9ff0d0"
     readonly property color successBorder: "#9ff0d033"
     readonly property color errorBorder: "#d66b6b66"
@@ -43,8 +43,8 @@ QtObject {
     readonly property color glassStrong: "#ffffff12"
     readonly property color orbitalLine: "#bfefff16"
     readonly property color bracketLine: "#bfefff2e"
-    readonly property color warning: "#ffd27a"
-    readonly property color warningText: "#141009"
+    readonly property color warning: "#e7b76a"
+    readonly property color warningText: "#18120a"
     readonly property color ambientCyan: "#65dfff"
     readonly property color ambientTeal: "#7fffd4"
     readonly property color ambientViolet: "#8bb8ff"
@@ -119,7 +119,7 @@ QtObject {
         if (modeName === "Minimal Mode")
             return "#9aa8af"
         if (modeName === "Tactical Mode")
-            return "#ff7a5f"
+            return "#e28a76"
         return accent
     }
 
@@ -127,7 +127,7 @@ QtObject {
         if (modeName === "Mission Mode")
             return "#67d8c2"
         if (modeName === "Tactical Mode")
-            return "#ffb15f"
+            return "#d7a06e"
         if (modeName === "Minimal Mode")
             return "#6f7d84"
         if (modeName === "Focus Mode")
@@ -139,13 +139,13 @@ QtObject {
         if (modeName === "Focus Mode")
             return "#1a2b42aa"
         if (modeName === "Mission Mode")
-            return "#302f24aa"
+            return "#20363aaa"
         if (modeName === "System Mode")
             return "#1b3440aa"
         if (modeName === "Minimal Mode")
             return "#1d2429aa"
         if (modeName === "Tactical Mode")
-            return "#38221faa"
+            return "#352a28aa"
         return "#25364366"
     }
 
