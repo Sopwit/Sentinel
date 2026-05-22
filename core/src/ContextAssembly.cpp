@@ -110,6 +110,10 @@ QString conversationSummaryStatusName(ConversationSummaryStatus status) {
         return QStringLiteral("Ready");
     case ConversationSummaryStatus::Truncated:
         return QStringLiteral("Truncated");
+    case ConversationSummaryStatus::Planned:
+        return QStringLiteral("Planned");
+    case ConversationSummaryStatus::Blocked:
+        return QStringLiteral("Blocked");
     }
 
     return QStringLiteral("Empty");
@@ -1831,6 +1835,274 @@ QStringList conversationCompressionCandidateSummaries(
 
 QStringList conversationCompressionTraceSummaries(const ConversationCompressionSummary& summary) {
     return summary.trace.candidateSummaries;
+}
+
+ConversationSummaryResult planConversationSummaryGeneration(
+    const QList<ConversationWindowMessage>& messages,
+    const ConversationCompressionSummary& compressionSummary,
+    const ConversationSummaryRequest& request, const ConversationSummaryPolicy& policy) {
+    ConversationSummaryResult result;
+    result.policy = policy;
+    result.request = request;
+    result.sourceConversationId = request.sourceConversationId;
+    result.summaryTimestampUtc =
+        request.requestedAtUtc.isValid() ? request.requestedAtUtc : QDateTime::currentDateTimeUtc();
+    result.budget.maxCharacters = std::max(0, policy.maxCharacters);
+    result.budget.remainingCharacters = result.budget.maxCharacters;
+    result.readiness.manualActionRequired = policy.manualOnly;
+    result.readiness.localOnly = policy.localOnly;
+    result.readiness.backgroundAllowed = policy.backgroundGenerationAllowed;
+    result.readiness.transcriptMutationAllowed = policy.transcriptMutationAllowed;
+    result.readiness.memoryWriteAllowed = policy.automaticMemoryWriteAllowed;
+    result.readiness.toolsAllowed = policy.toolsAllowed;
+    result.readiness.filesystemAuthorityAllowed = policy.filesystemAuthorityAllowed;
+    result.readiness.hiddenPromptExposureAllowed = false;
+    result.readiness.activeConversationOnly = true;
+
+    auto block = [&](const QString& reason, const QString& fallback) {
+        result.status = ConversationSummaryStatus::Blocked;
+        result.readiness.status = result.status;
+        result.readiness.available = false;
+        result.readiness.blockedReason = reason;
+        result.readiness.summary = reason;
+        result.fallback.reason = reason;
+        result.fallback.summary = fallback;
+        result.trace.safetySummaries.append(QStringLiteral("blocked / %1").arg(reason));
+        result.trace.summary = result.fallback.summary;
+        result.summary = reason;
+        return result;
+    };
+
+    if (!policy.enabled) {
+        return block(QStringLiteral("Manual summary generation is disabled by local policy."),
+                     QStringLiteral("Summary generation preparation stopped before execution."));
+    }
+    if (policy.manualOnly && !request.explicitUserAction) {
+        return block(QStringLiteral("Summary generation requires explicit user action."),
+                     QStringLiteral("No automatic or background summary is created."));
+    }
+    if (request.backgroundRequested || policy.backgroundGenerationAllowed) {
+        return block(QStringLiteral("Background summary generation is not allowed."),
+                     QStringLiteral("Summary generation remains foreground and manual only."));
+    }
+    if (request.sourceConversationId.trimmed().isEmpty() ||
+        request.sourceConversationId != request.activeConversationId) {
+        return block(QStringLiteral("Summary generation is limited to the active conversation."),
+                     QStringLiteral("Inactive conversation summary requests are refused."));
+    }
+    if (request.mutateTranscript || policy.transcriptMutationAllowed) {
+        return block(QStringLiteral("Summary generation cannot mutate the transcript."),
+                     QStringLiteral("Transcript replacement is outside this phase."));
+    }
+    if (request.writeCommittedMemory || policy.automaticMemoryWriteAllowed) {
+        return block(QStringLiteral("Summary generation cannot write committed memory."),
+                     QStringLiteral("Memory writes require a separate explicit review/commit path."));
+    }
+    if (request.includeRuntimeMetadata || request.exposeHiddenPrompt || policy.toolsAllowed ||
+        policy.filesystemAuthorityAllowed) {
+        return block(QStringLiteral("Summary generation cannot use runtime metadata, tools, "
+                                    "filesystem authority, or hidden prompt dumps."),
+                     QStringLiteral("Only visible active-conversation transcript metadata is "
+                                    "eligible."));
+    }
+    if (!policy.generationAvailable) {
+        result.readiness.blockedReason =
+            QStringLiteral("Local summary generation execution is unavailable.");
+    }
+
+    QList<ConversationWindowMessage> visibleMessages;
+    visibleMessages.reserve(messages.size());
+    for (const auto& message : messages) {
+        if (message.role.compare(QStringLiteral("system"), Qt::CaseInsensitive) == 0) {
+            result.trace.safetySummaries.append(
+                QStringLiteral("excluded / system-runtime metadata / message %1")
+                    .arg(message.originalIndex));
+            continue;
+        }
+        const auto content = message.content.simplified();
+        if (content.isEmpty()) {
+            continue;
+        }
+        visibleMessages.append(ConversationWindowMessage{message.originalIndex,
+                                                         message.role,
+                                                         content,
+                                                         toInt(content.size())});
+    }
+
+    if (visibleMessages.isEmpty()) {
+        return block(QStringLiteral("No visible conversation messages are available to summarize."),
+                     QStringLiteral("Summary generation has no eligible transcript segment."));
+    }
+
+    for (const auto& message : visibleMessages) {
+        result.budget.estimatedCharacters += message.originalSize;
+    }
+    result.coveredFirstMessageIndex = visibleMessages.first().originalIndex;
+    result.coveredLastMessageIndex = visibleMessages.last().originalIndex;
+
+    const int recentCount = std::min(6, toInt(visibleMessages.size()));
+    const int olderCount = std::max(0, toInt(visibleMessages.size()) - recentCount);
+    QList<ConversationSummarySegment> segments;
+    if (recentCount > 0) {
+        const auto first = visibleMessages.at(visibleMessages.size() - recentCount).originalIndex;
+        const auto last = visibleMessages.last().originalIndex;
+        segments.append(ConversationSummarySegment{
+            QStringLiteral("recent-window"),
+            QStringLiteral("Recent Window"),
+            QStringLiteral("Retain %1 newest visible messages as live transcript context.")
+                .arg(recentCount),
+            first,
+            last,
+            recentCount,
+            0,
+            0,
+            true,
+            false,
+            {},
+        });
+    }
+    if (olderCount > 0) {
+        int chars = 0;
+        for (int i = 0; i < olderCount; ++i) {
+            chars += visibleMessages.at(i).originalSize;
+        }
+        segments.append(ConversationSummarySegment{
+            QStringLiteral("older-window"),
+            QStringLiteral("Older Window"),
+            QStringLiteral("Prepare manual local summary for %1 older visible messages.")
+                .arg(olderCount),
+            visibleMessages.first().originalIndex,
+            visibleMessages.at(olderCount - 1).originalIndex,
+            olderCount,
+            chars,
+            0,
+            true,
+            false,
+            {},
+        });
+    }
+
+    for (const auto& candidate : compressionSummary.selection.candidates) {
+        if (candidate.kind == QStringLiteral("high-salience-user-facts") ||
+            candidate.kind == QStringLiteral("low-salience-repeated-turns") ||
+            candidate.kind == QStringLiteral("system-runtime-exclusion")) {
+            segments.append(ConversationSummarySegment{
+                candidate.kind,
+                candidate.title,
+                candidate.summary,
+                candidate.originalIndex,
+                candidate.originalIndex,
+                candidate.messageCount,
+                candidate.estimatedCharacters,
+                0,
+                candidate.kind != QStringLiteral("system-runtime-exclusion"),
+                candidate.kind == QStringLiteral("system-runtime-exclusion"),
+                candidate.kind == QStringLiteral("system-runtime-exclusion")
+                    ? QStringLiteral("Excluded safety boundary")
+                    : QString{},
+            });
+        }
+    }
+
+    int selectedCount = 0;
+    for (auto segment : segments) {
+        if (policy.maxSegments > 0 && selectedCount >= policy.maxSegments &&
+            !segment.excluded) {
+            segment.selected = false;
+            segment.excluded = true;
+            segment.exclusionReason = QStringLiteral("Summary segment limit reached");
+        }
+        if (segment.excluded) {
+            result.segments.append(segment);
+            result.trace.planningSummaries.append(
+                QStringLiteral("excluded / %1 / %2").arg(segment.title, segment.exclusionReason));
+            continue;
+        }
+        const int requestedChars = segment.estimatedCharacters > 0
+                                       ? segment.estimatedCharacters
+                                       : std::max(1, result.budget.maxCharacters / 4);
+        segment.selectedCharacters = std::min(requestedChars, result.budget.remainingCharacters);
+        if (segment.selectedCharacters <= 0) {
+            segment.selected = false;
+            segment.excluded = true;
+            segment.exclusionReason = QStringLiteral("Summary budget exhausted");
+            result.trace.planningSummaries.append(
+                QStringLiteral("excluded / %1 / %2").arg(segment.title, segment.exclusionReason));
+        } else {
+            ++selectedCount;
+            result.budget.includedCharacters += segment.selectedCharacters;
+            result.budget.remainingCharacters =
+                std::max(0, result.budget.maxCharacters - result.budget.includedCharacters);
+            result.trace.planningSummaries.append(
+                QStringLiteral("selected / %1 / messages %2-%3 / %4 chars")
+                    .arg(segment.title)
+                    .arg(segment.firstOriginalIndex)
+                    .arg(segment.lastOriginalIndex)
+                    .arg(segment.selectedCharacters));
+        }
+        result.segments.append(segment);
+    }
+
+    result.budget.blockCount = selectedCount;
+    result.budget.truncatedBlockCount =
+        result.budget.includedCharacters < result.budget.estimatedCharacters ? 1 : 0;
+    result.budget.summary =
+        QStringLiteral("%1 of %2 summary planning chars selected within %3 char budget.")
+            .arg(result.budget.includedCharacters)
+            .arg(result.budget.estimatedCharacters)
+            .arg(result.budget.maxCharacters);
+    result.estimatedReductionPercent =
+        result.budget.estimatedCharacters > 0
+            ? std::max(0, 100 - (result.budget.includedCharacters * 100 /
+                                 result.budget.estimatedCharacters))
+            : 0;
+    result.preview.available = selectedCount > 0;
+    result.preview.sourceCharacterCount = result.budget.estimatedCharacters;
+    result.preview.previewCharacterCount = result.budget.includedCharacters;
+    result.preview.estimatedReductionPercent = result.estimatedReductionPercent;
+    result.preview.summary =
+        QStringLiteral("Manual summary preview plan covers messages %1-%2 with estimated %3% "
+                       "compression gain.")
+            .arg(result.coveredFirstMessageIndex)
+            .arg(result.coveredLastMessageIndex)
+            .arg(result.estimatedReductionPercent);
+    result.readiness.available = policy.generationAvailable;
+    result.readiness.status =
+        policy.generationAvailable ? ConversationSummaryStatus::Planned : ConversationSummaryStatus::Blocked;
+    result.status = result.readiness.status;
+    result.readiness.summary =
+        policy.generationAvailable
+            ? QStringLiteral("Manual local summary generation is ready for explicit foreground "
+                             "execution.")
+            : result.readiness.blockedReason;
+    result.summary =
+        QStringLiteral("Conversation summary generation %1. %2")
+            .arg(conversationSummaryStatusName(result.status), result.preview.summary);
+    result.trace.summary =
+        QStringLiteral("%1 %2").arg(result.readiness.summary, result.budget.summary);
+    return result;
+}
+
+QStringList conversationSummarySegmentSummaries(const ConversationSummaryResult& result) {
+    QStringList lines;
+    for (const auto& segment : result.segments) {
+        lines.append(QStringLiteral("%1 / %2 / messages %3-%4 / %5")
+                         .arg(segment.selected ? QStringLiteral("selected")
+                                               : QStringLiteral("excluded"),
+                              segment.title)
+                         .arg(segment.firstOriginalIndex)
+                         .arg(segment.lastOriginalIndex)
+                         .arg(segment.exclusionReason.isEmpty()
+                                  ? segment.summary
+                                  : segment.exclusionReason));
+    }
+    return lines;
+}
+
+QStringList conversationSummaryTraceSummaries(const ConversationSummaryResult& result) {
+    auto lines = result.trace.planningSummaries;
+    lines.append(result.trace.safetySummaries);
+    return lines;
 }
 
 } // namespace sentinel::core

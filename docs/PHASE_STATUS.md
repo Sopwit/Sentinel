@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 30.0-30.10: Explicit Local Summary Generation Pipeline
+
+Completed. Adds manual-only local summary generation preparation metadata while keeping summary
+execution unavailable and preserving deterministic local safety boundaries.
+
+Scope:
+
+- Extended conversation summary value records with manual request, readiness, segment, trace,
+  fallback, preview, and generation-result metadata.
+- Added deterministic foreground planning for recent window retention, older-window summary
+  preparation, retained important facts, repeated-turn exclusions, and explicit system/runtime
+  metadata exclusion.
+- Added an explicit controller request path that requires user action, runs only against the active
+  conversation, refuses background/non-manual/mutating requests, and persists only local summary
+  metadata: timestamp, source conversation id, covered message range, estimated reduction, and
+  readiness state.
+- `ApplicationController` and `DesktopShellViewModel` expose QML-safe summary availability,
+  blocked reason, readiness, estimated compression gain, candidate segments, persisted metadata
+  summary, and trace summaries.
+- Runtime/Memory shows concise summary readiness in normal mode and planning/trace metadata in
+  Developer Mode. Chat shows only a disabled non-destructive Generate Summary placeholder while
+  generation is unavailable.
+
+Known limitation:
+
+- This phase does not execute summarization, call local/cloud providers, mutate or replace
+  transcript messages, write committed memory automatically, expose hidden prompts, activate
+  tools/plugins, gain filesystem/subprocess authority, index filesystems, start background work, or
+  give semantic/vector systems authority.
+
 ### Phase 29.0-29.8: Conversation Compression And Summary Readiness Foundation
 
 Completed. Adds deterministic conversation compression readiness and candidate-planning metadata

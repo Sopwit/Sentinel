@@ -19,6 +19,9 @@ public:
     bool pinConversation(const QString& conversationId) override;
     bool unpinConversation(const QString& conversationId) override;
     bool deleteConversation(const QString& conversationId) override;
+    bool saveSummaryMetadata(const ConversationSummaryMetadataRecord& metadata) override;
+    ConversationSummaryMetadataRecord
+    loadSummaryMetadata(const QString& conversationId) const override;
     ConversationStoreError lastError() const override;
 
 private:
@@ -31,6 +34,7 @@ private:
     QHash<QString, ConversationRecord> conversations_;
     QList<QString> conversationOrder_;
     QHash<QString, QList<ConversationMessageRecord>> messagesByConversation_;
+    QHash<QString, ConversationSummaryMetadataRecord> summaryMetadataByConversation_;
     mutable ConversationStoreError lastError_;
 };
 

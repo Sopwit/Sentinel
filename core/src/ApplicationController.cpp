@@ -3235,6 +3235,58 @@ QStringList ApplicationController::conversationCompressionTraceSummaries() const
     return sentinel::core::conversationCompressionTraceSummaries(conversationCompressionSummary());
 }
 
+ConversationSummaryResult ApplicationController::conversationSummaryGenerationResult() const {
+    if (latestConversationSummaryGenerationResult_.request.explicitUserAction ||
+        latestConversationSummaryGenerationResult_.summaryTimestampUtc.isValid()) {
+        return latestConversationSummaryGenerationResult_;
+    }
+    return planConversationSummaryGenerationForActiveConversation(false);
+}
+
+bool ApplicationController::conversationSummaryAvailable() const {
+    const auto result = conversationSummaryGenerationResult();
+    return result.readiness.available && result.preview.available;
+}
+
+QString ApplicationController::conversationSummaryGenerationStatus() const {
+    return conversationSummaryStatusName(conversationSummaryGenerationResult().status);
+}
+
+QString ApplicationController::conversationSummaryReadinessSummary() const {
+    return conversationSummaryGenerationResult().readiness.summary;
+}
+
+QString ApplicationController::conversationSummaryBlockedReason() const {
+    return conversationSummaryGenerationResult().readiness.blockedReason;
+}
+
+QString ApplicationController::conversationSummaryEstimatedCompressionGain() const {
+    const auto result = conversationSummaryGenerationResult();
+    return QStringLiteral("%1% estimated gain / messages %2-%3")
+        .arg(result.estimatedReductionPercent)
+        .arg(result.coveredFirstMessageIndex)
+        .arg(result.coveredLastMessageIndex);
+}
+
+QString ApplicationController::conversationSummaryPreviewSummary() const {
+    return conversationSummaryGenerationResult().preview.summary;
+}
+
+QString ApplicationController::conversationSummaryPersistenceSummary() const {
+    if (latestConversationSummaryMetadata_.conversationId.trimmed().isEmpty()) {
+        return QStringLiteral("No local summary metadata persisted.");
+    }
+    return latestConversationSummaryMetadata_.summary;
+}
+
+QStringList ApplicationController::conversationSummaryCandidateSegments() const {
+    return sentinel::core::conversationSummarySegmentSummaries(conversationSummaryGenerationResult());
+}
+
+QStringList ApplicationController::conversationSummaryGenerationTraceSummaries() const {
+    return sentinel::core::conversationSummaryTraceSummaries(conversationSummaryGenerationResult());
+}
+
 SemanticRetrievalPolicy ApplicationController::semanticRetrievalPolicy() const {
     return semanticRetrievalPolicy_;
 }
@@ -4114,12 +4166,15 @@ void ApplicationController::initializeActiveConversation() {
         conversationHistorySummary_.lastRestoredStatus =
             QStringLiteral("Restored %1 active conversation messages.").arg(storedMessages.size());
         conversationHistorySummary_.lastSavedStatus = QStringLiteral("Active conversation loaded.");
+        latestConversationSummaryMetadata_ =
+            conversationStore_->loadSummaryMetadata(activeConversationId_);
         return;
     }
 
     for (const auto& message : chatSession_->messages()) {
         persistActiveConversationMessage(message);
     }
+    latestConversationSummaryMetadata_ = conversationStore_->loadSummaryMetadata(activeConversationId_);
 }
 
 void ApplicationController::loadActiveConversationTranscript() {
@@ -4141,6 +4196,8 @@ void ApplicationController::loadActiveConversationTranscript() {
     }
     conversationHistorySummary_.lastRestoredStatus =
         QStringLiteral("Loaded active conversation transcript.");
+    latestConversationSummaryGenerationResult_ = {};
+    latestConversationSummaryMetadata_ = conversationStore_->loadSummaryMetadata(activeConversationId_);
 }
 
 bool ApplicationController::persistActiveConversationMessage(const ChatMessage& message) {
@@ -5273,6 +5330,64 @@ ApplicationController::conversationCompressionSummaryForPrompt(const QString& pr
                                        conversationCompressionPolicy_);
 }
 
+ConversationSummaryResult
+ApplicationController::planConversationSummaryGenerationForActiveConversation(
+    bool explicitUserAction) const {
+    QList<ConversationWindowMessage> messages;
+    if (chatSession_) {
+        const auto& history = chatSession_->messages();
+        messages.reserve(history.size());
+        for (int i = 0; i < history.size(); ++i) {
+            const auto& message = history.at(i);
+            messages.append(ConversationWindowMessage{
+                i + 1,
+                chatRoleName(message.role),
+                message.content,
+                toInt(message.content.size()),
+            });
+        }
+    }
+
+    ConversationSummaryRequest request;
+    request.requestId = QStringLiteral("conversation-summary-manual-%1")
+                            .arg(QDateTime::currentDateTimeUtc().toMSecsSinceEpoch());
+    request.sourceConversationId = activeConversationId();
+    request.activeConversationId = activeConversationId();
+    request.explicitUserAction = explicitUserAction;
+    request.requestedAtUtc = QDateTime::currentDateTimeUtc();
+    return planConversationSummaryGeneration(messages, conversationCompressionSummaryForPrompt({}),
+                                             request, conversationSummaryPolicy_);
+}
+
+bool ApplicationController::persistConversationSummaryMetadata(
+    const ConversationSummaryResult& result) {
+    if (!conversationStore_ || result.sourceConversationId.trimmed().isEmpty()) {
+        latestConversationSummaryMetadata_ = {};
+        return false;
+    }
+
+    ConversationSummaryMetadataRecord metadata;
+    metadata.conversationId = result.sourceConversationId;
+    metadata.summaryTimestampUtc = result.summaryTimestampUtc;
+    metadata.coveredFirstMessageId = result.coveredFirstMessageIndex;
+    metadata.coveredLastMessageId = result.coveredLastMessageIndex;
+    metadata.estimatedReductionPercent = result.estimatedReductionPercent;
+    metadata.readinessState = conversationSummaryStatusName(result.status);
+    metadata.summary = QStringLiteral("%1 / messages %2-%3 / %4% estimated reduction")
+                           .arg(metadata.readinessState)
+                           .arg(metadata.coveredFirstMessageId)
+                           .arg(metadata.coveredLastMessageId)
+                           .arg(metadata.estimatedReductionPercent);
+    if (!conversationStore_->saveSummaryMetadata(metadata)) {
+        latestConversationSummaryMetadata_ = {};
+        return false;
+    }
+
+    latestConversationSummaryMetadata_ =
+        conversationStore_->loadSummaryMetadata(result.sourceConversationId);
+    return true;
+}
+
 QList<RetrievalCandidate>
 ApplicationController::retrievalCandidatesForPrompt(const QString& prompt) const {
     QList<RetrievalCandidate> candidates;
@@ -6115,6 +6230,14 @@ void ApplicationController::clearLocalMemoryRecall() {
     emit memoryRecallChanged();
 }
 
+bool ApplicationController::requestConversationSummaryGeneration() {
+    latestConversationSummaryGenerationResult_ =
+        planConversationSummaryGenerationForActiveConversation(true);
+    persistConversationSummaryMetadata(latestConversationSummaryGenerationResult_);
+    emit contextAssemblyChanged();
+    return latestConversationSummaryGenerationResult_.status == ConversationSummaryStatus::Planned;
+}
+
 bool ApplicationController::sendMessage(const QString& message) {
     const auto trimmed = message.trimmed();
     if (trimmed.isEmpty()) {
@@ -6207,6 +6330,7 @@ bool ApplicationController::sendMessage(const QString& message) {
 
     const auto userMessage = chatSession_->appendUserMessage(trimmed);
     persistActiveConversationMessage(userMessage);
+    latestConversationSummaryGenerationResult_ = {};
     setChatSendLifecycle(QStringLiteral("sending"),
                          QStringLiteral("Prompt accepted and added to the local transcript."));
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {

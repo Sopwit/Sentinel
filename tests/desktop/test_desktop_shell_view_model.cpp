@@ -84,6 +84,7 @@ private slots:
     void exposesConversationWindowMetadata();
     void exposesConversationSummaryMetadata();
     void exposesConversationCompressionMetadata();
+    void exposesManualConversationSummaryGenerationMetadata();
     void exposesRetrievalPlanningMetadata();
     void exposesSemanticVectorReadinessMetadata();
     void exposesSemanticProviderPlanningMetadata();
@@ -1494,6 +1495,17 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("conversationCompressionCandidateSummaries"),
          QByteArrayLiteral("QStringList")},
         {QStringLiteral("conversationCompressionTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationSummaryAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("conversationSummaryGenerationStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryBlockedReason"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryEstimatedCompressionGain"),
+         QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryPreviewSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryPersistenceSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryCandidateSegments"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("conversationSummaryGenerationTraceSummaries"),
+         QByteArrayLiteral("QStringList")},
         {QStringLiteral("localInferenceBusy"), QByteArrayLiteral("bool")},
         {QStringLiteral("localInferenceRuntimeState"), QByteArrayLiteral("QString")},
         {QStringLiteral("localInferenceStatus"), QByteArrayLiteral("QString")},
@@ -2065,6 +2077,31 @@ void DesktopShellViewModelTest::exposesConversationCompressionMetadata() {
         QStringLiteral("compression candidate")));
     QVERIFY(!fixture.viewModel.conversationCompressionCandidateSummaries().isEmpty());
     QVERIFY(!fixture.viewModel.conversationCompressionTraceSummaries().isEmpty());
+}
+
+void DesktopShellViewModelTest::exposesManualConversationSummaryGenerationMetadata() {
+    ViewModelFixture fixture;
+
+    for (int i = 0; i < 18; ++i) {
+        QVERIFY(fixture.viewModel.sendMessage(
+            QStringLiteral("remember summary view model marker %1 %2")
+                .arg(i)
+                .arg(QString(180, QLatin1Char('v')))));
+    }
+
+    QVERIFY(!fixture.viewModel.requestConversationSummaryGeneration());
+    QCOMPARE(fixture.viewModel.conversationSummaryAvailable(), false);
+    QCOMPARE(fixture.viewModel.conversationSummaryGenerationStatus(), QStringLiteral("Blocked"));
+    QVERIFY(fixture.viewModel.conversationSummaryReadinessSummary().contains(
+        QStringLiteral("unavailable")));
+    QVERIFY(fixture.viewModel.conversationSummaryBlockedReason().contains(
+        QStringLiteral("unavailable")));
+    QVERIFY(fixture.viewModel.conversationSummaryEstimatedCompressionGain().contains(
+        QStringLiteral("estimated gain")));
+    QVERIFY(fixture.viewModel.conversationSummaryPreviewSummary().contains(
+        QStringLiteral("Manual summary preview")));
+    QVERIFY(!fixture.viewModel.conversationSummaryCandidateSegments().isEmpty());
+    QVERIFY(!fixture.viewModel.conversationSummaryGenerationTraceSummaries().isEmpty());
 }
 
 void DesktopShellViewModelTest::exposesRetrievalPlanningMetadata() {

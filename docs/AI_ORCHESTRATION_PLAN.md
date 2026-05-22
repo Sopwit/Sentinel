@@ -1,5 +1,16 @@
 # AI Orchestration Plan
 
+Phase 30.0 through Phase 30.10 adds an explicit local summary generation preparation pipeline while
+keeping summary execution unavailable. Manual requests are foreground-only, active-conversation
+only, and refuse background generation, autonomous creation, transcript mutation/replacement,
+committed memory writes, hidden prompt exposure, runtime/system metadata inclusion,
+tools/plugins, filesystem/subprocess authority, semantic/vector authority, filesystem indexing,
+cloud/API providers, and background workers. Deterministic planning separates recent-window
+retention, older-window summary preparation, important user facts, repeated-turn exclusions, and
+system/runtime metadata exclusion. Optional local persistence stores only timestamp, source
+conversation id, covered message range, estimated reduction, readiness state, and a safe summary
+line; raw hidden prompts and generated prompt payloads are not persisted.
+
 Phase 29.0 through Phase 29.8 adds conversation compression and summary readiness metadata while
 preserving the no-hidden-summarization boundary. Readiness is deterministic and local-only, using
 message count, estimated character/token pressure, active conversation length, context-injection

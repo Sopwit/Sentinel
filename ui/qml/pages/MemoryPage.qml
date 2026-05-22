@@ -177,6 +177,14 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Summary Readiness"
+                        value: memoryPage.viewModel.conversationSummaryGenerationStatus + " - "
+                               + memoryPage.viewModel.conversationSummaryReadinessSummary
+                        Layout.fillWidth: true
+                    }
+
                     Flow {
                         Layout.fillWidth: true
                         spacing: SentinelTheme.spaceSm
@@ -602,8 +610,57 @@ ScrollView {
                     }
 
                     SectionTitle {
+                        title: "Conversation Summary Pipeline"
+                        subtitle: "Manual-only summary preparation metadata; generation execution is unavailable."
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Summary Availability"
+                        value: (memoryPage.viewModel.conversationSummaryAvailable ? "Available" : "Unavailable")
+                               + " / " + memoryPage.viewModel.conversationSummaryBlockedReason
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Summary Gain"
+                        value: memoryPage.viewModel.conversationSummaryEstimatedCompressionGain
+                               + " / " + memoryPage.viewModel.conversationSummaryPreviewSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Summary Persistence"
+                        value: memoryPage.viewModel.conversationSummaryPersistenceSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        valueMaximumLineCount: 8
+                        label: "Summary Segments"
+                        value: memoryPage.viewModel.conversationSummaryCandidateSegments.length === 0
+                               ? "No summary segments planned."
+                               : memoryPage.viewModel.conversationSummaryCandidateSegments.join(" / ")
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        valueMaximumLineCount: 8
+                        label: "Summary Trace"
+                        value: memoryPage.viewModel.conversationSummaryGenerationTraceSummaries.length === 0
+                               ? "No summary trace prepared."
+                               : memoryPage.viewModel.conversationSummaryGenerationTraceSummaries.join(" / ")
+                        Layout.fillWidth: true
+                    }
+
+                    SectionTitle {
                         title: "Conversation Compression"
-                        subtitle: "Readiness-only compression metadata; no summary action is available."
+                        subtitle: "Readiness-only compression metadata."
                         Layout.fillWidth: true
                     }
 

@@ -1566,6 +1566,42 @@ QStringList DesktopShellViewModel::conversationCompressionTraceSummaries() const
     return controller_.conversationCompressionTraceSummaries();
 }
 
+bool DesktopShellViewModel::conversationSummaryAvailable() const {
+    return controller_.conversationSummaryAvailable();
+}
+
+QString DesktopShellViewModel::conversationSummaryGenerationStatus() const {
+    return controller_.conversationSummaryGenerationStatus();
+}
+
+QString DesktopShellViewModel::conversationSummaryReadinessSummary() const {
+    return controller_.conversationSummaryReadinessSummary();
+}
+
+QString DesktopShellViewModel::conversationSummaryBlockedReason() const {
+    return controller_.conversationSummaryBlockedReason();
+}
+
+QString DesktopShellViewModel::conversationSummaryEstimatedCompressionGain() const {
+    return controller_.conversationSummaryEstimatedCompressionGain();
+}
+
+QString DesktopShellViewModel::conversationSummaryPreviewSummary() const {
+    return controller_.conversationSummaryPreviewSummary();
+}
+
+QString DesktopShellViewModel::conversationSummaryPersistenceSummary() const {
+    return controller_.conversationSummaryPersistenceSummary();
+}
+
+QStringList DesktopShellViewModel::conversationSummaryCandidateSegments() const {
+    return controller_.conversationSummaryCandidateSegments();
+}
+
+QStringList DesktopShellViewModel::conversationSummaryGenerationTraceSummaries() const {
+    return controller_.conversationSummaryGenerationTraceSummaries();
+}
+
 core::SemanticRetrievalPolicy DesktopShellViewModel::semanticRetrievalPolicy() const {
     return controller_.semanticRetrievalPolicy();
 }
@@ -2619,6 +2655,10 @@ bool DesktopShellViewModel::sendMessage(const QString& message) {
 
 bool DesktopShellViewModel::runLocalInference(const QString& prompt, const QString& model) {
     return controller_.runLocalInference(prompt, model);
+}
+
+bool DesktopShellViewModel::requestConversationSummaryGeneration() {
+    return controller_.requestConversationSummaryGeneration();
 }
 
 bool DesktopShellViewModel::searchConversation(const QString& query) {

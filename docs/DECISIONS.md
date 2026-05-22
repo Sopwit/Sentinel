@@ -257,6 +257,32 @@ Out of scope:
   raw prompt/debug dumps, prompt alteration outside the existing explicit context-injection path,
   semantic/vector activation, filesystem indexing, cloud/API calls, and background workers.
 
+## 9.2.2 Explicit Summary Generation Preparation
+
+Decision: Summary generation preparation is controller-owned, manual-only, active-conversation-only
+metadata.
+
+Reason: Users need visible summary readiness and planning before any future summarization
+execution, but the app must not create summaries autonomously, alter transcripts, or write memory.
+
+Runtime behavior:
+
+- A summary request must carry explicit user action metadata and must target the active
+  conversation.
+- Background requests, inactive conversation requests, transcript mutation, committed memory
+  writes, hidden prompt exposure, tools/plugins, filesystem authority, and runtime/system metadata
+  inclusion are refused before execution.
+- Planning emits deterministic segments for recent-window retention, older-window summary
+  preparation, important facts, repeated turns, and system/runtime metadata exclusion.
+- Optional persistence stores only summary timestamp, source conversation id, covered message
+  range, estimated reduction, readiness state, and a safe summary line.
+
+Out of scope:
+
+- Actual summarization execution, local/cloud provider calls, autonomous/background summaries,
+  hidden prompt persistence, transcript replacement, automatic memory writes, semantic/vector
+  authority, filesystem indexing, tools/plugins, subprocesses, and cloud/API providers.
+
 ## 9.3 Active Conversation Lifecycle And Switching
 
 Decision: Use `IConversationStore` as the active local transcript source, with
