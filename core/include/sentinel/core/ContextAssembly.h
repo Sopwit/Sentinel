@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QDateTime>
 #include <QString>
 #include <QStringList>
 
@@ -57,6 +58,8 @@ enum class ConversationSummaryStatus : std::uint8_t {
     Empty,
     Ready,
     Truncated,
+    Planned,
+    Blocked,
 };
 
 enum class RetrievalPlanningStatus : std::uint8_t {
@@ -246,13 +249,35 @@ struct ConversationSummaryBudget {
 
 struct ConversationSummaryPolicy {
     bool enabled = true;
+    bool manualOnly = true;
+    bool localOnly = true;
+    bool generationAvailable = false;
+    bool backgroundGenerationAllowed = false;
+    bool transcriptMutationAllowed = false;
+    bool automaticMemoryWriteAllowed = false;
+    bool toolsAllowed = false;
+    bool filesystemAuthorityAllowed = false;
     int maxCharacters = 700;
     int maxMessagesPerBlock = 4;
+    int maxSegments = 5;
     QString delimiterStart = QStringLiteral("[Conversation Summary]");
     QString delimiterEnd = QStringLiteral("[/Conversation Summary]");
     QString status = QStringLiteral("Ready");
     QString summary = QStringLiteral(
         "Older omitted conversation history may be compacted with deterministic local heuristics.");
+};
+
+struct ConversationSummaryRequest {
+    QString requestId = QStringLiteral("conversation-summary-manual-request");
+    QString sourceConversationId;
+    QString activeConversationId;
+    bool explicitUserAction = false;
+    bool backgroundRequested = false;
+    bool mutateTranscript = false;
+    bool writeCommittedMemory = false;
+    bool includeRuntimeMetadata = false;
+    bool exposeHiddenPrompt = false;
+    QDateTime requestedAtUtc;
 };
 
 struct ConversationSummaryBlock {
@@ -275,12 +300,72 @@ struct ConversationSummaryWindow {
     QString summary = QStringLiteral("No older conversation messages are summarized.");
 };
 
+struct ConversationSummarySegment {
+    QString kind;
+    QString title;
+    QString summary;
+    int firstOriginalIndex = 0;
+    int lastOriginalIndex = 0;
+    int messageCount = 0;
+    int estimatedCharacters = 0;
+    int selectedCharacters = 0;
+    bool selected = false;
+    bool excluded = false;
+    QString exclusionReason;
+};
+
+struct ConversationSummaryTrace {
+    QStringList planningSummaries;
+    QStringList safetySummaries;
+    QString summary = QStringLiteral("No conversation summary generation trace has been prepared.");
+};
+
+struct ConversationSummaryFallback {
+    QString reason;
+    QString summary = QStringLiteral("No conversation summary fallback required.");
+};
+
+struct ConversationSummaryPreview {
+    bool available = false;
+    QString summary = QStringLiteral("No summary preview is available.");
+    int estimatedReductionPercent = 0;
+    int sourceCharacterCount = 0;
+    int previewCharacterCount = 0;
+};
+
+struct ConversationSummaryReadiness {
+    ConversationSummaryStatus status = ConversationSummaryStatus::Blocked;
+    bool available = false;
+    QString blockedReason = QStringLiteral("Manual summary generation is unavailable.");
+    bool manualActionRequired = true;
+    bool activeConversationOnly = true;
+    bool localOnly = true;
+    bool backgroundAllowed = false;
+    bool transcriptMutationAllowed = false;
+    bool memoryWriteAllowed = false;
+    bool toolsAllowed = false;
+    bool filesystemAuthorityAllowed = false;
+    bool hiddenPromptExposureAllowed = false;
+    QString summary = QStringLiteral("Manual summary generation is unavailable.");
+};
+
 struct ConversationSummaryResult {
     ConversationSummaryStatus status = ConversationSummaryStatus::Empty;
     ConversationSummaryPolicy policy;
+    ConversationSummaryRequest request;
     ConversationSummaryBudget budget;
     ConversationSummaryWindow window;
     QList<ConversationSummaryBlock> blocks;
+    QList<ConversationSummarySegment> segments;
+    ConversationSummaryTrace trace;
+    ConversationSummaryFallback fallback;
+    ConversationSummaryPreview preview;
+    ConversationSummaryReadiness readiness;
+    QString sourceConversationId;
+    int coveredFirstMessageIndex = 0;
+    int coveredLastMessageIndex = 0;
+    int estimatedReductionPercent = 0;
+    QDateTime summaryTimestampUtc;
     QString text;
     QString summary = QStringLiteral("No conversation summary is available.");
 };
@@ -659,8 +744,14 @@ ConversationCompressionSummary planConversationCompression(
     const ConversationSummaryResult& existingSummary,
     const ConversationSalienceSummary& salienceSummary, bool contextInjectionEnabled,
     const ConversationCompressionPolicy& policy);
+ConversationSummaryResult planConversationSummaryGeneration(
+    const QList<ConversationWindowMessage>& messages,
+    const ConversationCompressionSummary& compressionSummary,
+    const ConversationSummaryRequest& request, const ConversationSummaryPolicy& policy);
 QStringList conversationCompressionCandidateSummaries(
     const ConversationCompressionSummary& summary);
 QStringList conversationCompressionTraceSummaries(const ConversationCompressionSummary& summary);
+QStringList conversationSummarySegmentSummaries(const ConversationSummaryResult& result);
+QStringList conversationSummaryTraceSummaries(const ConversationSummaryResult& result);
 
 } // namespace sentinel::core

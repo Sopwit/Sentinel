@@ -372,6 +372,31 @@ ShellPanel {
                     }
                 }
 
+                Button {
+                    id: summaryPlaceholder
+                    visible: !homeChat.viewModel.conversationSummaryAvailable
+                    Layout.preferredWidth: 116
+                    Layout.preferredHeight: 34
+                    text: "Generate Summary"
+                    enabled: false
+                    hoverEnabled: true
+
+                    contentItem: Text {
+                        text: summaryPlaceholder.text
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+
+                    background: Rectangle {
+                        radius: 17
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
+                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
+                    }
+                }
+
                 TextArea {
                     id: promptInput
                     Layout.fillWidth: true

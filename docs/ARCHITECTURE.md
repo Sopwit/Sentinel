@@ -184,6 +184,24 @@ not mutate transcripts, replace user/assistant messages, write committed memory,
 expose raw prompt/debug payloads, call providers/models, activate semantic/vector systems, index
 filesystems, call cloud APIs, or start background workers.
 
+## Explicit Summary Generation Preparation
+
+Conversation summary generation is currently an explicit manual preparation pipeline, not an
+execution pipeline. `ConversationSummaryRequest`, `ConversationSummaryReadiness`,
+`ConversationSummarySegment`, `ConversationSummaryTrace`, `ConversationSummaryFallback`, and
+`ConversationSummaryPreview` extend the existing value-only summary records.
+
+Planning is deterministic over the active visible conversation only. It separates the retained
+recent window, older-window summary preparation, important user facts, repeated-turn exclusions,
+and system/runtime metadata exclusion. The controller refuses non-manual, background, inactive
+conversation, transcript-mutating, memory-writing, hidden-prompt, tool, and filesystem-authority
+requests before execution. Summary execution remains unavailable.
+
+Optional persistence stores only local summary metadata beside the conversation store: timestamp,
+source conversation id, covered message range, estimated reduction, readiness state, and a safe
+summary line. Raw prompts, hidden prompt templates, transcript replacements, generated summary
+text, committed memories, provider payloads, and runtime traces are not persisted.
+
 ## Intentional Boundaries
 
 - Chat provider behavior is hidden behind `IChatProvider`.

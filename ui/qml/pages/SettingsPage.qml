@@ -738,6 +738,16 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
+                            label: "Summary Pipeline"
+                            value: settingsPage.viewModel.conversationSummaryGenerationStatus
+                                   + " / "
+                                   + settingsPage.viewModel.conversationSummaryBlockedReason
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            visible: settingsPage.viewModel.developerModeEnabled
                             label: "Memory Relevance"
                             value: settingsPage.viewModel.memoryRelevanceIncludedCount
                                    + " included / "

@@ -12,6 +12,7 @@ using sentinel::core::ChatMessage;
 using sentinel::core::ChatMessageStatus;
 using sentinel::core::ChatRole;
 using sentinel::core::ConversationMessageRecord;
+using sentinel::core::ConversationSummaryMetadataRecord;
 using sentinel::core::ConversationStoreErrorCode;
 using sentinel::core::ConversationStoreStatus;
 using sentinel::core::SQLiteChatHistoryStore;
@@ -29,6 +30,7 @@ private slots:
     void blocksAppendingToArchivedConversation();
     void softDeleteHidesConversation();
     void softDeleteMarksOnlyAndKeepsMessagesInDatabase();
+    void persistsSummaryMetadataWithoutPromptText();
     void safelyNoOpsForUnopenableDatabasePath();
     void doesNotMigrateOrClearSingleTranscriptStore();
 };
@@ -66,7 +68,7 @@ void SQLiteConversationStoreTest::startsEmptyAndInitializesSchema() {
     SQLiteConversationStore store(databasePath(dir));
 
     QCOMPARE(store.status(), ConversationStoreStatus::Ready);
-    QCOMPARE(store.schemaVersion(), 2);
+    QCOMPARE(store.schemaVersion(), 3);
     QVERIFY(store.listConversations().isEmpty());
 }
 
@@ -240,6 +242,43 @@ void SQLiteConversationStoreTest::softDeleteMarksOnlyAndKeepsMessagesInDatabase(
     QSqlDatabase::removeDatabase(connectionName);
 }
 
+void SQLiteConversationStoreTest::persistsSummaryMetadataWithoutPromptText() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto path = databasePath(dir);
+
+    QString conversationId;
+    {
+        SQLiteConversationStore store(path);
+        const auto conversation = store.createConversation(QStringLiteral("Summary Metadata"));
+        conversationId = conversation.id;
+
+        ConversationSummaryMetadataRecord metadata;
+        metadata.conversationId = conversationId;
+        metadata.summaryTimestampUtc =
+            QDateTime::fromString(QStringLiteral("2026-05-23T10:00:00.000Z"),
+                                  Qt::ISODateWithMs);
+        metadata.coveredFirstMessageId = 2;
+        metadata.coveredLastMessageId = 18;
+        metadata.estimatedReductionPercent = 74;
+        metadata.readinessState = QStringLiteral("Blocked");
+        metadata.summary = QStringLiteral("Blocked / messages 2-18 / 74% estimated reduction");
+        QVERIFY(store.saveSummaryMetadata(metadata));
+    }
+
+    {
+        SQLiteConversationStore store(path);
+        const auto loaded = store.loadSummaryMetadata(conversationId);
+        QCOMPARE(loaded.conversationId, conversationId);
+        QCOMPARE(loaded.coveredFirstMessageId, 2);
+        QCOMPARE(loaded.coveredLastMessageId, 18);
+        QCOMPARE(loaded.estimatedReductionPercent, 74);
+        QCOMPARE(loaded.readinessState, QStringLiteral("Blocked"));
+        QVERIFY(loaded.summaryTimestampUtc.isValid());
+        QVERIFY(!loaded.summary.contains(QStringLiteral("[Conversation Summary]")));
+    }
+}
+
 void SQLiteConversationStoreTest::safelyNoOpsForUnopenableDatabasePath() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
@@ -268,7 +307,7 @@ void SQLiteConversationStoreTest::doesNotMigrateOrClearSingleTranscriptStore() {
 
     {
         SQLiteConversationStore conversationStore(conversationPath);
-        QCOMPARE(conversationStore.schemaVersion(), 2);
+        QCOMPARE(conversationStore.schemaVersion(), 3);
         QVERIFY(conversationStore.listConversations().isEmpty());
     }
 

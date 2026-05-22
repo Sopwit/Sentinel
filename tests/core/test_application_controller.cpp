@@ -754,6 +754,8 @@ private slots:
     void retrievalPlanningFeedsPromptContextWithoutMixingSources();
     void retrievalPlanningDoesNotMutateState();
     void conversationCompressionReadinessPlansMetadataWithoutMutation();
+    void manualSummaryGenerationIsBlockedAndDoesNotMutateTranscript();
+    void manualSummaryGenerationPersistsLocalMetadataOnly();
     void semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt();
     void semanticProviderPlanningExposesDisabledSelection();
     void semanticCandidateOrchestrationExposesSafeMetadata();
@@ -4363,6 +4365,55 @@ void ApplicationControllerTest::conversationCompressionReadinessPlansMetadataWit
     QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
     QCOMPARE(controller->chatMessages(), beforeTranscript);
     QCOMPARE(controller->promptContextInjectionStatus(), beforeInjectionStatus);
+}
+
+void ApplicationControllerTest::manualSummaryGenerationIsBlockedAndDoesNotMutateTranscript() {
+    const auto controller = makeController();
+    for (int i = 0; i < 18; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("remember summary pipeline %1 %2")
+                                            .arg(i)
+                                            .arg(QString(180, QLatin1Char('s')))));
+    }
+    controller->remember(QStringLiteral("summary.local"), QStringLiteral("unchanged"));
+    const auto beforeEntries = controller->memoryEntries();
+    const auto beforeMessages = controller->conversationHistoryMessageCount();
+    const auto beforeTranscript = controller->chatMessages();
+
+    QVERIFY(!controller->requestConversationSummaryGeneration());
+
+    QCOMPARE(controller->conversationSummaryGenerationStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->conversationSummaryAvailable(), false);
+    QVERIFY(controller->conversationSummaryBlockedReason().contains(QStringLiteral("unavailable")));
+    QVERIFY(controller->conversationSummaryEstimatedCompressionGain().contains(
+        QStringLiteral("estimated gain")));
+    QVERIFY(!controller->conversationSummaryCandidateSegments().isEmpty());
+    QVERIFY(!controller->conversationSummaryGenerationTraceSummaries().isEmpty());
+    QCOMPARE(controller->memoryEntries(), beforeEntries);
+    QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
+    QCOMPARE(controller->chatMessages(), beforeTranscript);
+}
+
+void ApplicationControllerTest::manualSummaryGenerationPersistsLocalMetadataOnly() {
+    auto store = std::make_unique<sentinel::core::InMemoryConversationStore>();
+    auto* storePtr = store.get();
+    auto controller = makeControllerWithConversationStore(std::move(store));
+    for (int i = 0; i < 16; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("manual summary metadata %1 %2")
+                                            .arg(i)
+                                            .arg(QString(160, QLatin1Char('m')))));
+    }
+
+    QVERIFY(!controller->requestConversationSummaryGeneration());
+
+    const auto metadata = storePtr->loadSummaryMetadata(controller->activeConversationId());
+    QCOMPARE(metadata.conversationId, controller->activeConversationId());
+    QCOMPARE(metadata.readinessState, QStringLiteral("Blocked"));
+    QVERIFY(metadata.summaryTimestampUtc.isValid());
+    QVERIFY(metadata.coveredFirstMessageId > 0);
+    QVERIFY(metadata.coveredLastMessageId >= metadata.coveredFirstMessageId);
+    QVERIFY(metadata.estimatedReductionPercent >= 0);
+    QVERIFY(!metadata.summary.contains(QStringLiteral("[")));
+    QVERIFY(controller->conversationSummaryPersistenceSummary().contains(QStringLiteral("Blocked")));
 }
 
 void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt() {

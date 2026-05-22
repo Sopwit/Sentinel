@@ -203,6 +203,33 @@ bool InMemoryConversationStore::deleteConversation(const QString& conversationId
     return true;
 }
 
+bool InMemoryConversationStore::saveSummaryMetadata(
+    const ConversationSummaryMetadataRecord& metadata) {
+    auto* conversation = findConversation(metadata.conversationId);
+    if (!conversation || conversation->deleted) {
+        setLastError(ConversationStoreErrorCode::InvalidConversationId,
+                     QStringLiteral("Conversation does not exist."));
+        return false;
+    }
+
+    summaryMetadataByConversation_.insert(metadata.conversationId, metadata);
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
+ConversationSummaryMetadataRecord
+InMemoryConversationStore::loadSummaryMetadata(const QString& conversationId) const {
+    const auto* conversation = findConversation(conversationId);
+    if (!conversation || conversation->deleted) {
+        setLastError(ConversationStoreErrorCode::InvalidConversationId,
+                     QStringLiteral("Conversation does not exist."));
+        return {};
+    }
+
+    setLastError(ConversationStoreErrorCode::None, {});
+    return summaryMetadataByConversation_.value(conversationId);
+}
+
 ConversationStoreError InMemoryConversationStore::lastError() const {
     return lastError_;
 }

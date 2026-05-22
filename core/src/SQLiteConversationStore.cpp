@@ -263,6 +263,91 @@ bool SQLiteConversationStore::deleteConversation(const QString& conversationId) 
     return updateConversationMetadata(conversationId, true, true);
 }
 
+bool SQLiteConversationStore::saveSummaryMetadata(
+    const ConversationSummaryMetadataRecord& metadata) {
+    if (!database_.isOpen()) {
+        setLastError(ConversationStoreErrorCode::Unavailable,
+                     QStringLiteral("SQLite conversation database is not open."));
+        return false;
+    }
+    if (!conversationExists(metadata.conversationId)) {
+        setLastError(ConversationStoreErrorCode::InvalidConversationId,
+                     QStringLiteral("Conversation does not exist."));
+        return false;
+    }
+
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral("INSERT INTO conversation_summary_metadata("
+                                 "conversation_id, summary_timestamp, covered_first_message_id, "
+                                 "covered_last_message_id, estimated_reduction_percent, "
+                                 "readiness_state, summary) "
+                                 "VALUES(?, ?, ?, ?, ?, ?, ?) "
+                                 "ON CONFLICT(conversation_id) DO UPDATE SET "
+                                 "summary_timestamp = excluded.summary_timestamp,"
+                                 "covered_first_message_id = excluded.covered_first_message_id,"
+                                 "covered_last_message_id = excluded.covered_last_message_id,"
+                                 "estimated_reduction_percent = "
+                                 "excluded.estimated_reduction_percent,"
+                                 "readiness_state = excluded.readiness_state,"
+                                 "summary = excluded.summary"));
+    query.addBindValue(metadata.conversationId);
+    query.addBindValue(metadata.summaryTimestampUtc.toUTC().toString(Qt::ISODateWithMs));
+    query.addBindValue(metadata.coveredFirstMessageId);
+    query.addBindValue(metadata.coveredLastMessageId);
+    query.addBindValue(metadata.estimatedReductionPercent);
+    query.addBindValue(metadata.readinessState);
+    query.addBindValue(metadata.summary);
+    if (!query.exec()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+        return false;
+    }
+
+    setLastError(ConversationStoreErrorCode::None, {});
+    return true;
+}
+
+ConversationSummaryMetadataRecord
+SQLiteConversationStore::loadSummaryMetadata(const QString& conversationId) const {
+    ConversationSummaryMetadataRecord metadata;
+    if (!database_.isOpen()) {
+        setLastError(ConversationStoreErrorCode::Unavailable,
+                     QStringLiteral("SQLite conversation database is not open."));
+        return metadata;
+    }
+    if (!conversationExists(conversationId)) {
+        setLastError(ConversationStoreErrorCode::InvalidConversationId,
+                     QStringLiteral("Conversation does not exist."));
+        return metadata;
+    }
+
+    QSqlQuery query(database_);
+    query.prepare(QStringLiteral("SELECT conversation_id, summary_timestamp, "
+                                 "covered_first_message_id, covered_last_message_id, "
+                                 "estimated_reduction_percent, readiness_state, summary "
+                                 "FROM conversation_summary_metadata "
+                                 "WHERE conversation_id = ?"));
+    query.addBindValue(conversationId);
+    if (!query.exec()) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+        return metadata;
+    }
+    if (!query.next()) {
+        setLastError(ConversationStoreErrorCode::None, {});
+        return metadata;
+    }
+
+    metadata.conversationId = query.value(0).toString();
+    metadata.summaryTimestampUtc =
+        QDateTime::fromString(query.value(1).toString(), Qt::ISODateWithMs);
+    metadata.coveredFirstMessageId = query.value(2).toInt();
+    metadata.coveredLastMessageId = query.value(3).toInt();
+    metadata.estimatedReductionPercent = query.value(4).toInt();
+    metadata.readinessState = query.value(5).toString();
+    metadata.summary = query.value(6).toString();
+    setLastError(ConversationStoreErrorCode::None, {});
+    return metadata;
+}
+
 ConversationStoreStatus SQLiteConversationStore::status() const {
     return database_.isOpen() ? ConversationStoreStatus::Ready
                               : ConversationStoreStatus::Unavailable;
@@ -415,6 +500,19 @@ void SQLiteConversationStore::initializeSchema() {
                                    "timestamp TEXT NOT NULL,"
                                    "status TEXT NOT NULL,"
                                    "PRIMARY KEY(conversation_id, message_id),"
+                                   "FOREIGN KEY(conversation_id) REFERENCES conversations(id))"))) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+        return;
+    }
+
+    if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversation_summary_metadata("
+                                   "conversation_id TEXT PRIMARY KEY NOT NULL,"
+                                   "summary_timestamp TEXT NOT NULL,"
+                                   "covered_first_message_id INTEGER NOT NULL DEFAULT 0,"
+                                   "covered_last_message_id INTEGER NOT NULL DEFAULT 0,"
+                                   "estimated_reduction_percent INTEGER NOT NULL DEFAULT 0,"
+                                   "readiness_state TEXT NOT NULL,"
+                                   "summary TEXT NOT NULL,"
                                    "FOREIGN KEY(conversation_id) REFERENCES conversations(id))"))) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return;

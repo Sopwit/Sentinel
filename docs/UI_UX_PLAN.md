@@ -275,6 +275,22 @@ Guidelines:
   replacement previews, memory-write affordances, vector/semantic authority, filesystem indexing,
   provider calls, or cloud/API messaging for this phase.
 
+## Phase 30 Manual Summary Pipeline Notes
+
+Phase 30.0 through Phase 30.10 adds explicit local summary generation preparation visibility while
+summary execution remains unavailable.
+
+Guidelines:
+
+- Runtime/Memory normal mode may show concise summary readiness, availability, and blocked reason.
+- Runtime/Memory Developer Mode may show planning segments, estimated gain, persisted summary
+  metadata, and bounded trace summaries.
+- Chat may show a disabled, non-destructive "Generate Summary" placeholder only while generation
+  is unavailable. It must not start a workflow or imply background summarization.
+- Summary UI must not expose hidden prompts, raw runtime traces, transcript replacement previews,
+  automatic memory writes, provider/cloud controls, tools/plugins, filesystem indexing, or
+  autonomous generation.
+
 Phase 26.0 through Phase 26.8 improves local deterministic context visibility without adding
 background behavior or semantic authority.
 

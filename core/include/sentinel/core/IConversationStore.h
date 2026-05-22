@@ -69,6 +69,16 @@ struct ConversationMessageRecord {
     ChatMessageStatus status = ChatMessageStatus::Received;
 };
 
+struct ConversationSummaryMetadataRecord {
+    QString conversationId;
+    QDateTime summaryTimestampUtc;
+    int coveredFirstMessageId = 0;
+    int coveredLastMessageId = 0;
+    int estimatedReductionPercent = 0;
+    QString readinessState = QStringLiteral("Blocked");
+    QString summary = QStringLiteral("No conversation summary metadata has been persisted.");
+};
+
 class IConversationStore {
 public:
     virtual ~IConversationStore() = default;
@@ -83,6 +93,15 @@ public:
     virtual bool pinConversation(const QString& conversationId) = 0;
     virtual bool unpinConversation(const QString& conversationId) = 0;
     virtual bool deleteConversation(const QString& conversationId) = 0;
+    virtual bool saveSummaryMetadata(const ConversationSummaryMetadataRecord& metadata) {
+        Q_UNUSED(metadata);
+        return false;
+    }
+    virtual ConversationSummaryMetadataRecord
+    loadSummaryMetadata(const QString& conversationId) const {
+        Q_UNUSED(conversationId);
+        return {};
+    }
 
     virtual ConversationStoreStatus status() const {
         return ConversationStoreStatus::Ready;

@@ -550,6 +550,24 @@ class DesktopShellViewModel final : public QObject {
                    conversationCompressionCandidateSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationCompressionTraceSummaries READ
                    conversationCompressionTraceSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(bool conversationSummaryAvailable READ conversationSummaryAvailable NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryGenerationStatus READ
+                   conversationSummaryGenerationStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryReadinessSummary READ
+                   conversationSummaryReadinessSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryBlockedReason READ conversationSummaryBlockedReason NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryEstimatedCompressionGain READ
+                   conversationSummaryEstimatedCompressionGain NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryPreviewSummary READ conversationSummaryPreviewSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryPersistenceSummary READ
+                   conversationSummaryPersistenceSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList conversationSummaryCandidateSegments READ
+                   conversationSummaryCandidateSegments NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList conversationSummaryGenerationTraceSummaries READ
+                   conversationSummaryGenerationTraceSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool semanticRetrievalEnabled READ semanticRetrievalEnabled CONSTANT)
     Q_PROPERTY(QString semanticRetrievalStatus READ semanticRetrievalStatus CONSTANT)
     Q_PROPERTY(QString semanticRetrievalSummary READ semanticRetrievalSummary CONSTANT)
@@ -1352,6 +1370,15 @@ public:
     QString conversationCompressionBudgetSummary() const;
     QStringList conversationCompressionCandidateSummaries() const;
     QStringList conversationCompressionTraceSummaries() const;
+    bool conversationSummaryAvailable() const;
+    QString conversationSummaryGenerationStatus() const;
+    QString conversationSummaryReadinessSummary() const;
+    QString conversationSummaryBlockedReason() const;
+    QString conversationSummaryEstimatedCompressionGain() const;
+    QString conversationSummaryPreviewSummary() const;
+    QString conversationSummaryPersistenceSummary() const;
+    QStringList conversationSummaryCandidateSegments() const;
+    QStringList conversationSummaryGenerationTraceSummaries() const;
     core::SemanticRetrievalPolicy semanticRetrievalPolicy() const;
     bool semanticRetrievalEnabled() const;
     QString semanticRetrievalStatus() const;
@@ -1612,6 +1639,7 @@ public:
 
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
+    Q_INVOKABLE bool requestConversationSummaryGeneration();
     Q_INVOKABLE bool generatePiperTtsFile(const QString& text);
     Q_INVOKABLE bool searchConversation(const QString& query);
     Q_INVOKABLE void clearConversationSearch();

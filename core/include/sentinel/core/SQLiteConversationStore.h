@@ -26,6 +26,9 @@ public:
     bool pinConversation(const QString& conversationId) override;
     bool unpinConversation(const QString& conversationId) override;
     bool deleteConversation(const QString& conversationId) override;
+    bool saveSummaryMetadata(const ConversationSummaryMetadataRecord& metadata) override;
+    ConversationSummaryMetadataRecord
+    loadSummaryMetadata(const QString& conversationId) const override;
     ConversationStoreStatus status() const override;
     ConversationStoreError lastError() const override;
 
@@ -42,7 +45,7 @@ private:
     void initializeSchema();
     void setLastError(ConversationStoreErrorCode code, const QString& summary) const;
 
-    static constexpr int currentSchemaVersion = 2;
+    static constexpr int currentSchemaVersion = 3;
 
     QString databasePath_;
     QString connectionName_;

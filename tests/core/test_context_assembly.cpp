@@ -12,6 +12,7 @@ using sentinel::core::ContextAssemblyStatus;
 using sentinel::core::contextAssemblyStatusName;
 using sentinel::core::contextAssemblySummaryForRequest;
 using sentinel::core::ConversationSummaryPolicy;
+using sentinel::core::ConversationSummaryRequest;
 using sentinel::core::ConversationSummaryStatus;
 using sentinel::core::ConversationSalienceCandidate;
 using sentinel::core::ConversationSaliencePolicy;
@@ -27,6 +28,7 @@ using sentinel::core::planRetrieval;
 using sentinel::core::rankConversationSalience;
 using sentinel::core::rankMemoryRelevance;
 using sentinel::core::planConversationCompression;
+using sentinel::core::planConversationSummaryGeneration;
 using sentinel::core::RetrievalCandidate;
 using sentinel::core::RetrievalPlanningPolicy;
 using sentinel::core::RetrievalPlanningStatus;
@@ -57,6 +59,8 @@ private slots:
     void conversationCompressionDisabledAndLowPressureStayMetadataOnly();
     void conversationCompressionPlansHighPressureCandidatesDeterministically();
     void conversationCompressionEnforcesBudgetBounds();
+    void conversationSummaryGenerationRequiresExplicitManualAction();
+    void conversationSummaryGenerationPlansSegmentsAndBudgetDeterministically();
 };
 
 void ContextAssemblyTest::createsDeterministicAssemblySummary() {
@@ -590,6 +594,70 @@ void ContextAssemblyTest::conversationCompressionEnforcesBudgetBounds() {
     QVERIFY(result.budget.selectedCharacters <= policy.maxCandidateCharacters);
     QVERIFY(result.budget.remainingCharacters >= 0);
     QVERIFY(result.selection.excludedCandidateCount >= 1);
+}
+
+void ContextAssemblyTest::conversationSummaryGenerationRequiresExplicitManualAction() {
+    const QList<ConversationWindowMessage> messages = {
+        ConversationWindowMessage{1, QStringLiteral("User"), QStringLiteral("remember alpha")},
+        ConversationWindowMessage{2, QStringLiteral("Assistant"), QStringLiteral("noted alpha")},
+    };
+
+    ConversationSummaryPolicy policy;
+    ConversationSummaryRequest automaticRequest;
+    automaticRequest.sourceConversationId = QStringLiteral("conversation-1");
+    automaticRequest.activeConversationId = QStringLiteral("conversation-1");
+    const auto automatic =
+        planConversationSummaryGeneration(messages, {}, automaticRequest, policy);
+
+    QCOMPARE(automatic.status, ConversationSummaryStatus::Blocked);
+    QVERIFY(automatic.readiness.blockedReason.contains(QStringLiteral("explicit user action")));
+    QVERIFY(automatic.segments.isEmpty());
+
+    ConversationSummaryRequest backgroundRequest = automaticRequest;
+    backgroundRequest.explicitUserAction = true;
+    backgroundRequest.backgroundRequested = true;
+    const auto background =
+        planConversationSummaryGeneration(messages, {}, backgroundRequest, policy);
+    QCOMPARE(background.status, ConversationSummaryStatus::Blocked);
+    QVERIFY(background.readiness.blockedReason.contains(QStringLiteral("Background")));
+}
+
+void ContextAssemblyTest::conversationSummaryGenerationPlansSegmentsAndBudgetDeterministically() {
+    QList<ConversationWindowMessage> messages;
+    messages.append(ConversationWindowMessage{
+        1, QStringLiteral("System"), QStringLiteral("runtime metadata should stay excluded")});
+    for (int i = 0; i < 18; ++i) {
+        messages.append(ConversationWindowMessage{
+            i + 2,
+            i % 2 == 0 ? QStringLiteral("User") : QStringLiteral("Assistant"),
+            QStringLiteral("remember summary pipeline marker %1 %2")
+                .arg(i)
+                .arg(QString(160, QLatin1Char('p'))),
+        });
+    }
+
+    ConversationCompressionPolicy compressionPolicy;
+    const auto compression = planConversationCompression(messages, {}, {}, true, compressionPolicy);
+    ConversationSummaryPolicy policy;
+    policy.maxCharacters = 360;
+    policy.maxSegments = 3;
+    ConversationSummaryRequest request;
+    request.sourceConversationId = QStringLiteral("conversation-1");
+    request.activeConversationId = QStringLiteral("conversation-1");
+    request.explicitUserAction = true;
+
+    const auto result =
+        planConversationSummaryGeneration(messages, compression, request, policy);
+
+    QCOMPARE(result.status, ConversationSummaryStatus::Blocked);
+    QVERIFY(result.preview.available);
+    QVERIFY(result.segments.size() >= 2);
+    QVERIFY(result.budget.includedCharacters <= policy.maxCharacters);
+    QVERIFY(result.estimatedReductionPercent >= 0);
+    QVERIFY(result.trace.safetySummaries.join(QStringLiteral("\n"))
+                .contains(QStringLiteral("system-runtime metadata")));
+    QCOMPARE(result.coveredFirstMessageIndex, 2);
+    QCOMPARE(result.coveredLastMessageIndex, 19);
 }
 
 QTEST_MAIN(ContextAssemblyTest)
