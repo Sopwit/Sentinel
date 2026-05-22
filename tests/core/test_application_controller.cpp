@@ -1818,8 +1818,9 @@ void ApplicationControllerTest::enabledLocalChatStreamingCancellationAppendsSafe
     controller->setLocalInferenceStreamingEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
-    QVERIFY(!sent);
+    QVERIFY(sent);
     QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Cancelled"));
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
     QCOMPARE(controller->chatHistory().size(), 3);
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
     QCOMPARE(controller->chatHistory().at(2).content,
@@ -1849,9 +1850,10 @@ void ApplicationControllerTest::streamingPreviewClearsAfterStreamError() {
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
 
-    QVERIFY(!controller->sendMessage(QStringLiteral("hello")));
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
     QVERIFY(controller->localInferenceStreamingText().isEmpty());
     QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Error"));
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
     QCOMPARE(controller->chatHistory().size(), 3);
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
     QCOMPARE(controller->chatHistory().at(2).content,
@@ -2478,7 +2480,7 @@ void ApplicationControllerTest::inMemoryConversationSearchFindsUserAndAssistantM
     ApplicationController controller{std::make_unique<ErrorProvider>(),
                                      std::make_unique<InMemoryStore>()};
 
-    QVERIFY(!controller.sendMessage(QStringLiteral("alpha deterministic user search")));
+    QVERIFY(controller.sendMessage(QStringLiteral("alpha deterministic user search")));
 
     QVERIFY(controller.searchConversation(QStringLiteral("deterministic")));
 
@@ -2760,7 +2762,7 @@ void ApplicationControllerTest::localInferenceTimeoutAppendsConciseFailureAndRes
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
-    QVERIFY(!sent);
+    QVERIFY(sent);
     QVERIFY(timeoutClientPtr->called);
     QVERIFY(!controller->localInferenceBusy());
     QCOMPARE(timeoutClientPtr->lastRequest.options.timeoutMs, 30000);
@@ -2769,6 +2771,7 @@ void ApplicationControllerTest::localInferenceTimeoutAppendsConciseFailureAndRes
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
     QCOMPARE(controller->chatHistory().at(2).content,
              QStringLiteral("Local inference failed: the local Ollama request timed out."));
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
 }
 
 void ApplicationControllerTest::
@@ -2790,12 +2793,13 @@ void ApplicationControllerTest::
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
-    QVERIFY(!sent);
+    QVERIFY(sent);
     QVERIFY(!controller->localInferenceBusy());
     QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
     QCOMPARE(controller->chatHistory().size(), 3);
     QCOMPARE(controller->chatHistory().at(2).content,
              QStringLiteral("Local inference failed: Ollama returned an invalid response."));
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
 }
 
 void ApplicationControllerTest::ollamaUnavailablePathAppendsConciseFailureWithoutRealService() {
@@ -2874,7 +2878,7 @@ void ApplicationControllerTest::streamingInterruptionClearsPreviewAndAppendsOneF
     controller->setLocalInferenceStreamingEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
-    QVERIFY(!sent);
+    QVERIFY(sent);
     QVERIFY(!controller->localInferenceBusy());
     QVERIFY(controller->localInferenceStreamingText().isEmpty());
     QCOMPARE(controller->chatHistory().size(), 3);
@@ -2883,6 +2887,7 @@ void ApplicationControllerTest::streamingInterruptionClearsPreviewAndAppendsOneF
              QStringLiteral("Local inference failed: the Ollama stream ended before a complete "
                             "assistant response was received."));
     QCOMPARE(historyStorePtr->messages_.size(), 3);
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
 }
 
 void ApplicationControllerTest::blocksLocalInferenceByDefaultPermission() {
@@ -2998,6 +3003,7 @@ void ApplicationControllerTest::enabledLocalChatInferenceWithoutValidModelFailsS
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
     QVERIFY(!sent);
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Missing Model"));
     QCOMPARE(controller->chatHistory().size(), 1);
@@ -3022,6 +3028,7 @@ void ApplicationControllerTest::enabledLocalChatInferenceWithInvalidModelShowsSa
     controller->setLocalChatInferenceEnabled(true);
 
     QVERIFY(!controller->sendMessage(QStringLiteral("hello")));
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Invalid Model"));
     QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Model Unavailable"));
@@ -3080,12 +3087,13 @@ void ApplicationControllerTest::enabledLocalChatInferenceErrorAppendsSafeRefusal
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
-    QVERIFY(!sent);
+    QVERIFY(sent);
     QVERIFY(errorClientPtr->called);
     QCOMPARE(controller->chatHistory().size(), 3);
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
     QCOMPARE(controller->chatHistory().at(2).content,
              QStringLiteral("Local inference unavailable: the local Ollama client is not ready."));
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("failed"));
 }
 
 void ApplicationControllerTest::localChatInferenceBlocksNonLoopbackEndpoint() {
@@ -3110,6 +3118,7 @@ void ApplicationControllerTest::localChatInferenceBlocksNonLoopbackEndpoint() {
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
     QVERIFY(!sent);
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Blocked"));
     QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
@@ -3618,7 +3627,7 @@ void ApplicationControllerTest::handlesUnavailableProvider() {
 
     const auto sent = controller->sendMessage(QStringLiteral("status"));
 
-    QVERIFY(!sent);
+    QVERIFY(sent);
     QCOMPARE(controller->providerName(), QStringLiteral("UnavailableProvider"));
     QCOMPARE(controller->providerStatus(), QStringLiteral("Unavailable"));
     QCOMPARE(controller->chatMessages().size(), 3);
@@ -3635,7 +3644,7 @@ void ApplicationControllerTest::handlesProviderErrorReply() {
 
     const auto sent = controller->sendMessage(QStringLiteral("status"));
 
-    QVERIFY(!sent);
+    QVERIFY(sent);
     QCOMPARE(controller->chatMessages().size(), 3);
     QCOMPARE(controller->chatMessages().last(),
              QStringLiteral("Sentinel: Provider error: deterministic failure"));
@@ -4752,7 +4761,7 @@ void ApplicationControllerTest::promptContextInjectionRespectsSafetyGateBeforeAs
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
-    QVERIFY(!controller->sendMessage(QStringLiteral("hello")));
+    QVERIFY(controller->sendMessage(QStringLiteral("hello")));
 
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Empty"));

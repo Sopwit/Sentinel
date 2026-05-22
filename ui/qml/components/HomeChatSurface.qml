@@ -9,7 +9,10 @@ ShellPanel {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property bool chatReady: viewModel.localChatSendAvailable
     readonly property bool canSend: viewModel.localChatSendAvailable
-    readonly property bool streamingActive: viewModel.localInferenceStreamingText.length > 0
+    readonly property string sendState: viewModel.chatSendLifecycleState
+    readonly property bool sendBusy: sendState === "validating" || sendState === "sending"
+                                     || sendState === "streaming"
+    readonly property bool streamingActive: sendState === "streaming"
                                             || viewModel.localInferenceRuntimeState === "Streaming"
     readonly property string uiSelfCheck: "chat-scroll-safe-area composer-visible no-bridge-duplication"
     readonly property string disabledReason: viewModel.activeConversationArchived
@@ -31,12 +34,16 @@ ShellPanel {
 
     function sendComposerText() {
         var prompt = promptInput.text.trim()
-        if (prompt.length === 0 || !sendButton.enabled)
+        if (prompt.length === 0 || !homeChat.canSend || homeChat.sendBusy)
             return
-        homeChat.viewModel.sendMessage(promptInput.text)
-        promptInput.clear()
-        recentMessages.followNewMessages = true
-        homeChat.scrollToLatest(true)
+        var accepted = homeChat.viewModel.sendMessage(promptInput.text)
+        var lifecycle = homeChat.viewModel.chatSendLifecycleState
+        if (accepted || lifecycle === "sending" || lifecycle === "streaming"
+                || lifecycle === "completed" || lifecycle === "failed") {
+            promptInput.clear()
+            recentMessages.followNewMessages = true
+            homeChat.scrollToLatest(true)
+        }
     }
 
     onStreamingActiveChanged: {
@@ -87,6 +94,9 @@ ShellPanel {
         ListView {
             id: recentMessages
             property bool followNewMessages: true
+            function nearBottom() {
+                return contentHeight <= height || (contentY + height >= contentHeight - 96)
+            }
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumHeight: 210
@@ -98,7 +108,7 @@ ShellPanel {
             boundsMovement: Flickable.StopAtBounds
             maximumFlickVelocity: 2200
             flickDeceleration: 5200
-            bottomMargin: SentinelTheme.spaceMd
+            bottomMargin: SentinelTheme.spaceXl + SentinelTheme.spaceMd
             ScrollBar.vertical: ScrollBar {
                 policy: ScrollBar.AsNeeded
                 contentItem: Rectangle {
@@ -112,8 +122,9 @@ ShellPanel {
             }
             onCountChanged: homeChat.scrollToLatest(false)
             Component.onCompleted: Qt.callLater(positionViewAtEnd)
-            onMovementEnded: followNewMessages = atYEnd || contentHeight <= height
-            onFlickEnded: followNewMessages = atYEnd || contentHeight <= height
+            onMovementStarted: followNewMessages = nearBottom()
+            onMovementEnded: followNewMessages = nearBottom()
+            onFlickEnded: followNewMessages = nearBottom()
 
             add: Transition {
                 NumberAnimation {
@@ -287,6 +298,23 @@ ShellPanel {
             }
         }
 
+        Label {
+            Layout.fillWidth: true
+            visible: homeChat.sendState !== "idle"
+                     && (homeChat.sendBusy || homeChat.viewModel.developerModeEnabled
+                         || homeChat.sendState === "refused" || homeChat.sendState === "failed"
+                         || homeChat.sendState === "cancelled")
+            text: homeChat.viewModel.developerModeEnabled
+                  ? homeChat.sendState + " / " + homeChat.viewModel.chatSendLifecycleSummary
+                  : homeChat.viewModel.chatSendLifecycleSummary
+            color: homeChat.sendState === "refused" || homeChat.sendState === "failed"
+                   || homeChat.sendState === "cancelled"
+                   ? SentinelTheme.warning
+                   : SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
+            wrapMode: Text.WordWrap
+        }
+
         Rectangle {
             Layout.fillWidth: true
             radius: SentinelTheme.radiusMd
@@ -339,9 +367,9 @@ ShellPanel {
                     Layout.fillWidth: true
                     Layout.minimumHeight: 48
                     Layout.maximumHeight: 126
-                    placeholderText: homeChat.chatReady ? "Ask Sentinel"
+                    placeholderText: homeChat.chatReady ? (homeChat.sendBusy ? "Sentinel is responding" : "Ask Sentinel")
                                                         : homeChat.viewModel.localChatSendAvailabilitySummary
-                    enabled: !homeChat.viewModel.activeConversationArchived
+                    enabled: !homeChat.viewModel.activeConversationArchived && !homeChat.sendBusy
                     color: SentinelTheme.textPrimary
                     placeholderTextColor: SentinelTheme.textPlaceholder
                     wrapMode: TextEdit.WordWrap
@@ -370,6 +398,7 @@ ShellPanel {
                     Layout.preferredWidth: 82
                     Layout.alignment: Qt.AlignBottom
                     enabled: promptInput.text.trim().length > 0 && homeChat.canSend
+                             && !homeChat.sendBusy
                     opacity: enabled ? 1.0 : 0.58
                     onClicked: homeChat.sendComposerText()
                 }
@@ -378,7 +407,7 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            visible: !homeChat.chatReady || homeChat.disabledReason.length > 0
+            visible: !homeChat.chatReady
             text: homeChat.disabledReason + (homeChat.chatReady ? "" : " Local Ollama only. No cloud provider active.")
             color: !homeChat.chatReady ? SentinelTheme.textMuted : SentinelTheme.warning
             font.pixelSize: SentinelTheme.fontSmall

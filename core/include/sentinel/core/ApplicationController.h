@@ -424,6 +424,10 @@ class ApplicationController final : public QObject {
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatSendAvailabilitySummary READ localChatSendAvailabilitySummary
                    NOTIFY localChatInferenceRoutingChanged)
+    Q_PROPERTY(QString chatSendLifecycleState READ chatSendLifecycleState NOTIFY
+                   localChatInferenceRoutingChanged)
+    Q_PROPERTY(QString chatSendLifecycleSummary READ chatSendLifecycleSummary NOTIFY
+                   localChatInferenceRoutingChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QString promptContextInjectionStatus READ promptContextInjectionStatus NOTIFY
@@ -1159,6 +1163,8 @@ public:
     QString localChatInferenceSummary() const;
     bool localChatSendAvailable() const;
     QString localChatSendAvailabilitySummary() const;
+    QString chatSendLifecycleState() const;
+    QString chatSendLifecycleSummary() const;
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
     PromptContextInjectionResult latestPromptContextInjectionResult() const;
@@ -1617,6 +1623,7 @@ private:
                                        const QString& route, bool streaming);
     void setConversationRuntimeResult(bool succeeded, const QString& summary,
                                       qint64 latencyMs = -1);
+    void setChatSendLifecycle(const QString& state, const QString& summary);
     LocalInferenceResponse blockedLocalInferenceResponse(const LocalInferenceRequest& request,
                                                          LocalInferenceError error,
                                                          const QString& summary) const;
@@ -1723,6 +1730,9 @@ private:
     bool activeLocalInferenceIsChatRequest_ = false;
     quint64 localInferenceRequestSequence_ = 0;
     QString activeLocalInferenceRequestId_;
+    QString activeLocalInferenceConversationId_;
+    QString chatSendLifecycleState_ = QStringLiteral("idle");
+    QString chatSendLifecycleSummary_ = QStringLiteral("Ready when local chat requirements pass.");
     QString conversationRuntimeRequestId_ = QStringLiteral("None");
     QString conversationRuntimeActiveModel_ = QStringLiteral("None");
     QString conversationRuntimeActiveRoute_ = QStringLiteral("Provider");

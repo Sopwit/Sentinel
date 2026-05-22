@@ -1295,6 +1295,14 @@ QString DesktopShellViewModel::localChatSendAvailabilitySummary() const {
     return controller_.localChatSendAvailabilitySummary();
 }
 
+QString DesktopShellViewModel::chatSendLifecycleState() const {
+    return controller_.chatSendLifecycleState();
+}
+
+QString DesktopShellViewModel::chatSendLifecycleSummary() const {
+    return controller_.chatSendLifecycleSummary();
+}
+
 bool DesktopShellViewModel::promptContextInjectionEnabled() const {
     return controller_.promptContextInjectionEnabled();
 }

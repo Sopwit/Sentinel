@@ -2800,6 +2800,14 @@ QString ApplicationController::localChatSendAvailabilitySummary() const {
     return QStringLiteral("Ready to send with Local Ollama.");
 }
 
+QString ApplicationController::chatSendLifecycleState() const {
+    return chatSendLifecycleState_;
+}
+
+QString ApplicationController::chatSendLifecycleSummary() const {
+    return chatSendLifecycleSummary_;
+}
+
 bool ApplicationController::promptContextInjectionEnabled() const {
     return promptContextInjectionEnabled_;
 }
@@ -5655,10 +5663,16 @@ void ApplicationController::clearLocalMemoryRecall() {
 bool ApplicationController::sendMessage(const QString& message) {
     const auto trimmed = message.trimmed();
     if (trimmed.isEmpty()) {
+        setChatSendLifecycle(QStringLiteral("refused"),
+                             QStringLiteral("Enter a prompt before sending."));
         return false;
     }
 
+    setChatSendLifecycle(QStringLiteral("validating"),
+                         QStringLiteral("Checking local chat send readiness."));
+
     if (activeConversationArchived()) {
+        setChatSendLifecycle(QStringLiteral("refused"), activeConversationStateSummary());
         return false;
     }
 
@@ -5675,6 +5689,8 @@ bool ApplicationController::sendMessage(const QString& message) {
                            "running."));
         latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
         latestLocalInferenceStreamResult_.accumulatedText.clear();
+        setChatSendLifecycle(QStringLiteral("refused"),
+                             QStringLiteral("A request is already active. Wait for it to finish."));
         emit localInferenceChanged();
         emit localChatInferenceRoutingChanged();
         return false;
@@ -5720,6 +5736,7 @@ bool ApplicationController::sendMessage(const QString& message) {
                                       request.options.model, QStringLiteral("Local Ollama"),
                                       false);
         setConversationRuntimeResult(false, reason);
+        setChatSendLifecycle(QStringLiteral("refused"), reason);
         emit localInferenceChanged();
         emit localChatInferenceRoutingChanged();
         return false;
@@ -5735,6 +5752,8 @@ bool ApplicationController::sendMessage(const QString& message) {
 
     const auto userMessage = chatSession_->appendUserMessage(trimmed);
     persistActiveConversationMessage(userMessage);
+    setChatSendLifecycle(QStringLiteral("sending"),
+                         QStringLiteral("Prompt accepted and added to the local transcript."));
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(userMessage);
         conversationHistorySummary_.lastSavedStatus =
@@ -5759,12 +5778,11 @@ bool ApplicationController::sendMessage(const QString& message) {
                                                ? runLocalInferenceStream(trimmed, {})
                                                : runLocalInference(trimmed, {});
         if (startedLocalInference || !activeLocalInferenceIsChatRequest_) {
-            return latestLocalInferenceResponse_.status == LocalInferenceStatus::Succeeded ||
-                   localInferenceBusy_;
+            return true;
         }
 
         finalizeLocalChatInference(false);
-        return false;
+        return true;
     }
 
     if (!provider_ || provider_->status() != ChatProviderStatus::Ready) {
@@ -5788,10 +5806,11 @@ bool ApplicationController::sendMessage(const QString& message) {
                                       QStringLiteral("None"),
                                       QStringLiteral("Provider: %1").arg(providerName()), false);
         setConversationRuntimeResult(false, errorMessage.content);
+        setChatSendLifecycle(QStringLiteral("failed"), errorMessage.content);
         refreshConversationHistorySummary();
         emit chatMessagesChanged();
         emit contextAssemblyChanged();
-        return false;
+        return true;
     }
 
     transitionConversationState(ConversationState::ReadyToRespond,
@@ -5824,10 +5843,12 @@ bool ApplicationController::sendMessage(const QString& message) {
     setConversationRuntimeRequest(QStringLiteral("provider-chat-request"), QStringLiteral("None"),
                                   QStringLiteral("Provider: %1").arg(providerName()), false);
     setConversationRuntimeResult(reply.success, assistantMessage.content);
+    setChatSendLifecycle(reply.success ? QStringLiteral("completed") : QStringLiteral("failed"),
+                         assistantMessage.content);
     refreshConversationHistorySummary();
     emit chatMessagesChanged();
     emit contextAssemblyChanged();
-    return reply.success;
+    return true;
 }
 
 bool ApplicationController::runLocalInference(const QString& prompt, const QString& model) {
@@ -5961,7 +5982,10 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
 
     request.id = QStringLiteral("local-inference-request-%1").arg(++localInferenceRequestSequence_);
     activeLocalInferenceRequestId_ = request.id;
+    activeLocalInferenceConversationId_ = activeConversationId_;
     localInferenceBusy_ = true;
+    setChatSendLifecycle(QStringLiteral("sending"),
+                         QStringLiteral("Local Ollama request accepted."));
     setConversationRuntimeRequest(request.id, request.options.model, QStringLiteral("Local Ollama"),
                                   false);
     latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
@@ -5997,6 +6021,7 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
     if (!started) {
         localInferenceBusy_ = false;
         activeLocalInferenceRequestId_.clear();
+        activeLocalInferenceConversationId_.clear();
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::BusyRequest,
             QStringLiteral("Local inference request rejected: worker is busy."));
@@ -6019,6 +6044,7 @@ bool ApplicationController::cancelLocalInference() {
         localInferenceWorker_->cancel(requestId);
     }
     activeLocalInferenceRequestId_.clear();
+    activeLocalInferenceConversationId_.clear();
     activeLocalInferenceIsChatRequest_ = false;
     localInferenceBusy_ = false;
     latestLocalInferenceResponse_.status = LocalInferenceStatus::Blocked;
@@ -6027,6 +6053,7 @@ bool ApplicationController::cancelLocalInference() {
     latestLocalInferenceResponse_.summary =
         QStringLiteral("Local inference request was cancelled; stale results will be ignored.");
     setConversationRuntimeResult(false, latestLocalInferenceResponse_.summary);
+    setChatSendLifecycle(QStringLiteral("cancelled"), latestLocalInferenceResponse_.summary);
     latestLocalInferenceStreamResult_.accumulatedText.clear();
     if (latestLocalInferenceStreamResult_.status == LocalInferenceStreamStatus::Streaming) {
         latestLocalInferenceStreamResult_.status = LocalInferenceStreamStatus::Cancelled;
@@ -6182,7 +6209,10 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
 
     request.id = QStringLiteral("local-inference-request-%1").arg(++localInferenceRequestSequence_);
     activeLocalInferenceRequestId_ = request.id;
+    activeLocalInferenceConversationId_ = activeConversationId_;
     localInferenceBusy_ = true;
+    setChatSendLifecycle(QStringLiteral("streaming"),
+                         QStringLiteral("Local Ollama stream accepted."));
     setConversationRuntimeRequest(request.id, request.options.model, QStringLiteral("Local Ollama"),
                                   true);
     latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
@@ -6229,6 +6259,7 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
     if (!started) {
         localInferenceBusy_ = false;
         activeLocalInferenceRequestId_.clear();
+        activeLocalInferenceConversationId_.clear();
         const auto blocked =
             blockStream(LocalInferenceError::BusyRequest,
                         QStringLiteral("Local streaming request rejected: worker is busy."),
@@ -6245,9 +6276,24 @@ void ApplicationController::finishLocalInferenceRequest(const QString& requestId
     if (requestId != activeLocalInferenceRequestId_) {
         return;
     }
+    if (!activeLocalInferenceConversationId_.isEmpty() &&
+        activeLocalInferenceConversationId_ != activeConversationId_) {
+        localInferenceBusy_ = false;
+        activeLocalInferenceIsChatRequest_ = false;
+        activeLocalInferenceRequestId_.clear();
+        activeLocalInferenceConversationId_.clear();
+        latestLocalInferenceStreamResult_.accumulatedText.clear();
+        setChatSendLifecycle(
+            QStringLiteral("cancelled"),
+            QStringLiteral("Ignored stale local response after conversation switch."));
+        emit localInferenceChanged();
+        emit localChatInferenceRoutingChanged();
+        return;
+    }
 
     localInferenceBusy_ = false;
     activeLocalInferenceRequestId_.clear();
+    activeLocalInferenceConversationId_.clear();
     latestLocalInferenceResponse_ = response;
     if (latestLocalInferenceResponse_.timeoutMs <= 0) {
         latestLocalInferenceResponse_.timeoutMs =
@@ -6288,9 +6334,24 @@ void ApplicationController::finishLocalInferenceStreamRequest(
     if (requestId != activeLocalInferenceRequestId_) {
         return;
     }
+    if (!activeLocalInferenceConversationId_.isEmpty() &&
+        activeLocalInferenceConversationId_ != activeConversationId_) {
+        localInferenceBusy_ = false;
+        activeLocalInferenceIsChatRequest_ = false;
+        activeLocalInferenceRequestId_.clear();
+        activeLocalInferenceConversationId_.clear();
+        latestLocalInferenceStreamResult_.accumulatedText.clear();
+        setChatSendLifecycle(
+            QStringLiteral("cancelled"),
+            QStringLiteral("Ignored stale local stream after conversation switch."));
+        emit localInferenceChanged();
+        emit localChatInferenceRoutingChanged();
+        return;
+    }
 
     localInferenceBusy_ = false;
     activeLocalInferenceRequestId_.clear();
+    activeLocalInferenceConversationId_.clear();
     latestLocalInferenceStreamResult_ = result;
     if (latestLocalInferenceStreamResult_.timeoutMs <= 0) {
         latestLocalInferenceStreamResult_.timeoutMs =
@@ -6333,6 +6394,8 @@ void ApplicationController::finalizeLocalChatInference(bool succeeded) {
     }
     setConversationRuntimeResult(succeeded, latestLocalInferenceResponse_.summary,
                                  latestLocalInferenceResponse_.latencyMs);
+    setChatSendLifecycle(succeeded ? QStringLiteral("completed") : QStringLiteral("failed"),
+                         latestLocalInferenceResponse_.summary);
     const auto assistantMessage = chatSession_->appendAssistantMessage(
         succeeded ? latestLocalInferenceResponse_.text
                   : localInferenceChatFailureMessage(latestLocalInferenceResponse_),
@@ -6529,6 +6592,7 @@ void ApplicationController::resetConversationRuntimeState() {
     localInferenceBusy_ = false;
     activeLocalInferenceIsChatRequest_ = false;
     activeLocalInferenceRequestId_.clear();
+    activeLocalInferenceConversationId_.clear();
     conversationRuntimeRequestId_ = QStringLiteral("None");
     conversationRuntimeActiveModel_ = QStringLiteral("None");
     conversationRuntimeActiveRoute_ = QStringLiteral("Provider");
@@ -6616,6 +6680,19 @@ void ApplicationController::setConversationRuntimeResult(bool succeeded, const Q
                                                  ? QStringLiteral("%1 ms").arg(latencyMs)
                                                  : QStringLiteral("No latency recorded.");
     emit conversationRuntimeChanged();
+}
+
+void ApplicationController::setChatSendLifecycle(const QString& state, const QString& summary) {
+    const auto safeState = state.trimmed().isEmpty() ? QStringLiteral("idle") : state.trimmed();
+    const auto safeSummary =
+        summary.trimmed().isEmpty() ? QStringLiteral("No send lifecycle summary.") : summary.trimmed();
+    if (chatSendLifecycleState_ == safeState && chatSendLifecycleSummary_ == safeSummary) {
+        return;
+    }
+
+    chatSendLifecycleState_ = safeState;
+    chatSendLifecycleSummary_ = safeSummary;
+    emit localChatInferenceRoutingChanged();
 }
 
 RuntimePermissionRequest ApplicationController::runtimePermissionRequest() const {
