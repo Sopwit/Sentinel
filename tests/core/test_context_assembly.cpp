@@ -11,28 +11,28 @@ using sentinel::core::contextAssemblySourceSummaries;
 using sentinel::core::ContextAssemblyStatus;
 using sentinel::core::contextAssemblyStatusName;
 using sentinel::core::contextAssemblySummaryForRequest;
+using sentinel::core::ConversationCompressionPolicy;
+using sentinel::core::ConversationCompressionStatus;
+using sentinel::core::ConversationSalienceCandidate;
+using sentinel::core::ConversationSaliencePolicy;
 using sentinel::core::ConversationSummaryPolicy;
 using sentinel::core::ConversationSummaryRequest;
 using sentinel::core::ConversationSummaryStatus;
-using sentinel::core::ConversationSalienceCandidate;
-using sentinel::core::ConversationSaliencePolicy;
 using sentinel::core::ConversationWindowMessage;
 using sentinel::core::ConversationWindowPolicy;
 using sentinel::core::ConversationWindowStatus;
-using sentinel::core::ConversationCompressionPolicy;
-using sentinel::core::ConversationCompressionStatus;
 using sentinel::core::makeContextAssemblySource;
 using sentinel::core::MemoryRelevanceCandidate;
 using sentinel::core::MemoryRelevancePolicy;
+using sentinel::core::planConversationCompression;
+using sentinel::core::planConversationSummaryGeneration;
 using sentinel::core::planRetrieval;
 using sentinel::core::rankConversationSalience;
 using sentinel::core::rankMemoryRelevance;
-using sentinel::core::planConversationCompression;
-using sentinel::core::planConversationSummaryGeneration;
 using sentinel::core::RetrievalCandidate;
+using sentinel::core::retrievalCandidateTraceSummaries;
 using sentinel::core::RetrievalPlanningPolicy;
 using sentinel::core::RetrievalPlanningStatus;
-using sentinel::core::retrievalCandidateTraceSummaries;
 using sentinel::core::retrievalSourceSummaries;
 
 class ContextAssemblyTest final : public QObject {
@@ -305,10 +305,8 @@ void ContextAssemblyTest::retrievalPlanningSuppressesDuplicatesAndReportsReasons
                                {},
                                QStringLiteral("Duplicate"),
                                QStringLiteral("same content")},
-            RetrievalCandidate{ContextAssemblySourceKind::CommittedMemory,
-                               {},
-                               QStringLiteral("Empty"),
-                               QString()},
+            RetrievalCandidate{
+                ContextAssemblySourceKind::CommittedMemory, {}, QStringLiteral("Empty"), QString()},
         },
         policy);
 
@@ -432,18 +430,15 @@ void ContextAssemblyTest::conversationSalienceScoresDeterministically() {
 
     const auto result = rankConversationSalience(
         {
-            ConversationSalienceCandidate{ContextAssemblySourceKind::CommittedMemory,
-                                          QStringLiteral("Memory Alpha"),
-                                          QStringLiteral("alpha dashboard preference"), 1, 26,
-                                          false, true, 1},
-            ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
-                                          QStringLiteral("Recent Window"),
-                                          QStringLiteral("user discussed alpha budget"), 0, 27,
-                                          true, false, 0},
-            ConversationSalienceCandidate{ContextAssemblySourceKind::RuntimeMetadata,
-                                          QStringLiteral("Runtime"),
-                                          QStringLiteral("idle local route"), 2, 16, false, false,
-                                          4},
+            ConversationSalienceCandidate{
+                ContextAssemblySourceKind::CommittedMemory, QStringLiteral("Memory Alpha"),
+                QStringLiteral("alpha dashboard preference"), 1, 26, false, true, 1},
+            ConversationSalienceCandidate{
+                ContextAssemblySourceKind::Conversation, QStringLiteral("Recent Window"),
+                QStringLiteral("user discussed alpha budget"), 0, 27, true, false, 0},
+            ConversationSalienceCandidate{
+                ContextAssemblySourceKind::RuntimeMetadata, QStringLiteral("Runtime"),
+                QStringLiteral("idle local route"), 2, 16, false, false, 4},
         },
         QStringLiteral("alpha dashboard"), QStringLiteral("Alpha Planning"),
         QStringLiteral("alpha budget"), QStringLiteral("assistant dashboard note"),
@@ -467,14 +462,12 @@ void ContextAssemblyTest::conversationSalienceAllocatesAdaptiveBudgetDeterminist
 
     const auto result = rankConversationSalience(
         {
-            ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
-                                          QStringLiteral("Window"),
-                                          QStringLiteral("alpha conversation text that is long"),
-                                          0},
-            ConversationSalienceCandidate{ContextAssemblySourceKind::CommittedMemory,
-                                          QStringLiteral("Memory"),
-                                          QStringLiteral("alpha memory text that is long"), 1, 0,
-                                          false, true},
+            ConversationSalienceCandidate{
+                ContextAssemblySourceKind::Conversation, QStringLiteral("Window"),
+                QStringLiteral("alpha conversation text that is long"), 0},
+            ConversationSalienceCandidate{
+                ContextAssemblySourceKind::CommittedMemory, QStringLiteral("Memory"),
+                QStringLiteral("alpha memory text that is long"), 1, 0, false, true},
             ConversationSalienceCandidate{ContextAssemblySourceKind::RuntimeMetadata,
                                           QStringLiteral("Runtime"),
                                           QStringLiteral("alpha runtime text that is long"), 2},
@@ -499,8 +492,8 @@ void ContextAssemblyTest::conversationSalienceSuppressesDuplicatesAndReportsCoun
             ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
                                           QStringLiteral("First"), QStringLiteral("alpha same"), 0},
             ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
-                                          QStringLiteral("Duplicate"),
-                                          QStringLiteral("alpha same"), 1},
+                                          QStringLiteral("Duplicate"), QStringLiteral("alpha same"),
+                                          1},
             ConversationSalienceCandidate{ContextAssemblySourceKind::CommittedMemory,
                                           QStringLiteral("Empty"), QString(), 2, 0, false, true},
         },
@@ -528,7 +521,8 @@ void ContextAssemblyTest::conversationCompressionDisabledAndLowPressureStayMetad
     const auto low = planConversationCompression(
         {
             ConversationWindowMessage{1, QStringLiteral("User"), QStringLiteral("short note")},
-            ConversationWindowMessage{2, QStringLiteral("Assistant"), QStringLiteral("short reply")},
+            ConversationWindowMessage{2, QStringLiteral("Assistant"),
+                                      QStringLiteral("short reply")},
         },
         {}, {}, false, policy);
 
@@ -542,11 +536,10 @@ void ContextAssemblyTest::conversationCompressionPlansHighPressureCandidatesDete
     QList<ConversationWindowMessage> messages;
     for (int i = 0; i < 32; ++i) {
         const auto role = i % 2 == 0 ? QStringLiteral("User") : QStringLiteral("Assistant");
-        const auto body = i % 6 == 0
-                              ? QStringLiteral("remember my alpha preference repeated")
-                              : QStringLiteral("alpha transcript segment %1 %2")
-                                    .arg(i)
-                                    .arg(QString(220, QLatin1Char('x')));
+        const auto body = i % 6 == 0 ? QStringLiteral("remember my alpha preference repeated")
+                                     : QStringLiteral("alpha transcript segment %1 %2")
+                                           .arg(i)
+                                           .arg(QString(220, QLatin1Char('x')));
         messages.append(ConversationWindowMessage{i + 1, role, body});
     }
 
@@ -554,8 +547,7 @@ void ContextAssemblyTest::conversationCompressionPlansHighPressureCandidatesDete
     saliencePolicy.maxCharacters = 80;
     const auto salience = rankConversationSalience(
         {ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
-                                       QStringLiteral("Window"),
-                                       QString(80, QLatin1Char('a')), 0}},
+                                       QStringLiteral("Window"), QString(80, QLatin1Char('a')), 0}},
         QStringLiteral("alpha"), {}, QStringLiteral("alpha"), {}, {}, saliencePolicy);
 
     ConversationCompressionPolicy policy;
@@ -569,7 +561,8 @@ void ContextAssemblyTest::conversationCompressionPlansHighPressureCandidatesDete
     QCOMPARE(result.selection.candidates.at(0).kind, QStringLiteral("recent-window"));
     QCOMPARE(result.selection.candidates.at(1).kind, QStringLiteral("older-segment"));
     QVERIFY(result.selection.candidates.at(2).kind == QStringLiteral("high-salience-user-facts") ||
-            result.selection.candidates.at(2).kind == QStringLiteral("low-salience-repeated-turns"));
+            result.selection.candidates.at(2).kind ==
+                QStringLiteral("low-salience-repeated-turns"));
     QVERIFY(result.trace.summary.contains(QStringLiteral("context enabled")));
 }
 
@@ -646,8 +639,7 @@ void ContextAssemblyTest::conversationSummaryGenerationPlansSegmentsAndBudgetDet
     request.activeConversationId = QStringLiteral("conversation-1");
     request.explicitUserAction = true;
 
-    const auto result =
-        planConversationSummaryGeneration(messages, compression, request, policy);
+    const auto result = planConversationSummaryGeneration(messages, compression, request, policy);
 
     QCOMPARE(result.status, ConversationSummaryStatus::Blocked);
     QVERIFY(result.preview.available);

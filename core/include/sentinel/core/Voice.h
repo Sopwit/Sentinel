@@ -266,8 +266,8 @@ struct VoicePipelineSessionPolicy {
     bool transcriptAutoInjectionAllowed = false;
     bool backgroundWorkersAllowed = false;
     bool autonomousLoopsAllowed = false;
-    QString summary = QStringLiteral(
-        "Voice pipeline session policy is disabled, local-only, and metadata-only.");
+    QString summary =
+        QStringLiteral("Voice pipeline session policy is disabled, local-only, and metadata-only.");
 };
 
 struct VoicePipelineSessionBudget {
@@ -302,8 +302,7 @@ struct VoicePipelineSessionTrace {
 
 struct VoicePipelineSessionSafetyReport {
     QString status = QStringLiteral("Blocked");
-    QString summary = QStringLiteral(
-        "Voice pipeline session execution is blocked by default.");
+    QString summary = QStringLiteral("Voice pipeline session execution is blocked by default.");
     bool executionAllowed = false;
     bool executionAttempted = false;
     bool microphoneCaptureAllowed = false;
@@ -513,11 +512,9 @@ QStringList voicePipelineTraceSummaries(const QList<VoicePipelineTrace>& traces)
 QString safeVoicePipelineSummary(const VoicePipelineResult& result);
 QString voicePipelineSessionReadinessSummary(const VoicePipelineSessionReadiness& readiness);
 QString voicePipelineSessionStepSummary(const VoicePipelineSessionStepRecord& step);
-QStringList voicePipelineSessionStepSummaries(
-    const QList<VoicePipelineSessionStepRecord>& steps);
+QStringList voicePipelineSessionStepSummaries(const QList<VoicePipelineSessionStepRecord>& steps);
 QString voicePipelineSessionTraceSummary(const VoicePipelineSessionTrace& trace);
-QStringList voicePipelineSessionTraceSummaries(
-    const QList<VoicePipelineSessionTrace>& traces);
+QStringList voicePipelineSessionTraceSummaries(const QList<VoicePipelineSessionTrace>& traces);
 QString voicePipelineSessionSafetySummary(const VoicePipelineSessionSafetyReport& report);
 QStringList voicePipelineSessionSafetyChecks(const VoicePipelineSessionSafetyReport& report);
 QString voicePipelineSessionFallbackSummary(const VoicePipelineSessionFallback& fallback);
@@ -541,9 +538,9 @@ QStringList voiceRuntimeSafetyCheckSummaries(const VoiceRuntimeSafetyReport& rep
 WhisperRuntimeDescriptor whisperRuntimeDescriptorFromConfiguration(const QString& binaryPath,
                                                                    const QString& modelPath);
 PiperRuntimeDescriptor piperRuntimeDescriptorFromConfiguration(const QString& binaryPath,
-                                                              const QString& modelPath);
-VoiceRuntimeReadinessReport voiceRuntimeReadinessReport(
-    const WhisperRuntimeDescriptor& whisper, const PiperRuntimeDescriptor& piper);
+                                                               const QString& modelPath);
+VoiceRuntimeReadinessReport voiceRuntimeReadinessReport(const WhisperRuntimeDescriptor& whisper,
+                                                        const PiperRuntimeDescriptor& piper);
 QString whisperRuntimeDescriptorSummary(const WhisperRuntimeDescriptor& descriptor);
 QString whisperRuntimePathSummaryText(const WhisperRuntimePathSummary& summary);
 QString piperRuntimeDescriptorSummary(const PiperRuntimeDescriptor& descriptor);
@@ -552,8 +549,8 @@ QString voiceRuntimeReadinessSummaryText(const VoiceRuntimeReadinessReport& repo
 QStringList voiceRuntimeReadinessChecks(const VoiceRuntimeReadinessReport& report);
 QString voiceRuntimePermissionFoundationSummary();
 QString voiceRuntimeSandboxSummary(const VoiceRuntimeReadinessReport& report);
-VoiceRuntimeSafetyReport voiceRuntimeSafetyReportForReadiness(
-    const VoiceRuntimeReadinessReport& report);
+VoiceRuntimeSafetyReport
+voiceRuntimeSafetyReportForReadiness(const VoiceRuntimeReadinessReport& report);
 
 class ITextToSpeechProvider {
 public:

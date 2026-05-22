@@ -148,19 +148,20 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(int agentTaskQueueCompletedCount READ agentTaskQueueCompletedCount CONSTANT)
     Q_PROPERTY(int agentTaskQueueRefusedCount READ agentTaskQueueRefusedCount CONSTANT)
     Q_PROPERTY(QString latestAgentTaskSummary READ latestAgentTaskSummary CONSTANT)
-    Q_PROPERTY(QString latestAgentTaskLifecycleSummary READ latestAgentTaskLifecycleSummary CONSTANT)
+    Q_PROPERTY(
+        QString latestAgentTaskLifecycleSummary READ latestAgentTaskLifecycleSummary CONSTANT)
     Q_PROPERTY(QStringList agentTaskQueueSummaries READ agentTaskQueueSummaries CONSTANT)
     Q_PROPERTY(QStringList agentTaskTraceSummaries READ agentTaskTraceSummaries CONSTANT)
     Q_PROPERTY(QString agentPlanningSessionStatus READ agentPlanningSessionStatus CONSTANT)
     Q_PROPERTY(QString agentPlanningSessionSummary READ agentPlanningSessionSummary CONSTANT)
     Q_PROPERTY(int agentPlanningCandidateCount READ agentPlanningCandidateCount CONSTANT)
     Q_PROPERTY(int agentPlanningRefusedCount READ agentPlanningRefusedCount CONSTANT)
-    Q_PROPERTY(QStringList agentPlanningCandidateSummaries READ agentPlanningCandidateSummaries
+    Q_PROPERTY(
+        QStringList agentPlanningCandidateSummaries READ agentPlanningCandidateSummaries CONSTANT)
+    Q_PROPERTY(QStringList agentPlanningArbitrationSummaries READ agentPlanningArbitrationSummaries
                    CONSTANT)
-    Q_PROPERTY(QStringList agentPlanningArbitrationSummaries READ
-                   agentPlanningArbitrationSummaries CONSTANT)
-    Q_PROPERTY(QStringList agentPlanningRefusalSummaries READ agentPlanningRefusalSummaries
-                   CONSTANT)
+    Q_PROPERTY(
+        QStringList agentPlanningRefusalSummaries READ agentPlanningRefusalSummaries CONSTANT)
     Q_PROPERTY(QString agentPlanningFallbackSummary READ agentPlanningFallbackSummary CONSTANT)
     Q_PROPERTY(QString agentCapabilityRegistryStatus READ agentCapabilityRegistryStatus CONSTANT)
     Q_PROPERTY(QString agentCapabilityRegistrySummary READ agentCapabilityRegistrySummary CONSTANT)
@@ -171,8 +172,8 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QStringList agentCapabilitySummaries READ agentCapabilitySummaries CONSTANT)
     Q_PROPERTY(QStringList agentCapabilityReadinessSummaries READ agentCapabilityReadinessSummaries
                    CONSTANT)
-    Q_PROPERTY(QStringList agentCapabilitySafetySummaries READ agentCapabilitySafetySummaries
-                   CONSTANT)
+    Q_PROPERTY(
+        QStringList agentCapabilitySafetySummaries READ agentCapabilitySafetySummaries CONSTANT)
     Q_PROPERTY(QString toolContractRegistryStatus READ toolContractRegistryStatus CONSTANT)
     Q_PROPERTY(QString toolContractRegistrySummary READ toolContractRegistrySummary CONSTANT)
     Q_PROPERTY(int toolContractCount READ toolContractCount CONSTANT)
@@ -180,11 +181,11 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(int toolContractDisabledCount READ toolContractDisabledCount CONSTANT)
     Q_PROPERTY(int toolContractRestrictedCount READ toolContractRestrictedCount CONSTANT)
     Q_PROPERTY(QStringList toolContractSummaries READ toolContractSummaries CONSTANT)
-    Q_PROPERTY(QStringList toolContractPermissionSummaries READ toolContractPermissionSummaries
-                   CONSTANT)
+    Q_PROPERTY(
+        QStringList toolContractPermissionSummaries READ toolContractPermissionSummaries CONSTANT)
     Q_PROPERTY(QStringList toolContractSandboxSummaries READ toolContractSandboxSummaries CONSTANT)
-    Q_PROPERTY(QStringList toolContractReadinessSummaries READ toolContractReadinessSummaries
-                   CONSTANT)
+    Q_PROPERTY(
+        QStringList toolContractReadinessSummaries READ toolContractReadinessSummaries CONSTANT)
     Q_PROPERTY(QStringList toolContractSafetySummaries READ toolContractSafetySummaries CONSTANT)
     Q_PROPERTY(QString localRuntimeStatus READ localRuntimeStatus CONSTANT)
     Q_PROPERTY(QString localRuntimeHealth READ localRuntimeHealth CONSTANT)
@@ -293,8 +294,8 @@ class ApplicationController final : public QObject {
                    voicePipelineSessionStageReadinessSummaries NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QStringList voicePipelineSessionTraceSummaries READ
                    voicePipelineSessionTraceSummaries NOTIFY voiceConfigurationChanged)
-    Q_PROPERTY(QString voicePipelineSessionFallbackSummary READ
-                   voicePipelineSessionFallbackSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString voicePipelineSessionFallbackSummary READ voicePipelineSessionFallbackSummary
+                   NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString voicePipelineSessionSafetySummary READ voicePipelineSessionSafetySummary
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QStringList voicePipelineSessionSafetyChecks READ voicePipelineSessionSafetyChecks
@@ -303,12 +304,12 @@ class ApplicationController final : public QObject {
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(int voicePipelineSessionBlockedStageCount READ voicePipelineSessionBlockedStageCount
                    NOTIFY voiceConfigurationChanged)
-    Q_PROPERTY(QString audioFileSessionStatus READ audioFileSessionStatus NOTIFY
-                   voiceConfigurationChanged)
+    Q_PROPERTY(
+        QString audioFileSessionStatus READ audioFileSessionStatus NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString audioFileSessionSummary READ audioFileSessionSummary NOTIFY
                    voiceConfigurationChanged)
-    Q_PROPERTY(QString audioFileSessionReadinessSummary READ
-                   audioFileSessionReadinessSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString audioFileSessionReadinessSummary READ audioFileSessionReadinessSummary NOTIFY
+                   voiceConfigurationChanged)
     Q_PROPERTY(QStringList audioFileValidationSummaries READ audioFileValidationSummaries NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QStringList audioFileSupportedExtensionSummaries READ
@@ -319,8 +320,8 @@ class ApplicationController final : public QObject {
                    voiceConfigurationChanged)
     Q_PROPERTY(QStringList audioFileSessionSafetyChecks READ audioFileSessionSafetyChecks NOTIFY
                    voiceConfigurationChanged)
-    Q_PROPERTY(QStringList audioFileSessionRefusalSummaries READ
-                   audioFileSessionRefusalSummaries NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QStringList audioFileSessionRefusalSummaries READ audioFileSessionRefusalSummaries
+                   NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QStringList audioFileTraceSummaries READ audioFileTraceSummaries NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString voiceRuntimeStatus READ voiceRuntimeStatus CONSTANT)
@@ -356,8 +357,8 @@ class ApplicationController final : public QObject {
                    voiceConfigurationChanged)
     Q_PROPERTY(QString piperTtsFileOutputSummary READ piperTtsFileOutputSummary NOTIFY
                    voiceConfigurationChanged)
-    Q_PROPERTY(QString piperSynthesisStatus READ piperSynthesisStatus NOTIFY
-                   voiceConfigurationChanged)
+    Q_PROPERTY(
+        QString piperSynthesisStatus READ piperSynthesisStatus NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString piperSynthesisReadinessSummary READ piperSynthesisReadinessSummary NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString piperSynthesisLastSummary READ piperSynthesisLastSummary NOTIFY
@@ -408,8 +409,8 @@ class ApplicationController final : public QObject {
                    whisperTranscriptionReadinessSummary NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString whisperTranscriptionLastSummary READ whisperTranscriptionLastSummary NOTIFY
                    voiceConfigurationChanged)
-    Q_PROPERTY(QString whisperTranscriptionFallbackSummary READ
-                   whisperTranscriptionFallbackSummary NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(QString whisperTranscriptionFallbackSummary READ whisperTranscriptionFallbackSummary
+                   NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString whisperTranscriptionSafetySummary READ whisperTranscriptionSafetySummary
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QStringList whisperTranscriptionTraceSummaries READ
@@ -422,8 +423,8 @@ class ApplicationController final : public QObject {
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(bool localChatSendAvailable READ localChatSendAvailable NOTIFY
                    localChatInferenceRoutingChanged)
-    Q_PROPERTY(QString localChatSendAvailabilitySummary READ localChatSendAvailabilitySummary
-                   NOTIFY localChatInferenceRoutingChanged)
+    Q_PROPERTY(QString localChatSendAvailabilitySummary READ localChatSendAvailabilitySummary NOTIFY
+                   localChatInferenceRoutingChanged)
     Q_PROPERTY(QString chatSendLifecycleState READ chatSendLifecycleState NOTIFY
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(QString chatSendLifecycleSummary READ chatSendLifecycleSummary NOTIFY
@@ -518,8 +519,8 @@ class ApplicationController final : public QObject {
                    contextAssemblyChanged)
     Q_PROPERTY(QStringList memoryRelevanceTraceSummaries READ memoryRelevanceTraceSummaries NOTIFY
                    contextAssemblyChanged)
-    Q_PROPERTY(QStringList memoryRelevanceExclusionSummaries READ
-                   memoryRelevanceExclusionSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList memoryRelevanceExclusionSummaries READ memoryRelevanceExclusionSummaries
+                   NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationSalienceSummaryText READ conversationSalienceSummaryText NOTIFY
                    contextAssemblyChanged)
     Q_PROPERTY(QString conversationSalienceBudgetSummary READ conversationSalienceBudgetSummary
@@ -530,8 +531,8 @@ class ApplicationController final : public QObject {
                    contextAssemblyChanged)
     Q_PROPERTY(int conversationSalienceExcludedCount READ conversationSalienceExcludedCount NOTIFY
                    contextAssemblyChanged)
-    Q_PROPERTY(int conversationSalienceTruncatedCount READ conversationSalienceTruncatedCount
-                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int conversationSalienceTruncatedCount READ conversationSalienceTruncatedCount NOTIFY
+                   contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationSalienceTraceSummaries READ
                    conversationSalienceTraceSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationSalienceExclusionSummaries READ
@@ -542,14 +543,14 @@ class ApplicationController final : public QObject {
                    conversationCompressionReadinessSummary NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationCompressionPressureSummary READ
                    conversationCompressionPressureSummary NOTIFY contextAssemblyChanged)
-    Q_PROPERTY(int conversationCompressionCandidateCount READ
-                   conversationCompressionCandidateCount NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int conversationCompressionCandidateCount READ conversationCompressionCandidateCount
+                   NOTIFY contextAssemblyChanged)
     Q_PROPERTY(int conversationCompressionSelectedCandidateCount READ
                    conversationCompressionSelectedCandidateCount NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationCompressionFallbackReason READ
                    conversationCompressionFallbackReason NOTIFY contextAssemblyChanged)
-    Q_PROPERTY(QString conversationCompressionTraceSummary READ
-                   conversationCompressionTraceSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationCompressionTraceSummary READ conversationCompressionTraceSummary
+                   NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationCompressionBudgetSummary READ
                    conversationCompressionBudgetSummary NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationCompressionCandidateSummaries READ
@@ -558,10 +559,10 @@ class ApplicationController final : public QObject {
                    conversationCompressionTraceSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool conversationSummaryAvailable READ conversationSummaryAvailable NOTIFY
                    contextAssemblyChanged)
-    Q_PROPERTY(QString conversationSummaryGenerationStatus READ
-                   conversationSummaryGenerationStatus NOTIFY contextAssemblyChanged)
-    Q_PROPERTY(QString conversationSummaryReadinessSummary READ
-                   conversationSummaryReadinessSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryGenerationStatus READ conversationSummaryGenerationStatus
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSummaryReadinessSummary READ conversationSummaryReadinessSummary
+                   NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationSummaryBlockedReason READ conversationSummaryBlockedReason NOTIFY
                    contextAssemblyChanged)
     Q_PROPERTY(QString conversationSummaryEstimatedCompressionGain READ
@@ -570,8 +571,8 @@ class ApplicationController final : public QObject {
                    NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationSummaryPersistenceSummary READ
                    conversationSummaryPersistenceSummary NOTIFY contextAssemblyChanged)
-    Q_PROPERTY(QString conversationSummaryInjectionSummary READ
-                   conversationSummaryInjectionSummary NOTIFY promptContextInjectionChanged)
+    Q_PROPERTY(QString conversationSummaryInjectionSummary READ conversationSummaryInjectionSummary
+                   NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QStringList conversationSummaryCandidateSegments READ
                    conversationSummaryCandidateSegments NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationSummaryGenerationTraceSummaries READ
@@ -1720,10 +1721,10 @@ private:
     QList<ConversationSalienceCandidate>
     conversationSalienceCandidatesForPrompt(const QString& prompt) const;
     ConversationSalienceSummary conversationSalienceSummaryForPrompt(const QString& prompt) const;
-    ConversationCompressionSummary conversationCompressionSummaryForPrompt(
-        const QString& prompt) const;
-    ConversationSummaryResult planConversationSummaryGenerationForActiveConversation(
-        bool explicitUserAction) const;
+    ConversationCompressionSummary
+    conversationCompressionSummaryForPrompt(const QString& prompt) const;
+    ConversationSummaryResult
+    planConversationSummaryGenerationForActiveConversation(bool explicitUserAction) const;
     bool persistConversationSummaryMetadata(const ConversationSummaryResult& result);
     bool startConversationSummaryInference(const ConversationSummaryResult& plannedResult);
     void finishConversationSummaryInference(const QString& requestId,

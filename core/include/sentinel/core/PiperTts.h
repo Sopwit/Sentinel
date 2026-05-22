@@ -53,8 +53,8 @@ struct PiperSynthesisPolicy {
     bool downloadsAllowed = false;
     bool filesystemScanAllowed = false;
     bool automaticChatInjectionAllowed = false;
-    QString summary = QStringLiteral(
-        "Piper synthesis policy is disabled, local-only, and metadata-only.");
+    QString summary =
+        QStringLiteral("Piper synthesis policy is disabled, local-only, and metadata-only.");
 };
 
 struct PiperSynthesisBudget {

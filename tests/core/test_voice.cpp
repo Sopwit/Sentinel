@@ -1,5 +1,5 @@
-#include "sentinel/core/PiperTts.h"
 #include "sentinel/core/AudioFileSession.h"
+#include "sentinel/core/PiperTts.h"
 #include "sentinel/core/Voice.h"
 #include "sentinel/core/WhisperTranscription.h"
 
@@ -8,47 +8,53 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
-using sentinel::core::buildVoiceReadinessReport;
 using sentinel::core::AudioFileDescriptor;
 using sentinel::core::AudioFileSessionPolicy;
-using sentinel::core::AudioFileSessionStatus;
-using sentinel::core::AudioFileValidationStatus;
 using sentinel::core::audioFileSessionRefusalSummaries;
 using sentinel::core::audioFileSessionSafetyChecks;
+using sentinel::core::AudioFileSessionStatus;
 using sentinel::core::audioFileSessionStatusName;
 using sentinel::core::audioFileTraceSummaries;
+using sentinel::core::AudioFileValidationStatus;
 using sentinel::core::audioFileValidationSummaries;
 using sentinel::core::buildAudioFileSessionResult;
-using sentinel::core::supportedAudioFileExtensionSummaries;
+using sentinel::core::buildVoicePipelineSessionResult;
+using sentinel::core::buildVoiceReadinessReport;
+using sentinel::core::configuredPiperSynthesisConfig;
+using sentinel::core::configuredWhisperTranscriptionConfig;
+using sentinel::core::defaultDisabledPiperSynthesisConfig;
+using sentinel::core::defaultDisabledWhisperTranscriptionConfig;
+using sentinel::core::LocalPiperSynthesisClient;
+using sentinel::core::LocalWhisperTranscriptionClient;
+using sentinel::core::NullPiperSynthesisClient;
 using sentinel::core::NullPiperTtsClient;
 using sentinel::core::NullSpeechToTextProvider;
 using sentinel::core::NullTextToSpeechProvider;
 using sentinel::core::NullVoiceRuntimeEnvironment;
+using sentinel::core::NullWhisperTranscriptionClient;
+using sentinel::core::piperRuntimeDescriptorFromConfiguration;
+using sentinel::core::piperRuntimeDescriptorSummary;
+using sentinel::core::PiperRuntimeReadiness;
+using sentinel::core::PiperRuntimeStatus;
+using sentinel::core::piperSynthesisReadiness;
+using sentinel::core::PiperSynthesisRequest;
+using sentinel::core::piperSynthesisSafetyReport;
+using sentinel::core::PiperSynthesisStatus;
+using sentinel::core::piperSynthesisStatusName;
 using sentinel::core::PiperTextToSpeechProvider;
 using sentinel::core::PiperTtsConfig;
 using sentinel::core::PiperTtsRequest;
 using sentinel::core::PiperTtsResult;
 using sentinel::core::PiperTtsStatus;
-using sentinel::core::piperRuntimeDescriptorFromConfiguration;
-using sentinel::core::piperRuntimeDescriptorSummary;
-using sentinel::core::PiperRuntimeReadiness;
-using sentinel::core::PiperRuntimeStatus;
-using sentinel::core::configuredPiperSynthesisConfig;
-using sentinel::core::defaultDisabledPiperSynthesisConfig;
-using sentinel::core::LocalPiperSynthesisClient;
-using sentinel::core::NullPiperSynthesisClient;
-using sentinel::core::PiperSynthesisRequest;
-using sentinel::core::PiperSynthesisStatus;
-using sentinel::core::piperSynthesisReadiness;
-using sentinel::core::piperSynthesisSafetyReport;
-using sentinel::core::piperSynthesisStatusName;
 using sentinel::core::piperTtsStatusName;
 using sentinel::core::safePiperSynthesisResultSummary;
 using sentinel::core::safePiperTtsResultSummary;
 using sentinel::core::safeVoicePipelineSummary;
 using sentinel::core::safeVoiceResponseSummary;
+using sentinel::core::safeWhisperTranscriptionResultSummary;
 using sentinel::core::StaticVoiceRuntimeCoordinator;
 using sentinel::core::StaticVoiceRuntimeEnvironment;
+using sentinel::core::supportedAudioFileExtensionSummaries;
 using sentinel::core::VoiceBinaryDescriptor;
 using sentinel::core::voiceBinaryDescriptorSummaries;
 using sentinel::core::VoiceBinaryStatus;
@@ -56,28 +62,27 @@ using sentinel::core::VoiceCapability;
 using sentinel::core::VoiceModelDescriptor;
 using sentinel::core::voiceModelDescriptorSummaries;
 using sentinel::core::VoiceModelStatus;
-using sentinel::core::VoicePipelineStage;
-using sentinel::core::voicePipelineStageName;
 using sentinel::core::VoicePipelineSessionReadiness;
-using sentinel::core::buildVoicePipelineSessionResult;
-using sentinel::core::voicePipelineSessionStatusName;
 using sentinel::core::VoicePipelineSessionStatus;
+using sentinel::core::voicePipelineSessionStatusName;
 using sentinel::core::VoicePipelineSessionStep;
 using sentinel::core::voicePipelineSessionStepName;
 using sentinel::core::voicePipelineSessionStepSummaries;
 using sentinel::core::voicePipelineSessionTraceSummaries;
+using sentinel::core::VoicePipelineStage;
+using sentinel::core::voicePipelineStageName;
 using sentinel::core::VoicePipelineStatus;
 using sentinel::core::voicePipelineStatusName;
 using sentinel::core::voicePipelineTraceSummaries;
 using sentinel::core::VoiceProviderStatus;
 using sentinel::core::voiceProviderStatusName;
 using sentinel::core::VoiceRequest;
-using sentinel::core::voiceRuntimeReadinessChecks;
-using sentinel::core::voiceRuntimeReadinessReport;
-using sentinel::core::VoiceRuntimeReadiness;
-using sentinel::core::voiceRuntimeReadinessSummaryText;
 using sentinel::core::VoiceRuntimeMode;
 using sentinel::core::voiceRuntimeModeName;
+using sentinel::core::VoiceRuntimeReadiness;
+using sentinel::core::voiceRuntimeReadinessChecks;
+using sentinel::core::voiceRuntimeReadinessReport;
+using sentinel::core::voiceRuntimeReadinessSummaryText;
 using sentinel::core::voiceRuntimeSafetyReportForReadiness;
 using sentinel::core::VoiceSessionState;
 using sentinel::core::voiceSessionStateName;
@@ -85,15 +90,10 @@ using sentinel::core::whisperRuntimeDescriptorFromConfiguration;
 using sentinel::core::whisperRuntimeDescriptorSummary;
 using sentinel::core::WhisperRuntimeReadiness;
 using sentinel::core::WhisperRuntimeStatus;
-using sentinel::core::configuredWhisperTranscriptionConfig;
-using sentinel::core::LocalWhisperTranscriptionClient;
-using sentinel::core::NullWhisperTranscriptionClient;
-using sentinel::core::WhisperTranscriptionRequest;
-using sentinel::core::WhisperTranscriptionStatus;
-using sentinel::core::defaultDisabledWhisperTranscriptionConfig;
-using sentinel::core::safeWhisperTranscriptionResultSummary;
 using sentinel::core::whisperTranscriptionReadiness;
+using sentinel::core::WhisperTranscriptionRequest;
 using sentinel::core::whisperTranscriptionSafetyReport;
+using sentinel::core::WhisperTranscriptionStatus;
 using sentinel::core::whisperTranscriptionStatusName;
 
 namespace {
@@ -391,13 +391,13 @@ void VoiceTest::voicePipelineSessionOrchestratesReadinessDeterministically() {
                                              summary};
     };
 
-    const auto result = buildVoicePipelineSessionResult(
-        ready(VoicePipelineSessionStep::TranscriptionReadiness,
-              QStringLiteral("Whisper ready metadata only.")),
-        ready(VoicePipelineSessionStep::ChatInferenceReadiness,
-              QStringLiteral("Local chat ready metadata only.")),
-        ready(VoicePipelineSessionStep::SynthesisReadiness,
-              QStringLiteral("Piper ready metadata only.")));
+    const auto result =
+        buildVoicePipelineSessionResult(ready(VoicePipelineSessionStep::TranscriptionReadiness,
+                                              QStringLiteral("Whisper ready metadata only.")),
+                                        ready(VoicePipelineSessionStep::ChatInferenceReadiness,
+                                              QStringLiteral("Local chat ready metadata only.")),
+                                        ready(VoicePipelineSessionStep::SynthesisReadiness,
+                                              QStringLiteral("Piper ready metadata only.")));
 
     QCOMPARE(result.status, VoicePipelineSessionStatus::Completed);
     QCOMPARE(voicePipelineSessionStatusName(result.status), QStringLiteral("completed"));
@@ -505,8 +505,9 @@ void VoiceTest::audioFileSessionReportsSupportedAndUnsupportedExtensionMetadata(
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("future-transcription-ready")));
     QCOMPARE(supportedAudioFileExtensionSummaries().size(), 4);
-    QVERIFY(supportedAudioFileExtensionSummaries().join(QStringLiteral(" ")).contains(
-        QStringLiteral("ogg")));
+    QVERIFY(supportedAudioFileExtensionSummaries()
+                .join(QStringLiteral(" "))
+                .contains(QStringLiteral("ogg")));
 
     const auto unsupported = buildAudioFileSessionResult(
         AudioFileDescriptor{QStringLiteral("/local/audio/sample.aac"), {}, 4096, false, true},
@@ -521,8 +522,8 @@ void VoiceTest::audioFileSessionRefusesUnsafePathWithoutExposingRawPath() {
     AudioFileSessionPolicy policy;
     policy.enabled = true;
     const auto result = buildAudioFileSessionResult(
-        AudioFileDescriptor{QStringLiteral("https://example.invalid/audio.wav"), {}, 4096, false,
-                            true},
+        AudioFileDescriptor{
+            QStringLiteral("https://example.invalid/audio.wav"), {}, 4096, false, true},
         policy);
 
     QCOMPARE(result.status, AudioFileSessionStatus::Refused);
@@ -551,8 +552,8 @@ void VoiceTest::audioFileSessionFallsBackForEmptyAndOversizedMetadataWithoutExec
     QVERIFY(!empty.safetyReport.playbackAllowed);
 
     const auto oversized = buildAudioFileSessionResult(
-        AudioFileDescriptor{QStringLiteral("/local/audio/large.mp3"), {},
-                            51LL * 1024LL * 1024LL, false, true},
+        AudioFileDescriptor{
+            QStringLiteral("/local/audio/large.mp3"), {}, 51LL * 1024LL * 1024LL, false, true},
         policy);
     QCOMPARE(oversized.status, AudioFileSessionStatus::Fallback);
     QVERIFY(audioFileSessionRefusalSummaries(oversized)
@@ -647,15 +648,13 @@ void VoiceTest::voiceRuntimeConfigurationReportsMissingAndReadyMetadata() {
     QCOMPARE(missingReport.missingCount, 4);
     QCOMPARE(missingReport.refusedCount, 0);
     QVERIFY(!missingReport.executionAttempted);
-    QVERIFY(voiceRuntimeReadinessSummaryText(missingReport).contains(
-        QStringLiteral("execution attempted: no")));
+    QVERIFY(voiceRuntimeReadinessSummaryText(missingReport)
+                .contains(QStringLiteral("execution attempted: no")));
 
-    const auto readyWhisper =
-        whisperRuntimeDescriptorFromConfiguration(QStringLiteral("/local/bin/whisper"),
-                                                  QStringLiteral("/local/models/whisper.bin"));
-    const auto readyPiper =
-        piperRuntimeDescriptorFromConfiguration(QStringLiteral("/local/bin/piper"),
-                                                QStringLiteral("/local/models/voice.onnx"));
+    const auto readyWhisper = whisperRuntimeDescriptorFromConfiguration(
+        QStringLiteral("/local/bin/whisper"), QStringLiteral("/local/models/whisper.bin"));
+    const auto readyPiper = piperRuntimeDescriptorFromConfiguration(
+        QStringLiteral("/local/bin/piper"), QStringLiteral("/local/models/voice.onnx"));
     const auto readyReport = voiceRuntimeReadinessReport(readyWhisper, readyPiper);
 
     QCOMPARE(readyWhisper.readiness, WhisperRuntimeReadiness::ReadyMetadata);
@@ -673,8 +672,8 @@ void VoiceTest::voiceRuntimeConfigurationReportsMissingAndReadyMetadata() {
 void VoiceTest::voiceRuntimeConfigurationRefusesUnsafeNonLocalPaths() {
     const auto whisper = whisperRuntimeDescriptorFromConfiguration(
         QStringLiteral("https://example.invalid/whisper"), QStringLiteral("/local/model.bin"));
-    const auto piper = piperRuntimeDescriptorFromConfiguration(
-        QStringLiteral("/local/bin/piper"), QStringLiteral("file://voice.onnx"));
+    const auto piper = piperRuntimeDescriptorFromConfiguration(QStringLiteral("/local/bin/piper"),
+                                                               QStringLiteral("file://voice.onnx"));
     const auto report = voiceRuntimeReadinessReport(whisper, piper);
     const auto checks = voiceRuntimeReadinessChecks(report).join(QStringLiteral(" "));
 
@@ -735,22 +734,22 @@ void VoiceTest::localWhisperTranscriptionRefusesMissingUnsafeAndNonLocalInput() 
     QVERIFY(!result.executionAttempted);
 
     QVERIFY(writeFile(audioPath, "audio"));
-    result = client.transcribe(WhisperTranscriptionRequest{
-                                   audioPath, {}, false, true, false, false, false, false, 100},
-                               config);
+    result = client.transcribe(
+        WhisperTranscriptionRequest{audioPath, {}, false, true, false, false, false, false, 100},
+        config);
     QCOMPARE(result.status, WhisperTranscriptionStatus::UnsafePath);
     QVERIFY(!result.executionAttempted);
 
-    result = client.transcribe(WhisperTranscriptionRequest{
-                                   audioPath, {}, true, true, false, false, false, false, 100},
-                               config);
+    result = client.transcribe(
+        WhisperTranscriptionRequest{audioPath, {}, true, true, false, false, false, false, 100},
+        config);
     QCOMPARE(result.status, WhisperTranscriptionStatus::Refused);
     QVERIFY(result.summary.contains(QStringLiteral("No subprocess")));
     QVERIFY(!result.executionAttempted);
     QVERIFY(result.transcript.isEmpty());
 
-    const auto readiness = whisperTranscriptionReadiness(config, WhisperTranscriptionRequest{
-                                                                     audioPath});
+    const auto readiness =
+        whisperTranscriptionReadiness(config, WhisperTranscriptionRequest{audioPath});
     QCOMPARE(readiness.status, WhisperTranscriptionStatus::ReadyMetadata);
     QVERIFY(!whisperTranscriptionSafetyReport(config.policy).executionAttempted);
     QCOMPARE(whisperTranscriptionStatusName(readiness.status), QStringLiteral("Ready Metadata"));
@@ -824,17 +823,17 @@ void VoiceTest::localPiperSynthesisRefusesMissingUnsafeAndNonLocalInput() {
 
     QVERIFY(writeFile(modelPath, "model"));
     config = configuredPiperSynthesisConfig(binaryPath, modelPath);
-    result = client.synthesize(PiperSynthesisRequest{
-                                   QStringLiteral("hello"), {}, {}, false, true, false, false,
-                                   false, false, false, 100},
-                               config);
+    result = client.synthesize(
+        PiperSynthesisRequest{
+            QStringLiteral("hello"), {}, {}, false, true, false, false, false, false, false, 100},
+        config);
     QCOMPARE(result.status, PiperSynthesisStatus::UnsafePath);
     QVERIFY(!result.executionAttempted);
 
-    result = client.synthesize(PiperSynthesisRequest{
-                                   QStringLiteral("hello"), {}, {}, true, true, false, false,
-                                   false, false, false, 100},
-                               config);
+    result = client.synthesize(
+        PiperSynthesisRequest{
+            QStringLiteral("hello"), {}, {}, true, true, false, false, false, false, false, 100},
+        config);
     QCOMPARE(result.status, PiperSynthesisStatus::Refused);
     QVERIFY(result.summary.contains(QStringLiteral("No subprocess")));
     QVERIFY(!result.executionAttempted);
@@ -858,8 +857,8 @@ void VoiceTest::localPiperSynthesisReportsTimeoutFallbackWithoutExecution() {
 
     LocalPiperSynthesisClient client;
     const auto result = client.synthesize(
-        PiperSynthesisRequest{QStringLiteral("hello"), {}, {}, true, true, false, false, false,
-                              false, false, 0},
+        PiperSynthesisRequest{
+            QStringLiteral("hello"), {}, {}, true, true, false, false, false, false, false, 0},
         configuredPiperSynthesisConfig(binaryPath, modelPath));
 
     QCOMPARE(result.status, PiperSynthesisStatus::Timeout);
@@ -1016,8 +1015,8 @@ void VoiceTest::piperLegacyFileOutputRefusesWithoutSideEffects() {
     QCOMPARE(result.status, PiperTtsStatus::Refused);
     QVERIFY(!result.success);
     QVERIFY(result.audioPath.isEmpty());
-    QVERIFY(!QFile::exists(QDir(config.controlledOutputDirectory)
-                               .filePath(QStringLiteral("sentinel-piper-tts.wav"))));
+    QVERIFY(!QFile::exists(
+        QDir(config.controlledOutputDirectory).filePath(QStringLiteral("sentinel-piper-tts.wav"))));
     QCOMPARE(result.timeoutMs, 100);
     QCOMPARE(result.exitCode, -1);
     QVERIFY(result.summary.contains(QStringLiteral("refused before execution")));

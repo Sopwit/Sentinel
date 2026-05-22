@@ -65,8 +65,8 @@ struct AudioFileSessionPolicy {
     bool filesystemScanningAllowed = false;
     bool automaticIngestionAllowed = false;
     bool cloudAllowed = false;
-    QString summary = QStringLiteral(
-        "Audio file session policy is disabled, local-only, and metadata-only.");
+    QString summary =
+        QStringLiteral("Audio file session policy is disabled, local-only, and metadata-only.");
 };
 
 struct AudioFileDescriptor {
@@ -159,12 +159,12 @@ struct AudioFileSessionResult {
 
 QStringList supportedAudioFileExtensions();
 QStringList supportedAudioFileExtensionSummaries();
-AudioFileSessionSafetyReport audioFileSessionSafetyReport(
-    const AudioFileSessionPolicy& policy = AudioFileSessionPolicy{});
-AudioFileSessionResult buildAudioFileSessionResult(
-    const AudioFileDescriptor& descriptor = AudioFileDescriptor{},
-    const AudioFileSessionPolicy& policy = AudioFileSessionPolicy{},
-    const AudioFileBudget& budget = AudioFileBudget{});
+AudioFileSessionSafetyReport
+audioFileSessionSafetyReport(const AudioFileSessionPolicy& policy = AudioFileSessionPolicy{});
+AudioFileSessionResult
+buildAudioFileSessionResult(const AudioFileDescriptor& descriptor = AudioFileDescriptor{},
+                            const AudioFileSessionPolicy& policy = AudioFileSessionPolicy{},
+                            const AudioFileBudget& budget = AudioFileBudget{});
 QString audioFileSessionReadinessSummary(const AudioFileSessionReadiness& readiness);
 QStringList audioFileValidationSummaries(const QList<AudioFileValidation>& validations);
 QStringList audioFileTraceSummaries(const QList<AudioFileTrace>& traces);

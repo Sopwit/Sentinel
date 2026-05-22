@@ -411,8 +411,8 @@ void DesktopShellViewModelTest::exposesAgentTaskRuntimeMetadata() {
     QCOMPARE(fixture.viewModel.toolContractSafetySummaries().size(), 10);
     QVERIFY(fixture.viewModel.toolContractPermissionSummaries().at(6).contains(
         QStringLiteral("future filesystem access")));
-    QVERIFY(fixture.viewModel.toolContractSandboxSummaries().at(7).contains(
-        QStringLiteral("Denied")));
+    QVERIFY(
+        fixture.viewModel.toolContractSandboxSummaries().at(7).contains(QStringLiteral("Denied")));
     QVERIFY(metaObject->indexOfProperty("agentTaskRuntimeStatus") >= 0);
     QVERIFY(metaObject->indexOfProperty("agentPlanningSessionStatus") >= 0);
     QVERIFY(metaObject->indexOfProperty("agentCapabilityRegistryStatus") >= 0);
@@ -763,8 +763,7 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
         QStringLiteral("execution attempted: no")));
     QVERIFY(fixture.viewModel.piperSynthesisLastSummary().contains(
         QStringLiteral("No Piper synthesis request")));
-    QVERIFY(fixture.viewModel.piperSynthesisFallbackSummary().contains(
-        QStringLiteral("no audio")));
+    QVERIFY(fixture.viewModel.piperSynthesisFallbackSummary().contains(QStringLiteral("no audio")));
     QVERIFY(fixture.viewModel.piperSynthesisSafetySummary().contains(
         QStringLiteral("execution attempted: no")));
     QVERIFY(fixture.viewModel.piperSynthesisTraceSummaries()
@@ -853,16 +852,16 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
         QStringLiteral("Ready for a later controlled file-output TTS phase")));
     QVERIFY(!fixture.viewModel.piperFileOutputExecutionEnabled());
     QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
-    QVERIFY(fixture.viewModel.piperFileOutputExecutionSummary().contains(
-        QStringLiteral("readiness")));
+    QVERIFY(
+        fixture.viewModel.piperFileOutputExecutionSummary().contains(QStringLiteral("readiness")));
 
     fixture.viewModel.setPiperFileOutputExecutionEnabled(true);
 
     QVERIFY(!fixture.settings.piperFileOutputExecutionEnabled());
     QVERIFY(!fixture.viewModel.piperFileOutputExecutionEnabled());
     QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
-    QVERIFY(fixture.viewModel.piperFileOutputExecutionSummary().contains(
-        QStringLiteral("readiness")));
+    QVERIFY(
+        fixture.viewModel.piperFileOutputExecutionSummary().contains(QStringLiteral("readiness")));
     QCOMPARE(fixture.viewModel.piperFileOutputAudioPathSummary(),
              QStringLiteral("No generated Piper audio file."));
     QCOMPARE(fixture.viewModel.whisperPreparationReadinessStatus(), QStringLiteral("Blocked"));
@@ -1757,8 +1756,8 @@ void DesktopShellViewModelTest::exposesPersistentPinAndDuplicateConversationActi
     QCOMPARE(fixture.viewModel.conversationDuplicateLastStatus(), QStringLiteral("Succeeded"));
     QVERIFY(fixture.viewModel.conversationDuplicateLastResultSummary().contains(
         QStringLiteral("Current Transcript Copy")));
-    QVERIFY(fixture.viewModel.conversationTitles().contains(
-        QStringLiteral("Current Transcript Copy")));
+    QVERIFY(
+        fixture.viewModel.conversationTitles().contains(QStringLiteral("Current Transcript Copy")));
     QVERIFY(fixture.viewModel.switchConversation(duplicateId));
     QCOMPARE(fixture.viewModel.conversationHistoryMessageCount(), 3);
 }
@@ -2000,7 +1999,8 @@ void DesktopShellViewModelTest::exposesContextAssemblyMetadata() {
     QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Disabled"));
     QCOMPARE(fixture.viewModel.promptContextInjectedBlockCount(), 0);
     QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("concise local summaries")));
-    QVERIFY(fixture.viewModel.memoryRelevanceSummaryText().contains(QStringLiteral("Memory relevance")));
+    QVERIFY(fixture.viewModel.memoryRelevanceSummaryText().contains(
+        QStringLiteral("Memory relevance")));
     QVERIFY(fixture.viewModel.memoryRelevanceIncludedCount() >= 1);
     QVERIFY(fixture.viewModel.conversationSalienceSummaryText().contains(
         QStringLiteral("Conversation salience")));
@@ -2059,10 +2059,9 @@ void DesktopShellViewModelTest::exposesConversationCompressionMetadata() {
     QCOMPARE(fixture.viewModel.conversationCompressionCandidateCount(), 0);
 
     for (int i = 0; i < 18; ++i) {
-        QVERIFY(fixture.viewModel.sendMessage(
-            QStringLiteral("remember my compression marker %1 %2")
-                .arg(i)
-                .arg(QString(220, QLatin1Char('m')))));
+        QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("remember my compression marker %1 %2")
+                                                  .arg(i)
+                                                  .arg(QString(220, QLatin1Char('m')))));
     }
 
     QVERIFY(fixture.viewModel.conversationCompressionStatus() == QStringLiteral("Planned") ||
@@ -2084,10 +2083,10 @@ void DesktopShellViewModelTest::exposesManualConversationSummaryGenerationMetada
     ViewModelFixture fixture;
 
     for (int i = 0; i < 18; ++i) {
-        QVERIFY(fixture.viewModel.sendMessage(
-            QStringLiteral("remember summary view model marker %1 %2")
-                .arg(i)
-                .arg(QString(180, QLatin1Char('v')))));
+        QVERIFY(
+            fixture.viewModel.sendMessage(QStringLiteral("remember summary view model marker %1 %2")
+                                              .arg(i)
+                                              .arg(QString(180, QLatin1Char('v')))));
     }
 
     QVERIFY(!fixture.viewModel.requestConversationSummaryGeneration());

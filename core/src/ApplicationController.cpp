@@ -1896,13 +1896,14 @@ VoicePipelineSessionResult ApplicationController::currentVoicePipelineSessionRes
     VoicePipelineSessionReadiness transcription;
     transcription.step = VoicePipelineSessionStep::TranscriptionReadiness;
     transcription.ready = whisperReadiness.ready;
-    transcription.status = whisperReadiness.ready
-        ? VoicePipelineSessionStatus::ReadyMetadata
-        : (whisperReadiness.status == WhisperTranscriptionStatus::UnsafePath ||
-           whisperReadiness.status == WhisperTranscriptionStatus::Refused ||
-           whisperReadiness.status == WhisperTranscriptionStatus::SafetyBlocked
-               ? VoicePipelineSessionStatus::Refused
-               : VoicePipelineSessionStatus::Blocked);
+    transcription.status =
+        whisperReadiness.ready
+            ? VoicePipelineSessionStatus::ReadyMetadata
+            : (whisperReadiness.status == WhisperTranscriptionStatus::UnsafePath ||
+                       whisperReadiness.status == WhisperTranscriptionStatus::Refused ||
+                       whisperReadiness.status == WhisperTranscriptionStatus::SafetyBlocked
+                   ? VoicePipelineSessionStatus::Refused
+                   : VoicePipelineSessionStatus::Blocked);
     transcription.summary =
         whisperReadiness.ready
             ? QStringLiteral("Whisper transcription readiness is available as metadata only; "
@@ -1934,12 +1935,12 @@ VoicePipelineSessionResult ApplicationController::currentVoicePipelineSessionRes
     synthesis.step = VoicePipelineSessionStep::SynthesisReadiness;
     synthesis.ready = piperReadiness.ready;
     synthesis.status = piperReadiness.ready
-        ? VoicePipelineSessionStatus::ReadyMetadata
-        : (piperReadiness.status == PiperSynthesisStatus::UnsafePath ||
-           piperReadiness.status == PiperSynthesisStatus::Refused ||
-           piperReadiness.status == PiperSynthesisStatus::SafetyBlocked
-               ? VoicePipelineSessionStatus::Refused
-               : VoicePipelineSessionStatus::Blocked);
+                           ? VoicePipelineSessionStatus::ReadyMetadata
+                           : (piperReadiness.status == PiperSynthesisStatus::UnsafePath ||
+                                      piperReadiness.status == PiperSynthesisStatus::Refused ||
+                                      piperReadiness.status == PiperSynthesisStatus::SafetyBlocked
+                                  ? VoicePipelineSessionStatus::Refused
+                                  : VoicePipelineSessionStatus::Blocked);
     synthesis.summary =
         piperReadiness.ready
             ? QStringLiteral("Piper synthesis readiness is available as metadata only; Piper "
@@ -2280,8 +2281,7 @@ PiperSynthesisRequest ApplicationController::currentPiperSynthesisRequest() cons
 }
 
 PiperSynthesisReadiness ApplicationController::currentPiperSynthesisReadiness() const {
-    return piperSynthesisReadiness(currentPiperSynthesisConfig(),
-                                   currentPiperSynthesisRequest());
+    return piperSynthesisReadiness(currentPiperSynthesisConfig(), currentPiperSynthesisRequest());
 }
 
 QString ApplicationController::piperSynthesisStatus() const {
@@ -3186,7 +3186,8 @@ QStringList ApplicationController::conversationSalienceExclusionSummaries() cons
 }
 
 ConversationCompressionSummary ApplicationController::conversationCompressionSummary() const {
-    return conversationCompressionSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt);
+    return conversationCompressionSummaryForPrompt(
+        latestPromptContextInjectionResult_.originalPrompt);
 }
 
 QString ApplicationController::conversationCompressionStatus() const {
@@ -3288,8 +3289,7 @@ QString ApplicationController::conversationSummaryInjectionSummary() const {
         std::find_if(latestPromptContextInjectionResult_.bundle.blocks.begin(),
                      latestPromptContextInjectionResult_.bundle.blocks.end(),
                      [](const PromptContextBlock& block) {
-                         return block.source ==
-                                ContextAssemblySourceKind::ConversationSummary;
+                         return block.source == ContextAssemblySourceKind::ConversationSummary;
                      });
     if (!promptContextInjectionEnabled_) {
         return persistedSummaryAvailable
@@ -3305,7 +3305,8 @@ QString ApplicationController::conversationSummaryInjectionSummary() const {
 }
 
 QStringList ApplicationController::conversationSummaryCandidateSegments() const {
-    return sentinel::core::conversationSummarySegmentSummaries(conversationSummaryGenerationResult());
+    return sentinel::core::conversationSummarySegmentSummaries(
+        conversationSummaryGenerationResult());
 }
 
 QStringList ApplicationController::conversationSummaryGenerationTraceSummaries() const {
@@ -4100,8 +4101,8 @@ QString ApplicationController::chatHistoryStatus() const {
 }
 
 QList<ConversationRecord> ApplicationController::conversationRecords() const {
-    auto records = conversationStore_ ? conversationStore_->listConversations()
-                                      : QList<ConversationRecord>{};
+    auto records =
+        conversationStore_ ? conversationStore_->listConversations() : QList<ConversationRecord>{};
     std::stable_sort(records.begin(), records.end(), [this](const auto& lhs, const auto& rhs) {
         const auto rank = [](const ConversationRecord& record) {
             if (record.archived) {
@@ -4199,7 +4200,8 @@ void ApplicationController::initializeActiveConversation() {
     for (const auto& message : chatSession_->messages()) {
         persistActiveConversationMessage(message);
     }
-    latestConversationSummaryMetadata_ = conversationStore_->loadSummaryMetadata(activeConversationId_);
+    latestConversationSummaryMetadata_ =
+        conversationStore_->loadSummaryMetadata(activeConversationId_);
 }
 
 void ApplicationController::loadActiveConversationTranscript() {
@@ -4222,7 +4224,8 @@ void ApplicationController::loadActiveConversationTranscript() {
     conversationHistorySummary_.lastRestoredStatus =
         QStringLiteral("Loaded active conversation transcript.");
     latestConversationSummaryGenerationResult_ = {};
-    latestConversationSummaryMetadata_ = conversationStore_->loadSummaryMetadata(activeConversationId_);
+    latestConversationSummaryMetadata_ =
+        conversationStore_->loadSummaryMetadata(activeConversationId_);
 }
 
 bool ApplicationController::persistActiveConversationMessage(const ChatMessage& message) {
@@ -5106,11 +5109,10 @@ ApplicationController::conversationSummaryForPrompt(const QString& prompt) const
         result.coveredLastMessageIndex = latestConversationSummaryMetadata_.coveredLastMessageId;
         result.estimatedReductionPercent =
             latestConversationSummaryMetadata_.estimatedReductionPercent;
-        result.text =
-            QStringLiteral("%1\n%2\n%3")
-                .arg(conversationSummaryPolicy_.delimiterStart,
-                     latestConversationSummaryMetadata_.summaryText.trimmed(),
-                     conversationSummaryPolicy_.delimiterEnd);
+        result.text = QStringLiteral("%1\n%2\n%3")
+                          .arg(conversationSummaryPolicy_.delimiterStart,
+                               latestConversationSummaryMetadata_.summaryText.trimmed(),
+                               conversationSummaryPolicy_.delimiterEnd);
         result.summary =
             QStringLiteral("Generated local summary covers messages %1-%2 with %3% estimated "
                            "reduction.")
@@ -5345,8 +5347,7 @@ ApplicationController::conversationSalienceSummaryForPrompt(const QString& promp
         const auto promptText = prompt.simplified();
         const auto& history = chatSession_->messages();
         for (int i = history.size() - 1;
-             i >= 0 && (recentUserMessages.size() < 4 || recentAssistantMessages.size() < 4);
-             --i) {
+             i >= 0 && (recentUserMessages.size() < 4 || recentAssistantMessages.size() < 4); --i) {
             const auto& message = history.at(i);
             if (message.role == ChatRole::System) {
                 continue;
@@ -5357,8 +5358,7 @@ ApplicationController::conversationSalienceSummaryForPrompt(const QString& promp
             }
             if (message.role == ChatRole::User && recentUserMessages.size() < 4) {
                 recentUserMessages.prepend(message.content);
-            } else if (message.role == ChatRole::Assistant &&
-                       recentAssistantMessages.size() < 4) {
+            } else if (message.role == ChatRole::Assistant && recentAssistantMessages.size() < 4) {
                 recentAssistantMessages.prepend(message.content);
             }
         }
@@ -5375,11 +5375,10 @@ ApplicationController::conversationSalienceSummaryForPrompt(const QString& promp
     ConversationSaliencePolicy policy = conversationSaliencePolicy_;
     policy.maxCharacters = promptContextInjectionPolicy_.maxCharacters;
     policy.maxCandidates = retrievalPlanningPolicy_.maxCandidates;
-    return rankConversationSalience(
-        conversationSalienceCandidatesForPrompt(prompt), prompt, activeTitle,
-        recentUserMessages.join(QStringLiteral("\n")),
-        recentAssistantMessages.join(QStringLiteral("\n")),
-        committedMemoryText.join(QStringLiteral("\n")), policy);
+    return rankConversationSalience(conversationSalienceCandidatesForPrompt(prompt), prompt,
+                                    activeTitle, recentUserMessages.join(QStringLiteral("\n")),
+                                    recentAssistantMessages.join(QStringLiteral("\n")),
+                                    committedMemoryText.join(QStringLiteral("\n")), policy);
 }
 
 ConversationCompressionSummary
@@ -5437,8 +5436,8 @@ ApplicationController::planConversationSummaryGenerationForActiveConversation(
     request.requestedAtUtc = QDateTime::currentDateTimeUtc();
     auto policy = conversationSummaryPolicy_;
     policy.generationAvailable = localChatSendAvailable();
-    auto result = planConversationSummaryGeneration(messages, conversationCompressionSummaryForPrompt({}),
-                                                    request, policy);
+    auto result = planConversationSummaryGeneration(
+        messages, conversationCompressionSummaryForPrompt({}), request, policy);
     if (explicitUserAction && !policy.generationAvailable) {
         result.readiness.available = false;
         result.readiness.status = ConversationSummaryStatus::Blocked;
@@ -5466,8 +5465,8 @@ bool ApplicationController::persistConversationSummaryMetadata(
     metadata.coveredLastMessageId = result.coveredLastMessageIndex;
     metadata.estimatedReductionPercent = result.estimatedReductionPercent;
     metadata.readinessState = conversationSummaryStatusName(result.status);
-    metadata.summaryText = result.status == ConversationSummaryStatus::Ready ? result.text.trimmed()
-                                                                             : QString{};
+    metadata.summaryText =
+        result.status == ConversationSummaryStatus::Ready ? result.text.trimmed() : QString{};
     metadata.summary = QStringLiteral("%1 / messages %2-%3 / %4% estimated reduction")
                            .arg(metadata.readinessState)
                            .arg(metadata.coveredFirstMessageId)
@@ -5717,14 +5716,10 @@ QString ApplicationController::sanitizeGeneratedConversationSummary(const QStrin
 
     const auto lowered = sanitized.toCaseFolded();
     const QStringList refusedTerms{
-        QStringLiteral("system prompt"),
-        QStringLiteral("hidden prompt"),
-        QStringLiteral("developer message"),
-        QStringLiteral("runtime metadata"),
-        QStringLiteral("provider metadata"),
-        QStringLiteral("tool call"),
-        QStringLiteral("filesystem"),
-        QStringLiteral("api key"),
+        QStringLiteral("system prompt"),     QStringLiteral("hidden prompt"),
+        QStringLiteral("developer message"), QStringLiteral("runtime metadata"),
+        QStringLiteral("provider metadata"), QStringLiteral("tool call"),
+        QStringLiteral("filesystem"),        QStringLiteral("api key"),
     };
     for (const auto& term : refusedTerms) {
         if (lowered.contains(term)) {
@@ -5748,8 +5743,8 @@ bool ApplicationController::startConversationSummaryInference(
     request.options.model = effectiveLocalModel({});
     const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
     request.options.timeoutMs = config.generateTimeoutMs;
-    request.id = QStringLiteral("conversation-summary-request-%1")
-                     .arg(++localInferenceRequestSequence_);
+    request.id =
+        QStringLiteral("conversation-summary-request-%1").arg(++localInferenceRequestSequence_);
 
     if (request.prompt.trimmed().isEmpty() || request.options.model.trimmed().isEmpty()) {
         latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
@@ -6331,9 +6326,9 @@ QString ApplicationController::duplicateConversation(const QString& conversation
         return {};
     }
 
-    const auto duplicateTitle = QStringLiteral("%1 Copy").arg(source.title.trimmed().isEmpty()
-                                                                 ? QStringLiteral("Untitled Conversation")
-                                                                 : source.title.trimmed());
+    const auto duplicateTitle = QStringLiteral("%1 Copy").arg(
+        source.title.trimmed().isEmpty() ? QStringLiteral("Untitled Conversation")
+                                         : source.title.trimmed());
     const auto duplicate = conversationStore_->createConversation(duplicateTitle);
     if (duplicate.id.isEmpty()) {
         latestConversationDuplicateResult_.status = QStringLiteral("Refused");
@@ -6638,8 +6633,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         latestLocalInferenceResponse_.timeoutMs = request.options.timeoutMs;
         latestLocalInferenceStreamResult_.accumulatedText.clear();
         setConversationRuntimeRequest(QStringLiteral("local-inference-blocked"),
-                                      request.options.model, QStringLiteral("Local Ollama"),
-                                      false);
+                                      request.options.model, QStringLiteral("Local Ollama"), false);
         setConversationRuntimeResult(false, reason);
         setChatSendLifecycle(QStringLiteral("refused"), reason);
         emit localInferenceChanged();
@@ -7616,8 +7610,9 @@ void ApplicationController::setConversationRuntimeResult(bool succeeded, const Q
 
 void ApplicationController::setChatSendLifecycle(const QString& state, const QString& summary) {
     const auto safeState = state.trimmed().isEmpty() ? QStringLiteral("idle") : state.trimmed();
-    const auto safeSummary =
-        summary.trimmed().isEmpty() ? QStringLiteral("No send lifecycle summary.") : summary.trimmed();
+    const auto safeSummary = summary.trimmed().isEmpty()
+                                 ? QStringLiteral("No send lifecycle summary.")
+                                 : summary.trimmed();
     if (chatSendLifecycleState_ == safeState && chatSendLifecycleSummary_ == safeSummary) {
         return;
     }

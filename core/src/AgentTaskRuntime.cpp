@@ -69,9 +69,9 @@ QString defaultTransitionSummary(AgentTaskStatus status) {
 bool containsUnsafePlanningIntent(const QString& text) {
     const auto lowered = text.toLower();
     const QStringList blockedTerms{
-        QStringLiteral("execute"),   QStringLiteral("tool"),       QStringLiteral("plugin"),
+        QStringLiteral("execute"),    QStringLiteral("tool"),        QStringLiteral("plugin"),
         QStringLiteral("filesystem"), QStringLiteral("file system"), QStringLiteral("shell"),
-        QStringLiteral("subprocess"), QStringLiteral("background"), QStringLiteral("cloud"),
+        QStringLiteral("subprocess"), QStringLiteral("background"),  QStringLiteral("cloud"),
         QStringLiteral("api call"),   QStringLiteral("network"),
     };
 
@@ -450,8 +450,8 @@ QString agentPlanningCandidateSummary(const AgentPlanningCandidate& candidate) {
     const auto status = candidate.refused ? QStringLiteral("Refused") : QStringLiteral("Planned");
     return QStringLiteral("%1. %2 [%3/%4]: %5")
         .arg(candidate.order)
-        .arg(agentTaskTypeName(candidate.taskType), status, agentTaskPriorityName(candidate.priority),
-             candidate.summary);
+        .arg(agentTaskTypeName(candidate.taskType), status,
+             agentTaskPriorityName(candidate.priority), candidate.summary);
 }
 
 QStringList agentPlanningCandidateSummaries(const AgentPlanningSession& session) {
@@ -476,8 +476,8 @@ QStringList agentPlanningArbitrationSummaries(const AgentPlanningSession& sessio
 
 QString agentPlanningFallbackSummary(const AgentPlanningSession& session) {
     return session.result.fallback.summary.isEmpty()
-        ? QStringLiteral("No planning fallback required.")
-        : session.result.fallback.summary;
+               ? QStringLiteral("No planning fallback required.")
+               : session.result.fallback.summary;
 }
 
 AgentCapabilitySummary agentCapabilitySummary(const AgentCapability& capability) {
@@ -512,9 +512,8 @@ QStringList agentCapabilitySummaries(const AgentCapabilityRegistry& registry) {
 QStringList agentCapabilityReadinessSummaries(const AgentCapabilityRegistry& registry) {
     QStringList summaries;
     for (const auto& capability : registry.capabilities) {
-        summaries.append(QStringLiteral("%1: %2")
-                             .arg(agentCapabilityTypeName(capability.type),
-                                  capability.readiness.summary));
+        summaries.append(QStringLiteral("%1: %2").arg(agentCapabilityTypeName(capability.type),
+                                                      capability.readiness.summary));
     }
     return summaries;
 }
@@ -522,9 +521,8 @@ QStringList agentCapabilityReadinessSummaries(const AgentCapabilityRegistry& reg
 QStringList agentCapabilitySafetySummaries(const AgentCapabilityRegistry& registry) {
     QStringList summaries;
     for (const auto& capability : registry.capabilities) {
-        summaries.append(QStringLiteral("%1: %2")
-                             .arg(agentCapabilityTypeName(capability.type),
-                                  capability.safetyReport.summary));
+        summaries.append(QStringLiteral("%1: %2").arg(agentCapabilityTypeName(capability.type),
+                                                      capability.safetyReport.summary));
     }
     return summaries;
 }
@@ -558,18 +556,21 @@ QString toolContractPermissionSummary(const ToolContract& contract) {
         permissions.append(toolContractPermissionName(permission));
     }
     return QStringLiteral("%1 permissions: %2.")
-        .arg(toolContractTypeName(contract.type),
-             permissions.isEmpty() ? QStringLiteral("none") : permissions.join(QStringLiteral(", ")));
+        .arg(toolContractTypeName(contract.type), permissions.isEmpty()
+                                                      ? QStringLiteral("none")
+                                                      : permissions.join(QStringLiteral(", ")));
 }
 
 QString toolContractSandboxSummary(const ToolContract& contract) {
-    const auto suffix = contract.sandbox == ToolContractSandbox::RequiredMetadata
-        ? QStringLiteral("sandbox requirement is metadata-only and grants no runtime access.")
-        : (contract.sandbox == ToolContractSandbox::Denied
-               ? QStringLiteral("sandbox is denied because the contract scope is unsafe.")
-               : QStringLiteral("sandbox is not required for local read-only metadata."));
+    const auto suffix =
+        contract.sandbox == ToolContractSandbox::RequiredMetadata
+            ? QStringLiteral("sandbox requirement is metadata-only and grants no runtime access.")
+            : (contract.sandbox == ToolContractSandbox::Denied
+                   ? QStringLiteral("sandbox is denied because the contract scope is unsafe.")
+                   : QStringLiteral("sandbox is not required for local read-only metadata."));
     return QStringLiteral("%1 sandbox: %2; %3")
-        .arg(toolContractTypeName(contract.type), toolContractSandboxName(contract.sandbox), suffix);
+        .arg(toolContractTypeName(contract.type), toolContractSandboxName(contract.sandbox),
+             suffix);
 }
 
 QStringList toolContractSummaries(const ToolContractRegistry& registry) {
@@ -599,9 +600,8 @@ QStringList toolContractSandboxSummaries(const ToolContractRegistry& registry) {
 QStringList toolContractReadinessSummaries(const ToolContractRegistry& registry) {
     QStringList summaries;
     for (const auto& contract : registry.contracts) {
-        summaries.append(QStringLiteral("%1: %2")
-                             .arg(toolContractTypeName(contract.type),
-                                  contract.readiness.summary));
+        summaries.append(QStringLiteral("%1: %2").arg(toolContractTypeName(contract.type),
+                                                      contract.readiness.summary));
     }
     return summaries;
 }
@@ -609,9 +609,8 @@ QStringList toolContractReadinessSummaries(const ToolContractRegistry& registry)
 QStringList toolContractSafetySummaries(const ToolContractRegistry& registry) {
     QStringList summaries;
     for (const auto& contract : registry.contracts) {
-        summaries.append(QStringLiteral("%1: %2")
-                             .arg(toolContractTypeName(contract.type),
-                                  contract.safetyReport.summary));
+        summaries.append(QStringLiteral("%1: %2").arg(toolContractTypeName(contract.type),
+                                                      contract.safetyReport.summary));
     }
     return summaries;
 }
@@ -681,25 +680,27 @@ AgentTaskQueueResult StaticAgentTaskRuntime::markTaskPlanned(const AgentTaskId& 
 
 AgentTaskQueueResult StaticAgentTaskRuntime::markTaskBlocked(const AgentTaskId& id,
                                                              const QString& reason) {
-    const auto summary = reason.trimmed().isEmpty()
-        ? QStringLiteral("Task blocked before execution.")
-        : QStringLiteral("Task blocked before execution: %1").arg(reason.trimmed());
+    const auto summary =
+        reason.trimmed().isEmpty()
+            ? QStringLiteral("Task blocked before execution.")
+            : QStringLiteral("Task blocked before execution: %1").arg(reason.trimmed());
     return updateTaskStatus(id, AgentTaskStatus::Blocked, summary, true);
 }
 
 AgentTaskQueueResult StaticAgentTaskRuntime::completeTaskAsMetadata(const AgentTaskId& id,
                                                                     const QString& summary) {
     const auto resultSummary = summary.trimmed().isEmpty()
-        ? QStringLiteral("Task completed as metadata without execution.")
-        : summary.trimmed();
+                                   ? QStringLiteral("Task completed as metadata without execution.")
+                                   : summary.trimmed();
     return updateTaskStatus(id, AgentTaskStatus::CompletedMetadata, resultSummary, true);
 }
 
 AgentTaskQueueResult StaticAgentTaskRuntime::refuseTask(const AgentTaskId& id,
                                                         const QString& reason) {
-    const auto summary = reason.trimmed().isEmpty()
-        ? QStringLiteral("Task refused at the no-execution boundary.")
-        : QStringLiteral("Task refused at the no-execution boundary: %1").arg(reason.trimmed());
+    const auto summary =
+        reason.trimmed().isEmpty()
+            ? QStringLiteral("Task refused at the no-execution boundary.")
+            : QStringLiteral("Task refused at the no-execution boundary: %1").arg(reason.trimmed());
     return updateTaskStatus(id, AgentTaskStatus::Refused, summary, true);
 }
 
@@ -747,8 +748,8 @@ AgentPlanningSession StaticAgentTaskRuntime::planningSession() const {
         if (candidate.refused) {
             refusals.append(candidate.refusal);
         }
-        arbitrationSummaries.append(QStringLiteral("%1 selected by priority/queue/id order.")
-                                        .arg(candidate.id));
+        arbitrationSummaries.append(
+            QStringLiteral("%1 selected by priority/queue/id order.").arg(candidate.id));
         candidates.append(candidate);
     }
 
@@ -822,11 +823,7 @@ AgentPlanningSession StaticAgentTaskRuntime::planningSession() const {
     };
 
     const AgentPlanningSessionSummary summary{
-        status,
-        selectedCount,
-        refusedCount,
-        fallback.used ? 1 : 0,
-        result.summary,
+        status, selectedCount, refusedCount, fallback.used ? 1 : 0, result.summary,
     };
 
     return AgentPlanningSession{
@@ -841,26 +838,26 @@ AgentPlanningSession StaticAgentTaskRuntime::planningSession() const {
 AgentCapabilityRegistry StaticAgentTaskRuntime::capabilityRegistry() const {
     QList<AgentCapability> capabilities{
         makeCapability(AgentCapabilityType::ConversationSummarization,
-                       AgentCapabilityStatus::EnabledMetadata,
-                       AgentCapabilityScope::LocalMetadata, 1,
-                       QStringLiteral("Prepare deterministic conversation summary metadata.")),
-        makeCapability(AgentCapabilityType::MemoryInspection, AgentCapabilityStatus::EnabledMetadata,
-                       AgentCapabilityScope::LocalMetadata, 2,
+                       AgentCapabilityStatus::EnabledMetadata, AgentCapabilityScope::LocalMetadata,
+                       1, QStringLiteral("Prepare deterministic conversation summary metadata.")),
+        makeCapability(AgentCapabilityType::MemoryInspection,
+                       AgentCapabilityStatus::EnabledMetadata, AgentCapabilityScope::LocalMetadata,
+                       2,
                        QStringLiteral("Inspect memory status summaries without private payloads.")),
         makeCapability(AgentCapabilityType::RetrievalPreparation,
-                       AgentCapabilityStatus::EnabledMetadata,
-                       AgentCapabilityScope::LocalMetadata, 3,
-                       QStringLiteral("Prepare deterministic retrieval metadata.")),
+                       AgentCapabilityStatus::EnabledMetadata, AgentCapabilityScope::LocalMetadata,
+                       3, QStringLiteral("Prepare deterministic retrieval metadata.")),
         makeCapability(AgentCapabilityType::SemanticSupplementPreparation,
-                       AgentCapabilityStatus::EnabledMetadata,
-                       AgentCapabilityScope::LocalMetadata, 4,
+                       AgentCapabilityStatus::EnabledMetadata, AgentCapabilityScope::LocalMetadata,
+                       4,
                        QStringLiteral("Prepare bounded semantic supplement readiness metadata.")),
-        makeCapability(AgentCapabilityType::ExportPreparation, AgentCapabilityStatus::EnabledMetadata,
-                       AgentCapabilityScope::LocalMetadata, 5,
+        makeCapability(AgentCapabilityType::ExportPreparation,
+                       AgentCapabilityStatus::EnabledMetadata, AgentCapabilityScope::LocalMetadata,
+                       5,
                        QStringLiteral("Prepare export readiness metadata without writing files.")),
         makeCapability(AgentCapabilityType::VoiceResponsePreparation,
-                       AgentCapabilityStatus::EnabledMetadata,
-                       AgentCapabilityScope::LocalMetadata, 6,
+                       AgentCapabilityStatus::EnabledMetadata, AgentCapabilityScope::LocalMetadata,
+                       6,
                        QStringLiteral("Prepare voice response metadata without audio execution.")),
         makeCapability(AgentCapabilityType::FilesystemAccess, AgentCapabilityStatus::Disabled,
                        AgentCapabilityScope::FutureRuntime, 7,
@@ -893,9 +890,9 @@ AgentCapabilityRegistry StaticAgentTaskRuntime::capabilityRegistry() const {
     }
 
     const auto status = refusedCount > 0
-        ? AgentCapabilityRegistryStatus::RefusingUnsafeCapabilities
-        : (restrictedCount > 0 ? AgentCapabilityRegistryStatus::Restricted
-                               : AgentCapabilityRegistryStatus::Ready);
+                            ? AgentCapabilityRegistryStatus::RefusingUnsafeCapabilities
+                            : (restrictedCount > 0 ? AgentCapabilityRegistryStatus::Restricted
+                                                   : AgentCapabilityRegistryStatus::Ready);
     const AgentCapabilityRegistrySummary summary{
         status,
         static_cast<int>(capabilities.size()),
@@ -958,38 +955,34 @@ ToolContractRegistry StaticAgentTaskRuntime::toolContractRegistry() const {
                          {ToolContractPermission::LocalOnly, ToolContractPermission::ReadOnly,
                           ToolContractPermission::FutureExportAction},
                          ToolContractSandbox::RequiredMetadata),
-        makeToolContract(ToolContractType::FutureFilesystemAccess, ToolContractStatus::Disabled,
-                         ToolContractScope::FutureRuntime, 7,
-                         QStringLiteral("Future filesystem access remains disabled."),
-                         {ToolContractPermission::Disabled,
-                          ToolContractPermission::FutureFilesystemAccess,
-                          ToolContractPermission::ApprovalRequired,
-                          ToolContractPermission::SandboxRequired},
-                         ToolContractSandbox::RequiredMetadata),
-        makeToolContract(ToolContractType::FutureSubprocessExecution, ToolContractStatus::Refused,
-                         ToolContractScope::UnsafeRuntime, 8,
-                         QStringLiteral("Future subprocess execution is refused by policy."),
-                         {ToolContractPermission::Refused,
-                          ToolContractPermission::FutureSubprocessExecution,
-                          ToolContractPermission::ApprovalRequired,
-                          ToolContractPermission::SandboxRequired},
-                         ToolContractSandbox::Denied),
-        makeToolContract(ToolContractType::FuturePluginRuntime, ToolContractStatus::Disabled,
-                         ToolContractScope::FutureRuntime, 9,
-                         QStringLiteral("Future plugin runtime remains disabled."),
-                         {ToolContractPermission::Disabled,
-                          ToolContractPermission::FuturePluginRuntime,
-                          ToolContractPermission::ApprovalRequired,
-                          ToolContractPermission::SandboxRequired},
-                         ToolContractSandbox::RequiredMetadata),
-        makeToolContract(ToolContractType::FutureExportAction, ToolContractStatus::Disabled,
-                         ToolContractScope::FutureRuntime, 10,
-                         QStringLiteral("Future export action remains disabled outside metadata."),
-                         {ToolContractPermission::Disabled,
-                          ToolContractPermission::FutureExportAction,
-                          ToolContractPermission::ApprovalRequired,
-                          ToolContractPermission::SandboxRequired},
-                         ToolContractSandbox::RequiredMetadata),
+        makeToolContract(
+            ToolContractType::FutureFilesystemAccess, ToolContractStatus::Disabled,
+            ToolContractScope::FutureRuntime, 7,
+            QStringLiteral("Future filesystem access remains disabled."),
+            {ToolContractPermission::Disabled, ToolContractPermission::FutureFilesystemAccess,
+             ToolContractPermission::ApprovalRequired, ToolContractPermission::SandboxRequired},
+            ToolContractSandbox::RequiredMetadata),
+        makeToolContract(
+            ToolContractType::FutureSubprocessExecution, ToolContractStatus::Refused,
+            ToolContractScope::UnsafeRuntime, 8,
+            QStringLiteral("Future subprocess execution is refused by policy."),
+            {ToolContractPermission::Refused, ToolContractPermission::FutureSubprocessExecution,
+             ToolContractPermission::ApprovalRequired, ToolContractPermission::SandboxRequired},
+            ToolContractSandbox::Denied),
+        makeToolContract(
+            ToolContractType::FuturePluginRuntime, ToolContractStatus::Disabled,
+            ToolContractScope::FutureRuntime, 9,
+            QStringLiteral("Future plugin runtime remains disabled."),
+            {ToolContractPermission::Disabled, ToolContractPermission::FuturePluginRuntime,
+             ToolContractPermission::ApprovalRequired, ToolContractPermission::SandboxRequired},
+            ToolContractSandbox::RequiredMetadata),
+        makeToolContract(
+            ToolContractType::FutureExportAction, ToolContractStatus::Disabled,
+            ToolContractScope::FutureRuntime, 10,
+            QStringLiteral("Future export action remains disabled outside metadata."),
+            {ToolContractPermission::Disabled, ToolContractPermission::FutureExportAction,
+             ToolContractPermission::ApprovalRequired, ToolContractPermission::SandboxRequired},
+            ToolContractSandbox::RequiredMetadata),
     };
 
     int enabledCount = 0;
@@ -1012,9 +1005,9 @@ ToolContractRegistry StaticAgentTaskRuntime::toolContractRegistry() const {
     }
 
     const auto status = refusedCount > 0
-        ? ToolContractRegistryStatus::RefusingUnsafeContracts
-        : (restrictedCount > 0 ? ToolContractRegistryStatus::Restricted
-                               : ToolContractRegistryStatus::Ready);
+                            ? ToolContractRegistryStatus::RefusingUnsafeContracts
+                            : (restrictedCount > 0 ? ToolContractRegistryStatus::Restricted
+                                                   : ToolContractRegistryStatus::Ready);
     const ToolContractRegistrySummary summary{
         status,
         static_cast<int>(contracts.size()),
@@ -1125,10 +1118,11 @@ AgentPlanningCandidate StaticAgentTaskRuntime::planningCandidateForTask(const Ag
                        policy.budget.maxSummaryCharacters);
     const auto unsafe = containsUnsafePlanningIntent(summary);
     const auto candidateId = QStringLiteral("agent-planning-candidate-%1").arg(order);
-    const auto refusalSummary = unsafe
-        ? QStringLiteral("%1 refused: planning request mentions blocked execution authority.")
-              .arg(candidateId)
-        : QString();
+    const auto refusalSummary =
+        unsafe
+            ? QStringLiteral("%1 refused: planning request mentions blocked execution authority.")
+                  .arg(candidateId)
+            : QString();
 
     AgentPlanningCandidate candidate;
     candidate.id = candidateId;
@@ -1174,15 +1168,17 @@ AgentCapability StaticAgentTaskRuntime::makeCapability(AgentCapabilityType type,
     const auto restricted = capabilityIsRestricted(status);
     const auto refused = status == AgentCapabilityStatus::Refused;
     const auto id = AgentCapabilityId{QStringLiteral("agent-capability-%1").arg(order)};
-    const auto readinessSummary = status == AgentCapabilityStatus::EnabledMetadata
-        ? QStringLiteral("Ready as metadata only; no execution authority is granted.")
-        : QStringLiteral("%1 remains unavailable until a later explicit runtime phase.")
-              .arg(agentCapabilityTypeName(type));
-    const auto safetySummary = restricted
-        ? QStringLiteral("%1 is %2 and exposes refusal metadata only; execution attempted: no.")
-              .arg(agentCapabilityTypeName(type), agentCapabilityStatusName(status).toLower())
-        : QStringLiteral("%1 passed metadata-only safety checks; execution attempted: no.")
-              .arg(agentCapabilityTypeName(type));
+    const auto readinessSummary =
+        status == AgentCapabilityStatus::EnabledMetadata
+            ? QStringLiteral("Ready as metadata only; no execution authority is granted.")
+            : QStringLiteral("%1 remains unavailable until a later explicit runtime phase.")
+                  .arg(agentCapabilityTypeName(type));
+    const auto safetySummary =
+        restricted
+            ? QStringLiteral("%1 is %2 and exposes refusal metadata only; execution attempted: no.")
+                  .arg(agentCapabilityTypeName(type), agentCapabilityStatusName(status).toLower())
+            : QStringLiteral("%1 passed metadata-only safety checks; execution attempted: no.")
+                  .arg(agentCapabilityTypeName(type));
 
     AgentCapability capability;
     capability.id = id;
@@ -1229,16 +1225,18 @@ ToolContract StaticAgentTaskRuntime::makeToolContract(ToolContractType type,
     const auto refused = status == ToolContractStatus::Refused;
     const auto unsafeScope = scope == ToolContractScope::UnsafeRuntime;
     const auto id = ToolContractId{QStringLiteral("tool-contract-%1").arg(order)};
-    const auto readinessSummary = status == ToolContractStatus::EnabledMetadata
-        ? QStringLiteral("Ready as deterministic metadata only; no tool runtime is available.")
-        : QStringLiteral("%1 remains unavailable until a later explicit tool runtime phase.")
-              .arg(toolContractTypeName(type));
-    const auto safetySummary = restricted || unsafeScope
-        ? QStringLiteral("%1 is %2; unsafe scope denied, refusal metadata exposed, execution "
-                         "attempted: no.")
-              .arg(toolContractTypeName(type), toolContractStatusName(status).toLower())
-        : QStringLiteral("%1 passed metadata-only contract checks; execution attempted: no.")
-              .arg(toolContractTypeName(type));
+    const auto readinessSummary =
+        status == ToolContractStatus::EnabledMetadata
+            ? QStringLiteral("Ready as deterministic metadata only; no tool runtime is available.")
+            : QStringLiteral("%1 remains unavailable until a later explicit tool runtime phase.")
+                  .arg(toolContractTypeName(type));
+    const auto safetySummary =
+        restricted || unsafeScope
+            ? QStringLiteral("%1 is %2; unsafe scope denied, refusal metadata exposed, execution "
+                             "attempted: no.")
+                  .arg(toolContractTypeName(type), toolContractStatusName(status).toLower())
+            : QStringLiteral("%1 passed metadata-only contract checks; execution attempted: no.")
+                  .arg(toolContractTypeName(type));
 
     ToolContract contract;
     contract.id = id;
@@ -1276,8 +1274,7 @@ ToolContract StaticAgentTaskRuntime::makeToolContract(ToolContractType type,
         safetySummary,
     };
     contract.readiness = ToolContractReadiness{!restricted && !unsafeScope,
-                                               sandbox != ToolContractSandbox::NotRequired,
-                                               refused,
+                                               sandbox != ToolContractSandbox::NotRequired, refused,
                                                readinessSummary};
     return contract;
 }
