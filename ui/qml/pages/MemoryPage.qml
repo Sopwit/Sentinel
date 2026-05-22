@@ -167,6 +167,16 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
+                    InfoRow {
+                        compact: memoryPage.compact
+                        visible: memoryPage.viewModel.conversationCompressionStatus !== "Not Needed"
+                                 || memoryPage.viewModel.conversationCompressionCandidateCount > 0
+                        label: "Conversation Compression"
+                        value: memoryPage.viewModel.conversationCompressionStatus + " - "
+                               + memoryPage.viewModel.conversationCompressionPressureSummary
+                        Layout.fillWidth: true
+                    }
+
                     Flow {
                         Layout.fillWidth: true
                         spacing: SentinelTheme.spaceSm
@@ -588,6 +598,57 @@ ScrollView {
                         value: memoryPage.viewModel.conversationSalienceExclusionSummaries.length === 0
                                ? "No salience exclusions."
                                : memoryPage.viewModel.conversationSalienceExclusionSummaries.join(" / ")
+                        Layout.fillWidth: true
+                    }
+
+                    SectionTitle {
+                        title: "Conversation Compression"
+                        subtitle: "Readiness-only compression metadata; no summary action is available."
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Compression Readiness"
+                        value: memoryPage.viewModel.conversationCompressionReadinessSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Compression Budget"
+                        value: memoryPage.viewModel.conversationCompressionBudgetSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Compression Selection"
+                        value: memoryPage.viewModel.conversationCompressionSelectedCandidateCount
+                               + " selected / "
+                               + memoryPage.viewModel.conversationCompressionCandidateCount
+                               + " candidates / "
+                               + memoryPage.viewModel.conversationCompressionFallbackReason
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        valueMaximumLineCount: 8
+                        label: "Compression Candidates"
+                        value: memoryPage.viewModel.conversationCompressionCandidateSummaries.length === 0
+                               ? "No compression candidates planned."
+                               : memoryPage.viewModel.conversationCompressionCandidateSummaries.join(" / ")
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        valueMaximumLineCount: 8
+                        label: "Compression Trace"
+                        value: memoryPage.viewModel.conversationCompressionTraceSummaries.length === 0
+                               ? memoryPage.viewModel.conversationCompressionTraceSummary
+                               : memoryPage.viewModel.conversationCompressionTraceSummaries.join(" / ")
                         Layout.fillWidth: true
                     }
 

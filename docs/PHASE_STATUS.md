@@ -2,6 +2,34 @@
 
 ## Completed / Stable
 
+### Phase 29.0-29.8: Conversation Compression And Summary Readiness Foundation
+
+Completed. Adds deterministic conversation compression readiness and candidate-planning metadata
+without enabling summarization, transcript mutation, memory writes, background workers, or
+semantic/vector authority.
+
+Scope:
+
+- Added value-only conversation compression records for policy, status, candidates, budget,
+  readiness, selection, trace, fallback, and summary.
+- Compression readiness uses message count, estimated character/token pressure, active
+  conversation length, context-injection state, existing deterministic summary availability, and
+  salience budget pressure.
+- Candidate planning is metadata only and distinguishes recent conversation window, older
+  conversation segment, high-salience user facts, low-salience repeated turns, and explicit
+  system/runtime metadata exclusion.
+- `ApplicationController` and `DesktopShellViewModel` expose QML-safe status, readiness,
+  pressure, candidate counts, selected counts, fallback, budget, candidate, and trace summaries.
+- Runtime/Memory normal mode shows a compact Conversation Compression card only when pressure
+  makes it useful. Developer Mode shows grouped budget, candidate, selection, and trace metadata.
+  Settings Developer Mode shows concise compression readiness under context/runtime diagnostics.
+
+Known limitation:
+
+- This phase does not generate summaries, mutate or replace transcript messages, write committed
+  memory, alter prompts, expose raw prompt/debug dumps, run model calls, activate semantic/vector
+  systems, index filesystems, make cloud/API calls, or start background work.
+
 ### Phase 28.0-28.8: Adaptive Context Budgeting And Conversation Salience Foundation
 
 Completed. Adds deterministic conversation salience metadata and adaptive context budgeting while

@@ -258,6 +258,23 @@ Guidelines:
 
 ## Phase 26 Context Visibility Notes
 
+## Phase 29 Conversation Compression Readiness Notes
+
+Phase 29.0 through Phase 29.8 adds read-only conversation compression readiness visibility without
+adding a summarize action, background work, or hidden prompt/transcript mutation.
+
+Guidelines:
+
+- Runtime/Memory normal mode may show Conversation Compression only when readiness is approaching
+  or above, or when metadata candidates are planned. The card should stay compact: status,
+  pressure, and candidate counts only.
+- Runtime/Memory Developer Mode may show grouped compression readiness, budget, candidate,
+  selection, fallback, and trace summaries. These are diagnostics, not controls.
+- Settings Developer Mode may show concise compression status under context/runtime diagnostics.
+- Do not add buttons, summarize actions, background progress, raw prompt/debug dumps, transcript
+  replacement previews, memory-write affordances, vector/semantic authority, filesystem indexing,
+  provider calls, or cloud/API messaging for this phase.
+
 Phase 26.0 through Phase 26.8 improves local deterministic context visibility without adding
 background behavior or semantic authority.
 

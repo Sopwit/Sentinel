@@ -67,6 +67,14 @@ enum class RetrievalPlanningStatus : std::uint8_t {
     Truncated,
 };
 
+enum class ConversationCompressionStatus : std::uint8_t {
+    Disabled,
+    NotNeeded,
+    Approaching,
+    Needed,
+    Planned,
+};
+
 enum class RetrievalSourcePriority : std::uint8_t {
     None = 0,
     RecentConversation = 1,
@@ -83,6 +91,7 @@ QString promptContextInjectionStatusName(PromptContextInjectionStatus status);
 QString conversationWindowStatusName(ConversationWindowStatus status);
 QString conversationSummaryStatusName(ConversationSummaryStatus status);
 QString retrievalPlanningStatusName(RetrievalPlanningStatus status);
+QString conversationCompressionStatusName(ConversationCompressionStatus status);
 QString retrievalSourcePriorityName(RetrievalSourcePriority priority);
 RetrievalSourcePriority retrievalSourcePriorityForKind(ContextAssemblySourceKind kind);
 
@@ -519,6 +528,94 @@ struct ConversationSalienceSummary {
     ConversationSalienceTrace trace;
 };
 
+struct ConversationCompressionPolicy {
+    bool enabled = true;
+    int messageWarningThreshold = 18;
+    int messageRequiredThreshold = 28;
+    int characterWarningThreshold = 9000;
+    int characterRequiredThreshold = 14000;
+    int tokenWarningThreshold = 2250;
+    int tokenRequiredThreshold = 3500;
+    int activeConversationWarningThreshold = 8000;
+    int activeConversationRequiredThreshold = 12000;
+    int saliencePressureWarningThreshold = 70;
+    int saliencePressureRequiredThreshold = 90;
+    int maxCandidateCharacters = 2400;
+    int maxCandidates = 6;
+    QString status = QStringLiteral("Ready");
+    QString summary = QStringLiteral(
+        "Conversation compression readiness is deterministic metadata only.");
+};
+
+struct ConversationCompressionCandidate {
+    QString kind;
+    QString title;
+    QString summary;
+    int originalIndex = 0;
+    int messageCount = 0;
+    int estimatedCharacters = 0;
+    int estimatedTokens = 0;
+    int selectedCharacters = 0;
+    bool selected = false;
+    bool excluded = false;
+    QString exclusionReason;
+};
+
+struct ConversationCompressionBudget {
+    int maxCandidateCharacters = 2400;
+    int estimatedCharacters = 0;
+    int estimatedTokens = 0;
+    int selectedCharacters = 0;
+    int remainingCharacters = 2400;
+    int pressurePercent = 0;
+    int saliencePressurePercent = 0;
+    QString summary = QStringLiteral("0 compression candidate characters selected.");
+};
+
+struct ConversationCompressionReadiness {
+    ConversationCompressionStatus status = ConversationCompressionStatus::NotNeeded;
+    bool compressionUseful = false;
+    int messageCount = 0;
+    int estimatedCharacters = 0;
+    int estimatedTokens = 0;
+    int activeConversationCharacters = 0;
+    bool contextInjectionEnabled = false;
+    bool existingSummaryAvailable = false;
+    int saliencePressurePercent = 0;
+    int pressurePercent = 0;
+    QString summary = QStringLiteral("Conversation compression is not needed.");
+};
+
+struct ConversationCompressionSelection {
+    QList<ConversationCompressionCandidate> candidates;
+    int candidateCount = 0;
+    int selectedCandidateCount = 0;
+    int excludedCandidateCount = 0;
+    QString summary = QStringLiteral("No compression candidates selected.");
+};
+
+struct ConversationCompressionTrace {
+    QStringList candidateSummaries;
+    QStringList selectionSummaries;
+    QString summary = QStringLiteral("No conversation compression trace has been generated.");
+};
+
+struct ConversationCompressionFallback {
+    QString reason;
+    QString summary = QStringLiteral("No compression fallback required.");
+};
+
+struct ConversationCompressionSummary {
+    ConversationCompressionPolicy policy;
+    ConversationCompressionStatus status = ConversationCompressionStatus::NotNeeded;
+    ConversationCompressionReadiness readiness;
+    ConversationCompressionBudget budget;
+    ConversationCompressionSelection selection;
+    ConversationCompressionTrace trace;
+    ConversationCompressionFallback fallback;
+    QString summary = QStringLiteral("Conversation compression is not needed.");
+};
+
 QString contextExclusionReasonName(ContextExclusionReason reason);
 
 ContextAssemblySource makeContextAssemblySource(ContextAssemblySourceKind kind, bool requested,
@@ -557,5 +654,13 @@ ConversationSalienceSummary rankConversationSalience(
     const ConversationSaliencePolicy& policy);
 QStringList conversationSalienceTraceSummaries(const ConversationSalienceSummary& summary);
 QStringList conversationSalienceExclusionSummaries(const ConversationSalienceSummary& summary);
+ConversationCompressionSummary planConversationCompression(
+    const QList<ConversationWindowMessage>& messages,
+    const ConversationSummaryResult& existingSummary,
+    const ConversationSalienceSummary& salienceSummary, bool contextInjectionEnabled,
+    const ConversationCompressionPolicy& policy);
+QStringList conversationCompressionCandidateSummaries(
+    const ConversationCompressionSummary& summary);
+QStringList conversationCompressionTraceSummaries(const ConversationCompressionSummary& summary);
 
 } // namespace sentinel::core

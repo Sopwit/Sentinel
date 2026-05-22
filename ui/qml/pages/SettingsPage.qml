@@ -729,6 +729,15 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
+                            label: "Compression"
+                            value: settingsPage.viewModel.conversationCompressionStatus + " / "
+                                   + settingsPage.viewModel.conversationCompressionPressureSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            visible: settingsPage.viewModel.developerModeEnabled
                             label: "Memory Relevance"
                             value: settingsPage.viewModel.memoryRelevanceIncludedCount
                                    + " included / "

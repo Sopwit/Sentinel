@@ -234,6 +234,29 @@ Out of scope:
   file pickers, arbitrary output paths, import, full transcript browser UI, cloud sync, encryption,
   pruning, broader filesystem/system actions, cloud/API keys, tools, and plugins.
 
+## 9.2.1 Conversation Compression Readiness Metadata
+
+Decision: Conversation compression readiness is controller-owned, deterministic metadata only.
+
+Reason: Long-conversation pressure needs visible planning before any summarization or transcript
+mutation phase. The UI can explain pressure and candidate shape without gaining authority to
+summarize, replace, persist, or inject hidden content.
+
+Runtime behavior:
+
+- Readiness uses message count, estimated character/token budget, active conversation length,
+  context injection state, existing deterministic summary availability, and salience budget
+  pressure.
+- Candidate planning labels recent conversation window, older conversation segment,
+  high-salience user facts, low-salience repeated turns, and system/runtime metadata exclusion.
+- Planning returns QML-safe summaries, counts, fallback text, budget usage, and traces only.
+
+Out of scope:
+
+- Hidden summarization, model calls, transcript mutation/replacement, committed memory writes,
+  raw prompt/debug dumps, prompt alteration outside the existing explicit context-injection path,
+  semantic/vector activation, filesystem indexing, cloud/API calls, and background workers.
+
 ## 9.3 Active Conversation Lifecycle And Switching
 
 Decision: Use `IConversationStore` as the active local transcript source, with

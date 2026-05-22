@@ -753,6 +753,7 @@ private slots:
     void conversationSummaryPlanningDoesNotMutateState();
     void retrievalPlanningFeedsPromptContextWithoutMixingSources();
     void retrievalPlanningDoesNotMutateState();
+    void conversationCompressionReadinessPlansMetadataWithoutMutation();
     void semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt();
     void semanticProviderPlanningExposesDisabledSelection();
     void semanticCandidateOrchestrationExposesSafeMetadata();
@@ -4331,6 +4332,36 @@ void ApplicationControllerTest::retrievalPlanningDoesNotMutateState() {
             planning.status == sentinel::core::RetrievalPlanningStatus::Truncated);
     QCOMPARE(controller->memoryEntries(), beforeEntries);
     QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
+    QCOMPARE(controller->promptContextInjectionStatus(), beforeInjectionStatus);
+}
+
+void ApplicationControllerTest::conversationCompressionReadinessPlansMetadataWithoutMutation() {
+    const auto controller = makeController();
+    for (int i = 0; i < 18; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("remember my compression preference %1 %2")
+                                            .arg(i)
+                                            .arg(QString(220, QLatin1Char('c')))));
+    }
+    controller->remember(QStringLiteral("compression.local"), QStringLiteral("unchanged"));
+    const auto beforeEntries = controller->memoryEntries();
+    const auto beforeMessages = controller->conversationHistoryMessageCount();
+    const auto beforeTranscript = controller->chatMessages();
+    const auto beforeInjectionStatus = controller->promptContextInjectionStatus();
+
+    const auto summary = controller->conversationCompressionSummary();
+
+    QVERIFY(summary.readiness.compressionUseful);
+    QVERIFY(controller->conversationCompressionStatus() == QStringLiteral("Planned") ||
+            controller->conversationCompressionStatus() == QStringLiteral("Needed") ||
+            controller->conversationCompressionStatus() == QStringLiteral("Approaching"));
+    QVERIFY(controller->conversationCompressionCandidateCount() > 0);
+    QVERIFY(controller->conversationCompressionSelectedCandidateCount() > 0);
+    QVERIFY(controller->conversationCompressionReadinessSummary().contains(
+        QStringLiteral("pressure")));
+    QVERIFY(controller->conversationCompressionTraceSummary().contains(QStringLiteral("selected")));
+    QCOMPARE(controller->memoryEntries(), beforeEntries);
+    QCOMPARE(controller->conversationHistoryMessageCount(), beforeMessages);
+    QCOMPARE(controller->chatMessages(), beforeTranscript);
     QCOMPARE(controller->promptContextInjectionStatus(), beforeInjectionStatus);
 }
 

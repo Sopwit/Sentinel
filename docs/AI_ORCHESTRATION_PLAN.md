@@ -1,5 +1,18 @@
 # AI Orchestration Plan
 
+Phase 29.0 through Phase 29.8 adds conversation compression and summary readiness metadata while
+preserving the no-hidden-summarization boundary. Readiness is deterministic and local-only, using
+message count, estimated character/token pressure, active conversation length, context-injection
+state, existing deterministic summary availability, and salience budget pressure. Candidate
+planning describes recent conversation window, older conversation segment, high-salience user
+facts, low-salience repeated turns, and system/runtime metadata exclusion as bounded metadata only.
+`ApplicationController` and `DesktopShellViewModel` expose QML-safe status, pressure, candidate,
+selection, fallback, budget, and trace summaries. No summary is generated, no transcript messages
+are replaced or mutated, no committed memory is written, no prompt is altered outside the existing
+explicit context-injection path, no raw prompt/debug dump is exposed, and no provider/model calls,
+semantic/vector activation, filesystem indexing, cloud/API calls, tools/plugins, subprocesses, or
+background workers are added.
+
 Phase 28.0 through Phase 28.8 adds adaptive context budgeting and conversation salience while
 preserving the existing local-only, opt-in context boundary. Deterministic salience records score
 local context candidates with literal active conversation title overlap, recent user and assistant
