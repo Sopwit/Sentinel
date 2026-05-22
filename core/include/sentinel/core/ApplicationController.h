@@ -442,6 +442,8 @@ class ApplicationController final : public QObject {
                    promptContextInjectionChanged)
     Q_PROPERTY(QString promptContextUsedSummary READ promptContextUsedSummary NOTIFY
                    promptContextInjectionChanged)
+    Q_PROPERTY(int promptContextUsedMemoryCount READ promptContextUsedMemoryCount NOTIFY
+                   promptContextInjectionChanged)
     Q_PROPERTY(QString contextBudgetUsageSummary READ contextBudgetUsageSummary NOTIFY
                    promptContextInjectionChanged)
     Q_PROPERTY(int contextIncludedCandidateCount READ contextIncludedCandidateCount NOTIFY
@@ -506,6 +508,18 @@ class ApplicationController final : public QObject {
                    retrievalPlanningTruncatedCandidateCount NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList retrievalPlanningSourceSummaries READ retrievalPlanningSourceSummaries
                    NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString memoryRelevanceSummaryText READ memoryRelevanceSummaryText NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString memoryRelevanceBudgetSummary READ memoryRelevanceBudgetSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int memoryRelevanceIncludedCount READ memoryRelevanceIncludedCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int memoryRelevanceExcludedCount READ memoryRelevanceExcludedCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList memoryRelevanceTraceSummaries READ memoryRelevanceTraceSummaries NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QStringList memoryRelevanceExclusionSummaries READ
+                   memoryRelevanceExclusionSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool semanticRetrievalEnabled READ semanticRetrievalEnabled CONSTANT)
     Q_PROPERTY(QString semanticRetrievalStatus READ semanticRetrievalStatus CONSTANT)
     Q_PROPERTY(QString semanticRetrievalSummary READ semanticRetrievalSummary CONSTANT)
@@ -1188,6 +1202,7 @@ public:
     QString promptContextSourceSummary() const;
     QString promptContextSizeSummary() const;
     QString promptContextUsedSummary() const;
+    int promptContextUsedMemoryCount() const;
     QString contextBudgetUsageSummary() const;
     int contextIncludedCandidateCount() const;
     int contextExcludedCandidateCount() const;
@@ -1226,6 +1241,12 @@ public:
     int retrievalPlanningExcludedCandidateCount() const;
     int retrievalPlanningTruncatedCandidateCount() const;
     QStringList retrievalPlanningSourceSummaries() const;
+    QString memoryRelevanceSummaryText() const;
+    QString memoryRelevanceBudgetSummary() const;
+    int memoryRelevanceIncludedCount() const;
+    int memoryRelevanceExcludedCount() const;
+    QStringList memoryRelevanceTraceSummaries() const;
+    QStringList memoryRelevanceExclusionSummaries() const;
     SemanticRetrievalPolicy semanticRetrievalPolicy() const;
     bool semanticRetrievalEnabled() const;
     QString semanticRetrievalStatus() const;
@@ -1608,6 +1629,7 @@ private:
     bool runLocalInferenceStream(const QString& prompt, const QString& model);
     ConversationWindowResult conversationWindowForPrompt(const QString& prompt) const;
     ConversationSummaryResult conversationSummaryForPrompt(const QString& prompt) const;
+    MemoryRelevanceSummary memoryRelevanceSummaryForPrompt(const QString& prompt) const;
     QList<RetrievalCandidate> retrievalCandidatesForPrompt(const QString& prompt) const;
     RetrievalPlanningResult retrievalPlanningForPrompt(const QString& prompt) const;
     QList<SemanticCandidate> semanticCandidatesForPrompt(const QString& prompt) const;

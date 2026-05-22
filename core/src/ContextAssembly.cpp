@@ -1,6 +1,7 @@
 #include "sentinel/core/ContextAssembly.h"
 
 #include <algorithm>
+#include <QRegularExpression>
 #include <QSet>
 
 namespace sentinel::core {
@@ -9,6 +10,28 @@ namespace {
 
 int toInt(qsizetype value) {
     return static_cast<int>(value);
+}
+
+QStringList literalTokens(const QString& text) {
+    QStringList tokens;
+    const auto parts = text.toCaseFolded().split(QRegularExpression(QStringLiteral("[^a-z0-9]+")),
+                                                 Qt::SkipEmptyParts);
+    for (const auto& part : parts) {
+        if (part.size() >= 3 && !tokens.contains(part)) {
+            tokens.append(part);
+        }
+    }
+    return tokens;
+}
+
+int overlapCount(const QStringList& left, const QStringList& right) {
+    int count = 0;
+    for (const auto& token : left) {
+        if (right.contains(token)) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 } // namespace
@@ -934,6 +957,228 @@ QStringList retrievalCandidateTraceSummaries(const RetrievalPlanningResult& resu
                                       : candidate.exclusionReason.simplified()));
     }
     return summaries;
+}
+
+MemoryRelevanceSummary rankMemoryRelevance(
+    const QList<MemoryRelevanceCandidate>& candidates, const QString& prompt,
+    const QString& activeConversationTitle, const QString& recentConversationText,
+    const MemoryRelevancePolicy& policy) {
+    MemoryRelevanceSummary summary;
+    summary.policy = policy;
+    summary.budget.maxCharacters = std::max(0, policy.maxCharacters);
+    summary.budget.remainingCharacters = summary.budget.maxCharacters;
+
+    if (!policy.enabled) {
+        summary.summary = policy.summary;
+        summary.trace.summary = QStringLiteral("Memory relevance policy is disabled.");
+        return summary;
+    }
+
+    const auto promptTokens = literalTokens(prompt);
+    const auto titleTokens = literalTokens(activeConversationTitle);
+    const auto recentTokens = literalTokens(recentConversationText);
+
+    QList<MemoryRelevanceSelection> evaluated;
+    evaluated.reserve(candidates.size());
+    for (const auto& candidate : candidates) {
+        MemoryRelevanceSelection selection;
+        selection.candidate = candidate;
+        selection.candidate.key = candidate.key.simplified();
+        selection.candidate.value = candidate.value.simplified();
+        selection.selectedText =
+            QStringLiteral("%1 = %2").arg(selection.candidate.key, selection.candidate.value);
+        summary.budget.estimatedCharacters += toInt(selection.selectedText.size());
+
+        if (selection.candidate.key.trimmed().isEmpty() ||
+            selection.candidate.value.trimmed().isEmpty()) {
+            selection.reason.exclusionReason = contextExclusionReasonName(
+                ContextExclusionReason::EmptyCandidate);
+            evaluated.append(selection);
+            continue;
+        }
+
+        const auto keyTokens = literalTokens(selection.candidate.key);
+        const auto valueTokens = literalTokens(selection.candidate.value);
+        const auto memoryTokens = literalTokens(selection.selectedText);
+        selection.score.keyOverlap = overlapCount(keyTokens, promptTokens);
+        selection.score.valueOverlap = overlapCount(valueTokens, promptTokens);
+        selection.score.activeConversationTitleOverlap = overlapCount(memoryTokens, titleTokens);
+        selection.score.recentConversationTermOverlap = overlapCount(memoryTokens, recentTokens);
+        selection.score.committedPriority = selection.candidate.committed ? 1 : 0;
+        selection.score.pinnedPriority = selection.candidate.pinned ? 8 : 0;
+        selection.score.total = selection.score.keyOverlap * 40 + selection.score.valueOverlap * 24 +
+                                selection.score.activeConversationTitleOverlap * 18 +
+                                selection.score.recentConversationTermOverlap * 10 +
+                                selection.score.pinnedPriority + selection.score.committedPriority;
+
+        if (selection.score.keyOverlap > 0) {
+            selection.reason.includedReasons.append(QStringLiteral("literal key overlap"));
+        }
+        if (selection.score.valueOverlap > 0) {
+            selection.reason.includedReasons.append(QStringLiteral("literal value overlap"));
+        }
+        if (selection.score.activeConversationTitleOverlap > 0) {
+            selection.reason.includedReasons.append(
+                QStringLiteral("active conversation title overlap"));
+        }
+        if (selection.score.recentConversationTermOverlap > 0) {
+            selection.reason.includedReasons.append(QStringLiteral("recent conversation terms"));
+        }
+        if (selection.candidate.pinned) {
+            selection.reason.includedReasons.append(QStringLiteral("explicit pinned priority"));
+        }
+        if (selection.candidate.committed) {
+            selection.reason.includedReasons.append(QStringLiteral("committed memory priority"));
+        }
+
+        const bool hasLiteralRelevance =
+            selection.score.keyOverlap > 0 || selection.score.valueOverlap > 0 ||
+            selection.score.activeConversationTitleOverlap > 0 ||
+            selection.score.recentConversationTermOverlap > 0;
+        if (!hasLiteralRelevance &&
+            !(policy.includePinnedWithoutOverlap && selection.candidate.pinned)) {
+            selection.reason.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::NotRelevant);
+        }
+        selection.reason.summary = !selection.reason.exclusionReason.isEmpty()
+                                       ? selection.reason.exclusionReason
+                                       : selection.reason.includedReasons.join(QStringLiteral(", "));
+        evaluated.append(selection);
+    }
+
+    std::stable_sort(evaluated.begin(), evaluated.end(), [](const auto& left, const auto& right) {
+        if (left.score.total != right.score.total) {
+            return left.score.total > right.score.total;
+        }
+        if (left.score.keyOverlap != right.score.keyOverlap) {
+            return left.score.keyOverlap > right.score.keyOverlap;
+        }
+        if (left.score.valueOverlap != right.score.valueOverlap) {
+            return left.score.valueOverlap > right.score.valueOverlap;
+        }
+        return left.candidate.originalIndex < right.candidate.originalIndex;
+    });
+
+    int remaining = summary.budget.maxCharacters;
+    QSet<QString> fingerprints;
+    for (auto selection : evaluated) {
+        if (!selection.reason.exclusionReason.isEmpty()) {
+            ++summary.excludedCount;
+            summary.selections.append(selection);
+            continue;
+        }
+
+        const auto fingerprint = selection.selectedText.toCaseFolded();
+        if (fingerprints.contains(fingerprint)) {
+            selection.duplicate = true;
+            selection.reason.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::DuplicateCandidate);
+            selection.reason.summary = selection.reason.exclusionReason;
+            ++summary.duplicateCount;
+            ++summary.excludedCount;
+            summary.selections.append(selection);
+            continue;
+        }
+
+        if (policy.maxCandidates > 0 && summary.includedCount >= policy.maxCandidates) {
+            selection.reason.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::CandidateCountLimit);
+            selection.reason.summary = selection.reason.exclusionReason;
+            ++summary.excludedCount;
+            summary.selections.append(selection);
+            continue;
+        }
+
+        if (remaining <= 0) {
+            selection.reason.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::BudgetExhausted);
+            selection.reason.summary = selection.reason.exclusionReason;
+            ++summary.excludedCount;
+            summary.selections.append(selection);
+            continue;
+        }
+
+        if (selection.selectedText.size() > remaining) {
+            selection.selectedText = selection.selectedText.left(remaining).trimmed();
+            selection.truncated = true;
+            ++summary.truncatedCount;
+        }
+        selection.selectedCharacters = toInt(selection.selectedText.size());
+        if (selection.selectedCharacters <= 0) {
+            selection.reason.exclusionReason =
+                contextExclusionReasonName(ContextExclusionReason::BudgetExhausted);
+            selection.reason.summary = selection.reason.exclusionReason;
+            ++summary.excludedCount;
+            summary.selections.append(selection);
+            continue;
+        }
+
+        selection.included = true;
+        fingerprints.insert(fingerprint);
+        remaining -= selection.selectedCharacters;
+        summary.budget.includedCharacters += selection.selectedCharacters;
+        ++summary.includedCount;
+        summary.selections.append(selection);
+    }
+
+    summary.candidateCount = toInt(summary.selections.size());
+    summary.budget.remainingCharacters = std::max(0, remaining);
+    summary.budget.summary =
+        QStringLiteral("%1 of %2 memory context characters selected within %3 character budget.")
+            .arg(summary.budget.includedCharacters)
+            .arg(summary.budget.estimatedCharacters)
+            .arg(summary.budget.maxCharacters);
+
+    for (const auto& selection : summary.selections) {
+        const auto line = QStringLiteral("%1 / score %2 / %3 chars / %4")
+                              .arg(selection.candidate.key)
+                              .arg(selection.score.total)
+                              .arg(selection.included ? selection.selectedCharacters
+                                                      : toInt(selection.selectedText.size()))
+                              .arg(selection.reason.summary);
+        if (selection.included) {
+            summary.trace.includedSummaries.append(line);
+        } else {
+            summary.trace.excludedSummaries.append(line);
+        }
+    }
+    summary.trace.summary =
+        QStringLiteral("%1 included / %2 excluded / %3 duplicates / %4 truncated.")
+            .arg(summary.includedCount)
+            .arg(summary.excludedCount)
+            .arg(summary.duplicateCount)
+            .arg(summary.truncatedCount);
+    summary.summary =
+        QStringLiteral("Memory relevance selected %1 of %2 committed %3; %4 excluded. %5")
+            .arg(summary.includedCount)
+            .arg(summary.candidateCount)
+            .arg(summary.candidateCount == 1 ? QStringLiteral("memory")
+                                             : QStringLiteral("memories"))
+            .arg(summary.excludedCount)
+            .arg(summary.budget.summary);
+    return summary;
+}
+
+QStringList memoryRelevanceTraceSummaries(const MemoryRelevanceSummary& summary) {
+    QStringList lines;
+    for (const auto& line : summary.trace.includedSummaries) {
+        lines.append(QStringLiteral("included / %1").arg(line));
+    }
+    for (const auto& line : summary.trace.excludedSummaries) {
+        lines.append(QStringLiteral("excluded / %1").arg(line));
+    }
+    return lines;
+}
+
+QStringList memoryRelevanceExclusionSummaries(const MemoryRelevanceSummary& summary) {
+    QStringList lines;
+    for (const auto& selection : summary.selections) {
+        if (!selection.included) {
+            lines.append(QStringLiteral("%1 / %2")
+                             .arg(selection.candidate.key, selection.reason.exclusionReason));
+        }
+    }
+    return lines;
 }
 
 } // namespace sentinel::core

@@ -17,7 +17,10 @@ using sentinel::core::ConversationWindowMessage;
 using sentinel::core::ConversationWindowPolicy;
 using sentinel::core::ConversationWindowStatus;
 using sentinel::core::makeContextAssemblySource;
+using sentinel::core::MemoryRelevanceCandidate;
+using sentinel::core::MemoryRelevancePolicy;
 using sentinel::core::planRetrieval;
+using sentinel::core::rankMemoryRelevance;
 using sentinel::core::RetrievalCandidate;
 using sentinel::core::RetrievalPlanningPolicy;
 using sentinel::core::RetrievalPlanningStatus;
@@ -39,6 +42,9 @@ private slots:
     void retrievalPlanningPreservesChronologyWithinSource();
     void retrievalPlanningSuppressesDuplicatesAndReportsReasons();
     void retrievalPlanningEnforcesCandidateAndSourceLimits();
+    void memoryRelevanceOrdersByDeterministicLiteralScore();
+    void memoryRelevanceSuppressesDuplicatesAndReportsExclusions();
+    void memoryRelevanceEnforcesBudgetAndStableTies();
 };
 
 void ContextAssemblyTest::createsDeterministicAssemblySummary() {
@@ -327,6 +333,81 @@ void ContextAssemblyTest::retrievalPlanningEnforcesCandidateAndSourceLimits() {
     QVERIFY(retrievalCandidateTraceSummaries(result)
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Source count limit reached")));
+}
+
+void ContextAssemblyTest::memoryRelevanceOrdersByDeterministicLiteralScore() {
+    MemoryRelevancePolicy policy;
+    policy.maxCharacters = 200;
+
+    const auto result = rankMemoryRelevance(
+        {
+            MemoryRelevanceCandidate{QStringLiteral("project.alpha"),
+                                     QStringLiteral("Uses blue dashboard styling"), 0},
+            MemoryRelevanceCandidate{QStringLiteral("tone.preference"),
+                                     QStringLiteral("Keep answers concise"), 1},
+            MemoryRelevanceCandidate{QStringLiteral("project.beta"),
+                                     QStringLiteral("Unrelated local note"), 2},
+        },
+        QStringLiteral("alpha dashboard"), QStringLiteral("Alpha planning"),
+        QStringLiteral("recent dashboard notes"), policy);
+
+    QCOMPARE(result.includedCount, 2);
+    QCOMPARE(result.excludedCount, 1);
+    QCOMPARE(result.selections.at(0).candidate.key, QStringLiteral("project.alpha"));
+    QVERIFY(result.selections.at(0).score.keyOverlap > 0);
+    QVERIFY(result.selections.at(0).reason.summary.contains(QStringLiteral("literal key overlap")));
+    QVERIFY(result.trace.summary.contains(QStringLiteral("2 included")));
+}
+
+void ContextAssemblyTest::memoryRelevanceSuppressesDuplicatesAndReportsExclusions() {
+    MemoryRelevancePolicy policy;
+    policy.maxCharacters = 200;
+
+    const auto result = rankMemoryRelevance(
+        {
+            MemoryRelevanceCandidate{QStringLiteral("alpha.one"), QStringLiteral("same value"), 0},
+            MemoryRelevanceCandidate{QStringLiteral("alpha.one"), QStringLiteral("same value"), 1},
+            MemoryRelevanceCandidate{QStringLiteral("empty.value"), QString(), 2},
+            MemoryRelevanceCandidate{QStringLiteral("other"), QStringLiteral("not related"), 3},
+        },
+        QStringLiteral("alpha value"), {}, {}, policy);
+
+    QCOMPARE(result.includedCount, 1);
+    QCOMPARE(result.duplicateCount, 1);
+    QVERIFY(sentinel::core::memoryRelevanceExclusionSummaries(result)
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Duplicate candidate")));
+    QVERIFY(sentinel::core::memoryRelevanceExclusionSummaries(result)
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Empty candidate")));
+    QVERIFY(sentinel::core::memoryRelevanceExclusionSummaries(result)
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("No deterministic literal relevance")));
+}
+
+void ContextAssemblyTest::memoryRelevanceEnforcesBudgetAndStableTies() {
+    MemoryRelevancePolicy policy;
+    policy.maxCharacters = 24;
+    policy.maxCandidates = 4;
+
+    const auto result = rankMemoryRelevance(
+        {
+            MemoryRelevanceCandidate{QStringLiteral("alpha.first"),
+                                     QStringLiteral("one two three four"), 0},
+            MemoryRelevanceCandidate{QStringLiteral("alpha.second"),
+                                     QStringLiteral("one two three four"), 1},
+            MemoryRelevanceCandidate{QStringLiteral("alpha.third"),
+                                     QStringLiteral("one two three four"), 2},
+        },
+        QStringLiteral("alpha"), {}, {}, policy);
+
+    QCOMPARE(result.selections.at(0).candidate.key, QStringLiteral("alpha.first"));
+    QVERIFY(result.includedCount >= 1);
+    QVERIFY(result.budget.includedCharacters <= policy.maxCharacters);
+    QVERIFY(result.excludedCount >= 1);
+    QVERIFY(sentinel::core::memoryRelevanceTraceSummaries(result)
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Retrieval budget exhausted")));
 }
 
 QTEST_MAIN(ContextAssemblyTest)

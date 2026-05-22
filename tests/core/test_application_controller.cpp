@@ -4105,7 +4105,10 @@ void ApplicationControllerTest::enabledPromptContextInjectionIncludesDeterminist
         QStringLiteral("[/Sentinel Local Context]\n\nUser prompt:\ntone concise hello")));
     QCOMPARE(controller->promptContextInjectionStatus(), QStringLiteral("Injected"));
     QVERIFY(controller->promptContextInjectedBlockCount() >= 3);
+    QCOMPARE(controller->promptContextUsedMemoryCount(), 1);
+    QVERIFY(controller->promptContextUsedSummary().contains(QStringLiteral("1 memory")));
     QVERIFY(controller->promptContextSourceSummary().contains(QStringLiteral("Committed Memory")));
+    QVERIFY(controller->memoryRelevanceSummaryText().contains(QStringLiteral("selected 1")));
 }
 
 void ApplicationControllerTest::promptContextInjectionUsesOnlyCommittedMemory() {

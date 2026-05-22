@@ -1338,6 +1338,10 @@ QString DesktopShellViewModel::promptContextUsedSummary() const {
     return controller_.promptContextUsedSummary();
 }
 
+int DesktopShellViewModel::promptContextUsedMemoryCount() const {
+    return controller_.promptContextUsedMemoryCount();
+}
+
 QString DesktopShellViewModel::contextBudgetUsageSummary() const {
     return controller_.contextBudgetUsageSummary();
 }
@@ -1464,6 +1468,30 @@ int DesktopShellViewModel::retrievalPlanningTruncatedCandidateCount() const {
 
 QStringList DesktopShellViewModel::retrievalPlanningSourceSummaries() const {
     return controller_.retrievalPlanningSourceSummaries();
+}
+
+QString DesktopShellViewModel::memoryRelevanceSummaryText() const {
+    return controller_.memoryRelevanceSummaryText();
+}
+
+QString DesktopShellViewModel::memoryRelevanceBudgetSummary() const {
+    return controller_.memoryRelevanceBudgetSummary();
+}
+
+int DesktopShellViewModel::memoryRelevanceIncludedCount() const {
+    return controller_.memoryRelevanceIncludedCount();
+}
+
+int DesktopShellViewModel::memoryRelevanceExcludedCount() const {
+    return controller_.memoryRelevanceExcludedCount();
+}
+
+QStringList DesktopShellViewModel::memoryRelevanceTraceSummaries() const {
+    return controller_.memoryRelevanceTraceSummaries();
+}
+
+QStringList DesktopShellViewModel::memoryRelevanceExclusionSummaries() const {
+    return controller_.memoryRelevanceExclusionSummaries();
 }
 
 core::SemanticRetrievalPolicy DesktopShellViewModel::semanticRetrievalPolicy() const {

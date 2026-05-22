@@ -725,6 +725,18 @@ Item {
                             value: settingsPage.viewModel.contextBudgetUsageSummary
                             Layout.fillWidth: true
                         }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            visible: settingsPage.viewModel.developerModeEnabled
+                            label: "Memory Relevance"
+                            value: settingsPage.viewModel.memoryRelevanceIncludedCount
+                                   + " included / "
+                                   + settingsPage.viewModel.memoryRelevanceExcludedCount
+                                   + " excluded / "
+                                   + settingsPage.viewModel.memoryRelevanceBudgetSummary
+                            Layout.fillWidth: true
+                        }
                     }
                 }
 

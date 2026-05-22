@@ -1,5 +1,17 @@
 # AI Orchestration Plan
 
+Phase 27.0 through Phase 27.8 adds local memory intelligence and context quality metadata while
+preserving the existing local-only, non-autonomous authority boundary. Committed key-value memory
+is scored through value-only memory relevance records using deterministic literal key overlap,
+literal value overlap, active conversation title overlap, recent conversation terms, and explicit
+pinned/committed priority metadata. Selected memories become individual deterministic context
+candidates with duplicate suppression, character budgeting, stable tie ordering,
+included/excluded counts, trace summaries, and exclusion reasons. Home, Runtime/Memory, and
+Settings expose only compact QML-safe summaries. Semantic/vector authority remains disabled; no
+embeddings, vector ranking, cloud/API calls, filesystem indexing, background summarization,
+autonomous writes, prompt debug dumps, raw hidden prompt exposure, tools/plugins, or voice
+authority is added.
+
 Phase 26.0 through Phase 26.8 improves context assembly and retrieval intelligence while
 preserving the existing local-first authority boundary. Deterministic context sources are recent
 conversation window, deterministic conversation summary metadata, committed key-value memory,

@@ -1974,6 +1974,11 @@ void DesktopShellViewModelTest::exposesContextAssemblyMetadata() {
         QStringLiteral("Prompt assembly: disabled")));
     QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Disabled"));
     QCOMPARE(fixture.viewModel.promptContextInjectedBlockCount(), 0);
+    QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("concise local summaries")));
+    QVERIFY(fixture.viewModel.memoryRelevanceSummaryText().contains(QStringLiteral("Memory relevance")));
+    QVERIFY(fixture.viewModel.memoryRelevanceIncludedCount() >= 1);
+    QCOMPARE(fixture.viewModel.promptContextUsedMemoryCount(), 0);
+    QVERIFY(!fixture.viewModel.memoryRelevanceTraceSummaries().isEmpty());
     QVERIFY(spy.count() >= 1);
 }
 
