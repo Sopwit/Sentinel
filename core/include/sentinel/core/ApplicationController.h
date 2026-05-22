@@ -420,6 +420,10 @@ class ApplicationController final : public QObject {
                    localChatInferenceRoutingChanged)
     Q_PROPERTY(QString localChatInferenceSummary READ localChatInferenceSummary NOTIFY
                    localChatInferenceRoutingChanged)
+    Q_PROPERTY(bool localChatSendAvailable READ localChatSendAvailable NOTIFY
+                   localChatInferenceRoutingChanged)
+    Q_PROPERTY(QString localChatSendAvailabilitySummary READ localChatSendAvailabilitySummary
+                   NOTIFY localChatInferenceRoutingChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QString promptContextInjectionStatus READ promptContextInjectionStatus NOTIFY
@@ -1153,6 +1157,8 @@ public:
     void setLocalChatInferenceEnabled(bool enabled);
     QString localChatInferenceStatus() const;
     QString localChatInferenceSummary() const;
+    bool localChatSendAvailable() const;
+    QString localChatSendAvailabilitySummary() const;
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
     PromptContextInjectionResult latestPromptContextInjectionResult() const;

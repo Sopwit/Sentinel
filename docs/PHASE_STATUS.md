@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 25.0-25.8: Local Chat Reliability, Ollama UX, And Runtime Status Hardening
+
+Completed. Hardens the local Ollama chat path so readiness, failures, and busy/stale request
+states are clear without adding cloud/API providers or new runtime authority.
+
+Scope:
+
+- Added QML-safe local chat send readiness metadata. Normal UI now uses a single user-facing
+  readiness summary for disabled local chat, archived conversations, runtime busy, invalid
+  endpoint, unreachable Ollama, missing model selection, unavailable model list, selected model
+  missing, and generation-ready states.
+- Local chat send controls are enabled only when local chat is enabled, Ollama is reachable on a
+  local loopback endpoint, an installed selected model is valid in discovered Ollama metadata, the
+  active conversation is not archived, and no local request is in progress.
+- Programmatic local-chat sends that fail readiness now refuse before appending a user message, so
+  unreachable Ollama, no selected model, selected-model-missing, and invalid endpoint states do not
+  create confusing transcript entries.
+- Existing request-id guards, cancellation, busy reset, streaming preview cleanup, and
+  conversation-switch stale-result protection remain in force. Streaming still appends one final
+  assistant message on completion and one safe failure message on stream failure after a request
+  has actually started.
+- Developer Mode continues to expose detailed local inference traces and runtime summaries; normal
+  UI shows concise guidance only and no raw payload dumps.
+
+Known limitation:
+
+- This phase does not add cloud/API providers, API keys, model downloads/deletes, tools/plugins,
+  filesystem/shell/subprocess execution, STT/TTS activation, autonomous actions, or semantic
+  authority expansion.
+
 ### Phase 24.0-24.6: Conversation Persistence Completion
 
 Completed. Turns the remaining conversation workflow placeholders into safe local persistent

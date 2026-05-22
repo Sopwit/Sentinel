@@ -8,9 +8,7 @@ ShellPanel {
     required property var viewModel
     property bool compact: width < 520
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property bool modelReady: viewModel.selectedLocalModelStatus === "Available"
-                                      || viewModel.selectedLocalModelStatus === "Fallback"
-    readonly property bool chatReady: viewModel.localChatInferenceEnabled && modelReady
+    readonly property bool chatReady: viewModel.localChatSendAvailable
     readonly property int contentPadding: compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
     readonly property string uiSelfCheck: "conversation-workflow-search-sections metadata-menu-local-only"
     property string renameStatusText: ""
@@ -136,7 +134,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Conversations, continuity, and local provider status"
+                    text: chatPanel.viewModel.localChatSendAvailabilitySummary
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                     wrapMode: Text.WordWrap

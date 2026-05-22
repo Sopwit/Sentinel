@@ -227,6 +227,27 @@ Guidelines:
 - The overflow menu should remain compact and use only actions backed by controller/view-model
   methods: Rename, Pin/Unpin, Duplicate, Archive/Unarchive, and disabled Delete.
 
+## Phase 25 Local Chat Reliability Notes
+
+Phase 25.0 through Phase 25.8 makes the local Ollama chat surface clearer and more reliable
+without adding cloud providers, model-management actions, tools, voice activation, or new runtime
+authority.
+
+Guidelines:
+
+- The composer should bind send availability to the controller/view-model readiness summary, not
+  duplicate provider/model rules in QML.
+- Send is available only when local chat is enabled, Ollama is reachable through the local loopback
+  endpoint, an explicitly selected installed model is valid, the active conversation is not
+  archived, and no request is already running.
+- Disabled composer copy should state the next action in plain language: enable local chat, start
+  Ollama, select an installed model, choose a model that exists in Ollama, wait for the current
+  response, or unarchive the conversation.
+- Normal UI should stay concise and avoid raw request/response payloads. Developer Mode may expose
+  lower-level local inference traces, stream status, latency, and runtime summaries.
+- Streaming preview remains transient. It may update while a stream is active, must clear on final
+  completion/failure, and must not create duplicate assistant messages.
+
 ## Future Assistant Visuals
 
 Future assistant visuals may include subtle status presence, listening/thinking indicators, and
