@@ -2,6 +2,45 @@
 
 ## Completed / Stable
 
+### Phase 19.7-19.9: Final UI Layout Polish, Navigation Cleanup, And Developer Surface Refinement
+
+Completed. Finalizes the Phase 19 product UI cleanup without changing backend authority.
+
+Scope:
+
+- Removed remaining decorative corner brackets and harsh colored panel borders from shared panels.
+  Accent color is reserved for selected controls, focus, compact status chips, and true warnings.
+- Home is now a clean chatbot screen: the "Local Assistant" label and separate local-status block
+  are gone, chat uses the available page space, bubbles wrap longer text, and the input remains
+  visible at the bottom of the chat surface.
+- AI Bridge is now a concise provider/conversation side panel. It no longer repeats full chat
+  messages, transcript search/export controls, or normal-mode runtime diagnostics. Conversation
+  rows use simple chat-app style summaries, row click switches conversations, and per-row overflow
+  metadata exposes rename, archive/unarchive, pin disabled, and delete disabled states.
+- Runtime/Memory keeps Overview, Recall, Local Data, and Developer segmentation. The Developer tab
+  is hidden completely unless Developer Mode is enabled, and Developer content is grouped into
+  Context Assembly, Retrieval, Semantic / Vector, Prompt Authority, and Diagnostics.
+- Agents keeps Overview, Tasks, Capabilities, and Developer segmentation. The Developer tab is
+  hidden completely unless Developer Mode is enabled, task cards use more consistent grid sizing,
+  static entries are labeled registered profiles, and Developer content is grouped into Task
+  Runtime, Queue / Lifecycle, Planning / Arbitration, Capability Registry, Tool Contracts, and
+  Voice Runtime.
+- Settings now uses left-side category navigation for General, Local AI, Model, Chat, Voice,
+  Privacy / Data, and Developer. Developer is hidden when Developer Mode is off, Developer Mode is
+  controlled by a switch, model recommendation rows and long normal-mode model management copy are
+  removed, and semantic/vector readiness is summarized in Developer Mode only.
+- Header health and mode controls are smaller and stable, and mode selection remains a
+  presentation-density control only.
+- i18n remains planning-only: future localization should use Qt `qsTr` extraction, `.ts` catalogs,
+  and compiled `.qm` files for English/Turkish work when explicitly scoped.
+
+Known limitation:
+
+- This phase does not add localization catalogs, runtime language switching, cloud/API providers,
+  model management actions, tools/plugins, autonomous execution, microphone capture, playback,
+  Piper/Whisper execution, filesystem scanning, shell/subprocess authority, permanent conversation
+  delete, pin persistence, or semantic authority expansion.
+
 ### Phase 19.4-19.6: Product UI Cleanup, Runtime/Memory, Agents, Settings, And i18n Planning
 
 Completed. Refines the Phase 19 product UI without adding runtime authority.

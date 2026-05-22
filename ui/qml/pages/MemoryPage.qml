@@ -12,6 +12,10 @@ ScrollView {
     readonly property bool retrievalActive: viewModel.retrievalPlanningSelectedSourceCount > 0
     readonly property bool contextActive: viewModel.contextAssemblyAvailableSourceCount > 0
     property string selectedSection: "Overview"
+    onDeveloperModeChanged: {
+        if (!developerMode && selectedSection === "Developer")
+            selectedSection = "Overview"
+    }
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -42,12 +46,13 @@ ScrollView {
                         spacing: SentinelTheme.spaceSm
 
                         Repeater {
-                            model: ["Overview", "Recall", "Local Data", "Developer"]
+                            model: memoryPage.developerMode
+                                   ? ["Overview", "Recall", "Local Data", "Developer"]
+                                   : ["Overview", "Recall", "Local Data"]
 
                             Button {
                                 id: memoryTabButton
                                 required property string modelData
-                                enabled: modelData !== "Developer" || memoryPage.developerMode
                                 text: modelData
                                 onClicked: memoryPage.selectedSection = modelData
 
@@ -80,7 +85,7 @@ ScrollView {
                     Label {
                         Layout.fillWidth: true
                         visible: !memoryPage.developerMode
-                        text: "Developer metadata is visible only when Developer Mode is enabled in Settings."
+                        text: "Developer metadata is hidden. Enable Developer Mode in Settings to view read-only internals."
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -255,7 +260,7 @@ ScrollView {
                         }
 
                         StatusChip {
-                            label: "Semantic path"
+                            label: "Semantic"
                             value: memoryPage.viewModel.semanticProviderMode
                             accent: SentinelTheme.warning
                             muted: true
@@ -424,6 +429,12 @@ ScrollView {
                         }
                     }
 
+                    SectionTitle {
+                        title: "Retrieval"
+                        subtitle: "Deterministic candidate selection and budget metadata."
+                        Layout.fillWidth: true
+                    }
+
                     InfoRow {
                         compact: memoryPage.compact
                         label: "Retrieval Planning"
@@ -456,6 +467,12 @@ ScrollView {
                         label: "Semantic Arbitration"
                         value: memoryPage.viewModel.semanticArbitrationStatus + " - "
                                + memoryPage.viewModel.semanticArbitrationSummary
+                        Layout.fillWidth: true
+                    }
+
+                    SectionTitle {
+                        title: "Semantic / Vector"
+                        subtitle: "Readiness-only vector and semantic search metadata."
                         Layout.fillWidth: true
                     }
 
@@ -526,6 +543,12 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
+                    SectionTitle {
+                        title: "Prompt Authority"
+                        subtitle: "Semantic supplements remain non-authoritative."
+                        Layout.fillWidth: true
+                    }
+
                     InfoRow {
                         compact: memoryPage.compact
                         label: "Prompt Authority"
@@ -543,6 +566,22 @@ ScrollView {
                                + " / "
                                + memoryPage.viewModel.semanticPromptInclusionIncludedCount
                                + " included supplements"
+                        Layout.fillWidth: true
+                    }
+
+                    SectionTitle {
+                        title: "Diagnostics"
+                        subtitle: "Counts and summaries only; no prompts or vectors are exposed."
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Candidate Boundary"
+                        value: memoryPage.viewModel.memoryCandidateCount
+                               + " candidates / "
+                               + memoryPage.viewModel.committedMemoryCandidateCount
+                               + " committed candidates"
                         Layout.fillWidth: true
                     }
                 }

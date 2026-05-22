@@ -27,7 +27,7 @@ ShellPanel {
 
     radius: SentinelTheme.radiusPanel
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.58)
-    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
+    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
 
     ColumnLayout {
         anchors.fill: parent
@@ -44,15 +44,6 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "LOCAL ASSISTANT"
-                    color: SentinelTheme.textMuted
-                    font.pixelSize: SentinelTheme.fontTiny
-                    font.letterSpacing: 1.8
-                    elide: Text.ElideRight
-                }
-
-                Label {
-                    Layout.fillWidth: true
                     text: "Ask Sentinel"
                     color: SentinelTheme.textPrimary
                     font.pixelSize: homeChat.compact ? SentinelTheme.fontTitle : SentinelTheme.fontTitle + 2
@@ -62,7 +53,7 @@ ShellPanel {
 
             StatusChip {
                 label: "Provider"
-                value: "Local Ollama only"
+                value: "Local"
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
                 muted: !homeChat.chatReady
             }
@@ -91,14 +82,14 @@ ShellPanel {
                 width: ListView.view.width
                 height: displayable ? recentMessageColumn.implicitHeight + SentinelTheme.spaceMd : 0
                 visible: displayable
-                radius: SentinelTheme.radiusSm
+                radius: SentinelTheme.radiusMd
                 color: messageRole === "user"
-                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.075)
+                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.085)
                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
                 border.color: SentinelTheme.withAlpha(messageRole === "user"
                                                       ? homeChat.modeAccent
                                                       : SentinelTheme.textPrimary,
-                                                      0.08)
+                                                      0.07)
 
                 ColumnLayout {
                     id: recentMessageColumn
@@ -123,8 +114,7 @@ ShellPanel {
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
-                        maximumLineCount: 12
-                        elide: Text.ElideRight
+                        maximumLineCount: 18
                     }
                 }
             }

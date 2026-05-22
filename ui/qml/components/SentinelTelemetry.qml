@@ -15,7 +15,7 @@ ShellPanel {
     radius: SentinelTheme.radiusLg
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.035)
     border.color: SentinelTheme.withAlpha(accent, 0.09)
-    showBrackets: true
+    showBrackets: false
     bracketSize: 7
     bracketColor: SentinelTheme.withAlpha(accent, 0.22)
 

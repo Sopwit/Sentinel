@@ -37,7 +37,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: panel.showBrackets
+        visible: false
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: SentinelTheme.spaceSm
@@ -49,7 +49,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: panel.showBrackets
+        visible: false
         anchors.left: parent.left
         anchors.top: parent.top
         anchors.leftMargin: SentinelTheme.spaceSm
@@ -61,7 +61,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: panel.showBrackets
+        visible: false
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.rightMargin: SentinelTheme.spaceSm
@@ -73,7 +73,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: panel.showBrackets
+        visible: false
         anchors.right: parent.right
         anchors.top: parent.top
         anchors.rightMargin: SentinelTheme.spaceSm
@@ -85,7 +85,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: panel.showBrackets
+        visible: false
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.leftMargin: SentinelTheme.spaceSm
@@ -97,7 +97,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: panel.showBrackets
+        visible: false
         anchors.left: parent.left
         anchors.bottom: parent.bottom
         anchors.leftMargin: SentinelTheme.spaceSm
@@ -109,7 +109,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: panel.showBrackets
+        visible: false
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.rightMargin: SentinelTheme.spaceSm
@@ -121,7 +121,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: panel.showBrackets
+        visible: false
         anchors.right: parent.right
         anchors.bottom: parent.bottom
         anchors.rightMargin: SentinelTheme.spaceSm

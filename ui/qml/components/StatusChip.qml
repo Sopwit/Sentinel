@@ -15,9 +15,9 @@ Rectangle {
     color: SentinelTheme.withAlpha(statusChip.accent,
                                    statusChip.selected ? 0.105 : statusChip.muted ? 0.028 : 0.055)
     border.color: SentinelTheme.withAlpha(statusChip.accent,
-                                          statusChip.selected ? 0.30 : statusChip.muted ? 0.09 : 0.18)
-    implicitWidth: Math.min(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 220)
-    implicitHeight: 28
+                                          statusChip.selected ? 0.20 : statusChip.muted ? 0.07 : 0.12)
+    implicitWidth: Math.min(Math.max(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 104), 300)
+    implicitHeight: Math.max(28, chipText.implicitHeight + SentinelTheme.spaceXs * 2)
     scale: 1.0
 
     Behavior on color {
@@ -67,7 +67,8 @@ Rectangle {
                                           : statusChip.value
         color: statusChip.muted ? SentinelTheme.textMuted : SentinelTheme.textPrimary
         font.pixelSize: SentinelTheme.fontSmall
-        elide: Text.ElideRight
+        wrapMode: Text.WordWrap
+        maximumLineCount: 2
     }
 
     StatusPulse {
