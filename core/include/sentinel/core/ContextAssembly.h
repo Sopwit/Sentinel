@@ -360,6 +360,78 @@ struct ContextAssemblyTrace {
     QString summary = QStringLiteral("No context assembly trace has been generated.");
 };
 
+struct MemoryRelevancePolicy {
+    bool enabled = true;
+    int maxCharacters = 1200;
+    int maxCandidates = 6;
+    bool includePinnedWithoutOverlap = true;
+    QString status = QStringLiteral("Ready");
+    QString summary = QStringLiteral(
+        "Deterministic memory relevance uses literal local overlap only.");
+};
+
+struct MemoryRelevanceCandidate {
+    QString key;
+    QString value;
+    int originalIndex = 0;
+    bool committed = true;
+    bool pinned = false;
+};
+
+struct MemoryRelevanceScore {
+    int total = 0;
+    int keyOverlap = 0;
+    int valueOverlap = 0;
+    int activeConversationTitleOverlap = 0;
+    int recentConversationTermOverlap = 0;
+    int committedPriority = 0;
+    int pinnedPriority = 0;
+};
+
+struct MemoryRelevanceReason {
+    QStringList includedReasons;
+    QString exclusionReason;
+    QString summary = QStringLiteral("No deterministic relevance.");
+};
+
+struct MemoryRelevanceBudget {
+    int maxCharacters = 1200;
+    int estimatedCharacters = 0;
+    int includedCharacters = 0;
+    int remainingCharacters = 1200;
+    QString summary = QStringLiteral("0 of 1200 memory context characters selected.");
+};
+
+struct MemoryRelevanceSelection {
+    MemoryRelevanceCandidate candidate;
+    MemoryRelevanceScore score;
+    MemoryRelevanceReason reason;
+    bool included = false;
+    bool duplicate = false;
+    bool truncated = false;
+    int selectedCharacters = 0;
+    QString selectedText;
+};
+
+struct MemoryRelevanceTrace {
+    QStringList includedSummaries;
+    QStringList excludedSummaries;
+    QString summary = QStringLiteral("No memory relevance trace has been generated.");
+};
+
+struct MemoryRelevanceSummary {
+    MemoryRelevancePolicy policy;
+    MemoryRelevanceBudget budget;
+    QList<MemoryRelevanceSelection> selections;
+    int candidateCount = 0;
+    int includedCount = 0;
+    int excludedCount = 0;
+    int duplicateCount = 0;
+    int truncatedCount = 0;
+    QString summary = QStringLiteral("No memory relevance has been evaluated.");
+    MemoryRelevanceTrace trace;
+};
+
 QString contextExclusionReasonName(ContextExclusionReason reason);
 
 ContextAssemblySource makeContextAssemblySource(ContextAssemblySourceKind kind, bool requested,
@@ -385,5 +457,11 @@ RetrievalPlanningResult planRetrieval(const QList<RetrievalCandidate>& candidate
                                       const RetrievalPlanningPolicy& policy);
 QStringList retrievalSourceSummaries(const RetrievalPlanningResult& result);
 QStringList retrievalCandidateTraceSummaries(const RetrievalPlanningResult& result);
+MemoryRelevanceSummary rankMemoryRelevance(
+    const QList<MemoryRelevanceCandidate>& candidates, const QString& prompt,
+    const QString& activeConversationTitle, const QString& recentConversationText,
+    const MemoryRelevancePolicy& policy);
+QStringList memoryRelevanceTraceSummaries(const MemoryRelevanceSummary& summary);
+QStringList memoryRelevanceExclusionSummaries(const MemoryRelevanceSummary& summary);
 
 } // namespace sentinel::core

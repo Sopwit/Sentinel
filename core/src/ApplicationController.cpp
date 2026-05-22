@@ -2928,11 +2928,20 @@ QString ApplicationController::promptContextUsedSummary() const {
         return QStringLiteral("Context used: disabled");
     }
     return QStringLiteral("Context used: %1 %2 / %3 chars")
-        .arg(latestPromptContextInjectionResult_.injectedBlockCount)
-        .arg(latestPromptContextInjectionResult_.injectedBlockCount == 1
-                 ? QStringLiteral("source")
-                 : QStringLiteral("sources"))
+        .arg(promptContextUsedMemoryCount())
+        .arg(promptContextUsedMemoryCount() == 1 ? QStringLiteral("memory")
+                                                 : QStringLiteral("memories"))
         .arg(latestPromptContextInjectionResult_.injectedCharacterCount);
+}
+
+int ApplicationController::promptContextUsedMemoryCount() const {
+    int count = 0;
+    for (const auto& block : latestPromptContextInjectionResult_.bundle.blocks) {
+        if (block.source == ContextAssemblySourceKind::CommittedMemory) {
+            ++count;
+        }
+    }
+    return count;
 }
 
 QString ApplicationController::contextBudgetUsageSummary() const {
@@ -3102,6 +3111,36 @@ int ApplicationController::retrievalPlanningTruncatedCandidateCount() const {
 
 QStringList ApplicationController::retrievalPlanningSourceSummaries() const {
     return sentinel::core::retrievalSourceSummaries(retrievalPlanningResult());
+}
+
+QString ApplicationController::memoryRelevanceSummaryText() const {
+    return memoryRelevanceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .summary;
+}
+
+QString ApplicationController::memoryRelevanceBudgetSummary() const {
+    return memoryRelevanceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .budget.summary;
+}
+
+int ApplicationController::memoryRelevanceIncludedCount() const {
+    return memoryRelevanceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .includedCount;
+}
+
+int ApplicationController::memoryRelevanceExcludedCount() const {
+    return memoryRelevanceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .excludedCount;
+}
+
+QStringList ApplicationController::memoryRelevanceTraceSummaries() const {
+    return sentinel::core::memoryRelevanceTraceSummaries(
+        memoryRelevanceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt));
+}
+
+QStringList ApplicationController::memoryRelevanceExclusionSummaries() const {
+    return sentinel::core::memoryRelevanceExclusionSummaries(
+        memoryRelevanceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt));
 }
 
 SemanticRetrievalPolicy ApplicationController::semanticRetrievalPolicy() const {
@@ -4904,6 +4943,60 @@ ApplicationController::conversationSummaryForPrompt(const QString& prompt) const
     return assembleConversationSummary(messages, window.messages, conversationSummaryPolicy_);
 }
 
+MemoryRelevanceSummary
+ApplicationController::memoryRelevanceSummaryForPrompt(const QString& prompt) const {
+    QList<MemoryRelevanceCandidate> candidates;
+    auto entries = currentMemoryEntries();
+    std::sort(entries.begin(), entries.end(),
+              [](const auto& left, const auto& right) { return left.first < right.first; });
+    candidates.reserve(entries.size());
+    int index = 0;
+    for (const auto& entry : entries) {
+        const auto key = entry.first.simplified();
+        const auto value = entry.second.simplified();
+        const auto foldedKey = key.toCaseFolded();
+        candidates.append(MemoryRelevanceCandidate{
+            key,
+            value,
+            index,
+            true,
+            foldedKey.startsWith(QStringLiteral("pinned.")) ||
+                foldedKey.contains(QStringLiteral(".pinned")) ||
+                foldedKey.contains(QStringLiteral("pinned.")),
+        });
+        ++index;
+    }
+
+    QString activeTitle;
+    const auto active = activeConversationRecord();
+    if (!active.id.isEmpty()) {
+        activeTitle = active.title;
+    }
+
+    QStringList recentMessages;
+    if (chatSession_) {
+        const auto promptText = prompt.simplified();
+        const auto& history = chatSession_->messages();
+        for (int i = history.size() - 1; i >= 0 && recentMessages.size() < 6; --i) {
+            const auto& message = history.at(i);
+            if (message.role == ChatRole::System) {
+                continue;
+            }
+            if (!promptText.isEmpty() && i == history.size() - 1 &&
+                message.role == ChatRole::User && message.content.simplified() == promptText) {
+                continue;
+            }
+            recentMessages.prepend(message.content);
+        }
+    }
+
+    MemoryRelevancePolicy policy;
+    policy.maxCharacters = std::min(1200, promptContextInjectionPolicy_.maxCharacters);
+    policy.maxCandidates = retrievalPlanningPolicy_.maxCandidates;
+    return rankMemoryRelevance(candidates, prompt, activeTitle,
+                               recentMessages.join(QStringLiteral("\n")), policy);
+}
+
 QList<RetrievalCandidate>
 ApplicationController::retrievalCandidatesForPrompt(const QString& prompt) const {
     QList<RetrievalCandidate> candidates;
@@ -4933,27 +5026,16 @@ ApplicationController::retrievalCandidatesForPrompt(const QString& prompt) const
     }
 
     if (contextAssemblyPolicy_.includeCommittedMemoryContext) {
-        auto entries = currentMemoryEntries();
-        std::sort(entries.begin(), entries.end(),
-                  [](const auto& left, const auto& right) { return left.first < right.first; });
-        QStringList lines;
-        for (const auto& entry : entries) {
-            if (entry.first.trimmed().isEmpty() || entry.second.trimmed().isEmpty()) {
+        const auto memorySummary = memoryRelevanceSummaryForPrompt(prompt);
+        for (const auto& selection : memorySummary.selections) {
+            if (!selection.included) {
                 continue;
             }
-            if (!prompt.trimmed().isEmpty() &&
-                !hasLiteralContextOverlap(prompt, entry.first, entry.second)) {
-                continue;
-            }
-            lines.append(
-                QStringLiteral("%1 = %2").arg(entry.first.simplified(), entry.second.simplified()));
-        }
-        if (!lines.isEmpty()) {
             candidates.append(RetrievalCandidate{
                 ContextAssemblySourceKind::CommittedMemory,
                 retrievalSourcePriorityForKind(ContextAssemblySourceKind::CommittedMemory),
-                QStringLiteral("Committed Local Memory"),
-                lines.join(QStringLiteral("\n")),
+                QStringLiteral("Committed Local Memory: %1").arg(selection.candidate.key),
+                selection.selectedText,
             });
         }
     }

@@ -2226,6 +2226,31 @@ Boundary rules:
   behind a separate retrieval/ranking boundary and keep this deterministic planning contract
   intact.
 
+## 81.1 Memory Relevance Is Deterministic Metadata
+
+Decision: Committed key-value memory uses a local deterministic relevance layer before becoming
+prompt context.
+
+Reason: Context injection needs better memory quality and explainability without granting
+semantic/vector authority or adding hidden background behavior.
+
+Boundary rules:
+
+- Memory relevance uses value-only records: `MemoryRelevancePolicy`,
+  `MemoryRelevanceCandidate`, `MemoryRelevanceScore`, `MemoryRelevanceReason`,
+  `MemoryRelevanceBudget`, `MemoryRelevanceSelection`, `MemoryRelevanceTrace`, and
+  `MemoryRelevanceSummary`.
+- Scoring is deterministic and limited to literal key overlap, literal value overlap, active
+  conversation title overlap, recent conversation terms, and explicit pinned/committed memory
+  priority metadata.
+- Selected memories remain key-value memory context candidates. Duplicate suppression, character
+  budgeting, candidate limits, stable tie ordering, included/excluded counts, and exclusion
+  reasons are exposed as QML-safe summaries.
+- Prompt context injection remains opt-in and still runs through existing local inference gates.
+- This layer must not add embeddings, semantic/vector ranking authority, cloud/API calls,
+  filesystem indexing, background summarization, autonomous memory writes, prompt debug dumps, raw
+  hidden prompt exposure, tools/plugins, or voice authority.
+
 ## 82. Embedding And Vector Support Starts As Interfaces
 
 Decision: Semantic/vector retrieval begins with disabled abstraction boundaries, not real semantic

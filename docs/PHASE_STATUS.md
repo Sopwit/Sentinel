@@ -2,6 +2,35 @@
 
 ## Completed / Stable
 
+### Phase 27.0-27.8: Local Memory Intelligence And Context Quality Foundation
+
+Completed. Adds deterministic local memory relevance metadata and safer memory-context quality
+visibility without enabling semantic/vector authority, cloud/API calls, filesystem indexing,
+background summarization, tools, voice, or autonomous behavior.
+
+Scope:
+
+- Added value-only memory relevance records for policy, candidates, scores, reasons, budget,
+  selections, trace, and summary.
+- Committed key-value memory is ranked deterministically with literal key overlap, literal value
+  overlap, active conversation title overlap, recent conversation terms, and explicit
+  pinned/committed priority metadata.
+- Prompt context injection remains opt-in. When enabled, committed memories become individually
+  ranked local context candidates, duplicates are suppressed, character and candidate budgets are
+  enforced, exclusion reasons are exposed, and stable tie ordering is preserved.
+- Home shows compact memory context usage as `Context used: X memories / Y chars` only when local
+  context injection is enabled.
+- Runtime/Memory normal mode shows a compact memory context quality summary. Developer Mode shows
+  relevance budget, included/excluded counts, trace summaries, and exclusion reasons.
+- Settings Chat keeps context enablement and deterministic source count visible, with detailed
+  memory relevance budget visible only in Developer Mode.
+
+Known limitation:
+
+- This phase does not add embeddings, semantic/vector ranking authority, cloud/API providers,
+  filesystem indexing, background memory capture/summarization, autonomous writes, prompt debug
+  dumps, raw hidden prompt exposure, tools/plugins, or voice authority.
+
 ### Phase 26.0-26.8: Context Assembly And Retrieval Intelligence Foundation
 
 Completed. Improves deterministic local context selection, budgeting, traceability, and UI

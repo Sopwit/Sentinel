@@ -156,6 +156,17 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Memory Context Quality"
+                        value: memoryPage.viewModel.memoryRelevanceIncludedCount
+                               + " included / "
+                               + memoryPage.viewModel.memoryRelevanceExcludedCount
+                               + " excluded / "
+                               + memoryPage.viewModel.memoryRelevanceBudgetSummary
+                        Layout.fillWidth: true
+                    }
+
                     Flow {
                         Layout.fillWidth: true
                         spacing: SentinelTheme.spaceSm
@@ -262,6 +273,17 @@ ScrollView {
 
                         InfoRow {
                             compact: true
+                            label: "Memory Relevance"
+                            value: memoryPage.viewModel.memoryRelevanceIncludedCount
+                                   + " included / "
+                                   + memoryPage.viewModel.memoryRelevanceExcludedCount
+                                   + " excluded / "
+                                   + memoryPage.viewModel.memoryRelevanceBudgetSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: true
                             label: "Semantic Readiness"
                             value: memoryPage.viewModel.semanticRetrievalStatus + " / "
                                    + memoryPage.viewModel.selectedSemanticProviderName + " / "
@@ -276,6 +298,26 @@ ScrollView {
                         value: memoryPage.viewModel.contextAssemblyTraceSummaries.length === 0
                                ? "No prompt context assembled yet."
                                : memoryPage.viewModel.contextAssemblyTraceSummaries.join(" / ")
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: true
+                        valueMaximumLineCount: 8
+                        label: "Memory Trace"
+                        value: memoryPage.viewModel.memoryRelevanceTraceSummaries.length === 0
+                               ? "No memory relevance evaluated yet."
+                               : memoryPage.viewModel.memoryRelevanceTraceSummaries.join(" / ")
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: true
+                        valueMaximumLineCount: 8
+                        label: "Memory Exclusions"
+                        value: memoryPage.viewModel.memoryRelevanceExclusionSummaries.length === 0
+                               ? "No memory exclusions."
+                               : memoryPage.viewModel.memoryRelevanceExclusionSummaries.join(" / ")
                         Layout.fillWidth: true
                     }
 
@@ -511,6 +553,13 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
+                        label: "Memory Relevance Budget"
+                        value: memoryPage.viewModel.memoryRelevanceBudgetSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
                         label: "Retrieval Sources"
                         value: memoryPage.viewModel.retrievalPlanningSelectedSourceCount
                                + " selected / "
@@ -518,6 +567,26 @@ ScrollView {
                                + " excluded / "
                                + memoryPage.viewModel.retrievalPlanningSelectedCandidateCount
                                + " blocks"
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        valueMaximumLineCount: 8
+                        label: "Memory Relevance Trace"
+                        value: memoryPage.viewModel.memoryRelevanceTraceSummaries.length === 0
+                               ? "No memory relevance evaluated yet."
+                               : memoryPage.viewModel.memoryRelevanceTraceSummaries.join(" / ")
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        valueMaximumLineCount: 8
+                        label: "Memory Exclusion Reasons"
+                        value: memoryPage.viewModel.memoryRelevanceExclusionSummaries.length === 0
+                               ? "No memory exclusions."
+                               : memoryPage.viewModel.memoryRelevanceExclusionSummaries.join(" / ")
                         Layout.fillWidth: true
                     }
 

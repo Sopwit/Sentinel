@@ -276,6 +276,26 @@ Guidelines:
   background summarization, autonomous memory writes, tool execution, subprocesses, cloud calls, or
   semantic/vector activation.
 
+## Phase 27 Memory Context Quality Notes
+
+Phase 27.0 through Phase 27.8 improves local memory relevance visibility while preserving the same
+opt-in, deterministic, local-only context boundary.
+
+Guidelines:
+
+- Home shows only the compact line `Context used: X memories / Y chars` when local context
+  injection is enabled. It must not expose prompt dumps, hidden prompt text, raw candidate payloads,
+  vector scores, or provider/runtime internals.
+- Runtime/Memory normal mode shows a concise memory context quality summary: included memory count,
+  excluded memory count, and budget usage.
+- Runtime/Memory Developer Mode may show deterministic relevance trace rows, budget details,
+  included/excluded counts, duplicate suppression, and exclusion reasons.
+- Settings Chat shows context enabled/disabled and deterministic source count in normal mode.
+  Memory relevance budget/details stay behind Developer Mode.
+- Memory relevance UI is read-only metadata. It must not add semantic search controls, vector
+  ranking controls, filesystem indexing, background summarization, autonomous memory writes,
+  provider/cloud actions, tools, voice controls, or prompt-debug exposure.
+
 ## Future Assistant Visuals
 
 Future assistant visuals may include subtle status presence, listening/thinking indicators, and

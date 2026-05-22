@@ -125,15 +125,25 @@ builds local value-only candidates from recent conversation history, determinist
 conversation summaries, committed key-value memory, runtime metadata, orchestration metadata, and
 selected conversation metadata.
 
+Committed key-value memory first passes through deterministic memory relevance scoring. The value
+records are `MemoryRelevancePolicy`, `MemoryRelevanceCandidate`, `MemoryRelevanceScore`,
+`MemoryRelevanceReason`, `MemoryRelevanceBudget`, `MemoryRelevanceSelection`,
+`MemoryRelevanceTrace`, and `MemoryRelevanceSummary`. Scoring uses only literal key overlap,
+literal value overlap, active conversation title overlap, recent conversation terms, and
+explicit pinned/committed priority metadata. Selected memories are emitted as separate committed
+memory context candidates so duplicate suppression, character budgeting, included/excluded counts,
+and exclusion reasons remain explainable.
+
 Selection is deterministic: fixed source priority, stable tie-breaking, bounded character budget,
 bounded candidate/source counts, duplicate suppression, and explicit exclusion reasons. Committed
-key-value memory is considered for prompt injection only when deterministic literal/key metadata
-overlaps the user prompt. The current user prompt remains outside conversation history and is
-placed after the compact local context block.
+key-value memory is considered for prompt injection only when deterministic local relevance
+metadata finds literal overlap or explicit pinned priority. The current user prompt remains outside
+conversation history and is placed after the compact local context block.
 
 QML receives only safe summaries through `DesktopShellViewModel`: context used, budget usage,
-included/excluded counts, source summaries, and trace summaries. The UI does not receive raw
-prompt dumps, vector scores, provider handles, filesystem paths, or semantic payloads.
+included/excluded counts, memory relevance budget/trace/exclusion summaries, source summaries, and
+trace summaries. The UI does not receive raw prompt dumps, vector scores, provider handles,
+filesystem paths, or semantic payloads.
 
 The context assembly path does not run semantic/vector search, embeddings, filesystem indexing,
 background summarization, autonomous memory writes, tool/plugin execution, subprocesses, cloud/API
