@@ -283,6 +283,17 @@ Companion, Focus, Mission, System, and Tactical modes remain presentation-densit
 must never alter backend authority, safety policy, provider access, tool access, or voice/runtime
 execution.
 
+Phase 19.10 through Phase 19.15 is the final full UI refinement pass for the Desktop Alpha shell.
+Shared controls, menus, dock states, chips, text fields, Settings navigation, and floating actions
+should avoid yellow/lime/neon treatment entirely. Active/focus styling should use low-opacity
+cyan/blue glass borders and calm glow only. Home remains the primary chatbot surface; AI Bridge is
+limited to provider/cloud status, conversation list, and selected conversation summary; Runtime/
+Memory and Agents keep Developer sections hidden unless Developer Mode is enabled; Settings keeps
+left-side navigation with reliable scroll active-state sync. Bottom status values must remain
+bound to `DesktopShellViewModel`/controller state, never mock text. Mode presentation may change
+density and telemetry visibility only, with no change to backend authority, safety, permissions,
+provider access, tool access, voice execution, or semantic authority.
+
 ## i18n Plan
 
 Localization is planned but not implemented in Phase 19.4-19.9. Sentinel should use Qt-native

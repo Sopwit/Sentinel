@@ -37,7 +37,17 @@ Item {
     function jumpTo(category) {
         activeCategory = category
         var target = sectionFor(category)
-        settingsFlick.contentY = Math.max(0, Math.min(target.y, settingsFlick.contentHeight - settingsFlick.height))
+        settingsFlick.contentY = Math.max(0, Math.min(target.y - SentinelTheme.spaceSm,
+                                                      settingsFlick.contentHeight - settingsFlick.height))
+    }
+
+    function voiceReadinessLine() {
+        var piperReady = viewModel.piperSynthesisStatus === "Ready Metadata"
+        var whisperReady = viewModel.whisperTranscriptionStatus === "Ready Metadata"
+        var prefix = piperReady && whisperReady
+                     ? "Voice prepared, activation disabled. "
+                     : "Voice readiness metadata. "
+        return prefix + viewModel.voiceConfigurationReadinessSummary
     }
 
     onDeveloperModeChanged: {
@@ -50,7 +60,7 @@ Item {
         spacing: SentinelTheme.spaceLg
 
         ShellPanel {
-            Layout.preferredWidth: settingsPage.compact ? 150 : 180
+            Layout.preferredWidth: settingsPage.compact ? 144 : 172
             Layout.fillHeight: true
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.036)
             border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
@@ -65,7 +75,8 @@ Item {
                     text: "Settings"
                     color: SentinelTheme.textPrimary
                     font.pixelSize: SentinelTheme.fontCard
-                    wrapMode: Text.WordWrap
+                    maximumLineCount: 1
+                    elide: Text.ElideRight
                 }
 
                 Repeater {
@@ -87,14 +98,14 @@ Item {
                                    : SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall
                             verticalAlignment: Text.AlignVCenter
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
                         }
 
                         background: Rectangle {
                             radius: SentinelTheme.radiusMd
                             color: settingsPage.activeCategory === navButton.modelData
-                                   ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName), 0.14)
+                                   ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName), 0.11)
                                    : navButton.hovered
                                      ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
                                      : "transparent"
@@ -118,8 +129,9 @@ Item {
             ScrollBar.vertical: ScrollBar {}
 
             onContentYChanged: {
-                var y = contentY + SentinelTheme.spaceLg
-                if (developerMode && y >= developerSection.y)
+                var y = contentY + Math.min(settingsFlick.height * 0.36, 180)
+                var atBottom = contentY + settingsFlick.height >= settingsFlick.contentHeight - SentinelTheme.spaceSm
+                if (developerMode && (y >= developerSection.y || atBottom))
                     activeCategory = "Developer"
                 else if (y >= privacySection.y)
                     activeCategory = "Privacy / Data"
@@ -207,8 +219,34 @@ Item {
                                 }
 
                                 Switch {
+                                    id: developerSwitch
                                     checked: settingsPage.viewModel.developerModeEnabled
                                     onToggled: settingsPage.viewModel.developerModeEnabled = checked
+
+                                    indicator: Rectangle {
+                                        implicitWidth: 46
+                                        implicitHeight: 24
+                                        x: developerSwitch.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: height / 2
+                                        color: developerSwitch.checked
+                                               ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName), 0.18)
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                        border.color: developerSwitch.activeFocus
+                                                      ? SentinelTheme.focusBorder
+                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                        Rectangle {
+                                            x: developerSwitch.checked ? parent.width - width - 3 : 3
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 18
+                                            height: 18
+                                            radius: 9
+                                            color: developerSwitch.checked
+                                                   ? SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName)
+                                                   : SentinelTheme.textMuted
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -297,6 +335,7 @@ Item {
                         }
 
                         ComboBox {
+                            id: modelCombo
                             Layout.fillWidth: true
                             enabled: settingsPage.viewModel.ollamaModelCount > 0
                             model: settingsPage.viewModel.ollamaModelNames
@@ -305,6 +344,52 @@ Item {
                                                            : settingsPage.viewModel.selectedLocalModelStatus
                                                              + " / No model selected"
                             onActivated: settingsPage.viewModel.selectedLocalModel = currentText
+
+                            contentItem: Text {
+                                leftPadding: SentinelTheme.spaceMd
+                                rightPadding: SentinelTheme.space2Xl
+                                text: modelCombo.displayText
+                                color: modelCombo.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontBody
+                                verticalAlignment: Text.AlignVCenter
+                                maximumLineCount: 1
+                                elide: Text.ElideRight
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                border.color: modelCombo.activeFocus
+                                              ? SentinelTheme.focusBorder
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.085)
+                            }
+
+                            delegate: ItemDelegate {
+                                id: modelOption
+                                width: modelCombo.width
+                                text: modelData
+                                highlighted: modelCombo.highlightedIndex === index
+
+                                contentItem: Text {
+                                    text: modelOption.text
+                                    color: modelOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    color: modelOption.highlighted
+                                           ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(settingsPage.viewModel.currentModeName), 0.10)
+                                           : "transparent"
+                                }
+                            }
+
+                            popup.background: Rectangle {
+                                radius: SentinelTheme.radiusLg
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.095)
+                            }
                         }
 
                         InfoRow {
@@ -342,24 +427,112 @@ Item {
                         }
 
                         CheckBox {
+                            id: localChatToggle
                             Layout.fillWidth: true
                             text: "Local chat inference"
+                            leftPadding: localChatToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.localChatInferenceEnabled
                             onToggled: settingsPage.viewModel.localChatInferenceEnabled = checked
+                            contentItem: Text {
+                                text: localChatToggle.text
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            indicator: Rectangle {
+                                implicitWidth: 18
+                                implicitHeight: 18
+                                x: localChatToggle.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: SentinelTheme.radiusSm
+                                color: localChatToggle.checked
+                                       ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.16)
+                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                                border.color: localChatToggle.activeFocus
+                                              ? SentinelTheme.focusBorder
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    visible: localChatToggle.checked
+                                    color: SentinelTheme.accent
+                                }
+                            }
                         }
 
                         CheckBox {
+                            id: streamingToggle
                             Layout.fillWidth: true
                             text: "Local response streaming"
+                            leftPadding: streamingToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.localInferenceStreamingEnabled
                             onToggled: settingsPage.viewModel.localInferenceStreamingEnabled = checked
+                            contentItem: Text {
+                                text: streamingToggle.text
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            indicator: Rectangle {
+                                implicitWidth: 18
+                                implicitHeight: 18
+                                x: streamingToggle.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: SentinelTheme.radiusSm
+                                color: streamingToggle.checked
+                                       ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.16)
+                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                                border.color: streamingToggle.activeFocus
+                                              ? SentinelTheme.focusBorder
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    visible: streamingToggle.checked
+                                    color: SentinelTheme.accent
+                                }
+                            }
                         }
 
                         CheckBox {
+                            id: contextToggle
                             Layout.fillWidth: true
                             text: "Use local memory/context in chat"
+                            leftPadding: contextToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.promptContextInjectionEnabled
                             onToggled: settingsPage.viewModel.promptContextInjectionEnabled = checked
+                            contentItem: Text {
+                                text: contextToggle.text
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                verticalAlignment: Text.AlignVCenter
+                                elide: Text.ElideRight
+                            }
+                            indicator: Rectangle {
+                                implicitWidth: 18
+                                implicitHeight: 18
+                                x: contextToggle.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: SentinelTheme.radiusSm
+                                color: contextToggle.checked
+                                       ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.16)
+                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                                border.color: contextToggle.activeFocus
+                                              ? SentinelTheme.focusBorder
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    visible: contextToggle.checked
+                                    color: SentinelTheme.accent
+                                }
+                            }
                         }
 
                         InfoRow {
@@ -470,8 +643,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             label: "Readiness"
-                            value: "Voice prepared, activation disabled. "
-                                   + settingsPage.viewModel.voiceConfigurationReadinessSummary
+                            value: settingsPage.voiceReadinessLine()
                             Layout.fillWidth: true
                         }
 

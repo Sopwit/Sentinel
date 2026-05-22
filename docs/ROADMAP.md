@@ -219,6 +219,26 @@ Still out of scope:
   endpoint expansion, subprocess launch, filesystem/system actions, tools/plugins, autonomous
   loops, and broad model-management workflows.
 
+## Phase 19.10-19.15: Full UI Refinement Pass
+
+Completed. Final Desktop Alpha UI polish pass over shared styling, Home chat, AI Bridge
+conversations, Runtime/Memory, Agents, Settings navigation, typography, adaptive layout, and
+bottom status presentation.
+
+Delivered:
+
+- Removed remaining harsh yellow/lime/neon styling from shared QML controls and page surfaces.
+- Kept Home chatbot-first and AI Bridge conversation-focused.
+- Kept Developer surfaces hidden unless Developer Mode is enabled.
+- Improved Settings category navigation and scroll active-state synchronization.
+- Confirmed bottom status remains view-model/controller driven and not mock data.
+
+Still out of scope:
+
+- Cloud/API providers, API keys, model-management actions, tool/plugin execution, autonomous
+  actions, microphone capture, playback, STT/TTS activation, permanent conversation delete,
+  persistent conversation pinning, semantic authority expansion, and backend permission changes.
+
 ## Phase 11.7-11.9: Local AI Usability Checkpoint And Runtime QA
 
 Completed. Checkpointed the current local AI user flow and runtime QA posture before Phase 12.

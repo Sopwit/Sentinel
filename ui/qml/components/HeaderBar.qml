@@ -8,8 +8,8 @@ ShellPanel {
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property date now: new Date()
-    readonly property int modeButtonWidth: compact ? 132 : 148
-    readonly property string dashboardSubtitleText: "Chat with Sentinel through configured local providers."
+    readonly property int modeButtonWidth: compact ? 124 : 136
+    readonly property string dashboardSubtitleText: "Chat through configured local providers."
     readonly property string modeSubtitleText: pageSubtitle(headerBar.viewModel.currentPage)
     readonly property string subtitleText: headerBar.viewModel.currentPage === "Dashboard"
                                            ? headerBar.dashboardSubtitleText
@@ -99,19 +99,20 @@ ShellPanel {
 
             Rectangle {
                 visible: !headerBar.compact
-                Layout.preferredWidth: 118
-                Layout.preferredHeight: 32
-                radius: 16
+                Layout.preferredWidth: 104
+                Layout.preferredHeight: 28
+                radius: 14
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.075)
 
                 Label {
                     anchors.fill: parent
-                    anchors.leftMargin: SentinelTheme.spaceMd
-                    anchors.rightMargin: SentinelTheme.spaceMd
+                    anchors.leftMargin: SentinelTheme.spaceSm
+                    anchors.rightMargin: SentinelTheme.spaceSm
                     text: headerBar.viewModel.ollamaHealthStatus
                     color: SentinelTheme.textPlaceholder
                     verticalAlignment: Text.AlignVCenter
+                    horizontalAlignment: Text.AlignHCenter
                     font.pixelSize: SentinelTheme.fontSmall
                     elide: Text.ElideRight
                 }
@@ -120,7 +121,7 @@ ShellPanel {
             Button {
                 id: modeButton
                 Layout.preferredWidth: headerBar.modeButtonWidth
-                Layout.preferredHeight: 32
+                Layout.preferredHeight: 28
                 hoverEnabled: true
                 focusPolicy: Qt.StrongFocus
                 text: headerBar.viewModel.currentModeName
@@ -129,7 +130,7 @@ ShellPanel {
                 contentItem: RowLayout {
                     anchors.fill: parent
                     anchors.leftMargin: SentinelTheme.spaceMd
-                    anchors.rightMargin: SentinelTheme.spaceMd
+                    anchors.rightMargin: SentinelTheme.spaceSm
                     spacing: SentinelTheme.spaceSm
 
                     Label {
@@ -150,12 +151,12 @@ ShellPanel {
                 background: Rectangle {
                     radius: 16
                     color: modeButton.down || modePopup.opened
-                           ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.18)
+                           ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.13)
                            : modeButton.hovered
-                             ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.12)
+                             ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.085)
                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
                     border.color: modeButton.activeFocus ? SentinelTheme.focusBorder
-                                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.080)
                     border.width: 1
                 }
 
@@ -170,8 +171,8 @@ ShellPanel {
 
                     background: Rectangle {
                         radius: SentinelTheme.radiusLg
-                        color: SentinelTheme.backgroundRaised
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.095)
                     }
 
                     contentItem: ColumnLayout {

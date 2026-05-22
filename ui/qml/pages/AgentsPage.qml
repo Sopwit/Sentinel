@@ -239,14 +239,18 @@ ScrollView {
                             StatusChip {
                                 label: "Blocked"
                                 value: agentsPage.viewModel.agentTaskQueueBlockedCount.toString()
-                                accent: SentinelTheme.warning
+                                accent: agentsPage.viewModel.agentTaskQueueBlockedCount > 0
+                                        ? SentinelTheme.warning
+                                        : SentinelTheme.textMuted
                                 muted: agentsPage.viewModel.agentTaskQueueBlockedCount === 0
                             }
 
                             StatusChip {
                                 label: "Refused"
                                 value: agentsPage.viewModel.agentTaskQueueRefusedCount.toString()
-                                accent: SentinelTheme.warning
+                                accent: agentsPage.viewModel.agentTaskQueueRefusedCount > 0
+                                        ? SentinelTheme.warning
+                                        : SentinelTheme.textMuted
                                 muted: agentsPage.viewModel.agentTaskQueueRefusedCount === 0
                             }
                         }
@@ -299,7 +303,9 @@ ScrollView {
                             StatusChip {
                                 label: "Refused"
                                 value: agentsPage.viewModel.agentPlanningRefusedCount.toString()
-                                accent: SentinelTheme.warning
+                                accent: agentsPage.viewModel.agentPlanningRefusedCount > 0
+                                        ? SentinelTheme.warning
+                                        : SentinelTheme.textMuted
                                 muted: agentsPage.viewModel.agentPlanningRefusedCount === 0
                             }
                         }
@@ -352,7 +358,9 @@ ScrollView {
                             StatusChip {
                                 label: "Restricted"
                                 value: agentsPage.viewModel.agentCapabilityRestrictedCount.toString()
-                                accent: SentinelTheme.warning
+                                accent: agentsPage.viewModel.agentCapabilityRestrictedCount > 0
+                                        ? SentinelTheme.warning
+                                        : SentinelTheme.textMuted
                                 muted: agentsPage.viewModel.agentCapabilityRestrictedCount === 0
                             }
                         }
@@ -360,12 +368,27 @@ ScrollView {
                         Repeater {
                             model: Math.min(4, agentsPage.viewModel.agentCapabilitySummaries.length)
 
-                            InfoRow {
+                            Rectangle {
+                                id: capabilityRow
                                 required property int index
-                                compact: true
-                                label: "Capability"
-                                value: agentsPage.viewModel.agentCapabilitySummaries[index]
                                 Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                implicitHeight: capabilityText.implicitHeight + SentinelTheme.spaceSm
+
+                                Text {
+                                    id: capabilityText
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: agentsPage.viewModel.agentCapabilitySummaries[capabilityRow.index]
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 3
+                                    elide: Text.ElideRight
+                                }
                             }
                         }
                     }
@@ -410,7 +433,9 @@ ScrollView {
                             StatusChip {
                                 label: "Restricted"
                                 value: agentsPage.viewModel.toolContractRestrictedCount.toString()
-                                accent: SentinelTheme.warning
+                                accent: agentsPage.viewModel.toolContractRestrictedCount > 0
+                                        ? SentinelTheme.warning
+                                        : SentinelTheme.textMuted
                                 muted: agentsPage.viewModel.toolContractRestrictedCount === 0
                             }
                         }
@@ -418,12 +443,27 @@ ScrollView {
                         Repeater {
                             model: Math.min(4, agentsPage.viewModel.toolContractSummaries.length)
 
-                            InfoRow {
+                            Rectangle {
+                                id: contractRow
                                 required property int index
-                                compact: true
-                                label: "Contract"
-                                value: agentsPage.viewModel.toolContractSummaries[index]
                                 Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                implicitHeight: contractText.implicitHeight + SentinelTheme.spaceSm
+
+                                Text {
+                                    id: contractText
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: agentsPage.viewModel.toolContractSummaries[contractRow.index]
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                    maximumLineCount: 3
+                                    elide: Text.ElideRight
+                                }
                             }
                         }
                     }

@@ -37,7 +37,7 @@ ShellPanel {
     implicitHeight: compact ? 58 : 62
     radius: SentinelTheme.radiusPill
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.82)
-    border.color: SentinelTheme.withAlpha(modeAccent, 0.20)
+    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.080)
     showBrackets: false
     clip: true
 
@@ -102,7 +102,7 @@ ShellPanel {
                              : "transparent"
                     border.color: dockButton.activeFocus ? SentinelTheme.focusBorder
                                                          : dockButton.active
-                                                           ? SentinelTheme.withAlpha(dock.modeAccent, 0.30)
+                                                           ? SentinelTheme.withAlpha(dock.modeAccent, 0.18)
                                                            : "transparent"
                     border.width: 1
                 }

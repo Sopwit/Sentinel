@@ -14,10 +14,10 @@ Rectangle {
     radius: SentinelTheme.radiusPill
     color: SentinelTheme.withAlpha(statusChip.accent,
                                    statusChip.selected ? 0.105 : statusChip.muted ? 0.028 : 0.055)
-    border.color: SentinelTheme.withAlpha(statusChip.accent,
-                                          statusChip.selected ? 0.20 : statusChip.muted ? 0.07 : 0.12)
-    implicitWidth: Math.min(Math.max(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 104), 300)
-    implicitHeight: Math.max(28, chipText.implicitHeight + SentinelTheme.spaceXs * 2)
+    border.color: SentinelTheme.withAlpha(statusChip.selected ? statusChip.accent : SentinelTheme.textPrimary,
+                                          statusChip.selected ? 0.16 : statusChip.muted ? 0.045 : 0.075)
+    implicitWidth: Math.min(Math.max(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 96), 320)
+    implicitHeight: 28
     scale: 1.0
 
     Behavior on color {
@@ -47,8 +47,7 @@ Rectangle {
         radius: parent.radius
         color: "transparent"
         border.width: 1
-        border.color: SentinelTheme.withAlpha(statusChip.accent,
-                                              hoverArea.containsMouse || statusChip.selected ? 0.10 : 0.0)
+        border.color: "transparent"
         opacity: statusChip.muted ? 0.45 : 1.0
 
         Behavior on border.color {
@@ -67,8 +66,9 @@ Rectangle {
                                           : statusChip.value
         color: statusChip.muted ? SentinelTheme.textMuted : SentinelTheme.textPrimary
         font.pixelSize: SentinelTheme.fontSmall
-        wrapMode: Text.WordWrap
-        maximumLineCount: 2
+        wrapMode: Text.NoWrap
+        maximumLineCount: 1
+        elide: Text.ElideRight
     }
 
     StatusPulse {

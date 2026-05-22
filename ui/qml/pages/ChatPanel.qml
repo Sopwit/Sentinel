@@ -169,8 +169,8 @@ ShellPanel {
                                    : SentinelTheme.textPrimary
                             font.pixelSize: SentinelTheme.fontSmall
                             font.bold: conversationItem.active
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
                         }
 
                         Text {
@@ -182,8 +182,8 @@ ShellPanel {
                                   + chatPanel.viewModel.conversationArchivedSummaries[index]
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontTiny
-                            wrapMode: Text.WordWrap
-                            maximumLineCount: 2
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
                         }
                     }
 
@@ -206,7 +206,7 @@ ShellPanel {
                         background: Rectangle {
                             radius: 15
                             color: overflowButton.hovered
-                                   ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.12)
+                                   ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.085)
                                    : "transparent"
                             border.color: overflowButton.activeFocus
                                           ? SentinelTheme.focusBorder
@@ -216,14 +216,41 @@ ShellPanel {
                         Menu {
                             id: overflowMenu
                             width: 180
+                            padding: SentinelTheme.spaceXs
 
-                            MenuItem {
-                                text: "Rename"
-                                enabled: conversationItem.active
-                                onTriggered: renameInput.forceActiveFocus()
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusLg
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.095)
                             }
 
                             MenuItem {
+                                id: renameMenuItem
+                                text: "Rename"
+                                onTriggered: {
+                                    if (!conversationItem.active)
+                                        chatPanel.viewModel.switchConversation(conversationItem.conversationId)
+                                    renameInput.forceActiveFocus()
+                                }
+
+                                contentItem: Text {
+                                    text: renameMenuItem.text
+                                    color: renameMenuItem.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: renameMenuItem.highlighted
+                                           ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10)
+                                           : "transparent"
+                                }
+                            }
+
+                            MenuItem {
+                                id: archiveMenuItem
                                 text: conversationItem.archived ? "Unarchive" : "Archive"
                                 onTriggered: {
                                     if (conversationItem.archived)
@@ -231,16 +258,59 @@ ShellPanel {
                                     else
                                         chatPanel.viewModel.archiveConversation(conversationItem.conversationId)
                                 }
+
+                                contentItem: Text {
+                                    text: archiveMenuItem.text
+                                    color: archiveMenuItem.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: archiveMenuItem.highlighted
+                                           ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.10)
+                                           : "transparent"
+                                }
                             }
 
                             MenuItem {
-                                text: "Pin"
+                                id: pinMenuItem
+                                text: "Pin disabled"
                                 enabled: false
+
+                                contentItem: Text {
+                                    text: pinMenuItem.text
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: "transparent"
+                                }
                             }
 
                             MenuItem {
+                                id: deleteMenuItem
                                 text: "Delete disabled"
                                 enabled: false
+
+                                contentItem: Text {
+                                    text: deleteMenuItem.text
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: "transparent"
+                                }
                             }
                         }
                     }

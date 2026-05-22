@@ -262,7 +262,7 @@ ScrollView {
                         StatusChip {
                             label: "Semantic"
                             value: memoryPage.viewModel.semanticProviderMode
-                            accent: SentinelTheme.warning
+                            accent: SentinelTheme.textMuted
                             muted: true
                             selected: true
                         }
@@ -425,6 +425,8 @@ ScrollView {
                             text: modelData
                             color: SentinelTheme.textMuted
                             wrapMode: Text.WordWrap
+                            maximumLineCount: 3
+                            elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
                     }
@@ -749,6 +751,15 @@ ScrollView {
                 columns: memoryPage.compact ? 1 : 3
                 columnSpacing: SentinelTheme.spaceSm
                 rowSpacing: SentinelTheme.spaceSm
+
+                Label {
+                    Layout.fillWidth: true
+                    Layout.columnSpan: memoryPage.compact ? 1 : 3
+                    text: "Key = memory name/topic. Value = saved local note. Store saves local memory only; no cloud or model call."
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                }
 
                 SentinelTextField {
                     id: memoryKey

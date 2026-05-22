@@ -19,6 +19,8 @@ GridLayout {
         color: SentinelTheme.textMuted
         font.pixelSize: SentinelTheme.fontBody
         Layout.preferredWidth: infoRow.compact ? -1 : 112
+        maximumLineCount: 1
+        elide: Text.ElideRight
     }
 
     Label {
@@ -27,5 +29,7 @@ GridLayout {
         color: SentinelTheme.textPrimary
         font.pixelSize: SentinelTheme.fontBody
         wrapMode: Text.WordWrap
+        maximumLineCount: infoRow.compact ? 3 : 4
+        elide: Text.ElideRight
     }
 }
