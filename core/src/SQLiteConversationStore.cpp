@@ -4,6 +4,7 @@
 #include <QFileInfo>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QSqlRecord>
 #include <QUuid>
 #include <QVariant>
 
@@ -280,8 +281,8 @@ bool SQLiteConversationStore::saveSummaryMetadata(
     query.prepare(QStringLiteral("INSERT INTO conversation_summary_metadata("
                                  "conversation_id, summary_timestamp, covered_first_message_id, "
                                  "covered_last_message_id, estimated_reduction_percent, "
-                                 "readiness_state, summary) "
-                                 "VALUES(?, ?, ?, ?, ?, ?, ?) "
+                                 "readiness_state, summary_text, summary) "
+                                 "VALUES(?, ?, ?, ?, ?, ?, ?, ?) "
                                  "ON CONFLICT(conversation_id) DO UPDATE SET "
                                  "summary_timestamp = excluded.summary_timestamp,"
                                  "covered_first_message_id = excluded.covered_first_message_id,"
@@ -289,6 +290,7 @@ bool SQLiteConversationStore::saveSummaryMetadata(
                                  "estimated_reduction_percent = "
                                  "excluded.estimated_reduction_percent,"
                                  "readiness_state = excluded.readiness_state,"
+                                 "summary_text = excluded.summary_text,"
                                  "summary = excluded.summary"));
     query.addBindValue(metadata.conversationId);
     query.addBindValue(metadata.summaryTimestampUtc.toUTC().toString(Qt::ISODateWithMs));
@@ -296,6 +298,7 @@ bool SQLiteConversationStore::saveSummaryMetadata(
     query.addBindValue(metadata.coveredLastMessageId);
     query.addBindValue(metadata.estimatedReductionPercent);
     query.addBindValue(metadata.readinessState);
+    query.addBindValue(metadata.summaryText);
     query.addBindValue(metadata.summary);
     if (!query.exec()) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
@@ -323,7 +326,8 @@ SQLiteConversationStore::loadSummaryMetadata(const QString& conversationId) cons
     QSqlQuery query(database_);
     query.prepare(QStringLiteral("SELECT conversation_id, summary_timestamp, "
                                  "covered_first_message_id, covered_last_message_id, "
-                                 "estimated_reduction_percent, readiness_state, summary "
+                                 "estimated_reduction_percent, readiness_state, summary_text, "
+                                 "summary "
                                  "FROM conversation_summary_metadata "
                                  "WHERE conversation_id = ?"));
     query.addBindValue(conversationId);
@@ -343,7 +347,8 @@ SQLiteConversationStore::loadSummaryMetadata(const QString& conversationId) cons
     metadata.coveredLastMessageId = query.value(3).toInt();
     metadata.estimatedReductionPercent = query.value(4).toInt();
     metadata.readinessState = query.value(5).toString();
-    metadata.summary = query.value(6).toString();
+    metadata.summaryText = query.value(6).toString();
+    metadata.summary = query.value(7).toString();
     setLastError(ConversationStoreErrorCode::None, {});
     return metadata;
 }
@@ -512,10 +517,20 @@ void SQLiteConversationStore::initializeSchema() {
                                    "covered_last_message_id INTEGER NOT NULL DEFAULT 0,"
                                    "estimated_reduction_percent INTEGER NOT NULL DEFAULT 0,"
                                    "readiness_state TEXT NOT NULL,"
+                                   "summary_text TEXT NOT NULL DEFAULT '',"
                                    "summary TEXT NOT NULL,"
                                    "FOREIGN KEY(conversation_id) REFERENCES conversations(id))"))) {
         setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
         return;
+    }
+
+    if (!database_.record(QStringLiteral("conversation_summary_metadata"))
+             .contains(QStringLiteral("summary_text"))) {
+        if (!query.exec(QStringLiteral("ALTER TABLE conversation_summary_metadata "
+                                       "ADD COLUMN summary_text TEXT NOT NULL DEFAULT ''"))) {
+            setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+            return;
+        }
     }
 
     if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversation_schema_metadata("

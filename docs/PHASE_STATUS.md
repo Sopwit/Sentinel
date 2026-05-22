@@ -2,6 +2,44 @@
 
 ## Completed / Stable
 
+### Phase 31.0-31.12: Controlled Local Summary Generation Execution
+
+Completed. Enables explicit foreground local conversation summary generation through the existing
+local inference boundary while preserving transcript, memory, provider, tool, filesystem, and
+background-execution safety boundaries.
+
+Scope:
+
+- The Generate Summary action is manual-only, active-conversation-only, and requires local chat
+  inference readiness: enabled local chat, local loopback Ollama readiness, selected installed
+  model, unarchived active conversation, and no busy local request.
+- Summary generation uses the existing local inference worker and request-id/conversation-id stale
+  completion guard. It never runs autonomously, never schedules background work, and never uses
+  cloud/API providers, tools, plugins, filesystem indexing, subprocess expansion, or semantic/
+  vector authority.
+- Generated summary text is sanitized, compacted to the local summary budget, and refused if it
+  exposes hidden prompt/runtime/provider/tool/filesystem terms. Failures, cancellations, archived
+  conversations, missing runtime/model readiness, busy generation, stale completions, and invalid
+  output do not mutate transcripts, replace transcript history, or write committed memory.
+- Persistence stores only safe local summary records: sanitized summary text, timestamp, covered
+  message range, estimated reduction, readiness state, and source conversation id. Raw hidden
+  prompts, provider internals, runtime payloads, and traces are not persisted.
+- Prompt context injection can optionally include the generated summary as the existing
+  Conversation Summary context source when injection is explicitly enabled. It remains a
+  deterministic context candidate in stable ordering and never silently replaces transcript
+  history.
+- Chat exposes an explicit Generate Summary action, ready/loading/blocked indication, and summary
+  inclusion copy. Runtime/Memory shows summary metadata and inclusion state; Developer Mode keeps
+  traces and budgets visible. Settings Developer Mode shows summary status and inclusion/budget
+  posture.
+
+Known limitation:
+
+- Summary quality depends on the configured local Ollama model. There is still no autonomous
+  summarization, background compression, transcript replacement, committed-memory write,
+  semantic/vector authority, filesystem indexing, tools/plugins, subprocess expansion, cloud/API
+  provider path, or hidden prompt/debug dump exposure.
+
 ### Phase 30.0-30.10: Explicit Local Summary Generation Pipeline
 
 Completed. Adds manual-only local summary generation preparation metadata while keeping summary

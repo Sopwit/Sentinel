@@ -640,6 +640,13 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
+                        label: "Summary Inclusion"
+                        value: memoryPage.viewModel.conversationSummaryInjectionSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
                         valueMaximumLineCount: 8
                         label: "Summary Segments"
                         value: memoryPage.viewModel.conversationSummaryCandidateSegments.length === 0

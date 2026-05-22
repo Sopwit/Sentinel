@@ -1594,6 +1594,10 @@ QString DesktopShellViewModel::conversationSummaryPersistenceSummary() const {
     return controller_.conversationSummaryPersistenceSummary();
 }
 
+QString DesktopShellViewModel::conversationSummaryInjectionSummary() const {
+    return controller_.conversationSummaryInjectionSummary();
+}
+
 QStringList DesktopShellViewModel::conversationSummaryCandidateSegments() const {
     return controller_.conversationSummaryCandidateSegments();
 }

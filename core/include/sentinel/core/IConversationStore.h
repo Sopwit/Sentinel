@@ -76,6 +76,7 @@ struct ConversationSummaryMetadataRecord {
     int coveredLastMessageId = 0;
     int estimatedReductionPercent = 0;
     QString readinessState = QStringLiteral("Blocked");
+    QString summaryText;
     QString summary = QStringLiteral("No conversation summary metadata has been persisted.");
 };
 

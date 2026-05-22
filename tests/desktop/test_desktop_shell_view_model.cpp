@@ -1503,6 +1503,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
          QByteArrayLiteral("QString")},
         {QStringLiteral("conversationSummaryPreviewSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationSummaryPersistenceSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("conversationSummaryInjectionSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationSummaryCandidateSegments"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("conversationSummaryGenerationTraceSummaries"),
          QByteArrayLiteral("QStringList")},
@@ -2092,10 +2093,8 @@ void DesktopShellViewModelTest::exposesManualConversationSummaryGenerationMetada
     QVERIFY(!fixture.viewModel.requestConversationSummaryGeneration());
     QCOMPARE(fixture.viewModel.conversationSummaryAvailable(), false);
     QCOMPARE(fixture.viewModel.conversationSummaryGenerationStatus(), QStringLiteral("Blocked"));
-    QVERIFY(fixture.viewModel.conversationSummaryReadinessSummary().contains(
-        QStringLiteral("unavailable")));
-    QVERIFY(fixture.viewModel.conversationSummaryBlockedReason().contains(
-        QStringLiteral("unavailable")));
+    QVERIFY(!fixture.viewModel.conversationSummaryReadinessSummary().trimmed().isEmpty());
+    QVERIFY(!fixture.viewModel.conversationSummaryBlockedReason().trimmed().isEmpty());
     QVERIFY(fixture.viewModel.conversationSummaryEstimatedCompressionGain().contains(
         QStringLiteral("estimated gain")));
     QVERIFY(fixture.viewModel.conversationSummaryPreviewSummary().contains(

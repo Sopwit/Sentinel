@@ -3279,6 +3279,31 @@ QString ApplicationController::conversationSummaryPersistenceSummary() const {
     return latestConversationSummaryMetadata_.summary;
 }
 
+QString ApplicationController::conversationSummaryInjectionSummary() const {
+    const bool persistedSummaryAvailable =
+        latestConversationSummaryMetadata_.conversationId == activeConversationId_ &&
+        !latestConversationSummaryMetadata_.summaryText.trimmed().isEmpty();
+    const bool injected =
+        latestPromptContextInjectionResult_.bundle.blocks.end() !=
+        std::find_if(latestPromptContextInjectionResult_.bundle.blocks.begin(),
+                     latestPromptContextInjectionResult_.bundle.blocks.end(),
+                     [](const PromptContextBlock& block) {
+                         return block.source ==
+                                ContextAssemblySourceKind::ConversationSummary;
+                     });
+    if (!promptContextInjectionEnabled_) {
+        return persistedSummaryAvailable
+                   ? QStringLiteral("Summary available; context injection is disabled.")
+                   : QStringLiteral("No generated summary is available for injection.");
+    }
+    if (injected) {
+        return QStringLiteral("Generated summary is included in local prompt context.");
+    }
+    return persistedSummaryAvailable
+               ? QStringLiteral("Summary available but not selected within current context budget.")
+               : QStringLiteral("No generated summary is available for injection.");
+}
+
 QStringList ApplicationController::conversationSummaryCandidateSegments() const {
     return sentinel::core::conversationSummarySegmentSummaries(conversationSummaryGenerationResult());
 }
@@ -5066,6 +5091,61 @@ ApplicationController::conversationWindowForPrompt(const QString& prompt) const 
 
 ConversationSummaryResult
 ApplicationController::conversationSummaryForPrompt(const QString& prompt) const {
+    if (latestConversationSummaryMetadata_.conversationId == activeConversationId_ &&
+        !latestConversationSummaryMetadata_.summaryText.trimmed().isEmpty()) {
+        ConversationSummaryResult result;
+        result.policy = conversationSummaryPolicy_;
+        result.status = ConversationSummaryStatus::Ready;
+        result.readiness.status = ConversationSummaryStatus::Ready;
+        result.readiness.available = true;
+        result.readiness.blockedReason.clear();
+        result.readiness.summary = QStringLiteral("Manual local summary is available.");
+        result.sourceConversationId = latestConversationSummaryMetadata_.conversationId;
+        result.summaryTimestampUtc = latestConversationSummaryMetadata_.summaryTimestampUtc;
+        result.coveredFirstMessageIndex = latestConversationSummaryMetadata_.coveredFirstMessageId;
+        result.coveredLastMessageIndex = latestConversationSummaryMetadata_.coveredLastMessageId;
+        result.estimatedReductionPercent =
+            latestConversationSummaryMetadata_.estimatedReductionPercent;
+        result.text =
+            QStringLiteral("%1\n%2\n%3")
+                .arg(conversationSummaryPolicy_.delimiterStart,
+                     latestConversationSummaryMetadata_.summaryText.trimmed(),
+                     conversationSummaryPolicy_.delimiterEnd);
+        result.summary =
+            QStringLiteral("Generated local summary covers messages %1-%2 with %3% estimated "
+                           "reduction.")
+                .arg(result.coveredFirstMessageIndex)
+                .arg(result.coveredLastMessageIndex)
+                .arg(result.estimatedReductionPercent);
+        result.window.summarizedMessageCount =
+            std::max(0, result.coveredLastMessageIndex - result.coveredFirstMessageIndex + 1);
+        result.window.blockCount = 1;
+        result.window.summary = result.summary;
+        result.budget.maxCharacters = conversationSummaryPolicy_.maxCharacters;
+        result.budget.includedCharacters =
+            toInt(latestConversationSummaryMetadata_.summaryText.trimmed().size());
+        result.budget.estimatedCharacters = result.budget.includedCharacters;
+        result.budget.remainingCharacters =
+            std::max(0, result.budget.maxCharacters - result.budget.includedCharacters);
+        result.budget.blockCount = 1;
+        result.budget.summary =
+            QStringLiteral("%1 generated summary characters available within %2 character budget.")
+                .arg(result.budget.includedCharacters)
+                .arg(result.budget.maxCharacters);
+        result.blocks.append(ConversationSummaryBlock{
+            1,
+            result.coveredFirstMessageIndex,
+            result.coveredLastMessageIndex,
+            result.window.summarizedMessageCount,
+            result.budget.includedCharacters,
+            result.budget.includedCharacters,
+            false,
+            latestConversationSummaryMetadata_.summaryText.trimmed(),
+            {QStringLiteral("Generated manual local summary")},
+        });
+        return result;
+    }
+
     QList<ConversationWindowMessage> messages;
     if (!chatSession_) {
         return assembleConversationSummary(messages, {}, conversationSummaryPolicy_);
@@ -5355,8 +5435,21 @@ ApplicationController::planConversationSummaryGenerationForActiveConversation(
     request.activeConversationId = activeConversationId();
     request.explicitUserAction = explicitUserAction;
     request.requestedAtUtc = QDateTime::currentDateTimeUtc();
-    return planConversationSummaryGeneration(messages, conversationCompressionSummaryForPrompt({}),
-                                             request, conversationSummaryPolicy_);
+    auto policy = conversationSummaryPolicy_;
+    policy.generationAvailable = localChatSendAvailable();
+    auto result = planConversationSummaryGeneration(messages, conversationCompressionSummaryForPrompt({}),
+                                                    request, policy);
+    if (explicitUserAction && !policy.generationAvailable) {
+        result.readiness.available = false;
+        result.readiness.status = ConversationSummaryStatus::Blocked;
+        result.status = ConversationSummaryStatus::Blocked;
+        result.readiness.blockedReason = localChatSendAvailabilitySummary();
+        result.readiness.summary = result.readiness.blockedReason;
+        result.fallback.reason = result.readiness.blockedReason;
+        result.fallback.summary = QStringLiteral("Manual summary generation did not start.");
+        result.summary = result.readiness.blockedReason;
+    }
+    return result;
 }
 
 bool ApplicationController::persistConversationSummaryMetadata(
@@ -5373,6 +5466,8 @@ bool ApplicationController::persistConversationSummaryMetadata(
     metadata.coveredLastMessageId = result.coveredLastMessageIndex;
     metadata.estimatedReductionPercent = result.estimatedReductionPercent;
     metadata.readinessState = conversationSummaryStatusName(result.status);
+    metadata.summaryText = result.status == ConversationSummaryStatus::Ready ? result.text.trimmed()
+                                                                             : QString{};
     metadata.summary = QStringLiteral("%1 / messages %2-%3 / %4% estimated reduction")
                            .arg(metadata.readinessState)
                            .arg(metadata.coveredFirstMessageId)
@@ -5553,6 +5648,214 @@ ApplicationController::preparePromptContextInjection(const QString& prompt) {
         result, assembly, authority, semanticPromptInclusionPolicy());
     result.prompt = latestSemanticPromptInclusionResult_.prompt;
     return result;
+}
+
+ConversationSummaryResult
+ApplicationController::blockedConversationSummaryResult(const QString& reason,
+                                                        const QString& fallback) const {
+    ConversationSummaryResult result;
+    result.policy = conversationSummaryPolicy_;
+    result.status = ConversationSummaryStatus::Blocked;
+    result.sourceConversationId = activeConversationId_;
+    result.summaryTimestampUtc = QDateTime::currentDateTimeUtc();
+    result.readiness.status = ConversationSummaryStatus::Blocked;
+    result.readiness.available = false;
+    result.readiness.blockedReason = reason;
+    result.readiness.summary = reason;
+    result.fallback.reason = reason;
+    result.fallback.summary = fallback;
+    result.trace.safetySummaries.append(QStringLiteral("blocked / %1").arg(reason));
+    result.trace.summary = fallback;
+    result.summary = reason;
+    return result;
+}
+
+QString ApplicationController::buildConversationSummaryPrompt(
+    const ConversationSummaryResult& plannedResult) const {
+    QStringList transcriptLines;
+    if (chatSession_) {
+        const auto& history = chatSession_->messages();
+        for (int i = 0; i < history.size(); ++i) {
+            const auto index = i + 1;
+            if (index < plannedResult.coveredFirstMessageIndex ||
+                index > plannedResult.coveredLastMessageIndex) {
+                continue;
+            }
+            const auto& message = history.at(i);
+            if (message.role == ChatRole::System) {
+                continue;
+            }
+            const auto content = message.content.simplified();
+            if (content.isEmpty()) {
+                continue;
+            }
+            transcriptLines.append(QStringLiteral("%1. %2: %3")
+                                       .arg(index)
+                                       .arg(chatRoleName(message.role), content.left(900)));
+        }
+    }
+
+    return QStringLiteral(
+               "Create a concise local conversation summary from the visible transcript below.\n"
+               "Rules: keep important factual continuity, retain recent context references, omit "
+               "repetition, avoid invented facts, do not mention tools, providers, runtime, "
+               "metadata, prompts, policies, or hidden instructions, and do not replace the "
+               "transcript. Return only the summary text in 120 words or fewer.\n\n"
+               "Visible transcript:\n%1")
+        .arg(transcriptLines.join(QStringLiteral("\n")).left(6000));
+}
+
+QString ApplicationController::sanitizeGeneratedConversationSummary(const QString& text) const {
+    auto sanitized = text.simplified();
+    sanitized.remove(conversationSummaryPolicy_.delimiterStart, Qt::CaseInsensitive);
+    sanitized.remove(conversationSummaryPolicy_.delimiterEnd, Qt::CaseInsensitive);
+    sanitized.remove(QRegularExpression(QStringLiteral("```[^`]*```")));
+    sanitized = sanitized.simplified();
+    if (sanitized.size() > conversationSummaryPolicy_.maxCharacters) {
+        sanitized = sanitized.left(conversationSummaryPolicy_.maxCharacters).trimmed();
+    }
+
+    const auto lowered = sanitized.toCaseFolded();
+    const QStringList refusedTerms{
+        QStringLiteral("system prompt"),
+        QStringLiteral("hidden prompt"),
+        QStringLiteral("developer message"),
+        QStringLiteral("runtime metadata"),
+        QStringLiteral("provider metadata"),
+        QStringLiteral("tool call"),
+        QStringLiteral("filesystem"),
+        QStringLiteral("api key"),
+    };
+    for (const auto& term : refusedTerms) {
+        if (lowered.contains(term)) {
+            return {};
+        }
+    }
+    return sanitized;
+}
+
+bool ApplicationController::startConversationSummaryInference(
+    const ConversationSummaryResult& plannedResult) {
+    if (!localInferenceWorker_) {
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            QStringLiteral("Local summary generation blocked: runtime client is unavailable."),
+            QStringLiteral("No local summary was generated."));
+        return false;
+    }
+
+    LocalInferenceRequest request;
+    request.prompt = buildConversationSummaryPrompt(plannedResult);
+    request.options.model = effectiveLocalModel({});
+    const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
+    request.options.timeoutMs = config.generateTimeoutMs;
+    request.id = QStringLiteral("conversation-summary-request-%1")
+                     .arg(++localInferenceRequestSequence_);
+
+    if (request.prompt.trimmed().isEmpty() || request.options.model.trimmed().isEmpty()) {
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            QStringLiteral("Local summary generation blocked: missing model or transcript."),
+            QStringLiteral("No local summary was generated."));
+        return false;
+    }
+
+    latestConversationSummaryGenerationResult_ = plannedResult;
+    latestConversationSummaryGenerationResult_.status = ConversationSummaryStatus::Planned;
+    latestConversationSummaryGenerationResult_.summary =
+        QStringLiteral("Manual local summary generation is running.");
+    latestConversationSummaryGenerationResult_.readiness.summary =
+        QStringLiteral("Manual local summary generation is running.");
+    latestConversationSummaryGenerationResult_.request.requestId = request.id;
+    activeLocalInferenceRequestId_ = request.id;
+    activeLocalInferenceConversationId_ = activeConversationId_;
+    activeLocalInferenceIsSummaryRequest_ = true;
+    activeLocalInferenceIsChatRequest_ = false;
+    localInferenceBusy_ = true;
+    latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
+    latestLocalInferenceResponse_.model = request.options.model;
+    latestLocalInferenceResponse_.text.clear();
+    latestLocalInferenceResponse_.summary =
+        QStringLiteral("Manual local summary generation is running.");
+    setConversationRuntimeRequest(request.id, request.options.model,
+                                  QStringLiteral("Local Ollama Summary"), false);
+    emit localInferenceChanged();
+    emit localChatInferenceRoutingChanged();
+
+    const auto started = localInferenceWorker_->startInference(
+        request, [this](const QString& requestId, const LocalInferenceResponse& response) {
+            finishLocalInferenceRequest(requestId, response);
+        });
+    if (!started) {
+        localInferenceBusy_ = false;
+        activeLocalInferenceIsSummaryRequest_ = false;
+        activeLocalInferenceRequestId_.clear();
+        activeLocalInferenceConversationId_.clear();
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            QStringLiteral("Local summary generation rejected: worker is busy."),
+            QStringLiteral("No local summary was generated."));
+        emit localInferenceChanged();
+        emit localChatInferenceRoutingChanged();
+        return false;
+    }
+    return true;
+}
+
+void ApplicationController::finishConversationSummaryInference(
+    const QString& requestId, const LocalInferenceResponse& response) {
+    if (requestId != latestConversationSummaryGenerationResult_.request.requestId) {
+        return;
+    }
+
+    latestLocalInferenceResponse_ = response;
+    latestLocalInferenceResponse_.text.clear();
+    if (response.status != LocalInferenceStatus::Succeeded) {
+        latestConversationSummaryGenerationResult_.status = ConversationSummaryStatus::Blocked;
+        latestConversationSummaryGenerationResult_.readiness.status =
+            ConversationSummaryStatus::Blocked;
+        latestConversationSummaryGenerationResult_.readiness.available = false;
+        latestConversationSummaryGenerationResult_.readiness.blockedReason =
+            response.summary.trimmed().isEmpty()
+                ? QStringLiteral("Local summary generation failed.")
+                : response.summary.trimmed();
+        latestConversationSummaryGenerationResult_.readiness.summary =
+            latestConversationSummaryGenerationResult_.readiness.blockedReason;
+        latestConversationSummaryGenerationResult_.fallback.reason =
+            latestConversationSummaryGenerationResult_.readiness.blockedReason;
+        latestConversationSummaryGenerationResult_.fallback.summary =
+            QStringLiteral("Transcript, memory, and persisted summary metadata were unchanged.");
+        latestConversationSummaryGenerationResult_.summary =
+            latestConversationSummaryGenerationResult_.readiness.blockedReason;
+        emit contextAssemblyChanged();
+        return;
+    }
+
+    const auto summaryText = sanitizeGeneratedConversationSummary(response.text);
+    if (summaryText.isEmpty()) {
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            QStringLiteral("Local summary generation returned an invalid safe summary."),
+            QStringLiteral("Transcript, memory, and persisted summary metadata were unchanged."));
+        emit contextAssemblyChanged();
+        return;
+    }
+
+    latestConversationSummaryGenerationResult_.status = ConversationSummaryStatus::Ready;
+    latestConversationSummaryGenerationResult_.readiness.status = ConversationSummaryStatus::Ready;
+    latestConversationSummaryGenerationResult_.readiness.available = true;
+    latestConversationSummaryGenerationResult_.readiness.blockedReason.clear();
+    latestConversationSummaryGenerationResult_.readiness.summary =
+        QStringLiteral("Manual local summary generated and persisted.");
+    latestConversationSummaryGenerationResult_.summaryTimestampUtc =
+        QDateTime::currentDateTimeUtc();
+    latestConversationSummaryGenerationResult_.text = summaryText;
+    latestConversationSummaryGenerationResult_.summary =
+        QStringLiteral("Manual local summary covers messages %1-%2 with %3% estimated reduction.")
+            .arg(latestConversationSummaryGenerationResult_.coveredFirstMessageIndex)
+            .arg(latestConversationSummaryGenerationResult_.coveredLastMessageIndex)
+            .arg(latestConversationSummaryGenerationResult_.estimatedReductionPercent);
+    latestConversationSummaryGenerationResult_.preview.available = true;
+    latestConversationSummaryGenerationResult_.preview.summary =
+        QStringLiteral("Manual local summary is available for optional context injection.");
+    persistConversationSummaryMetadata(latestConversationSummaryGenerationResult_);
+    emit contextAssemblyChanged();
 }
 
 QString ApplicationController::memoryRecallPolicyStatus() const {
@@ -6231,11 +6534,35 @@ void ApplicationController::clearLocalMemoryRecall() {
 }
 
 bool ApplicationController::requestConversationSummaryGeneration() {
+    if (localInferenceBusy_) {
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            QStringLiteral("Summary generation is already busy."),
+            QStringLiteral("Wait for the current local generation request to finish."));
+        emit contextAssemblyChanged();
+        return false;
+    }
+
+    if (activeConversationArchived()) {
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            QStringLiteral("Archived conversations cannot generate summaries."),
+            QStringLiteral("Unarchive the active conversation before generating a summary."));
+        emit contextAssemblyChanged();
+        return false;
+    }
+
     latestConversationSummaryGenerationResult_ =
         planConversationSummaryGenerationForActiveConversation(true);
-    persistConversationSummaryMetadata(latestConversationSummaryGenerationResult_);
+    if (latestConversationSummaryGenerationResult_.status != ConversationSummaryStatus::Planned) {
+        emit contextAssemblyChanged();
+        return false;
+    }
+
+    if (!startConversationSummaryInference(latestConversationSummaryGenerationResult_)) {
+        emit contextAssemblyChanged();
+        return false;
+    }
     emit contextAssemblyChanged();
-    return latestConversationSummaryGenerationResult_.status == ConversationSummaryStatus::Planned;
+    return true;
 }
 
 bool ApplicationController::sendMessage(const QString& message) {
@@ -6625,6 +6952,8 @@ bool ApplicationController::cancelLocalInference() {
     activeLocalInferenceRequestId_.clear();
     activeLocalInferenceConversationId_.clear();
     activeLocalInferenceIsChatRequest_ = false;
+    const bool wasSummaryRequest = activeLocalInferenceIsSummaryRequest_;
+    activeLocalInferenceIsSummaryRequest_ = false;
     localInferenceBusy_ = false;
     latestLocalInferenceResponse_.status = LocalInferenceStatus::Blocked;
     latestLocalInferenceResponse_.error = LocalInferenceError::RequestFailed;
@@ -6638,6 +6967,12 @@ bool ApplicationController::cancelLocalInference() {
         latestLocalInferenceStreamResult_.status = LocalInferenceStreamStatus::Cancelled;
         latestLocalInferenceStreamResult_.summary =
             QStringLiteral("Local streaming request was cancelled.");
+    }
+    if (wasSummaryRequest) {
+        latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+            QStringLiteral("Manual summary generation was cancelled."),
+            QStringLiteral("Transcript, memory, and persisted summary metadata were unchanged."));
+        emit contextAssemblyChanged();
     }
     emit localInferenceChanged();
     emit localChatInferenceRoutingChanged();
@@ -6859,12 +7194,20 @@ void ApplicationController::finishLocalInferenceRequest(const QString& requestId
         activeLocalInferenceConversationId_ != activeConversationId_) {
         localInferenceBusy_ = false;
         activeLocalInferenceIsChatRequest_ = false;
+        const bool wasSummaryRequest = activeLocalInferenceIsSummaryRequest_;
+        activeLocalInferenceIsSummaryRequest_ = false;
         activeLocalInferenceRequestId_.clear();
         activeLocalInferenceConversationId_.clear();
         latestLocalInferenceStreamResult_.accumulatedText.clear();
         setChatSendLifecycle(
             QStringLiteral("cancelled"),
             QStringLiteral("Ignored stale local response after conversation switch."));
+        if (wasSummaryRequest) {
+            latestConversationSummaryGenerationResult_ = blockedConversationSummaryResult(
+                QStringLiteral("Ignored stale summary completion after conversation switch."),
+                QStringLiteral("No transcript, memory, or summary metadata was changed."));
+            emit contextAssemblyChanged();
+        }
         emit localInferenceChanged();
         emit localChatInferenceRoutingChanged();
         return;
@@ -6873,6 +7216,15 @@ void ApplicationController::finishLocalInferenceRequest(const QString& requestId
     localInferenceBusy_ = false;
     activeLocalInferenceRequestId_.clear();
     activeLocalInferenceConversationId_.clear();
+    if (activeLocalInferenceIsSummaryRequest_) {
+        activeLocalInferenceIsSummaryRequest_ = false;
+        finishConversationSummaryInference(requestId, response);
+        setConversationRuntimeResult(response.status == LocalInferenceStatus::Succeeded,
+                                     response.summary, response.latencyMs);
+        emit localInferenceChanged();
+        emit localChatInferenceRoutingChanged();
+        return;
+    }
     latestLocalInferenceResponse_ = response;
     if (latestLocalInferenceResponse_.timeoutMs <= 0) {
         latestLocalInferenceResponse_.timeoutMs =
@@ -7170,6 +7522,7 @@ void ApplicationController::resetConversationRuntimeState() {
 
     localInferenceBusy_ = false;
     activeLocalInferenceIsChatRequest_ = false;
+    activeLocalInferenceIsSummaryRequest_ = false;
     activeLocalInferenceRequestId_.clear();
     activeLocalInferenceConversationId_.clear();
     conversationRuntimeRequestId_ = QStringLiteral("None");

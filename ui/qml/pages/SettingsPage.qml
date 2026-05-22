@@ -720,6 +720,14 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
+                            label: "Summary Injection"
+                            value: (settingsPage.viewModel.promptContextInjectionEnabled ? "Enabled / " : "Disabled / ")
+                                   + settingsPage.viewModel.conversationSummaryInjectionSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
                             label: "Adaptive Budget"
                             value: settingsPage.viewModel.conversationSalienceAllocationSummary
@@ -742,6 +750,8 @@ Item {
                             value: settingsPage.viewModel.conversationSummaryGenerationStatus
                                    + " / "
                                    + settingsPage.viewModel.conversationSummaryBlockedReason
+                                   + " / "
+                                   + settingsPage.viewModel.conversationSummaryInjectionSummary
                             Layout.fillWidth: true
                         }
 

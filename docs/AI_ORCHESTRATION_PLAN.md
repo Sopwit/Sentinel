@@ -1,5 +1,16 @@
 # AI Orchestration Plan
 
+Phase 31.0 through Phase 31.12 enables controlled local summary generation execution for explicit
+manual active-conversation requests only. The path uses the existing local inference worker and
+local Ollama readiness gates, refuses unavailable runtime/model, archived conversation, busy
+generation, cancellation, stale completion, invalid summary output, transcript mutation, committed
+memory writes, hidden prompt exposure, tools/plugins, filesystem authority, semantic/vector
+authority, filesystem indexing, subprocess expansion, cloud/API providers, autonomous generation,
+and background execution. Persistence stores only sanitized summary text, timestamp, source
+conversation id, covered range, estimated reduction, and readiness state. When explicit context
+injection is enabled, generated summaries participate as deterministic Conversation Summary
+context candidates in stable ordering and never replace transcript history.
+
 Phase 30.0 through Phase 30.10 adds an explicit local summary generation preparation pipeline while
 keeping summary execution unavailable. Manual requests are foreground-only, active-conversation
 only, and refuse background generation, autonomous creation, transcript mutation/replacement,
