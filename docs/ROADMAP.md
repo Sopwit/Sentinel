@@ -2671,6 +2671,26 @@ Still out of scope:
   microphone capture, playback, Piper/Whisper execution, filesystem scanning, subprocess launch,
   semantic authority expansion, full localization catalogs, and runtime language switching.
 
+## Phase 19.7-19.9: Final UI Layout Polish
+
+Completed. Finalized the Phase 19 UI cleanup while preserving runtime safety boundaries.
+
+Delivered:
+
+- Removed remaining decorative corner brackets and harsh colored panel borders.
+- Simplified Home into a chatbot-first surface and AI Bridge into provider/conversation metadata.
+- Hid Runtime/Memory and Agents Developer tabs completely unless Developer Mode is enabled.
+- Grouped Runtime/Memory and Agents Developer metadata into readable internal categories.
+- Rebuilt Settings with left-side category navigation and a switch-based Developer Mode control.
+- Kept i18n planning on the Qt `qsTr` plus `.ts`/`.qm` route for future English/Turkish catalogs.
+
+Still out of scope:
+
+- Localization implementation, cloud/API providers, model management actions, tools/plugins,
+  autonomous execution, microphone capture, playback, Piper/Whisper execution, filesystem
+  scanning, shell/subprocess authority, permanent conversation delete, pin persistence, and
+  semantic authority expansion.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.

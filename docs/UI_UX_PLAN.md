@@ -268,9 +268,24 @@ brackets and colored border accents are disabled by default; accent color is res
 segments, active chips, keyboard focus, and true warnings. Mode changes alter UI density and
 telemetry visibility only; they do not change backend authority or safety.
 
+Phase 19.7 through Phase 19.9 completes the Phase 19 UI polish pass. Decorative brackets, neon
+corner accents, and harsh colored panel borders are removed globally; glass panels use soft neutral
+borders and accent color only for selected controls, focus, status chips, and warnings. Home is a
+clean chatbot surface without the Local Assistant label or local-status block. AI Bridge is a
+provider/conversation side panel only, with simple conversation rows, a visible New action, and
+per-row overflow metadata for rename, archive/unarchive, pin disabled, and delete disabled states.
+Runtime/Memory and Agents hide their Developer tabs entirely when Developer Mode is off and group
+Developer content into readable internal categories. Settings uses left-side category navigation
+for General, Local AI, Model, Chat, Voice, Privacy / Data, and Developer; Developer is hidden when
+Developer Mode is off, Developer Mode uses a switch, and advanced semantic/vector/runtime
+diagnostics stay behind Developer Mode. Header health and mode controls are compact and stable.
+Companion, Focus, Mission, System, and Tactical modes remain presentation-density states only and
+must never alter backend authority, safety policy, provider access, tool access, or voice/runtime
+execution.
+
 ## i18n Plan
 
-Localization is planned but not implemented in Phase 19.4-19.6. Sentinel should use Qt-native
+Localization is planned but not implemented in Phase 19.4-19.9. Sentinel should use Qt-native
 `qsTr`/`.ts`/`.qm` translation workflow for QML and C++ because it integrates with Qt Linguist,
 supports translation context, and fits native packaging. A Helium-style JSON/string-catalog
 approach is not recommended for the core Qt UI unless a future plugin/content layer needs its own

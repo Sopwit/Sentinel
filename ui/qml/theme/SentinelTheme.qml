@@ -32,7 +32,7 @@ QtObject {
     readonly property color accentBorder: "#c8ecff26"
     readonly property color accentBorderSubtle: "#ffffff0d"
     readonly property color accentBorderSoft: "#9bdfff1a"
-    readonly property color focusBorder: "#ffd27aaa"
+    readonly property color focusBorder: "#9bdfff99"
     readonly property color success: "#9ff0d0"
     readonly property color successBorder: "#9ff0d033"
     readonly property color errorBorder: "#d66b6b66"
@@ -113,7 +113,7 @@ QtObject {
         if (modeName === "Focus Mode")
             return "#8eb8ff"
         if (modeName === "Mission Mode")
-            return "#e7b866"
+            return "#67d8c2"
         if (modeName === "System Mode")
             return "#7fe7ff"
         if (modeName === "Minimal Mode")

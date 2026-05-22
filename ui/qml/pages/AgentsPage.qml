@@ -11,6 +11,10 @@ ScrollView {
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
     property string selectedSection: "Overview"
+    onDeveloperModeChanged: {
+        if (!developerMode && selectedSection === "Developer")
+            selectedSection = "Overview"
+    }
 
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
@@ -45,12 +49,13 @@ ScrollView {
                         spacing: SentinelTheme.spaceSm
 
                         Repeater {
-                            model: ["Overview", "Tasks", "Capabilities", "Developer"]
+                            model: agentsPage.developerMode
+                                   ? ["Overview", "Tasks", "Capabilities", "Developer"]
+                                   : ["Overview", "Tasks", "Capabilities"]
 
                             Button {
                                 id: agentTabButton
                                 required property string modelData
-                                enabled: modelData !== "Developer" || agentsPage.developerMode
                                 text: modelData
                                 onClicked: agentsPage.selectedSection = modelData
 
@@ -81,7 +86,9 @@ ScrollView {
 
                     Label {
                         Layout.fillWidth: true
-                        text: "Metadata-only; no execution active. Developer Mode reveals internals only."
+                        text: agentsPage.developerMode
+                              ? "Metadata-only; no execution active. Developer internals are visible."
+                              : "Metadata-only; no execution active."
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -155,6 +162,7 @@ ScrollView {
                     Layout.fillWidth: true
                     visible: agentsPage.selectedSection === "Tasks"
                     implicitHeight: agentsPage.sectionHeight(taskRuntimeContent)
+                    Layout.preferredHeight: 220
 
                     ColumnLayout {
                         id: taskRuntimeContent
@@ -196,6 +204,7 @@ ScrollView {
                     Layout.fillWidth: true
                     visible: agentsPage.selectedSection === "Tasks"
                     implicitHeight: agentsPage.sectionHeight(taskQueueContent)
+                    Layout.preferredHeight: 220
 
                     ColumnLayout {
                         id: taskQueueContent
@@ -255,6 +264,7 @@ ScrollView {
                     Layout.fillWidth: true
                     visible: agentsPage.selectedSection === "Tasks"
                     implicitHeight: agentsPage.sectionHeight(planningContent)
+                    Layout.preferredHeight: 220
 
                     ColumnLayout {
                         id: planningContent
@@ -307,6 +317,7 @@ ScrollView {
                     Layout.fillWidth: true
                     visible: agentsPage.selectedSection === "Capabilities"
                     implicitHeight: agentsPage.sectionHeight(capabilityContent)
+                    Layout.preferredHeight: 260
 
                     ColumnLayout {
                         id: capabilityContent
@@ -364,6 +375,7 @@ ScrollView {
                     Layout.fillWidth: true
                     visible: agentsPage.selectedSection === "Capabilities"
                     implicitHeight: agentsPage.sectionHeight(toolContent)
+                    Layout.preferredHeight: 260
 
                     ColumnLayout {
                         id: toolContent
@@ -478,8 +490,8 @@ ScrollView {
                     spacing: SentinelTheme.spaceSm
 
                     SectionTitle {
-                        title: "Developer Metadata"
-                        subtitle: "Trace, arbitration, permission, sandbox, and voice pipeline summaries."
+                        title: "Task Runtime"
+                        subtitle: "Read-only traces and latest task metadata."
                         Layout.fillWidth: true
                     }
 
@@ -494,6 +506,37 @@ ScrollView {
                         }
                     }
 
+                    SectionTitle {
+                        title: "Queue / Lifecycle"
+                        subtitle: "Queue counts and latest lifecycle transition."
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: true
+                        label: "Queue"
+                        value: agentsPage.viewModel.agentTaskQueueCount
+                               + " queued / "
+                               + agentsPage.viewModel.agentTaskQueueBlockedCount
+                               + " blocked / "
+                               + agentsPage.viewModel.agentTaskQueueRefusedCount
+                               + " refused"
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: true
+                        label: "Lifecycle"
+                        value: agentsPage.viewModel.latestAgentTaskLifecycleSummary
+                        Layout.fillWidth: true
+                    }
+
+                    SectionTitle {
+                        title: "Planning / Arbitration"
+                        subtitle: "Planner selection and refusal summaries."
+                        Layout.fillWidth: true
+                    }
+
                     Repeater {
                         model: agentsPage.viewModel.agentPlanningArbitrationSummaries
                         InfoRow {
@@ -503,6 +546,29 @@ ScrollView {
                             value: modelData
                             Layout.fillWidth: true
                         }
+                    }
+
+                    SectionTitle {
+                        title: "Capability Registry"
+                        subtitle: "Capabilities are descriptive metadata, not grants."
+                        Layout.fillWidth: true
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.agentCapabilityReadinessSummaries
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Readiness"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    SectionTitle {
+                        title: "Tool Contracts"
+                        subtitle: "Permission and sandbox contracts do not execute tools."
+                        Layout.fillWidth: true
                     }
 
                     Repeater {
@@ -525,6 +591,12 @@ ScrollView {
                             value: modelData
                             Layout.fillWidth: true
                         }
+                    }
+
+                    SectionTitle {
+                        title: "Voice Runtime"
+                        subtitle: "Voice pipeline readiness metadata only."
+                        Layout.fillWidth: true
                     }
 
                     Repeater {

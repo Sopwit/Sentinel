@@ -8,8 +8,8 @@ ShellPanel {
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property date now: new Date()
-    readonly property int modeButtonWidth: compact ? 150 : 170
-    readonly property string dashboardSubtitleText: "Local Ollama chatbot. No cloud provider active."
+    readonly property int modeButtonWidth: compact ? 132 : 148
+    readonly property string dashboardSubtitleText: "Chat with Sentinel through configured local providers."
     readonly property string modeSubtitleText: pageSubtitle(headerBar.viewModel.currentPage)
     readonly property string subtitleText: headerBar.viewModel.currentPage === "Dashboard"
                                            ? headerBar.dashboardSubtitleText
@@ -99,17 +99,17 @@ ShellPanel {
 
             Rectangle {
                 visible: !headerBar.compact
-                Layout.preferredWidth: 154
+                Layout.preferredWidth: 118
                 Layout.preferredHeight: 32
                 radius: 16
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                border.color: SentinelTheme.withAlpha(headerBar.modeAccent, 0.08)
+                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
 
                 Label {
                     anchors.fill: parent
                     anchors.leftMargin: SentinelTheme.spaceMd
                     anchors.rightMargin: SentinelTheme.spaceMd
-                    text: headerBar.viewModel.ollamaHealthStatus + " / " + headerBar.viewModel.selectedLocalModelStatus
+                    text: headerBar.viewModel.ollamaHealthStatus
                     color: SentinelTheme.textPlaceholder
                     verticalAlignment: Text.AlignVCenter
                     font.pixelSize: SentinelTheme.fontSmall
@@ -155,7 +155,7 @@ ShellPanel {
                              ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.12)
                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
                     border.color: modeButton.activeFocus ? SentinelTheme.focusBorder
-                                                         : SentinelTheme.withAlpha(headerBar.modeAccent, 0.18)
+                                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                     border.width: 1
                 }
 
@@ -171,7 +171,7 @@ ShellPanel {
                     background: Rectangle {
                         radius: SentinelTheme.radiusLg
                         color: SentinelTheme.backgroundRaised
-                        border.color: SentinelTheme.withAlpha(headerBar.modeAccent, 0.22)
+                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
                     }
 
                     contentItem: ColumnLayout {
