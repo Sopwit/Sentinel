@@ -296,6 +296,25 @@ Guidelines:
   ranking controls, filesystem indexing, background summarization, autonomous memory writes,
   provider/cloud actions, tools, voice controls, or prompt-debug exposure.
 
+## Phase 28 Adaptive Context Salience Notes
+
+Phase 28.0 through Phase 28.8 adds adaptive context budgeting and conversation salience visibility
+without redesigning the shell or expanding runtime authority.
+
+Guidelines:
+
+- Home continues to show only the compact `Context used: X memories / Y chars` line when local
+  context injection is enabled.
+- Runtime/Memory normal mode shows a concise context quality summary based on salience included,
+  excluded, and allocation metadata.
+- Runtime/Memory Developer Mode may show salience budget allocation, included/excluded/truncated
+  counts, deterministic reasons, traces, and exclusions.
+- Settings Chat shows a compact adaptive context status in normal mode. Detailed budget allocation
+  remains Developer Mode content.
+- UI must not show raw prompts, hidden prompt blocks, debug dumps, vector scores, semantic
+  payloads, provider handles, filesystem paths, or controls that imply background indexing or
+  autonomous memory behavior.
+
 ## Future Assistant Visuals
 
 Future assistant visuals may include subtle status presence, listening/thinking indicators, and

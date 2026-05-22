@@ -13,6 +13,8 @@ using sentinel::core::contextAssemblyStatusName;
 using sentinel::core::contextAssemblySummaryForRequest;
 using sentinel::core::ConversationSummaryPolicy;
 using sentinel::core::ConversationSummaryStatus;
+using sentinel::core::ConversationSalienceCandidate;
+using sentinel::core::ConversationSaliencePolicy;
 using sentinel::core::ConversationWindowMessage;
 using sentinel::core::ConversationWindowPolicy;
 using sentinel::core::ConversationWindowStatus;
@@ -20,6 +22,7 @@ using sentinel::core::makeContextAssemblySource;
 using sentinel::core::MemoryRelevanceCandidate;
 using sentinel::core::MemoryRelevancePolicy;
 using sentinel::core::planRetrieval;
+using sentinel::core::rankConversationSalience;
 using sentinel::core::rankMemoryRelevance;
 using sentinel::core::RetrievalCandidate;
 using sentinel::core::RetrievalPlanningPolicy;
@@ -45,6 +48,9 @@ private slots:
     void memoryRelevanceOrdersByDeterministicLiteralScore();
     void memoryRelevanceSuppressesDuplicatesAndReportsExclusions();
     void memoryRelevanceEnforcesBudgetAndStableTies();
+    void conversationSalienceScoresDeterministically();
+    void conversationSalienceAllocatesAdaptiveBudgetDeterministically();
+    void conversationSalienceSuppressesDuplicatesAndReportsCounts();
 };
 
 void ContextAssemblyTest::createsDeterministicAssemblySummary() {
@@ -349,7 +355,7 @@ void ContextAssemblyTest::memoryRelevanceOrdersByDeterministicLiteralScore() {
                                      QStringLiteral("Unrelated local note"), 2},
         },
         QStringLiteral("alpha dashboard"), QStringLiteral("Alpha planning"),
-        QStringLiteral("recent dashboard notes"), policy);
+        QStringLiteral("recent dashboard concise notes"), policy);
 
     QCOMPARE(result.includedCount, 2);
     QCOMPARE(result.excludedCount, 1);
@@ -408,6 +414,97 @@ void ContextAssemblyTest::memoryRelevanceEnforcesBudgetAndStableTies() {
     QVERIFY(sentinel::core::memoryRelevanceTraceSummaries(result)
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Retrieval budget exhausted")));
+}
+
+void ContextAssemblyTest::conversationSalienceScoresDeterministically() {
+    ConversationSaliencePolicy policy;
+    policy.maxCharacters = 240;
+
+    const auto result = rankConversationSalience(
+        {
+            ConversationSalienceCandidate{ContextAssemblySourceKind::CommittedMemory,
+                                          QStringLiteral("Memory Alpha"),
+                                          QStringLiteral("alpha dashboard preference"), 1, 26,
+                                          false, true, 1},
+            ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
+                                          QStringLiteral("Recent Window"),
+                                          QStringLiteral("user discussed alpha budget"), 0, 27,
+                                          true, false, 0},
+            ConversationSalienceCandidate{ContextAssemblySourceKind::RuntimeMetadata,
+                                          QStringLiteral("Runtime"),
+                                          QStringLiteral("idle local route"), 2, 16, false, false,
+                                          4},
+        },
+        QStringLiteral("alpha dashboard"), QStringLiteral("Alpha Planning"),
+        QStringLiteral("alpha budget"), QStringLiteral("assistant dashboard note"),
+        QStringLiteral("alpha dashboard preference"), policy);
+
+    QCOMPARE(result.includedCount, 3);
+    QCOMPARE(result.selections.at(0).candidate.source, ContextAssemblySourceKind::Conversation);
+    QVERIFY(result.selections.at(0).reason.summary.contains(QStringLiteral("pinned")));
+    QCOMPARE(result.selections.at(1).candidate.source, ContextAssemblySourceKind::CommittedMemory);
+    QVERIFY(result.selections.at(1).score.committedMemoryOverlap > 0);
+    QVERIFY(result.trace.summary.contains(QStringLiteral("3 included")));
+}
+
+void ContextAssemblyTest::conversationSalienceAllocatesAdaptiveBudgetDeterministically() {
+    ConversationSaliencePolicy policy;
+    policy.maxCharacters = 40;
+    policy.maxCandidates = 4;
+    policy.activeConversationBudgetPercent = 50;
+    policy.committedMemoryBudgetPercent = 25;
+    policy.runtimeMetadataBudgetPercent = 25;
+
+    const auto result = rankConversationSalience(
+        {
+            ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
+                                          QStringLiteral("Window"),
+                                          QStringLiteral("alpha conversation text that is long"),
+                                          0},
+            ConversationSalienceCandidate{ContextAssemblySourceKind::CommittedMemory,
+                                          QStringLiteral("Memory"),
+                                          QStringLiteral("alpha memory text that is long"), 1, 0,
+                                          false, true},
+            ConversationSalienceCandidate{ContextAssemblySourceKind::RuntimeMetadata,
+                                          QStringLiteral("Runtime"),
+                                          QStringLiteral("alpha runtime text that is long"), 2},
+        },
+        QStringLiteral("alpha"), {}, QStringLiteral("alpha"), {}, QStringLiteral("alpha"), policy);
+
+    QCOMPARE(result.budget.activeConversationBudget, 20);
+    QCOMPARE(result.budget.committedMemoryBudget, 10);
+    QCOMPARE(result.budget.runtimeMetadataBudget, 10);
+    QCOMPARE(result.includedCount, 3);
+    QCOMPARE(result.truncatedCount, 3);
+    QCOMPARE(result.budget.includedCharacters, 40);
+    QVERIFY(result.budget.summary.contains(QStringLiteral("Active conversation 20")));
+}
+
+void ContextAssemblyTest::conversationSalienceSuppressesDuplicatesAndReportsCounts() {
+    ConversationSaliencePolicy policy;
+    policy.maxCharacters = 100;
+
+    const auto result = rankConversationSalience(
+        {
+            ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
+                                          QStringLiteral("First"), QStringLiteral("alpha same"), 0},
+            ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
+                                          QStringLiteral("Duplicate"),
+                                          QStringLiteral("alpha same"), 1},
+            ConversationSalienceCandidate{ContextAssemblySourceKind::CommittedMemory,
+                                          QStringLiteral("Empty"), QString(), 2, 0, false, true},
+        },
+        QStringLiteral("alpha"), {}, QStringLiteral("alpha"), {}, QStringLiteral("alpha"), policy);
+
+    QCOMPARE(result.includedCount, 1);
+    QCOMPARE(result.excludedCount, 2);
+    QCOMPARE(result.duplicateCount, 1);
+    QVERIFY(sentinel::core::conversationSalienceExclusionSummaries(result)
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Duplicate candidate")));
+    QVERIFY(sentinel::core::conversationSalienceExclusionSummaries(result)
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Empty candidate")));
 }
 
 QTEST_MAIN(ContextAssemblyTest)

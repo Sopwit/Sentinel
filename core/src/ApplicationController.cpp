@@ -2960,16 +2960,16 @@ int ApplicationController::contextExcludedCandidateCount() const {
     if (latestPromptContextInjectionResult_.originalPrompt.trimmed().isEmpty()) {
         return 0;
     }
-    return retrievalPlanningForPrompt(latestPromptContextInjectionResult_.originalPrompt)
-        .excludedCandidateCount;
+    return conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .excludedCount;
 }
 
 QStringList ApplicationController::contextAssemblyTraceSummaries() const {
     if (latestPromptContextInjectionResult_.originalPrompt.trimmed().isEmpty()) {
         return {};
     }
-    return sentinel::core::retrievalCandidateTraceSummaries(
-        retrievalPlanningForPrompt(latestPromptContextInjectionResult_.originalPrompt));
+    return sentinel::core::conversationSalienceTraceSummaries(
+        conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt));
 }
 
 QStringList ApplicationController::promptContextBlockSummaries() const {
@@ -3141,6 +3141,46 @@ QStringList ApplicationController::memoryRelevanceTraceSummaries() const {
 QStringList ApplicationController::memoryRelevanceExclusionSummaries() const {
     return sentinel::core::memoryRelevanceExclusionSummaries(
         memoryRelevanceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt));
+}
+
+QString ApplicationController::conversationSalienceSummaryText() const {
+    return conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .summary;
+}
+
+QString ApplicationController::conversationSalienceBudgetSummary() const {
+    return conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .budget.summary;
+}
+
+QString ApplicationController::conversationSalienceAllocationSummary() const {
+    return conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .budget.allocationSummary;
+}
+
+int ApplicationController::conversationSalienceIncludedCount() const {
+    return conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .includedCount;
+}
+
+int ApplicationController::conversationSalienceExcludedCount() const {
+    return conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .excludedCount;
+}
+
+int ApplicationController::conversationSalienceTruncatedCount() const {
+    return conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .truncatedCount;
+}
+
+QStringList ApplicationController::conversationSalienceTraceSummaries() const {
+    return sentinel::core::conversationSalienceTraceSummaries(
+        conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt));
+}
+
+QStringList ApplicationController::conversationSalienceExclusionSummaries() const {
+    return sentinel::core::conversationSalienceExclusionSummaries(
+        conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt));
 }
 
 SemanticRetrievalPolicy ApplicationController::semanticRetrievalPolicy() const {
@@ -4997,6 +5037,162 @@ ApplicationController::memoryRelevanceSummaryForPrompt(const QString& prompt) co
                                recentMessages.join(QStringLiteral("\n")), policy);
 }
 
+QList<ConversationSalienceCandidate>
+ApplicationController::conversationSalienceCandidatesForPrompt(const QString& prompt) const {
+    QList<ConversationSalienceCandidate> candidates;
+    int index = 0;
+
+    if (contextAssemblyPolicy_.includeConversationContext) {
+        const auto window = conversationWindowForPrompt(prompt);
+        if (!window.text.trimmed().isEmpty()) {
+            candidates.append(ConversationSalienceCandidate{
+                ContextAssemblySourceKind::Conversation,
+                QStringLiteral("Bounded Conversation History"),
+                window.text,
+                index++,
+                window.budget.estimatedCharacters,
+                activeConversationRecord().pinned,
+                false,
+                0,
+            });
+        }
+
+        const auto summary = conversationSummaryForPrompt(prompt);
+        if (!summary.text.trimmed().isEmpty()) {
+            candidates.append(ConversationSalienceCandidate{
+                ContextAssemblySourceKind::ConversationSummary,
+                QStringLiteral("Older Conversation Summary"),
+                summary.text,
+                index++,
+                summary.budget.estimatedCharacters,
+                activeConversationRecord().pinned,
+                false,
+                2,
+            });
+        }
+    }
+
+    if (contextAssemblyPolicy_.includeCommittedMemoryContext) {
+        const auto memorySummary = memoryRelevanceSummaryForPrompt(prompt);
+        for (const auto& selection : memorySummary.selections) {
+            if (!selection.included) {
+                continue;
+            }
+            candidates.append(ConversationSalienceCandidate{
+                ContextAssemblySourceKind::CommittedMemory,
+                QStringLiteral("Committed Local Memory"),
+                selection.selectedText,
+                index++,
+                selection.selectedCharacters,
+                selection.candidate.pinned,
+                true,
+                1,
+            });
+        }
+    }
+
+    if (contextAssemblyPolicy_.includeRuntimeMetadataContext) {
+        const auto runtimeSummary = conversationRuntimeSummary().simplified();
+        if (!runtimeSummary.isEmpty()) {
+            candidates.append(ConversationSalienceCandidate{
+                ContextAssemblySourceKind::RuntimeMetadata,
+                QStringLiteral("Runtime Metadata Summary"),
+                runtimeSummary,
+                index++,
+                toInt(runtimeSummary.size()),
+                false,
+                false,
+                4,
+            });
+        }
+    }
+
+    if (contextAssemblyPolicy_.includeOrchestrationContext) {
+        const auto orchestrationSummary = orchestrationSnapshotSummary().simplified();
+        if (!orchestrationSummary.isEmpty()) {
+            candidates.append(ConversationSalienceCandidate{
+                ContextAssemblySourceKind::Orchestration,
+                QStringLiteral("Orchestration Metadata Summary"),
+                orchestrationSummary,
+                index++,
+                toInt(orchestrationSummary.size()),
+                false,
+                false,
+                5,
+            });
+        }
+    }
+
+    if (contextAssemblyPolicy_.includeSelectedConversationMetadata) {
+        const auto activeSummary = activeConversationSummary().simplified();
+        if (!activeSummary.isEmpty()) {
+            candidates.append(ConversationSalienceCandidate{
+                ContextAssemblySourceKind::SelectedConversationMetadata,
+                QStringLiteral("Selected Conversation Metadata"),
+                activeSummary,
+                index++,
+                toInt(activeSummary.size()),
+                activeConversationRecord().pinned,
+                false,
+                3,
+            });
+        }
+    }
+
+    return candidates;
+}
+
+ConversationSalienceSummary
+ApplicationController::conversationSalienceSummaryForPrompt(const QString& prompt) const {
+    QString activeTitle;
+    const auto active = activeConversationRecord();
+    if (!active.id.isEmpty()) {
+        activeTitle = active.title;
+    }
+
+    QStringList recentUserMessages;
+    QStringList recentAssistantMessages;
+    if (chatSession_) {
+        const auto promptText = prompt.simplified();
+        const auto& history = chatSession_->messages();
+        for (int i = history.size() - 1;
+             i >= 0 && (recentUserMessages.size() < 4 || recentAssistantMessages.size() < 4);
+             --i) {
+            const auto& message = history.at(i);
+            if (message.role == ChatRole::System) {
+                continue;
+            }
+            if (!promptText.isEmpty() && i == history.size() - 1 &&
+                message.role == ChatRole::User && message.content.simplified() == promptText) {
+                continue;
+            }
+            if (message.role == ChatRole::User && recentUserMessages.size() < 4) {
+                recentUserMessages.prepend(message.content);
+            } else if (message.role == ChatRole::Assistant &&
+                       recentAssistantMessages.size() < 4) {
+                recentAssistantMessages.prepend(message.content);
+            }
+        }
+    }
+
+    QStringList committedMemoryText;
+    auto entries = currentMemoryEntries();
+    std::sort(entries.begin(), entries.end(),
+              [](const auto& left, const auto& right) { return left.first < right.first; });
+    for (const auto& entry : entries) {
+        committedMemoryText.append(QStringLiteral("%1 %2").arg(entry.first, entry.second));
+    }
+
+    ConversationSaliencePolicy policy = conversationSaliencePolicy_;
+    policy.maxCharacters = promptContextInjectionPolicy_.maxCharacters;
+    policy.maxCandidates = retrievalPlanningPolicy_.maxCandidates;
+    return rankConversationSalience(
+        conversationSalienceCandidatesForPrompt(prompt), prompt, activeTitle,
+        recentUserMessages.join(QStringLiteral("\n")),
+        recentAssistantMessages.join(QStringLiteral("\n")),
+        committedMemoryText.join(QStringLiteral("\n")), policy);
+}
+
 QList<RetrievalCandidate>
 ApplicationController::retrievalCandidatesForPrompt(const QString& prompt) const {
     QList<RetrievalCandidate> candidates;
@@ -5132,16 +5328,19 @@ ApplicationController::semanticCandidateArbitrationForPrompt(const QString& prom
 
 QList<PromptContextBlock> ApplicationController::promptContextBlocks(const QString& prompt) const {
     QList<PromptContextBlock> blocks;
-    const auto planning = retrievalPlanningForPrompt(prompt);
-    blocks.reserve(planning.selectedCandidates.size());
-    for (const auto& candidate : planning.selectedCandidates) {
+    const auto salience = conversationSalienceSummaryForPrompt(prompt);
+    blocks.reserve(salience.includedCount);
+    for (const auto& selection : salience.selections) {
+        if (!selection.included) {
+            continue;
+        }
         blocks.append(PromptContextBlock{
-            candidate.source,
-            candidate.title,
-            candidate.content,
-            candidate.originalSize,
-            candidate.selectedSize,
-            candidate.truncated,
+            selection.candidate.source,
+            selection.candidate.title,
+            selection.selectedText,
+            selection.candidate.originalSize,
+            selection.selectedCharacters,
+            selection.truncated,
         });
     }
 

@@ -305,6 +305,32 @@ Out of scope:
   background summarization, autonomous memory writes, cloud/API calls, tools/plugins, subprocesses,
   raw prompt dumps, and prompt mutation outside the existing explicit injection path.
 
+## 9.4.1 Adaptive Context Budgeting And Conversation Salience
+
+Decision: Add conversation salience as deterministic value metadata over existing local context
+candidates.
+
+Reason: Local prompt context quality needs to account for the active conversation and recent
+dialogue without introducing semantic/vector authority or hidden background processing.
+
+Runtime behavior:
+
+- Salience records are value-only: policy, candidate, score, reason, budget, selection, trace, and
+  summary.
+- Scoring uses literal active title overlap, recent user message overlap, recent assistant message
+  overlap, pinned conversation metadata, committed memory overlap, explicit user query terms, and
+  deterministic recency weighting.
+- Context capacity is split deterministically between active conversation context, selected
+  committed memories, and runtime/orchestration metadata.
+- Prompt injection remains opt-in. When disabled, prompts are unchanged.
+- QML receives concise summaries, counts, budget allocation, reasons, and traces only.
+
+Out of scope:
+
+- Embeddings, vector search, semantic ranking authority, filesystem indexing, background
+  summarization, autonomous memory writes, tools/plugins, cloud/API calls, STT/TTS activation,
+  subprocesses, hidden workers, and raw prompt/debug dump exposure.
+
 ## 9.5 Conversation Delete Readiness Checkpoint
 
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent

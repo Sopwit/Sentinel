@@ -2,6 +2,34 @@
 
 ## Completed / Stable
 
+### Phase 28.0-28.8: Adaptive Context Budgeting And Conversation Salience Foundation
+
+Completed. Adds deterministic conversation salience metadata and adaptive context budgeting while
+preserving opt-in prompt context injection and the existing no-semantic-authority boundary.
+
+Scope:
+
+- Added value-only conversation salience records for policy, candidates, scores, reasons, budget,
+  selections, trace, and summary.
+- Salience scoring uses literal active conversation title overlap, recent user message overlap,
+  recent assistant message overlap, pinned conversation metadata, committed memory overlap,
+  explicit user query terms, and deterministic recency weighting.
+- Prompt context selection now applies an adaptive deterministic split across active conversation
+  context, selected committed memories, and runtime/orchestration metadata. Included, excluded,
+  duplicate, and truncated counts plus budget allocation summaries are exposed as QML-safe
+  metadata.
+- Prompt context injection remains opt-in. Disabled context leaves prompts unchanged; enabled
+  context still uses compact local context blocks without raw prompt/debug dump exposure.
+- Home keeps the compact context-used line only when context is enabled. Runtime/Memory and
+  Settings expose concise salience quality summaries in normal mode and detailed salience budget,
+  reasons, traces, and counts in Developer Mode.
+
+Known limitation:
+
+- This phase does not add embeddings, vector search, semantic authority, filesystem indexing,
+  background summarization, autonomous memory writes, tools/plugins, cloud/API calls, STT/TTS
+  activation, subprocesses, or hidden background workers.
+
 ### Phase 27.0-27.8: Local Memory Intelligence And Context Quality Foundation
 
 Completed. Adds deterministic local memory relevance metadata and safer memory-context quality
