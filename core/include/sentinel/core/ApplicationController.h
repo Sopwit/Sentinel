@@ -440,6 +440,16 @@ class ApplicationController final : public QObject {
                    promptContextInjectionChanged)
     Q_PROPERTY(QString promptContextSizeSummary READ promptContextSizeSummary NOTIFY
                    promptContextInjectionChanged)
+    Q_PROPERTY(QString promptContextUsedSummary READ promptContextUsedSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QString contextBudgetUsageSummary READ contextBudgetUsageSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(int contextIncludedCandidateCount READ contextIncludedCandidateCount NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(int contextExcludedCandidateCount READ contextExcludedCandidateCount NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QStringList contextAssemblyTraceSummaries READ contextAssemblyTraceSummaries NOTIFY
+                   promptContextInjectionChanged)
     Q_PROPERTY(QStringList promptContextBlockSummaries READ promptContextBlockSummaries NOTIFY
                    promptContextInjectionChanged)
     Q_PROPERTY(
@@ -1177,6 +1187,11 @@ public:
     int promptContextInjectedBlockCount() const;
     QString promptContextSourceSummary() const;
     QString promptContextSizeSummary() const;
+    QString promptContextUsedSummary() const;
+    QString contextBudgetUsageSummary() const;
+    int contextIncludedCandidateCount() const;
+    int contextExcludedCandidateCount() const;
+    QStringList contextAssemblyTraceSummaries() const;
     QStringList promptContextBlockSummaries() const;
     ConversationWindowPolicy conversationWindowPolicy() const;
     ConversationWindowResult conversationWindowResult() const;

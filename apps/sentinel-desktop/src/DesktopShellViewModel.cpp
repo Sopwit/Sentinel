@@ -1334,6 +1334,26 @@ QString DesktopShellViewModel::promptContextSizeSummary() const {
     return controller_.promptContextSizeSummary();
 }
 
+QString DesktopShellViewModel::promptContextUsedSummary() const {
+    return controller_.promptContextUsedSummary();
+}
+
+QString DesktopShellViewModel::contextBudgetUsageSummary() const {
+    return controller_.contextBudgetUsageSummary();
+}
+
+int DesktopShellViewModel::contextIncludedCandidateCount() const {
+    return controller_.contextIncludedCandidateCount();
+}
+
+int DesktopShellViewModel::contextExcludedCandidateCount() const {
+    return controller_.contextExcludedCandidateCount();
+}
+
+QStringList DesktopShellViewModel::contextAssemblyTraceSummaries() const {
+    return controller_.contextAssemblyTraceSummaries();
+}
+
 QStringList DesktopShellViewModel::promptContextBlockSummaries() const {
     return controller_.promptContextBlockSummaries();
 }

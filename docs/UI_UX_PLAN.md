@@ -256,6 +256,26 @@ Guidelines:
   Sending a prompt forces the new message into view; manual scroll-away pauses bottom-follow until
   the user returns near the end.
 
+## Phase 26 Context Visibility Notes
+
+Phase 26.0 through Phase 26.8 improves local deterministic context visibility without adding
+background behavior or semantic authority.
+
+Guidelines:
+
+- Home may show one concise context line when prompt context injection is enabled:
+  "Context used: X sources / Y chars". Keep it near the composer/status area and do not expose raw
+  prompt payloads.
+- Runtime/Memory Overview stays simple. Developer Mode may show deterministic source groups,
+  budget usage, included/excluded counts, and safe trace summaries.
+- Settings Chat should show whether local context injection is enabled and the current
+  deterministic source count. Detailed budget/readiness summaries remain Developer Mode content.
+- UI must not show raw prompts, vector scores, provider handles, filesystem paths, debug dumps, or
+  semantic candidate payloads.
+- Context controls remain visibility/configuration only. They must not start filesystem indexing,
+  background summarization, autonomous memory writes, tool execution, subprocesses, cloud calls, or
+  semantic/vector activation.
+
 ## Future Assistant Visuals
 
 Future assistant visuals may include subtle status presence, listening/thinking indicators, and

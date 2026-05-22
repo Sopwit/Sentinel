@@ -118,6 +118,27 @@ the active request is streaming, clears after completion/failure/cancel/switch, 
 separately into the transcript. Final assistant text is appended once from the completed response
 for the request id and active conversation id that started the request.
 
+## Deterministic Context Assembly
+
+Prompt context injection remains explicit opt-in local behavior. When enabled, `ApplicationController`
+builds local value-only candidates from recent conversation history, deterministic older
+conversation summaries, committed key-value memory, runtime metadata, orchestration metadata, and
+selected conversation metadata.
+
+Selection is deterministic: fixed source priority, stable tie-breaking, bounded character budget,
+bounded candidate/source counts, duplicate suppression, and explicit exclusion reasons. Committed
+key-value memory is considered for prompt injection only when deterministic literal/key metadata
+overlaps the user prompt. The current user prompt remains outside conversation history and is
+placed after the compact local context block.
+
+QML receives only safe summaries through `DesktopShellViewModel`: context used, budget usage,
+included/excluded counts, source summaries, and trace summaries. The UI does not receive raw
+prompt dumps, vector scores, provider handles, filesystem paths, or semantic payloads.
+
+The context assembly path does not run semantic/vector search, embeddings, filesystem indexing,
+background summarization, autonomous memory writes, tool/plugin execution, subprocesses, cloud/API
+calls, or provider discovery.
+
 ## Intentional Boundaries
 
 - Chat provider behavior is hidden behind `IChatProvider`.
