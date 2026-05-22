@@ -27,11 +27,7 @@ ShellPanel {
 
     radius: SentinelTheme.radiusPanel
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.58)
-    border.color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.16)
-    bracketColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.24)
-    edgeLightColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.34)
-    edgeLightOpacity: 0.20
-    bracketSize: 10
+    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
 
     ColumnLayout {
         anchors.fill: parent
@@ -49,17 +45,17 @@ ShellPanel {
                 Label {
                     Layout.fillWidth: true
                     text: "LOCAL ASSISTANT"
-                    color: homeChat.modeAccent
+                    color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontTiny
-                    font.letterSpacing: 2.2
+                    font.letterSpacing: 1.8
                     elide: Text.ElideRight
                 }
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Ask Sentinel using your selected local model."
+                    text: "Ask Sentinel"
                     color: SentinelTheme.textPrimary
-                    font.pixelSize: homeChat.compact ? SentinelTheme.fontBody : SentinelTheme.fontCard
+                    font.pixelSize: homeChat.compact ? SentinelTheme.fontTitle : SentinelTheme.fontTitle + 2
                     wrapMode: Text.WordWrap
                 }
             }
@@ -75,11 +71,15 @@ ShellPanel {
         ListView {
             id: recentMessages
             Layout.fillWidth: true
-            Layout.preferredHeight: Math.min(170, Math.max(92, contentHeight))
-            visible: homeChat.viewModel.conversationHistoryMessageCount > 1
+            Layout.fillHeight: true
+            Layout.minimumHeight: 210
+            visible: true
             clip: true
-            spacing: SentinelTheme.spaceXs
+            spacing: SentinelTheme.spaceSm
             model: homeChat.viewModel.chatMessages
+            boundsBehavior: Flickable.StopAtBounds
+            onCountChanged: Qt.callLater(positionViewAtEnd)
+            Component.onCompleted: Qt.callLater(positionViewAtEnd)
 
             delegate: Rectangle {
                 id: recentMessage
@@ -87,10 +87,9 @@ ShellPanel {
                 required property string messageRole
                 required property string content
                 readonly property bool displayable: messageRole !== "system"
-                                                    && index >= recentMessages.count - 4
 
                 width: ListView.view.width
-                height: displayable ? recentMessageColumn.implicitHeight + SentinelTheme.spaceSm : 0
+                height: displayable ? recentMessageColumn.implicitHeight + SentinelTheme.spaceMd : 0
                 visible: displayable
                 radius: SentinelTheme.radiusSm
                 color: messageRole === "user"
@@ -104,7 +103,7 @@ ShellPanel {
                 ColumnLayout {
                     id: recentMessageColumn
                     x: SentinelTheme.spaceSm
-                    y: SentinelTheme.spaceXs
+                    y: SentinelTheme.spaceSm
                     width: parent.width - SentinelTheme.spaceSm * 2
                     spacing: 2
 
@@ -124,7 +123,7 @@ ShellPanel {
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
-                        maximumLineCount: 2
+                        maximumLineCount: 12
                         elide: Text.ElideRight
                     }
                 }
@@ -134,7 +133,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             visible: homeChat.viewModel.conversationHistoryMessageCount <= 1
-            text: "Ask Sentinel using your selected local model."
+            text: "No conversation yet. Local Ollama only; no cloud provider is active."
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontBody
             wrapMode: Text.WordWrap

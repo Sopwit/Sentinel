@@ -8,24 +8,22 @@ ShellPanel {
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property date now: new Date()
-    readonly property int modeButtonWidth: compact ? 190 : 230
-    readonly property string dashboardModelText: headerBar.viewModel.selectedLocalModelStatus === "Available"
-                                                ? headerBar.viewModel.selectedLocalModelSummary
-                                                : "No ready local model. Start Ollama and install/select a local model."
-    readonly property string dashboardSubtitleText: "Ollama "
-                                                   + headerBar.viewModel.ollamaHealthStatus
-                                                   + ". Chat "
-                                                   + headerBar.viewModel.localChatInferenceStatus
-                                                   + ". Stream "
-                                                   + headerBar.viewModel.localInferenceStreamStatus
-                                                   + ". "
-                                                   + headerBar.dashboardModelText
-    readonly property string modeSubtitleText: headerBar.viewModel.currentModeName
-                                               + " - "
-                                               + SentinelTheme.modeStatusText(headerBar.viewModel.currentModeName)
+    readonly property int modeButtonWidth: compact ? 150 : 170
+    readonly property string dashboardSubtitleText: "Local Ollama chatbot. No cloud provider active."
+    readonly property string modeSubtitleText: pageSubtitle(headerBar.viewModel.currentPage)
     readonly property string subtitleText: headerBar.viewModel.currentPage === "Dashboard"
                                            ? headerBar.dashboardSubtitleText
                                            : headerBar.modeSubtitleText
+
+    function pageSubtitle(pageName) {
+        if (pageName === "Memory")
+            return "Local memory, recall, and conversation context."
+        if (pageName === "Agents")
+            return "Metadata-only agent planning and capability status."
+        if (pageName === "Settings")
+            return "Local preferences and readiness controls."
+        return "Local Ollama chatbot. No cloud provider active."
+    }
 
     function greetingFor(dateValue) {
         const hour = dateValue.getHours()
@@ -67,10 +65,10 @@ ShellPanel {
                 }
 
                 Label {
-                    text: "SENTINEL / OPERATING LAYER"
-                    color: SentinelTheme.textMuted
-                    font.pixelSize: SentinelTheme.fontTiny
-                    font.letterSpacing: 2.6
+                text: "SENTINEL"
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontTiny
+                font.letterSpacing: 1.8
                     elide: Text.ElideRight
                     Layout.fillWidth: true
                 }
@@ -79,16 +77,19 @@ ShellPanel {
             Label {
                 text: headerBar.viewModel.currentPage === "Dashboard" ? headerBar.greetingFor(headerBar.now) : headerBar.viewModel.currentPage
                 color: SentinelTheme.textPrimary
-                font.pixelSize: headerBar.compact ? SentinelTheme.fontTitle : SentinelTheme.fontDisplay
+                font.pixelSize: headerBar.compact ? SentinelTheme.fontTitle : SentinelTheme.fontTitle + 2
                 font.weight: Font.Light
+                elide: Text.ElideRight
+                Layout.fillWidth: true
             }
 
             Label {
                 Layout.fillWidth: true
                 text: headerBar.subtitleText
                 color: SentinelTheme.textMuted
-                font.pixelSize: SentinelTheme.fontBody
-                wrapMode: Text.WordWrap
+                font.pixelSize: SentinelTheme.fontSmall
+                maximumLineCount: 1
+                elide: Text.ElideRight
             }
         }
 
@@ -98,9 +99,9 @@ ShellPanel {
 
             Rectangle {
                 visible: !headerBar.compact
-                Layout.preferredWidth: 236
-                Layout.preferredHeight: SentinelTheme.controlHeight
-                radius: SentinelTheme.controlHeight / 2
+                Layout.preferredWidth: 154
+                Layout.preferredHeight: 32
+                radius: 16
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
                 border.color: SentinelTheme.withAlpha(headerBar.modeAccent, 0.08)
 
@@ -119,7 +120,7 @@ ShellPanel {
             Button {
                 id: modeButton
                 Layout.preferredWidth: headerBar.modeButtonWidth
-                Layout.preferredHeight: SentinelTheme.controlHeight
+                Layout.preferredHeight: 32
                 hoverEnabled: true
                 focusPolicy: Qt.StrongFocus
                 text: headerBar.viewModel.currentModeName
@@ -147,7 +148,7 @@ ShellPanel {
                 }
 
                 background: Rectangle {
-                    radius: SentinelTheme.controlHeight / 2
+                    radius: 16
                     color: modeButton.down || modePopup.opened
                            ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.18)
                            : modeButton.hovered

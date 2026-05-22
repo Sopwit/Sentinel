@@ -115,7 +115,15 @@ synchronize the UI with that runtime posture: Home becomes the primary local Oll
 Settings gates advanced metadata behind Developer Mode, Agents presents metadata-only runtime
 sections, modes alter presentation density only, and no cloud/API provider, tools/plugins, voice
 execution, subprocess, filesystem, semantic-authority, or autonomous authority is added. Phase
-15.7 stabilizes
+19.4 through Phase 19.6 continue that UI-only posture: Home is simplified into the primary
+chatbot surface, Runtime/Memory and Agents split normal user views from Developer metadata views,
+Settings hides low-level diagnostics in normal mode, voice copy distinguishes prepared readiness
+from inactive execution, and provider copy remains Local Ollama only with no cloud provider
+active. Developer Mode remains a visibility-only setting and does not change permission, safety,
+provider, model, voice, tool, filesystem, subprocess, semantic, or agent authority. The phase also
+records the future i18n approach: Qt-native `qsTr` plus `.ts`/`.qm` catalogs, with
+English/Turkish localization and runtime language switching deferred until explicitly scoped.
+Phase 15.7 stabilizes
 controlled local Ollama reliability before additional voice/STT work: health, discovery,
 generation, and streaming requests carry timeout metadata; failures are categorized into
 not-running, endpoint-unreachable, missing/invalid model, timeout, malformed response, interrupted
@@ -896,6 +904,10 @@ execution, or arbitrary export paths:
   advanced semantic, retrieval, arbitration, agent/tool, voice-pipeline, and raw readiness
   metadata without changing permission or safety policy. Local Ollama loopback remains the only
   current inference endpoint; external API providers and API keys remain future opt-in work.
+- Phase 19.4 through Phase 19.6 is also UI-only. It reduces normal-mode debug density, makes Home
+  chatbot-first, separates Runtime/Memory and Agents into normal versus Developer segments,
+  simplifies Settings, clarifies voice as prepared but inactive, and documents Qt-native i18n
+  planning for later English/Turkish catalogs. No runtime authority changes.
 - `docs/PHASE_13_CHECKPOINT.md` records the Phase 13 Voice/Piper review, confirms the TTS path as
   `text -> Piper provider -> gated file-output metadata`, and marks Phase 14 ready only for
   explicit planning or configuration-readiness work unless a later phase separately authorizes

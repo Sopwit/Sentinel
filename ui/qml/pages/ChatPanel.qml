@@ -22,16 +22,9 @@ ShellPanel {
                                                        : ""
     readonly property int contentPadding: compact ? SentinelTheme.spaceMd : SentinelTheme.space2Xl
     readonly property int cardPadding: SentinelTheme.spaceMd
-    readonly property string bridgeStatusText: "Model "
+    readonly property string bridgeStatusText: "Local Ollama only / "
                                                + chatPanel.viewModel.selectedLocalModelStatus
-                                               + " / Chat "
-                                               + chatPanel.viewModel.localChatInferenceStatus
-                                               + " / Stream "
-                                               + chatPanel.viewModel.localInferenceStreamStatus
-                                               + " / Voice "
-                                               + chatPanel.viewModel.voicePipelineSessionStatus
-                                               + " / Audio "
-                                               + chatPanel.viewModel.audioFileSessionStatus
+                                               + " / No cloud provider active"
     readonly property string runtimeStatusText: chatPanel.viewModel.ollamaHealthStatus
                                                 + " / "
                                                 + chatPanel.viewModel.localInferenceRuntimeState
@@ -43,11 +36,7 @@ ShellPanel {
     property string renameStatusText: ""
 
     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.046)
-    border.color: SentinelTheme.withAlpha(modeAccent, 0.13)
-    bracketColor: SentinelTheme.withAlpha(modeAccent, 0.28)
-    edgeLightColor: SentinelTheme.withAlpha(modeAccent, 0.42)
-    edgeLightOpacity: 0.24
-    bracketSize: 12
+    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
 
     ColumnLayout {
         anchors.fill: parent
@@ -89,8 +78,8 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "AI BRIDGE / LIVE SURFACE"
-                    color: chatPanel.modeAccent
+                    text: "AI BRIDGE"
+                    color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontTiny
                     font.letterSpacing: 2.6
                 }
@@ -108,50 +97,6 @@ ShellPanel {
         Flow {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceSm
-
-            StatusChip {
-                label: "Context injection"
-                value: chatPanel.viewModel.promptContextInjectionEnabled ? "on" : "off"
-                accent: chatPanel.viewModel.promptContextInjectionEnabled ? SentinelTheme.success
-                                                                           : SentinelTheme.textMuted
-                muted: !chatPanel.viewModel.promptContextInjectionEnabled
-                active: chatPanel.contextActive && chatPanel.viewModel.promptContextInjectionEnabled
-                selected: chatPanel.contextActive
-            }
-
-            StatusChip {
-                label: "Retrieval"
-                value: chatPanel.viewModel.retrievalPlanningSelectedSourceCount + " sources"
-                accent: SentinelTheme.success
-                active: chatPanel.retrievalActive
-                selected: true
-            }
-
-            StatusChip {
-                label: "Window"
-                value: chatPanel.viewModel.conversationWindowIncludedMessageCount
-                       + " in / "
-                       + chatPanel.viewModel.conversationWindowOmittedMessageCount
-                       + " out"
-                accent: SentinelTheme.accentSecondary
-                selected: chatPanel.viewModel.conversationWindowIncludedMessageCount > 0
-            }
-
-            StatusChip {
-                label: "Summary"
-                value: chatPanel.viewModel.conversationSummaryBlockCount + " blocks"
-                accent: SentinelTheme.accent
-                muted: chatPanel.viewModel.conversationSummaryBlockCount === 0
-                selected: chatPanel.viewModel.conversationSummaryBlockCount > 0
-            }
-
-            StatusChip {
-                label: "Semantic"
-                value: "disabled"
-                accent: SentinelTheme.warning
-                muted: true
-                selected: chatPanel.semanticDisabled
-            }
 
             StatusChip {
                 label: "Stream"
@@ -390,93 +335,6 @@ ShellPanel {
                            + " / "
                            + chatPanel.viewModel.conversationHistoryMessageCount
                            + (chatPanel.viewModel.conversationHistoryMessageCount === 1 ? " message" : " messages")
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Saved"
-                    value: chatPanel.viewModel.conversationLastSavedStatus
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Search"
-                    value: chatPanel.viewModel.conversationSearchStatus
-                           + " / "
-                           + chatPanel.viewModel.conversationSearchSummaryText
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Export"
-                    value: chatPanel.viewModel.conversationExportLastStatus
-                           + " / "
-                           + chatPanel.viewModel.conversationExportLastResultSummary
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Inference"
-                    value: chatPanel.viewModel.localInferenceSummary
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Context"
-                    value: (chatPanel.viewModel.promptContextInjectionEnabled ? "On / " : "Off / ")
-                           + chatPanel.viewModel.promptContextInjectionStatus
-                           + " / "
-                           + chatPanel.viewModel.promptContextInjectedBlockCount
-                           + (chatPanel.viewModel.promptContextInjectedBlockCount === 1 ? " block / " : " blocks / ")
-                           + chatPanel.viewModel.promptContextSourceSummary
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Window"
-                    value: chatPanel.viewModel.conversationWindowStatus
-                           + " / "
-                           + chatPanel.viewModel.conversationWindowIncludedMessageCount
-                           + " included / "
-                           + chatPanel.viewModel.conversationWindowTruncatedMessageCount
-                           + " truncated"
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Summary"
-                    value: chatPanel.viewModel.conversationSummaryStatus
-                           + " / "
-                           + chatPanel.viewModel.conversationSummaryBlockCount
-                           + " blocks / "
-                           + chatPanel.viewModel.conversationSummaryTruncatedBlockCount
-                           + " truncated"
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Retrieval"
-                    value: chatPanel.viewModel.retrievalPlanningStatus
-                           + " / "
-                           + chatPanel.viewModel.retrievalPlanningSelectedSourceCount
-                           + " sources / "
-                           + chatPanel.viewModel.retrievalPlanningExcludedCandidateCount
-                           + " excluded"
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: true
-                    label: "Sources"
-                    value: chatPanel.viewModel.retrievalPlanningSourceSummary
                     Layout.fillWidth: true
                 }
 

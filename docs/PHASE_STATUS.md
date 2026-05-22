@@ -2,6 +2,43 @@
 
 ## Completed / Stable
 
+### Phase 19.4-19.6: Product UI Cleanup, Runtime/Memory, Agents, Settings, And i18n Planning
+
+Completed. Refines the Phase 19 product UI without adding runtime authority.
+
+Scope:
+
+- Home is now chatbot-first: the redundant central runtime/orb surface was removed, the local
+  assistant panel owns the main screen, message bubbles scroll to the latest message, and the
+  input remains visible inside the panel.
+- Shared panel styling is calmer: decorative corner brackets and colored border accents are off by
+  default, with accent color reserved for active chips, focus, and selected segmented controls.
+- Headers use one short page sentence, smaller health/mode controls, and avoid duplicate body page
+  titles.
+- Runtime/Memory now presents segmented Overview, Recall, Local Data, and Developer views. Normal
+  views explain that recall searches saved key-value memory only and that Store writes local
+  key/value notes without model calls, cloud, or automatic extraction.
+- Runtime/Memory Developer view is visible only when Developer Mode is enabled and remains
+  read-only metadata for context assembly, retrieval budgets, semantic/vector readiness,
+  arbitration, prompt authority/inclusion, and diagnostic summaries.
+- Agents now uses segmented Overview, Tasks, Capabilities, and Developer views. Static entries are
+  labeled registered profiles, and the page states metadata-only with no active execution.
+- Settings remains focused on General, Local AI/Ollama, Model Selection, Chat, Voice Setup, and
+  Privacy/Local Data. Model recommendations, management text, raw semantic/vector diagnostics, and
+  duplicated local-data rows are hidden behind Developer Mode.
+- Voice Setup copy now reports "Voice prepared, activation disabled." when readiness metadata is
+  present but execution is unavailable.
+- Provider posture remains explicit: Local Ollama only, with no cloud provider active.
+- Added i18n planning guidance: use Qt-native `qsTr`/`.ts`/`.qm` for QML/C++, plan English and
+  Turkish catalogs later, and defer runtime language switching until explicitly scoped.
+
+Known limitation:
+
+- This phase does not add localization catalogs, runtime language switching, cloud/API providers,
+  model management actions, tools/plugins, autonomous execution, microphone capture, playback,
+  Piper/Whisper execution, filesystem scanning, shell/subprocess authority, or semantic authority
+  expansion.
+
 ### Phase 19.0-19.3: Product UI/UX Synchronization Pass
 
 Completed. Aligns the desktop UI with the current local-runtime state without expanding backend

@@ -60,6 +60,13 @@ Decision: Chat providers are hidden behind `IChatProvider`.
 
 Reason: Real providers, local providers, status handling, and future configuration can evolve without changing UI code.
 
+Provider posture decision:
+
+- The current product UI must state Local Ollama only and no cloud provider active.
+- Future external API/cloud providers must be explicit opt-in integrations with separate provider
+  boundaries, settings, safety review, tests, and user-facing activation. They must not appear as
+  implied active configuration in normal UI.
+
 ## 6. Memory Persistence Boundary
 
 Decision: Memory storage is hidden behind `IMemoryStore`.
@@ -2700,3 +2707,24 @@ Boundary rules:
 - QML receives only status strings, counts, latest summaries, and trace summaries.
 - Any real tool/task runtime must arrive in a separate phase behind explicit permission, safety,
   approval, sandbox, and UI boundaries.
+
+## 102. Product UI Density And Developer Mode
+
+Decision: Normal UI surfaces prioritize user-facing local chat, local memory, registered profile,
+and settings summaries. Advanced retrieval, semantic/vector, prompt authority, arbitration, trace,
+tool-contract, voice-pipeline, and raw diagnostic summaries belong behind Developer Mode or
+Developer segments.
+
+Reason: Developer Mode is a diagnostic visibility boundary only. It must not grant backend
+authority or imply active execution.
+
+## 103. Localization Direction
+
+Decision: Use Qt-native localization for Sentinel when localization is scoped.
+
+Reason: `qsTr` and Qt `.ts`/`.qm` catalogs work across QML and C++, integrate with Qt Linguist,
+support context-aware translation, and fit the native desktop build. A JSON/string-catalog pattern
+can be reconsidered only for non-Qt plugin content or remote documentation later.
+
+Current status: no full localization catalogs or runtime language switcher are implemented.
+Future target catalogs are English and Turkish.

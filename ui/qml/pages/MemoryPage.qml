@@ -8,8 +8,10 @@ ScrollView {
     required property var viewModel
     readonly property bool compact: width < 720
     readonly property int panelPadding: SentinelTheme.spaceLg
+    readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property bool retrievalActive: viewModel.retrievalPlanningSelectedSourceCount > 0
     readonly property bool contextActive: viewModel.contextAssemblyAvailableSourceCount > 0
+    property string selectedSection: "Overview"
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
 
@@ -24,19 +26,73 @@ ScrollView {
             width: parent.width
             spacing: SentinelTheme.contentSpacing(memoryPage.width)
 
-            SectionTitle {
+            ShellPanel {
                 width: parent.width
-                title: "Runtime Memory"
-                subtitle: "Key-value memory, chat history status, and future semantic memory stay separate."
+                implicitHeight: memoryTabs.implicitHeight + SentinelTheme.spaceMd * 2
+
+                ColumnLayout {
+                    id: memoryTabs
+                    x: SentinelTheme.spaceMd
+                    y: SentinelTheme.spaceMd
+                    width: parent.width - SentinelTheme.spaceMd * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+
+                        Repeater {
+                            model: ["Overview", "Recall", "Local Data", "Developer"]
+
+                            Button {
+                                id: memoryTabButton
+                                required property string modelData
+                                enabled: modelData !== "Developer" || memoryPage.developerMode
+                                text: modelData
+                                onClicked: memoryPage.selectedSection = modelData
+
+                                contentItem: Label {
+                                    text: memoryTabButton.text
+                                    color: memoryPage.selectedSection === memoryTabButton.modelData
+                                           ? SentinelTheme.textPrimary
+                                           : SentinelTheme.textMuted
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    implicitWidth: 112
+                                    implicitHeight: 32
+                                    radius: 16
+                                    color: memoryPage.selectedSection === memoryTabButton.modelData
+                                           ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(memoryPage.viewModel.currentModeName), 0.14)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.035)
+                                    border.color: memoryTabButton.activeFocus
+                                                  ? SentinelTheme.focusBorder
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.075)
+                                }
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        visible: !memoryPage.developerMode
+                        text: "Developer metadata is visible only when Developer Mode is enabled in Settings."
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
+                    }
+                }
             }
 
             ShellPanel {
                 width: parent.width
+                visible: memoryPage.selectedSection === "Overview"
                 implicitHeight: memoryStatusColumn.implicitHeight + memoryPage.panelPadding * 2
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.040)
-                border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
-                bracketColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.24)
-                edgeLightColor: SentinelTheme.withAlpha(SentinelTheme.accent, 0.36)
 
                 ColumnLayout {
                     id: memoryStatusColumn
@@ -62,8 +118,7 @@ ScrollView {
                     InfoRow {
                         compact: memoryPage.compact
                         label: "Semantic Memory"
-                        value: memoryPage.viewModel.semanticRetrievalStatus + " - "
-                               + memoryPage.viewModel.semanticReadiness
+                        value: "Planned; disabled in normal use"
                         Layout.fillWidth: true
                     }
 
@@ -80,14 +135,6 @@ ScrollView {
                         }
 
                         StatusChip {
-                            label: "Semantic retrieval"
-                            value: "disabled"
-                            accent: SentinelTheme.warning
-                            muted: true
-                            selected: true
-                        }
-
-                        StatusChip {
                             label: "Prompt injection"
                             value: memoryPage.viewModel.promptContextInjectionEnabled ? "opt-in on"
                                                                                       : "opt-in off"
@@ -97,30 +144,15 @@ ScrollView {
                             active: memoryPage.viewModel.promptContextInjectionEnabled && memoryPage.contextActive
                         }
 
-                        StatusChip {
-                            label: "Vector index"
-                            value: memoryPage.viewModel.vectorIndexedItemCount + " items"
-                            accent: SentinelTheme.accentSecondary
-                            muted: true
-                        }
-
-                        StatusChip {
-                            label: "Arbitration"
-                            value: memoryPage.viewModel.semanticArbitrationStatus
-                            accent: SentinelTheme.textMuted
-                            muted: true
-                        }
                     }
                 }
             }
 
             ShellPanel {
                 width: parent.width
+                visible: memoryPage.selectedSection === "Developer" && memoryPage.developerMode
                 implicitHeight: contextPipelineColumn.implicitHeight + memoryPage.panelPadding * 2
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.034)
-                border.color: SentinelTheme.withAlpha(SentinelTheme.accentTertiary, 0.13)
-                bracketColor: SentinelTheme.withAlpha(SentinelTheme.accentTertiary, 0.24)
-                edgeLightColor: SentinelTheme.withAlpha(SentinelTheme.accentTertiary, 0.34)
 
                 ColumnLayout {
                     id: contextPipelineColumn
@@ -235,6 +267,7 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                visible: memoryPage.selectedSection === "Recall"
                 implicitHeight: recallColumn.implicitHeight + memoryPage.panelPadding * 2
 
                 ColumnLayout {
@@ -246,7 +279,7 @@ ScrollView {
 
                     SectionTitle {
                         title: "Local Memory Recall"
-                        subtitle: "Literal read-only search over committed key-value memory."
+                        subtitle: "Searches saved key-value memory only; it does not search chats."
                         Layout.fillWidth: true
                     }
 
@@ -317,7 +350,7 @@ ScrollView {
                     Label {
                         visible: memoryPage.viewModel.memoryRecallResultCount === 0
                                  && memoryPage.viewModel.memoryRecallStatus === "Completed"
-                        text: "No committed memory entries matched the recall query."
+                        text: "No saved local memory matched that query."
                         color: SentinelTheme.textMuted
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
@@ -327,6 +360,7 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                visible: memoryPage.selectedSection === "Developer" && memoryPage.developerMode
                 implicitHeight: contextAssemblyColumn.implicitHeight + memoryPage.panelPadding * 2
 
                 ColumnLayout {
@@ -516,6 +550,7 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                visible: memoryPage.selectedSection === "Local Data"
                 implicitHeight: candidateColumn.implicitHeight + memoryPage.panelPadding * 2
 
                 ColumnLayout {
@@ -671,6 +706,7 @@ ScrollView {
 
             GridLayout {
                 width: parent.width
+                visible: memoryPage.selectedSection === "Local Data"
                 columns: memoryPage.compact ? 1 : 3
                 columnSpacing: SentinelTheme.spaceSm
                 rowSpacing: SentinelTheme.spaceSm
@@ -679,13 +715,13 @@ ScrollView {
                     id: memoryKey
                     Layout.fillWidth: true
                     Layout.preferredWidth: memoryPage.compact ? -1 : 220
-                    placeholderText: "key"
+                    placeholderText: "Key: memory name or topic"
                 }
 
                 SentinelTextField {
                     id: memoryValue
                     Layout.fillWidth: true
-                    placeholderText: "value"
+                    placeholderText: "Value: saved local note"
                 }
 
                 SentinelButton {
@@ -703,6 +739,7 @@ ScrollView {
             ListView {
                 id: memoryList
                 width: parent.width
+                visible: memoryPage.selectedSection === "Local Data"
                 height: Math.min(420, Math.max(220, memoryPage.height - 360))
                 clip: true
                 spacing: SentinelTheme.spaceSm
@@ -732,8 +769,8 @@ ScrollView {
 
             Label {
                 width: parent.width
-                visible: memoryList.count === 0
-                text: "No key-value memory entries stored."
+                visible: memoryPage.selectedSection === "Local Data" && memoryList.count === 0
+                text: "No saved key-value memory yet. Store saves local memory only; it does not call a model, use cloud, or extract automatically."
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignHCenter
             }
