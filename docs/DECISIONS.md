@@ -318,6 +318,34 @@ Runtime behavior:
 - Switching conversations invalidates active async request ids so stale completions cannot mutate
   the newly active transcript.
 
+## 11. Local Ollama Send Readiness
+
+Decision: Local chat send availability is a controller-owned readiness contract exposed through
+QML-safe view-model properties.
+
+Reason: The UI previously had to infer readiness from separate Ollama/model/busy fields, which
+could make Ollama appear connected while generation was blocked or unclear. A single readiness
+summary keeps normal UI understandable while Developer Mode retains detailed diagnostics.
+
+Runtime behavior:
+
+- Send availability requires local chat enabled, local loopback Ollama, reachable health, a
+  discovered installed model list, an explicitly selected model present in that list, an
+  unarchived active conversation, and no active request.
+- Readiness failures refuse before appending a user message. This applies to Ollama unreachable,
+  invalid endpoint, no selected model, selected model missing, unavailable model list, archived
+  conversation, and runtime busy states.
+- Started local inference requests still use the async worker/request-id guard. Cancellation,
+  clear-chat, and conversation switching invalidate active request ids so stale completions cannot
+  append to the current transcript.
+- Streaming preview is transient. Completed streams append one assistant response; failed streams
+  clear preview text and append one safe failure response only for requests that actually started.
+
+Out of scope:
+
+- Cloud/API providers, API keys, model downloads/deletes, tools/plugins, filesystem/shell/
+  subprocess execution, STT/TTS activation, autonomous actions, and semantic authority expansion.
+
 Out of scope:
 
 - Permanent delete execution, cloud sync, import/export workflow changes, semantic/vector memory,

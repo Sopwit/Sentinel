@@ -577,7 +577,7 @@ void DesktopShellViewModelTest::exposesDiscoveredModelSelectionMetadata() {
              QStringList({QStringLiteral("llama3.2"), QStringLiteral("mistral")}));
     QVERIFY(viewModel.ollamaModelSummaries().contains(
         QStringLiteral("llama3.2 (2.0 GiB, modified 2026-05-01T10:00:00Z, Local Only)")));
-    QCOMPARE(viewModel.selectedLocalModelStatus(), QStringLiteral("Fallback"));
+    QCOMPARE(viewModel.selectedLocalModelStatus(), QStringLiteral("Missing"));
     QCOMPARE(viewModel.selectedLocalModelMetadataSummary(),
              QStringLiteral("Fallback model: llama3.2 (2.0 GiB, modified "
                             "2026-05-01T10:00:00Z, Local Only)"));
@@ -896,6 +896,9 @@ void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
     QCOMPARE(fixture.viewModel.localChatInferenceSummary(),
              QStringLiteral("Local chat inference is disabled; chat stays on the local safe "
                             "provider path and no Ollama prompt is sent."));
+    QVERIFY(!fixture.viewModel.localChatSendAvailable());
+    QCOMPARE(fixture.viewModel.localChatSendAvailabilitySummary(),
+             QStringLiteral("Enable Local chat inference in Settings to send with Ollama."));
     QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Unavailable"));
     QCOMPARE(fixture.viewModel.localInferenceLatencySummary(),
              QStringLiteral("No local inference latency recorded."));
@@ -1454,6 +1457,8 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("piperRuntimePathSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("localChatInferenceSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("localChatSendAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("localChatSendAvailabilitySummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("promptContextInjectionEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("promptContextInjectionStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("promptContextInjectionSummary"), QByteArrayLiteral("QString")},
@@ -2530,7 +2535,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QVERIFY(fixture.viewModel.developerModeEnabled());
     QVERIFY(fixture.settings.developerModeEnabled());
     QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Empty"));
-    QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Enabled"));
+    QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Ollama Unreachable"));
+    QVERIFY(!fixture.viewModel.localChatSendAvailable());
     QCOMPARE(themeSpy.count(), 1);
     QCOMPARE(profileSpy.count(), 1);
     QCOMPARE(modelSpy.count(), 1);

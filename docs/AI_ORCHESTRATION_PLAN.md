@@ -1,5 +1,15 @@
 # AI Orchestration Plan
 
+Phase 25.0 through Phase 25.8 hardens the active local Ollama chat path without expanding runtime
+authority. Local Ollama remains the only active inference provider; no cloud/API provider or API-key
+configuration is active. Send readiness is a controller-owned contract requiring local chat
+enabled, reachable local loopback Ollama health, installed model discovery, an explicitly selected
+model present in that discovered list, an unarchived active conversation, and no active request.
+Readiness failures refuse before transcript mutation and expose concise normal-UI copy plus
+Developer Mode diagnostics. Started non-streaming and streaming requests keep the existing
+request-id guard, busy cleanup, stale-result ignore behavior, transient streaming preview, and
+single final assistant-message append semantics.
+
 Phase 4.11 recorded future AI routing direction only. Phase 6.0 began implementing that direction
 as metadata-only architecture. Phase 6.1 persists the user routing mode preference. Phase 6.2 adds
 a provider/model catalog metadata boundary. Phase 6.3 adds capability graph and task planner

@@ -85,6 +85,28 @@ release packaging through its native translation workflow.
 External API/cloud providers remain future opt-in integrations only. No cloud provider or API-key
 configuration is active in the current desktop runtime.
 
+## Local Ollama Chat Reliability
+
+The current active inference path is local Ollama only. `ApplicationController` owns the local chat
+readiness contract and `DesktopShellViewModel` exposes only QML-safe booleans and summaries to the
+UI.
+
+Send readiness requires:
+
+- local chat inference enabled
+- local loopback HTTP Ollama endpoint
+- reachable Ollama health status
+- installed-model discovery available
+- explicitly selected model present in discovered Ollama metadata
+- active conversation not archived
+- no active local inference request
+
+Normal UI consumes `localChatSendAvailable` and `localChatSendAvailabilitySummary` for composer
+state and next-action copy. Developer Mode may show `localInferenceStatus`, traces, latency,
+stream status, and conversation runtime summaries. Failed readiness refuses before transcript
+mutation; started requests still use request-id guards so stale completions after cancellation,
+clear, or conversation switch are ignored.
+
 ## Intentional Boundaries
 
 - Chat provider behavior is hidden behind `IChatProvider`.

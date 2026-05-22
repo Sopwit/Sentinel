@@ -1287,6 +1287,14 @@ QString DesktopShellViewModel::localChatInferenceSummary() const {
     return controller_.localChatInferenceSummary();
 }
 
+bool DesktopShellViewModel::localChatSendAvailable() const {
+    return controller_.localChatSendAvailable();
+}
+
+QString DesktopShellViewModel::localChatSendAvailabilitySummary() const {
+    return controller_.localChatSendAvailabilitySummary();
+}
+
 bool DesktopShellViewModel::promptContextInjectionEnabled() const {
     return controller_.promptContextInjectionEnabled();
 }

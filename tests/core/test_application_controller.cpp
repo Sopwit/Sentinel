@@ -834,7 +834,7 @@ static void configureReadyPiperPaths(ApplicationController& controller, QTempora
 
 static std::unique_ptr<ApplicationController>
 makeAsyncWorkerController(std::unique_ptr<ILocalInferenceWorker> worker) {
-    return std::make_unique<ApplicationController>(
+    auto controller = std::make_unique<ApplicationController>(
         std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
         nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
         nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
@@ -842,6 +842,8 @@ makeAsyncWorkerController(std::unique_ptr<ILocalInferenceWorker> worker) {
         std::make_unique<FakeOllamaRuntimeClient>(
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, std::move(worker));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    return controller;
 }
 
 void ApplicationControllerTest::exposesProviderNameAndInitialSystemMessage() {
@@ -1212,10 +1214,10 @@ void ApplicationControllerTest::exposesSelectedModelDefaultAndFallback() {
     QCOMPARE(controller->ollamaModelNames(), QStringList{QStringLiteral("llama3.2")});
     QCOMPARE(controller->ollamaModelSummaries(),
              QStringList{QStringLiteral("llama3.2 (10 B, Local Only)")});
-    QCOMPARE(controller->selectedLocalModelStatus(), QStringLiteral("Fallback"));
+    QCOMPARE(controller->selectedLocalModelStatus(), QStringLiteral("Missing"));
     QCOMPARE(controller->selectedLocalModelSummary(),
-             QStringLiteral("No local model selected; fallback candidate is llama3.2 from "
-                            "discovered Ollama metadata."));
+             QStringLiteral("No local model selected. Choose an installed Ollama model in "
+                            "Settings before sending."));
     QCOMPARE(controller->selectedLocalModelMetadataSummary(),
              QStringLiteral("Fallback model: llama3.2 (10 B, Local Only)"));
     QCOMPARE(controller->activeLocalRuntimeBadge(), QStringLiteral("Ollama Local / llama3.2"));
@@ -1681,6 +1683,12 @@ void ApplicationControllerTest::streamDisabledByDefaultFallsBackToNonStreaming()
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(fakeClient), std::move(streamClient));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
@@ -1712,6 +1720,10 @@ void ApplicationControllerTest::enabledLocalChatStreamingAppendsOrderedChunksOnc
     QSignalSpy localSpy(controller.get(), &ApplicationController::localInferenceChanged);
     QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
@@ -1746,6 +1758,8 @@ void ApplicationControllerTest::streamingPreviewClearsAfterFinalResponseIsPersis
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
 
@@ -1774,6 +1788,7 @@ void ApplicationControllerTest::enabledLocalChatStreamingHandlesMalformedChunk()
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
@@ -1798,6 +1813,7 @@ void ApplicationControllerTest::enabledLocalChatStreamingCancellationAppendsSafe
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
@@ -1829,6 +1845,7 @@ void ApplicationControllerTest::streamingPreviewClearsAfterStreamError() {
         std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
     QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
 
@@ -1874,6 +1891,8 @@ void ApplicationControllerTest::asyncLocalChatStreamingCompletesWithFakeWorker()
     auto controller = makeAsyncWorkerController(std::move(worker));
     QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
@@ -1903,6 +1922,8 @@ void ApplicationControllerTest::asyncLocalChatInferenceErrorResetsBusy() {
         std::make_unique<AsyncLocalInferenceWorker>(AsyncLocalInferenceWorker::Mode::TimeoutError);
     auto controller = makeAsyncWorkerController(std::move(worker));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
@@ -1920,6 +1941,8 @@ void ApplicationControllerTest::asyncSuccessUpdatesConversationRuntimeState() {
     auto worker = std::make_unique<AsyncLocalInferenceWorker>();
     auto controller = makeAsyncWorkerController(std::move(worker));
     QSignalSpy runtimeSpy(controller.get(), &ApplicationController::conversationRuntimeChanged);
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
 
     controller->setLocalChatInferenceEnabled(true);
     QVERIFY(controller->sendMessage(QStringLiteral("hello")));
@@ -1944,6 +1967,8 @@ void ApplicationControllerTest::
     auto worker =
         std::make_unique<AsyncLocalInferenceWorker>(AsyncLocalInferenceWorker::Mode::TimeoutError);
     auto controller = makeAsyncWorkerController(std::move(worker));
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
 
     controller->setLocalChatInferenceEnabled(true);
     QVERIFY(controller->sendMessage(QStringLiteral("hello")));
@@ -2331,6 +2356,7 @@ void ApplicationControllerTest::switchingConversationIgnoresStaleAsyncResultAndR
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, std::move(worker));
     controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     const auto firstId = controller->activeConversationId();
     const auto secondId = controller->createConversation(QStringLiteral("After Switch"));
@@ -2631,6 +2657,7 @@ void ApplicationControllerTest::clearChatResetsStreamingAndActiveRequestMetadata
     worker->streamFinishDelayMs = 100;
     auto* workerPtr = worker.get();
     auto controller = makeAsyncWorkerController(std::move(worker));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
 
@@ -2670,6 +2697,8 @@ void ApplicationControllerTest::asyncDuplicateSendIsRejectedBeforeAppending() {
     worker->delayMs = 25;
     auto controller = makeAsyncWorkerController(std::move(worker));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+
     controller->setLocalChatInferenceEnabled(true);
     QVERIFY(controller->sendMessage(QStringLiteral("hello")));
     const auto duplicateAccepted = controller->sendMessage(QStringLiteral("duplicate"));
@@ -2689,6 +2718,8 @@ void ApplicationControllerTest::staleAsyncResultIsIgnoredAfterCancellation() {
     auto* workerPtr = worker.get();
     worker->delayMs = 25;
     auto controller = makeAsyncWorkerController(std::move(worker));
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
 
     controller->setLocalChatInferenceEnabled(true);
     QVERIFY(controller->sendMessage(QStringLiteral("hello")));
@@ -2724,6 +2755,8 @@ void ApplicationControllerTest::localInferenceTimeoutAppendsConciseFailureAndRes
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(timeoutClient));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
@@ -2752,6 +2785,8 @@ void ApplicationControllerTest::
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(malformedClient));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
@@ -2772,17 +2807,18 @@ void ApplicationControllerTest::ollamaUnavailablePathAppendsConciseFailureWithou
         std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{}));
 
     controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
     QVERIFY(!sent);
     QVERIFY(!controller->localInferenceBusy());
     QCOMPARE(controller->localInferenceRuntimeState(), QStringLiteral("Failed"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Local inference unavailable: the local Ollama endpoint is "
-                            "unreachable."));
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Ollama Unreachable"));
+    QCOMPARE(controller->localChatSendAvailable(), false);
+    QCOMPARE(controller->localChatSendAvailabilitySummary(),
+             QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again."));
 }
 
 void ApplicationControllerTest::duplicateSendDuringActiveStreamIsRejectedWithoutAppending() {
@@ -2797,6 +2833,8 @@ void ApplicationControllerTest::duplicateSendDuringActiveStreamIsRejectedWithout
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
     streamClientPtr->controller = controller.get();
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
 
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
@@ -2829,6 +2867,8 @@ void ApplicationControllerTest::streamingInterruptionClearsPreviewAndAppendsOneF
         std::make_unique<FakeOllamaRuntimeClient>(
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::make_unique<FakeLocalInferenceClient>(), std::move(streamClient));
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
 
     controller->setLocalChatInferenceEnabled(true);
     controller->setLocalInferenceStreamingEnabled(true);
@@ -2960,10 +3000,10 @@ void ApplicationControllerTest::enabledLocalChatInferenceWithoutValidModelFailsS
     QVERIFY(!sent);
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Missing Model"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-    QVERIFY(controller->chatHistory().at(2).content.contains(
-        QStringLiteral("Local inference did not run: no local model is selected.")));
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->localChatSendAvailable(), false);
+    QCOMPARE(controller->localChatSendAvailabilitySummary(),
+             QStringLiteral("Select an installed Ollama model in Settings before sending."));
 }
 
 void ApplicationControllerTest::enabledLocalChatInferenceWithInvalidModelShowsSafeSummary() {
@@ -2985,10 +3025,11 @@ void ApplicationControllerTest::enabledLocalChatInferenceWithInvalidModelShowsSa
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Invalid Model"));
     QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Model Unavailable"));
-    QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Error);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Local inference did not run: the selected model is not available in "
-                            "discovered Ollama metadata."));
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->localChatSendAvailable(), false);
+    QCOMPARE(controller->localChatSendAvailabilitySummary(),
+             QStringLiteral("Selected model missing-model is not installed in Ollama. Choose an "
+                            "available model in Settings."));
 }
 
 void ApplicationControllerTest::enabledLocalChatInferenceAppendsFakeResponse() {
@@ -3005,6 +3046,8 @@ void ApplicationControllerTest::enabledLocalChatInferenceAppendsFakeResponse() {
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(fakeClient));
     QSignalSpy chatSpy(controller.get(), &ApplicationController::chatMessagesChanged);
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
 
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
@@ -3031,6 +3074,8 @@ void ApplicationControllerTest::enabledLocalChatInferenceErrorAppendsSafeRefusal
         std::make_unique<FakeOllamaRuntimeClient>(
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(errorClient));
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
 
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
@@ -3059,6 +3104,8 @@ void ApplicationControllerTest::localChatInferenceBlocksNonLoopbackEndpoint() {
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}, config),
         std::move(fakeClient));
 
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+
     controller->setLocalChatInferenceEnabled(true);
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
@@ -3066,8 +3113,10 @@ void ApplicationControllerTest::localChatInferenceBlocksNonLoopbackEndpoint() {
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Blocked"));
     QCOMPARE(controller->localInferenceStatus(), QStringLiteral("Blocked"));
-    QVERIFY(controller->chatHistory().at(2).content.contains(
-        QStringLiteral("Ollama must use local loopback HTTP")));
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->localChatSendAvailable(), false);
+    QCOMPARE(controller->localChatSendAvailabilitySummary(),
+             QStringLiteral("Ollama must use a local loopback HTTP endpoint."));
 }
 
 void ApplicationControllerTest::exposesConversationSessionMetadata() {
@@ -4009,6 +4058,7 @@ void ApplicationControllerTest::promptContextInjectionDisabledLeavesPromptUnchan
         std::make_unique<FakeOllamaRuntimeClient>(
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(fakeClient));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
 
     QVERIFY(controller->sendMessage(QStringLiteral("hello")));
@@ -4031,6 +4081,7 @@ void ApplicationControllerTest::enabledPromptContextInjectionIncludesDeterminist
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(fakeClient));
     controller->remember(QStringLiteral("preference.tone"), QStringLiteral("Concise answers"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
@@ -4065,6 +4116,7 @@ void ApplicationControllerTest::promptContextInjectionUsesOnlyCommittedMemory() 
     QVERIFY(controller->rejectMemoryCandidate(rejectedId));
     Q_UNUSED(pendingId);
     controller->remember(QStringLiteral("approved.local"), QStringLiteral("committed only"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
@@ -4112,6 +4164,7 @@ void ApplicationControllerTest::promptContextInjectionUsesBoundedRecentConversat
             QStringLiteral("history marker %1 %2").arg(i).arg(QString(120, QLatin1Char('x')))));
     }
     const auto messageCountBeforePrompt = controller->conversationHistoryMessageCount();
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
     controller->remember(QStringLiteral("stable.memory"), QStringLiteral("kept separate"));
@@ -4158,6 +4211,7 @@ void ApplicationControllerTest::conversationSummaryUsesOlderWindowAndStaysSepara
             QStringLiteral("summary marker %1 %2").arg(i).arg(QString(100, QLatin1Char('s')))));
     }
     controller->remember(QStringLiteral("summary.memory"), QStringLiteral("memory stays distinct"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
@@ -4217,6 +4271,7 @@ void ApplicationControllerTest::retrievalPlanningFeedsPromptContextWithoutMixing
     }
     controller->remember(QStringLiteral("retrieval.memory"),
                          QStringLiteral("committed memory remains distinct"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
@@ -4278,6 +4333,7 @@ void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOr
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(fakeClient));
     controller->remember(QStringLiteral("semantic.local"), QStringLiteral("deterministic only"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
@@ -4634,6 +4690,7 @@ void ApplicationControllerTest::semanticCandidateOrchestrationDoesNotMutatePromp
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(fakeClient));
     controller->remember(QStringLiteral("candidate.prompt"), QStringLiteral("deterministic"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
@@ -4666,6 +4723,7 @@ void ApplicationControllerTest::promptContextInjectionDoesNotMutateMemoryOrCandi
     controller->remember(QStringLiteral("stable.local"), QStringLiteral("unchanged"));
     const auto beforeEntries = controller->memoryEntries();
     const auto beforeCandidateCount = controller->memoryCandidateCount();
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 
@@ -4690,6 +4748,7 @@ void ApplicationControllerTest::promptContextInjectionRespectsSafetyGateBeforeAs
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         std::move(fakeClient));
     controller->remember(QStringLiteral("stable.local"), QStringLiteral("do not assemble"));
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
     controller->setLocalChatInferenceEnabled(true);
     controller->setPromptContextInjectionEnabled(true);
 

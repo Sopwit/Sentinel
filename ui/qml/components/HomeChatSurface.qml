@@ -7,24 +7,14 @@ ShellPanel {
     required property var viewModel
     property bool compact: width < 760
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property bool modelReady: viewModel.selectedLocalModelStatus === "Available"
-                                      || viewModel.selectedLocalModelStatus === "Fallback"
-    readonly property bool chatReady: viewModel.localChatInferenceEnabled && modelReady
-    readonly property bool canSend: chatReady
-                                    && !viewModel.localInferenceBusy
-                                    && !viewModel.activeConversationArchived
+    readonly property bool chatReady: viewModel.localChatSendAvailable
+    readonly property bool canSend: viewModel.localChatSendAvailable
     readonly property bool streamingActive: viewModel.localInferenceStreamingText.length > 0
                                             || viewModel.localInferenceRuntimeState === "Streaming"
     readonly property string uiSelfCheck: "chat-scroll-safe-area composer-visible no-bridge-duplication"
     readonly property string disabledReason: viewModel.activeConversationArchived
                                              ? viewModel.activeConversationStateSummary
-                                             : !viewModel.localChatInferenceEnabled
-                                               ? "Enable Local chat inference in Settings to send with Ollama."
-                                               : !modelReady
-                                                 ? "Select an available local Ollama model before sending."
-                                                 : viewModel.localInferenceBusy
-                                                   ? "Sentinel is responding."
-                                                   : ""
+                                             : viewModel.localChatSendAvailabilitySummary
 
     radius: SentinelTheme.radiusPanel
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.58)
@@ -350,8 +340,8 @@ ShellPanel {
                     Layout.minimumHeight: 48
                     Layout.maximumHeight: 126
                     placeholderText: homeChat.chatReady ? "Ask Sentinel"
-                                                        : "Local provider chat is not ready"
-                    enabled: homeChat.canSend
+                                                        : homeChat.viewModel.localChatSendAvailabilitySummary
+                    enabled: !homeChat.viewModel.activeConversationArchived
                     color: SentinelTheme.textPrimary
                     placeholderTextColor: SentinelTheme.textPlaceholder
                     wrapMode: TextEdit.WordWrap
@@ -375,7 +365,7 @@ ShellPanel {
 
                 SentinelButton {
                     id: sendButton
-                    visible: homeChat.chatReady
+                    visible: true
                     text: "Send"
                     Layout.preferredWidth: 82
                     Layout.alignment: Qt.AlignBottom
@@ -389,9 +379,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             visible: !homeChat.chatReady || homeChat.disabledReason.length > 0
-            text: !homeChat.chatReady
-                  ? homeChat.disabledReason + " Local Ollama only. No cloud provider active."
-                  : homeChat.disabledReason
+            text: homeChat.disabledReason + (homeChat.chatReady ? "" : " Local Ollama only. No cloud provider active.")
             color: !homeChat.chatReady ? SentinelTheme.textMuted : SentinelTheme.warning
             font.pixelSize: SentinelTheme.fontSmall
             wrapMode: Text.WordWrap
