@@ -1494,6 +1494,38 @@ QStringList DesktopShellViewModel::memoryRelevanceExclusionSummaries() const {
     return controller_.memoryRelevanceExclusionSummaries();
 }
 
+QString DesktopShellViewModel::conversationSalienceSummaryText() const {
+    return controller_.conversationSalienceSummaryText();
+}
+
+QString DesktopShellViewModel::conversationSalienceBudgetSummary() const {
+    return controller_.conversationSalienceBudgetSummary();
+}
+
+QString DesktopShellViewModel::conversationSalienceAllocationSummary() const {
+    return controller_.conversationSalienceAllocationSummary();
+}
+
+int DesktopShellViewModel::conversationSalienceIncludedCount() const {
+    return controller_.conversationSalienceIncludedCount();
+}
+
+int DesktopShellViewModel::conversationSalienceExcludedCount() const {
+    return controller_.conversationSalienceExcludedCount();
+}
+
+int DesktopShellViewModel::conversationSalienceTruncatedCount() const {
+    return controller_.conversationSalienceTruncatedCount();
+}
+
+QStringList DesktopShellViewModel::conversationSalienceTraceSummaries() const {
+    return controller_.conversationSalienceTraceSummaries();
+}
+
+QStringList DesktopShellViewModel::conversationSalienceExclusionSummaries() const {
+    return controller_.conversationSalienceExclusionSummaries();
+}
+
 core::SemanticRetrievalPolicy DesktopShellViewModel::semanticRetrievalPolicy() const {
     return controller_.semanticRetrievalPolicy();
 }

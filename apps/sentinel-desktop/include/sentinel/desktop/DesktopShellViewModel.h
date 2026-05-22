@@ -514,6 +514,22 @@ class DesktopShellViewModel final : public QObject {
                    contextAssemblyChanged)
     Q_PROPERTY(QStringList memoryRelevanceExclusionSummaries READ
                    memoryRelevanceExclusionSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSalienceSummaryText READ conversationSalienceSummaryText NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSalienceBudgetSummary READ conversationSalienceBudgetSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString conversationSalienceAllocationSummary READ
+                   conversationSalienceAllocationSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(int conversationSalienceIncludedCount READ conversationSalienceIncludedCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int conversationSalienceExcludedCount READ conversationSalienceExcludedCount NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(int conversationSalienceTruncatedCount READ conversationSalienceTruncatedCount
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList conversationSalienceTraceSummaries READ
+                   conversationSalienceTraceSummaries NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QStringList conversationSalienceExclusionSummaries READ
+                   conversationSalienceExclusionSummaries NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool semanticRetrievalEnabled READ semanticRetrievalEnabled CONSTANT)
     Q_PROPERTY(QString semanticRetrievalStatus READ semanticRetrievalStatus CONSTANT)
     Q_PROPERTY(QString semanticRetrievalSummary READ semanticRetrievalSummary CONSTANT)
@@ -1298,6 +1314,14 @@ public:
     int memoryRelevanceExcludedCount() const;
     QStringList memoryRelevanceTraceSummaries() const;
     QStringList memoryRelevanceExclusionSummaries() const;
+    QString conversationSalienceSummaryText() const;
+    QString conversationSalienceBudgetSummary() const;
+    QString conversationSalienceAllocationSummary() const;
+    int conversationSalienceIncludedCount() const;
+    int conversationSalienceExcludedCount() const;
+    int conversationSalienceTruncatedCount() const;
+    QStringList conversationSalienceTraceSummaries() const;
+    QStringList conversationSalienceExclusionSummaries() const;
     core::SemanticRetrievalPolicy semanticRetrievalPolicy() const;
     bool semanticRetrievalEnabled() const;
     QString semanticRetrievalStatus() const;

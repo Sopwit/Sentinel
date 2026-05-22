@@ -432,6 +432,93 @@ struct MemoryRelevanceSummary {
     MemoryRelevanceTrace trace;
 };
 
+struct ConversationSaliencePolicy {
+    bool enabled = true;
+    int maxCharacters = 3200;
+    int maxCandidates = 8;
+    int activeConversationBudgetPercent = 65;
+    int committedMemoryBudgetPercent = 30;
+    int runtimeMetadataBudgetPercent = 5;
+    QString status = QStringLiteral("Ready");
+    QString summary = QStringLiteral(
+        "Adaptive deterministic salience budgets local context without semantic/vector authority.");
+};
+
+struct ConversationSalienceCandidate {
+    ContextAssemblySourceKind source = ContextAssemblySourceKind::Conversation;
+    QString title;
+    QString content;
+    int originalIndex = 0;
+    int originalSize = 0;
+    bool pinned = false;
+    bool committedMemory = false;
+    int recencyRank = 0;
+};
+
+struct ConversationSalienceScore {
+    int total = 0;
+    int activeConversationTitleOverlap = 0;
+    int recentUserMessageOverlap = 0;
+    int recentAssistantMessageOverlap = 0;
+    int pinnedConversationPriority = 0;
+    int committedMemoryOverlap = 0;
+    int explicitQueryTermOverlap = 0;
+    int recencyWeight = 0;
+};
+
+struct ConversationSalienceReason {
+    QStringList includedReasons;
+    QString exclusionReason;
+    QString summary = QStringLiteral("No deterministic salience.");
+};
+
+struct ConversationSalienceBudget {
+    int maxCharacters = 3200;
+    int activeConversationBudget = 2080;
+    int committedMemoryBudget = 960;
+    int runtimeMetadataBudget = 160;
+    int estimatedCharacters = 0;
+    int includedCharacters = 0;
+    int activeConversationCharacters = 0;
+    int committedMemoryCharacters = 0;
+    int runtimeMetadataCharacters = 0;
+    int remainingCharacters = 3200;
+    QString allocationSummary =
+        QStringLiteral("Active conversation 2080 chars / committed memory 960 chars / runtime "
+                       "metadata 160 chars.");
+    QString summary = QStringLiteral("0 of 3200 salience context characters selected.");
+};
+
+struct ConversationSalienceSelection {
+    ConversationSalienceCandidate candidate;
+    ConversationSalienceScore score;
+    ConversationSalienceReason reason;
+    bool included = false;
+    bool duplicate = false;
+    bool truncated = false;
+    int selectedCharacters = 0;
+    QString selectedText;
+};
+
+struct ConversationSalienceTrace {
+    QStringList includedSummaries;
+    QStringList excludedSummaries;
+    QString summary = QStringLiteral("No conversation salience trace has been generated.");
+};
+
+struct ConversationSalienceSummary {
+    ConversationSaliencePolicy policy;
+    ConversationSalienceBudget budget;
+    QList<ConversationSalienceSelection> selections;
+    int candidateCount = 0;
+    int includedCount = 0;
+    int excludedCount = 0;
+    int duplicateCount = 0;
+    int truncatedCount = 0;
+    QString summary = QStringLiteral("No conversation salience has been evaluated.");
+    ConversationSalienceTrace trace;
+};
+
 QString contextExclusionReasonName(ContextExclusionReason reason);
 
 ContextAssemblySource makeContextAssemblySource(ContextAssemblySourceKind kind, bool requested,
@@ -463,5 +550,12 @@ MemoryRelevanceSummary rankMemoryRelevance(
     const MemoryRelevancePolicy& policy);
 QStringList memoryRelevanceTraceSummaries(const MemoryRelevanceSummary& summary);
 QStringList memoryRelevanceExclusionSummaries(const MemoryRelevanceSummary& summary);
+ConversationSalienceSummary rankConversationSalience(
+    const QList<ConversationSalienceCandidate>& candidates, const QString& explicitUserQuery,
+    const QString& activeConversationTitle, const QString& recentUserMessages,
+    const QString& recentAssistantMessages, const QString& committedMemoryText,
+    const ConversationSaliencePolicy& policy);
+QStringList conversationSalienceTraceSummaries(const ConversationSalienceSummary& summary);
+QStringList conversationSalienceExclusionSummaries(const ConversationSalienceSummary& summary);
 
 } // namespace sentinel::core

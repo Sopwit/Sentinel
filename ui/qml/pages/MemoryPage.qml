@@ -158,12 +158,12 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Memory Context Quality"
-                        value: memoryPage.viewModel.memoryRelevanceIncludedCount
+                        label: "Context Quality"
+                        value: memoryPage.viewModel.conversationSalienceIncludedCount
                                + " included / "
-                               + memoryPage.viewModel.memoryRelevanceExcludedCount
+                               + memoryPage.viewModel.conversationSalienceExcludedCount
                                + " excluded / "
-                               + memoryPage.viewModel.memoryRelevanceBudgetSummary
+                               + memoryPage.viewModel.conversationSalienceAllocationSummary
                         Layout.fillWidth: true
                     }
 
@@ -266,19 +266,20 @@ ScrollView {
 
                         InfoRow {
                             compact: true
-                            label: "Context Budget"
-                            value: memoryPage.viewModel.contextBudgetUsageSummary
+                            label: "Salience Budget"
+                            value: memoryPage.viewModel.conversationSalienceAllocationSummary
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: true
-                            label: "Memory Relevance"
-                            value: memoryPage.viewModel.memoryRelevanceIncludedCount
+                            label: "Salience Counts"
+                            value: memoryPage.viewModel.conversationSalienceIncludedCount
                                    + " included / "
-                                   + memoryPage.viewModel.memoryRelevanceExcludedCount
+                                   + memoryPage.viewModel.conversationSalienceExcludedCount
                                    + " excluded / "
-                                   + memoryPage.viewModel.memoryRelevanceBudgetSummary
+                                   + memoryPage.viewModel.conversationSalienceTruncatedCount
+                                   + " truncated"
                             Layout.fillWidth: true
                         }
 
@@ -294,10 +295,10 @@ ScrollView {
                     InfoRow {
                         compact: true
                         valueMaximumLineCount: 8
-                        label: "Context Trace"
-                        value: memoryPage.viewModel.contextAssemblyTraceSummaries.length === 0
+                        label: "Salience Trace"
+                        value: memoryPage.viewModel.conversationSalienceTraceSummaries.length === 0
                                ? "No prompt context assembled yet."
-                               : memoryPage.viewModel.contextAssemblyTraceSummaries.join(" / ")
+                               : memoryPage.viewModel.conversationSalienceTraceSummaries.join(" / ")
                         Layout.fillWidth: true
                     }
 
@@ -546,15 +547,15 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Retrieval Budget"
-                        value: memoryPage.viewModel.retrievalPlanningBudgetSummary
+                        label: "Salience Budget"
+                        value: memoryPage.viewModel.conversationSalienceBudgetSummary
                         Layout.fillWidth: true
                     }
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Memory Relevance Budget"
-                        value: memoryPage.viewModel.memoryRelevanceBudgetSummary
+                        label: "Salience Allocation"
+                        value: memoryPage.viewModel.conversationSalienceAllocationSummary
                         Layout.fillWidth: true
                     }
 
@@ -573,20 +574,20 @@ ScrollView {
                     InfoRow {
                         compact: memoryPage.compact
                         valueMaximumLineCount: 8
-                        label: "Memory Relevance Trace"
-                        value: memoryPage.viewModel.memoryRelevanceTraceSummaries.length === 0
-                               ? "No memory relevance evaluated yet."
-                               : memoryPage.viewModel.memoryRelevanceTraceSummaries.join(" / ")
+                        label: "Salience Trace"
+                        value: memoryPage.viewModel.conversationSalienceTraceSummaries.length === 0
+                               ? "No salience evaluated yet."
+                               : memoryPage.viewModel.conversationSalienceTraceSummaries.join(" / ")
                         Layout.fillWidth: true
                     }
 
                     InfoRow {
                         compact: memoryPage.compact
                         valueMaximumLineCount: 8
-                        label: "Memory Exclusion Reasons"
-                        value: memoryPage.viewModel.memoryRelevanceExclusionSummaries.length === 0
-                               ? "No memory exclusions."
-                               : memoryPage.viewModel.memoryRelevanceExclusionSummaries.join(" / ")
+                        label: "Salience Exclusions"
+                        value: memoryPage.viewModel.conversationSalienceExclusionSummaries.length === 0
+                               ? "No salience exclusions."
+                               : memoryPage.viewModel.conversationSalienceExclusionSummaries.join(" / ")
                         Layout.fillWidth: true
                     }
 

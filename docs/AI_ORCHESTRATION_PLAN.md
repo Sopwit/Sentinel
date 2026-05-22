@@ -1,5 +1,17 @@
 # AI Orchestration Plan
 
+Phase 28.0 through Phase 28.8 adds adaptive context budgeting and conversation salience while
+preserving the existing local-only, opt-in context boundary. Deterministic salience records score
+local context candidates with literal active conversation title overlap, recent user and assistant
+message overlap, pinned conversation metadata, committed memory overlap, explicit user query
+terms, and deterministic recency weighting. Prompt-time context capacity is split between active
+conversation context, selected committed memories, and runtime/orchestration metadata with stable
+ordering, duplicate suppression, included/excluded/truncated counts, allocation summaries, reasons,
+and traces. Context injection remains disabled by default; when disabled, prompts remain
+unchanged. Semantic/vector authority remains disabled; no embeddings, vector search, cloud/API
+calls, filesystem indexing, background summarization, autonomous writes, prompt dumps,
+tools/plugins, voice activation, subprocesses, or hidden background workers are added.
+
 Phase 27.0 through Phase 27.8 adds local memory intelligence and context quality metadata while
 preserving the existing local-only, non-autonomous authority boundary. Committed key-value memory
 is scored through value-only memory relevance records using deterministic literal key overlap,

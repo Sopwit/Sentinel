@@ -1977,8 +1977,16 @@ void DesktopShellViewModelTest::exposesContextAssemblyMetadata() {
     QVERIFY(fixture.viewModel.sendMessage(QStringLiteral("concise local summaries")));
     QVERIFY(fixture.viewModel.memoryRelevanceSummaryText().contains(QStringLiteral("Memory relevance")));
     QVERIFY(fixture.viewModel.memoryRelevanceIncludedCount() >= 1);
+    QVERIFY(fixture.viewModel.conversationSalienceSummaryText().contains(
+        QStringLiteral("Conversation salience")));
+    QVERIFY(fixture.viewModel.conversationSalienceIncludedCount() >= 1);
+    QVERIFY(fixture.viewModel.conversationSalienceBudgetSummary().contains(
+        QStringLiteral("salience context characters")));
+    QVERIFY(fixture.viewModel.conversationSalienceAllocationSummary().contains(
+        QStringLiteral("Active conversation")));
     QCOMPARE(fixture.viewModel.promptContextUsedMemoryCount(), 0);
     QVERIFY(!fixture.viewModel.memoryRelevanceTraceSummaries().isEmpty());
+    QVERIFY(!fixture.viewModel.conversationSalienceTraceSummaries().isEmpty());
     QVERIFY(spy.count() >= 1);
 }
 

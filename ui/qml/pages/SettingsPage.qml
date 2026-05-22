@@ -713,16 +713,16 @@ Item {
                             value: (settingsPage.viewModel.promptContextInjectionEnabled ? "On / " : "Off / ")
                                    + settingsPage.viewModel.promptContextInjectionStatus
                                    + " / "
-                                   + settingsPage.viewModel.retrievalPlanningSelectedSourceCount
-                                   + " deterministic sources"
+                                   + settingsPage.viewModel.conversationSalienceIncludedCount
+                                   + " adaptive items"
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
-                            label: "Context Budget"
-                            value: settingsPage.viewModel.contextBudgetUsageSummary
+                            label: "Adaptive Budget"
+                            value: settingsPage.viewModel.conversationSalienceAllocationSummary
                             Layout.fillWidth: true
                         }
 

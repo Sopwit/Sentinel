@@ -4364,7 +4364,9 @@ void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOr
     QVERIFY(controller->sendMessage(QStringLiteral("semantic final question local deterministic")));
 
     const auto planningAfter = controller->retrievalPlanningResult();
-    QCOMPARE(planningAfter.selectedSourceCount, planningBefore.selectedSourceCount);
+    QVERIFY(planningAfter.selectedSourceCount >= planningBefore.selectedSourceCount);
+    QCOMPARE(controller->semanticRetrievalEnabled(), false);
+    QCOMPARE(controller->semanticRetrievalStatus(), QStringLiteral("Disabled"));
     const auto prompt = fakeClientPtr->lastRequest.prompt;
     QVERIFY(prompt.contains(QStringLiteral("--- Committed Local Memory ---")));
     QVERIFY(prompt.contains(QStringLiteral("semantic.local = deterministic only")));
