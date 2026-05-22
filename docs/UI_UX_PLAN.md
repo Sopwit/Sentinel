@@ -239,6 +239,54 @@ motion, and Mission/System/Tactical foreground more telemetry. Voice copy should
 disabled, or not active, with Whisper/Piper ready or missing summaries only in normal mode.
 Provider copy should state Local Ollama only and no cloud provider active.
 
+Phase 19.4 through Phase 19.6 cleans up the product UI after screenshot review. Home should be a
+clean chatbot-first screen with a compact greeting, concise Local Ollama/model status, stable
+message scrolling, clear user/assistant bubbles, and an always-visible input. The large central
+orb/runtime widget is removed from Home when redundant. The AI Bridge is a compact side panel for
+provider/model summary, conversation list, selected conversation status, and concise runtime state;
+it should not repeat long retrieval or diagnostic metadata.
+
+Runtime/Memory is explicitly not the main chat screen. It is for local memory, memory recall,
+conversation/context status, and local data visibility. Normal mode should show Overview, Recall,
+and Local Data. Developer Mode may reveal context assembly internals, retrieval budgets,
+semantic/vector readiness, arbitration, prompt authority/inclusion, candidate boundaries, and raw
+diagnostic summaries without exposing raw prompts or vectors.
+
+Agents normal mode should show metadata-only runtime status, task queue, planning sessions,
+capability registry, tool contracts, and voice readiness in compact aligned cards/chips. Static
+agent entries should be labeled registered profiles, not active workers. Developer Mode may reveal
+detailed traces, refusals, contracts, permissions, sandbox summaries, and voice pipeline metadata.
+
+Settings normal mode should remain limited to General, Local AI/Ollama, Model Selection, Chat,
+Voice Setup, and Privacy/Local Data. Model recommendations, long management text,
+semantic/vector diagnostics, low-level runtime details, duplicated status rows, and old mock copy
+belong behind Developer Mode. Voice readiness copy should say "Voice prepared, activation
+disabled." when Piper/Whisper path metadata is ready but execution is inactive.
+
+Shared panel styling should use subtle glass panels and soft borders. Decorative colored corner
+brackets and colored border accents are disabled by default; accent color is reserved for selected
+segments, active chips, keyboard focus, and true warnings. Mode changes alter UI density and
+telemetry visibility only; they do not change backend authority or safety.
+
+## i18n Plan
+
+Localization is planned but not implemented in Phase 19.4-19.6. Sentinel should use Qt-native
+`qsTr`/`.ts`/`.qm` translation workflow for QML and C++ because it integrates with Qt Linguist,
+supports translation context, and fits native packaging. A Helium-style JSON/string-catalog
+approach is not recommended for the core Qt UI unless a future plugin/content layer needs its own
+catalog format.
+
+Future localization phase:
+
+- Convert user-facing QML and C++ strings to translatable Qt strings.
+- Add English and Turkish `.ts` catalogs and compile `.qm` files in release packaging.
+- Add copy QA for truncation/overflow across compact and desktop layouts.
+- Defer runtime language switching until explicitly scoped with translator loading, persisted
+  language setting, UI refresh handling, and focused tests.
+
+External APIs and cloud providers remain future opt-in features only. The current UI should say
+Local Ollama only and no cloud provider active, and it should not expose API-key configuration.
+
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic
 search, vector graph execution, autonomous memory writes, embeddings, provider calls, or tool

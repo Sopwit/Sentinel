@@ -28,12 +28,6 @@ ScrollView {
             width: parent.width
             spacing: SentinelTheme.spaceLg
 
-            SectionTitle {
-                width: parent.width
-                title: "Settings"
-                subtitle: "Local preferences and read-only runtime state."
-            }
-
             ShellPanel {
                 width: parent.width
                 implicitHeight: settingsPage.sectionHeight(generalContent)
@@ -126,7 +120,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Endpoint"
-                    value: settingsPage.viewModel.ollamaEndpoint
+                    value: "Local loopback Ollama"
                     Layout.fillWidth: true
                 }
 
@@ -203,6 +197,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Selected Metadata"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.selectedLocalModelMetadataSummary
                     Layout.fillWidth: true
                 }
@@ -210,6 +205,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Runtime Badge"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.activeLocalRuntimeBadge
                     Layout.fillWidth: true
                 }
@@ -217,6 +213,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Management"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.modelManagementStatus + " / " + settingsPage.viewModel.modelManagementActionAvailability
                     Layout.fillWidth: true
                 }
@@ -227,6 +224,7 @@ ScrollView {
                     InfoRow {
                         required property int index
                         compact: settingsPage.compact
+                        visible: settingsPage.developerMode
                         label: "Recommendation"
                         value: settingsPage.viewModel.modelRecommendationSummaries[index]
                         Layout.fillWidth: true
@@ -236,7 +234,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Setup Hint"
-                    value: settingsPage.viewModel.ollamaModelCount > 0 ? "Select one discovered local model. Downloads are not available here." : "Start Ollama and install/select a local model."
+                    value: settingsPage.viewModel.ollamaModelCount > 0 ? "Select one discovered local model." : "Start Ollama and install/select a local model."
                     Layout.fillWidth: true
                 }
             }
@@ -1047,8 +1045,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Readiness"
-                    value: settingsPage.viewModel.voiceReadinessStatus
-                           + " / "
+                    value: "Voice prepared, activation disabled. "
                            + settingsPage.viewModel.voiceConfigurationReadinessSummary
                     Layout.fillWidth: true
                 }
@@ -1074,7 +1071,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "State"
-                    value: "Voice is prepared / disabled / not active"
+                    value: "Voice prepared, activation disabled."
                     Layout.fillWidth: true
                 }
 
@@ -1354,6 +1351,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Chat Save"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationLastSavedStatus
                     Layout.fillWidth: true
                 }
@@ -1361,6 +1359,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Chat Restore"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationLastRestoredStatus
                     Layout.fillWidth: true
                 }
@@ -1388,6 +1387,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Transcript Status"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationListCurrentPersistenceStatus
                            + " / "
                            + settingsPage.viewModel.conversationListCurrentLastUpdatedSummary
@@ -1464,6 +1464,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Search"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationListCurrentSearchAvailabilitySummary
                     Layout.fillWidth: true
                 }
@@ -1471,6 +1472,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Export"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationListCurrentExportAvailabilitySummary
                     Layout.fillWidth: true
                 }
@@ -1478,6 +1480,7 @@ ScrollView {
                 InfoRow {
                     compact: settingsPage.compact
                     label: "Export File"
+                    visible: settingsPage.developerMode
                     value: settingsPage.viewModel.conversationExportLastFileName
                     Layout.fillWidth: true
                 }

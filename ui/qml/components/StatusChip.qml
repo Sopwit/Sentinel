@@ -13,12 +13,12 @@ Rectangle {
 
     radius: SentinelTheme.radiusPill
     color: SentinelTheme.withAlpha(statusChip.accent,
-                                   statusChip.selected ? 0.145 : statusChip.muted ? 0.035 : 0.075)
+                                   statusChip.selected ? 0.105 : statusChip.muted ? 0.028 : 0.055)
     border.color: SentinelTheme.withAlpha(statusChip.accent,
-                                          statusChip.selected ? 0.48 : statusChip.muted ? 0.12 : 0.28)
-    implicitWidth: chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 14
-    implicitHeight: 30
-    scale: hoverArea.containsMouse ? 1.018 : 1.0
+                                          statusChip.selected ? 0.30 : statusChip.muted ? 0.09 : 0.18)
+    implicitWidth: Math.min(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 220)
+    implicitHeight: 28
+    scale: 1.0
 
     Behavior on color {
         ColorAnimation {
@@ -48,7 +48,7 @@ Rectangle {
         color: "transparent"
         border.width: 1
         border.color: SentinelTheme.withAlpha(statusChip.accent,
-                                              hoverArea.containsMouse || statusChip.selected ? 0.20 : 0.0)
+                                              hoverArea.containsMouse || statusChip.selected ? 0.10 : 0.0)
         opacity: statusChip.muted ? 0.45 : 1.0
 
         Behavior on border.color {

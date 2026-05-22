@@ -5,14 +5,14 @@ Rectangle {
 
     radius: SentinelTheme.radiusPanel
     color: SentinelTheme.panel
-    border.color: SentinelTheme.accentBorderSubtle
+    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
     border.width: 1
 
-    property color bracketColor: SentinelTheme.accentBorder
-    property bool showBrackets: true
+    property color bracketColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.0)
+    property bool showBrackets: false
     property int bracketSize: 12
     property color edgeLightColor: bracketColor
-    property real edgeLightOpacity: 0.18
+    property real edgeLightOpacity: 0.0
 
     Rectangle {
         anchors.left: parent.left

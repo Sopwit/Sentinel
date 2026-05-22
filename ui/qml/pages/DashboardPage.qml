@@ -44,23 +44,12 @@ ScrollView {
                 Layout.columnSpan: dashboardPage.wideLayout && !dashboardPage.focusMode ? 8 : 1
                 spacing: dashboardPage.focusMode ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
 
-                WorkspacePresence {
-                    viewModel: dashboardPage.viewModel
-                    compact: dashboardPage.compact || dashboardPage.focusMode
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: dashboardPage.focusMode
-                                            ? 250
-                                            : dashboardPage.compact ? 260 : 360
-                    Layout.maximumHeight: dashboardPage.focusMode
-                                          ? 300
-                                          : dashboardPage.compact ? 320 : 430
-                }
-
                 HomeChatSurface {
                     viewModel: dashboardPage.viewModel
                     compact: dashboardPage.compact || dashboardPage.focusMode
                     Layout.fillWidth: true
-                    Layout.preferredHeight: dashboardPage.focusMode ? 250 : 330
+                    Layout.fillHeight: true
+                    Layout.minimumHeight: 430
                 }
             }
 
@@ -74,11 +63,6 @@ ScrollView {
                     Layout.fillWidth: true
                     implicitHeight: stateColumn.implicitHeight + dashboardPage.panelPadding * 2
                     color: SentinelTheme.modePanelColor(dashboardPage.viewModel.currentModeName)
-                    border.color: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.13)
-                    bracketColor: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.24)
-                    edgeLightColor: SentinelTheme.withAlpha(SentinelTheme.modeAccent(dashboardPage.viewModel.currentModeName), 0.38)
-                    edgeLightOpacity: 0.22
-                    bracketSize: 9
 
                     ColumnLayout {
                         id: stateColumn
@@ -89,7 +73,7 @@ ScrollView {
 
                         Label {
                             Layout.fillWidth: true
-                            text: "RUNTIME / MEMORY"
+                            text: "LOCAL STATUS"
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontTiny
                             font.letterSpacing: 2.2
@@ -146,22 +130,6 @@ ScrollView {
                             visible: !dashboardPage.companionMode || dashboardPage.streamingActive
                         }
 
-                        InfoRow {
-                            compact: true
-                            label: "Memory"
-                            value: dashboardPage.viewModel.memoryStatus + " / Chat history " + dashboardPage.viewModel.chatHistoryStatus
-                            Layout.fillWidth: true
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: "SETUP"
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontTiny
-                            font.letterSpacing: 2.2
-                            elide: Text.ElideRight
-                        }
-
                         Label {
                             Layout.fillWidth: true
                             text: dashboardPage.viewModel.ollamaModelCount > 0 ? dashboardPage.viewModel.selectedLocalModelSummary : "Start Ollama and install/select a local model."
@@ -181,7 +149,7 @@ ScrollView {
                                    + " / Piper "
                                    + dashboardPage.viewModel.piperSynthesisStatus
                             Layout.fillWidth: true
-                            visible: !dashboardPage.companionMode || dashboardPage.telemetryMode
+                            visible: dashboardPage.telemetryMode
                         }
 
                         InfoRow {

@@ -10,6 +10,7 @@ ScrollView {
     readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
+    property string selectedSection: "Overview"
 
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
@@ -28,16 +29,70 @@ ScrollView {
             width: parent.width
             spacing: SentinelTheme.spaceLg
 
-            SectionTitle {
+            ShellPanel {
                 width: parent.width
-                title: "Agents"
-                subtitle: "Metadata-only agent runtime. No execution, approvals, tools, plugins, shell, or autonomous controls are active."
+                implicitHeight: agentTabs.implicitHeight + SentinelTheme.spaceMd * 2
+
+                ColumnLayout {
+                    id: agentTabs
+                    x: SentinelTheme.spaceMd
+                    y: SentinelTheme.spaceMd
+                    width: parent.width - SentinelTheme.spaceMd * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+
+                        Repeater {
+                            model: ["Overview", "Tasks", "Capabilities", "Developer"]
+
+                            Button {
+                                id: agentTabButton
+                                required property string modelData
+                                enabled: modelData !== "Developer" || agentsPage.developerMode
+                                text: modelData
+                                onClicked: agentsPage.selectedSection = modelData
+
+                                contentItem: Label {
+                                    text: agentTabButton.text
+                                    color: agentsPage.selectedSection === agentTabButton.modelData
+                                           ? SentinelTheme.textPrimary
+                                           : SentinelTheme.textMuted
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+
+                                background: Rectangle {
+                                    implicitWidth: 112
+                                    implicitHeight: 32
+                                    radius: 16
+                                    color: agentsPage.selectedSection === agentTabButton.modelData
+                                           ? SentinelTheme.withAlpha(agentsPage.modeAccent, 0.14)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.035)
+                                    border.color: agentTabButton.activeFocus
+                                                  ? SentinelTheme.focusBorder
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.075)
+                                }
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: "Metadata-only; no execution active. Developer Mode reveals internals only."
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
+                    }
+                }
             }
 
             ShellPanel {
                 width: parent.width
+                visible: agentsPage.selectedSection === "Overview"
                 implicitHeight: agentsPage.sectionHeight(registryContent)
-                border.color: SentinelTheme.withAlpha(agentsPage.modeAccent, 0.14)
 
                 ColumnLayout {
                     id: registryContent
@@ -47,8 +102,8 @@ ScrollView {
                     spacing: SentinelTheme.spaceMd
 
                     SectionTitle {
-                        title: "Agent Registry"
-                        subtitle: "Registered agent metadata only."
+                        title: "Registered Profiles"
+                        subtitle: "Static profiles, not active workers."
                         Layout.fillWidth: true
                     }
 
@@ -89,12 +144,16 @@ ScrollView {
 
             GridLayout {
                 width: parent.width
+                visible: agentsPage.selectedSection === "Tasks"
+                         || agentsPage.selectedSection === "Capabilities"
+                         || agentsPage.selectedSection === "Overview"
                 columns: agentsPage.compact ? 1 : 2
                 columnSpacing: SentinelTheme.spaceLg
                 rowSpacing: SentinelTheme.spaceLg
 
                 ShellPanel {
                     Layout.fillWidth: true
+                    visible: agentsPage.selectedSection === "Tasks"
                     implicitHeight: agentsPage.sectionHeight(taskRuntimeContent)
 
                     ColumnLayout {
@@ -135,6 +194,7 @@ ScrollView {
 
                 ShellPanel {
                     Layout.fillWidth: true
+                    visible: agentsPage.selectedSection === "Tasks"
                     implicitHeight: agentsPage.sectionHeight(taskQueueContent)
 
                     ColumnLayout {
@@ -193,6 +253,7 @@ ScrollView {
 
                 ShellPanel {
                     Layout.fillWidth: true
+                    visible: agentsPage.selectedSection === "Tasks"
                     implicitHeight: agentsPage.sectionHeight(planningContent)
 
                     ColumnLayout {
@@ -244,6 +305,7 @@ ScrollView {
 
                 ShellPanel {
                     Layout.fillWidth: true
+                    visible: agentsPage.selectedSection === "Capabilities"
                     implicitHeight: agentsPage.sectionHeight(capabilityContent)
 
                     ColumnLayout {
@@ -300,6 +362,7 @@ ScrollView {
 
                 ShellPanel {
                     Layout.fillWidth: true
+                    visible: agentsPage.selectedSection === "Capabilities"
                     implicitHeight: agentsPage.sectionHeight(toolContent)
 
                     ColumnLayout {
@@ -356,6 +419,7 @@ ScrollView {
 
                 ShellPanel {
                     Layout.fillWidth: true
+                    visible: agentsPage.selectedSection === "Overview"
                     implicitHeight: agentsPage.sectionHeight(voiceContent)
 
                     ColumnLayout {
@@ -403,7 +467,7 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
-                visible: agentsPage.developerMode
+                visible: agentsPage.selectedSection === "Developer" && agentsPage.developerMode
                 implicitHeight: agentsPage.sectionHeight(developerContent)
 
                 ColumnLayout {

@@ -21,6 +21,13 @@ the async local inference worker, the local-only runtime permission policy, `Mod
 
 QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, chat history persistence, and settings defaults.
 
+Phase 19.4 through Phase 19.6 are presentation-only UI cleanup phases. Home is the primary local
+Ollama chatbot surface. Runtime/Memory is a local memory, recall, conversation-context, and local
+data visibility area, not the main chat screen. Agents is a metadata-only registry/task/capability
+visibility area, not an execution console. Developer Mode changes only UI density and diagnostic
+visibility; it does not grant provider, model, tool, voice, filesystem, subprocess, cloud, or
+agent authority.
+
 ## Desktop View Model
 
 `DesktopShellViewModel` is the QML boundary for the desktop app. It forwards safe operations to the core controller, mode manager, and settings object:
@@ -52,6 +59,27 @@ The desktop shell is split into small QML components:
 - `components/SentinelTextField.qml`: lightweight text-field styling with tokenized focus states.
 
 These files bind to `shellViewModel`. They should not own business rules, provider logic, persistence logic, or platform automation.
+
+Current product styling keeps `ShellPanel` brackets disabled by default. Pages may use subtle glass
+panels and soft borders; accent color should be reserved for focus, selected segmented controls,
+active status chips, and warnings.
+
+## i18n Direction
+
+Sentinel should use Qt-native localization when localization is explicitly scoped:
+
+- Wrap user-facing QML strings with `qsTr()` and C++ strings with Qt translation APIs.
+- Generate `.ts` catalogs with Qt Linguist tooling and compile `.qm` catalogs for release builds.
+- Start with English and Turkish catalogs in a later localization phase.
+- Do not add runtime language switching until a separate phase scopes translator loading,
+  persistence, UI refresh behavior, tests, and copy QA.
+
+A JSON/string-catalog structure like Helium-style web apps is not recommended for Sentinel's core
+UI because Qt already provides extraction, context, plural handling, QML/C++ integration, and
+release packaging through its native translation workflow.
+
+External API/cloud providers remain future opt-in integrations only. No cloud provider or API-key
+configuration is active in the current desktop runtime.
 
 ## Intentional Boundaries
 

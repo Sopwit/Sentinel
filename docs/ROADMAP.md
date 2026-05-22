@@ -2647,6 +2647,30 @@ Still out of scope:
   playback, real STT/TTS execution, model management actions, subprocess launch, filesystem
   scanning, semantic authority expansion, and broad backend refactors.
 
+## Phase 19.4-19.6: Product UI Cleanup And i18n Planning
+
+Completed. Product UI cleanup after the Phase 19.0-19.3 sync.
+
+Delivered:
+
+- Chatbot-first Home layout with the redundant central runtime/orb widget removed.
+- Simplified AI Bridge, calmer shared panel styling, shorter headers, smaller health/mode controls,
+  and reduced normal-mode diagnostics.
+- Runtime/Memory segmented into Overview, Recall, Local Data, and Developer. Normal mode explains
+  local key-value memory and recall; Developer Mode exposes internals only.
+- Agents segmented into Overview, Tasks, Capabilities, and Developer. Static agent entries are
+  registered profiles, not active workers.
+- Settings simplified around General, Local AI/Ollama, Model Selection, Chat, Voice Setup, and
+  Privacy/Local Data, with advanced diagnostics hidden by Developer Mode.
+- i18n plan documented: Qt-native `qsTr` plus `.ts`/`.qm`, later English/Turkish catalogs, and no
+  runtime language switching until scoped.
+
+Still out of scope:
+
+- Cloud/API providers, API keys, model downloads, tool/plugin execution, autonomous agents,
+  microphone capture, playback, Piper/Whisper execution, filesystem scanning, subprocess launch,
+  semantic authority expansion, full localization catalogs, and runtime language switching.
+
 ## Later Phase 7: Packaging / Ecosystem / Extensions
 
 Prepare packaging, update channels, plugin/extension lifecycle, platform-specific integration packages, and distribution workflows.
