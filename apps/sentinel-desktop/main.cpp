@@ -21,10 +21,69 @@
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
+#include <QQuickWindow>
+#include <QSGRendererInterface>
+
+#if defined(Q_OS_LINUX) && QT_CONFIG(vulkan)
+#include <QVulkanInstance>
+#endif
 
 #include <memory>
 
 namespace {
+
+QString graphicsApiName(QSGRendererInterface::GraphicsApi api) {
+    if (api == QSGRendererInterface::Unknown) {
+        return QStringLiteral("automatic");
+    }
+    if (api == QSGRendererInterface::Software) {
+        return QStringLiteral("software");
+    }
+    if (api == QSGRendererInterface::OpenVG) {
+        return QStringLiteral("OpenVG");
+    }
+    if (api == QSGRendererInterface::OpenGL) {
+        return QStringLiteral("OpenGL");
+    }
+    if (api == QSGRendererInterface::Direct3D11) {
+        return QStringLiteral("Direct3D 11");
+    }
+    if (api == QSGRendererInterface::Vulkan) {
+        return QStringLiteral("Vulkan");
+    }
+    if (api == QSGRendererInterface::Metal) {
+        return QStringLiteral("Metal");
+    }
+    if (api == QSGRendererInterface::Null) {
+        return QStringLiteral("null");
+    }
+
+    return QStringLiteral("unknown");
+}
+
+void configureGraphicsBackend() {
+#if defined(Q_OS_MACOS)
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::Metal);
+    qInfo().noquote() << "Sentinel graphics backend requested:"
+                      << graphicsApiName(QSGRendererInterface::Metal);
+#elif defined(Q_OS_WIN)
+    QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D11);
+    qInfo().noquote() << "Sentinel graphics backend requested:"
+                      << graphicsApiName(QSGRendererInterface::Direct3D11);
+#elif defined(Q_OS_LINUX)
+#if QT_CONFIG(vulkan)
+    QVulkanInstance vulkanInstance;
+    if (vulkanInstance.create()) {
+        QQuickWindow::setGraphicsApi(QSGRendererInterface::Vulkan);
+        qInfo().noquote() << "Sentinel graphics backend requested:"
+                          << graphicsApiName(QSGRendererInterface::Vulkan);
+        return;
+    }
+#endif
+    qInfo().noquote() << "Sentinel graphics backend requested:"
+                      << graphicsApiName(QSGRendererInterface::Unknown);
+#endif
+}
 
 QString preferredUiFontFamily() {
     const QStringList availableFamilies = QFontDatabase::families();
@@ -59,6 +118,8 @@ void configureDefaultUiFont() {
 } // namespace
 
 int main(int argc, char* argv[]) {
+    configureGraphicsBackend();
+
     QGuiApplication app(argc, argv);
     configureDefaultUiFont();
     QGuiApplication::setApplicationName(sentinel::core::AppMetadata::displayName());
