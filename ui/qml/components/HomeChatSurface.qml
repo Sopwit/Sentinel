@@ -110,11 +110,12 @@ ShellPanel {
             flickDeceleration: 5200
             bottomMargin: SentinelTheme.spaceXl + SentinelTheme.spaceMd
             ScrollBar.vertical: ScrollBar {
+                id: recentMessagesScrollBar
                 policy: ScrollBar.AsNeeded
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
-                    color: SentinelTheme.withAlpha(homeChat.modeAccent, parent.active ? 0.34 : 0.18)
+                    color: SentinelTheme.withAlpha(homeChat.modeAccent, recentMessagesScrollBar.active ? 0.34 : 0.18)
                 }
                 background: Rectangle {
                     color: "transparent"

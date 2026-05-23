@@ -629,7 +629,7 @@ private:
                                    const QString& summary) const;
     ToolContract makeToolContract(ToolContractType type, ToolContractStatus status,
                                   ToolContractScope scope, int order, const QString& summary,
-                                  QList<ToolContractPermission> permissions,
+                                  const QList<ToolContractPermission>& permissions,
                                   ToolContractSandbox sandbox) const;
     AgentTaskQueueSummary queueSummary() const;
     QList<AgentTask> orderedTasks() const;

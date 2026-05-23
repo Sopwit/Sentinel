@@ -512,7 +512,6 @@ SemanticCandidateSource semanticCandidateSourceForContextSource(ContextAssemblyS
     case ContextAssemblySourceKind::RuntimeMetadata:
         return SemanticCandidateSource::RuntimeMetadata;
     case ContextAssemblySourceKind::Orchestration:
-        return SemanticCandidateSource::OrchestrationMetadata;
     case ContextAssemblySourceKind::SelectedConversationMetadata:
         return SemanticCandidateSource::OrchestrationMetadata;
     }

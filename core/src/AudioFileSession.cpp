@@ -306,7 +306,7 @@ AudioFileSessionResult buildAudioFileSessionResult(const AudioFileDescriptor& de
                        "transcription, no playback, no microphone capture, and no subprocess "
                        "execution.");
     result.summary.status = result.status;
-    result.summary.validationCount = result.validations.size();
+    result.summary.validationCount = static_cast<int>(result.validations.size());
     result.summary.acceptedCount = acceptedCount;
     result.summary.refusedCount = refusedCount;
     result.summary.fallbackCount = fallbackCount;

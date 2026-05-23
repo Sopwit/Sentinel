@@ -16,6 +16,7 @@ ApplicationWindow {
     property bool shellReady: false
     readonly property bool compactLayout: root.width < 1080
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
+    readonly property int shellEntranceOffset: root.shellReady || MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 8
     readonly property int pageMotionOffset: MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 10
     readonly property int dockZoneHeight: (compactLayout ? 58 : 62)
                                           + (compactLayout ? SentinelTheme.spaceMd
@@ -56,13 +57,11 @@ ApplicationWindow {
         anchors.fill: parent
         anchors.leftMargin: SentinelTheme.pageMargin(root.width)
         anchors.rightMargin: SentinelTheme.pageMargin(root.width)
-        anchors.topMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
-        anchors.bottomMargin: root.dockZoneHeight
+        anchors.topMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
+                           + root.shellEntranceOffset
+        anchors.bottomMargin: root.dockZoneHeight - root.shellEntranceOffset
         spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
         opacity: root.shellReady ? 1.0 : 0.0
-        transform: Translate {
-            y: root.shellReady || MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 8
-        }
 
         Behavior on opacity {
             NumberAnimation {

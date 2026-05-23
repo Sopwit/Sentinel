@@ -173,11 +173,12 @@ Item {
             maximumFlickVelocity: 2200
             flickDeceleration: 5200
             ScrollBar.vertical: ScrollBar {
+                id: settingsFlickScrollBar
                 policy: ScrollBar.AsNeeded
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
-                    color: SentinelTheme.withAlpha(settingsPage.modeAccent, parent.active ? 0.34 : 0.18)
+                    color: SentinelTheme.withAlpha(settingsPage.modeAccent, settingsFlickScrollBar.active ? 0.34 : 0.18)
                 }
                 background: Rectangle {
                     color: "transparent"

@@ -20,12 +20,13 @@ ScrollView {
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
     ScrollBar.vertical: ScrollBar {
+        id: memoryPageScrollBar
         policy: ScrollBar.AsNeeded
         contentItem: Rectangle {
             implicitWidth: 4
             radius: 2
             color: SentinelTheme.withAlpha(SentinelTheme.modeAccent(memoryPage.viewModel.currentModeName),
-                                           parent.active ? 0.34 : 0.18)
+                                           memoryPageScrollBar.active ? 0.34 : 0.18)
         }
         background: Rectangle {
             color: "transparent"
