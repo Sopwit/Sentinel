@@ -668,7 +668,7 @@ buildVoicePipelineSessionResult(const VoicePipelineSessionReadiness& transcripti
     result.summary.readyStageCount = readyCount;
     result.summary.blockedStageCount = blockedCount;
     result.summary.refusedStageCount = refusedCount;
-    result.summary.traceCount = result.traces.size();
+    result.summary.traceCount = static_cast<int>(result.traces.size());
     result.summary.summary =
         QStringLiteral("%1 voice pipeline session: %2 ready stages, %3 blocked/fallback stages, "
                        "%4 refused stages, %5 traces; execution attempted: no; microphone, "

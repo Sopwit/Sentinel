@@ -216,6 +216,7 @@ ShellPanel {
             Repeater {
                 model: ["All", "Pinned", "Recent", "Archived"]
                 delegate: Button {
+                    id: filterButton
                     required property string modelData
                     text: modelData
                     height: 28
@@ -226,8 +227,8 @@ ShellPanel {
                     onClicked: chatPanel.conversationFilter = modelData
 
                     contentItem: Text {
-                        text: parent.text
-                        color: chatPanel.conversationFilter === parent.text
+                        text: filterButton.text
+                        color: chatPanel.conversationFilter === filterButton.text
                                ? SentinelTheme.textPrimary
                                : SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontTiny
@@ -237,11 +238,11 @@ ShellPanel {
 
                     background: Rectangle {
                         radius: SentinelTheme.radiusSm
-                        color: InteractionTokens.surfaceColor(parent.hovered, parent.down,
-                                                               chatPanel.conversationFilter === parent.text,
+                        color: InteractionTokens.surfaceColor(filterButton.hovered, filterButton.down,
+                                                               chatPanel.conversationFilter === filterButton.text,
                                                                chatPanel.modeAccent)
-                        border.color: InteractionTokens.borderColor(parent.activeFocus, parent.hovered,
-                                                                     chatPanel.conversationFilter === parent.text,
+                        border.color: InteractionTokens.borderColor(filterButton.activeFocus, filterButton.hovered,
+                                                                     chatPanel.conversationFilter === filterButton.text,
                                                                      chatPanel.modeAccent)
                     }
                 }
@@ -263,11 +264,12 @@ ShellPanel {
             bottomMargin: SentinelTheme.spaceMd
             activeFocusOnTab: true
             ScrollBar.vertical: ScrollBar {
+                id: conversationListScrollBar
                 policy: ScrollBar.AsNeeded
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
-                    color: SentinelTheme.withAlpha(chatPanel.modeAccent, parent.active ? 0.34 : 0.18)
+                    color: SentinelTheme.withAlpha(chatPanel.modeAccent, conversationListScrollBar.active ? 0.34 : 0.18)
                 }
                 background: Rectangle {
                     color: "transparent"

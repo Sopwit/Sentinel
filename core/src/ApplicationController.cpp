@@ -5208,16 +5208,19 @@ ApplicationController::memoryRelevanceSummaryForPrompt(const QString& prompt) co
     if (chatSession_) {
         const auto promptText = prompt.simplified();
         const auto& history = chatSession_->messages();
-        for (int i = history.size() - 1; i >= 0 && recentMessages.size() < 6; --i) {
-            const auto& message = history.at(i);
-            if (message.role == ChatRole::System) {
-                continue;
+        if (!history.isEmpty()) {
+            const qsizetype lastIndex = history.size() - 1;
+            for (qsizetype i = lastIndex; i >= 0 && recentMessages.size() < 6; --i) {
+                const auto& message = history.at(i);
+                if (message.role == ChatRole::System) {
+                    continue;
+                }
+                if (!promptText.isEmpty() && i == lastIndex && message.role == ChatRole::User &&
+                    message.content.simplified() == promptText) {
+                    continue;
+                }
+                recentMessages.prepend(message.content);
             }
-            if (!promptText.isEmpty() && i == history.size() - 1 &&
-                message.role == ChatRole::User && message.content.simplified() == promptText) {
-                continue;
-            }
-            recentMessages.prepend(message.content);
         }
     }
 
@@ -5346,20 +5349,25 @@ ApplicationController::conversationSalienceSummaryForPrompt(const QString& promp
     if (chatSession_) {
         const auto promptText = prompt.simplified();
         const auto& history = chatSession_->messages();
-        for (int i = history.size() - 1;
-             i >= 0 && (recentUserMessages.size() < 4 || recentAssistantMessages.size() < 4); --i) {
-            const auto& message = history.at(i);
-            if (message.role == ChatRole::System) {
-                continue;
-            }
-            if (!promptText.isEmpty() && i == history.size() - 1 &&
-                message.role == ChatRole::User && message.content.simplified() == promptText) {
-                continue;
-            }
-            if (message.role == ChatRole::User && recentUserMessages.size() < 4) {
-                recentUserMessages.prepend(message.content);
-            } else if (message.role == ChatRole::Assistant && recentAssistantMessages.size() < 4) {
-                recentAssistantMessages.prepend(message.content);
+        if (!history.isEmpty()) {
+            const qsizetype lastIndex = history.size() - 1;
+            for (qsizetype i = lastIndex;
+                 i >= 0 && (recentUserMessages.size() < 4 || recentAssistantMessages.size() < 4);
+                 --i) {
+                const auto& message = history.at(i);
+                if (message.role == ChatRole::System) {
+                    continue;
+                }
+                if (!promptText.isEmpty() && i == lastIndex && message.role == ChatRole::User &&
+                    message.content.simplified() == promptText) {
+                    continue;
+                }
+                if (message.role == ChatRole::User && recentUserMessages.size() < 4) {
+                    recentUserMessages.prepend(message.content);
+                } else if (message.role == ChatRole::Assistant &&
+                           recentAssistantMessages.size() < 4) {
+                    recentAssistantMessages.prepend(message.content);
+                }
             }
         }
     }

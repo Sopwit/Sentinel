@@ -20,11 +20,12 @@ ScrollView {
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
     ScrollBar.vertical: ScrollBar {
+        id: agentsPageScrollBar
         policy: ScrollBar.AsNeeded
         contentItem: Rectangle {
             implicitWidth: 4
             radius: 2
-            color: SentinelTheme.withAlpha(agentsPage.modeAccent, parent.active ? 0.34 : 0.18)
+            color: SentinelTheme.withAlpha(agentsPage.modeAccent, agentsPageScrollBar.active ? 0.34 : 0.18)
         }
         background: Rectangle {
             color: "transparent"

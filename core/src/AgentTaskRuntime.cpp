@@ -1092,8 +1092,9 @@ AgentTaskQueueResult StaticAgentTaskRuntime::updateTaskStatus(const AgentTaskId&
         task.lifecycle.summary = QStringLiteral("%1 [%2]: %3")
                                      .arg(task.id.value, agentTaskStatusName(status),
                                           task.lifecycle.events.last().summary);
-        task.traces.append(traceFor(task.traces.size() + 1, QStringLiteral("Lifecycle Update"),
-                                    status, task.lifecycle.events.last().summary));
+        task.traces.append(traceFor(static_cast<int>(task.traces.size() + 1),
+                                    QStringLiteral("Lifecycle Update"), status,
+                                    task.lifecycle.events.last().summary));
         if (status == AgentTaskStatus::Refused) {
             task.result = refuseExecution(task);
         }
@@ -1215,12 +1216,11 @@ AgentCapability StaticAgentTaskRuntime::makeCapability(AgentCapabilityType type,
     return capability;
 }
 
-ToolContract StaticAgentTaskRuntime::makeToolContract(ToolContractType type,
-                                                      ToolContractStatus status,
-                                                      ToolContractScope scope, int order,
-                                                      const QString& summary,
-                                                      QList<ToolContractPermission> permissions,
-                                                      ToolContractSandbox sandbox) const {
+ToolContract
+StaticAgentTaskRuntime::makeToolContract(ToolContractType type, ToolContractStatus status,
+                                         ToolContractScope scope, int order, const QString& summary,
+                                         const QList<ToolContractPermission>& permissions,
+                                         ToolContractSandbox sandbox) const {
     const auto restricted = toolContractIsRestricted(status);
     const auto refused = status == ToolContractStatus::Refused;
     const auto unsafeScope = scope == ToolContractScope::UnsafeRuntime;

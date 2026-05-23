@@ -123,11 +123,12 @@ SentinelOverlayModal {
             model: palette.filteredActions
             currentIndex: model.length > 0 ? 0 : -1
             ScrollBar.vertical: ScrollBar {
+                id: actionListScrollBar
                 policy: ScrollBar.AsNeeded
                 contentItem: Rectangle {
                     implicitWidth: 4
                     radius: 2
-                    color: SentinelTheme.withAlpha(palette.modeAccent, parent.active ? 0.34 : 0.18)
+                    color: SentinelTheme.withAlpha(palette.modeAccent, actionListScrollBar.active ? 0.34 : 0.18)
                 }
                 background: Rectangle {
                     color: "transparent"
