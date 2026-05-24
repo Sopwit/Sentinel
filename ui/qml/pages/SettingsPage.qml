@@ -723,7 +723,17 @@ Item {
                             compact: settingsPage.compact
                             label: "Summary Injection"
                             value: (settingsPage.viewModel.promptContextInjectionEnabled ? "Enabled / " : "Disabled / ")
+                                   + settingsPage.viewModel.summaryContinuityStatus
+                                   + " / "
                                    + settingsPage.viewModel.conversationSummaryInjectionSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: "Explainability"
+                            value: (settingsPage.viewModel.contextExplainabilityEnabled ? "Enabled / " : "Disabled / ")
+                                   + settingsPage.viewModel.contextReasoningSummary
                             Layout.fillWidth: true
                         }
 
@@ -753,6 +763,31 @@ Item {
                                    + settingsPage.viewModel.conversationSummaryBlockedReason
                                    + " / "
                                    + settingsPage.viewModel.conversationSummaryInjectionSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            visible: settingsPage.viewModel.developerModeEnabled
+                            label: "Continuity Budget"
+                            value: settingsPage.viewModel.summaryContinuityBudgetTrace
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            visible: settingsPage.viewModel.developerModeEnabled
+                            label: "Context Diagnostics"
+                            value: settingsPage.viewModel.contextReasoningBudgetSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            visible: settingsPage.viewModel.developerModeEnabled
+                            valueMaximumLineCount: 8
+                            label: "Context Trace"
+                            value: settingsPage.viewModel.contextReasoningDeveloperTraces.join(" / ")
                             Layout.fillWidth: true
                         }
 

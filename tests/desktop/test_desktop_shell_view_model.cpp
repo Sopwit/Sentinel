@@ -1503,6 +1503,23 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("conversationSummaryPreviewSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationSummaryPersistenceSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("conversationSummaryInjectionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("summaryContinuityStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("summaryContinuityFreshnessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("summaryContinuityCoverageSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("summaryContinuityContributionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("summaryContinuityFallbackSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("summaryContinuityOrderingSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("summaryContinuityBudgetTrace"), QByteArrayLiteral("QString")},
+        {QStringLiteral("contextExplainabilityEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("contextReasoningSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("contextReasoningBudgetSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("contextReasoningOrderingSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("contextReasoningFallbackSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("contextReasoningContributionSummaries"),
+         QByteArrayLiteral("QStringList")},
+        {QStringLiteral("contextReasoningInclusionHints"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("contextReasoningExclusionHints"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("contextReasoningDeveloperTraces"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("conversationSummaryCandidateSegments"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("conversationSummaryGenerationTraceSummaries"),
          QByteArrayLiteral("QStringList")},
@@ -2098,6 +2115,18 @@ void DesktopShellViewModelTest::exposesManualConversationSummaryGenerationMetada
         QStringLiteral("estimated gain")));
     QVERIFY(fixture.viewModel.conversationSummaryPreviewSummary().contains(
         QStringLiteral("Manual summary preview")));
+    QVERIFY(!fixture.viewModel.summaryContinuityStatus().trimmed().isEmpty());
+    QVERIFY(fixture.viewModel.summaryContinuityOrderingSummary().contains(
+        QStringLiteral("active conversation recency")));
+    QVERIFY(fixture.viewModel.summaryContinuityBudgetTrace().contains(
+        QStringLiteral("Continuity budget")));
+    QVERIFY(fixture.viewModel.contextExplainabilityEnabled());
+    QVERIFY(fixture.viewModel.contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
+    QVERIFY(fixture.viewModel.contextReasoningBudgetSummary().contains(QStringLiteral("chars")));
+    QVERIFY(fixture.viewModel.contextReasoningOrderingSummary().contains(
+        QStringLiteral("recent transcript")));
+    QVERIFY(!fixture.viewModel.contextReasoningFallbackSummary().trimmed().isEmpty());
+    QVERIFY(!fixture.viewModel.contextReasoningDeveloperTraces().isEmpty());
     QVERIFY(!fixture.viewModel.conversationSummaryCandidateSegments().isEmpty());
     QVERIFY(!fixture.viewModel.conversationSummaryGenerationTraceSummaries().isEmpty());
 }

@@ -1598,6 +1598,70 @@ QString DesktopShellViewModel::conversationSummaryInjectionSummary() const {
     return controller_.conversationSummaryInjectionSummary();
 }
 
+QString DesktopShellViewModel::summaryContinuityStatus() const {
+    return controller_.summaryContinuityStatus();
+}
+
+QString DesktopShellViewModel::summaryContinuityFreshnessSummary() const {
+    return controller_.summaryContinuityFreshnessSummary();
+}
+
+QString DesktopShellViewModel::summaryContinuityCoverageSummary() const {
+    return controller_.summaryContinuityCoverageSummary();
+}
+
+QString DesktopShellViewModel::summaryContinuityContributionSummary() const {
+    return controller_.summaryContinuityContributionSummary();
+}
+
+QString DesktopShellViewModel::summaryContinuityFallbackSummary() const {
+    return controller_.summaryContinuityFallbackSummary();
+}
+
+QString DesktopShellViewModel::summaryContinuityOrderingSummary() const {
+    return controller_.summaryContinuityOrderingSummary();
+}
+
+QString DesktopShellViewModel::summaryContinuityBudgetTrace() const {
+    return controller_.summaryContinuityBudgetTrace();
+}
+
+bool DesktopShellViewModel::contextExplainabilityEnabled() const {
+    return controller_.contextExplainabilityEnabled();
+}
+
+QString DesktopShellViewModel::contextReasoningSummary() const {
+    return controller_.contextReasoningSummary();
+}
+
+QString DesktopShellViewModel::contextReasoningBudgetSummary() const {
+    return controller_.contextReasoningBudgetSummary();
+}
+
+QString DesktopShellViewModel::contextReasoningOrderingSummary() const {
+    return controller_.contextReasoningOrderingSummary();
+}
+
+QString DesktopShellViewModel::contextReasoningFallbackSummary() const {
+    return controller_.contextReasoningFallbackSummary();
+}
+
+QStringList DesktopShellViewModel::contextReasoningContributionSummaries() const {
+    return controller_.contextReasoningContributionSummaries();
+}
+
+QStringList DesktopShellViewModel::contextReasoningInclusionHints() const {
+    return controller_.contextReasoningInclusionHints();
+}
+
+QStringList DesktopShellViewModel::contextReasoningExclusionHints() const {
+    return controller_.contextReasoningExclusionHints();
+}
+
+QStringList DesktopShellViewModel::contextReasoningDeveloperTraces() const {
+    return controller_.contextReasoningDeveloperTraces();
+}
+
 QStringList DesktopShellViewModel::conversationSummaryCandidateSegments() const {
     return controller_.conversationSummaryCandidateSegments();
 }

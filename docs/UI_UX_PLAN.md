@@ -260,6 +260,44 @@ Guidelines:
 
 ## Phase 29 Conversation Compression Readiness Notes
 
+## Phase 32 Summary Continuity Notes
+
+Phase 32.0 through Phase 32.12 makes explicit local summaries visible as continuity assistance for
+long conversations without adding autonomous generation, hidden transcript replacement, semantic
+retrieval, or new runtime authority.
+
+Guidelines:
+
+- Chat may show concise summary continuity assistance when a validated summary is actively included
+  in local context, a stale-summary indicator when excluded for freshness, and safe transcript-only
+  fallback copy when no valid summary participates.
+- Runtime/Memory normal mode may show continuity contribution, deterministic ordering, freshness,
+  coverage, and fallback metadata. Developer Mode may show bounded allocation and budget traces.
+- Settings should show whether summary continuity is enabled through prompt context injection and
+  may show continuity budget diagnostics only in Developer Mode.
+- UI must not expose hidden prompts, raw prompt payloads, transcript replacement previews,
+automatic memory-write controls, background summary toggles, semantic/vector scores,
+filesystem-indexing controls, cloud/API controls, or tool/plugin activation.
+
+## Phase 33 Context Explainability Notes
+
+Phase 33.0 through Phase 33.12 makes context orchestration decisions understandable without turning
+the product UI into a debug wall.
+
+Guidelines:
+
+- Home/Chat may show a compact expandable "Context reasoning" surface with a short "why this
+  context was used" summary and safe inclusion/exclusion hints.
+- Runtime/Memory may show richer contribution, ordering, fallback, and budget panels. Developer
+  Mode may show bounded traces, still as selectable/copyable safe diagnostics.
+- Settings should show explainability enabled/disabled state, concise context diagnostics, and
+  Developer Mode orchestration visibility.
+- Normal mode should stay concise. Developer Mode may be denser, but diagnostics must wrap, remain
+  keyboard navigable, and avoid overlap at narrow widths.
+- UI must not expose hidden prompts, raw provider payloads, raw system prompts, semantic/vector
+  scores or payloads, filesystem indexing controls, cloud/API controls, tool/plugin controls,
+  autonomous toggles, transcript mutation affordances, or hidden background activity.
+
 Phase 29.0 through Phase 29.8 adds read-only conversation compression readiness visibility without
 adding a summarize action, background work, or hidden prompt/transcript mutation.
 

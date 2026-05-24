@@ -573,6 +573,38 @@ class ApplicationController final : public QObject {
                    conversationSummaryPersistenceSummary NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationSummaryInjectionSummary READ conversationSummaryInjectionSummary
                    NOTIFY promptContextInjectionChanged)
+    Q_PROPERTY(QString summaryContinuityStatus READ summaryContinuityStatus NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityFreshnessSummary READ
+                   summaryContinuityFreshnessSummary NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityCoverageSummary READ summaryContinuityCoverageSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityContributionSummary READ
+                   summaryContinuityContributionSummary NOTIFY promptContextInjectionChanged)
+    Q_PROPERTY(QString summaryContinuityFallbackSummary READ summaryContinuityFallbackSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityOrderingSummary READ summaryContinuityOrderingSummary
+                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityBudgetTrace READ summaryContinuityBudgetTrace NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(bool contextExplainabilityEnabled READ contextExplainabilityEnabled NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QString contextReasoningSummary READ contextReasoningSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QString contextReasoningBudgetSummary READ contextReasoningBudgetSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QString contextReasoningOrderingSummary READ contextReasoningOrderingSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QString contextReasoningFallbackSummary READ contextReasoningFallbackSummary NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QStringList contextReasoningContributionSummaries READ
+                   contextReasoningContributionSummaries NOTIFY promptContextInjectionChanged)
+    Q_PROPERTY(QStringList contextReasoningInclusionHints READ contextReasoningInclusionHints
+                   NOTIFY promptContextInjectionChanged)
+    Q_PROPERTY(QStringList contextReasoningExclusionHints READ contextReasoningExclusionHints
+                   NOTIFY promptContextInjectionChanged)
+    Q_PROPERTY(QStringList contextReasoningDeveloperTraces READ contextReasoningDeveloperTraces
+                   NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QStringList conversationSummaryCandidateSegments READ
                    conversationSummaryCandidateSegments NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QStringList conversationSummaryGenerationTraceSummaries READ
@@ -1332,6 +1364,23 @@ public:
     QString conversationSummaryPreviewSummary() const;
     QString conversationSummaryPersistenceSummary() const;
     QString conversationSummaryInjectionSummary() const;
+    QString summaryContinuityStatus() const;
+    QString summaryContinuityFreshnessSummary() const;
+    QString summaryContinuityCoverageSummary() const;
+    QString summaryContinuityContributionSummary() const;
+    QString summaryContinuityFallbackSummary() const;
+    QString summaryContinuityOrderingSummary() const;
+    QString summaryContinuityBudgetTrace() const;
+    ContextDecisionSummary contextDecisionSummary() const;
+    bool contextExplainabilityEnabled() const;
+    QString contextReasoningSummary() const;
+    QString contextReasoningBudgetSummary() const;
+    QString contextReasoningOrderingSummary() const;
+    QString contextReasoningFallbackSummary() const;
+    QStringList contextReasoningContributionSummaries() const;
+    QStringList contextReasoningInclusionHints() const;
+    QStringList contextReasoningExclusionHints() const;
+    QStringList contextReasoningDeveloperTraces() const;
     QStringList conversationSummaryCandidateSegments() const;
     QStringList conversationSummaryGenerationTraceSummaries() const;
     SemanticRetrievalPolicy semanticRetrievalPolicy() const;
@@ -1717,6 +1766,9 @@ private:
     bool runLocalInferenceStream(const QString& prompt, const QString& model);
     ConversationWindowResult conversationWindowForPrompt(const QString& prompt) const;
     ConversationSummaryResult conversationSummaryForPrompt(const QString& prompt) const;
+    int currentConversationMessageCountForSummary() const;
+    QString persistedSummaryExclusionReason() const;
+    bool persistedSummaryReadyForContinuity(QString* reason = nullptr) const;
     MemoryRelevanceSummary memoryRelevanceSummaryForPrompt(const QString& prompt) const;
     QList<ConversationSalienceCandidate>
     conversationSalienceCandidatesForPrompt(const QString& prompt) const;

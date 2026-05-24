@@ -212,6 +212,45 @@ When prompt context injection is explicitly enabled, the generated summary can p
 existing Conversation Summary context candidate in deterministic source order. It does not replace
 transcript history and does not write memory.
 
+## Summary-Aware Conversation Continuity
+
+Phase 32 extends the deterministic context path so persisted manual local summaries can preserve
+long-conversation continuity after restarts and context pressure. `ApplicationController` validates
+summary ownership, readiness state, timestamp, covered message range, active archive state,
+transcript compatibility, and freshness before exposing the summary as a context candidate.
+
+Validated summaries participate only in the existing explicit prompt-context path. Ordering remains
+stable: active conversation recency, summary continuity value, committed memory relevance, runtime
+metadata, orchestration/selected-conversation metadata, then budget constraints. Recent transcript
+turns remain in the conversation window, and the summary compresses older covered history without
+deleting, replacing, or mutating transcript messages.
+
+Stale, invalid, incompatible, archived, unavailable, and budget-excluded summaries produce
+QML-safe fallback and allocation summaries. The fallback is transcript-only context selection; it
+does not write committed memory, run generation, start background work, activate semantic/vector
+retrieval, index filesystems, call cloud/API providers, or expose raw prompt/debug payloads.
+
+## Context Observability And Explainability
+
+Phase 33 adds a read-only explainability layer over deterministic context assembly. The core value
+records are `ContextDecisionReason`, `ContextDecisionTrace`, `ContextDecisionBudget`,
+`ContextDecisionContribution`, `ContextDecisionFallback`, `ContextDecisionSummary`, and
+`ContextDecisionVisibility`.
+
+The controller derives these records from already-bounded prompt context injection, conversation
+salience, memory relevance, and summary continuity metadata. QML receives only safe summaries:
+context reasoning, ordering stages, contribution breakdowns, inclusion/exclusion hints, fallback
+reasoning, and Developer Mode traces. The UI does not receive hidden prompts, raw system prompts,
+provider payloads, raw prompt text, semantic/vector internals, filesystem paths, or unsafe debug
+objects.
+
+Ordering visibility is deterministic: recent transcript, continuity summary, committed memory, and
+runtime metadata. Budget visibility reports allocated characters, approximate tokens, remaining
+budget, compression gain, and transcript/summary/memory/runtime metadata contribution counts.
+Explainability is visibility only; it does not change prompt construction, mutate transcripts,
+write memory, activate semantic/vector systems, index filesystems, call providers/cloud APIs,
+execute tools/plugins, or start background workers.
+
 ## Intentional Boundaries
 
 - Chat provider behavior is hidden behind `IChatProvider`.
