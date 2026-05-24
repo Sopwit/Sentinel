@@ -298,6 +298,25 @@ Guidelines:
   scores or payloads, filesystem indexing controls, cloud/API controls, tool/plugin controls,
   autonomous toggles, transcript mutation affordances, or hidden background activity.
 
+## Phase 34 Explainability Control Notes
+
+Phase 34.0 through Phase 34.8 makes context explainability user-controllable and visually calmer
+without changing runtime authority.
+
+Guidelines:
+
+- Settings Chat exposes "Show context reasoning" as a persistent UI visibility toggle. The default
+  is on.
+- Turning the toggle off hides normal Home/Chat context reasoning surfaces only. It must explain
+  that context reasoning is hidden from UI and runtime behavior is unchanged.
+- Developer Mode remains separate and may still reveal bounded context diagnostics when enabled.
+- Home/Chat should remove the reasoning surface cleanly when hidden: no empty gaps and no
+  streaming-driven layout jumps.
+- Context reasoning controls and read-only diagnostic text should remain keyboard reachable, and
+  diagnostic text should remain selectable/copyable.
+- Detail rows may wrap long diagnostic values. Compact status chips should stay one-line and
+  should be given enough width in wide layouts to avoid avoidable ellipsis.
+
 Phase 29.0 through Phase 29.8 adds read-only conversation compression readiness visibility without
 adding a summarize action, background work, or hidden prompt/transcript mutation.
 

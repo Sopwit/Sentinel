@@ -2,6 +2,32 @@
 
 ## Completed / Stable
 
+### Phase 34.0-34.8: Explainability Controls, UI Refinement, And Regression Polish
+
+Completed. Adds a persistent context explainability visibility control and polishes the
+explainability UI without changing runtime authority or prompt/context behavior.
+
+Scope:
+
+- Added persisted `contextExplainabilityVisible`, default enabled. It controls normal UI
+  visibility only; safe context decision metadata still remains generated internally.
+- Settings Chat now exposes a keyboard-focusable "Show context reasoning" toggle. When disabled,
+  Settings states that context reasoning is hidden from UI and runtime behavior is unchanged.
+- Home hides the expandable Context reasoning surface when the visibility setting is off, without
+  leaving empty gaps or coupling visibility to streaming state.
+- Developer Mode remains a separate diagnostic visibility gate. Developer diagnostics may still
+  show bounded context traces when Developer Mode is enabled.
+- Context reasoning text areas remain keyboard reachable and selectable/copyable; compact status
+  chips stay single-line while wider layouts give chips more room before eliding.
+- Focused tests cover settings persistence, view-model exposure, and preservation of internal
+  explainability metadata when the UI visibility setting is disabled.
+
+Known limitation:
+
+- The new setting is a UI visibility preference only. It does not disable metadata generation,
+  alter deterministic prompt assembly, change retrieval selection, expose hidden prompts, enable
+  semantic/vector authority, or grant provider/tool/runtime execution authority.
+
 ### Phase 33.0-33.12: Context Observability And Explainability UX
 
 Completed. Exposes deterministic context orchestration decisions as concise, QML-safe

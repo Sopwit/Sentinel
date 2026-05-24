@@ -704,6 +704,7 @@ ScrollView {
                         Layout.fillWidth: true
                         Layout.preferredHeight: memoryPage.viewModel.developerModeEnabled ? 132 : 86
                         readOnly: true
+                        activeFocusOnTab: true
                         selectByMouse: true
                         wrapMode: TextEdit.Wrap
                         text: memoryPage.viewModel.developerModeEnabled

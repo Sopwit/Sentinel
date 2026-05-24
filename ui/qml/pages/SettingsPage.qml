@@ -700,6 +700,62 @@ Item {
                             }
                         }
 
+                        CheckBox {
+                            id: contextReasoningVisibilityToggle
+                            Layout.fillWidth: true
+                            text: "Show context reasoning"
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            leftPadding: contextReasoningVisibilityToggle.indicator.width + SentinelTheme.spaceSm
+                            checked: settingsPage.viewModel.contextExplainabilityVisible
+                            onToggled: settingsPage.viewModel.contextExplainabilityVisible = checked
+                            contentItem: Text {
+                                text: contextReasoningVisibilityToggle.text
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                verticalAlignment: Text.AlignVCenter
+                                wrapMode: Text.WordWrap
+                            }
+                            indicator: Rectangle {
+                                implicitWidth: 18
+                                implicitHeight: 18
+                                x: contextReasoningVisibilityToggle.leftPadding
+                                y: parent.height / 2 - height / 2
+                                radius: SentinelTheme.radiusSm
+                                color: contextReasoningVisibilityToggle.checked
+                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
+                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                                border.color: InteractionTokens.borderColor(contextReasoningVisibilityToggle.activeFocus,
+                                                                             contextReasoningVisibilityToggle.hovered,
+                                                                             contextReasoningVisibilityToggle.checked,
+                                                                             settingsPage.modeAccent)
+                                Rectangle {
+                                    anchors.centerIn: parent
+                                    width: 8
+                                    height: 8
+                                    radius: 4
+                                    visible: contextReasoningVisibilityToggle.checked
+                                    color: settingsPage.modeAccent
+                                }
+
+                                Behavior on color {
+                                    ColorAnimation {
+                                        duration: MotionTokens.fast
+                                        easing.type: MotionTokens.standard
+                                    }
+                                }
+                            }
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            visible: !settingsPage.viewModel.contextExplainabilityVisible
+                            text: "Context reasoning is hidden from UI; runtime behavior is unchanged."
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontSmall
+                            wrapMode: Text.WordWrap
+                        }
+
                         InfoRow {
                             compact: settingsPage.compact
                             label: "Routing"
@@ -732,7 +788,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             label: "Explainability"
-                            value: (settingsPage.viewModel.contextExplainabilityEnabled ? "Enabled / " : "Disabled / ")
+                            value: (settingsPage.viewModel.contextExplainabilityVisible ? "Visible / " : "Hidden / ")
                                    + settingsPage.viewModel.contextReasoningSummary
                             Layout.fillWidth: true
                         }

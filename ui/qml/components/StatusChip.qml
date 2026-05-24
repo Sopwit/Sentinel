@@ -16,7 +16,7 @@ Rectangle {
                                                        : statusChip.muted ? 0.026 : 0.052)
     border.color: SentinelTheme.withAlpha(statusChip.selected ? statusChip.accent : SentinelTheme.textPrimary,
                                           statusChip.selected ? 0.20 : statusChip.muted ? 0.040 : 0.070)
-    implicitWidth: Math.min(Math.max(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 88), 420)
+    implicitWidth: Math.min(Math.max(chipText.implicitWidth + SentinelTheme.spaceMd * 2 + 10, 88), 560)
     implicitHeight: 28
     scale: hoverArea.containsMouse && !statusChip.muted ? InteractionTokens.cardHoverLift : 1.0
 
