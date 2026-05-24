@@ -757,6 +757,8 @@ private slots:
     void manualSummaryGenerationIsBlockedAndDoesNotMutateTranscript();
     void manualSummaryGenerationFailureDoesNotPersistMetadata();
     void manualSummaryGenerationPersistsSafeLocalSummary();
+    void summaryContinuityInjectsPersistedSummaryAfterRestart();
+    void staleSummaryContinuityFallsBackToTranscriptOnly();
     void semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt();
     void semanticProviderPlanningExposesDisabledSelection();
     void semanticCandidateOrchestrationExposesSafeMetadata();
@@ -4469,7 +4471,95 @@ void ApplicationControllerTest::manualSummaryGenerationPersistsSafeLocalSummary(
     QVERIFY(memoryStart > summaryStart);
     QVERIFY(prompt.mid(summaryStart, memoryStart - summaryStart)
                 .contains(QStringLiteral("fake local completion")));
-    QVERIFY(controller->conversationSummaryInjectionSummary().contains(QStringLiteral("included")));
+    QVERIFY(
+        controller->conversationSummaryInjectionSummary().contains(QStringLiteral("assisting")));
+}
+
+void ApplicationControllerTest::summaryContinuityInjectsPersistedSummaryAfterRestart() {
+    QTemporaryDir tempDir;
+    QVERIFY(tempDir.isValid());
+    const auto dbPath = tempDir.filePath(QStringLiteral("conversations.sqlite3"));
+    QString conversationId;
+    {
+        auto store = std::make_unique<SQLiteConversationStore>(dbPath);
+        auto* storePtr = store.get();
+        auto controller = makeControllerWithConversationStore(std::move(store));
+        conversationId = controller->activeConversationId();
+        for (int i = 0; i < 5; ++i) {
+            QVERIFY(controller->sendMessage(QStringLiteral("continuity persisted turn %1").arg(i)));
+        }
+
+        sentinel::core::ConversationSummaryMetadataRecord metadata;
+        metadata.conversationId = conversationId;
+        metadata.summaryTimestampUtc = QDateTime::currentDateTimeUtc();
+        metadata.coveredFirstMessageId = 2;
+        metadata.coveredLastMessageId = 6;
+        metadata.estimatedReductionPercent = 72;
+        metadata.readinessState = QStringLiteral("Ready");
+        metadata.summaryText = QStringLiteral("Persisted continuity summary for restart.");
+        metadata.summary = QStringLiteral("Ready / messages 2-6 / 72% estimated reduction");
+        QVERIFY(storePtr->saveSummaryMetadata(metadata));
+    }
+
+    auto reloaded = makeControllerWithConversationStore(
+        std::make_unique<SQLiteConversationStore>(dbPath));
+    QCOMPARE(reloaded->activeConversationId(), conversationId);
+    reloaded->setPromptContextInjectionEnabled(true);
+    QVERIFY(reloaded->sendMessage(QStringLiteral("continuity followup")));
+    QCOMPARE(reloaded->summaryContinuityStatus(), QStringLiteral("Active"));
+    QVERIFY(reloaded->summaryContinuityFreshnessSummary().contains(QStringLiteral("newer")));
+    QVERIFY(reloaded->summaryContinuityCoverageSummary().contains(QStringLiteral("messages 2-6")));
+    QVERIFY(reloaded->summaryContinuityContributionSummary().contains(QStringLiteral("72%")));
+    QVERIFY(reloaded->promptContextBlockSummaries().join(QStringLiteral("\n")).contains(
+        QStringLiteral("Conversation Summary Context")));
+    QVERIFY(reloaded->contextExplainabilityEnabled());
+    QVERIFY(reloaded->contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
+    QVERIFY(reloaded->contextReasoningBudgetSummary().contains(QStringLiteral("summary")));
+    QVERIFY(reloaded->contextReasoningOrderingSummary().contains(QStringLiteral("recent transcript")));
+    QVERIFY(reloaded->contextReasoningContributionSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Conversation Summary Context")));
+    QVERIFY(!reloaded->contextReasoningDeveloperTraces().join(QStringLiteral("\n"))
+                 .contains(QStringLiteral("[Sentinel Local Context]")));
+}
+
+void ApplicationControllerTest::staleSummaryContinuityFallsBackToTranscriptOnly() {
+    auto store = std::make_unique<sentinel::core::InMemoryConversationStore>();
+    auto* storePtr = store.get();
+    auto controller = makeControllerWithConversationStore(std::move(store));
+    for (int i = 0; i < 4; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("stale continuity seed %1").arg(i)));
+    }
+
+    sentinel::core::ConversationSummaryMetadataRecord metadata;
+    metadata.conversationId = controller->activeConversationId();
+    metadata.summaryTimestampUtc = QDateTime::currentDateTimeUtc();
+    metadata.coveredFirstMessageId = 2;
+    metadata.coveredLastMessageId = 3;
+    metadata.estimatedReductionPercent = 65;
+    metadata.readinessState = QStringLiteral("Ready");
+    metadata.summaryText = QStringLiteral("Stale summary text must not inject.");
+    metadata.summary = QStringLiteral("Ready / messages 2-3 / 65% estimated reduction");
+    QVERIFY(storePtr->saveSummaryMetadata(metadata));
+    const auto otherId = controller->createConversation(QStringLiteral("Other"));
+    QVERIFY(!otherId.isEmpty());
+    QVERIFY(controller->switchConversation(metadata.conversationId));
+
+    for (int i = 0; i < 13; ++i) {
+        QVERIFY(controller->sendMessage(QStringLiteral("newer stale turn %1").arg(i)));
+    }
+    const auto beforeMessages = controller->chatMessages();
+    const auto beforeMemory = controller->memoryEntries();
+
+    controller->setPromptContextInjectionEnabled(true);
+    QVERIFY(controller->sendMessage(QStringLiteral("stale continuity followup")));
+    QCOMPARE(controller->summaryContinuityStatus(), QStringLiteral("Stale"));
+    QVERIFY(controller->summaryContinuityFallbackSummary().contains(QStringLiteral("Transcript-only")));
+    QVERIFY(controller->contextReasoningFallbackSummary().contains(QStringLiteral("Fallback active")));
+    QVERIFY(controller->contextReasoningExclusionHints().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("summary is stale")));
+    QVERIFY(!controller->promptContextSourceSummary().contains(QStringLiteral("Conversation Summary")));
+    QVERIFY(controller->chatMessages().size() > beforeMessages.size());
+    QCOMPARE(controller->memoryEntries(), beforeMemory);
 }
 
 void ApplicationControllerTest::semanticRetrievalMetadataDoesNotAffectPlanningOrPrompt() {

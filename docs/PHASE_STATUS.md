@@ -2,6 +2,67 @@
 
 ## Completed / Stable
 
+### Phase 33.0-33.12: Context Observability And Explainability UX
+
+Completed. Exposes deterministic context orchestration decisions as concise, QML-safe
+explainability metadata without exposing hidden prompts, raw provider payloads, semantic/vector
+authority, filesystem indexing, cloud/API expansion, tools/plugins, autonomous behavior, transcript
+mutation, or background workers.
+
+Scope:
+
+- Added value-only context decision records for reason, trace, budget, contribution, fallback,
+  summary, and visibility metadata.
+- Context reasoning reports why transcript, summary, committed memory, and runtime metadata
+  contributions were included or excluded, including deterministic fallback and truncation/budget
+  posture.
+- Budget visibility reports allocated characters, approximate tokens, remaining budget,
+  compression gain, and transcript/summary/memory/runtime metadata contribution counts.
+- Ordering visibility stays stable and readable: recent transcript, continuity summary, committed
+  memory, then runtime metadata.
+- Home shows a compact expandable Context Reasoning surface. Runtime/Memory shows richer
+  contribution, fallback, ordering, and selectable diagnostics. Settings shows explainability
+  enabled/disabled state plus Developer Mode context diagnostics.
+- Focused tests cover deterministic reasoning, fallback/exclusion reporting, ordering/budget
+  visibility, no raw prompt exposure, view-model exposure, and Developer Mode trace gating.
+
+Known limitation:
+
+- Explainability is read-only metadata over the existing deterministic context path. It does not
+  reveal hidden prompts or raw payloads, and it does not add semantic/vector authority, filesystem
+  indexing, provider/cloud access, tools/plugins, autonomous work, transcript mutation, or
+  background processing.
+
+### Phase 32.0-32.12: Summary-Aware Long Conversation Continuity
+
+Completed. Uses explicit persisted local summaries as deterministic continuity context for long
+conversations while preserving transcript, memory, provider, tool, filesystem, and background
+execution boundaries.
+
+Scope:
+
+- Persisted local summaries now pass deterministic readiness, ownership, archive-state, coverage,
+  timestamp, freshness, and compatibility validation before they can participate in prompt context.
+- Valid summaries participate as bounded Conversation Summary context candidates after active
+  conversation recency and before committed memory/runtime metadata. They preserve recent turns,
+  expose compression gain and budget contribution, and never replace or delete transcript history.
+- Stale, invalid, incompatible, archived, unavailable, and budget-excluded summaries surface safe
+  fallback reasons and revert to transcript-only context selection without hidden mutation.
+- `ApplicationController` and `DesktopShellViewModel` expose QML-safe continuity status,
+  freshness, coverage, contribution, fallback, ordering, and deterministic budget trace summaries.
+- Chat shows concise continuity assistance/fallback copy. Runtime/Memory shows continuity
+  contribution, ordering, freshness, coverage, and Developer Mode budget traces. Settings shows
+  summary continuity enablement and Developer Mode diagnostics.
+- Focused tests cover persisted-summary restart continuity, stale-summary exclusion, transcript
+  preservation, no memory mutation, deterministic ordering, and view-model property exposure.
+
+Known limitation:
+
+- Summary continuity depends on an explicit previously generated local summary. There is still no
+  autonomous summary generation, background compression, transcript replacement, committed-memory
+  write, semantic/vector authority, filesystem indexing, tools/plugins, cloud/API provider path, or
+  hidden prompt/debug dump exposure.
+
 ### Phase 31.0-31.12: Controlled Local Summary Generation Execution
 
 Completed. Enables explicit foreground local conversation summary generation through the existing

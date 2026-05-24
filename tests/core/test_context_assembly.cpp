@@ -17,10 +17,16 @@ using sentinel::core::ConversationSalienceCandidate;
 using sentinel::core::ConversationSaliencePolicy;
 using sentinel::core::ConversationSummaryPolicy;
 using sentinel::core::ConversationSummaryRequest;
+using sentinel::core::ConversationSummaryResult;
 using sentinel::core::ConversationSummaryStatus;
 using sentinel::core::ConversationWindowMessage;
 using sentinel::core::ConversationWindowPolicy;
 using sentinel::core::ConversationWindowStatus;
+using sentinel::core::contextDecisionContributionSummaries;
+using sentinel::core::contextDecisionDeveloperTraceSummaries;
+using sentinel::core::contextDecisionExclusionSummaries;
+using sentinel::core::contextDecisionInclusionSummaries;
+using sentinel::core::explainContextDecision;
 using sentinel::core::makeContextAssemblySource;
 using sentinel::core::MemoryRelevanceCandidate;
 using sentinel::core::MemoryRelevancePolicy;
@@ -34,6 +40,10 @@ using sentinel::core::retrievalCandidateTraceSummaries;
 using sentinel::core::RetrievalPlanningPolicy;
 using sentinel::core::RetrievalPlanningStatus;
 using sentinel::core::retrievalSourceSummaries;
+using sentinel::core::PromptContextBlock;
+using sentinel::core::PromptContextInjectionPolicy;
+using sentinel::core::PromptContextInjectionResult;
+using sentinel::core::PromptContextInjectionStatus;
 
 class ContextAssemblyTest final : public QObject {
     Q_OBJECT
@@ -61,6 +71,8 @@ private slots:
     void conversationCompressionEnforcesBudgetBounds();
     void conversationSummaryGenerationRequiresExplicitManualAction();
     void conversationSummaryGenerationPlansSegmentsAndBudgetDeterministically();
+    void contextDecisionExplainabilityReportsOrderingBudgetAndFallback();
+    void contextDecisionExplainabilityDoesNotExposeRawPrompt();
 };
 
 void ContextAssemblyTest::createsDeterministicAssemblySummary() {
@@ -650,6 +662,99 @@ void ContextAssemblyTest::conversationSummaryGenerationPlansSegmentsAndBudgetDet
                 .contains(QStringLiteral("system-runtime metadata")));
     QCOMPARE(result.coveredFirstMessageIndex, 2);
     QCOMPARE(result.coveredLastMessageIndex, 19);
+}
+
+void ContextAssemblyTest::contextDecisionExplainabilityReportsOrderingBudgetAndFallback() {
+    PromptContextInjectionResult injection;
+    injection.status = PromptContextInjectionStatus::Injected;
+    injection.policy = PromptContextInjectionPolicy{};
+    injection.injectedCharacterCount = 84;
+    injection.injectedBlockCount = 3;
+    injection.bundle.blocks = {
+        PromptContextBlock{ContextAssemblySourceKind::Conversation,
+                           QStringLiteral("Recent"),
+                           {},
+                           40,
+                           40},
+        PromptContextBlock{ContextAssemblySourceKind::CommittedMemory,
+                           QStringLiteral("Memory"),
+                           {},
+                           24,
+                           24},
+        PromptContextBlock{ContextAssemblySourceKind::RuntimeMetadata,
+                           QStringLiteral("Runtime"),
+                           {},
+                           20,
+                           20},
+    };
+
+    ConversationSaliencePolicy saliencePolicy;
+    const auto salience = rankConversationSalience(
+        {
+            ConversationSalienceCandidate{ContextAssemblySourceKind::Conversation,
+                                          QStringLiteral("Recent"),
+                                          QStringLiteral("alpha continuity"),
+                                          0,
+                                          16},
+            ConversationSalienceCandidate{ContextAssemblySourceKind::ConversationSummary,
+                                          QStringLiteral("Summary"),
+                                          QStringLiteral("unmatched"),
+                                          1,
+                                          9},
+        },
+        QStringLiteral("alpha"), {}, QStringLiteral("alpha"), {}, {}, saliencePolicy);
+
+    const auto memory = rankMemoryRelevance(
+        {MemoryRelevanceCandidate{QStringLiteral("alpha.preference"),
+                                  QStringLiteral("local only"), 0}},
+        QStringLiteral("alpha"), {}, {}, MemoryRelevancePolicy{});
+
+    ConversationSummaryResult summary;
+    summary.fallback.reason = QStringLiteral("summary unavailable for this request");
+    summary.budget.maxCharacters = 700;
+
+    const auto decision = explainContextDecision(injection, salience, memory, summary);
+
+    QVERIFY(decision.summary.contains(QStringLiteral("Context reasoning")));
+    QVERIFY(decision.budget.summary.contains(QStringLiteral("approx")));
+    QCOMPARE(decision.budget.transcriptCharacters, 40);
+    QCOMPARE(decision.budget.memoryCharacters, 24);
+    QCOMPARE(decision.budget.runtimeMetadataCharacters, 20);
+    QVERIFY(decision.fallback.active);
+    QVERIFY(decision.fallback.summary.contains(QStringLiteral("transcript-only")));
+    QVERIFY(decision.trace.orderingStages.join(QStringLiteral(" -> "))
+                .contains(QStringLiteral("recent transcript -> continuity summary")));
+    QVERIFY(!contextDecisionContributionSummaries(decision).isEmpty());
+    QVERIFY(!contextDecisionInclusionSummaries(decision).isEmpty());
+    QVERIFY(!contextDecisionExclusionSummaries(decision).isEmpty());
+    QVERIFY(!contextDecisionDeveloperTraceSummaries(decision).isEmpty());
+}
+
+void ContextAssemblyTest::contextDecisionExplainabilityDoesNotExposeRawPrompt() {
+    PromptContextInjectionResult injection;
+    injection.status = PromptContextInjectionStatus::Injected;
+    injection.policy = PromptContextInjectionPolicy{};
+    injection.originalPrompt =
+        QStringLiteral("RAW_SYSTEM_PROMPT provider_payload secret-vector debug dump");
+    injection.injectedCharacterCount = 0;
+
+    const auto salience = rankConversationSalience({}, injection.originalPrompt, {}, {}, {}, {},
+                                                   ConversationSaliencePolicy{});
+    const auto memory =
+        rankMemoryRelevance({}, injection.originalPrompt, {}, {}, MemoryRelevancePolicy{});
+    ConversationSummaryResult summary;
+    summary.fallback.reason = QStringLiteral("no valid generated summary is available");
+
+    const auto decision = explainContextDecision(injection, salience, memory, summary);
+    const auto exposed = QStringList{decision.summary, decision.budget.summary,
+                                     decision.fallback.summary}
+                             .join(QStringLiteral("\n")) +
+                         contextDecisionDeveloperTraceSummaries(decision).join(
+                             QStringLiteral("\n"));
+
+    QVERIFY(!exposed.contains(QStringLiteral("RAW_SYSTEM_PROMPT")));
+    QVERIFY(!exposed.contains(QStringLiteral("provider_payload")));
+    QVERIFY(!exposed.contains(QStringLiteral("secret-vector")));
 }
 
 QTEST_MAIN(ContextAssemblyTest)

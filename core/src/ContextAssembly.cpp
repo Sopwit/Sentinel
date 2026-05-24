@@ -2106,4 +2106,198 @@ QStringList conversationSummaryTraceSummaries(const ConversationSummaryResult& r
     return lines;
 }
 
+namespace {
+
+int estimatedTokenCount(int characters) {
+    return std::max(0, (characters + 3) / 4);
+}
+
+void addDecisionContribution(ContextDecisionSummary& decision, ContextAssemblySourceKind source,
+                             int characters, const QString& reason) {
+    if (characters <= 0) {
+        return;
+    }
+    const auto tokens = estimatedTokenCount(characters);
+    decision.contributions.append(ContextDecisionContribution{
+        source,
+        characters,
+        tokens,
+        reason,
+        QStringLiteral("%1: %2 chars / approx %3 tokens / %4")
+            .arg(contextAssemblySourceKindName(source))
+            .arg(characters)
+            .arg(tokens)
+            .arg(reason),
+    });
+}
+
+} // namespace
+
+ContextDecisionSummary
+explainContextDecision(const PromptContextInjectionResult& injection,
+                       const ConversationSalienceSummary& salience,
+                       const MemoryRelevanceSummary& memory,
+                       const ConversationSummaryResult& summary) {
+    ContextDecisionSummary decision;
+    decision.trace.orderingStages = {
+        QStringLiteral("recent transcript"),
+        QStringLiteral("continuity summary"),
+        QStringLiteral("committed memory"),
+        QStringLiteral("runtime metadata"),
+    };
+
+    decision.budget.allocatedCharacters = injection.injectedCharacterCount;
+    decision.budget.allocatedTokens = estimatedTokenCount(injection.injectedCharacterCount);
+    decision.budget.remainingCharacters =
+        std::max(0, injection.policy.maxCharacters - injection.injectedCharacterCount);
+    decision.budget.compressionGainPercent = summary.continuityGainEstimatePercent;
+
+    for (const auto& block : injection.bundle.blocks) {
+        switch (block.source) {
+        case ContextAssemblySourceKind::Conversation:
+            decision.budget.transcriptCharacters += block.injectedSize;
+            break;
+        case ContextAssemblySourceKind::ConversationSummary:
+            decision.budget.summaryCharacters += block.injectedSize;
+            break;
+        case ContextAssemblySourceKind::CommittedMemory:
+            decision.budget.memoryCharacters += block.injectedSize;
+            break;
+        case ContextAssemblySourceKind::RuntimeMetadata:
+        case ContextAssemblySourceKind::Orchestration:
+        case ContextAssemblySourceKind::SelectedConversationMetadata:
+            decision.budget.runtimeMetadataCharacters += block.injectedSize;
+            break;
+        }
+    }
+
+    decision.budget.summary =
+        QStringLiteral("%1 chars allocated / approx %2 tokens / %3 chars remaining / gain %4%. "
+                       "Transcript %5, summary %6, memory %7, runtime metadata %8 chars.")
+            .arg(decision.budget.allocatedCharacters)
+            .arg(decision.budget.allocatedTokens)
+            .arg(decision.budget.remainingCharacters)
+            .arg(decision.budget.compressionGainPercent)
+            .arg(decision.budget.transcriptCharacters)
+            .arg(decision.budget.summaryCharacters)
+            .arg(decision.budget.memoryCharacters)
+            .arg(decision.budget.runtimeMetadataCharacters);
+
+    addDecisionContribution(decision, ContextAssemblySourceKind::Conversation,
+                            decision.budget.transcriptCharacters,
+                            QStringLiteral("recent transcript preserved continuity"));
+    addDecisionContribution(decision, ContextAssemblySourceKind::ConversationSummary,
+                            decision.budget.summaryCharacters,
+                            QStringLiteral("validated manual summary compressed older turns"));
+    addDecisionContribution(decision, ContextAssemblySourceKind::CommittedMemory,
+                            decision.budget.memoryCharacters,
+                            QStringLiteral("literal local memory relevance matched the request"));
+    addDecisionContribution(decision, ContextAssemblySourceKind::RuntimeMetadata,
+                            decision.budget.runtimeMetadataCharacters,
+                            QStringLiteral("safe runtime/orchestration metadata stayed bounded"));
+
+    for (const auto& selection : salience.selections) {
+        decision.reasons.append(ContextDecisionReason{
+            selection.candidate.source,
+            selection.included,
+            selection.reason.summary,
+            QStringLiteral("%1 %2: %3")
+                .arg(selection.included ? QStringLiteral("Included") : QStringLiteral("Excluded"),
+                     contextAssemblySourceKindName(selection.candidate.source),
+                     selection.reason.summary),
+        });
+    }
+
+    if (memory.candidateCount > 0) {
+        decision.reasons.append(ContextDecisionReason{
+            ContextAssemblySourceKind::CommittedMemory,
+            memory.includedCount > 0,
+            memory.summary,
+            QStringLiteral("Memory: %1 included / %2 excluded / %3")
+                .arg(memory.includedCount)
+                .arg(memory.excludedCount)
+                .arg(memory.budget.summary),
+        });
+    }
+
+    const bool summaryInjected = decision.budget.summaryCharacters > 0;
+    if (!summaryInjected) {
+        const auto reason = summary.fallback.reason.trimmed().isEmpty()
+                                ? QStringLiteral("summary not selected in the current budget")
+                                : summary.fallback.reason.simplified();
+        decision.reasons.append(ContextDecisionReason{
+            ContextAssemblySourceKind::ConversationSummary,
+            false,
+            reason,
+            QStringLiteral("Summary excluded: %1").arg(reason),
+        });
+    }
+
+    decision.fallback.active = !summaryInjected;
+    decision.fallback.reason =
+        summaryInjected ? QString() : (summary.fallback.reason.trimmed().isEmpty()
+                                           ? QStringLiteral("summary unavailable or budget-excluded")
+                                           : summary.fallback.reason.simplified());
+    decision.fallback.summary =
+        summaryInjected ? QStringLiteral("No fallback required; continuity summary was included.")
+                        : QStringLiteral("Fallback active: transcript-only continuity; %1.")
+                              .arg(decision.fallback.reason);
+
+    decision.trace.reasonSummaries = contextDecisionInclusionSummaries(decision);
+    decision.trace.reasonSummaries.append(contextDecisionExclusionSummaries(decision));
+    decision.trace.developerSummaries = {
+        decision.budget.summary,
+        salience.budget.summary,
+        memory.budget.summary,
+        summary.budget.summary,
+        decision.fallback.summary,
+    };
+    decision.trace.summary =
+        QStringLiteral("Ordering: %1. %2")
+            .arg(decision.trace.orderingStages.join(QStringLiteral(" -> ")),
+                 decision.budget.summary);
+    decision.summary =
+        QStringLiteral("Context reasoning: %1 included / %2 excluded / %3")
+            .arg(salience.includedCount)
+            .arg(salience.excludedCount + (summaryInjected ? 0 : 1))
+            .arg(decision.fallback.active ? QStringLiteral("fallback active")
+                                          : QStringLiteral("continuity preserved"));
+    return decision;
+}
+
+QStringList contextDecisionContributionSummaries(const ContextDecisionSummary& summary) {
+    QStringList lines;
+    for (const auto& contribution : summary.contributions) {
+        lines.append(contribution.summary);
+    }
+    return lines;
+}
+
+QStringList contextDecisionInclusionSummaries(const ContextDecisionSummary& summary) {
+    QStringList lines;
+    for (const auto& reason : summary.reasons) {
+        if (reason.included) {
+            lines.append(reason.summary);
+        }
+    }
+    return lines;
+}
+
+QStringList contextDecisionExclusionSummaries(const ContextDecisionSummary& summary) {
+    QStringList lines;
+    for (const auto& reason : summary.reasons) {
+        if (!reason.included) {
+            lines.append(reason.summary);
+        }
+    }
+    return lines;
+}
+
+QStringList contextDecisionDeveloperTraceSummaries(const ContextDecisionSummary& summary) {
+    QStringList lines;
+    lines.append(summary.trace.summary);
+    lines.append(summary.trace.developerSummaries);
+    return lines;
+}
+
 } // namespace sentinel::core

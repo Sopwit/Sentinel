@@ -334,14 +334,70 @@ ShellPanel {
             text: homeChat.viewModel.conversationSummaryGenerationStatus === "Planned"
                   ? homeChat.viewModel.conversationSummaryReadinessSummary
                   : (homeChat.viewModel.promptContextInjectionEnabled
-                     ? homeChat.viewModel.conversationSummaryInjectionSummary
+                     ? homeChat.viewModel.summaryContinuityContributionSummary
                      : homeChat.viewModel.conversationSummaryReadinessSummary)
             color: homeChat.viewModel.conversationSummaryGenerationStatus === "Blocked"
+                   || homeChat.viewModel.summaryContinuityStatus === "Stale"
                    ? SentinelTheme.warning
                    : SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             maximumLineCount: 2
             wrapMode: Text.WordWrap
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            visible: homeChat.viewModel.contextExplainabilityEnabled
+                     && homeChat.viewModel.promptContextInjectionEnabled
+            spacing: SentinelTheme.spaceXs
+
+            Button {
+                id: contextReasoningToggle
+                property bool expanded: false
+                Layout.fillWidth: true
+                text: (expanded ? "Context reasoning -" : "Context reasoning +")
+                      + "  " + homeChat.viewModel.contextReasoningSummary
+                hoverEnabled: true
+                activeFocusOnTab: true
+                onClicked: expanded = !expanded
+
+                contentItem: Text {
+                    text: contextReasoningToggle.text
+                    color: SentinelTheme.textPrimary
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                }
+
+                background: Rectangle {
+                    radius: SentinelTheme.radiusMd
+                    color: contextReasoningToggle.activeFocus
+                           ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.14)
+                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
+                    border.color: contextReasoningToggle.activeFocus
+                                  ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.62)
+                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.080)
+                }
+            }
+
+            TextArea {
+                Layout.fillWidth: true
+                visible: contextReasoningToggle.expanded
+                readOnly: true
+                selectByMouse: true
+                wrapMode: TextEdit.Wrap
+                text: homeChat.viewModel.contextReasoningOrderingSummary + "\n"
+                      + homeChat.viewModel.contextReasoningFallbackSummary + "\n"
+                      + homeChat.viewModel.contextReasoningInclusionHints.slice(0, 3).join("\n")
+                color: SentinelTheme.textMuted
+                selectedTextColor: SentinelTheme.backgroundBase
+                selectionColor: SentinelTheme.modeAccent(homeChat.viewModel.currentModeName)
+                font.pixelSize: SentinelTheme.fontSmall
+                background: Rectangle {
+                    radius: SentinelTheme.radiusMd
+                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.38)
+                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                }
+            }
         }
 
         Rectangle {

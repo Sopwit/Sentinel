@@ -289,6 +289,35 @@ Out of scope:
   memory writes, semantic/vector authority, filesystem indexing, tools/plugins, subprocess
   expansion, and cloud/API providers.
 
+## 9.2.3 Summary-Aware Long Conversation Continuity
+
+Decision: Explicit persisted local summaries may act as deterministic continuity context only after
+readiness, ownership, safety, freshness, and coverage validation.
+
+Reason: Long-running conversations need durable compressed continuity after restart and context
+pressure, but summaries must not become autonomous memory, semantic authority, or hidden transcript
+replacement.
+
+Runtime behavior:
+
+- Summary validation checks active conversation ownership, unarchived state, `Ready` readiness,
+  valid timestamp, valid covered range, transcript compatibility, non-empty sanitized text, and a
+  deterministic freshness window.
+- Valid summaries are selected through the existing context path after active conversation recency
+  and before committed memory, runtime metadata, orchestration metadata, and budget constraints.
+- Recent transcript turns stay preserved; old messages are not deleted, replaced, reordered, or
+  hidden.
+- The controller exposes QML-safe continuity status, freshness, coverage, contribution, fallback,
+  ordering, and deterministic budget trace strings.
+- Stale, invalid, incompatible, archived, unavailable, and budget-excluded summaries fall back to
+  transcript-only context.
+
+Out of scope:
+
+- Autonomous summary generation, background execution, hidden transcript replacement, semantic/
+  vector retrieval, filesystem indexing, cloud/API providers, tools/plugins activation, hidden
+  prompt dumping, and automatic committed-memory writes.
+
 ## 9.3 Active Conversation Lifecycle And Switching
 
 Decision: Use `IConversationStore` as the active local transcript source, with
@@ -384,7 +413,34 @@ Out of scope:
 
 - Embeddings, vector search, semantic ranking authority, filesystem indexing, background
   summarization, autonomous memory writes, tools/plugins, cloud/API calls, STT/TTS activation,
-  subprocesses, hidden workers, and raw prompt/debug dump exposure.
+subprocesses, hidden workers, and raw prompt/debug dump exposure.
+
+## 9.4.2 Context Observability And Explainability
+
+Decision: Expose context orchestration explainability as deterministic value-only metadata.
+
+Reason: Users and developers need to understand why local context was included, excluded,
+truncated, ordered, or placed in fallback without gaining access to hidden prompts, raw provider
+payloads, semantic/vector internals, or unsafe runtime authority.
+
+Runtime behavior:
+
+- `ContextDecisionReason`, `ContextDecisionTrace`, `ContextDecisionBudget`,
+  `ContextDecisionContribution`, `ContextDecisionFallback`, `ContextDecisionSummary`, and
+  `ContextDecisionVisibility` are read models over existing context injection, salience, memory
+  relevance, and summary continuity metadata.
+- Budget diagnostics report allocated characters, approximate tokens, remaining budget,
+  compression gain, and contribution by transcript, summary, memory, and runtime metadata.
+- Ordering diagnostics report recent transcript, continuity summary, committed memory, and runtime
+  metadata in stable order.
+- Normal UI shows concise context reasoning. Developer Mode shows richer bounded traces, still as
+  strings/counts only.
+
+Out of scope:
+
+- Hidden prompt dumping, raw provider payload exposure, raw system prompt exposure, semantic/vector
+  authority, filesystem indexing, cloud/API expansion, tools/plugins activation, autonomous
+  behavior, transcript mutation, and hidden background workers.
 
 ## 9.5 Conversation Delete Readiness Checkpoint
 

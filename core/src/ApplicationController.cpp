@@ -3281,9 +3281,8 @@ QString ApplicationController::conversationSummaryPersistenceSummary() const {
 }
 
 QString ApplicationController::conversationSummaryInjectionSummary() const {
-    const bool persistedSummaryAvailable =
-        latestConversationSummaryMetadata_.conversationId == activeConversationId_ &&
-        !latestConversationSummaryMetadata_.summaryText.trimmed().isEmpty();
+    QString exclusionReason;
+    const bool persistedSummaryAvailable = persistedSummaryReadyForContinuity(&exclusionReason);
     const bool injected =
         latestPromptContextInjectionResult_.bundle.blocks.end() !=
         std::find_if(latestPromptContextInjectionResult_.bundle.blocks.begin(),
@@ -3294,14 +3293,129 @@ QString ApplicationController::conversationSummaryInjectionSummary() const {
     if (!promptContextInjectionEnabled_) {
         return persistedSummaryAvailable
                    ? QStringLiteral("Summary available; context injection is disabled.")
-                   : QStringLiteral("No generated summary is available for injection.");
+                   : QStringLiteral("Summary excluded; %1").arg(exclusionReason);
     }
     if (injected) {
-        return QStringLiteral("Generated summary is included in local prompt context.");
+        return QStringLiteral("Summary assisting continuity in local prompt context.");
     }
     return persistedSummaryAvailable
                ? QStringLiteral("Summary available but not selected within current context budget.")
-               : QStringLiteral("No generated summary is available for injection.");
+               : QStringLiteral("Transcript-only fallback; %1").arg(exclusionReason);
+}
+
+QString ApplicationController::summaryContinuityStatus() const {
+    const auto summary = conversationSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt);
+    if (summary.activeContextUsage) {
+        return QStringLiteral("Active");
+    }
+    if (summary.stale) {
+        return QStringLiteral("Stale");
+    }
+    if (!promptContextInjectionEnabled_) {
+        return QStringLiteral("Disabled");
+    }
+    return QStringLiteral("Fallback");
+}
+
+QString ApplicationController::summaryContinuityFreshnessSummary() const {
+    return conversationSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .freshnessSummary;
+}
+
+QString ApplicationController::summaryContinuityCoverageSummary() const {
+    return conversationSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt)
+        .coverageSummary;
+}
+
+QString ApplicationController::summaryContinuityContributionSummary() const {
+    const auto summary = conversationSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt);
+    const bool injected =
+        latestPromptContextInjectionResult_.bundle.blocks.end() !=
+        std::find_if(latestPromptContextInjectionResult_.bundle.blocks.begin(),
+                     latestPromptContextInjectionResult_.bundle.blocks.end(),
+                     [](const PromptContextBlock& block) {
+                         return block.source == ContextAssemblySourceKind::ConversationSummary;
+                     });
+    if (injected) {
+        return QStringLiteral("Continuity contribution active: %1% estimated compression gain.")
+            .arg(summary.continuityGainEstimatePercent);
+    }
+    return QStringLiteral("Continuity contribution inactive: %1")
+        .arg(summary.fallback.reason.trimmed().isEmpty() ? persistedSummaryExclusionReason()
+                                                         : summary.fallback.reason);
+}
+
+QString ApplicationController::summaryContinuityFallbackSummary() const {
+    const auto summary = conversationSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt);
+    if (summary.activeContextUsage) {
+        return QStringLiteral("No fallback required; summary passed deterministic validation.");
+    }
+    return summary.fallback.summary.trimmed().isEmpty()
+               ? QStringLiteral("Transcript-only fallback is active.")
+               : summary.fallback.summary;
+}
+
+QString ApplicationController::summaryContinuityOrderingSummary() const {
+    return QStringLiteral("Injection order: active conversation recency -> summary continuity "
+                          "value -> committed memory relevance -> runtime metadata -> budget.");
+}
+
+QString ApplicationController::summaryContinuityBudgetTrace() const {
+    const auto summary = conversationSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt);
+    const auto salience =
+        conversationSalienceSummaryForPrompt(latestPromptContextInjectionResult_.originalPrompt);
+    return QStringLiteral("Continuity budget: summary %1 chars / active conversation group %2 of "
+                          "%3 chars / gain %4% / replacement eligible %5.")
+        .arg(summary.budget.includedCharacters)
+        .arg(salience.budget.activeConversationCharacters)
+        .arg(salience.budget.activeConversationBudget)
+        .arg(summary.continuityGainEstimatePercent)
+        .arg(summary.replacementEligible ? QStringLiteral("yes") : QStringLiteral("no"));
+}
+
+ContextDecisionSummary ApplicationController::contextDecisionSummary() const {
+    const auto prompt = latestPromptContextInjectionResult_.originalPrompt;
+    return sentinel::core::explainContextDecision(latestPromptContextInjectionResult_,
+                                                  conversationSalienceSummaryForPrompt(prompt),
+                                                  memoryRelevanceSummaryForPrompt(prompt),
+                                                  conversationSummaryForPrompt(prompt));
+}
+
+bool ApplicationController::contextExplainabilityEnabled() const {
+    return true;
+}
+
+QString ApplicationController::contextReasoningSummary() const {
+    return contextDecisionSummary().summary;
+}
+
+QString ApplicationController::contextReasoningBudgetSummary() const {
+    return contextDecisionSummary().budget.summary;
+}
+
+QString ApplicationController::contextReasoningOrderingSummary() const {
+    return QStringLiteral("Ordering: %1")
+        .arg(contextDecisionSummary().trace.orderingStages.join(QStringLiteral(" -> ")));
+}
+
+QString ApplicationController::contextReasoningFallbackSummary() const {
+    return contextDecisionSummary().fallback.summary;
+}
+
+QStringList ApplicationController::contextReasoningContributionSummaries() const {
+    return sentinel::core::contextDecisionContributionSummaries(contextDecisionSummary());
+}
+
+QStringList ApplicationController::contextReasoningInclusionHints() const {
+    return sentinel::core::contextDecisionInclusionSummaries(contextDecisionSummary());
+}
+
+QStringList ApplicationController::contextReasoningExclusionHints() const {
+    return sentinel::core::contextDecisionExclusionSummaries(contextDecisionSummary());
+}
+
+QStringList ApplicationController::contextReasoningDeveloperTraces() const {
+    return sentinel::core::contextDecisionDeveloperTraceSummaries(contextDecisionSummary());
 }
 
 QStringList ApplicationController::conversationSummaryCandidateSegments() const {
@@ -5094,8 +5208,8 @@ ApplicationController::conversationWindowForPrompt(const QString& prompt) const 
 
 ConversationSummaryResult
 ApplicationController::conversationSummaryForPrompt(const QString& prompt) const {
-    if (latestConversationSummaryMetadata_.conversationId == activeConversationId_ &&
-        !latestConversationSummaryMetadata_.summaryText.trimmed().isEmpty()) {
+    QString exclusionReason;
+    if (persistedSummaryReadyForContinuity(&exclusionReason)) {
         ConversationSummaryResult result;
         result.policy = conversationSummaryPolicy_;
         result.status = ConversationSummaryStatus::Ready;
@@ -5109,6 +5223,14 @@ ApplicationController::conversationSummaryForPrompt(const QString& prompt) const
         result.coveredLastMessageIndex = latestConversationSummaryMetadata_.coveredLastMessageId;
         result.estimatedReductionPercent =
             latestConversationSummaryMetadata_.estimatedReductionPercent;
+        result.continuityGainEstimatePercent =
+            latestConversationSummaryMetadata_.estimatedReductionPercent;
+        result.activeContextUsage = promptContextInjectionEnabled_;
+        result.replacementEligible = false;
+        result.stale = false;
+        result.freshMessageCount =
+            std::max(0, currentConversationMessageCountForSummary() -
+                            latestConversationSummaryMetadata_.coveredLastMessageId);
         result.text = QStringLiteral("%1\n%2\n%3")
                           .arg(conversationSummaryPolicy_.delimiterStart,
                                latestConversationSummaryMetadata_.summaryText.trimmed(),
@@ -5119,6 +5241,21 @@ ApplicationController::conversationSummaryForPrompt(const QString& prompt) const
                 .arg(result.coveredFirstMessageIndex)
                 .arg(result.coveredLastMessageIndex)
                 .arg(result.estimatedReductionPercent);
+        result.coverageSummary =
+            QStringLiteral("Summary coverage: messages %1-%2 of %3 visible transcript messages.")
+                .arg(result.coveredFirstMessageIndex)
+                .arg(result.coveredLastMessageIndex)
+                .arg(currentConversationMessageCountForSummary());
+        result.freshnessSummary =
+            result.freshMessageCount == 0
+                ? QStringLiteral("Summary freshness: current with no newer transcript messages.")
+                : QStringLiteral("Summary freshness: %1 newer transcript messages preserved by "
+                                 "recent-window context.")
+                      .arg(result.freshMessageCount);
+        result.continuitySummary =
+            QStringLiteral("Summary continuity active: deterministic compressed context with %1% "
+                           "estimated gain; transcript remains preserved.")
+                .arg(result.continuityGainEstimatePercent);
         result.window.summarizedMessageCount =
             std::max(0, result.coveredLastMessageIndex - result.coveredFirstMessageIndex + 1);
         result.window.blockCount = 1;
@@ -5148,6 +5285,30 @@ ApplicationController::conversationSummaryForPrompt(const QString& prompt) const
         return result;
     }
 
+    const bool persistedSummaryPresent =
+        !latestConversationSummaryMetadata_.conversationId.trimmed().isEmpty() ||
+        !latestConversationSummaryMetadata_.summaryText.trimmed().isEmpty();
+    if (persistedSummaryPresent && !exclusionReason.isEmpty()) {
+        auto result = assembleConversationSummary({}, {}, conversationSummaryPolicy_);
+        result.status = ConversationSummaryStatus::Blocked;
+        result.readiness.status = ConversationSummaryStatus::Blocked;
+        result.readiness.available = false;
+        result.readiness.blockedReason = exclusionReason;
+        result.readiness.summary = exclusionReason;
+        result.fallback.reason = exclusionReason;
+        result.fallback.summary =
+            QStringLiteral("Summary continuity excluded; transcript-only fallback is active.");
+        result.stale = exclusionReason.contains(QStringLiteral("stale"), Qt::CaseInsensitive);
+        result.coverageSummary = QStringLiteral("Summary coverage unavailable: %1").arg(exclusionReason);
+        result.freshnessSummary =
+            result.stale ? QStringLiteral("Summary freshness: stale summary excluded.")
+                         : QStringLiteral("Summary freshness: no valid summary is available.");
+        result.continuitySummary =
+            QStringLiteral("Summary continuity inactive: transcript-only fallback.");
+        result.summary = result.fallback.summary;
+        return result;
+    }
+
     QList<ConversationWindowMessage> messages;
     if (!chatSession_) {
         return assembleConversationSummary(messages, {}, conversationSummaryPolicy_);
@@ -5172,6 +5333,73 @@ ApplicationController::conversationSummaryForPrompt(const QString& prompt) const
 
     const auto window = assembleConversationWindow(messages, conversationWindowPolicy_);
     return assembleConversationSummary(messages, window.messages, conversationSummaryPolicy_);
+}
+
+int ApplicationController::currentConversationMessageCountForSummary() const {
+    if (!chatSession_) {
+        return 0;
+    }
+    return toInt(chatSession_->messages().size());
+}
+
+QString ApplicationController::persistedSummaryExclusionReason() const {
+    QString reason;
+    persistedSummaryReadyForContinuity(&reason);
+    return reason.trimmed().isEmpty() ? QStringLiteral("no valid generated summary is available")
+                                      : reason;
+}
+
+bool ApplicationController::persistedSummaryReadyForContinuity(QString* reason) const {
+    auto setReason = [reason](const QString& text) {
+        if (reason) {
+            *reason = text;
+        }
+    };
+
+    if (latestConversationSummaryMetadata_.conversationId.trimmed().isEmpty() ||
+        latestConversationSummaryMetadata_.summaryText.trimmed().isEmpty()) {
+        setReason(QStringLiteral("no valid generated summary is available"));
+        return false;
+    }
+    if (latestConversationSummaryMetadata_.conversationId != activeConversationId_) {
+        setReason(QStringLiteral("summary belongs to another conversation"));
+        return false;
+    }
+    if (activeConversationArchived()) {
+        setReason(QStringLiteral("active conversation is archived"));
+        return false;
+    }
+    if (latestConversationSummaryMetadata_.readinessState != QStringLiteral("Ready")) {
+        setReason(QStringLiteral("summary readiness is not ready"));
+        return false;
+    }
+    if (!latestConversationSummaryMetadata_.summaryTimestampUtc.isValid()) {
+        setReason(QStringLiteral("summary timestamp is invalid"));
+        return false;
+    }
+    if (latestConversationSummaryMetadata_.coveredFirstMessageId <= 0 ||
+        latestConversationSummaryMetadata_.coveredLastMessageId <
+            latestConversationSummaryMetadata_.coveredFirstMessageId) {
+        setReason(QStringLiteral("summary coverage range is invalid"));
+        return false;
+    }
+
+    const auto messageCount = currentConversationMessageCountForSummary();
+    if (latestConversationSummaryMetadata_.coveredLastMessageId > messageCount) {
+        setReason(QStringLiteral("summary coverage is incompatible with transcript"));
+        return false;
+    }
+
+    const auto freshMessages =
+        std::max(0, messageCount - latestConversationSummaryMetadata_.coveredLastMessageId);
+    if (freshMessages > 12) {
+        setReason(QStringLiteral("summary is stale after %1 newer transcript messages")
+                      .arg(freshMessages));
+        return false;
+    }
+
+    setReason({});
+    return true;
 }
 
 MemoryRelevanceSummary

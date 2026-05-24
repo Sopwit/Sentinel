@@ -1,5 +1,30 @@
 # AI Orchestration Plan
 
+Phase 33.0 through Phase 33.12 adds context observability and explainability UX over the existing
+deterministic context path. `ContextDecisionReason`, `ContextDecisionTrace`,
+`ContextDecisionBudget`, `ContextDecisionContribution`, `ContextDecisionFallback`,
+`ContextDecisionSummary`, and `ContextDecisionVisibility` describe why safe local context was used,
+excluded, truncated, or placed in fallback. The exposed ordering remains recent transcript,
+continuity summary, committed memory, and runtime metadata. Budget diagnostics include allocated
+characters, approximate tokens, remaining budget, compression gain, and contribution by transcript,
+summary, memory, and runtime metadata. Normal UI receives concise explanations; Developer Mode can
+show richer bounded traces. The phase does not expose hidden prompts, raw provider payloads, raw
+system prompts, semantic/vector authority, filesystem indexing, cloud/API expansion,
+tools/plugins, autonomous behavior, transcript mutation, or hidden background workers.
+
+Phase 32.0 through Phase 32.12 adds summary-aware long conversation continuity over explicit
+persisted local summaries. When prompt context injection is enabled, a manual local summary can
+participate as deterministic compressed continuity context only after readiness, ownership,
+archive-state, timestamp, coverage, compatibility, and freshness validation. Ordering remains
+stable: active conversation recency, summary continuity value, committed memory relevance, runtime
+metadata, orchestration/selected-conversation metadata, and budget constraints. Stale, invalid,
+incompatible, archived, unavailable, and budget-excluded summaries expose safe fallback reasons and
+revert to transcript-only context. The phase adds QML-safe continuity status, freshness, coverage,
+contribution, ordering, fallback, and budget trace metadata. It does not add autonomous summary
+generation, background execution, hidden transcript replacement, semantic/vector retrieval,
+filesystem indexing, cloud/API providers, tools/plugins activation, hidden prompt dumping, or
+automatic committed-memory writes.
+
 Phase 31.0 through Phase 31.12 enables controlled local summary generation execution for explicit
 manual active-conversation requests only. The path uses the existing local inference worker and
 local Ollama readiness gates, refuses unavailable runtime/model, archived conversation, busy

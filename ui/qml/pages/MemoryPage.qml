@@ -186,6 +186,14 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Continuity"
+                        value: memoryPage.viewModel.summaryContinuityStatus + " - "
+                               + memoryPage.viewModel.summaryContinuityContributionSummary
+                        Layout.fillWidth: true
+                    }
+
                     Flow {
                         Layout.fillWidth: true
                         spacing: SentinelTheme.spaceSm
@@ -643,6 +651,83 @@ ScrollView {
                         compact: memoryPage.compact
                         label: "Summary Inclusion"
                         value: memoryPage.viewModel.conversationSummaryInjectionSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Freshness"
+                        value: memoryPage.viewModel.summaryContinuityFreshnessSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Coverage"
+                        value: memoryPage.viewModel.summaryContinuityCoverageSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Ordering"
+                        value: memoryPage.viewModel.summaryContinuityOrderingSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Context Reasoning"
+                        value: memoryPage.viewModel.contextReasoningSummary
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Contribution"
+                        valueMaximumLineCount: 8
+                        value: memoryPage.viewModel.contextReasoningContributionSummaries.length === 0
+                               ? "No context contributions recorded."
+                               : memoryPage.viewModel.contextReasoningContributionSummaries.join(" / ")
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: "Fallback"
+                        value: memoryPage.viewModel.contextReasoningFallbackSummary
+                        Layout.fillWidth: true
+                    }
+
+                    TextArea {
+                        id: contextReasoningDiagnostics
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: memoryPage.viewModel.developerModeEnabled ? 132 : 86
+                        readOnly: true
+                        selectByMouse: true
+                        wrapMode: TextEdit.Wrap
+                        text: memoryPage.viewModel.developerModeEnabled
+                              ? memoryPage.viewModel.contextReasoningDeveloperTraces.join("\n")
+                              : memoryPage.viewModel.contextReasoningInclusionHints.concat(
+                                    memoryPage.viewModel.contextReasoningExclusionHints).join("\n")
+                        color: SentinelTheme.textPrimary
+                        selectedTextColor: SentinelTheme.backgroundBase
+                        selectionColor: SentinelTheme.modeAccent(memoryPage.viewModel.currentModeName)
+                        font.pixelSize: SentinelTheme.fontSmall
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusMd
+                            color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.34)
+                            border.color: contextReasoningDiagnostics.activeFocus
+                                          ? SentinelTheme.withAlpha(SentinelTheme.modeAccent(memoryPage.viewModel.currentModeName), 0.62)
+                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
+                        }
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        visible: memoryPage.viewModel.developerModeEnabled
+                        label: "Continuity Budget"
+                        value: memoryPage.viewModel.summaryContinuityBudgetTrace
                         Layout.fillWidth: true
                     }
 

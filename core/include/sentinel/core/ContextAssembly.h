@@ -88,6 +88,11 @@ enum class RetrievalSourcePriority : std::uint8_t {
     SelectedConversationMetadata = 6,
 };
 
+enum class ContextDecisionVisibility : std::uint8_t {
+    Normal,
+    Developer,
+};
+
 QString contextAssemblyStatusName(ContextAssemblyStatus status);
 QString contextAssemblySourceKindName(ContextAssemblySourceKind kind);
 QString promptContextInjectionStatusName(PromptContextInjectionStatus status);
@@ -367,6 +372,14 @@ struct ConversationSummaryResult {
     int estimatedReductionPercent = 0;
     QDateTime summaryTimestampUtc;
     QString text;
+    bool activeContextUsage = false;
+    bool stale = false;
+    bool replacementEligible = false;
+    int freshMessageCount = 0;
+    int continuityGainEstimatePercent = 0;
+    QString freshnessSummary = QStringLiteral("No summary freshness metadata is available.");
+    QString coverageSummary = QStringLiteral("No summary coverage metadata is available.");
+    QString continuitySummary = QStringLiteral("No summary continuity metadata is available.");
     QString summary = QStringLiteral("No conversation summary is available.");
 };
 
@@ -701,6 +714,57 @@ struct ConversationCompressionSummary {
     QString summary = QStringLiteral("Conversation compression is not needed.");
 };
 
+struct ContextDecisionReason {
+    ContextAssemblySourceKind source = ContextAssemblySourceKind::Conversation;
+    bool included = false;
+    QString reason;
+    QString summary = QStringLiteral("No context decision reason recorded.");
+};
+
+struct ContextDecisionBudget {
+    int allocatedCharacters = 0;
+    int allocatedTokens = 0;
+    int remainingCharacters = 0;
+    int compressionGainPercent = 0;
+    int transcriptCharacters = 0;
+    int summaryCharacters = 0;
+    int memoryCharacters = 0;
+    int runtimeMetadataCharacters = 0;
+    QString summary = QStringLiteral("No context decision budget recorded.");
+};
+
+struct ContextDecisionContribution {
+    ContextAssemblySourceKind source = ContextAssemblySourceKind::Conversation;
+    int characters = 0;
+    int tokens = 0;
+    QString reason;
+    QString summary = QStringLiteral("No context contribution recorded.");
+};
+
+struct ContextDecisionFallback {
+    bool active = false;
+    QString reason;
+    QString summary = QStringLiteral("No context fallback active.");
+};
+
+struct ContextDecisionTrace {
+    ContextDecisionVisibility visibility = ContextDecisionVisibility::Normal;
+    QStringList orderingStages;
+    QStringList reasonSummaries;
+    QStringList developerSummaries;
+    QString summary = QStringLiteral("No context decision trace recorded.");
+};
+
+struct ContextDecisionSummary {
+    bool enabled = true;
+    ContextDecisionBudget budget;
+    QList<ContextDecisionContribution> contributions;
+    QList<ContextDecisionReason> reasons;
+    ContextDecisionFallback fallback;
+    ContextDecisionTrace trace;
+    QString summary = QStringLiteral("No context reasoning available.");
+};
+
 QString contextExclusionReasonName(ContextExclusionReason reason);
 
 ContextAssemblySource makeContextAssemblySource(ContextAssemblySourceKind kind, bool requested,
@@ -757,5 +821,14 @@ conversationCompressionCandidateSummaries(const ConversationCompressionSummary& 
 QStringList conversationCompressionTraceSummaries(const ConversationCompressionSummary& summary);
 QStringList conversationSummarySegmentSummaries(const ConversationSummaryResult& result);
 QStringList conversationSummaryTraceSummaries(const ConversationSummaryResult& result);
+ContextDecisionSummary
+explainContextDecision(const PromptContextInjectionResult& injection,
+                       const ConversationSalienceSummary& salience,
+                       const MemoryRelevanceSummary& memory,
+                       const ConversationSummaryResult& summary);
+QStringList contextDecisionContributionSummaries(const ContextDecisionSummary& summary);
+QStringList contextDecisionInclusionSummaries(const ContextDecisionSummary& summary);
+QStringList contextDecisionExclusionSummaries(const ContextDecisionSummary& summary);
+QStringList contextDecisionDeveloperTraceSummaries(const ContextDecisionSummary& summary);
 
 } // namespace sentinel::core
