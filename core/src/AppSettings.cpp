@@ -157,6 +157,22 @@ void AppSettings::setSemanticPromptInclusionEnabled(bool enabled) {
     emit semanticPromptInclusionEnabledChanged();
 }
 
+bool AppSettings::contextExplainabilityVisible() const {
+    return store_ ? store_->value(QString::fromLatin1(contextExplainabilityVisibleKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setContextExplainabilityVisible(bool visible) {
+    if (visible == contextExplainabilityVisible() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(contextExplainabilityVisibleKey),
+                     visible ? QStringLiteral("true") : QStringLiteral("false"));
+    emit contextExplainabilityVisibleChanged();
+}
+
 bool AppSettings::developerModeEnabled() const {
     return store_ ? store_->value(QString::fromLatin1(developerModeEnabledKey),
                                   QStringLiteral("false")) == QStringLiteral("true")

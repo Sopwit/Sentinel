@@ -1511,6 +1511,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("summaryContinuityOrderingSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("summaryContinuityBudgetTrace"), QByteArrayLiteral("QString")},
         {QStringLiteral("contextExplainabilityEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("contextExplainabilityVisible"), QByteArrayLiteral("bool")},
         {QStringLiteral("contextReasoningSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("contextReasoningBudgetSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("contextReasoningOrderingSummary"), QByteArrayLiteral("QString")},
@@ -1579,6 +1580,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
     };
 
     const QSet<QString> writableProperties{
+        QStringLiteral("contextExplainabilityVisible"),
         QStringLiteral("developerModeEnabled"),
         QStringLiteral("piperFileOutputExecutionEnabled"),
         QStringLiteral("promptContextInjectionEnabled"),
@@ -2121,6 +2123,7 @@ void DesktopShellViewModelTest::exposesManualConversationSummaryGenerationMetada
     QVERIFY(fixture.viewModel.summaryContinuityBudgetTrace().contains(
         QStringLiteral("Continuity budget")));
     QVERIFY(fixture.viewModel.contextExplainabilityEnabled());
+    QVERIFY(fixture.viewModel.contextExplainabilityVisible());
     QVERIFY(fixture.viewModel.contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
     QVERIFY(fixture.viewModel.contextReasoningBudgetSummary().contains(QStringLiteral("chars")));
     QVERIFY(fixture.viewModel.contextReasoningOrderingSummary().contains(
@@ -2640,6 +2643,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QSignalSpy contextInjectionSpy(&fixture.viewModel,
                                    &DesktopShellViewModel::promptContextInjectionChanged);
     QSignalSpy developerModeSpy(&fixture.viewModel, &DesktopShellViewModel::developerModeChanged);
+    QSignalSpy contextVisibilitySpy(&fixture.viewModel,
+                                    &DesktopShellViewModel::contextExplainabilityVisibleChanged);
 
     fixture.viewModel.setThemeName(QStringLiteral("Sentinel Light"));
     fixture.viewModel.setConfigurationProfile(QStringLiteral("Phase 2 Shell"));
@@ -2647,6 +2652,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     fixture.viewModel.setLocalChatInferenceEnabled(true);
     fixture.viewModel.setLocalInferenceStreamingEnabled(true);
     fixture.viewModel.setPromptContextInjectionEnabled(true);
+    fixture.viewModel.setContextExplainabilityVisible(false);
     fixture.viewModel.setDeveloperModeEnabled(true);
 
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
@@ -2659,6 +2665,11 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QVERIFY(fixture.settings.localInferenceStreamingEnabled());
     QVERIFY(fixture.viewModel.promptContextInjectionEnabled());
     QVERIFY(fixture.settings.promptContextInjectionEnabled());
+    QVERIFY(!fixture.viewModel.contextExplainabilityEnabled());
+    QVERIFY(!fixture.viewModel.contextExplainabilityVisible());
+    QVERIFY(!fixture.settings.contextExplainabilityVisible());
+    QVERIFY(fixture.controller.contextExplainabilityEnabled());
+    QVERIFY(fixture.viewModel.contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
     QVERIFY(fixture.viewModel.developerModeEnabled());
     QVERIFY(fixture.settings.developerModeEnabled());
     QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Empty"));
@@ -2671,6 +2682,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(inferenceSpy.count(), 1);
     QCOMPARE(contextInjectionSpy.count(), 1);
     QCOMPARE(developerModeSpy.count(), 1);
+    QCOMPARE(contextVisibilitySpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {

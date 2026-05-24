@@ -83,6 +83,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::configurationProfileChanged);
     connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
             &DesktopShellViewModel::developerModeChanged);
+    connect(&settings_, &core::AppSettings::contextExplainabilityVisibleChanged, this,
+            &DesktopShellViewModel::contextExplainabilityVisibleChanged);
     connect(&settings_, &core::AppSettings::activeConversationIdChanged, this,
             &DesktopShellViewModel::chatMessagesChanged);
     connect(&settings_, &core::AppSettings::routingModeNameChanged, this,
@@ -1627,7 +1629,15 @@ QString DesktopShellViewModel::summaryContinuityBudgetTrace() const {
 }
 
 bool DesktopShellViewModel::contextExplainabilityEnabled() const {
-    return controller_.contextExplainabilityEnabled();
+    return settings_.contextExplainabilityVisible();
+}
+
+bool DesktopShellViewModel::contextExplainabilityVisible() const {
+    return settings_.contextExplainabilityVisible();
+}
+
+void DesktopShellViewModel::setContextExplainabilityVisible(bool visible) {
+    settings_.setContextExplainabilityVisible(visible);
 }
 
 QString DesktopShellViewModel::contextReasoningSummary() const {

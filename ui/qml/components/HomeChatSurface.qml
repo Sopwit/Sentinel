@@ -347,7 +347,7 @@ ShellPanel {
 
         ColumnLayout {
             Layout.fillWidth: true
-            visible: homeChat.viewModel.contextExplainabilityEnabled
+            visible: homeChat.viewModel.contextExplainabilityVisible
                      && homeChat.viewModel.promptContextInjectionEnabled
             spacing: SentinelTheme.spaceXs
 
@@ -383,6 +383,7 @@ ShellPanel {
                 Layout.fillWidth: true
                 visible: contextReasoningToggle.expanded
                 readOnly: true
+                activeFocusOnTab: true
                 selectByMouse: true
                 wrapMode: TextEdit.Wrap
                 text: homeChat.viewModel.contextReasoningOrderingSummary + "\n"

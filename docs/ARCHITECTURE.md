@@ -251,6 +251,13 @@ Explainability is visibility only; it does not change prompt construction, mutat
 write memory, activate semantic/vector systems, index filesystems, call providers/cloud APIs,
 execute tools/plugins, or start background workers.
 
+Phase 34 adds the persisted `contextExplainabilityVisible` setting as a UI-only control. It
+defaults on and is exposed through `AppSettings` and `DesktopShellViewModel` for QML. Disabling it
+hides normal Home/Chat context reasoning surfaces and normal Settings visibility copy, but the
+controller still derives safe context decision metadata internally. Developer Mode remains a
+separate visibility gate for bounded diagnostics and does not alter runtime permission, safety,
+prompt assembly, retrieval selection, provider, tool, or execution authority.
+
 ## Intentional Boundaries
 
 - Chat provider behavior is hidden behind `IChatProvider`.

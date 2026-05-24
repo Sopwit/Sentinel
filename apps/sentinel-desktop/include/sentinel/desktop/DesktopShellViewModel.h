@@ -583,7 +583,9 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString summaryContinuityBudgetTrace READ summaryContinuityBudgetTrace NOTIFY
                    promptContextInjectionChanged)
     Q_PROPERTY(bool contextExplainabilityEnabled READ contextExplainabilityEnabled NOTIFY
-                   promptContextInjectionChanged)
+                   contextExplainabilityVisibleChanged)
+    Q_PROPERTY(bool contextExplainabilityVisible READ contextExplainabilityVisible WRITE
+                   setContextExplainabilityVisible NOTIFY contextExplainabilityVisibleChanged)
     Q_PROPERTY(QString contextReasoningSummary READ contextReasoningSummary NOTIFY
                    promptContextInjectionChanged)
     Q_PROPERTY(QString contextReasoningBudgetSummary READ contextReasoningBudgetSummary NOTIFY
@@ -1422,6 +1424,8 @@ public:
     QString summaryContinuityOrderingSummary() const;
     QString summaryContinuityBudgetTrace() const;
     bool contextExplainabilityEnabled() const;
+    bool contextExplainabilityVisible() const;
+    void setContextExplainabilityVisible(bool visible);
     QString contextReasoningSummary() const;
     QString contextReasoningBudgetSummary() const;
     QString contextReasoningOrderingSummary() const;
@@ -1732,6 +1736,7 @@ signals:
     void themeNameChanged();
     void configurationProfileChanged();
     void developerModeChanged();
+    void contextExplainabilityVisibleChanged();
     void currentPageChanged();
     void maintenanceStatusChanged();
     void agentStatusChanged();

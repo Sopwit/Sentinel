@@ -442,6 +442,28 @@ Out of scope:
   authority, filesystem indexing, cloud/API expansion, tools/plugins activation, autonomous
   behavior, transcript mutation, and hidden background workers.
 
+## 9.4.3 Context Explainability Visibility Control
+
+Decision: Persist `contextExplainabilityVisible` as a UI visibility preference, default enabled.
+
+Reason: Users should be able to keep normal chat surfaces visually quiet without changing the
+deterministic context path or weakening Developer Mode diagnostics.
+
+Runtime behavior:
+
+- `AppSettings` owns the persisted setting and `DesktopShellViewModel` exposes it to QML.
+- The setting controls normal UI visibility for concise context reasoning surfaces only.
+- Safe context decision metadata continues to be generated internally when the UI surface is
+  hidden.
+- Developer Mode remains a separate diagnostic visibility gate and does not inherit runtime
+  authority from this setting.
+
+Out of scope:
+
+- Prompt assembly changes, retrieval behavior changes, metadata generation disablement, hidden
+  prompt exposure, semantic/vector authority, provider/cloud activation, tool/plugin execution,
+  autonomous behavior, transcript mutation, and background workers.
+
 ## 9.5 Conversation Delete Readiness Checkpoint
 
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent

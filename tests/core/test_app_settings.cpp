@@ -30,6 +30,7 @@ private slots:
     void persistsLocalInferenceStreamingOptIn();
     void persistsPromptContextInjectionOptIn();
     void persistsSemanticPromptInclusionOptIn();
+    void persistsContextExplainabilityVisibility();
     void persistsDeveloperModeVisibilityOptIn();
     void persistsVoiceConfigurationPaths();
     void persistsPiperFileOutputExecutionOptIn();
@@ -50,6 +51,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(!settings->localInferenceStreamingEnabled());
     QVERIFY(!settings->promptContextInjectionEnabled());
     QVERIFY(!settings->semanticPromptInclusionEnabled());
+    QVERIFY(settings->contextExplainabilityVisible());
     QVERIFY(!settings->developerModeEnabled());
     QVERIFY(settings->piperBinaryPath().isEmpty());
     QVERIFY(settings->piperModelPath().isEmpty());
@@ -251,6 +253,25 @@ void AppSettingsTest::persistsSemanticPromptInclusionOptIn() {
     QCOMPARE(spy.count(), 2);
 }
 
+void AppSettingsTest::persistsContextExplainabilityVisibility() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::contextExplainabilityVisibleChanged);
+
+    QVERIFY(settings->contextExplainabilityVisible());
+
+    settings->setContextExplainabilityVisible(false);
+
+    QVERIFY(!settings->contextExplainabilityVisible());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setContextExplainabilityVisible(false);
+    QCOMPARE(spy.count(), 1);
+
+    settings->setContextExplainabilityVisible(true);
+    QVERIFY(settings->contextExplainabilityVisible());
+    QCOMPARE(spy.count(), 2);
+}
+
 void AppSettingsTest::persistsDeveloperModeVisibilityOptIn() {
     const auto settings = makeSettings();
     QSignalSpy spy(settings.get(), &AppSettings::developerModeEnabledChanged);
@@ -323,6 +344,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setLocalInferenceStreamingEnabled(true);
         settings.setPromptContextInjectionEnabled(true);
         settings.setSemanticPromptInclusionEnabled(true);
+        settings.setContextExplainabilityVisible(false);
         settings.setDeveloperModeEnabled(true);
         settings.setPiperBinaryPath(QStringLiteral("/opt/piper/piper"));
         settings.setPiperModelPath(QStringLiteral("/opt/piper/model.onnx"));
@@ -338,6 +360,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QVERIFY(reloaded.localInferenceStreamingEnabled());
     QVERIFY(reloaded.promptContextInjectionEnabled());
     QVERIFY(reloaded.semanticPromptInclusionEnabled());
+    QVERIFY(!reloaded.contextExplainabilityVisible());
     QVERIFY(reloaded.developerModeEnabled());
     QCOMPARE(reloaded.piperBinaryPath(), QStringLiteral("/opt/piper/piper"));
     QCOMPARE(reloaded.piperModelPath(), QStringLiteral("/opt/piper/model.onnx"));
