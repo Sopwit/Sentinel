@@ -13,6 +13,18 @@ ScrollView {
     readonly property bool contextActive: viewModel.contextAssemblyAvailableSourceCount > 0
     readonly property string uiSelfCheck: "developer-gated grouped-diagnostics bottom-safe-scroll"
     property string selectedSection: "Overview"
+
+    function sectionLabel(section) {
+        if (section === "Overview")
+            return qsTr("Overview")
+        if (section === "Recall")
+            return qsTr("Recall")
+        if (section === "Local Data")
+            return qsTr("Local Data")
+        if (section === "Developer")
+            return qsTr("Developer")
+        return section
+    }
     onDeveloperModeChanged: {
         if (!developerMode && selectedSection === "Developer")
             selectedSection = "Overview"
@@ -68,7 +80,7 @@ ScrollView {
                                 id: memoryTabButton
                                 required property string modelData
                                 readonly property bool active: memoryPage.selectedSection === memoryTabButton.modelData
-                                text: modelData
+                                text: memoryPage.sectionLabel(modelData)
                                 hoverEnabled: true
                                 onClicked: memoryPage.selectedSection = modelData
 
@@ -115,7 +127,7 @@ ScrollView {
                     Label {
                         Layout.fillWidth: true
                         visible: false
-                        text: "Developer metadata is hidden. Enable Developer Mode in Settings to view read-only internals."
+                        text: qsTr("Developer metadata is hidden. Enable Developer Mode in Settings to view read-only internals.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -138,32 +150,32 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Key-value Store"
+                        label: qsTr("Key-value Store")
                         value: memoryPage.viewModel.memoryStatus + " (" + memoryPage.viewModel.memoryMaintenanceStatus + ")"
                         Layout.fillWidth: true
                     }
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Chat History"
+                        label: qsTr("Chat History")
                         value: memoryPage.viewModel.chatHistoryStatus + " (" + memoryPage.viewModel.chatMaintenanceStatus + ")"
                         Layout.fillWidth: true
                     }
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Semantic Memory"
-                        value: "Planned; disabled in normal use"
+                        label: qsTr("Semantic Memory")
+                        value: qsTr("Planned; disabled in normal use")
                         Layout.fillWidth: true
                     }
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Context Quality"
+                        label: qsTr("Context Quality")
                         value: memoryPage.viewModel.conversationSalienceIncludedCount
-                               + " included / "
+                               + qsTr(" included / ")
                                + memoryPage.viewModel.conversationSalienceExcludedCount
-                               + " excluded / "
+                               + qsTr(" excluded / ")
                                + memoryPage.viewModel.conversationSalienceAllocationSummary
                         Layout.fillWidth: true
                     }
@@ -172,7 +184,7 @@ ScrollView {
                         compact: memoryPage.compact
                         visible: memoryPage.viewModel.conversationCompressionStatus !== "Not Needed"
                                  || memoryPage.viewModel.conversationCompressionCandidateCount > 0
-                        label: "Conversation Compression"
+                        label: qsTr("Conversation Compression")
                         value: memoryPage.viewModel.conversationCompressionStatus + " - "
                                + memoryPage.viewModel.conversationCompressionPressureSummary
                         Layout.fillWidth: true
@@ -180,7 +192,7 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Summary Readiness"
+                        label: qsTr("Summary Readiness")
                         value: memoryPage.viewModel.conversationSummaryGenerationStatus + " - "
                                + memoryPage.viewModel.conversationSummaryReadinessSummary
                         Layout.fillWidth: true
@@ -188,7 +200,7 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Continuity"
+                        label: qsTr("Continuity")
                         value: memoryPage.viewModel.summaryContinuityStatus + " - "
                                + memoryPage.viewModel.summaryContinuityContributionSummary
                         Layout.fillWidth: true
@@ -199,17 +211,17 @@ ScrollView {
                         spacing: SentinelTheme.spaceSm
 
                         StatusChip {
-                            label: "Deterministic retrieval"
-                            value: "active"
+                            label: qsTr("Deterministic retrieval")
+                            value: qsTr("active")
                             accent: SentinelTheme.success
                             active: memoryPage.retrievalActive
                             selected: true
                         }
 
                         StatusChip {
-                            label: "Prompt injection"
-                            value: memoryPage.viewModel.promptContextInjectionEnabled ? "opt-in on"
-                                                                                      : "opt-in off"
+                            label: qsTr("Prompt injection")
+                            value: memoryPage.viewModel.promptContextInjectionEnabled ? qsTr("opt-in on")
+                                                                                      : qsTr("opt-in off")
                             accent: memoryPage.viewModel.promptContextInjectionEnabled ? SentinelTheme.success
                                                                                        : SentinelTheme.textMuted
                             muted: !memoryPage.viewModel.promptContextInjectionEnabled
@@ -221,7 +233,7 @@ ScrollView {
                     Label {
                         Layout.fillWidth: true
                         visible: memoryPage.viewModel.memoryEntryCount === 0
-                        text: "Memory is empty until you save a local key-value note."
+                        text: qsTr("Memory is empty until you save a local key-value note.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -411,14 +423,14 @@ ScrollView {
                     spacing: SentinelTheme.spaceSm
 
                     SectionTitle {
-                        title: "Local Memory Recall"
-                        subtitle: "Searches saved key-value memory only; it does not search chats."
+                        title: qsTr("Local Memory Recall")
+                        subtitle: qsTr("Searches saved key-value memory only; it does not search chats.")
                         Layout.fillWidth: true
                     }
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Recall Policy"
+                        label: qsTr("Recall Policy")
                         value: memoryPage.viewModel.memoryRecallPolicyStatus + " - "
                                + memoryPage.viewModel.memoryRecallPolicySummary
                         Layout.fillWidth: true
@@ -426,7 +438,7 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Recall Status"
+                        label: qsTr("Recall Status")
                         value: memoryPage.viewModel.memoryRecallStatus + " - "
                                + memoryPage.viewModel.memoryRecallSummaryText
                         Layout.fillWidth: true
@@ -434,7 +446,7 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: "Memory Entries"
+                        label: qsTr("Memory Entries")
                         value: memoryPage.viewModel.memoryEntryCount + " committed / "
                                + memoryPage.viewModel.memoryRecallResultCount + " recall matches"
                         Layout.fillWidth: true
@@ -447,19 +459,19 @@ ScrollView {
                         SentinelTextField {
                             id: memoryRecallQuery
                             Layout.fillWidth: true
-                            placeholderText: "literal key or value"
+                            placeholderText: qsTr("literal key or value")
                             onAccepted: memoryPage.viewModel.recallLocalMemory(text)
                         }
 
                         SentinelButton {
-                            text: "Recall"
+                            text: qsTr("Recall")
                             enabled: memoryRecallQuery.text.trim().length > 0
                             Layout.preferredWidth: 96
                             onClicked: memoryPage.viewModel.recallLocalMemory(memoryRecallQuery.text)
                         }
 
                         SentinelButton {
-                            text: "Clear"
+                            text: qsTr("Clear")
                             Layout.preferredWidth: 96
                             onClicked: {
                                 memoryRecallQuery.clear()

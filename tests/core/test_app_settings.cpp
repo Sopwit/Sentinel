@@ -19,6 +19,9 @@ private slots:
     void updatesThemeName();
     void ignoresBlankThemeName();
     void updatesConfigurationProfile();
+    void exposesLanguageDefaults();
+    void persistsLanguageSelection();
+    void languageSettingDoesNotChangeRuntimeFlags();
     void exposesRoutingModeDefault();
     void updatesRoutingMode();
     void fallsBackForInvalidRoutingMode();
@@ -46,6 +49,9 @@ void AppSettingsTest::exposesDefaults() {
 
     QCOMPARE(settings->themeName(), QStringLiteral("Sentinel Dark"));
     QCOMPARE(settings->configurationProfile(), QStringLiteral("Desktop Alpha"));
+    QCOMPARE(settings->appLanguage(), QStringLiteral("system"));
+    QCOMPARE(settings->availableLanguages(),
+             QStringList({QStringLiteral("system"), QStringLiteral("en"), QStringLiteral("tr")}));
     QVERIFY(settings->selectedLocalModel().isEmpty());
     QVERIFY(!settings->localChatInferenceEnabled());
     QVERIFY(!settings->localInferenceStreamingEnabled());
@@ -91,6 +97,61 @@ void AppSettingsTest::updatesConfigurationProfile() {
 
     QCOMPARE(settings->configurationProfile(), QStringLiteral("Phase 2 Shell"));
     QCOMPARE(spy.count(), 1);
+}
+
+void AppSettingsTest::exposesLanguageDefaults() {
+    const auto settings = makeSettings();
+
+    QCOMPARE(settings->appLanguage(), QStringLiteral("system"));
+    QCOMPARE(settings->languageDisplayName(QStringLiteral("system")),
+             QStringLiteral("System Default"));
+    QCOMPARE(settings->languageDisplayName(QStringLiteral("en")), QStringLiteral("English"));
+    QCOMPARE(settings->languageDisplayName(QStringLiteral("tr")), QStringLiteral("Türkçe"));
+}
+
+void AppSettingsTest::persistsLanguageSelection() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto filePath = dir.filePath(QStringLiteral("settings.json"));
+
+    {
+        AppSettings settings{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
+        QSignalSpy spy(&settings, &AppSettings::appLanguageChanged);
+
+        settings.setAppLanguage(QStringLiteral(" tr "));
+
+        QCOMPARE(settings.appLanguage(), QStringLiteral("tr"));
+        QCOMPARE(spy.count(), 1);
+
+        settings.setAppLanguage(QStringLiteral("unsupported"));
+        QCOMPARE(settings.appLanguage(), QStringLiteral("system"));
+        QCOMPARE(spy.count(), 2);
+
+        settings.setAppLanguage(QStringLiteral("en"));
+    }
+
+    AppSettings reloaded{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
+    QCOMPARE(reloaded.appLanguage(), QStringLiteral("en"));
+}
+
+void AppSettingsTest::languageSettingDoesNotChangeRuntimeFlags() {
+    const auto settings = makeSettings();
+
+    settings->setLocalChatInferenceEnabled(true);
+    settings->setLocalInferenceStreamingEnabled(true);
+    settings->setPromptContextInjectionEnabled(true);
+    settings->setSemanticPromptInclusionEnabled(true);
+    settings->setContextExplainabilityVisible(false);
+    settings->setDeveloperModeEnabled(true);
+
+    settings->setAppLanguage(QStringLiteral("tr"));
+
+    QVERIFY(settings->localChatInferenceEnabled());
+    QVERIFY(settings->localInferenceStreamingEnabled());
+    QVERIFY(settings->promptContextInjectionEnabled());
+    QVERIFY(settings->semanticPromptInclusionEnabled());
+    QVERIFY(!settings->contextExplainabilityVisible());
+    QVERIFY(settings->developerModeEnabled());
 }
 
 void AppSettingsTest::exposesRoutingModeDefault() {

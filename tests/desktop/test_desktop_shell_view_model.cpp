@@ -104,6 +104,8 @@ private slots:
     void forwardsModeChanges();
     void forwardsMemoryWrites();
     void forwardsSettingsChanges();
+    void exposesLanguageSettings();
+    void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
     void ignoresRepeatedAndUnknownNavigationChanges();
@@ -227,6 +229,9 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QVERIFY(fixture.viewModel.availableModes().contains(QStringLiteral("Tactical Mode")));
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Dark"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
+    QCOMPARE(fixture.viewModel.appLanguage(), QStringLiteral("system"));
+    QCOMPARE(fixture.viewModel.availableLanguages(),
+             QStringList({QStringLiteral("system"), QStringLiteral("en"), QStringLiteral("tr")}));
     QVERIFY(!fixture.viewModel.developerModeEnabled());
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(fixture.viewModel.availablePages(),
@@ -2683,6 +2688,38 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(contextInjectionSpy.count(), 1);
     QCOMPARE(developerModeSpy.count(), 1);
     QCOMPARE(contextVisibilitySpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesLanguageSettings() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::appLanguageChanged);
+
+    fixture.viewModel.setAppLanguage(QStringLiteral("tr"));
+
+    QCOMPARE(fixture.viewModel.appLanguage(), QStringLiteral("tr"));
+    QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("system")),
+             QStringLiteral("System Default"));
+    QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("en")), QStringLiteral("English"));
+    QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("tr")), QStringLiteral("Türkçe"));
+    QCOMPARE(spy.count(), 1);
+}
+
+void DesktopShellViewModelTest::languageSettingDoesNotChangeRuntimePresentationFlags() {
+    ViewModelFixture fixture;
+
+    fixture.viewModel.setLocalChatInferenceEnabled(true);
+    fixture.viewModel.setPromptContextInjectionEnabled(true);
+    fixture.viewModel.setContextExplainabilityVisible(false);
+    fixture.viewModel.setDeveloperModeEnabled(true);
+
+    fixture.viewModel.setAppLanguage(QStringLiteral("tr"));
+
+    QVERIFY(fixture.viewModel.localChatInferenceEnabled());
+    QVERIFY(fixture.viewModel.promptContextInjectionEnabled());
+    QVERIFY(!fixture.viewModel.contextExplainabilityVisible());
+    QVERIFY(fixture.viewModel.developerModeEnabled());
+    QCOMPARE(fixture.viewModel.localRuntimeStatus(), QStringLiteral("Metadata Only"));
+    QCOMPARE(fixture.viewModel.providerName(), QStringLiteral("LocalEchoProvider"));
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {

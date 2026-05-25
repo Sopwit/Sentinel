@@ -81,6 +81,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::themeNameChanged);
     connect(&settings_, &core::AppSettings::configurationProfileChanged, this,
             &DesktopShellViewModel::configurationProfileChanged);
+    connect(&settings_, &core::AppSettings::appLanguageChanged, this,
+            &DesktopShellViewModel::appLanguageChanged);
     connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
             &DesktopShellViewModel::developerModeChanged);
     connect(&settings_, &core::AppSettings::contextExplainabilityVisibleChanged, this,
@@ -2717,6 +2719,22 @@ QString DesktopShellViewModel::configurationProfile() const {
 
 void DesktopShellViewModel::setConfigurationProfile(const QString& configurationProfile) {
     settings_.setConfigurationProfile(configurationProfile);
+}
+
+QString DesktopShellViewModel::appLanguage() const {
+    return settings_.appLanguage();
+}
+
+void DesktopShellViewModel::setAppLanguage(const QString& language) {
+    settings_.setAppLanguage(language);
+}
+
+QStringList DesktopShellViewModel::availableLanguages() const {
+    return settings_.availableLanguages();
+}
+
+QString DesktopShellViewModel::languageDisplayName(const QString& language) const {
+    return settings_.languageDisplayName(language);
 }
 
 bool DesktopShellViewModel::developerModeEnabled() const {

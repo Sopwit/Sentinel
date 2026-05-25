@@ -84,8 +84,8 @@ ShellPanel {
             }
 
             StatusChip {
-                label: "Provider"
-                value: "local"
+                label: qsTr("Provider")
+                value: qsTr("local")
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
                 muted: !homeChat.chatReady
             }
@@ -195,7 +195,7 @@ ShellPanel {
 
                         Label {
                             Layout.fillWidth: true
-                            text: recentMessage.messageRole === "user" ? "You" : "Sentinel"
+                            text: recentMessage.messageRole === "user" ? qsTr("You") : qsTr("Sentinel")
                             color: recentMessage.messageRole === "user"
                                    ? homeChat.modeAccent
                                    : SentinelTheme.textMuted
@@ -207,7 +207,7 @@ ShellPanel {
                             id: copyButton
                             Layout.preferredWidth: 46
                             Layout.preferredHeight: 24
-                            text: "Copy"
+                            text: qsTr("Copy")
                             hoverEnabled: true
                             focusPolicy: Qt.StrongFocus
                             onClicked: {
@@ -259,7 +259,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             visible: homeChat.viewModel.conversationHistoryMessageCount <= 1
-            text: "Start with a focused question, a draft to revise, or notes to organize. Local Ollama only; no cloud provider is active."
+            text: qsTr("Start with a focused question, a draft to revise, or notes to organize. Local Ollama only; no cloud provider is active.")
             color: SentinelTheme.textPrimary
             font.pixelSize: SentinelTheme.fontBody
             wrapMode: Text.WordWrap
@@ -355,7 +355,7 @@ ShellPanel {
                 id: contextReasoningToggle
                 property bool expanded: false
                 Layout.fillWidth: true
-                text: (expanded ? "Context reasoning -" : "Context reasoning +")
+                text: (expanded ? qsTr("Context reasoning -") : qsTr("Context reasoning +"))
                       + "  " + homeChat.viewModel.contextReasoningSummary
                 hoverEnabled: true
                 activeFocusOnTab: true
@@ -452,7 +452,7 @@ ShellPanel {
                     id: summaryAction
                     Layout.preferredWidth: 116
                     Layout.preferredHeight: 34
-                    text: homeChat.viewModel.conversationSummaryAvailable ? "Summary Ready" : "Generate Summary"
+                    text: homeChat.viewModel.conversationSummaryAvailable ? qsTr("Summary Ready") : qsTr("Generate Summary")
                     enabled: homeChat.viewModel.localChatSendAvailable && !homeChat.sendBusy
                              && homeChat.viewModel.conversationSummaryGenerationStatus !== "Planned"
                     hoverEnabled: true
@@ -486,7 +486,7 @@ ShellPanel {
                     Layout.fillWidth: true
                     Layout.minimumHeight: 48
                     Layout.maximumHeight: 126
-                    placeholderText: homeChat.chatReady ? (homeChat.sendBusy ? "Sentinel is responding" : "Ask Sentinel")
+                    placeholderText: homeChat.chatReady ? (homeChat.sendBusy ? qsTr("Sentinel is responding") : qsTr("Ask Sentinel"))
                                                         : homeChat.viewModel.localChatSendAvailabilitySummary
                     enabled: !homeChat.viewModel.activeConversationArchived && !homeChat.sendBusy
                     color: SentinelTheme.textPrimary
@@ -513,7 +513,7 @@ ShellPanel {
                 SentinelButton {
                     id: sendButton
                     visible: true
-                    text: "Send"
+                    text: qsTr("Send")
                     Layout.preferredWidth: 82
                     Layout.alignment: Qt.AlignBottom
                     enabled: promptInput.text.trim().length > 0 && homeChat.canSend
@@ -527,7 +527,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             visible: !homeChat.chatReady
-            text: homeChat.disabledReason + (homeChat.chatReady ? "" : " Local Ollama only. No cloud provider active.")
+            text: homeChat.disabledReason + (homeChat.chatReady ? "" : qsTr(" Local Ollama only. No cloud provider active."))
             color: !homeChat.chatReady ? SentinelTheme.textMuted : SentinelTheme.warning
             font.pixelSize: SentinelTheme.fontSmall
             wrapMode: Text.WordWrap

@@ -14,6 +14,8 @@ class AppSettings final : public QObject {
     Q_PROPERTY(QString themeName READ themeName WRITE setThemeName NOTIFY themeNameChanged)
     Q_PROPERTY(QString configurationProfile READ configurationProfile WRITE setConfigurationProfile
                    NOTIFY configurationProfileChanged)
+    Q_PROPERTY(QString appLanguage READ appLanguage WRITE setAppLanguage NOTIFY appLanguageChanged)
+    Q_PROPERTY(QStringList availableLanguages READ availableLanguages CONSTANT)
     Q_PROPERTY(QString routingModeName READ routingModeName WRITE setRoutingModeName NOTIFY
                    routingModeNameChanged)
     Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint WRITE setOllamaEndpoint NOTIFY
@@ -54,6 +56,11 @@ public:
     QString configurationProfile() const;
     void setConfigurationProfile(const QString& configurationProfile);
 
+    QString appLanguage() const;
+    void setAppLanguage(const QString& language);
+    QStringList availableLanguages() const;
+    QString languageDisplayName(const QString& language) const;
+
     QString routingModeName() const;
     void setRoutingModeName(const QString& routingModeName);
     QStringList availableRoutingModes() const;
@@ -92,6 +99,7 @@ public:
 signals:
     void themeNameChanged();
     void configurationProfileChanged();
+    void appLanguageChanged();
     void routingModeNameChanged();
     void ollamaEndpointChanged();
     void selectedLocalModelChanged();
@@ -111,6 +119,7 @@ signals:
 private:
     static constexpr auto themeNameKey = "themeName";
     static constexpr auto configurationProfileKey = "configurationProfile";
+    static constexpr auto appLanguageKey = "appLanguage";
     static constexpr auto routingModeKey = "routingMode";
     static constexpr auto ollamaEndpointKey = "ollamaEndpoint";
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";
@@ -128,6 +137,7 @@ private:
     static constexpr auto activeConversationIdKey = "activeConversationId";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
+    static constexpr auto defaultAppLanguage = "system";
 
     std::unique_ptr<ISettingsStore> store_;
 };

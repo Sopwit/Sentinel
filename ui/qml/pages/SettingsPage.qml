@@ -37,6 +37,24 @@ Item {
         return generalSection
     }
 
+    function categoryLabel(category) {
+        if (category === "General")
+            return qsTr("General")
+        if (category === "Local AI")
+            return qsTr("Local AI")
+        if (category === "Model")
+            return qsTr("Model")
+        if (category === "Chat")
+            return qsTr("Chat")
+        if (category === "Voice")
+            return qsTr("Voice")
+        if (category === "Privacy / Data")
+            return qsTr("Privacy / Data")
+        if (category === "Developer")
+            return qsTr("Developer")
+        return category
+    }
+
     function jumpTo(category) {
         activeCategory = category
         var target = sectionFor(category)
@@ -50,8 +68,8 @@ Item {
         var piperReady = viewModel.piperSynthesisStatus === "Ready Metadata"
         var whisperReady = viewModel.whisperTranscriptionStatus === "Ready Metadata"
         var prefix = piperReady && whisperReady
-                     ? "Voice prepared, activation disabled. "
-                     : "Voice readiness metadata. "
+                     ? qsTr("Voice prepared, activation disabled. ")
+                     : qsTr("Voice readiness metadata. ")
         return prefix + viewModel.voiceConfigurationReadinessSummary
     }
 
@@ -77,7 +95,7 @@ Item {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Settings"
+                    text: qsTr("Settings")
                     color: SentinelTheme.textPrimary
                     font.pixelSize: SentinelTheme.fontCard
                     maximumLineCount: 1
@@ -93,7 +111,7 @@ Item {
                         readonly property bool active: settingsPage.activeCategory === navButton.modelData
                         Layout.fillWidth: true
                         Layout.preferredHeight: 34
-                        text: modelData
+                        text: settingsPage.categoryLabel(modelData)
                         hoverEnabled: true
                         focusPolicy: Qt.StrongFocus
                         onClicked: settingsPage.jumpTo(modelData)
@@ -238,28 +256,100 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "General"
-                            subtitle: "Desktop shell preferences."
+                            title: qsTr("General")
+                            subtitle: qsTr("Desktop shell preferences.")
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Theme"
+                            label: qsTr("Theme")
                             value: settingsPage.viewModel.themeName
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Profile"
+                            label: qsTr("Profile")
                             value: settingsPage.viewModel.configurationProfile
                             Layout.fillWidth: true
                         }
 
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                text: qsTr("Language")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                            }
+
+                            ComboBox {
+                                id: languageCombo
+                                Layout.fillWidth: true
+                                hoverEnabled: true
+                                model: settingsPage.viewModel.availableLanguages
+                                currentIndex: settingsPage.viewModel.availableLanguages.indexOf(settingsPage.viewModel.appLanguage)
+                                textRole: ""
+                                displayText: settingsPage.viewModel.languageDisplayName(currentValue)
+                                onActivated: settingsPage.viewModel.appLanguage = currentValue
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: languageCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(languageCombo.activeFocus,
+                                                                                 languageCombo.hovered,
+                                                                                 languageCombo.popup.visible,
+                                                                                 settingsPage.modeAccent)
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: languageOption
+                                    width: languageCombo.width
+                                    text: settingsPage.viewModel.languageDisplayName(modelData)
+                                    highlighted: languageCombo.highlightedIndex === index
+
+                                    contentItem: Text {
+                                        text: languageOption.text
+                                        color: languageOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        verticalAlignment: Text.AlignVCenter
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    background: Rectangle {
+                                        color: InteractionTokens.surfaceColor(languageOption.highlighted, false, false,
+                                                                               settingsPage.modeAccent)
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: InteractionTokens.borderColor(false, true, false,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+                        }
+
                         Label {
                             Layout.fillWidth: true
-                            text: "Settings are explicit and local. Disabled runtime features stay inactive until a later phase enables them."
+                            text: qsTr("Settings are explicit and local. Disabled runtime features stay inactive until a later phase enables them. Language changes are persisted and may require restart.")
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall
                             wrapMode: Text.WordWrap
@@ -285,14 +375,14 @@ Item {
 
                                     Label {
                                         Layout.fillWidth: true
-                                        text: "Developer Mode"
+                                        text: qsTr("Developer Mode")
                                         color: SentinelTheme.textPrimary
                                         font.pixelSize: SentinelTheme.fontBody
                                     }
 
                                     Label {
                                         Layout.fillWidth: true
-                                        text: "Shows advanced read-only metadata only. It does not enable tools, voice execution, cloud providers, or runtime authority."
+                                        text: qsTr("Shows advanced read-only metadata only. It does not enable tools, voice execution, cloud providers, or runtime authority.")
                                         color: SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
                                         wrapMode: Text.WordWrap
@@ -378,8 +468,8 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Local AI"
-                            subtitle: "Local Ollama only. No cloud provider active."
+                            title: qsTr("Local AI")
+                            subtitle: qsTr("Local Ollama only. No cloud provider active.")
                             Layout.fillWidth: true
                         }
 
@@ -388,7 +478,7 @@ Item {
                             spacing: SentinelTheme.spaceSm
 
                             StatusChip {
-                                label: "Health"
+                                label: qsTr("Health")
                                 value: settingsPage.viewModel.ollamaHealthStatus
                                 accent: settingsPage.viewModel.ollamaHealthStatus === "Available"
                                         ? SentinelTheme.success
@@ -397,14 +487,14 @@ Item {
                             }
 
                             StatusChip {
-                                label: "Models"
+                                label: qsTr("Models")
                                 value: settingsPage.viewModel.ollamaModelCount.toString()
                                 accent: SentinelTheme.accentTertiary
                             }
 
                             StatusChip {
-                                label: "Cloud"
-                                value: "inactive"
+                                label: qsTr("Cloud")
+                                value: qsTr("inactive")
                                 accent: SentinelTheme.textMuted
                                 muted: true
                             }
@@ -412,17 +502,17 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Endpoint"
-                            value: "Local loopback Ollama"
+                            label: qsTr("Endpoint")
+                            value: qsTr("Local loopback Ollama")
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Availability"
+                            label: qsTr("Availability")
                             value: settingsPage.viewModel.ollamaModelCount > 0
                                    ? settingsPage.viewModel.ollamaHealthSummary
-                                   : "Start Ollama and install/select a local model."
+                                   : qsTr("Start Ollama and install/select a local model.")
                             Layout.fillWidth: true
                         }
                     }
@@ -441,8 +531,8 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Model"
-                            subtitle: "Selection is persisted configuration only."
+                            title: qsTr("Model")
+                            subtitle: qsTr("Selection is persisted configuration only.")
                             Layout.fillWidth: true
                         }
 
@@ -455,7 +545,7 @@ Item {
                             currentIndex: settingsPage.viewModel.ollamaModelNames.indexOf(settingsPage.viewModel.selectedLocalModel)
                             displayText: currentIndex >= 0 ? currentText
                                                            : settingsPage.viewModel.selectedLocalModelStatus
-                                                             + " / No model selected"
+                                                             + qsTr(" / No model selected")
                             onActivated: settingsPage.viewModel.selectedLocalModel = currentText
 
                             contentItem: Text {
@@ -530,14 +620,14 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Status"
+                            label: qsTr("Status")
                             value: settingsPage.viewModel.selectedLocalModelStatus
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Selected"
+                            label: qsTr("Selected")
                             value: settingsPage.viewModel.selectedLocalModelSummary
                             Layout.fillWidth: true
                         }
@@ -557,15 +647,15 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Chat"
-                            subtitle: "Explicit local chat routing controls."
+                            title: qsTr("Chat")
+                            subtitle: qsTr("Explicit local chat routing controls.")
                             Layout.fillWidth: true
                         }
 
                         CheckBox {
                             id: localChatToggle
                             Layout.fillWidth: true
-                            text: "Local chat inference"
+                            text: qsTr("Local chat inference")
                             hoverEnabled: true
                             leftPadding: localChatToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.localChatInferenceEnabled
@@ -611,7 +701,7 @@ Item {
                         CheckBox {
                             id: streamingToggle
                             Layout.fillWidth: true
-                            text: "Local response streaming"
+                            text: qsTr("Local response streaming")
                             hoverEnabled: true
                             leftPadding: streamingToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.localInferenceStreamingEnabled
@@ -657,7 +747,7 @@ Item {
                         CheckBox {
                             id: contextToggle
                             Layout.fillWidth: true
-                            text: "Use local memory/context in chat"
+                            text: qsTr("Use local memory/context in chat")
                             hoverEnabled: true
                             leftPadding: contextToggle.indicator.width + SentinelTheme.spaceSm
                             checked: settingsPage.viewModel.promptContextInjectionEnabled
@@ -703,7 +793,7 @@ Item {
                         CheckBox {
                             id: contextReasoningVisibilityToggle
                             Layout.fillWidth: true
-                            text: "Show context reasoning"
+                            text: qsTr("Show context reasoning")
                             hoverEnabled: true
                             focusPolicy: Qt.StrongFocus
                             leftPadding: contextReasoningVisibilityToggle.indicator.width + SentinelTheme.spaceSm
@@ -750,7 +840,7 @@ Item {
                         Label {
                             Layout.fillWidth: true
                             visible: !settingsPage.viewModel.contextExplainabilityVisible
-                            text: "Context reasoning is hidden from UI; runtime behavior is unchanged."
+                            text: qsTr("Context reasoning is hidden from UI; runtime behavior is unchanged.")
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall
                             wrapMode: Text.WordWrap
@@ -758,7 +848,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Routing"
+                            label: qsTr("Routing")
                             value: settingsPage.viewModel.localChatInferenceStatus + " / "
                                    + settingsPage.viewModel.localChatInferenceSummary
                             Layout.fillWidth: true
@@ -766,7 +856,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Context"
+                            label: qsTr("Context")
                             value: (settingsPage.viewModel.promptContextInjectionEnabled ? "On / " : "Off / ")
                                    + settingsPage.viewModel.promptContextInjectionStatus
                                    + " / "
@@ -777,7 +867,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Summary Injection"
+                            label: qsTr("Summary Injection")
                             value: (settingsPage.viewModel.promptContextInjectionEnabled ? "Enabled / " : "Disabled / ")
                                    + settingsPage.viewModel.summaryContinuityStatus
                                    + " / "
@@ -787,7 +877,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Explainability"
+                            label: qsTr("Explainability")
                             value: (settingsPage.viewModel.contextExplainabilityVisible ? "Visible / " : "Hidden / ")
                                    + settingsPage.viewModel.contextReasoningSummary
                             Layout.fillWidth: true
@@ -796,7 +886,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
-                            label: "Adaptive Budget"
+                            label: qsTr("Adaptive Budget")
                             value: settingsPage.viewModel.conversationSalienceAllocationSummary
                             Layout.fillWidth: true
                         }
@@ -804,7 +894,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
-                            label: "Compression"
+                            label: qsTr("Compression")
                             value: settingsPage.viewModel.conversationCompressionStatus + " / "
                                    + settingsPage.viewModel.conversationCompressionPressureSummary
                             Layout.fillWidth: true
@@ -813,7 +903,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
-                            label: "Summary Pipeline"
+                            label: qsTr("Summary Pipeline")
                             value: settingsPage.viewModel.conversationSummaryGenerationStatus
                                    + " / "
                                    + settingsPage.viewModel.conversationSummaryBlockedReason
@@ -825,7 +915,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
-                            label: "Continuity Budget"
+                            label: qsTr("Continuity Budget")
                             value: settingsPage.viewModel.summaryContinuityBudgetTrace
                             Layout.fillWidth: true
                         }
@@ -833,7 +923,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
-                            label: "Context Diagnostics"
+                            label: qsTr("Context Diagnostics")
                             value: settingsPage.viewModel.contextReasoningBudgetSummary
                             Layout.fillWidth: true
                         }
@@ -842,7 +932,7 @@ Item {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
                             valueMaximumLineCount: 8
-                            label: "Context Trace"
+                            label: qsTr("Context Trace")
                             value: settingsPage.viewModel.contextReasoningDeveloperTraces.join(" / ")
                             Layout.fillWidth: true
                         }
@@ -850,7 +940,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             visible: settingsPage.viewModel.developerModeEnabled
-                            label: "Memory Relevance"
+                            label: qsTr("Memory Relevance")
                             value: settingsPage.viewModel.memoryRelevanceIncludedCount
                                    + " included / "
                                    + settingsPage.viewModel.memoryRelevanceExcludedCount
@@ -874,8 +964,8 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Voice"
-                            subtitle: "Readiness metadata only. No microphone, playback, STT, or TTS execution."
+                            title: qsTr("Voice")
+                            subtitle: qsTr("Readiness metadata only. No microphone, playback, STT, or TTS execution.")
                             Layout.fillWidth: true
                         }
 
@@ -887,7 +977,7 @@ Item {
 
                             Label {
                                 Layout.fillWidth: true
-                                text: "Piper binary"
+                                text: qsTr("Piper binary")
                                 color: SentinelTheme.textMuted
                                 wrapMode: Text.WordWrap
                             }
@@ -896,13 +986,13 @@ Item {
                                 id: piperBinaryField
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.piperBinaryPath
-                                placeholderText: "Piper binary path"
+                                placeholderText: qsTr("Piper binary path")
                                 onEditingFinished: settingsPage.viewModel.piperBinaryPath = text
                             }
 
                             Label {
                                 Layout.fillWidth: true
-                                text: "Piper model"
+                                text: qsTr("Piper model")
                                 color: SentinelTheme.textMuted
                                 wrapMode: Text.WordWrap
                             }
@@ -911,13 +1001,13 @@ Item {
                                 id: piperModelField
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.piperModelPath
-                                placeholderText: "Piper .onnx model path"
+                                placeholderText: qsTr("Piper .onnx model path")
                                 onEditingFinished: settingsPage.viewModel.piperModelPath = text
                             }
 
                             Label {
                                 Layout.fillWidth: true
-                                text: "Whisper binary"
+                                text: qsTr("Whisper binary")
                                 color: SentinelTheme.textMuted
                                 wrapMode: Text.WordWrap
                             }
@@ -926,13 +1016,13 @@ Item {
                                 id: whisperBinaryField
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.whisperBinaryPath
-                                placeholderText: "Whisper binary path"
+                                placeholderText: qsTr("Whisper binary path")
                                 onEditingFinished: settingsPage.viewModel.whisperBinaryPath = text
                             }
 
                             Label {
                                 Layout.fillWidth: true
-                                text: "Whisper model"
+                                text: qsTr("Whisper model")
                                 color: SentinelTheme.textMuted
                                 wrapMode: Text.WordWrap
                             }
@@ -941,13 +1031,13 @@ Item {
                                 id: whisperModelField
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.whisperModelPath
-                                placeholderText: "Whisper model folder or model file"
+                                placeholderText: qsTr("Whisper model folder or model file")
                                 onEditingFinished: settingsPage.viewModel.whisperModelPath = text
                             }
                         }
 
                         SentinelButton {
-                            text: "Apply Paths"
+                            text: qsTr("Apply Paths")
                             Layout.preferredWidth: 140
                             onClicked: settingsPage.viewModel.applyVoiceConfigurationPaths(
                                 piperBinaryField.text,
@@ -959,7 +1049,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Readiness"
+                            label: qsTr("Readiness")
                             value: settingsPage.voiceReadinessLine()
                             Layout.fillWidth: true
                         }
@@ -967,7 +1057,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Whisper"
+                            label: qsTr("Whisper")
                             value: settingsPage.viewModel.whisperTranscriptionStatus
                                    + " / "
                                    + settingsPage.viewModel.whisperTranscriptionReadinessSummary
@@ -977,7 +1067,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Piper"
+                            label: qsTr("Piper")
                             value: settingsPage.viewModel.piperSynthesisStatus
                                    + " / "
                                    + settingsPage.viewModel.piperSynthesisReadinessSummary
@@ -999,14 +1089,14 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Privacy / Data"
-                            subtitle: "Settings, memory, and chat history remain separate."
+                            title: qsTr("Privacy / Data")
+                            subtitle: qsTr("Settings, memory, and chat history remain separate.")
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Memory"
+                            label: qsTr("Memory")
                             value: settingsPage.viewModel.memoryStatus + " ("
                                    + settingsPage.viewModel.memoryMaintenanceStatus + ")"
                             Layout.fillWidth: true
@@ -1014,7 +1104,7 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Chat History"
+                            label: qsTr("Chat History")
                             value: settingsPage.viewModel.conversationHistorySummaryText
                                    + " / "
                                    + settingsPage.viewModel.chatMaintenanceStatus
@@ -1024,7 +1114,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Active Conversation"
+                            label: qsTr("Active Conversation")
                             value: settingsPage.viewModel.activeConversationSummary
                                    + " / "
                                    + settingsPage.viewModel.activeConversationStateSummary
@@ -1038,27 +1128,27 @@ Item {
                             rowSpacing: SentinelTheme.spaceSm
 
                             SentinelButton {
-                                text: "Clear Local Memory"
+                                text: qsTr("Clear Local Memory")
                                 enabled: settingsPage.viewModel.memoryStatus === "Available"
                                 Layout.fillWidth: true
                                 onClicked: clearMemoryDialog.open()
                             }
 
                             SentinelButton {
-                                text: "Clear Chat History"
+                                text: qsTr("Clear Chat History")
                                 Layout.fillWidth: true
                                 onClicked: clearChatDialog.open()
                             }
 
                             SentinelButton {
-                                text: "Export Markdown"
+                                text: qsTr("Export Markdown")
                                 enabled: settingsPage.viewModel.conversationExportAvailable
                                 Layout.fillWidth: true
                                 onClicked: settingsPage.viewModel.exportTranscript("markdown")
                             }
 
                             SentinelButton {
-                                text: "Export JSON"
+                                text: qsTr("Export JSON")
                                 enabled: settingsPage.viewModel.conversationExportAvailable
                                 Layout.fillWidth: true
                                 onClicked: settingsPage.viewModel.exportTranscript("json")
@@ -1081,14 +1171,14 @@ Item {
                         spacing: SentinelTheme.spaceMd
 
                         SectionTitle {
-                            title: "Developer"
-                            subtitle: "Read-only runtime boundary metadata."
+                            title: qsTr("Developer")
+                            subtitle: qsTr("Read-only runtime boundary metadata.")
                             Layout.fillWidth: true
                         }
 
                         SectionTitle {
-                            title: "Semantic / Vector Readiness"
-                            subtitle: "Grouped summaries only. Semantic authority remains disabled unless separately scoped."
+                            title: qsTr("Semantic / Vector Readiness")
+                            subtitle: qsTr("Grouped summaries only. Semantic authority remains disabled unless separately scoped.")
                             Layout.fillWidth: true
                         }
 
@@ -1100,7 +1190,7 @@ Item {
 
                             InfoRow {
                                 compact: true
-                                label: "Semantic"
+                                label: qsTr("Semantic")
                                 value: settingsPage.viewModel.semanticRetrievalStatus
                                        + " / "
                                        + settingsPage.viewModel.semanticActivationReadiness
@@ -1109,7 +1199,7 @@ Item {
 
                             InfoRow {
                                 compact: true
-                                label: "Provider"
+                                label: qsTr("Provider")
                                 value: settingsPage.viewModel.selectedSemanticProviderName
                                        + " / "
                                        + settingsPage.viewModel.semanticProviderMode
@@ -1118,7 +1208,7 @@ Item {
 
                             InfoRow {
                                 compact: true
-                                label: "Vector"
+                                label: qsTr("Vector")
                                 value: settingsPage.viewModel.vectorPersistenceStatus
                                        + " / "
                                        + settingsPage.viewModel.vectorPersistenceIndexedItemCount
@@ -1128,7 +1218,7 @@ Item {
 
                             InfoRow {
                                 compact: true
-                                label: "Prompt Authority"
+                                label: qsTr("Prompt Authority")
                                 value: settingsPage.viewModel.semanticPromptAuthorityStatus
                                        + " / non-authoritative"
                                 Layout.fillWidth: true
@@ -1136,14 +1226,14 @@ Item {
                         }
 
                         SectionTitle {
-                            title: "Runtime Diagnostics"
-                            subtitle: "Presentation-only metadata; no permission changes."
+                            title: qsTr("Runtime Diagnostics")
+                            subtitle: qsTr("Presentation-only metadata; no permission changes.")
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: "Routing"
+                            label: qsTr("Routing")
                             value: settingsPage.viewModel.currentRoutingMode + " / "
                                    + settingsPage.viewModel.modelRoutingStatus
                             Layout.fillWidth: true
@@ -1152,7 +1242,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Runtime Safety"
+                            label: qsTr("Runtime Safety")
                             value: settingsPage.viewModel.runtimeSafetyDecision + " / "
                                    + settingsPage.viewModel.runtimeSafetySummary
                             Layout.fillWidth: true
@@ -1161,22 +1251,22 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Permissions"
+                            label: qsTr("Permissions")
                             value: settingsPage.viewModel.runtimePermissionDecision + " / "
                                    + settingsPage.viewModel.runtimePermissionSummary
                             Layout.fillWidth: true
                         }
 
                         SectionTitle {
-                            title: "Voice Boundary"
-                            subtitle: "No microphone, playback, Piper, or Whisper execution is enabled here."
+                            title: qsTr("Voice Boundary")
+                            subtitle: qsTr("No microphone, playback, Piper, or Whisper execution is enabled here.")
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Pipeline"
+                            label: qsTr("Pipeline")
                             value: settingsPage.viewModel.voicePipelineSessionStatus + " / "
                                    + settingsPage.viewModel.voicePipelineSessionSummary
                             Layout.fillWidth: true
@@ -1185,7 +1275,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Safety"
+                            label: qsTr("Safety")
                             value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / "
                                    + settingsPage.viewModel.voiceRuntimeSafetySummary
                             Layout.fillWidth: true
@@ -1194,7 +1284,7 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             valueMaximumLineCount: 8
-                            label: "Audio File"
+                            label: qsTr("Audio File")
                             value: settingsPage.viewModel.audioFileSessionStatus + " / "
                                    + settingsPage.viewModel.audioFileSessionReadinessSummary
                             Layout.fillWidth: true
@@ -1224,7 +1314,7 @@ Item {
 
             Label {
                 Layout.fillWidth: true
-                text: "Clear local memory?"
+                text: qsTr("Clear local memory?")
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontCard
                 font.bold: true
@@ -1232,7 +1322,7 @@ Item {
 
             Label {
                 Layout.fillWidth: true
-                text: "This clears local memory entries only. Settings are kept."
+                text: qsTr("This clears local memory entries only. Settings are kept.")
                 color: SentinelTheme.textMuted
                 wrapMode: Text.WordWrap
                 font.pixelSize: SentinelTheme.fontBody
@@ -1247,13 +1337,13 @@ Item {
                 }
 
                 SentinelButton {
-                    text: "Cancel"
+                    text: qsTr("Cancel")
                     Layout.preferredWidth: 96
                     onClicked: clearMemoryDialog.close()
                 }
 
                 SentinelButton {
-                    text: "Clear"
+                    text: qsTr("Clear")
                     Layout.preferredWidth: 96
                     onClicked: {
                         settingsPage.viewModel.clearMemory()
@@ -1278,7 +1368,7 @@ Item {
 
             Label {
                 Layout.fillWidth: true
-                text: "Clear chat history?"
+                text: qsTr("Clear chat history?")
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontCard
                 font.bold: true
@@ -1286,7 +1376,7 @@ Item {
 
             Label {
                 Layout.fillWidth: true
-                text: "This clears the runtime transcript and persisted local chat history when available, then restores the single initial system message. Settings and memory are kept."
+                text: qsTr("This clears the runtime transcript and persisted local chat history when available, then restores the single initial system message. Settings and memory are kept.")
                 color: SentinelTheme.textMuted
                 wrapMode: Text.WordWrap
                 font.pixelSize: SentinelTheme.fontBody
@@ -1301,13 +1391,13 @@ Item {
                 }
 
                 SentinelButton {
-                    text: "Cancel"
+                    text: qsTr("Cancel")
                     Layout.preferredWidth: 96
                     onClicked: clearChatDialog.close()
                 }
 
                 SentinelButton {
-                    text: "Clear"
+                    text: qsTr("Clear")
                     Layout.preferredWidth: 96
                     onClicked: {
                         settingsPage.viewModel.clearChat()
