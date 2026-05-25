@@ -39,6 +39,42 @@ void AppSettings::setConfigurationProfile(const QString& configurationProfile) {
     emit configurationProfileChanged();
 }
 
+QString AppSettings::appLanguage() const {
+    const auto fallback = QString::fromLatin1(defaultAppLanguage);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(appLanguageKey), fallback)
+                               : fallback;
+    const auto normalized = stored.trimmed().toLower();
+    return availableLanguages().contains(normalized) ? normalized : fallback;
+}
+
+void AppSettings::setAppLanguage(const QString& language) {
+    const auto normalized = language.trimmed().toLower();
+    const auto selected = availableLanguages().contains(normalized)
+                              ? normalized
+                              : QString::fromLatin1(defaultAppLanguage);
+    if (selected == appLanguage() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(appLanguageKey), selected);
+    emit appLanguageChanged();
+}
+
+QStringList AppSettings::availableLanguages() const {
+    return {QStringLiteral("system"), QStringLiteral("en"), QStringLiteral("tr")};
+}
+
+QString AppSettings::languageDisplayName(const QString& language) const {
+    const auto normalized = language.trimmed().toLower();
+    if (normalized == QStringLiteral("tr")) {
+        return tr("Türkçe");
+    }
+    if (normalized == QStringLiteral("en")) {
+        return tr("English");
+    }
+    return tr("System Default");
+}
+
 QString AppSettings::routingModeName() const {
     const auto fallback = sentinel::core::routingModeName(RoutingMode::LocalOnly);
     return store_ ? normalizedRoutingModeName(

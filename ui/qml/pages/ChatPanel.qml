@@ -126,7 +126,7 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "AI BRIDGE"
+                    text: qsTr("AI BRIDGE")
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontTiny
                     font.letterSpacing: 2.4
@@ -147,14 +147,14 @@ ShellPanel {
             spacing: SentinelTheme.spaceSm
 
             StatusChip {
-                label: "Provider"
-                value: "Local Ollama"
+                label: qsTr("Provider")
+                value: qsTr("Local Ollama")
                 accent: chatPanel.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
                 muted: !chatPanel.chatReady
             }
 
             StatusChip {
-                label: "Restored"
+                label: qsTr("Restored")
                 value: chatPanel.viewModel.conversationLastRestoredStatus
                 accent: SentinelTheme.calmAccent
                 muted: false
@@ -171,27 +171,27 @@ ShellPanel {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Conversations"
+                    text: qsTr("Conversations")
                     color: SentinelTheme.textPrimary
                     font.pixelSize: SentinelTheme.fontCard
                 }
 
                 Label {
                     Layout.fillWidth: true
-                    text: chatPanel.viewModel.activeConversationCount + " active / "
-                          + chatPanel.viewModel.archivedConversationCount + " archived"
+                    text: qsTr("%1 active / %2 archived").arg(chatPanel.viewModel.activeConversationCount)
+                          .arg(chatPanel.viewModel.archivedConversationCount)
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                 }
             }
 
             SentinelButton {
-                text: "New"
+                text: qsTr("New")
                 Layout.preferredWidth: 78
                 onClicked: {
                     var nextNumber = chatPanel.viewModel.conversationStoreConversationCount + 1
-                    var createdId = chatPanel.viewModel.createConversation("Conversation " + nextNumber)
-                    actionStatusText = createdId.length > 0 ? "New conversation created." : "New conversation unavailable."
+                    var createdId = chatPanel.viewModel.createConversation(qsTr("Conversation ") + nextNumber)
+                    actionStatusText = createdId.length > 0 ? qsTr("New conversation created.") : qsTr("New conversation unavailable.")
                     renameInput.clear()
                 }
             }
@@ -200,7 +200,7 @@ ShellPanel {
         SentinelTextField {
             id: conversationSearch
             Layout.fillWidth: true
-            placeholderText: "Filter conversations locally"
+            placeholderText: qsTr("Filter conversations locally")
             text: chatPanel.conversationSearchText
             onTextChanged: chatPanel.conversationSearchText = text
             Keys.onEscapePressed: {
@@ -218,7 +218,10 @@ ShellPanel {
                 delegate: Button {
                     id: filterButton
                     required property string modelData
-                    text: modelData
+                    text: modelData === "All" ? qsTr("All")
+                          : modelData === "Pinned" ? qsTr("Pinned")
+                          : modelData === "Recent" ? qsTr("Recent")
+                          : qsTr("Archived")
                     height: 28
                     leftPadding: SentinelTheme.spaceSm
                     rightPadding: SentinelTheme.spaceSm
@@ -444,7 +447,7 @@ ShellPanel {
                                 }
 
                                 MenuItem {
-                                    text: "Rename"
+                                    text: qsTr("Rename")
                                     onTriggered: {
                                         if (!conversationDelegate.active)
                                             chatPanel.viewModel.switchConversation(conversationDelegate.conversationId)
@@ -455,45 +458,45 @@ ShellPanel {
                                 }
 
                                 MenuItem {
-                                    text: conversationDelegate.pinned ? "Unpin" : "Pin"
+                                    text: conversationDelegate.pinned ? qsTr("Unpin") : qsTr("Pin")
                                     onTriggered: {
                                         var ok = conversationDelegate.pinned
                                                  ? chatPanel.viewModel.unpinConversation(conversationDelegate.conversationId)
                                                  : chatPanel.viewModel.pinConversation(conversationDelegate.conversationId)
                                         actionStatusText = ok
-                                                           ? (conversationDelegate.pinned ? "Conversation unpinned." : "Conversation pinned.")
-                                                           : "Conversation pin update refused."
+                                                           ? (conversationDelegate.pinned ? qsTr("Conversation unpinned.") : qsTr("Conversation pinned."))
+                                                           : qsTr("Conversation pin update refused.")
                                     }
                                 }
 
                                 MenuItem {
-                                    text: conversationDelegate.archived ? "Unarchive" : "Archive"
+                                    text: conversationDelegate.archived ? qsTr("Unarchive") : qsTr("Archive")
                                     onTriggered: {
                                         var ok = conversationDelegate.archived
                                                  ? chatPanel.viewModel.unarchiveConversation(conversationDelegate.conversationId)
                                                  : chatPanel.viewModel.archiveConversation(conversationDelegate.conversationId)
                                         actionStatusText = ok
-                                                           ? (conversationDelegate.archived ? "Conversation unarchived." : "Conversation archived.")
-                                                           : "Conversation update refused."
+                                                           ? (conversationDelegate.archived ? qsTr("Conversation unarchived.") : qsTr("Conversation archived."))
+                                                           : qsTr("Conversation update refused.")
                                     }
                                 }
 
                                 MenuSeparator {}
 
                                 MenuItem {
-                                    text: "Duplicate"
+                                    text: qsTr("Duplicate")
                                     onTriggered: {
                                         var duplicateId = chatPanel.viewModel.duplicateConversation(
                                             conversationDelegate.conversationId)
                                         actionStatusText = duplicateId.length > 0
                                                            ? chatPanel.viewModel.conversationDuplicateLastResultSummary
-                                                           : "Conversation duplicate refused."
+                                                           : qsTr("Conversation duplicate refused.")
                                     }
                                 }
 
                                 MenuItem {
                                     id: deleteDisabledItem
-                                    text: "Permanent delete is not enabled yet. Archive is available."
+                                    text: qsTr("Permanent delete is not enabled yet. Archive is available.")
                                     enabled: false
 
                                     contentItem: Text {
@@ -524,9 +527,9 @@ ShellPanel {
                 y: SentinelTheme.spaceXs
                 width: parent.width - SentinelTheme.spaceSm * 2
                 text: chatPanel.conversationFilter === "Pinned"
-                      ? "No pinned conversations yet."
+                      ? qsTr("No pinned conversations yet.")
                       : chatPanel.conversationSearchText.trim().length > 0
-                        ? "No local conversation metadata matches this filter."
+                        ? qsTr("No local conversation metadata matches this filter.")
                         : chatPanel.viewModel.conversationBrowserEmptyStateSummary
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontSmall
@@ -550,14 +553,14 @@ ShellPanel {
 
                 InfoRow {
                     compact: true
-                    label: "Current"
+                    label: qsTr("Current")
                     value: chatPanel.viewModel.activeConversationSummary
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: true
-                    label: "Continuity"
+                    label: qsTr("Continuity")
                     value: chatPanel.viewModel.conversationLastRestoredStatus
                     Layout.fillWidth: true
                 }
@@ -571,7 +574,7 @@ ShellPanel {
             SentinelTextField {
                 id: renameInput
                 Layout.fillWidth: true
-                placeholderText: "Rename current conversation"
+                placeholderText: qsTr("Rename current conversation")
                 enabled: chatPanel.viewModel.activeConversationId.length > 0
                 onAccepted: {
                     if (renameButton.enabled)
@@ -585,14 +588,14 @@ ShellPanel {
 
             SentinelButton {
                 id: renameButton
-                text: "Rename"
+                text: qsTr("Rename")
                 enabled: renameInput.text.trim().length > 0
                 Layout.preferredWidth: 92
                 onClicked: {
                     var renamed = chatPanel.viewModel.renameConversation(
                         chatPanel.viewModel.activeConversationId,
                         renameInput.text)
-                    chatPanel.renameStatusText = renamed ? "Rename saved." : "Rename refused."
+                    chatPanel.renameStatusText = renamed ? qsTr("Rename saved.") : qsTr("Rename refused.")
                     if (renamed)
                         renameInput.clear()
                 }

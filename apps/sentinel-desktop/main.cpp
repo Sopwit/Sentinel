@@ -23,6 +23,8 @@
 #include <QQmlContext>
 #include <QQuickWindow>
 #include <QSGRendererInterface>
+#include <QLocale>
+#include <QTranslator>
 
 #if defined(Q_OS_LINUX) && QT_CONFIG(vulkan)
 #include <QVulkanInstance>
@@ -115,6 +117,27 @@ void configureDefaultUiFont() {
     QGuiApplication::setFont(font);
 }
 
+QString effectiveLanguageCode(const sentinel::core::AppSettings& settings) {
+    const auto configured = settings.appLanguage();
+    const auto systemLanguage = QLocale::system().name().left(2).toLower();
+    if (configured == QStringLiteral("tr") || configured == QStringLiteral("en")) {
+        return configured;
+    }
+    return systemLanguage == QStringLiteral("tr") ? QStringLiteral("tr") : QStringLiteral("en");
+}
+
+void installStartupTranslator(QGuiApplication& app, const sentinel::core::AppSettings& settings,
+                              QTranslator& translator) {
+    const auto language = effectiveLanguageCode(settings);
+    if (language == QStringLiteral("en")) {
+        return;
+    }
+
+    if (translator.load(QStringLiteral(":/i18n/sentinel_%1.qm").arg(language))) {
+        app.installTranslator(&translator);
+    }
+}
+
 } // namespace
 
 int main(int argc, char* argv[]) {
@@ -131,6 +154,8 @@ int main(int argc, char* argv[]) {
     sentinel::core::StandardPathProvider pathProvider;
     sentinel::core::AppSettings settings(
         std::make_unique<sentinel::core::JsonSettingsStore>(pathProvider.settingsFilePath()));
+    QTranslator translator;
+    installStartupTranslator(app, settings, translator);
     const auto ollamaConfig = sentinel::core::OllamaConfig::fromEndpoint(settings.ollamaEndpoint());
     sentinel::core::ApplicationController controller(
         std::make_unique<sentinel::core::LocalEchoProvider>(),

@@ -593,19 +593,27 @@ voice/model paths or summaries should stay readable without changing any backend
 
 ## i18n Plan
 
-Localization is planned but not implemented in Phase 19.4-19.9. Sentinel should use Qt-native
-`qsTr`/`.ts`/`.qm` translation workflow for QML and C++ because it integrates with Qt Linguist,
-supports translation context, and fits native packaging. A Helium-style JSON/string-catalog
-approach is not recommended for the core Qt UI unless a future plugin/content layer needs its own
-catalog format.
+Phase 35 adds the first localization foundation. Sentinel uses Qt-native `qsTr` and `.ts`
+translation catalogs for the core QML shell because they integrate with Qt Linguist, support
+translation context, and fit native packaging. A Helium-style JSON/string-catalog approach is not
+recommended for the core Qt UI unless a future plugin/content layer needs its own catalog format.
 
-Future localization phase:
+Current behavior:
 
-- Convert user-facing QML and C++ strings to translatable Qt strings.
-- Add English and Turkish `.ts` catalogs and compile `.qm` files in release packaging.
-- Add copy QA for truncation/overflow across compact and desktop layouts.
-- Defer runtime language switching until explicitly scoped with translator loading, persisted
-  language setting, UI refresh handling, and focused tests.
+- Preferred app languages are English and Turkish.
+- Settings > General exposes Language with System Default, English, and Türkçe.
+- System Default uses Turkish only on Turkish system locales and otherwise falls back to English.
+- The setting is persisted through `AppSettings` and may require restart to take effect.
+- Main shell, header, dock, chat, Runtime/Memory, Agents, Settings, overlays, and command palette
+  strings should use `qsTr()` for user-facing copy.
+
+Still follow-up:
+
+- Compile `.qm` catalogs in release packaging.
+- Add live retranslation and UI refresh if a later phase scopes it.
+- Broaden copy QA for Turkish truncation/overflow across compact and desktop layouts.
+- Localize selected C++ user-facing summaries only when doing so will not translate diagnostic
+  machine tokens, provider/model names, paths, or internal ids.
 
 External APIs and cloud providers remain future opt-in features only. The current UI should say
 Local Ollama only and no cloud provider active, and it should not expose API-key configuration.

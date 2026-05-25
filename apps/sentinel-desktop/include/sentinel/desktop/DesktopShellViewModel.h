@@ -1055,6 +1055,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString themeName READ themeName WRITE setThemeName NOTIFY themeNameChanged)
     Q_PROPERTY(QString configurationProfile READ configurationProfile WRITE setConfigurationProfile
                    NOTIFY configurationProfileChanged)
+    Q_PROPERTY(QString appLanguage READ appLanguage WRITE setAppLanguage NOTIFY appLanguageChanged)
+    Q_PROPERTY(QStringList availableLanguages READ availableLanguages CONSTANT)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeChanged)
 
@@ -1691,6 +1693,10 @@ public:
     void setThemeName(const QString& themeName);
     QString configurationProfile() const;
     void setConfigurationProfile(const QString& configurationProfile);
+    QString appLanguage() const;
+    void setAppLanguage(const QString& language);
+    QStringList availableLanguages() const;
+    Q_INVOKABLE QString languageDisplayName(const QString& language) const;
     bool developerModeEnabled() const;
     void setDeveloperModeEnabled(bool enabled);
 
@@ -1735,6 +1741,7 @@ signals:
     void memoryEntriesChanged();
     void themeNameChanged();
     void configurationProfileChanged();
+    void appLanguageChanged();
     void developerModeChanged();
     void contextExplainabilityVisibleChanged();
     void currentPageChanged();

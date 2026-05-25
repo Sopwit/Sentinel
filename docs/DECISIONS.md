@@ -2976,11 +2976,25 @@ authority or imply active execution.
 
 ## 103. Localization Direction
 
-Decision: Use Qt-native localization for Sentinel when localization is scoped.
+Decision: Use Qt-native localization for Sentinel's core desktop UI.
 
 Reason: `qsTr` and Qt `.ts`/`.qm` catalogs work across QML and C++, integrate with Qt Linguist,
 support context-aware translation, and fit the native desktop build. A JSON/string-catalog pattern
 can be reconsidered only for non-Qt plugin content or remote documentation later.
 
-Current status: no full localization catalogs or runtime language switcher are implemented.
-Future target catalogs are English and Turkish.
+Language policy:
+
+- Preferred languages are English and Turkish.
+- `AppSettings::appLanguage` persists `system`, `en`, or `tr`.
+- System Default resolves to Turkish only when the system locale is Turkish; otherwise English is
+  the fallback.
+- Manual language selection is exposed in Settings through `DesktopShellViewModel`.
+- Language selection is presentation-only. It must not change prompt assembly, model/provider
+  routing, runtime permission/safety policy, context behavior, memory behavior, provider behavior,
+  filesystem behavior, or tool execution authority.
+- Internal ids, enum values, provider names, model names, filesystem paths, and diagnostic machine
+  tokens are not translation targets.
+
+Current status: English and Turkish `.ts` catalogs exist and key QML surfaces use `qsTr()`.
+Startup translator loading is present, but compiled `.qm` packaging and live retranslation remain
+future work; language changes may require restart.

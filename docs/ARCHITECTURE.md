@@ -70,13 +70,21 @@ active status chips, and warnings.
 
 ## i18n Direction
 
-Sentinel should use Qt-native localization when localization is explicitly scoped:
+Sentinel uses a Qt-native localization foundation for the core desktop shell:
 
-- Wrap user-facing QML strings with `qsTr()` and C++ strings with Qt translation APIs.
-- Generate `.ts` catalogs with Qt Linguist tooling and compile `.qm` catalogs for release builds.
-- Start with English and Turkish catalogs in a later localization phase.
-- Do not add runtime language switching until a separate phase scopes translator loading,
-  persistence, UI refresh behavior, tests, and copy QA.
+- Preferred app languages are English and Turkish.
+- The persisted `AppSettings::appLanguage` value is `system`, `en`, or `tr`.
+- System Default resolves to Turkish only when the system locale is Turkish; otherwise English is
+  used as the fallback.
+- QML receives only QML-safe language state through `DesktopShellViewModel`: `appLanguage`,
+  `availableLanguages`, and `languageDisplayName`.
+- User-facing QML strings should use `qsTr()`. Internal ids, enum values, provider names, model
+  names, filesystem paths, and diagnostic machine tokens must not be translated.
+- Startup translator loading is presentation-only and must not alter prompt assembly, provider
+  routing, runtime permissions, memory behavior, context behavior, or tool/provider execution
+  authority.
+- `.ts` catalogs exist for English and Turkish. Compiled `.qm` release packaging and live
+  retranslation remain follow-up work; language changes may require restart.
 
 A JSON/string-catalog structure like Helium-style web apps is not recommended for Sentinel's core
 UI because Qt already provides extraction, context, plural handling, QML/C++ integration, and

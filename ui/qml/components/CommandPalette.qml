@@ -11,13 +11,13 @@ SentinelOverlayModal {
     property string actionStatus: ""
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property var actions: [
-        { "title": "Home", "subtitle": "Open the main local chat workspace", "kind": "Navigate", "page": "Dashboard", "enabled": true },
-        { "title": "Runtime/Memory", "subtitle": "Open local memory and runtime metadata", "kind": "Navigate", "page": "Memory", "enabled": true },
-        { "title": "Agents", "subtitle": "Open metadata-only agent readiness", "kind": "Navigate", "page": "Agents", "enabled": true },
-        { "title": "Settings", "subtitle": "Open desktop preferences", "kind": "Navigate", "page": "Settings", "enabled": true },
-        { "title": "Clear Chat History", "subtitle": "Prepared only; no command-palette mutation", "kind": "Quick action", "page": "", "enabled": false },
-        { "title": "Export Markdown", "subtitle": "Prepared only; no filesystem access from palette", "kind": "Quick action", "page": "", "enabled": false },
-        { "title": "Export JSON", "subtitle": "Prepared only; no filesystem access from palette", "kind": "Quick action", "page": "", "enabled": false }
+        { "title": qsTr("Home"), "subtitle": qsTr("Open the main local chat workspace"), "kind": qsTr("Navigate"), "page": "Dashboard", "enabled": true },
+        { "title": qsTr("Runtime/Memory"), "subtitle": qsTr("Open local memory and runtime metadata"), "kind": qsTr("Navigate"), "page": "Memory", "enabled": true },
+        { "title": qsTr("Agents"), "subtitle": qsTr("Open metadata-only agent readiness"), "kind": qsTr("Navigate"), "page": "Agents", "enabled": true },
+        { "title": qsTr("Settings"), "subtitle": qsTr("Open desktop preferences"), "kind": qsTr("Navigate"), "page": "Settings", "enabled": true },
+        { "title": qsTr("Clear Chat History"), "subtitle": qsTr("Prepared only; no command-palette mutation"), "kind": qsTr("Quick action"), "page": "", "enabled": false },
+        { "title": qsTr("Export Markdown"), "subtitle": qsTr("Prepared only; no filesystem access from palette"), "kind": qsTr("Quick action"), "page": "", "enabled": false },
+        { "title": qsTr("Export JSON"), "subtitle": qsTr("Prepared only; no filesystem access from palette"), "kind": qsTr("Quick action"), "page": "", "enabled": false }
     ]
     readonly property var filteredActions: {
         var normalized = query.trim().toLowerCase()
@@ -37,7 +37,7 @@ SentinelOverlayModal {
     preferredHeight: Math.min(520, Math.max(360, (parent ? parent.height : 720) - SentinelTheme.space4Xl))
     onOpened: {
         query = ""
-        actionStatus = "Local navigation only. Quick actions are visible as metadata and do not execute."
+        actionStatus = qsTr("Local navigation only. Quick actions are visible as metadata and do not execute.")
         searchField.forceActiveFocus()
     }
 
@@ -51,7 +51,7 @@ SentinelOverlayModal {
             close()
             return
         }
-        actionStatus = action.title + " is metadata-only in this shell."
+        actionStatus = qsTr("%1 is metadata-only in this shell.").arg(action.title)
     }
 
     contentItem: ColumnLayout {
@@ -69,7 +69,7 @@ SentinelOverlayModal {
 
                 Label {
                     Layout.fillWidth: true
-                    text: "Command Palette"
+                    text: qsTr("Command Palette")
                     color: SentinelTheme.textPrimary
                     font.pixelSize: SentinelTheme.fontCard
                     font.bold: true
@@ -96,7 +96,7 @@ SentinelOverlayModal {
             SentinelTextField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: "Search local commands"
+                placeholderText: qsTr("Search local commands")
                 text: palette.query
                 onTextChanged: palette.query = text
                 Keys.onDownPressed: actionList.forceActiveFocus()

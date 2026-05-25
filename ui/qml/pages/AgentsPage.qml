@@ -12,6 +12,18 @@ ScrollView {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property string uiSelfCheck: "developer-gated balanced-cards wrapped-contracts bottom-safe-scroll"
     property string selectedSection: "Overview"
+
+    function sectionLabel(section) {
+        if (section === "Overview")
+            return qsTr("Overview")
+        if (section === "Tasks")
+            return qsTr("Tasks")
+        if (section === "Capabilities")
+            return qsTr("Capabilities")
+        if (section === "Developer")
+            return qsTr("Developer")
+        return section
+    }
     onDeveloperModeChanged: {
         if (!developerMode && selectedSection === "Developer")
             selectedSection = "Overview"
@@ -78,7 +90,7 @@ ScrollView {
                                 id: agentTabButton
                                 required property string modelData
                                 readonly property bool active: agentsPage.selectedSection === agentTabButton.modelData
-                                text: modelData
+                                text: agentsPage.sectionLabel(modelData)
                                 hoverEnabled: true
                                 onClicked: agentsPage.selectedSection = modelData
 
@@ -124,8 +136,8 @@ ScrollView {
                     Label {
                         Layout.fillWidth: true
                         text: agentsPage.developerMode
-                              ? "Metadata-only; no execution active. Developer internals are visible."
-                              : "Metadata-only; no execution active."
+                              ? qsTr("Metadata-only; no execution active. Developer internals are visible.")
+                              : qsTr("Metadata-only; no execution active.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -146,8 +158,8 @@ ScrollView {
                     spacing: SentinelTheme.spaceMd
 
                     SectionTitle {
-                        title: "Registered Profiles"
-                        subtitle: "Static profiles, not active workers."
+                        title: qsTr("Registered Profiles")
+                        subtitle: qsTr("Static profiles, not active workers.")
                         Layout.fillWidth: true
                     }
 
@@ -156,22 +168,22 @@ ScrollView {
                         spacing: SentinelTheme.spaceSm
 
                         StatusChip {
-                            label: "Registered"
+                            label: qsTr("Registered")
                             value: agentsPage.viewModel.registeredAgentCount.toString()
                             accent: agentsPage.modeAccent
                             selected: true
                         }
 
                         StatusChip {
-                            label: "Activity"
+                            label: qsTr("Activity")
                             value: agentsPage.viewModel.agentActivityCount.toString()
                             accent: SentinelTheme.accentSecondary
                             muted: agentsPage.viewModel.agentActivityCount === 0
                         }
 
                         StatusChip {
-                            label: "Authority"
-                            value: "metadata only"
+                            label: qsTr("Authority")
+                            value: qsTr("metadata only")
                             accent: SentinelTheme.textMuted
                             muted: true
                         }
@@ -179,14 +191,14 @@ ScrollView {
 
                     InfoRow {
                         compact: agentsPage.compact
-                        label: "Current"
+                        label: qsTr("Current")
                         value: agentsPage.viewModel.currentAgentSummary
                         Layout.fillWidth: true
                     }
 
                     Label {
                         Layout.fillWidth: true
-                        text: "Profiles are registered for visibility only. Nothing runs in the background."
+                        text: qsTr("Profiles are registered for visibility only. Nothing runs in the background.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -217,13 +229,13 @@ ScrollView {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Task Runtime"
-                            subtitle: "Static runtime state, no workers."
+                            title: qsTr("Task Runtime")
+                            subtitle: qsTr("Static runtime state, no workers.")
                             Layout.fillWidth: true
                         }
 
                         StatusChip {
-                            label: "Runtime"
+                            label: qsTr("Runtime")
                             value: agentsPage.viewModel.agentTaskRuntimeStatus
                             accent: agentsPage.modeAccent
                             selected: true
@@ -231,14 +243,14 @@ ScrollView {
 
                         InfoRow {
                             compact: true
-                            label: "Boundary"
+                            label: qsTr("Boundary")
                             value: agentsPage.viewModel.agentTaskRuntimeSummary
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: true
-                            label: "Latest"
+                            label: qsTr("Latest")
                             value: agentsPage.viewModel.latestAgentTaskSummary
                             Layout.fillWidth: true
                         }
@@ -259,8 +271,8 @@ ScrollView {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Task Queue"
-                            subtitle: "Queued lifecycle metadata."
+                            title: qsTr("Task Queue")
+                            subtitle: qsTr("Queued lifecycle metadata.")
                             Layout.fillWidth: true
                         }
 
@@ -269,20 +281,20 @@ ScrollView {
                             spacing: SentinelTheme.spaceSm
 
                             StatusChip {
-                                label: "Queued"
+                                label: qsTr("Queued")
                                 value: agentsPage.viewModel.agentTaskQueueCount.toString()
                                 accent: agentsPage.modeAccent
                                 selected: true
                             }
 
                             StatusChip {
-                                label: "Planned"
+                                label: qsTr("Planned")
                                 value: agentsPage.viewModel.agentTaskQueuePlannedCount.toString()
                                 accent: SentinelTheme.accentSecondary
                             }
 
                             StatusChip {
-                                label: "Blocked"
+                                label: qsTr("Blocked")
                                 value: agentsPage.viewModel.agentTaskQueueBlockedCount.toString()
                                 accent: agentsPage.viewModel.agentTaskQueueBlockedCount > 0
                                         ? SentinelTheme.warning
@@ -291,7 +303,7 @@ ScrollView {
                             }
 
                             StatusChip {
-                                label: "Refused"
+                                label: qsTr("Refused")
                                 value: agentsPage.viewModel.agentTaskQueueRefusedCount.toString()
                                 accent: agentsPage.viewModel.agentTaskQueueRefusedCount > 0
                                         ? SentinelTheme.warning
@@ -302,7 +314,7 @@ ScrollView {
 
                         InfoRow {
                             compact: true
-                            label: "Lifecycle"
+                            label: qsTr("Lifecycle")
                             value: agentsPage.viewModel.latestAgentTaskLifecycleSummary
                             Layout.fillWidth: true
                         }
@@ -323,8 +335,8 @@ ScrollView {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Planning Sessions"
-                            subtitle: "Safety arbitration metadata only."
+                            title: qsTr("Planning Sessions")
+                            subtitle: qsTr("Safety arbitration metadata only.")
                             Layout.fillWidth: true
                         }
 
@@ -333,20 +345,20 @@ ScrollView {
                             spacing: SentinelTheme.spaceSm
 
                             StatusChip {
-                                label: "Status"
+                                label: qsTr("Status")
                                 value: agentsPage.viewModel.agentPlanningSessionStatus
                                 accent: agentsPage.modeAccent
                                 selected: true
                             }
 
                             StatusChip {
-                                label: "Candidates"
+                                label: qsTr("Candidates")
                                 value: agentsPage.viewModel.agentPlanningCandidateCount.toString()
                                 accent: SentinelTheme.accentSecondary
                             }
 
                             StatusChip {
-                                label: "Refused"
+                                label: qsTr("Refused")
                                 value: agentsPage.viewModel.agentPlanningRefusedCount.toString()
                                 accent: agentsPage.viewModel.agentPlanningRefusedCount > 0
                                         ? SentinelTheme.warning
@@ -357,7 +369,7 @@ ScrollView {
 
                         InfoRow {
                             compact: true
-                            label: "Summary"
+                            label: qsTr("Summary")
                             value: agentsPage.viewModel.agentPlanningSessionSummary
                             Layout.fillWidth: true
                         }
@@ -378,8 +390,8 @@ ScrollView {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: "Capability Registry"
-                            subtitle: "Capabilities are labels, not grants."
+                            title: qsTr("Capability Registry")
+                            subtitle: qsTr("Capabilities are labels, not grants.")
                             Layout.fillWidth: true
                         }
 
@@ -388,20 +400,20 @@ ScrollView {
                             spacing: SentinelTheme.spaceSm
 
                             StatusChip {
-                                label: "Enabled"
+                                label: qsTr("Enabled")
                                 value: agentsPage.viewModel.agentCapabilityEnabledCount.toString()
                                 accent: SentinelTheme.success
                             }
 
                             StatusChip {
-                                label: "Disabled"
+                                label: qsTr("Disabled")
                                 value: agentsPage.viewModel.agentCapabilityDisabledCount.toString()
                                 accent: SentinelTheme.textMuted
                                 muted: true
                             }
 
                             StatusChip {
-                                label: "Restricted"
+                                label: qsTr("Restricted")
                                 value: agentsPage.viewModel.agentCapabilityRestrictedCount.toString()
                                 accent: agentsPage.viewModel.agentCapabilityRestrictedCount > 0
                                         ? SentinelTheme.warning

@@ -10,7 +10,7 @@ ApplicationWindow {
     minimumWidth: 780
     minimumHeight: 640
     visible: true
-    title: "Sentinel Desktop Alpha"
+    title: qsTr("Sentinel Desktop Alpha")
     color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
     property bool shellReady: false

@@ -20,6 +20,15 @@ qt_add_executable(sentinel-desktop
     main.cpp
 )
 
+set(SENTINEL_TRANSLATION_SOURCES
+    ${CMAKE_SOURCE_DIR}/translations/sentinel_en.ts
+    ${CMAKE_SOURCE_DIR}/translations/sentinel_tr.ts
+)
+
+target_sources(sentinel-desktop PRIVATE
+    ${SENTINEL_TRANSLATION_SOURCES}
+)
+
 set(SENTINEL_APP_ICON_PNG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.png)
 set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.svg)
 set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.icns)

@@ -28,9 +28,11 @@ ShellPanel {
 
     function pageLabel(pageName) {
         if (pageName === "Dashboard")
-            return "Home"
+            return qsTr("Home")
         if (pageName === "Memory")
-            return "Runtime/Memory"
+            return qsTr("Runtime/Memory")
+        if (pageName === "Agents")
+            return qsTr("Agents")
         return pageName
     }
 

@@ -2,6 +2,33 @@
 
 ## Completed / Stable
 
+### Phase 35.0-35.10: Localization / i18n Foundation
+
+Completed. Adds a safe English/Turkish localization foundation for visible desktop UI text while
+keeping runtime behavior unchanged.
+
+Scope:
+
+- Added persisted `appLanguage` with supported values `system`, `en`, and `tr`. The default is
+  System Default, which resolves to Turkish only when the system locale is Turkish; otherwise the
+  app falls back to English.
+- Exposed `availableLanguages` and `languageDisplayName` through `AppSettings` and
+  `DesktopShellViewModel` for QML-safe Settings UI binding.
+- Added a General > Language selector with System Default, English, and Türkçe options. Changing
+  it persists the setting; startup translator loading reads the setting on the next launch.
+- Added Qt `.ts` translation source catalogs for English and Turkish plus initial Turkish coverage
+  for the primary shell labels and commands.
+- Wrapped most visible hardcoded user-facing strings in the main shell, dock, header, chat,
+  Runtime/Memory, Agents, Settings, and command palette surfaces with `qsTr()`.
+- Focused tests cover language defaults, persistence, view-model exposure, available language
+  list, display names, and preservation of runtime/prompt/context flags when language changes.
+
+Known limitation:
+
+- Live retranslation and compiled `.qm` release packaging are not complete in this phase. Language
+  changes may require restart, and untranslated diagnostic summaries from C++ remain intentionally
+  unchanged unless a later copy-localization phase scopes them.
+
 ### Phase 34.0-34.8: Explainability Controls, UI Refinement, And Regression Polish
 
 Completed. Adds a persistent context explainability visibility control and polishes the

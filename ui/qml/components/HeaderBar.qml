@@ -9,7 +9,7 @@ ShellPanel {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property date now: new Date()
     readonly property int modeButtonWidth: compact ? 124 : 136
-    readonly property string dashboardSubtitleText: "Chat through configured local providers."
+    readonly property string dashboardSubtitleText: qsTr("Chat through configured local providers.")
     readonly property string modeSubtitleText: pageSubtitle(headerBar.viewModel.currentPage)
     readonly property string subtitleText: headerBar.viewModel.currentPage === "Dashboard"
                                            ? headerBar.dashboardSubtitleText
@@ -17,21 +17,21 @@ ShellPanel {
 
     function pageSubtitle(pageName) {
         if (pageName === "Memory")
-            return "Local memory, recall, and conversation context."
+            return qsTr("Local memory, recall, and conversation context.")
         if (pageName === "Agents")
-            return "Metadata-only agent planning and capability status."
+            return qsTr("Metadata-only agent planning and capability status.")
         if (pageName === "Settings")
-            return "Local preferences and readiness controls."
-        return "Local Ollama chatbot. No cloud provider active."
+            return qsTr("Local preferences and readiness controls.")
+        return qsTr("Local Ollama chatbot. No cloud provider active.")
     }
 
     function greetingFor(dateValue) {
         const hour = dateValue.getHours()
         if (hour < 12)
-            return "Good morning, Operator."
+            return qsTr("Good morning, Operator.")
         if (hour < 18)
-            return "Good afternoon, Operator."
-        return "Good evening, Operator."
+            return qsTr("Good afternoon, Operator.")
+        return qsTr("Good evening, Operator.")
     }
 
     color: "transparent"
@@ -65,7 +65,7 @@ ShellPanel {
                 }
 
                 Label {
-                text: "SENTINEL"
+                text: qsTr("SENTINEL")
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 1.8
