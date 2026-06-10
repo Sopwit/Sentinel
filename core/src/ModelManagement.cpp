@@ -10,6 +10,12 @@ QString modelManagementActionName(ModelManagementAction action) {
         return QStringLiteral("Delete");
     case ModelManagementAction::Install:
         return QStringLiteral("Install");
+    case ModelManagementAction::Refresh:
+        return QStringLiteral("Refresh");
+    case ModelManagementAction::Import:
+        return QStringLiteral("Import");
+    case ModelManagementAction::Export:
+        return QStringLiteral("Export");
     }
 
     return QStringLiteral("Pull");
@@ -154,7 +160,7 @@ StaticModelManagementService::evaluate(const ModelManagementRequest& request) co
         modelName,
         false,
         QStringLiteral("%1 for %2 is unavailable: model management is metadata-only and real "
-                       "pull, delete, or install work is future scoped.")
+                       "pull, delete, install, refresh, import, or export work is future scoped.")
             .arg(modelManagementActionName(request.action), modelName),
     };
 }

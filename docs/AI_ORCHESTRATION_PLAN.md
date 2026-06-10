@@ -1,5 +1,20 @@
 # AI Orchestration Plan
 
+Phase 37.0 through Phase 37.12 adds a deterministic local-first model registry and model
+management foundation. `ModelSummary`, `ModelRegistry`, `ModelRegistryStatus`, and
+`ModelRegistrySummary` describe provider id, raw model name, display name, family, format, size
+class, source scope, approximate disk/RAM/context metadata, capability labels, readiness, status,
+restrictions, safety report, and runtime badge metadata. Ollama entries are mapped only from
+existing local Ollama discovery metadata; unknown values remain unknown. Selected models persist
+per provider while Ollama keeps the existing selected local model setting for compatibility.
+Disabled providers expose placeholder metadata only. Send validation refuses before transcript
+mutation unless the selected provider is Local Ollama, local chat inference is enabled, Ollama is
+reachable through loopback HTTP, the selected model exists in discovered metadata, the active
+conversation is unarchived, and no request is active. Pull/install/delete/refresh/import/export
+remain unavailable metadata-only placeholders; there are no downloads, cloud calls, filesystem
+scans, model file inspection, hidden capability lookup, background discovery, tools, or hidden
+execution.
+
 Phase 36.0 through Phase 36.14 adds a runtime orchestration and provider abstraction foundation.
 `RuntimeProviderDescriptor`, `RuntimeCapabilitySet`, `RuntimeReadinessState`,
 `LocalRuntimeProvider`, `OllamaRuntimeProvider`, `OpenAICompatibleRuntimeProvider`, and

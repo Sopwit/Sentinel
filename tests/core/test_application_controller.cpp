@@ -693,9 +693,10 @@ private slots:
     void blocksLocalInferenceByDefaultPermission();
     void blocksLocalInferenceWhenSafetyPolicyBlocks();
     void runsInjectedLocalInferenceWhenPermissionAllows();
-    void usesProviderChatPathWhenLocalChatInferenceDisabled();
+    void refusesSendWhenLocalChatInferenceDisabledBeforeTranscriptMutation();
     void enabledLocalChatInferenceWithoutValidModelFailsSafely();
     void enabledLocalChatInferenceWithInvalidModelShowsSafeSummary();
+    void disabledProviderSelectionRefusesBeforeTranscriptMutation();
     void enabledLocalChatInferenceAppendsFakeResponse();
     void enabledLocalChatInferenceErrorAppendsSafeRefusal();
     void localChatInferenceBlocksNonLoopbackEndpoint();
@@ -3023,7 +3024,7 @@ void ApplicationControllerTest::runsInjectedLocalInferenceWhenPermissionAllows()
                        "and no-execution posture is enforced with deterministic metadata rules.")));
 }
 
-void ApplicationControllerTest::usesProviderChatPathWhenLocalChatInferenceDisabled() {
+void ApplicationControllerTest::refusesSendWhenLocalChatInferenceDisabledBeforeTranscriptMutation() {
     auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
     auto* fakeClientPtr = fakeClient.get();
     auto controller = std::make_unique<ApplicationController>(
@@ -3037,13 +3038,13 @@ void ApplicationControllerTest::usesProviderChatPathWhenLocalChatInferenceDisabl
 
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
-    QVERIFY(sent);
+    QVERIFY(!sent);
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Disabled"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(1).role, sentinel::core::ChatRole::User);
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Sentinel Core online. Local chat pipeline is active."));
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->localChatSendAvailabilitySummary(),
+             QStringLiteral("Enable Local chat inference in Settings to send with Ollama."));
 }
 
 void ApplicationControllerTest::enabledLocalChatInferenceWithoutValidModelFailsSafely() {
@@ -3095,6 +3096,32 @@ void ApplicationControllerTest::enabledLocalChatInferenceWithInvalidModelShowsSa
     QCOMPARE(controller->localChatSendAvailabilitySummary(),
              QStringLiteral("Selected model missing-model is not installed in Ollama. Choose an "
                             "available model in Settings."));
+}
+
+void ApplicationControllerTest::disabledProviderSelectionRefusesBeforeTranscriptMutation() {
+    auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
+    auto* fakeClientPtr = fakeClient.get();
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, std::make_unique<AllowLocalInferencePolicy>(), nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        std::move(fakeClient));
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
+
+    QVERIFY(!controller->sendMessage(QStringLiteral("hello")));
+    QVERIFY(!fakeClientPtr->called);
+    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
+    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Provider Disabled"));
+    QCOMPARE(controller->localChatSendAvailabilitySummary(),
+             QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
+                            "Ollama to send."));
 }
 
 void ApplicationControllerTest::enabledLocalChatInferenceAppendsFakeResponse() {

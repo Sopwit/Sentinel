@@ -30,6 +30,7 @@
 #include "sentinel/core/MemoryCandidate.h"
 #include "sentinel/core/MemoryRecall.h"
 #include "sentinel/core/ModelManagement.h"
+#include "sentinel/core/ModelRegistry.h"
 #include "sentinel/core/OllamaRuntime.h"
 #include "sentinel/core/OrchestrationDiagnostics.h"
 #include "sentinel/core/OrchestrationSnapshot.h"
@@ -292,6 +293,14 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString selectedLocalModelMetadataSummary READ selectedLocalModelMetadataSummary
                    NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QString activeLocalRuntimeBadge READ activeLocalRuntimeBadge NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QString modelRegistryStatus READ modelRegistryStatus NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QString modelRegistrySummary READ modelRegistrySummary NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QStringList modelRegistryModelSummaries READ modelRegistryModelSummaries NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QStringList selectedModelCapabilityLabels READ selectedModelCapabilityLabels NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(
         QString modelManagementStatus READ modelManagementStatus NOTIFY localModelSelectionChanged)
@@ -1197,6 +1206,10 @@ public:
     QString selectedLocalModelSummary() const;
     QString selectedLocalModelMetadataSummary() const;
     QString activeLocalRuntimeBadge() const;
+    QString modelRegistryStatus() const;
+    QString modelRegistrySummary() const;
+    QStringList modelRegistryModelSummaries() const;
+    QStringList selectedModelCapabilityLabels() const;
     QString modelManagementStatus() const;
     QString modelManagementSummary() const;
     QString modelManagementActionAvailability() const;
@@ -1878,6 +1891,7 @@ private:
     MemoryEntries currentMemoryEntries() const;
     void refreshMemoryRecallForCurrentEntries();
     ContextAssemblySource contextAssemblySource(ContextAssemblySourceKind kind) const;
+    ModelRegistry currentModelRegistry() const;
     MemoryCandidate memoryCandidateFromConversationText(const QString& text) const;
     bool reviewMemoryCandidate(const QString& candidateId, MemoryCandidateReviewAction action);
     WhisperRuntimeDescriptor currentWhisperRuntimeDescriptor() const;

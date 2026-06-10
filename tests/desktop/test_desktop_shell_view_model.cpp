@@ -614,6 +614,9 @@ void DesktopShellViewModelTest::exposesDiscoveredModelSelectionMetadata() {
     QVERIFY(viewModel.ollamaModelSummaries().contains(
         QStringLiteral("llama3.2 (2.0 GiB, modified 2026-05-01T10:00:00Z, Local Only)")));
     QCOMPARE(viewModel.selectedLocalModelStatus(), QStringLiteral("Missing"));
+    QCOMPARE(viewModel.modelRegistryStatus(), QStringLiteral("ready"));
+    QVERIFY(viewModel.modelRegistrySummary().contains(QStringLiteral("2 available")));
+    QVERIFY(viewModel.modelRegistryModelSummaries().first().contains(QStringLiteral("llama3.2")));
     QCOMPARE(viewModel.selectedLocalModelMetadataSummary(),
              QStringLiteral("Fallback model: llama3.2 (2.0 GiB, modified "
                             "2026-05-01T10:00:00Z, Local Only)"));
@@ -623,6 +626,8 @@ void DesktopShellViewModelTest::exposesDiscoveredModelSelectionMetadata() {
     QCOMPARE(settings.selectedLocalModel(), QStringLiteral("mistral"));
     QCOMPARE(viewModel.selectedLocalModel(), QStringLiteral("mistral"));
     QCOMPARE(viewModel.selectedLocalModelStatus(), QStringLiteral("Available"));
+    QCOMPARE(viewModel.selectedModelCapabilityLabels(),
+             QStringList({QStringLiteral("chat"), QStringLiteral("streaming")}));
     QCOMPARE(viewModel.selectedLocalModelMetadataSummary(),
              QStringLiteral("Selected model: mistral (1.0 KiB, Local Only)"));
     QVERIFY(spy.count() >= 1);
@@ -1398,6 +1403,10 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("selectedLocalModelSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("selectedLocalModelMetadataSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("activeLocalRuntimeBadge"), QByteArrayLiteral("QString")},
+        {QStringLiteral("modelRegistryStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("modelRegistrySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("modelRegistryModelSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("selectedModelCapabilityLabels"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("modelManagementStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("modelManagementSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("modelManagementActionAvailability"), QByteArrayLiteral("QString")},

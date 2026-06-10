@@ -637,7 +637,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Model")
-                            subtitle: qsTr("Selection is persisted configuration only.")
+                            subtitle: qsTr("Local-first selection metadata.")
                             Layout.fillWidth: true
                         }
 
@@ -725,8 +725,23 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: qsTr("Status")
-                            value: settingsPage.viewModel.selectedLocalModelStatus
+                            label: qsTr("Provider")
+                            value: settingsPage.viewModel.activeRuntimeProviderLabel
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Readiness")
+                            value: settingsPage.viewModel.activeRuntimeReadinessState
+                                   + " - " + settingsPage.viewModel.localChatSendAvailabilitySummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Scope")
+                            value: settingsPage.viewModel.activeRuntimeLocalOnlySummary
                             Layout.fillWidth: true
                         }
 
@@ -735,6 +750,49 @@ Item {
                             label: qsTr("Selected")
                             value: settingsPage.viewModel.selectedLocalModelSummary
                             Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            visible: settingsPage.viewModel.selectedModelCapabilityLabels.length > 0
+                            spacing: SentinelTheme.spaceSm
+
+                            Repeater {
+                                model: settingsPage.viewModel.selectedModelCapabilityLabels
+
+                                StatusChip {
+                                    required property string modelData
+                                    label: qsTr("Capability")
+                                    value: modelData
+                                    accent: settingsPage.modeAccent
+                                    selected: true
+                                }
+                            }
+                        }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: settingsPage.developerMode
+                            spacing: SentinelTheme.spaceXs
+
+                            InfoRow {
+                                compact: settingsPage.compact
+                                label: qsTr("Registry")
+                                value: settingsPage.viewModel.modelRegistrySummary
+                                Layout.fillWidth: true
+                            }
+
+                            Repeater {
+                                model: Math.min(3, settingsPage.viewModel.modelRegistryModelSummaries.length)
+
+                                InfoRow {
+                                    required property int index
+                                    compact: settingsPage.compact
+                                    label: qsTr("Model Metadata")
+                                    value: settingsPage.viewModel.modelRegistryModelSummaries[index]
+                                    Layout.fillWidth: true
+                                }
+                            }
                         }
                     }
                 }

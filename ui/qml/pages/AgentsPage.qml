@@ -662,6 +662,14 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
+                    InfoRow {
+                        compact: true
+                        label: "Runtime Model"
+                        value: agentsPage.viewModel.activeRuntimeProviderLabel + " / "
+                               + agentsPage.viewModel.modelRegistrySummary
+                        Layout.fillWidth: true
+                    }
+
                     Repeater {
                         model: agentsPage.viewModel.agentTaskTraceSummaries
                         InfoRow {

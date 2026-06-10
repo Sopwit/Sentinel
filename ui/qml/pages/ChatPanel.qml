@@ -155,7 +155,9 @@ ShellPanel {
 
             StatusChip {
                 label: qsTr("Model")
-                value: chatPanel.viewModel.activeRuntimeModelLabel
+                value: chatPanel.viewModel.selectedLocalModel.length > 0
+                       ? chatPanel.viewModel.selectedLocalModel
+                       : qsTr("No model")
                 accent: SentinelTheme.accentTertiary
                 muted: chatPanel.viewModel.selectedLocalModelStatus !== "Available"
             }

@@ -260,6 +260,13 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
+                    InfoRow {
+                        compact: true
+                        label: "Model Registry"
+                        value: memoryPage.viewModel.modelRegistrySummary
+                        Layout.fillWidth: true
+                    }
+
                     Repeater {
                         model: memoryPage.viewModel.runtimeProviderValidationTraces
 
