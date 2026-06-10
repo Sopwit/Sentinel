@@ -67,6 +67,29 @@ Provider posture decision:
   boundaries, settings, safety review, tests, and user-facing activation. They must not appear as
   implied active configuration in normal UI.
 
+## 5.1 Runtime Provider Abstraction
+
+Decision: Runtime/provider readiness is exposed through a value-only runtime provider registry.
+
+Reason: Sentinel needs multi-runtime local-first orchestration metadata without granting new
+provider authority or coupling QML to runtime clients.
+
+Runtime behavior:
+
+- Local Ollama is the only enabled provider/runtime path.
+- OpenAI-compatible/API providers are disabled placeholders only.
+- Selected provider metadata is persisted, but disabled providers cannot become active execution
+  paths; active provider metadata falls back to Local Ollama.
+- Capability metadata is deterministic and does not activate capabilities.
+- Readiness checks remain explicit/manual through existing loopback-only Ollama health/model
+  metadata. There are no background probes or discovery daemons.
+
+Out of scope:
+
+- Cloud execution, API-key storage, automatic fallback routing, background model pulls,
+  provider auto-discovery, filesystem scanning, embeddings/vector search, tool execution, agent
+  planning, hidden retries, and automatic provider switching.
+
 ## 6. Memory Persistence Boundary
 
 Decision: Memory storage is hidden behind `IMemoryStore`.

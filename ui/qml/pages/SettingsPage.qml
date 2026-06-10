@@ -468,8 +468,8 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: qsTr("Local AI")
-                            subtitle: qsTr("Local Ollama only. No cloud provider active.")
+                            title: qsTr("Runtime")
+                            subtitle: qsTr("Local-first runtime selection. Future API providers are disabled placeholders.")
                             Layout.fillWidth: true
                         }
 
@@ -478,42 +478,147 @@ Item {
                             spacing: SentinelTheme.spaceSm
 
                             StatusChip {
-                                label: qsTr("Health")
-                                value: settingsPage.viewModel.ollamaHealthStatus
-                                accent: settingsPage.viewModel.ollamaHealthStatus === "Available"
+                                label: qsTr("Readiness")
+                                value: settingsPage.viewModel.activeRuntimeReadinessState
+                                accent: settingsPage.viewModel.activeRuntimeReadinessState === "ready"
                                         ? SentinelTheme.success
                                         : SentinelTheme.textMuted
-                                muted: settingsPage.viewModel.ollamaHealthStatus !== "Available"
+                                muted: settingsPage.viewModel.activeRuntimeReadinessState !== "ready"
                             }
 
                             StatusChip {
-                                label: qsTr("Models")
-                                value: settingsPage.viewModel.ollamaModelCount.toString()
+                                label: qsTr("Provider")
+                                value: settingsPage.viewModel.activeRuntimeProviderLabel
                                 accent: SentinelTheme.accentTertiary
                             }
 
                             StatusChip {
-                                label: qsTr("Cloud")
-                                value: qsTr("inactive")
-                                accent: SentinelTheme.textMuted
-                                muted: true
+                                label: qsTr("Scope")
+                                value: settingsPage.viewModel.activeRuntimeLocalOnlySummary
+                                accent: SentinelTheme.calmAccent
+                                muted: settingsPage.viewModel.activeRuntimeLocalOnlySummary !== "Local Only"
                             }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                text: qsTr("Provider")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                            }
+
+                            ComboBox {
+                                id: runtimeProviderCombo
+                                Layout.fillWidth: true
+                                hoverEnabled: true
+                                model: settingsPage.viewModel.selectableRuntimeProviderLabels
+                                currentIndex: settingsPage.viewModel.selectableRuntimeProviderIds.indexOf(settingsPage.viewModel.selectedRuntimeProvider)
+                                displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.activeRuntimeProviderLabel
+                                onActivated: {
+                                    if (index >= 0 && index < settingsPage.viewModel.selectableRuntimeProviderIds.length)
+                                        settingsPage.viewModel.selectedRuntimeProvider = settingsPage.viewModel.selectableRuntimeProviderIds[index]
+                                }
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: runtimeProviderCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(runtimeProviderCombo.activeFocus,
+                                                                                 runtimeProviderCombo.hovered,
+                                                                                 runtimeProviderCombo.popup.visible,
+                                                                                 settingsPage.modeAccent)
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: runtimeProviderOption
+                                    width: runtimeProviderCombo.width
+                                    text: modelData
+                                    highlighted: runtimeProviderCombo.highlightedIndex === index
+
+                                    contentItem: Text {
+                                        text: runtimeProviderOption.text
+                                        color: runtimeProviderOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        verticalAlignment: Text.AlignVCenter
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    background: Rectangle {
+                                        color: InteractionTokens.surfaceColor(runtimeProviderOption.highlighted, false, false,
+                                                                               settingsPage.modeAccent)
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: InteractionTokens.borderColor(false, true, false,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Active Model")
+                            value: settingsPage.viewModel.activeRuntimeModelLabel
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Readiness")
+                            value: settingsPage.viewModel.activeRuntimeReadinessSummary
+                            Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Endpoint")
-                            value: qsTr("Local loopback Ollama")
+                            value: settingsPage.viewModel.ollamaEndpoint
                             Layout.fillWidth: true
                         }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Availability")
-                            value: settingsPage.viewModel.ollamaModelCount > 0
-                                   ? settingsPage.viewModel.ollamaHealthSummary
-                                   : qsTr("Start Ollama and install/select a local model.")
-                            Layout.fillWidth: true
+                        Repeater {
+                            model: settingsPage.viewModel.runtimeProviderCardSummaries
+
+                            Rectangle {
+                                required property string modelData
+                                Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                implicitHeight: runtimeProviderCardLabel.implicitHeight + SentinelTheme.spaceMd
+
+                                Label {
+                                    id: runtimeProviderCardLabel
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: modelData
+                                    color: modelData.indexOf("disabled") >= 0
+                                           ? SentinelTheme.textMuted
+                                           : SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
                         }
                     }
                 }

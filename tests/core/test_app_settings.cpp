@@ -28,6 +28,7 @@ private slots:
     void persistsRoutingModeThroughJsonStore();
     void exposesOllamaEndpointDefault();
     void normalizesOllamaEndpoint();
+    void persistsSelectedRuntimeProvider();
     void persistsSelectedLocalModel();
     void persistsLocalChatInferenceOptIn();
     void persistsLocalInferenceStreamingOptIn();
@@ -53,6 +54,7 @@ void AppSettingsTest::exposesDefaults() {
     QCOMPARE(settings->availableLanguages(),
              QStringList({QStringLiteral("system"), QStringLiteral("en"), QStringLiteral("tr")}));
     QVERIFY(settings->selectedLocalModel().isEmpty());
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
     QVERIFY(!settings->localChatInferenceEnabled());
     QVERIFY(!settings->localInferenceStreamingEnabled());
     QVERIFY(!settings->promptContextInjectionEnabled());
@@ -222,6 +224,23 @@ void AppSettingsTest::normalizesOllamaEndpoint() {
     settings->setOllamaEndpoint(QStringLiteral("https://example.com"));
 
     QCOMPARE(settings->ollamaEndpoint(), QStringLiteral("http://127.0.0.1:11434"));
+    QCOMPARE(spy.count(), 2);
+}
+
+void AppSettingsTest::persistsSelectedRuntimeProvider() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::selectedRuntimeProviderChanged);
+
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
+
+    settings->setSelectedRuntimeProvider(QStringLiteral(" openai-compatible "));
+
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
+    QCOMPARE(spy.count(), 1);
+
+    settings->setSelectedRuntimeProvider(QStringLiteral("unknown-provider"));
+
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
     QCOMPARE(spy.count(), 2);
 }
 
@@ -400,6 +419,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
 
     {
         AppSettings settings{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
+        settings.setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
         settings.setSelectedLocalModel(QStringLiteral(" llama3.2 "));
         settings.setLocalChatInferenceEnabled(true);
         settings.setLocalInferenceStreamingEnabled(true);
@@ -416,6 +436,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
 
     AppSettings reloaded{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
 
+    QCOMPARE(reloaded.selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
     QCOMPARE(reloaded.selectedLocalModel(), QStringLiteral("llama3.2"));
     QVERIFY(reloaded.localChatInferenceEnabled());
     QVERIFY(reloaded.localInferenceStreamingEnabled());

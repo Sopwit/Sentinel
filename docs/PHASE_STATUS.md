@@ -2,6 +2,38 @@
 
 ## Completed / Stable
 
+### Phase 36.0-36.14: Runtime Orchestration And Provider Abstraction Foundation
+
+Completed. Adds a local-first runtime provider abstraction and registry foundation while
+preserving the existing Ollama execution path and keeping future cloud/API providers disabled.
+
+Scope:
+
+- Added value-only runtime provider descriptors for Local Ollama and a disabled
+  OpenAI-compatible placeholder.
+- Added deterministic runtime readiness states: ready, unavailable, invalidEndpoint,
+  missingModel, busy, disabled, incompatible, unauthorized, and unknown.
+- Added capability metadata for local-only posture, API-key requirement, offline support,
+  structured output, reasoning, function calling, images, audio, streaming, tools, vision, and
+  embeddings.
+- Added a runtime registry read model for selected provider, active provider, installed/configured
+  providers, available local runtimes, capability summaries, and validation traces.
+- Persisted selected runtime provider metadata and continued persisting local Ollama endpoint/model
+  metadata. API keys, secrets, provider transcripts, and hidden prompts are not persisted.
+- Settings now shows a Runtime section with provider selector, runtime cards, health/readiness,
+  local-only scope, endpoint, active model, capabilities, and disabled future-provider metadata.
+- Chat surfaces show active provider, active model, local-only scope, and readiness state.
+- Developer Mode exposes bounded provider registry/capability/readiness traces only.
+- Focused tests cover provider registry, readiness transitions, disabled-provider safety,
+  capability exposure, provider persistence, runtime selection behavior, and QML exposure.
+
+Known limitation:
+
+- Unsupported providers remain disabled placeholders. This phase does not add cloud execution,
+  API-key storage, automatic fallback routing, provider switching, background discovery, model
+  pulls, package installs, tool execution, agent planning, filesystem scanning, embeddings/vector
+  search, hidden retries, or autonomous behavior.
+
 ### Phase 35.0-35.10: Localization / i18n Foundation
 
 Completed. Adds a safe English/Turkish localization foundation for visible desktop UI text while

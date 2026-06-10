@@ -55,6 +55,7 @@ private slots:
     void exposesOrchestrationReadinessDiagnostics();
     void exposesAgentTaskRuntimeMetadata();
     void exposesLocalRuntimeMetadata();
+    void exposesRuntimeProviderRegistryMetadata();
     void exposesOllamaRuntimeBoundaryMetadata();
     void exposesDiscoveredModelSelectionMetadata();
     void exposesModelManagementReadinessMetadata();
@@ -529,6 +530,34 @@ void DesktopShellViewModelTest::exposesLocalRuntimeMetadata() {
     QVERIFY(fixture.viewModel.runtimeIntegrationReadinessChecks().contains(
         QStringLiteral("Pass: Endpoint Configuration - Safe local Ollama endpoint is configured "
                        "for loopback-only health checks.")));
+}
+
+void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy runtimeProviderSpy(&fixture.viewModel,
+                                  &DesktopShellViewModel::runtimeProviderRegistryChanged);
+
+    QCOMPARE(fixture.viewModel.selectedRuntimeProvider(), QStringLiteral("ollama"));
+    QCOMPARE(fixture.viewModel.activeRuntimeProviderId(), QStringLiteral("ollama"));
+    QCOMPARE(fixture.viewModel.activeRuntimeProviderLabel(), QStringLiteral("Local Ollama"));
+    QCOMPARE(fixture.viewModel.activeRuntimeReadinessState(), QStringLiteral("unavailable"));
+    QCOMPARE(fixture.viewModel.activeRuntimeLocalOnlySummary(), QStringLiteral("Local Only"));
+    QCOMPARE(fixture.viewModel.selectableRuntimeProviderIds(),
+             QStringList{QStringLiteral("ollama")});
+    QCOMPARE(fixture.viewModel.runtimeProviderCardSummaries().size(), 2);
+    QVERIFY(fixture.viewModel.runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("OpenAI-Compatible API")));
+    QVERIFY(fixture.viewModel.runtimeProviderCapabilitySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("requiresApiKey: yes")));
+    QVERIFY(fixture.viewModel.runtimeProviderValidationTraces().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("readiness=disabled")));
+
+    fixture.viewModel.setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
+
+    QCOMPARE(fixture.settings.selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
+    QCOMPARE(fixture.viewModel.selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
+    QCOMPARE(fixture.viewModel.activeRuntimeProviderId(), QStringLiteral("ollama"));
+    QCOMPARE(runtimeProviderSpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::exposesOllamaRuntimeBoundaryMetadata() {
@@ -1343,6 +1372,21 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("runtimeIntegrationReadinessStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeIntegrationReadinessSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("runtimeIntegrationReadinessChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("selectedRuntimeProvider"), QByteArrayLiteral("QString")},
+        {QStringLiteral("activeRuntimeProviderId"), QByteArrayLiteral("QString")},
+        {QStringLiteral("activeRuntimeProviderLabel"), QByteArrayLiteral("QString")},
+        {QStringLiteral("activeRuntimeModelLabel"), QByteArrayLiteral("QString")},
+        {QStringLiteral("activeRuntimeReadinessState"), QByteArrayLiteral("QString")},
+        {QStringLiteral("activeRuntimeReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("activeRuntimeLocalOnlySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectableRuntimeProviderIds"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("selectableRuntimeProviderLabels"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("runtimeProviderCardSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("runtimeProviderCapabilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("runtimeProviderValidationTraces"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("installedRuntimeProviderSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("configuredRuntimeProviderSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("availableLocalRuntimeSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("ollamaEndpoint"), QByteArrayLiteral("QString")},
         {QStringLiteral("ollamaConnectionStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("ollamaHealthStatus"), QByteArrayLiteral("QString")},
@@ -1589,6 +1633,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("developerModeEnabled"),
         QStringLiteral("piperFileOutputExecutionEnabled"),
         QStringLiteral("promptContextInjectionEnabled"),
+        QStringLiteral("selectedRuntimeProvider"),
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -2642,6 +2687,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QSignalSpy themeSpy(&fixture.viewModel, &DesktopShellViewModel::themeNameChanged);
     QSignalSpy profileSpy(&fixture.viewModel, &DesktopShellViewModel::configurationProfileChanged);
     QSignalSpy modelSpy(&fixture.viewModel, &DesktopShellViewModel::localModelSelectionChanged);
+    QSignalSpy runtimeProviderSpy(&fixture.viewModel,
+                                  &DesktopShellViewModel::runtimeProviderRegistryChanged);
     QSignalSpy chatRoutingSpy(&fixture.viewModel,
                               &DesktopShellViewModel::localChatInferenceRoutingChanged);
     QSignalSpy inferenceSpy(&fixture.viewModel, &DesktopShellViewModel::localInferenceChanged);
@@ -2654,6 +2701,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     fixture.viewModel.setThemeName(QStringLiteral("Sentinel Light"));
     fixture.viewModel.setConfigurationProfile(QStringLiteral("Phase 2 Shell"));
     fixture.viewModel.setSelectedLocalModel(QStringLiteral(" local-model "));
+    fixture.viewModel.setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
     fixture.viewModel.setLocalChatInferenceEnabled(true);
     fixture.viewModel.setLocalInferenceStreamingEnabled(true);
     fixture.viewModel.setPromptContextInjectionEnabled(true);
@@ -2664,6 +2712,9 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
     QCOMPARE(fixture.viewModel.selectedLocalModel(), QStringLiteral("local-model"));
     QCOMPARE(fixture.settings.selectedLocalModel(), QStringLiteral("local-model"));
+    QCOMPARE(fixture.viewModel.selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
+    QCOMPARE(fixture.settings.selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
+    QCOMPARE(fixture.viewModel.activeRuntimeProviderId(), QStringLiteral("ollama"));
     QVERIFY(fixture.viewModel.localChatInferenceEnabled());
     QVERIFY(fixture.settings.localChatInferenceEnabled());
     QVERIFY(fixture.viewModel.localInferenceStreamingEnabled());
@@ -2683,7 +2734,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(themeSpy.count(), 1);
     QCOMPARE(profileSpy.count(), 1);
     QCOMPARE(modelSpy.count(), 1);
-    QCOMPARE(chatRoutingSpy.count(), 2);
+    QVERIFY(runtimeProviderSpy.count() >= 1);
+    QCOMPARE(chatRoutingSpy.count(), 3);
     QCOMPARE(inferenceSpy.count(), 1);
     QCOMPARE(contextInjectionSpy.count(), 1);
     QCOMPARE(developerModeSpy.count(), 1);

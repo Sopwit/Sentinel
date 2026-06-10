@@ -93,6 +93,33 @@ release packaging through its native translation workflow.
 External API/cloud providers remain future opt-in integrations only. No cloud provider or API-key
 configuration is active in the current desktop runtime.
 
+## Runtime Provider Registry
+
+Phase 36 introduces a value-only runtime provider abstraction above the existing local Ollama
+health/model metadata and inference boundary.
+
+The current registry contains:
+
+- `ollama`: Local Ollama, the only enabled provider/runtime path.
+- `openai-compatible`: disabled placeholder metadata only.
+
+Runtime provider descriptors expose provider id, display name, runtime state, deterministic
+readiness state, validation state, endpoint/model summaries, installed/configured/enabled flags,
+model names, and capability metadata. Capability metadata includes local-only, API-key
+requirement, offline support, structured output, reasoning, function calling, images, audio,
+streaming, tools, vision, and embeddings.
+
+The registry can report selected provider, active provider, installed providers, configured
+providers, available local runtimes, capability summaries, and validation traces. Disabled
+provider selections fall back to the enabled local runtime as active provider metadata; they do
+not enable cloud execution or routing.
+
+This layer does not probe providers in the background, auto-discover runtimes, scan filesystems,
+download models, install packages, store API keys, route to cloud providers, execute tools, or
+switch providers automatically. Ollama health/model metadata remains the existing explicit
+loopback-only path, and local inference still requires the existing user opt-in, selected model,
+permission, safety, and busy-state gates.
+
 ## Local Ollama Chat Reliability
 
 The current active inference path is local Ollama only. `ApplicationController` owns the local chat

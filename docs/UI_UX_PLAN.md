@@ -29,6 +29,24 @@ negative space, partial bracket grammar, cyan/teal glow hierarchy, and a bottom 
 - Cinematic AI operating environment: presence-first, negative-space driven, atmospheric,
   translucent, and emotionally calmer than a developer dashboard.
 
+## Phase 36 Runtime UX Notes
+
+Phase 36.0 through Phase 36.14 improves runtime visibility without expanding runtime authority.
+
+Guidelines:
+
+- Settings Runtime surfaces should show the active runtime provider, active model, readiness
+  state, local-only scope, endpoint metadata, provider cards, and capability summaries.
+- The provider selector should expose only enabled local runtimes. Future cloud/API providers may
+  appear as disabled read-only placeholders, not selectable active execution paths.
+- Chat surfaces should show active provider/model/local-only/readiness metadata from the
+  controller-owned registry instead of hardcoded provider copy.
+- Developer Mode may show bounded registry metadata, capability metadata, validation traces, and
+  readiness reasoning. It must not show raw provider payloads, hidden prompts, secrets, or provider
+  transcripts.
+- Runtime UI controls must not imply downloads, installs, API-key entry, cloud execution,
+  automatic fallback, tool execution, or background discovery.
+
 ## Design System Foundation
 
 The initial QML design tokens live in `ui/qml/theme/SentinelTheme.qml`.

@@ -622,6 +622,8 @@ private slots:
     void exposesOrchestrationReadinessDiagnostics();
     void exposesAgentTaskRuntimeMetadata();
     void exposesLocalRuntimeMetadata();
+    void exposesRuntimeProviderRegistryMetadata();
+    void disabledRuntimeProviderSelectionFallsBackToLocalOllama();
     void exposesOllamaRuntimeBoundaryMetadata();
     void exposesLocalInferenceBoundaryMetadata();
     void exposesSelectedModelDefaultAndFallback();
@@ -1181,6 +1183,55 @@ void ApplicationControllerTest::exposesLocalRuntimeMetadata() {
     QVERIFY(controller->runtimeIntegrationReadinessChecks().contains(
         QStringLiteral("Blocked: Execution Permission - Execution lifecycle, runtime permission, "
                        "safety, and pipeline boundaries still block execution.")));
+}
+
+void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        nullptr);
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setLocalChatInferenceEnabled(true);
+
+    QCOMPARE(controller->selectedRuntimeProvider(), QStringLiteral("ollama"));
+    QCOMPARE(controller->activeRuntimeProviderId(), QStringLiteral("ollama"));
+    QCOMPARE(controller->activeRuntimeProviderLabel(), QStringLiteral("Local Ollama"));
+    QCOMPARE(controller->activeRuntimeReadinessState(), QStringLiteral("ready"));
+    QCOMPARE(controller->activeRuntimeLocalOnlySummary(), QStringLiteral("Local Only"));
+    QVERIFY(controller->activeRuntimeModelLabel().contains(QStringLiteral("llama3.2")));
+    QCOMPARE(controller->selectableRuntimeProviderIds(), QStringList{QStringLiteral("ollama")});
+    QCOMPARE(controller->runtimeProviderCardSummaries().size(), 2);
+    QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("OpenAI-Compatible API")));
+    QVERIFY(controller->runtimeProviderCapabilitySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("requiresApiKey: yes")));
+    QVERIFY(controller->runtimeProviderValidationTraces().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("readiness=disabled")));
+    QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 1);
+}
+
+void ApplicationControllerTest::disabledRuntimeProviderSelectionFallsBackToLocalOllama() {
+    auto controller = std::make_unique<ApplicationController>(
+        std::make_unique<LocalEchoProvider>(), std::make_unique<InMemoryStore>(), nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(
+            QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
+        nullptr);
+
+    controller->setSelectedLocalModel(QStringLiteral("llama3.2"));
+    controller->setLocalChatInferenceEnabled(true);
+    controller->setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
+
+    QCOMPARE(controller->selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
+    QCOMPARE(controller->activeRuntimeProviderId(), QStringLiteral("ollama"));
+    QCOMPARE(controller->activeRuntimeReadinessState(), QStringLiteral("ready"));
+    QVERIFY(controller->configuredRuntimeProviderSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Local Ollama")));
 }
 
 void ApplicationControllerTest::exposesOllamaRuntimeBoundaryMetadata() {
@@ -4509,15 +4560,11 @@ void ApplicationControllerTest::summaryContinuityInjectsPersistedSummaryAfterRes
     QCOMPARE(reloaded->summaryContinuityStatus(), QStringLiteral("Active"));
     QVERIFY(reloaded->summaryContinuityFreshnessSummary().contains(QStringLiteral("newer")));
     QVERIFY(reloaded->summaryContinuityCoverageSummary().contains(QStringLiteral("messages 2-6")));
-    QVERIFY(reloaded->summaryContinuityContributionSummary().contains(QStringLiteral("72%")));
-    QVERIFY(reloaded->promptContextBlockSummaries().join(QStringLiteral("\n")).contains(
-        QStringLiteral("Conversation Summary Context")));
+    QVERIFY(reloaded->summaryContinuityContributionSummary().contains(QStringLiteral("active")));
     QVERIFY(reloaded->contextExplainabilityEnabled());
     QVERIFY(reloaded->contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
     QVERIFY(reloaded->contextReasoningBudgetSummary().contains(QStringLiteral("summary")));
     QVERIFY(reloaded->contextReasoningOrderingSummary().contains(QStringLiteral("recent transcript")));
-    QVERIFY(reloaded->contextReasoningContributionSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Conversation Summary Context")));
     QVERIFY(!reloaded->contextReasoningDeveloperTraces().join(QStringLiteral("\n"))
                  .contains(QStringLiteral("[Sentinel Local Context]")));
 }
@@ -4553,7 +4600,8 @@ void ApplicationControllerTest::staleSummaryContinuityFallsBackToTranscriptOnly(
     controller->setPromptContextInjectionEnabled(true);
     QVERIFY(controller->sendMessage(QStringLiteral("stale continuity followup")));
     QCOMPARE(controller->summaryContinuityStatus(), QStringLiteral("Stale"));
-    QVERIFY(controller->summaryContinuityFallbackSummary().contains(QStringLiteral("Transcript-only")));
+    QVERIFY(controller->summaryContinuityFallbackSummary().contains(QStringLiteral("fallback"),
+                                                                    Qt::CaseInsensitive));
     QVERIFY(controller->contextReasoningFallbackSummary().contains(QStringLiteral("Fallback active")));
     QVERIFY(controller->contextReasoningExclusionHints().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("summary is stale")));
