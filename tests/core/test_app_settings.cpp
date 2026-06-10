@@ -30,6 +30,7 @@ private slots:
     void normalizesOllamaEndpoint();
     void persistsSelectedRuntimeProvider();
     void persistsSelectedLocalModel();
+    void persistsSelectedModelPerProvider();
     void persistsLocalChatInferenceOptIn();
     void persistsLocalInferenceStreamingOptIn();
     void persistsPromptContextInjectionOptIn();
@@ -255,6 +256,23 @@ void AppSettingsTest::persistsSelectedLocalModel() {
 
     settings->setSelectedLocalModel(QStringLiteral("llama3.2"));
     QCOMPARE(spy.count(), 1);
+}
+
+void AppSettingsTest::persistsSelectedModelPerProvider() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::selectedLocalModelChanged);
+
+    settings->setSelectedModelForProvider(QStringLiteral("ollama"),
+                                          QStringLiteral(" llama3.2 "));
+    settings->setSelectedModelForProvider(QStringLiteral("openai-compatible"),
+                                          QStringLiteral(" future-model "));
+
+    QCOMPARE(settings->selectedLocalModel(), QStringLiteral("llama3.2"));
+    QCOMPARE(settings->selectedModelForProvider(QStringLiteral("ollama")),
+             QStringLiteral("llama3.2"));
+    QCOMPARE(settings->selectedModelForProvider(QStringLiteral("openai-compatible")),
+             QStringLiteral("future-model"));
+    QCOMPARE(spy.count(), 2);
 }
 
 void AppSettingsTest::persistsLocalChatInferenceOptIn() {

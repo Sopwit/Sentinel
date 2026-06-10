@@ -259,6 +259,14 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QString activeLocalRuntimeBadge READ activeLocalRuntimeBadge NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(QString modelRegistryStatus READ modelRegistryStatus NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QString modelRegistrySummary READ modelRegistrySummary NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QStringList modelRegistryModelSummaries READ modelRegistryModelSummaries NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QStringList selectedModelCapabilityLabels READ selectedModelCapabilityLabels NOTIFY
+                   localModelSelectionChanged)
     Q_PROPERTY(
         QString modelManagementStatus READ modelManagementStatus NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QString modelManagementSummary READ modelManagementSummary NOTIFY
@@ -1269,6 +1277,10 @@ public:
     QString selectedLocalModelSummary() const;
     QString selectedLocalModelMetadataSummary() const;
     QString activeLocalRuntimeBadge() const;
+    QString modelRegistryStatus() const;
+    QString modelRegistrySummary() const;
+    QStringList modelRegistryModelSummaries() const;
+    QStringList selectedModelCapabilityLabels() const;
     QString modelManagementStatus() const;
     QString modelManagementSummary() const;
     QString modelManagementActionAvailability() const;

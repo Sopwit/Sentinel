@@ -47,6 +47,23 @@ Guidelines:
 - Runtime UI controls must not imply downloads, installs, API-key entry, cloud execution,
   automatic fallback, tool execution, or background discovery.
 
+## Phase 37 Model Registry UX Notes
+
+Phase 37.0 through Phase 37.12 adds model metadata visibility without adding model management
+authority.
+
+Guidelines:
+
+- Settings should keep model selection compact: provider, selected model, readiness, local-only
+  scope, and capability chips only when model metadata exists.
+- Normal Home and AI Bridge surfaces should show concise provider/model readiness while keeping
+  chat and the conversation list primary.
+- Developer Mode may show bounded model registry summaries on Settings, Runtime/Memory, and
+  Agents. Normal mode should not expose model internals.
+- Recommendation blocks and model management controls should not appear in normal UI.
+- Pull/install/delete/refresh/import/export affordances, if shown later, must be clearly labeled
+  unavailable or future-scoped and must not execute.
+
 ## Design System Foundation
 
 The initial QML design tokens live in `ui/qml/theme/SentinelTheme.qml`.

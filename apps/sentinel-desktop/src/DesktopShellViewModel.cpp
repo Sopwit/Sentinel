@@ -94,9 +94,14 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::routingModeNameChanged, this,
             &DesktopShellViewModel::modelRoutingChanged);
     connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this,
-            [this]() { controller_.setSelectedLocalModel(settings_.selectedLocalModel()); });
+            [this]() {
+                controller_.setSelectedLocalModel(
+                    settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
+            });
     connect(&settings_, &core::AppSettings::selectedRuntimeProviderChanged, this, [this]() {
         controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
+        controller_.setSelectedLocalModel(
+            settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
     });
     connect(&settings_, &core::AppSettings::localChatInferenceEnabledChanged, this, [this]() {
         controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
@@ -121,8 +126,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::piperFileOutputExecutionEnabledChanged, this, [this]() {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     });
-    controller_.setSelectedLocalModel(settings_.selectedLocalModel());
     controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
+    controller_.setSelectedLocalModel(
+        settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
     controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
@@ -743,6 +749,10 @@ void DesktopShellViewModel::setSelectedRuntimeProvider(const QString& providerId
     if (controller_.selectedRuntimeProvider() != settings_.selectedRuntimeProvider()) {
         controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
     }
+    const auto providerModel = settings_.selectedModelForProvider(settings_.selectedRuntimeProvider());
+    if (controller_.selectedLocalModel() != providerModel) {
+        controller_.setSelectedLocalModel(providerModel);
+    }
 }
 
 QString DesktopShellViewModel::activeRuntimeProviderId() const {
@@ -834,9 +844,10 @@ QString DesktopShellViewModel::selectedLocalModel() const {
 }
 
 void DesktopShellViewModel::setSelectedLocalModel(const QString& model) {
-    settings_.setSelectedLocalModel(model);
-    if (controller_.selectedLocalModel() != settings_.selectedLocalModel()) {
-        controller_.setSelectedLocalModel(settings_.selectedLocalModel());
+    settings_.setSelectedModelForProvider(settings_.selectedRuntimeProvider(), model);
+    const auto providerModel = settings_.selectedModelForProvider(settings_.selectedRuntimeProvider());
+    if (controller_.selectedLocalModel() != providerModel) {
+        controller_.setSelectedLocalModel(providerModel);
     }
 }
 
@@ -854,6 +865,22 @@ QString DesktopShellViewModel::selectedLocalModelMetadataSummary() const {
 
 QString DesktopShellViewModel::activeLocalRuntimeBadge() const {
     return controller_.activeLocalRuntimeBadge();
+}
+
+QString DesktopShellViewModel::modelRegistryStatus() const {
+    return controller_.modelRegistryStatus();
+}
+
+QString DesktopShellViewModel::modelRegistrySummary() const {
+    return controller_.modelRegistrySummary();
+}
+
+QStringList DesktopShellViewModel::modelRegistryModelSummaries() const {
+    return controller_.modelRegistryModelSummaries();
+}
+
+QStringList DesktopShellViewModel::selectedModelCapabilityLabels() const {
+    return controller_.selectedModelCapabilityLabels();
 }
 
 QString DesktopShellViewModel::modelManagementStatus() const {

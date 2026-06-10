@@ -97,7 +97,9 @@ ShellPanel {
 
             StatusChip {
                 label: qsTr("Model")
-                value: homeChat.viewModel.activeRuntimeModelLabel
+                value: homeChat.viewModel.selectedLocalModel.length > 0
+                       ? homeChat.viewModel.selectedLocalModel
+                       : qsTr("No model")
                 accent: SentinelTheme.accentTertiary
                 muted: homeChat.viewModel.selectedLocalModelStatus !== "Available"
             }

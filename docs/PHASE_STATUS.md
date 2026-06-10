@@ -2,6 +2,35 @@
 
 ## Completed / Stable
 
+### Phase 37.0-37.12: Model Registry And Model Management Foundation
+
+Completed. Adds a deterministic, local-first model metadata layer above runtime providers without
+adding downloads, cloud calls, filesystem scans, model file inspection, hidden execution, or model
+management side effects.
+
+Scope:
+
+- Added value-only model registry records for provider id, raw name, display name, family, format,
+  size class, source, disk/RAM/context metadata, capabilities, readiness, status, restrictions,
+  safety report, runtime badge, registry status, and registry summary.
+- Mapped existing read-only Ollama discovery metadata into local `ModelRegistry` entries. Unknown
+  RAM/context/model-specific capabilities remain unknown; disk size is populated only from Ollama
+  `/api/tags` metadata when available.
+- Persisted selected model values per provider while preserving the existing Ollama
+  `selectedLocalModel` setting for compatibility.
+- Tightened chat send validation so accepted sends require Local Ollama as the selected provider,
+  local chat enabled, loopback endpoint readiness, reachable Ollama health, selected model present
+  in discovered local metadata, active unarchived conversation, and no active request.
+- Settings now uses a compact model picker with provider, readiness, local-only scope, and
+  capability chips. Developer Mode may show bounded model registry summaries.
+- Model management placeholders remain unavailable for pull/install/delete/refresh/import/export.
+
+Known limitation:
+
+- The registry is metadata only. It does not install, pull, delete, refresh, import, export, scan
+  filesystems, inspect model files, infer remote capabilities, call cloud providers, or enable
+  disabled providers.
+
 ### Phase 36.0-36.14: Runtime Orchestration And Provider Abstraction Foundation
 
 Completed. Adds a local-first runtime provider abstraction and registry foundation while

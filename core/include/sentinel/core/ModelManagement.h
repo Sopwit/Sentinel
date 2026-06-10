@@ -12,6 +12,9 @@ enum class ModelManagementAction : std::uint8_t {
     Pull,
     Delete,
     Install,
+    Refresh,
+    Import,
+    Export,
 };
 
 QString modelManagementActionName(ModelManagementAction action);

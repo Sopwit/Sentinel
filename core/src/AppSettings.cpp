@@ -142,17 +142,51 @@ void AppSettings::setSelectedRuntimeProvider(const QString& providerId) {
 }
 
 QString AppSettings::selectedLocalModel() const {
-    return store_ ? store_->value(QString::fromLatin1(selectedLocalModelKey), {}).trimmed()
-                  : QString();
+    return selectedModelForProvider(QStringLiteral("ollama"));
 }
 
 void AppSettings::setSelectedLocalModel(const QString& model) {
-    const auto normalized = model.trimmed();
-    if (normalized == selectedLocalModel() || !store_) {
+    setSelectedModelForProvider(QStringLiteral("ollama"), model);
+}
+
+QString AppSettings::selectedModelForProvider(const QString& providerId) const {
+    if (!store_) {
+        return {};
+    }
+
+    const auto normalizedProvider = providerId.trimmed().toLower();
+    if (normalizedProvider.isEmpty()) {
+        return {};
+    }
+
+    const auto providerKey =
+        QString::fromLatin1(selectedProviderModelKeyPrefix) + normalizedProvider;
+    const auto fallback = normalizedProvider == QStringLiteral("ollama")
+                              ? store_->value(QString::fromLatin1(selectedLocalModelKey), {})
+                              : QString();
+    return store_->value(providerKey, fallback).trimmed();
+}
+
+void AppSettings::setSelectedModelForProvider(const QString& providerId, const QString& model) {
+    if (!store_) {
         return;
     }
 
-    store_->setValue(QString::fromLatin1(selectedLocalModelKey), normalized);
+    const auto normalizedProvider = providerId.trimmed().toLower();
+    if (normalizedProvider.isEmpty()) {
+        return;
+    }
+
+    const auto normalized = model.trimmed();
+    if (normalized == selectedModelForProvider(normalizedProvider)) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(selectedProviderModelKeyPrefix) + normalizedProvider,
+                     normalized);
+    if (normalizedProvider == QStringLiteral("ollama")) {
+        store_->setValue(QString::fromLatin1(selectedLocalModelKey), normalized);
+    }
     emit selectedLocalModelChanged();
 }
 

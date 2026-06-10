@@ -53,6 +53,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/MemoryRecall.h
     include/sentinel/core/ModeManager.h
     include/sentinel/core/ModelManagement.h
+    include/sentinel/core/ModelRegistry.h
     include/sentinel/core/ModelRouting.h
     include/sentinel/core/NullAgentRuntime.h
     include/sentinel/core/NullToolExecutor.h
@@ -115,6 +116,7 @@ add_library(sentinel_core STATIC
     src/MemoryCandidate.cpp
     src/MemoryRecall.cpp
     src/ModelManagement.cpp
+    src/ModelRegistry.cpp
     src/NullAgentRuntime.cpp
     src/NullToolExecutor.cpp
     src/OllamaRuntime.cpp

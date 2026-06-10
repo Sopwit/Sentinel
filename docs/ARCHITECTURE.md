@@ -120,6 +120,31 @@ switch providers automatically. Ollama health/model metadata remains the existin
 loopback-only path, and local inference still requires the existing user opt-in, selected model,
 permission, safety, and busy-state gates.
 
+## Model Registry
+
+Phase 37 introduces a value-only model registry above provider/runtime metadata. The registry maps
+existing read-only Ollama discovery results into deterministic local model records and exposes only
+QML-safe summaries through `ApplicationController` and `DesktopShellViewModel`.
+
+Model records include provider id, raw model name, display name, family, format, size class, source
+scope, approximate disk size when Ollama reports it, approximate RAM class, context length,
+capability labels, readiness, status, restrictions, safety report, and runtime badge metadata.
+Unknown values remain unknown rather than being inferred from remote APIs or model files.
+
+Selected model persistence is provider-aware. Ollama continues to use the existing
+`selectedLocalModel` setting for compatibility, and provider-specific values are stored separately
+for future providers. Disabled providers may expose placeholder model metadata only; selecting one
+does not enable execution or cloud/API calls.
+
+Send validation now refuses before transcript mutation unless the selected provider is Local
+Ollama, local chat inference is enabled, the endpoint is loopback HTTP and reachable, the selected
+model exists in discovered local Ollama metadata, the active conversation is not archived, and no
+request is already active.
+
+The registry does not pull, install, delete, refresh, import, export, scan filesystems, inspect
+model files, call cloud providers, infer hidden capabilities, execute tools, or start background
+discovery.
+
 ## Local Ollama Chat Reliability
 
 The current active inference path is local Ollama only. `ApplicationController` owns the local chat

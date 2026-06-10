@@ -90,6 +90,29 @@ Out of scope:
   provider auto-discovery, filesystem scanning, embeddings/vector search, tool execution, agent
   planning, hidden retries, and automatic provider switching.
 
+## 5.2 Model Registry Boundary
+
+Decision: Model metadata is represented by a deterministic value-only `ModelRegistry`.
+
+Reason: Sentinel needs to display, validate, and persist model choices across providers without
+granting model management or execution authority.
+
+Runtime behavior:
+
+- Ollama model entries are built only from existing local Ollama discovery metadata.
+- Unknown RAM, context, and model-specific capabilities remain unknown.
+- Selected model values are persisted per provider; Ollama keeps the existing selected local model
+  setting for compatibility.
+- Disabled/future providers may expose placeholder model metadata only.
+- Send validation refuses before transcript mutation unless the selected provider is Local
+  Ollama, the selected local model is present in discovered metadata, Ollama is reachable through
+  loopback HTTP, the active conversation is unarchived, and no request is active.
+
+Out of scope:
+
+- Pulling, installing, deleting, refreshing, importing, exporting, filesystem scanning, model file
+  inspection, cloud/API capability lookup, automatic fallback routing, and hidden model execution.
+
 ## 6. Memory Persistence Boundary
 
 Decision: Memory storage is hidden behind `IMemoryStore`.
