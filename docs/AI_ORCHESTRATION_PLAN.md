@@ -1,5 +1,19 @@
 # AI Orchestration Plan
 
+Phase 36.0 through Phase 36.14 adds a runtime orchestration and provider abstraction foundation.
+`RuntimeProviderDescriptor`, `RuntimeCapabilitySet`, `RuntimeReadinessState`,
+`LocalRuntimeProvider`, `OllamaRuntimeProvider`, `OpenAICompatibleRuntimeProvider`, and
+`RuntimeProviderRegistry` describe provider identity, runtime state, readiness, model metadata,
+capabilities, installed/configured/enabled state, validation traces, and active provider
+selection. Local Ollama remains the only enabled provider/runtime path. OpenAI-compatible/API
+providers are disabled placeholders only. Settings persists selected provider metadata plus
+existing local endpoint/model metadata, but no API keys, secrets, transcripts, or hidden prompts.
+Chat and Settings show active provider/model/local-only/readiness metadata from the registry, and
+Developer Mode may show bounded registry/capability/readiness traces. The phase adds no cloud
+execution, automatic fallback routing, background workers, model pulls/downloads, provider
+auto-discovery daemons, filesystem scanning, embeddings/vector search, tool execution, agent
+planning, hidden retries, autonomous behavior, or automatic provider switching.
+
 Phase 33.0 through Phase 33.12 adds context observability and explainability UX over the existing
 deterministic context path. `ContextDecisionReason`, `ContextDecisionTrace`,
 `ContextDecisionBudget`, `ContextDecisionContribution`, `ContextDecisionFallback`,

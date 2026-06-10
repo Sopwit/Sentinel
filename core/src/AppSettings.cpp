@@ -114,6 +114,33 @@ void AppSettings::setOllamaEndpoint(const QString& endpoint) {
     emit ollamaEndpointChanged();
 }
 
+QString AppSettings::selectedRuntimeProvider() const {
+    const auto fallback = QString::fromLatin1(defaultSelectedRuntimeProvider);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(selectedRuntimeProviderKey),
+                                               fallback)
+                               : fallback;
+    const auto normalized = stored.trimmed().toLower();
+    if (normalized == QStringLiteral("ollama") ||
+        normalized == QStringLiteral("openai-compatible")) {
+        return normalized;
+    }
+    return fallback;
+}
+
+void AppSettings::setSelectedRuntimeProvider(const QString& providerId) {
+    const auto normalized = providerId.trimmed().toLower();
+    const auto selected = (normalized == QStringLiteral("ollama") ||
+                           normalized == QStringLiteral("openai-compatible"))
+                              ? normalized
+                              : QString::fromLatin1(defaultSelectedRuntimeProvider);
+    if (selected == selectedRuntimeProvider() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(selectedRuntimeProviderKey), selected);
+    emit selectedRuntimeProviderChanged();
+}
+
 QString AppSettings::selectedLocalModel() const {
     return store_ ? store_->value(QString::fromLatin1(selectedLocalModelKey), {}).trimmed()
                   : QString();

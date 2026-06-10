@@ -38,6 +38,7 @@
 #include "sentinel/core/RuntimeIntegration.h"
 #include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/RuntimePipeline.h"
+#include "sentinel/core/RuntimeProvider.h"
 #include "sentinel/core/RuntimeSafety.h"
 #include "sentinel/core/SemanticRetrieval.h"
 #include "sentinel/core/Voice.h"
@@ -245,6 +246,36 @@ class ApplicationController final : public QObject {
         QString runtimeIntegrationReadinessSummary READ runtimeIntegrationReadinessSummary CONSTANT)
     Q_PROPERTY(QStringList runtimeIntegrationReadinessChecks READ runtimeIntegrationReadinessChecks
                    CONSTANT)
+    Q_PROPERTY(QString selectedRuntimeProvider READ selectedRuntimeProvider WRITE
+                   setSelectedRuntimeProvider NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString activeRuntimeProviderId READ activeRuntimeProviderId NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString activeRuntimeProviderLabel READ activeRuntimeProviderLabel NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString activeRuntimeModelLabel READ activeRuntimeModelLabel NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString activeRuntimeReadinessState READ activeRuntimeReadinessState NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString activeRuntimeReadinessSummary READ activeRuntimeReadinessSummary NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString activeRuntimeLocalOnlySummary READ activeRuntimeLocalOnlySummary NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList selectableRuntimeProviderIds READ selectableRuntimeProviderIds NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList selectableRuntimeProviderLabels READ selectableRuntimeProviderLabels
+                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList runtimeProviderCardSummaries READ runtimeProviderCardSummaries NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList runtimeProviderCapabilitySummaries READ
+                   runtimeProviderCapabilitySummaries NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList runtimeProviderValidationTraces READ runtimeProviderValidationTraces
+                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList installedRuntimeProviderSummaries READ installedRuntimeProviderSummaries
+                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList configuredRuntimeProviderSummaries READ
+                   configuredRuntimeProviderSummaries NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList availableLocalRuntimeSummaries READ availableLocalRuntimeSummaries
+                   NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint CONSTANT)
     Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus CONSTANT)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus CONSTANT)
@@ -1137,6 +1168,22 @@ public:
     QString runtimeIntegrationReadinessStatus() const;
     QString runtimeIntegrationReadinessSummary() const;
     QStringList runtimeIntegrationReadinessChecks() const;
+    QString selectedRuntimeProvider() const;
+    void setSelectedRuntimeProvider(const QString& providerId);
+    QString activeRuntimeProviderId() const;
+    QString activeRuntimeProviderLabel() const;
+    QString activeRuntimeModelLabel() const;
+    QString activeRuntimeReadinessState() const;
+    QString activeRuntimeReadinessSummary() const;
+    QString activeRuntimeLocalOnlySummary() const;
+    QStringList selectableRuntimeProviderIds() const;
+    QStringList selectableRuntimeProviderLabels() const;
+    QStringList runtimeProviderCardSummaries() const;
+    QStringList runtimeProviderCapabilitySummaries() const;
+    QStringList runtimeProviderValidationTraces() const;
+    QStringList installedRuntimeProviderSummaries() const;
+    QStringList configuredRuntimeProviderSummaries() const;
+    QStringList availableLocalRuntimeSummaries() const;
     QString ollamaEndpoint() const;
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
@@ -1732,6 +1779,7 @@ signals:
     void modelRoutingChanged();
     void taskPlanChanged();
     void orchestrationSnapshotChanged();
+    void runtimeProviderRegistryChanged();
     void localModelSelectionChanged();
     void localChatInferenceRoutingChanged();
     void localInferenceChanged();
@@ -1757,6 +1805,7 @@ private:
     ProviderRuntimeBridgeRequest providerRuntimeBridgeRequest() const;
     ProviderRuntimeBridgeResponse currentProviderRuntimeBridgeResponse() const;
     RuntimeIntegrationReport currentRuntimeIntegrationReport() const;
+    RuntimeProviderRegistry currentRuntimeProviderRegistry() const;
     OllamaHealthCheckResult currentOllamaHealthCheck() const;
     QList<OllamaModelSummary> currentOllamaModels() const;
     QString effectiveLocalModel(const QString& requestedModel) const;
@@ -1919,6 +1968,7 @@ private:
     StaticConversationStateGraph conversationStateGraph_;
     AgentActivityLog agentActivityLog_;
     QString selectedLocalModel_;
+    QString selectedRuntimeProvider_ = QStringLiteral("ollama");
     bool localChatInferenceEnabled_ = false;
     bool promptContextInjectionEnabled_ = false;
     bool localInferenceStreamingEnabled_ = false;

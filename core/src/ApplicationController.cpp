@@ -1636,6 +1636,98 @@ QStringList ApplicationController::runtimeIntegrationReadinessChecks() const {
         currentRuntimeIntegrationReport().checks);
 }
 
+QString ApplicationController::selectedRuntimeProvider() const {
+    return selectedRuntimeProvider_;
+}
+
+void ApplicationController::setSelectedRuntimeProvider(const QString& providerId) {
+    const auto normalized = providerId.trimmed().toLower();
+    const auto selected = (normalized == QStringLiteral("ollama") ||
+                           normalized == QStringLiteral("openai-compatible"))
+                              ? normalized
+                              : QStringLiteral("ollama");
+    if (selected == selectedRuntimeProvider_) {
+        return;
+    }
+
+    selectedRuntimeProvider_ = selected;
+    emit runtimeProviderRegistryChanged();
+    emit localChatInferenceRoutingChanged();
+}
+
+QString ApplicationController::activeRuntimeProviderId() const {
+    return currentRuntimeProviderRegistry().activeProviderId();
+}
+
+QString ApplicationController::activeRuntimeProviderLabel() const {
+    return currentRuntimeProviderRegistry().activeProviderDisplayName();
+}
+
+QString ApplicationController::activeRuntimeModelLabel() const {
+    return currentRuntimeProviderRegistry().activeModelLabel();
+}
+
+QString ApplicationController::activeRuntimeReadinessState() const {
+    return currentRuntimeProviderRegistry().activeReadinessState();
+}
+
+QString ApplicationController::activeRuntimeReadinessSummary() const {
+    return currentRuntimeProviderRegistry().activeReadinessSummary();
+}
+
+QString ApplicationController::activeRuntimeLocalOnlySummary() const {
+    return currentRuntimeProviderRegistry().activeLocalOnlySummary();
+}
+
+QStringList ApplicationController::selectableRuntimeProviderIds() const {
+    QStringList ids;
+    for (const auto& provider : currentRuntimeProviderRegistry().providers()) {
+        if (provider.enabled) {
+            ids.append(provider.providerId);
+        }
+    }
+    return ids;
+}
+
+QStringList ApplicationController::selectableRuntimeProviderLabels() const {
+    QStringList labels;
+    for (const auto& provider : currentRuntimeProviderRegistry().providers()) {
+        if (provider.enabled) {
+            labels.append(provider.displayName);
+        }
+    }
+    return labels;
+}
+
+QStringList ApplicationController::runtimeProviderCardSummaries() const {
+    QStringList summaries;
+    for (const auto& provider : currentRuntimeProviderRegistry().providers()) {
+        summaries.append(runtimeProviderCardSummary(provider));
+    }
+    return summaries;
+}
+
+QStringList ApplicationController::runtimeProviderCapabilitySummaries() const {
+    return sentinel::core::runtimeProviderCapabilitySummaries(
+        currentRuntimeProviderRegistry().providers());
+}
+
+QStringList ApplicationController::runtimeProviderValidationTraces() const {
+    return currentRuntimeProviderRegistry().validationTraceSummaries();
+}
+
+QStringList ApplicationController::installedRuntimeProviderSummaries() const {
+    return currentRuntimeProviderRegistry().installedProviderSummaries();
+}
+
+QStringList ApplicationController::configuredRuntimeProviderSummaries() const {
+    return currentRuntimeProviderRegistry().configuredProviderSummaries();
+}
+
+QStringList ApplicationController::availableLocalRuntimeSummaries() const {
+    return currentRuntimeProviderRegistry().availableLocalRuntimeSummaries();
+}
+
 QString ApplicationController::ollamaEndpoint() const {
     return ollamaRuntimeClient_ ? ollamaRuntimeClient_->config().endpoint.toString()
                                 : OllamaEndpoint::defaultEndpoint().toString();
@@ -1682,6 +1774,7 @@ void ApplicationController::setSelectedLocalModel(const QString& model) {
 
     selectedLocalModel_ = normalized;
     emit localModelSelectionChanged();
+    emit runtimeProviderRegistryChanged();
     emit localChatInferenceRoutingChanged();
 }
 
@@ -2706,6 +2799,7 @@ void ApplicationController::setLocalChatInferenceEnabled(bool enabled) {
     }
 
     localChatInferenceEnabled_ = enabled;
+    emit runtimeProviderRegistryChanged();
     emit localChatInferenceRoutingChanged();
 }
 
@@ -8020,6 +8114,20 @@ RuntimeIntegrationReport ApplicationController::currentRuntimeIntegrationReport(
                                     "health/discovery metadata is available, but provider bridge "
                                     "execution and inference remain disabled.");
     return report;
+}
+
+RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() const {
+    const auto health = currentOllamaHealthCheck();
+    const auto models = currentOllamaModels();
+    const OllamaRuntimeProvider ollamaProvider{
+        ollamaEndpoint(), health, models, selectedLocalModel_, localChatInferenceEnabled_,
+        localInferenceBusy_};
+    const OpenAICompatibleRuntimeProvider openAiCompatibleProvider;
+
+    return RuntimeProviderRegistry{
+        {ollamaProvider.descriptor(), openAiCompatibleProvider.descriptor()},
+        selectedRuntimeProvider_,
+    };
 }
 
 OllamaHealthCheckResult ApplicationController::currentOllamaHealthCheck() const {

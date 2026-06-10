@@ -65,6 +65,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::taskPlanChanged);
     connect(&controller_, &core::ApplicationController::orchestrationSnapshotChanged, this,
             &DesktopShellViewModel::orchestrationSnapshotChanged);
+    connect(&controller_, &core::ApplicationController::runtimeProviderRegistryChanged, this,
+            &DesktopShellViewModel::runtimeProviderRegistryChanged);
     connect(&controller_, &core::ApplicationController::localModelSelectionChanged, this,
             &DesktopShellViewModel::localModelSelectionChanged);
     connect(&controller_, &core::ApplicationController::localChatInferenceRoutingChanged, this,
@@ -93,6 +95,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::modelRoutingChanged);
     connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this,
             [this]() { controller_.setSelectedLocalModel(settings_.selectedLocalModel()); });
+    connect(&settings_, &core::AppSettings::selectedRuntimeProviderChanged, this, [this]() {
+        controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
+    });
     connect(&settings_, &core::AppSettings::localChatInferenceEnabledChanged, this, [this]() {
         controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     });
@@ -117,6 +122,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     });
     controller_.setSelectedLocalModel(settings_.selectedLocalModel());
+    controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
     controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
@@ -726,6 +732,73 @@ QString DesktopShellViewModel::runtimeIntegrationReadinessSummary() const {
 
 QStringList DesktopShellViewModel::runtimeIntegrationReadinessChecks() const {
     return controller_.runtimeIntegrationReadinessChecks();
+}
+
+QString DesktopShellViewModel::selectedRuntimeProvider() const {
+    return settings_.selectedRuntimeProvider();
+}
+
+void DesktopShellViewModel::setSelectedRuntimeProvider(const QString& providerId) {
+    settings_.setSelectedRuntimeProvider(providerId);
+    if (controller_.selectedRuntimeProvider() != settings_.selectedRuntimeProvider()) {
+        controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
+    }
+}
+
+QString DesktopShellViewModel::activeRuntimeProviderId() const {
+    return controller_.activeRuntimeProviderId();
+}
+
+QString DesktopShellViewModel::activeRuntimeProviderLabel() const {
+    return controller_.activeRuntimeProviderLabel();
+}
+
+QString DesktopShellViewModel::activeRuntimeModelLabel() const {
+    return controller_.activeRuntimeModelLabel();
+}
+
+QString DesktopShellViewModel::activeRuntimeReadinessState() const {
+    return controller_.activeRuntimeReadinessState();
+}
+
+QString DesktopShellViewModel::activeRuntimeReadinessSummary() const {
+    return controller_.activeRuntimeReadinessSummary();
+}
+
+QString DesktopShellViewModel::activeRuntimeLocalOnlySummary() const {
+    return controller_.activeRuntimeLocalOnlySummary();
+}
+
+QStringList DesktopShellViewModel::selectableRuntimeProviderIds() const {
+    return controller_.selectableRuntimeProviderIds();
+}
+
+QStringList DesktopShellViewModel::selectableRuntimeProviderLabels() const {
+    return controller_.selectableRuntimeProviderLabels();
+}
+
+QStringList DesktopShellViewModel::runtimeProviderCardSummaries() const {
+    return controller_.runtimeProviderCardSummaries();
+}
+
+QStringList DesktopShellViewModel::runtimeProviderCapabilitySummaries() const {
+    return controller_.runtimeProviderCapabilitySummaries();
+}
+
+QStringList DesktopShellViewModel::runtimeProviderValidationTraces() const {
+    return controller_.runtimeProviderValidationTraces();
+}
+
+QStringList DesktopShellViewModel::installedRuntimeProviderSummaries() const {
+    return controller_.installedRuntimeProviderSummaries();
+}
+
+QStringList DesktopShellViewModel::configuredRuntimeProviderSummaries() const {
+    return controller_.configuredRuntimeProviderSummaries();
+}
+
+QStringList DesktopShellViewModel::availableLocalRuntimeSummaries() const {
+    return controller_.availableLocalRuntimeSummaries();
 }
 
 QString DesktopShellViewModel::ollamaEndpoint() const {

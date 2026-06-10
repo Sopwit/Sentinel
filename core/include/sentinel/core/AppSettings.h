@@ -20,6 +20,8 @@ class AppSettings final : public QObject {
                    routingModeNameChanged)
     Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint WRITE setOllamaEndpoint NOTIFY
                    ollamaEndpointChanged)
+    Q_PROPERTY(QString selectedRuntimeProvider READ selectedRuntimeProvider WRITE
+                   setSelectedRuntimeProvider NOTIFY selectedRuntimeProviderChanged)
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    selectedLocalModelChanged)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
@@ -67,6 +69,8 @@ public:
 
     QString ollamaEndpoint() const;
     void setOllamaEndpoint(const QString& endpoint);
+    QString selectedRuntimeProvider() const;
+    void setSelectedRuntimeProvider(const QString& providerId);
 
     QString selectedLocalModel() const;
     void setSelectedLocalModel(const QString& model);
@@ -102,6 +106,7 @@ signals:
     void appLanguageChanged();
     void routingModeNameChanged();
     void ollamaEndpointChanged();
+    void selectedRuntimeProviderChanged();
     void selectedLocalModelChanged();
     void localChatInferenceEnabledChanged();
     void localInferenceStreamingEnabledChanged();
@@ -122,6 +127,7 @@ private:
     static constexpr auto appLanguageKey = "appLanguage";
     static constexpr auto routingModeKey = "routingMode";
     static constexpr auto ollamaEndpointKey = "ollamaEndpoint";
+    static constexpr auto selectedRuntimeProviderKey = "selectedRuntimeProvider";
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";
     static constexpr auto localChatInferenceEnabledKey = "localChatInferenceEnabled";
     static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
@@ -138,6 +144,7 @@ private:
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "system";
+    static constexpr auto defaultSelectedRuntimeProvider = "ollama";
 
     std::unique_ptr<ISettingsStore> store_;
 };

@@ -65,6 +65,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/RuntimeIntegration.h
     include/sentinel/core/RuntimePermissions.h
     include/sentinel/core/RuntimePipeline.h
+    include/sentinel/core/RuntimeProvider.h
     include/sentinel/core/RuntimeSafety.h
     include/sentinel/core/SemanticRetrieval.h
     include/sentinel/core/SQLiteChatHistoryStore.h
@@ -123,6 +124,7 @@ add_library(sentinel_core STATIC
     src/RuntimeIntegration.cpp
     src/RuntimePermissions.cpp
     src/RuntimePipeline.cpp
+    src/RuntimeProvider.cpp
     src/RuntimeSafety.cpp
     src/SemanticRetrieval.cpp
     src/SQLiteChatHistoryStore.cpp

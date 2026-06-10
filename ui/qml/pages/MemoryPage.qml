@@ -260,6 +260,30 @@ ScrollView {
                         Layout.fillWidth: true
                     }
 
+                    Repeater {
+                        model: memoryPage.viewModel.runtimeProviderValidationTraces
+
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Runtime Provider"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
+                        model: memoryPage.viewModel.runtimeProviderCapabilitySummaries
+
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Runtime Capability"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
                     GridLayout {
                         Layout.fillWidth: true
                         columns: memoryPage.compact ? 1 : 2

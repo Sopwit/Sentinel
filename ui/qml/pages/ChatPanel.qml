@@ -148,7 +148,21 @@ ShellPanel {
 
             StatusChip {
                 label: qsTr("Provider")
-                value: qsTr("Local Ollama")
+                value: chatPanel.viewModel.activeRuntimeProviderLabel
+                accent: chatPanel.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
+                muted: !chatPanel.chatReady
+            }
+
+            StatusChip {
+                label: qsTr("Model")
+                value: chatPanel.viewModel.activeRuntimeModelLabel
+                accent: SentinelTheme.accentTertiary
+                muted: chatPanel.viewModel.selectedLocalModelStatus !== "Available"
+            }
+
+            StatusChip {
+                label: qsTr("Runtime")
+                value: chatPanel.viewModel.activeRuntimeReadinessState
                 accent: chatPanel.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
                 muted: !chatPanel.chatReady
             }

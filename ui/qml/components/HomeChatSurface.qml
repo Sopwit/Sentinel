@@ -85,7 +85,33 @@ ShellPanel {
 
             StatusChip {
                 label: qsTr("Provider")
-                value: qsTr("local")
+                value: homeChat.viewModel.activeRuntimeProviderLabel
+                accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
+                muted: !homeChat.chatReady
+            }
+        }
+
+        Flow {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            StatusChip {
+                label: qsTr("Model")
+                value: homeChat.viewModel.activeRuntimeModelLabel
+                accent: SentinelTheme.accentTertiary
+                muted: homeChat.viewModel.selectedLocalModelStatus !== "Available"
+            }
+
+            StatusChip {
+                label: qsTr("Scope")
+                value: homeChat.viewModel.activeRuntimeLocalOnlySummary
+                accent: SentinelTheme.calmAccent
+                muted: homeChat.viewModel.activeRuntimeLocalOnlySummary !== "Local Only"
+            }
+
+            StatusChip {
+                label: qsTr("Runtime")
+                value: homeChat.viewModel.activeRuntimeReadinessState
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
                 muted: !homeChat.chatReady
             }
