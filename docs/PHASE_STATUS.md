@@ -2,6 +2,77 @@
 
 ## Completed / Stable
 
+### Phase 42.0-42.12: Sentinel Capability Roadmap Integration
+
+Completed. Converts the open-source ecosystem review and long-term strategy into a concrete,
+phased capability roadmap while preserving Sentinel's local-first, explicit-permission,
+no-hidden-execution posture.
+
+Scope:
+
+- Added `docs/SENTINEL_CAPABILITY_ROADMAP.md` as the product roadmap reference for core
+  capabilities, optional capabilities, permission defaults, future phase order, and safety
+  boundaries.
+- Updated UI/UX planning with the final Settings information architecture, companion/menu
+  bar/system tray direction, Quick Capture, Daily Brief, Timeline, and permission-state UX.
+- Updated architecture planning with future-scoped `CompanionService`, `WorkspaceService`,
+  `SkillProfileService`, `PermissionPolicyService`, `ToolExecutionGateway`,
+  `VoiceActivationGateway`, and `CloudProviderGateway` module boundaries.
+- Recorded explicit roadmap decisions for local-first defaults, no hidden background execution,
+  permission-tiered activation, user-visible companion integration, opt-in cloud providers,
+  scoped filesystem/workspace access, and disabled-by-default voice activation.
+- Added the future agent/tool execution ladder and ecosystem inspiration mapping to the AI
+  orchestration plan.
+
+Upcoming macro phases:
+
+- Companion/Menu Bar/System Tray: user-visible shell integration, quick status, safe foreground
+  actions, and no hidden background work.
+- Workspaces: explicit project/path scopes, session ownership, and visible context boundaries.
+- Skills/Profiles: capability declarations, installed-vs-enabled lifecycle, provenance, and
+  disabled-by-default activation.
+- Permission Modes: Disabled, Ask Every Time, Trusted, and Enabled states enforced by core policy.
+- Agent Runtime Activation: foreground-only, audited, proposal-first agent sessions before any
+  automation.
+- Tool Execution: gateway-mediated, permission-gated, sandboxed, audited, and initially narrow
+  read-only pilots only.
+- Voice Activation: disabled by default, local-first STT/TTS candidates, explicit microphone and
+  playback permission gates.
+- Cloud Provider Activation: opt-in credentials, provider execution gates, billing/privacy copy,
+  and no local-to-cloud fallback without approval.
+- Filesystem/Workspace Access: workspace/path scoped access only; no broad scanning or implicit
+  mutation.
+- Packaging/Productization: platform packaging, notices, dependency/license inventory, settings
+  polish, startup behavior, and release QA.
+
+Known limitation:
+
+- This phase is documentation-only. It does not add runtime execution, tools/plugins, cloud/API
+  calls, API-key input, filesystem scanning, microphone/playback/STT/TTS activation, autonomous
+  agents, background workers, dependencies, or product behavior changes.
+
+### Phase 41.0-41.15: Open-Source Ecosystem Review And Strategic Adaptation Plan
+
+Completed. Adds a strategic review of the modern open-source AI assistant ecosystem and records
+Sentinel's long-term adoption posture without changing production behavior.
+
+Scope:
+
+- Added `docs/OPEN_SOURCE_ECOSYSTEM_REVIEW.md` with an adoption matrix, category-by-category
+  findings, technical trade-offs, security principles, licensing summary, and source notes.
+- Added `docs/SENTINEL_LONG_TERM_STRATEGY.md` with the long-term architecture posture and
+  recommended future phases for plugins/skills, approvals, audit logs, developer tooling, MCP,
+  voice, semantic retrieval, cloud providers, local tools, STT/TTS, and agent workflows.
+- Reviewed agent frameworks, coding assistant architectures, voice engines, tool/skill ecosystems,
+  context/memory systems, runtime/provider systems, security models, and licensing obligations.
+- Recorded recommendations to adopt, adapt, keep optional, or avoid ecosystem components.
+
+Known limitation:
+
+- This phase is documentation-only. It does not integrate external code, add dependencies, enable
+  providers, activate tools or agents, activate STT/TTS, add cloud execution, change runtime
+  behavior, or authorize production execution.
+
 ### Phase 40.0-40.10: Secure Credential Backend Foundation
 
 Completed. Adds a platform-ready credential backend abstraction for future provider API keys while

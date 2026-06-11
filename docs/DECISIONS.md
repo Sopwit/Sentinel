@@ -3116,3 +3116,71 @@ Language policy:
 Current status: English and Turkish `.ts` catalogs exist and key QML surfaces use `qsTr()`.
 Startup translator loading is present, but compiled `.qm` packaging and live retranslation remain
 future work; language changes may require restart.
+
+## 104. Open-Source Ecosystem Adoption Posture
+
+Decision: Phase 41 establishes an adopt/adapt/optional/avoid posture for open-source AI assistant
+ecosystem components, but does not authorize implementation or execution.
+
+Reason: Sentinel needs a durable long-term reference before adding plugins, tools, agents, voice,
+semantic retrieval, cloud providers, or developer automation. Ecosystem patterns are valuable, but
+Sentinel must preserve local-first operation, explicit user authority, Qt/C++ architecture, and
+metadata-only boundaries until later activation phases.
+
+Adoption rules:
+
+- Adopt only components that fit Sentinel's native local-first posture and pass license,
+  packaging, security, and platform review.
+- Adapt architectural patterns such as MCP-style capability declarations, graph state,
+  checkpoints, human approval states, patch review UX, explainable context assembly, and audit
+  trails.
+- Keep Python-heavy agent/RAG frameworks optional or inspiration-only unless a later phase creates
+  a separate integration boundary.
+- Avoid autonomous defaults, hidden tool execution, hidden provider fallback, automatic cloud
+  boundary crossing, hidden memory mutation, and default voice cloning.
+- Review code licenses, model weights, voice models, sample assets, and plugin/server licenses
+  separately before any future distribution.
+
+Current status: `docs/OPEN_SOURCE_ECOSYSTEM_REVIEW.md` and
+`docs/SENTINEL_LONG_TERM_STRATEGY.md` are the master references for this posture. No runtime
+behavior changes are authorized by this decision.
+
+## 105. Capability Roadmap Activation Policy
+
+Decision: Sentinel's capability roadmap defaults to local-first operation, no hidden background
+execution, permission-tiered activation, user-visible shell integration, opt-in cloud providers,
+workspace/path-scoped filesystem access, and disabled-by-default voice activation.
+
+Reason: Phase 42 converts ecosystem and strategy findings into a product roadmap. The roadmap must
+make future capability order concrete without quietly granting authority to providers, tools,
+agents, filesystems, cloud APIs, microphones, playback devices, or background workers.
+
+Policy decisions:
+
+- Local-first default: local Ollama and local data boundaries remain the default posture. Cloud
+  providers are optional and must never become active through fallback, discovery, or implied
+  configuration.
+- No hidden background execution: background planning, hidden retries, filesystem observation,
+  provider probing, autonomous agents, tool runs, microphone capture, playback, and cloud calls
+  are not allowed unless a later phase explicitly implements visible lifecycle, permissions,
+  cancellation, and audit.
+- Permission-tiered feature activation: future capabilities use Disabled, Ask Every Time,
+  Trusted, and Enabled states. Core policy must enforce these states; QML copy alone is not a
+  security boundary.
+- Companion surface restriction: menu bar/system tray companion integration is allowed only as a
+  user-visible shell surface for status, navigation, quick capture, brief entry, and pause/setting
+  controls. It must not become a hidden daemon or scheduler.
+- Cloud/API opt-in only: cloud providers require explicit provider selection, secure credential
+  storage, privacy/billing warnings, user-visible activation, execution gates, and audit. API key
+  entry and provider calls remain out of scope until separately implemented.
+- Filesystem workspace/path scope only: future filesystem access must be limited to user-approved
+  workspaces or paths with explicit purpose, session, and revocation metadata. Broad scanning and
+  implicit mutation are forbidden by default.
+- Voice disabled by default: voice activation, microphone capture, STT, TTS, and playback remain
+  disabled until explicit local-first voice phases add permission prompts, runtime gates, model
+  and voice license review, visible session state, and tests.
+
+Current status: `docs/SENTINEL_CAPABILITY_ROADMAP.md` is a roadmap reference only. Phase 42 adds
+no runtime execution, tools/plugins, cloud/API calls, API-key input, filesystem scanning,
+microphone/playback/STT/TTS activation, autonomous agents, background workers, dependencies, or
+product behavior changes.

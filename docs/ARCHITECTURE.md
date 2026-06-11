@@ -93,6 +93,64 @@ release packaging through its native translation workflow.
 External API/cloud providers remain future opt-in integrations only. No cloud provider or API-key
 configuration is active in the current desktop runtime.
 
+## Open-Source Ecosystem Strategy
+
+Phase 41 records Sentinel's strategic ecosystem posture in
+`docs/OPEN_SOURCE_ECOSYSTEM_REVIEW.md` and `docs/SENTINEL_LONG_TERM_STRATEGY.md`.
+
+The architecture should adopt or adapt external ecosystem ideas only when they preserve Sentinel's
+native local-first boundaries:
+
+- MCP-style tool and skill descriptors are useful for future interoperability, but installed
+  tools must remain inert until explicitly enabled, scoped, approved, sandboxed, and audited.
+- LangGraph, Semantic Kernel, OpenHands, opencode, aider, Cline, Roo Code, Cursor, and Windsurf
+  inform graph state, approval checkpoints, patch review UX, context assembly, and audit design.
+  They do not replace Sentinel's C++ core or Qt/QML shell.
+- whisper.cpp and Piper are preferred future local voice candidates, subject to explicit activation
+  phases, packaging review, platform testing, and model/voice license review. Kokoro, faster-whisper,
+  Coqui, and StyleTTS-style systems remain optional or inspiration-only.
+- Ollama remains the primary local provider target. llama.cpp is a future native-runtime candidate.
+  LM Studio and cloud providers remain optional integrations behind explicit user configuration,
+  secure credentials, local/cloud boundary UX, and provider execution gates.
+
+Phase 41 does not authorize runtime behavior. No external code, provider, tool, plugin, voice,
+semantic/vector, cloud, sandbox, or autonomous execution path is added by the strategy documents.
+
+## Capability Roadmap Architecture
+
+Phase 42 records the capability roadmap in `docs/SENTINEL_CAPABILITY_ROADMAP.md`. The roadmap is
+future-scoped and does not authorize runtime behavior. Planned capability modules must preserve
+Sentinel's explicit-permission posture: installed does not mean enabled, selected does not mean
+active, and configured does not mean executable.
+
+Planned high-level modules:
+
+- `CompanionService`: future user-visible menu bar/system tray companion boundary for status,
+  quick capture entry, daily brief entry, pause/resume visibility, and app navigation. It must not
+  become a hidden daemon, scheduler, provider caller, microphone owner, filesystem scanner, or tool
+  executor.
+- `WorkspaceService`: future workspace/session scope boundary for named projects, allowed paths,
+  visible context sources, and path-scoped permissions. It must not add broad filesystem scanning
+  or implicit mutation.
+- `SkillProfileService`: future skill/profile registry boundary for manifests, provenance,
+  capability declarations, install/enable separation, and profile defaults. It must not load or
+  execute plugins until a later explicit activation phase.
+- `PermissionPolicyService`: future central policy boundary for Disabled, Ask Every Time, Trusted,
+  and Enabled permission states. It must be enforced in C++ core policy, not only QML.
+- `ToolExecutionGateway`: future controlled entry point for tool execution after descriptors,
+  approval UX, sandboxing, audit logs, and rollback/refusal reporting exist. It remains inactive
+  until a later tool-execution phase.
+- `VoiceActivationGateway`: future controlled entry point for microphone capture, local STT, local
+  TTS, and playback. It defaults to disabled and requires explicit microphone/playback permission,
+  local model/voice license review, and visible session state.
+- `CloudProviderGateway`: future controlled entry point for cloud/API providers after OS
+  credential storage, provider activation UI, billing/privacy warnings, provider tests, and audit
+  gates exist. It must never be used for hidden fallback from local providers.
+
+All future capability modules must expose QML-safe summaries through view models and keep raw
+core/runtime objects, secrets, filesystem handles, microphone handles, provider payloads, and tool
+outputs out of QML.
+
 ## Runtime Provider Registry
 
 Phase 36 introduces a value-only runtime provider abstraction above the existing local Ollama
