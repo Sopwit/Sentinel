@@ -82,6 +82,42 @@ Guidelines:
   show secrets, raw provider payloads, stored key material, remote endpoint probing, or hidden
   routing traces.
 
+## Phase 39 Credential Store UX Notes
+
+Phase 39.0 through Phase 39.12 adds secure credential infrastructure visibility without adding
+credential entry or cloud authority.
+
+Guidelines:
+
+- Settings Local AI should show a compact Credential Security section for OS secret-store
+  readiness, credential-store posture, provider credential status, and disabled credential
+  actions.
+- Add API Key, Update API Key, and Remove API Key may appear only as disabled placeholders in this
+  phase. They must not store, update, remove, validate, route, test, or call providers.
+- Provider credential cards for OpenAI-compatible, Claude, and Gemini should continue to show
+  required/not configured, storage unavailable/requires future implementation, and execution
+  disabled metadata.
+- Developer Mode may show bounded credential-store traces and policy/safety metadata. It must not
+  show raw secrets, secret-derived values, provider payloads, prompt payloads, remote endpoint
+  probing, or hidden routing traces.
+
+## Phase 40 Credential Backend UX Notes
+
+Phase 40.0 through Phase 40.10 adds a secure credential backend foundation without adding user
+secret entry or cloud authority.
+
+Guidelines:
+
+- Settings Local AI should expose credential storage backend readiness and provider credential
+  state as summaries only: provider id/display name, configured/not configured, backend kind,
+  readiness, last operation posture, and safe reason text.
+- Future cloud providers remain disabled unless a later phase explicitly enables a safe backend,
+  key-entry flow, and provider execution gate.
+- Add API Key, Update API Key, and Remove API Key remain disabled or no-op metadata states in the
+  desktop app. No Test Provider action should be shown in this phase.
+- QML must not receive API-key values, authorization headers, hidden prompts, raw secret payloads,
+  or secret-derived diagnostics.
+
 ## Design System Foundation
 
 The initial QML design tokens live in `ui/qml/theme/SentinelTheme.qml`.

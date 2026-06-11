@@ -1751,6 +1751,32 @@ QStringList ApplicationController::providerCredentialSafetySummaries() const {
     return currentProviderCredentialRegistry().safetySummaries();
 }
 
+QString ApplicationController::credentialStoreSummary() const {
+    return currentCredentialStore().summary().summary;
+}
+
+QString ApplicationController::credentialStoreBackendSummary() const {
+    return currentCredentialStore().summary().backendSummary;
+}
+
+QString ApplicationController::credentialStoreSafetySummary() const {
+    return currentCredentialStore().summary().safetySummary;
+}
+
+QStringList ApplicationController::credentialStoreTraceSummaries() const {
+    return currentCredentialStore().traceSummaries();
+}
+
+QString ApplicationController::credentialActionReadiness() const {
+    return QStringLiteral("Add API Key, Update API Key, and Remove API Key are disabled "
+                          "placeholders; no credential state can be mutated.");
+}
+
+QString ApplicationController::credentialExecutionStatus() const {
+    return QStringLiteral("Execution disabled: credential storage does not enable cloud/API "
+                          "provider calls.");
+}
+
 QString ApplicationController::ollamaEndpoint() const {
     return ollamaRuntimeClient_ ? ollamaRuntimeClient_->config().endpoint.toString()
                                 : OllamaEndpoint::defaultEndpoint().toString();
@@ -8186,7 +8212,11 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
 }
 
 ProviderCredentialRegistry ApplicationController::currentProviderCredentialRegistry() const {
-    return defaultProviderCredentialRegistry();
+    return defaultProviderCredentialRegistry(currentCredentialStore().summary());
+}
+
+CredentialStore ApplicationController::currentCredentialStore() const {
+    return defaultCredentialStore();
 }
 
 ModelRegistry ApplicationController::currentModelRegistry() const {

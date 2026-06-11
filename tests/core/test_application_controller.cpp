@@ -1218,6 +1218,12 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
                 .contains(QStringLiteral("readiness=disabled")));
     QVERIFY(controller->providerCredentialRegistrySummary()
                 .contains(QStringLiteral("API key values are not stored")));
+    QVERIFY(controller->credentialStoreSummary().contains(QStringLiteral("Credential store disabled")));
+    QVERIFY(controller->credentialStoreBackendSummary().contains(QStringLiteral("storage unavailable")));
+    QVERIFY(controller->credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
+    QCOMPARE(controller->credentialStoreTraceSummaries().size(), 5);
+    QVERIFY(controller->credentialActionReadiness().contains(QStringLiteral("disabled")));
+    QVERIFY(controller->credentialExecutionStatus().contains(QStringLiteral("Execution disabled")));
     QCOMPARE(controller->providerCredentialSummaries().size(), 4);
     QVERIFY(controller->providerCredentialSafetySummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("cloudRequests=refused")));

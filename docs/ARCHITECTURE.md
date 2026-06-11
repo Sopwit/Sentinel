@@ -140,6 +140,40 @@ switch providers automatically. Ollama health/model metadata remains the existin
 loopback-only path, and local inference still requires the existing user opt-in, selected model,
 permission, safety, and busy-state gates.
 
+## Secure Credential Store Boundary
+
+Phase 39 adds `CredentialStore` as a value-only secure credential infrastructure boundary. It
+reports readiness for the intended OS secret-store direction without storing secrets:
+
+- macOS: Keychain placeholder/readiness.
+- Windows: Credential Manager placeholder/readiness.
+- Linux: Secret Service placeholder/readiness.
+- Fallback: local unavailable metadata only.
+
+The boundary exposes only `CredentialStoreSummary`, `CredentialStoreSafetyReport`,
+`CredentialStoreTrace`, and disabled `CredentialStoreResult` metadata. It has no raw API-key
+field, no plaintext persistence path, no secret logging path, no provider test-call path, and no
+background probing. Settings and QML receive only strings such as credential-store summary,
+backend summary, safety summary, provider credential summaries, action readiness, execution
+status, and bounded traces.
+
+Provider credential records for OpenAI-compatible, Claude, and Gemini consume this readiness
+metadata so each provider can show credential required, credential not configured, backend
+readiness, storage unavailable/requires future implementation, and execution disabled. Local
+Ollama still requires no credential.
+
+Phase 40 adds a platform-ready backend interface under the same boundary. `ICredentialBackend`
+defines provider-scoped store, read, delete, and contains operations with value-only result
+metadata. The default desktop backend is still disabled and refuses all persistence. macOS
+Keychain, Windows Credential Manager, and Linux Secret Service remain non-executing placeholders
+without OS-specific hard dependencies. `InMemoryCredentialBackend` exists for focused core tests
+only and is not selected by the desktop controller.
+
+Future activation requires an explicit credential-storage phase with OS-specific implementations
+behind this boundary, user-explicit add/update/remove flows, no-plaintext persistence tests,
+no-secret view-model tests, provider-scoped key metadata, provider execution gates, and security
+review.
+
 ## Model Registry
 
 Phase 37 introduces a value-only model registry above provider/runtime metadata. The registry maps

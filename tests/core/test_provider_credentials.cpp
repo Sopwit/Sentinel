@@ -2,6 +2,7 @@
 
 #include <QtTest>
 
+using sentinel::core::inMemoryTestCredentialStore;
 using sentinel::core::ProviderCredentialStatus;
 using sentinel::core::defaultProviderCredentialRegistry;
 
@@ -11,6 +12,8 @@ class ProviderCredentialsTest final : public QObject {
 private slots:
     void exposesMetadataOnlyDefaults();
     void keepsCloudProvidersMissingAndDisabled();
+    void includesCredentialStoreReadiness();
+    void providerReadinessRemainsDisabledWithoutExplicitKeyConfiguration();
     void refusesSecretPersistenceAndExecutionSafety();
 };
 
@@ -34,7 +37,30 @@ void ProviderCredentialsTest::keepsCloudProvidersMissingAndDisabled() {
         QVERIFY(readiness.placeholderReady);
         QVERIFY(!readiness.executionAllowed);
         QVERIFY(readiness.summary.contains(QStringLiteral("not configured")));
+        QVERIFY(readiness.backendSummary.contains(QStringLiteral("storage unavailable")));
     }
+}
+
+void ProviderCredentialsTest::includesCredentialStoreReadiness() {
+    const auto registry = defaultProviderCredentialRegistry();
+
+    QVERIFY(registry.summary().summary.contains(QStringLiteral("credential store is disabled")));
+    QVERIFY(registry.requirementSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("requiresFutureImplementation"))
+            || registry.requirementSummaries().join(QStringLiteral("\n"))
+                   .contains(QStringLiteral("disabledFallback")));
+}
+
+void ProviderCredentialsTest::providerReadinessRemainsDisabledWithoutExplicitKeyConfiguration() {
+    const auto testStore = inMemoryTestCredentialStore();
+    const auto registry = defaultProviderCredentialRegistry(testStore.summary());
+
+    const auto readiness = registry.readinessForProvider(QStringLiteral("openai-compatible"));
+    QCOMPARE(readiness.status, ProviderCredentialStatus::Missing);
+    QVERIFY(readiness.placeholderReady);
+    QVERIFY(!readiness.configured);
+    QVERIFY(!readiness.executionAllowed);
+    QVERIFY(readiness.backendSummary.contains(QStringLiteral("testOnlyReady")));
 }
 
 void ProviderCredentialsTest::refusesSecretPersistenceAndExecutionSafety() {
