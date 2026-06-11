@@ -62,6 +62,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/OrchestrationSnapshot.h
     include/sentinel/core/PiperTts.h
     include/sentinel/core/ProviderCatalog.h
+    include/sentinel/core/ProviderCredentials.h
     include/sentinel/core/RuntimeCapabilities.h
     include/sentinel/core/RuntimeIntegration.h
     include/sentinel/core/RuntimePermissions.h
@@ -122,6 +123,7 @@ add_library(sentinel_core STATIC
     src/OllamaRuntime.cpp
     src/OrchestrationDiagnostics.cpp
     src/PiperTts.cpp
+    src/ProviderCredentials.cpp
     src/RuntimeCapabilities.cpp
     src/RuntimeIntegration.cpp
     src/RuntimePermissions.cpp

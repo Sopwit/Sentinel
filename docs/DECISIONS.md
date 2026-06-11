@@ -113,6 +113,29 @@ Out of scope:
 - Pulling, installing, deleting, refreshing, importing, exporting, filesystem scanning, model file
   inspection, cloud/API capability lookup, automatic fallback routing, and hidden model execution.
 
+## 5.3 Provider Credential Boundary
+
+Decision: Provider credentials are represented by value-only readiness metadata until a later
+explicit credential phase.
+
+Reason: Sentinel needs UI and settings posture for future OpenAI-compatible, Claude, and Gemini
+providers without creating secret-handling, cloud-network, or routing authority prematurely.
+
+Runtime behavior:
+
+- Local Ollama requires no API key and remains the only active provider path.
+- OpenAI-compatible, Claude, and Gemini providers are disabled placeholder-ready metadata only.
+- Selected provider metadata may persist, but disabled cloud providers cannot become active
+  execution paths; active provider metadata falls back to Local Ollama.
+- API key values are not accepted, stored, logged, or exposed. Settings and QML receive only
+  configured/not-required, missing, and refused metadata.
+
+Out of scope:
+
+- API-key entry, secret storage, keychain integration, cloud calls, connect/test-call buttons,
+  provider fallback routing, hidden retries, background provider discovery, automatic provider
+  switching, and remote model discovery.
+
 ## 6. Memory Persistence Boundary
 
 Decision: Memory storage is hidden behind `IMemoryStore`.

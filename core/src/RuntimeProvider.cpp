@@ -18,6 +18,29 @@ QString capabilityFlag(bool enabled, const QString& label) {
                                                        : QStringLiteral("no"));
 }
 
+RuntimeProviderDescriptor disabledCloudProviderDescriptor(const QString& providerId,
+                                                          const QString& displayName) {
+    return RuntimeProviderDescriptor{
+        providerId,
+        displayName,
+        QStringLiteral("disabled-placeholder-ready"),
+        RuntimeReadinessState::Disabled,
+        QStringLiteral("Disabled placeholder only; no API key storage or cloud execution exists."),
+        QStringLiteral("No endpoint configured"),
+        QStringLiteral("No model metadata"),
+        QStringLiteral("%1 is placeholder-ready for future configuration metadata only.")
+            .arg(displayName),
+        RuntimeCapabilitySet{
+            false, true, false, true,  true,  true,
+            true,  false, true, false, true,  false,
+        },
+        {},
+        false,
+        false,
+        false,
+    };
+}
+
 } // namespace
 
 QString runtimeReadinessStateName(RuntimeReadinessState state) {
@@ -163,24 +186,16 @@ RuntimeProviderDescriptor OllamaRuntimeProvider::descriptor() const {
 }
 
 RuntimeProviderDescriptor OpenAICompatibleRuntimeProvider::descriptor() const {
-    return RuntimeProviderDescriptor{
-        QStringLiteral("openai-compatible"),
-        QStringLiteral("OpenAI-Compatible API"),
-        QStringLiteral("disabled-placeholder"),
-        RuntimeReadinessState::Disabled,
-        QStringLiteral("Disabled placeholder only; no API key storage or cloud execution exists."),
-        QStringLiteral("No endpoint configured"),
-        QStringLiteral("No model metadata"),
-        QStringLiteral("Cloud/API providers are disabled placeholders in this phase."),
-        RuntimeCapabilitySet{
-            false, true, false, true,  true,  true,
-            true,  false, true, false, true,  false,
-        },
-        {},
-        false,
-        false,
-        false,
-    };
+    return disabledCloudProviderDescriptor(QStringLiteral("openai-compatible"),
+                                           QStringLiteral("OpenAI-Compatible API"));
+}
+
+RuntimeProviderDescriptor ClaudeRuntimeProvider::descriptor() const {
+    return disabledCloudProviderDescriptor(QStringLiteral("claude"), QStringLiteral("Claude API"));
+}
+
+RuntimeProviderDescriptor GeminiRuntimeProvider::descriptor() const {
+    return disabledCloudProviderDescriptor(QStringLiteral("gemini"), QStringLiteral("Gemini API"));
 }
 
 RuntimeProviderRegistry::RuntimeProviderRegistry(QList<RuntimeProviderDescriptor> providers,

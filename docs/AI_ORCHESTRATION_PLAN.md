@@ -1,5 +1,21 @@
 # AI Orchestration Plan
 
+Phase 38.0 through Phase 38.12 adds a metadata-only provider credential and cloud-readiness
+foundation. `ProviderCredentialPolicy`, `ProviderCredentialStatus`,
+`ProviderCredentialScope`, `ProviderCredentialRequirement`, `ProviderCredentialSafetyReport`,
+`ProviderCredentialReadiness`, `ProviderCredentialSummary`, and
+`ProviderCredentialRegistry` describe provider credential posture without accepting or storing
+secret values. Local Ollama requires no API key and remains the only active provider path.
+OpenAI-compatible, Claude, and Gemini are disabled placeholder-ready metadata only: credentials are
+missing, API key values are not stored, and execution remains disabled. Settings may persist
+selected provider metadata, but disabled selections fall back to Local Ollama as active execution
+metadata. Home and Settings expose only bounded QML-safe summaries: local active, cloud inactive,
+not configured/disabled, and API keys not stored. This phase adds no API-key input, plaintext
+secret storage, keychain integration, cloud/API calls, connect/test-call actions, provider
+fallback routing, hidden retries, background provider discovery, remote model lookup, autonomous
+provider switching, tools, plugins, STT/TTS execution, subprocesses, filesystem scanning, or
+non-Ollama network behavior.
+
 Phase 37.0 through Phase 37.12 adds a deterministic local-first model registry and model
 management foundation. `ModelSummary`, `ModelRegistry`, `ModelRegistryStatus`, and
 `ModelRegistrySummary` describe provider id, raw model name, display name, family, format, size

@@ -811,6 +811,26 @@ QStringList DesktopShellViewModel::availableLocalRuntimeSummaries() const {
     return controller_.availableLocalRuntimeSummaries();
 }
 
+QString DesktopShellViewModel::providerCredentialRegistryStatus() const {
+    return controller_.providerCredentialRegistryStatus();
+}
+
+QString DesktopShellViewModel::providerCredentialRegistrySummary() const {
+    return controller_.providerCredentialRegistrySummary();
+}
+
+QStringList DesktopShellViewModel::providerCredentialSummaries() const {
+    return controller_.providerCredentialSummaries();
+}
+
+QStringList DesktopShellViewModel::providerCredentialReadinessSummaries() const {
+    return controller_.providerCredentialReadinessSummaries();
+}
+
+QStringList DesktopShellViewModel::providerCredentialSafetySummaries() const {
+    return controller_.providerCredentialSafetySummaries();
+}
+
 QString DesktopShellViewModel::ollamaEndpoint() const {
     return controller_.ollamaEndpoint();
 }

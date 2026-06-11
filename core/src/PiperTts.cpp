@@ -697,10 +697,6 @@ PiperTtsStatus PiperTextToSpeechProvider::evaluateStatus() const {
         return PiperTtsStatus::MissingModel;
     }
 
-    if (!hasConfiguredPath(config_.controlledOutputDirectory)) {
-        return PiperTtsStatus::NotConfigured;
-    }
-
     if (config_.safetyReport.executionAllowed || config_.safetyReport.processExecutionAllowed ||
         config_.processExecutionAllowed || config_.fileOutputAllowed ||
         config_.audioPlaybackAllowed || config_.safetyReport.playbackAllowed ||

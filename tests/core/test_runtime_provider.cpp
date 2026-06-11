@@ -7,6 +7,8 @@ using sentinel::core::OllamaHealthCheckResult;
 using sentinel::core::OllamaHealthStatus;
 using sentinel::core::OllamaModelSummary;
 using sentinel::core::OllamaRuntimeProvider;
+using sentinel::core::ClaudeRuntimeProvider;
+using sentinel::core::GeminiRuntimeProvider;
 using sentinel::core::OpenAICompatibleRuntimeProvider;
 using sentinel::core::RuntimeProviderRegistry;
 using sentinel::core::RuntimeReadinessState;
@@ -73,6 +75,8 @@ void RuntimeProviderTest::reportsReadinessTransitions() {
 
 void RuntimeProviderTest::keepsUnsupportedProviderDisabled() {
     const OpenAICompatibleRuntimeProvider provider;
+    const ClaudeRuntimeProvider claudeProvider;
+    const GeminiRuntimeProvider geminiProvider;
     const auto descriptor = provider.descriptor();
 
     QCOMPARE(descriptor.providerId, QStringLiteral("openai-compatible"));
@@ -80,6 +84,10 @@ void RuntimeProviderTest::keepsUnsupportedProviderDisabled() {
     QVERIFY(!descriptor.enabled);
     QVERIFY(descriptor.capabilities.requiresApiKey);
     QVERIFY(!descriptor.capabilities.localOnly);
+    QCOMPARE(claudeProvider.descriptor().providerId, QStringLiteral("claude"));
+    QCOMPARE(claudeProvider.descriptor().readiness, RuntimeReadinessState::Disabled);
+    QCOMPARE(geminiProvider.descriptor().providerId, QStringLiteral("gemini"));
+    QCOMPARE(geminiProvider.descriptor().readiness, RuntimeReadinessState::Disabled);
 }
 
 void RuntimeProviderTest::fallsBackToEnabledLocalProviderForDisabledSelection() {

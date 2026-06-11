@@ -498,6 +498,28 @@ Item {
                                 accent: SentinelTheme.calmAccent
                                 muted: settingsPage.viewModel.activeRuntimeLocalOnlySummary !== "Local Only"
                             }
+
+                            StatusChip {
+                                label: qsTr("API Keys")
+                                value: qsTr("Not stored")
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Cloud Providers")
+                            value: qsTr("Not configured / disabled")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Credentials")
+                            value: settingsPage.viewModel.providerCredentialRegistrySummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
                         }
 
                         RowLayout {
@@ -613,6 +635,32 @@ Item {
                                     width: parent.width - SentinelTheme.spaceSm * 2
                                     text: modelData
                                     color: modelData.indexOf("disabled") >= 0
+                                           ? SentinelTheme.textMuted
+                                           : SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.providerCredentialReadinessSummaries
+
+                            Rectangle {
+                                required property string modelData
+                                Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
+                                implicitHeight: credentialCardLabel.implicitHeight + SentinelTheme.spaceMd
+
+                                Label {
+                                    id: credentialCardLabel
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: modelData
+                                    color: modelData.indexOf("execution disabled") >= 0
                                            ? SentinelTheme.textMuted
                                            : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall
@@ -1408,6 +1456,14 @@ Item {
                             label: qsTr("Runtime Safety")
                             value: settingsPage.viewModel.runtimeSafetyDecision + " / "
                                    + settingsPage.viewModel.runtimeSafetySummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Credentials")
+                            value: settingsPage.viewModel.providerCredentialSafetySummaries.join("\n")
                             Layout.fillWidth: true
                         }
 

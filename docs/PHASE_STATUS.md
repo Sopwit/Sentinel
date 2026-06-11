@@ -2,6 +2,32 @@
 
 ## Completed / Stable
 
+### Phase 38.0-38.12: Provider Credentials And Cloud-Provider Readiness Foundation
+
+Completed. Adds metadata-only provider credential/readiness records for future cloud provider
+configuration without enabling cloud execution or API-key storage.
+
+Scope:
+
+- Added `ProviderCredentialPolicy`, `ProviderCredentialStatus`, `ProviderCredentialScope`,
+  `ProviderCredentialRequirement`, `ProviderCredentialSafetyReport`,
+  `ProviderCredentialReadiness`, `ProviderCredentialSummary`, and
+  `ProviderCredentialRegistry`.
+- Runtime/provider readiness now includes Local Ollama plus disabled placeholder-ready metadata for
+  OpenAI-compatible, Claude, and Gemini providers.
+- Settings continues to persist selected runtime provider metadata, but disabled cloud selections
+  fall back to Local Ollama as the active execution provider.
+- API key values are not accepted, stored, logged, tested, or exposed. UI receives only
+  configured/not-required, missing, and refused credential metadata.
+- Settings and Home show Local Ollama active posture, cloud providers disabled/not configured, and
+  API keys not stored. Developer Mode may show bounded credential safety diagnostics.
+
+Known limitation:
+
+- The credential layer is readiness metadata only. It does not add API-key entry, secret storage,
+  cloud/API calls, connect/test-call actions, provider fallback routing, hidden retries,
+  background provider discovery, autonomous provider switching, or non-Ollama network behavior.
+
 ### Phase 37.0-37.12: Model Registry And Model Management Foundation
 
 Completed. Adds a deterministic, local-first model metadata layer above runtime providers without

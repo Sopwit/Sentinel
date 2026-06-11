@@ -91,6 +91,16 @@ public:
     RuntimeProviderDescriptor descriptor() const override;
 };
 
+class ClaudeRuntimeProvider final : public LocalRuntimeProvider {
+public:
+    RuntimeProviderDescriptor descriptor() const override;
+};
+
+class GeminiRuntimeProvider final : public LocalRuntimeProvider {
+public:
+    RuntimeProviderDescriptor descriptor() const override;
+};
+
 class RuntimeProviderRegistry final {
 public:
     RuntimeProviderRegistry(QList<RuntimeProviderDescriptor> providers,
