@@ -151,6 +151,26 @@ All future capability modules must expose QML-safe summaries through view models
 core/runtime objects, secrets, filesystem handles, microphone handles, provider payloads, and tool
 outputs out of QML.
 
+## Companion Service Boundary
+
+Phase 43 adds `CompanionService` as a value-only companion/menu-bar/system-tray foundation. It
+reports companion status, availability, current platform posture, cross-platform platform targets,
+permission posture, safety boundary text, quick-capture readiness, safe action labels, and bounded
+trace summaries.
+
+The current implementation is readiness-only:
+
+- macOS menu bar, Windows system tray, and Linux StatusNotifier/AppIndicator/system tray are
+  represented as planned platform capabilities only.
+- The persisted `AppSettings::companionEnabled` value records user visibility intent only.
+- `DesktopShellViewModel` exposes QML-safe booleans, strings, and string lists for Settings.
+- No raw platform handles, native tray objects, OS-specific dependencies, action callbacks,
+  background loops, timers, provider calls, tool execution, filesystem scanning, microphone
+  capture, playback, memory writes, or transcript mutation are added.
+
+Future native integration must stay behind this boundary or an explicit platform service boundary
+and continue to separate visible shell integration from execution authority.
+
 ## Runtime Provider Registry
 
 Phase 36 introduces a value-only runtime provider abstraction above the existing local Ollama

@@ -1,5 +1,13 @@
 # AI Orchestration Plan
 
+Phase 43.0 through Phase 43.12 adds a metadata-only companion/menu-bar/system-tray foundation.
+`CompanionService` reports readiness, platform posture, permission posture, safety summaries,
+quick-capture readiness, safe companion action labels, and bounded traces. The persisted companion
+setting records visibility intent only. No native tray item, menu-bar item, background worker,
+timer, provider/model call, cloud/API call, filesystem scan, microphone capture, playback,
+STT/TTS activation, tool/plugin execution, transcript mutation, committed-memory write,
+autonomous behavior, or executable companion action is added.
+
 Phase 42.0 through Phase 42.12 integrates the ecosystem review and long-term strategy into a
 capability roadmap. It adds `docs/SENTINEL_CAPABILITY_ROADMAP.md` as a roadmap reference and keeps
 all new capability areas future-scoped. No provider/model calls, cloud calls, API keys, plugin

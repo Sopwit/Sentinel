@@ -34,6 +34,8 @@ class AppSettings final : public QObject {
                    setSemanticPromptInclusionEnabled NOTIFY semanticPromptInclusionEnabledChanged)
     Q_PROPERTY(bool contextExplainabilityVisible READ contextExplainabilityVisible WRITE
                    setContextExplainabilityVisible NOTIFY contextExplainabilityVisibleChanged)
+    Q_PROPERTY(bool companionEnabled READ companionEnabled WRITE setCompanionEnabled NOTIFY
+                   companionEnabledChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeEnabledChanged)
     Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
@@ -87,6 +89,8 @@ public:
     void setSemanticPromptInclusionEnabled(bool enabled);
     bool contextExplainabilityVisible() const;
     void setContextExplainabilityVisible(bool visible);
+    bool companionEnabled() const;
+    void setCompanionEnabled(bool enabled);
     bool developerModeEnabled() const;
     void setDeveloperModeEnabled(bool enabled);
     QString piperBinaryPath() const;
@@ -115,6 +119,7 @@ signals:
     void promptContextInjectionEnabledChanged();
     void semanticPromptInclusionEnabledChanged();
     void contextExplainabilityVisibleChanged();
+    void companionEnabledChanged();
     void developerModeEnabledChanged();
     void piperBinaryPathChanged();
     void piperModelPathChanged();
@@ -137,6 +142,7 @@ private:
     static constexpr auto promptContextInjectionEnabledKey = "promptContextInjectionEnabled";
     static constexpr auto semanticPromptInclusionEnabledKey = "semanticPromptInclusionEnabled";
     static constexpr auto contextExplainabilityVisibleKey = "contextExplainabilityVisible";
+    static constexpr auto companionEnabledKey = "companionEnabled";
     static constexpr auto developerModeEnabledKey = "developerModeEnabled";
     static constexpr auto piperBinaryPathKey = "piperBinaryPath";
     static constexpr auto piperModelPathKey = "piperModelPath";

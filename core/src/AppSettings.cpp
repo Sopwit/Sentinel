@@ -278,6 +278,22 @@ void AppSettings::setContextExplainabilityVisible(bool visible) {
     emit contextExplainabilityVisibleChanged();
 }
 
+bool AppSettings::companionEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(companionEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setCompanionEnabled(bool enabled) {
+    if (enabled == companionEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(companionEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit companionEnabledChanged();
+}
+
 bool AppSettings::developerModeEnabled() const {
     return store_ ? store_->value(QString::fromLatin1(developerModeEnabledKey),
                                   QStringLiteral("false")) == QStringLiteral("true")
