@@ -1,5 +1,54 @@
 # AI Orchestration Plan
 
+Phase 42.0 through Phase 42.12 integrates the ecosystem review and long-term strategy into a
+capability roadmap. It adds `docs/SENTINEL_CAPABILITY_ROADMAP.md` as a roadmap reference and keeps
+all new capability areas future-scoped. No provider/model calls, cloud calls, API keys, plugin
+loading, tool execution, subprocess execution, filesystem scanning, microphone capture, playback,
+semantic/vector indexing, background workers, autonomous behavior, or hidden routing is added.
+
+Future agent/tool execution ladder:
+
+1. Metadata-only: descriptors, plans, policies, readiness, safety reports, and audit summaries
+   exist, but execution is refused.
+2. Dry-run plan: Sentinel can assemble a proposed action graph, required permissions, expected
+   inputs/outputs, affected scope, and rollback notes without mutating state.
+3. Ask-every-time execution: each foreground action requires explicit user approval with visible
+   reason, scope, command/tool/provider, data touched, and result/audit summary.
+4. Trusted tool execution: repeated actions may run only inside named trusted scopes such as a
+   provider, workspace, tool, session, time window, or permission grant, with cancellation,
+   revocation, and audit.
+5. Full automation: allowed only if explicitly enabled by the user for a bounded profile/scope and
+   still subject to safety policy, audit, cancellation, and refusal on boundary violations.
+
+Open-source inspiration mapping:
+
+- opencode/OpenHands-style tool planning informs proposal-first task plans, workspace/sandbox
+  boundaries, visible lifecycle, command/test logs, and refusal states. Sentinel should adapt the
+  pattern without copying terminal-first, browser/VNC, or Docker-centric runtime assumptions.
+- LangGraph/AutoGen-style graph orchestration remains future inspiration for typed state graphs,
+  checkpoints, resumability, handoff states, and human approval nodes. Sentinel should implement
+  any such graph in its own C++ core boundary if later scoped.
+- MCP-style tool contracts are an optional future integration direction for descriptors, schemas,
+  transports, registries, provenance, and capability declarations. Installed MCP-compatible tools
+  must remain inert until enabled, scoped, approved, sandboxed, and audited.
+- Whisper/Piper/Kokoro-style local voice pipeline candidates inform future offline STT/TTS
+  selection. Voice remains disabled by default until explicit microphone/playback permissions,
+  local model and voice license review, runtime gates, packaging review, and tests exist.
+
+Phase 41.0 through Phase 41.15 is a strategic ecosystem review and adaptation checkpoint. It adds
+`docs/OPEN_SOURCE_ECOSYSTEM_REVIEW.md` and `docs/SENTINEL_LONG_TERM_STRATEGY.md` as master
+references for future providers, agents, tools, skills/plugins, voice, context/memory, developer
+tooling, security, and licensing decisions. The review recommends adapting MCP-style capability
+descriptors, graph/checkpoint orchestration, human approval states, proposal-first coding workflows,
+explainable context retrieval, local-first voice/runtime candidates, and audit-first security
+models while preserving Sentinel's C++/Qt modular-monolith architecture. It explicitly keeps
+Python-heavy agent/RAG frameworks, cloud providers, semantic/vector retrieval, MCP execution,
+plugins, tool execution, STT/TTS activation, and multi-agent autonomy out of production behavior
+until separate future phases scope, test, and approve those boundaries. No provider/model calls,
+cloud calls, API keys, plugin loading, tool execution, subprocess execution, filesystem mutation,
+microphone capture, playback, semantic/vector indexing, hidden memory writes, hidden retries,
+automatic provider switching, or autonomous behavior is added.
+
 Phase 40.0 through Phase 40.10 adds a secure credential backend foundation without enabling cloud
 execution or desktop secret entry. `ICredentialBackend`, `CredentialKey`,
 `CredentialBackendOperation`, `CredentialBackendResult`, and `CredentialReadResult` define

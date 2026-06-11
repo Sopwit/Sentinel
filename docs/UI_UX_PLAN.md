@@ -118,6 +118,83 @@ Guidelines:
 - QML must not receive API-key values, authorization headers, hidden prompts, raw secret payloads,
   or secret-derived diagnostics.
 
+## Phase 42 Capability Roadmap UX Notes
+
+Phase 42.0 through Phase 42.12 converts the ecosystem review and long-term strategy into product
+roadmap UX. It is documentation-only and does not add controls that execute tools, activate
+providers, scan filesystems, capture microphones, play audio, start workers, or run agents.
+
+Final Settings information architecture:
+
+- General: language, startup/window basics, shell status, and non-sensitive app behavior.
+- Appearance: theme, density, motion, accessibility, and layout preferences.
+- Local AI: Ollama/local runtime status, local model selection, local inference toggles, and
+  local-only readiness.
+- Providers: future cloud/local provider configuration, credential posture, and explicit
+  activation status.
+- Voice: future microphone, STT, TTS, playback, voice model, and local voice readiness settings.
+- Workspaces: future workspace list, active scope, allowed paths, indexing posture, and session
+  ownership.
+- Skills: future skill/profile registry, installed/enabled state, provenance, and required
+  permissions.
+- Privacy & Security: permission modes, audit posture, data boundaries, credential backend state,
+  and revocation controls.
+- Automation: future agent/tool automation gates, approval defaults, trusted scopes, and
+  full-automation disabled state.
+- Developer: diagnostic traces, registries, readiness summaries, policy reports, and bounded
+  debug visibility only.
+
+Companion/Menu Bar/System Tray UX plan:
+
+- Companion is a user-visible shell surface, not a hidden daemon.
+- Linux should prefer a KDE-friendly system tray/status notifier direction where possible, while
+  keeping Windows and macOS menu bar/tray equivalents behind platform services.
+- The companion surface may show current local provider status, active workspace, latest safe
+  notification, paused/running/refused session state, and quick navigation back to the main app.
+- Companion actions must be foreground-safe: open Sentinel, new quick capture, view daily brief,
+  pause automation, and open permission settings.
+- Companion must not trigger hidden provider calls, background planning, filesystem scanning,
+  microphone capture, playback, tool execution, or autonomous work.
+
+Quick Capture UX plan:
+
+- Quick Capture is a lightweight foreground note/intake surface for a user-authored text snippet,
+  link, or selected workspace reference.
+- Captured items should remain drafts or explicit local records until the user chooses a target
+  such as chat, memory, workspace note, or future task.
+- No capture flow may silently write committed memory, scan the originating app, upload content,
+  run summarization, or launch a tool.
+
+Daily Brief UX plan:
+
+- Daily Brief should be a user-visible summary surface assembled from explicitly permitted local
+  sources such as recent chats, pinned memories, workspace notes, and future calendar/mail
+  connectors only after those connectors are separately approved.
+- The default brief state is unavailable or manual-only until source permissions and audit records
+  exist.
+- It must show source categories, freshness, omissions, and permission blocks instead of implying
+  complete background awareness.
+
+Timeline UX plan:
+
+- Timeline is a future local activity/audit surface for chats, summaries, captures, workspace
+  events, approvals, refusals, and agent/tool proposals.
+- Timeline entries should expose provenance, source, timestamp, permission state, and revocation
+  affordances where applicable.
+- Timeline is not a hidden telemetry collector and must not create new background observation
+  authority.
+
+Permission state UX:
+
+- Disabled: capability cannot run; controls are unavailable and explain what explicit phase or
+  setting is required.
+- Ask Every Time: each action requires a user-visible prompt with scope, reason, data touched, and
+  expected result.
+- Trusted: repeated actions may run inside a named provider/tool/workspace/session scope with
+  audit and revocation.
+- Enabled: capability is available within configured policy, still bounded by explicit scopes,
+  safety checks, audit, and cancellation.
+
 ## Design System Foundation
 
 The initial QML design tokens live in `ui/qml/theme/SentinelTheme.qml`.
