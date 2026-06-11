@@ -522,6 +522,61 @@ Item {
                             valueMaximumLineCount: 3
                         }
 
+                        SectionTitle {
+                            title: qsTr("Credential Security")
+                            subtitle: qsTr("OS secret-store readiness only; cloud execution remains disabled.")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Store")
+                            value: settingsPage.viewModel.credentialStoreSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("OS Backend")
+                            value: settingsPage.viewModel.credentialStoreBackendSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 2
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Actions")
+                            value: settingsPage.viewModel.credentialActionReadiness
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 3
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Add API Key")
+                                enabled: false
+                                Layout.fillWidth: true
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Update API Key")
+                                enabled: false
+                                Layout.fillWidth: true
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Remove API Key")
+                                enabled: false
+                                Layout.fillWidth: true
+                            }
+                        }
+
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: SentinelTheme.spaceMd
@@ -1464,6 +1519,15 @@ Item {
                             valueMaximumLineCount: 8
                             label: qsTr("Credentials")
                             value: settingsPage.viewModel.providerCredentialSafetySummaries.join("\n")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Credential Store")
+                            value: settingsPage.viewModel.credentialStoreSafetySummary + "\n"
+                                   + settingsPage.viewModel.credentialStoreTraceSummaries.join("\n")
                             Layout.fillWidth: true
                         }
 

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "sentinel/core/CredentialStore.h"
+
 #include <QList>
 #include <QString>
 #include <QStringList>
@@ -39,6 +41,8 @@ struct ProviderCredentialRequirement {
     ProviderCredentialStatus status = ProviderCredentialStatus::Missing;
     bool placeholderReady = false;
     bool executionEnabled = false;
+    CredentialStoreReadiness storeReadiness = CredentialStoreReadiness::DisabledFallback;
+    QString backendSummary;
     QString summary;
 };
 
@@ -60,6 +64,7 @@ struct ProviderCredentialReadiness {
     bool configured = false;
     bool placeholderReady = false;
     bool executionAllowed = false;
+    QString backendSummary;
     QString summary;
 };
 
@@ -79,7 +84,9 @@ QString providerCredentialReadinessSummary(const ProviderCredentialReadiness& re
 
 class ProviderCredentialRegistry final {
 public:
-    explicit ProviderCredentialRegistry(QList<ProviderCredentialRequirement> requirements);
+    explicit ProviderCredentialRegistry(
+        QList<ProviderCredentialRequirement> requirements,
+        CredentialStoreSummary credentialStoreSummary = defaultCredentialStore().summary());
 
     QList<ProviderCredentialRequirement> requirements() const;
     ProviderCredentialRequirement requirementForProvider(const QString& providerId) const;
@@ -93,8 +100,10 @@ public:
 
 private:
     QList<ProviderCredentialRequirement> requirements_;
+    CredentialStoreSummary credentialStoreSummary_;
 };
 
-ProviderCredentialRegistry defaultProviderCredentialRegistry();
+ProviderCredentialRegistry defaultProviderCredentialRegistry(
+    CredentialStoreSummary credentialStoreSummary = defaultCredentialStore().summary());
 
 } // namespace sentinel::core

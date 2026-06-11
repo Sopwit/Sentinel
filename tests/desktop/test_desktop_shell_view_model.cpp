@@ -563,6 +563,23 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
                 .contains(QStringLiteral("execution disabled")));
     QVERIFY(fixture.viewModel.providerCredentialSafetySummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("plaintextStorage=refused")));
+    QVERIFY(fixture.viewModel.credentialStoreSummary()
+                .contains(QStringLiteral("Credential store disabled")));
+    QVERIFY(fixture.viewModel.credentialStoreBackendSummary()
+                .contains(QStringLiteral("storage unavailable")));
+    QVERIFY(fixture.viewModel.credentialStoreSafetySummary()
+                .contains(QStringLiteral("no plaintext")));
+    QCOMPARE(fixture.viewModel.credentialStoreTraceSummaries().size(), 5);
+    QVERIFY(fixture.viewModel.credentialActionReadiness().contains(QStringLiteral("disabled")));
+    QVERIFY(fixture.viewModel.credentialExecutionStatus()
+                .contains(QStringLiteral("Execution disabled")));
+    const auto exposedCredentialText =
+        fixture.viewModel.credentialStoreSummary() + fixture.viewModel.credentialStoreBackendSummary()
+        + fixture.viewModel.credentialStoreSafetySummary()
+        + fixture.viewModel.providerCredentialSummaries().join(QStringLiteral("\n"))
+        + fixture.viewModel.providerCredentialReadinessSummaries().join(QStringLiteral("\n"));
+    QVERIFY(!exposedCredentialText.contains(QStringLiteral("sk-test-secret")));
+    QVERIFY(!exposedCredentialText.contains(QStringLiteral("apiKey"), Qt::CaseInsensitive));
 
     fixture.viewModel.setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
 
@@ -1410,6 +1427,12 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("providerCredentialSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("providerCredentialReadinessSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("providerCredentialSafetySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("credentialStoreSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("credentialStoreBackendSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("credentialStoreSafetySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("credentialStoreTraceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("credentialActionReadiness"), QByteArrayLiteral("QString")},
+        {QStringLiteral("credentialExecutionStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("ollamaEndpoint"), QByteArrayLiteral("QString")},
         {QStringLiteral("ollamaConnectionStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("ollamaHealthStatus"), QByteArrayLiteral("QString")},

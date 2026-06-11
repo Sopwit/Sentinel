@@ -14,6 +14,8 @@ ProviderCredentialRequirement unknownRequirement(const QString& providerId) {
         ProviderCredentialStatus::Refused,
         false,
         false,
+        CredentialStoreReadiness::DisabledFallback,
+        QStringLiteral("Credential store disabled / unknown provider refused."),
         QStringLiteral("Unknown provider credentials are refused and cannot enable execution."),
     };
 }
@@ -80,12 +82,13 @@ QString providerCredentialScopeName(ProviderCredentialScope scope) {
 
 QString providerCredentialRequirementSummary(
     const ProviderCredentialRequirement& requirement) {
-    return QStringLiteral("%1 (%2): %3 / %4 / %5 / API keys not stored")
+    return QStringLiteral("%1 (%2): %3 / %4 / %5 / %6 / API keys not stored")
         .arg(requirement.displayName, requirement.providerId,
              providerCredentialScopeName(requirement.scope),
              providerCredentialStatusName(requirement.status),
              requirement.executionEnabled ? QStringLiteral("execution enabled")
-                                          : QStringLiteral("execution disabled"));
+                                          : QStringLiteral("execution disabled"),
+             credentialStoreReadinessName(requirement.storeReadiness));
 }
 
 QString providerCredentialSafetySummary(const ProviderCredentialSafetyReport& report) {
@@ -103,15 +106,18 @@ QString providerCredentialSafetySummary(const ProviderCredentialSafetyReport& re
 }
 
 QString providerCredentialReadinessSummary(const ProviderCredentialReadiness& readiness) {
-    return QStringLiteral("%1: %2 / %3 / API key values not stored")
+    return QStringLiteral("%1: %2 / %3 / %4 / API key values not stored")
         .arg(readiness.displayName, providerCredentialStatusName(readiness.status),
              readiness.executionAllowed ? QStringLiteral("execution allowed")
-                                        : QStringLiteral("execution disabled"));
+                                        : QStringLiteral("execution disabled"),
+             readiness.backendSummary);
 }
 
 ProviderCredentialRegistry::ProviderCredentialRegistry(
-    QList<ProviderCredentialRequirement> requirements)
-    : requirements_(std::move(requirements)) {}
+    QList<ProviderCredentialRequirement> requirements,
+    CredentialStoreSummary credentialStoreSummary)
+    : requirements_(std::move(requirements))
+    , credentialStoreSummary_(std::move(credentialStoreSummary)) {}
 
 QList<ProviderCredentialRequirement> ProviderCredentialRegistry::requirements() const {
     return requirements_;
@@ -140,6 +146,8 @@ ProviderCredentialReadiness ProviderCredentialRegistry::readinessForProvider(
         configured,
         requirement.placeholderReady,
         false,
+        requirement.backendSummary.isEmpty() ? credentialStoreSummary_.backendSummary
+                                             : requirement.backendSummary,
         requirement.summary.isEmpty() ? providerCredentialRequirementSummary(requirement)
                                       : requirement.summary,
     };
@@ -178,7 +186,7 @@ ProviderCredentialSummary ProviderCredentialRegistry::summary() const {
                                             : ProviderCredentialStatus::Configured;
     result.summary =
         QStringLiteral("%1 provider credential records: %2 configured/not-required, %3 missing, "
-                       "%4 refused. API key values are not stored.")
+                       "%4 refused. API key values are not stored; credential store is disabled.")
             .arg(result.providerCount)
             .arg(result.configuredCount)
             .arg(result.missingCount)
@@ -211,7 +219,10 @@ QStringList ProviderCredentialRegistry::safetySummaries() const {
     return summaries;
 }
 
-ProviderCredentialRegistry defaultProviderCredentialRegistry() {
+ProviderCredentialRegistry defaultProviderCredentialRegistry(
+    CredentialStoreSummary credentialStoreSummary) {
+    const auto backendSummary = credentialStoreSummary.backendSummary;
+    const auto storeReadiness = credentialStoreSummary.readiness;
     return ProviderCredentialRegistry{
         {
             ProviderCredentialRequirement{
@@ -222,6 +233,8 @@ ProviderCredentialRegistry defaultProviderCredentialRegistry() {
                 ProviderCredentialStatus::NotRequired,
                 true,
                 false,
+                storeReadiness,
+                QStringLiteral("No credential storage required for Local Ollama."),
                 QStringLiteral("Local Ollama does not require an API key."),
             },
             ProviderCredentialRequirement{
@@ -232,8 +245,11 @@ ProviderCredentialRegistry defaultProviderCredentialRegistry() {
                 ProviderCredentialStatus::Missing,
                 true,
                 false,
+                storeReadiness,
+                backendSummary,
                 QStringLiteral("OpenAI-compatible credentials are not configured; API key values "
-                               "are not stored."),
+                               "are not stored; storage requires future OS secret-store "
+                               "implementation."),
             },
             ProviderCredentialRequirement{
                 QStringLiteral("claude"),
@@ -243,8 +259,10 @@ ProviderCredentialRegistry defaultProviderCredentialRegistry() {
                 ProviderCredentialStatus::Missing,
                 true,
                 false,
+                storeReadiness,
+                backendSummary,
                 QStringLiteral("Claude credentials are not configured; API key values are not "
-                               "stored."),
+                               "stored; storage requires future OS secret-store implementation."),
             },
             ProviderCredentialRequirement{
                 QStringLiteral("gemini"),
@@ -254,10 +272,13 @@ ProviderCredentialRegistry defaultProviderCredentialRegistry() {
                 ProviderCredentialStatus::Missing,
                 true,
                 false,
+                storeReadiness,
+                backendSummary,
                 QStringLiteral("Gemini credentials are not configured; API key values are not "
-                               "stored."),
+                               "stored; storage requires future OS secret-store implementation."),
             },
         },
+        credentialStoreSummary,
     };
 }
 

@@ -136,6 +136,55 @@ Out of scope:
   provider fallback routing, hidden retries, background provider discovery, automatic provider
   switching, and remote model discovery.
 
+## 5.4 Secure Credential Store Boundary
+
+Decision: Secure credential infrastructure is represented by a value-only `CredentialStore`
+boundary until a later explicit storage phase.
+
+Reason: Sentinel needs to prepare for future API-key storage without adding plaintext secret
+persistence, cloud execution, provider testing, or platform-specific secret-store calls
+prematurely.
+
+Runtime behavior:
+
+- The preferred future backend is OS-native: macOS Keychain, Windows Credential Manager, or Linux
+  Secret Service.
+- The current implementation is readiness metadata only; all storage, remove, and test actions
+  return disabled, non-mutating results.
+- Provider credential records may reference backend readiness, but they remain missing/not
+  configured for cloud providers and cannot enable execution.
+- QML receives only safe strings: store summary, backend summary, safety summary, provider
+  summaries, disabled action readiness, execution disabled status, and bounded traces.
+
+Out of scope:
+
+- Real secret storage, plaintext API-key persistence, secret logging, raw secret exposure, key
+  entry/removal/testing, OS keychain calls, provider calls, cloud routing, background probing,
+  hidden retries, fallback execution, and autonomous behavior.
+
+## 5.5 Secure Credential Backend Interface
+
+Decision: Future credential storage is hidden behind `ICredentialBackend`.
+
+Reason: Sentinel needs a testable provider-scoped secret-storage contract before real OS
+keychain integration, while keeping QML and provider routing away from raw secrets.
+
+Runtime behavior:
+
+- The desktop app uses the disabled backend by default; store, read, delete, and contains refuse
+  safely and do not mutate state.
+- macOS Keychain, Windows Credential Manager, and Linux Secret Service are represented as
+  non-executing placeholders with no platform-specific hard dependency.
+- The in-memory backend exists for tests only and is not wired into the desktop controller.
+- Backend operation results expose provider id, credential name, backend kind, readiness, success
+  posture, mutation posture, and safe reason text. They do not include API-key values.
+
+Out of scope:
+
+- User key entry, real OS secret-store calls, plaintext persistence, cloud/provider calls,
+  provider test calls, hidden retries, background probing, filesystem scanning, subprocess
+  execution, and autonomous provider switching.
+
 ## 6. Memory Persistence Boundary
 
 Decision: Memory storage is hidden behind `IMemoryStore`.

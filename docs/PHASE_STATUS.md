@@ -2,6 +2,65 @@
 
 ## Completed / Stable
 
+### Phase 40.0-40.10: Secure Credential Backend Foundation
+
+Completed. Adds a platform-ready credential backend abstraction for future provider API keys while
+preserving the current no-cloud/no-execution safety boundary.
+
+Scope:
+
+- Added a core `ICredentialBackend` interface plus provider-scoped credential keys, operation
+  results, read results, and safe result summaries for store/read/delete/contains behavior.
+- Added non-executing placeholder backend support for macOS Keychain, Windows Credential Manager,
+  and Linux Secret Service without OS-specific hard dependencies.
+- Added a disabled fallback backend that refuses persistence safely and remains the default
+  desktop backend.
+- Added an in-memory credential backend for focused tests only. It can store/read/delete raw
+  secrets inside core tests, but it is not selected by the desktop controller and is never exposed
+  to QML.
+- Settings Local AI now shows credential backend readiness and disabled metadata-only Add API Key,
+  Update API Key, and Remove API Key actions. No provider test call is exposed.
+- Provider credential readiness remains summary-only: provider id, configured/not configured,
+  backend readiness, operation status, and safe reason text. Raw secrets, authorization payloads,
+  hidden prompts, and API-key values are not exposed.
+
+Known limitation:
+
+- This phase does not implement real OS keychain storage, key entry, cloud/API calls, provider
+  execution, provider testing, background probing, hidden retries, filesystem scanning,
+  subprocess execution, or autonomous provider switching.
+
+### Phase 39.0-39.12: Secure Credential Infrastructure Foundation
+
+Completed. Adds a metadata-only secure credential infrastructure foundation for future API-key
+storage without enabling cloud execution, provider calls, secret entry, or persistence.
+
+Scope:
+
+- Added `CredentialStore`, `CredentialStoreStatus`, `CredentialStoreBackend`,
+  `CredentialStoreReadiness`, `CredentialStoreCapability`, `CredentialStoreSafetyReport`,
+  `CredentialStoreSummary`, `CredentialStoreResult`, and `CredentialStoreTrace`.
+- Added deterministic readiness metadata for macOS Keychain, Windows Credential Manager, Linux
+  Secret Service, and a local unavailable fallback. All backends remain non-persistent
+  placeholders.
+- Credential policy explicitly refuses plaintext persistence, secret logging, raw secret exposure,
+  automatic provider calls, backend fallback execution, hidden background work, and autonomous
+  behavior.
+- Provider credential readiness for OpenAI-compatible, Claude, and Gemini now includes credential
+  required/not configured, backend readiness, storage unavailable/requires future implementation,
+  and execution disabled metadata.
+- Settings Local AI shows a compact Credential Security section with OS backend readiness,
+  provider credential status, and disabled Add API Key, Update API Key, and Remove API Key
+  placeholders. Developer Mode shows bounded store safety and backend traces.
+
+Known limitation:
+
+- This phase does not implement real secret storage, key entry, key removal, key testing, OS
+  keychain calls, cloud/API calls, provider execution, remote model lookup, background probing, or
+  autonomous provider behavior. Future activation requires an explicit credential storage phase,
+  OS-specific implementations behind this boundary, no-plaintext persistence tests, user-explicit
+  UI flows, provider execution gates, and security review.
+
 ### Phase 38.0-38.12: Provider Credentials And Cloud-Provider Readiness Foundation
 
 Completed. Adds metadata-only provider credential/readiness records for future cloud provider

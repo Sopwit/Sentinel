@@ -831,6 +831,30 @@ QStringList DesktopShellViewModel::providerCredentialSafetySummaries() const {
     return controller_.providerCredentialSafetySummaries();
 }
 
+QString DesktopShellViewModel::credentialStoreSummary() const {
+    return controller_.credentialStoreSummary();
+}
+
+QString DesktopShellViewModel::credentialStoreBackendSummary() const {
+    return controller_.credentialStoreBackendSummary();
+}
+
+QString DesktopShellViewModel::credentialStoreSafetySummary() const {
+    return controller_.credentialStoreSafetySummary();
+}
+
+QStringList DesktopShellViewModel::credentialStoreTraceSummaries() const {
+    return controller_.credentialStoreTraceSummaries();
+}
+
+QString DesktopShellViewModel::credentialActionReadiness() const {
+    return controller_.credentialActionReadiness();
+}
+
+QString DesktopShellViewModel::credentialExecutionStatus() const {
+    return controller_.credentialExecutionStatus();
+}
+
 QString DesktopShellViewModel::ollamaEndpoint() const {
     return controller_.ollamaEndpoint();
 }

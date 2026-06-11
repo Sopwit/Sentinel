@@ -1,5 +1,32 @@
 # AI Orchestration Plan
 
+Phase 40.0 through Phase 40.10 adds a secure credential backend foundation without enabling cloud
+execution or desktop secret entry. `ICredentialBackend`, `CredentialKey`,
+`CredentialBackendOperation`, `CredentialBackendResult`, and `CredentialReadResult` define
+provider-scoped store/read/delete/contains behavior behind a core boundary. The default desktop
+path uses a disabled backend that refuses persistence safely. macOS Keychain, Windows Credential
+Manager, and Linux Secret Service are represented as non-executing placeholders with no
+OS-specific hard dependency. `InMemoryCredentialBackend` is available for focused core tests only
+and is not exposed to QML. Settings shows credential backend readiness and disabled Add API Key,
+Update API Key, and Remove API Key metadata states only. No raw secret, authorization header,
+hidden prompt, API-key payload, provider test call, cloud request, background probe, filesystem
+scan, subprocess execution, hidden retry, or autonomous provider switch is added.
+
+Phase 39.0 through Phase 39.12 adds a secure credential infrastructure foundation without
+enabling cloud execution or secret storage. `CredentialStore`, `CredentialStoreStatus`,
+`CredentialStoreBackend`, `CredentialStoreReadiness`, `CredentialStoreCapability`,
+`CredentialStoreSafetyReport`, `CredentialStoreSummary`, `CredentialStoreResult`, and
+`CredentialStoreTrace` describe OS secret-store readiness for macOS Keychain, Windows Credential
+Manager, Linux Secret Service, and a local unavailable fallback. The current implementation is
+metadata-only: no API key value is accepted, stored, logged, exposed, removed, tested, or used for
+provider execution. Provider credential records for OpenAI-compatible, Claude, and Gemini include
+credential required/not configured, backend readiness, storage unavailable/requires future
+implementation, and execution disabled metadata. Settings exposes safe summaries and disabled Add
+API Key, Update API Key, and Remove API Key placeholders only. Developer Mode may show bounded
+policy/safety traces, never raw secrets or provider payloads. Future activation requires an
+explicit OS secret-store implementation phase, user-explicit credential flows, no-plaintext
+persistence tests, no-secret view-model tests, provider execution gates, and security review.
+
 Phase 38.0 through Phase 38.12 adds a metadata-only provider credential and cloud-readiness
 foundation. `ProviderCredentialPolicy`, `ProviderCredentialStatus`,
 `ProviderCredentialScope`, `ProviderCredentialRequirement`, `ProviderCredentialSafetyReport`,
