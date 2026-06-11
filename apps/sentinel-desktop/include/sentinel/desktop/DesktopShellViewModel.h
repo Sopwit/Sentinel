@@ -1,5 +1,6 @@
 #pragma once
 
+#include "sentinel/core/CompanionService.h"
 #include "sentinel/core/SemanticRetrieval.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 
@@ -1117,6 +1118,24 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY configurationProfileChanged)
     Q_PROPERTY(QString appLanguage READ appLanguage WRITE setAppLanguage NOTIFY appLanguageChanged)
     Q_PROPERTY(QStringList availableLanguages READ availableLanguages CONSTANT)
+    Q_PROPERTY(bool companionEnabled READ companionEnabled WRITE setCompanionEnabled NOTIFY
+                   companionChanged)
+    Q_PROPERTY(bool companionAvailable READ companionAvailable NOTIFY companionChanged)
+    Q_PROPERTY(QString companionStatus READ companionStatus NOTIFY companionChanged)
+    Q_PROPERTY(QString companionAvailability READ companionAvailability NOTIFY companionChanged)
+    Q_PROPERTY(QString companionPlatformCapability READ companionPlatformCapability NOTIFY
+                   companionChanged)
+    Q_PROPERTY(QString companionPermissionPosture READ companionPermissionPosture NOTIFY
+                   companionChanged)
+    Q_PROPERTY(QString companionSafetyBoundary READ companionSafetyBoundary NOTIFY companionChanged)
+    Q_PROPERTY(QString companionQuickCaptureSummary READ companionQuickCaptureSummary NOTIFY
+                   companionChanged)
+    Q_PROPERTY(QStringList companionActionSummaries READ companionActionSummaries NOTIFY
+                   companionChanged)
+    Q_PROPERTY(QStringList companionPlatformSummaries READ companionPlatformSummaries NOTIFY
+                   companionChanged)
+    Q_PROPERTY(QStringList companionTraceSummaries READ companionTraceSummaries NOTIFY
+                   companionChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeChanged)
 
@@ -1788,6 +1807,18 @@ public:
     void setAppLanguage(const QString& language);
     QStringList availableLanguages() const;
     Q_INVOKABLE QString languageDisplayName(const QString& language) const;
+    bool companionEnabled() const;
+    void setCompanionEnabled(bool enabled);
+    bool companionAvailable() const;
+    QString companionStatus() const;
+    QString companionAvailability() const;
+    QString companionPlatformCapability() const;
+    QString companionPermissionPosture() const;
+    QString companionSafetyBoundary() const;
+    QString companionQuickCaptureSummary() const;
+    QStringList companionActionSummaries() const;
+    QStringList companionPlatformSummaries() const;
+    QStringList companionTraceSummaries() const;
     bool developerModeEnabled() const;
     void setDeveloperModeEnabled(bool enabled);
 
@@ -1833,6 +1864,7 @@ signals:
     void themeNameChanged();
     void configurationProfileChanged();
     void appLanguageChanged();
+    void companionChanged();
     void developerModeChanged();
     void contextExplainabilityVisibleChanged();
     void currentPageChanged();
@@ -1872,6 +1904,7 @@ private:
     core::ApplicationController& controller_;
     core::ModeManager& modeManager_;
     core::AppSettings& settings_;
+    core::CompanionService companionService_;
     ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");
 };

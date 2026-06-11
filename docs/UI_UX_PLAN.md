@@ -195,6 +195,27 @@ Permission state UX:
 - Enabled: capability is available within configured policy, still bounded by explicit scopes,
   safety checks, audit, and cancellation.
 
+## Phase 43 Companion UX Notes
+
+Phase 43.0 through Phase 43.12 adds companion/menu-bar/system-tray readiness UX without creating
+a native tray item, background worker, hidden daemon, or executable companion actions.
+
+Guidelines:
+
+- Settings General exposes a normal user-facing "Show Sentinel in menu bar / system tray"
+  preference. The setting persists visibility intent only and must clearly show readiness-only
+  status until native platform integration is implemented.
+- Normal mode should show only the preference, availability/status, and a concise safety boundary.
+- Developer Mode may show platform capability, action summaries, quick-capture readiness, and
+  bounded traces.
+- Companion actions are labels/readiness metadata only in this phase: Open Sentinel, New
+  conversation, Quick note, Pause companion, Settings, and Quit.
+- Quick Capture remains a placeholder. It must not write files, committed memory, transcript
+  messages, or trigger model/provider calls.
+- Companion UI must not imply hidden background execution, startup autonomy, tool/plugin
+  execution, microphone capture, playback, filesystem scanning, cloud/API calls, or provider
+  routing.
+
 ## Design System Foundation
 
 The initial QML design tokens live in `ui/qml/theme/SentinelTheme.qml`.

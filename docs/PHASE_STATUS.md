@@ -2,6 +2,34 @@
 
 ## Completed / Stable
 
+### Phase 43.0-43.12: Companion / Tray / Menu Bar Foundation
+
+Completed. Adds a safe, cross-platform companion surface foundation so Sentinel can expose
+menu-bar/system-tray readiness without adding hidden execution or background autonomy.
+
+Scope:
+
+- Added a value-only `CompanionService` boundary with companion status, availability, platform
+  posture, permission posture, safe action labels, quick-capture readiness, and bounded traces.
+- Represented macOS menu bar, Windows system tray, and Linux StatusNotifier/AppIndicator/system
+  tray as readiness-only platform targets. No native tray/menu object is created in this phase.
+- Added a persisted user preference for "Show Sentinel in menu bar / system tray"; it records
+  visibility intent only and does not start background work.
+- Settings General shows the companion preference, readiness status, and safety boundary summary.
+  Developer Mode shows platform details, action metadata, and traces.
+- Safe companion actions are metadata-only labels: Open Sentinel, New conversation, Quick note,
+  Pause companion, Settings, and Quit. They do not navigate, mutate transcripts, write files,
+  write memory, quit the app, or execute tools.
+- Quick Capture is readiness-only and performs no filesystem write, memory write, transcript
+  mutation, or model call.
+
+Known limitation:
+
+- This phase does not add native tray/menu-bar integration, hidden background behavior, startup
+  agents, provider/model calls, cloud/API calls, filesystem scanning, microphone capture,
+  playback, STT/TTS activation, tools/plugins, autonomous actions, or executable companion
+  commands.
+
 ### Phase 42.0-42.12: Sentinel Capability Roadmap Integration
 
 Completed. Converts the open-source ecosystem review and long-term strategy into a concrete,

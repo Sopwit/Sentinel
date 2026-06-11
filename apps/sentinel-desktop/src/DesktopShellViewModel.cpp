@@ -85,6 +85,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::configurationProfileChanged);
     connect(&settings_, &core::AppSettings::appLanguageChanged, this,
             &DesktopShellViewModel::appLanguageChanged);
+    connect(&settings_, &core::AppSettings::companionEnabledChanged, this,
+            &DesktopShellViewModel::companionChanged);
     connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
             &DesktopShellViewModel::developerModeChanged);
     connect(&settings_, &core::AppSettings::contextExplainabilityVisibleChanged, this,
@@ -2879,6 +2881,54 @@ QStringList DesktopShellViewModel::availableLanguages() const {
 
 QString DesktopShellViewModel::languageDisplayName(const QString& language) const {
     return settings_.languageDisplayName(language);
+}
+
+bool DesktopShellViewModel::companionEnabled() const {
+    return settings_.companionEnabled();
+}
+
+void DesktopShellViewModel::setCompanionEnabled(bool enabled) {
+    settings_.setCompanionEnabled(enabled);
+}
+
+bool DesktopShellViewModel::companionAvailable() const {
+    return companionService_.summary(settings_.companionEnabled()).available;
+}
+
+QString DesktopShellViewModel::companionStatus() const {
+    return companionService_.summary(settings_.companionEnabled()).status;
+}
+
+QString DesktopShellViewModel::companionAvailability() const {
+    return companionService_.summary(settings_.companionEnabled()).availability;
+}
+
+QString DesktopShellViewModel::companionPlatformCapability() const {
+    return companionService_.summary(settings_.companionEnabled()).platformCapability;
+}
+
+QString DesktopShellViewModel::companionPermissionPosture() const {
+    return companionService_.summary(settings_.companionEnabled()).permissionPostureSummary;
+}
+
+QString DesktopShellViewModel::companionSafetyBoundary() const {
+    return companionService_.summary(settings_.companionEnabled()).safetyBoundarySummary;
+}
+
+QString DesktopShellViewModel::companionQuickCaptureSummary() const {
+    return companionService_.summary(settings_.companionEnabled()).quickCaptureSummary;
+}
+
+QStringList DesktopShellViewModel::companionActionSummaries() const {
+    return companionService_.summary(settings_.companionEnabled()).actionSummaries;
+}
+
+QStringList DesktopShellViewModel::companionPlatformSummaries() const {
+    return companionService_.summary(settings_.companionEnabled()).platformSummaries;
+}
+
+QStringList DesktopShellViewModel::companionTraceSummaries() const {
+    return companionService_.summary(settings_.companionEnabled()).traceSummaries;
 }
 
 bool DesktopShellViewModel::developerModeEnabled() const {

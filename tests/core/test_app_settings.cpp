@@ -38,6 +38,7 @@ private slots:
     void persistsPromptContextInjectionOptIn();
     void persistsSemanticPromptInclusionOptIn();
     void persistsContextExplainabilityVisibility();
+    void persistsCompanionVisibilityPreference();
     void persistsDeveloperModeVisibilityOptIn();
     void persistsVoiceConfigurationPaths();
     void persistsPiperFileOutputExecutionOptIn();
@@ -63,6 +64,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(!settings->promptContextInjectionEnabled());
     QVERIFY(!settings->semanticPromptInclusionEnabled());
     QVERIFY(settings->contextExplainabilityVisible());
+    QVERIFY(!settings->companionEnabled());
     QVERIFY(!settings->developerModeEnabled());
     QVERIFY(settings->piperBinaryPath().isEmpty());
     QVERIFY(settings->piperModelPath().isEmpty());
@@ -147,6 +149,7 @@ void AppSettingsTest::languageSettingDoesNotChangeRuntimeFlags() {
     settings->setPromptContextInjectionEnabled(true);
     settings->setSemanticPromptInclusionEnabled(true);
     settings->setContextExplainabilityVisible(false);
+    settings->setCompanionEnabled(true);
     settings->setDeveloperModeEnabled(true);
 
     settings->setAppLanguage(QStringLiteral("tr"));
@@ -156,6 +159,7 @@ void AppSettingsTest::languageSettingDoesNotChangeRuntimeFlags() {
     QVERIFY(settings->promptContextInjectionEnabled());
     QVERIFY(settings->semanticPromptInclusionEnabled());
     QVERIFY(!settings->contextExplainabilityVisible());
+    QVERIFY(settings->companionEnabled());
     QVERIFY(settings->developerModeEnabled());
 }
 
@@ -402,6 +406,25 @@ void AppSettingsTest::persistsContextExplainabilityVisibility() {
     QCOMPARE(spy.count(), 2);
 }
 
+void AppSettingsTest::persistsCompanionVisibilityPreference() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::companionEnabledChanged);
+
+    QVERIFY(!settings->companionEnabled());
+
+    settings->setCompanionEnabled(true);
+
+    QVERIFY(settings->companionEnabled());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setCompanionEnabled(true);
+    QCOMPARE(spy.count(), 1);
+
+    settings->setCompanionEnabled(false);
+    QVERIFY(!settings->companionEnabled());
+    QCOMPARE(spy.count(), 2);
+}
+
 void AppSettingsTest::persistsDeveloperModeVisibilityOptIn() {
     const auto settings = makeSettings();
     QSignalSpy spy(settings.get(), &AppSettings::developerModeEnabledChanged);
@@ -476,6 +499,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setPromptContextInjectionEnabled(true);
         settings.setSemanticPromptInclusionEnabled(true);
         settings.setContextExplainabilityVisible(false);
+        settings.setCompanionEnabled(true);
         settings.setDeveloperModeEnabled(true);
         settings.setPiperBinaryPath(QStringLiteral("/opt/piper/piper"));
         settings.setPiperModelPath(QStringLiteral("/opt/piper/model.onnx"));
@@ -493,6 +517,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QVERIFY(reloaded.promptContextInjectionEnabled());
     QVERIFY(reloaded.semanticPromptInclusionEnabled());
     QVERIFY(!reloaded.contextExplainabilityVisible());
+    QVERIFY(reloaded.companionEnabled());
     QVERIFY(reloaded.developerModeEnabled());
     QCOMPARE(reloaded.piperBinaryPath(), QStringLiteral("/opt/piper/piper"));
     QCOMPARE(reloaded.piperModelPath(), QStringLiteral("/opt/piper/model.onnx"));

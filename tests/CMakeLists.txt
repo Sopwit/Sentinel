@@ -52,6 +52,7 @@ add_sentinel_core_test(test_runtime_integration core/test_runtime_integration.cp
 add_sentinel_core_test(test_runtime_provider core/test_runtime_provider.cpp)
 add_sentinel_core_test(test_credential_store core/test_credential_store.cpp)
 add_sentinel_core_test(test_provider_credentials core/test_provider_credentials.cpp)
+add_sentinel_core_test(test_companion_service core/test_companion_service.cpp)
 add_sentinel_core_test(test_model_registry core/test_model_registry.cpp)
 add_sentinel_core_test(test_ollama_runtime core/test_ollama_runtime.cpp)
 add_sentinel_core_test(test_local_inference core/test_local_inference.cpp)

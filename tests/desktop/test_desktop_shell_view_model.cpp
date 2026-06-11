@@ -106,6 +106,7 @@ private slots:
     void forwardsMemoryWrites();
     void forwardsSettingsChanges();
     void exposesLanguageSettings();
+    void exposesCompanionReadinessMetadata();
     void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
@@ -587,6 +588,37 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
     QCOMPARE(fixture.viewModel.selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
     QCOMPARE(fixture.viewModel.activeRuntimeProviderId(), QStringLiteral("ollama"));
     QCOMPARE(runtimeProviderSpy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy companionSpy(&fixture.viewModel, &DesktopShellViewModel::companionChanged);
+
+    QVERIFY(!fixture.viewModel.companionEnabled());
+    QVERIFY(!fixture.viewModel.companionAvailable());
+    QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.companionAvailability(), QStringLiteral("Readiness Only"));
+    QVERIFY(fixture.viewModel.companionPlatformCapability()
+                .contains(QStringLiteral("readiness only")));
+    QVERIFY(fixture.viewModel.companionPermissionPosture()
+                .contains(QStringLiteral("Disabled by default")));
+    QVERIFY(fixture.viewModel.companionSafetyBoundary()
+                .contains(QStringLiteral("no background daemon")));
+    QVERIFY(fixture.viewModel.companionQuickCaptureSummary()
+                .contains(QStringLiteral("no note")));
+    QCOMPARE(fixture.viewModel.companionActionSummaries().size(), 6);
+    QCOMPARE(fixture.viewModel.companionPlatformSummaries().size(), 3);
+    QCOMPARE(fixture.viewModel.companionTraceSummaries().size(), 5);
+    QVERIFY(fixture.viewModel.companionActionSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Quick note")));
+
+    fixture.viewModel.setCompanionEnabled(true);
+
+    QVERIFY(fixture.settings.companionEnabled());
+    QVERIFY(fixture.viewModel.companionEnabled());
+    QVERIFY(!fixture.viewModel.companionAvailable());
+    QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Readiness Only"));
+    QCOMPARE(companionSpy.count(), 1);
 }
 
 void DesktopShellViewModelTest::exposesOllamaRuntimeBoundaryMetadata() {
@@ -1453,6 +1485,17 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("modelManagementActionAvailability"), QByteArrayLiteral("QString")},
         {QStringLiteral("modelRecommendationSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("modelRequirementSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("companionEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("companionAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("companionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("companionAvailability"), QByteArrayLiteral("QString")},
+        {QStringLiteral("companionPlatformCapability"), QByteArrayLiteral("QString")},
+        {QStringLiteral("companionPermissionPosture"), QByteArrayLiteral("QString")},
+        {QStringLiteral("companionSafetyBoundary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("companionQuickCaptureSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("companionActionSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("companionPlatformSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("companionTraceSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("developerModeEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("voiceRuntimeMode"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceEnabled"), QByteArrayLiteral("bool")},
@@ -1680,6 +1723,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
 
     const QSet<QString> writableProperties{
         QStringLiteral("contextExplainabilityVisible"),
+        QStringLiteral("companionEnabled"),
         QStringLiteral("developerModeEnabled"),
         QStringLiteral("piperFileOutputExecutionEnabled"),
         QStringLiteral("promptContextInjectionEnabled"),

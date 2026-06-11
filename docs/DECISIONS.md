@@ -36,6 +36,32 @@ Phase 3.4 implementation status:
 - Added `ISystemIntegrationService` as a lightweight placeholder.
 - Kept these as boundaries only; no OS-specific integration/automation implementation yet.
 
+## 1.2 Companion/Menu Bar/System Tray Boundary
+
+Decision: Companion/menu-bar/system-tray behavior is represented first as a platform-neutral,
+value-only `CompanionService` readiness boundary.
+
+Reason: Sentinel needs a future lightweight desktop entry point, but shell integration must not
+become hidden background autonomy or an execution side channel.
+
+Runtime behavior:
+
+- The user preference "Show Sentinel in menu bar / system tray" persists visibility intent only.
+- macOS menu bar, Windows system tray, and Linux StatusNotifier/AppIndicator/system tray are
+  readiness-only platform postures.
+- Companion actions are metadata labels only: Open Sentinel, New conversation, Quick note, Pause
+  companion, Settings, and Quit.
+- Quick Capture is placeholder metadata and does not write files, memory, transcripts, or call
+  models/providers.
+- QML receives only booleans, strings, and string lists through `DesktopShellViewModel`.
+
+Out of scope:
+
+- Native tray/menu objects, startup agents, hidden background workers, timers, autonomous loops,
+  provider/model calls, cloud/API calls, filesystem scanning, microphone capture, playback,
+  STT/TTS activation, tools/plugins, action execution, process exit, and OS-specific handle
+  exposure.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.

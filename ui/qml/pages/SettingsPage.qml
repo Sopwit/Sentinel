@@ -360,6 +360,94 @@ Item {
                             radius: SentinelTheme.radiusMd
                             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
                             border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
+                            implicitHeight: companionToggleRow.implicitHeight + SentinelTheme.spaceMd
+
+                            RowLayout {
+                                id: companionToggleRow
+                                x: SentinelTheme.spaceSm
+                                y: SentinelTheme.spaceXs
+                                width: parent.width - SentinelTheme.spaceSm * 2
+                                spacing: SentinelTheme.spaceSm
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Show Sentinel in menu bar / system tray")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontBody
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: settingsPage.viewModel.companionStatus
+                                              + qsTr(" / ")
+                                              + settingsPage.viewModel.companionAvailability
+                                              + qsTr(". Native tray creation is not active in this phase.")
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+
+                                Switch {
+                                    id: companionSwitch
+                                    checked: settingsPage.viewModel.companionEnabled
+                                    hoverEnabled: true
+                                    onToggled: settingsPage.viewModel.companionEnabled = checked
+
+                                    indicator: Rectangle {
+                                        implicitWidth: 46
+                                        implicitHeight: 24
+                                        x: companionSwitch.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: height / 2
+                                        color: companionSwitch.checked
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                        border.color: companionSwitch.activeFocus
+                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                      : companionSwitch.hovered
+                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                        Rectangle {
+                                            x: companionSwitch.checked ? parent.width - width - 3 : 3
+                                            anchors.verticalCenter: parent.verticalCenter
+                                            width: 18
+                                            height: 18
+                                            radius: 9
+                                            color: companionSwitch.checked
+                                                   ? settingsPage.modeAccent
+                                                   : SentinelTheme.textMuted
+
+                                            Behavior on x {
+                                                NumberAnimation {
+                                                    duration: MotionTokens.fast
+                                                    easing.type: MotionTokens.enter
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Companion")
+                            value: settingsPage.viewModel.companionSafetyBoundary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            radius: SentinelTheme.radiusMd
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
                             implicitHeight: developerToggleRow.implicitHeight + SentinelTheme.spaceMd
 
                             RowLayout {
@@ -1528,6 +1616,61 @@ Item {
                             label: qsTr("Credential Store")
                             value: settingsPage.viewModel.credentialStoreSafetySummary + "\n"
                                    + settingsPage.viewModel.credentialStoreTraceSummaries.join("\n")
+                            Layout.fillWidth: true
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Companion Boundary")
+                            subtitle: qsTr("Readiness-only shell integration metadata.")
+                            Layout.fillWidth: true
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 2
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            InfoRow {
+                                compact: true
+                                label: qsTr("State")
+                                value: settingsPage.viewModel.companionStatus
+                                       + " / "
+                                       + settingsPage.viewModel.companionAvailability
+                                Layout.fillWidth: true
+                            }
+
+                            InfoRow {
+                                compact: true
+                                label: qsTr("Preference")
+                                value: settingsPage.viewModel.companionEnabled
+                                       ? qsTr("Enabled preference")
+                                       : qsTr("Disabled preference")
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 4
+                            label: qsTr("Platform")
+                            value: settingsPage.viewModel.companionPlatformCapability
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Actions")
+                            value: settingsPage.viewModel.companionActionSummaries.join("\n")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Traces")
+                            value: settingsPage.viewModel.companionTraceSummaries.join("\n")
                             Layout.fillWidth: true
                         }
 
