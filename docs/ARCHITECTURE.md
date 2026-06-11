@@ -114,6 +114,26 @@ providers, available local runtimes, capability summaries, and validation traces
 provider selections fall back to the enabled local runtime as active provider metadata; they do
 not enable cloud execution or routing.
 
+## Provider Credentials And Cloud Readiness
+
+Phase 38 adds a value-only credential/readiness registry for provider configuration posture.
+
+The current credential registry contains:
+
+- `ollama`: Local Ollama, no API key required.
+- `openai-compatible`: disabled placeholder-ready metadata, API key missing and not stored.
+- `claude`: disabled placeholder-ready metadata, API key missing and not stored.
+- `gemini`: disabled placeholder-ready metadata, API key missing and not stored.
+
+Credential records expose provider id, display name, scope, policy, status, placeholder readiness,
+execution-enabled metadata, readiness summaries, and safety summaries. Safety reports explicitly
+refuse plaintext key storage, secret logging, cloud requests, background discovery, provider
+fallback routing, and autonomous provider switching.
+
+Settings may persist selected provider metadata for future providers, but the application has no
+API-key value field or credential write path in this phase. QML receives only QML-safe
+configured/not-required, missing, and refused summaries.
+
 This layer does not probe providers in the background, auto-discover runtimes, scan filesystems,
 download models, install packages, store API keys, route to cloud providers, execute tools, or
 switch providers automatically. Ollama health/model metadata remains the existing explicit

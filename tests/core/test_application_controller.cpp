@@ -693,7 +693,7 @@ private slots:
     void blocksLocalInferenceByDefaultPermission();
     void blocksLocalInferenceWhenSafetyPolicyBlocks();
     void runsInjectedLocalInferenceWhenPermissionAllows();
-    void refusesSendWhenLocalChatInferenceDisabledBeforeTranscriptMutation();
+    void usesProviderPathWhenLocalChatInferenceDisabled();
     void enabledLocalChatInferenceWithoutValidModelFailsSafely();
     void enabledLocalChatInferenceWithInvalidModelShowsSafeSummary();
     void disabledProviderSelectionRefusesBeforeTranscriptMutation();
@@ -1205,13 +1205,22 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
     QCOMPARE(controller->activeRuntimeLocalOnlySummary(), QStringLiteral("Local Only"));
     QVERIFY(controller->activeRuntimeModelLabel().contains(QStringLiteral("llama3.2")));
     QCOMPARE(controller->selectableRuntimeProviderIds(), QStringList{QStringLiteral("ollama")});
-    QCOMPARE(controller->runtimeProviderCardSummaries().size(), 2);
+    QCOMPARE(controller->runtimeProviderCardSummaries().size(), 4);
     QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("OpenAI-Compatible API")));
+    QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Claude API")));
+    QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Gemini API")));
     QVERIFY(controller->runtimeProviderCapabilitySummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("requiresApiKey: yes")));
     QVERIFY(controller->runtimeProviderValidationTraces().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("readiness=disabled")));
+    QVERIFY(controller->providerCredentialRegistrySummary()
+                .contains(QStringLiteral("API key values are not stored")));
+    QCOMPARE(controller->providerCredentialSummaries().size(), 4);
+    QVERIFY(controller->providerCredentialSafetySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("cloudRequests=refused")));
     QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 1);
 }
 
@@ -3024,7 +3033,7 @@ void ApplicationControllerTest::runsInjectedLocalInferenceWhenPermissionAllows()
                        "and no-execution posture is enforced with deterministic metadata rules.")));
 }
 
-void ApplicationControllerTest::refusesSendWhenLocalChatInferenceDisabledBeforeTranscriptMutation() {
+void ApplicationControllerTest::usesProviderPathWhenLocalChatInferenceDisabled() {
     auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
     auto* fakeClientPtr = fakeClient.get();
     auto controller = std::make_unique<ApplicationController>(
@@ -3038,11 +3047,14 @@ void ApplicationControllerTest::refusesSendWhenLocalChatInferenceDisabledBeforeT
 
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
-    QVERIFY(!sent);
+    QVERIFY(sent);
     QVERIFY(!fakeClientPtr->called);
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Disabled"));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
-    QCOMPARE(controller->chatHistory().size(), 1);
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("completed"));
+    QCOMPARE(controller->chatHistory().size(), 3);
+    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
+    QCOMPARE(controller->chatHistory().at(2).content,
+             QStringLiteral("Sentinel Core online. Local chat pipeline is active."));
     QCOMPARE(controller->localChatSendAvailabilitySummary(),
              QStringLiteral("Enable Local chat inference in Settings to send with Ollama."));
 }

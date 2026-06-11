@@ -35,6 +35,7 @@
 #include "sentinel/core/OrchestrationDiagnostics.h"
 #include "sentinel/core/OrchestrationSnapshot.h"
 #include "sentinel/core/PiperTts.h"
+#include "sentinel/core/ProviderCredentials.h"
 #include "sentinel/core/RuntimeCapabilities.h"
 #include "sentinel/core/RuntimeIntegration.h"
 #include "sentinel/core/RuntimePermissions.h"
@@ -276,6 +277,16 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QStringList configuredRuntimeProviderSummaries READ
                    configuredRuntimeProviderSummaries NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QStringList availableLocalRuntimeSummaries READ availableLocalRuntimeSummaries
+                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString providerCredentialRegistryStatus READ providerCredentialRegistryStatus
+                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString providerCredentialRegistrySummary READ providerCredentialRegistrySummary
+                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList providerCredentialSummaries READ providerCredentialSummaries NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList providerCredentialReadinessSummaries READ
+                   providerCredentialReadinessSummaries NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList providerCredentialSafetySummaries READ providerCredentialSafetySummaries
                    NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint CONSTANT)
     Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus CONSTANT)
@@ -1193,6 +1204,11 @@ public:
     QStringList installedRuntimeProviderSummaries() const;
     QStringList configuredRuntimeProviderSummaries() const;
     QStringList availableLocalRuntimeSummaries() const;
+    QString providerCredentialRegistryStatus() const;
+    QString providerCredentialRegistrySummary() const;
+    QStringList providerCredentialSummaries() const;
+    QStringList providerCredentialReadinessSummaries() const;
+    QStringList providerCredentialSafetySummaries() const;
     QString ollamaEndpoint() const;
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
@@ -1819,6 +1835,7 @@ private:
     ProviderRuntimeBridgeResponse currentProviderRuntimeBridgeResponse() const;
     RuntimeIntegrationReport currentRuntimeIntegrationReport() const;
     RuntimeProviderRegistry currentRuntimeProviderRegistry() const;
+    ProviderCredentialRegistry currentProviderCredentialRegistry() const;
     OllamaHealthCheckResult currentOllamaHealthCheck() const;
     QList<OllamaModelSummary> currentOllamaModels() const;
     QString effectiveLocalModel(const QString& requestedModel) const;

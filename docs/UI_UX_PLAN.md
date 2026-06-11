@@ -64,6 +64,24 @@ Guidelines:
 - Pull/install/delete/refresh/import/export affordances, if shown later, must be clearly labeled
   unavailable or future-scoped and must not execute.
 
+## Phase 38 Provider Credential UX Notes
+
+Phase 38.0 through Phase 38.12 adds credential/readiness visibility for future cloud providers
+without adding cloud authority.
+
+Guidelines:
+
+- Settings Runtime should show Local Ollama as the active provider, cloud providers as not
+  configured/disabled, and API keys as not stored.
+- Future provider cards for OpenAI-compatible, Claude, and Gemini are compact read-only readiness
+  cards. They must not include live API-key fields, connect buttons, test-call buttons, or model
+  lookup controls.
+- Home/AI Bridge should keep the posture concise: local provider active, cloud inactive, and no
+  API key stored.
+- Developer Mode may show bounded credential readiness and safety diagnostics only. It must not
+  show secrets, raw provider payloads, stored key material, remote endpoint probing, or hidden
+  routing traces.
+
 ## Design System Foundation
 
 The initial QML design tokens live in `ui/qml/theme/SentinelTheme.qml`.

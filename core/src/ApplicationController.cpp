@@ -1643,7 +1643,9 @@ QString ApplicationController::selectedRuntimeProvider() const {
 void ApplicationController::setSelectedRuntimeProvider(const QString& providerId) {
     const auto normalized = providerId.trimmed().toLower();
     const auto selected = (normalized == QStringLiteral("ollama") ||
-                           normalized == QStringLiteral("openai-compatible"))
+                           normalized == QStringLiteral("openai-compatible") ||
+                           normalized == QStringLiteral("claude") ||
+                           normalized == QStringLiteral("gemini"))
                               ? normalized
                               : QStringLiteral("ollama");
     if (selected == selectedRuntimeProvider_) {
@@ -1727,6 +1729,26 @@ QStringList ApplicationController::configuredRuntimeProviderSummaries() const {
 
 QStringList ApplicationController::availableLocalRuntimeSummaries() const {
     return currentRuntimeProviderRegistry().availableLocalRuntimeSummaries();
+}
+
+QString ApplicationController::providerCredentialRegistryStatus() const {
+    return providerCredentialStatusName(currentProviderCredentialRegistry().summary().status);
+}
+
+QString ApplicationController::providerCredentialRegistrySummary() const {
+    return currentProviderCredentialRegistry().summary().summary;
+}
+
+QStringList ApplicationController::providerCredentialSummaries() const {
+    return currentProviderCredentialRegistry().requirementSummaries();
+}
+
+QStringList ApplicationController::providerCredentialReadinessSummaries() const {
+    return currentProviderCredentialRegistry().readinessSummaries();
+}
+
+QStringList ApplicationController::providerCredentialSafetySummaries() const {
+    return currentProviderCredentialRegistry().safetySummaries();
 }
 
 QString ApplicationController::ollamaEndpoint() const {
@@ -6960,7 +6982,8 @@ bool ApplicationController::sendMessage(const QString& message) {
         return false;
     }
 
-    if (!localChatSendAvailable()) {
+    if ((selectedRuntimeProvider_ != QStringLiteral("ollama") || localChatInferenceEnabled_) &&
+        !localChatSendAvailable()) {
         const auto localChatEffectiveModel = effectiveLocalModel({});
         const auto localChatHealth = currentOllamaHealthCheck();
         LocalInferenceRequest request;
@@ -8152,17 +8175,28 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
         ollamaEndpoint(), health, models, selectedLocalModel_, localChatInferenceEnabled_,
         localInferenceBusy_};
     const OpenAICompatibleRuntimeProvider openAiCompatibleProvider;
+    const ClaudeRuntimeProvider claudeProvider;
+    const GeminiRuntimeProvider geminiProvider;
 
     return RuntimeProviderRegistry{
-        {ollamaProvider.descriptor(), openAiCompatibleProvider.descriptor()},
+        {ollamaProvider.descriptor(), openAiCompatibleProvider.descriptor(),
+         claudeProvider.descriptor(), geminiProvider.descriptor()},
         selectedRuntimeProvider_,
     };
+}
+
+ProviderCredentialRegistry ApplicationController::currentProviderCredentialRegistry() const {
+    return defaultProviderCredentialRegistry();
 }
 
 ModelRegistry ApplicationController::currentModelRegistry() const {
     auto models = modelSummariesFromOllama(currentOllamaModels());
     models.append(disabledProviderModelPlaceholder(QStringLiteral("openai-compatible"),
                                                    QStringLiteral("OpenAI-Compatible API")));
+    models.append(disabledProviderModelPlaceholder(QStringLiteral("claude"),
+                                                   QStringLiteral("Claude API")));
+    models.append(disabledProviderModelPlaceholder(QStringLiteral("gemini"),
+                                                   QStringLiteral("Gemini API")));
     const auto selectedModel =
         selectedRuntimeProvider_ == QStringLiteral("ollama") ? selectedLocalModel_ : QString();
     return ModelRegistry{models, selectedRuntimeProvider_, selectedModel};

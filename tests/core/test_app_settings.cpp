@@ -2,6 +2,7 @@
 #include "sentinel/core/InMemorySettingsStore.h"
 #include "sentinel/core/JsonSettingsStore.h"
 
+#include <QFile>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
@@ -29,6 +30,7 @@ private slots:
     void exposesOllamaEndpointDefault();
     void normalizesOllamaEndpoint();
     void persistsSelectedRuntimeProvider();
+    void doesNotPersistApiKeyValuesForCloudPlaceholders();
     void persistsSelectedLocalModel();
     void persistsSelectedModelPerProvider();
     void persistsLocalChatInferenceOptIn();
@@ -239,10 +241,40 @@ void AppSettingsTest::persistsSelectedRuntimeProvider() {
     QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
     QCOMPARE(spy.count(), 1);
 
+    settings->setSelectedRuntimeProvider(QStringLiteral("claude"));
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("claude"));
+    QCOMPARE(spy.count(), 2);
+
+    settings->setSelectedRuntimeProvider(QStringLiteral("gemini"));
+    QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("gemini"));
+    QCOMPARE(spy.count(), 3);
+
     settings->setSelectedRuntimeProvider(QStringLiteral("unknown-provider"));
 
     QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
-    QCOMPARE(spy.count(), 2);
+    QCOMPARE(spy.count(), 4);
+}
+
+void AppSettingsTest::doesNotPersistApiKeyValuesForCloudPlaceholders() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto filePath = dir.filePath(QStringLiteral("settings.json"));
+
+    {
+        AppSettings settings{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
+        settings.setSelectedRuntimeProvider(QStringLiteral("openai-compatible"));
+        settings.setSelectedRuntimeProvider(QStringLiteral("claude"));
+        settings.setSelectedRuntimeProvider(QStringLiteral("gemini"));
+    }
+
+    QFile file{filePath};
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    const auto stored = QString::fromUtf8(file.readAll());
+    QVERIFY(stored.contains(QStringLiteral("selectedRuntimeProvider")));
+    QVERIFY(!stored.contains(QStringLiteral("apiKey"), Qt::CaseInsensitive));
+    QVERIFY(!stored.contains(QStringLiteral("secret"), Qt::CaseInsensitive));
+    QVERIFY(!stored.contains(QStringLiteral("token"), Qt::CaseInsensitive));
+    QVERIFY(!stored.contains(QStringLiteral("sk-test-secret")));
 }
 
 void AppSettingsTest::persistsSelectedLocalModel() {

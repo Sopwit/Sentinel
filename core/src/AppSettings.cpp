@@ -5,6 +5,16 @@
 
 namespace sentinel::core {
 
+namespace {
+
+bool isKnownRuntimeProviderId(const QString& providerId) {
+    return providerId == QStringLiteral("ollama") ||
+           providerId == QStringLiteral("openai-compatible") ||
+           providerId == QStringLiteral("claude") || providerId == QStringLiteral("gemini");
+}
+
+} // namespace
+
 AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent)
     : QObject(parent), store_(std::move(store)) {}
 
@@ -120,8 +130,7 @@ QString AppSettings::selectedRuntimeProvider() const {
                                                fallback)
                                : fallback;
     const auto normalized = stored.trimmed().toLower();
-    if (normalized == QStringLiteral("ollama") ||
-        normalized == QStringLiteral("openai-compatible")) {
+    if (isKnownRuntimeProviderId(normalized)) {
         return normalized;
     }
     return fallback;
@@ -129,8 +138,7 @@ QString AppSettings::selectedRuntimeProvider() const {
 
 void AppSettings::setSelectedRuntimeProvider(const QString& providerId) {
     const auto normalized = providerId.trimmed().toLower();
-    const auto selected = (normalized == QStringLiteral("ollama") ||
-                           normalized == QStringLiteral("openai-compatible"))
+    const auto selected = isKnownRuntimeProviderId(normalized)
                               ? normalized
                               : QString::fromLatin1(defaultSelectedRuntimeProvider);
     if (selected == selectedRuntimeProvider() || !store_) {

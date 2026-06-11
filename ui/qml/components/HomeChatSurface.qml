@@ -117,6 +117,13 @@ ShellPanel {
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
                 muted: !homeChat.chatReady
             }
+
+            StatusChip {
+                label: qsTr("API Keys")
+                value: qsTr("Not stored")
+                accent: SentinelTheme.textMuted
+                muted: true
+            }
         }
 
         ListView {

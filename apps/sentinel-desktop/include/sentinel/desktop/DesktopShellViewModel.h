@@ -242,6 +242,16 @@ class DesktopShellViewModel final : public QObject {
                    configuredRuntimeProviderSummaries NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QStringList availableLocalRuntimeSummaries READ availableLocalRuntimeSummaries
                    NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString providerCredentialRegistryStatus READ providerCredentialRegistryStatus
+                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString providerCredentialRegistrySummary READ providerCredentialRegistrySummary
+                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList providerCredentialSummaries READ providerCredentialSummaries NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList providerCredentialReadinessSummaries READ
+                   providerCredentialReadinessSummaries NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList providerCredentialSafetySummaries READ providerCredentialSafetySummaries
+                   NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint CONSTANT)
     Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus CONSTANT)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus CONSTANT)
@@ -1264,6 +1274,11 @@ public:
     QStringList installedRuntimeProviderSummaries() const;
     QStringList configuredRuntimeProviderSummaries() const;
     QStringList availableLocalRuntimeSummaries() const;
+    QString providerCredentialRegistryStatus() const;
+    QString providerCredentialRegistrySummary() const;
+    QStringList providerCredentialSummaries() const;
+    QStringList providerCredentialReadinessSummaries() const;
+    QStringList providerCredentialSafetySummaries() const;
     QString ollamaEndpoint() const;
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
