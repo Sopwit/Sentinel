@@ -12,8 +12,8 @@ Item {
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap bottom-safe-scroll"
     readonly property var categories: developerMode
-                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Developer"]
-                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data"]
+                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Workspace", "Developer"]
+                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Workspace"]
     property string activeCategory: "General"
     property bool programmaticScroll: false
 
@@ -30,6 +30,8 @@ Item {
             return chatSection
         if (category === "Voice")
             return voiceSection
+        if (category === "Workspace")
+            return workspaceSection
         if (category === "Privacy / Data")
             return privacySection
         if (category === "Developer")
@@ -48,6 +50,8 @@ Item {
             return qsTr("Chat")
         if (category === "Voice")
             return qsTr("Voice")
+        if (category === "Workspace")
+            return qsTr("Workspace")
         if (category === "Privacy / Data")
             return qsTr("Privacy / Data")
         if (category === "Developer")
@@ -218,6 +222,8 @@ Item {
                 var atBottom = contentY + settingsFlick.height >= settingsFlick.contentHeight - SentinelTheme.spaceSm
                 if (developerMode && (y >= developerSection.y || atBottom))
                     activeCategory = "Developer"
+                else if (y >= workspaceSection.y)
+                    activeCategory = "Workspace"
                 else if (y >= privacySection.y)
                     activeCategory = "Privacy / Data"
                 else if (y >= voiceSection.y)
@@ -1512,6 +1518,199 @@ Item {
                 }
 
                 ShellPanel {
+                    id: workspaceSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(workspaceContent)
+
+                    ColumnLayout {
+                        id: workspaceContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Workspace")
+                            subtitle: qsTr("Future project context metadata. Workspace access is not enabled yet.")
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: qsTr("Access")
+                                value: settingsPage.viewModel.selectedWorkspaceAccessState
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Readiness")
+                                value: settingsPage.viewModel.workspaceReadinessStatus
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Mode")
+                                value: qsTr("Metadata only")
+                                accent: SentinelTheme.calmAccent
+                                muted: true
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                text: qsTr("Selected")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                            }
+
+                            ComboBox {
+                                id: workspaceCombo
+                                Layout.fillWidth: true
+                                hoverEnabled: true
+                                model: settingsPage.viewModel.workspaceNames
+                                currentIndex: settingsPage.viewModel.workspaceIds.indexOf(settingsPage.viewModel.selectedWorkspaceId)
+                                displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.selectedWorkspaceName
+                                onActivated: {
+                                    if (index >= 0 && index < settingsPage.viewModel.workspaceIds.length)
+                                        settingsPage.viewModel.selectedWorkspaceId = settingsPage.viewModel.workspaceIds[index]
+                                }
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: workspaceCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(workspaceCombo.activeFocus,
+                                                                                 workspaceCombo.hovered,
+                                                                                 workspaceCombo.popup.visible,
+                                                                                 settingsPage.modeAccent)
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: workspaceOption
+                                    width: workspaceCombo.width
+                                    text: modelData
+                                    highlighted: workspaceCombo.highlightedIndex === index
+
+                                    contentItem: Text {
+                                        text: workspaceOption.text
+                                        color: workspaceOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        verticalAlignment: Text.AlignVCenter
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    background: Rectangle {
+                                        color: InteractionTokens.surfaceColor(workspaceOption.highlighted, false, false,
+                                                                               settingsPage.modeAccent)
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: InteractionTokens.borderColor(false, true, false,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Boundary")
+                            value: settingsPage.viewModel.workspaceReadinessSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Root")
+                            value: settingsPage.viewModel.selectedWorkspaceRootSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Permissions")
+                            value: settingsPage.viewModel.workspacePermissionSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.workspaceReadinessChecks
+
+                            Rectangle {
+                                required property string modelData
+                                Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
+                                implicitHeight: workspaceCheckLabel.implicitHeight + SentinelTheme.spaceMd
+
+                                Label {
+                                    id: workspaceCheckLabel
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: modelData
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 3
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Choose Folder")
+                                enabled: false
+                                Layout.fillWidth: true
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Scan Workspace")
+                                enabled: false
+                                Layout.fillWidth: true
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Index Workspace")
+                                enabled: false
+                                Layout.fillWidth: true
+                            }
+                        }
+                    }
+                }
+
+                ShellPanel {
                     id: developerSection
                     width: parent.width
                     visible: settingsPage.developerMode
@@ -1582,6 +1781,29 @@ Item {
                         SectionTitle {
                             title: qsTr("Runtime Diagnostics")
                             subtitle: qsTr("Presentation-only metadata; no permission changes.")
+                            Layout.fillWidth: true
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Workspace Boundary")
+                            subtitle: qsTr("Read-only workspace diagnostics. Access remains disabled.")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Workspace")
+                            value: settingsPage.viewModel.selectedWorkspaceName + " / "
+                                   + settingsPage.viewModel.workspaceReadinessSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Boundary")
+                            value: settingsPage.viewModel.workspaceBoundaryDiagnostics.join("\n")
                             Layout.fillWidth: true
                         }
 

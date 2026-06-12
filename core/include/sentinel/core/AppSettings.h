@@ -50,6 +50,8 @@ class AppSettings final : public QObject {
                    setPiperFileOutputExecutionEnabled NOTIFY piperFileOutputExecutionEnabledChanged)
     Q_PROPERTY(QString activeConversationId READ activeConversationId WRITE setActiveConversationId
                    NOTIFY activeConversationIdChanged)
+    Q_PROPERTY(QString selectedWorkspaceId READ selectedWorkspaceId WRITE setSelectedWorkspaceId
+                   NOTIFY selectedWorkspaceIdChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -105,6 +107,8 @@ public:
     void setPiperFileOutputExecutionEnabled(bool enabled);
     QString activeConversationId() const;
     void setActiveConversationId(const QString& conversationId);
+    QString selectedWorkspaceId() const;
+    void setSelectedWorkspaceId(const QString& workspaceId);
 
 signals:
     void themeNameChanged();
@@ -127,6 +131,7 @@ signals:
     void whisperModelPathChanged();
     void piperFileOutputExecutionEnabledChanged();
     void activeConversationIdChanged();
+    void selectedWorkspaceIdChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
@@ -150,10 +155,12 @@ private:
     static constexpr auto whisperModelPathKey = "whisperModelPath";
     static constexpr auto piperFileOutputExecutionEnabledKey = "piperFileOutputExecutionEnabled";
     static constexpr auto activeConversationIdKey = "activeConversationId";
+    static constexpr auto selectedWorkspaceIdKey = "selectedWorkspaceId";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "system";
     static constexpr auto defaultSelectedRuntimeProvider = "ollama";
+    static constexpr auto defaultSelectedWorkspaceId = "local-placeholder";
 
     std::unique_ptr<ISettingsStore> store_;
 };

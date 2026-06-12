@@ -2,6 +2,7 @@
 
 #include "sentinel/core/CompanionService.h"
 #include "sentinel/core/SemanticRetrieval.h"
+#include "sentinel/core/WorkspaceService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 
 #include <QObject>
@@ -1139,6 +1140,26 @@ class DesktopShellViewModel final : public QObject {
                    companionChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeChanged)
+    Q_PROPERTY(QString selectedWorkspaceId READ selectedWorkspaceId WRITE setSelectedWorkspaceId
+                   NOTIFY workspaceChanged)
+    Q_PROPERTY(QString selectedWorkspaceName READ selectedWorkspaceName NOTIFY workspaceChanged)
+    Q_PROPERTY(QString selectedWorkspaceAccessState READ selectedWorkspaceAccessState NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QString selectedWorkspaceRootSummary READ selectedWorkspaceRootSummary NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QString workspaceReadinessStatus READ workspaceReadinessStatus NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QString workspaceReadinessSummary READ workspaceReadinessSummary NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QString workspacePermissionSummary READ workspacePermissionSummary NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QStringList workspaceIds READ workspaceIds CONSTANT)
+    Q_PROPERTY(QStringList workspaceNames READ workspaceNames CONSTANT)
+    Q_PROPERTY(QStringList workspaceSummaries READ workspaceSummaries CONSTANT)
+    Q_PROPERTY(QStringList workspaceReadinessChecks READ workspaceReadinessChecks NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QStringList workspaceBoundaryDiagnostics READ workspaceBoundaryDiagnostics NOTIFY
+                   workspaceChanged)
 
 public:
     DesktopShellViewModel(core::ApplicationController& controller, core::ModeManager& modeManager,
@@ -1825,6 +1846,19 @@ public:
     QStringList companionTraceSummaries() const;
     bool developerModeEnabled() const;
     void setDeveloperModeEnabled(bool enabled);
+    QString selectedWorkspaceId() const;
+    void setSelectedWorkspaceId(const QString& workspaceId);
+    QString selectedWorkspaceName() const;
+    QString selectedWorkspaceAccessState() const;
+    QString selectedWorkspaceRootSummary() const;
+    QString workspaceReadinessStatus() const;
+    QString workspaceReadinessSummary() const;
+    QString workspacePermissionSummary() const;
+    QStringList workspaceIds() const;
+    QStringList workspaceNames() const;
+    QStringList workspaceSummaries() const;
+    QStringList workspaceReadinessChecks() const;
+    QStringList workspaceBoundaryDiagnostics() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
@@ -1901,6 +1935,7 @@ signals:
     void localInferenceChanged();
     void voiceConfigurationChanged();
     void promptContextInjectionChanged();
+    void workspaceChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
@@ -1909,6 +1944,7 @@ private:
     core::ModeManager& modeManager_;
     core::AppSettings& settings_;
     core::CompanionService companionService_;
+    core::WorkspaceService workspaceService_;
     ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");
     bool companionNativeAvailable_ = false;

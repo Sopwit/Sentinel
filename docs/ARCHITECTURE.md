@@ -177,6 +177,24 @@ platform handles to QML and does not add background loops, provider calls, tool 
 filesystem scanning, microphone capture, playback, memory writes, hidden transcript mutation,
 subprocess execution, cloud calls, plugins, or autonomous behavior.
 
+## Workspace Service Boundary
+
+Phase 44 adds `WorkspaceService` as a metadata-only workspace foundation. It owns local
+workspace placeholder metadata, readiness checks, and boundary diagnostics. The selected workspace
+id is persisted through `AppSettings::selectedWorkspaceId`; the current default is
+`local-placeholder`.
+
+`DesktopShellViewModel` exposes only QML-safe strings and string lists for workspace name, access
+state, root summary, permission summary, readiness checks, and developer diagnostics. QML receives
+no filesystem handles, directory listings, file contents, index data, embeddings, tool outputs, or
+workspace-derived prompt blocks.
+
+The current workspace model is intentionally non-operational: no file picker, recursive scanning,
+file reads, indexing, embeddings, subprocesses, tools/plugins, autonomous agents, background
+workers, provider/model execution, hidden memory writes, or workspace prompt-context injection are
+enabled. Future workspace activation must add explicit permission scopes, revocation metadata,
+session ownership, and core-enforced policy before any filesystem access exists.
+
 ## Runtime Provider Registry
 
 Phase 36 introduces a value-only runtime provider abstraction above the existing local Ollama

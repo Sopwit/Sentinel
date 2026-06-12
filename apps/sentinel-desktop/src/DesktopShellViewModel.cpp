@@ -89,6 +89,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::companionChanged);
     connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
             &DesktopShellViewModel::developerModeChanged);
+    connect(&settings_, &core::AppSettings::selectedWorkspaceIdChanged, this,
+            &DesktopShellViewModel::workspaceChanged);
     connect(&settings_, &core::AppSettings::contextExplainabilityVisibleChanged, this,
             &DesktopShellViewModel::contextExplainabilityVisibleChanged);
     connect(&settings_, &core::AppSettings::activeConversationIdChanged, this,
@@ -2982,6 +2984,66 @@ bool DesktopShellViewModel::developerModeEnabled() const {
 
 void DesktopShellViewModel::setDeveloperModeEnabled(bool enabled) {
     settings_.setDeveloperModeEnabled(enabled);
+}
+
+QString DesktopShellViewModel::selectedWorkspaceId() const {
+    return workspaceService_.normalizedWorkspaceId(settings_.selectedWorkspaceId());
+}
+
+void DesktopShellViewModel::setSelectedWorkspaceId(const QString& workspaceId) {
+    settings_.setSelectedWorkspaceId(workspaceService_.normalizedWorkspaceId(workspaceId));
+}
+
+QString DesktopShellViewModel::selectedWorkspaceName() const {
+    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).name;
+}
+
+QString DesktopShellViewModel::selectedWorkspaceAccessState() const {
+    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).accessState;
+}
+
+QString DesktopShellViewModel::selectedWorkspaceRootSummary() const {
+    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).rootSummary;
+}
+
+QString DesktopShellViewModel::workspaceReadinessStatus() const {
+    return workspaceService_.readiness(settings_.selectedWorkspaceId()).status;
+}
+
+QString DesktopShellViewModel::workspaceReadinessSummary() const {
+    return workspaceService_.readiness(settings_.selectedWorkspaceId()).summary;
+}
+
+QString DesktopShellViewModel::workspacePermissionSummary() const {
+    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).permissionSummary;
+}
+
+QStringList DesktopShellViewModel::workspaceIds() const {
+    QStringList ids;
+    for (const auto& workspace : workspaceService_.availableWorkspaces()) {
+        ids.append(workspace.id);
+    }
+    return ids;
+}
+
+QStringList DesktopShellViewModel::workspaceNames() const {
+    QStringList names;
+    for (const auto& workspace : workspaceService_.availableWorkspaces()) {
+        names.append(workspace.name);
+    }
+    return names;
+}
+
+QStringList DesktopShellViewModel::workspaceSummaries() const {
+    return workspaceService_.workspaceSummaries();
+}
+
+QStringList DesktopShellViewModel::workspaceReadinessChecks() const {
+    return workspaceService_.readiness(settings_.selectedWorkspaceId()).checks;
+}
+
+QStringList DesktopShellViewModel::workspaceBoundaryDiagnostics() const {
+    return workspaceService_.readiness(settings_.selectedWorkspaceId()).boundaryDiagnostics;
 }
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {

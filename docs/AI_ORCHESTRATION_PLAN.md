@@ -1,5 +1,12 @@
 # AI Orchestration Plan
 
+Phase 44.0 through Phase 44.12 adds a metadata-only workspace foundation. `WorkspaceService`
+reports local placeholder workspace metadata, selected workspace readiness, permission posture,
+and developer boundary diagnostics. The persisted selected workspace setting stores an id only.
+No file picker, recursive filesystem scan, file read, indexing, embeddings, subprocess, tool,
+plugin, autonomous agent, background worker, provider/model execution, hidden memory write, or
+workspace-derived prompt context is added.
+
 Phase 43.0 through Phase 43.12 adds a metadata-only companion/menu-bar/system-tray foundation.
 `CompanionService` reports readiness, platform posture, permission posture, safety summaries,
 quick-capture readiness, safe companion action labels, and bounded traces. The persisted companion

@@ -91,6 +91,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ToolSandbox.h
     include/sentinel/core/Voice.h
     include/sentinel/core/WhisperTranscription.h
+    include/sentinel/core/WorkspaceService.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
     src/AudioFileSession.cpp
@@ -148,6 +149,7 @@ add_library(sentinel_core STATIC
     src/StaticTaskPlanner.cpp
     src/Voice.cpp
     src/WhisperTranscription.cpp
+    src/WorkspaceService.cpp
 )
 
 target_include_directories(sentinel_core

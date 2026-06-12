@@ -3212,3 +3212,27 @@ Current status: `docs/SENTINEL_CAPABILITY_ROADMAP.md` is a roadmap reference onl
 no runtime execution, tools/plugins, cloud/API calls, API-key input, filesystem scanning,
 microphone/playback/STT/TTS activation, autonomous agents, background workers, dependencies, or
 product behavior changes.
+
+## 106. Workspace Foundation Remains Metadata-Only
+
+Decision: Phase 44 introduces `WorkspaceService`, a persisted selected workspace id, Settings >
+Workspace UX, Home workspace status, and Developer Mode boundary diagnostics as metadata-only
+workspace foundation.
+
+Reason: Sentinel needs a durable local-first project-context boundary before any future
+filesystem access. The foundation must make the disabled state visible and prepare permission
+language without accidentally becoming a file manager, scanner, indexer, or agent runtime.
+
+Rules:
+
+- The default workspace is a local placeholder, not a selected filesystem path.
+- The selected workspace setting stores only an id such as `local-placeholder`.
+- Workspace readiness summaries must state that workspace access is not enabled yet.
+- QML receives only safe strings and string lists.
+- No directory picker, recursive scanning, file reading, indexing, embeddings, subprocesses,
+  tools/plugins, autonomous agents, background workers, hidden prompt-context injection, or
+  workspace-derived memory writes are authorized by this phase.
+
+Current status: Phase 44 is implemented as a local metadata boundary. Future workspace activation
+requires explicit permission scopes, session ownership, revocation metadata, and core-enforced
+policy before any filesystem access can be added.

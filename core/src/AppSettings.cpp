@@ -400,4 +400,24 @@ void AppSettings::setActiveConversationId(const QString& conversationId) {
     emit activeConversationIdChanged();
 }
 
+QString AppSettings::selectedWorkspaceId() const {
+    const auto fallback = QString::fromLatin1(defaultSelectedWorkspaceId);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(selectedWorkspaceIdKey), fallback)
+                               : fallback;
+    const auto normalized = stored.trimmed();
+    return normalized.isEmpty() ? fallback : normalized;
+}
+
+void AppSettings::setSelectedWorkspaceId(const QString& workspaceId) {
+    const auto normalized = workspaceId.trimmed();
+    const auto selected = normalized.isEmpty() ? QString::fromLatin1(defaultSelectedWorkspaceId)
+                                               : normalized;
+    if (selected == selectedWorkspaceId() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(selectedWorkspaceIdKey), selected);
+    emit selectedWorkspaceIdChanged();
+}
+
 } // namespace sentinel::core
