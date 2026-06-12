@@ -10,10 +10,10 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap profiles-metadata permissions-policy tool-gateway bottom-safe-scroll"
+    readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap profiles-metadata permissions-policy tool-gateway agent-runtime bottom-safe-scroll"
     readonly property var categories: developerMode
-                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Permissions", "Tools", "Profiles", "Workspace", "Developer"]
-                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Permissions", "Tools", "Profiles", "Workspace"]
+                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Permissions", "Tools", "Agents", "Profiles", "Workspace", "Developer"]
+                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Permissions", "Tools", "Agents", "Profiles", "Workspace"]
     property string activeCategory: "General"
     property bool programmaticScroll: false
 
@@ -34,6 +34,8 @@ Item {
             return permissionsSection
         if (category === "Tools")
             return toolsSection
+        if (category === "Agents")
+            return agentsSection
         if (category === "Profiles")
             return profilesSection
         if (category === "Workspace")
@@ -60,6 +62,8 @@ Item {
             return qsTr("Permissions")
         if (category === "Tools")
             return qsTr("Tools")
+        if (category === "Agents")
+            return qsTr("Agents")
         if (category === "Profiles")
             return qsTr("Profiles")
         if (category === "Workspace")
@@ -1796,6 +1800,107 @@ Item {
                 }
 
                 ShellPanel {
+                    id: agentsSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(agentsContent)
+
+                    ColumnLayout {
+                        id: agentsContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Agents")
+                            subtitle: qsTr("Agent execution is disabled. Sentinel can only prepare dry-run plan metadata.")
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: qsTr("Status")
+                                value: settingsPage.viewModel.agentRuntimeStatus
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Agents")
+                                value: String(settingsPage.viewModel.agentRuntimeAgentCount)
+                                accent: settingsPage.modeAccent
+                                selected: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Ready")
+                                value: String(settingsPage.viewModel.agentRuntimeReadyAgentCount)
+                                accent: SentinelTheme.calmAccent
+                            }
+
+                            StatusChip {
+                                label: qsTr("Approval")
+                                value: settingsPage.viewModel.agentRuntimeApprovalPosture
+                                accent: SentinelTheme.warning
+                                muted: false
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Boundary")
+                            value: settingsPage.viewModel.agentRuntimeSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Plan Preview")
+                            value: settingsPage.viewModel.agentPlanGoalSummary + " / "
+                                   + settingsPage.viewModel.agentPlanApprovalState
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Refusal")
+                            value: settingsPage.viewModel.agentPlanRefusalReason
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.agentRuntimeReadinessSummaries
+
+                            Rectangle {
+                                required property string modelData
+                                Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
+                                implicitHeight: agentReadinessLabel.implicitHeight + SentinelTheme.spaceMd
+
+                                Label {
+                                    id: agentReadinessLabel
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: modelData
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ShellPanel {
                     id: profilesSection
                     width: parent.width
                     implicitHeight: settingsPage.sectionHeight(profilesContent)
@@ -2462,6 +2567,40 @@ Item {
                             valueMaximumLineCount: 12
                             label: qsTr("Tools")
                             value: settingsPage.viewModel.toolGatewayDeveloperDiagnostics.join("\n")
+                            Layout.fillWidth: true
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Agent Runtime")
+                            subtitle: qsTr("Dry-run plan diagnostics. Approval cannot execute actions.")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 6
+                            label: qsTr("Runtime")
+                            value: settingsPage.viewModel.agentRuntimeStatus + " / "
+                                   + settingsPage.viewModel.agentRuntimeApprovalPosture + "\n"
+                                   + settingsPage.viewModel.agentRuntimeSummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 12
+                            label: qsTr("Plan")
+                            value: settingsPage.viewModel.agentPlanSteps.join("\n")
+                                   + "\n" + settingsPage.viewModel.agentPlanRequiredTools.join("\n")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 12
+                            label: qsTr("Traces")
+                            value: settingsPage.viewModel.agentRuntimeDeveloperDiagnostics.join("\n")
+                                   + "\n" + settingsPage.viewModel.agentPlanDiagnostics.join("\n")
                             Layout.fillWidth: true
                         }
 

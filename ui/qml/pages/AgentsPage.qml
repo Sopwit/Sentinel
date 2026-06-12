@@ -169,7 +169,7 @@ ScrollView {
 
                         StatusChip {
                             label: qsTr("Registered")
-                            value: agentsPage.viewModel.registeredAgentCount.toString()
+                            value: agentsPage.viewModel.agentRuntimeAgentCount.toString()
                             accent: agentsPage.modeAccent
                             selected: true
                         }
@@ -182,26 +182,140 @@ ScrollView {
                         }
 
                         StatusChip {
-                            label: qsTr("Authority")
-                            value: qsTr("metadata only")
-                            accent: SentinelTheme.textMuted
-                            muted: true
+                            label: qsTr("Approval")
+                            value: agentsPage.viewModel.agentRuntimeApprovalPosture
+                            accent: SentinelTheme.warning
+                            muted: false
                         }
                     }
 
                     InfoRow {
                         compact: agentsPage.compact
-                        label: qsTr("Current")
-                        value: agentsPage.viewModel.currentAgentSummary
+                        label: qsTr("Runtime")
+                        value: agentsPage.viewModel.agentRuntimeSummary
                         Layout.fillWidth: true
+                        valueMaximumLineCount: 4
                     }
 
                     Label {
                         Layout.fillWidth: true
-                        text: qsTr("Profiles are registered for visibility only. Nothing runs in the background.")
+                        text: qsTr("Agent execution is disabled. Planning surfaces are dry-run metadata only.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.agentRuntimeAgentSummaries
+
+                        Rectangle {
+                            required property string modelData
+                            Layout.fillWidth: true
+                            radius: SentinelTheme.radiusMd
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
+                            implicitHeight: agentCatalogLabel.implicitHeight + SentinelTheme.spaceMd
+
+                            Label {
+                                id: agentCatalogLabel
+                                x: SentinelTheme.spaceSm
+                                y: SentinelTheme.spaceXs
+                                width: parent.width - SentinelTheme.spaceSm * 2
+                                text: modelData
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+                }
+            }
+
+            ShellPanel {
+                width: parent.width
+                visible: agentsPage.selectedSection === "Overview"
+                implicitHeight: agentsPage.sectionHeight(agentPlanPreviewContent)
+
+                ColumnLayout {
+                    id: agentPlanPreviewContent
+                    x: agentsPage.panelPadding
+                    y: agentsPage.panelPadding
+                    width: parent.width - agentsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: qsTr("Plan Preview")
+                        subtitle: qsTr("Inspectable dry-run plan. Approval cannot enable execution.")
+                        Layout.fillWidth: true
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+
+                        StatusChip {
+                            label: qsTr("Plan")
+                            value: agentsPage.viewModel.agentPlanId
+                            accent: agentsPage.modeAccent
+                            selected: true
+                        }
+
+                        StatusChip {
+                            label: qsTr("Risk")
+                            value: agentsPage.viewModel.agentPlanEstimatedRisk
+                            accent: agentsPage.viewModel.agentPlanEstimatedRisk === "Critical"
+                                    || agentsPage.viewModel.agentPlanEstimatedRisk === "High"
+                                    ? SentinelTheme.warning
+                                    : SentinelTheme.calmAccent
+                            muted: false
+                        }
+
+                        StatusChip {
+                            label: qsTr("Approval")
+                            value: agentsPage.viewModel.agentPlanApprovalState
+                            accent: SentinelTheme.warning
+                            muted: false
+                        }
+                    }
+
+                    InfoRow {
+                        compact: agentsPage.compact
+                        label: qsTr("Goal")
+                        value: agentsPage.viewModel.agentPlanGoalSummary
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 4
+                    }
+
+                    InfoRow {
+                        compact: agentsPage.compact
+                        label: qsTr("Steps")
+                        value: agentsPage.viewModel.agentPlanSteps.join("\n")
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 8
+                    }
+
+                    InfoRow {
+                        compact: agentsPage.compact
+                        label: qsTr("Tools")
+                        value: agentsPage.viewModel.agentPlanRequiredTools.join("\n")
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 8
+                    }
+
+                    InfoRow {
+                        compact: agentsPage.compact
+                        label: qsTr("Permissions")
+                        value: agentsPage.viewModel.agentPlanRequiredPermissions.join("\n")
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 6
+                    }
+
+                    InfoRow {
+                        compact: agentsPage.compact
+                        label: qsTr("Refusal")
+                        value: agentsPage.viewModel.agentPlanRefusalReason
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 4
                     }
                 }
             }
@@ -842,6 +956,34 @@ ScrollView {
                             required property string modelData
                             compact: true
                             label: "Gateway"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    SectionTitle {
+                        title: "Agent Runtime"
+                        subtitle: "Dry-run plan diagnostics; no approval path executes."
+                        Layout.fillWidth: true
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.agentRuntimeDeveloperDiagnostics
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Runtime"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.agentPlanDiagnostics
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Plan"
                             value: modelData
                             Layout.fillWidth: true
                         }

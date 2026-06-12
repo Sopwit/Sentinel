@@ -111,6 +111,7 @@ private slots:
     void exposesSkillProfileMetadata();
     void exposesPermissionPolicyMetadata();
     void exposesToolGatewayMetadata();
+    void exposesAgentRuntimeMetadata();
     void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
@@ -3055,6 +3056,51 @@ void DesktopShellViewModelTest::exposesToolGatewayMetadata() {
     QVERIFY(fixture.viewModel.toolGatewayToolSummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Run Command / Refused / Trusted")));
     QCOMPARE(spy.count(), 1);
+}
+
+void DesktopShellViewModelTest::exposesAgentRuntimeMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy runtimeSpy(&fixture.viewModel, &DesktopShellViewModel::agentRuntimeChanged);
+
+    QCOMPARE(fixture.viewModel.agentRuntimeStatus(), QStringLiteral("Dry-run planning only"));
+    QCOMPARE(fixture.viewModel.agentRuntimeApprovalPosture(),
+             QStringLiteral("Approval cannot enable execution"));
+    QCOMPARE(fixture.viewModel.agentRuntimeAgentCount(), 5);
+    QCOMPARE(fixture.viewModel.agentRuntimeReadyAgentCount(), 5);
+    QCOMPARE(fixture.viewModel.agentRuntimeRefusedAgentCount(), 0);
+    QVERIFY(fixture.viewModel.agentRuntimeSummary().contains(
+        QStringLiteral("cannot execute tools")));
+    QVERIFY(fixture.viewModel.agentRuntimeAgentSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Voice Assistant")));
+    QVERIFY(fixture.viewModel.agentRuntimeReadinessSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Dry-run ready / Disabled")));
+    QVERIFY(fixture.viewModel.agentRuntimeDeveloperDiagnostics().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Runtime execution grant: none")));
+
+    QCOMPARE(fixture.viewModel.agentPlanId(), QStringLiteral("dry-run-general-assistant"));
+    QCOMPARE(fixture.viewModel.agentPlanEstimatedRisk(), QStringLiteral("Low"));
+    QCOMPARE(fixture.viewModel.agentPlanApprovalState(),
+             QStringLiteral("Approval disabled / dry-run only"));
+    QVERIFY(fixture.viewModel.agentPlanGoalSummary().contains(QStringLiteral("safe next steps")));
+    QVERIFY(fixture.viewModel.agentPlanSteps().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("without reading files")));
+    QVERIFY(fixture.viewModel.agentPlanRequiredTools().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Summarize Current Conversation")));
+    QVERIFY(fixture.viewModel.agentPlanRequiredPermissions().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("agent-execution / Disabled")));
+    QVERIFY(fixture.viewModel.agentPlanRefusalReason().contains(
+        QStringLiteral("execution is disabled")));
+    QVERIFY(fixture.viewModel.agentPlanDiagnostics().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Execution grant: none")));
+
+    fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
+    QCOMPARE(fixture.viewModel.agentRuntimeReadinessSummaries().join(QStringLiteral("\n"))
+                 .contains(QStringLiteral("Dry-run ready / Trusted")),
+             true);
+    QCOMPARE(runtimeSpy.count(), 1);
+
+    fixture.viewModel.setSelectedSkillProfile(QStringLiteral("researcher"));
+    QCOMPARE(runtimeSpy.count(), 2);
 }
 
 void DesktopShellViewModelTest::languageSettingDoesNotChangeRuntimePresentationFlags() {

@@ -1,5 +1,20 @@
 # AI Orchestration Plan
 
+Phase 49.0 through Phase 49.14 adds the Agent Runtime Foundation for dry-run planning only.
+`AgentRuntimeService` exposes built-in General Assistant, Coding Assistant, Research Assistant,
+Workspace Assistant, and Voice Assistant records with QML-safe id, display name, description,
+capability summary, supported tool categories, required permission posture, readiness state, and
+refusal reason. `AgentPlanRegistry` creates inspectable `AgentPlanRecord` metadata with plan id,
+goal summary, ordered steps, required tools, required permissions, estimated risk, approval state,
+refusal reason, and bounded diagnostics.
+
+The runtime consults `PermissionPolicyService`, `ToolExecutionGateway`, `SkillProfileService`,
+and `WorkspaceService` only for metadata. Plans remain dry-run records. Approval cannot enable
+execution. This phase adds no tool execution, filesystem access, workspace reading or writing,
+subprocess execution, provider/cloud/API calls, web access, microphone capture, playback, STT/TTS
+activation, autonomous agents, hidden retries, background workers, prompt mutation, or automatic
+memory writes.
+
 Phase 48.0 through Phase 48.12 adds the Tool Execution Gateway Foundation while preserving the
 current execution boundary. `ToolExecutionGateway` exposes static metadata for Open Workspace,
 Read File, Write File, Run Command, Summarize Current Conversation, Export Conversation, Voice

@@ -97,6 +97,25 @@ Guidelines:
   lookup controls, voice activation controls, hidden prompt controls, memory-write controls, or
   autonomous agent controls.
 
+## Phase 49 Agent Runtime UX Notes
+
+Phase 49.0 through Phase 49.14 adds an Agent Runtime Foundation for dry-run planning only.
+
+Guidelines:
+
+- Agents Overview should show the built-in agent catalog, readiness summaries, approval posture,
+  and plan preview as read-only metadata.
+- The plan preview should show goal summary, ordered steps, required tools, required permissions,
+  estimated risk, approval state, and refusal reason.
+- Settings > Agents must clearly say agent execution is disabled. Approval labels are posture
+  metadata only and must not appear as executable controls.
+- Home may show only a compact agent posture chip.
+- Developer Mode may show bounded plan diagnostics and traces, but no raw prompts, provider
+  payloads, filesystem paths, command payloads, tool handles, or execution controls.
+- Agent UI must not expose run buttons, autonomous toggles, file pickers, command inputs, web
+  lookup controls, provider/API calls, microphone/playback controls, prompt mutation controls, or
+  memory-write controls.
+
 ## Phase 37 Model Registry UX Notes
 
 Phase 37.0 through Phase 37.12 adds model metadata visibility without adding model management

@@ -258,6 +258,25 @@ permission posture, tool summaries, and developer diagnostics. QML receives no c
 handles, filesystem paths, command payloads, provider payloads, web handles, voice handles, raw
 tool descriptors with execution behavior, or tool outputs.
 
+## Agent Runtime Service Boundary
+
+Phase 49 adds `AgentRuntimeService` and `AgentPlanRegistry` as metadata-only dry-run planning
+boundaries. The runtime owns built-in records for General Assistant, Coding Assistant, Research
+Assistant, Workspace Assistant, and Voice Assistant. Records describe agent id, display name,
+description, capability summary, supported tool categories, required permission posture,
+readiness state, and refusal reason.
+
+`AgentPlanRegistry` creates inspectable `AgentPlanRecord` metadata with plan id, goal summary,
+ordered steps, required tools, required permissions, estimated risk, approval state, refusal
+reason, and bounded diagnostics. Plan synthesis consults `PermissionPolicyService`,
+`ToolExecutionGateway`, `SkillProfileService`, and `WorkspaceService` for posture/readiness
+metadata only. It does not open workspace handles, inspect files, execute tools, call providers,
+mutate prompts, or write memory.
+
+`DesktopShellViewModel` exposes only QML-safe strings, counts, and string lists for agent catalog
+status, readiness summaries, plan preview, approval posture, refusal reason, and developer
+diagnostics. Approval cannot enable execution in this phase.
+
 The current gateway is intentionally non-operational: no tool execution, filesystem read/write,
 subprocess launch, provider/cloud/API call, web access, microphone capture, audio playback,
 STT/TTS activation, autonomous agent behavior, background worker, prompt mutation, or automatic

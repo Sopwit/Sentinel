@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 49.0-49.14: Agent Runtime Foundation (Dry-Run Planning Only)
+
+Completed. Adds Sentinel's first agent runtime planning abstraction while preserving a strict
+non-execution boundary.
+
+Scope:
+
+- Added `AgentRuntimeService` and `AgentPlanRegistry` as metadata-only services for built-in
+  agent catalog records and inspectable dry-run plan records.
+- Added built-in General Assistant, Coding Assistant, Research Assistant, Workspace Assistant, and
+  Voice Assistant records with QML-safe capability, tool-category, permission-posture, readiness,
+  and refusal metadata.
+- Agent plans include plan id, goal summary, ordered steps, required tools, required permissions,
+  estimated risk, approval state, refusal reason, and bounded diagnostics.
+- The runtime consults `PermissionPolicyService`, `ToolExecutionGateway`, `SkillProfileService`,
+  and `WorkspaceService` for posture and readiness metadata only.
+- Exposed agent runtime status, catalog summaries, plan preview, approval posture, refusal reason,
+  and developer diagnostics through `DesktopShellViewModel`.
+- Agents page now shows an agent catalog, dry-run plan preview, readiness summaries, and approval
+  posture badges.
+- Settings now includes an Agents section with "Agent execution is disabled" messaging. Home shows
+  a compact agent posture chip. Developer Mode exposes runtime and plan diagnostics.
+
+Known limitation:
+
+- Agent plans remain dry-run metadata. Approval cannot enable execution. This phase does not
+  execute tools, read or write files, access workspaces, launch subprocesses, call providers/cloud
+  APIs, access the web, capture microphones, play audio, activate STT/TTS, start autonomous agents,
+  run hidden retries or background workers, mutate prompts, or write memory automatically.
+
 ### Phase 48.0-48.12: Tool Execution Gateway Foundation
 
 Completed. Adds the central Tool Execution Gateway foundation as metadata-only tool readiness and
