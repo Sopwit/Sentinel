@@ -1121,6 +1121,7 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(bool companionEnabled READ companionEnabled WRITE setCompanionEnabled NOTIFY
                    companionChanged)
     Q_PROPERTY(bool companionAvailable READ companionAvailable NOTIFY companionChanged)
+    Q_PROPERTY(bool companionPaused READ companionPaused NOTIFY companionChanged)
     Q_PROPERTY(QString companionStatus READ companionStatus NOTIFY companionChanged)
     Q_PROPERTY(QString companionAvailability READ companionAvailability NOTIFY companionChanged)
     Q_PROPERTY(QString companionPlatformCapability READ companionPlatformCapability NOTIFY
@@ -1810,6 +1811,9 @@ public:
     bool companionEnabled() const;
     void setCompanionEnabled(bool enabled);
     bool companionAvailable() const;
+    bool companionPaused() const;
+    void setCompanionNativeAvailable(bool available);
+    void setCompanionPaused(bool paused);
     QString companionStatus() const;
     QString companionAvailability() const;
     QString companionPlatformCapability() const;
@@ -1907,6 +1911,8 @@ private:
     core::CompanionService companionService_;
     ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");
+    bool companionNativeAvailable_ = false;
+    bool companionPaused_ = false;
 };
 
 } // namespace sentinel::desktop

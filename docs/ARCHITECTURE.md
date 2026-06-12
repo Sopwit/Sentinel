@@ -153,23 +153,29 @@ outputs out of QML.
 
 ## Companion Service Boundary
 
-Phase 43 adds `CompanionService` as a value-only companion/menu-bar/system-tray foundation. It
-reports companion status, availability, current platform posture, cross-platform platform targets,
-permission posture, safety boundary text, quick-capture readiness, safe action labels, and bounded
-trace summaries.
+Phase 43 adds `CompanionService` as a value-only companion/menu-bar/system-tray boundary. It
+reports companion status, availability, paused state, current platform posture, cross-platform
+platform targets, permission posture, safety boundary text, quick-capture readiness, safe action
+labels, and bounded trace summaries.
 
-The current implementation is readiness-only:
+Phase 43.5 adds `NativeCompanionAdapter` in `apps/sentinel-desktop` as the desktop-owned native
+adapter layer. It uses Qt's `QSystemTrayIcon` and `QMenu` APIs:
 
-- macOS menu bar, Windows system tray, and Linux StatusNotifier/AppIndicator/system tray are
-  represented as planned platform capabilities only.
-- The persisted `AppSettings::companionEnabled` value records user visibility intent only.
+- macOS uses Qt tray/status item behavior first.
+- Windows uses Qt system tray behavior.
+- Linux uses Qt tray/status notifier behavior where available and degrades to unavailable
+  companion metadata when no tray is exposed.
+- The persisted `AppSettings::companionEnabled` value controls native companion visibility only.
 - `DesktopShellViewModel` exposes QML-safe booleans, strings, and string lists for Settings.
-- No raw platform handles, native tray objects, OS-specific dependencies, action callbacks,
-  background loops, timers, provider calls, tool execution, filesystem scanning, microphone
-  capture, playback, memory writes, or transcript mutation are added.
+- Native actions are foreground-safe: Open Sentinel shows/raises/focuses the main window, New
+  Conversation calls the existing safe conversation creation path, Settings opens the Settings
+  page, Pause Companion changes presentation/readiness metadata, and Quit uses normal application
+  quit.
 
-Future native integration must stay behind this boundary or an explicit platform service boundary
-and continue to separate visible shell integration from execution authority.
+Quick Note / Capture remains disabled and metadata-only. The companion layer does not expose raw
+platform handles to QML and does not add background loops, provider calls, tool execution,
+filesystem scanning, microphone capture, playback, memory writes, hidden transcript mutation,
+subprocess execution, cloud calls, plugins, or autonomous behavior.
 
 ## Runtime Provider Registry
 

@@ -1,4 +1,5 @@
 #include "sentinel/desktop/DesktopShellViewModel.h"
+#include "sentinel/desktop/NativeCompanionAdapter.h"
 
 #include "sentinel/core/AppMetadata.h"
 #include "sentinel/core/AppSettings.h"
@@ -15,9 +16,9 @@
 #include "sentinel/core/SQLiteMemoryStore.h"
 #include "sentinel/core/StandardPathProvider.h"
 
+#include <QApplication>
 #include <QFont>
 #include <QFontDatabase>
-#include <QGuiApplication>
 #include <QIcon>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
@@ -143,7 +144,7 @@ void installStartupTranslator(QGuiApplication& app, const sentinel::core::AppSet
 int main(int argc, char* argv[]) {
     configureGraphicsBackend();
 
-    QGuiApplication app(argc, argv);
+    QApplication app(argc, argv);
     configureDefaultUiFont();
     QGuiApplication::setApplicationName(sentinel::core::AppMetadata::displayName());
     QGuiApplication::setOrganizationName(sentinel::core::AppMetadata::organizationName());
@@ -187,5 +188,8 @@ int main(int argc, char* argv[]) {
 
     engine.loadFromModule(QStringLiteral("Sentinel.Desktop"), QStringLiteral("Main"));
 
-    return QGuiApplication::exec();
+    QObject* rootWindow = engine.rootObjects().isEmpty() ? nullptr : engine.rootObjects().first();
+    sentinel::desktop::NativeCompanionAdapter companionAdapter(shellViewModel, settings, rootWindow);
+
+    return QApplication::exec();
 }

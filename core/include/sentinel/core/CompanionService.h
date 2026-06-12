@@ -9,11 +9,14 @@ namespace sentinel::core {
 enum class CompanionStatus {
     Disabled,
     ReadinessOnly,
+    Active,
+    Paused,
 };
 
 enum class CompanionAvailability {
     Unavailable,
     ReadinessOnly,
+    NativeAvailable,
 };
 
 enum class CompanionPermissionMode {
@@ -71,11 +74,13 @@ QString companionTraceSummary(const CompanionTrace& trace);
 
 class CompanionService final {
 public:
-    CompanionSummary summary(bool enabledPreference) const;
-    QList<CompanionAction> actions() const;
-    QList<CompanionTrace> traces(bool enabledPreference) const;
+    CompanionSummary summary(bool enabledPreference, bool nativeAvailable = false,
+                             bool paused = false) const;
+    QList<CompanionAction> actions(bool nativeAvailable = false, bool paused = false) const;
+    QList<CompanionTrace> traces(bool enabledPreference, bool nativeAvailable = false,
+                                 bool paused = false) const;
     QStringList platformSummaries() const;
-    QString currentPlatformCapability() const;
+    QString currentPlatformCapability(bool nativeAvailable = false) const;
 };
 
 CompanionService defaultCompanionService();

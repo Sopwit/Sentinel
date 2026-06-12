@@ -385,7 +385,7 @@ Item {
                                         text: settingsPage.viewModel.companionStatus
                                               + qsTr(" / ")
                                               + settingsPage.viewModel.companionAvailability
-                                              + qsTr(". Native tray creation is not active in this phase.")
+                                              + qsTr(". Uses native tray/menu bar integration when the platform exposes it.")
                                         color: SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
                                         wrapMode: Text.WordWrap
@@ -1621,7 +1621,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Companion Boundary")
-                            subtitle: qsTr("Readiness-only shell integration metadata.")
+                            subtitle: qsTr("Native shell presentation with explicit safety boundaries.")
                             Layout.fillWidth: true
                         }
 

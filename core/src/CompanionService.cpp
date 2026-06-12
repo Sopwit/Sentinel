@@ -10,6 +10,10 @@ QString companionStatusName(CompanionStatus status) {
         return QStringLiteral("Disabled");
     case CompanionStatus::ReadinessOnly:
         return QStringLiteral("Readiness Only");
+    case CompanionStatus::Active:
+        return QStringLiteral("Active");
+    case CompanionStatus::Paused:
+        return QStringLiteral("Paused");
     }
     return QStringLiteral("Unknown");
 }
@@ -20,6 +24,8 @@ QString companionAvailabilityName(CompanionAvailability availability) {
         return QStringLiteral("Unavailable");
     case CompanionAvailability::ReadinessOnly:
         return QStringLiteral("Readiness Only");
+    case CompanionAvailability::NativeAvailable:
+        return QStringLiteral("Native Available");
     }
     return QStringLiteral("Unknown");
 }
@@ -70,53 +76,64 @@ QString companionTraceSummary(const CompanionTrace& trace) {
     return QStringLiteral("%1: %2 - %3").arg(trace.category, trace.status, trace.summary);
 }
 
-CompanionSummary CompanionService::summary(bool enabledPreference) const {
+CompanionSummary CompanionService::summary(bool enabledPreference, bool nativeAvailable,
+                                           bool paused) const {
     CompanionSummary result;
-    result.available = false;
+    result.available = enabledPreference && nativeAvailable;
     result.enabledPreference = enabledPreference;
-    result.status = companionStatusName(enabledPreference ? CompanionStatus::ReadinessOnly
-                                                          : CompanionStatus::Disabled);
-    result.availability = companionAvailabilityName(CompanionAvailability::ReadinessOnly);
-    result.platformCapability = currentPlatformCapability();
+    if (!enabledPreference) {
+        result.status = companionStatusName(CompanionStatus::Disabled);
+    } else if (!nativeAvailable) {
+        result.status = companionStatusName(CompanionStatus::ReadinessOnly);
+    } else if (paused) {
+        result.status = companionStatusName(CompanionStatus::Paused);
+    } else {
+        result.status = companionStatusName(CompanionStatus::Active);
+    }
+    result.availability = companionAvailabilityName(
+        nativeAvailable ? CompanionAvailability::NativeAvailable
+                        : CompanionAvailability::Unavailable);
+    result.platformCapability = currentPlatformCapability(nativeAvailable);
     result.permissionPostureSummary =
-        QStringLiteral("Permission posture is Disabled by default; Ask Every Time, Trusted, and "
-                       "Enabled are future policy states only.");
+        QStringLiteral("Companion actions are foreground-safe shell actions only; provider, model, "
+                       "tool, voice, filesystem, and agent permissions remain disabled.");
     result.safetyBoundarySummary =
-        QStringLiteral("Companion is readiness-only: no background daemon, provider call, tool "
-                       "execution, filesystem scan, microphone capture, playback, memory write, "
-                       "or transcript mutation.");
+        QStringLiteral("Companion is native shell presentation only: no background daemon, provider "
+                       "call, tool execution, filesystem scan, microphone capture, playback, "
+                       "memory write, or hidden transcript mutation.");
     result.quickCaptureSummary =
         QStringLiteral("Quick Capture placeholder is metadata-only; no note, memory, transcript, "
                        "filesystem, or model action is performed.");
     result.platformSummaries = platformSummaries();
-    for (const auto& action : actions()) {
+    for (const auto& action : actions(nativeAvailable, paused)) {
         result.actionSummaries.append(companionActionSummary(action));
     }
-    for (const auto& trace : traces(enabledPreference)) {
+    for (const auto& trace : traces(enabledPreference, nativeAvailable, paused)) {
         result.traceSummaries.append(companionTraceSummary(trace));
     }
     return result;
 }
 
-QList<CompanionAction> CompanionService::actions() const {
+QList<CompanionAction> CompanionService::actions(bool nativeAvailable, bool paused) const {
+    const bool shellActionAvailable = nativeAvailable;
     return {
         {CompanionActionKind::OpenSentinel,
          companionActionKindName(CompanionActionKind::OpenSentinel),
          QStringLiteral("Open Sentinel"),
-         QStringLiteral("foreground navigation placeholder; no hidden execution"),
+         QStringLiteral("foreground navigation; no hidden execution"),
          CompanionPermissionMode::Disabled,
-         false,
-         false},
+         shellActionAvailable,
+         shellActionAvailable},
         {CompanionActionKind::NewConversation,
          companionActionKindName(CompanionActionKind::NewConversation),
-         QStringLiteral("New conversation"),
-         QStringLiteral("metadata-only placeholder; no transcript mutation"),
+         QStringLiteral("New Conversation"),
+         QStringLiteral("uses existing safe conversation creation path when available"),
          CompanionPermissionMode::Disabled,
-         false,
-         false},
+         shellActionAvailable,
+         shellActionAvailable},
         {CompanionActionKind::QuickNote,
          companionActionKindName(CompanionActionKind::QuickNote),
-         QStringLiteral("Quick note"),
+         QStringLiteral("Quick Note"),
          QStringLiteral("Quick Capture placeholder; no filesystem, memory, transcript, or model "
                         "write"),
          CompanionPermissionMode::Disabled,
@@ -124,42 +141,50 @@ QList<CompanionAction> CompanionService::actions() const {
          false},
         {CompanionActionKind::PauseCompanion,
          companionActionKindName(CompanionActionKind::PauseCompanion),
-         QStringLiteral("Pause companion"),
-         QStringLiteral("readiness placeholder; no background work exists to pause"),
+         paused ? QStringLiteral("Resume Companion") : QStringLiteral("Pause Companion"),
+         QStringLiteral("presentation/readiness metadata only; no runtime or model behavior is "
+                        "changed"),
          CompanionPermissionMode::Disabled,
-         false,
-         false},
+         shellActionAvailable,
+         shellActionAvailable},
         {CompanionActionKind::Settings,
          companionActionKindName(CompanionActionKind::Settings),
          QStringLiteral("Settings"),
-         QStringLiteral("foreground navigation placeholder; no permission change is applied"),
+         QStringLiteral("foreground navigation; no permission change is applied"),
          CompanionPermissionMode::Disabled,
-         false,
-         false},
+         shellActionAvailable,
+         shellActionAvailable},
         {CompanionActionKind::Quit,
          companionActionKindName(CompanionActionKind::Quit),
          QStringLiteral("Quit"),
-         QStringLiteral("readiness-only placeholder; no process exit is invoked"),
+         QStringLiteral("normal application quit; no background runtime is started"),
          CompanionPermissionMode::Disabled,
-         false,
-         false},
+         shellActionAvailable,
+         shellActionAvailable},
     };
 }
 
-QList<CompanionTrace> CompanionService::traces(bool enabledPreference) const {
+QList<CompanionTrace> CompanionService::traces(bool enabledPreference, bool nativeAvailable,
+                                               bool paused) const {
     return {
         {QStringLiteral("preference"),
          enabledPreference ? QStringLiteral("enabled preference")
                            : QStringLiteral("disabled preference"),
-         QStringLiteral("stored setting changes visibility intent only; it does not create tray "
-                        "runtime support")},
-        {QStringLiteral("platform"), QStringLiteral("readiness-only"), currentPlatformCapability()},
+         QStringLiteral("stored setting controls native tray/menu visibility only; it does not "
+                        "start runtime work")},
+        {QStringLiteral("platform"),
+         nativeAvailable ? QStringLiteral("native available") : QStringLiteral("unavailable"),
+         currentPlatformCapability(nativeAvailable)},
         {QStringLiteral("permissions"),
          QStringLiteral("disabled"),
-         QStringLiteral("future permission modes are represented but no companion action can run")},
+         QStringLiteral("shell actions do not grant provider, model, tool, voice, filesystem, or "
+                        "agent authority")},
         {QStringLiteral("quick-capture"),
          QStringLiteral("placeholder"),
          QStringLiteral("no filesystem write, memory write, transcript mutation, or model call")},
+        {QStringLiteral("pause"),
+         paused ? QStringLiteral("paused") : QStringLiteral("ready"),
+         QStringLiteral("pause changes companion presentation/readiness metadata only")},
         {QStringLiteral("execution"),
          QStringLiteral("blocked"),
          QStringLiteral("no provider, tool, voice, plugin, background worker, or autonomous "
@@ -169,26 +194,29 @@ QList<CompanionTrace> CompanionService::traces(bool enabledPreference) const {
 
 QStringList CompanionService::platformSummaries() const {
     return {
-        QStringLiteral("macOS menu bar: planned readiness only; no menu bar item is created."),
-        QStringLiteral("Windows system tray: planned readiness only; no tray icon is created."),
-        QStringLiteral("Linux StatusNotifier/AppIndicator/system tray: planned readiness only; "
-                       "no tray item is created."),
+        QStringLiteral("macOS menu bar/status item: uses Qt tray integration first."),
+        QStringLiteral("Windows system tray: uses Qt native system tray integration."),
+        QStringLiteral("Linux StatusNotifier/AppIndicator/system tray: uses Qt tray/status "
+                       "notifier integration when available and degrades gracefully."),
     };
 }
 
-QString CompanionService::currentPlatformCapability() const {
+QString CompanionService::currentPlatformCapability(bool nativeAvailable) const {
+    const QString availability =
+        nativeAvailable ? QStringLiteral("native integration available")
+                        : QStringLiteral("native integration unavailable");
 #if defined(Q_OS_MACOS)
-    return QStringLiteral("Current platform: macOS menu bar readiness only; native menu bar "
-                          "integration is not implemented.");
+    return QStringLiteral("Current platform: macOS menu bar/status item through Qt tray; %1.")
+        .arg(availability);
 #elif defined(Q_OS_WIN)
-    return QStringLiteral("Current platform: Windows system tray readiness only; native tray "
-                          "integration is not implemented.");
+    return QStringLiteral("Current platform: Windows system tray through Qt tray; %1.")
+        .arg(availability);
 #elif defined(Q_OS_LINUX)
-    return QStringLiteral("Current platform: Linux StatusNotifier/AppIndicator/system tray "
-                          "readiness only; native tray integration is not implemented.");
+    return QStringLiteral("Current platform: Linux StatusNotifier/AppIndicator/system tray through "
+                          "Qt tray when supported; %1.")
+        .arg(availability);
 #else
-    return QStringLiteral("Current platform: generic companion readiness only; native shell "
-                          "integration is not implemented.");
+    return QStringLiteral("Current platform: generic Qt tray integration; %1.").arg(availability);
 #endif
 }
 

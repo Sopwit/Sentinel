@@ -2892,43 +2892,88 @@ void DesktopShellViewModel::setCompanionEnabled(bool enabled) {
 }
 
 bool DesktopShellViewModel::companionAvailable() const {
-    return companionService_.summary(settings_.companionEnabled()).available;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .available;
+}
+
+bool DesktopShellViewModel::companionPaused() const {
+    return companionPaused_;
+}
+
+void DesktopShellViewModel::setCompanionNativeAvailable(bool available) {
+    if (available == companionNativeAvailable_) {
+        return;
+    }
+
+    companionNativeAvailable_ = available;
+    if (!available && companionPaused_) {
+        companionPaused_ = false;
+    }
+    emit companionChanged();
+}
+
+void DesktopShellViewModel::setCompanionPaused(bool paused) {
+    if (paused == companionPaused_) {
+        return;
+    }
+
+    companionPaused_ = paused;
+    emit companionChanged();
 }
 
 QString DesktopShellViewModel::companionStatus() const {
-    return companionService_.summary(settings_.companionEnabled()).status;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .status;
 }
 
 QString DesktopShellViewModel::companionAvailability() const {
-    return companionService_.summary(settings_.companionEnabled()).availability;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .availability;
 }
 
 QString DesktopShellViewModel::companionPlatformCapability() const {
-    return companionService_.summary(settings_.companionEnabled()).platformCapability;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .platformCapability;
 }
 
 QString DesktopShellViewModel::companionPermissionPosture() const {
-    return companionService_.summary(settings_.companionEnabled()).permissionPostureSummary;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .permissionPostureSummary;
 }
 
 QString DesktopShellViewModel::companionSafetyBoundary() const {
-    return companionService_.summary(settings_.companionEnabled()).safetyBoundarySummary;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .safetyBoundarySummary;
 }
 
 QString DesktopShellViewModel::companionQuickCaptureSummary() const {
-    return companionService_.summary(settings_.companionEnabled()).quickCaptureSummary;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .quickCaptureSummary;
 }
 
 QStringList DesktopShellViewModel::companionActionSummaries() const {
-    return companionService_.summary(settings_.companionEnabled()).actionSummaries;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .actionSummaries;
 }
 
 QStringList DesktopShellViewModel::companionPlatformSummaries() const {
-    return companionService_.summary(settings_.companionEnabled()).platformSummaries;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .platformSummaries;
 }
 
 QStringList DesktopShellViewModel::companionTraceSummaries() const {
-    return companionService_.summary(settings_.companionEnabled()).traceSummaries;
+    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
+                                     companionPaused_)
+        .traceSummaries;
 }
 
 bool DesktopShellViewModel::developerModeEnabled() const {
