@@ -1,5 +1,33 @@
 # Phase Status
 
+## Planned / Roadmap
+
+### Phase 46.0-46.12: Multi-Provider Local Runtime Roadmap
+
+Planned. Expands the provider roadmap beyond Local Ollama while keeping new providers
+metadata-only until separately activated.
+
+Scope:
+
+- Keep Local Ollama as the current default and only currently active local chat path.
+- Plan provider registry support for Ollama, llama.cpp server, LM Studio local server,
+  OpenAI-compatible local endpoints, vLLM-compatible endpoints, Jan / other safe local
+  OpenAI-compatible runtimes, and future opt-in cloud providers.
+- Separate provider id, endpoint, discovery, selected model, readiness, streaming support,
+  context-window metadata, local/cloud scope, API-key requirement, and capability metadata.
+- Use one shared OpenAI-compatible adapter for local/cloud providers that expose that API shape.
+- Update Settings > Local AI, Home/Chat, and AI Bridge language to describe a generic selected
+  local provider instead of hardcoding Ollama-only copy.
+- Add planned tests for provider registry entries, endpoint validation, selected-provider
+  persistence, view-model/UI exposure, and disabled-provider send refusal.
+
+Known limitation:
+
+- This roadmap phase does not add automatic probing, background discovery daemons, hidden network
+  calls, API-key storage, cloud execution, automatic provider fallback, filesystem scanning,
+  subprocess launch of local runtimes, or chat execution for LM Studio/llama.cpp/OpenAI-compatible
+  endpoints unless a later phase explicitly enables it.
+
 ## Completed / Stable
 
 ### Phase 45.0-45.12: Workspace UX And Permission Foundation Refinement
