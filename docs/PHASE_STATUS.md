@@ -2,6 +2,58 @@
 
 ## Completed / Stable
 
+### Phase 48.0-48.12: Tool Execution Gateway Foundation
+
+Completed. Adds the central Tool Execution Gateway foundation as metadata-only tool readiness and
+permission-posture architecture without adding tool execution.
+
+Scope:
+
+- Added `ToolExecutionGateway` as a value-only registry for Open Workspace, Read File, Write File,
+  Run Command, Summarize Current Conversation, Export Conversation, Voice Transcribe, Voice Speak,
+  Web Search, and Provider Test Call.
+- Tool records include tool id, display name, category, description, required permission domain,
+  risk level, local/cloud scope, execution availability, and refusal reason.
+- The gateway consults `PermissionPolicyService` for the current permission posture, but no
+  posture grants execution in this phase.
+- Exposed QML-safe gateway status, counts, summaries, and developer diagnostics through
+  `DesktopShellViewModel`.
+- Added Settings > Tools with readiness counts, permission posture, boundary copy, and read-only
+  tool summaries.
+- Agents Overview shows compact tool registry posture in normal mode, and Developer Mode shows
+  detailed gateway diagnostics.
+
+Known limitation:
+
+- The gateway does not execute tools. It does not read or write files, launch subprocesses, call
+  providers/cloud/API endpoints, access the web, activate microphone/playback/STT/TTS, run agents,
+  start background workers, mutate prompts, or write memory automatically.
+
+### Phase 47.0-47.12: Permission Policy Engine Foundation
+
+Completed. Adds a central metadata-only permission policy engine for future user-controlled
+authority states without granting execution.
+
+Scope:
+
+- Added `PermissionPolicyService` as a value-only registry for Workspace Access, Tool Execution,
+  Agent Execution, Voice Capture, Voice Playback, Cloud Provider Access, Filesystem Write,
+  Subprocess Execution, Memory Commit, and Context Injection.
+- Added permission states: Disabled, Ask Every Time, Trusted, and Enabled. The default persisted
+  posture is Disabled.
+- Exposed QML-safe permission policy status, summaries, state labels, domain ids/names, domain
+  summaries, and developer diagnostics through `DesktopShellViewModel`.
+- Added Settings > Permissions with a default posture selector and read-only domain summaries.
+- Developer Mode shows central permission diagnostics alongside runtime, workspace, profile,
+  credential, companion, and voice boundaries.
+- Home shows a compact central permission posture chip.
+
+Known limitation:
+
+- Permission states do not grant real execution in this phase. No tools, agents, filesystem
+  access, cloud/API calls, voice capture/playback, subprocesses, background workers, hidden prompt
+  mutation, automatic memory writes, or context behavior changes are enabled.
+
 ### Phase 46.0-46.12: Skill/Profile System Foundation
 
 Completed. Adds user-facing assistant profiles that shape presentation and future policy metadata

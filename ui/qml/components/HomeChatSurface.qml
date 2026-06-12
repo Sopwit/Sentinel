@@ -119,6 +119,13 @@ ShellPanel {
             }
 
             StatusChip {
+                label: qsTr("Permission")
+                value: homeChat.viewModel.defaultPermissionPolicyState
+                accent: SentinelTheme.textMuted
+                muted: true
+            }
+
+            StatusChip {
                 label: qsTr("Profile")
                 value: homeChat.viewModel.selectedSkillProfileName
                 accent: SentinelTheme.calmAccent

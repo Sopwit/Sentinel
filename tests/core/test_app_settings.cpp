@@ -42,6 +42,7 @@ private slots:
     void persistsDeveloperModeVisibilityOptIn();
     void persistsSelectedWorkspaceId();
     void persistsSelectedSkillProfile();
+    void persistsDefaultPermissionPolicyState();
     void persistsVoiceConfigurationPaths();
     void persistsPiperFileOutputExecutionOptIn();
     void persistsLocalAiRuntimeSettingsThroughJsonStore();
@@ -75,6 +76,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(!settings->piperFileOutputExecutionEnabled());
     QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("local-placeholder"));
     QCOMPARE(settings->selectedSkillProfile(), QStringLiteral("developer"));
+    QCOMPARE(settings->defaultPermissionPolicyState(), QStringLiteral("Disabled"));
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -482,6 +484,26 @@ void AppSettingsTest::persistsSelectedSkillProfile() {
     QCOMPARE(spy.count(), 2);
 }
 
+void AppSettingsTest::persistsDefaultPermissionPolicyState() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::defaultPermissionPolicyStateChanged);
+
+    settings->setDefaultPermissionPolicyState(QStringLiteral(" ask-every-time "));
+    QCOMPARE(settings->defaultPermissionPolicyState(), QStringLiteral("Ask Every Time"));
+    QCOMPARE(spy.count(), 1);
+
+    settings->setDefaultPermissionPolicyState(QStringLiteral("Enabled"));
+    QCOMPARE(settings->defaultPermissionPolicyState(), QStringLiteral("Enabled"));
+    QCOMPARE(spy.count(), 2);
+
+    settings->setDefaultPermissionPolicyState(QStringLiteral("unknown"));
+    QCOMPARE(settings->defaultPermissionPolicyState(), QStringLiteral("Disabled"));
+    QCOMPARE(spy.count(), 3);
+
+    settings->setDefaultPermissionPolicyState(QStringLiteral("Disabled"));
+    QCOMPARE(spy.count(), 3);
+}
+
 void AppSettingsTest::persistsVoiceConfigurationPaths() {
     const auto settings = makeSettings();
     QSignalSpy piperBinarySpy(settings.get(), &AppSettings::piperBinaryPathChanged);
@@ -541,6 +563,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setDeveloperModeEnabled(true);
         settings.setSelectedWorkspaceId(QStringLiteral("future-project"));
         settings.setSelectedSkillProfile(QStringLiteral("researcher"));
+        settings.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
         settings.setPiperBinaryPath(QStringLiteral("/opt/piper/piper"));
         settings.setPiperModelPath(QStringLiteral("/opt/piper/model.onnx"));
         settings.setWhisperBinaryPath(QStringLiteral("/opt/whisper/whisper"));
@@ -561,6 +584,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QVERIFY(reloaded.developerModeEnabled());
     QCOMPARE(reloaded.selectedWorkspaceId(), QStringLiteral("future-project"));
     QCOMPARE(reloaded.selectedSkillProfile(), QStringLiteral("researcher"));
+    QCOMPARE(reloaded.defaultPermissionPolicyState(), QStringLiteral("Trusted"));
     QCOMPARE(reloaded.piperBinaryPath(), QStringLiteral("/opt/piper/piper"));
     QCOMPARE(reloaded.piperModelPath(), QStringLiteral("/opt/piper/model.onnx"));
     QCOMPARE(reloaded.whisperBinaryPath(), QStringLiteral("/opt/whisper/whisper"));

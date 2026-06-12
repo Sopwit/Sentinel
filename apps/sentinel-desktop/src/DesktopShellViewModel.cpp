@@ -93,6 +93,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::skillProfileChanged);
     connect(&settings_, &core::AppSettings::selectedWorkspaceIdChanged, this,
             &DesktopShellViewModel::workspaceChanged);
+    connect(&settings_, &core::AppSettings::defaultPermissionPolicyStateChanged, this,
+            &DesktopShellViewModel::permissionPolicyChanged);
     connect(&settings_, &core::AppSettings::contextExplainabilityVisibleChanged, this,
             &DesktopShellViewModel::contextExplainabilityVisibleChanged);
     connect(&settings_, &core::AppSettings::activeConversationIdChanged, this,
@@ -3118,6 +3120,98 @@ QStringList DesktopShellViewModel::workspaceReadinessChecks() const {
 
 QStringList DesktopShellViewModel::workspaceBoundaryDiagnostics() const {
     return workspaceService_.readiness(settings_.selectedWorkspaceId()).boundaryDiagnostics;
+}
+
+QString DesktopShellViewModel::defaultPermissionPolicyState() const {
+    return permissionPolicyService_.normalizedState(settings_.defaultPermissionPolicyState());
+}
+
+void DesktopShellViewModel::setDefaultPermissionPolicyState(const QString& state) {
+    settings_.setDefaultPermissionPolicyState(permissionPolicyService_.normalizedState(state));
+}
+
+QString DesktopShellViewModel::permissionPolicyStatus() const {
+    return permissionPolicyService_.registrySummary(settings_.defaultPermissionPolicyState()).status;
+}
+
+QString DesktopShellViewModel::permissionPolicySummary() const {
+    return permissionPolicyService_.registrySummary(settings_.defaultPermissionPolicyState()).summary;
+}
+
+QStringList DesktopShellViewModel::permissionPolicyStateLabels() const {
+    return permissionPolicyService_.permissionStateLabels();
+}
+
+QStringList DesktopShellViewModel::permissionPolicyDomainIds() const {
+    return permissionPolicyService_.permissionDomainIds();
+}
+
+QStringList DesktopShellViewModel::permissionPolicyDomainNames() const {
+    return permissionPolicyService_.permissionDomainNames();
+}
+
+QStringList DesktopShellViewModel::permissionPolicyDomainSummaries() const {
+    return permissionPolicyService_.registrySummary(settings_.defaultPermissionPolicyState())
+        .domainSummaries;
+}
+
+QStringList DesktopShellViewModel::permissionPolicyDeveloperDiagnostics() const {
+    return permissionPolicyService_.registrySummary(settings_.defaultPermissionPolicyState())
+        .developerDiagnostics;
+}
+
+QString DesktopShellViewModel::toolGatewayStatus() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .status;
+}
+
+QString DesktopShellViewModel::toolGatewaySummary() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .summary;
+}
+
+QString DesktopShellViewModel::toolGatewayPermissionPosture() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .permissionPosture;
+}
+
+int DesktopShellViewModel::toolGatewayToolCount() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .toolCount;
+}
+
+int DesktopShellViewModel::toolGatewayMetadataSafeCount() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .metadataSafeCount;
+}
+
+int DesktopShellViewModel::toolGatewayUnavailableCount() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .unavailableCount;
+}
+
+int DesktopShellViewModel::toolGatewayRefusedCount() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .refusedCount;
+}
+
+QStringList DesktopShellViewModel::toolGatewayToolSummaries() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .toolSummaries;
+}
+
+QStringList DesktopShellViewModel::toolGatewayDeveloperDiagnostics() const {
+    return toolExecutionGateway_
+        .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
+        .developerDiagnostics;
 }
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {

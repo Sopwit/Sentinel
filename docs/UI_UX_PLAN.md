@@ -62,6 +62,41 @@ Guidelines:
 - Profiles must not imply custom instructions, hidden prompt changes, tool execution, workspace
   access, cloud/API calls, STT/TTS activation, subprocesses, agents, or autonomous behavior.
 
+## Phase 47 Permission Policy UX Notes
+
+Phase 47.0 through Phase 47.12 adds a central Permissions settings surface without activating
+authority.
+
+Guidelines:
+
+- Settings > Permissions shows the central default posture, state labels, and domain summaries for
+  Workspace Access, Tool Execution, Agent Execution, Voice Capture, Voice Playback, Cloud Provider
+  Access, Filesystem Write, Subprocess Execution, Memory Commit, and Context Injection.
+- The default posture is Disabled. Ask Every Time, Trusted, and Enabled are representable labels
+  for future policy work only.
+- Home may show a compact central permission posture chip for orientation.
+- Developer Mode may show detailed permission diagnostics, but only as bounded strings.
+- Permission UI must not imply actual tool execution, agent runtime, filesystem scanning, folder
+  reading, cloud/API calls, microphone capture, audio playback, subprocess launch, hidden prompt
+  mutation, automatic memory commits, or context behavior changes.
+
+## Phase 48 Tool Gateway UX Notes
+
+Phase 48.0 through Phase 48.12 adds a Tool Execution Gateway surface without activating tools.
+
+Guidelines:
+
+- Settings > Tools shows registry status, total tool count, metadata-safe/unavailable/refused
+  counts, permission posture, boundary copy, and read-only summaries for the initial placeholder
+  tools.
+- Agents Overview may show compact tool gateway posture in normal mode. Developer Mode may show
+  detailed gateway diagnostics as bounded strings.
+- Tool readiness states are labels only. Metadata-safe means descriptor display is safe, not that
+  a tool can run.
+- Tool UI must not expose run buttons, file pickers, command inputs, provider test calls, web
+  lookup controls, voice activation controls, hidden prompt controls, memory-write controls, or
+  autonomous agent controls.
+
 ## Phase 37 Model Registry UX Notes
 
 Phase 37.0 through Phase 37.12 adds model metadata visibility without adding model management

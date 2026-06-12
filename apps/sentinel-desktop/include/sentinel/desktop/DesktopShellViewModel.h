@@ -1,8 +1,10 @@
 #pragma once
 
 #include "sentinel/core/CompanionService.h"
+#include "sentinel/core/PermissionPolicyService.h"
 #include "sentinel/core/SemanticRetrieval.h"
 #include "sentinel/core/SkillProfileService.h"
+#include "sentinel/core/ToolExecutionGateway.h"
 #include "sentinel/core/WorkspaceService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 
@@ -1186,6 +1188,34 @@ class DesktopShellViewModel final : public QObject {
                    workspaceChanged)
     Q_PROPERTY(QStringList workspaceBoundaryDiagnostics READ workspaceBoundaryDiagnostics NOTIFY
                    workspaceChanged)
+    Q_PROPERTY(QString defaultPermissionPolicyState READ defaultPermissionPolicyState WRITE
+                   setDefaultPermissionPolicyState NOTIFY permissionPolicyChanged)
+    Q_PROPERTY(QString permissionPolicyStatus READ permissionPolicyStatus NOTIFY
+                   permissionPolicyChanged)
+    Q_PROPERTY(QString permissionPolicySummary READ permissionPolicySummary NOTIFY
+                   permissionPolicyChanged)
+    Q_PROPERTY(QStringList permissionPolicyStateLabels READ permissionPolicyStateLabels CONSTANT)
+    Q_PROPERTY(QStringList permissionPolicyDomainIds READ permissionPolicyDomainIds CONSTANT)
+    Q_PROPERTY(QStringList permissionPolicyDomainNames READ permissionPolicyDomainNames CONSTANT)
+    Q_PROPERTY(QStringList permissionPolicyDomainSummaries READ permissionPolicyDomainSummaries
+                   NOTIFY permissionPolicyChanged)
+    Q_PROPERTY(QStringList permissionPolicyDeveloperDiagnostics READ
+                   permissionPolicyDeveloperDiagnostics NOTIFY permissionPolicyChanged)
+    Q_PROPERTY(QString toolGatewayStatus READ toolGatewayStatus NOTIFY permissionPolicyChanged)
+    Q_PROPERTY(QString toolGatewaySummary READ toolGatewaySummary NOTIFY permissionPolicyChanged)
+    Q_PROPERTY(QString toolGatewayPermissionPosture READ toolGatewayPermissionPosture NOTIFY
+                   permissionPolicyChanged)
+    Q_PROPERTY(int toolGatewayToolCount READ toolGatewayToolCount NOTIFY permissionPolicyChanged)
+    Q_PROPERTY(int toolGatewayMetadataSafeCount READ toolGatewayMetadataSafeCount NOTIFY
+                   permissionPolicyChanged)
+    Q_PROPERTY(int toolGatewayUnavailableCount READ toolGatewayUnavailableCount NOTIFY
+                   permissionPolicyChanged)
+    Q_PROPERTY(int toolGatewayRefusedCount READ toolGatewayRefusedCount NOTIFY
+                   permissionPolicyChanged)
+    Q_PROPERTY(QStringList toolGatewayToolSummaries READ toolGatewayToolSummaries NOTIFY
+                   permissionPolicyChanged)
+    Q_PROPERTY(QStringList toolGatewayDeveloperDiagnostics READ
+                   toolGatewayDeveloperDiagnostics NOTIFY permissionPolicyChanged)
 
 public:
     DesktopShellViewModel(core::ApplicationController& controller, core::ModeManager& modeManager,
@@ -1901,6 +1931,24 @@ public:
     QStringList workspaceActionPlaceholders() const;
     QStringList workspaceReadinessChecks() const;
     QStringList workspaceBoundaryDiagnostics() const;
+    QString defaultPermissionPolicyState() const;
+    void setDefaultPermissionPolicyState(const QString& state);
+    QString permissionPolicyStatus() const;
+    QString permissionPolicySummary() const;
+    QStringList permissionPolicyStateLabels() const;
+    QStringList permissionPolicyDomainIds() const;
+    QStringList permissionPolicyDomainNames() const;
+    QStringList permissionPolicyDomainSummaries() const;
+    QStringList permissionPolicyDeveloperDiagnostics() const;
+    QString toolGatewayStatus() const;
+    QString toolGatewaySummary() const;
+    QString toolGatewayPermissionPosture() const;
+    int toolGatewayToolCount() const;
+    int toolGatewayMetadataSafeCount() const;
+    int toolGatewayUnavailableCount() const;
+    int toolGatewayRefusedCount() const;
+    QStringList toolGatewayToolSummaries() const;
+    QStringList toolGatewayDeveloperDiagnostics() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
@@ -1979,6 +2027,7 @@ signals:
     void promptContextInjectionChanged();
     void skillProfileChanged();
     void workspaceChanged();
+    void permissionPolicyChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
@@ -1987,7 +2036,9 @@ private:
     core::ModeManager& modeManager_;
     core::AppSettings& settings_;
     core::CompanionService companionService_;
+    core::PermissionPolicyService permissionPolicyService_;
     core::SkillProfileService skillProfileService_;
+    core::ToolExecutionGateway toolExecutionGateway_;
     core::WorkspaceService workspaceService_;
     ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");
