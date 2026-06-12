@@ -88,6 +88,29 @@ Out of scope:
   provider/model calls, cloud/API calls, subprocesses, tools/plugins, autonomous agents,
   background workers, hidden memory writes, and workspace-derived prompt context.
 
+## 1.4 Skill/Profile Metadata Boundary
+
+Decision: Assistant profiles are represented by a value-only `SkillProfileService` registry and a
+persisted selected profile id.
+
+Reason: Users need presentation-level profile choices before Sentinel has policy-enforced skills,
+plugins, tools, workspace access, or automation.
+
+Runtime behavior:
+
+- The default selected profile is Developer.
+- Available profiles are Developer, Student, Researcher, Personal Assistant, and Custom.
+- `AppSettings` persists only `selectedSkillProfile`.
+- `DesktopShellViewModel` exposes only safe strings and string lists for selected profile
+  metadata, summaries, readiness checks, capability labels, and developer diagnostics.
+- Profiles shape presentation and future policy metadata only.
+
+Out of scope:
+
+- Prompt mutation, hidden system prompt changes, custom instruction loading, tool execution,
+  agent activation, workspace/filesystem authority, cloud/API calls, STT/TTS activation,
+  subprocess launch, background workers, autonomous behavior, and runtime permission changes.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.
@@ -115,8 +138,8 @@ Reason: Real providers, local providers, status handling, and future configurati
 Provider posture decision:
 
 - The current product UI must state that Local Ollama is the only active execution path and no
-  cloud provider is active. Phase 46 updates future-facing provider labels to use generic selected
-  local provider wording instead of Ollama-only UI copy.
+  cloud provider is active. Future-facing provider labels should use generic selected local
+  provider wording where copy is not specifically describing the active Ollama execution path.
 - Future external API/cloud providers must be explicit opt-in integrations with separate provider
   boundaries, settings, safety review, tests, and user-facing activation. They must not appear as
   implied active configuration in normal UI.

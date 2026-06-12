@@ -47,27 +47,20 @@ Guidelines:
 - Runtime UI controls must not imply downloads, installs, API-key entry, cloud execution,
   automatic fallback, tool execution, or background discovery.
 
-## Phase 46 Provider Roadmap UX Notes
+## Phase 46 Skill/Profile UX Notes
 
-Phase 46.0 through Phase 46.12 updates the provider roadmap so Local AI surfaces can describe
-multiple local runtime providers without enabling new execution paths.
+Phase 46.0 through Phase 46.12 adds assistant profiles as presentation metadata without enabling
+new runtime authority.
 
 Guidelines:
 
-- Settings > Local AI should show a provider selector with Ollama, llama.cpp, LM Studio,
-  OpenAI-compatible local, and Custom local endpoint. Local Ollama remains the default.
-- Provider readiness should show Installed/Reachable, Endpoint, Models discovered, Streaming
-  supported, and Context length when known.
-- Home/Chat should describe the selected provider generically as the local provider rather than
-  hardcoding Ollama-only copy.
-- AI Bridge should say "Local Provider" for the active local runtime surface.
-- LM Studio, llama.cpp, OpenAI-compatible local, Custom local endpoint, vLLM-compatible, and Jan /
-  compatible runtimes should be shown as disabled, metadata-only, or readiness-only until a later
-  phase explicitly enables safe chat execution.
-- UI must not offer automatic provider fallback, hidden provider probing, background discovery,
-  cloud activation, API-key entry, provider test calls, filesystem scanning, or subprocess launch
-  for local runtimes.
-- Local endpoint UI must default to loopback-only hosts: `127.0.0.1`, `localhost`, and `::1`.
+- Settings > Profiles should show Developer, Student, Researcher, Personal Assistant, and Custom
+  profile choices with concise summary, description, readiness, and safety-boundary text.
+- Home may show a compact selected-profile chip when it helps orientation.
+- Developer Mode may show profile capability/readiness metadata and diagnostics only.
+- Profile copy must be clear that profiles affect presentation/future policy metadata only.
+- Profiles must not imply custom instructions, hidden prompt changes, tool execution, workspace
+  access, cloud/API calls, STT/TTS activation, subprocesses, agents, or autonomous behavior.
 
 ## Phase 37 Model Registry UX Notes
 
@@ -872,8 +865,9 @@ Still follow-up:
 
 External APIs and cloud providers remain future opt-in features only. The current UI should say
 Local Ollama is the only active execution path, no cloud provider is active, and it should not
-expose API-key configuration. Phase 46 provider surfaces should use generic selected-provider
-labels where the copy is not specifically describing the active Ollama execution path.
+expose API-key configuration. Future provider-roadmap surfaces should use generic
+selected-provider labels where the copy is not specifically describing the active Ollama execution
+path.
 
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic

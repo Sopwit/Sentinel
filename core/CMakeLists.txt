@@ -72,6 +72,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/RuntimeProvider.h
     include/sentinel/core/RuntimeSafety.h
     include/sentinel/core/SemanticRetrieval.h
+    include/sentinel/core/SkillProfileService.h
     include/sentinel/core/SQLiteChatHistoryStore.h
     include/sentinel/core/SQLiteConversationStore.h
     include/sentinel/core/SQLiteMemoryStore.h
@@ -136,6 +137,7 @@ add_library(sentinel_core STATIC
     src/RuntimeProvider.cpp
     src/RuntimeSafety.cpp
     src/SemanticRetrieval.cpp
+    src/SkillProfileService.cpp
     src/SQLiteChatHistoryStore.cpp
     src/SQLiteConversationStore.cpp
     src/SQLiteMemoryStore.cpp

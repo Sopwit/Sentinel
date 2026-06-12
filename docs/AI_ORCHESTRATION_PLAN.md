@@ -1,22 +1,16 @@
 # AI Orchestration Plan
 
-Phase 46.0 through Phase 46.12 plans the multi-provider local runtime roadmap while preserving
-the current execution boundary. Sentinel must support multiple local runtime providers over time:
-Ollama, llama.cpp server, LM Studio local server, OpenAI-compatible local endpoints,
-vLLM-compatible endpoints, Jan and other local OpenAI-compatible runtimes where safe, plus future
-explicit cloud providers such as OpenAI, Claude, Gemini, OpenRouter, and similar services. Local
-Ollama remains the current default and the only currently active chat path.
+Phase 46.0 through Phase 46.12 adds the Skill/Profile System Foundation while preserving the
+current execution boundary. `SkillProfileService` exposes static metadata for Developer, Student,
+Researcher, Personal Assistant, and Custom profiles. `AppSettings` persists only the selected
+profile id, defaulting to Developer. `DesktopShellViewModel` exposes QML-safe selected profile
+name, summary, description, readiness, capability metadata, and developer diagnostics. Settings
+adds a Profiles section and Home may show a compact selected-profile chip.
 
-The provider abstraction must separate provider id, endpoint, model-list discovery, selected
-model, readiness, streaming support, context-window metadata, local/cloud scope, API-key
-requirement, and capabilities. Any provider exposing an OpenAI-compatible API should use a shared
-OpenAI-compatible adapter instead of provider-specific duplicate request logic. LM Studio and
-llama.cpp begin as readiness/metadata-only targets unless a later phase explicitly wires safe chat
-execution. No automatic provider probing, background discovery daemons, hidden network calls,
-filesystem scanning, subprocess launch, API-key storage, automatic fallback, cloud call, or
-non-loopback local endpoint is authorized by this roadmap phase. Execution remains allowed only
-when the provider is local or explicitly trusted, the endpoint is valid, a model is selected, chat
-is enabled, and permission policy allows the request.
+Profiles shape presentation and future policy metadata only. They do not mutate prompts, change
+hidden system prompts, load custom instructions, execute tools, activate agents, grant workspace
+or filesystem authority, make cloud/API calls, activate STT/TTS, launch subprocesses, start
+background workers, enable autonomous behavior, or change runtime/provider permissions.
 
 Phase 45.0 through Phase 45.12 refines the metadata-only workspace UX and permission foundation.
 Settings shows selected workspace metadata, root state, readiness, disabled Choose Workspace and

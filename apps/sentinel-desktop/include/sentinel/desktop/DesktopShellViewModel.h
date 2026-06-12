@@ -2,6 +2,7 @@
 
 #include "sentinel/core/CompanionService.h"
 #include "sentinel/core/SemanticRetrieval.h"
+#include "sentinel/core/SkillProfileService.h"
 #include "sentinel/core/WorkspaceService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 
@@ -1140,6 +1141,27 @@ class DesktopShellViewModel final : public QObject {
                    companionChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeChanged)
+    Q_PROPERTY(QString selectedSkillProfile READ selectedSkillProfile WRITE
+                   setSelectedSkillProfile NOTIFY skillProfileChanged)
+    Q_PROPERTY(QString selectedSkillProfileName READ selectedSkillProfileName NOTIFY
+                   skillProfileChanged)
+    Q_PROPERTY(QString selectedSkillProfileSummary READ selectedSkillProfileSummary NOTIFY
+                   skillProfileChanged)
+    Q_PROPERTY(QString selectedSkillProfileDescription READ selectedSkillProfileDescription NOTIFY
+                   skillProfileChanged)
+    Q_PROPERTY(QString selectedSkillProfileReadiness READ selectedSkillProfileReadiness NOTIFY
+                   skillProfileChanged)
+    Q_PROPERTY(QString selectedSkillProfilePolicyPosture READ selectedSkillProfilePolicyPosture
+                   NOTIFY skillProfileChanged)
+    Q_PROPERTY(QStringList skillProfileIds READ skillProfileIds CONSTANT)
+    Q_PROPERTY(QStringList skillProfileNames READ skillProfileNames CONSTANT)
+    Q_PROPERTY(QStringList skillProfileSummaries READ skillProfileSummaries CONSTANT)
+    Q_PROPERTY(QStringList skillProfileCapabilitySummaries READ skillProfileCapabilitySummaries
+                   NOTIFY skillProfileChanged)
+    Q_PROPERTY(QStringList skillProfileReadinessChecks READ skillProfileReadinessChecks NOTIFY
+                   skillProfileChanged)
+    Q_PROPERTY(QStringList skillProfileDeveloperDiagnostics READ
+                   skillProfileDeveloperDiagnostics NOTIFY skillProfileChanged)
     Q_PROPERTY(QString selectedWorkspaceId READ selectedWorkspaceId WRITE setSelectedWorkspaceId
                    NOTIFY workspaceChanged)
     Q_PROPERTY(QString selectedWorkspaceName READ selectedWorkspaceName NOTIFY workspaceChanged)
@@ -1850,6 +1872,19 @@ public:
     QStringList companionTraceSummaries() const;
     bool developerModeEnabled() const;
     void setDeveloperModeEnabled(bool enabled);
+    QString selectedSkillProfile() const;
+    void setSelectedSkillProfile(const QString& profileId);
+    QString selectedSkillProfileName() const;
+    QString selectedSkillProfileSummary() const;
+    QString selectedSkillProfileDescription() const;
+    QString selectedSkillProfileReadiness() const;
+    QString selectedSkillProfilePolicyPosture() const;
+    QStringList skillProfileIds() const;
+    QStringList skillProfileNames() const;
+    QStringList skillProfileSummaries() const;
+    QStringList skillProfileCapabilitySummaries() const;
+    QStringList skillProfileReadinessChecks() const;
+    QStringList skillProfileDeveloperDiagnostics() const;
     QString selectedWorkspaceId() const;
     void setSelectedWorkspaceId(const QString& workspaceId);
     QString selectedWorkspaceName() const;
@@ -1942,6 +1977,7 @@ signals:
     void localInferenceChanged();
     void voiceConfigurationChanged();
     void promptContextInjectionChanged();
+    void skillProfileChanged();
     void workspaceChanged();
 
 private:
@@ -1951,6 +1987,7 @@ private:
     core::ModeManager& modeManager_;
     core::AppSettings& settings_;
     core::CompanionService companionService_;
+    core::SkillProfileService skillProfileService_;
     core::WorkspaceService workspaceService_;
     ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");

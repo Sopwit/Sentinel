@@ -1,34 +1,29 @@
 # Phase Status
 
-## Planned / Roadmap
+## Completed / Stable
 
-### Phase 46.0-46.12: Multi-Provider Local Runtime Roadmap
+### Phase 46.0-46.12: Skill/Profile System Foundation
 
-Planned. Expands the provider roadmap beyond Local Ollama while keeping new providers
-metadata-only until separately activated.
+Completed. Adds user-facing assistant profiles that shape presentation and future policy metadata
+without changing runtime authority.
 
 Scope:
 
-- Keep Local Ollama as the current default and only currently active local chat path.
-- Plan provider registry support for Ollama, llama.cpp server, LM Studio local server,
-  OpenAI-compatible local endpoints, vLLM-compatible endpoints, Jan / other safe local
-  OpenAI-compatible runtimes, and future opt-in cloud providers.
-- Separate provider id, endpoint, discovery, selected model, readiness, streaming support,
-  context-window metadata, local/cloud scope, API-key requirement, and capability metadata.
-- Use one shared OpenAI-compatible adapter for local/cloud providers that expose that API shape.
-- Update Settings > Local AI, Home/Chat, and AI Bridge language to describe a generic selected
-  local provider instead of hardcoding Ollama-only copy.
-- Add planned tests for provider registry entries, endpoint validation, selected-provider
-  persistence, view-model/UI exposure, and disabled-provider send refusal.
+- Added `SkillProfileService` as a metadata-only registry for Developer, Student, Researcher,
+  Personal Assistant, and Custom profiles.
+- Added persisted `selectedSkillProfile` support in `AppSettings`; the default is `developer`.
+- Exposed QML-safe selected profile id/name, summaries, description, readiness checks,
+  capability/readiness metadata, and developer diagnostics through `DesktopShellViewModel`.
+- Added Settings > Profiles with a profile selector, metadata-only readiness, summary,
+  description, and boundary copy.
+- Added a compact Home profile chip.
+- Developer Mode shows profile capability/readiness diagnostics as read-only metadata.
 
 Known limitation:
 
-- This roadmap phase does not add automatic probing, background discovery daemons, hidden network
-  calls, API-key storage, cloud execution, automatic provider fallback, filesystem scanning,
-  subprocess launch of local runtimes, or chat execution for LM Studio/llama.cpp/OpenAI-compatible
-  endpoints unless a later phase explicitly enables it.
-
-## Completed / Stable
+- Profiles do not mutate prompts, change hidden system prompts, execute tools, activate agents,
+  grant workspace/filesystem authority, call cloud/API providers, activate STT/TTS, launch
+  subprocesses, enable autonomous behavior, or change runtime/provider permissions.
 
 ### Phase 45.0-45.12: Workspace UX And Permission Foundation Refinement
 

@@ -89,6 +89,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::companionChanged);
     connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
             &DesktopShellViewModel::developerModeChanged);
+    connect(&settings_, &core::AppSettings::selectedSkillProfileChanged, this,
+            &DesktopShellViewModel::skillProfileChanged);
     connect(&settings_, &core::AppSettings::selectedWorkspaceIdChanged, this,
             &DesktopShellViewModel::workspaceChanged);
     connect(&settings_, &core::AppSettings::contextExplainabilityVisibleChanged, this,
@@ -2984,6 +2986,66 @@ bool DesktopShellViewModel::developerModeEnabled() const {
 
 void DesktopShellViewModel::setDeveloperModeEnabled(bool enabled) {
     settings_.setDeveloperModeEnabled(enabled);
+}
+
+QString DesktopShellViewModel::selectedSkillProfile() const {
+    return skillProfileService_.normalizedProfileId(settings_.selectedSkillProfile());
+}
+
+void DesktopShellViewModel::setSelectedSkillProfile(const QString& profileId) {
+    settings_.setSelectedSkillProfile(skillProfileService_.normalizedProfileId(profileId));
+}
+
+QString DesktopShellViewModel::selectedSkillProfileName() const {
+    return skillProfileService_.selectedProfile(settings_.selectedSkillProfile()).name;
+}
+
+QString DesktopShellViewModel::selectedSkillProfileSummary() const {
+    return skillProfileService_.selectedProfile(settings_.selectedSkillProfile()).summary;
+}
+
+QString DesktopShellViewModel::selectedSkillProfileDescription() const {
+    return skillProfileService_.selectedProfile(settings_.selectedSkillProfile()).description;
+}
+
+QString DesktopShellViewModel::selectedSkillProfileReadiness() const {
+    return skillProfileService_.readiness(settings_.selectedSkillProfile()).status;
+}
+
+QString DesktopShellViewModel::selectedSkillProfilePolicyPosture() const {
+    return skillProfileService_.selectedProfile(settings_.selectedSkillProfile()).policyPosture;
+}
+
+QStringList DesktopShellViewModel::skillProfileIds() const {
+    QStringList ids;
+    for (const auto& profile : skillProfileService_.availableProfiles()) {
+        ids.append(profile.id);
+    }
+    return ids;
+}
+
+QStringList DesktopShellViewModel::skillProfileNames() const {
+    QStringList names;
+    for (const auto& profile : skillProfileService_.availableProfiles()) {
+        names.append(profile.name);
+    }
+    return names;
+}
+
+QStringList DesktopShellViewModel::skillProfileSummaries() const {
+    return skillProfileService_.profileSummaries();
+}
+
+QStringList DesktopShellViewModel::skillProfileCapabilitySummaries() const {
+    return skillProfileService_.selectedProfile(settings_.selectedSkillProfile()).capabilitySummaries;
+}
+
+QStringList DesktopShellViewModel::skillProfileReadinessChecks() const {
+    return skillProfileService_.readiness(settings_.selectedSkillProfile()).checks;
+}
+
+QStringList DesktopShellViewModel::skillProfileDeveloperDiagnostics() const {
+    return skillProfileService_.readiness(settings_.selectedSkillProfile()).developerDiagnostics;
 }
 
 QString DesktopShellViewModel::selectedWorkspaceId() const {
