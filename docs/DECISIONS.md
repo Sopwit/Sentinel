@@ -111,6 +111,59 @@ Out of scope:
   agent activation, workspace/filesystem authority, cloud/API calls, STT/TTS activation,
   subprocess launch, background workers, autonomous behavior, and runtime permission changes.
 
+## 1.5 Central Permission Policy Metadata Boundary
+
+Decision: Permission posture is represented by a central value-only `PermissionPolicyService`
+registry and a persisted default state.
+
+Reason: Sentinel needs one user-visible authority model before future workspace, tool, agent,
+voice, cloud, filesystem, subprocess, memory, and context features can be safely activated.
+
+Runtime behavior:
+
+- The default state is Disabled.
+- Ask Every Time, Trusted, and Enabled are representable future states only.
+- The registry covers Workspace Access, Tool Execution, Agent Execution, Voice Capture, Voice
+  Playback, Cloud Provider Access, Filesystem Write, Subprocess Execution, Memory Commit, and
+  Context Injection.
+- `DesktopShellViewModel` exposes only safe strings and string lists for state labels, domain
+  summaries, and developer diagnostics.
+
+Out of scope:
+
+- Granting execution, filesystem scanning or writing, folder reading, cloud/API calls, tool/plugin
+  execution, autonomous agents, subprocess launch, microphone capture, audio playback, STT/TTS,
+  hidden prompt mutation, automatic memory writes, background workers, and context behavior
+  changes.
+
+## 1.6 Tool Execution Gateway Metadata Boundary
+
+Decision: Tool readiness is represented by a central value-only `ToolExecutionGateway` registry
+that reports descriptor, permission, risk, scope, availability, and refusal metadata before any
+tool execution exists.
+
+Reason: Sentinel needs one gateway-shaped boundary for future tools so UI, agents, permissions,
+sandboxing, and audit work can align around explicit refusal/unavailable states before execution
+is safe to activate.
+
+Runtime behavior:
+
+- The initial registry contains Open Workspace, Read File, Write File, Run Command, Summarize
+  Current Conversation, Export Conversation, Voice Transcribe, Voice Speak, Web Search, and
+  Provider Test Call.
+- Each tool reports a required central permission domain, risk level, local/cloud scope,
+  execution availability, and refusal reason.
+- The gateway consults `PermissionPolicyService` for posture labels, but Disabled, Ask Every
+  Time, Trusted, and Enabled remain metadata labels only.
+- `DesktopShellViewModel` exposes only safe strings and counts for Settings, Agents, and
+  Developer Mode.
+
+Out of scope:
+
+- Tool execution, filesystem reads/writes, subprocess execution, provider/cloud/API calls, web
+  access, microphone capture, playback, STT/TTS activation, autonomous agents, background workers,
+  prompt mutation, automatic memory writes, raw tool handles, command payloads, and tool outputs.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.

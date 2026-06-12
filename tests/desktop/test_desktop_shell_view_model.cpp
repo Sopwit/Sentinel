@@ -109,6 +109,8 @@ private slots:
     void exposesCompanionReadinessMetadata();
     void exposesWorkspaceReadinessMetadata();
     void exposesSkillProfileMetadata();
+    void exposesPermissionPolicyMetadata();
+    void exposesToolGatewayMetadata();
     void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
@@ -1527,6 +1529,38 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("skillProfileCapabilitySummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("skillProfileReadinessChecks"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("skillProfileDeveloperDiagnostics"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("selectedWorkspaceId"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedWorkspaceName"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedWorkspaceAccessState"), QByteArrayLiteral("QString")},
+        {QStringLiteral("workspacePermissionPosture"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedWorkspaceRootSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("workspaceReadinessStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("workspaceReadinessSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("workspacePermissionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("workspaceIds"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("workspaceNames"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("workspaceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("workspacePermissionPostures"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("workspaceActionPlaceholders"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("workspaceReadinessChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("workspaceBoundaryDiagnostics"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("defaultPermissionPolicyState"), QByteArrayLiteral("QString")},
+        {QStringLiteral("permissionPolicyStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("permissionPolicySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("permissionPolicyStateLabels"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("permissionPolicyDomainIds"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("permissionPolicyDomainNames"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("permissionPolicyDomainSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("permissionPolicyDeveloperDiagnostics"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("toolGatewayStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("toolGatewaySummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("toolGatewayPermissionPosture"), QByteArrayLiteral("QString")},
+        {QStringLiteral("toolGatewayToolCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("toolGatewayMetadataSafeCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("toolGatewayUnavailableCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("toolGatewayRefusedCount"), QByteArrayLiteral("int")},
+        {QStringLiteral("toolGatewayToolSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("toolGatewayDeveloperDiagnostics"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("voiceRuntimeMode"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("voiceReadinessStatus"), QByteArrayLiteral("QString")},
@@ -1757,7 +1791,9 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("developerModeEnabled"),
         QStringLiteral("piperFileOutputExecutionEnabled"),
         QStringLiteral("promptContextInjectionEnabled"),
+        QStringLiteral("defaultPermissionPolicyState"),
         QStringLiteral("selectedSkillProfile"),
+        QStringLiteral("selectedWorkspaceId"),
         QStringLiteral("selectedRuntimeProvider"),
     };
 
@@ -1797,6 +1833,14 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("orchestrationSnapshot"),
         QStringLiteral("skillProfileRegistry"),
         QStringLiteral("skillProfileEntries"),
+        QStringLiteral("permissionPolicyRegistry"),
+        QStringLiteral("permissionPolicyEntries"),
+        QStringLiteral("permissionPolicyRawPayload"),
+        QStringLiteral("toolExecutionGateway"),
+        QStringLiteral("toolGatewayRegistry"),
+        QStringLiteral("toolGatewayEntries"),
+        QStringLiteral("toolGatewayRawPayload"),
+        QStringLiteral("toolExecutionHandle"),
         QStringLiteral("workspaceStateSummary"),
         QStringLiteral("orchestrationReadinessReport"),
         QStringLiteral("orchestrationReadinessChecks"),
@@ -2823,6 +2867,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
                                    &DesktopShellViewModel::promptContextInjectionChanged);
     QSignalSpy developerModeSpy(&fixture.viewModel, &DesktopShellViewModel::developerModeChanged);
     QSignalSpy skillProfileSpy(&fixture.viewModel, &DesktopShellViewModel::skillProfileChanged);
+    QSignalSpy permissionPolicySpy(&fixture.viewModel,
+                                   &DesktopShellViewModel::permissionPolicyChanged);
     QSignalSpy contextVisibilitySpy(&fixture.viewModel,
                                     &DesktopShellViewModel::contextExplainabilityVisibleChanged);
 
@@ -2836,6 +2882,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     fixture.viewModel.setContextExplainabilityVisible(false);
     fixture.viewModel.setDeveloperModeEnabled(true);
     fixture.viewModel.setSelectedSkillProfile(QStringLiteral("researcher"));
+    fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("trusted"));
 
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
@@ -2860,6 +2907,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("researcher"));
     QCOMPARE(fixture.viewModel.selectedSkillProfileName(), QStringLiteral("Researcher"));
     QCOMPARE(fixture.settings.selectedSkillProfile(), QStringLiteral("researcher"));
+    QCOMPARE(fixture.viewModel.defaultPermissionPolicyState(), QStringLiteral("Trusted"));
+    QCOMPARE(fixture.settings.defaultPermissionPolicyState(), QStringLiteral("Trusted"));
     QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Empty"));
     QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Provider Disabled"));
     QVERIFY(!fixture.viewModel.localChatSendAvailable());
@@ -2872,6 +2921,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(contextInjectionSpy.count(), 1);
     QCOMPARE(developerModeSpy.count(), 1);
     QCOMPARE(skillProfileSpy.count(), 1);
+    QCOMPARE(permissionPolicySpy.count(), 1);
     QCOMPARE(contextVisibilitySpy.count(), 1);
 }
 
@@ -2951,6 +3001,60 @@ void DesktopShellViewModelTest::exposesSkillProfileMetadata() {
     fixture.viewModel.setSelectedSkillProfile(QStringLiteral("unknown"));
     QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("developer"));
     QCOMPARE(spy.count(), 2);
+}
+
+void DesktopShellViewModelTest::exposesPermissionPolicyMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::permissionPolicyChanged);
+
+    QCOMPARE(fixture.viewModel.defaultPermissionPolicyState(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.permissionPolicyStatus(), QStringLiteral("Metadata only"));
+    QVERIFY(fixture.viewModel.permissionPolicySummary().contains(
+        QStringLiteral("no state grants execution")));
+    QCOMPARE(fixture.viewModel.permissionPolicyStateLabels(),
+             QStringList({QStringLiteral("Disabled"), QStringLiteral("Ask Every Time"),
+                          QStringLiteral("Trusted"), QStringLiteral("Enabled")}));
+    QCOMPARE(fixture.viewModel.permissionPolicyDomainIds().size(), 10);
+    QVERIFY(fixture.viewModel.permissionPolicyDomainNames().contains(
+        QStringLiteral("Workspace Access")));
+    QCOMPARE(fixture.viewModel.permissionPolicyDomainSummaries().size(), 10);
+    QVERIFY(fixture.viewModel.permissionPolicyDomainSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Tool Execution / Disabled")));
+    QVERIFY(fixture.viewModel.permissionPolicyDeveloperDiagnostics().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("No subprocess launch")));
+
+    fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("ask-every-time"));
+    QCOMPARE(fixture.viewModel.defaultPermissionPolicyState(), QStringLiteral("Ask Every Time"));
+    QCOMPARE(fixture.settings.defaultPermissionPolicyState(), QStringLiteral("Ask Every Time"));
+    QCOMPARE(spy.count(), 1);
+
+    fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("unknown"));
+    QCOMPARE(fixture.viewModel.defaultPermissionPolicyState(), QStringLiteral("Disabled"));
+    QCOMPARE(spy.count(), 2);
+}
+
+void DesktopShellViewModelTest::exposesToolGatewayMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::permissionPolicyChanged);
+
+    QCOMPARE(fixture.viewModel.toolGatewayStatus(), QStringLiteral("Metadata only"));
+    QCOMPARE(fixture.viewModel.toolGatewayPermissionPosture(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.toolGatewayToolCount(), 10);
+    QCOMPARE(fixture.viewModel.toolGatewayMetadataSafeCount(), 1);
+    QCOMPARE(fixture.viewModel.toolGatewayUnavailableCount(), 2);
+    QCOMPARE(fixture.viewModel.toolGatewayRefusedCount(), 7);
+    QVERIFY(fixture.viewModel.toolGatewaySummary().contains(
+        QStringLiteral("does not run tools")));
+    QVERIFY(fixture.viewModel.toolGatewayToolSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Run Command / Refused / Disabled")));
+    QVERIFY(fixture.viewModel.toolGatewayDeveloperDiagnostics().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Gateway execution grant: none in this phase")));
+
+    fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
+    QCOMPARE(fixture.viewModel.toolGatewayPermissionPosture(), QStringLiteral("Trusted"));
+    QVERIFY(fixture.viewModel.toolGatewayToolSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Run Command / Refused / Trusted")));
+    QCOMPARE(spy.count(), 1);
 }
 
 void DesktopShellViewModelTest::languageSettingDoesNotChangeRuntimePresentationFlags() {

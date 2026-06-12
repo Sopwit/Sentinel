@@ -206,6 +206,68 @@ ScrollView {
                 }
             }
 
+            ShellPanel {
+                width: parent.width
+                visible: agentsPage.selectedSection === "Overview"
+                implicitHeight: agentsPage.sectionHeight(toolGatewayOverviewContent)
+
+                ColumnLayout {
+                    id: toolGatewayOverviewContent
+                    x: agentsPage.panelPadding
+                    y: agentsPage.panelPadding
+                    width: parent.width - agentsPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: qsTr("Tool Gateway")
+                        subtitle: qsTr("Tool readiness and permission posture only.")
+                        Layout.fillWidth: true
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+
+                        StatusChip {
+                            label: qsTr("Tools")
+                            value: agentsPage.viewModel.toolGatewayToolCount.toString()
+                            accent: agentsPage.modeAccent
+                            selected: true
+                        }
+
+                        StatusChip {
+                            label: qsTr("Metadata")
+                            value: agentsPage.viewModel.toolGatewayMetadataSafeCount.toString()
+                            accent: SentinelTheme.calmAccent
+                        }
+
+                        StatusChip {
+                            label: qsTr("Refused")
+                            value: agentsPage.viewModel.toolGatewayRefusedCount.toString()
+                            accent: agentsPage.viewModel.toolGatewayRefusedCount > 0
+                                    ? SentinelTheme.warning
+                                    : SentinelTheme.textMuted
+                            muted: agentsPage.viewModel.toolGatewayRefusedCount === 0
+                        }
+
+                        StatusChip {
+                            label: qsTr("Posture")
+                            value: agentsPage.viewModel.toolGatewayPermissionPosture
+                            accent: SentinelTheme.textMuted
+                            muted: true
+                        }
+                    }
+
+                    InfoRow {
+                        compact: agentsPage.compact
+                        label: qsTr("Boundary")
+                        value: agentsPage.viewModel.toolGatewaySummary
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 4
+                    }
+                }
+            }
+
             GridLayout {
                 width: parent.width
                 visible: agentsPage.selectedSection === "Tasks"
@@ -763,6 +825,23 @@ ScrollView {
                             required property string modelData
                             compact: true
                             label: "Sandbox"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    SectionTitle {
+                        title: "Tool Gateway"
+                        subtitle: "Registry diagnostics are read-only and non-executing."
+                        Layout.fillWidth: true
+                    }
+
+                    Repeater {
+                        model: agentsPage.viewModel.toolGatewayDeveloperDiagnostics
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Gateway"
                             value: modelData
                             Layout.fillWidth: true
                         }

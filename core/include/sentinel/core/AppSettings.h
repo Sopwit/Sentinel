@@ -54,6 +54,8 @@ class AppSettings final : public QObject {
                    NOTIFY selectedWorkspaceIdChanged)
     Q_PROPERTY(QString selectedSkillProfile READ selectedSkillProfile WRITE setSelectedSkillProfile
                    NOTIFY selectedSkillProfileChanged)
+    Q_PROPERTY(QString defaultPermissionPolicyState READ defaultPermissionPolicyState WRITE
+                   setDefaultPermissionPolicyState NOTIFY defaultPermissionPolicyStateChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -113,6 +115,8 @@ public:
     void setSelectedWorkspaceId(const QString& workspaceId);
     QString selectedSkillProfile() const;
     void setSelectedSkillProfile(const QString& profileId);
+    QString defaultPermissionPolicyState() const;
+    void setDefaultPermissionPolicyState(const QString& state);
 
 signals:
     void themeNameChanged();
@@ -137,6 +141,7 @@ signals:
     void activeConversationIdChanged();
     void selectedWorkspaceIdChanged();
     void selectedSkillProfileChanged();
+    void defaultPermissionPolicyStateChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
@@ -162,12 +167,14 @@ private:
     static constexpr auto activeConversationIdKey = "activeConversationId";
     static constexpr auto selectedWorkspaceIdKey = "selectedWorkspaceId";
     static constexpr auto selectedSkillProfileKey = "selectedSkillProfile";
+    static constexpr auto defaultPermissionPolicyStateKey = "defaultPermissionPolicyState";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "system";
     static constexpr auto defaultSelectedRuntimeProvider = "ollama";
     static constexpr auto defaultSelectedWorkspaceId = "local-placeholder";
     static constexpr auto defaultSelectedSkillProfile = "developer";
+    static constexpr auto defaultPermissionPolicyStateValue = "Disabled";
 
     std::unique_ptr<ISettingsStore> store_;
 };

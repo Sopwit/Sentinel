@@ -63,6 +63,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/OrchestrationDiagnostics.h
     include/sentinel/core/OrchestrationSnapshot.h
     include/sentinel/core/PiperTts.h
+    include/sentinel/core/PermissionPolicyService.h
     include/sentinel/core/ProviderCatalog.h
     include/sentinel/core/ProviderCredentials.h
     include/sentinel/core/RuntimeCapabilities.h
@@ -87,6 +88,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/TaskPlanning.h
     include/sentinel/core/ToolApproval.h
     include/sentinel/core/ToolDescriptor.h
+    include/sentinel/core/ToolExecutionGateway.h
     include/sentinel/core/ToolExecution.h
     include/sentinel/core/ToolInvocationPlan.h
     include/sentinel/core/ToolSandbox.h
@@ -129,6 +131,7 @@ add_library(sentinel_core STATIC
     src/OllamaRuntime.cpp
     src/OrchestrationDiagnostics.cpp
     src/PiperTts.cpp
+    src/PermissionPolicyService.cpp
     src/ProviderCredentials.cpp
     src/RuntimeCapabilities.cpp
     src/RuntimeIntegration.cpp
@@ -150,6 +153,7 @@ add_library(sentinel_core STATIC
     src/StaticSandboxPolicy.cpp
     src/StaticTaskPlanner.cpp
     src/Voice.cpp
+    src/ToolExecutionGateway.cpp
     src/WhisperTranscription.cpp
     src/WorkspaceService.cpp
 )

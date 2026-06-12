@@ -1,5 +1,35 @@
 # AI Orchestration Plan
 
+Phase 48.0 through Phase 48.12 adds the Tool Execution Gateway Foundation while preserving the
+current execution boundary. `ToolExecutionGateway` exposes static metadata for Open Workspace,
+Read File, Write File, Run Command, Summarize Current Conversation, Export Conversation, Voice
+Transcribe, Voice Speak, Web Search, and Provider Test Call. Tool records include id, display
+name, category, description, required permission domain, risk level, local/cloud scope, execution
+availability, and refusal reason. The gateway consults `PermissionPolicyService` to report the
+current permission posture, but posture labels do not grant execution. `DesktopShellViewModel`
+exposes QML-safe gateway status, counts, summaries, and developer diagnostics. Settings adds a
+Tools section, Agents Overview shows compact registry posture, and Developer Mode shows detailed
+diagnostics.
+
+The tool gateway is metadata-only in this phase. It does not execute tools, read or write files,
+launch subprocesses, call providers/cloud/API endpoints, access the web, capture microphone input,
+play audio, activate STT/TTS, run autonomous agents, start hidden background workers, mutate
+prompts, or automatically write memory.
+
+Phase 47.0 through Phase 47.12 adds the Permission Policy Engine Foundation while preserving the
+current execution boundary. `PermissionPolicyService` exposes central metadata for Disabled, Ask
+Every Time, Trusted, and Enabled states across Workspace Access, Tool Execution, Agent Execution,
+Voice Capture, Voice Playback, Cloud Provider Access, Filesystem Write, Subprocess Execution,
+Memory Commit, and Context Injection. `AppSettings` persists only the default permission posture,
+defaulting to Disabled. `DesktopShellViewModel` exposes QML-safe state labels, domain summaries,
+and developer diagnostics. Settings adds a Permissions section and Developer Mode shows detailed
+policy diagnostics.
+
+Permission policy states are labels only in this phase. They do not grant tool execution, agent
+runtime authority, filesystem scanning or writing, folder reading, cloud/API calls, voice capture,
+audio playback, STT/TTS activation, subprocess execution, hidden prompt mutation, automatic memory
+writes, background work, autonomous behavior, or context behavior changes.
+
 Phase 46.0 through Phase 46.12 adds the Skill/Profile System Foundation while preserving the
 current execution boundary. `SkillProfileService` exposes static metadata for Developer, Student,
 Researcher, Personal Assistant, and Custom profiles. `AppSettings` persists only the selected

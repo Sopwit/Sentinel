@@ -20,6 +20,21 @@ bool isKnownSkillProfileId(const QString& profileId) {
            profileId == QStringLiteral("custom");
 }
 
+QString normalizedPermissionPolicyState(const QString& state) {
+    const auto normalized = state.trimmed().toLower();
+    if (normalized == QStringLiteral("ask every time") ||
+        normalized == QStringLiteral("ask-every-time")) {
+        return QStringLiteral("Ask Every Time");
+    }
+    if (normalized == QStringLiteral("trusted")) {
+        return QStringLiteral("Trusted");
+    }
+    if (normalized == QStringLiteral("enabled")) {
+        return QStringLiteral("Enabled");
+    }
+    return QStringLiteral("Disabled");
+}
+
 } // namespace
 
 AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent)
@@ -447,6 +462,24 @@ void AppSettings::setSelectedSkillProfile(const QString& profileId) {
 
     store_->setValue(QString::fromLatin1(selectedSkillProfileKey), selected);
     emit selectedSkillProfileChanged();
+}
+
+QString AppSettings::defaultPermissionPolicyState() const {
+    const auto fallback = QString::fromLatin1(defaultPermissionPolicyStateValue);
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(defaultPermissionPolicyStateKey), fallback)
+               : fallback;
+    return normalizedPermissionPolicyState(stored);
+}
+
+void AppSettings::setDefaultPermissionPolicyState(const QString& state) {
+    const auto selected = normalizedPermissionPolicyState(state);
+    if (selected == defaultPermissionPolicyState() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(defaultPermissionPolicyStateKey), selected);
+    emit defaultPermissionPolicyStateChanged();
 }
 
 } // namespace sentinel::core

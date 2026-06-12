@@ -10,10 +10,10 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap profiles-metadata bottom-safe-scroll"
+    readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap profiles-metadata permissions-policy tool-gateway bottom-safe-scroll"
     readonly property var categories: developerMode
-                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Profiles", "Workspace", "Developer"]
-                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Profiles", "Workspace"]
+                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Permissions", "Tools", "Profiles", "Workspace", "Developer"]
+                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Permissions", "Tools", "Profiles", "Workspace"]
     property string activeCategory: "General"
     property bool programmaticScroll: false
 
@@ -30,6 +30,10 @@ Item {
             return chatSection
         if (category === "Voice")
             return voiceSection
+        if (category === "Permissions")
+            return permissionsSection
+        if (category === "Tools")
+            return toolsSection
         if (category === "Profiles")
             return profilesSection
         if (category === "Workspace")
@@ -52,6 +56,10 @@ Item {
             return qsTr("Chat")
         if (category === "Voice")
             return qsTr("Voice")
+        if (category === "Permissions")
+            return qsTr("Permissions")
+        if (category === "Tools")
+            return qsTr("Tools")
         if (category === "Profiles")
             return qsTr("Profiles")
         if (category === "Workspace")
@@ -230,6 +238,10 @@ Item {
                     activeCategory = "Workspace"
                 else if (y >= profilesSection.y)
                     activeCategory = "Profiles"
+                else if (y >= toolsSection.y)
+                    activeCategory = "Tools"
+                else if (y >= permissionsSection.y)
+                    activeCategory = "Permissions"
                 else if (y >= privacySection.y)
                     activeCategory = "Privacy / Data"
                 else if (y >= voiceSection.y)
@@ -1524,6 +1536,266 @@ Item {
                 }
 
                 ShellPanel {
+                    id: permissionsSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(permissionsContent)
+
+                    ColumnLayout {
+                        id: permissionsContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Permissions")
+                            subtitle: qsTr("Central authority posture. These states are metadata only and do not enable execution.")
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: qsTr("Status")
+                                value: settingsPage.viewModel.permissionPolicyStatus
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Default")
+                                value: settingsPage.viewModel.defaultPermissionPolicyState
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Domains")
+                                value: String(settingsPage.viewModel.permissionPolicyDomainIds.length)
+                                accent: SentinelTheme.calmAccent
+                                muted: false
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                text: qsTr("Default")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                            }
+
+                            ComboBox {
+                                id: permissionStateCombo
+                                Layout.fillWidth: true
+                                hoverEnabled: true
+                                model: settingsPage.viewModel.permissionPolicyStateLabels
+                                currentIndex: settingsPage.viewModel.permissionPolicyStateLabels.indexOf(settingsPage.viewModel.defaultPermissionPolicyState)
+                                displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.defaultPermissionPolicyState
+                                onActivated: {
+                                    if (index >= 0 && index < settingsPage.viewModel.permissionPolicyStateLabels.length)
+                                        settingsPage.viewModel.defaultPermissionPolicyState = settingsPage.viewModel.permissionPolicyStateLabels[index]
+                                }
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: permissionStateCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(permissionStateCombo.activeFocus,
+                                                                                 permissionStateCombo.hovered,
+                                                                                 permissionStateCombo.popup.visible,
+                                                                                 settingsPage.modeAccent)
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: permissionStateOption
+                                    width: permissionStateCombo.width
+                                    text: modelData
+                                    highlighted: permissionStateCombo.highlightedIndex === index
+
+                                    contentItem: Text {
+                                        text: permissionStateOption.text
+                                        color: permissionStateOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        verticalAlignment: Text.AlignVCenter
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    background: Rectangle {
+                                        color: InteractionTokens.surfaceColor(permissionStateOption.highlighted, false, false,
+                                                                               settingsPage.modeAccent)
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: InteractionTokens.borderColor(false, true, false,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Boundary")
+                            value: settingsPage.viewModel.permissionPolicySummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("States")
+                            value: settingsPage.viewModel.permissionPolicyStateLabels.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 2
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.permissionPolicyDomainSummaries
+
+                            Rectangle {
+                                required property string modelData
+                                Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
+                                implicitHeight: permissionDomainLabel.implicitHeight + SentinelTheme.spaceMd
+
+                                Label {
+                                    id: permissionDomainLabel
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: modelData
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    id: toolsSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(toolsContent)
+
+                    ColumnLayout {
+                        id: toolsContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Tools")
+                            subtitle: qsTr("Gateway readiness only. No tool can run from this section.")
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: qsTr("Status")
+                                value: settingsPage.viewModel.toolGatewayStatus
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Tools")
+                                value: String(settingsPage.viewModel.toolGatewayToolCount)
+                                accent: settingsPage.modeAccent
+                                selected: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Metadata")
+                                value: String(settingsPage.viewModel.toolGatewayMetadataSafeCount)
+                                accent: SentinelTheme.calmAccent
+                            }
+
+                            StatusChip {
+                                label: qsTr("Unavailable")
+                                value: String(settingsPage.viewModel.toolGatewayUnavailableCount)
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Refused")
+                                value: String(settingsPage.viewModel.toolGatewayRefusedCount)
+                                accent: settingsPage.viewModel.toolGatewayRefusedCount > 0
+                                        ? SentinelTheme.warning
+                                        : SentinelTheme.textMuted
+                                muted: settingsPage.viewModel.toolGatewayRefusedCount === 0
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Permission")
+                            value: settingsPage.viewModel.toolGatewayPermissionPosture
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Boundary")
+                            value: settingsPage.viewModel.toolGatewaySummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.toolGatewayToolSummaries
+
+                            Rectangle {
+                                required property string modelData
+                                Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
+                                implicitHeight: toolGatewayLabel.implicitHeight + SentinelTheme.spaceMd
+
+                                Label {
+                                    id: toolGatewayLabel
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: modelData
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ShellPanel {
                     id: profilesSection
                     width: parent.width
                     implicitHeight: settingsPage.sectionHeight(profilesContent)
@@ -2144,6 +2416,52 @@ Item {
                             label: qsTr("Permissions")
                             value: settingsPage.viewModel.runtimePermissionDecision + " / "
                                    + settingsPage.viewModel.runtimePermissionSummary
+                            Layout.fillWidth: true
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Permission Policy")
+                            subtitle: qsTr("Central policy diagnostics. States do not grant execution in this build.")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 4
+                            label: qsTr("Registry")
+                            value: settingsPage.viewModel.defaultPermissionPolicyState + " / "
+                                   + settingsPage.viewModel.permissionPolicySummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 10
+                            label: qsTr("Domains")
+                            value: settingsPage.viewModel.permissionPolicyDeveloperDiagnostics.join("\n")
+                            Layout.fillWidth: true
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Tool Gateway")
+                            subtitle: qsTr("Descriptor, posture, and refusal diagnostics only.")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 4
+                            label: qsTr("Registry")
+                            value: settingsPage.viewModel.toolGatewayPermissionPosture + " / "
+                                   + settingsPage.viewModel.toolGatewaySummary
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 12
+                            label: qsTr("Tools")
+                            value: settingsPage.viewModel.toolGatewayDeveloperDiagnostics.join("\n")
                             Layout.fillWidth: true
                         }
 

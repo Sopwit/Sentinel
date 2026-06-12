@@ -222,6 +222,47 @@ hidden system prompt change, custom-instruction loading, tool execution, agent a
 workspace/filesystem authority, cloud/API call, STT/TTS activation, subprocess launch, background
 worker, autonomous behavior, or runtime permission change is enabled.
 
+## Permission Policy Service Boundary
+
+Phase 47 adds `PermissionPolicyService` as the central metadata-only permission policy registry.
+It describes future user-controlled authority states for Workspace Access, Tool Execution, Agent
+Execution, Voice Capture, Voice Playback, Cloud Provider Access, Filesystem Write, Subprocess
+Execution, Memory Commit, and Context Injection.
+
+`AppSettings` persists only the default permission policy state. The current default is Disabled.
+`DesktopShellViewModel` exposes QML-safe status strings, state labels, domain ids/names, domain
+summaries, and developer diagnostics. QML receives no authority handles, filesystem paths,
+provider payloads, tool descriptors that can execute, microphone/playback handles, subprocess
+handles, raw prompts, or memory-write commands from this boundary.
+
+The current service is intentionally non-operational: Disabled, Ask Every Time, Trusted, and
+Enabled are representable policy labels only. No state grants real execution, filesystem access,
+cloud/API access, voice capture/playback, tool/plugin execution, agent runtime authority,
+subprocess execution, background workers, hidden prompt mutation, automatic memory writes, or
+context behavior changes in this build.
+
+## Tool Execution Gateway Boundary
+
+Phase 48 adds `ToolExecutionGateway` as the central metadata-only tool registry and future
+execution entry-point boundary. It owns static placeholder metadata for Open Workspace, Read File,
+Write File, Run Command, Summarize Current Conversation, Export Conversation, Voice Transcribe,
+Voice Speak, Web Search, and Provider Test Call.
+
+Each tool record describes id, display name, category, description, required permission domain,
+risk level, local/cloud scope, execution availability, and refusal reason. The gateway consults
+`PermissionPolicyService` to report the current permission posture for the required domain, but
+the posture remains descriptive and never grants execution in this phase.
+
+`DesktopShellViewModel` exposes only QML-safe strings and counts for gateway status, summary,
+permission posture, tool summaries, and developer diagnostics. QML receives no callable tool
+handles, filesystem paths, command payloads, provider payloads, web handles, voice handles, raw
+tool descriptors with execution behavior, or tool outputs.
+
+The current gateway is intentionally non-operational: no tool execution, filesystem read/write,
+subprocess launch, provider/cloud/API call, web access, microphone capture, audio playback,
+STT/TTS activation, autonomous agent behavior, background worker, prompt mutation, or automatic
+memory write is enabled.
+
 ## Runtime Provider Registry
 
 Phase 36 introduces a value-only runtime provider abstraction above the existing local Ollama
