@@ -91,10 +91,16 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::developerModeChanged);
     connect(&settings_, &core::AppSettings::selectedSkillProfileChanged, this,
             &DesktopShellViewModel::skillProfileChanged);
+    connect(&settings_, &core::AppSettings::selectedSkillProfileChanged, this,
+            &DesktopShellViewModel::agentRuntimeChanged);
     connect(&settings_, &core::AppSettings::selectedWorkspaceIdChanged, this,
             &DesktopShellViewModel::workspaceChanged);
+    connect(&settings_, &core::AppSettings::selectedWorkspaceIdChanged, this,
+            &DesktopShellViewModel::agentRuntimeChanged);
     connect(&settings_, &core::AppSettings::defaultPermissionPolicyStateChanged, this,
             &DesktopShellViewModel::permissionPolicyChanged);
+    connect(&settings_, &core::AppSettings::defaultPermissionPolicyStateChanged, this,
+            &DesktopShellViewModel::agentRuntimeChanged);
     connect(&settings_, &core::AppSettings::contextExplainabilityVisibleChanged, this,
             &DesktopShellViewModel::contextExplainabilityVisibleChanged);
     connect(&settings_, &core::AppSettings::activeConversationIdChanged, this,
@@ -3212,6 +3218,177 @@ QStringList DesktopShellViewModel::toolGatewayDeveloperDiagnostics() const {
     return toolExecutionGateway_
         .registrySummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_)
         .developerDiagnostics;
+}
+
+QString DesktopShellViewModel::agentRuntimeStatus() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .status;
+}
+
+QString DesktopShellViewModel::agentRuntimeSummary() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .summary;
+}
+
+QString DesktopShellViewModel::agentRuntimeApprovalPosture() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .approvalPosture;
+}
+
+int DesktopShellViewModel::agentRuntimeAgentCount() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .agentCount;
+}
+
+int DesktopShellViewModel::agentRuntimeReadyAgentCount() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .readyAgentCount;
+}
+
+int DesktopShellViewModel::agentRuntimeRefusedAgentCount() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .refusedAgentCount;
+}
+
+QStringList DesktopShellViewModel::agentRuntimeAgentSummaries() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .agentSummaries;
+}
+
+QStringList DesktopShellViewModel::agentRuntimeReadinessSummaries() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .readinessSummaries;
+}
+
+QStringList DesktopShellViewModel::agentRuntimeDeveloperDiagnostics() const {
+    return agentRuntimeService_
+        .runtimeSummary(settings_.defaultPermissionPolicyState(), permissionPolicyService_,
+                        toolExecutionGateway_, skillProfileService_,
+                        settings_.selectedSkillProfile(), workspaceService_,
+                        settings_.selectedWorkspaceId())
+        .developerDiagnostics;
+}
+
+QString DesktopShellViewModel::agentPlanId() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .planId;
+}
+
+QString DesktopShellViewModel::agentPlanGoalSummary() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .goalSummary;
+}
+
+QStringList DesktopShellViewModel::agentPlanSteps() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .orderedPlanSteps;
+}
+
+QStringList DesktopShellViewModel::agentPlanRequiredTools() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .requiredTools;
+}
+
+QStringList DesktopShellViewModel::agentPlanRequiredPermissions() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .requiredPermissions;
+}
+
+QString DesktopShellViewModel::agentPlanEstimatedRisk() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .estimatedRisk;
+}
+
+QString DesktopShellViewModel::agentPlanApprovalState() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .approvalState;
+}
+
+QString DesktopShellViewModel::agentPlanRefusalReason() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .refusalReason;
+}
+
+QStringList DesktopShellViewModel::agentPlanDiagnostics() const {
+    return agentRuntimeService_
+        .previewPlan(QStringLiteral("Review the current goal and propose safe next steps."),
+                     QStringLiteral("general-assistant"), settings_.defaultPermissionPolicyState(),
+                     permissionPolicyService_, toolExecutionGateway_, skillProfileService_,
+                     settings_.selectedSkillProfile(), workspaceService_,
+                     settings_.selectedWorkspaceId())
+        .diagnostics;
 }
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {

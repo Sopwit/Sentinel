@@ -1,6 +1,7 @@
 #pragma once
 
 #include "sentinel/core/CompanionService.h"
+#include "sentinel/core/AgentRuntimeService.h"
 #include "sentinel/core/PermissionPolicyService.h"
 #include "sentinel/core/SemanticRetrieval.h"
 #include "sentinel/core/SkillProfileService.h"
@@ -1216,6 +1217,32 @@ class DesktopShellViewModel final : public QObject {
                    permissionPolicyChanged)
     Q_PROPERTY(QStringList toolGatewayDeveloperDiagnostics READ
                    toolGatewayDeveloperDiagnostics NOTIFY permissionPolicyChanged)
+    Q_PROPERTY(QString agentRuntimeStatus READ agentRuntimeStatus NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QString agentRuntimeSummary READ agentRuntimeSummary NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QString agentRuntimeApprovalPosture READ agentRuntimeApprovalPosture NOTIFY
+                   agentRuntimeChanged)
+    Q_PROPERTY(int agentRuntimeAgentCount READ agentRuntimeAgentCount NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(int agentRuntimeReadyAgentCount READ agentRuntimeReadyAgentCount NOTIFY
+                   agentRuntimeChanged)
+    Q_PROPERTY(int agentRuntimeRefusedAgentCount READ agentRuntimeRefusedAgentCount NOTIFY
+                   agentRuntimeChanged)
+    Q_PROPERTY(QStringList agentRuntimeAgentSummaries READ agentRuntimeAgentSummaries NOTIFY
+                   agentRuntimeChanged)
+    Q_PROPERTY(QStringList agentRuntimeReadinessSummaries READ agentRuntimeReadinessSummaries NOTIFY
+                   agentRuntimeChanged)
+    Q_PROPERTY(QStringList agentRuntimeDeveloperDiagnostics READ agentRuntimeDeveloperDiagnostics
+                   NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QString agentPlanId READ agentPlanId NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QString agentPlanGoalSummary READ agentPlanGoalSummary NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QStringList agentPlanSteps READ agentPlanSteps NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QStringList agentPlanRequiredTools READ agentPlanRequiredTools NOTIFY
+                   agentRuntimeChanged)
+    Q_PROPERTY(QStringList agentPlanRequiredPermissions READ agentPlanRequiredPermissions NOTIFY
+                   agentRuntimeChanged)
+    Q_PROPERTY(QString agentPlanEstimatedRisk READ agentPlanEstimatedRisk NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QString agentPlanApprovalState READ agentPlanApprovalState NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QString agentPlanRefusalReason READ agentPlanRefusalReason NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QStringList agentPlanDiagnostics READ agentPlanDiagnostics NOTIFY agentRuntimeChanged)
 
 public:
     DesktopShellViewModel(core::ApplicationController& controller, core::ModeManager& modeManager,
@@ -1949,6 +1976,24 @@ public:
     int toolGatewayRefusedCount() const;
     QStringList toolGatewayToolSummaries() const;
     QStringList toolGatewayDeveloperDiagnostics() const;
+    QString agentRuntimeStatus() const;
+    QString agentRuntimeSummary() const;
+    QString agentRuntimeApprovalPosture() const;
+    int agentRuntimeAgentCount() const;
+    int agentRuntimeReadyAgentCount() const;
+    int agentRuntimeRefusedAgentCount() const;
+    QStringList agentRuntimeAgentSummaries() const;
+    QStringList agentRuntimeReadinessSummaries() const;
+    QStringList agentRuntimeDeveloperDiagnostics() const;
+    QString agentPlanId() const;
+    QString agentPlanGoalSummary() const;
+    QStringList agentPlanSteps() const;
+    QStringList agentPlanRequiredTools() const;
+    QStringList agentPlanRequiredPermissions() const;
+    QString agentPlanEstimatedRisk() const;
+    QString agentPlanApprovalState() const;
+    QString agentPlanRefusalReason() const;
+    QStringList agentPlanDiagnostics() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
@@ -2028,6 +2073,7 @@ signals:
     void skillProfileChanged();
     void workspaceChanged();
     void permissionPolicyChanged();
+    void agentRuntimeChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
@@ -2035,6 +2081,7 @@ private:
     core::ApplicationController& controller_;
     core::ModeManager& modeManager_;
     core::AppSettings& settings_;
+    core::AgentRuntimeService agentRuntimeService_;
     core::CompanionService companionService_;
     core::PermissionPolicyService permissionPolicyService_;
     core::SkillProfileService skillProfileService_;

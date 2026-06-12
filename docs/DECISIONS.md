@@ -164,6 +164,34 @@ Out of scope:
   access, microphone capture, playback, STT/TTS activation, autonomous agents, background workers,
   prompt mutation, automatic memory writes, raw tool handles, command payloads, and tool outputs.
 
+## 1.7 Agent Runtime Dry-Run Planning Boundary
+
+Decision: Agent runtime behavior is represented by `AgentRuntimeService` and `AgentPlanRegistry`
+as value-only dry-run planning metadata before any execution authority exists.
+
+Reason: Sentinel needs a visible agent planning surface that can classify goals, identify
+candidate actions, and report required tools/permissions without creating an automation side
+channel.
+
+Runtime behavior:
+
+- Built-in agents are General Assistant, Coding Assistant, Research Assistant, Workspace
+  Assistant, and Voice Assistant.
+- Agent records expose QML-safe id, display name, description, capability summary, supported tool
+  categories, required permission posture, readiness state, and refusal reason.
+- Agent plans expose plan id, goal summary, ordered steps, required tools, required permissions,
+  estimated risk, approval state, refusal reason, and bounded diagnostics.
+- The runtime consults permission policy, tool gateway, skill/profile, and workspace metadata,
+  but these consultations do not grant authority.
+- Approval state is descriptive only; approval cannot enable execution in this phase.
+
+Out of scope:
+
+- Tool execution, filesystem reads/writes, workspace access, subprocess launch, provider/cloud/API
+  calls, web access, microphone capture, playback, STT/TTS activation, autonomous agents, hidden
+  retries, background workers, prompt mutation, automatic memory writes, raw handles, command
+  payloads, provider payloads, and tool outputs.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.

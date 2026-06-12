@@ -133,6 +133,13 @@ ShellPanel {
             }
 
             StatusChip {
+                label: qsTr("Agent")
+                value: homeChat.viewModel.agentRuntimeStatus
+                accent: SentinelTheme.warning
+                muted: false
+            }
+
+            StatusChip {
                 label: qsTr("Runtime")
                 value: homeChat.viewModel.activeRuntimeReadinessState
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
