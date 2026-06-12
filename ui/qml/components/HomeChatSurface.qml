@@ -119,6 +119,13 @@ ShellPanel {
             }
 
             StatusChip {
+                label: qsTr("Profile")
+                value: homeChat.viewModel.selectedSkillProfileName
+                accent: SentinelTheme.calmAccent
+                muted: false
+            }
+
+            StatusChip {
                 label: qsTr("Runtime")
                 value: homeChat.viewModel.activeRuntimeReadinessState
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted

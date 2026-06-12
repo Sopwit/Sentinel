@@ -52,6 +52,8 @@ class AppSettings final : public QObject {
                    NOTIFY activeConversationIdChanged)
     Q_PROPERTY(QString selectedWorkspaceId READ selectedWorkspaceId WRITE setSelectedWorkspaceId
                    NOTIFY selectedWorkspaceIdChanged)
+    Q_PROPERTY(QString selectedSkillProfile READ selectedSkillProfile WRITE setSelectedSkillProfile
+                   NOTIFY selectedSkillProfileChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -109,6 +111,8 @@ public:
     void setActiveConversationId(const QString& conversationId);
     QString selectedWorkspaceId() const;
     void setSelectedWorkspaceId(const QString& workspaceId);
+    QString selectedSkillProfile() const;
+    void setSelectedSkillProfile(const QString& profileId);
 
 signals:
     void themeNameChanged();
@@ -132,6 +136,7 @@ signals:
     void piperFileOutputExecutionEnabledChanged();
     void activeConversationIdChanged();
     void selectedWorkspaceIdChanged();
+    void selectedSkillProfileChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
@@ -156,11 +161,13 @@ private:
     static constexpr auto piperFileOutputExecutionEnabledKey = "piperFileOutputExecutionEnabled";
     static constexpr auto activeConversationIdKey = "activeConversationId";
     static constexpr auto selectedWorkspaceIdKey = "selectedWorkspaceId";
+    static constexpr auto selectedSkillProfileKey = "selectedSkillProfile";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "system";
     static constexpr auto defaultSelectedRuntimeProvider = "ollama";
     static constexpr auto defaultSelectedWorkspaceId = "local-placeholder";
+    static constexpr auto defaultSelectedSkillProfile = "developer";
 
     std::unique_ptr<ISettingsStore> store_;
 };

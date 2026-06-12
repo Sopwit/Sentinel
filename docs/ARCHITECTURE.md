@@ -135,9 +135,10 @@ Planned high-level modules:
 - `WorkspaceService`: future workspace/session scope boundary for named projects, allowed paths,
   visible context sources, and path-scoped permissions. It must not add broad filesystem scanning
   or implicit mutation.
-- `SkillProfileService`: future skill/profile registry boundary for manifests, provenance,
-  capability declarations, install/enable separation, and profile defaults. It must not load or
-  execute plugins until a later explicit activation phase.
+- `SkillProfileService`: skill/profile registry boundary for presentation metadata, future policy
+  declarations, profile defaults, and readiness diagnostics. It must not mutate prompts, load
+  custom instructions, load or execute plugins, activate agents, execute tools, or grant workspace
+  authority until later explicit activation phases.
 - `PermissionPolicyService`: future central policy boundary for Disabled, Ask Every Time, Trusted,
   and Enabled permission states. It must be enforced in C++ core policy, not only QML.
 - `ToolExecutionGateway`: future controlled entry point for tool execution after descriptors,
@@ -204,12 +205,29 @@ the current desktop posture remains Disabled and no posture activates filesystem
 build. Choose Workspace and Clear Workspace are UI placeholders only until native picker,
 revocation, and core policy behavior are separately scoped.
 
+## Skill/Profile Service Boundary
+
+Phase 46 adds `SkillProfileService` as a metadata-only profile registry. It owns static profile
+metadata for Developer, Student, Researcher, Personal Assistant, and Custom profiles. The selected
+profile id is persisted through `AppSettings::selectedSkillProfile`; the current default is
+`developer`.
+
+`DesktopShellViewModel` exposes only QML-safe strings and string lists for selected profile name,
+summary, description, readiness, capability/readiness summaries, and developer diagnostics. QML
+receives no prompt fragments, raw system prompts, tool descriptors, agent handles, workspace
+handles, filesystem paths, provider payloads, credentials, or voice handles from this boundary.
+
+Profiles are intentionally presentation and future policy metadata only: no prompt mutation,
+hidden system prompt change, custom-instruction loading, tool execution, agent activation,
+workspace/filesystem authority, cloud/API call, STT/TTS activation, subprocess launch, background
+worker, autonomous behavior, or runtime permission change is enabled.
+
 ## Runtime Provider Registry
 
 Phase 36 introduces a value-only runtime provider abstraction above the existing local Ollama
 health/model metadata and inference boundary.
 
-Phase 46 extends the roadmap for this boundary so Sentinel can support multiple local runtime
+The future provider roadmap extends this boundary so Sentinel can support multiple local runtime
 providers without hardcoding Ollama behavior into UI or core logic. Local Ollama remains the
 current default and only currently active chat path. Planned provider targets are:
 

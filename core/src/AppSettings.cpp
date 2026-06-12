@@ -13,6 +13,13 @@ bool isKnownRuntimeProviderId(const QString& providerId) {
            providerId == QStringLiteral("claude") || providerId == QStringLiteral("gemini");
 }
 
+bool isKnownSkillProfileId(const QString& profileId) {
+    return profileId == QStringLiteral("developer") || profileId == QStringLiteral("student") ||
+           profileId == QStringLiteral("researcher") ||
+           profileId == QStringLiteral("personal-assistant") ||
+           profileId == QStringLiteral("custom");
+}
+
 } // namespace
 
 AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent)
@@ -418,6 +425,28 @@ void AppSettings::setSelectedWorkspaceId(const QString& workspaceId) {
 
     store_->setValue(QString::fromLatin1(selectedWorkspaceIdKey), selected);
     emit selectedWorkspaceIdChanged();
+}
+
+QString AppSettings::selectedSkillProfile() const {
+    const auto fallback = QString::fromLatin1(defaultSelectedSkillProfile);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(selectedSkillProfileKey),
+                                               fallback)
+                               : fallback;
+    const auto normalized = stored.trimmed().toLower();
+    return isKnownSkillProfileId(normalized) ? normalized : fallback;
+}
+
+void AppSettings::setSelectedSkillProfile(const QString& profileId) {
+    const auto normalized = profileId.trimmed().toLower();
+    const auto selected = isKnownSkillProfileId(normalized)
+                              ? normalized
+                              : QString::fromLatin1(defaultSelectedSkillProfile);
+    if (selected == selectedSkillProfile() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(selectedSkillProfileKey), selected);
+    emit selectedSkillProfileChanged();
 }
 
 } // namespace sentinel::core

@@ -10,10 +10,10 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap bottom-safe-scroll"
+    readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap profiles-metadata bottom-safe-scroll"
     readonly property var categories: developerMode
-                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Workspace", "Developer"]
-                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Workspace"]
+                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Profiles", "Workspace", "Developer"]
+                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Profiles", "Workspace"]
     property string activeCategory: "General"
     property bool programmaticScroll: false
 
@@ -30,6 +30,8 @@ Item {
             return chatSection
         if (category === "Voice")
             return voiceSection
+        if (category === "Profiles")
+            return profilesSection
         if (category === "Workspace")
             return workspaceSection
         if (category === "Privacy / Data")
@@ -50,6 +52,8 @@ Item {
             return qsTr("Chat")
         if (category === "Voice")
             return qsTr("Voice")
+        if (category === "Profiles")
+            return qsTr("Profiles")
         if (category === "Workspace")
             return qsTr("Workspace")
         if (category === "Privacy / Data")
@@ -224,6 +228,8 @@ Item {
                     activeCategory = "Developer"
                 else if (y >= workspaceSection.y)
                     activeCategory = "Workspace"
+                else if (y >= profilesSection.y)
+                    activeCategory = "Profiles"
                 else if (y >= privacySection.y)
                     activeCategory = "Privacy / Data"
                 else if (y >= voiceSection.y)
@@ -1518,6 +1524,174 @@ Item {
                 }
 
                 ShellPanel {
+                    id: profilesSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(profilesContent)
+
+                    ColumnLayout {
+                        id: profilesContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Profiles")
+                            subtitle: qsTr("Assistant presentation profiles. Runtime authority is unchanged.")
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: qsTr("Selected")
+                                value: settingsPage.viewModel.selectedSkillProfileName
+                                accent: SentinelTheme.calmAccent
+                                muted: false
+                            }
+
+                            StatusChip {
+                                label: qsTr("Readiness")
+                                value: settingsPage.viewModel.selectedSkillProfileReadiness
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Authority")
+                                value: qsTr("Unchanged")
+                                accent: SentinelTheme.textMuted
+                                muted: true
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                text: qsTr("Selected")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                            }
+
+                            ComboBox {
+                                id: profileCombo
+                                Layout.fillWidth: true
+                                hoverEnabled: true
+                                model: settingsPage.viewModel.skillProfileNames
+                                currentIndex: settingsPage.viewModel.skillProfileIds.indexOf(settingsPage.viewModel.selectedSkillProfile)
+                                displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.selectedSkillProfileName
+                                onActivated: {
+                                    if (index >= 0 && index < settingsPage.viewModel.skillProfileIds.length)
+                                        settingsPage.viewModel.selectedSkillProfile = settingsPage.viewModel.skillProfileIds[index]
+                                }
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: profileCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(profileCombo.activeFocus,
+                                                                                 profileCombo.hovered,
+                                                                                 profileCombo.popup.visible,
+                                                                                 settingsPage.modeAccent)
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: profileOption
+                                    width: profileCombo.width
+                                    text: modelData
+                                    highlighted: profileCombo.highlightedIndex === index
+
+                                    contentItem: Text {
+                                        text: profileOption.text
+                                        color: profileOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        verticalAlignment: Text.AlignVCenter
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    background: Rectangle {
+                                        color: InteractionTokens.surfaceColor(profileOption.highlighted, false, false,
+                                                                               settingsPage.modeAccent)
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: InteractionTokens.borderColor(false, true, false,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Summary")
+                            value: settingsPage.viewModel.selectedSkillProfileSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Description")
+                            value: settingsPage.viewModel.selectedSkillProfileDescription
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Boundary")
+                            value: settingsPage.viewModel.selectedSkillProfilePolicyPosture
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.skillProfileReadinessChecks
+
+                            Rectangle {
+                                required property string modelData
+                                Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
+                                implicitHeight: profileCheckLabel.implicitHeight + SentinelTheme.spaceMd
+
+                                Label {
+                                    id: profileCheckLabel
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: modelData
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+                    }
+                }
+
+                ShellPanel {
                     id: workspaceSection
                     width: parent.width
                     implicitHeight: settingsPage.sectionHeight(workspaceContent)
@@ -1820,8 +1994,40 @@ Item {
                         }
 
                         SectionTitle {
+                            title: qsTr("Profile Boundary")
+                            subtitle: qsTr("Read-only profile metadata. Profiles do not grant runtime authority.")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Profile")
+                            value: settingsPage.viewModel.selectedSkillProfileName + " / "
+                                   + settingsPage.viewModel.selectedSkillProfileReadiness + " / "
+                                   + settingsPage.viewModel.selectedSkillProfileSummary
+                            Layout.fillWidth: true
+                        }
+
+                        SectionTitle {
                             title: qsTr("Workspace Boundary")
                             subtitle: qsTr("Read-only workspace diagnostics. Access remains disabled.")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Capabilities")
+                            value: settingsPage.viewModel.skillProfileCapabilitySummaries.join("\n")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            valueMaximumLineCount: 8
+                            label: qsTr("Diagnostics")
+                            value: settingsPage.viewModel.skillProfileDeveloperDiagnostics.join("\n")
                             Layout.fillWidth: true
                         }
 

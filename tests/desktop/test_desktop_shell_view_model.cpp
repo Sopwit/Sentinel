@@ -108,6 +108,7 @@ private slots:
     void exposesLanguageSettings();
     void exposesCompanionReadinessMetadata();
     void exposesWorkspaceReadinessMetadata();
+    void exposesSkillProfileMetadata();
     void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
@@ -1514,6 +1515,18 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("companionPlatformSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("companionTraceSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("developerModeEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("selectedSkillProfile"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedSkillProfileName"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedSkillProfileSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedSkillProfileDescription"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedSkillProfileReadiness"), QByteArrayLiteral("QString")},
+        {QStringLiteral("selectedSkillProfilePolicyPosture"), QByteArrayLiteral("QString")},
+        {QStringLiteral("skillProfileIds"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("skillProfileNames"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("skillProfileSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("skillProfileCapabilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("skillProfileReadinessChecks"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("skillProfileDeveloperDiagnostics"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("voiceRuntimeMode"), QByteArrayLiteral("QString")},
         {QStringLiteral("voiceEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("voiceReadinessStatus"), QByteArrayLiteral("QString")},
@@ -1744,6 +1757,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("developerModeEnabled"),
         QStringLiteral("piperFileOutputExecutionEnabled"),
         QStringLiteral("promptContextInjectionEnabled"),
+        QStringLiteral("selectedSkillProfile"),
         QStringLiteral("selectedRuntimeProvider"),
     };
 
@@ -1781,6 +1795,8 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("memoryRecallQuery"),
         QStringLiteral("memoryRecallPolicy"),
         QStringLiteral("orchestrationSnapshot"),
+        QStringLiteral("skillProfileRegistry"),
+        QStringLiteral("skillProfileEntries"),
         QStringLiteral("workspaceStateSummary"),
         QStringLiteral("orchestrationReadinessReport"),
         QStringLiteral("orchestrationReadinessChecks"),
@@ -2806,6 +2822,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QSignalSpy contextInjectionSpy(&fixture.viewModel,
                                    &DesktopShellViewModel::promptContextInjectionChanged);
     QSignalSpy developerModeSpy(&fixture.viewModel, &DesktopShellViewModel::developerModeChanged);
+    QSignalSpy skillProfileSpy(&fixture.viewModel, &DesktopShellViewModel::skillProfileChanged);
     QSignalSpy contextVisibilitySpy(&fixture.viewModel,
                                     &DesktopShellViewModel::contextExplainabilityVisibleChanged);
 
@@ -2818,6 +2835,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     fixture.viewModel.setPromptContextInjectionEnabled(true);
     fixture.viewModel.setContextExplainabilityVisible(false);
     fixture.viewModel.setDeveloperModeEnabled(true);
+    fixture.viewModel.setSelectedSkillProfile(QStringLiteral("researcher"));
 
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Phase 2 Shell"));
@@ -2839,6 +2857,9 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QVERIFY(fixture.viewModel.contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
     QVERIFY(fixture.viewModel.developerModeEnabled());
     QVERIFY(fixture.settings.developerModeEnabled());
+    QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("researcher"));
+    QCOMPARE(fixture.viewModel.selectedSkillProfileName(), QStringLiteral("Researcher"));
+    QCOMPARE(fixture.settings.selectedSkillProfile(), QStringLiteral("researcher"));
     QCOMPARE(fixture.viewModel.promptContextInjectionStatus(), QStringLiteral("Empty"));
     QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Provider Disabled"));
     QVERIFY(!fixture.viewModel.localChatSendAvailable());
@@ -2850,6 +2871,7 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QCOMPARE(inferenceSpy.count(), 1);
     QCOMPARE(contextInjectionSpy.count(), 1);
     QCOMPARE(developerModeSpy.count(), 1);
+    QCOMPARE(skillProfileSpy.count(), 1);
     QCOMPARE(contextVisibilitySpy.count(), 1);
 }
 
@@ -2892,6 +2914,43 @@ void DesktopShellViewModelTest::exposesWorkspaceReadinessMetadata() {
     fixture.viewModel.setSelectedWorkspaceId(QStringLiteral("unknown"));
     QCOMPARE(fixture.viewModel.selectedWorkspaceId(), QStringLiteral("local-placeholder"));
     QCOMPARE(spy.count(), 0);
+}
+
+void DesktopShellViewModelTest::exposesSkillProfileMetadata() {
+    ViewModelFixture fixture;
+    QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::skillProfileChanged);
+
+    QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("developer"));
+    QCOMPARE(fixture.viewModel.selectedSkillProfileName(), QStringLiteral("Developer"));
+    QCOMPARE(fixture.viewModel.selectedSkillProfileReadiness(), QStringLiteral("Metadata only"));
+    QVERIFY(fixture.viewModel.selectedSkillProfileSummary().contains(QStringLiteral("Code-aware")));
+    QVERIFY(fixture.viewModel.selectedSkillProfileDescription().contains(
+        QStringLiteral("without changing prompts or runtime authority")));
+    QVERIFY(fixture.viewModel.selectedSkillProfilePolicyPosture().contains(
+        QStringLiteral("No runtime authority")));
+    QCOMPARE(fixture.viewModel.skillProfileIds(),
+             QStringList({QStringLiteral("developer"), QStringLiteral("student"),
+                          QStringLiteral("researcher"), QStringLiteral("personal-assistant"),
+                          QStringLiteral("custom")}));
+    QVERIFY(fixture.viewModel.skillProfileNames().contains(QStringLiteral("Personal Assistant")));
+    QVERIFY(fixture.viewModel.skillProfileSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Custom")));
+    QVERIFY(fixture.viewModel.skillProfileCapabilitySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Prompt mutation: disabled")));
+    QVERIFY(fixture.viewModel.skillProfileReadinessChecks().contains(
+        QStringLiteral("Hidden system prompt changes: disabled")));
+    QVERIFY(fixture.viewModel.skillProfileDeveloperDiagnostics().contains(
+        QStringLiteral("Runtime authority: unchanged")));
+
+    fixture.viewModel.setSelectedSkillProfile(QStringLiteral("student"));
+    QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("student"));
+    QCOMPARE(fixture.viewModel.selectedSkillProfileName(), QStringLiteral("Student"));
+    QCOMPARE(fixture.settings.selectedSkillProfile(), QStringLiteral("student"));
+    QCOMPARE(spy.count(), 1);
+
+    fixture.viewModel.setSelectedSkillProfile(QStringLiteral("unknown"));
+    QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("developer"));
+    QCOMPARE(spy.count(), 2);
 }
 
 void DesktopShellViewModelTest::languageSettingDoesNotChangeRuntimePresentationFlags() {
