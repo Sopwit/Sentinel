@@ -1145,6 +1145,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString selectedWorkspaceName READ selectedWorkspaceName NOTIFY workspaceChanged)
     Q_PROPERTY(QString selectedWorkspaceAccessState READ selectedWorkspaceAccessState NOTIFY
                    workspaceChanged)
+    Q_PROPERTY(QString workspacePermissionPosture READ workspacePermissionPosture NOTIFY
+                   workspaceChanged)
     Q_PROPERTY(QString selectedWorkspaceRootSummary READ selectedWorkspaceRootSummary NOTIFY
                    workspaceChanged)
     Q_PROPERTY(QString workspaceReadinessStatus READ workspaceReadinessStatus NOTIFY
@@ -1156,6 +1158,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QStringList workspaceIds READ workspaceIds CONSTANT)
     Q_PROPERTY(QStringList workspaceNames READ workspaceNames CONSTANT)
     Q_PROPERTY(QStringList workspaceSummaries READ workspaceSummaries CONSTANT)
+    Q_PROPERTY(QStringList workspacePermissionPostures READ workspacePermissionPostures CONSTANT)
+    Q_PROPERTY(QStringList workspaceActionPlaceholders READ workspaceActionPlaceholders CONSTANT)
     Q_PROPERTY(QStringList workspaceReadinessChecks READ workspaceReadinessChecks NOTIFY
                    workspaceChanged)
     Q_PROPERTY(QStringList workspaceBoundaryDiagnostics READ workspaceBoundaryDiagnostics NOTIFY
@@ -1850,6 +1854,7 @@ public:
     void setSelectedWorkspaceId(const QString& workspaceId);
     QString selectedWorkspaceName() const;
     QString selectedWorkspaceAccessState() const;
+    QString workspacePermissionPosture() const;
     QString selectedWorkspaceRootSummary() const;
     QString workspaceReadinessStatus() const;
     QString workspaceReadinessSummary() const;
@@ -1857,6 +1862,8 @@ public:
     QStringList workspaceIds() const;
     QStringList workspaceNames() const;
     QStringList workspaceSummaries() const;
+    QStringList workspacePermissionPostures() const;
+    QStringList workspaceActionPlaceholders() const;
     QStringList workspaceReadinessChecks() const;
     QStringList workspaceBoundaryDiagnostics() const;
 

@@ -10,8 +10,10 @@ WorkspaceMetadata localPlaceholderWorkspace() {
         QStringLiteral("Local Workspace"),
         QStringLiteral("Local metadata placeholder"),
         QStringLiteral("Access not enabled"),
+        QStringLiteral("Disabled"),
         QStringLiteral("No folder selected. No filesystem paths are read."),
-        QStringLiteral("Workspace access is not enabled yet."),
+        QStringLiteral("Disabled. Future modes are Ask Every Time, Trusted, and Enabled; none "
+                       "grant access in this build."),
     };
 }
 
@@ -39,6 +41,7 @@ WorkspaceReadinessSummary WorkspaceService::readiness(const QString& selectedWor
                        "workspace metadata placeholder."),
         {
             QStringLiteral("Selected workspace: %1").arg(workspace.name),
+            QStringLiteral("Permission posture: %1").arg(workspace.permissionPosture),
             QStringLiteral("Filesystem scanning: disabled"),
             QStringLiteral("File reading: disabled"),
             QStringLiteral("Indexing and embeddings: disabled"),
@@ -47,10 +50,29 @@ WorkspaceReadinessSummary WorkspaceService::readiness(const QString& selectedWor
         },
         {
             QStringLiteral("Workspace root: metadata placeholder only"),
-            QStringLiteral("Permission model: future explicit opt-in required"),
+            QStringLiteral("Permission model: Disabled, Ask Every Time, Trusted, Enabled"),
+            QStringLiteral("Current permission posture: %1").arg(workspace.permissionPosture),
             QStringLiteral("Runtime boundary: no subprocesses, no tools, no recursive scanning"),
             QStringLiteral("Data boundary: settings only; memory and chat history are separate"),
         },
+    };
+}
+
+QStringList WorkspaceService::permissionPostures() const {
+    return {
+        QStringLiteral("Disabled"),
+        QStringLiteral("Ask Every Time"),
+        QStringLiteral("Trusted"),
+        QStringLiteral("Enabled"),
+    };
+}
+
+QStringList WorkspaceService::actionPlaceholders() const {
+    return {
+        QStringLiteral("Choose Workspace: unavailable until native picker wiring is scoped"),
+        QStringLiteral("Clear Workspace: unavailable; only placeholder metadata is selected"),
+        QStringLiteral("Scan Workspace: disabled; no filesystem scanning exists"),
+        QStringLiteral("Index Workspace: disabled; no indexing or embeddings exist"),
     };
 }
 
@@ -74,7 +96,7 @@ QString WorkspaceService::normalizedWorkspaceId(const QString& workspaceId) cons
 
 QString workspaceSummary(const WorkspaceMetadata& workspace) {
     return QStringLiteral("%1 / %2 / %3")
-        .arg(workspace.name, workspace.accessState, workspace.permissionSummary);
+        .arg(workspace.name, workspace.accessState, workspace.permissionPosture);
 }
 
 } // namespace sentinel::core

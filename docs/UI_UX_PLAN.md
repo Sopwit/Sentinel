@@ -239,6 +239,27 @@ Guidelines:
   subprocess execution, tool/plugin execution, autonomous agents, background workers, or hidden
   prompt-context injection.
 
+## Phase 45 Workspace Refinement UX Notes
+
+Phase 45.0 through Phase 45.12 turns the workspace foundation into a calmer readiness layer
+without activating workspace access.
+
+Guidelines:
+
+- Settings > Workspace shows selected workspace metadata, root state, readiness, and permission
+  posture as the primary surface.
+- Permission posture labels are Disabled, Ask Every Time, Trusted, and Enabled. Disabled is the
+  current posture; the others are future policy states and must not imply active access.
+- Choose Workspace and Clear Workspace may appear only as disabled placeholders until native picker
+  and revocation behavior are explicitly scoped.
+- Scan and Index states remain explanatory metadata only; no buttons should execute or imply
+  hidden indexing.
+- Home may show only a compact workspace readiness/posture chip. Developer Mode may show boundary
+  diagnostics only.
+- Workspace UI must continue to avoid filesystem scanning, automatic folder reading, background
+  indexing, provider/model calls, tools/plugins, subprocesses, cloud/API calls, and autonomous
+  behavior.
+
 ## Design System Foundation
 
 The initial QML design tokens live in `ui/qml/theme/SentinelTheme.qml`.

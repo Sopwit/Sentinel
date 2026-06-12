@@ -195,6 +195,12 @@ workers, provider/model execution, hidden memory writes, or workspace prompt-con
 enabled. Future workspace activation must add explicit permission scopes, revocation metadata,
 session ownership, and core-enforced policy before any filesystem access exists.
 
+Phase 45 refines this boundary with explicit permission posture metadata and disabled action
+placeholder summaries. The posture labels are Disabled, Ask Every Time, Trusted, and Enabled, but
+the current desktop posture remains Disabled and no posture activates filesystem access in this
+build. Choose Workspace and Clear Workspace are UI placeholders only until native picker,
+revocation, and core policy behavior are separately scoped.
+
 ## Runtime Provider Registry
 
 Phase 36 introduces a value-only runtime provider abstraction above the existing local Ollama

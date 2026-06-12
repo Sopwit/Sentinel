@@ -11,6 +11,7 @@ struct WorkspaceMetadata {
     QString name;
     QString kind;
     QString accessState;
+    QString permissionPosture;
     QString rootSummary;
     QString permissionSummary;
 };
@@ -27,6 +28,8 @@ public:
     QList<WorkspaceMetadata> availableWorkspaces() const;
     WorkspaceMetadata selectedWorkspace(const QString& selectedWorkspaceId) const;
     WorkspaceReadinessSummary readiness(const QString& selectedWorkspaceId) const;
+    QStringList permissionPostures() const;
+    QStringList actionPlaceholders() const;
     QStringList workspaceSummaries() const;
     QString normalizedWorkspaceId(const QString& workspaceId) const;
 };

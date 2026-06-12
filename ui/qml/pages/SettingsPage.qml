@@ -1531,7 +1531,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Workspace")
-                            subtitle: qsTr("Future project context metadata. Workspace access is not enabled yet.")
+                            subtitle: qsTr("Workspace access is not active yet. Sentinel stores readiness metadata only.")
                             Layout.fillWidth: true
                         }
 
@@ -1557,6 +1557,13 @@ Item {
                                 label: qsTr("Mode")
                                 value: qsTr("Metadata only")
                                 accent: SentinelTheme.calmAccent
+                                muted: true
+                            }
+
+                            StatusChip {
+                                label: qsTr("Permission")
+                                value: settingsPage.viewModel.workspacePermissionPosture
+                                accent: SentinelTheme.textMuted
                                 muted: true
                             }
                         }
@@ -1653,7 +1660,17 @@ Item {
 
                         InfoRow {
                             compact: settingsPage.compact
-                            label: qsTr("Permissions")
+                            label: qsTr("Posture")
+                            value: settingsPage.viewModel.workspacePermissionPosture
+                                   + " / "
+                                   + settingsPage.viewModel.workspacePermissionPostures.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Policy")
                             value: settingsPage.viewModel.workspacePermissionSummary
                             Layout.fillWidth: true
                             valueMaximumLineCount: 3
@@ -1683,26 +1700,44 @@ Item {
                             }
                         }
 
+                        Repeater {
+                            model: settingsPage.viewModel.workspaceActionPlaceholders
+
+                            Rectangle {
+                                required property string modelData
+                                Layout.fillWidth: true
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
+                                implicitHeight: workspaceActionLabel.implicitHeight + SentinelTheme.spaceMd
+
+                                Label {
+                                    id: workspaceActionLabel
+                                    x: SentinelTheme.spaceSm
+                                    y: SentinelTheme.spaceXs
+                                    width: parent.width - SentinelTheme.spaceSm * 2
+                                    text: modelData
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
                         GridLayout {
                             Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 3
+                            columns: settingsPage.compact ? 1 : 2
                             columnSpacing: SentinelTheme.spaceSm
                             rowSpacing: SentinelTheme.spaceSm
 
                             SentinelButton {
-                                text: qsTr("Choose Folder")
+                                text: qsTr("Choose Workspace")
                                 enabled: false
                                 Layout.fillWidth: true
                             }
 
                             SentinelButton {
-                                text: qsTr("Scan Workspace")
-                                enabled: false
-                                Layout.fillWidth: true
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Index Workspace")
+                                text: qsTr("Clear Workspace")
                                 enabled: false
                                 Layout.fillWidth: true
                             }
@@ -1795,6 +1830,7 @@ Item {
                             valueMaximumLineCount: 8
                             label: qsTr("Workspace")
                             value: settingsPage.viewModel.selectedWorkspaceName + " / "
+                                   + settingsPage.viewModel.workspacePermissionPosture + " / "
                                    + settingsPage.viewModel.workspaceReadinessSummary
                             Layout.fillWidth: true
                         }

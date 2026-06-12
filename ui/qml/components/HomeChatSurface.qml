@@ -113,7 +113,7 @@ ShellPanel {
 
             StatusChip {
                 label: qsTr("Workspace")
-                value: homeChat.viewModel.workspaceReadinessStatus
+                value: homeChat.viewModel.workspacePermissionPosture
                 accent: SentinelTheme.textMuted
                 muted: true
             }
