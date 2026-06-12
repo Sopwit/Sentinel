@@ -2,6 +2,31 @@
 
 ## Completed / Stable
 
+### Phase 44.0-44.12: Workspace Foundation
+
+Completed. Adds a local-first workspace foundation for future project context while keeping
+workspace access non-operational.
+
+Scope:
+
+- Added `WorkspaceService` and `WorkspaceMetadata` / readiness summary value data for a safe local
+  placeholder workspace.
+- Added persisted `selectedWorkspaceId` settings support. The current default is
+  `local-placeholder`.
+- Exposed QML-safe workspace properties through `DesktopShellViewModel`: selected workspace name,
+  access state, root summary, permission summary, readiness checks, and developer boundary
+  diagnostics.
+- Added Settings > Workspace with a metadata-only workspace selector, readiness summary, disabled
+  Choose Folder / Scan Workspace / Index Workspace actions, and clear "Workspace access is not
+  enabled yet" copy.
+- Added compact Home workspace status and Developer Mode workspace boundary diagnostics.
+
+Known limitation:
+
+- This phase does not add file pickers, recursive scanning, filesystem reads, indexing,
+  embeddings, subprocesses, tools/plugins, autonomous agents, background workers, provider/model
+  execution, hidden memory writes, or workspace-derived prompt context.
+
 ### Phase 43.5: Native Companion Activation
 
 Completed. Turns the companion/menu-bar/system-tray foundation into a Qt-native desktop shell

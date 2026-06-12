@@ -112,6 +112,13 @@ ShellPanel {
             }
 
             StatusChip {
+                label: qsTr("Workspace")
+                value: homeChat.viewModel.workspaceReadinessStatus
+                accent: SentinelTheme.textMuted
+                muted: true
+            }
+
+            StatusChip {
                 label: qsTr("Runtime")
                 value: homeChat.viewModel.activeRuntimeReadinessState
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted

@@ -40,6 +40,7 @@ private slots:
     void persistsContextExplainabilityVisibility();
     void persistsCompanionVisibilityPreference();
     void persistsDeveloperModeVisibilityOptIn();
+    void persistsSelectedWorkspaceId();
     void persistsVoiceConfigurationPaths();
     void persistsPiperFileOutputExecutionOptIn();
     void persistsLocalAiRuntimeSettingsThroughJsonStore();
@@ -71,6 +72,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(settings->whisperBinaryPath().isEmpty());
     QVERIFY(settings->whisperModelPath().isEmpty());
     QVERIFY(!settings->piperFileOutputExecutionEnabled());
+    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("local-placeholder"));
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -444,6 +446,24 @@ void AppSettingsTest::persistsDeveloperModeVisibilityOptIn() {
     QCOMPARE(spy.count(), 2);
 }
 
+void AppSettingsTest::persistsSelectedWorkspaceId() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::selectedWorkspaceIdChanged);
+
+    settings->setSelectedWorkspaceId(QStringLiteral(" local-placeholder "));
+
+    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("local-placeholder"));
+    QCOMPARE(spy.count(), 0);
+
+    settings->setSelectedWorkspaceId(QStringLiteral("future-project"));
+    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("future-project"));
+    QCOMPARE(spy.count(), 1);
+
+    settings->setSelectedWorkspaceId(QStringLiteral("   "));
+    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("local-placeholder"));
+    QCOMPARE(spy.count(), 2);
+}
+
 void AppSettingsTest::persistsVoiceConfigurationPaths() {
     const auto settings = makeSettings();
     QSignalSpy piperBinarySpy(settings.get(), &AppSettings::piperBinaryPathChanged);
@@ -501,6 +521,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setContextExplainabilityVisible(false);
         settings.setCompanionEnabled(true);
         settings.setDeveloperModeEnabled(true);
+        settings.setSelectedWorkspaceId(QStringLiteral("future-project"));
         settings.setPiperBinaryPath(QStringLiteral("/opt/piper/piper"));
         settings.setPiperModelPath(QStringLiteral("/opt/piper/model.onnx"));
         settings.setWhisperBinaryPath(QStringLiteral("/opt/whisper/whisper"));
@@ -519,6 +540,7 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QVERIFY(!reloaded.contextExplainabilityVisible());
     QVERIFY(reloaded.companionEnabled());
     QVERIFY(reloaded.developerModeEnabled());
+    QCOMPARE(reloaded.selectedWorkspaceId(), QStringLiteral("future-project"));
     QCOMPARE(reloaded.piperBinaryPath(), QStringLiteral("/opt/piper/piper"));
     QCOMPARE(reloaded.piperModelPath(), QStringLiteral("/opt/piper/model.onnx"));
     QCOMPARE(reloaded.whisperBinaryPath(), QStringLiteral("/opt/whisper/whisper"));

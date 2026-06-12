@@ -222,6 +222,23 @@ Guidelines:
   execution, microphone capture, playback, filesystem scanning, cloud/API calls, or provider
   routing.
 
+## Phase 44 Workspace UX Notes
+
+Phase 44.0 through Phase 44.12 adds workspace foundation UX without enabling workspace access.
+
+Guidelines:
+
+- Settings > Workspace should feel like future project context, not a file manager.
+- Normal mode shows only selected workspace metadata, readiness, permission posture, and disabled
+  future actions.
+- Home may show a compact workspace status chip, but chat remains primary.
+- Developer Mode may show boundary diagnostics for workspace root, permission model, runtime
+  boundary, and data boundary.
+- The UI must clearly say "Workspace access is not enabled yet."
+- Workspace controls must not imply recursive scanning, file reading, indexing, embeddings,
+  subprocess execution, tool/plugin execution, autonomous agents, background workers, or hidden
+  prompt-context injection.
+
 ## Design System Foundation
 
 The initial QML design tokens live in `ui/qml/theme/SentinelTheme.qml`.
