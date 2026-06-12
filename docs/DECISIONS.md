@@ -38,29 +38,31 @@ Phase 3.4 implementation status:
 
 ## 1.2 Companion/Menu Bar/System Tray Boundary
 
-Decision: Companion/menu-bar/system-tray behavior is represented first as a platform-neutral,
-value-only `CompanionService` readiness boundary.
+Decision: Companion/menu-bar/system-tray behavior is represented by a platform-neutral,
+value-only `CompanionService` boundary plus a desktop-owned Qt native adapter.
 
 Reason: Sentinel needs a future lightweight desktop entry point, but shell integration must not
 become hidden background autonomy or an execution side channel.
 
 Runtime behavior:
 
-- The user preference "Show Sentinel in menu bar / system tray" persists visibility intent only.
-- macOS menu bar, Windows system tray, and Linux StatusNotifier/AppIndicator/system tray are
-  readiness-only platform postures.
-- Companion actions are metadata labels only: Open Sentinel, New conversation, Quick note, Pause
-  companion, Settings, and Quit.
-- Quick Capture is placeholder metadata and does not write files, memory, transcripts, or call
-  models/providers.
-- QML receives only booleans, strings, and string lists through `DesktopShellViewModel`.
+- The user preference "Show Sentinel in menu bar / system tray" controls native companion
+  visibility when Qt reports tray/status item support.
+- macOS uses Qt tray/status item behavior first, Windows uses Qt system tray behavior, and Linux
+  uses Qt tray/status notifier behavior where available.
+- If native tray/status item support is unavailable, the companion degrades to unavailable
+  metadata and does not create an alternate daemon.
+- Native actions are foreground-safe shell actions: Open Sentinel, New Conversation, Settings,
+  Pause Companion, and Quit. Quick Note / Capture remains disabled and metadata-only.
+- Pause Companion changes only companion presentation/readiness metadata, not runtime/model
+  behavior.
+- QML receives only safe booleans, strings, and string lists through `DesktopShellViewModel`.
 
 Out of scope:
 
-- Native tray/menu objects, startup agents, hidden background workers, timers, autonomous loops,
-  provider/model calls, cloud/API calls, filesystem scanning, microphone capture, playback,
-  STT/TTS activation, tools/plugins, action execution, process exit, and OS-specific handle
-  exposure.
+- Startup agents, hidden background workers, timers, autonomous loops, provider/model calls,
+  cloud/API calls, filesystem scanning, microphone capture, playback, STT/TTS activation,
+  tools/plugins, subprocess execution, hidden indexing, and OS-specific handle exposure to QML.
 
 ## 2. Modular Monolith
 

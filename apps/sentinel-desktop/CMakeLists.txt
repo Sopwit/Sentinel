@@ -17,7 +17,9 @@ target_link_libraries(sentinel_desktop_viewmodels
 )
 
 qt_add_executable(sentinel-desktop
+    include/sentinel/desktop/NativeCompanionAdapter.h
     main.cpp
+    src/NativeCompanionAdapter.cpp
 )
 
 set(SENTINEL_TRANSLATION_SOURCES
@@ -144,6 +146,7 @@ target_link_libraries(sentinel-desktop
         Qt6::Gui
         Qt6::Quick
         Qt6::Qml
+        Qt6::Widgets
 )
 
 set_target_properties(sentinel-desktop PROPERTIES

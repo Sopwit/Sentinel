@@ -2,6 +2,34 @@
 
 ## Completed / Stable
 
+### Phase 43.5: Native Companion Activation
+
+Completed. Turns the companion/menu-bar/system-tray foundation into a Qt-native desktop shell
+integration while preserving Sentinel's safety boundaries.
+
+Scope:
+
+- Added a desktop-owned native companion adapter backed by `QSystemTrayIcon` and `QMenu`.
+- Wired the persisted "Show Sentinel in menu bar / system tray" setting to actual tray/status item
+  visibility when the platform reports native tray support.
+- macOS uses Qt tray/status item behavior first, Windows uses Qt system tray behavior, and Linux
+  uses Qt tray/status notifier behavior where available with graceful unavailable metadata when it
+  is not.
+- Added native menu actions for Open Sentinel, New Conversation, disabled Quick Note / Capture,
+  Pause Companion, Settings, and Quit.
+- Open Sentinel shows, raises, and requests activation for the main window. Settings opens the
+  foreground Settings page. New Conversation uses the existing safe conversation creation path.
+- Pause Companion changes companion presentation/readiness metadata only.
+- QML receives safe companion availability, status, paused state, action summaries, platform
+  summaries, and traces through `DesktopShellViewModel`.
+
+Known limitation:
+
+- Quick Note / Capture remains disabled and metadata-only. The companion does not add background
+  AI execution, provider/model calls, cloud/API calls, filesystem scanning, microphone or playback
+  activation, STT/TTS, tools/plugins, autonomous agents, subprocess execution, hidden indexing, or
+  new non-Qt dependencies.
+
 ### Phase 43.0-43.12: Companion / Tray / Menu Bar Foundation
 
 Completed. Adds a safe, cross-platform companion surface foundation so Sentinel can expose

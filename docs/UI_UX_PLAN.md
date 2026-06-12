@@ -197,19 +197,25 @@ Permission state UX:
 
 ## Phase 43 Companion UX Notes
 
-Phase 43.0 through Phase 43.12 adds companion/menu-bar/system-tray readiness UX without creating
-a native tray item, background worker, hidden daemon, or executable companion actions.
+Phase 43.0 through Phase 43.12 added companion/menu-bar/system-tray readiness UX without creating
+a native tray item, background worker, hidden daemon, or executable companion actions. Phase 43.5
+activates native Qt tray/menu-bar presentation through `QSystemTrayIcon` while keeping shell
+actions foreground-safe.
 
 Guidelines:
 
 - Settings General exposes a normal user-facing "Show Sentinel in menu bar / system tray"
-  preference. The setting persists visibility intent only and must clearly show readiness-only
-  status until native platform integration is implemented.
-- Normal mode should show only the preference, availability/status, and a concise safety boundary.
+  preference. The setting now controls native companion visibility when tray/status item support is
+  available and shows unavailable readiness when it is not.
+- Normal mode should show only the preference, availability/status, paused state by status text,
+  and a concise safety boundary.
 - Developer Mode may show platform capability, action summaries, quick-capture readiness, and
   bounded traces.
-- Companion actions are labels/readiness metadata only in this phase: Open Sentinel, New
-  conversation, Quick note, Pause companion, Settings, and Quit.
+- Companion actions are native menu actions only for foreground-safe shell behavior: Open Sentinel,
+  New Conversation, Pause Companion, Settings, and Quit. Quick Note / Capture remains disabled and
+  metadata-only.
+- Pause Companion changes only companion presentation/readiness metadata. It must not affect
+  provider/model/runtime behavior.
 - Quick Capture remains a placeholder. It must not write files, committed memory, transcript
   messages, or trigger model/provider calls.
 - Companion UI must not imply hidden background execution, startup autonomy, tool/plugin

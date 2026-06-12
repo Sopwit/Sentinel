@@ -597,20 +597,20 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
     QVERIFY(!fixture.viewModel.companionEnabled());
     QVERIFY(!fixture.viewModel.companionAvailable());
     QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Disabled"));
-    QCOMPARE(fixture.viewModel.companionAvailability(), QStringLiteral("Readiness Only"));
+    QCOMPARE(fixture.viewModel.companionAvailability(), QStringLiteral("Unavailable"));
     QVERIFY(fixture.viewModel.companionPlatformCapability()
-                .contains(QStringLiteral("readiness only")));
+                .contains(QStringLiteral("native integration unavailable")));
     QVERIFY(fixture.viewModel.companionPermissionPosture()
-                .contains(QStringLiteral("Disabled by default")));
+                .contains(QStringLiteral("foreground-safe shell")));
     QVERIFY(fixture.viewModel.companionSafetyBoundary()
                 .contains(QStringLiteral("no background daemon")));
     QVERIFY(fixture.viewModel.companionQuickCaptureSummary()
                 .contains(QStringLiteral("no note")));
     QCOMPARE(fixture.viewModel.companionActionSummaries().size(), 6);
     QCOMPARE(fixture.viewModel.companionPlatformSummaries().size(), 3);
-    QCOMPARE(fixture.viewModel.companionTraceSummaries().size(), 5);
+    QCOMPARE(fixture.viewModel.companionTraceSummaries().size(), 6);
     QVERIFY(fixture.viewModel.companionActionSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Quick note")));
+                .contains(QStringLiteral("Quick Note")));
 
     fixture.viewModel.setCompanionEnabled(true);
 
@@ -619,6 +619,21 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
     QVERIFY(!fixture.viewModel.companionAvailable());
     QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Readiness Only"));
     QCOMPARE(companionSpy.count(), 1);
+
+    fixture.viewModel.setCompanionNativeAvailable(true);
+
+    QVERIFY(fixture.viewModel.companionAvailable());
+    QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Active"));
+    QCOMPARE(fixture.viewModel.companionAvailability(), QStringLiteral("Native Available"));
+    QCOMPARE(companionSpy.count(), 2);
+
+    fixture.viewModel.setCompanionPaused(true);
+
+    QVERIFY(fixture.viewModel.companionPaused());
+    QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Paused"));
+    QVERIFY(fixture.viewModel.companionActionSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Resume Companion")));
+    QCOMPARE(companionSpy.count(), 3);
 }
 
 void DesktopShellViewModelTest::exposesOllamaRuntimeBoundaryMetadata() {
@@ -1487,6 +1502,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("modelRequirementSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("companionEnabled"), QByteArrayLiteral("bool")},
         {QStringLiteral("companionAvailable"), QByteArrayLiteral("bool")},
+        {QStringLiteral("companionPaused"), QByteArrayLiteral("bool")},
         {QStringLiteral("companionStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("companionAvailability"), QByteArrayLiteral("QString")},
         {QStringLiteral("companionPlatformCapability"), QByteArrayLiteral("QString")},
