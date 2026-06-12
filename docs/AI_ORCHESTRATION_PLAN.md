@@ -1,5 +1,14 @@
 # AI Orchestration Plan
 
+Phase 45.0 through Phase 45.12 refines the metadata-only workspace UX and permission foundation.
+Settings shows selected workspace metadata, root state, readiness, disabled Choose Workspace and
+Clear Workspace placeholders, and explicit permission posture labels: Disabled, Ask Every Time,
+Trusted, and Enabled. The current posture remains Disabled and no posture activates workspace
+access in this build. Developer Mode shows only workspace boundary diagnostics. No native file
+picker, workspace clear operation, filesystem scan, automatic folder read, indexing, embeddings,
+subprocess, tool, plugin, autonomous agent, background worker, provider/model execution,
+cloud/API call, hidden memory write, or workspace-derived prompt context is added.
+
 Phase 44.0 through Phase 44.12 adds a metadata-only workspace foundation. `WorkspaceService`
 reports local placeholder workspace metadata, selected workspace readiness, permission posture,
 and developer boundary diagnostics. The persisted selected workspace setting stores an id only.

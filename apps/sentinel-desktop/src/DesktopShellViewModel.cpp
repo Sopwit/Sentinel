@@ -3002,6 +3002,10 @@ QString DesktopShellViewModel::selectedWorkspaceAccessState() const {
     return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).accessState;
 }
 
+QString DesktopShellViewModel::workspacePermissionPosture() const {
+    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).permissionPosture;
+}
+
 QString DesktopShellViewModel::selectedWorkspaceRootSummary() const {
     return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).rootSummary;
 }
@@ -3036,6 +3040,14 @@ QStringList DesktopShellViewModel::workspaceNames() const {
 
 QStringList DesktopShellViewModel::workspaceSummaries() const {
     return workspaceService_.workspaceSummaries();
+}
+
+QStringList DesktopShellViewModel::workspacePermissionPostures() const {
+    return workspaceService_.permissionPostures();
+}
+
+QStringList DesktopShellViewModel::workspaceActionPlaceholders() const {
+    return workspaceService_.actionPlaceholders();
 }
 
 QStringList DesktopShellViewModel::workspaceReadinessChecks() const {

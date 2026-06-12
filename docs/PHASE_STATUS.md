@@ -2,6 +2,31 @@
 
 ## Completed / Stable
 
+### Phase 45.0-45.12: Workspace UX And Permission Foundation Refinement
+
+Completed. Refines the workspace foundation into a clearer user-facing readiness layer while
+keeping workspace access non-operational.
+
+Scope:
+
+- Polished Settings > Workspace copy and presentation around selected workspace state, root
+  metadata, readiness, permission posture, and future disabled actions.
+- Added explicit workspace permission posture metadata: Disabled, Ask Every Time, Trusted, and
+  Enabled. The current posture is Disabled and does not grant filesystem authority.
+- Replaced action affordances with disabled Choose Workspace and Clear Workspace placeholders,
+  plus metadata explaining that scan and index behavior remain unavailable.
+- Kept Home to a compact workspace readiness chip and Developer Mode to read-only workspace
+  boundary diagnostics.
+- Extended focused tests for workspace metadata, settings persistence, and
+  `DesktopShellViewModel` workspace exposure.
+
+Known limitation:
+
+- This phase does not add native file pickers, workspace clearing behavior, filesystem scanning,
+  automatic folder reading, indexing, embeddings, subprocesses, tools/plugins, autonomous agents,
+  background workers, provider/model execution, cloud/API calls, hidden memory writes, or
+  workspace-derived prompt context.
+
 ### Phase 44.0-44.12: Workspace Foundation
 
 Completed. Adds a local-first workspace foundation for future project context while keeping

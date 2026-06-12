@@ -2875,12 +2875,18 @@ void DesktopShellViewModelTest::exposesWorkspaceReadinessMetadata() {
     QCOMPARE(fixture.viewModel.selectedWorkspaceName(), QStringLiteral("Local Workspace"));
     QCOMPARE(fixture.viewModel.selectedWorkspaceAccessState(),
              QStringLiteral("Access not enabled"));
+    QCOMPARE(fixture.viewModel.workspacePermissionPosture(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.workspacePermissionPostures(),
+             QStringList({QStringLiteral("Disabled"), QStringLiteral("Ask Every Time"),
+                          QStringLiteral("Trusted"), QStringLiteral("Enabled")}));
     QVERIFY(fixture.viewModel.workspaceReadinessSummary().contains(
         QStringLiteral("Workspace access is not enabled yet")));
     QVERIFY(fixture.viewModel.workspaceReadinessChecks().contains(
         QStringLiteral("Filesystem scanning: disabled")));
     QVERIFY(fixture.viewModel.workspaceBoundaryDiagnostics().contains(
-        QStringLiteral("Permission model: future explicit opt-in required")));
+        QStringLiteral("Permission model: Disabled, Ask Every Time, Trusted, Enabled")));
+    QVERIFY(fixture.viewModel.workspaceActionPlaceholders().contains(QStringLiteral(
+        "Clear Workspace: unavailable; only placeholder metadata is selected")));
     QCOMPARE(fixture.viewModel.workspaceIds(), QStringList({QStringLiteral("local-placeholder")}));
 
     fixture.viewModel.setSelectedWorkspaceId(QStringLiteral("unknown"));

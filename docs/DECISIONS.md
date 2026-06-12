@@ -64,6 +64,30 @@ Out of scope:
   cloud/API calls, filesystem scanning, microphone capture, playback, STT/TTS activation,
   tools/plugins, subprocess execution, hidden indexing, and OS-specific handle exposure to QML.
 
+## 1.3 Workspace Readiness And Permission Posture
+
+Decision: Workspace access is represented as readiness metadata with explicit permission posture
+labels before any filesystem authority exists.
+
+Reason: Users need a clear workspace surface, but selecting or viewing workspace readiness must
+not silently grant directory access, scan files, index content, or feed workspace data into prompts.
+
+Runtime behavior:
+
+- The current workspace is a local metadata placeholder.
+- The current permission posture is Disabled.
+- Future posture labels are Ask Every Time, Trusted, and Enabled, but they are inert in this
+  build.
+- Choose Workspace and Clear Workspace are disabled placeholders until native picker, revocation,
+  and core policy behavior are explicitly implemented.
+- QML receives only QML-safe strings and string lists through `DesktopShellViewModel`.
+
+Out of scope:
+
+- Native file pickers, path grants, filesystem reads, recursive scans, indexing, embeddings,
+  provider/model calls, cloud/API calls, subprocesses, tools/plugins, autonomous agents,
+  background workers, hidden memory writes, and workspace-derived prompt context.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.
