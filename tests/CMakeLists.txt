@@ -1,4 +1,8 @@
 function(add_sentinel_core_test target source)
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
+        message(FATAL_ERROR "Registered test source does not exist: ${source}")
+    endif()
+
     qt_add_executable(${target}
         ${source}
     )
@@ -9,7 +13,7 @@ function(add_sentinel_core_test target source)
             Qt6::Test
     )
 
-    add_test(NAME ${target} COMMAND ${target})
+    add_test(NAME ${target} COMMAND $<TARGET_FILE:${target}>)
 endfunction()
 
 add_sentinel_core_test(test_mode_manager core/test_mode_manager.cpp)
