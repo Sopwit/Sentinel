@@ -114,7 +114,9 @@ Reason: Real providers, local providers, status handling, and future configurati
 
 Provider posture decision:
 
-- The current product UI must state Local Ollama only and no cloud provider active.
+- The current product UI must state that Local Ollama is the only active execution path and no
+  cloud provider is active. Phase 46 updates future-facing provider labels to use generic selected
+  local provider wording instead of Ollama-only UI copy.
 - Future external API/cloud providers must be explicit opt-in integrations with separate provider
   boundaries, settings, safety review, tests, and user-facing activation. They must not appear as
   implied active configuration in normal UI.
@@ -3260,3 +3262,48 @@ Rules:
 Current status: Phase 44 is implemented as a local metadata boundary. Future workspace activation
 requires explicit permission scopes, session ownership, revocation metadata, and core-enforced
 policy before any filesystem access can be added.
+
+## 107. Provider Roadmap Must Not Be Ollama-Only
+
+Decision: Sentinel's provider roadmap must support multiple local runtime providers while keeping
+Local Ollama as the current default and only currently active chat execution path.
+
+Reason: Ollama is a strong default, but users may run local models through llama.cpp server,
+LM Studio, OpenAI-compatible local servers, vLLM-compatible endpoints, Jan, or other compatible
+local runtimes. The core and UI should model these providers generically now so later activation
+does not require undoing Ollama-specific assumptions.
+
+Provider rules:
+
+- Provider metadata must separate provider id, endpoint, model-list discovery, selected model,
+  readiness, streaming support, context-window metadata, local/cloud scope, API-key requirement,
+  and capabilities.
+- Required provider targets are Ollama, llama.cpp server, LM Studio local server,
+  OpenAI-compatible local endpoints, vLLM-compatible endpoints, Jan / other safe local
+  OpenAI-compatible runtimes, and future cloud providers such as OpenAI, Claude, Gemini, and
+  OpenRouter.
+- Any provider exposing an OpenAI-compatible API must use a shared OpenAI-compatible adapter
+  where practical.
+- LM Studio and llama.cpp begin as readiness/metadata-only unless safe chat execution is
+  explicitly wired in a later phase.
+- No automatic probing, background discovery daemon, hidden network call, filesystem scan,
+  subprocess launch, automatic provider fallback, cloud call, or API-key storage is authorized by
+  this roadmap.
+- Local endpoints default to loopback only: `127.0.0.1`, `localhost`, and `::1`.
+- Execution is allowed only when the provider is local or explicitly trusted, the endpoint is
+  valid, a model is selected, chat is enabled, and permission policy allows it.
+
+UI rules:
+
+- Settings > Local AI should show a provider selector for Ollama, llama.cpp, LM Studio,
+  OpenAI-compatible local, and Custom local endpoint.
+- Provider readiness should expose Installed/Reachable, Endpoint, Models discovered, Streaming
+  supported, and Context length when known.
+- Home/Chat and AI Bridge should use generic selected-provider wording such as Local Provider
+  instead of hardcoding Ollama-only labels.
+
+Test expectations:
+
+- Add provider registry coverage for Ollama, llama.cpp, LM Studio, and OpenAI-compatible targets.
+- Add endpoint validation tests, selected provider persistence tests, UI/view-model exposure
+  tests, and disabled-provider send refusal tests.

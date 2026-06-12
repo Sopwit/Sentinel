@@ -47,6 +47,28 @@ Guidelines:
 - Runtime UI controls must not imply downloads, installs, API-key entry, cloud execution,
   automatic fallback, tool execution, or background discovery.
 
+## Phase 46 Provider Roadmap UX Notes
+
+Phase 46.0 through Phase 46.12 updates the provider roadmap so Local AI surfaces can describe
+multiple local runtime providers without enabling new execution paths.
+
+Guidelines:
+
+- Settings > Local AI should show a provider selector with Ollama, llama.cpp, LM Studio,
+  OpenAI-compatible local, and Custom local endpoint. Local Ollama remains the default.
+- Provider readiness should show Installed/Reachable, Endpoint, Models discovered, Streaming
+  supported, and Context length when known.
+- Home/Chat should describe the selected provider generically as the local provider rather than
+  hardcoding Ollama-only copy.
+- AI Bridge should say "Local Provider" for the active local runtime surface.
+- LM Studio, llama.cpp, OpenAI-compatible local, Custom local endpoint, vLLM-compatible, and Jan /
+  compatible runtimes should be shown as disabled, metadata-only, or readiness-only until a later
+  phase explicitly enables safe chat execution.
+- UI must not offer automatic provider fallback, hidden provider probing, background discovery,
+  cloud activation, API-key entry, provider test calls, filesystem scanning, or subprocess launch
+  for local runtimes.
+- Local endpoint UI must default to loopback-only hosts: `127.0.0.1`, `localhost`, and `::1`.
+
 ## Phase 37 Model Registry UX Notes
 
 Phase 37.0 through Phase 37.12 adds model metadata visibility without adding model management
@@ -754,7 +776,9 @@ execute, approval, sandbox, tool-runtime, plugin, filesystem, shell, or autonomo
 selection is presentation-only: Companion reduces diagnostics, Focus compacts the UI and reduces
 motion, and Mission/System/Tactical foreground more telemetry. Voice copy should say prepared,
 disabled, or not active, with Whisper/Piper ready or missing summaries only in normal mode.
-Provider copy should state Local Ollama only and no cloud provider active.
+Provider copy should state that Local Ollama is the only active execution path and no cloud
+provider is active. Future-facing labels may use generic local-provider wording so the UI does not
+become Ollama-only.
 
 Phase 19.4 through Phase 19.6 cleans up the product UI after screenshot review. Home should be a
 clean chatbot-first screen with a compact greeting, concise Local Ollama/model status, stable
@@ -847,7 +871,9 @@ Still follow-up:
   machine tokens, provider/model names, paths, or internal ids.
 
 External APIs and cloud providers remain future opt-in features only. The current UI should say
-Local Ollama only and no cloud provider active, and it should not expose API-key configuration.
+Local Ollama is the only active execution path, no cloud provider is active, and it should not
+expose API-key configuration. Phase 46 provider surfaces should use generic selected-provider
+labels where the copy is not specifically describing the active Ollama execution path.
 
 Phase 6.5 adds text-only memory taxonomy visibility. Memory surfaces may show static category
 summaries, retention/privacy labels, and planner affinity metadata, but must not expose semantic

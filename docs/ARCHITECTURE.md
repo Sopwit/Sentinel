@@ -109,9 +109,12 @@ native local-first boundaries:
 - whisper.cpp and Piper are preferred future local voice candidates, subject to explicit activation
   phases, packaging review, platform testing, and model/voice license review. Kokoro, faster-whisper,
   Coqui, and StyleTTS-style systems remain optional or inspiration-only.
-- Ollama remains the primary local provider target. llama.cpp is a future native-runtime candidate.
-  LM Studio and cloud providers remain optional integrations behind explicit user configuration,
-  secure credentials, local/cloud boundary UX, and provider execution gates.
+- Ollama remains the current default local provider target, but the provider architecture must not
+  become Ollama-only. Future local runtime targets include llama.cpp server, LM Studio local
+  server, OpenAI-compatible local endpoints, vLLM-compatible endpoints, and Jan / other local
+  OpenAI-compatible runtimes where safe. Cloud providers remain optional integrations behind
+  explicit user configuration, secure credentials, local/cloud boundary UX, and provider execution
+  gates.
 
 Phase 41 does not authorize runtime behavior. No external code, provider, tool, plugin, voice,
 semantic/vector, cloud, sandbox, or autonomous execution path is added by the strategy documents.
@@ -206,21 +209,43 @@ revocation, and core policy behavior are separately scoped.
 Phase 36 introduces a value-only runtime provider abstraction above the existing local Ollama
 health/model metadata and inference boundary.
 
-The current registry contains:
+Phase 46 extends the roadmap for this boundary so Sentinel can support multiple local runtime
+providers without hardcoding Ollama behavior into UI or core logic. Local Ollama remains the
+current default and only currently active chat path. Planned provider targets are:
 
 - `ollama`: Local Ollama, the only enabled provider/runtime path.
-- `openai-compatible`: disabled placeholder metadata only.
+- `llama-cpp`: llama.cpp server, readiness/metadata-only until explicitly activated.
+- `lm-studio`: LM Studio local server, readiness/metadata-only until explicitly activated.
+- `openai-compatible-local`: OpenAI-compatible local endpoint, disabled until explicitly
+  activated.
+- `custom-local-endpoint`: user-configured local endpoint, disabled until explicitly activated.
+- `vllm-compatible`: vLLM-compatible endpoint, future target behind endpoint and trust gates.
+- `jan`: Jan or other safe local OpenAI-compatible runtime, future target through the shared
+  OpenAI-compatible adapter where compatible.
+- Future cloud providers such as OpenAI, Claude, Gemini, OpenRouter, and similar services,
+  disabled until explicit cloud activation, credential storage, billing/privacy UX, and audit
+  gates exist.
 
-Runtime provider descriptors expose provider id, display name, runtime state, deterministic
-readiness state, validation state, endpoint/model summaries, installed/configured/enabled flags,
-model names, and capability metadata. Capability metadata includes local-only, API-key
-requirement, offline support, structured output, reasoning, function calling, images, audio,
-streaming, tools, vision, and embeddings.
+Runtime provider descriptors expose provider id, display name, endpoint, model-list discovery
+state, selected model, readiness state, streaming support, context-window metadata, local/cloud
+scope, API-key requirement, validation state, installed/configured/enabled flags, and capability
+metadata. Capability metadata includes offline support, structured output, reasoning, function
+calling, images, audio, streaming, tools, vision, embeddings, and any known local runtime
+constraints.
 
 The registry can report selected provider, active provider, installed providers, configured
 providers, available local runtimes, capability summaries, and validation traces. Disabled
-provider selections fall back to the enabled local runtime as active provider metadata; they do
-not enable cloud execution or routing.
+provider selections must not send, route, or automatically fall back to another provider. Any
+provider exposing an OpenAI-compatible API should use a shared OpenAI-compatible adapter rather
+than duplicating request logic per runtime.
+
+No provider may be probed automatically unless the user enables it. The application must not start
+background discovery daemons, make hidden network calls, scan filesystems, launch llama.cpp, launch
+LM Studio, store API keys before the credential backend is ready, call cloud providers without
+explicit cloud enablement, or switch providers automatically. Local endpoint defaults are
+loopback-only: `127.0.0.1`, `localhost`, and `::1`. Execution is allowed only when the provider is
+local or explicitly trusted, the endpoint is valid, a model is selected, chat is enabled, and
+permission policy allows the request.
 
 ## Provider Credentials And Cloud Readiness
 
@@ -298,10 +323,12 @@ Selected model persistence is provider-aware. Ollama continues to use the existi
 for future providers. Disabled providers may expose placeholder model metadata only; selecting one
 does not enable execution or cloud/API calls.
 
-Send validation now refuses before transcript mutation unless the selected provider is Local
-Ollama, local chat inference is enabled, the endpoint is loopback HTTP and reachable, the selected
-model exists in discovered local Ollama metadata, the active conversation is not archived, and no
-request is already active.
+Send validation now refuses before transcript mutation unless the selected provider is executable
+under current policy. In the current desktop runtime that means Local Ollama only: local chat
+inference is enabled, the endpoint is loopback HTTP and reachable, the selected model exists in
+discovered local Ollama metadata, the active conversation is not archived, and no request is
+already active. Future providers must satisfy the same generic execution gates plus any
+provider-specific trust, credential, and capability requirements before they can send.
 
 The registry does not pull, install, delete, refresh, import, export, scan filesystems, inspect
 model files, call cloud providers, infer hidden capabilities, execute tools, or start background

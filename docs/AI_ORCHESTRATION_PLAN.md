@@ -1,5 +1,23 @@
 # AI Orchestration Plan
 
+Phase 46.0 through Phase 46.12 plans the multi-provider local runtime roadmap while preserving
+the current execution boundary. Sentinel must support multiple local runtime providers over time:
+Ollama, llama.cpp server, LM Studio local server, OpenAI-compatible local endpoints,
+vLLM-compatible endpoints, Jan and other local OpenAI-compatible runtimes where safe, plus future
+explicit cloud providers such as OpenAI, Claude, Gemini, OpenRouter, and similar services. Local
+Ollama remains the current default and the only currently active chat path.
+
+The provider abstraction must separate provider id, endpoint, model-list discovery, selected
+model, readiness, streaming support, context-window metadata, local/cloud scope, API-key
+requirement, and capabilities. Any provider exposing an OpenAI-compatible API should use a shared
+OpenAI-compatible adapter instead of provider-specific duplicate request logic. LM Studio and
+llama.cpp begin as readiness/metadata-only targets unless a later phase explicitly wires safe chat
+execution. No automatic provider probing, background discovery daemons, hidden network calls,
+filesystem scanning, subprocess launch, API-key storage, automatic fallback, cloud call, or
+non-loopback local endpoint is authorized by this roadmap phase. Execution remains allowed only
+when the provider is local or explicitly trusted, the endpoint is valid, a model is selected, chat
+is enabled, and permission policy allows the request.
+
 Phase 45.0 through Phase 45.12 refines the metadata-only workspace UX and permission foundation.
 Settings shows selected workspace metadata, root state, readiness, disabled Choose Workspace and
 Clear Workspace placeholders, and explicit permission posture labels: Disabled, Ask Every Time,
@@ -369,11 +387,12 @@ execution, subprocess, filesystem, semantic-authority, or autonomous authority i
 19.4 through Phase 19.6 continue that UI-only posture: Home is simplified into the primary
 chatbot surface, Runtime/Memory and Agents split normal user views from Developer metadata views,
 Settings hides low-level diagnostics in normal mode, voice copy distinguishes prepared readiness
-from inactive execution, and provider copy remains Local Ollama only with no cloud provider
-active. Developer Mode remains a visibility-only setting and does not change permission, safety,
-provider, model, voice, tool, filesystem, subprocess, semantic, or agent authority. The phase also
-records the future i18n approach: Qt-native `qsTr` plus `.ts`/`.qm` catalogs, with
-English/Turkish localization and runtime language switching deferred until explicitly scoped.
+from inactive execution, and provider copy states Local Ollama is the only active execution path
+with no cloud provider active. Developer Mode remains a visibility-only setting and does not
+change permission, safety, provider, model, voice, tool, filesystem, subprocess, semantic, or
+agent authority. The phase also records the future i18n approach: Qt-native `qsTr` plus
+`.ts`/`.qm` catalogs, with English/Turkish localization and runtime language switching deferred
+until explicitly scoped.
 Phase 15.7 stabilizes
 controlled local Ollama reliability before additional voice/STT work: health, discovery,
 generation, and streaming requests carry timeout metadata; failures are categorized into
