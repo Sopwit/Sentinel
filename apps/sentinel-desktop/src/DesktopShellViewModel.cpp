@@ -89,6 +89,16 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::companionChanged);
     connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
             &DesktopShellViewModel::developerModeChanged);
+    connect(&settings_, &core::AppSettings::updateCheckPolicyChanged, this,
+            &DesktopShellViewModel::nativeExperienceChanged);
+    connect(&settings_, &core::AppSettings::notificationPolicyChanged, this,
+            &DesktopShellViewModel::nativeExperienceChanged);
+    connect(&settings_, &core::AppSettings::onboardingCompleteChanged, this,
+            &DesktopShellViewModel::nativeExperienceChanged);
+    connect(&settings_, &core::AppSettings::onboardingUseCaseChanged, this,
+            &DesktopShellViewModel::nativeExperienceChanged);
+    connect(&settings_, &core::AppSettings::recoveryDraftTextChanged, this,
+            &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::selectedSkillProfileChanged, this,
             &DesktopShellViewModel::skillProfileChanged);
     connect(&settings_, &core::AppSettings::selectedSkillProfileChanged, this,
@@ -2828,6 +2838,10 @@ QString DesktopShellViewModel::currentModeName() const {
     return modeManager_.currentModeName();
 }
 
+void DesktopShellViewModel::setCurrentModeName(const QString& modeName) {
+    modeManager_.setModeByName(modeName);
+}
+
 QStringList DesktopShellViewModel::availableModes() const {
     return modeManager_.availableModes();
 }
@@ -2993,6 +3007,69 @@ bool DesktopShellViewModel::developerModeEnabled() const {
 
 void DesktopShellViewModel::setDeveloperModeEnabled(bool enabled) {
     settings_.setDeveloperModeEnabled(enabled);
+}
+
+QString DesktopShellViewModel::updateCheckPolicy() const {
+    return settings_.updateCheckPolicy();
+}
+
+void DesktopShellViewModel::setUpdateCheckPolicy(const QString& policy) {
+    settings_.setUpdateCheckPolicy(policy);
+}
+
+QString DesktopShellViewModel::notificationPolicy() const {
+    return settings_.notificationPolicy();
+}
+
+void DesktopShellViewModel::setNotificationPolicy(const QString& policy) {
+    settings_.setNotificationPolicy(policy);
+}
+
+bool DesktopShellViewModel::onboardingComplete() const {
+    return settings_.onboardingComplete();
+}
+
+void DesktopShellViewModel::setOnboardingComplete(bool complete) {
+    settings_.setOnboardingComplete(complete);
+}
+
+QString DesktopShellViewModel::onboardingUseCase() const {
+    return settings_.onboardingUseCase();
+}
+
+void DesktopShellViewModel::setOnboardingUseCase(const QString& useCase) {
+    settings_.setOnboardingUseCase(useCase);
+}
+
+QString DesktopShellViewModel::recoveryDraftText() const {
+    return settings_.recoveryDraftText();
+}
+
+void DesktopShellViewModel::setRecoveryDraftText(const QString& text) {
+    settings_.setRecoveryDraftText(text);
+}
+
+QStringList DesktopShellViewModel::activityTimelineSummaries() const {
+    QStringList lines{
+        QStringLiteral("Today - Chat Created - %1").arg(conversationListCurrentTitle()),
+        QStringLiteral("Today - Export Completed - %1").arg(conversationExportLastStatus()),
+        QStringLiteral("Today - Brain Memory Saved - %1 entries").arg(memoryEntryCount()),
+        QStringLiteral("Yesterday - Theme Changed - %1").arg(themeName()),
+        QStringLiteral("Yesterday - Settings Modified - local preferences only"),
+    };
+    return lines;
+}
+
+QStringList DesktopShellViewModel::notificationCenterSummaries() const {
+    return {
+        QStringLiteral("Chat Completed - shown when a foreground chat finishes"),
+        QStringLiteral("Export Completed - %1").arg(conversationExportLastResultSummary()),
+        QStringLiteral("Update Available - check is manual; no hidden polling"),
+        QStringLiteral("Permission Needed - future explicit approvals only"),
+        QStringLiteral("Brain Saved - local memory events only"),
+        QStringLiteral("Error - local failures"),
+        QStringLiteral("Warning - safety boundary notices"),
+    };
 }
 
 QString DesktopShellViewModel::selectedSkillProfile() const {
@@ -3412,6 +3489,11 @@ void DesktopShellViewModel::clearConversationSearch() {
 
 bool DesktopShellViewModel::exportTranscript(const QString& format) {
     return controller_.exportTranscript(format);
+}
+
+bool DesktopShellViewModel::checkForUpdates() {
+    emit nativeExperienceChanged();
+    return false;
 }
 
 bool DesktopShellViewModel::requestConversationExport(const QString& format) {

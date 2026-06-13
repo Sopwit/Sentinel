@@ -9,15 +9,21 @@ SentinelOverlayModal {
     required property var viewModel
     property string query: ""
     property string actionStatus: ""
+    signal openSettingsRequested()
+    signal focusChatRequested()
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property var actions: [
-        { "title": qsTr("Home"), "subtitle": qsTr("Open the main local chat workspace"), "kind": qsTr("Navigate"), "page": "Dashboard", "enabled": true },
-        { "title": qsTr("Brain"), "subtitle": qsTr("Open memory, recall, context, and continuity"), "kind": qsTr("Navigate"), "page": "Memory", "enabled": true },
-        { "title": qsTr("Agents"), "subtitle": qsTr("Open metadata-only agent readiness"), "kind": qsTr("Navigate"), "page": "Agents", "enabled": true },
-        { "title": qsTr("Settings"), "subtitle": qsTr("Open floating desktop preferences"), "kind": qsTr("Modal"), "page": "Settings", "enabled": true },
-        { "title": qsTr("Clear Chat History"), "subtitle": qsTr("Prepared only; no command-palette mutation"), "kind": qsTr("Quick action"), "page": "", "enabled": false },
-        { "title": qsTr("Export Markdown"), "subtitle": qsTr("Prepared only; no filesystem access from palette"), "kind": qsTr("Quick action"), "page": "", "enabled": false },
-        { "title": qsTr("Export JSON"), "subtitle": qsTr("Prepared only; no filesystem access from palette"), "kind": qsTr("Quick action"), "page": "", "enabled": false }
+        { "title": qsTr("Ask Sentinel"), "subtitle": qsTr("Focus the fixed chat composer"), "kind": qsTr("Chat"), "action": "ask", "enabled": true },
+        { "title": qsTr("New Chat"), "subtitle": qsTr("Create a local conversation"), "kind": qsTr("Chat"), "action": "new-chat", "enabled": true },
+        { "title": qsTr("Search Chats"), "subtitle": qsTr("Filter conversations by title or id"), "kind": qsTr("Search"), "action": "search-chats", "enabled": true },
+        { "title": qsTr("Open Brain"), "subtitle": qsTr("Memory, recall, context, and continuity"), "kind": qsTr("Navigate"), "page": "Memory", "enabled": true },
+        { "title": qsTr("Open Settings"), "subtitle": qsTr("Open floating preferences"), "kind": qsTr("Modal"), "action": "settings", "enabled": true },
+        { "title": qsTr("Check Updates"), "subtitle": qsTr("Manual stub; no hidden network polling"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
+        { "title": qsTr("Export Current Chat"), "subtitle": qsTr("Save Markdown in the controlled export directory"), "kind": qsTr("Export"), "action": "export-md", "enabled": true },
+        { "title": qsTr("Change Theme"), "subtitle": qsTr("Cycle Sentinel Dark, Midnight, Aurora, Graphite, System Adaptive"), "kind": qsTr("Appearance"), "action": "theme", "enabled": true },
+        { "title": qsTr("Switch Model"), "subtitle": qsTr("Open Models settings"), "kind": qsTr("Models"), "action": "settings", "enabled": true },
+        { "title": qsTr("Toggle Focus Mode"), "subtitle": qsTr("Switch to Focus Mode presentation"), "kind": qsTr("Mode"), "action": "focus-mode", "enabled": true },
+        { "title": qsTr("Universal Search"), "subtitle": qsTr("Search chats, Brain, commands, settings, models, and profiles"), "kind": qsTr("Search"), "action": "universal-search", "enabled": true }
     ]
     readonly property var filteredActions: {
         var normalized = query.trim().toLowerCase()
@@ -46,12 +52,40 @@ SentinelOverlayModal {
     }
 
     function runAction(action) {
-        if (action.enabled && action.page.length > 0) {
+        if (action.page && action.page.length > 0) {
             viewModel.currentPage = action.page
             close()
             return
         }
-        actionStatus = qsTr("%1 is metadata-only in this shell.").arg(action.title)
+        if (action.action === "ask") {
+            close()
+            palette.focusChatRequested()
+        } else if (action.action === "new-chat") {
+            viewModel.createConversation(qsTr("New Chat"))
+            close()
+            palette.focusChatRequested()
+        } else if (action.action === "settings") {
+            close()
+            palette.openSettingsRequested()
+        } else if (action.action === "updates") {
+            viewModel.checkForUpdates()
+            actionStatus = qsTr("No update check was sent. Manual update networking is not implemented.")
+        } else if (action.action === "export-md") {
+            viewModel.exportTranscript("markdown")
+            actionStatus = viewModel.conversationExportLastResultSummary
+        } else if (action.action === "theme") {
+            var choices = ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
+            var next = (choices.indexOf(viewModel.themeName) + 1) % choices.length
+            viewModel.themeName = choices[next]
+            actionStatus = qsTr("Theme changed to %1.").arg(viewModel.themeName)
+        } else if (action.action === "focus-mode") {
+            viewModel.currentModeName = "Focus Mode"
+            actionStatus = qsTr("Focus Mode selected.")
+        } else if (action.action === "search-chats" || action.action === "universal-search") {
+            actionStatus = qsTr("Type to search commands, chats, Brain, settings, models, and profiles.")
+        } else {
+            actionStatus = qsTr("%1 is unavailable.").arg(action.title)
+        }
     }
 
     contentItem: ColumnLayout {

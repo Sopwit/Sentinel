@@ -12,6 +12,8 @@ Item {
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property string uiSelfCheck: "modal-ready rail-scroll-sync advanced-gated voice-path-wrap profiles-metadata permissions-policy tool-gateway agent-runtime bottom-safe-scroll"
     readonly property var themeChoices: ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
+    readonly property var notificationPolicies: ["Disabled", "Important Only", "All", "Custom"]
+    readonly property var updatePolicies: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
     readonly property var categories: developerMode
                                     ? ["General", "Appearance", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates", "Advanced"]
                                     : ["General", "Appearance", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates"]
@@ -1673,6 +1675,47 @@ Item {
                                 Layout.fillWidth: true
                                 onClicked: settingsPage.viewModel.exportTranscript("json")
                             }
+
+                            SentinelButton {
+                                text: qsTr("Export TXT")
+                                enabled: settingsPage.viewModel.conversationExportAvailable
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.exportTranscript("txt")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Export PDF")
+                                enabled: settingsPage.viewModel.conversationExportAvailable
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.exportTranscript("pdf")
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Brain Export")
+                            value: qsTr("Backup foundation: .sentinelbackup package metadata for Brain, chats, and settings. Restore metadata UI is prepared; no cloud sync.")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 2
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Backup Metadata")
+                                enabled: false
+                                Layout.fillWidth: true
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Restore Metadata")
+                                enabled: false
+                                Layout.fillWidth: true
+                            }
                         }
                     }
                 }
@@ -2448,7 +2491,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Notifications")
-                            subtitle: qsTr("Professional notification roadmap. No background polling or hidden notifications.")
+                            subtitle: qsTr("In-app notification center. No background polling or hidden notifications.")
                             Layout.fillWidth: true
                         }
 
@@ -2463,26 +2506,34 @@ Item {
                                     required property string modelData
                                     label: qsTr("Policy")
                                     value: modelData
-                                    accent: modelData === qsTr("Disabled") ? settingsPage.modeAccent
-                                                                            : SentinelTheme.textMuted
-                                    selected: modelData === qsTr("Disabled")
-                                    muted: modelData !== qsTr("Disabled")
+                                    accent: modelData === settingsPage.viewModel.notificationPolicy ? settingsPage.modeAccent
+                                                                                                     : SentinelTheme.textMuted
+                                    selected: modelData === settingsPage.viewModel.notificationPolicy
+                                    muted: modelData !== settingsPage.viewModel.notificationPolicy
                                 }
                             }
+                        }
+
+                        ComboBox {
+                            id: notificationPolicyCombo
+                            Layout.fillWidth: true
+                            model: settingsPage.notificationPolicies
+                            currentIndex: settingsPage.notificationPolicies.indexOf(settingsPage.viewModel.notificationPolicy)
+                            onActivated: settingsPage.viewModel.notificationPolicy = currentText
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Center")
+                            value: settingsPage.viewModel.notificationCenterSummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 8
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Categories")
-                            value: qsTr("Chat complete, model ready, update available, export complete, voice ready, permission request, agent plan ready, tool approval required, workspace blocked, errors, daily brief, focus complete.")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 5
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Platform Targets")
-                            value: qsTr("macOS Notification Center / Windows Toast / Linux desktop notifications / future in-app notification center.")
+                            value: qsTr("Chat Completed, Export Completed, Update Available, Permission Needed, Brain Saved, Error, Warning.")
                             Layout.fillWidth: true
                             valueMaximumLineCount: 3
                         }
@@ -2547,24 +2598,33 @@ Item {
                             spacing: SentinelTheme.spaceSm
 
                             Repeater {
-                                model: [qsTr("Never"), qsTr("Ask before checking"), qsTr("Weekly"), qsTr("On Startup")]
+                                model: [qsTr("Never"), qsTr("Ask Before Checking"), qsTr("Weekly"), qsTr("On Startup")]
 
                                 StatusChip {
                                     required property string modelData
                                     label: qsTr("Check Policy")
                                     value: modelData
-                                    accent: modelData === qsTr("Never") ? settingsPage.modeAccent
-                                                                         : SentinelTheme.textMuted
-                                    selected: modelData === qsTr("Never")
-                                    muted: modelData !== qsTr("Never")
+                                    accent: modelData === settingsPage.viewModel.updateCheckPolicy ? settingsPage.modeAccent
+                                                                                                    : SentinelTheme.textMuted
+                                    selected: modelData === settingsPage.viewModel.updateCheckPolicy
+                                    muted: modelData !== settingsPage.viewModel.updateCheckPolicy
                                 }
                             }
                         }
 
+                        ComboBox {
+                            id: updatePolicyCombo
+                            Layout.fillWidth: true
+                            model: settingsPage.updatePolicies
+                            currentIndex: settingsPage.updatePolicies.indexOf(settingsPage.viewModel.updateCheckPolicy)
+                            onActivated: settingsPage.viewModel.updateCheckPolicy = currentText
+                        }
+
                         SentinelButton {
                             text: qsTr("Check for Updates")
-                            enabled: false
+                            enabled: true
                             Layout.preferredWidth: 180
+                            onClicked: settingsPage.viewModel.checkForUpdates()
                         }
                     }
                 }
@@ -2583,9 +2643,24 @@ Item {
                         spacing: SentinelTheme.spaceMd
 
                         SectionTitle {
-                            title: qsTr("Advanced Diagnostics")
-                            subtitle: qsTr("Read-only runtime boundary metadata.")
+                            title: qsTr("Advanced")
+                            subtitle: qsTr("Diagnostics, logs, runtime status, and trace viewer.")
                             Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+                            Repeater {
+                                model: [qsTr("Diagnostics"), qsTr("Logs"), qsTr("Runtime Status"), qsTr("Trace Viewer")]
+                                StatusChip {
+                                    required property string modelData
+                                    label: qsTr("Section")
+                                    value: modelData
+                                    accent: SentinelTheme.textMuted
+                                    muted: true
+                                }
+                            }
                         }
 
                         SectionTitle {

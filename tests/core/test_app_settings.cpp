@@ -43,6 +43,7 @@ private slots:
     void persistsSelectedWorkspaceId();
     void persistsSelectedSkillProfile();
     void persistsDefaultPermissionPolicyState();
+    void persistsNativeExperiencePreferences();
     void persistsVoiceConfigurationPaths();
     void persistsPiperFileOutputExecutionOptIn();
     void persistsLocalAiRuntimeSettingsThroughJsonStore();
@@ -77,6 +78,11 @@ void AppSettingsTest::exposesDefaults() {
     QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("local-placeholder"));
     QCOMPARE(settings->selectedSkillProfile(), QStringLiteral("developer"));
     QCOMPARE(settings->defaultPermissionPolicyState(), QStringLiteral("Disabled"));
+    QCOMPARE(settings->updateCheckPolicy(), QStringLiteral("Ask Before Checking"));
+    QCOMPARE(settings->notificationPolicy(), QStringLiteral("Important Only"));
+    QVERIFY(!settings->onboardingComplete());
+    QCOMPARE(settings->onboardingUseCase(), QStringLiteral("General Assistant"));
+    QVERIFY(settings->recoveryDraftText().isEmpty());
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -502,6 +508,48 @@ void AppSettingsTest::persistsDefaultPermissionPolicyState() {
 
     settings->setDefaultPermissionPolicyState(QStringLiteral("Disabled"));
     QCOMPARE(spy.count(), 3);
+}
+
+void AppSettingsTest::persistsNativeExperiencePreferences() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const auto filePath = dir.filePath(QStringLiteral("settings.json"));
+
+    {
+        AppSettings settings{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
+        QSignalSpy updateSpy(&settings, &AppSettings::updateCheckPolicyChanged);
+        QSignalSpy notificationSpy(&settings, &AppSettings::notificationPolicyChanged);
+        QSignalSpy onboardingSpy(&settings, &AppSettings::onboardingCompleteChanged);
+
+        settings.setUpdateCheckPolicy(QStringLiteral(" weekly "));
+        settings.setNotificationPolicy(QStringLiteral("all"));
+        settings.setOnboardingUseCase(QStringLiteral("coding"));
+        settings.setOnboardingComplete(true);
+        settings.setRecoveryDraftText(QStringLiteral("draft"));
+
+        QCOMPARE(settings.updateCheckPolicy(), QStringLiteral("Weekly"));
+        QCOMPARE(settings.notificationPolicy(), QStringLiteral("All"));
+        QCOMPARE(settings.onboardingUseCase(), QStringLiteral("Coding"));
+        QVERIFY(settings.onboardingComplete());
+        QCOMPARE(settings.recoveryDraftText(), QStringLiteral("draft"));
+        QCOMPARE(updateSpy.count(), 1);
+        QCOMPARE(notificationSpy.count(), 1);
+        QCOMPARE(onboardingSpy.count(), 1);
+    }
+
+    AppSettings reloaded{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
+    QCOMPARE(reloaded.updateCheckPolicy(), QStringLiteral("Weekly"));
+    QCOMPARE(reloaded.notificationPolicy(), QStringLiteral("All"));
+    QCOMPARE(reloaded.onboardingUseCase(), QStringLiteral("Coding"));
+    QVERIFY(reloaded.onboardingComplete());
+    QCOMPARE(reloaded.recoveryDraftText(), QStringLiteral("draft"));
+
+    reloaded.setUpdateCheckPolicy(QStringLiteral("unknown"));
+    reloaded.setNotificationPolicy(QStringLiteral("unknown"));
+    reloaded.setOnboardingUseCase(QStringLiteral("unknown"));
+    QCOMPARE(reloaded.updateCheckPolicy(), QStringLiteral("Ask Before Checking"));
+    QCOMPARE(reloaded.notificationPolicy(), QStringLiteral("Important Only"));
+    QCOMPARE(reloaded.onboardingUseCase(), QStringLiteral("General Assistant"));
 }
 
 void AppSettingsTest::persistsVoiceConfigurationPaths() {

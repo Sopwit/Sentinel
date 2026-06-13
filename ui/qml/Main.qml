@@ -24,8 +24,20 @@ ApplicationWindow {
                                                            : SentinelTheme.spaceXl)
                                           + SentinelTheme.spaceLg
     Component.onCompleted: Qt.callLater(function() {
+        SentinelTheme.activeTheme = root.viewModel.themeName
         root.shellReady = true
+        if (!root.viewModel.onboardingComplete)
+            onboardingModal.open()
+        else if (root.viewModel.recoveryDraftText.length > 0)
+            recoveryModal.open()
     })
+
+    Connections {
+        target: root.viewModel
+        function onThemeNameChanged() {
+            SentinelTheme.activeTheme = root.viewModel.themeName
+        }
+    }
 
     function currentPageIndex() {
         if (root.viewModel.currentPage === "Dashboard")
@@ -270,6 +282,139 @@ ApplicationWindow {
     CommandPalette {
         id: commandPalette
         viewModel: root.viewModel
+        onOpenSettingsRequested: root.openSettings()
+        onFocusChatRequested: root.focusChatComposer()
+    }
+
+    SentinelOverlayModal {
+        id: onboardingModal
+        accent: SentinelTheme.modeAccent(root.viewModel.currentModeName)
+        modeName: root.viewModel.currentModeName
+        preferredWidth: Math.min(720, root.width - SentinelTheme.space4Xl)
+        preferredHeight: Math.min(560, root.height - SentinelTheme.space4Xl)
+        closePolicy: Popup.NoAutoClose
+
+        property int step: 0
+
+        contentItem: ColumnLayout {
+            spacing: SentinelTheme.spaceLg
+
+            Label {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceLg
+                Layout.bottomMargin: 0
+                text: onboardingModal.step === 0 ? qsTr("Welcome to Sentinel")
+                     : onboardingModal.step === 1 ? qsTr("Device Overview")
+                     : qsTr("Starter Setup")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontTitle
+                font.bold: true
+            }
+
+            StackLayout {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.leftMargin: SentinelTheme.spaceLg
+                Layout.rightMargin: SentinelTheme.spaceLg
+                currentIndex: onboardingModal.step
+
+                Flow {
+                    spacing: SentinelTheme.spaceSm
+                    Repeater {
+                        model: ["Coding", "Study", "Writing", "General Assistant"]
+                        SentinelButton {
+                            required property string modelData
+                            text: modelData
+                            onClicked: root.viewModel.onboardingUseCase = modelData
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: SentinelTheme.spaceSm
+                    InfoRow { label: qsTr("Platform"); value: Qt.platform.os; Layout.fillWidth: true }
+                    InfoRow { label: qsTr("Runtime"); value: root.viewModel.activeRuntimeProviderLabel + " / " + root.viewModel.activeRuntimeReadinessState; Layout.fillWidth: true }
+                    InfoRow { label: qsTr("Privacy"); value: qsTr("No telemetry, no hidden uploads, no background scans."); Layout.fillWidth: true }
+                }
+
+                ColumnLayout {
+                    spacing: SentinelTheme.spaceSm
+                    InfoRow { label: qsTr("Use Case"); value: root.viewModel.onboardingUseCase; Layout.fillWidth: true }
+                    InfoRow { label: qsTr("Theme"); value: root.viewModel.themeName; Layout.fillWidth: true }
+                    InfoRow { label: qsTr("Models"); value: qsTr("No downloads are started."); Layout.fillWidth: true }
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceLg
+                SentinelButton {
+                    text: qsTr("Back")
+                    enabled: onboardingModal.step > 0
+                    onClicked: onboardingModal.step--
+                }
+                Item { Layout.fillWidth: true }
+                SentinelButton {
+                    text: onboardingModal.step < 2 ? qsTr("Next") : qsTr("Start")
+                    onClicked: {
+                        if (onboardingModal.step < 2) {
+                            onboardingModal.step++
+                        } else {
+                            root.viewModel.onboardingComplete = true
+                            onboardingModal.close()
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    SentinelOverlayModal {
+        id: recoveryModal
+        accent: SentinelTheme.warning
+        modeName: root.viewModel.currentModeName
+        preferredWidth: Math.min(520, root.width - SentinelTheme.space4Xl)
+        preferredHeight: 260
+
+        contentItem: ColumnLayout {
+            spacing: SentinelTheme.spaceMd
+            Label {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceLg
+                text: qsTr("Restore previous session?")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontCard
+                font.bold: true
+            }
+            Label {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceLg
+                Layout.rightMargin: SentinelTheme.spaceLg
+                text: qsTr("Sentinel saved your last draft locally. Restore it into the composer or discard it.")
+                color: SentinelTheme.textMuted
+                wrapMode: Text.WordWrap
+            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceLg
+                SentinelButton {
+                    text: qsTr("Discard")
+                    onClicked: {
+                        root.viewModel.recoveryDraftText = ""
+                        recoveryModal.close()
+                    }
+                }
+                Item { Layout.fillWidth: true }
+                SentinelButton {
+                    text: qsTr("Restore")
+                    onClicked: {
+                        dashboardPage.restoreDraft(root.viewModel.recoveryDraftText)
+                        root.viewModel.recoveryDraftText = ""
+                        recoveryModal.close()
+                    }
+                }
+            }
+        }
     }
 
     SentinelOverlayModal {

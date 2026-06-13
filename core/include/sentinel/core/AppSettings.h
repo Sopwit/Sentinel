@@ -56,6 +56,16 @@ class AppSettings final : public QObject {
                    NOTIFY selectedSkillProfileChanged)
     Q_PROPERTY(QString defaultPermissionPolicyState READ defaultPermissionPolicyState WRITE
                    setDefaultPermissionPolicyState NOTIFY defaultPermissionPolicyStateChanged)
+    Q_PROPERTY(QString updateCheckPolicy READ updateCheckPolicy WRITE setUpdateCheckPolicy NOTIFY
+                   updateCheckPolicyChanged)
+    Q_PROPERTY(QString notificationPolicy READ notificationPolicy WRITE setNotificationPolicy NOTIFY
+                   notificationPolicyChanged)
+    Q_PROPERTY(bool onboardingComplete READ onboardingComplete WRITE setOnboardingComplete NOTIFY
+                   onboardingCompleteChanged)
+    Q_PROPERTY(QString onboardingUseCase READ onboardingUseCase WRITE setOnboardingUseCase NOTIFY
+                   onboardingUseCaseChanged)
+    Q_PROPERTY(QString recoveryDraftText READ recoveryDraftText WRITE setRecoveryDraftText NOTIFY
+                   recoveryDraftTextChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -117,6 +127,16 @@ public:
     void setSelectedSkillProfile(const QString& profileId);
     QString defaultPermissionPolicyState() const;
     void setDefaultPermissionPolicyState(const QString& state);
+    QString updateCheckPolicy() const;
+    void setUpdateCheckPolicy(const QString& policy);
+    QString notificationPolicy() const;
+    void setNotificationPolicy(const QString& policy);
+    bool onboardingComplete() const;
+    void setOnboardingComplete(bool complete);
+    QString onboardingUseCase() const;
+    void setOnboardingUseCase(const QString& useCase);
+    QString recoveryDraftText() const;
+    void setRecoveryDraftText(const QString& text);
 
 signals:
     void themeNameChanged();
@@ -142,6 +162,11 @@ signals:
     void selectedWorkspaceIdChanged();
     void selectedSkillProfileChanged();
     void defaultPermissionPolicyStateChanged();
+    void updateCheckPolicyChanged();
+    void notificationPolicyChanged();
+    void onboardingCompleteChanged();
+    void onboardingUseCaseChanged();
+    void recoveryDraftTextChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
@@ -168,6 +193,11 @@ private:
     static constexpr auto selectedWorkspaceIdKey = "selectedWorkspaceId";
     static constexpr auto selectedSkillProfileKey = "selectedSkillProfile";
     static constexpr auto defaultPermissionPolicyStateKey = "defaultPermissionPolicyState";
+    static constexpr auto updateCheckPolicyKey = "updateCheckPolicy";
+    static constexpr auto notificationPolicyKey = "notificationPolicy";
+    static constexpr auto onboardingCompleteKey = "onboardingComplete";
+    static constexpr auto onboardingUseCaseKey = "onboardingUseCase";
+    static constexpr auto recoveryDraftTextKey = "recoveryDraftText";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "system";
@@ -175,6 +205,9 @@ private:
     static constexpr auto defaultSelectedWorkspaceId = "local-placeholder";
     static constexpr auto defaultSelectedSkillProfile = "developer";
     static constexpr auto defaultPermissionPolicyStateValue = "Disabled";
+    static constexpr auto defaultUpdateCheckPolicy = "Ask Before Checking";
+    static constexpr auto defaultNotificationPolicy = "Important Only";
+    static constexpr auto defaultOnboardingUseCase = "General Assistant";
 
     std::unique_ptr<ISettingsStore> store_;
 };

@@ -89,7 +89,7 @@ struct ConversationListEntry {
     QString searchAvailabilitySummary =
         QStringLiteral("Search is available for the current transcript.");
     QString exportAvailabilitySummary =
-        QStringLiteral("Export is available for Markdown and JSON.");
+        QStringLiteral("Export is available for Markdown, JSON, TXT, and PDF.");
     QString summary = QStringLiteral("Current transcript entry metadata is not available.");
 };
 
@@ -213,19 +213,25 @@ struct ConversationSearchSummary {
 };
 
 enum class ConversationExportFormat {
+    Unsupported,
     PlainText,
     Markdown,
     Json,
+    Pdf,
 };
 
 inline QString conversationExportFormatName(ConversationExportFormat format) {
     switch (format) {
+    case ConversationExportFormat::Unsupported:
+        return QStringLiteral("Unsupported");
     case ConversationExportFormat::PlainText:
         return QStringLiteral("Plain Text");
     case ConversationExportFormat::Markdown:
         return QStringLiteral("Markdown");
     case ConversationExportFormat::Json:
         return QStringLiteral("JSON");
+    case ConversationExportFormat::Pdf:
+        return QStringLiteral("PDF");
     }
 
     return QStringLiteral("Plain Text");
@@ -241,11 +247,11 @@ struct ConversationExportReadiness {
     bool writesFiles = true;
     QString status = QStringLiteral("Ready");
     QString summary =
-        QStringLiteral("Current transcript export is available for Markdown and JSON.");
+        QStringLiteral("Current transcript export is available for Markdown, JSON, TXT, and PDF.");
     QStringList checks{
         QStringLiteral("Scope: Current transcript only"),
         QStringLiteral("Output: App-controlled export directory"),
-        QStringLiteral("Formats: Markdown, JSON"),
+        QStringLiteral("Formats: Markdown, JSON, TXT, PDF"),
         QStringLiteral("Import: Disabled"),
     };
 };

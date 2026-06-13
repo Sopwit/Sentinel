@@ -23,6 +23,8 @@ ScrollView {
             return qsTr("Memory")
         if (section === "Context")
             return qsTr("Context")
+        if (section === "Continuity")
+            return qsTr("Continuity")
         if (section === "Advanced")
             return qsTr("Advanced")
         return section
@@ -75,8 +77,8 @@ ScrollView {
 
                         Repeater {
                             model: memoryPage.developerMode
-                                   ? ["Overview", "Memory", "Recall", "Context", "Advanced"]
-                                   : ["Overview", "Memory", "Recall", "Context"]
+                                   ? ["Overview", "Memory", "Recall", "Context", "Continuity", "Advanced"]
+                                   : ["Overview", "Memory", "Recall", "Context", "Continuity"]
 
                             Button {
                                 id: memoryTabButton
@@ -445,6 +447,40 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                visible: memoryPage.selectedSection === "Overview"
+                implicitHeight: activityTimelineColumn.implicitHeight + memoryPage.panelPadding * 2
+                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.034)
+
+                ColumnLayout {
+                    id: activityTimelineColumn
+                    x: memoryPage.panelPadding
+                    y: memoryPage.panelPadding
+                    width: parent.width - memoryPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: qsTr("Activity Timeline")
+                        subtitle: qsTr("Local app events only.")
+                        Layout.fillWidth: true
+                    }
+
+                    Repeater {
+                        model: memoryPage.viewModel.activityTimelineSummaries
+
+                        InfoRow {
+                            required property string modelData
+                            compact: memoryPage.compact
+                            label: modelData.split(" - ")[0]
+                            value: modelData.split(" - ").slice(1).join(" - ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 2
+                        }
+                    }
+                }
+            }
+
+            ShellPanel {
+                width: parent.width
                 visible: memoryPage.selectedSection === "Recall"
                 implicitHeight: recallColumn.implicitHeight + memoryPage.panelPadding * 2
 
@@ -615,6 +651,70 @@ ScrollView {
                                                                                        : SentinelTheme.textMuted
                             muted: !memoryPage.viewModel.promptContextInjectionEnabled
                         }
+                    }
+                }
+            }
+
+            ShellPanel {
+                width: parent.width
+                visible: memoryPage.selectedSection === "Continuity"
+                implicitHeight: continuityColumn.implicitHeight + memoryPage.panelPadding * 2
+
+                ColumnLayout {
+                    id: continuityColumn
+                    x: memoryPage.panelPadding
+                    y: memoryPage.panelPadding
+                    width: parent.width - memoryPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: qsTr("Continuity")
+                        subtitle: qsTr("Local summary and session recovery state.")
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: qsTr("Summary")
+                        value: memoryPage.viewModel.conversationSummaryGenerationStatus + " - "
+                               + memoryPage.viewModel.conversationSummaryReadinessSummary
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 3
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: qsTr("Contribution")
+                        value: memoryPage.viewModel.summaryContinuityContributionSummary
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 3
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: qsTr("Recovery")
+                        value: memoryPage.viewModel.recoveryDraftText.length > 0
+                               ? qsTr("Draft recovery is available locally.")
+                               : qsTr("No local draft recovery is pending.")
+                        Layout.fillWidth: true
+                    }
+
+                    Button {
+                        id: continuityDetailsToggle
+                        property bool expanded: false
+                        Layout.fillWidth: true
+                        text: expanded ? qsTr("Hide details") : qsTr("Show details")
+                        onClicked: expanded = !expanded
+                    }
+
+                    InfoRow {
+                        visible: continuityDetailsToggle.expanded
+                        compact: true
+                        label: qsTr("Details")
+                        value: memoryPage.viewModel.conversationSummaryInjectionSummary + " / "
+                               + memoryPage.viewModel.summaryContinuityBudgetTrace
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 6
                     }
                 }
             }

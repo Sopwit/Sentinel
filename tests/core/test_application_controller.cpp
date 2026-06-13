@@ -678,6 +678,7 @@ private slots:
     void clearChatResetsConversationSearchSummary();
     void markdownConversationExportWritesCurrentTranscript();
     void jsonConversationExportWritesValidStructure();
+    void textAndPdfConversationExportWriteLocalFiles();
     void emptyConversationExportIsRefused();
     void conversationExportUsesSanitizedTimestampedFilenames();
     void unsupportedConversationExportFormatWritesNoFile();
@@ -2674,6 +2675,32 @@ void ApplicationControllerTest::jsonConversationExportWritesValidStructure() {
              QStringLiteral("user"));
     QCOMPARE(messages.at(1).toObject().value(QStringLiteral("content")).toString(),
              QStringLiteral("export json token"));
+}
+
+void ApplicationControllerTest::textAndPdfConversationExportWriteLocalFiles() {
+    ApplicationController controller{std::make_unique<LocalEchoProvider>(),
+                                     std::make_unique<InMemoryStore>()};
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    controller.setConversationExportDirectory(dir.path());
+
+    QVERIFY(controller.sendMessage(QStringLiteral("export text and pdf token")));
+    QVERIFY(controller.exportTranscript(QStringLiteral("txt")));
+    auto result = controller.latestConversationExportResult();
+    QVERIFY(result.success);
+    QVERIFY(result.outputFileName.endsWith(QStringLiteral(".txt")));
+    QFile textFile(result.outputPath);
+    QVERIFY(textFile.open(QIODevice::ReadOnly | QIODevice::Text));
+    QVERIFY(QString::fromUtf8(textFile.readAll())
+                .contains(QStringLiteral("export text and pdf token")));
+
+    QVERIFY(controller.exportTranscript(QStringLiteral("pdf")));
+    result = controller.latestConversationExportResult();
+    QVERIFY(result.success);
+    QVERIFY(result.outputFileName.endsWith(QStringLiteral(".pdf")));
+    QFile pdfFile(result.outputPath);
+    QVERIFY(pdfFile.open(QIODevice::ReadOnly));
+    QVERIFY(pdfFile.read(8).startsWith("%PDF-1."));
 }
 
 void ApplicationControllerTest::emptyConversationExportIsRefused() {

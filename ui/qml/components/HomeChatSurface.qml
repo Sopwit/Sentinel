@@ -35,6 +35,11 @@ ShellPanel {
         promptInput.forceActiveFocus()
     }
 
+    function restoreDraft(text) {
+        promptInput.text = text
+        promptInput.forceActiveFocus()
+    }
+
     function sendComposerText() {
         var prompt = promptInput.text.trim()
         if (prompt.length === 0 || !homeChat.canSend || homeChat.sendBusy)
@@ -76,7 +81,7 @@ ShellPanel {
 
         ShellPanel {
             id: conversationRail
-            Layout.preferredWidth: homeChat.sidebarEffectiveOpen ? 260 : 44
+            Layout.preferredWidth: homeChat.sidebarEffectiveOpen ? Math.min(300, Math.max(238, homeChat.width * 0.22)) : 44
             Layout.fillHeight: true
             Layout.minimumHeight: 0
             color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.34)
@@ -146,7 +151,10 @@ ShellPanel {
                         SentinelButton {
                             text: qsTr("New")
                             Layout.fillWidth: true
-                            onClicked: homeChat.viewModel.createConversation(qsTr("New Chat"))
+                            onClicked: {
+                                homeChat.viewModel.createConversation(qsTr("New Chat"))
+                                homeChat.conversationSidebarOpen = !homeChat.compact
+                            }
                         }
 
                         SentinelButton {
@@ -165,13 +173,22 @@ ShellPanel {
                         font.bold: true
                     }
 
-                    Label {
+                    ListView {
                         Layout.fillWidth: true
-                        text: homeChat.viewModel.conversationListCurrentTitle
-                        color: SentinelTheme.textPrimary
-                        font.pixelSize: SentinelTheme.fontSmall
-                        maximumLineCount: 1
-                        elide: Text.ElideRight
+                        Layout.preferredHeight: Math.min(96, contentHeight)
+                        clip: true
+                        spacing: SentinelTheme.spaceXs
+                        model: homeChat.viewModel.conversationPinnedSummaries
+
+                        delegate: Label {
+                            required property string modelData
+                            width: ListView.view.width
+                            text: modelData
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: SentinelTheme.fontSmall
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                        }
                     }
 
                     Label {
@@ -233,6 +250,24 @@ ShellPanel {
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontTiny
                         font.bold: true
+                    }
+
+                    ListView {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.min(84, contentHeight)
+                        clip: true
+                        spacing: SentinelTheme.spaceXs
+                        model: homeChat.viewModel.conversationArchivedSummaries
+
+                        delegate: Label {
+                            required property string modelData
+                            width: ListView.view.width
+                            text: modelData
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontTiny
+                            maximumLineCount: 2
+                            elide: Text.ElideRight
+                        }
                     }
                 }
             }
@@ -485,6 +520,69 @@ ShellPanel {
                                                                              copyButton.hovered,
                                                                              false,
                                                                              homeChat.modeAccent)
+                            }
+                        }
+
+                        Button {
+                            id: messageMenuButton
+                            Layout.preferredWidth: 32
+                            Layout.preferredHeight: 24
+                            text: "\u22ef"
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            onClicked: messageMenu.open()
+
+                            contentItem: Text {
+                                text: messageMenuButton.text
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusSm
+                                color: InteractionTokens.surfaceColor(messageMenuButton.hovered,
+                                                                       messageMenuButton.down,
+                                                                       messageMenuButton.activeFocus,
+                                                                       homeChat.modeAccent)
+                                border.color: InteractionTokens.borderColor(messageMenuButton.activeFocus,
+                                                                             messageMenuButton.hovered,
+                                                                             false,
+                                                                             homeChat.modeAccent)
+                            }
+
+                            Menu {
+                                id: messageMenu
+                                MenuItem {
+                                    text: qsTr("Edit")
+                                    enabled: recentMessage.messageRole === "user"
+                                    onTriggered: {
+                                        promptInput.text = recentMessage.content
+                                        promptInput.forceActiveFocus()
+                                    }
+                                }
+                                MenuItem {
+                                    text: qsTr("Regenerate")
+                                    enabled: recentMessage.messageRole !== "user" && homeChat.canSend && !homeChat.sendBusy
+                                    onTriggered: homeChat.viewModel.sendMessage(qsTr("Regenerate the previous response."))
+                                }
+                                MenuItem {
+                                    text: qsTr("Pin")
+                                    onTriggered: homeChat.viewModel.pinConversation(homeChat.viewModel.activeConversationId)
+                                }
+                                MenuItem {
+                                    text: qsTr("Delete")
+                                    onTriggered: homeChat.viewModel.requestPermanentDeleteConversation(homeChat.viewModel.activeConversationId)
+                                }
+                                MenuItem {
+                                    text: qsTr("Export Markdown")
+                                    onTriggered: homeChat.viewModel.exportTranscript("markdown")
+                                }
+                                MenuItem {
+                                    text: qsTr("Export TXT")
+                                    onTriggered: homeChat.viewModel.exportTranscript("txt")
+                                }
                             }
                         }
                     }
@@ -746,6 +844,7 @@ ShellPanel {
                     selectByMouse: true
                     selectionColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.34)
                     selectedTextColor: SentinelTheme.textPrimary
+                    onTextChanged: homeChat.viewModel.recoveryDraftText = text
                     background: Rectangle {
                         color: "transparent"
                     }

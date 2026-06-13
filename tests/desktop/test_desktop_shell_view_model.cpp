@@ -240,6 +240,15 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.availableLanguages(),
              QStringList({QStringLiteral("system"), QStringLiteral("en"), QStringLiteral("tr")}));
     QVERIFY(!fixture.viewModel.developerModeEnabled());
+    QCOMPARE(fixture.viewModel.updateCheckPolicy(), QStringLiteral("Ask Before Checking"));
+    QCOMPARE(fixture.viewModel.notificationPolicy(), QStringLiteral("Important Only"));
+    QVERIFY(!fixture.viewModel.onboardingComplete());
+    QCOMPARE(fixture.viewModel.onboardingUseCase(), QStringLiteral("General Assistant"));
+    QVERIFY(fixture.viewModel.recoveryDraftText().isEmpty());
+    QVERIFY(fixture.viewModel.activityTimelineSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Chat Created")));
+    QVERIFY(fixture.viewModel.notificationCenterSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Export Completed")));
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(fixture.viewModel.availablePages(),
              QStringList({QStringLiteral("Memory"), QStringLiteral("Dashboard"),
@@ -1518,6 +1527,13 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("companionPlatformSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("companionTraceSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("developerModeEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("updateCheckPolicy"), QByteArrayLiteral("QString")},
+        {QStringLiteral("notificationPolicy"), QByteArrayLiteral("QString")},
+        {QStringLiteral("onboardingComplete"), QByteArrayLiteral("bool")},
+        {QStringLiteral("onboardingUseCase"), QByteArrayLiteral("QString")},
+        {QStringLiteral("recoveryDraftText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("activityTimelineSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("notificationCenterSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("selectedSkillProfile"), QByteArrayLiteral("QString")},
         {QStringLiteral("selectedSkillProfileName"), QByteArrayLiteral("QString")},
         {QStringLiteral("selectedSkillProfileSummary"), QByteArrayLiteral("QString")},
@@ -1789,13 +1805,19 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
     const QSet<QString> writableProperties{
         QStringLiteral("contextExplainabilityVisible"),
         QStringLiteral("companionEnabled"),
+        QStringLiteral("currentModeName"),
         QStringLiteral("developerModeEnabled"),
+        QStringLiteral("notificationPolicy"),
+        QStringLiteral("onboardingComplete"),
+        QStringLiteral("onboardingUseCase"),
         QStringLiteral("piperFileOutputExecutionEnabled"),
         QStringLiteral("promptContextInjectionEnabled"),
+        QStringLiteral("recoveryDraftText"),
         QStringLiteral("defaultPermissionPolicyState"),
         QStringLiteral("selectedSkillProfile"),
         QStringLiteral("selectedWorkspaceId"),
         QStringLiteral("selectedRuntimeProvider"),
+        QStringLiteral("updateCheckPolicy"),
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
