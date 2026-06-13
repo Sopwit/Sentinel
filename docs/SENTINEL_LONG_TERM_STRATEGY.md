@@ -26,6 +26,13 @@ replaces Advanced Diagnostics wording in user-facing surfaces. The realignment d
 runtime execution, tools, agents, model management, cloud calls, telemetry, update checks, or
 background work.
 
+Phase 49.6 turns that direction into a daily-use native UX baseline: chat-first Home, command
+palette, modal Settings, usable themes, first-run onboarding, local recovery, notification center,
+activity timeline, updates/about, backup metadata, and expanded exports. These remain local and
+foreground-only foundations; they do not authorize autonomous agents, tool execution, hidden
+background behavior, cloud calls, telemetry, update polling, workspace scans, model downloads, or
+voice execution.
+
 ## Architecture Position
 
 Sentinel should remain a C++20/Qt modular monolith with explicit service boundaries:

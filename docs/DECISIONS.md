@@ -3434,3 +3434,25 @@ Rules:
 - No Phase 50 tool approval, real tool execution, agent execution, filesystem scanning, model
   downloads, cloud/API calls, API-key input, voice execution, subprocess execution, background
   workers, hidden indexing, telemetry, or update network checks are authorized by this decision.
+
+## 109. Native Experience Is Foreground-Only
+
+Decision: Phase 49.6 native experience features are implemented as foreground Qt/QML UI and local
+settings/export behavior, not as hidden services.
+
+Reason: Sentinel needs a premium daily-use desktop experience without weakening the explicit
+authority model before Phase 50.
+
+Rules:
+
+- Command palette actions may navigate, focus the composer, create a local chat, switch local UI
+  theme/mode, open Settings, or request a controlled local export.
+- Check for Updates remains an explicit no-network stub until a later update phase defines
+  networking, consent, and packaging policy.
+- Notification Center is in-app summary UI only; no OS notification emission or hidden background
+  notification generation is added.
+- Crash recovery stores only local draft text and active conversation selection metadata already
+  managed by settings/controller boundaries.
+- Backup/restore is `.sentinelbackup` metadata foundation only; restore controls stay disabled
+  until import validation and user consent are separately scoped.
+- Permanent delete remains refused; archive is the available safe lifecycle action.

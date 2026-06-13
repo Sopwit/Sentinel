@@ -35,6 +35,48 @@ QString normalizedPermissionPolicyState(const QString& state) {
     return QStringLiteral("Disabled");
 }
 
+QString normalizedUpdatePolicy(const QString& policy) {
+    const auto normalized = policy.trimmed().toLower();
+    if (normalized == QStringLiteral("never")) {
+        return QStringLiteral("Never");
+    }
+    if (normalized == QStringLiteral("weekly")) {
+        return QStringLiteral("Weekly");
+    }
+    if (normalized == QStringLiteral("on startup") || normalized == QStringLiteral("startup")) {
+        return QStringLiteral("On Startup");
+    }
+    return QStringLiteral("Ask Before Checking");
+}
+
+QString normalizedNotificationPolicy(const QString& policy) {
+    const auto normalized = policy.trimmed().toLower();
+    if (normalized == QStringLiteral("disabled")) {
+        return QStringLiteral("Disabled");
+    }
+    if (normalized == QStringLiteral("all")) {
+        return QStringLiteral("All");
+    }
+    if (normalized == QStringLiteral("custom")) {
+        return QStringLiteral("Custom");
+    }
+    return QStringLiteral("Important Only");
+}
+
+QString normalizedOnboardingUseCase(const QString& useCase) {
+    const auto normalized = useCase.trimmed().toLower();
+    if (normalized == QStringLiteral("coding")) {
+        return QStringLiteral("Coding");
+    }
+    if (normalized == QStringLiteral("study")) {
+        return QStringLiteral("Study");
+    }
+    if (normalized == QStringLiteral("writing")) {
+        return QStringLiteral("Writing");
+    }
+    return QStringLiteral("General Assistant");
+}
+
 } // namespace
 
 AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent)
@@ -480,6 +522,86 @@ void AppSettings::setDefaultPermissionPolicyState(const QString& state) {
 
     store_->setValue(QString::fromLatin1(defaultPermissionPolicyStateKey), selected);
     emit defaultPermissionPolicyStateChanged();
+}
+
+QString AppSettings::updateCheckPolicy() const {
+    const auto fallback = QString::fromLatin1(defaultUpdateCheckPolicy);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(updateCheckPolicyKey), fallback)
+                               : fallback;
+    return normalizedUpdatePolicy(stored);
+}
+
+void AppSettings::setUpdateCheckPolicy(const QString& policy) {
+    const auto selected = normalizedUpdatePolicy(policy);
+    if (selected == updateCheckPolicy() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(updateCheckPolicyKey), selected);
+    emit updateCheckPolicyChanged();
+}
+
+QString AppSettings::notificationPolicy() const {
+    const auto fallback = QString::fromLatin1(defaultNotificationPolicy);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(notificationPolicyKey), fallback)
+                               : fallback;
+    return normalizedNotificationPolicy(stored);
+}
+
+void AppSettings::setNotificationPolicy(const QString& policy) {
+    const auto selected = normalizedNotificationPolicy(policy);
+    if (selected == notificationPolicy() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(notificationPolicyKey), selected);
+    emit notificationPolicyChanged();
+}
+
+bool AppSettings::onboardingComplete() const {
+    return store_ ? store_->value(QString::fromLatin1(onboardingCompleteKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setOnboardingComplete(bool complete) {
+    if (complete == onboardingComplete() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(onboardingCompleteKey),
+                     complete ? QStringLiteral("true") : QStringLiteral("false"));
+    emit onboardingCompleteChanged();
+}
+
+QString AppSettings::onboardingUseCase() const {
+    const auto fallback = QString::fromLatin1(defaultOnboardingUseCase);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(onboardingUseCaseKey), fallback)
+                               : fallback;
+    return normalizedOnboardingUseCase(stored);
+}
+
+void AppSettings::setOnboardingUseCase(const QString& useCase) {
+    const auto selected = normalizedOnboardingUseCase(useCase);
+    if (selected == onboardingUseCase() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(onboardingUseCaseKey), selected);
+    emit onboardingUseCaseChanged();
+}
+
+QString AppSettings::recoveryDraftText() const {
+    return store_ ? store_->value(QString::fromLatin1(recoveryDraftTextKey), {}) : QString();
+}
+
+void AppSettings::setRecoveryDraftText(const QString& text) {
+    if (text == recoveryDraftText() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(recoveryDraftTextKey), text);
+    emit recoveryDraftTextChanged();
 }
 
 } // namespace sentinel::core

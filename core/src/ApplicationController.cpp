@@ -198,7 +198,13 @@ ConversationExportFormat conversationExportFormatFromName(const QString& format)
     if (normalized == QStringLiteral("json")) {
         return ConversationExportFormat::Json;
     }
-    return ConversationExportFormat::PlainText;
+    if (normalized == QStringLiteral("txt") || normalized == QStringLiteral("text")) {
+        return ConversationExportFormat::PlainText;
+    }
+    if (normalized == QStringLiteral("pdf")) {
+        return ConversationExportFormat::Pdf;
+    }
+    return ConversationExportFormat::Unsupported;
 }
 
 QString defaultConversationExportDirectory() {
@@ -239,15 +245,77 @@ QString sanitizedExportFileStem(QString stem) {
 
 QString conversationExportExtension(ConversationExportFormat format) {
     switch (format) {
+    case ConversationExportFormat::Unsupported:
+        break;
     case ConversationExportFormat::Markdown:
         return QStringLiteral("md");
     case ConversationExportFormat::Json:
         return QStringLiteral("json");
     case ConversationExportFormat::PlainText:
-        break;
+        return QStringLiteral("txt");
+    case ConversationExportFormat::Pdf:
+        return QStringLiteral("pdf");
     }
 
     return QString();
+}
+
+QString plainTextTranscript(const QList<ChatMessage>& messages, const QString& exportedAtUtc) {
+    QString output;
+    QTextStream stream(&output);
+    stream << "Sentinel Transcript\n";
+    stream << "Exported: " << exportedAtUtc << "\n";
+    stream << "Messages: " << messages.size() << "\n\n";
+    for (const auto& message : messages) {
+        stream << chatRoleName(message.role) << " #" << message.id << "\n";
+        stream << message.timestamp.toUTC().toString(Qt::ISODate) << " / "
+               << chatMessageStatusName(message.status) << "\n";
+        stream << message.content.trimmed() << "\n\n";
+    }
+    return output;
+}
+
+QByteArray pdfTranscript(const QList<ChatMessage>& messages, const QString& exportedAtUtc) {
+    const auto text = plainTextTranscript(messages, exportedAtUtc)
+                          .left(12000)
+                          .replace(QLatin1Char('\\'), QStringLiteral("\\\\"))
+                          .replace(QLatin1Char('('), QStringLiteral("\\("))
+                          .replace(QLatin1Char(')'), QStringLiteral("\\)"));
+    const auto lines = text.split(QLatin1Char('\n'));
+    QString content;
+    QTextStream contentStream(&content);
+    contentStream << "BT /F1 10 Tf 48 792 Td 12 TL\n";
+    for (const auto& line : lines) {
+        contentStream << "(" << line.left(96) << ") Tj T*\n";
+    }
+    contentStream << "ET\n";
+
+    QByteArray pdf;
+    QList<int> offsets;
+    auto appendObject = [&pdf, &offsets](const QByteArray& object) {
+        offsets.append(pdf.size());
+        pdf.append(object);
+    };
+
+    pdf.append("%PDF-1.4\n");
+    appendObject("1 0 obj << /Type /Catalog /Pages 2 0 R >> endobj\n");
+    appendObject("2 0 obj << /Type /Pages /Kids [3 0 R] /Count 1 >> endobj\n");
+    appendObject("3 0 obj << /Type /Page /Parent 2 0 R /MediaBox [0 0 612 842] "
+                 "/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >> endobj\n");
+    appendObject("4 0 obj << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> endobj\n");
+    const auto contentBytes = content.toUtf8();
+    appendObject(QByteArray("5 0 obj << /Length ") + QByteArray::number(contentBytes.size()) +
+                 QByteArray(" >> stream\n") + contentBytes + QByteArray("\nendstream endobj\n"));
+    const auto xrefOffset = pdf.size();
+    pdf.append("xref\n0 6\n0000000000 65535 f \n");
+    for (const auto offset : offsets) {
+        pdf.append(QByteArray::number(offset).rightJustified(10, '0'));
+        pdf.append(" 00000 n \n");
+    }
+    pdf.append("trailer << /Size 6 /Root 1 0 R >>\nstartxref\n");
+    pdf.append(QByteArray::number(xrefOffset));
+    pdf.append("\n%%EOF\n");
+    return pdf;
 }
 
 QString uniqueExportFilePath(const QDir& directory, const QString& baseName,
@@ -6498,7 +6566,7 @@ bool ApplicationController::exportTranscript(const QString& format) {
         latestConversationExportResult_.refusalSummary =
             QStringLiteral("Unsupported transcript export format.");
         latestConversationExportResult_.summary =
-            QStringLiteral("Transcript export refused: only Markdown and JSON are supported.");
+            QStringLiteral("Transcript export refused: unsupported format.");
         emit conversationExportChanged();
         return false;
     }
@@ -6547,8 +6615,12 @@ bool ApplicationController::exportTranscript(const QString& format) {
     QByteArray payload;
     if (exportFormat == ConversationExportFormat::Markdown) {
         payload = markdownTranscript(messages, exportedAt).toUtf8();
-    } else {
+    } else if (exportFormat == ConversationExportFormat::Json) {
         payload = jsonTranscript(messages, exportedAt);
+    } else if (exportFormat == ConversationExportFormat::Pdf) {
+        payload = pdfTranscript(messages, exportedAt);
+    } else {
+        payload = plainTextTranscript(messages, exportedAt).toUtf8();
     }
 
     QSaveFile file(outputPath);

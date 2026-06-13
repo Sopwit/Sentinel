@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 49.6: Native Experience & Premium Product Pass
+
+Completed. Converts the Phase 49.5 product realignment into visible native desktop UX while
+preserving the strict non-execution boundary.
+
+Scope:
+
+- Home is a chat-first surface with a collapsible conversation sidebar, search/filter, pinned,
+  recent, archived sections, fixed composer, and message actions for copy, edit, regenerate, pin,
+  delete request, and export.
+- Added a keyboard-first universal command palette for Ask Sentinel, New Chat, Search Chats, Open
+  Brain, Open Settings, Check Updates, Export Current Chat, Change Theme, Switch Model, Toggle
+  Focus Mode, and Universal Search.
+- Settings remains a floating modal and now persists native-experience preferences for update
+  check policy, notification policy, onboarding completion/use case, and local recovery draft.
+- Theme selection now drives the shared QML theme token palette for Sentinel Dark, Midnight,
+  Aurora, Graphite, and System Adaptive.
+- Brain adds a Continuity section and a local-only Activity Timeline; Advanced contains
+  diagnostics/logs/runtime status/trace-viewer framing.
+- Added first-run onboarding, local draft recovery prompt, notification center summaries,
+  update/about policy UI, backup/restore metadata foundation, and Markdown/JSON/TXT/PDF chat
+  export.
+
+Known limitation:
+
+- Update checks are manual stubs and perform no network call. Backup/restore metadata controls are
+  disabled foundations. Delete requests still refuse permanent deletion safely. No Phase 50 tool
+  execution, autonomous agents, hidden background behavior, filesystem scanning, cloud calls, model
+  downloads, STT/TTS execution, telemetry, or update polling is added.
+
 ### Phase 49.5: Sentinel Product Realignment Mega-Pass
 
 Completed. Realigns Sentinel around a premium native AI desktop companion while preserving the

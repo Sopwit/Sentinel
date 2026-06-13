@@ -1112,7 +1112,8 @@ class DesktopShellViewModel final : public QObject {
                    maintenanceStatusChanged)
     Q_PROPERTY(
         QString chatMaintenanceStatus READ chatMaintenanceStatus NOTIFY maintenanceStatusChanged)
-    Q_PROPERTY(QString currentModeName READ currentModeName NOTIFY currentModeChanged)
+    Q_PROPERTY(QString currentModeName READ currentModeName WRITE setCurrentModeName NOTIFY
+                   currentModeChanged)
     Q_PROPERTY(QStringList availableModes READ availableModes CONSTANT)
     Q_PROPERTY(QString currentPage READ currentPage WRITE setCurrentPage NOTIFY currentPageChanged)
     Q_PROPERTY(QStringList availablePages READ availablePages CONSTANT)
@@ -1144,6 +1145,20 @@ class DesktopShellViewModel final : public QObject {
                    companionChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeChanged)
+    Q_PROPERTY(QString updateCheckPolicy READ updateCheckPolicy WRITE setUpdateCheckPolicy NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QString notificationPolicy READ notificationPolicy WRITE setNotificationPolicy
+                   NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool onboardingComplete READ onboardingComplete WRITE setOnboardingComplete NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QString onboardingUseCase READ onboardingUseCase WRITE setOnboardingUseCase NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QString recoveryDraftText READ recoveryDraftText WRITE setRecoveryDraftText NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList notificationCenterSummaries READ notificationCenterSummaries NOTIFY
+                   nativeExperienceChanged)
     Q_PROPERTY(QString selectedSkillProfile READ selectedSkillProfile WRITE
                    setSelectedSkillProfile NOTIFY skillProfileChanged)
     Q_PROPERTY(QString selectedSkillProfileName READ selectedSkillProfileName NOTIFY
@@ -1898,6 +1913,7 @@ public:
     QString memoryMaintenanceStatus() const;
     QString chatMaintenanceStatus() const;
     QString currentModeName() const;
+    void setCurrentModeName(const QString& modeName);
     QStringList availableModes() const;
     QString currentPage() const;
     void setCurrentPage(const QString& page);
@@ -1929,6 +1945,18 @@ public:
     QStringList companionTraceSummaries() const;
     bool developerModeEnabled() const;
     void setDeveloperModeEnabled(bool enabled);
+    QString updateCheckPolicy() const;
+    void setUpdateCheckPolicy(const QString& policy);
+    QString notificationPolicy() const;
+    void setNotificationPolicy(const QString& policy);
+    bool onboardingComplete() const;
+    void setOnboardingComplete(bool complete);
+    QString onboardingUseCase() const;
+    void setOnboardingUseCase(const QString& useCase);
+    QString recoveryDraftText() const;
+    void setRecoveryDraftText(const QString& text);
+    QStringList activityTimelineSummaries() const;
+    QStringList notificationCenterSummaries() const;
     QString selectedSkillProfile() const;
     void setSelectedSkillProfile(const QString& profileId);
     QString selectedSkillProfileName() const;
@@ -2002,6 +2030,7 @@ public:
     Q_INVOKABLE bool searchConversation(const QString& query);
     Q_INVOKABLE void clearConversationSearch();
     Q_INVOKABLE bool exportTranscript(const QString& format);
+    Q_INVOKABLE bool checkForUpdates();
     Q_INVOKABLE bool requestConversationExport(const QString& format);
     Q_INVOKABLE QString createConversation(const QString& title);
     Q_INVOKABLE bool switchConversation(const QString& conversationId);
@@ -2041,6 +2070,7 @@ signals:
     void developerModeChanged();
     void contextExplainabilityVisibleChanged();
     void currentPageChanged();
+    void nativeExperienceChanged();
     void maintenanceStatusChanged();
     void agentStatusChanged();
     void agentResponseChanged();

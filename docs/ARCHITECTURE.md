@@ -36,6 +36,16 @@ dock page. User-facing diagnostic copy should say Advanced or Diagnostics; the i
 metadata only and grants no runtime, provider, model, tool, agent, filesystem, cloud, voice,
 subprocess, telemetry, or update-check authority.
 
+Phase 49.6 implements the native-experience pass within the same boundaries. `AppSettings` persists
+presentation/user-experience state for theme, update-check policy, notification policy, onboarding,
+and local draft recovery. `DesktopShellViewModel` exposes QML-safe summaries for activity timeline
+and notification center data. The command palette, Settings modal, Home sidebar/actions, Brain
+Continuity, onboarding, recovery, and About/Updates surfaces remain foreground UI only. Chat export
+writes Markdown, JSON, TXT, and PDF files to the existing app-controlled export directory.
+Update checks, backup restore, permanent deletion, global quick-panel shortcuts, cloud sync,
+workspace scanning, tools, agents, voice execution, telemetry, and background polling remain out of
+scope.
+
 ## Desktop View Model
 
 `DesktopShellViewModel` is the QML boundary for the desktop app. It forwards safe operations to the core controller, mode manager, and settings object:

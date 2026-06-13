@@ -31,6 +31,10 @@ ScrollView {
         homeChatSurface.focusComposer()
     }
 
+    function restoreDraft(text) {
+        homeChatSurface.restoreDraft(text)
+    }
+
     contentWidth: availableWidth
 
     Item {

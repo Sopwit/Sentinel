@@ -20,6 +20,24 @@ negative space, partial bracket grammar, cyan/teal glow hierarchy, and a bottom 
 Phase 49.5 realigns Sentinel into a premium native AI desktop companion without adding runtime
 authority. The durable reference is `docs/SENTINEL_PRODUCT_REALIGNMENT.md`.
 
+## Phase 49.6 Native Experience
+
+Phase 49.6 implements the native-experience pass described by Phase 49.5. The durable reference is
+`docs/NATIVE_EXPERIENCE.md`.
+
+Guidelines:
+
+- Home is chat-first, with conversation browsing in a collapsible sidebar and no empty diagnostic
+  panels reducing the chat area.
+- The command palette is keyboard-first and may run only foreground-safe local UI actions or
+  explicit local exports.
+- Settings opens as a floating modal. Advanced replaces Developer Mode in user-facing copy, while
+  the internal compatibility flag may remain `developerModeEnabled`.
+- Themes affect QML presentation tokens only.
+- Onboarding, notification center, update/about, activity timeline, backup, and recovery surfaces
+  are local-only and must not start hidden work.
+- Export may write only to the app-controlled export directory.
+
 Guidelines:
 
 - Primary navigation is Home, Brain, and Agents. Settings is a floating modal opened from gear,
