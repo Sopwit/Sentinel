@@ -23,6 +23,9 @@ foreground-only behavior.
 - Notification Center shows in-app category summaries and persists notification policy.
 - Chat export supports Markdown, JSON, TXT, and PDF in the controlled app export directory.
 - Backup/restore is represented as `.sentinelbackup` metadata foundation only.
+- Phase 49.7 adds Local AI Ecosystem metadata in Settings > Models, compact Home model/role chips,
+  Brain model-role summaries, Agents model-role planning readiness, and in-app notification
+  categories for model/provider/download/benchmark/role events.
 
 ## Command Palette Actions
 
@@ -43,6 +46,10 @@ foreground-only behavior.
 Phase 49.6 does not add Phase 50 execution authority. It does not add tool execution, autonomous
 agents, hidden background work, filesystem scanning, cloud/provider calls, API-key submission,
 model downloads, STT/TTS execution, update polling, telemetry, or silent indexing.
+
+Phase 49.7 also keeps provider discovery, Model Advisor, Downloads Center, and Benchmark Hub
+foreground metadata-only. It adds no hidden provider probes, catalog fetches, model pulls, update
+workers, benchmarks, automatic routing, or native OS notifications.
 
 Check for Updates is explicit and network-stubbed. Global quick-panel shortcuts are not registered.
 Backup restore controls are disabled metadata. Permanent delete remains refused; archive remains the

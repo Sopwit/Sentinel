@@ -1,5 +1,6 @@
 #include "sentinel/core/AppSettings.h"
 
+#include "sentinel/core/ModelRegistry.h"
 #include "sentinel/core/ModelRouting.h"
 #include "sentinel/core/OllamaRuntime.h"
 
@@ -18,6 +19,10 @@ bool isKnownSkillProfileId(const QString& profileId) {
            profileId == QStringLiteral("researcher") ||
            profileId == QStringLiteral("personal-assistant") ||
            profileId == QStringLiteral("custom");
+}
+
+bool isKnownModelRoleId(const QString& roleId) {
+    return modelRoleIds().contains(roleId.trimmed().toLower());
 }
 
 QString normalizedPermissionPolicyState(const QString& state) {
@@ -260,6 +265,41 @@ void AppSettings::setSelectedModelForProvider(const QString& providerId, const Q
         store_->setValue(QString::fromLatin1(selectedLocalModelKey), normalized);
     }
     emit selectedLocalModelChanged();
+}
+
+QString AppSettings::selectedModelForRole(const QString& roleId) const {
+    if (!store_) {
+        return {};
+    }
+
+    const auto normalizedRole = roleId.trimmed().toLower();
+    if (!isKnownModelRoleId(normalizedRole)) {
+        return {};
+    }
+
+    return store_
+        ->value(QString::fromLatin1(selectedRoleModelKeyPrefix) + normalizedRole, {})
+        .trimmed();
+}
+
+void AppSettings::setSelectedModelForRole(const QString& roleId, const QString& modelId) {
+    if (!store_) {
+        return;
+    }
+
+    const auto normalizedRole = roleId.trimmed().toLower();
+    if (!isKnownModelRoleId(normalizedRole)) {
+        return;
+    }
+
+    const auto normalizedModel = modelId.trimmed();
+    if (normalizedModel == selectedModelForRole(normalizedRole)) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(selectedRoleModelKeyPrefix) + normalizedRole,
+                     normalizedModel);
+    emit selectedModelRoleChanged();
 }
 
 bool AppSettings::localChatInferenceEnabled() const {

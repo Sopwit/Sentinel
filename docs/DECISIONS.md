@@ -192,6 +192,33 @@ Out of scope:
   retries, background workers, prompt mutation, automatic memory writes, raw handles, command
   payloads, provider payloads, and tool outputs.
 
+## 1.8 Local AI Ecosystem Metadata Boundary
+
+Decision: Model Library, provider discovery, model roles, Model Advisor, Downloads Center, and
+Benchmark Hub are represented as QML-safe metadata before any new runtime authority exists.
+
+Reason: Sentinel needs a professional local AI management surface, but model availability,
+provider discovery, downloads, updates, benchmarks, and routing can easily become hidden execution
+or data-egress channels if treated as active behavior too early.
+
+Runtime behavior:
+
+- Installed model metadata may come from the existing safe local Ollama metadata path.
+- LM Studio, llama.cpp server, OpenAI-compatible local endpoints, Hugging Face metadata, and custom
+  catalogs are disabled/readiness placeholders.
+- Provider discovery summaries report connected/unavailable/disabled, endpoint, selected model,
+  and reason text. New providers are not probed.
+- Model roles persist role-to-model ids in settings metadata only.
+- Model Advisor uses deterministic static local metadata plus Qt platform labels.
+- Downloads and benchmarks expose readiness/state/manual metric placeholders only.
+
+Out of scope:
+
+- Background probing, hidden network calls, cloud provider activation, catalog fetches, API-key
+  entry, subprocesses, filesystem scanning, model downloads/pulls/updates/deletes, benchmark
+  execution, automatic multi-model routing, parallel agentic execution, telemetry, native OS
+  notifications, tools, and autonomous agents.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.

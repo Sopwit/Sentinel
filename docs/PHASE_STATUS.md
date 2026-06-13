@@ -2,6 +2,37 @@
 
 ## Completed / Stable
 
+### Phase 49.7: Local AI Ecosystem Foundation
+
+Completed. Expands Sentinel's local model/runtime metadata into a user-facing ecosystem
+foundation without adding unsafe execution or hidden background behavior.
+
+Scope:
+
+- Model Library now exposes installed Ollama metadata, discoverable placeholder sources, model
+  details, recommendations, size/RAM/context/capability/support/performance/readiness summaries,
+  and unavailable reasons.
+- Provider discovery metadata covers Ollama, LM Studio, llama.cpp server, and OpenAI-compatible
+  local endpoints with connected/unavailable/disabled state, endpoint, selected model, and reason
+  strings. Only the existing safe local Ollama metadata path is active.
+- Model roles are persisted as settings metadata for Primary Chat, Coding, Summarizer, Research,
+  Fast, Voice, and Embedding roles. Role assignment does not enable automatic routing.
+- Added deterministic local Model Advisor, Downloads Center, and Benchmark Hub metadata
+  summaries. Downloads and benchmark execution remain disabled.
+- Settings > Models now contains Model Library, Provider Status, Model Roles, Model Advisor,
+  Downloads, and Benchmark sections. Home shows compact role status; Brain and Agents show
+  model-role summaries where useful.
+- In-app Notification Center metadata includes model discovered/unavailable, download
+  queued/completed, benchmark finished, provider offline, and model role changed categories.
+
+Known limitation:
+
+- No provider probing beyond existing explicit/safe local Ollama metadata, no hidden network
+  calls, no cloud activation, no model downloads/updates/deletes, no subprocesses, no filesystem
+  scanning, no benchmark execution, no telemetry, no autonomous agents, and no tool execution are
+  added. Offscreen smoke launch in the current environment still exits 139 and remains a known
+  launch-environment limitation after successful build and tests.
+
 ### Phase 49.6: Native Experience & Premium Product Pass
 
 Completed. Converts the Phase 49.5 product realignment into visible native desktop UX while

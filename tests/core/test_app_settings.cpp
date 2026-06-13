@@ -33,6 +33,7 @@ private slots:
     void doesNotPersistApiKeyValuesForCloudPlaceholders();
     void persistsSelectedLocalModel();
     void persistsSelectedModelPerProvider();
+    void persistsSelectedModelRoles();
     void persistsLocalChatInferenceOptIn();
     void persistsLocalInferenceStreamingOptIn();
     void persistsPromptContextInjectionOptIn();
@@ -321,6 +322,24 @@ void AppSettingsTest::persistsSelectedModelPerProvider() {
     QCOMPARE(settings->selectedModelForProvider(QStringLiteral("openai-compatible")),
              QStringLiteral("future-model"));
     QCOMPARE(spy.count(), 2);
+}
+
+void AppSettingsTest::persistsSelectedModelRoles() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::selectedModelRoleChanged);
+
+    QVERIFY(settings->selectedModelForRole(QStringLiteral("coding")).isEmpty());
+
+    settings->setSelectedModelForRole(QStringLiteral(" coding "),
+                                      QStringLiteral(" qwen2.5-coder:7b "));
+
+    QCOMPARE(settings->selectedModelForRole(QStringLiteral("coding")),
+             QStringLiteral("qwen2.5-coder:7b"));
+    QCOMPARE(spy.count(), 1);
+
+    settings->setSelectedModelForRole(QStringLiteral("unknown-role"), QStringLiteral("ignored"));
+    QVERIFY(settings->selectedModelForRole(QStringLiteral("unknown-role")).isEmpty());
+    QCOMPARE(spy.count(), 1);
 }
 
 void AppSettingsTest::persistsLocalChatInferenceOptIn() {

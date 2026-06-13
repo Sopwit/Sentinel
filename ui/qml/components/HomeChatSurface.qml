@@ -328,6 +328,15 @@ ShellPanel {
             }
 
             StatusChip {
+                label: qsTr("Role")
+                value: homeChat.viewModel.modelRoleAssignmentSummaries.length > 0
+                       ? homeChat.viewModel.modelRoleAssignmentSummaries[0].split(" - ")[1]
+                       : qsTr("No role")
+                accent: SentinelTheme.calmAccent
+                muted: true
+            }
+
+            StatusChip {
                 label: qsTr("Scope")
                 value: homeChat.viewModel.activeRuntimeLocalOnlySummary
                 accent: SentinelTheme.calmAccent

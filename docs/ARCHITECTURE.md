@@ -46,6 +46,20 @@ Update checks, backup restore, permanent deletion, global quick-panel shortcuts,
 workspace scanning, tools, agents, voice execution, telemetry, and background polling remain out of
 scope.
 
+Phase 49.7 adds the Local AI Ecosystem Foundation as metadata over the existing model/runtime
+boundaries. `ModelRegistry` exposes installed local Ollama metadata, discoverable placeholder
+sources, details, recommendations, deterministic advisor output, download readiness, and benchmark
+readiness. `AppSettings` persists only role-to-model assignment ids. `DesktopShellViewModel`
+exposes QML-safe string/string-list summaries for Model Library, provider discovery, model roles,
+Model Advisor, Downloads Center, Benchmark Hub, and notification categories. The only active model
+metadata source remains the existing safe local Ollama path; LM Studio, llama.cpp server,
+OpenAI-compatible local endpoints, Hugging Face metadata, and custom catalogs are represented as
+disabled/readiness placeholders.
+
+Phase 49.7 does not add hidden provider discovery, background workers, cloud calls, catalog fetches,
+subprocesses, filesystem scans, model downloads/updates/deletes, benchmark execution, automatic
+multi-model routing, tools, autonomous agents, telemetry, or native OS notifications.
+
 ## Desktop View Model
 
 `DesktopShellViewModel` is the QML boundary for the desktop app. It forwards safe operations to the core controller, mode manager, and settings object:

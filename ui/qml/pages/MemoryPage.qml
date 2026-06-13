@@ -272,6 +272,18 @@ ScrollView {
                     }
 
                     Repeater {
+                        model: memoryPage.viewModel.modelRoleAssignmentSummaries
+
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: "Model Role"
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
                         model: memoryPage.viewModel.runtimeProviderValidationTraces
 
                         InfoRow {

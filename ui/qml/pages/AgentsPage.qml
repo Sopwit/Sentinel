@@ -206,6 +206,18 @@ ScrollView {
                     }
 
                     Repeater {
+                        model: Math.min(3, agentsPage.viewModel.modelRoleAssignmentSummaries.length)
+
+                        InfoRow {
+                            required property int index
+                            compact: agentsPage.compact
+                            label: qsTr("Model Role")
+                            value: agentsPage.viewModel.modelRoleAssignmentSummaries[index]
+                            Layout.fillWidth: true
+                        }
+                    }
+
+                    Repeater {
                         model: agentsPage.viewModel.agentRuntimeAgentSummaries
 
                         Rectangle {

@@ -2,6 +2,7 @@
 
 #include "sentinel/core/AppSettings.h"
 #include "sentinel/core/ApplicationController.h"
+#include "sentinel/core/ModelRegistry.h"
 #include "sentinel/core/ModeManager.h"
 
 namespace sentinel::desktop {
@@ -122,6 +123,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                 controller_.setSelectedLocalModel(
                     settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
             });
+    connect(&settings_, &core::AppSettings::selectedModelRoleChanged, this,
+            &DesktopShellViewModel::modelRoleChanged);
     connect(&settings_, &core::AppSettings::selectedRuntimeProviderChanged, this, [this]() {
         controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
         controller_.setSelectedLocalModel(
@@ -945,6 +948,69 @@ QString DesktopShellViewModel::modelRegistrySummary() const {
 
 QStringList DesktopShellViewModel::modelRegistryModelSummaries() const {
     return controller_.modelRegistryModelSummaries();
+}
+
+QStringList DesktopShellViewModel::modelLibraryInstalledSummaries() const {
+    return controller_.modelLibraryInstalledSummaries();
+}
+
+QStringList DesktopShellViewModel::modelLibraryAvailableSummaries() const {
+    return controller_.modelLibraryAvailableSummaries();
+}
+
+QStringList DesktopShellViewModel::modelLibraryRecommendedSummaries() const {
+    return controller_.modelLibraryRecommendedSummaries();
+}
+
+QStringList DesktopShellViewModel::modelLibraryDetailSummaries() const {
+    return controller_.modelLibraryDetailSummaries();
+}
+
+QStringList DesktopShellViewModel::providerDiscoverySummaries() const {
+    return controller_.providerDiscoverySummaries();
+}
+
+QStringList DesktopShellViewModel::modelRoleIds() const {
+    return core::modelRoleIds();
+}
+
+QStringList DesktopShellViewModel::modelRoleAssignmentSummaries() const {
+    QStringList summaries;
+    const QList<core::ModelRole> roles{
+        core::ModelRole::PrimaryChat, core::ModelRole::Coding, core::ModelRole::Summarizer,
+        core::ModelRole::Research,    core::ModelRole::Fast,   core::ModelRole::Voice,
+        core::ModelRole::Embedding,
+    };
+    for (const auto role : roles) {
+        const auto roleId = core::modelRoleId(role);
+        const auto selected = settings_.selectedModelForRole(roleId);
+        summaries.append(QStringLiteral("%1 - %2 - routing metadata only; automatic multi-model "
+                                        "execution is disabled.")
+                             .arg(core::modelRoleDisplayName(role),
+                                  selected.isEmpty() ? QStringLiteral("No model assigned")
+                                                     : selected));
+    }
+    return summaries;
+}
+
+void DesktopShellViewModel::assignModelRole(const QString& roleId, const QString& modelId) {
+    settings_.setSelectedModelForRole(roleId, modelId);
+}
+
+QStringList DesktopShellViewModel::modelAdvisorRecommendationSummaries() const {
+    return controller_.modelAdvisorRecommendationSummaries();
+}
+
+QStringList DesktopShellViewModel::modelAdvisorAvoidSummaries() const {
+    return controller_.modelAdvisorAvoidSummaries();
+}
+
+QStringList DesktopShellViewModel::downloadsCenterSummaries() const {
+    return controller_.downloadsCenterSummaries();
+}
+
+QStringList DesktopShellViewModel::benchmarkHubSummaries() const {
+    return controller_.benchmarkHubSummaries();
 }
 
 QStringList DesktopShellViewModel::selectedModelCapabilityLabels() const {
@@ -3064,6 +3130,13 @@ QStringList DesktopShellViewModel::notificationCenterSummaries() const {
     return {
         QStringLiteral("Chat Completed - shown when a foreground chat finishes"),
         QStringLiteral("Export Completed - %1").arg(conversationExportLastResultSummary()),
+        QStringLiteral("Model Discovered - shown only from explicit foreground local metadata"),
+        QStringLiteral("Model Unavailable - shown only from visible readiness changes"),
+        QStringLiteral("Download Queued - metadata category; downloads cannot start"),
+        QStringLiteral("Download Completed - metadata category; no downloader exists"),
+        QStringLiteral("Benchmark Finished - metadata category; benchmark execution is disabled"),
+        QStringLiteral("Provider Offline - local readiness metadata only"),
+        QStringLiteral("Model Role Changed - shown when the user changes role metadata"),
         QStringLiteral("Update Available - check is manual; no hidden polling"),
         QStringLiteral("Permission Needed - future explicit approvals only"),
         QStringLiteral("Brain Saved - local memory events only"),

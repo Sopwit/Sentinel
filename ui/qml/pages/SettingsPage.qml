@@ -1113,6 +1113,152 @@ Item {
                                 }
                             }
                         }
+
+                        SectionTitle {
+                            title: qsTr("Model Library")
+                            subtitle: qsTr("Installed, discoverable, and recommended local AI metadata.")
+                            Layout.fillWidth: true
+                        }
+
+                        Repeater {
+                            model: Math.min(4, settingsPage.viewModel.modelLibraryInstalledSummaries.length)
+
+                            InfoRow {
+                                required property int index
+                                compact: settingsPage.compact
+                                label: index === 0 ? qsTr("Installed") : qsTr("Installed Model")
+                                value: settingsPage.viewModel.modelLibraryInstalledSummaries[index]
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        Repeater {
+                            model: Math.min(4, settingsPage.viewModel.modelLibraryRecommendedSummaries.length)
+
+                            InfoRow {
+                                required property int index
+                                compact: settingsPage.compact
+                                label: index === 0 ? qsTr("Recommended") : qsTr("Recommendation")
+                                value: settingsPage.viewModel.modelLibraryRecommendedSummaries[index]
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Provider Status")
+                            subtitle: qsTr("Discovery metadata only. No background probing or hidden network calls.")
+                            Layout.fillWidth: true
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.providerDiscoverySummaries
+
+                            InfoRow {
+                                required property string modelData
+                                compact: settingsPage.compact
+                                label: qsTr("Provider")
+                                value: modelData
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Model Roles")
+                            subtitle: qsTr("Assignments are metadata only and do not enable automatic routing.")
+                            Layout.fillWidth: true
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.modelRoleAssignmentSummaries
+
+                            RowLayout {
+                                required property string modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceSm
+
+                                InfoRow {
+                                    compact: true
+                                    label: qsTr("Role")
+                                    value: modelData
+                                    Layout.fillWidth: true
+                                }
+
+                                SentinelButton {
+                                    text: qsTr("Use Selected")
+                                    enabled: settingsPage.viewModel.selectedLocalModel.length > 0
+                                    onClicked: settingsPage.viewModel.assignModelRole(
+                                                   settingsPage.viewModel.modelRoleIds[index],
+                                                   settingsPage.viewModel.selectedLocalModel)
+                                }
+                            }
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Model Advisor")
+                            subtitle: qsTr("Deterministic local recommendations from static metadata.")
+                            Layout.fillWidth: true
+                        }
+
+                        Repeater {
+                            model: Math.min(3, settingsPage.viewModel.modelAdvisorRecommendationSummaries.length)
+
+                            InfoRow {
+                                required property int index
+                                compact: settingsPage.compact
+                                label: qsTr("Advisor")
+                                value: settingsPage.viewModel.modelAdvisorRecommendationSummaries[index]
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        Repeater {
+                            model: Math.min(2, settingsPage.viewModel.modelAdvisorAvoidSummaries.length)
+
+                            InfoRow {
+                                required property int index
+                                compact: settingsPage.compact
+                                label: qsTr("Avoid")
+                                value: settingsPage.viewModel.modelAdvisorAvoidSummaries[index]
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Downloads")
+                            subtitle: qsTr("Download center foundation. Actions are disabled.")
+                            Layout.fillWidth: true
+                        }
+
+                        Repeater {
+                            model: Math.min(3, settingsPage.viewModel.downloadsCenterSummaries.length)
+
+                            InfoRow {
+                                required property int index
+                                compact: settingsPage.compact
+                                label: qsTr("Download")
+                                value: settingsPage.viewModel.downloadsCenterSummaries[index]
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        SectionTitle {
+                            title: qsTr("Benchmark")
+                            subtitle: qsTr("Manual/placeholder performance metadata only.")
+                            Layout.fillWidth: true
+                        }
+
+                        Repeater {
+                            model: Math.min(3, settingsPage.viewModel.benchmarkHubSummaries.length)
+
+                            InfoRow {
+                                required property int index
+                                compact: settingsPage.compact
+                                label: qsTr("Benchmark")
+                                value: settingsPage.viewModel.benchmarkHubSummaries[index]
+                                Layout.fillWidth: true
+                            }
+                        }
                     }
                 }
 

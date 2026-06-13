@@ -22,6 +22,7 @@
 #include <QRegularExpression>
 #include <QSaveFile>
 #include <QStandardPaths>
+#include <QSysInfo>
 #include <QTextStream>
 
 #include <algorithm>
@@ -1977,6 +1978,69 @@ QString ApplicationController::modelRegistrySummary() const {
 
 QStringList ApplicationController::modelRegistryModelSummaries() const {
     return currentModelRegistry().modelDisplaySummaries();
+}
+
+QStringList ApplicationController::modelLibraryInstalledSummaries() const {
+    return currentModelRegistry().installedModelLibrarySummaries();
+}
+
+QStringList ApplicationController::modelLibraryAvailableSummaries() const {
+    return currentModelRegistry().availableModelLibrarySummaries();
+}
+
+QStringList ApplicationController::modelLibraryRecommendedSummaries() const {
+    return currentModelRegistry().recommendedModelLibrarySummaries();
+}
+
+QStringList ApplicationController::modelLibraryDetailSummaries() const {
+    return currentModelRegistry().modelDetailSummaries();
+}
+
+QStringList ApplicationController::providerDiscoverySummaries() const {
+    const auto registry = currentRuntimeProviderRegistry();
+    QStringList summaries;
+    for (const auto& provider : registry.providers()) {
+        const auto state = provider.enabled && provider.readiness == RuntimeReadinessState::Ready
+                               ? QStringLiteral("connected")
+                               : provider.enabled ? QStringLiteral("unavailable")
+                                                  : QStringLiteral("disabled");
+        summaries.append(QStringLiteral("%1 - %2 - endpoint %3 - selected model %4 - reason %5")
+                             .arg(provider.displayName, state, provider.endpointSummary,
+                                  provider.modelSummary, provider.readinessReason));
+    }
+    summaries.append(QStringLiteral("LM Studio - disabled - endpoint loopback only, not configured "
+                                    "- selected model none - reason explicit foreground local "
+                                    "endpoint checks are future-scoped."));
+    summaries.append(QStringLiteral("llama.cpp server - disabled - endpoint loopback only, not "
+                                    "configured - selected model none - reason no probing, "
+                                    "subprocess, or filesystem scanning is enabled."));
+    summaries.append(QStringLiteral("OpenAI-compatible local endpoint - disabled - endpoint "
+                                    "loopback only, not configured - selected model none - reason "
+                                    "local endpoint activation requires a later explicit phase."));
+    return summaries;
+}
+
+QStringList ApplicationController::modelAdvisorRecommendationSummaries() const {
+    return deterministicModelAdvisorRecommendations(
+        ModelAdvisorInput{QSysInfo::prettyProductName(), QSysInfo::currentCpuArchitecture(),
+                          QStringLiteral("Unknown"), QStringLiteral("General Assistant"),
+                          QStringLiteral("Balanced"), QStringLiteral("system")},
+        currentModelRegistry());
+}
+
+QStringList ApplicationController::modelAdvisorAvoidSummaries() const {
+    return deterministicModelAdvisorAvoidList(
+        ModelAdvisorInput{QSysInfo::prettyProductName(), QSysInfo::currentCpuArchitecture(),
+                          QStringLiteral("Unknown"), QStringLiteral("General Assistant"),
+                          QStringLiteral("Balanced"), QStringLiteral("system")});
+}
+
+QStringList ApplicationController::downloadsCenterSummaries() const {
+    return downloadCenterPlaceholderSummaries(currentModelRegistry().models());
+}
+
+QStringList ApplicationController::benchmarkHubSummaries() const {
+    return benchmarkHubPlaceholderSummaries(currentModelRegistry().models());
 }
 
 QStringList ApplicationController::selectedModelCapabilityLabels() const {
@@ -8295,10 +8359,16 @@ ModelRegistry ApplicationController::currentModelRegistry() const {
     auto models = modelSummariesFromOllama(currentOllamaModels());
     models.append(disabledProviderModelPlaceholder(QStringLiteral("openai-compatible"),
                                                    QStringLiteral("OpenAI-Compatible API")));
-    models.append(disabledProviderModelPlaceholder(QStringLiteral("claude"),
-                                                   QStringLiteral("Claude API")));
-    models.append(disabledProviderModelPlaceholder(QStringLiteral("gemini"),
-                                                   QStringLiteral("Gemini API")));
+    models.append(disabledProviderModelPlaceholder(QStringLiteral("lm-studio"),
+                                                   QStringLiteral("LM Studio")));
+    models.append(disabledProviderModelPlaceholder(QStringLiteral("llama-cpp-server"),
+                                                   QStringLiteral("llama.cpp server")));
+    models.append(disabledProviderModelPlaceholder(QStringLiteral("openai-compatible-local"),
+                                                   QStringLiteral("OpenAI-compatible local endpoint")));
+    models.append(disabledProviderModelPlaceholder(QStringLiteral("huggingface-catalog"),
+                                                   QStringLiteral("Hugging Face metadata catalog")));
+    models.append(disabledProviderModelPlaceholder(QStringLiteral("custom-catalog"),
+                                                   QStringLiteral("Future custom catalogs")));
     const auto selectedModel =
         selectedRuntimeProvider_ == QStringLiteral("ollama") ? selectedLocalModel_ : QString();
     return ModelRegistry{models, selectedRuntimeProvider_, selectedModel};
