@@ -19,6 +19,13 @@ Sentinel should become a production-grade cross-platform AI assistant with:
 - Plugin/skill extensibility through capability declarations.
 - Future provider interoperability without cloud-by-default behavior.
 
+Phase 49.5 product realignment sharpens this north star: Sentinel should feel like a premium native
+AI desktop companion with a large chat-first Home, Brain for memory/context/continuity, Agents for
+metadata-only planning readiness, and Settings as a floating modal. Advanced/Diagnostics copy
+replaces Advanced Diagnostics wording in user-facing surfaces. The realignment does not authorize new
+runtime execution, tools, agents, model management, cloud calls, telemetry, update checks, or
+background work.
+
 ## Architecture Position
 
 Sentinel should remain a C++20/Qt modular monolith with explicit service boundaries:

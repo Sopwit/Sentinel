@@ -1,5 +1,13 @@
 # AI Orchestration Plan
 
+Phase 49.5 realigns Sentinel's product surface around Home, Brain, and Agents while keeping AI
+orchestration metadata-only. Brain replaces Brain language for memory, recall, context,
+summaries, continuity, and explainability. Settings becomes a floating modal surface. Model
+Library, multi-model role assignments, Model Advisor, notifications, Companion/Quick Panel, and
+focus/session modes are roadmap/foundation concepts only. This phase does not implement Phase 50
+tool approval, automatic routing, parallel agentic execution, model downloads, cloud/API calls,
+filesystem scanning, hidden profiling, background workers, telemetry, or update checks.
+
 Phase 49.0 through Phase 49.14 adds the Agent Runtime Foundation for dry-run planning only.
 `AgentRuntimeService` exposes built-in General Assistant, Coding Assistant, Research Assistant,
 Workspace Assistant, and Voice Assistant records with QML-safe id, display name, description,
@@ -23,7 +31,7 @@ name, category, description, required permission domain, risk level, local/cloud
 availability, and refusal reason. The gateway consults `PermissionPolicyService` to report the
 current permission posture, but posture labels do not grant execution. `DesktopShellViewModel`
 exposes QML-safe gateway status, counts, summaries, and developer diagnostics. Settings adds a
-Tools section, Agents Overview shows compact registry posture, and Developer Mode shows detailed
+Tools section, Agents Overview shows compact registry posture, and Advanced Diagnostics shows detailed
 diagnostics.
 
 The tool gateway is metadata-only in this phase. It does not execute tools, read or write files,
@@ -37,7 +45,7 @@ Every Time, Trusted, and Enabled states across Workspace Access, Tool Execution,
 Voice Capture, Voice Playback, Cloud Provider Access, Filesystem Write, Subprocess Execution,
 Memory Commit, and Context Injection. `AppSettings` persists only the default permission posture,
 defaulting to Disabled. `DesktopShellViewModel` exposes QML-safe state labels, domain summaries,
-and developer diagnostics. Settings adds a Permissions section and Developer Mode shows detailed
+and developer diagnostics. Settings adds a Permissions section and Advanced Diagnostics shows detailed
 policy diagnostics.
 
 Permission policy states are labels only in this phase. They do not grant tool execution, agent
@@ -61,7 +69,7 @@ Phase 45.0 through Phase 45.12 refines the metadata-only workspace UX and permis
 Settings shows selected workspace metadata, root state, readiness, disabled Choose Workspace and
 Clear Workspace placeholders, and explicit permission posture labels: Disabled, Ask Every Time,
 Trusted, and Enabled. The current posture remains Disabled and no posture activates workspace
-access in this build. Developer Mode shows only workspace boundary diagnostics. No native file
+access in this build. Advanced Diagnostics shows only workspace boundary diagnostics. No native file
 picker, workspace clear operation, filesystem scan, automatic folder read, indexing, embeddings,
 subprocess, tool, plugin, autonomous agent, background worker, provider/model execution,
 cloud/API call, hidden memory write, or workspace-derived prompt context is added.
@@ -152,7 +160,7 @@ metadata-only: no API key value is accepted, stored, logged, exposed, removed, t
 provider execution. Provider credential records for OpenAI-compatible, Claude, and Gemini include
 credential required/not configured, backend readiness, storage unavailable/requires future
 implementation, and execution disabled metadata. Settings exposes safe summaries and disabled Add
-API Key, Update API Key, and Remove API Key placeholders only. Developer Mode may show bounded
+API Key, Update API Key, and Remove API Key placeholders only. Advanced Diagnostics may show bounded
 policy/safety traces, never raw secrets or provider payloads. Future activation requires an
 explicit OS secret-store implementation phase, user-explicit credential flows, no-plaintext
 persistence tests, no-secret view-model tests, provider execution gates, and security review.
@@ -197,7 +205,7 @@ selection. Local Ollama remains the only enabled provider/runtime path. OpenAI-c
 providers are disabled placeholders only. Settings persists selected provider metadata plus
 existing local endpoint/model metadata, but no API keys, secrets, transcripts, or hidden prompts.
 Chat and Settings show active provider/model/local-only/readiness metadata from the registry, and
-Developer Mode may show bounded registry/capability/readiness traces. The phase adds no cloud
+Advanced Diagnostics may show bounded registry/capability/readiness traces. The phase adds no cloud
 execution, automatic fallback routing, background workers, model pulls/downloads, provider
 auto-discovery daemons, filesystem scanning, embeddings/vector search, tool execution, agent
 planning, hidden retries, autonomous behavior, or automatic provider switching.
@@ -209,7 +217,7 @@ deterministic context path. `ContextDecisionReason`, `ContextDecisionTrace`,
 excluded, truncated, or placed in fallback. The exposed ordering remains recent transcript,
 continuity summary, committed memory, and runtime metadata. Budget diagnostics include allocated
 characters, approximate tokens, remaining budget, compression gain, and contribution by transcript,
-summary, memory, and runtime metadata. Normal UI receives concise explanations; Developer Mode can
+summary, memory, and runtime metadata. Normal UI receives concise explanations; Advanced Diagnostics can
 show richer bounded traces. The phase does not expose hidden prompts, raw provider payloads, raw
 system prompts, semantic/vector authority, filesystem indexing, cloud/API expansion,
 tools/plugins, autonomous behavior, transcript mutation, or hidden background workers.
@@ -280,7 +288,7 @@ is scored through value-only memory relevance records using deterministic litera
 literal value overlap, active conversation title overlap, recent conversation terms, and explicit
 pinned/committed priority metadata. Selected memories become individual deterministic context
 candidates with duplicate suppression, character budgeting, stable tie ordering,
-included/excluded counts, trace summaries, and exclusion reasons. Home, Runtime/Memory, and
+included/excluded counts, trace summaries, and exclusion reasons. Home, Brain, and
 Settings expose only compact QML-safe summaries. Semantic/vector authority remains disabled; no
 embeddings, vector ranking, cloud/API calls, filesystem indexing, background summarization,
 autonomous writes, prompt debug dumps, raw hidden prompt exposure, tools/plugins, or voice
@@ -304,7 +312,7 @@ configuration is active. Send readiness is a controller-owned contract requiring
 enabled, reachable local loopback Ollama health, installed model discovery, an explicitly selected
 model present in that discovered list, an unarchived active conversation, and no active request.
 Readiness failures refuse before transcript mutation and expose concise normal-UI copy plus
-Developer Mode diagnostics. Started non-streaming and streaming requests keep the existing
+Advanced diagnostics. Started non-streaming and streaming requests keep the existing
 request-id guard, busy cleanup, stale-result ignore behavior, transient streaming preview, and
 single final assistant-message append semantics.
 
@@ -420,14 +428,14 @@ scanning, subprocess execution, cloud/API calls, automatic ingestion, or autonom
 18.31 through Phase 18.33 checkpoint the completed Phase 18 agent/tool/voice foundation and
 confirm `executionAttempted` remains false across those paths. Phase 19.0 through Phase 19.3
 synchronize the UI with that runtime posture: Home becomes the primary local Ollama chat surface,
-Settings gates advanced metadata behind Developer Mode, Agents presents metadata-only runtime
+Settings gates advanced metadata behind Advanced Diagnostics, Agents presents metadata-only runtime
 sections, modes alter presentation density only, and no cloud/API provider, tools/plugins, voice
 execution, subprocess, filesystem, semantic-authority, or autonomous authority is added. Phase
 19.4 through Phase 19.6 continue that UI-only posture: Home is simplified into the primary
-chatbot surface, Runtime/Memory and Agents split normal user views from Developer metadata views,
+chatbot surface, Brain and Agents split normal user views from Advanced metadata views,
 Settings hides low-level diagnostics in normal mode, voice copy distinguishes prepared readiness
 from inactive execution, and provider copy states Local Ollama is the only active execution path
-with no cloud provider active. Developer Mode remains a visibility-only setting and does not
+with no cloud provider active. Advanced Diagnostics remains a visibility-only setting and does not
 change permission, safety, provider, model, voice, tool, filesystem, subprocess, semantic, or
 agent authority. The phase also records the future i18n approach: Qt-native `qsTr` plus
 `.ts`/`.qm` catalogs, with English/Turkish localization and runtime language switching deferred
@@ -1209,12 +1217,12 @@ execution, or arbitrary export paths:
   remain metadata-only. `executionAttempted` remains false across these paths, and no microphone,
   playback, subprocess, filesystem scanning, cloud/API, tools/plugins, autonomous loop, real STT,
   or real TTS execution is authorized.
-- Phase 19.0 through Phase 19.3 is a UI synchronization pass only. Developer Mode reveals
+- Phase 19.0 through Phase 19.3 is a UI synchronization pass only. Advanced Diagnostics reveals
   advanced semantic, retrieval, arbitration, agent/tool, voice-pipeline, and raw readiness
   metadata without changing permission or safety policy. Local Ollama loopback remains the only
   current inference endpoint; external API providers and API keys remain future opt-in work.
 - Phase 19.4 through Phase 19.6 is also UI-only. It reduces normal-mode debug density, makes Home
-  chatbot-first, separates Runtime/Memory and Agents into normal versus Developer segments,
+  chatbot-first, separates Brain and Agents into normal versus Advanced segments,
   simplifies Settings, clarifies voice as prepared but inactive, and documents Qt-native i18n
   planning for later English/Turkish catalogs. No runtime authority changes.
 - `docs/PHASE_13_CHECKPOINT.md` records the Phase 13 Voice/Piper review, confirms the TTS path as

@@ -11,7 +11,7 @@ ScrollView {
     readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property bool retrievalActive: viewModel.retrievalPlanningSelectedSourceCount > 0
     readonly property bool contextActive: viewModel.contextAssemblyAvailableSourceCount > 0
-    readonly property string uiSelfCheck: "developer-gated grouped-diagnostics bottom-safe-scroll"
+    readonly property string uiSelfCheck: "advanced-gated grouped-diagnostics brain-sections bottom-safe-scroll"
     property string selectedSection: "Overview"
 
     function sectionLabel(section) {
@@ -19,14 +19,16 @@ ScrollView {
             return qsTr("Overview")
         if (section === "Recall")
             return qsTr("Recall")
-        if (section === "Local Data")
-            return qsTr("Local Data")
-        if (section === "Developer")
-            return qsTr("Developer")
+        if (section === "Memory")
+            return qsTr("Memory")
+        if (section === "Context")
+            return qsTr("Context")
+        if (section === "Advanced")
+            return qsTr("Advanced")
         return section
     }
     onDeveloperModeChanged: {
-        if (!developerMode && selectedSection === "Developer")
+        if (!developerMode && selectedSection === "Advanced")
             selectedSection = "Overview"
     }
     clip: true
@@ -73,8 +75,8 @@ ScrollView {
 
                         Repeater {
                             model: memoryPage.developerMode
-                                   ? ["Overview", "Recall", "Local Data", "Developer"]
-                                   : ["Overview", "Recall", "Local Data"]
+                                   ? ["Overview", "Memory", "Recall", "Context", "Advanced"]
+                                   : ["Overview", "Memory", "Recall", "Context"]
 
                             Button {
                                 id: memoryTabButton
@@ -127,7 +129,7 @@ ScrollView {
                     Label {
                         Layout.fillWidth: true
                         visible: false
-                        text: qsTr("Developer metadata is hidden. Enable Developer Mode in Settings to view read-only internals.")
+                        text: qsTr("Advanced diagnostics are hidden. Enable Advanced in Settings to view read-only internals.")
                         color: SentinelTheme.textMuted
                         font.pixelSize: SentinelTheme.fontSmall
                         wrapMode: Text.WordWrap
@@ -164,7 +166,7 @@ ScrollView {
 
                     InfoRow {
                         compact: memoryPage.compact
-                        label: qsTr("Semantic Memory")
+                        label: qsTr("Semantic Recall")
                         value: qsTr("Planned; disabled in normal use")
                         Layout.fillWidth: true
                     }
@@ -243,7 +245,7 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
-                visible: memoryPage.selectedSection === "Developer" && memoryPage.developerMode
+                visible: memoryPage.selectedSection === "Advanced" && memoryPage.developerMode
                 implicitHeight: contextPipelineColumn.implicitHeight + memoryPage.panelPadding * 2
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.034)
 
@@ -255,7 +257,7 @@ ScrollView {
                     spacing: SentinelTheme.spaceMd
 
                     SectionTitle {
-                        title: "Developer Context"
+                        title: "Advanced Brain Diagnostics"
                         subtitle: "Committed memory feeds deterministic recall, assembly, and retrieval planning. Semantic retrieval remains disabled."
                         Layout.fillWidth: true
                     }
@@ -536,7 +538,90 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
-                visible: memoryPage.selectedSection === "Developer" && memoryPage.developerMode
+                visible: memoryPage.selectedSection === "Context"
+                implicitHeight: brainContextColumn.implicitHeight + memoryPage.panelPadding * 2
+
+                ColumnLayout {
+                    id: brainContextColumn
+                    x: memoryPage.panelPadding
+                    y: memoryPage.panelPadding
+                    width: parent.width - memoryPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: qsTr("Context")
+                        subtitle: qsTr("Concise continuity and explainability status. Detailed traces live in Advanced.")
+                        Layout.fillWidth: true
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: qsTr("Assembly")
+                        value: memoryPage.viewModel.contextAssemblyStatus + " - "
+                               + memoryPage.viewModel.contextAssemblySummaryText
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 3
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: qsTr("Continuity")
+                        value: memoryPage.viewModel.summaryContinuityStatus + " - "
+                               + memoryPage.viewModel.summaryContinuityContributionSummary
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 3
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: qsTr("Explainability")
+                        value: memoryPage.viewModel.contextReasoningSummary
+                        Layout.fillWidth: true
+                        valueMaximumLineCount: 3
+                    }
+
+                    InfoRow {
+                        compact: memoryPage.compact
+                        label: qsTr("Sources")
+                        value: memoryPage.viewModel.contextAssemblyAvailableSourceCount + qsTr(" available / ")
+                               + memoryPage.viewModel.contextAssemblyCandidateBlockCount + qsTr(" blocks")
+                        Layout.fillWidth: true
+                    }
+
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+
+                        StatusChip {
+                            label: qsTr("Memory")
+                            value: memoryPage.viewModel.committedMemoryContextAvailability
+                            accent: SentinelTheme.calmAccent
+                            muted: memoryPage.viewModel.committedMemoryContextAvailability !== "Available"
+                        }
+
+                        StatusChip {
+                            label: qsTr("Summaries")
+                            value: memoryPage.viewModel.conversationSummaryAvailable ? qsTr("ready") : qsTr("not ready")
+                            accent: memoryPage.viewModel.conversationSummaryAvailable ? SentinelTheme.success
+                                                                                       : SentinelTheme.textMuted
+                            muted: !memoryPage.viewModel.conversationSummaryAvailable
+                        }
+
+                        StatusChip {
+                            label: qsTr("Injection")
+                            value: memoryPage.viewModel.promptContextInjectionEnabled ? qsTr("opt-in on")
+                                                                                      : qsTr("opt-in off")
+                            accent: memoryPage.viewModel.promptContextInjectionEnabled ? SentinelTheme.success
+                                                                                       : SentinelTheme.textMuted
+                            muted: !memoryPage.viewModel.promptContextInjectionEnabled
+                        }
+                    }
+                }
+            }
+
+            ShellPanel {
+                width: parent.width
+                visible: memoryPage.selectedSection === "Advanced" && memoryPage.developerMode
                 implicitHeight: contextAssemblyColumn.implicitHeight + memoryPage.panelPadding * 2
 
                 ColumnLayout {
@@ -547,7 +632,7 @@ ScrollView {
                     spacing: SentinelTheme.spaceMd
 
                     SectionTitle {
-                        title: "Context"
+                        title: "Advanced Context"
                         subtitle: "Planning metadata only. Prompt assembly and automatic attachment remain disabled."
                         Layout.fillWidth: true
                     }
@@ -973,7 +1058,7 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
-                visible: memoryPage.selectedSection === "Local Data"
+                visible: memoryPage.selectedSection === "Memory"
                 implicitHeight: candidateColumn.implicitHeight + memoryPage.panelPadding * 2
 
                 ColumnLayout {
@@ -1129,7 +1214,7 @@ ScrollView {
 
             GridLayout {
                 width: parent.width
-                visible: memoryPage.selectedSection === "Local Data"
+                visible: memoryPage.selectedSection === "Memory"
                 columns: memoryPage.compact ? 1 : 3
                 columnSpacing: SentinelTheme.spaceSm
                 rowSpacing: SentinelTheme.spaceSm
@@ -1171,7 +1256,7 @@ ScrollView {
             ListView {
                 id: memoryList
                 width: parent.width
-                visible: memoryPage.selectedSection === "Local Data"
+                visible: memoryPage.selectedSection === "Memory"
                 height: Math.min(420, Math.max(220, memoryPage.height - 360))
                 clip: true
                 spacing: SentinelTheme.spaceSm
@@ -1205,7 +1290,7 @@ ScrollView {
 
             Label {
                 width: parent.width
-                visible: memoryPage.selectedSection === "Local Data" && memoryList.count === 0
+                visible: memoryPage.selectedSection === "Memory" && memoryList.count === 0
                 text: "No saved key-value memory yet. Store saves local memory only; it does not call a model, use cloud, or extract automatically."
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignHCenter

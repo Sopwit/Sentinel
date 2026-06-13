@@ -30,7 +30,7 @@ ShellPanel {
         if (pageName === "Dashboard")
             return qsTr("Home")
         if (pageName === "Memory")
-            return qsTr("Runtime/Memory")
+            return qsTr("Brain")
         if (pageName === "Agents")
             return qsTr("Agents")
         return pageName

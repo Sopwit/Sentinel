@@ -2,6 +2,33 @@
 
 ## Completed / Stable
 
+### Phase 49.5: Sentinel Product Realignment Mega-Pass
+
+Completed. Realigns Sentinel around a premium native AI desktop companion while preserving the
+strict metadata-only execution boundary.
+
+Scope:
+
+- Primary product surfaces are Home, Brain, and Agents. Settings is planned and presented as a
+  floating modal/popup rather than a primary dock page.
+- Home is chat-first with a larger central chat surface and collapsible conversation sidebar
+  foundation for search/filter, pinned, recent, and archived sections.
+- Brain product wording is replaced with Brain for memory, recall, context, summaries,
+  continuity, and explainability. Advanced replaces Advanced Diagnostics wording in user-facing copy
+  while the internal `developerModeEnabled` compatibility flag remains unchanged.
+- Settings categories are realigned to General, Appearance, AI, Models, Voice, Brain,
+  Permissions, Tools, Agents, Workspace, Notifications, Updates, and Advanced.
+- Added roadmap/foundation documentation for Companion/Quick Panel, themes, Model Library,
+  multi-model roles, Model Advisor, notifications, updates/about, chat productivity, focus/session
+  modes, privacy/telemetry, and Odysseus ecosystem inspiration.
+
+Known limitation:
+
+- This phase adds no Phase 50 tool approval, real tool execution, agent execution, filesystem
+  scanning, model download/delete/update execution, cloud/API calls, API-key input, STT/TTS,
+  microphone/playback, subprocess execution, autonomous agents, background workers, hidden
+  indexing, telemetry, or update network checks.
+
 ### Phase 49.0-49.14: Agent Runtime Foundation (Dry-Run Planning Only)
 
 Completed. Adds Sentinel's first agent runtime planning abstraction while preserving a strict
@@ -23,7 +50,7 @@ Scope:
 - Agents page now shows an agent catalog, dry-run plan preview, readiness summaries, and approval
   posture badges.
 - Settings now includes an Agents section with "Agent execution is disabled" messaging. Home shows
-  a compact agent posture chip. Developer Mode exposes runtime and plan diagnostics.
+  a compact agent posture chip. Advanced Diagnostics exposes runtime and plan diagnostics.
 
 Known limitation:
 
@@ -50,7 +77,7 @@ Scope:
   `DesktopShellViewModel`.
 - Added Settings > Tools with readiness counts, permission posture, boundary copy, and read-only
   tool summaries.
-- Agents Overview shows compact tool registry posture in normal mode, and Developer Mode shows
+- Agents Overview shows compact tool registry posture in normal mode, and Advanced Diagnostics shows
   detailed gateway diagnostics.
 
 Known limitation:
@@ -74,7 +101,7 @@ Scope:
 - Exposed QML-safe permission policy status, summaries, state labels, domain ids/names, domain
   summaries, and developer diagnostics through `DesktopShellViewModel`.
 - Added Settings > Permissions with a default posture selector and read-only domain summaries.
-- Developer Mode shows central permission diagnostics alongside runtime, workspace, profile,
+- Advanced Diagnostics shows central permission diagnostics alongside runtime, workspace, profile,
   credential, companion, and voice boundaries.
 - Home shows a compact central permission posture chip.
 
@@ -99,7 +126,7 @@ Scope:
 - Added Settings > Profiles with a profile selector, metadata-only readiness, summary,
   description, and boundary copy.
 - Added a compact Home profile chip.
-- Developer Mode shows profile capability/readiness diagnostics as read-only metadata.
+- Advanced Diagnostics shows profile capability/readiness diagnostics as read-only metadata.
 
 Known limitation:
 
@@ -120,7 +147,7 @@ Scope:
   Enabled. The current posture is Disabled and does not grant filesystem authority.
 - Replaced action affordances with disabled Choose Workspace and Clear Workspace placeholders,
   plus metadata explaining that scan and index behavior remain unavailable.
-- Kept Home to a compact workspace readiness chip and Developer Mode to read-only workspace
+- Kept Home to a compact workspace readiness chip and Advanced Diagnostics to read-only workspace
   boundary diagnostics.
 - Extended focused tests for workspace metadata, settings persistence, and
   `DesktopShellViewModel` workspace exposure.
@@ -149,7 +176,7 @@ Scope:
 - Added Settings > Workspace with a metadata-only workspace selector, readiness summary, disabled
   Choose Folder / Scan Workspace / Index Workspace actions, and clear "Workspace access is not
   enabled yet" copy.
-- Added compact Home workspace status and Developer Mode workspace boundary diagnostics.
+- Added compact Home workspace status and Advanced Diagnostics workspace boundary diagnostics.
 
 Known limitation:
 
@@ -199,7 +226,7 @@ Scope:
 - Added a persisted user preference for "Show Sentinel in menu bar / system tray"; it records
   visibility intent only and does not start background work.
 - Settings General shows the companion preference, readiness status, and safety boundary summary.
-  Developer Mode shows platform details, action metadata, and traces.
+  Advanced Diagnostics shows platform details, action metadata, and traces.
 - Safe companion actions are metadata-only labels: Open Sentinel, New conversation, Quick note,
   Pause companion, Settings, and Quit. They do not navigate, mutate transcripts, write files,
   write memory, quit the app, or execute tools.
@@ -333,7 +360,7 @@ Scope:
   and execution disabled metadata.
 - Settings Local AI shows a compact Credential Security section with OS backend readiness,
   provider credential status, and disabled Add API Key, Update API Key, and Remove API Key
-  placeholders. Developer Mode shows bounded store safety and backend traces.
+  placeholders. Advanced Diagnostics shows bounded store safety and backend traces.
 
 Known limitation:
 
@@ -361,7 +388,7 @@ Scope:
 - API key values are not accepted, stored, logged, tested, or exposed. UI receives only
   configured/not-required, missing, and refused credential metadata.
 - Settings and Home show Local Ollama active posture, cloud providers disabled/not configured, and
-  API keys not stored. Developer Mode may show bounded credential safety diagnostics.
+  API keys not stored. Advanced Diagnostics may show bounded credential safety diagnostics.
 
 Known limitation:
 
@@ -389,7 +416,7 @@ Scope:
   local chat enabled, loopback endpoint readiness, reachable Ollama health, selected model present
   in discovered local metadata, active unarchived conversation, and no active request.
 - Settings now uses a compact model picker with provider, readiness, local-only scope, and
-  capability chips. Developer Mode may show bounded model registry summaries.
+  capability chips. Advanced Diagnostics may show bounded model registry summaries.
 - Model management placeholders remain unavailable for pull/install/delete/refresh/import/export.
 
 Known limitation:
@@ -419,7 +446,7 @@ Scope:
 - Settings now shows a Runtime section with provider selector, runtime cards, health/readiness,
   local-only scope, endpoint, active model, capabilities, and disabled future-provider metadata.
 - Chat surfaces show active provider, active model, local-only scope, and readiness state.
-- Developer Mode exposes bounded provider registry/capability/readiness traces only.
+- Advanced Diagnostics exposes bounded provider registry/capability/readiness traces only.
 - Focused tests cover provider registry, readiness transitions, disabled-provider safety,
   capability exposure, provider persistence, runtime selection behavior, and QML exposure.
 
@@ -447,7 +474,7 @@ Scope:
 - Added Qt `.ts` translation source catalogs for English and Turkish plus initial Turkish coverage
   for the primary shell labels and commands.
 - Wrapped most visible hardcoded user-facing strings in the main shell, dock, header, chat,
-  Runtime/Memory, Agents, Settings, and command palette surfaces with `qsTr()`.
+  Brain, Agents, Settings, and command palette surfaces with `qsTr()`.
 - Focused tests cover language defaults, persistence, view-model exposure, available language
   list, display names, and preservation of runtime/prompt/context flags when language changes.
 
@@ -470,8 +497,8 @@ Scope:
   Settings states that context reasoning is hidden from UI and runtime behavior is unchanged.
 - Home hides the expandable Context reasoning surface when the visibility setting is off, without
   leaving empty gaps or coupling visibility to streaming state.
-- Developer Mode remains a separate diagnostic visibility gate. Developer diagnostics may still
-  show bounded context traces when Developer Mode is enabled.
+- Advanced Diagnostics remains a separate diagnostic visibility gate. Advanced diagnostics may still
+  show bounded context traces when Advanced Diagnostics is enabled.
 - Context reasoning text areas remain keyboard reachable and selectable/copyable; compact status
   chips stay single-line while wider layouts give chips more room before eliding.
 - Focused tests cover settings persistence, view-model exposure, and preservation of internal
@@ -501,11 +528,11 @@ Scope:
   compression gain, and transcript/summary/memory/runtime metadata contribution counts.
 - Ordering visibility stays stable and readable: recent transcript, continuity summary, committed
   memory, then runtime metadata.
-- Home shows a compact expandable Context Reasoning surface. Runtime/Memory shows richer
+- Home shows a compact expandable Context Reasoning surface. Brain shows richer
   contribution, fallback, ordering, and selectable diagnostics. Settings shows explainability
-  enabled/disabled state plus Developer Mode context diagnostics.
+  enabled/disabled state plus Advanced Diagnostics context diagnostics.
 - Focused tests cover deterministic reasoning, fallback/exclusion reporting, ordering/budget
-  visibility, no raw prompt exposure, view-model exposure, and Developer Mode trace gating.
+  visibility, no raw prompt exposure, view-model exposure, and Advanced Diagnostics trace gating.
 
 Known limitation:
 
@@ -531,9 +558,9 @@ Scope:
   fallback reasons and revert to transcript-only context selection without hidden mutation.
 - `ApplicationController` and `DesktopShellViewModel` expose QML-safe continuity status,
   freshness, coverage, contribution, fallback, ordering, and deterministic budget trace summaries.
-- Chat shows concise continuity assistance/fallback copy. Runtime/Memory shows continuity
-  contribution, ordering, freshness, coverage, and Developer Mode budget traces. Settings shows
-  summary continuity enablement and Developer Mode diagnostics.
+- Chat shows concise continuity assistance/fallback copy. Brain shows continuity
+  contribution, ordering, freshness, coverage, and Advanced Diagnostics budget traces. Settings shows
+  summary continuity enablement and Advanced diagnostics.
 - Focused tests cover persisted-summary restart continuity, stale-summary exclusion, transcript
   preservation, no memory mutation, deterministic ordering, and view-model property exposure.
 
@@ -571,8 +598,8 @@ Scope:
   deterministic context candidate in stable ordering and never silently replaces transcript
   history.
 - Chat exposes an explicit Generate Summary action, ready/loading/blocked indication, and summary
-  inclusion copy. Runtime/Memory shows summary metadata and inclusion state; Developer Mode keeps
-  traces and budgets visible. Settings Developer Mode shows summary status and inclusion/budget
+  inclusion copy. Brain shows summary metadata and inclusion state; Advanced Diagnostics keeps
+  traces and budgets visible. Settings Advanced Diagnostics shows summary status and inclusion/budget
   posture.
 
 Known limitation:
@@ -601,8 +628,8 @@ Scope:
 - `ApplicationController` and `DesktopShellViewModel` expose QML-safe summary availability,
   blocked reason, readiness, estimated compression gain, candidate segments, persisted metadata
   summary, and trace summaries.
-- Runtime/Memory shows concise summary readiness in normal mode and planning/trace metadata in
-  Developer Mode. Chat shows only a disabled non-destructive Generate Summary placeholder while
+- Brain shows concise summary readiness in normal mode and planning/trace metadata in
+  Advanced Diagnostics. Chat shows only a disabled non-destructive Generate Summary placeholder while
   generation is unavailable.
 
 Known limitation:
@@ -630,9 +657,9 @@ Scope:
   system/runtime metadata exclusion.
 - `ApplicationController` and `DesktopShellViewModel` expose QML-safe status, readiness,
   pressure, candidate counts, selected counts, fallback, budget, candidate, and trace summaries.
-- Runtime/Memory normal mode shows a compact Conversation Compression card only when pressure
-  makes it useful. Developer Mode shows grouped budget, candidate, selection, and trace metadata.
-  Settings Developer Mode shows concise compression readiness under context/runtime diagnostics.
+- Brain normal mode shows a compact Conversation Compression card only when pressure
+  makes it useful. Advanced Diagnostics shows grouped budget, candidate, selection, and trace metadata.
+  Settings Advanced Diagnostics shows concise compression readiness under context/runtime diagnostics.
 
 Known limitation:
 
@@ -658,9 +685,9 @@ Scope:
   metadata.
 - Prompt context injection remains opt-in. Disabled context leaves prompts unchanged; enabled
   context still uses compact local context blocks without raw prompt/debug dump exposure.
-- Home keeps the compact context-used line only when context is enabled. Runtime/Memory and
+- Home keeps the compact context-used line only when context is enabled. Brain and
   Settings expose concise salience quality summaries in normal mode and detailed salience budget,
-  reasons, traces, and counts in Developer Mode.
+  reasons, traces, and counts in Advanced Diagnostics.
 
 Known limitation:
 
@@ -686,10 +713,10 @@ Scope:
   enforced, exclusion reasons are exposed, and stable tie ordering is preserved.
 - Home shows compact memory context usage as `Context used: X memories / Y chars` only when local
   context injection is enabled.
-- Runtime/Memory normal mode shows a compact memory context quality summary. Developer Mode shows
+- Brain normal mode shows a compact memory context quality summary. Advanced Diagnostics shows
   relevance budget, included/excluded counts, trace summaries, and exclusion reasons.
 - Settings Chat keeps context enablement and deterministic source count visible, with detailed
-  memory relevance budget visible only in Developer Mode.
+  memory relevance budget visible only in Advanced Diagnostics.
 
 Known limitation:
 
@@ -714,9 +741,9 @@ Scope:
 - Added selected conversation metadata as a concise metadata-only local context source.
 - Prompt context injection still happens only through the existing explicit opt-in local context
   path, before the user prompt, with compact delimiters and no raw prompt dump in UI.
-- Home shows concise context usage when injection is enabled. Runtime/Memory Developer view shows
+- Home shows concise context usage when injection is enabled. Brain Advanced view shows
   source, budget, included/excluded, and safe trace summaries. Settings shows context enablement
-  and deterministic source count, with detailed budget visible only in Developer Mode.
+  and deterministic source count, with detailed budget visible only in Advanced Diagnostics.
 
 Known limitation:
 
@@ -757,7 +784,7 @@ Scope:
 - Conversation switching cancels the active local request metadata, clears transient preview text,
   and ignores stale async completions so final output cannot be written into the newly selected
   conversation.
-- Developer Mode continues to expose detailed local inference traces and runtime summaries; normal
+- Advanced Diagnostics continues to expose detailed local inference traces and runtime summaries; normal
   UI shows concise guidance only and no raw payload dumps.
 
 Known limitation:
@@ -841,7 +868,7 @@ Scope:
 - Added a shared dimmed modal shell with bounded opacity/scale transitions, escape/outside-click
   closing, and consistent premium confirmation styling for local-data destructive prompts.
 - Added a metadata-only command palette on Ctrl/Cmd+K with searchable local navigation actions for
-  Home, Runtime/Memory, Agents, and Settings.
+  Home, Brain, Agents, and Settings.
 - Added command-palette quick-action rows for Clear Chat History, Export Markdown, and Export JSON
   as metadata-only disabled actions; they do not call export, clear, filesystem, plugin, tool, or
   runtime execution paths.
@@ -874,7 +901,7 @@ Scope:
   user/assistant message distinction, streaming/status readability, and scrollbar integration.
 - Improved AI Bridge conversation row hover/selection hierarchy, active-row emphasis, compact
   list scrolling, and metadata-only selected-conversation status presentation.
-- Improved Runtime/Memory and Agents diagnostic readability with calmer scrollbars, clearer
+- Improved Brain and Agents diagnostic readability with calmer scrollbars, clearer
   grouped spacing, hoverable metadata rows, and stronger blocked/refused/restricted emphasis.
 - Improved Settings section hierarchy, compact rail behavior, toggle hover/focus feel, model
   selector popup presentation, long-path field readability, and scroll integration.
@@ -896,16 +923,16 @@ Scope:
 
 - Removed avoidable value truncation in shared detail rows while keeping ellipsis for compact
   chips, navigation labels, and one-line controls where wrapping would break layout.
-- Added explicit bottom breathing room to scrollable Home, Runtime/Memory, Agents, and Settings
+- Added explicit bottom breathing room to scrollable Home, Brain, Agents, and Settings
   content so final sections remain visible above the shell status and dock area.
 - Aligned remaining menu, model selector, checkbox, hover, focus, and active states with shared
   interaction tokens and calm cyan/blue theme treatment.
 - Kept Home chatbot-first with the composer visible, chat list bottom-follow behavior after send
   and streaming completion, and AI Bridge limited to provider/conversation metadata.
-- Kept Runtime/Memory and Agents Developer surfaces gated by Developer Mode, with wrapped
+- Kept Brain and Agents Advanced surfaces gated by Advanced Diagnostics, with wrapped
   diagnostic rows and compact scrollable metadata walls.
-- Improved Settings category rail synchronization, exact section jumps, Developer gating, readable
-  voice/model detail rows, and preserved the premium Developer Mode switch styling.
+- Improved Settings category rail synchronization, exact section jumps, Advanced gating, readable
+  voice/model detail rows, and preserved the premium Advanced Diagnostics switch styling.
 - Added lightweight QML `uiSelfCheck` metadata on polished UI surfaces for future visual QA hooks.
 
 Known limitation:
@@ -917,7 +944,7 @@ Known limitation:
 ### Phase 20.0-20.6: Premium Motion, Interaction, And Visual Polish Foundation
 
 Completed. Adds shared QML motion and interaction polish while preserving the current
-presentation-only Developer Mode and metadata-only runtime boundaries.
+presentation-only Advanced Diagnostics and metadata-only runtime boundaries.
 
 Scope:
 
@@ -930,10 +957,10 @@ Scope:
   scrolled up. Sending a message returns the chat to the latest message.
 - AI Bridge remains limited to provider/cloud status, compact conversations, selected
   conversation actions, and disabled pin/delete metadata.
-- Runtime/Memory and Agents keep Developer tabs hidden unless Developer Mode is enabled, with
-  Developer content grouped into compact read-only metadata sections.
+- Brain and Agents keep Advanced tabs hidden unless Advanced Diagnostics is enabled, with
+  Advanced content grouped into compact read-only metadata sections.
 - Settings keeps left category navigation, adds a smoother scroll-to-section behavior and a
-  premium active rail indicator, preserves the Developer section gate, and keeps the Developer
+  premium active rail indicator, preserves the Advanced section gate, and keeps the Developer
   Mode switch presentation-only.
 
 Known limitation:
@@ -958,15 +985,15 @@ Scope:
   rows with compact one-line metadata, active-row highlighting, no inline switch/archive buttons,
   and a styled overflow menu for rename, archive/unarchive, pin disabled, and delete disabled
   metadata.
-- Runtime/Memory keeps Overview, Recall, Local Data, and Developer segmentation. Developer remains
-  hidden when Developer Mode is off, and normal Local Data copy clearly states that Store writes
+- Brain keeps Overview, Recall, Memory, and Advanced segmentation. Advanced remains
+  hidden when Advanced Diagnostics is off, and normal Memory copy clearly states that Store writes
   local key/value memory only without model or cloud calls.
-- Agents keeps Overview, Tasks, Capabilities, and Developer segmentation. Developer remains hidden
-  when Developer Mode is off, warning accents are only shown for non-zero blocked/refused/
+- Agents keeps Overview, Tasks, Capabilities, and Advanced segmentation. Advanced remains hidden
+  when Advanced Diagnostics is off, warning accents are only shown for non-zero blocked/refused/
   restricted states, and capability/tool contract rows are compact bounded summaries.
 - Settings keeps left-side category navigation with a calmer glass rail, compact single-line
-  category items, improved scroll-based active-category sync including the final Developer
-  section, custom glass controls for Developer Mode and chat toggles, styled model selection, and
+  category items, improved scroll-based active-category sync including the final Advanced
+  section, custom glass controls for Advanced Diagnostics and chat toggles, styled model selection, and
   concise voice readiness copy.
 - Header health and mode controls are smaller and stable, and the bottom status strip continues to
   bind to `DesktopShellViewModel` state only.
@@ -995,18 +1022,18 @@ Scope:
   messages, transcript search/export controls, or normal-mode runtime diagnostics. Conversation
   rows use simple chat-app style summaries, row click switches conversations, and per-row overflow
   metadata exposes rename, archive/unarchive, pin disabled, and delete disabled states.
-- Runtime/Memory keeps Overview, Recall, Local Data, and Developer segmentation. The Developer tab
-  is hidden completely unless Developer Mode is enabled, and Developer content is grouped into
+- Brain keeps Overview, Recall, Memory, and Advanced segmentation. The Advanced tab
+  is hidden completely unless Advanced Diagnostics is enabled, and Advanced content is grouped into
   Context Assembly, Retrieval, Semantic / Vector, Prompt Authority, and Diagnostics.
-- Agents keeps Overview, Tasks, Capabilities, and Developer segmentation. The Developer tab is
-  hidden completely unless Developer Mode is enabled, task cards use more consistent grid sizing,
-  static entries are labeled registered profiles, and Developer content is grouped into Task
+- Agents keeps Overview, Tasks, Capabilities, and Advanced segmentation. The Advanced tab is
+  hidden completely unless Advanced Diagnostics is enabled, task cards use more consistent grid sizing,
+  static entries are labeled registered profiles, and Advanced content is grouped into Task
   Runtime, Queue / Lifecycle, Planning / Arbitration, Capability Registry, Tool Contracts, and
   Voice Runtime.
 - Settings now uses left-side category navigation for General, Local AI, Model, Chat, Voice,
-  Privacy / Data, and Developer. Developer is hidden when Developer Mode is off, Developer Mode is
+  Brain, and Advanced. Advanced is hidden when Advanced Diagnostics is off, Advanced Diagnostics is
   controlled by a switch, model recommendation rows and long normal-mode model management copy are
-  removed, and semantic/vector readiness is summarized in Developer Mode only.
+  removed, and semantic/vector readiness is summarized in Advanced Diagnostics only.
 - Header health and mode controls are smaller and stable, and mode selection remains a
   presentation-density control only.
 - i18n remains planning-only: future localization should use Qt `qsTr` extraction, `.ts` catalogs,
@@ -1019,7 +1046,7 @@ Known limitation:
   Piper/Whisper execution, filesystem scanning, shell/subprocess authority, permanent conversation
   delete, pin persistence, or semantic authority expansion.
 
-### Phase 19.4-19.6: Product UI Cleanup, Runtime/Memory, Agents, Settings, And i18n Planning
+### Phase 19.4-19.6: Product UI Cleanup, Brain, Agents, Settings, And i18n Planning
 
 Completed. Refines the Phase 19 product UI without adding runtime authority.
 
@@ -1032,17 +1059,17 @@ Scope:
   default, with accent color reserved for active chips, focus, and selected segmented controls.
 - Headers use one short page sentence, smaller health/mode controls, and avoid duplicate body page
   titles.
-- Runtime/Memory now presents segmented Overview, Recall, Local Data, and Developer views. Normal
+- Brain now presents segmented Overview, Recall, Memory, and Advanced views. Normal
   views explain that recall searches saved key-value memory only and that Store writes local
   key/value notes without model calls, cloud, or automatic extraction.
-- Runtime/Memory Developer view is visible only when Developer Mode is enabled and remains
+- Brain Advanced view is visible only when Advanced Diagnostics is enabled and remains
   read-only metadata for context assembly, retrieval budgets, semantic/vector readiness,
   arbitration, prompt authority/inclusion, and diagnostic summaries.
-- Agents now uses segmented Overview, Tasks, Capabilities, and Developer views. Static entries are
+- Agents now uses segmented Overview, Tasks, Capabilities, and Advanced views. Static entries are
   labeled registered profiles, and the page states metadata-only with no active execution.
 - Settings remains focused on General, Local AI/Ollama, Model Selection, Chat, Voice Setup, and
-  Privacy/Local Data. Model recommendations, management text, raw semantic/vector diagnostics, and
-  duplicated local-data rows are hidden behind Developer Mode.
+  Brain. Model recommendations, management text, raw semantic/vector diagnostics, and
+  duplicated local-data rows are hidden behind Advanced Diagnostics.
 - Voice Setup copy now reports "Voice prepared, activation disabled." when readiness metadata is
   present but execution is unavailable.
 - Provider posture remains explicit: Local Ollama only, with no cloud provider active.
@@ -1068,8 +1095,8 @@ Scope:
 - Chat send controls are visible only when explicit local chat inference is enabled and a local
   Ollama model is available. Sending still uses the existing chat path only.
 - Settings now defaults to a compact user-facing view for General, Local AI/Ollama, Model
-  Selection, Chat, Voice Setup, and Privacy/Local Data.
-- Added persisted Developer Mode as a visibility-only setting. It reveals advanced semantic,
+  Selection, Chat, Voice Setup, and Brain.
+- Added persisted Advanced Diagnostics as a visibility-only setting. It reveals advanced semantic,
   retrieval, arbitration, tool, agent, voice-pipeline, and raw diagnostics metadata but grants no
   runtime authority.
 - Agents now presents metadata-only sections for Agent Registry, Task Runtime, Task Queue,
