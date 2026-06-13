@@ -122,7 +122,10 @@ Model metadata should include provider/source, size, RAM estimate, context lengt
 capabilities, Turkish support, coding support, reasoning support, vision/audio support, and
 performance estimate.
 
-This phase does not download, delete, update, scan, or fetch model catalogs.
+Phase 49.7 implements this as a metadata-only foundation in Settings > Models. Installed data may
+come from existing safe local Ollama metadata; LM Studio, llama.cpp server, OpenAI-compatible local
+endpoints, Hugging Face, and custom catalogs remain disabled/readiness placeholders. Sentinel does
+not download, delete, update, scan, benchmark, probe, or fetch model catalogs in this foundation.
 
 ## Multi-Model Roles
 
@@ -139,6 +142,9 @@ Future role assignments:
 Role routing remains metadata/readiness only. No parallel agentic execution or automatic routing is
 authorized by this phase. Future route decisions must remain explainable.
 
+Phase 49.7 persists role-to-model ids in settings metadata only. Assigning a model role does not
+change the send path or enable multi-model execution.
+
 ## Model Advisor
 
 Sentinel should later include a local deterministic model recommendation assistant. Inputs include
@@ -148,6 +154,9 @@ suggestions.
 
 The first version should use static metadata. No automatic downloads, hidden profiling, or hidden
 network access are allowed. External tools such as llmfit require license review before use.
+
+Phase 49.7 implements the first deterministic/static version and treats llmfit-style tooling as
+future license-reviewed inspiration only.
 
 ## Notifications
 

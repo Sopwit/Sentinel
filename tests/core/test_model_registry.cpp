@@ -17,6 +17,7 @@ private slots:
     void mapsOllamaModelsDeterministically();
     void exposesSelectedModelReadinessSummary();
     void disabledProviderPlaceholderDoesNotEnableExecutionMetadata();
+    void exposesLocalAiEcosystemFoundationMetadata();
 };
 
 void ModelRegistryTest::mapsOllamaModelsDeterministically() {
@@ -76,6 +77,37 @@ void ModelRegistryTest::disabledProviderPlaceholderDoesNotEnableExecutionMetadat
                                         QStringLiteral("gpt-placeholder")));
     QVERIFY(registry.selectedModelCapabilityLabels().isEmpty());
     QVERIFY(registry.selectedModelReadinessSummary().contains(QStringLiteral("missing")));
+}
+
+void ModelRegistryTest::exposesLocalAiEcosystemFoundationMetadata() {
+    const ModelRegistry registry{
+        sentinel::core::modelSummariesFromOllama({
+            OllamaModelSummary{QStringLiteral("qwen2.5-coder:7b"), {},
+                               5LL * 1024LL * 1024LL * 1024LL},
+        }),
+        QStringLiteral("ollama"), QStringLiteral("qwen2.5-coder:7b")};
+
+    QVERIFY(registry.installedModelLibrarySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Installed")));
+    QVERIFY(registry.availableModelLibrarySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("LM Studio")));
+    QVERIFY(registry.recommendedModelLibrarySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("coding")));
+    QVERIFY(registry.modelDetailSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("quantization")));
+
+    const auto advisor = sentinel::core::deterministicModelAdvisorRecommendations(
+        sentinel::core::ModelAdvisorInput{QStringLiteral("Fedora"), QStringLiteral("x86_64"),
+                                          QStringLiteral("Unknown"), QStringLiteral("Coding"),
+                                          QStringLiteral("Balanced"), QStringLiteral("tr")},
+        registry);
+    QVERIFY(advisor.join(QStringLiteral("\n")).contains(QStringLiteral("qwen2.5-coder:7b")));
+    QVERIFY(sentinel::core::downloadCenterPlaceholderSummaries(registry.models())
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Execution Disabled")));
+    QVERIFY(sentinel::core::benchmarkHubPlaceholderSummaries(registry.models())
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("tokens/sec")));
 }
 
 QTEST_MAIN(ModelRegistryTest)

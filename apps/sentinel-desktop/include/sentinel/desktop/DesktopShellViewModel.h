@@ -293,6 +293,26 @@ class DesktopShellViewModel final : public QObject {
                    localModelSelectionChanged)
     Q_PROPERTY(QStringList modelRegistryModelSummaries READ modelRegistryModelSummaries NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(QStringList modelLibraryInstalledSummaries READ modelLibraryInstalledSummaries NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QStringList modelLibraryAvailableSummaries READ modelLibraryAvailableSummaries NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QStringList modelLibraryRecommendedSummaries READ
+                   modelLibraryRecommendedSummaries NOTIFY localModelSelectionChanged)
+    Q_PROPERTY(QStringList modelLibraryDetailSummaries READ modelLibraryDetailSummaries NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QStringList providerDiscoverySummaries READ providerDiscoverySummaries NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList modelRoleIds READ modelRoleIds CONSTANT)
+    Q_PROPERTY(QStringList modelRoleAssignmentSummaries READ modelRoleAssignmentSummaries NOTIFY
+                   modelRoleChanged)
+    Q_PROPERTY(QStringList modelAdvisorRecommendationSummaries READ
+                   modelAdvisorRecommendationSummaries NOTIFY localModelSelectionChanged)
+    Q_PROPERTY(QStringList modelAdvisorAvoidSummaries READ modelAdvisorAvoidSummaries CONSTANT)
+    Q_PROPERTY(QStringList downloadsCenterSummaries READ downloadsCenterSummaries NOTIFY
+                   localModelSelectionChanged)
+    Q_PROPERTY(QStringList benchmarkHubSummaries READ benchmarkHubSummaries NOTIFY
+                   localModelSelectionChanged)
     Q_PROPERTY(QStringList selectedModelCapabilityLabels READ selectedModelCapabilityLabels NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(
@@ -1452,6 +1472,18 @@ public:
     QString modelRegistryStatus() const;
     QString modelRegistrySummary() const;
     QStringList modelRegistryModelSummaries() const;
+    QStringList modelLibraryInstalledSummaries() const;
+    QStringList modelLibraryAvailableSummaries() const;
+    QStringList modelLibraryRecommendedSummaries() const;
+    QStringList modelLibraryDetailSummaries() const;
+    QStringList providerDiscoverySummaries() const;
+    QStringList modelRoleIds() const;
+    QStringList modelRoleAssignmentSummaries() const;
+    Q_INVOKABLE void assignModelRole(const QString& roleId, const QString& modelId);
+    QStringList modelAdvisorRecommendationSummaries() const;
+    QStringList modelAdvisorAvoidSummaries() const;
+    QStringList downloadsCenterSummaries() const;
+    QStringList benchmarkHubSummaries() const;
     QStringList selectedModelCapabilityLabels() const;
     QString modelManagementStatus() const;
     QString modelManagementSummary() const;
@@ -2096,6 +2128,7 @@ signals:
     void orchestrationSnapshotChanged();
     void runtimeProviderRegistryChanged();
     void localModelSelectionChanged();
+    void modelRoleChanged();
     void localChatInferenceRoutingChanged();
     void localInferenceChanged();
     void voiceConfigurationChanged();

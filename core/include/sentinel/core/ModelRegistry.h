@@ -53,6 +53,27 @@ enum class ModelSource : std::uint8_t {
     Unknown,
 };
 
+enum class ModelRole : std::uint8_t {
+    PrimaryChat,
+    Coding,
+    Summarizer,
+    Research,
+    Fast,
+    Voice,
+    Embedding,
+};
+
+enum class ModelDownloadState : std::uint8_t {
+    NotStarted,
+    Queued,
+    Downloading,
+    Paused,
+    Completed,
+    Failed,
+    Cancelled,
+    ExecutionDisabled,
+};
+
 struct ModelRestriction {
     bool localOnly = true;
     bool managementUnavailable = true;
@@ -97,6 +118,15 @@ struct ModelSummary {
     QString summary;
 };
 
+struct ModelAdvisorInput {
+    QString platform;
+    QString cpuArchitecture;
+    QString ramEstimate = QStringLiteral("Unknown");
+    QString userGoal = QStringLiteral("General Assistant");
+    QString speedQualityPreference = QStringLiteral("Balanced");
+    QString languagePreference = QStringLiteral("system");
+};
+
 enum class ModelRegistryStatus : std::uint8_t {
     Ready,
     Empty,
@@ -127,6 +157,10 @@ public:
     bool hasAvailableModel(const QString& providerId, const QString& modelId) const;
     QStringList modelIdsForProvider(const QString& providerId) const;
     QStringList modelDisplaySummaries() const;
+    QStringList installedModelLibrarySummaries() const;
+    QStringList availableModelLibrarySummaries() const;
+    QStringList recommendedModelLibrarySummaries() const;
+    QStringList modelDetailSummaries() const;
     QStringList selectedModelCapabilityLabels() const;
     QString selectedModelReadinessSummary() const;
 
@@ -140,11 +174,23 @@ QString modelCapabilityName(ModelCapability capability);
 QString modelReadinessName(ModelReadiness readiness);
 QString modelStatusName(ModelStatus status);
 QString modelSourceName(ModelSource source);
+QString modelRoleId(ModelRole role);
+QString modelRoleDisplayName(ModelRole role);
+QStringList modelRoleIds();
+QString modelDownloadStateName(ModelDownloadState state);
 QString modelRegistryStatusName(ModelRegistryStatus status);
 QString modelSummaryLine(const ModelSummary& model);
+QString modelLibrarySummaryLine(const ModelSummary& model);
+QString modelDetailSummaryLine(const ModelSummary& model);
 QStringList modelCapabilityLabels(const QList<ModelCapability>& capabilities);
 QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& models);
 ModelSummary disabledProviderModelPlaceholder(const QString& providerId,
                                               const QString& providerLabel);
+QList<ModelSummary> localAiCatalogPlaceholders();
+QStringList deterministicModelAdvisorRecommendations(const ModelAdvisorInput& input,
+                                                     const ModelRegistry& registry);
+QStringList deterministicModelAdvisorAvoidList(const ModelAdvisorInput& input);
+QStringList downloadCenterPlaceholderSummaries(const QList<ModelSummary>& models);
+QStringList benchmarkHubPlaceholderSummaries(const QList<ModelSummary>& models);
 
 } // namespace sentinel::core

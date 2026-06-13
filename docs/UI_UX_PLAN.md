@@ -38,6 +38,24 @@ Guidelines:
   are local-only and must not start hidden work.
 - Export may write only to the app-controlled export directory.
 
+## Phase 49.7 Local AI Ecosystem
+
+Phase 49.7 turns the roadmap Model Library into a concrete metadata foundation. Settings > Models
+is the main surface for installed/discoverable/recommended models, provider status, role
+assignments, Model Advisor, Downloads, and Benchmark metadata. Home stays chat-first and shows only
+compact active model/provider/role chips. Brain and Agents may show role/context summaries, while
+verbose model details remain in Settings or Advanced.
+
+UX rules:
+
+- Provider discovery copy must state that checks are explicit/local-only; no background probing or
+  hidden network calls are implied.
+- Role assignment controls persist metadata only and must not imply automatic multi-model routing.
+- Downloads and benchmarks may show state/readiness/manual metric placeholders, but no run/pull,
+  install, update, delete, subprocess, or scanner action.
+- Model Advisor output is deterministic local metadata. It must not imply hardware profiling,
+  catalog fetching, cloud selection, or automatic downloads.
+
 Guidelines:
 
 - Primary navigation is Home, Brain, and Agents. Settings is a floating modal opened from gear,

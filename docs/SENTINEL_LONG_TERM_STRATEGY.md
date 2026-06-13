@@ -33,6 +33,12 @@ foreground-only foundations; they do not authorize autonomous agents, tool execu
 background behavior, cloud calls, telemetry, update polling, workspace scans, model downloads, or
 voice execution.
 
+Phase 49.7 establishes the local AI ecosystem surface without activating runtime authority. Model
+Library, local provider discovery metadata, model roles, Model Advisor, Downloads Center, and
+Benchmark Hub make future local AI management legible while preserving local-first defaults: no
+background probes, cloud calls, catalog fetches, downloads, model deletion, benchmarks, automatic
+routing, telemetry, tools, or autonomous agents.
+
 ## Architecture Position
 
 Sentinel should remain a C++20/Qt modular monolith with explicit service boundaries:

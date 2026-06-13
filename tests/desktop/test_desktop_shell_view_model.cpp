@@ -59,6 +59,7 @@ private slots:
     void exposesOllamaRuntimeBoundaryMetadata();
     void exposesDiscoveredModelSelectionMetadata();
     void exposesModelManagementReadinessMetadata();
+    void exposesLocalAiEcosystemFoundationMetadata();
     void exposesVoiceReadinessMetadata();
     void exposesVoiceConfigurationMetadata();
     void exposesLocalInferenceBoundaryMetadata();
@@ -777,6 +778,63 @@ void DesktopShellViewModelTest::exposesModelManagementReadinessMetadata() {
         viewModel.modelRecommendationSummaries().first().contains(QStringLiteral("llama3.2:3b")));
     QVERIFY(viewModel.modelRequirementSummaries().first().contains(
         QStringLiteral("approx disk about 3 GB")));
+}
+
+void DesktopShellViewModelTest::exposesLocalAiEcosystemFoundationMetadata() {
+    ApplicationController controller{
+        std::make_unique<LocalEchoProvider>(),
+        std::make_unique<InMemoryStore>(),
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        nullptr,
+        std::make_unique<FakeOllamaRuntimeClient>(QList<OllamaModelSummary>{
+            {QStringLiteral("qwen2.5-coder:7b"), QStringLiteral("2026-05-01T10:00:00Z"),
+             5LL * 1024LL * 1024LL * 1024LL},
+        })};
+    ModeManager modeManager;
+    AppSettings settings{std::make_unique<InMemorySettingsStore>()};
+    DesktopShellViewModel viewModel{controller, modeManager, settings};
+
+    viewModel.setSelectedLocalModel(QStringLiteral("qwen2.5-coder:7b"));
+    viewModel.assignModelRole(QStringLiteral("coding"), QStringLiteral("qwen2.5-coder:7b"));
+
+    QVERIFY(viewModel.modelLibraryInstalledSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("qwen2.5-coder:7b")));
+    QVERIFY(viewModel.modelLibraryAvailableSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("LM Studio")));
+    QVERIFY(viewModel.providerDiscoverySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("llama.cpp server")));
+    QVERIFY(viewModel.modelRoleAssignmentSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Coding Model - qwen2.5-coder:7b")));
+    QVERIFY(viewModel.modelAdvisorRecommendationSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("qwen2.5-coder:7b")));
+    QVERIFY(viewModel.modelAdvisorAvoidSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("cloud-only")));
+    QVERIFY(viewModel.downloadsCenterSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Execution Disabled")));
+    QVERIFY(viewModel.benchmarkHubSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("tokens/sec")));
+    QVERIFY(viewModel.notificationCenterSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Model Role Changed")));
 }
 
 void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
@@ -1508,6 +1566,17 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("modelRegistryStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("modelRegistrySummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("modelRegistryModelSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelLibraryInstalledSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelLibraryAvailableSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelLibraryRecommendedSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelLibraryDetailSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("providerDiscoverySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelRoleIds"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelRoleAssignmentSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelAdvisorRecommendationSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("modelAdvisorAvoidSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("downloadsCenterSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("benchmarkHubSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("selectedModelCapabilityLabels"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("modelManagementStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("modelManagementSummary"), QByteArrayLiteral("QString")},

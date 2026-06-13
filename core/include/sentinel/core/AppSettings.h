@@ -94,6 +94,8 @@ public:
     void setSelectedLocalModel(const QString& model);
     QString selectedModelForProvider(const QString& providerId) const;
     void setSelectedModelForProvider(const QString& providerId, const QString& model);
+    QString selectedModelForRole(const QString& roleId) const;
+    void setSelectedModelForRole(const QString& roleId, const QString& modelId);
 
     bool localChatInferenceEnabled() const;
     void setLocalChatInferenceEnabled(bool enabled);
@@ -146,6 +148,7 @@ signals:
     void ollamaEndpointChanged();
     void selectedRuntimeProviderChanged();
     void selectedLocalModelChanged();
+    void selectedModelRoleChanged();
     void localChatInferenceEnabledChanged();
     void localInferenceStreamingEnabledChanged();
     void promptContextInjectionEnabledChanged();
@@ -177,6 +180,7 @@ private:
     static constexpr auto selectedRuntimeProviderKey = "selectedRuntimeProvider";
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";
     static constexpr auto selectedProviderModelKeyPrefix = "selectedModel.";
+    static constexpr auto selectedRoleModelKeyPrefix = "selectedModelRole.";
     static constexpr auto localChatInferenceEnabledKey = "localChatInferenceEnabled";
     static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
     static constexpr auto promptContextInjectionEnabledKey = "promptContextInjectionEnabled";

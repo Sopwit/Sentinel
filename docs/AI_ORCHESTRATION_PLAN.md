@@ -1,5 +1,16 @@
 # AI Orchestration Plan
 
+Phase 49.7 completes the Local AI Ecosystem Foundation as metadata only. Model Library exposes
+installed Ollama metadata plus disabled/discoverable placeholders for LM Studio, llama.cpp server,
+OpenAI-compatible local endpoints, Hugging Face metadata, and custom catalogs. Provider discovery
+summaries, model role assignments, deterministic Model Advisor recommendations, Downloads Center
+states, Benchmark Hub metrics, and notification categories are exposed through
+`DesktopShellViewModel` as QML-safe strings. Role assignments persist only model ids in
+`AppSettings`. This phase adds no hidden provider probing, background worker, cloud/API call,
+catalog fetch, model download/update/delete, subprocess, filesystem scan, benchmark execution,
+automatic multi-model routing, autonomous agent, tool execution, telemetry, or hidden
+notification.
+
 Phase 49.5 realigns Sentinel's product surface around Home, Brain, and Agents while keeping AI
 orchestration metadata-only. Brain replaces Brain language for memory, recall, context,
 summaries, continuity, and explainability. Settings becomes a floating modal surface. Model
