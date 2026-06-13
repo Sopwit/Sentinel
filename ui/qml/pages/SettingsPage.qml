@@ -10,10 +10,11 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property string uiSelfCheck: "rail-scroll-sync developer-gated voice-path-wrap profiles-metadata permissions-policy tool-gateway agent-runtime bottom-safe-scroll"
+    readonly property string uiSelfCheck: "modal-ready rail-scroll-sync advanced-gated voice-path-wrap profiles-metadata permissions-policy tool-gateway agent-runtime bottom-safe-scroll"
+    readonly property var themeChoices: ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
     readonly property var categories: developerMode
-                                    ? ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Permissions", "Tools", "Agents", "Profiles", "Workspace", "Developer"]
-                                    : ["General", "Local AI", "Model", "Chat", "Voice", "Privacy / Data", "Permissions", "Tools", "Agents", "Profiles", "Workspace"]
+                                    ? ["General", "Appearance", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates", "Advanced"]
+                                    : ["General", "Appearance", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates"]
     property string activeCategory: "General"
     property bool programmaticScroll: false
 
@@ -22,12 +23,12 @@ Item {
     }
 
     function sectionFor(category) {
-        if (category === "Local AI")
+        if (category === "Appearance")
+            return appearanceSection
+        if (category === "AI")
             return localAiSection
-        if (category === "Model")
+        if (category === "Models")
             return modelSection
-        if (category === "Chat")
-            return chatSection
         if (category === "Voice")
             return voiceSection
         if (category === "Permissions")
@@ -36,13 +37,15 @@ Item {
             return toolsSection
         if (category === "Agents")
             return agentsSection
-        if (category === "Profiles")
-            return profilesSection
         if (category === "Workspace")
             return workspaceSection
-        if (category === "Privacy / Data")
-            return privacySection
-        if (category === "Developer")
+        if (category === "Brain")
+            return brainSection
+        if (category === "Notifications")
+            return notificationsSection
+        if (category === "Updates")
+            return updatesSection
+        if (category === "Advanced")
             return developerSection
         return generalSection
     }
@@ -50,12 +53,12 @@ Item {
     function categoryLabel(category) {
         if (category === "General")
             return qsTr("General")
-        if (category === "Local AI")
-            return qsTr("Local AI")
-        if (category === "Model")
-            return qsTr("Model")
-        if (category === "Chat")
-            return qsTr("Chat")
+        if (category === "Appearance")
+            return qsTr("Appearance")
+        if (category === "AI")
+            return qsTr("AI")
+        if (category === "Models")
+            return qsTr("Models")
         if (category === "Voice")
             return qsTr("Voice")
         if (category === "Permissions")
@@ -64,14 +67,16 @@ Item {
             return qsTr("Tools")
         if (category === "Agents")
             return qsTr("Agents")
-        if (category === "Profiles")
-            return qsTr("Profiles")
         if (category === "Workspace")
             return qsTr("Workspace")
-        if (category === "Privacy / Data")
-            return qsTr("Privacy / Data")
-        if (category === "Developer")
-            return qsTr("Developer")
+        if (category === "Brain")
+            return qsTr("Brain")
+        if (category === "Notifications")
+            return qsTr("Notifications")
+        if (category === "Updates")
+            return qsTr("Updates")
+        if (category === "Advanced")
+            return qsTr("Advanced")
         return category
     }
 
@@ -94,7 +99,7 @@ Item {
     }
 
     onDeveloperModeChanged: {
-        if (!developerMode && activeCategory === "Developer")
+        if (!developerMode && activeCategory === "Advanced")
             jumpTo("General")
     }
 
@@ -237,25 +242,27 @@ Item {
                 var y = contentY + Math.min(settingsFlick.height * 0.36, 180)
                 var atBottom = contentY + settingsFlick.height >= settingsFlick.contentHeight - SentinelTheme.spaceSm
                 if (developerMode && (y >= developerSection.y || atBottom))
-                    activeCategory = "Developer"
+                    activeCategory = "Advanced"
+                else if (y >= updatesSection.y)
+                    activeCategory = "Updates"
+                else if (y >= notificationsSection.y)
+                    activeCategory = "Notifications"
                 else if (y >= workspaceSection.y)
                     activeCategory = "Workspace"
-                else if (y >= profilesSection.y)
-                    activeCategory = "Profiles"
                 else if (y >= toolsSection.y)
                     activeCategory = "Tools"
                 else if (y >= permissionsSection.y)
                     activeCategory = "Permissions"
-                else if (y >= privacySection.y)
-                    activeCategory = "Privacy / Data"
+                else if (y >= brainSection.y)
+                    activeCategory = "Brain"
                 else if (y >= voiceSection.y)
                     activeCategory = "Voice"
-                else if (y >= chatSection.y)
-                    activeCategory = "Chat"
                 else if (y >= modelSection.y)
-                    activeCategory = "Model"
+                    activeCategory = "Models"
                 else if (y >= localAiSection.y)
-                    activeCategory = "Local AI"
+                    activeCategory = "AI"
+                else if (y >= appearanceSection.y)
+                    activeCategory = "Appearance"
                 else
                     activeCategory = "General"
             }
@@ -491,14 +498,14 @@ Item {
 
                                     Label {
                                         Layout.fillWidth: true
-                                        text: qsTr("Developer Mode")
+                                        text: qsTr("Advanced")
                                         color: SentinelTheme.textPrimary
                                         font.pixelSize: SentinelTheme.fontBody
                                     }
 
                                     Label {
                                         Layout.fillWidth: true
-                                        text: qsTr("Shows advanced read-only metadata only. It does not enable tools, voice execution, cloud providers, or runtime authority.")
+                                        text: qsTr("Shows read-only diagnostics only. It does not enable tools, voice execution, cloud providers, or runtime authority.")
                                         color: SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
                                         wrapMode: Text.WordWrap
@@ -572,6 +579,97 @@ Item {
                 }
 
                 ShellPanel {
+                    id: appearanceSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(appearanceContent)
+
+                    ColumnLayout {
+                        id: appearanceContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Appearance")
+                            subtitle: qsTr("Theme foundation for a calm native desktop UI.")
+                            Layout.fillWidth: true
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                text: qsTr("Theme")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                            }
+
+                            ComboBox {
+                                id: themeCombo
+                                Layout.fillWidth: true
+                                hoverEnabled: true
+                                model: settingsPage.themeChoices
+                                currentIndex: settingsPage.themeChoices.indexOf(settingsPage.viewModel.themeName)
+                                displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.themeName
+                                onActivated: settingsPage.viewModel.themeName = currentText
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: themeCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(themeCombo.activeFocus,
+                                                                                 themeCombo.hovered,
+                                                                                 themeCombo.popup.visible,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            Repeater {
+                                model: settingsPage.themeChoices
+
+                                StatusChip {
+                                    required property string modelData
+                                    label: qsTr("Theme")
+                                    value: modelData
+                                    accent: modelData === settingsPage.viewModel.themeName
+                                            ? settingsPage.modeAccent
+                                            : SentinelTheme.textMuted
+                                    selected: modelData === settingsPage.viewModel.themeName
+                                    muted: modelData !== settingsPage.viewModel.themeName
+                                }
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Scope")
+                            value: qsTr("Theme selection is persisted presentation metadata only; it does not change providers, permissions, models, or runtime behavior.")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+                    }
+                }
+
+                ShellPanel {
                     id: localAiSection
                     width: parent.width
                     implicitHeight: settingsPage.sectionHeight(localAiContent)
@@ -584,8 +682,8 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: qsTr("Runtime")
-                            subtitle: qsTr("Local-first runtime selection. Future API providers are disabled placeholders.")
+                            title: qsTr("AI")
+                            subtitle: qsTr("Local-first provider readiness. Future API providers are disabled placeholders.")
                             Layout.fillWidth: true
                         }
 
@@ -855,8 +953,8 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: qsTr("Model")
-                            subtitle: qsTr("Local-first selection metadata.")
+                            title: qsTr("Models")
+                            subtitle: qsTr("Model Library foundation and local-first selection metadata.")
                             Layout.fillWidth: true
                         }
 
@@ -1459,7 +1557,7 @@ Item {
                 }
 
                 ShellPanel {
-                    id: privacySection
+                    id: brainSection
                     width: parent.width
                     implicitHeight: settingsPage.sectionHeight(privacyContent)
 
@@ -1471,9 +1569,40 @@ Item {
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: qsTr("Privacy / Data")
-                            subtitle: qsTr("Settings, memory, and chat history remain separate.")
+                            title: qsTr("Brain")
+                            subtitle: qsTr("Memory, recall, context, summaries, and continuity remain local and explicit.")
                             Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            StatusChip {
+                                label: qsTr("Memory")
+                                value: settingsPage.viewModel.memoryStatus
+                                accent: settingsPage.viewModel.memoryStatus === "Available"
+                                        ? SentinelTheme.success
+                                        : SentinelTheme.textMuted
+                                muted: settingsPage.viewModel.memoryStatus !== "Available"
+                            }
+
+                            StatusChip {
+                                label: qsTr("Recall")
+                                value: settingsPage.viewModel.memoryRecallStatus
+                                accent: SentinelTheme.calmAccent
+                                muted: settingsPage.viewModel.memoryRecallResultCount === 0
+                            }
+
+                            StatusChip {
+                                label: qsTr("Context")
+                                value: settingsPage.viewModel.promptContextInjectionEnabled ? qsTr("opt-in on")
+                                                                                            : qsTr("opt-in off")
+                                accent: settingsPage.viewModel.promptContextInjectionEnabled
+                                        ? SentinelTheme.success
+                                        : SentinelTheme.textMuted
+                                muted: !settingsPage.viewModel.promptContextInjectionEnabled
+                            }
                         }
 
                         InfoRow {
@@ -1482,6 +1611,15 @@ Item {
                             value: settingsPage.viewModel.memoryStatus + " ("
                                    + settingsPage.viewModel.memoryMaintenanceStatus + ")"
                             Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Continuity")
+                            value: settingsPage.viewModel.summaryContinuityStatus + " / "
+                                   + settingsPage.viewModel.summaryContinuityContributionSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
                         }
 
                         InfoRow {
@@ -2297,6 +2435,141 @@ Item {
                 }
 
                 ShellPanel {
+                    id: notificationsSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(notificationsContent)
+
+                    ColumnLayout {
+                        id: notificationsContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Notifications")
+                            subtitle: qsTr("Professional notification roadmap. No background polling or hidden notifications.")
+                            Layout.fillWidth: true
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            Repeater {
+                                model: [qsTr("Disabled"), qsTr("Important Only"), qsTr("All"), qsTr("Custom")]
+
+                                StatusChip {
+                                    required property string modelData
+                                    label: qsTr("Policy")
+                                    value: modelData
+                                    accent: modelData === qsTr("Disabled") ? settingsPage.modeAccent
+                                                                            : SentinelTheme.textMuted
+                                    selected: modelData === qsTr("Disabled")
+                                    muted: modelData !== qsTr("Disabled")
+                                }
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Categories")
+                            value: qsTr("Chat complete, model ready, update available, export complete, voice ready, permission request, agent plan ready, tool approval required, workspace blocked, errors, daily brief, focus complete.")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 5
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Platform Targets")
+                            value: qsTr("macOS Notification Center / Windows Toast / Linux desktop notifications / future in-app notification center.")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    id: updatesSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(updatesContent)
+
+                    ColumnLayout {
+                        id: updatesContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Updates")
+                            subtitle: qsTr("About and update UX foundation. No network check, auto-download, auto-install, or telemetry.")
+                            Layout.fillWidth: true
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 2
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            InfoRow {
+                                compact: true
+                                label: qsTr("Version")
+                                value: Qt.application.version.length > 0 ? Qt.application.version : qsTr("Desktop Alpha")
+                                Layout.fillWidth: true
+                            }
+
+                            InfoRow {
+                                compact: true
+                                label: qsTr("Qt")
+                                value: qsTr("Qt 6 native shell")
+                                Layout.fillWidth: true
+                            }
+
+                            InfoRow {
+                                compact: true
+                                label: qsTr("Platform")
+                                value: settingsPage.viewModel.companionPlatformCapability
+                                Layout.fillWidth: true
+                            }
+
+                            InfoRow {
+                                compact: true
+                                label: qsTr("Build")
+                                value: qsTr("Local desktop build")
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            Repeater {
+                                model: [qsTr("Never"), qsTr("Ask before checking"), qsTr("Weekly"), qsTr("On Startup")]
+
+                                StatusChip {
+                                    required property string modelData
+                                    label: qsTr("Check Policy")
+                                    value: modelData
+                                    accent: modelData === qsTr("Never") ? settingsPage.modeAccent
+                                                                         : SentinelTheme.textMuted
+                                    selected: modelData === qsTr("Never")
+                                    muted: modelData !== qsTr("Never")
+                                }
+                            }
+                        }
+
+                        SentinelButton {
+                            text: qsTr("Check for Updates")
+                            enabled: false
+                            Layout.preferredWidth: 180
+                        }
+                    }
+                }
+
+                ShellPanel {
                     id: developerSection
                     width: parent.width
                     visible: settingsPage.developerMode
@@ -2310,7 +2583,7 @@ Item {
                         spacing: SentinelTheme.spaceMd
 
                         SectionTitle {
-                            title: qsTr("Developer")
+                            title: qsTr("Advanced Diagnostics")
                             subtitle: qsTr("Read-only runtime boundary metadata.")
                             Layout.fillWidth: true
                         }

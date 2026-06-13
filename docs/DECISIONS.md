@@ -156,7 +156,7 @@ Runtime behavior:
 - The gateway consults `PermissionPolicyService` for posture labels, but Disabled, Ask Every
   Time, Trusted, and Enabled remain metadata labels only.
 - `DesktopShellViewModel` exposes only safe strings and counts for Settings, Agents, and
-  Developer Mode.
+  Advanced Diagnostics.
 
 Out of scope:
 
@@ -709,7 +709,7 @@ Runtime behavior:
   compression gain, and contribution by transcript, summary, memory, and runtime metadata.
 - Ordering diagnostics report recent transcript, continuity summary, committed memory, and runtime
   metadata in stable order.
-- Normal UI shows concise context reasoning. Developer Mode shows richer bounded traces, still as
+- Normal UI shows concise context reasoning. Advanced Diagnostics shows richer bounded traces, still as
   strings/counts only.
 
 Out of scope:
@@ -723,7 +723,7 @@ Out of scope:
 Decision: Persist `contextExplainabilityVisible` as a UI visibility preference, default enabled.
 
 Reason: Users should be able to keep normal chat surfaces visually quiet without changing the
-deterministic context path or weakening Developer Mode diagnostics.
+deterministic context path or weakening Advanced diagnostics.
 
 Runtime behavior:
 
@@ -731,7 +731,7 @@ Runtime behavior:
 - The setting controls normal UI visibility for concise context reasoning surfaces only.
 - Safe context decision metadata continues to be generated internally when the UI surface is
   hidden.
-- Developer Mode remains a separate diagnostic visibility gate and does not inherit runtime
+- Advanced Diagnostics remains a separate diagnostic visibility gate and does not inherit runtime
   authority from this setting.
 
 Out of scope:
@@ -745,7 +745,7 @@ Out of scope:
 Decision: Keep archive/unarchive as the only supported local removal lifecycle and keep permanent
 delete disabled until a later explicit destructive phase.
 
-## 10. Product UI Synchronization And Developer Mode
+## 10. Product UI Synchronization And Advanced Diagnostics
 
 Decision: Treat Phase 19 as a UI presentation synchronization pass over the existing local runtime
 state, not as a runtime authority phase.
@@ -761,8 +761,8 @@ Runtime behavior:
 - The right-side AI Bridge remains a secondary chat and transcript surface.
 - Send controls appear only when local chat inference is explicitly enabled and a local Ollama
   model is available.
-- Developer Mode is persisted in settings and reveals advanced metadata only.
-- Developer Mode does not alter runtime permission policy, safety policy, provider routing, tool
+- Advanced Diagnostics is persisted in settings and reveals advanced metadata only.
+- Advanced Diagnostics does not alter runtime permission policy, safety policy, provider routing, tool
   contracts, agent behavior, voice readiness, semantic authority, or execution gates.
 - Mode selection affects presentation density and diagnostic visibility only.
 - Local Ollama loopback remains the only current inference endpoint. No cloud provider or external
@@ -798,7 +798,7 @@ QML-safe view-model properties.
 
 Reason: The UI previously had to infer readiness from separate Ollama/model/busy fields, which
 could make Ollama appear connected while generation was blocked or unclear. A single readiness
-summary keeps normal UI understandable while Developer Mode retains detailed diagnostics.
+summary keeps normal UI understandable while Advanced Diagnostics retains detailed diagnostics.
 
 Runtime behavior:
 
@@ -3240,14 +3240,14 @@ Boundary rules:
 - Any real tool/task runtime must arrive in a separate phase behind explicit permission, safety,
   approval, sandbox, and UI boundaries.
 
-## 102. Product UI Density And Developer Mode
+## 102. Product UI Density And Advanced Diagnostics
 
 Decision: Normal UI surfaces prioritize user-facing local chat, local memory, registered profile,
 and settings summaries. Advanced retrieval, semantic/vector, prompt authority, arbitration, trace,
-tool-contract, voice-pipeline, and raw diagnostic summaries belong behind Developer Mode or
-Developer segments.
+tool-contract, voice-pipeline, and raw diagnostic summaries belong behind Advanced Diagnostics or
+Advanced segments.
 
-Reason: Developer Mode is a diagnostic visibility boundary only. It must not grant backend
+Reason: Advanced Diagnostics is a diagnostic visibility boundary only. It must not grant backend
 authority or imply active execution.
 
 ## 103. Localization Direction
@@ -3346,7 +3346,7 @@ product behavior changes.
 ## 106. Workspace Foundation Remains Metadata-Only
 
 Decision: Phase 44 introduces `WorkspaceService`, a persisted selected workspace id, Settings >
-Workspace UX, Home workspace status, and Developer Mode boundary diagnostics as metadata-only
+Workspace UX, Home workspace status, and Advanced Diagnostics boundary diagnostics as metadata-only
 workspace foundation.
 
 Reason: Sentinel needs a durable local-first project-context boundary before any future
@@ -3411,3 +3411,26 @@ Test expectations:
 - Add provider registry coverage for Ollama, llama.cpp, LM Studio, and OpenAI-compatible targets.
 - Add endpoint validation tests, selected provider persistence tests, UI/view-model exposure
   tests, and disabled-provider send refusal tests.
+
+## 108. Sentinel Product Realignment
+
+Decision: Product-facing IA is Home, Brain, and Agents, with Settings as a floating modal/popup and
+Advanced/Diagnostics replacing Advanced Diagnostics wording in user-facing copy.
+
+Reason: Sentinel should feel like a premium native AI desktop companion, not a runtime dashboard.
+Chat is the primary user workflow, Brain is the understandable home for memory/context/continuity,
+and advanced internals should stay discoverable without dominating normal use.
+
+Rules:
+
+- Keep internal compatibility names such as `developerModeEnabled` and the existing `Memory` page
+  id where changing them would create churn.
+- Product-facing copy should use Brain, Advanced, and Diagnostics.
+- Settings is not a primary dock page. Existing internal routes may open the modal for
+  compatibility.
+- Theme, Model Library, multi-model roles, Model Advisor, notifications, update/about, companion
+  quick panel, chat productivity, and focus/session work remain UI/documentation/metadata
+  foundations until later activation phases.
+- No Phase 50 tool approval, real tool execution, agent execution, filesystem scanning, model
+  downloads, cloud/API calls, API-key input, voice execution, subprocess execution, background
+  workers, hidden indexing, telemetry, or update network checks are authorized by this decision.

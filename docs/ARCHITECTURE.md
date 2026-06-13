@@ -22,11 +22,19 @@ the async local inference worker, the local-only runtime permission policy, `Mod
 QML handles layout and user input. C++ owns chat handling, provider calls, mode state, memory state, chat history persistence, and settings defaults.
 
 Phase 19.4 through Phase 19.6 are presentation-only UI cleanup phases. Home is the primary local
-Ollama chatbot surface. Runtime/Memory is a local memory, recall, conversation-context, and local
+Ollama chatbot surface. Brain is a local memory, recall, conversation-context, and local
 data visibility area, not the main chat screen. Agents is a metadata-only registry/task/capability
-visibility area, not an execution console. Developer Mode changes only UI density and diagnostic
+visibility area, not an execution console. Advanced Diagnostics changes only UI density and diagnostic
 visibility; it does not grant provider, model, tool, voice, filesystem, subprocess, cloud, or
 agent authority.
+
+Phase 49.5 updates product-facing architecture language: the primary surfaces are Home, Brain, and
+Agents. Brain replaces Brain in UI copy for memory, recall, context, summaries,
+continuity, and explainability. Settings is a floating modal/popup surface rather than a primary
+dock page. User-facing diagnostic copy should say Advanced or Diagnostics; the internal
+`developerModeEnabled` flag may remain for compatibility. This realignment is presentation and
+metadata only and grants no runtime, provider, model, tool, agent, filesystem, cloud, voice,
+subprocess, telemetry, or update-check authority.
 
 ## Desktop View Model
 
@@ -429,7 +437,7 @@ Send readiness requires:
 - no active local inference request
 
 Normal UI consumes `localChatSendAvailable` and `localChatSendAvailabilitySummary` for composer
-state and next-action copy. Developer Mode may show `localInferenceStatus`, traces, latency,
+state and next-action copy. Advanced Diagnostics may show `localInferenceStatus`, traces, latency,
 stream status, and conversation runtime summaries. Failed readiness refuses before transcript
 mutation; started requests still use request-id guards so stale completions after cancellation,
 clear, or conversation switch are ignored.
@@ -567,7 +575,7 @@ records are `ContextDecisionReason`, `ContextDecisionTrace`, `ContextDecisionBud
 The controller derives these records from already-bounded prompt context injection, conversation
 salience, memory relevance, and summary continuity metadata. QML receives only safe summaries:
 context reasoning, ordering stages, contribution breakdowns, inclusion/exclusion hints, fallback
-reasoning, and Developer Mode traces. The UI does not receive hidden prompts, raw system prompts,
+reasoning, and Advanced Diagnostics traces. The UI does not receive hidden prompts, raw system prompts,
 provider payloads, raw prompt text, semantic/vector internals, filesystem paths, or unsafe debug
 objects.
 
@@ -581,7 +589,7 @@ execute tools/plugins, or start background workers.
 Phase 34 adds the persisted `contextExplainabilityVisible` setting as a UI-only control. It
 defaults on and is exposed through `AppSettings` and `DesktopShellViewModel` for QML. Disabling it
 hides normal Home/Chat context reasoning surfaces and normal Settings visibility copy, but the
-controller still derives safe context decision metadata internally. Developer Mode remains a
+controller still derives safe context decision metadata internally. Advanced Diagnostics remains a
 separate visibility gate for bounded diagnostics and does not alter runtime permission, safety,
 prompt assembly, retrieval selection, provider, tool, or execution authority.
 
@@ -773,12 +781,12 @@ Phase 19.0 through Phase 19.3 synchronize the product UI with the current backen
 - Send controls are presented only when explicit local chat inference is enabled and a selected or
   fallback local Ollama model is available. Disabled states summarize the missing local condition.
 - Settings separates normal user configuration from advanced runtime metadata through persisted
-  Developer Mode. Developer Mode is a visibility boundary only and is not connected to runtime
+  Advanced Diagnostics. Advanced Diagnostics is a visibility boundary only and is not connected to runtime
   permission, safety, provider, tool, voice, or agent authority.
 - Normal Settings surfaces General, Local AI/Ollama, Model Selection, Chat, Voice Setup, and
-  Privacy/Local Data. Semantic/vector internals, retrieval budgets, arbitration, tool contracts,
+  Brain. Semantic/vector internals, retrieval budgets, arbitration, tool contracts,
   agent traces, voice pipeline traces, and raw readiness diagnostics remain visible only in
-  Developer Mode.
+  Advanced Diagnostics.
 - Agents presents metadata-only Agent Registry, Task Runtime, Task Queue, Planning Sessions,
   Capability Registry, and Tool Contracts sections. No execute, approval, sandbox, tool runtime,
   plugin, filesystem, shell, or autonomous controls are added.

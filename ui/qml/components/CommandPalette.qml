@@ -12,9 +12,9 @@ SentinelOverlayModal {
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property var actions: [
         { "title": qsTr("Home"), "subtitle": qsTr("Open the main local chat workspace"), "kind": qsTr("Navigate"), "page": "Dashboard", "enabled": true },
-        { "title": qsTr("Runtime/Memory"), "subtitle": qsTr("Open local memory and runtime metadata"), "kind": qsTr("Navigate"), "page": "Memory", "enabled": true },
+        { "title": qsTr("Brain"), "subtitle": qsTr("Open memory, recall, context, and continuity"), "kind": qsTr("Navigate"), "page": "Memory", "enabled": true },
         { "title": qsTr("Agents"), "subtitle": qsTr("Open metadata-only agent readiness"), "kind": qsTr("Navigate"), "page": "Agents", "enabled": true },
-        { "title": qsTr("Settings"), "subtitle": qsTr("Open desktop preferences"), "kind": qsTr("Navigate"), "page": "Settings", "enabled": true },
+        { "title": qsTr("Settings"), "subtitle": qsTr("Open floating desktop preferences"), "kind": qsTr("Modal"), "page": "Settings", "enabled": true },
         { "title": qsTr("Clear Chat History"), "subtitle": qsTr("Prepared only; no command-palette mutation"), "kind": qsTr("Quick action"), "page": "", "enabled": false },
         { "title": qsTr("Export Markdown"), "subtitle": qsTr("Prepared only; no filesystem access from palette"), "kind": qsTr("Quick action"), "page": "", "enabled": false },
         { "title": qsTr("Export JSON"), "subtitle": qsTr("Prepared only; no filesystem access from palette"), "kind": qsTr("Quick action"), "page": "", "enabled": false }

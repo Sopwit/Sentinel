@@ -14,6 +14,7 @@ ApplicationWindow {
     color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
     property bool shellReady: false
+    property string lastPrimaryPage: "Dashboard"
     readonly property bool compactLayout: root.width < 1080
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
     readonly property int shellEntranceOffset: root.shellReady || MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 8
@@ -33,13 +34,19 @@ ApplicationWindow {
             return 1
         if (root.viewModel.currentPage === "Agents")
             return 2
-        if (root.viewModel.currentPage === "Settings")
-            return 3
         return 0
     }
 
     function navigateToPage(pageName) {
+        if (pageName === "Settings") {
+            root.openSettings()
+            return
+        }
         root.viewModel.currentPage = pageName
+    }
+
+    function openSettings() {
+        settingsModal.open()
     }
 
     function focusChatComposer() {
@@ -161,27 +168,6 @@ ApplicationWindow {
                             }
                         }
                     }
-                    SettingsPage {
-                        viewModel: root.viewModel
-                        opacity: root.currentPageIndex() === 3 ? 1.0 : 0.0
-                        transform: Translate {
-                            y: root.currentPageIndex() === 3 ? 0 : root.pageMotionOffset
-
-                            Behavior on y {
-                                NumberAnimation {
-                                    duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                                    easing.type: MotionTokens.enter
-                                }
-                            }
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                                easing.type: MotionTokens.standard
-                            }
-                        }
-                    }
                 }
 
                 StatusBar {
@@ -189,14 +175,6 @@ ApplicationWindow {
                     Layout.fillWidth: true
                     Layout.preferredHeight: 34
                 }
-            }
-
-            ChatPanel {
-                viewModel: root.viewModel
-                visible: !root.compactLayout && root.viewModel.currentPage === "Dashboard"
-                Layout.preferredWidth: Math.min(SentinelTheme.rightPanelWidth, root.width * 0.32)
-                Layout.fillHeight: true
-                Layout.minimumHeight: 0
             }
         }
     }
@@ -239,7 +217,7 @@ ApplicationWindow {
                                   : 1.0
         text: "\u2699"
         font.pixelSize: 22
-        onClicked: root.viewModel.currentPage = "Settings"
+        onClicked: root.openSettings()
 
         contentItem: Text {
             text: settingsFab.text
@@ -252,10 +230,10 @@ ApplicationWindow {
         background: Rectangle {
             radius: width / 2
             color: InteractionTokens.surfaceColor(settingsFab.hovered, settingsFab.down,
-                                                   root.viewModel.currentPage === "Settings",
+                                                   settingsModal.opened,
                                                    SentinelTheme.calmAccent)
             border.color: InteractionTokens.borderColor(settingsFab.activeFocus, settingsFab.hovered,
-                                                         root.viewModel.currentPage === "Settings",
+                                                         settingsModal.opened,
                                                          SentinelTheme.calmAccent)
             border.width: 1
 
@@ -294,6 +272,32 @@ ApplicationWindow {
         viewModel: root.viewModel
     }
 
+    SentinelOverlayModal {
+        id: settingsModal
+        accent: SentinelTheme.modeAccent(root.viewModel.currentModeName)
+        modeName: root.viewModel.currentModeName
+        preferredWidth: Math.min(1040, root.width - SentinelTheme.space4Xl)
+        preferredHeight: Math.min(760, root.height - SentinelTheme.space4Xl)
+
+        contentItem: SettingsPage {
+            viewModel: root.viewModel
+            width: settingsModal.width
+            height: settingsModal.height
+        }
+    }
+
+    Connections {
+        target: root.viewModel
+        function onCurrentPageChanged() {
+            if (root.viewModel.currentPage === "Settings") {
+                root.openSettings()
+                root.viewModel.currentPage = root.lastPrimaryPage
+                return
+            }
+            root.lastPrimaryPage = root.viewModel.currentPage
+        }
+    }
+
     Shortcut {
         sequences: ["Ctrl+K", "Meta+K"]
         onActivated: commandPalette.openPalette()
@@ -316,7 +320,7 @@ ApplicationWindow {
 
     Shortcut {
         sequences: ["Ctrl+4", "Meta+4"]
-        onActivated: root.navigateToPage("Settings")
+        onActivated: root.openSettings()
     }
 
     Shortcut {
@@ -326,7 +330,7 @@ ApplicationWindow {
 
     Shortcut {
         sequences: ["Ctrl+,", "Meta+,"]
-        onActivated: root.navigateToPage("Settings")
+        onActivated: root.openSettings()
     }
 
     Shortcut {
@@ -334,6 +338,8 @@ ApplicationWindow {
         onActivated: {
             if (commandPalette.opened)
                 commandPalette.close()
+            else if (settingsModal.opened)
+                settingsModal.close()
         }
     }
 }

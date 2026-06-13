@@ -18,6 +18,9 @@ ShellPanel {
     readonly property string disabledReason: viewModel.activeConversationArchived
                                              ? viewModel.activeConversationStateSummary
                                              : viewModel.localChatSendAvailabilitySummary
+    readonly property bool sidebarEffectiveOpen: conversationSidebarOpen && !compact
+    property bool conversationSidebarOpen: true
+    property string conversationFilter: ""
 
     radius: SentinelTheme.radiusPanel
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.58)
@@ -46,14 +49,199 @@ ShellPanel {
         }
     }
 
+    function filteredConversationIndexes() {
+        var normalized = conversationFilter.trim().toLowerCase()
+        var result = []
+        for (var i = 0; i < viewModel.conversationTitles.length; ++i) {
+            var title = viewModel.conversationTitles[i]
+            var id = viewModel.conversationIds[i]
+            if (normalized.length === 0
+                    || title.toLowerCase().indexOf(normalized) >= 0
+                    || id.toLowerCase().indexOf(normalized) >= 0) {
+                result.push(i)
+            }
+        }
+        return result
+    }
+
     onStreamingActiveChanged: {
         if (!streamingActive)
             scrollToLatest(true)
     }
 
-    ColumnLayout {
+    RowLayout {
         anchors.fill: parent
         anchors.margins: homeChat.compact ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
+        spacing: SentinelTheme.spaceMd
+
+        ShellPanel {
+            id: conversationRail
+            Layout.preferredWidth: homeChat.sidebarEffectiveOpen ? 260 : 44
+            Layout.fillHeight: true
+            Layout.minimumHeight: 0
+            color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.34)
+            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
+            showBrackets: false
+            clip: true
+
+            Behavior on Layout.preferredWidth {
+                NumberAnimation {
+                    duration: MotionTokens.duration(MotionTokens.normal, homeChat.viewModel.currentModeName)
+                    easing.type: MotionTokens.enter
+                }
+            }
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceSm
+
+                Button {
+                    id: sidebarToggle
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 34
+                    text: homeChat.sidebarEffectiveOpen ? qsTr("Hide") : "\u2630"
+                    hoverEnabled: true
+                    onClicked: homeChat.conversationSidebarOpen = !homeChat.conversationSidebarOpen
+
+                    contentItem: Text {
+                        text: sidebarToggle.text
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontSmall
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+
+                    background: Rectangle {
+                        radius: SentinelTheme.radiusMd
+                        color: InteractionTokens.surfaceColor(sidebarToggle.hovered, sidebarToggle.down,
+                                                               homeChat.sidebarEffectiveOpen,
+                                                               homeChat.modeAccent)
+                        border.color: InteractionTokens.borderColor(sidebarToggle.activeFocus,
+                                                                     sidebarToggle.hovered,
+                                                                     homeChat.sidebarEffectiveOpen,
+                                                                     homeChat.modeAccent)
+                    }
+                }
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    visible: homeChat.sidebarEffectiveOpen
+                    spacing: SentinelTheme.spaceSm
+
+                    SentinelTextField {
+                        id: conversationSearch
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Search conversations")
+                        text: homeChat.conversationFilter
+                        onTextChanged: homeChat.conversationFilter = text
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceXs
+
+                        SentinelButton {
+                            text: qsTr("New")
+                            Layout.fillWidth: true
+                            onClicked: homeChat.viewModel.createConversation(qsTr("New Chat"))
+                        }
+
+                        SentinelButton {
+                            text: qsTr("Search")
+                            enabled: conversationSearch.text.trim().length > 0
+                            Layout.fillWidth: true
+                            onClicked: homeChat.viewModel.searchConversation(conversationSearch.text)
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Pinned")
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.bold: true
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: homeChat.viewModel.conversationListCurrentTitle
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontSmall
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Recent")
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.bold: true
+                    }
+
+                    ListView {
+                        id: conversationList
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                        Layout.minimumHeight: 120
+                        clip: true
+                        spacing: SentinelTheme.spaceXs
+                        model: homeChat.filteredConversationIndexes()
+
+                        delegate: Button {
+                            id: conversationButton
+                            required property int modelData
+                            readonly property string conversationId: homeChat.viewModel.conversationIds[modelData]
+                            readonly property string conversationTitle: homeChat.viewModel.conversationTitles[modelData]
+                            readonly property bool active: conversationId === homeChat.viewModel.activeConversationId
+                            width: ListView.view.width
+                            height: 38
+                            hoverEnabled: true
+                            onClicked: homeChat.viewModel.switchConversation(conversationId)
+
+                            contentItem: Text {
+                                text: conversationButton.conversationTitle
+                                color: conversationButton.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                verticalAlignment: Text.AlignVCenter
+                                maximumLineCount: 1
+                                elide: Text.ElideRight
+                                leftPadding: SentinelTheme.spaceSm
+                                rightPadding: SentinelTheme.spaceSm
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd
+                                color: InteractionTokens.surfaceColor(conversationButton.hovered,
+                                                                       conversationButton.down,
+                                                                       conversationButton.active,
+                                                                       homeChat.modeAccent)
+                                border.color: InteractionTokens.borderColor(conversationButton.activeFocus,
+                                                                             conversationButton.hovered,
+                                                                             conversationButton.active,
+                                                                             homeChat.modeAccent)
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Archived") + "  " + homeChat.viewModel.archivedConversationCount
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        font.bold: true
+                    }
+                }
+            }
+        }
+
+        ColumnLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.minimumHeight: 0
         spacing: SentinelTheme.spaceMd
 
         RowLayout {
@@ -594,6 +782,7 @@ ShellPanel {
             color: !homeChat.chatReady ? SentinelTheme.textMuted : SentinelTheme.warning
             font.pixelSize: SentinelTheme.fontSmall
             wrapMode: Text.WordWrap
+        }
         }
     }
 }

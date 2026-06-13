@@ -15,6 +15,33 @@ Phase 5.5 reconstructed the visual shell around the translated Sentinel identity
 cinematic AI operating environment, presence-first workspace, floating translucent surfaces,
 negative space, partial bracket grammar, cyan/teal glow hierarchy, and a bottom command dock.
 
+## Phase 49.5 Product Realignment
+
+Phase 49.5 realigns Sentinel into a premium native AI desktop companion without adding runtime
+authority. The durable reference is `docs/SENTINEL_PRODUCT_REALIGNMENT.md`.
+
+Guidelines:
+
+- Primary navigation is Home, Brain, and Agents. Settings is a floating modal opened from gear,
+  command palette, or companion entry points.
+- Home is chat-first. The chat surface should be wider and larger than supporting metadata, with
+  conversation browsing in a collapsible sidebar containing search/filter plus pinned, recent, and
+  archived sections.
+- Brain replaces product-facing Brain wording and contains Overview, Memory, Recall,
+  Context, and Advanced. Normal Brain UI stays concise; long traces and technical diagnostics move
+  to Advanced.
+- User-facing copy says Advanced or Diagnostics instead of Advanced Diagnostics. Internal
+  `developerModeEnabled` may remain as a compatibility flag.
+- Settings categories are General, Appearance, AI, Models, Voice, Brain, Permissions, Tools,
+  Agents, Workspace, Notifications, Updates, and Advanced.
+- Theme choices are Sentinel Dark, Midnight, Aurora, Graphite, and System Adaptive. Theme changes
+  are presentation-only.
+- Model Library, multi-model roles, Model Advisor, Companion/Quick Panel, notifications,
+  updates/about, chat productivity, and focus/session modes are roadmap/foundation surfaces only
+  unless a later phase explicitly activates behavior.
+- No background AI work, hidden cloud calls, filesystem scanning, model downloads, telemetry, or
+  update network checks are authorized.
+
 ## Direction
 
 - Native Qt/QML desktop experience optimized first for Linux/Fedora KDE Plasma.
@@ -35,13 +62,13 @@ Phase 36.0 through Phase 36.14 improves runtime visibility without expanding run
 
 Guidelines:
 
-- Settings Runtime surfaces should show the active runtime provider, active model, readiness
+- Settings AI surfaces should show the active runtime provider, active model, readiness
   state, local-only scope, endpoint metadata, provider cards, and capability summaries.
 - The provider selector should expose only enabled local runtimes. Future cloud/API providers may
   appear as disabled read-only placeholders, not selectable active execution paths.
 - Chat surfaces should show active provider/model/local-only/readiness metadata from the
   controller-owned registry instead of hardcoded provider copy.
-- Developer Mode may show bounded registry metadata, capability metadata, validation traces, and
+- Advanced Diagnostics may show bounded registry metadata, capability metadata, validation traces, and
   readiness reasoning. It must not show raw provider payloads, hidden prompts, secrets, or provider
   transcripts.
 - Runtime UI controls must not imply downloads, installs, API-key entry, cloud execution,
@@ -57,7 +84,7 @@ Guidelines:
 - Settings > Profiles should show Developer, Student, Researcher, Personal Assistant, and Custom
   profile choices with concise summary, description, readiness, and safety-boundary text.
 - Home may show a compact selected-profile chip when it helps orientation.
-- Developer Mode may show profile capability/readiness metadata and diagnostics only.
+- Advanced Diagnostics may show profile capability/readiness metadata and diagnostics only.
 - Profile copy must be clear that profiles affect presentation/future policy metadata only.
 - Profiles must not imply custom instructions, hidden prompt changes, tool execution, workspace
   access, cloud/API calls, STT/TTS activation, subprocesses, agents, or autonomous behavior.
@@ -75,7 +102,7 @@ Guidelines:
 - The default posture is Disabled. Ask Every Time, Trusted, and Enabled are representable labels
   for future policy work only.
 - Home may show a compact central permission posture chip for orientation.
-- Developer Mode may show detailed permission diagnostics, but only as bounded strings.
+- Advanced Diagnostics may show detailed permission diagnostics, but only as bounded strings.
 - Permission UI must not imply actual tool execution, agent runtime, filesystem scanning, folder
   reading, cloud/API calls, microphone capture, audio playback, subprocess launch, hidden prompt
   mutation, automatic memory commits, or context behavior changes.
@@ -89,7 +116,7 @@ Guidelines:
 - Settings > Tools shows registry status, total tool count, metadata-safe/unavailable/refused
   counts, permission posture, boundary copy, and read-only summaries for the initial placeholder
   tools.
-- Agents Overview may show compact tool gateway posture in normal mode. Developer Mode may show
+- Agents Overview may show compact tool gateway posture in normal mode. Advanced Diagnostics may show
   detailed gateway diagnostics as bounded strings.
 - Tool readiness states are labels only. Metadata-safe means descriptor display is safe, not that
   a tool can run.
@@ -110,7 +137,7 @@ Guidelines:
 - Settings > Agents must clearly say agent execution is disabled. Approval labels are posture
   metadata only and must not appear as executable controls.
 - Home may show only a compact agent posture chip.
-- Developer Mode may show bounded plan diagnostics and traces, but no raw prompts, provider
+- Advanced Diagnostics may show bounded plan diagnostics and traces, but no raw prompts, provider
   payloads, filesystem paths, command payloads, tool handles, or execution controls.
 - Agent UI must not expose run buttons, autonomous toggles, file pickers, command inputs, web
   lookup controls, provider/API calls, microphone/playback controls, prompt mutation controls, or
@@ -127,7 +154,7 @@ Guidelines:
   scope, and capability chips only when model metadata exists.
 - Normal Home and AI Bridge surfaces should show concise provider/model readiness while keeping
   chat and the conversation list primary.
-- Developer Mode may show bounded model registry summaries on Settings, Runtime/Memory, and
+- Advanced Diagnostics may show bounded model registry summaries on Settings, Brain, and
   Agents. Normal mode should not expose model internals.
 - Recommendation blocks and model management controls should not appear in normal UI.
 - Pull/install/delete/refresh/import/export affordances, if shown later, must be clearly labeled
@@ -140,14 +167,14 @@ without adding cloud authority.
 
 Guidelines:
 
-- Settings Runtime should show Local Ollama as the active provider, cloud providers as not
+- Settings AI should show Local Ollama as the active provider, cloud providers as not
   configured/disabled, and API keys as not stored.
 - Future provider cards for OpenAI-compatible, Claude, and Gemini are compact read-only readiness
   cards. They must not include live API-key fields, connect buttons, test-call buttons, or model
   lookup controls.
 - Home/AI Bridge should keep the posture concise: local provider active, cloud inactive, and no
   API key stored.
-- Developer Mode may show bounded credential readiness and safety diagnostics only. It must not
+- Advanced Diagnostics may show bounded credential readiness and safety diagnostics only. It must not
   show secrets, raw provider payloads, stored key material, remote endpoint probing, or hidden
   routing traces.
 
@@ -158,7 +185,7 @@ credential entry or cloud authority.
 
 Guidelines:
 
-- Settings Local AI should show a compact Credential Security section for OS secret-store
+- Settings AI should show a compact Credential Security section for OS secret-store
   readiness, credential-store posture, provider credential status, and disabled credential
   actions.
 - Add API Key, Update API Key, and Remove API Key may appear only as disabled placeholders in this
@@ -166,7 +193,7 @@ Guidelines:
 - Provider credential cards for OpenAI-compatible, Claude, and Gemini should continue to show
   required/not configured, storage unavailable/requires future implementation, and execution
   disabled metadata.
-- Developer Mode may show bounded credential-store traces and policy/safety metadata. It must not
+- Advanced Diagnostics may show bounded credential-store traces and policy/safety metadata. It must not
   show raw secrets, secret-derived values, provider payloads, prompt payloads, remote endpoint
   probing, or hidden routing traces.
 
@@ -177,7 +204,7 @@ secret entry or cloud authority.
 
 Guidelines:
 
-- Settings Local AI should expose credential storage backend readiness and provider credential
+- Settings AI should expose credential storage backend readiness and provider credential
   state as summaries only: provider id/display name, configured/not configured, backend kind,
   readiness, last operation posture, and safe reason text.
 - Future cloud providers remain disabled unless a later phase explicitly enables a safe backend,
@@ -278,7 +305,7 @@ Guidelines:
   available and shows unavailable readiness when it is not.
 - Normal mode should show only the preference, availability/status, paused state by status text,
   and a concise safety boundary.
-- Developer Mode may show platform capability, action summaries, quick-capture readiness, and
+- Advanced Diagnostics may show platform capability, action summaries, quick-capture readiness, and
   bounded traces.
 - Companion actions are native menu actions only for foreground-safe shell behavior: Open Sentinel,
   New Conversation, Pause Companion, Settings, and Quit. Quick Note / Capture remains disabled and
@@ -301,7 +328,7 @@ Guidelines:
 - Normal mode shows only selected workspace metadata, readiness, permission posture, and disabled
   future actions.
 - Home may show a compact workspace status chip, but chat remains primary.
-- Developer Mode may show boundary diagnostics for workspace root, permission model, runtime
+- Advanced Diagnostics may show boundary diagnostics for workspace root, permission model, runtime
   boundary, and data boundary.
 - The UI must clearly say "Workspace access is not enabled yet."
 - Workspace controls must not imply recursive scanning, file reading, indexing, embeddings,
@@ -323,7 +350,7 @@ Guidelines:
   and revocation behavior are explicitly scoped.
 - Scan and Index states remain explanatory metadata only; no buttons should execute or imply
   hidden indexing.
-- Home may show only a compact workspace readiness/posture chip. Developer Mode may show boundary
+- Home may show only a compact workspace readiness/posture chip. Advanced Diagnostics may show boundary
   diagnostics only.
 - Workspace UI must continue to avoid filesystem scanning, automatic folder reading, background
   indexing, provider/model calls, tools/plugins, subprocesses, cloud/API calls, and autonomous
@@ -363,7 +390,7 @@ Guidelines:
 - `MetricCard` and nested panels should use shared card padding.
 - Section headings should wrap cleanly and keep page subtitles muted.
 - `ShellPanel` owns glass-like panel borders and lightweight corner brackets.
-- `SentinelDock` owns bottom navigation ordered Runtime/Memory, Home, Agents through the existing
+- `SentinelDock` owns bottom navigation ordered Brain, Home, Agents through the existing
   view model. Settings remains a bottom-right command button.
 - `SentinelOrb` owns the lightweight central presence geometry.
 - `SentinelTelemetry` owns small floating readouts for safe view-model metadata.
@@ -452,7 +479,7 @@ Guidelines:
   effect, or blur stack should be added.
 - Safe animated properties are opacity, scale, translate, color/border-color fades, and soft
   presence fades. Avoid large layout movement and avoid motion that competes with reading.
-- Runtime/Memory, Agents, AI Bridge, and Settings developer sections remain read-only
+- Brain, Agents, AI Bridge, and Settings developer sections remain read-only
   metadata-only surfaces. Polish may improve hierarchy, spacing, focus, hover, scrollbars, and
   blocked/refused/restricted emphasis, but must not add execution controls or backend authority.
 
@@ -465,7 +492,7 @@ Guidelines:
 
 - Startup should use lightweight shell readiness and short first-render opacity transitions to
   avoid layout popping. Do not add splash processes, workers, polling loops, or continuous timers.
-- The command palette is a local shell affordance. It may navigate to Home, Runtime/Memory,
+- The command palette is a local shell affordance. It may navigate to Home, Brain,
   Agents, and Settings, but quick actions such as clear chat and export remain metadata-only in the
   palette and must not perform filesystem access or destructive mutation from that surface.
 - Keyboard shortcuts should remain user-facing and safe: Ctrl/Cmd+K for the palette, Ctrl/Cmd+1-4
@@ -539,7 +566,7 @@ Guidelines:
   duplicate provider/model rules in QML.
 - The composer should also bind to the controller-owned send lifecycle: idle, validating, sending,
   streaming, completed, refused, failed, and cancelled. Normal UI may show concise lifecycle copy
-  only when it affects actionability; Developer Mode may show state plus summary.
+  only when it affects actionability; Advanced Diagnostics may show state plus summary.
 - Send is available only when local chat is enabled, Ollama is reachable through the local loopback
   endpoint, an explicitly selected installed model is valid, the active conversation is not
   archived, and no request is already running.
@@ -548,7 +575,7 @@ Guidelines:
   response, or unarchive the conversation.
 - Refused sends keep the draft visible and do not append a user or assistant message. Accepted
   sends may clear the composer after the controller accepts the prompt into the transcript.
-- Normal UI should stay concise and avoid raw request/response payloads. Developer Mode may expose
+- Normal UI should stay concise and avoid raw request/response payloads. Advanced Diagnostics may expose
   lower-level local inference traces, stream status, latency, and runtime summaries.
 - Streaming preview remains transient. It may update while a stream is active, must clear on final
   completion/failure, and must not create duplicate assistant messages.
@@ -571,10 +598,10 @@ Guidelines:
 - Chat may show concise summary continuity assistance when a validated summary is actively included
   in local context, a stale-summary indicator when excluded for freshness, and safe transcript-only
   fallback copy when no valid summary participates.
-- Runtime/Memory normal mode may show continuity contribution, deterministic ordering, freshness,
-  coverage, and fallback metadata. Developer Mode may show bounded allocation and budget traces.
+- Brain normal mode may show continuity contribution, deterministic ordering, freshness,
+  coverage, and fallback metadata. Advanced Diagnostics may show bounded allocation and budget traces.
 - Settings should show whether summary continuity is enabled through prompt context injection and
-  may show continuity budget diagnostics only in Developer Mode.
+  may show continuity budget diagnostics only in Advanced Diagnostics.
 - UI must not expose hidden prompts, raw prompt payloads, transcript replacement previews,
 automatic memory-write controls, background summary toggles, semantic/vector scores,
 filesystem-indexing controls, cloud/API controls, or tool/plugin activation.
@@ -588,11 +615,11 @@ Guidelines:
 
 - Home/Chat may show a compact expandable "Context reasoning" surface with a short "why this
   context was used" summary and safe inclusion/exclusion hints.
-- Runtime/Memory may show richer contribution, ordering, fallback, and budget panels. Developer
+- Brain may show richer contribution, ordering, fallback, and budget panels. Developer
   Mode may show bounded traces, still as selectable/copyable safe diagnostics.
 - Settings should show explainability enabled/disabled state, concise context diagnostics, and
-  Developer Mode orchestration visibility.
-- Normal mode should stay concise. Developer Mode may be denser, but diagnostics must wrap, remain
+  Advanced Diagnostics orchestration visibility.
+- Normal mode should stay concise. Advanced Diagnostics may be denser, but diagnostics must wrap, remain
   keyboard navigable, and avoid overlap at narrow widths.
 - UI must not expose hidden prompts, raw provider payloads, raw system prompts, semantic/vector
   scores or payloads, filesystem indexing controls, cloud/API controls, tool/plugin controls,
@@ -609,7 +636,7 @@ Guidelines:
   is on.
 - Turning the toggle off hides normal Home/Chat context reasoning surfaces only. It must explain
   that context reasoning is hidden from UI and runtime behavior is unchanged.
-- Developer Mode remains separate and may still reveal bounded context diagnostics when enabled.
+- Advanced Diagnostics remains separate and may still reveal bounded context diagnostics when enabled.
 - Home/Chat should remove the reasoning surface cleanly when hidden: no empty gaps and no
   streaming-driven layout jumps.
 - Context reasoning controls and read-only diagnostic text should remain keyboard reachable, and
@@ -622,12 +649,12 @@ adding a summarize action, background work, or hidden prompt/transcript mutation
 
 Guidelines:
 
-- Runtime/Memory normal mode may show Conversation Compression only when readiness is approaching
+- Brain normal mode may show Conversation Compression only when readiness is approaching
   or above, or when metadata candidates are planned. The card should stay compact: status,
   pressure, and candidate counts only.
-- Runtime/Memory Developer Mode may show grouped compression readiness, budget, candidate,
+- Brain Advanced Diagnostics may show grouped compression readiness, budget, candidate,
   selection, fallback, and trace summaries. These are diagnostics, not controls.
-- Settings Developer Mode may show concise compression status under context/runtime diagnostics.
+- Settings Advanced Diagnostics may show concise compression status under context/runtime diagnostics.
 - Do not add buttons, summarize actions, background progress, raw prompt/debug dumps, transcript
   replacement previews, memory-write affordances, vector/semantic authority, filesystem indexing,
   provider calls, or cloud/API messaging for this phase.
@@ -639,8 +666,8 @@ summary execution remains unavailable.
 
 Guidelines:
 
-- Runtime/Memory normal mode may show concise summary readiness, availability, and blocked reason.
-- Runtime/Memory Developer Mode may show planning segments, estimated gain, persisted summary
+- Brain normal mode may show concise summary readiness, availability, and blocked reason.
+- Brain Advanced Diagnostics may show planning segments, estimated gain, persisted summary
   metadata, and bounded trace summaries.
 - Chat may show a disabled, non-destructive "Generate Summary" placeholder only while generation
   is unavailable. It must not start a workflow or imply background summarization.
@@ -657,10 +684,10 @@ Guidelines:
 
 - Chat may show Generate Summary, Summary Ready, loading, blocked/refused/error copy, and concise
   summary-in-use copy when explicit context injection includes the generated summary.
-- Runtime/Memory normal mode may show summary metadata, persistence, and inclusion state.
-  Developer Mode may show bounded traces, segments, and budgets.
+- Brain normal mode may show summary metadata, persistence, and inclusion state.
+  Advanced Diagnostics may show bounded traces, segments, and budgets.
 - Settings should show summary injection enabled/disabled state in normal Chat/context copy.
-  Developer Mode may show deterministic summary budget/status details.
+  Advanced Diagnostics may show deterministic summary budget/status details.
 - Summary UI must not show hidden prompts, raw prompt payloads, provider internals, filesystem
   paths, transcript replacement previews, automatic memory write affordances, cloud/API controls,
   tool/plugin activation, semantic/vector authority, or background/autonomous generation toggles.
@@ -673,10 +700,10 @@ Guidelines:
 - Home may show one concise context line when prompt context injection is enabled:
   "Context used: X sources / Y chars". Keep it near the composer/status area and do not expose raw
   prompt payloads.
-- Runtime/Memory Overview stays simple. Developer Mode may show deterministic source groups,
+- Brain Overview stays simple. Advanced Diagnostics may show deterministic source groups,
   budget usage, included/excluded counts, and safe trace summaries.
 - Settings Chat should show whether local context injection is enabled and the current
-  deterministic source count. Detailed budget/readiness summaries remain Developer Mode content.
+  deterministic source count. Detailed budget/readiness summaries remain Advanced Diagnostics content.
 - UI must not show raw prompts, vector scores, provider handles, filesystem paths, debug dumps, or
   semantic candidate payloads.
 - Context controls remain visibility/configuration only. They must not start filesystem indexing,
@@ -693,12 +720,12 @@ Guidelines:
 - Home shows only the compact line `Context used: X memories / Y chars` when local context
   injection is enabled. It must not expose prompt dumps, hidden prompt text, raw candidate payloads,
   vector scores, or provider/runtime internals.
-- Runtime/Memory normal mode shows a concise memory context quality summary: included memory count,
+- Brain normal mode shows a concise memory context quality summary: included memory count,
   excluded memory count, and budget usage.
-- Runtime/Memory Developer Mode may show deterministic relevance trace rows, budget details,
+- Brain Advanced Diagnostics may show deterministic relevance trace rows, budget details,
   included/excluded counts, duplicate suppression, and exclusion reasons.
 - Settings Chat shows context enabled/disabled and deterministic source count in normal mode.
-  Memory relevance budget/details stay behind Developer Mode.
+  Memory relevance budget/details stay behind Advanced Diagnostics.
 - Memory relevance UI is read-only metadata. It must not add semantic search controls, vector
   ranking controls, filesystem indexing, background summarization, autonomous memory writes,
   provider/cloud actions, tools, voice controls, or prompt-debug exposure.
@@ -712,12 +739,12 @@ Guidelines:
 
 - Home continues to show only the compact `Context used: X memories / Y chars` line when local
   context injection is enabled.
-- Runtime/Memory normal mode shows a concise context quality summary based on salience included,
+- Brain normal mode shows a concise context quality summary based on salience included,
   excluded, and allocation metadata.
-- Runtime/Memory Developer Mode may show salience budget allocation, included/excluded/truncated
+- Brain Advanced Diagnostics may show salience budget allocation, included/excluded/truncated
   counts, deterministic reasons, traces, and exclusions.
 - Settings Chat shows a compact adaptive context status in normal mode. Detailed budget allocation
-  remains Developer Mode content.
+  remains Advanced Diagnostics content.
 - UI must not show raw prompts, hidden prompt blocks, debug dumps, vector scores, semantic
   payloads, provider handles, filesystem paths, or controls that imply background indexing or
   autonomous memory behavior.
@@ -814,8 +841,8 @@ assistant surface with a floating local chat input, recent message preview, comp
 state, and clear disabled reasons. Send is visible only when explicit local chat inference is
 enabled and a selected/fallback local Ollama model is available. The right-side AI Bridge remains
 available but is no longer the only chat input. Settings defaults to user-facing sections only:
-General, Local AI/Ollama, Model Selection, Chat, Voice Setup, and Privacy/Local Data. Persisted
-Developer Mode reveals semantic/vector internals, retrieval budgets, arbitration, tool contracts,
+General, AI, Models, Voice, Brain, Notifications, Updates, and Advanced. Persisted
+Advanced Diagnostics reveals semantic/vector internals, retrieval budgets, arbitration, tool contracts,
 agent traces, voice pipeline traces, and raw diagnostics; it does not grant runtime authority.
 Agents should read as a metadata-only runtime status surface with cards/chips for Agent Registry,
 Task Runtime, Task Queue, Planning Sessions, Capability Registry, and Tool Contracts, and no
@@ -834,21 +861,21 @@ orb/runtime widget is removed from Home when redundant. The AI Bridge is a compa
 provider/model summary, conversation list, selected conversation status, and concise runtime state;
 it should not repeat long retrieval or diagnostic metadata.
 
-Runtime/Memory is explicitly not the main chat screen. It is for local memory, memory recall,
+Brain is explicitly not the main chat screen. It is for local memory, memory recall,
 conversation/context status, and local data visibility. Normal mode should show Overview, Recall,
-and Local Data. Developer Mode may reveal context assembly internals, retrieval budgets,
+and Memory. Advanced Diagnostics may reveal context assembly internals, retrieval budgets,
 semantic/vector readiness, arbitration, prompt authority/inclusion, candidate boundaries, and raw
 diagnostic summaries without exposing raw prompts or vectors.
 
 Agents normal mode should show metadata-only runtime status, task queue, planning sessions,
 capability registry, tool contracts, and voice readiness in compact aligned cards/chips. Static
-agent entries should be labeled registered profiles, not active workers. Developer Mode may reveal
+agent entries should be labeled registered profiles, not active workers. Advanced Diagnostics may reveal
 detailed traces, refusals, contracts, permissions, sandbox summaries, and voice pipeline metadata.
 
 Settings normal mode should remain limited to General, Local AI/Ollama, Model Selection, Chat,
-Voice Setup, and Privacy/Local Data. Model recommendations, long management text,
+Voice Setup, and Brain. Model recommendations, long management text,
 semantic/vector diagnostics, low-level runtime details, duplicated status rows, and old mock copy
-belong behind Developer Mode. Voice readiness copy should say "Voice prepared, activation
+belong behind Advanced Diagnostics. Voice readiness copy should say "Voice prepared, activation
 disabled." when Piper/Whisper path metadata is ready but execution is inactive.
 
 Shared panel styling should use subtle glass panels and soft borders. Decorative colored corner
@@ -862,11 +889,11 @@ borders and accent color only for selected controls, focus, status chips, and wa
 clean chatbot surface without the Local Assistant label or local-status block. AI Bridge is a
 provider/conversation side panel only, with simple conversation rows, a visible New action, and
 per-row overflow metadata for rename, archive/unarchive, pin disabled, and delete disabled states.
-Runtime/Memory and Agents hide their Developer tabs entirely when Developer Mode is off and group
-Developer content into readable internal categories. Settings uses left-side category navigation
-for General, Local AI, Model, Chat, Voice, Privacy / Data, and Developer; Developer is hidden when
-Developer Mode is off, Developer Mode uses a switch, and advanced semantic/vector/runtime
-diagnostics stay behind Developer Mode. Header health and mode controls are compact and stable.
+Brain and Agents hide their Advanced tabs entirely when Advanced Diagnostics is off and group
+Advanced content into readable internal categories. Settings uses left-side category navigation
+for General, Local AI, Model, Chat, Voice, Brain, and Advanced; Advanced is hidden when
+Advanced Diagnostics is off, Advanced Diagnostics uses a switch, and advanced semantic/vector/runtime
+diagnostics stay behind Advanced Diagnostics. Header health and mode controls are compact and stable.
 Companion, Focus, Mission, System, and Tactical modes remain presentation-density states only and
 must never alter backend authority, safety policy, provider access, tool access, or voice/runtime
 execution.
@@ -876,7 +903,7 @@ Shared controls, menus, dock states, chips, text fields, Settings navigation, an
 should avoid yellow/lime/neon treatment entirely. Active/focus styling should use low-opacity
 cyan/blue glass borders and calm glow only. Home remains the primary chatbot surface; AI Bridge is
 limited to provider/cloud status, conversation list, and selected conversation summary; Runtime/
-Memory and Agents keep Developer sections hidden unless Developer Mode is enabled; Settings keeps
+Memory and Agents keep Advanced sections hidden unless Advanced Diagnostics is enabled; Settings keeps
 left-side navigation with reliable scroll active-state sync. Bottom status values must remain
 bound to `DesktopShellViewModel`/controller state, never mock text. Mode presentation may change
 density and telemetry visibility only, with no change to backend authority, safety, permissions,
@@ -888,8 +915,8 @@ status/dock area. Detail rows should wrap long values instead of truncating them
 chips, dock labels, rail labels, and one-line selectors may still elide to preserve layout.
 Home must keep the composer visible and continue following new messages after sends and streaming
 completion. AI Bridge should remain a provider/conversation metadata panel and keep its menus
-styled with the app theme. Runtime/Memory and Agents Developer sections remain hidden unless
-Developer Mode is enabled and should group diagnostics into readable wrapped rows. Settings rail
+styled with the app theme. Brain and Agents Advanced sections remain hidden unless
+Advanced Diagnostics is enabled and should group diagnostics into readable wrapped rows. Settings rail
 clicks should land on the exact section, scroll-based active-state sync should remain stable, and
 voice/model paths or summaries should stay readable without changing any backend authority.
 
@@ -906,7 +933,7 @@ Current behavior:
 - Settings > General exposes Language with System Default, English, and Türkçe.
 - System Default uses Turkish only on Turkish system locales and otherwise falls back to English.
 - The setting is persisted through `AppSettings` and may require restart to take effect.
-- Main shell, header, dock, chat, Runtime/Memory, Agents, Settings, overlays, and command palette
+- Main shell, header, dock, chat, Brain, Agents, Settings, overlays, and command palette
   strings should use `qsTr()` for user-facing copy.
 
 Still follow-up:

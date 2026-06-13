@@ -48,6 +48,7 @@ Primary review date: 2026-06-11.
 | Anthropic | Cloud provider | Optional | Same cloud-provider posture as OpenAI. |
 | Gemini | Cloud provider | Optional | Same cloud-provider posture as OpenAI. |
 | OpenRouter | Cloud aggregator | Optional | Useful for provider interoperability, but higher trust and routing ambiguity; never default. |
+| Odysseus | Self-hosted AI workspace / agent product | Inspiration only | AGPL-3.0 posture means no code copy or dependency import without separate approval. Extract only concepts such as self-hosted workspace posture, tool categories, agent planning, and workflow/recipe ideas. |
 
 ## Agent Framework Findings
 

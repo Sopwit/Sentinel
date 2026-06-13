@@ -17,11 +17,11 @@ ShellPanel {
 
     function pageSubtitle(pageName) {
         if (pageName === "Memory")
-            return qsTr("Local memory, recall, and conversation context.")
+            return qsTr("Memory, recall, context, summaries, and continuity.")
         if (pageName === "Agents")
             return qsTr("Metadata-only agent planning and capability status.")
         if (pageName === "Settings")
-            return qsTr("Local preferences and readiness controls.")
+            return qsTr("Floating local preferences and readiness controls.")
         return qsTr("Local Ollama chatbot. No cloud provider active.")
     }
 
@@ -75,7 +75,9 @@ ShellPanel {
             }
 
             Label {
-                text: headerBar.viewModel.currentPage === "Dashboard" ? headerBar.greetingFor(headerBar.now) : headerBar.viewModel.currentPage
+                text: headerBar.viewModel.currentPage === "Dashboard" ? headerBar.greetingFor(headerBar.now)
+                      : headerBar.viewModel.currentPage === "Memory" ? qsTr("Brain")
+                      : headerBar.viewModel.currentPage
                 color: SentinelTheme.textPrimary
                 font.pixelSize: headerBar.compact ? SentinelTheme.fontTitle : SentinelTheme.fontTitle + 2
                 font.weight: Font.Light
