@@ -11,6 +11,7 @@ public:
     QString chatHistoryDatabasePath() const override;
     QString conversationDatabasePath() const override;
     QString conversationExportDirectoryPath() const override;
+    QString localRagDatabasePath() const;
 };
 
 } // namespace sentinel::core

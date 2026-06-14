@@ -493,6 +493,52 @@ ScrollView {
 
             ShellPanel {
                 width: parent.width
+                visible: memoryPage.selectedSection === "Overview"
+                implicitHeight: workspaceBrainColumn.implicitHeight + memoryPage.panelPadding * 2
+                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.034)
+
+                ColumnLayout {
+                    id: workspaceBrainColumn
+                    x: memoryPage.panelPadding
+                    y: memoryPage.panelPadding
+                    width: parent.width - memoryPage.panelPadding * 2
+                    spacing: SentinelTheme.spaceSm
+
+                    SectionTitle {
+                        title: qsTr("Workspace Brain")
+                        subtitle: qsTr("Lightweight local workspace, attachment, knowledge, and retrieval summaries.")
+                        Layout.fillWidth: true
+                    }
+
+                    Repeater {
+                        model: memoryPage.viewModel.brainWorkspaceSummaries
+
+                        InfoRow {
+                            required property string modelData
+                            compact: memoryPage.compact
+                            label: modelData.split(" - ")[0]
+                            value: modelData.split(" - ").slice(1).join(" - ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+                    }
+
+                    Repeater {
+                        model: memoryPage.viewModel.retrievalExplainabilitySummaries
+
+                        InfoRow {
+                            required property string modelData
+                            compact: true
+                            label: qsTr("Retrieval")
+                            value: modelData
+                            Layout.fillWidth: true
+                        }
+                    }
+                }
+            }
+
+            ShellPanel {
+                width: parent.width
                 visible: memoryPage.selectedSection === "Recall"
                 implicitHeight: recallColumn.implicitHeight + memoryPage.panelPadding * 2
 

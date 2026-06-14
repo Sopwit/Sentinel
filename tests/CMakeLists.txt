@@ -22,6 +22,7 @@ add_sentinel_core_test(test_conversation_session core/test_conversation_session.
 add_sentinel_core_test(test_conversation_state_graph core/test_conversation_state_graph.cpp)
 add_sentinel_core_test(test_context_assembly core/test_context_assembly.cpp)
 add_sentinel_core_test(test_semantic_retrieval core/test_semantic_retrieval.cpp)
+add_sentinel_core_test(test_local_rag_store core/test_local_rag_store.cpp)
 add_sentinel_core_test(test_in_memory_conversation_store core/test_in_memory_conversation_store.cpp)
 add_sentinel_core_test(test_in_memory_memory_candidate_store
                        core/test_in_memory_memory_candidate_store.cpp)

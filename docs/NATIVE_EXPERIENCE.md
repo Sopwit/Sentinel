@@ -26,6 +26,9 @@ foreground-only behavior.
 - Phase 49.7 adds Local AI Ecosystem metadata in Settings > Models, compact Home model/role chips,
   Brain model-role summaries, Agents model-role planning readiness, and in-app notification
   categories for model/provider/download/benchmark/role events.
+- Phase 50B adds workspace selection/status on Home, explicit browse/drag/drop/paste attachment
+  controls, Settings workspace Local Knowledge Base opt-in, privacy/export summaries, and Brain
+  workspace document/RAG summaries.
 
 ## Command Palette Actions
 
@@ -50,6 +53,10 @@ model downloads, STT/TTS execution, update polling, telemetry, or silent indexin
 Phase 49.7 also keeps provider discovery, Model Advisor, Downloads Center, and Benchmark Hub
 foreground metadata-only. It adds no hidden provider probes, catalog fetches, model pulls, update
 workers, benchmarks, automatic routing, or native OS notifications.
+
+Phase 50B keeps document interaction foreground-only. It adds no folder import, recursive
+filesystem scan, background document processing, automatic embedding generation, cloud retrieval,
+telemetry, autonomous agents, or hidden knowledge-base activation.
 
 Check for Updates is explicit and network-stubbed. Global quick-panel shortcuts are not registered.
 Backup restore controls are disabled metadata. Permanent delete remains refused; archive remains the

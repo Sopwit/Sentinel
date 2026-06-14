@@ -39,6 +39,11 @@ Benchmark Hub make future local AI management legible while preserving local-fir
 background probes, cloud calls, catalog fetches, downloads, model deletion, benchmarks, automatic
 routing, telemetry, tools, or autonomous agents.
 
+Phase 50B moves Sentinel toward a professional AI Workspace: real workspace records, explicit
+file-chat attachments, and optional workspace-scoped Local RAG. The strategic constraint remains
+unchanged: no hidden cloud calls, telemetry, autonomous agents, filesystem scanning, background
+indexing, automatic embeddings, or automatic knowledge-base activation.
+
 ## Architecture Position
 
 Sentinel should remain a C++20/Qt modular monolith with explicit service boundaries:

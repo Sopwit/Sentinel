@@ -39,4 +39,9 @@ QString StandardPathProvider::conversationExportDirectoryPath() const {
            QStringLiteral("/exports");
 }
 
+QString StandardPathProvider::localRagDatabasePath() const {
+    return writableDirectoryOrFallback(QStandardPaths::AppDataLocation) +
+           QStringLiteral("/local_rag.sqlite3");
+}
+
 } // namespace sentinel::core

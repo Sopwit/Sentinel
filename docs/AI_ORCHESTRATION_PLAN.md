@@ -1,5 +1,13 @@
 # AI Orchestration Plan
 
+Phase 50B adds workspace, file-chat, and Local RAG orchestration metadata without adding autonomous
+agents, tool execution, hidden indexing, or cloud retrieval. The active workspace is now a real
+scope for chat context, Brain summaries, attachment metadata, Local RAG metadata, and workspace
+preferences. File attachments and knowledge-base documents enter the system only through explicit
+foreground user actions. Local RAG is disabled by default, workspace-only, SQLite-backed, and
+manual-index-only. Retrieval explainability can show source document, chunk reference, and
+relevance metadata, but it does not grant prompt authority or automatic embeddings.
+
 Phase 50A activates real foreground local AI execution for the first provider boundary. Ollama is
 the executable local provider through loopback HTTP only. Chat requests resolve to one provider,
 one role, and one model, then execute through `ApplicationController` and the local inference

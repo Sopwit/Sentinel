@@ -3,6 +3,10 @@
 Phase 50A turns the local AI ecosystem foundation into guarded foreground local execution for
 Ollama while keeping all privacy boundaries explicit.
 
+Phase 50B extends the local ecosystem with workspace-scoped document metadata and optional Local
+RAG. This remains local-only: documents are added explicitly, Local Knowledge Base is disabled by
+default, re-indexing is manual, and no cloud embedding or retrieval services are used.
+
 ## Surfaces
 
 - Model Library: installed, discoverable, recommended, and detailed model summaries.
@@ -37,3 +41,12 @@ Only foreground local provider calls are allowed. This phase adds no background 
 network calls, cloud activation, catalog fetch, model download/update/delete, filesystem scan,
 subprocess, benchmark execution, automatic routing, autonomous agents, tool execution, telemetry,
 or hidden notifications.
+
+Local RAG safety:
+
+- All document and retrieval metadata is stored locally in SQLite.
+- Metadata is isolated by workspace id.
+- Folder import, recursive scanning, background indexing, automatic embedding generation, and
+  automatic knowledge-base activation are disabled.
+- Retrieval explainability can expose source document, section/chunk reference, and bounded
+  relevance metadata.

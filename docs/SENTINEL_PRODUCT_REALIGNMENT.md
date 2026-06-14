@@ -214,8 +214,11 @@ Roadmap actions:
 - Delete.
 - Export.
 
-Roadmap attachments: PDF, image, code, and text. Roadmap exports: Markdown, JSON, TXT, PDF, and
-Share Package.
+Phase 50B attachments: PDF, TXT, Markdown, DOCX, CSV, JSON, and source code files through explicit
+browse, drag/drop, or paste attachment actions only. Folder import, recursive scanning, background
+processing, automatic embeddings, and automatic knowledge-base activation remain disabled.
+
+Roadmap exports: Markdown, JSON, TXT, PDF, DOCX, and Share Package.
 
 ## Focus And Session Modes
 

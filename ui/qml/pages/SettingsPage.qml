@@ -2462,7 +2462,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Workspace")
-                            subtitle: qsTr("Workspace access is not active yet. Sentinel stores readiness metadata only.")
+                            subtitle: qsTr("Workspace scope for chat context, Brain summaries, attachments, and optional local knowledge.")
                             Layout.fillWidth: true
                         }
 
@@ -2486,9 +2486,9 @@ Item {
 
                             StatusChip {
                                 label: qsTr("Mode")
-                                value: qsTr("Metadata only")
+                                value: qsTr("Workspace only")
                                 accent: SentinelTheme.calmAccent
-                                muted: true
+                                muted: false
                             }
 
                             StatusChip {
@@ -2496,6 +2496,73 @@ Item {
                                 value: settingsPage.viewModel.workspacePermissionPosture
                                 accent: SentinelTheme.textMuted
                                 muted: true
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            radius: SentinelTheme.radiusMd
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
+                            implicitHeight: ragToggleRow.implicitHeight + SentinelTheme.spaceMd
+
+                            RowLayout {
+                                id: ragToggleRow
+                                x: SentinelTheme.spaceSm
+                                y: SentinelTheme.spaceXs
+                                width: parent.width - SentinelTheme.spaceSm * 2
+                                spacing: SentinelTheme.spaceSm
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Local Knowledge Base")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontBody
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: settingsPage.viewModel.localKnowledgeBaseStatus
+                                              + qsTr(" / indexing is manual only / document scope is workspace only")
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+
+                                Switch {
+                                    checked: settingsPage.viewModel.localKnowledgeBaseEnabled
+                                    hoverEnabled: true
+                                    onToggled: settingsPage.viewModel.localKnowledgeBaseEnabled = checked
+                                }
+                            }
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.privacyCenterSummaries
+
+                            InfoRow {
+                                required property string modelData
+                                compact: settingsPage.compact
+                                label: qsTr("Privacy")
+                                value: modelData
+                                Layout.fillWidth: true
+                            }
+                        }
+
+                        Repeater {
+                            model: settingsPage.viewModel.exportCenterSummaries
+
+                            InfoRow {
+                                required property string modelData
+                                compact: settingsPage.compact
+                                label: qsTr("Export")
+                                value: modelData
+                                Layout.fillWidth: true
                             }
                         }
 
