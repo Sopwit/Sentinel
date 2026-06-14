@@ -2,6 +2,41 @@
 
 ## Completed / Stable
 
+### Phase 51: Product Excellence & Ecosystem
+
+Completed. Adds Sentinel 1.0 Release Candidate product-readiness surfaces while preserving the
+QML -> `DesktopShellViewModel` -> core boundary and explicit user authority.
+
+Scope:
+
+- Expanded first-class onboarding to six steps: Welcome, Privacy Philosophy, Theme, AI provider,
+  Workspace Introduction, and Finish. Completion, provider choice, theme, and replay state are
+  persisted locally.
+- Added professional About, manual Updates, release notes, and download-confirmation surfaces.
+- Notification Center now exposes Tasks, Models, Updates, Brain, Workspace, and Security
+  categories with local pin, archive, clear archived, mark-read, filtering, and search state.
+- Command Palette covers navigation, workspaces, themes, Settings, Updates, Notifications,
+  controlled task planner, and export preview.
+- Accessibility preferences persist reduced motion, high contrast, and UI density.
+- Export preview and diagnostics export cover conversations, Brain entries, task reports,
+  workspace summaries, Markdown, TXT, JSON, and PDF metadata.
+- Diagnostics Center exposes version, provider/model, workspace count, Brain statistics, task
+  statistics, and notification statistics.
+- Brain Insights adds visual-only recent activity, workspace activity, task trend, and model usage
+  summaries.
+- Recovery and reliability summaries cover local draft restore, recovery notifications, unsaved
+  work detection, and safe shutdown storage boundaries.
+- Privacy guarantees are visible in Settings: no telemetry by default, no silent updates, no
+  hidden uploads, no hidden indexing, and no hidden cloud activation.
+
+Known limitation:
+
+- Update checks and download confirmation remain explicit foreground stubs. They perform no
+  network request, background polling, automatic download, or installation.
+- Product diagnostics and Brain insights are local summaries only. They do not upload analytics.
+- Offscreen smoke launch in the current environment still exits 139 and remains a known
+  launch-environment limitation after successful build and tests.
+
 ### Phase 50C: Controlled Agent Tasks
 
 Completed. Adds safe, foreground-only controlled agent workflows while preserving explicit user

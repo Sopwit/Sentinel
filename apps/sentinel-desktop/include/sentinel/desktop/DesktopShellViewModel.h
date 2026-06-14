@@ -1178,11 +1178,45 @@ class DesktopShellViewModel final : public QObject {
                    nativeExperienceChanged)
     Q_PROPERTY(QString onboardingUseCase READ onboardingUseCase WRITE setOnboardingUseCase NOTIFY
                    nativeExperienceChanged)
+    Q_PROPERTY(QString onboardingAiProvider READ onboardingAiProvider WRITE setOnboardingAiProvider
+                   NOTIFY nativeExperienceChanged)
     Q_PROPERTY(QString recoveryDraftText READ recoveryDraftText WRITE setRecoveryDraftText NOTIFY
                    nativeExperienceChanged)
+    Q_PROPERTY(bool reducedMotionEnabled READ reducedMotionEnabled WRITE setReducedMotionEnabled
+                   NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool highContrastEnabled READ highContrastEnabled WRITE setHighContrastEnabled
+                   NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(QString uiDensity READ uiDensity WRITE setUiDensity NOTIFY nativeExperienceChanged)
     Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationCenterSummaries READ notificationCenterSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList notificationCategories READ notificationCategories NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList notificationLifecycleSummaries READ notificationLifecycleSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList notificationFilteredSummaries READ notificationFilteredSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QString notificationSearchQuery READ notificationSearchQuery WRITE
+                   setNotificationSearchQuery NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(QString notificationCategoryFilter READ notificationCategoryFilter WRITE
+                   setNotificationCategoryFilter NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(QString updateWorkflowState READ updateWorkflowState NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(QStringList releaseNotesSummaries READ releaseNotesSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList aboutSentinelSummaries READ aboutSentinelSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList accessibilitySummaries READ accessibilitySummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList diagnosticsCenterSummaries READ diagnosticsCenterSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList exportPreviewSummaries READ exportPreviewSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList brainInsightSummaries READ brainInsightSummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList recoveryReliabilitySummaries READ recoveryReliabilitySummaries NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(QStringList productPolishSummaries READ productPolishSummaries NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QString selectedSkillProfile READ selectedSkillProfile WRITE
                    setSelectedSkillProfile NOTIFY skillProfileChanged)
@@ -2035,10 +2069,34 @@ public:
     void setOnboardingComplete(bool complete);
     QString onboardingUseCase() const;
     void setOnboardingUseCase(const QString& useCase);
+    QString onboardingAiProvider() const;
+    void setOnboardingAiProvider(const QString& provider);
     QString recoveryDraftText() const;
     void setRecoveryDraftText(const QString& text);
+    bool reducedMotionEnabled() const;
+    void setReducedMotionEnabled(bool enabled);
+    bool highContrastEnabled() const;
+    void setHighContrastEnabled(bool enabled);
+    QString uiDensity() const;
+    void setUiDensity(const QString& density);
     QStringList activityTimelineSummaries() const;
     QStringList notificationCenterSummaries() const;
+    QStringList notificationCategories() const;
+    QStringList notificationLifecycleSummaries() const;
+    QStringList notificationFilteredSummaries() const;
+    QString notificationSearchQuery() const;
+    void setNotificationSearchQuery(const QString& query);
+    QString notificationCategoryFilter() const;
+    void setNotificationCategoryFilter(const QString& category);
+    QString updateWorkflowState() const;
+    QStringList releaseNotesSummaries() const;
+    QStringList aboutSentinelSummaries() const;
+    QStringList accessibilitySummaries() const;
+    QStringList diagnosticsCenterSummaries() const;
+    QStringList exportPreviewSummaries() const;
+    QStringList brainInsightSummaries() const;
+    QStringList recoveryReliabilitySummaries() const;
+    QStringList productPolishSummaries() const;
     QString selectedSkillProfile() const;
     void setSelectedSkillProfile(const QString& profileId);
     QString selectedSkillProfileName() const;
@@ -2142,6 +2200,15 @@ public:
     Q_INVOKABLE void clearConversationSearch();
     Q_INVOKABLE bool exportTranscript(const QString& format);
     Q_INVOKABLE bool checkForUpdates();
+    Q_INVOKABLE bool confirmUpdateDownload();
+    Q_INVOKABLE void replayOnboarding();
+    Q_INVOKABLE void seedRecoveryDraft(const QString& text);
+    Q_INVOKABLE bool pinNotification(const QString& notificationId);
+    Q_INVOKABLE bool archiveNotification(const QString& notificationId);
+    Q_INVOKABLE bool markNotificationRead(const QString& notificationId);
+    Q_INVOKABLE bool clearArchivedNotifications();
+    Q_INVOKABLE bool prepareExportPreview(const QString& source, const QString& format);
+    Q_INVOKABLE bool exportDiagnostics(const QString& format);
     Q_INVOKABLE bool requestConversationExport(const QString& format);
     Q_INVOKABLE QString createWorkspace(const QString& name, const QString& templateName);
     Q_INVOKABLE bool renameWorkspace(const QString& workspaceId, const QString& name);
@@ -2261,6 +2328,10 @@ private:
     QList<core::RagDocumentRecord> attachments_;
     QString workspaceLastActionStatus_ = QStringLiteral("Ready");
     QString workspaceLastActionSummary_ = QStringLiteral("No workspace action has run.");
+    QString notificationSearchQuery_;
+    QString notificationCategoryFilter_ = QStringLiteral("All");
+    QString exportPreviewSource_ = QStringLiteral("conversations");
+    QString exportPreviewFormat_ = QStringLiteral("Markdown");
     ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");
     bool companionNativeAvailable_ = false;

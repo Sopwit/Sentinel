@@ -89,7 +89,13 @@ void AppSettingsTest::exposesDefaults() {
     QCOMPARE(settings->notificationPolicy(), QStringLiteral("Important Only"));
     QVERIFY(!settings->onboardingComplete());
     QCOMPARE(settings->onboardingUseCase(), QStringLiteral("General Assistant"));
+    QCOMPARE(settings->onboardingAiProvider(), QStringLiteral("Ollama"));
     QVERIFY(settings->recoveryDraftText().isEmpty());
+    QVERIFY(!settings->reducedMotionEnabled());
+    QVERIFY(!settings->highContrastEnabled());
+    QCOMPARE(settings->uiDensity(), QStringLiteral("Comfortable"));
+    QCOMPARE(settings->notificationCenterJson(), QStringLiteral("{\"notifications\":[]}"));
+    QCOMPARE(settings->updateWorkflowState(), QStringLiteral("Not Checked"));
 }
 
 void AppSettingsTest::updatesThemeName() {
@@ -577,14 +583,26 @@ void AppSettingsTest::persistsNativeExperiencePreferences() {
         settings.setUpdateCheckPolicy(QStringLiteral(" weekly "));
         settings.setNotificationPolicy(QStringLiteral("all"));
         settings.setOnboardingUseCase(QStringLiteral("coding"));
+        settings.setOnboardingAiProvider(QStringLiteral("lm-studio"));
         settings.setOnboardingComplete(true);
         settings.setRecoveryDraftText(QStringLiteral("draft"));
+        settings.setReducedMotionEnabled(true);
+        settings.setHighContrastEnabled(true);
+        settings.setUiDensity(QStringLiteral("large"));
+        settings.setNotificationCenterJson(QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
+        settings.setUpdateWorkflowState(QStringLiteral("Checked manually"));
 
         QCOMPARE(settings.updateCheckPolicy(), QStringLiteral("Weekly"));
         QCOMPARE(settings.notificationPolicy(), QStringLiteral("All"));
         QCOMPARE(settings.onboardingUseCase(), QStringLiteral("Coding"));
+        QCOMPARE(settings.onboardingAiProvider(), QStringLiteral("LM Studio"));
         QVERIFY(settings.onboardingComplete());
         QCOMPARE(settings.recoveryDraftText(), QStringLiteral("draft"));
+        QVERIFY(settings.reducedMotionEnabled());
+        QVERIFY(settings.highContrastEnabled());
+        QCOMPARE(settings.uiDensity(), QStringLiteral("Large"));
+        QCOMPARE(settings.notificationCenterJson(), QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
+        QCOMPARE(settings.updateWorkflowState(), QStringLiteral("Checked manually"));
         QCOMPARE(updateSpy.count(), 1);
         QCOMPARE(notificationSpy.count(), 1);
         QCOMPARE(onboardingSpy.count(), 1);
@@ -594,15 +612,27 @@ void AppSettingsTest::persistsNativeExperiencePreferences() {
     QCOMPARE(reloaded.updateCheckPolicy(), QStringLiteral("Weekly"));
     QCOMPARE(reloaded.notificationPolicy(), QStringLiteral("All"));
     QCOMPARE(reloaded.onboardingUseCase(), QStringLiteral("Coding"));
+    QCOMPARE(reloaded.onboardingAiProvider(), QStringLiteral("LM Studio"));
     QVERIFY(reloaded.onboardingComplete());
     QCOMPARE(reloaded.recoveryDraftText(), QStringLiteral("draft"));
+    QVERIFY(reloaded.reducedMotionEnabled());
+    QVERIFY(reloaded.highContrastEnabled());
+    QCOMPARE(reloaded.uiDensity(), QStringLiteral("Large"));
+    QCOMPARE(reloaded.notificationCenterJson(), QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
+    QCOMPARE(reloaded.updateWorkflowState(), QStringLiteral("Checked manually"));
 
     reloaded.setUpdateCheckPolicy(QStringLiteral("unknown"));
     reloaded.setNotificationPolicy(QStringLiteral("unknown"));
     reloaded.setOnboardingUseCase(QStringLiteral("unknown"));
+    reloaded.setOnboardingAiProvider(QStringLiteral("unknown"));
+    reloaded.setUiDensity(QStringLiteral("unknown"));
+    reloaded.setUpdateWorkflowState(QStringLiteral("   "));
     QCOMPARE(reloaded.updateCheckPolicy(), QStringLiteral("Ask Before Checking"));
     QCOMPARE(reloaded.notificationPolicy(), QStringLiteral("Important Only"));
     QCOMPARE(reloaded.onboardingUseCase(), QStringLiteral("General Assistant"));
+    QCOMPARE(reloaded.onboardingAiProvider(), QStringLiteral("Ollama"));
+    QCOMPARE(reloaded.uiDensity(), QStringLiteral("Comfortable"));
+    QCOMPARE(reloaded.updateWorkflowState(), QStringLiteral("Not Checked"));
 }
 
 void AppSettingsTest::persistsVoiceConfigurationPaths() {

@@ -291,10 +291,18 @@ ApplicationWindow {
         accent: SentinelTheme.modeAccent(root.viewModel.currentModeName)
         modeName: root.viewModel.currentModeName
         preferredWidth: Math.min(720, root.width - SentinelTheme.space4Xl)
-        preferredHeight: Math.min(560, root.height - SentinelTheme.space4Xl)
+        preferredHeight: Math.min(620, root.height - SentinelTheme.space4Xl)
         closePolicy: Popup.NoAutoClose
 
         property int step: 0
+        readonly property var titles: [
+            qsTr("Welcome to Sentinel"),
+            qsTr("Privacy Philosophy"),
+            qsTr("Choose Theme"),
+            qsTr("Configure AI"),
+            qsTr("Workspace Introduction"),
+            qsTr("Finish")
+        ]
 
         contentItem: ColumnLayout {
             spacing: SentinelTheme.spaceLg
@@ -303,9 +311,7 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 Layout.margins: SentinelTheme.spaceLg
                 Layout.bottomMargin: 0
-                text: onboardingModal.step === 0 ? qsTr("Welcome to Sentinel")
-                     : onboardingModal.step === 1 ? qsTr("Device Overview")
-                     : qsTr("Starter Setup")
+                text: onboardingModal.titles[onboardingModal.step]
                 color: SentinelTheme.textPrimary
                 font.pixelSize: SentinelTheme.fontTitle
                 font.bold: true
@@ -318,30 +324,73 @@ ApplicationWindow {
                 Layout.rightMargin: SentinelTheme.spaceLg
                 currentIndex: onboardingModal.step
 
-                Flow {
+                ColumnLayout {
                     spacing: SentinelTheme.spaceSm
-                    Repeater {
-                        model: ["Coding", "Study", "Writing", "General Assistant"]
-                        SentinelButton {
-                            required property string modelData
-                            text: modelData
-                            onClicked: root.viewModel.onboardingUseCase = modelData
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Sentinel is a local-first desktop assistant for chat, Brain, workspaces, controlled tasks, and notifications.")
+                        color: SentinelTheme.textMuted
+                        wrapMode: Text.WordWrap
+                    }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+                        Repeater {
+                            model: ["Coding", "Study", "Writing", "General Assistant"]
+                            SentinelButton {
+                                required property string modelData
+                                text: modelData
+                                onClicked: root.viewModel.onboardingUseCase = modelData
+                            }
                         }
                     }
                 }
 
                 ColumnLayout {
                     spacing: SentinelTheme.spaceSm
-                    InfoRow { label: qsTr("Platform"); value: Qt.platform.os; Layout.fillWidth: true }
-                    InfoRow { label: qsTr("Runtime"); value: root.viewModel.activeRuntimeProviderLabel + " / " + root.viewModel.activeRuntimeReadinessState; Layout.fillWidth: true }
-                    InfoRow { label: qsTr("Privacy"); value: qsTr("No telemetry, no hidden uploads, no background scans."); Layout.fillWidth: true }
+                    InfoRow { label: qsTr("Local-first"); value: qsTr("Settings, memory, chat history, notifications, diagnostics, and recovery data stay local."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
+                    InfoRow { label: qsTr("No telemetry"); value: qsTr("Telemetry is disabled by default and no analytics uploads are added."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
+                    InfoRow { label: qsTr("User control"); value: qsTr("Updates, exports, tasks, providers, and sensitive operations require visible user action."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
+                }
+
+                Flow {
+                    spacing: SentinelTheme.spaceSm
+                    Repeater {
+                        model: ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
+                        SentinelButton {
+                            required property string modelData
+                            text: modelData
+                            onClicked: root.viewModel.themeName = modelData
+                        }
+                    }
+                }
+
+                Flow {
+                    spacing: SentinelTheme.spaceSm
+                    Repeater {
+                        model: ["Ollama", "LM Studio", "llama.cpp server", "OpenAI-compatible local endpoint"]
+                        SentinelButton {
+                            required property string modelData
+                            text: modelData
+                            onClicked: root.viewModel.onboardingAiProvider = modelData
+                        }
+                    }
+                }
+
+                ColumnLayout {
+                    spacing: SentinelTheme.spaceSm
+                    InfoRow { label: qsTr("Brain"); value: qsTr("Local memory, recall, context, summaries, and insights."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
+                    InfoRow { label: qsTr("Workspaces"); value: qsTr("Personal, Coding, Research, Writing, and Student scopes without folder scans."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
+                    InfoRow { label: qsTr("Tasks"); value: qsTr("Controlled task plans require approval and visible step-by-step progress."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
+                    InfoRow { label: qsTr("Notifications"); value: qsTr("Local in-app center with categories, pin, archive, read state, filtering, and search."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
                 }
 
                 ColumnLayout {
                     spacing: SentinelTheme.spaceSm
                     InfoRow { label: qsTr("Use Case"); value: root.viewModel.onboardingUseCase; Layout.fillWidth: true }
                     InfoRow { label: qsTr("Theme"); value: root.viewModel.themeName; Layout.fillWidth: true }
-                    InfoRow { label: qsTr("Models"); value: qsTr("No downloads are started."); Layout.fillWidth: true }
+                    InfoRow { label: qsTr("AI"); value: root.viewModel.onboardingAiProvider + qsTr(" / no downloads are started."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
+                    InfoRow { label: qsTr("Privacy"); value: qsTr("No telemetry, no hidden uploads, no silent updates, no hidden indexing, no hidden cloud activation."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
                 }
             }
 
@@ -355,9 +404,9 @@ ApplicationWindow {
                 }
                 Item { Layout.fillWidth: true }
                 SentinelButton {
-                    text: onboardingModal.step < 2 ? qsTr("Next") : qsTr("Start")
+                    text: onboardingModal.step < 5 ? qsTr("Next") : qsTr("Start")
                     onClicked: {
-                        if (onboardingModal.step < 2) {
+                        if (onboardingModal.step < 5) {
                             onboardingModal.step++
                         } else {
                             root.viewModel.onboardingComplete = true

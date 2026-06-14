@@ -114,6 +114,7 @@ private slots:
     void exposesToolGatewayMetadata();
     void exposesAgentRuntimeMetadata();
     void exposesControlledAgentTaskWorkflow();
+    void exposesProductExcellenceWorkflow();
     void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
@@ -246,11 +247,22 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.notificationPolicy(), QStringLiteral("Important Only"));
     QVERIFY(!fixture.viewModel.onboardingComplete());
     QCOMPARE(fixture.viewModel.onboardingUseCase(), QStringLiteral("General Assistant"));
+    QCOMPARE(fixture.viewModel.onboardingAiProvider(), QStringLiteral("Ollama"));
     QVERIFY(fixture.viewModel.recoveryDraftText().isEmpty());
+    QVERIFY(!fixture.viewModel.reducedMotionEnabled());
+    QVERIFY(!fixture.viewModel.highContrastEnabled());
+    QCOMPARE(fixture.viewModel.uiDensity(), QStringLiteral("Comfortable"));
     QVERIFY(fixture.viewModel.activityTimelineSummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Chat Created")));
     QVERIFY(fixture.viewModel.notificationCenterSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Export Completed")));
+                .contains(QStringLiteral("Manual updates only")));
+    QVERIFY(fixture.viewModel.notificationCategories().contains(QStringLiteral("Security")));
+    QVERIFY(fixture.viewModel.aboutSentinelSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Version:")));
+    QVERIFY(fixture.viewModel.diagnosticsCenterSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Active provider:")));
+    QVERIFY(fixture.viewModel.exportPreviewSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Markdown")));
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(fixture.viewModel.availablePages(),
              QStringList({QStringLiteral("Memory"), QStringLiteral("Dashboard"),
@@ -1602,9 +1614,27 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("notificationPolicy"), QByteArrayLiteral("QString")},
         {QStringLiteral("onboardingComplete"), QByteArrayLiteral("bool")},
         {QStringLiteral("onboardingUseCase"), QByteArrayLiteral("QString")},
+        {QStringLiteral("onboardingAiProvider"), QByteArrayLiteral("QString")},
         {QStringLiteral("recoveryDraftText"), QByteArrayLiteral("QString")},
+        {QStringLiteral("reducedMotionEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("highContrastEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("uiDensity"), QByteArrayLiteral("QString")},
         {QStringLiteral("activityTimelineSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("notificationCenterSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("notificationCategories"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("notificationLifecycleSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("notificationFilteredSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("notificationSearchQuery"), QByteArrayLiteral("QString")},
+        {QStringLiteral("notificationCategoryFilter"), QByteArrayLiteral("QString")},
+        {QStringLiteral("updateWorkflowState"), QByteArrayLiteral("QString")},
+        {QStringLiteral("releaseNotesSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("aboutSentinelSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("accessibilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("diagnosticsCenterSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("exportPreviewSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("brainInsightSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("recoveryReliabilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("productPolishSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("selectedSkillProfile"), QByteArrayLiteral("QString")},
         {QStringLiteral("selectedSkillProfileName"), QByteArrayLiteral("QString")},
         {QStringLiteral("selectedSkillProfileSummary"), QByteArrayLiteral("QString")},
@@ -1895,7 +1925,13 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("developerModeEnabled"),
         QStringLiteral("notificationPolicy"),
         QStringLiteral("onboardingComplete"),
+        QStringLiteral("onboardingAiProvider"),
         QStringLiteral("onboardingUseCase"),
+        QStringLiteral("reducedMotionEnabled"),
+        QStringLiteral("highContrastEnabled"),
+        QStringLiteral("uiDensity"),
+        QStringLiteral("notificationSearchQuery"),
+        QStringLiteral("notificationCategoryFilter"),
         QStringLiteral("piperFileOutputExecutionEnabled"),
         QStringLiteral("promptContextInjectionEnabled"),
         QStringLiteral("recoveryDraftText"),
@@ -3269,6 +3305,50 @@ void DesktopShellViewModelTest::exposesControlledAgentTaskWorkflow() {
     QVERIFY(fixture.viewModel.controlledTaskPermissionSummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Files: Allow For Workspace")));
     QVERIFY(fixture.settings.controlledAgentTasksJson().contains(taskId));
+}
+
+void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {
+    ViewModelFixture fixture;
+    QSignalSpy nativeSpy(&fixture.viewModel, &DesktopShellViewModel::nativeExperienceChanged);
+
+    fixture.viewModel.setOnboardingAiProvider(QStringLiteral("llama.cpp server"));
+    fixture.viewModel.setReducedMotionEnabled(true);
+    fixture.viewModel.setHighContrastEnabled(true);
+    fixture.viewModel.setUiDensity(QStringLiteral("Compact"));
+
+    QCOMPARE(fixture.viewModel.onboardingAiProvider(), QStringLiteral("llama.cpp server"));
+    QVERIFY(fixture.viewModel.reducedMotionEnabled());
+    QVERIFY(fixture.viewModel.highContrastEnabled());
+    QCOMPARE(fixture.viewModel.uiDensity(), QStringLiteral("Compact"));
+    QVERIFY(fixture.viewModel.accessibilitySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Reduced motion: Enabled")));
+
+    fixture.viewModel.setNotificationSearchQuery(QStringLiteral("privacy"));
+    fixture.viewModel.setNotificationCategoryFilter(QStringLiteral("Security"));
+    QVERIFY(fixture.viewModel.notificationFilteredSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Privacy guarantees active")));
+    QVERIFY(fixture.viewModel.markNotificationRead(QStringLiteral("security-privacy")));
+    QVERIFY(fixture.viewModel.archiveNotification(QStringLiteral("workspace-active")));
+    QVERIFY(fixture.viewModel.clearArchivedNotifications());
+    QVERIFY(fixture.viewModel.notificationLifecycleSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Persistence: local settings JSON")));
+
+    QVERIFY(!fixture.viewModel.checkForUpdates());
+    QVERIFY(fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Checked manually")));
+    QVERIFY(!fixture.viewModel.confirmUpdateDownload());
+    QVERIFY(fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Download confirmation")));
+
+    QVERIFY(fixture.viewModel.prepareExportPreview(QStringLiteral("Brain entries"),
+                                                   QStringLiteral("JSON")));
+    QVERIFY(fixture.viewModel.exportPreviewSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Brain entries")));
+    QVERIFY(fixture.viewModel.diagnosticsCenterSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Notification statistics:")));
+    QVERIFY(fixture.viewModel.brainInsightSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Visualization only")));
+    QVERIFY(fixture.viewModel.recoveryReliabilitySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Crash recovery draft:")));
+    QVERIFY(nativeSpy.count() > 0);
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {
