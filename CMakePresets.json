@@ -24,7 +24,28 @@
       "binaryDir": "${sourceDir}/build/release",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_DISABLE_FIND_PACKAGE_WrapVulkanHeaders": "ON",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "relwithdebinfo",
+      "displayName": "Release with debug info",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build/relwithdebinfo",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_DISABLE_FIND_PACKAGE_WrapVulkanHeaders": "ON",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "package-ready",
+      "displayName": "Package-ready release",
+      "inherits": "release",
+      "binaryDir": "${sourceDir}/build/package-ready",
+      "cacheVariables": {
+        "SENTINEL_BUILD_NUMBER": "0"
       }
     },
     {
@@ -51,6 +72,17 @@
     {
       "name": "release",
       "configurePreset": "release"
+    },
+    {
+      "name": "relwithdebinfo",
+      "configurePreset": "relwithdebinfo"
+    },
+    {
+      "name": "package-ready",
+      "configurePreset": "package-ready",
+      "targets": [
+        "sentinel-desktop"
+      ]
     },
     {
       "name": "tests",

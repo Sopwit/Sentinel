@@ -44,6 +44,10 @@ file-chat attachments, and optional workspace-scoped Local RAG. The strategic co
 unchanged: no hidden cloud calls, telemetry, autonomous agents, filesystem scanning, background
 indexing, automatic embeddings, or automatic knowledge-base activation.
 
+Phase 52 in the active product history is Packaging, Distribution, and Sentinel 1.0 Release
+Candidate Preparation. It supersedes the older recommended-phase numbering below, which remains a
+strategy reference rather than an active execution plan.
+
 ## Architecture Position
 
 Sentinel should remain a C++20/Qt modular monolith with explicit service boundaries:

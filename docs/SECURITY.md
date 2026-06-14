@@ -2,6 +2,14 @@
 
 Sentinel defaults to explicit user authority.
 
+## Phase 52 Release Boundary
+
+- Packaging metadata does not grant runtime authority.
+- No telemetry, silent update check, automatic download, or automatic install is added.
+- No signing, notarization, package upload, or update-feed credential is stored in the repository.
+- Release diagnostics expose safe build metadata only.
+- Packaging helpers are explicit operator actions and must not weaken permission gates.
+
 ## Phase 51 Boundary
 
 - No telemetry by default.

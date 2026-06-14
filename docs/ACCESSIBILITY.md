@@ -19,3 +19,6 @@ Phase 51 adds persistent accessibility and productivity preferences.
 
 Accessibility preferences affect presentation only. They do not alter provider routing, model
 execution, permissions, memory behavior, exports, updates, cloud state, or task execution.
+
+Release-candidate QA must validate keyboard navigation, visible focus, reduced motion, high
+contrast, UI density, and primary accessible names before platform packages are promoted.

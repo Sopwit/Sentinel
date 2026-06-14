@@ -1,8 +1,28 @@
 # Sentinel
 
-Sentinel is a modular AI Operating Layer for native desktop-first companion software. It is not a simple chatbot. The long-term direction includes Linux, macOS, Windows, Raspberry Pi, Jetson, and wearable devices, but this repository currently contains only the Desktop Alpha foundation.
+Sentinel is a modular AI Operating Layer for native desktop-first companion software. It is not a simple chatbot. The long-term direction includes Linux, macOS, Windows, Raspberry Pi, Jetson, and wearable devices, but this repository currently contains only the Desktop release-candidate foundation.
 
-## Desktop Alpha Foundation
+## Sentinel 1.0 Release Candidate Preparation
+
+Phase 52 prepares Sentinel for a professional cross-platform 1.0 release candidate. Release
+metadata, packaging manifests, QA plans, and project templates are present, while privacy and
+authority boundaries remain unchanged:
+
+- No telemetry.
+- No hidden cloud calls.
+- No silent update checks.
+- No automatic downloads or installs.
+- No autonomous tool or agent execution.
+
+Release-candidate references:
+
+- [Packaging and distribution](docs/PACKAGING.md)
+- [Release checklist](docs/RELEASE_CHECKLIST.md)
+- [Release QA plan](docs/QA_PLAN.md)
+- [Release notes](RELEASE_NOTES.md)
+- [Changelog](CHANGELOG.md)
+
+## Desktop Foundation
 
 This first version includes:
 
@@ -20,6 +40,8 @@ This first version includes:
 - `AppSettings` with `ISettingsStore`, in-memory test storage, and lightweight JSON desktop storage.
 - `DesktopShellViewModel` as the QML boundary.
 - HUD-style dashboard, sidebar navigation, mode switcher, chat panel, settings placeholder, and memory placeholder.
+- Release metadata for version, build number, git commit, build type, platform, and architecture.
+- Cross-platform icon and app metadata foundations for macOS, Windows, and Linux.
 
 ## Build
 
@@ -91,6 +113,23 @@ ctest --preset tests
 ```
 
 Development workflow details are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Test details are in [docs/TESTING.md](docs/TESTING.md).
+
+## Release Builds
+
+```bash
+cmake --preset release
+cmake --build --preset release --target sentinel-desktop
+```
+
+Package-ready local validation builds can set an explicit build number:
+
+```bash
+cmake --preset package-ready -DSENTINEL_BUILD_NUMBER=52
+cmake --build --preset package-ready
+```
+
+Packaging tools, signing credentials, notarization credentials, package upload credentials, and
+update feeds are intentionally not required by normal builds.
 
 ## Open With CLion
 
