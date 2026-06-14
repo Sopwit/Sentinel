@@ -17,11 +17,16 @@ SentinelOverlayModal {
         { "title": qsTr("New Chat"), "subtitle": qsTr("Create a local conversation"), "kind": qsTr("Chat"), "action": "new-chat", "enabled": true },
         { "title": qsTr("Search Chats"), "subtitle": qsTr("Filter conversations by title or id"), "kind": qsTr("Search"), "action": "search-chats", "enabled": true },
         { "title": qsTr("Open Brain"), "subtitle": qsTr("Memory, recall, context, and continuity"), "kind": qsTr("Navigate"), "page": "Memory", "enabled": true },
+        { "title": qsTr("Open Workspace"), "subtitle": qsTr("Open workspace controls in Settings"), "kind": qsTr("Workspace"), "action": "settings", "enabled": true },
         { "title": qsTr("Open Settings"), "subtitle": qsTr("Open floating preferences"), "kind": qsTr("Modal"), "action": "settings", "enabled": true },
         { "title": qsTr("Check Updates"), "subtitle": qsTr("Manual stub; no hidden network polling"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
+        { "title": qsTr("Open Updates"), "subtitle": qsTr("Open manual update and release notes surfaces"), "kind": qsTr("Updates"), "action": "settings", "enabled": true },
+        { "title": qsTr("Open Notifications"), "subtitle": qsTr("Open notification center controls"), "kind": qsTr("Notifications"), "action": "settings", "enabled": true },
         { "title": qsTr("Export Current Chat"), "subtitle": qsTr("Save Markdown in the controlled export directory"), "kind": qsTr("Export"), "action": "export-md", "enabled": true },
+        { "title": qsTr("Export Data"), "subtitle": qsTr("Prepare export preview for local data"), "kind": qsTr("Export"), "action": "export-preview", "enabled": true },
         { "title": qsTr("Change Theme"), "subtitle": qsTr("Cycle Sentinel Dark, Midnight, Aurora, Graphite, System Adaptive"), "kind": qsTr("Appearance"), "action": "theme", "enabled": true },
         { "title": qsTr("Switch Model"), "subtitle": qsTr("Open Models settings"), "kind": qsTr("Models"), "action": "settings", "enabled": true },
+        { "title": qsTr("Start Planner"), "subtitle": qsTr("Open controlled task planner"), "kind": qsTr("Tasks"), "page": "Agents", "enabled": true },
         { "title": qsTr("Toggle Focus Mode"), "subtitle": qsTr("Switch to Focus Mode presentation"), "kind": qsTr("Mode"), "action": "focus-mode", "enabled": true },
         { "title": qsTr("Universal Search"), "subtitle": qsTr("Search chats, Brain, commands, settings, models, and profiles"), "kind": qsTr("Search"), "action": "universal-search", "enabled": true }
     ]
@@ -73,6 +78,9 @@ SentinelOverlayModal {
         } else if (action.action === "export-md") {
             viewModel.exportTranscript("markdown")
             actionStatus = viewModel.conversationExportLastResultSummary
+        } else if (action.action === "export-preview") {
+            viewModel.prepareExportPreview("conversations", "Markdown")
+            actionStatus = viewModel.exportPreviewSummaries.join(" / ")
         } else if (action.action === "theme") {
             var choices = ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
             var next = (choices.indexOf(viewModel.themeName) + 1) % choices.length

@@ -87,6 +87,38 @@ QString normalizedOnboardingUseCase(const QString& useCase) {
     return QStringLiteral("General Assistant");
 }
 
+QString normalizedOnboardingAiProvider(const QString& provider) {
+    const auto normalized = provider.trimmed().toLower();
+    if (normalized == QStringLiteral("lm studio") || normalized == QStringLiteral("lm-studio")) {
+        return QStringLiteral("LM Studio");
+    }
+    if (normalized == QStringLiteral("llama.cpp server") ||
+        normalized == QStringLiteral("llama-cpp-server")) {
+        return QStringLiteral("llama.cpp server");
+    }
+    if (normalized == QStringLiteral("openai-compatible local endpoint") ||
+        normalized == QStringLiteral("openai-compatible-local")) {
+        return QStringLiteral("OpenAI-compatible local endpoint");
+    }
+    return QStringLiteral("Ollama");
+}
+
+QString normalizedUiDensity(const QString& density) {
+    const auto normalized = density.trimmed().toLower();
+    if (normalized == QStringLiteral("compact")) {
+        return QStringLiteral("Compact");
+    }
+    if (normalized == QStringLiteral("large")) {
+        return QStringLiteral("Large");
+    }
+    return QStringLiteral("Comfortable");
+}
+
+QString normalizedUpdateWorkflowState(const QString& state) {
+    const auto normalized = state.trimmed();
+    return normalized.isEmpty() ? QStringLiteral("Not Checked") : normalized;
+}
+
 QString normalizedWorkspaceIdSetting(const QString& workspaceId) {
     const auto normalized = workspaceId.trimmed();
     return normalized.isEmpty() ? QStringLiteral("personal") : normalized;
@@ -850,6 +882,23 @@ void AppSettings::setOnboardingUseCase(const QString& useCase) {
     emit onboardingUseCaseChanged();
 }
 
+QString AppSettings::onboardingAiProvider() const {
+    const auto fallback = QString::fromLatin1(defaultOnboardingAiProvider);
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(onboardingAiProviderKey), fallback) : fallback;
+    return normalizedOnboardingAiProvider(stored);
+}
+
+void AppSettings::setOnboardingAiProvider(const QString& provider) {
+    const auto selected = normalizedOnboardingAiProvider(provider);
+    if (selected == onboardingAiProvider() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(onboardingAiProviderKey), selected);
+    emit onboardingUseCaseChanged();
+}
+
 QString AppSettings::recoveryDraftText() const {
     return store_ ? store_->value(QString::fromLatin1(recoveryDraftTextKey), {}) : QString();
 }
@@ -861,6 +910,87 @@ void AppSettings::setRecoveryDraftText(const QString& text) {
 
     store_->setValue(QString::fromLatin1(recoveryDraftTextKey), text);
     emit recoveryDraftTextChanged();
+}
+
+bool AppSettings::reducedMotionEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(reducedMotionEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setReducedMotionEnabled(bool enabled) {
+    if (enabled == reducedMotionEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(reducedMotionEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit productExperienceChanged();
+}
+
+bool AppSettings::highContrastEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(highContrastEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setHighContrastEnabled(bool enabled) {
+    if (enabled == highContrastEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(highContrastEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit productExperienceChanged();
+}
+
+QString AppSettings::uiDensity() const {
+    const auto fallback = QString::fromLatin1(defaultUiDensity);
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(uiDensityKey), fallback) : fallback;
+    return normalizedUiDensity(stored);
+}
+
+void AppSettings::setUiDensity(const QString& density) {
+    const auto selected = normalizedUiDensity(density);
+    if (selected == uiDensity() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(uiDensityKey), selected);
+    emit productExperienceChanged();
+}
+
+QString AppSettings::notificationCenterJson() const {
+    return store_ ? store_->value(QString::fromLatin1(notificationCenterJsonKey),
+                                  QStringLiteral("{\"notifications\":[]}"))
+                  : QStringLiteral("{\"notifications\":[]}");
+}
+
+void AppSettings::setNotificationCenterJson(const QString& json) {
+    if (json == notificationCenterJson() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(notificationCenterJsonKey), json);
+    emit productExperienceChanged();
+}
+
+QString AppSettings::updateWorkflowState() const {
+    const auto fallback = QString::fromLatin1(defaultUpdateWorkflowState);
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(updateWorkflowStateKey), fallback) : fallback;
+    return normalizedUpdateWorkflowState(stored);
+}
+
+void AppSettings::setUpdateWorkflowState(const QString& state) {
+    const auto selected = normalizedUpdateWorkflowState(state);
+    if (selected == updateWorkflowState() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(updateWorkflowStateKey), selected);
+    emit productExperienceChanged();
 }
 
 QString AppSettings::controlledAgentTasksJson() const {

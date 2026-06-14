@@ -2,6 +2,17 @@
 
 Sentinel is local-first and privacy-first.
 
+## Phase 51 Guarantees
+
+- Onboarding, theme, AI provider choice, accessibility, notification lifecycle, update workflow
+  state, and recovery draft state are stored locally in settings.
+- Manual update checks do not contact an update server in this build.
+- Release notes, About, Diagnostics Center, Brain Insights, and export preview are local UI
+  summaries.
+- Diagnostics export is user-initiated and writes to the local app-controlled export directory.
+- No telemetry, analytics upload, hidden cloud activation, hidden uploads, hidden indexing,
+  automatic downloads, silent updates, or background polling are added.
+
 ## Phase 50C Guarantees
 
 - Controlled task history is stored locally.
@@ -30,6 +41,9 @@ knowledge base without user opt-in.
 - Memory: `QStandardPaths::AppDataLocation + "/memory.sqlite3"`
 - Chat history: `QStandardPaths::AppDataLocation + "/chat_history.sqlite3"`
 - Local RAG: `QStandardPaths::AppDataLocation + "/local_rag.sqlite3"`
+- Diagnostics and data exports: `QStandardPaths::AppDataLocation + "/exports"`
 - Controlled task history and workspace permissions: settings JSON
 
 These stores remain separate. Local RAG document and retrieval metadata is isolated by workspace id.
+Phase 51 notification, onboarding, accessibility, recovery, and update workflow state stays in
+settings JSON and does not alter memory, chat history, or Local RAG storage.

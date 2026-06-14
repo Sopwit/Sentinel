@@ -86,8 +86,19 @@ class AppSettings final : public QObject {
                    onboardingCompleteChanged)
     Q_PROPERTY(QString onboardingUseCase READ onboardingUseCase WRITE setOnboardingUseCase NOTIFY
                    onboardingUseCaseChanged)
+    Q_PROPERTY(QString onboardingAiProvider READ onboardingAiProvider WRITE setOnboardingAiProvider
+                   NOTIFY onboardingUseCaseChanged)
     Q_PROPERTY(QString recoveryDraftText READ recoveryDraftText WRITE setRecoveryDraftText NOTIFY
                    recoveryDraftTextChanged)
+    Q_PROPERTY(bool reducedMotionEnabled READ reducedMotionEnabled WRITE setReducedMotionEnabled
+                   NOTIFY productExperienceChanged)
+    Q_PROPERTY(bool highContrastEnabled READ highContrastEnabled WRITE setHighContrastEnabled
+                   NOTIFY productExperienceChanged)
+    Q_PROPERTY(QString uiDensity READ uiDensity WRITE setUiDensity NOTIFY productExperienceChanged)
+    Q_PROPERTY(QString notificationCenterJson READ notificationCenterJson WRITE
+                   setNotificationCenterJson NOTIFY productExperienceChanged)
+    Q_PROPERTY(QString updateWorkflowState READ updateWorkflowState WRITE setUpdateWorkflowState
+                   NOTIFY productExperienceChanged)
     Q_PROPERTY(QString controlledAgentTasksJson READ controlledAgentTasksJson WRITE
                    setControlledAgentTasksJson NOTIFY controlledAgentTasksChanged)
     Q_PROPERTY(QString controlledAgentPermissionsJson READ controlledAgentPermissionsJson WRITE
@@ -185,8 +196,20 @@ public:
     void setOnboardingComplete(bool complete);
     QString onboardingUseCase() const;
     void setOnboardingUseCase(const QString& useCase);
+    QString onboardingAiProvider() const;
+    void setOnboardingAiProvider(const QString& provider);
     QString recoveryDraftText() const;
     void setRecoveryDraftText(const QString& text);
+    bool reducedMotionEnabled() const;
+    void setReducedMotionEnabled(bool enabled);
+    bool highContrastEnabled() const;
+    void setHighContrastEnabled(bool enabled);
+    QString uiDensity() const;
+    void setUiDensity(const QString& density);
+    QString notificationCenterJson() const;
+    void setNotificationCenterJson(const QString& json);
+    QString updateWorkflowState() const;
+    void setUpdateWorkflowState(const QString& state);
     QString controlledAgentTasksJson() const;
     void setControlledAgentTasksJson(const QString& json);
     QString controlledAgentPermissionsJson() const;
@@ -224,6 +247,7 @@ signals:
     void onboardingCompleteChanged();
     void onboardingUseCaseChanged();
     void recoveryDraftTextChanged();
+    void productExperienceChanged();
     void controlledAgentTasksChanged();
 
 private:
@@ -267,7 +291,13 @@ private:
     static constexpr auto notificationPolicyKey = "notificationPolicy";
     static constexpr auto onboardingCompleteKey = "onboardingComplete";
     static constexpr auto onboardingUseCaseKey = "onboardingUseCase";
+    static constexpr auto onboardingAiProviderKey = "onboardingAiProvider";
     static constexpr auto recoveryDraftTextKey = "recoveryDraftText";
+    static constexpr auto reducedMotionEnabledKey = "reducedMotionEnabled";
+    static constexpr auto highContrastEnabledKey = "highContrastEnabled";
+    static constexpr auto uiDensityKey = "uiDensity";
+    static constexpr auto notificationCenterJsonKey = "notificationCenterJson";
+    static constexpr auto updateWorkflowStateKey = "updateWorkflowState";
     static constexpr auto controlledAgentTasksJsonKey = "controlledAgentTasksJson";
     static constexpr auto controlledAgentPermissionsJsonKey = "controlledAgentPermissionsJson";
     static constexpr auto defaultThemeName = "Sentinel Dark";
@@ -282,6 +312,9 @@ private:
     static constexpr auto defaultUpdateCheckPolicy = "Ask Before Checking";
     static constexpr auto defaultNotificationPolicy = "Important Only";
     static constexpr auto defaultOnboardingUseCase = "General Assistant";
+    static constexpr auto defaultOnboardingAiProvider = "Ollama";
+    static constexpr auto defaultUiDensity = "Comfortable";
+    static constexpr auto defaultUpdateWorkflowState = "Not Checked";
     static constexpr int defaultLocalInferenceTimeoutMs = 30000;
 
     std::unique_ptr<ISettingsStore> store_;

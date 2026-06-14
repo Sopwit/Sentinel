@@ -2,6 +2,22 @@
 
 Sentinel defaults to explicit user authority.
 
+## Phase 51 Boundary
+
+- No telemetry by default.
+- No silent updates.
+- No automatic downloads or installs.
+- No hidden uploads.
+- No hidden indexing.
+- No hidden cloud activation.
+- No autonomous product behavior.
+
+Onboarding, About, Updates, Notifications, Accessibility, Exports, Recovery, Diagnostics, and
+Brain Insights are foreground product surfaces. Manual update checks and download confirmations
+record local state only until a later update phase explicitly implements networking and package
+verification. Diagnostics export writes only to the app-controlled export directory after user
+action.
+
 ## Phase 50C Boundary
 
 - No autonomous execution.

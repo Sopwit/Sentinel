@@ -109,6 +109,22 @@ workflow progress and explainability; they do not run tools, read files, use the
 terminal commands, open browsers, call providers/cloud services, spawn recursive agents, or run in
 the background.
 
+Phase 51 adds the product-excellence layer for Sentinel 1.0 Release Candidate readiness. The layer
+is implemented through persisted `AppSettings` values and QML-safe `DesktopShellViewModel`
+summaries/actions for onboarding, About, manual updates, notification lifecycle, command palette
+commands, accessibility preferences, export preview, recovery summaries, Diagnostics Center, Brain
+Insights, UI polish state, and privacy guarantees.
+
+Phase 51 preserves the existing architecture boundary: QML presents state and invokes explicit
+foreground actions; `DesktopShellViewModel` owns local state transitions and delegates core
+behavior where applicable. Notification records, onboarding state, accessibility preferences,
+manual update state, recovery draft text, and controlled task metadata remain local settings JSON.
+Diagnostics export writes only to the app-controlled export directory after user action.
+
+Manual updates remain non-executing product UX. There is no background polling, silent update,
+automatic download, automatic installation, telemetry upload, hidden indexing, hidden cloud
+activation, or autonomous behavior.
+
 ## Desktop View Model
 
 `DesktopShellViewModel` is the QML boundary for the desktop app. It forwards safe operations to the core controller, mode manager, and settings object:

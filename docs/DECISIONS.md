@@ -3563,3 +3563,28 @@ Rules:
 - Backup/restore is `.sentinelbackup` metadata foundation only; restore controls stay disabled
   until import validation and user consent are separately scoped.
 - Permanent delete remains refused; archive is the available safe lifecycle action.
+
+## 110. Product Excellence Surfaces Are Local And Explicit
+
+Decision: Phase 51 product-excellence surfaces are persisted locally and operate only through
+explicit foreground user actions.
+
+Reason: Sentinel needs a polished Release Candidate experience without creating hidden update,
+telemetry, indexing, cloud, or automation behavior.
+
+Rules:
+
+- Onboarding completion, AI provider choice, accessibility preferences, notification lifecycle,
+  recovery drafts, and manual update state are local settings values.
+- About, release notes, Diagnostics Center, Brain Insights, export preview, and privacy guarantee
+  surfaces expose QML-safe summaries only.
+- Check for Updates records a manual local state transition and release-note availability. It does
+  not poll, download, install, contact a server, or emit telemetry.
+- Download confirmation is a user-visible state only until a later packaging/update phase defines
+  a secure updater.
+- Notification Center may pin, archive, mark read, clear archived, search, and filter local
+  records. It does not create OS notifications or background polling.
+- Diagnostics export writes only to the app-controlled export directory after explicit user
+  action.
+- No hidden uploads, hidden indexing, hidden cloud activation, autonomous behavior, background
+  workers, silent updates, or telemetry are authorized.

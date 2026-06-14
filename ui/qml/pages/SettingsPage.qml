@@ -14,9 +14,10 @@ Item {
     readonly property var themeChoices: ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
     readonly property var notificationPolicies: ["Disabled", "Important Only", "All", "Custom"]
     readonly property var updatePolicies: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
+    readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
     readonly property var categories: developerMode
-                                    ? ["General", "Appearance", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates", "Advanced"]
-                                    : ["General", "Appearance", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates"]
+                                    ? ["General", "Appearance", "Accessibility", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates", "Diagnostics", "Advanced"]
+                                    : ["General", "Appearance", "Accessibility", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates", "Diagnostics"]
     property string activeCategory: "General"
     property bool programmaticScroll: false
 
@@ -27,6 +28,8 @@ Item {
     function sectionFor(category) {
         if (category === "Appearance")
             return appearanceSection
+        if (category === "Accessibility")
+            return accessibilitySection
         if (category === "AI")
             return localAiSection
         if (category === "Models")
@@ -47,6 +50,8 @@ Item {
             return notificationsSection
         if (category === "Updates")
             return updatesSection
+        if (category === "Diagnostics")
+            return diagnosticsSection
         if (category === "Advanced")
             return developerSection
         return generalSection
@@ -57,6 +62,8 @@ Item {
             return qsTr("General")
         if (category === "Appearance")
             return qsTr("Appearance")
+        if (category === "Accessibility")
+            return qsTr("Accessibility")
         if (category === "AI")
             return qsTr("AI")
         if (category === "Models")
@@ -77,6 +84,8 @@ Item {
             return qsTr("Notifications")
         if (category === "Updates")
             return qsTr("Updates")
+        if (category === "Diagnostics")
+            return qsTr("Diagnostics")
         if (category === "Advanced")
             return qsTr("Advanced")
         return category
@@ -245,6 +254,8 @@ Item {
                 var atBottom = contentY + settingsFlick.height >= settingsFlick.contentHeight - SentinelTheme.spaceSm
                 if (developerMode && (y >= developerSection.y || atBottom))
                     activeCategory = "Advanced"
+                else if (y >= diagnosticsSection.y)
+                    activeCategory = "Diagnostics"
                 else if (y >= updatesSection.y)
                     activeCategory = "Updates"
                 else if (y >= notificationsSection.y)
@@ -263,6 +274,8 @@ Item {
                     activeCategory = "Models"
                 else if (y >= localAiSection.y)
                     activeCategory = "AI"
+                else if (y >= accessibilitySection.y)
+                    activeCategory = "Accessibility"
                 else if (y >= appearanceSection.y)
                     activeCategory = "Appearance"
                 else
@@ -390,6 +403,25 @@ Item {
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall
                             wrapMode: Text.WordWrap
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 2
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Replay Onboarding")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.replayOnboarding()
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Save Recovery Draft")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.seedRecoveryDraft(qsTr("Recovered local draft"))
+                            }
                         }
 
                         Rectangle {
@@ -667,6 +699,70 @@ Item {
                             value: qsTr("Theme selection is persisted presentation metadata only; it does not change providers, permissions, models, or runtime behavior.")
                             Layout.fillWidth: true
                             valueMaximumLineCount: 3
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    id: accessibilitySection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(accessibilityContent)
+
+                    ColumnLayout {
+                        id: accessibilityContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Accessibility")
+                            subtitle: qsTr("Keyboard-first controls, persistent comfort preferences, and clear focus states.")
+                            Layout.fillWidth: true
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 3
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            CheckBox {
+                                text: qsTr("Reduced motion")
+                                checked: settingsPage.viewModel.reducedMotionEnabled
+                                onToggled: settingsPage.viewModel.reducedMotionEnabled = checked
+                                Layout.fillWidth: true
+                            }
+
+                            CheckBox {
+                                text: qsTr("High contrast")
+                                checked: settingsPage.viewModel.highContrastEnabled
+                                onToggled: settingsPage.viewModel.highContrastEnabled = checked
+                                Layout.fillWidth: true
+                            }
+
+                            ComboBox {
+                                Layout.fillWidth: true
+                                model: settingsPage.densityChoices
+                                currentIndex: settingsPage.densityChoices.indexOf(settingsPage.viewModel.uiDensity)
+                                onActivated: settingsPage.viewModel.uiDensity = currentText
+                            }
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Support")
+                            value: settingsPage.viewModel.accessibilitySummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 8
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Discoverability")
+                            value: qsTr("Command Palette opens with Ctrl/Cmd+K. Settings, notifications, updates, exports, workspaces, themes, and controlled task planner are reachable from the palette.")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
                         }
                     }
                 }
@@ -2788,10 +2884,31 @@ Item {
                             onActivated: settingsPage.viewModel.notificationPolicy = currentText
                         }
 
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 2
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            SentinelTextField {
+                                Layout.fillWidth: true
+                                placeholderText: qsTr("Search notifications")
+                                text: settingsPage.viewModel.notificationSearchQuery
+                                onTextChanged: settingsPage.viewModel.notificationSearchQuery = text
+                            }
+
+                            ComboBox {
+                                Layout.fillWidth: true
+                                model: settingsPage.viewModel.notificationCategories
+                                currentIndex: settingsPage.viewModel.notificationCategories.indexOf(settingsPage.viewModel.notificationCategoryFilter)
+                                onActivated: settingsPage.viewModel.notificationCategoryFilter = currentText
+                            }
+                        }
+
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Center")
-                            value: settingsPage.viewModel.notificationCenterSummaries.join(" / ")
+                            value: settingsPage.viewModel.notificationFilteredSummaries.join(" / ")
                             Layout.fillWidth: true
                             valueMaximumLineCount: 8
                         }
@@ -2799,9 +2916,48 @@ Item {
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Categories")
-                            value: qsTr("Chat Completed, Export Completed, Update Available, Permission Needed, Brain Saved, Error, Warning.")
+                            value: settingsPage.viewModel.notificationCategories.join(", ")
                             Layout.fillWidth: true
                             valueMaximumLineCount: 3
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Lifecycle")
+                            value: settingsPage.viewModel.notificationLifecycleSummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 4
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Pin Update")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.pinNotification("updates-manual")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Mark Security Read")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.markNotificationRead("security-privacy")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Archive Workspace")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.archiveNotification("workspace-active")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Clear Archived")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.clearArchivedNotifications()
+                            }
                         }
                     }
                 }
@@ -2854,8 +3010,9 @@ Item {
                             InfoRow {
                                 compact: true
                                 label: qsTr("Build")
-                                value: qsTr("Local desktop build")
+                                value: settingsPage.viewModel.aboutSentinelSummaries.join(" / ")
                                 Layout.fillWidth: true
+                                valueMaximumLineCount: 6
                             }
                         }
 
@@ -2891,6 +3048,128 @@ Item {
                             enabled: true
                             Layout.preferredWidth: 180
                             onClicked: settingsPage.viewModel.checkForUpdates()
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("State")
+                            value: settingsPage.viewModel.updateWorkflowState
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 3
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Release Notes")
+                            value: settingsPage.viewModel.releaseNotesSummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 6
+                        }
+
+                        SentinelButton {
+                            text: qsTr("Confirm Download")
+                            enabled: true
+                            Layout.preferredWidth: 180
+                            onClicked: settingsPage.viewModel.confirmUpdateDownload()
+                        }
+                    }
+                }
+
+                ShellPanel {
+                    id: diagnosticsSection
+                    width: parent.width
+                    implicitHeight: settingsPage.sectionHeight(diagnosticsContent)
+
+                    ColumnLayout {
+                        id: diagnosticsContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
+                            title: qsTr("Diagnostics")
+                            subtitle: qsTr("Local product diagnostics and export preview. No telemetry upload.")
+                            Layout.fillWidth: true
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Diagnostics")
+                            value: settingsPage.viewModel.diagnosticsCenterSummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 8
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Export Preview")
+                            value: settingsPage.viewModel.exportPreviewSummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 6
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Brain Insights")
+                            value: settingsPage.viewModel.brainInsightSummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 8
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Recovery")
+                            value: settingsPage.viewModel.recoveryReliabilitySummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 6
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Privacy Guarantees")
+                            value: settingsPage.viewModel.privacyCenterSummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 8
+                        }
+
+                        InfoRow {
+                            compact: settingsPage.compact
+                            label: qsTr("Polish")
+                            value: settingsPage.viewModel.productPolishSummaries.join(" / ")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 6
+                        }
+
+                        GridLayout {
+                            Layout.fillWidth: true
+                            columns: settingsPage.compact ? 1 : 4
+                            columnSpacing: SentinelTheme.spaceSm
+                            rowSpacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Preview Markdown")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.prepareExportPreview("conversations", "Markdown")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Preview JSON")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.prepareExportPreview("workspace summaries", "JSON")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Export Diagnostics TXT")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.exportDiagnostics("txt")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Export Diagnostics JSON")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.exportDiagnostics("json")
+                            }
                         }
                     }
                 }

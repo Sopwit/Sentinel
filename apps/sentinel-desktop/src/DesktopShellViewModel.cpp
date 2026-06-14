@@ -1,5 +1,6 @@
 #include "sentinel/desktop/DesktopShellViewModel.h"
 
+#include "sentinel/core/AppMetadata.h"
 #include "sentinel/core/AppSettings.h"
 #include "sentinel/core/ApplicationController.h"
 #include "sentinel/core/ModelRegistry.h"
@@ -7,12 +8,18 @@
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
+#include <QIODevice>
 #include <QSaveFile>
 #include <QFileInfo>
+#include <QLibraryInfo>
 #include <QStandardPaths>
+#include <QSysInfo>
 
 #include <algorithm>
+#include <functional>
 
 namespace sentinel::desktop {
 
@@ -66,6 +73,93 @@ QString fileTypeForPath(const QString& pathOrName) {
 
 bool supportedAttachmentType(const QString& type) {
     return type != QStringLiteral("Unsupported");
+}
+
+QJsonArray defaultNotifications() {
+    QJsonArray notifications;
+    const auto add = [&notifications](const QString& id, const QString& category,
+                                      const QString& title, const QString& body, bool pinned) {
+        QJsonObject item;
+        item.insert(QStringLiteral("id"), id);
+        item.insert(QStringLiteral("category"), category);
+        item.insert(QStringLiteral("title"), title);
+        item.insert(QStringLiteral("body"), body);
+        item.insert(QStringLiteral("pinned"), pinned);
+        item.insert(QStringLiteral("archived"), false);
+        item.insert(QStringLiteral("read"), false);
+        notifications.append(item);
+    };
+    add(QStringLiteral("updates-manual"), QStringLiteral("Updates"),
+        QStringLiteral("Manual updates only"),
+        QStringLiteral("Sentinel checks for updates only after explicit user action."), true);
+    add(QStringLiteral("security-privacy"), QStringLiteral("Security"),
+        QStringLiteral("Privacy guarantees active"),
+        QStringLiteral("No telemetry, hidden uploads, silent updates, or hidden cloud activation."),
+        true);
+    add(QStringLiteral("tasks-controlled"), QStringLiteral("Tasks"),
+        QStringLiteral("Controlled tasks require approval"),
+        QStringLiteral("Task execution advances only through visible user actions."), false);
+    add(QStringLiteral("brain-local"), QStringLiteral("Brain"),
+        QStringLiteral("Brain data stays local"),
+        QStringLiteral("Memory, chat history, Local RAG metadata, and diagnostics remain local."),
+        false);
+    add(QStringLiteral("workspace-active"), QStringLiteral("Workspace"),
+        QStringLiteral("Workspace scope selected"),
+        QStringLiteral("Workspace metadata does not grant folder scans or filesystem authority."),
+        false);
+    add(QStringLiteral("models-local"), QStringLiteral("Models"),
+        QStringLiteral("Local provider selected"),
+        QStringLiteral("Ollama can execute foreground local chat; other local endpoints require configuration."),
+        false);
+    add(QStringLiteral("models-role"), QStringLiteral("Models"),
+        QStringLiteral("Model Role Changed"),
+        QStringLiteral("Shown when the user changes local model-role metadata."), false);
+    return notifications;
+}
+
+QJsonArray notificationsFromJson(const QString& json) {
+    const auto document = QJsonDocument::fromJson(json.toUtf8());
+    const auto stored = document.object().value(QStringLiteral("notifications")).toArray();
+    return stored.isEmpty() ? defaultNotifications() : stored;
+}
+
+QString notificationsToJson(const QJsonArray& notifications) {
+    QJsonObject root;
+    root.insert(QStringLiteral("notifications"), notifications);
+    return QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact));
+}
+
+QString notificationSummary(const QJsonObject& item) {
+    const auto state = item.value(QStringLiteral("archived")).toBool()
+                           ? QStringLiteral("Archived")
+                           : item.value(QStringLiteral("read")).toBool() ? QStringLiteral("Read")
+                                                                          : QStringLiteral("Unread");
+    const auto pin = item.value(QStringLiteral("pinned")).toBool() ? QStringLiteral("Pinned")
+                                                                   : QStringLiteral("Unpinned");
+    return QStringLiteral("%1 - %2 - %3 - %4")
+        .arg(item.value(QStringLiteral("category")).toString(),
+             item.value(QStringLiteral("title")).toString(), state, pin);
+}
+
+bool updateNotification(const QString& json, const QString& notificationId,
+                        const std::function<void(QJsonObject&)>& update, QString* updatedJson) {
+    auto notifications = notificationsFromJson(json);
+    bool changed = false;
+    for (qsizetype i = 0; i < notifications.size(); ++i) {
+        auto item = notifications.at(i).toObject();
+        if (item.value(QStringLiteral("id")).toString() != notificationId) {
+            continue;
+        }
+        update(item);
+        notifications.replace(i, item);
+        changed = true;
+        break;
+    }
+    if (!changed) {
+        return false;
+    }
+    *updatedJson = notificationsToJson(notifications);
+    return true;
 }
 
 } // namespace
@@ -162,6 +256,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::onboardingUseCaseChanged, this,
             &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::recoveryDraftTextChanged, this,
+            &DesktopShellViewModel::nativeExperienceChanged);
+    connect(&settings_, &core::AppSettings::productExperienceChanged, this,
             &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::controlledAgentTasksChanged, this,
             &DesktopShellViewModel::controlledAgentTasksChanged);
@@ -3189,12 +3285,44 @@ void DesktopShellViewModel::setOnboardingUseCase(const QString& useCase) {
     settings_.setOnboardingUseCase(useCase);
 }
 
+QString DesktopShellViewModel::onboardingAiProvider() const {
+    return settings_.onboardingAiProvider();
+}
+
+void DesktopShellViewModel::setOnboardingAiProvider(const QString& provider) {
+    settings_.setOnboardingAiProvider(provider);
+}
+
 QString DesktopShellViewModel::recoveryDraftText() const {
     return settings_.recoveryDraftText();
 }
 
 void DesktopShellViewModel::setRecoveryDraftText(const QString& text) {
     settings_.setRecoveryDraftText(text);
+}
+
+bool DesktopShellViewModel::reducedMotionEnabled() const {
+    return settings_.reducedMotionEnabled();
+}
+
+void DesktopShellViewModel::setReducedMotionEnabled(bool enabled) {
+    settings_.setReducedMotionEnabled(enabled);
+}
+
+bool DesktopShellViewModel::highContrastEnabled() const {
+    return settings_.highContrastEnabled();
+}
+
+void DesktopShellViewModel::setHighContrastEnabled(bool enabled) {
+    settings_.setHighContrastEnabled(enabled);
+}
+
+QString DesktopShellViewModel::uiDensity() const {
+    return settings_.uiDensity();
+}
+
+void DesktopShellViewModel::setUiDensity(const QString& density) {
+    settings_.setUiDensity(density);
 }
 
 QStringList DesktopShellViewModel::activityTimelineSummaries() const {
@@ -3209,36 +3337,165 @@ QStringList DesktopShellViewModel::activityTimelineSummaries() const {
 }
 
 QStringList DesktopShellViewModel::notificationCenterSummaries() const {
+    return notificationFilteredSummaries();
+}
+
+QStringList DesktopShellViewModel::notificationCategories() const {
+    return {QStringLiteral("All"),      QStringLiteral("Tasks"),   QStringLiteral("Models"),
+            QStringLiteral("Updates"),  QStringLiteral("Brain"),   QStringLiteral("Workspace"),
+            QStringLiteral("Security")};
+}
+
+QStringList DesktopShellViewModel::notificationLifecycleSummaries() const {
+    QStringList summaries;
+    int pinned = 0;
+    int unread = 0;
+    int archived = 0;
+    const auto notifications = notificationsFromJson(settings_.notificationCenterJson());
+    for (const auto& value : notifications) {
+        const auto item = value.toObject();
+        pinned += item.value(QStringLiteral("pinned")).toBool() ? 1 : 0;
+        unread += item.value(QStringLiteral("read")).toBool() ? 0 : 1;
+        archived += item.value(QStringLiteral("archived")).toBool() ? 1 : 0;
+    }
+    summaries << QStringLiteral("Pinned: %1").arg(pinned)
+              << QStringLiteral("Unread: %1").arg(unread)
+              << QStringLiteral("Archived: %1").arg(archived)
+              << QStringLiteral("Policy: %1").arg(settings_.notificationPolicy())
+              << QStringLiteral("Persistence: local settings JSON");
+    return summaries;
+}
+
+QStringList DesktopShellViewModel::notificationFilteredSummaries() const {
+    QStringList summaries;
+    const auto query = notificationSearchQuery_.trimmed().toLower();
+    const auto filter = notificationCategoryFilter_;
+    const auto notifications = notificationsFromJson(settings_.notificationCenterJson());
+    for (const auto& value : notifications) {
+        const auto item = value.toObject();
+        const auto category = item.value(QStringLiteral("category")).toString();
+        const auto line = notificationSummary(item);
+        if (filter != QStringLiteral("All") && category != filter) {
+            continue;
+        }
+        if (!query.isEmpty() && !line.toLower().contains(query) &&
+            !item.value(QStringLiteral("body")).toString().toLower().contains(query)) {
+            continue;
+        }
+        summaries.append(line);
+    }
+    return summaries.isEmpty() ? QStringList{QStringLiteral("No notifications match the filter.")}
+                               : summaries;
+}
+
+QString DesktopShellViewModel::notificationSearchQuery() const {
+    return notificationSearchQuery_;
+}
+
+void DesktopShellViewModel::setNotificationSearchQuery(const QString& query) {
+    if (query == notificationSearchQuery_) {
+        return;
+    }
+    notificationSearchQuery_ = query;
+    emit nativeExperienceChanged();
+}
+
+QString DesktopShellViewModel::notificationCategoryFilter() const {
+    return notificationCategoryFilter_;
+}
+
+void DesktopShellViewModel::setNotificationCategoryFilter(const QString& category) {
+    const auto selected = notificationCategories().contains(category) ? category : QStringLiteral("All");
+    if (selected == notificationCategoryFilter_) {
+        return;
+    }
+    notificationCategoryFilter_ = selected;
+    emit nativeExperienceChanged();
+}
+
+QString DesktopShellViewModel::updateWorkflowState() const {
+    return settings_.updateWorkflowState();
+}
+
+QStringList DesktopShellViewModel::releaseNotesSummaries() const {
     return {
-        QStringLiteral("Chat Completed - shown when a foreground chat finishes"),
-        QStringLiteral("Generation Cancelled - shown when the user stops an active local request"),
-        QStringLiteral("Export Completed - %1").arg(conversationExportLastResultSummary()),
-        QStringLiteral("Model Discovered - shown only from explicit foreground local metadata"),
-        QStringLiteral("Model Unavailable - shown only from visible readiness changes"),
-        QStringLiteral("Download Queued - metadata category; downloads cannot start"),
-        QStringLiteral("Download Completed - metadata category; no downloader exists"),
-        QStringLiteral("Benchmark Finished - metadata category; benchmark execution is disabled"),
-        QStringLiteral("Provider Offline - local readiness metadata only"),
-        QStringLiteral("Provider Recovered - shown when visible local readiness becomes available"),
-        QStringLiteral("Provider Unavailable - %1").arg(controller_.activeRuntimeReadinessSummary()),
-        QStringLiteral("Model Switched - %1").arg(controller_.activeRuntimeModelLabel()),
-        QStringLiteral("Model Role Changed - shown when the user changes role metadata"),
-        QStringLiteral("Document Attached - %1").arg(attachmentStatus()),
-        QStringLiteral("Indexing Completed - manual workspace-only indexing"),
-        QStringLiteral("Indexing Failed - explicit file or local store failure"),
-        QStringLiteral("Retrieval Completed - local explainability metadata only"),
-        QStringLiteral("Workspace Changed - %1").arg(selectedWorkspaceName()),
-        QStringLiteral("Task Planned - visible controlled task plan created"),
-        QStringLiteral("Approval Needed - controlled task cannot start without approval"),
-        QStringLiteral("Task Started - foreground single-task execution only"),
-        QStringLiteral("Task Completed - all visible approved steps resolved"),
-        QStringLiteral("Task Failed - controlled task failure metadata"),
-        QStringLiteral("Task Cancelled - user cancelled or denied a task"),
-        QStringLiteral("Update Available - check is manual; no hidden polling"),
-        QStringLiteral("Permission Needed - future explicit approvals only"),
-        QStringLiteral("Brain Saved - local memory events only"),
-        QStringLiteral("Error - local failures"),
-        QStringLiteral("Warning - safety boundary notices"),
+        QStringLiteral("Sentinel %1 - Phase 51 product-excellence readiness")
+            .arg(core::AppMetadata::version()),
+        QStringLiteral("Onboarding, About, Notifications, Accessibility, Diagnostics, and Export previews are local UI surfaces."),
+        QStringLiteral("Manual update check is explicit; no background polling, silent download, or automatic install exists."),
+    };
+}
+
+QStringList DesktopShellViewModel::aboutSentinelSummaries() const {
+    return {
+        QStringLiteral("Version: %1").arg(core::AppMetadata::version()),
+        QStringLiteral("Build: Local desktop build"),
+        QStringLiteral("Qt: %1").arg(QString::fromLatin1(qVersion())),
+        QStringLiteral("Commit: local workspace"),
+        QStringLiteral("License: project license and third-party notices in local docs"),
+        QStringLiteral("Docs: docs/PRIVACY.md, docs/SECURITY.md, docs/UPDATES.md, docs/DIAGNOSTICS.md"),
+        QStringLiteral("Platform: %1 / %2").arg(QSysInfo::prettyProductName(), QSysInfo::currentCpuArchitecture()),
+    };
+}
+
+QStringList DesktopShellViewModel::accessibilitySummaries() const {
+    return {
+        QStringLiteral("Keyboard navigation: enabled across shell, settings, command palette, and dialogs"),
+        QStringLiteral("Focus indicators: tokenized focus borders on interactive controls"),
+        QStringLiteral("Reduced motion: %1").arg(settings_.reducedMotionEnabled() ? QStringLiteral("Enabled") : QStringLiteral("Disabled")),
+        QStringLiteral("High contrast: %1").arg(settings_.highContrastEnabled() ? QStringLiteral("Enabled") : QStringLiteral("Disabled")),
+        QStringLiteral("UI density: %1").arg(settings_.uiDensity()),
+        QStringLiteral("Screen reader labels: primary controls expose descriptive labels in QML"),
+    };
+}
+
+QStringList DesktopShellViewModel::diagnosticsCenterSummaries() const {
+    return {
+        QStringLiteral("Sentinel version: %1").arg(core::AppMetadata::version()),
+        QStringLiteral("Active provider: %1").arg(controller_.activeRuntimeProviderLabel()),
+        QStringLiteral("Active model: %1").arg(controller_.activeRuntimeModelLabel()),
+        QStringLiteral("Workspace count: %1").arg(workspaceIds().size()),
+        QStringLiteral("Brain entries: %1").arg(memoryEntryCount()),
+        QStringLiteral("Task statistics: %1").arg(controlledTaskDiagnosticsSummary()),
+        QStringLiteral("Notification statistics: %1").arg(notificationLifecycleSummaries().join(QStringLiteral(" / "))),
+    };
+}
+
+QStringList DesktopShellViewModel::exportPreviewSummaries() const {
+    return {
+        QStringLiteral("Source: %1").arg(exportPreviewSource_),
+        QStringLiteral("Format: %1").arg(exportPreviewFormat_),
+        QStringLiteral("Preview: conversations, Brain entries, task reports, and workspace summaries support Markdown, TXT, JSON, and PDF."),
+        QStringLiteral("Output: App-controlled export directory"),
+        QStringLiteral("Privacy: export is foreground-only and user initiated"),
+    };
+}
+
+QStringList DesktopShellViewModel::brainInsightSummaries() const {
+    return {
+        QStringLiteral("Recent activity: %1").arg(activityTimelineSummaries().value(0)),
+        QStringLiteral("Workspace activity: %1").arg(brainWorkspaceSummaries().value(0)),
+        QStringLiteral("Task completion trends: %1").arg(controlledTaskDiagnosticsSummary()),
+        QStringLiteral("Model usage trends: active %1 / %2").arg(controller_.activeRuntimeProviderLabel(), controller_.activeRuntimeModelLabel()),
+        QStringLiteral("Visualization only: no analytics upload"),
+    };
+}
+
+QStringList DesktopShellViewModel::recoveryReliabilitySummaries() const {
+    return {
+        QStringLiteral("Crash recovery draft: %1").arg(settings_.recoveryDraftText().isEmpty() ? QStringLiteral("No draft saved") : QStringLiteral("Draft available")),
+        QStringLiteral("Recovery notifications: local in-app notices only"),
+        QStringLiteral("Unsaved work detection: composer drafts can be restored or discarded explicitly"),
+        QStringLiteral("Safe shutdown summary: chats, Brain, settings, tasks, notifications, and Local RAG remain separate local stores"),
+    };
+}
+
+QStringList DesktopShellViewModel::productPolishSummaries() const {
+    return {
+        QStringLiteral("Home remains chat-first"),
+        QStringLiteral("Conversation sidebar remains collapsible"),
+        QStringLiteral("Smooth transitions respect reduced-motion preference"),
+        QStringLiteral("Consistent spacing, responsive layouts, compact mode, large mode, empty, loading, and error states are surfaced through shared QML components"),
     };
 }
 
@@ -4323,8 +4580,137 @@ bool DesktopShellViewModel::exportTranscript(const QString& format) {
 }
 
 bool DesktopShellViewModel::checkForUpdates() {
+    settings_.setUpdateWorkflowState(QStringLiteral("Checked manually - no automatic update check was started"));
+    QString updatedJson;
+    if (updateNotification(settings_.notificationCenterJson(), QStringLiteral("updates-manual"),
+                           [](QJsonObject& item) {
+                               item.insert(QStringLiteral("read"), false);
+                               item.insert(QStringLiteral("archived"), false);
+                               item.insert(QStringLiteral("body"),
+                                           QStringLiteral("Manual check completed locally. Release notes are available; download requires explicit confirmation."));
+                           },
+                           &updatedJson)) {
+        settings_.setNotificationCenterJson(updatedJson);
+    }
     emit nativeExperienceChanged();
     return false;
+}
+
+bool DesktopShellViewModel::confirmUpdateDownload() {
+    settings_.setUpdateWorkflowState(
+        QStringLiteral("Download confirmation shown - downloader is not implemented in this build"));
+    emit nativeExperienceChanged();
+    return false;
+}
+
+void DesktopShellViewModel::replayOnboarding() {
+    settings_.setOnboardingComplete(false);
+}
+
+void DesktopShellViewModel::seedRecoveryDraft(const QString& text) {
+    settings_.setRecoveryDraftText(text);
+}
+
+bool DesktopShellViewModel::pinNotification(const QString& notificationId) {
+    QString updatedJson;
+    if (!updateNotification(settings_.notificationCenterJson(), notificationId,
+                            [](QJsonObject& item) {
+                                item.insert(QStringLiteral("pinned"),
+                                            !item.value(QStringLiteral("pinned")).toBool());
+                            },
+                            &updatedJson)) {
+        return false;
+    }
+    settings_.setNotificationCenterJson(updatedJson);
+    return true;
+}
+
+bool DesktopShellViewModel::archiveNotification(const QString& notificationId) {
+    QString updatedJson;
+    if (!updateNotification(settings_.notificationCenterJson(), notificationId,
+                            [](QJsonObject& item) {
+                                item.insert(QStringLiteral("archived"), true);
+                                item.insert(QStringLiteral("read"), true);
+                            },
+                            &updatedJson)) {
+        return false;
+    }
+    settings_.setNotificationCenterJson(updatedJson);
+    return true;
+}
+
+bool DesktopShellViewModel::markNotificationRead(const QString& notificationId) {
+    QString updatedJson;
+    if (!updateNotification(settings_.notificationCenterJson(), notificationId,
+                            [](QJsonObject& item) {
+                                item.insert(QStringLiteral("read"), true);
+                            },
+                            &updatedJson)) {
+        return false;
+    }
+    settings_.setNotificationCenterJson(updatedJson);
+    return true;
+}
+
+bool DesktopShellViewModel::clearArchivedNotifications() {
+    const auto notifications = notificationsFromJson(settings_.notificationCenterJson());
+    QJsonArray kept;
+    for (const auto& value : notifications) {
+        const auto item = value.toObject();
+        if (!item.value(QStringLiteral("archived")).toBool()) {
+            kept.append(item);
+        }
+    }
+    settings_.setNotificationCenterJson(notificationsToJson(kept));
+    return true;
+}
+
+bool DesktopShellViewModel::prepareExportPreview(const QString& source, const QString& format) {
+    const auto normalizedSource = source.trimmed().isEmpty() ? QStringLiteral("conversations")
+                                                            : source.trimmed();
+    const auto normalizedFormat = format.trimmed().isEmpty() ? QStringLiteral("Markdown")
+                                                            : format.trimmed();
+    if (normalizedSource == exportPreviewSource_ && normalizedFormat == exportPreviewFormat_) {
+        return true;
+    }
+    exportPreviewSource_ = normalizedSource;
+    exportPreviewFormat_ = normalizedFormat;
+    emit nativeExperienceChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::exportDiagnostics(const QString& format) {
+    const auto extension = format.trimmed().toLower() == QStringLiteral("json") ? QStringLiteral("json")
+                                                                                : QStringLiteral("txt");
+    QDir directory(appDataPath() + QStringLiteral("/exports"));
+    if (!directory.exists() && !directory.mkpath(QStringLiteral("."))) {
+        return false;
+    }
+    const auto outputPath = directory.filePath(QStringLiteral("sentinel-diagnostics.%1").arg(extension));
+    QSaveFile file(outputPath);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        return false;
+    }
+
+    QByteArray payload;
+    if (extension == QStringLiteral("json")) {
+        QJsonObject root;
+        root.insert(QStringLiteral("version"), core::AppMetadata::version());
+        root.insert(QStringLiteral("activeProvider"), controller_.activeRuntimeProviderLabel());
+        root.insert(QStringLiteral("activeModel"), controller_.activeRuntimeModelLabel());
+        root.insert(QStringLiteral("workspaceCount"), workspaceIds().size());
+        root.insert(QStringLiteral("brainEntryCount"), memoryEntryCount());
+        root.insert(QStringLiteral("taskStatistics"), controlledTaskDiagnosticsSummary());
+        root.insert(QStringLiteral("notificationStatistics"),
+                    notificationLifecycleSummaries().join(QStringLiteral(" / ")));
+        payload = QJsonDocument(root).toJson(QJsonDocument::Indented);
+    } else {
+        payload = diagnosticsCenterSummaries().join(QStringLiteral("\n")).toUtf8();
+    }
+    if (file.write(payload) != payload.size()) {
+        return false;
+    }
+    return file.commit();
 }
 
 bool DesktopShellViewModel::requestConversationExport(const QString& format) {
