@@ -1631,6 +1631,21 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("workspaceActionPlaceholders"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("workspaceReadinessChecks"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("workspaceBoundaryDiagnostics"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("workspaceTemplateNames"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("workspaceLastActionStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("workspaceLastActionSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("attachmentSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("attachmentStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("attachmentPreviewSummary"), QByteArrayLiteral("QString")},
+        {QStringLiteral("fileChatActionSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("localKnowledgeBaseEnabled"), QByteArrayLiteral("bool")},
+        {QStringLiteral("localKnowledgeBaseStatus"), QByteArrayLiteral("QString")},
+        {QStringLiteral("knowledgeBaseDocumentSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("recentRetrievalSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("retrievalExplainabilitySummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("brainWorkspaceSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("exportCenterSummaries"), QByteArrayLiteral("QStringList")},
+        {QStringLiteral("privacyCenterSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("defaultPermissionPolicyState"), QByteArrayLiteral("QString")},
         {QStringLiteral("permissionPolicyStatus"), QByteArrayLiteral("QString")},
         {QStringLiteral("permissionPolicySummary"), QByteArrayLiteral("QString")},
@@ -1886,6 +1901,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("defaultPermissionPolicyState"),
         QStringLiteral("selectedSkillProfile"),
         QStringLiteral("selectedWorkspaceId"),
+        QStringLiteral("localKnowledgeBaseEnabled"),
         QStringLiteral("selectedRuntimeProvider"),
         QStringLiteral("updateCheckPolicy"),
     };
@@ -3036,27 +3052,39 @@ void DesktopShellViewModelTest::exposesWorkspaceReadinessMetadata() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::workspaceChanged);
 
-    QCOMPARE(fixture.viewModel.selectedWorkspaceId(), QStringLiteral("local-placeholder"));
-    QCOMPARE(fixture.viewModel.selectedWorkspaceName(), QStringLiteral("Local Workspace"));
-    QCOMPARE(fixture.viewModel.selectedWorkspaceAccessState(),
-             QStringLiteral("Access not enabled"));
-    QCOMPARE(fixture.viewModel.workspacePermissionPosture(), QStringLiteral("Disabled"));
-    QCOMPARE(fixture.viewModel.workspacePermissionPostures(),
-             QStringList({QStringLiteral("Disabled"), QStringLiteral("Ask Every Time"),
-                          QStringLiteral("Trusted"), QStringLiteral("Enabled")}));
+    QCOMPARE(fixture.viewModel.selectedWorkspaceId(), QStringLiteral("personal"));
+    QCOMPARE(fixture.viewModel.selectedWorkspaceName(), QStringLiteral("Personal"));
+    QCOMPARE(fixture.viewModel.selectedWorkspaceAccessState(), QStringLiteral("Active"));
+    QCOMPARE(fixture.viewModel.workspacePermissionPosture(), QStringLiteral("Workspace Only"));
+    QVERIFY(fixture.viewModel.workspacePermissionPostures().contains(QStringLiteral("Workspace Only")));
+    QVERIFY(fixture.viewModel.workspaceTemplateNames().contains(QStringLiteral("Research")));
     QVERIFY(fixture.viewModel.workspaceReadinessSummary().contains(
-        QStringLiteral("Workspace access is not enabled yet")));
+        QStringLiteral("isolated by workspace")));
     QVERIFY(fixture.viewModel.workspaceReadinessChecks().contains(
         QStringLiteral("Filesystem scanning: disabled")));
     QVERIFY(fixture.viewModel.workspaceBoundaryDiagnostics().contains(
-        QStringLiteral("Permission model: Disabled, Ask Every Time, Trusted, Enabled")));
+        QStringLiteral("Local RAG: disabled by default; manual indexing only")));
     QVERIFY(fixture.viewModel.workspaceActionPlaceholders().contains(QStringLiteral(
-        "Clear Workspace: unavailable; only placeholder metadata is selected")));
-    QCOMPARE(fixture.viewModel.workspaceIds(), QStringList({QStringLiteral("local-placeholder")}));
+        "Create Workspace: available")));
+    QVERIFY(fixture.viewModel.workspaceIds().contains(QStringLiteral("personal")));
+    QVERIFY(fixture.viewModel.workspaceIds().contains(QStringLiteral("coding")));
+    QCOMPARE(fixture.viewModel.localKnowledgeBaseStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.privacyCenterSummaries().contains(QStringLiteral("Indexing: Manual Only")));
+    QVERIFY(fixture.viewModel.brainWorkspaceSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Knowledge Base Summary")));
 
     fixture.viewModel.setSelectedWorkspaceId(QStringLiteral("unknown"));
-    QCOMPARE(fixture.viewModel.selectedWorkspaceId(), QStringLiteral("local-placeholder"));
+    QCOMPARE(fixture.viewModel.selectedWorkspaceId(), QStringLiteral("personal"));
     QCOMPARE(spy.count(), 0);
+
+    const auto createdId =
+        fixture.viewModel.createWorkspace(QStringLiteral("Case Notes"), QStringLiteral("Research"));
+    QVERIFY(!createdId.isEmpty());
+    QCOMPARE(fixture.viewModel.selectedWorkspaceId(), createdId);
+    QVERIFY(fixture.viewModel.renameWorkspace(createdId, QStringLiteral("Case Notes 2")));
+    QVERIFY(fixture.viewModel.archiveWorkspace(createdId));
+    QVERIFY(!fixture.viewModel.duplicateWorkspace(QStringLiteral("personal")).isEmpty());
+    QVERIFY(fixture.viewModel.workspaceLastActionSummary().contains(QStringLiteral("Duplicated")));
 }
 
 void DesktopShellViewModelTest::exposesSkillProfileMetadata() {

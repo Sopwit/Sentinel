@@ -26,7 +26,7 @@ void AgentRuntimeServiceTest::exposesBuiltInAgentCatalog() {
 
     const auto summary = runtime.runtimeSummary(QStringLiteral("Disabled"), permissions, tools,
                                                 profiles, QStringLiteral("developer"), workspaces,
-                                                QStringLiteral("local-placeholder"));
+                                                QStringLiteral("personal"));
 
     QCOMPARE(summary.status, QStringLiteral("Dry-run planning only"));
     QCOMPARE(summary.agentCount, 5);
@@ -49,7 +49,7 @@ void AgentRuntimeServiceTest::producesDryRunPlanWithoutExecutionGrant() {
                                           QStringLiteral("coding-assistant"),
                                           QStringLiteral("Enabled"), permissions, tools, profiles,
                                           QStringLiteral("developer"), workspaces,
-                                          QStringLiteral("local-placeholder"));
+                                          QStringLiteral("personal"));
 
     QCOMPARE(plan.planId, QStringLiteral("dry-run-coding-assistant"));
     QCOMPARE(plan.estimatedRisk, QStringLiteral("Critical"));
@@ -72,7 +72,7 @@ void AgentRuntimeServiceTest::consultsPermissionToolProfileAndWorkspaceMetadata(
                                           QStringLiteral("research-assistant"),
                                           QStringLiteral("Ask Every Time"), permissions, tools,
                                           profiles, QStringLiteral("researcher"), workspaces,
-                                          QStringLiteral("local-placeholder"));
+                                          QStringLiteral("personal"));
     const auto diagnostics = plan.diagnostics.join(QStringLiteral("\n"));
 
     QVERIFY(plan.requiredTools.join(QStringLiteral("\n")).contains(QStringLiteral("Web Search")));
@@ -81,7 +81,7 @@ void AgentRuntimeServiceTest::consultsPermissionToolProfileAndWorkspaceMetadata(
     QVERIFY(plan.requiredPermissions.join(QStringLiteral("\n"))
                 .contains(QStringLiteral("cloud-provider-access / Ask Every Time")));
     QVERIFY(diagnostics.contains(QStringLiteral("Profile: Researcher")));
-    QVERIFY(diagnostics.contains(QStringLiteral("Workspace: Local Workspace")));
+    QVERIFY(diagnostics.contains(QStringLiteral("Workspace: Personal")));
     QVERIFY(diagnostics.contains(QStringLiteral("Permission posture: Ask Every Time")));
 }
 

@@ -5,13 +5,72 @@
 #include "sentinel/core/ModelRegistry.h"
 #include "sentinel/core/ModeManager.h"
 
+#include <QCryptographicHash>
+#include <QDir>
+#include <QFileInfo>
+#include <QStandardPaths>
+
 namespace sentinel::desktop {
+
+namespace {
+
+QString appDataPath() {
+    const auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    return path.isEmpty() ? QDir::currentPath() : path;
+}
+
+QString localRagPath() {
+    return appDataPath() + QStringLiteral("/local_rag.sqlite3");
+}
+
+QString attachmentId(const QString& workspaceId, const QString& name, qint64 size) {
+    const auto seed = workspaceId + QStringLiteral("|") + name + QStringLiteral("|") +
+                      QString::number(size);
+    return QString::fromLatin1(
+        QCryptographicHash::hash(seed.toUtf8(), QCryptographicHash::Sha1).toHex().left(16));
+}
+
+QString fileTypeForPath(const QString& pathOrName) {
+    const auto suffix = QFileInfo(pathOrName).suffix().toLower();
+    if (suffix == QStringLiteral("pdf")) {
+        return QStringLiteral("PDF");
+    }
+    if (suffix == QStringLiteral("txt")) {
+        return QStringLiteral("TXT");
+    }
+    if (suffix == QStringLiteral("md") || suffix == QStringLiteral("markdown")) {
+        return QStringLiteral("Markdown");
+    }
+    if (suffix == QStringLiteral("docx")) {
+        return QStringLiteral("DOCX");
+    }
+    if (suffix == QStringLiteral("csv")) {
+        return QStringLiteral("CSV");
+    }
+    if (suffix == QStringLiteral("json")) {
+        return QStringLiteral("JSON");
+    }
+    if (QStringList({QStringLiteral("cpp"), QStringLiteral("h"), QStringLiteral("hpp"),
+                     QStringLiteral("qml"), QStringLiteral("js"), QStringLiteral("ts"),
+                     QStringLiteral("py"), QStringLiteral("java"), QStringLiteral("cs"),
+                     QStringLiteral("go"), QStringLiteral("rs"), QStringLiteral("swift")})
+            .contains(suffix)) {
+        return QStringLiteral("Source Code");
+    }
+    return QStringLiteral("Unsupported");
+}
+
+bool supportedAttachmentType(const QString& type) {
+    return type != QStringLiteral("Unsupported");
+}
+
+} // namespace
 
 DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& controller,
                                              core::ModeManager& modeManager,
                                              core::AppSettings& settings, QObject* parent)
     : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings),
-      chatMessages_(this) {
+      chatMessages_(this), localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())) {
     controller_.setRoutingModeByName(settings_.routingModeName());
     chatMessages_.setMessages(controller_.chatHistory());
     connect(&controller_, &core::ApplicationController::chatMessagesChanged, this, [this]() {
@@ -105,6 +164,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::selectedSkillProfileChanged, this,
             &DesktopShellViewModel::agentRuntimeChanged);
     connect(&settings_, &core::AppSettings::selectedWorkspaceIdChanged, this,
+            &DesktopShellViewModel::workspaceChanged);
+    connect(&settings_, &core::AppSettings::workspaceSettingsChanged, this,
             &DesktopShellViewModel::workspaceChanged);
     connect(&settings_, &core::AppSettings::selectedWorkspaceIdChanged, this,
             &DesktopShellViewModel::agentRuntimeChanged);
@@ -3156,6 +3217,11 @@ QStringList DesktopShellViewModel::notificationCenterSummaries() const {
         QStringLiteral("Provider Unavailable - %1").arg(controller_.activeRuntimeReadinessSummary()),
         QStringLiteral("Model Switched - %1").arg(controller_.activeRuntimeModelLabel()),
         QStringLiteral("Model Role Changed - shown when the user changes role metadata"),
+        QStringLiteral("Document Attached - %1").arg(attachmentStatus()),
+        QStringLiteral("Indexing Completed - manual workspace-only indexing"),
+        QStringLiteral("Indexing Failed - explicit file or local store failure"),
+        QStringLiteral("Retrieval Completed - local explainability metadata only"),
+        QStringLiteral("Workspace Changed - %1").arg(selectedWorkspaceName()),
         QStringLiteral("Update Available - check is manual; no hidden polling"),
         QStringLiteral("Permission Needed - future explicit approvals only"),
         QStringLiteral("Brain Saved - local memory events only"),
@@ -3225,44 +3291,56 @@ QStringList DesktopShellViewModel::skillProfileDeveloperDiagnostics() const {
 }
 
 QString DesktopShellViewModel::selectedWorkspaceId() const {
-    return workspaceService_.normalizedWorkspaceId(settings_.selectedWorkspaceId());
+    return workspaceService_.normalizedWorkspaceId(settings_.selectedWorkspaceId(),
+                                                   settings_.workspaceCatalogJson());
 }
 
 void DesktopShellViewModel::setSelectedWorkspaceId(const QString& workspaceId) {
-    settings_.setSelectedWorkspaceId(workspaceService_.normalizedWorkspaceId(workspaceId));
+    settings_.setSelectedWorkspaceId(
+        workspaceService_.normalizedWorkspaceId(workspaceId, settings_.workspaceCatalogJson()));
 }
 
 QString DesktopShellViewModel::selectedWorkspaceName() const {
-    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).name;
+    return workspaceService_
+        .selectedWorkspace(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .name;
 }
 
 QString DesktopShellViewModel::selectedWorkspaceAccessState() const {
-    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).accessState;
+    return workspaceService_
+        .selectedWorkspace(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .accessState;
 }
 
 QString DesktopShellViewModel::workspacePermissionPosture() const {
-    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).permissionPosture;
+    return workspaceService_
+        .selectedWorkspace(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .permissionPosture;
 }
 
 QString DesktopShellViewModel::selectedWorkspaceRootSummary() const {
-    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).rootSummary;
+    return workspaceService_
+        .selectedWorkspace(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .rootSummary;
 }
 
 QString DesktopShellViewModel::workspaceReadinessStatus() const {
-    return workspaceService_.readiness(settings_.selectedWorkspaceId()).status;
+    return workspaceService_.readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson()).status;
 }
 
 QString DesktopShellViewModel::workspaceReadinessSummary() const {
-    return workspaceService_.readiness(settings_.selectedWorkspaceId()).summary;
+    return workspaceService_.readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson()).summary;
 }
 
 QString DesktopShellViewModel::workspacePermissionSummary() const {
-    return workspaceService_.selectedWorkspace(settings_.selectedWorkspaceId()).permissionSummary;
+    return workspaceService_
+        .selectedWorkspace(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .permissionSummary;
 }
 
 QStringList DesktopShellViewModel::workspaceIds() const {
     QStringList ids;
-    for (const auto& workspace : workspaceService_.availableWorkspaces()) {
+    for (const auto& workspace : workspaceService_.availableWorkspaces(settings_.workspaceCatalogJson())) {
         ids.append(workspace.id);
     }
     return ids;
@@ -3270,14 +3348,14 @@ QStringList DesktopShellViewModel::workspaceIds() const {
 
 QStringList DesktopShellViewModel::workspaceNames() const {
     QStringList names;
-    for (const auto& workspace : workspaceService_.availableWorkspaces()) {
+    for (const auto& workspace : workspaceService_.availableWorkspaces(settings_.workspaceCatalogJson())) {
         names.append(workspace.name);
     }
     return names;
 }
 
 QStringList DesktopShellViewModel::workspaceSummaries() const {
-    return workspaceService_.workspaceSummaries();
+    return workspaceService_.workspaceSummaries(settings_.workspaceCatalogJson());
 }
 
 QStringList DesktopShellViewModel::workspacePermissionPostures() const {
@@ -3289,11 +3367,336 @@ QStringList DesktopShellViewModel::workspaceActionPlaceholders() const {
 }
 
 QStringList DesktopShellViewModel::workspaceReadinessChecks() const {
-    return workspaceService_.readiness(settings_.selectedWorkspaceId()).checks;
+    return workspaceService_.readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson()).checks;
 }
 
 QStringList DesktopShellViewModel::workspaceBoundaryDiagnostics() const {
-    return workspaceService_.readiness(settings_.selectedWorkspaceId()).boundaryDiagnostics;
+    return workspaceService_.readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson()).boundaryDiagnostics;
+}
+
+QStringList DesktopShellViewModel::workspaceTemplateNames() const {
+    return workspaceService_.builtInTemplateNames();
+}
+
+QString DesktopShellViewModel::workspaceLastActionStatus() const {
+    return workspaceLastActionStatus_;
+}
+
+QString DesktopShellViewModel::workspaceLastActionSummary() const {
+    return workspaceLastActionSummary_;
+}
+
+QStringList DesktopShellViewModel::attachmentSummaries() const {
+    QStringList summaries;
+    for (const auto& attachment : attachments_) {
+        summaries.append(core::ragDocumentSummary(attachment));
+    }
+    return summaries;
+}
+
+QString DesktopShellViewModel::attachmentStatus() const {
+    return attachments_.isEmpty() ? QStringLiteral("No Attachments")
+                                  : QStringLiteral("%1 attachment(s)").arg(attachments_.size());
+}
+
+QString DesktopShellViewModel::attachmentPreviewSummary() const {
+    if (attachments_.isEmpty()) {
+        return QStringLiteral("No file attached. Drag, browse, or paste explicitly to attach.");
+    }
+    return core::ragDocumentSummary(attachments_.last());
+}
+
+QStringList DesktopShellViewModel::fileChatActionSummaries() const {
+    return {
+        QStringLiteral("Summarize attached file"),
+        QStringLiteral("Ask questions about attached file"),
+        QStringLiteral("Extract key points"),
+        QStringLiteral("Translate selected attachment"),
+        QStringLiteral("Export file-chat results"),
+    };
+}
+
+bool DesktopShellViewModel::localKnowledgeBaseEnabled() const {
+    return settings_.localKnowledgeBaseEnabled();
+}
+
+void DesktopShellViewModel::setLocalKnowledgeBaseEnabled(bool enabled) {
+    settings_.setLocalKnowledgeBaseEnabled(enabled);
+}
+
+QString DesktopShellViewModel::localKnowledgeBaseStatus() const {
+    if (!settings_.localKnowledgeBaseEnabled()) {
+        return QStringLiteral("Disabled");
+    }
+    return localRagStore_ && localRagStore_->isAvailable() ? QStringLiteral("Enabled / Manual Only")
+                                                           : QStringLiteral("Unavailable");
+}
+
+QStringList DesktopShellViewModel::knowledgeBaseDocumentSummaries() const {
+    if (!localRagStore_) {
+        return {};
+    }
+    QStringList summaries;
+    for (const auto& document : localRagStore_->documents(selectedWorkspaceId())) {
+        summaries.append(core::ragDocumentSummary(document));
+    }
+    return summaries;
+}
+
+QStringList DesktopShellViewModel::recentRetrievalSummaries() const {
+    if (!localRagStore_) {
+        return {};
+    }
+    QStringList summaries;
+    for (const auto& retrieval : localRagStore_->recentRetrievals(selectedWorkspaceId())) {
+        summaries.append(core::ragRetrievalSummary(retrieval));
+    }
+    return summaries;
+}
+
+QStringList DesktopShellViewModel::retrievalExplainabilitySummaries() const {
+    if (!settings_.retrievalExplainabilityEnabled()) {
+        return {QStringLiteral("Retrieval explainability disabled by user setting.")};
+    }
+    return {
+        QStringLiteral("Source document: shown for each retrieval result"),
+        QStringLiteral("Section/chunk reference: shown as manual chunk metadata"),
+        QStringLiteral("Relevance metadata: shown as bounded local score metadata"),
+    };
+}
+
+QStringList DesktopShellViewModel::brainWorkspaceSummaries() const {
+    return {
+        QStringLiteral("Workspace Timeline - %1 / %2").arg(selectedWorkspaceName(),
+                                                           workspaceLastActionSummary_),
+        QStringLiteral("Attached Documents - %1").arg(attachmentStatus()),
+        QStringLiteral("Knowledge Base Summary - %1 / %2 document(s)")
+            .arg(localKnowledgeBaseStatus())
+            .arg(knowledgeBaseDocumentSummaries().size()),
+        QStringLiteral("Recent Retrievals - %1 record(s)").arg(recentRetrievalSummaries().size()),
+    };
+}
+
+QStringList DesktopShellViewModel::exportCenterSummaries() const {
+    return {
+        QStringLiteral("Chats - Markdown, PDF, TXT, DOCX, JSON"),
+        QStringLiteral("Workspace summaries - %1 default").arg(settings_.exportDefaultFormat()),
+        QStringLiteral("Document summaries - citations %1")
+            .arg(settings_.exportIncludeCitations() ? QStringLiteral("included")
+                                                    : QStringLiteral("excluded")),
+        QStringLiteral("Retrieval reports - timestamps %1 / anonymize names %2 / model metadata %3")
+            .arg(settings_.exportIncludeTimestamps() ? QStringLiteral("included")
+                                                     : QStringLiteral("excluded"),
+                 settings_.exportAnonymizeNames() ? QStringLiteral("on") : QStringLiteral("off"),
+                 settings_.exportIncludeModelMetadata() ? QStringLiteral("included")
+                                                        : QStringLiteral("excluded")),
+    };
+}
+
+QStringList DesktopShellViewModel::privacyCenterSummaries() const {
+    return {
+        QStringLiteral("Knowledge Base: %1")
+            .arg(settings_.localKnowledgeBaseEnabled() ? QStringLiteral("Enabled")
+                                                       : QStringLiteral("Disabled")),
+        QStringLiteral("Indexing: Manual Only"),
+        QStringLiteral("Document Scope: Workspace Only"),
+        QStringLiteral("Cloud Retrieval: Disabled"),
+        QStringLiteral("Telemetry: Disabled"),
+        QStringLiteral("Hidden filesystem scanning: Disabled"),
+    };
+}
+
+QString DesktopShellViewModel::createWorkspace(const QString& name, const QString& templateName) {
+    const auto result =
+        workspaceService_.createWorkspace(settings_.workspaceCatalogJson(), name, templateName);
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    if (result.success) {
+        settings_.setWorkspaceCatalogJson(result.catalogJson);
+        settings_.setSelectedWorkspaceId(result.selectedWorkspaceId);
+    }
+    emit workspaceChanged();
+    return result.success ? result.selectedWorkspaceId : QString();
+}
+
+bool DesktopShellViewModel::renameWorkspace(const QString& workspaceId, const QString& name) {
+    const auto result =
+        workspaceService_.renameWorkspace(settings_.workspaceCatalogJson(), workspaceId, name);
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    if (result.success) {
+        settings_.setWorkspaceCatalogJson(result.catalogJson);
+    }
+    emit workspaceChanged();
+    return result.success;
+}
+
+bool DesktopShellViewModel::archiveWorkspace(const QString& workspaceId) {
+    const auto result =
+        workspaceService_.archiveWorkspace(settings_.workspaceCatalogJson(), workspaceId);
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    if (result.success) {
+        settings_.setWorkspaceCatalogJson(result.catalogJson);
+    }
+    emit workspaceChanged();
+    return result.success;
+}
+
+bool DesktopShellViewModel::deleteWorkspace(const QString& workspaceId) {
+    const auto result = workspaceService_.deleteWorkspace(
+        settings_.workspaceCatalogJson(), workspaceId, settings_.selectedWorkspaceId());
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    if (result.success) {
+        settings_.setWorkspaceCatalogJson(result.catalogJson);
+        settings_.setSelectedWorkspaceId(result.selectedWorkspaceId);
+    }
+    emit workspaceChanged();
+    return result.success;
+}
+
+QString DesktopShellViewModel::duplicateWorkspace(const QString& workspaceId) {
+    const auto result =
+        workspaceService_.duplicateWorkspace(settings_.workspaceCatalogJson(), workspaceId);
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    if (result.success) {
+        settings_.setWorkspaceCatalogJson(result.catalogJson);
+        settings_.setSelectedWorkspaceId(result.selectedWorkspaceId);
+    }
+    emit workspaceChanged();
+    return result.success ? result.selectedWorkspaceId : QString();
+}
+
+bool DesktopShellViewModel::attachFileToChat(const QString& filePath) {
+    const QFileInfo info(filePath);
+    if (!info.exists() || !info.isFile()) {
+        workspaceLastActionStatus_ = QStringLiteral("Refused");
+        workspaceLastActionSummary_ = QStringLiteral("Attachment requires one explicit file.");
+        emit workspaceChanged();
+        return false;
+    }
+    const auto type = fileTypeForPath(filePath);
+    if (!supportedAttachmentType(type)) {
+        workspaceLastActionStatus_ = QStringLiteral("Refused");
+        workspaceLastActionSummary_ = QStringLiteral("Unsupported attachment type.");
+        emit workspaceChanged();
+        return false;
+    }
+    attachments_.append({attachmentId(selectedWorkspaceId(), info.fileName(), info.size()),
+                         selectedWorkspaceId(), info.fileName(), type, info.size(),
+                         QStringLiteral("Attached Explicitly"),
+                         QStringLiteral("Explicit user attachment; no folder import.")});
+    workspaceLastActionStatus_ = QStringLiteral("Document Attached");
+    workspaceLastActionSummary_ = QStringLiteral("Attached %1.").arg(info.fileName());
+    emit attachmentChanged();
+    emit workspaceChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::pasteAttachment(const QString& name, const QString& text) {
+    const auto fileName = name.trimmed().isEmpty() ? QStringLiteral("pasted-attachment.txt")
+                                                   : name.trimmed();
+    const auto type = fileTypeForPath(fileName);
+    if (!supportedAttachmentType(type) || text.trimmed().isEmpty()) {
+        workspaceLastActionStatus_ = QStringLiteral("Refused");
+        workspaceLastActionSummary_ = QStringLiteral("Paste attachment requires supported name and text.");
+        emit workspaceChanged();
+        return false;
+    }
+    attachments_.append({attachmentId(selectedWorkspaceId(), fileName, text.size()),
+                         selectedWorkspaceId(), fileName, type, text.toUtf8().size(),
+                         QStringLiteral("Pasted Explicitly"),
+                         QStringLiteral("Explicit paste attachment; no background processing.")});
+    workspaceLastActionStatus_ = QStringLiteral("Document Attached");
+    workspaceLastActionSummary_ = QStringLiteral("Pasted %1.").arg(fileName);
+    emit attachmentChanged();
+    emit workspaceChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::removeAttachment(const QString& attachmentIdValue) {
+    for (qsizetype index = 0; index < attachments_.size(); ++index) {
+        if (attachments_.at(index).id == attachmentIdValue.trimmed()) {
+            attachments_.removeAt(index);
+            workspaceLastActionStatus_ = QStringLiteral("Attachment Removed");
+            workspaceLastActionSummary_ = QStringLiteral("Removed attachment.");
+            emit attachmentChanged();
+            emit workspaceChanged();
+            return true;
+        }
+    }
+    return false;
+}
+
+bool DesktopShellViewModel::replaceAttachment(const QString& attachmentIdValue,
+                                              const QString& filePath) {
+    if (!removeAttachment(attachmentIdValue)) {
+        return false;
+    }
+    return attachFileToChat(filePath);
+}
+
+bool DesktopShellViewModel::addKnowledgeBaseDocument(const QString& filePath) {
+    if (!settings_.localKnowledgeBaseEnabled() || !localRagStore_) {
+        workspaceLastActionStatus_ = QStringLiteral("Refused");
+        workspaceLastActionSummary_ = QStringLiteral("Enable the workspace knowledge base first.");
+        emit workspaceChanged();
+        return false;
+    }
+    const QFileInfo info(filePath);
+    const auto type = fileTypeForPath(filePath);
+    if (!info.exists() || !info.isFile() || !supportedAttachmentType(type)) {
+        workspaceLastActionStatus_ = QStringLiteral("Indexing Failed");
+        workspaceLastActionSummary_ = QStringLiteral("Knowledge base accepts explicit supported files only.");
+        emit workspaceChanged();
+        return false;
+    }
+    const auto result = localRagStore_->addDocument(
+        {attachmentId(selectedWorkspaceId(), info.fileName(), info.size()), selectedWorkspaceId(),
+         info.fileName(), type, info.size(), QStringLiteral("Added / Not Indexed"),
+         QStringLiteral("Workspace-only explicit document.")});
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    emit workspaceChanged();
+    return result.success;
+}
+
+bool DesktopShellViewModel::removeKnowledgeBaseDocument(const QString& documentId) {
+    if (!localRagStore_) {
+        return false;
+    }
+    const auto result = localRagStore_->removeDocument(selectedWorkspaceId(), documentId);
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    emit workspaceChanged();
+    return result.success;
+}
+
+bool DesktopShellViewModel::reindexKnowledgeBase() {
+    if (!settings_.localKnowledgeBaseEnabled() || !localRagStore_) {
+        workspaceLastActionStatus_ = QStringLiteral("Refused");
+        workspaceLastActionSummary_ = QStringLiteral("Manual re-index requires an enabled knowledge base.");
+        emit workspaceChanged();
+        return false;
+    }
+    const auto result = localRagStore_->markReindexed(selectedWorkspaceId());
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    emit workspaceChanged();
+    return result.success;
+}
+
+bool DesktopShellViewModel::clearKnowledgeBase() {
+    if (!localRagStore_) {
+        return false;
+    }
+    const auto result = localRagStore_->clearWorkspace(selectedWorkspaceId());
+    workspaceLastActionStatus_ = result.status;
+    workspaceLastActionSummary_ = result.summary;
+    emit workspaceChanged();
+    return result.success;
 }
 
 QString DesktopShellViewModel::defaultPermissionPolicyState() const {

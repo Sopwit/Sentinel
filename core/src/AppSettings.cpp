@@ -87,6 +87,41 @@ QString normalizedOnboardingUseCase(const QString& useCase) {
     return QStringLiteral("General Assistant");
 }
 
+QString normalizedWorkspaceIdSetting(const QString& workspaceId) {
+    const auto normalized = workspaceId.trimmed();
+    return normalized.isEmpty() ? QStringLiteral("personal") : normalized;
+}
+
+QString normalizedAttachmentBehavior(const QString& behavior) {
+    const auto normalized = behavior.trimmed().toLower();
+    if (normalized == QStringLiteral("replace") ||
+        normalized == QStringLiteral("replace existing attachment")) {
+        return QStringLiteral("Replace Existing Attachment");
+    }
+    if (normalized == QStringLiteral("paste enabled") || normalized == QStringLiteral("paste") ||
+        normalized == QStringLiteral("paste attachment enabled")) {
+        return QStringLiteral("Paste Attachment Enabled");
+    }
+    return QStringLiteral("Manual Attachments Only");
+}
+
+QString normalizedExportFormat(const QString& format) {
+    const auto normalized = format.trimmed().toLower();
+    if (normalized == QStringLiteral("pdf")) {
+        return QStringLiteral("PDF");
+    }
+    if (normalized == QStringLiteral("txt") || normalized == QStringLiteral("text")) {
+        return QStringLiteral("TXT");
+    }
+    if (normalized == QStringLiteral("docx")) {
+        return QStringLiteral("DOCX");
+    }
+    if (normalized == QStringLiteral("json")) {
+        return QStringLiteral("JSON");
+    }
+    return QStringLiteral("Markdown");
+}
+
 } // namespace
 
 AppSettings::AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent)
@@ -535,20 +570,177 @@ QString AppSettings::selectedWorkspaceId() const {
     const auto fallback = QString::fromLatin1(defaultSelectedWorkspaceId);
     const auto stored = store_ ? store_->value(QString::fromLatin1(selectedWorkspaceIdKey), fallback)
                                : fallback;
-    const auto normalized = stored.trimmed();
-    return normalized.isEmpty() ? fallback : normalized;
+    return normalizedWorkspaceIdSetting(stored);
 }
 
 void AppSettings::setSelectedWorkspaceId(const QString& workspaceId) {
-    const auto normalized = workspaceId.trimmed();
-    const auto selected = normalized.isEmpty() ? QString::fromLatin1(defaultSelectedWorkspaceId)
-                                               : normalized;
+    const auto selected = normalizedWorkspaceIdSetting(workspaceId);
     if (selected == selectedWorkspaceId() || !store_) {
         return;
     }
 
     store_->setValue(QString::fromLatin1(selectedWorkspaceIdKey), selected);
     emit selectedWorkspaceIdChanged();
+}
+
+QString AppSettings::defaultWorkspaceId() const {
+    const auto fallback = QString::fromLatin1(defaultSelectedWorkspaceId);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(defaultWorkspaceIdKey), fallback)
+                               : fallback;
+    return normalizedWorkspaceIdSetting(stored);
+}
+
+void AppSettings::setDefaultWorkspaceId(const QString& workspaceId) {
+    const auto selected = normalizedWorkspaceIdSetting(workspaceId);
+    if (selected == defaultWorkspaceId() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(defaultWorkspaceIdKey), selected);
+    emit workspaceSettingsChanged();
+}
+
+QString AppSettings::workspaceCatalogJson() const {
+    return store_ ? store_->value(QString::fromLatin1(workspaceCatalogJsonKey), {}) : QString();
+}
+
+void AppSettings::setWorkspaceCatalogJson(const QString& catalogJson) {
+    if (catalogJson == workspaceCatalogJson() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(workspaceCatalogJsonKey), catalogJson);
+    emit workspaceSettingsChanged();
+}
+
+bool AppSettings::localKnowledgeBaseEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(localKnowledgeBaseEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setLocalKnowledgeBaseEnabled(bool enabled) {
+    if (enabled == localKnowledgeBaseEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(localKnowledgeBaseEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit workspaceSettingsChanged();
+}
+
+bool AppSettings::retrievalExplainabilityEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(retrievalExplainabilityEnabledKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setRetrievalExplainabilityEnabled(bool enabled) {
+    if (enabled == retrievalExplainabilityEnabled() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(retrievalExplainabilityEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit workspaceSettingsChanged();
+}
+
+QString AppSettings::attachmentBehavior() const {
+    const auto fallback = QString::fromLatin1(defaultAttachmentBehavior);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(attachmentBehaviorKey), fallback)
+                               : fallback;
+    return normalizedAttachmentBehavior(stored);
+}
+
+void AppSettings::setAttachmentBehavior(const QString& behavior) {
+    const auto selected = normalizedAttachmentBehavior(behavior);
+    if (selected == attachmentBehavior() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(attachmentBehaviorKey), selected);
+    emit workspaceSettingsChanged();
+}
+
+QString AppSettings::exportDefaultFormat() const {
+    const auto fallback = QString::fromLatin1(defaultExportFormat);
+    const auto stored = store_ ? store_->value(QString::fromLatin1(exportDefaultFormatKey), fallback)
+                               : fallback;
+    return normalizedExportFormat(stored);
+}
+
+void AppSettings::setExportDefaultFormat(const QString& format) {
+    const auto selected = normalizedExportFormat(format);
+    if (selected == exportDefaultFormat() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(exportDefaultFormatKey), selected);
+    emit workspaceSettingsChanged();
+}
+
+bool AppSettings::exportIncludeTimestamps() const {
+    return store_ ? store_->value(QString::fromLatin1(exportIncludeTimestampsKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setExportIncludeTimestamps(bool enabled) {
+    if (enabled == exportIncludeTimestamps() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(exportIncludeTimestampsKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit workspaceSettingsChanged();
+}
+
+bool AppSettings::exportIncludeCitations() const {
+    return store_ ? store_->value(QString::fromLatin1(exportIncludeCitationsKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setExportIncludeCitations(bool enabled) {
+    if (enabled == exportIncludeCitations() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(exportIncludeCitationsKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit workspaceSettingsChanged();
+}
+
+bool AppSettings::exportAnonymizeNames() const {
+    return store_ ? store_->value(QString::fromLatin1(exportAnonymizeNamesKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setExportAnonymizeNames(bool enabled) {
+    if (enabled == exportAnonymizeNames() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(exportAnonymizeNamesKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit workspaceSettingsChanged();
+}
+
+bool AppSettings::exportIncludeModelMetadata() const {
+    return store_ ? store_->value(QString::fromLatin1(exportIncludeModelMetadataKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setExportIncludeModelMetadata(bool enabled) {
+    if (enabled == exportIncludeModelMetadata() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(exportIncludeModelMetadataKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit workspaceSettingsChanged();
 }
 
 QString AppSettings::selectedSkillProfile() const {

@@ -2,6 +2,7 @@
 
 #include "sentinel/core/CompanionService.h"
 #include "sentinel/core/AgentRuntimeService.h"
+#include "sentinel/core/LocalRagStore.h"
 #include "sentinel/core/PermissionPolicyService.h"
 #include "sentinel/core/SemanticRetrieval.h"
 #include "sentinel/core/SkillProfileService.h"
@@ -12,6 +13,7 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <memory>
 
 namespace sentinel::core {
 class AppSettings;
@@ -1226,6 +1228,25 @@ class DesktopShellViewModel final : public QObject {
                    workspaceChanged)
     Q_PROPERTY(QStringList workspaceBoundaryDiagnostics READ workspaceBoundaryDiagnostics NOTIFY
                    workspaceChanged)
+    Q_PROPERTY(QStringList workspaceTemplateNames READ workspaceTemplateNames CONSTANT)
+    Q_PROPERTY(QString workspaceLastActionStatus READ workspaceLastActionStatus NOTIFY workspaceChanged)
+    Q_PROPERTY(QString workspaceLastActionSummary READ workspaceLastActionSummary NOTIFY workspaceChanged)
+    Q_PROPERTY(QStringList attachmentSummaries READ attachmentSummaries NOTIFY attachmentChanged)
+    Q_PROPERTY(QString attachmentStatus READ attachmentStatus NOTIFY attachmentChanged)
+    Q_PROPERTY(QString attachmentPreviewSummary READ attachmentPreviewSummary NOTIFY attachmentChanged)
+    Q_PROPERTY(QStringList fileChatActionSummaries READ fileChatActionSummaries NOTIFY attachmentChanged)
+    Q_PROPERTY(bool localKnowledgeBaseEnabled READ localKnowledgeBaseEnabled WRITE
+                   setLocalKnowledgeBaseEnabled NOTIFY workspaceChanged)
+    Q_PROPERTY(QString localKnowledgeBaseStatus READ localKnowledgeBaseStatus NOTIFY workspaceChanged)
+    Q_PROPERTY(QStringList knowledgeBaseDocumentSummaries READ knowledgeBaseDocumentSummaries NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QStringList recentRetrievalSummaries READ recentRetrievalSummaries NOTIFY
+                   workspaceChanged)
+    Q_PROPERTY(QStringList retrievalExplainabilitySummaries READ retrievalExplainabilitySummaries
+                   NOTIFY workspaceChanged)
+    Q_PROPERTY(QStringList brainWorkspaceSummaries READ brainWorkspaceSummaries NOTIFY workspaceChanged)
+    Q_PROPERTY(QStringList exportCenterSummaries READ exportCenterSummaries NOTIFY workspaceChanged)
+    Q_PROPERTY(QStringList privacyCenterSummaries READ privacyCenterSummaries NOTIFY workspaceChanged)
     Q_PROPERTY(QString defaultPermissionPolicyState READ defaultPermissionPolicyState WRITE
                    setDefaultPermissionPolicyState NOTIFY permissionPolicyChanged)
     Q_PROPERTY(QString permissionPolicyStatus READ permissionPolicyStatus NOTIFY
@@ -2022,6 +2043,22 @@ public:
     QStringList workspaceActionPlaceholders() const;
     QStringList workspaceReadinessChecks() const;
     QStringList workspaceBoundaryDiagnostics() const;
+    QStringList workspaceTemplateNames() const;
+    QString workspaceLastActionStatus() const;
+    QString workspaceLastActionSummary() const;
+    QStringList attachmentSummaries() const;
+    QString attachmentStatus() const;
+    QString attachmentPreviewSummary() const;
+    QStringList fileChatActionSummaries() const;
+    bool localKnowledgeBaseEnabled() const;
+    void setLocalKnowledgeBaseEnabled(bool enabled);
+    QString localKnowledgeBaseStatus() const;
+    QStringList knowledgeBaseDocumentSummaries() const;
+    QStringList recentRetrievalSummaries() const;
+    QStringList retrievalExplainabilitySummaries() const;
+    QStringList brainWorkspaceSummaries() const;
+    QStringList exportCenterSummaries() const;
+    QStringList privacyCenterSummaries() const;
     QString defaultPermissionPolicyState() const;
     void setDefaultPermissionPolicyState(const QString& state);
     QString permissionPolicyStatus() const;
@@ -2069,6 +2106,19 @@ public:
     Q_INVOKABLE bool exportTranscript(const QString& format);
     Q_INVOKABLE bool checkForUpdates();
     Q_INVOKABLE bool requestConversationExport(const QString& format);
+    Q_INVOKABLE QString createWorkspace(const QString& name, const QString& templateName);
+    Q_INVOKABLE bool renameWorkspace(const QString& workspaceId, const QString& name);
+    Q_INVOKABLE bool archiveWorkspace(const QString& workspaceId);
+    Q_INVOKABLE bool deleteWorkspace(const QString& workspaceId);
+    Q_INVOKABLE QString duplicateWorkspace(const QString& workspaceId);
+    Q_INVOKABLE bool attachFileToChat(const QString& filePath);
+    Q_INVOKABLE bool pasteAttachment(const QString& name, const QString& text);
+    Q_INVOKABLE bool removeAttachment(const QString& attachmentId);
+    Q_INVOKABLE bool replaceAttachment(const QString& attachmentId, const QString& filePath);
+    Q_INVOKABLE bool addKnowledgeBaseDocument(const QString& filePath);
+    Q_INVOKABLE bool removeKnowledgeBaseDocument(const QString& documentId);
+    Q_INVOKABLE bool reindexKnowledgeBase();
+    Q_INVOKABLE bool clearKnowledgeBase();
     Q_INVOKABLE QString createConversation(const QString& title);
     Q_INVOKABLE bool switchConversation(const QString& conversationId);
     Q_INVOKABLE bool renameConversation(const QString& conversationId, const QString& title);
@@ -2140,6 +2190,7 @@ signals:
     void promptContextInjectionChanged();
     void skillProfileChanged();
     void workspaceChanged();
+    void attachmentChanged();
     void permissionPolicyChanged();
     void agentRuntimeChanged();
 
@@ -2155,6 +2206,10 @@ private:
     core::SkillProfileService skillProfileService_;
     core::ToolExecutionGateway toolExecutionGateway_;
     core::WorkspaceService workspaceService_;
+    std::unique_ptr<core::LocalRagStore> localRagStore_;
+    QList<core::RagDocumentRecord> attachments_;
+    QString workspaceLastActionStatus_ = QStringLiteral("Ready");
+    QString workspaceLastActionSummary_ = QStringLiteral("No workspace action has run.");
     ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");
     bool companionNativeAvailable_ = false;

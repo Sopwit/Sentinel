@@ -54,6 +54,26 @@ class AppSettings final : public QObject {
                    NOTIFY activeConversationIdChanged)
     Q_PROPERTY(QString selectedWorkspaceId READ selectedWorkspaceId WRITE setSelectedWorkspaceId
                    NOTIFY selectedWorkspaceIdChanged)
+    Q_PROPERTY(QString defaultWorkspaceId READ defaultWorkspaceId WRITE setDefaultWorkspaceId
+                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(QString workspaceCatalogJson READ workspaceCatalogJson WRITE setWorkspaceCatalogJson
+                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(bool localKnowledgeBaseEnabled READ localKnowledgeBaseEnabled WRITE
+                   setLocalKnowledgeBaseEnabled NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(bool retrievalExplainabilityEnabled READ retrievalExplainabilityEnabled WRITE
+                   setRetrievalExplainabilityEnabled NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(QString attachmentBehavior READ attachmentBehavior WRITE setAttachmentBehavior
+                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(QString exportDefaultFormat READ exportDefaultFormat WRITE setExportDefaultFormat
+                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(bool exportIncludeTimestamps READ exportIncludeTimestamps WRITE
+                   setExportIncludeTimestamps NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(bool exportIncludeCitations READ exportIncludeCitations WRITE setExportIncludeCitations
+                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(bool exportAnonymizeNames READ exportAnonymizeNames WRITE setExportAnonymizeNames
+                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(bool exportIncludeModelMetadata READ exportIncludeModelMetadata WRITE
+                   setExportIncludeModelMetadata NOTIFY workspaceSettingsChanged)
     Q_PROPERTY(QString selectedSkillProfile READ selectedSkillProfile WRITE setSelectedSkillProfile
                    NOTIFY selectedSkillProfileChanged)
     Q_PROPERTY(QString defaultPermissionPolicyState READ defaultPermissionPolicyState WRITE
@@ -129,6 +149,26 @@ public:
     void setActiveConversationId(const QString& conversationId);
     QString selectedWorkspaceId() const;
     void setSelectedWorkspaceId(const QString& workspaceId);
+    QString defaultWorkspaceId() const;
+    void setDefaultWorkspaceId(const QString& workspaceId);
+    QString workspaceCatalogJson() const;
+    void setWorkspaceCatalogJson(const QString& catalogJson);
+    bool localKnowledgeBaseEnabled() const;
+    void setLocalKnowledgeBaseEnabled(bool enabled);
+    bool retrievalExplainabilityEnabled() const;
+    void setRetrievalExplainabilityEnabled(bool enabled);
+    QString attachmentBehavior() const;
+    void setAttachmentBehavior(const QString& behavior);
+    QString exportDefaultFormat() const;
+    void setExportDefaultFormat(const QString& format);
+    bool exportIncludeTimestamps() const;
+    void setExportIncludeTimestamps(bool enabled);
+    bool exportIncludeCitations() const;
+    void setExportIncludeCitations(bool enabled);
+    bool exportAnonymizeNames() const;
+    void setExportAnonymizeNames(bool enabled);
+    bool exportIncludeModelMetadata() const;
+    void setExportIncludeModelMetadata(bool enabled);
     QString selectedSkillProfile() const;
     void setSelectedSkillProfile(const QString& profileId);
     QString defaultPermissionPolicyState() const;
@@ -168,6 +208,7 @@ signals:
     void piperFileOutputExecutionEnabledChanged();
     void activeConversationIdChanged();
     void selectedWorkspaceIdChanged();
+    void workspaceSettingsChanged();
     void selectedSkillProfileChanged();
     void defaultPermissionPolicyStateChanged();
     void updateCheckPolicyChanged();
@@ -201,6 +242,16 @@ private:
     static constexpr auto piperFileOutputExecutionEnabledKey = "piperFileOutputExecutionEnabled";
     static constexpr auto activeConversationIdKey = "activeConversationId";
     static constexpr auto selectedWorkspaceIdKey = "selectedWorkspaceId";
+    static constexpr auto defaultWorkspaceIdKey = "defaultWorkspaceId";
+    static constexpr auto workspaceCatalogJsonKey = "workspaceCatalogJson";
+    static constexpr auto localKnowledgeBaseEnabledKey = "localKnowledgeBaseEnabled";
+    static constexpr auto retrievalExplainabilityEnabledKey = "retrievalExplainabilityEnabled";
+    static constexpr auto attachmentBehaviorKey = "attachmentBehavior";
+    static constexpr auto exportDefaultFormatKey = "exportDefaultFormat";
+    static constexpr auto exportIncludeTimestampsKey = "exportIncludeTimestamps";
+    static constexpr auto exportIncludeCitationsKey = "exportIncludeCitations";
+    static constexpr auto exportAnonymizeNamesKey = "exportAnonymizeNames";
+    static constexpr auto exportIncludeModelMetadataKey = "exportIncludeModelMetadata";
     static constexpr auto selectedSkillProfileKey = "selectedSkillProfile";
     static constexpr auto defaultPermissionPolicyStateKey = "defaultPermissionPolicyState";
     static constexpr auto updateCheckPolicyKey = "updateCheckPolicy";
@@ -212,7 +263,9 @@ private:
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "system";
     static constexpr auto defaultSelectedRuntimeProvider = "ollama";
-    static constexpr auto defaultSelectedWorkspaceId = "local-placeholder";
+    static constexpr auto defaultSelectedWorkspaceId = "personal";
+    static constexpr auto defaultAttachmentBehavior = "Manual Attachments Only";
+    static constexpr auto defaultExportFormat = "Markdown";
     static constexpr auto defaultSelectedSkillProfile = "developer";
     static constexpr auto defaultPermissionPolicyStateValue = "Disabled";
     static constexpr auto defaultUpdateCheckPolicy = "Ask Before Checking";

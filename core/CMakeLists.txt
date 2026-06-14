@@ -49,6 +49,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/JsonSettingsStore.h
     include/sentinel/core/LocalEchoProvider.h
     include/sentinel/core/LocalInference.h
+    include/sentinel/core/LocalRagStore.h
     include/sentinel/core/LocalRuntime.h
     include/sentinel/core/LocalRuntimeSession.h
     include/sentinel/core/MemoryMetadata.h
@@ -121,6 +122,7 @@ add_library(sentinel_core STATIC
     src/JsonSettingsStore.cpp
     src/LocalEchoProvider.cpp
     src/LocalInference.cpp
+    src/LocalRagStore.cpp
     src/LocalRuntime.cpp
     src/LocalRuntimeSession.cpp
     src/ModeManager.cpp

@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Dialogs
 import QtQuick.Layouts
 
 ShellPanel {
@@ -804,6 +805,14 @@ ShellPanel {
                 acceptedButtons: Qt.NoButton
             }
 
+            DropArea {
+                anchors.fill: parent
+                onDropped: function(drop) {
+                    if (drop.hasUrls && drop.urls.length > 0)
+                        homeChat.viewModel.attachFileToChat(drop.urls[0].toString().replace("file://", ""))
+                }
+            }
+
             RowLayout {
                 id: composerLayout
                 x: SentinelTheme.spaceSm
@@ -812,16 +821,18 @@ ShellPanel {
                 spacing: SentinelTheme.spaceSm
 
                 Button {
-                    id: attachPlaceholder
+                    id: attachButton
                     Layout.preferredWidth: 34
                     Layout.preferredHeight: 34
                     text: "+"
-                    enabled: false
                     hoverEnabled: true
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Attach file")
+                    onClicked: attachmentDialog.open()
 
                     contentItem: Text {
-                        text: attachPlaceholder.text
-                        color: SentinelTheme.textMuted
+                        text: attachButton.text
+                        color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontControl
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
@@ -829,8 +840,47 @@ ShellPanel {
 
                     background: Rectangle {
                         radius: 17
-                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
+                        color: InteractionTokens.surfaceColor(attachButton.hovered, attachButton.down,
+                                                               attachButton.activeFocus,
+                                                               homeChat.modeAccent)
+                        border.color: InteractionTokens.borderColor(attachButton.activeFocus,
+                                                                     attachButton.hovered,
+                                                                     false,
+                                                                     homeChat.modeAccent)
+                    }
+                }
+
+                Button {
+                    id: pasteAttachButton
+                    Layout.preferredWidth: 54
+                    Layout.preferredHeight: 34
+                    text: qsTr("Paste")
+                    enabled: promptInput.text.trim().length > 0
+                    hoverEnabled: true
+                    onClicked: {
+                        if (homeChat.viewModel.pasteAttachment("pasted-attachment.txt", promptInput.text))
+                            promptInput.clear()
+                    }
+
+                    contentItem: Text {
+                        text: pasteAttachButton.text
+                        color: pasteAttachButton.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontTiny
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideRight
+                    }
+
+                    background: Rectangle {
+                        radius: 17
+                        color: InteractionTokens.surfaceColor(pasteAttachButton.hovered,
+                                                               pasteAttachButton.down,
+                                                               pasteAttachButton.activeFocus,
+                                                               homeChat.modeAccent)
+                        border.color: InteractionTokens.borderColor(pasteAttachButton.activeFocus,
+                                                                     pasteAttachButton.hovered,
+                                                                     false,
+                                                                     homeChat.modeAccent)
                     }
                 }
 
@@ -925,5 +975,58 @@ ShellPanel {
             wrapMode: Text.WordWrap
         }
         }
+
+        Flow {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceSm
+
+            StatusChip {
+                label: qsTr("Workspace")
+                value: homeChat.viewModel.selectedWorkspaceName
+                accent: homeChat.modeAccent
+                selected: true
+            }
+
+            StatusChip {
+                label: qsTr("Attachments")
+                value: homeChat.viewModel.attachmentStatus
+                accent: homeChat.viewModel.attachmentSummaries.length > 0 ? SentinelTheme.success
+                                                                           : SentinelTheme.textMuted
+                muted: homeChat.viewModel.attachmentSummaries.length === 0
+            }
+
+            StatusChip {
+                label: qsTr("Knowledge")
+                value: homeChat.viewModel.localKnowledgeBaseStatus
+                accent: homeChat.viewModel.localKnowledgeBaseEnabled ? SentinelTheme.success
+                                                                     : SentinelTheme.textMuted
+                muted: !homeChat.viewModel.localKnowledgeBaseEnabled
+            }
+        }
+
+        Repeater {
+            model: homeChat.viewModel.attachmentSummaries
+
+            InfoRow {
+                required property string modelData
+                compact: homeChat.compact
+                label: qsTr("Attachment")
+                value: modelData
+                Layout.fillWidth: true
+                valueMaximumLineCount: 2
+            }
+        }
+    }
+
+    FileDialog {
+        id: attachmentDialog
+        title: qsTr("Attach file")
+        fileMode: FileDialog.OpenFile
+        nameFilters: [
+            qsTr("Documents (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)"),
+            qsTr("Source files (*.cpp *.h *.hpp *.qml *.js *.ts *.py *.java *.cs *.go *.rs *.swift)"),
+            qsTr("All files (*)")
+        ]
+        onAccepted: homeChat.viewModel.attachFileToChat(selectedFile.toString().replace("file://", ""))
     }
 }

@@ -42,6 +42,7 @@ private slots:
     void persistsCompanionVisibilityPreference();
     void persistsDeveloperModeVisibilityOptIn();
     void persistsSelectedWorkspaceId();
+    void persistsWorkspaceDefaults();
     void persistsSelectedSkillProfile();
     void persistsDefaultPermissionPolicyState();
     void persistsNativeExperiencePreferences();
@@ -76,8 +77,13 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(settings->whisperBinaryPath().isEmpty());
     QVERIFY(settings->whisperModelPath().isEmpty());
     QVERIFY(!settings->piperFileOutputExecutionEnabled());
-    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("local-placeholder"));
+    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("personal"));
     QCOMPARE(settings->selectedSkillProfile(), QStringLiteral("developer"));
+    QCOMPARE(settings->defaultWorkspaceId(), QStringLiteral("personal"));
+    QVERIFY(!settings->localKnowledgeBaseEnabled());
+    QVERIFY(settings->retrievalExplainabilityEnabled());
+    QCOMPARE(settings->attachmentBehavior(), QStringLiteral("Manual Attachments Only"));
+    QCOMPARE(settings->exportDefaultFormat(), QStringLiteral("Markdown"));
     QCOMPARE(settings->defaultPermissionPolicyState(), QStringLiteral("Disabled"));
     QCOMPARE(settings->updateCheckPolicy(), QStringLiteral("Ask Before Checking"));
     QCOMPARE(settings->notificationPolicy(), QStringLiteral("Important Only"));
@@ -479,9 +485,9 @@ void AppSettingsTest::persistsSelectedWorkspaceId() {
     const auto settings = makeSettings();
     QSignalSpy spy(settings.get(), &AppSettings::selectedWorkspaceIdChanged);
 
-    settings->setSelectedWorkspaceId(QStringLiteral(" local-placeholder "));
+    settings->setSelectedWorkspaceId(QStringLiteral(" personal "));
 
-    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("local-placeholder"));
+    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("personal"));
     QCOMPARE(spy.count(), 0);
 
     settings->setSelectedWorkspaceId(QStringLiteral("future-project"));
@@ -489,8 +495,36 @@ void AppSettingsTest::persistsSelectedWorkspaceId() {
     QCOMPARE(spy.count(), 1);
 
     settings->setSelectedWorkspaceId(QStringLiteral("   "));
-    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("local-placeholder"));
+    QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("personal"));
     QCOMPARE(spy.count(), 2);
+}
+
+void AppSettingsTest::persistsWorkspaceDefaults() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::workspaceSettingsChanged);
+
+    settings->setDefaultWorkspaceId(QStringLiteral("research"));
+    settings->setWorkspaceCatalogJson(QStringLiteral("{\"version\":1,\"customWorkspaces\":[]}"));
+    settings->setLocalKnowledgeBaseEnabled(true);
+    settings->setRetrievalExplainabilityEnabled(false);
+    settings->setAttachmentBehavior(QStringLiteral("paste"));
+    settings->setExportDefaultFormat(QStringLiteral("docx"));
+    settings->setExportIncludeTimestamps(false);
+    settings->setExportIncludeCitations(false);
+    settings->setExportAnonymizeNames(true);
+    settings->setExportIncludeModelMetadata(false);
+
+    QCOMPARE(settings->defaultWorkspaceId(), QStringLiteral("research"));
+    QVERIFY(settings->workspaceCatalogJson().contains(QStringLiteral("customWorkspaces")));
+    QVERIFY(settings->localKnowledgeBaseEnabled());
+    QVERIFY(!settings->retrievalExplainabilityEnabled());
+    QCOMPARE(settings->attachmentBehavior(), QStringLiteral("Paste Attachment Enabled"));
+    QCOMPARE(settings->exportDefaultFormat(), QStringLiteral("DOCX"));
+    QVERIFY(!settings->exportIncludeTimestamps());
+    QVERIFY(!settings->exportIncludeCitations());
+    QVERIFY(settings->exportAnonymizeNames());
+    QVERIFY(!settings->exportIncludeModelMetadata());
+    QCOMPARE(spy.count(), 10);
 }
 
 void AppSettingsTest::persistsSelectedSkillProfile() {
@@ -629,6 +663,10 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
         settings.setCompanionEnabled(true);
         settings.setDeveloperModeEnabled(true);
         settings.setSelectedWorkspaceId(QStringLiteral("future-project"));
+        settings.setDefaultWorkspaceId(QStringLiteral("future-project"));
+        settings.setLocalKnowledgeBaseEnabled(true);
+        settings.setRetrievalExplainabilityEnabled(false);
+        settings.setExportDefaultFormat(QStringLiteral("json"));
         settings.setSelectedSkillProfile(QStringLiteral("researcher"));
         settings.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
         settings.setPiperBinaryPath(QStringLiteral("/opt/piper/piper"));
@@ -650,6 +688,10 @@ void AppSettingsTest::persistsLocalAiRuntimeSettingsThroughJsonStore() {
     QVERIFY(reloaded.companionEnabled());
     QVERIFY(reloaded.developerModeEnabled());
     QCOMPARE(reloaded.selectedWorkspaceId(), QStringLiteral("future-project"));
+    QCOMPARE(reloaded.defaultWorkspaceId(), QStringLiteral("future-project"));
+    QVERIFY(reloaded.localKnowledgeBaseEnabled());
+    QVERIFY(!reloaded.retrievalExplainabilityEnabled());
+    QCOMPARE(reloaded.exportDefaultFormat(), QStringLiteral("JSON"));
     QCOMPARE(reloaded.selectedSkillProfile(), QStringLiteral("researcher"));
     QCOMPARE(reloaded.defaultPermissionPolicyState(), QStringLiteral("Trusted"));
     QCOMPARE(reloaded.piperBinaryPath(), QStringLiteral("/opt/piper/piper"));

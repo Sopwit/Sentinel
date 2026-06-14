@@ -78,6 +78,25 @@ used as fallback. Phase 50A adds no telemetry, hidden cloud calls, subprocess ex
 execution, autonomous agents, filesystem scanning, background indexing, model downloads, or
 automatic updates.
 
+Phase 50B adds workspace, file-chat, and Local RAG foundations without changing the execution
+boundary. Workspaces are managed by `WorkspaceService`, persisted through `AppSettings`, and
+exposed only as QML-safe strings and invokable foreground actions through `DesktopShellViewModel`.
+The built-in workspace templates are Personal, Coding, Research, Writing, and Student. User
+workspaces support create, rename, archive, delete, and duplicate. Active workspace state scopes
+chat context, Brain summaries, attachment metadata, Local RAG metadata, and workspace preferences.
+
+File chat is explicit-user-action only. QML can browse, drag/drop, or paste a single attachment
+into the view model. Supported attachment metadata covers PDF, TXT, Markdown, DOCX, CSV, JSON, and
+source files. The app does not import folders, recursively scan directories, process documents in
+the background, or generate embeddings automatically.
+
+Local RAG uses `LocalRagStore` with Qt SQL and SQLite at
+`QStandardPaths::AppDataLocation + "/local_rag.sqlite3"`. It is disabled by default and scoped by
+workspace id. It stores document records, manual index status, and retrieval explainability
+metadata: source document, section/chunk reference, relevance score, and summary. Re-index updates
+local metadata only and runs only when the user invokes it. No cloud embedding service, hidden
+update, background indexer, automatic knowledge-base activation, or prompt mutation is added.
+
 ## Desktop View Model
 
 `DesktopShellViewModel` is the QML boundary for the desktop app. It forwards safe operations to the core controller, mode manager, and settings object:

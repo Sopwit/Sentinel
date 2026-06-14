@@ -247,6 +247,33 @@ Out of scope:
   subprocesses, filesystem scanning, background indexing, automatic model downloads, `ollama pull`,
   automatic updates, hidden retries, and background provider probing.
 
+## 1.10 Workspace, File Chat, And Local RAG Boundary
+
+Decision: Phase 50B makes workspaces real product state and adds explicit file-chat attachment and
+workspace-scoped Local RAG metadata without adding hidden document processing.
+
+Reason: Sentinel needs to operate as an AI workspace, but document interaction can easily become a
+privacy risk if folder import, recursive scanning, background indexing, automatic embeddings, or
+cloud retrieval are introduced implicitly.
+
+Runtime behavior:
+
+- Built-in workspaces are Personal, Coding, Research, Writing, and Student.
+- User workspaces support create, rename, archive, delete, and duplicate through
+  `DesktopShellViewModel`.
+- Workspace catalog and preferences are persisted in settings. Local RAG document/retrieval
+  metadata is persisted separately in SQLite.
+- Attachments are explicit user selections through browse, drag/drop, or paste attachment actions.
+- Local Knowledge Base is disabled by default, workspace-only, local-only, and manual-index-only.
+- Retrieval explainability exposes source document, section/chunk reference, and relevance
+  metadata unless the user disables it.
+
+Out of scope:
+
+- Folder import, recursive filesystem scanning, background document processing, automatic
+  embedding generation, automatic knowledge base activation, cloud embedding services, cloud
+  retrieval, telemetry, autonomous agents, hidden prompt mutation, and automatic memory writes.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.

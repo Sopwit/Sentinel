@@ -2,6 +2,45 @@
 
 ## Completed / Stable
 
+### Phase 50B: Workspace, File Chat & Local RAG
+
+Completed. Adds a professional workspace and document-interaction foundation while preserving
+privacy-first, foreground-only behavior.
+
+Scope:
+
+- Built-in workspaces are Personal, Coding, Research, Writing, and Student.
+- User-created workspaces can be created, renamed, archived, deleted, and duplicated through the
+  `DesktopShellViewModel` boundary, with workspace catalog state persisted in settings.
+- Active workspace is exposed to Home, Settings, Brain, and agent/runtime metadata. Chat context,
+  Brain summaries, settings preferences, attachments, and Local RAG metadata are workspace-scoped.
+- File chat supports explicit user attachments for PDF, TXT, Markdown, DOCX, CSV, JSON, and source
+  files through browse, drag/drop, or paste attachment actions. Folder import and recursive scans
+  are refused.
+- Local Knowledge Base is disabled by default, workspace-only, SQLite-backed, and manually updated.
+  Documents can be added, removed, manually re-indexed, or cleared only through explicit user
+  action. No embeddings are generated automatically.
+- Retrieval explainability metadata exposes source document, section/chunk reference, and relevance
+  metadata, and can be disabled.
+- Brain exposes Workspace Timeline, Attached Documents, Knowledge Base Summary, and Recent
+  Retrievals as lightweight summaries.
+- Export Center metadata covers chats, workspace summaries, document summaries, and retrieval
+  reports in Markdown, PDF, TXT, DOCX, and JSON with timestamp, citation, anonymization, and
+  provider/model metadata options.
+- Notification Center categories now include document attached, indexing completed, indexing
+  failed, retrieval completed, and workspace changed.
+- Privacy Center states Knowledge Base enabled/disabled, Indexing manual only, Document Scope
+  workspace only, Cloud Retrieval disabled, telemetry disabled, and hidden filesystem scanning
+  disabled.
+
+Known limitation:
+
+- Local RAG stores document/retrieval metadata and manual index status only. It does not parse file
+  contents, generate embeddings, perform vector search, run background indexing, scan folders,
+  activate autonomous agents, call cloud retrieval services, or mutate prompts automatically.
+- Offscreen smoke launch in the current environment still exits 139 and remains a known
+  launch-environment limitation after successful build and tests.
+
 ### Phase 50A: Real Local AI Execution
 
 Completed. Activates guarded foreground local inference for Sentinel while preserving the
