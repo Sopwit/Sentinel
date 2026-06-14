@@ -1372,6 +1372,59 @@ Item {
                             }
                         }
 
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                text: qsTr("Timeout")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                            }
+
+                            SpinBox {
+                                id: timeoutSpin
+                                Layout.preferredWidth: 150
+                                from: 1000
+                                to: 300000
+                                stepSize: 1000
+                                value: settingsPage.viewModel.localInferenceTimeoutMs
+                                editable: true
+                                onValueModified: settingsPage.viewModel.localInferenceTimeoutMs = value
+
+                                contentItem: TextInput {
+                                    text: timeoutSpin.textFromValue(timeoutSpin.value, timeoutSpin.locale)
+                                    color: SentinelTheme.textPrimary
+                                    selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
+                                    selectedTextColor: SentinelTheme.textPrimary
+                                    horizontalAlignment: Qt.AlignHCenter
+                                    verticalAlignment: Qt.AlignVCenter
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    validator: timeoutSpin.validator
+                                    inputMethodHints: Qt.ImhFormattedNumbersOnly
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(timeoutSpin.activeFocus,
+                                                                                 timeoutSpin.hovered,
+                                                                                 false,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("ms")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                            }
+                        }
+
                         CheckBox {
                             id: contextToggle
                             Layout.fillWidth: true

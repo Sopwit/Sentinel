@@ -1205,16 +1205,18 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
     QCOMPARE(controller->activeRuntimeReadinessState(), QStringLiteral("ready"));
     QCOMPARE(controller->activeRuntimeLocalOnlySummary(), QStringLiteral("Local Only"));
     QVERIFY(controller->activeRuntimeModelLabel().contains(QStringLiteral("llama3.2")));
-    QCOMPARE(controller->selectableRuntimeProviderIds(), QStringList{QStringLiteral("ollama")});
+    QCOMPARE(controller->selectableRuntimeProviderIds(),
+             QStringList({QStringLiteral("ollama"), QStringLiteral("openai-compatible-local"),
+                          QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server")}));
     QCOMPARE(controller->runtimeProviderCardSummaries().size(), 4);
     QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("OpenAI-Compatible API")));
+                .contains(QStringLiteral("OpenAI-compatible Local")));
     QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Claude API")));
+                .contains(QStringLiteral("LM Studio")));
     QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Gemini API")));
+                .contains(QStringLiteral("llama.cpp server")));
     QVERIFY(controller->runtimeProviderCapabilitySummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("requiresApiKey: yes")));
+                .contains(QStringLiteral("requiresApiKey: no")));
     QVERIFY(controller->runtimeProviderValidationTraces().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("readiness=disabled")));
     QVERIFY(controller->providerCredentialRegistrySummary()
@@ -1228,7 +1230,7 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
     QCOMPARE(controller->providerCredentialSummaries().size(), 4);
     QVERIFY(controller->providerCredentialSafetySummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("cloudRequests=refused")));
-    QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 1);
+    QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 4);
 }
 
 void ApplicationControllerTest::disabledRuntimeProviderSelectionFallsBackToLocalOllama() {

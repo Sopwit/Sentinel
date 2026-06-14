@@ -1,6 +1,7 @@
 # Local AI Ecosystem
 
-Phase 49.7 adds Sentinel's local AI ecosystem foundation as metadata only.
+Phase 50A turns the local AI ecosystem foundation into guarded foreground local execution for
+Ollama while keeping all privacy boundaries explicit.
 
 ## Surfaces
 
@@ -14,10 +15,25 @@ Phase 49.7 adds Sentinel's local AI ecosystem foundation as metadata only.
 - Benchmark Hub: manual/placeholder tokens/sec, latency, response time, RAM, and performance class
   metadata.
 
+## Execution
+
+- Ollama is executable through `http://127.0.0.1:11434` only.
+- Installed Ollama models are listed from local `/api/tags`.
+- Chat generation uses local `/api/generate`, supports streaming, timeout handling, cancellation,
+  stale request rejection, and user-facing error states.
+- OpenAI-compatible Local, LM Studio, and llama.cpp server are selectable local provider targets
+  only. They require a later endpoint/model configuration phase before execution.
+- Each send resolves to one provider/model from the active selection and role assignment context.
+  No automatic fallback, parallel execution, or autonomous agent execution is performed.
+
+## Diagnostics
+
+Runtime diagnostics expose answered-by model, provider/route, request id, streaming state, total
+duration, first-token latency, and approximate tokens/sec when available. Metrics stay local.
+
 ## Safety
 
-Only existing safe local Ollama metadata may populate installed model data. All other providers and
-catalogs are disabled/readiness placeholders. This phase adds no background probing, hidden network
-calls, cloud activation, catalog fetch, model download/update/delete, filesystem scan, subprocess,
-benchmark execution, automatic routing, autonomous agents, tool execution, telemetry, or hidden
-notifications.
+Only foreground local provider calls are allowed. This phase adds no background probing, hidden
+network calls, cloud activation, catalog fetch, model download/update/delete, filesystem scan,
+subprocess, benchmark execution, automatic routing, autonomous agents, tool execution, telemetry,
+or hidden notifications.

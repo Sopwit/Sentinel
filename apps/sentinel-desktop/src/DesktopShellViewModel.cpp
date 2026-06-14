@@ -136,6 +136,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::localInferenceStreamingEnabledChanged, this, [this]() {
         controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
     });
+    connect(&settings_, &core::AppSettings::localInferenceTimeoutMsChanged, this, [this]() {
+        controller_.setLocalInferenceTimeoutMs(settings_.localInferenceTimeoutMs());
+    });
     connect(&settings_, &core::AppSettings::promptContextInjectionEnabledChanged, this, [this]() {
         controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
     });
@@ -158,6 +161,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
+    controller_.setLocalInferenceTimeoutMs(settings_.localInferenceTimeoutMs());
     controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
     controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
     controller_.setPiperBinaryPath(settings_.piperBinaryPath());
@@ -2388,6 +2392,17 @@ void DesktopShellViewModel::setLocalInferenceStreamingEnabled(bool enabled) {
     }
 }
 
+int DesktopShellViewModel::localInferenceTimeoutMs() const {
+    return controller_.localInferenceTimeoutMs();
+}
+
+void DesktopShellViewModel::setLocalInferenceTimeoutMs(int timeoutMs) {
+    settings_.setLocalInferenceTimeoutMs(timeoutMs);
+    if (controller_.localInferenceTimeoutMs() != settings_.localInferenceTimeoutMs()) {
+        controller_.setLocalInferenceTimeoutMs(settings_.localInferenceTimeoutMs());
+    }
+}
+
 bool DesktopShellViewModel::localInferenceBusy() const {
     return controller_.localInferenceBusy();
 }
@@ -3129,6 +3144,7 @@ QStringList DesktopShellViewModel::activityTimelineSummaries() const {
 QStringList DesktopShellViewModel::notificationCenterSummaries() const {
     return {
         QStringLiteral("Chat Completed - shown when a foreground chat finishes"),
+        QStringLiteral("Generation Cancelled - shown when the user stops an active local request"),
         QStringLiteral("Export Completed - %1").arg(conversationExportLastResultSummary()),
         QStringLiteral("Model Discovered - shown only from explicit foreground local metadata"),
         QStringLiteral("Model Unavailable - shown only from visible readiness changes"),
@@ -3136,6 +3152,9 @@ QStringList DesktopShellViewModel::notificationCenterSummaries() const {
         QStringLiteral("Download Completed - metadata category; no downloader exists"),
         QStringLiteral("Benchmark Finished - metadata category; benchmark execution is disabled"),
         QStringLiteral("Provider Offline - local readiness metadata only"),
+        QStringLiteral("Provider Recovered - shown when visible local readiness becomes available"),
+        QStringLiteral("Provider Unavailable - %1").arg(controller_.activeRuntimeReadinessSummary()),
+        QStringLiteral("Model Switched - %1").arg(controller_.activeRuntimeModelLabel()),
         QStringLiteral("Model Role Changed - shown when the user changes role metadata"),
         QStringLiteral("Update Available - check is manual; no hidden polling"),
         QStringLiteral("Permission Needed - future explicit approvals only"),
@@ -3542,6 +3561,10 @@ QStringList DesktopShellViewModel::agentPlanDiagnostics() const {
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {
     return controller_.sendMessage(message);
+}
+
+bool DesktopShellViewModel::cancelLocalInference() {
+    return controller_.cancelLocalInference();
 }
 
 bool DesktopShellViewModel::runLocalInference(const QString& prompt, const QString& model) {

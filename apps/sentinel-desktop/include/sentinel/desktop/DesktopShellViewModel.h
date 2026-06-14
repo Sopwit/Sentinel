@@ -898,6 +898,8 @@ class DesktopShellViewModel final : public QObject {
                    contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
+    Q_PROPERTY(int localInferenceTimeoutMs READ localInferenceTimeoutMs WRITE
+                   setLocalInferenceTimeoutMs NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
     Q_PROPERTY(QString localInferenceRuntimeState READ localInferenceRuntimeState NOTIFY
                    localInferenceChanged)
@@ -1816,6 +1818,8 @@ public:
     QStringList semanticPromptInclusionChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
+    int localInferenceTimeoutMs() const;
+    void setLocalInferenceTimeoutMs(int timeoutMs);
     bool localInferenceBusy() const;
     QString localInferenceRuntimeState() const;
     QString localInferenceStatus() const;
@@ -2056,6 +2060,7 @@ public:
     QStringList agentPlanDiagnostics() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
+    Q_INVOKABLE bool cancelLocalInference();
     Q_INVOKABLE bool runLocalInference(const QString& prompt, const QString& model);
     Q_INVOKABLE bool requestConversationSummaryGeneration();
     Q_INVOKABLE bool generatePiperTtsFile(const QString& text);

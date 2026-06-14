@@ -190,6 +190,38 @@ RuntimeProviderDescriptor OpenAICompatibleRuntimeProvider::descriptor() const {
                                            QStringLiteral("OpenAI-Compatible API"));
 }
 
+OpenAICompatibleLocalRuntimeProvider::OpenAICompatibleLocalRuntimeProvider(
+    QString providerId, QString displayName, QString endpointSummary, QString selectedModel)
+    : providerId_(std::move(providerId)), displayName_(std::move(displayName)),
+      endpointSummary_(std::move(endpointSummary)), selectedModel_(std::move(selectedModel)) {}
+
+RuntimeProviderDescriptor OpenAICompatibleLocalRuntimeProvider::descriptor() const {
+    return RuntimeProviderDescriptor{
+        providerId_,
+        displayName_,
+        QStringLiteral("configuration-required"),
+        RuntimeReadinessState::Disabled,
+        QStringLiteral("Disabled until the user configures an explicit loopback "
+                       "OpenAI-compatible endpoint and model."),
+        endpointSummary_.trimmed().isEmpty() ? QStringLiteral("Not configured")
+                                             : endpointSummary_.trimmed(),
+        selectedModel_.trimmed().isEmpty()
+            ? QStringLiteral("No model selected")
+            : QStringLiteral("Selected model: %1").arg(selectedModel_.trimmed()),
+        QStringLiteral("%1 support is local-only and OpenAI-compatible, but no endpoint probing, "
+                       "cloud fallback, API key, or automatic model discovery is enabled.")
+            .arg(displayName_),
+        RuntimeCapabilitySet{
+            true,  false, true,  true,  false, false,
+            false, false, true,  false, false, false,
+        },
+        selectedModel_.trimmed().isEmpty() ? QStringList{} : QStringList{selectedModel_.trimmed()},
+        true,
+        false,
+        true,
+    };
+}
+
 RuntimeProviderDescriptor ClaudeRuntimeProvider::descriptor() const {
     return disabledCloudProviderDescriptor(QStringLiteral("claude"), QStringLiteral("Claude API"));
 }

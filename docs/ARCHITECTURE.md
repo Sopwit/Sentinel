@@ -60,6 +60,24 @@ Phase 49.7 does not add hidden provider discovery, background workers, cloud cal
 subprocesses, filesystem scans, model downloads/updates/deletes, benchmark execution, automatic
 multi-model routing, tools, autonomous agents, telemetry, or native OS notifications.
 
+Phase 50A activates the first real local AI execution path. Foreground chat sends still flow through
+QML -> `DesktopShellViewModel` -> `ApplicationController` -> local inference worker. Ollama is the
+only executable provider, using loopback HTTP only at the configured safe local endpoint. The
+controller validates active conversation state, selected provider/model, endpoint policy, runtime
+permission/safety policy, request id, and stale completion state before mutating transcript
+history. SQLite chat history schema version 2 persists local execution metadata on assistant
+messages: provider, model, role, response duration, first-token latency, and approximate tokens/sec.
+Streaming responses are accumulated in controller state for smooth QML updates and are persisted as
+one assistant message only after completion; cancellation clears the active request id so stale
+completions are ignored and the worker cancellation token aborts active streaming replies.
+
+OpenAI-compatible Local, LM Studio, and llama.cpp server are represented as local-only selectable
+provider targets, but remain configuration-required and non-executing until explicit loopback
+endpoint/model configuration and clients are added. Cloud providers remain disabled and are not
+used as fallback. Phase 50A adds no telemetry, hidden cloud calls, subprocess execution, tool
+execution, autonomous agents, filesystem scanning, background indexing, model downloads, or
+automatic updates.
+
 ## Desktop View Model
 
 `DesktopShellViewModel` is the QML boundary for the desktop app. It forwards safe operations to the core controller, mode manager, and settings object:

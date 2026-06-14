@@ -559,16 +559,17 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
     QCOMPARE(fixture.viewModel.activeRuntimeReadinessState(), QStringLiteral("unavailable"));
     QCOMPARE(fixture.viewModel.activeRuntimeLocalOnlySummary(), QStringLiteral("Local Only"));
     QCOMPARE(fixture.viewModel.selectableRuntimeProviderIds(),
-             QStringList{QStringLiteral("ollama")});
+             QStringList({QStringLiteral("ollama"), QStringLiteral("openai-compatible-local"),
+                          QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server")}));
     QCOMPARE(fixture.viewModel.runtimeProviderCardSummaries().size(), 4);
     QVERIFY(fixture.viewModel.runtimeProviderCardSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("OpenAI-Compatible API")));
+                .contains(QStringLiteral("OpenAI-compatible Local")));
     QVERIFY(fixture.viewModel.runtimeProviderCardSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Claude API")));
+                .contains(QStringLiteral("LM Studio")));
     QVERIFY(fixture.viewModel.runtimeProviderCardSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Gemini API")));
+                .contains(QStringLiteral("llama.cpp server")));
     QVERIFY(fixture.viewModel.runtimeProviderCapabilitySummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("requiresApiKey: yes")));
+                .contains(QStringLiteral("requiresApiKey: no")));
     QVERIFY(fixture.viewModel.runtimeProviderValidationTraces().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("readiness=disabled")));
     QCOMPARE(fixture.viewModel.providerCredentialRegistryStatus(), QStringLiteral("missing"));

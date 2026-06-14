@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 50A: Real Local AI Execution
+
+Completed. Activates guarded foreground local inference for Sentinel while preserving the
+privacy-first desktop boundary.
+
+Scope:
+
+- Ollama is the active execution provider through loopback HTTP at `http://127.0.0.1:11434`.
+- Installed Ollama models are listed from `/api/tags`; the selected model is respected for chat.
+- Chat requests execute through the existing QML -> `DesktopShellViewModel` ->
+  `ApplicationController` -> local inference worker flow.
+- Streaming `/api/generate` responses update the UI incrementally, support Stop/cancel, reject
+  stale request ids, and append one final assistant message or safe refusal.
+- OpenAI-compatible Local, LM Studio, and llama.cpp server are selectable local provider targets
+  represented as local-only configuration-required providers. They do not execute until explicit
+  loopback endpoint/model configuration is added.
+- Runtime diagnostics and SQLite chat history expose/store provider, model, role, request id,
+  streaming state, total duration, first-token latency, and approximate tokens/sec when available.
+- Settings exposes active provider, active model, timeout, streaming, and explainability controls.
+- In-app notification center summaries include generation cancelled, provider unavailable,
+  provider recovered, and model switched categories.
+
+Known limitation:
+
+- Only Ollama has real execution in this phase. OpenAI-compatible local, LM Studio, and llama.cpp
+  server support is represented as selectable local provider readiness but has no endpoint
+  configuration or execution client yet. No subprocesses, `ollama pull`, automatic downloads,
+  filesystem scanning, background indexing, autonomous agents, tool execution, telemetry, hidden
+  cloud calls, automatic updates, or cloud fallback are added.
+
 ### Phase 49.7: Local AI Ecosystem Foundation
 
 Completed. Expands Sentinel's local model/runtime metadata into a user-facing ecosystem

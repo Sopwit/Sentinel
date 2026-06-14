@@ -10,6 +10,7 @@
 #include <QThread>
 
 #include <cstdint>
+#include <atomic>
 #include <functional>
 #include <memory>
 
@@ -61,6 +62,7 @@ struct LocalInferenceOptions {
     int timeoutMs = 30000;
     bool streamingRequested = false;
     bool cancellationRequested = false;
+    std::shared_ptr<std::atomic_bool> cancellationToken;
 };
 
 struct LocalInferenceRequest {
@@ -84,6 +86,9 @@ struct LocalInferenceResponse {
     QString text;
     QString summary = QStringLiteral("No local inference request yet.");
     qint64 latencyMs = -1;
+    qint64 firstTokenLatencyMs = -1;
+    int approximateOutputTokens = 0;
+    double approximateTokensPerSecond = 0.0;
     QList<LocalInferenceTrace> traces;
     int timeoutMs = 0;
 };
@@ -117,6 +122,10 @@ struct LocalInferenceStreamResult {
     QString accumulatedText;
     bool cancelled = false;
     int malformedChunkCount = 0;
+    qint64 latencyMs = -1;
+    qint64 firstTokenLatencyMs = -1;
+    int approximateOutputTokens = 0;
+    double approximateTokensPerSecond = 0.0;
     QList<LocalInferenceStreamChunk> chunks;
     QList<LocalInferenceTrace> traces;
     int timeoutMs = 0;
@@ -202,11 +211,13 @@ public:
 
 private:
     bool hasActiveThread() const;
+    bool requestCancelled(const LocalInferenceRequest& request) const;
 
     std::unique_ptr<ILocalInferenceClient> inferenceClient_;
     std::unique_ptr<ILocalInferenceStreamClient> streamClient_;
     QObject* callbackContext_ = nullptr;
     QThread* activeThread_ = nullptr;
+    std::shared_ptr<std::atomic_bool> activeCancellationToken_;
     bool threadedInference_ = false;
     bool threadedStream_ = false;
 };

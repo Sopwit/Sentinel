@@ -23,6 +23,12 @@ struct ChatMessage {
     QString content;
     QDateTime timestamp;
     ChatMessageStatus status = ChatMessageStatus::Received;
+    QString providerUsed;
+    QString modelUsed;
+    QString roleUsed;
+    qint64 responseDurationMs = -1;
+    qint64 firstTokenLatencyMs = -1;
+    double approximateTokensPerSecond = 0.0;
 };
 
 inline QString chatRoleName(ChatRole role) {

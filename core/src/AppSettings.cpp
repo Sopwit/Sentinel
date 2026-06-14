@@ -4,12 +4,17 @@
 #include "sentinel/core/ModelRouting.h"
 #include "sentinel/core/OllamaRuntime.h"
 
+#include <algorithm>
+
 namespace sentinel::core {
 
 namespace {
 
 bool isKnownRuntimeProviderId(const QString& providerId) {
     return providerId == QStringLiteral("ollama") ||
+           providerId == QStringLiteral("openai-compatible-local") ||
+           providerId == QStringLiteral("lm-studio") ||
+           providerId == QStringLiteral("llama-cpp-server") ||
            providerId == QStringLiteral("openai-compatible") ||
            providerId == QStringLiteral("claude") || providerId == QStringLiteral("gemini");
 }
@@ -332,6 +337,28 @@ void AppSettings::setLocalInferenceStreamingEnabled(bool enabled) {
     store_->setValue(QString::fromLatin1(localInferenceStreamingEnabledKey),
                      enabled ? QStringLiteral("true") : QStringLiteral("false"));
     emit localInferenceStreamingEnabledChanged();
+}
+
+int AppSettings::localInferenceTimeoutMs() const {
+    const auto fallback = QString::number(defaultLocalInferenceTimeoutMs);
+    bool ok = false;
+    const auto value =
+        store_ ? store_->value(QString::fromLatin1(localInferenceTimeoutMsKey), fallback).toInt(&ok)
+               : defaultLocalInferenceTimeoutMs;
+    if (!ok) {
+        return defaultLocalInferenceTimeoutMs;
+    }
+    return std::clamp(value, 1000, 300000);
+}
+
+void AppSettings::setLocalInferenceTimeoutMs(int timeoutMs) {
+    const auto normalized = std::clamp(timeoutMs, 1000, 300000);
+    if (normalized == localInferenceTimeoutMs() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(localInferenceTimeoutMsKey), QString::number(normalized));
+    emit localInferenceTimeoutMsChanged();
 }
 
 bool AppSettings::promptContextInjectionEnabled() const {
