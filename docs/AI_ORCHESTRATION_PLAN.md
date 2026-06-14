@@ -1,5 +1,12 @@
 # AI Orchestration Plan
 
+Phase 50C adds controlled agent task workflows without adding autonomous behavior. Sentinel can
+create an editable plan, request approval, and then advance one visible step at a time after the
+user starts the task. Queue execution is single-active-task only. Tool permissions are
+workspace-scoped metadata, not capability grants. Every step records model, reason, resources,
+requested tools, and outcome. There is no hidden tool use, recursive task spawning, background
+approval, automatic retry, telemetry, or cloud activation.
+
 Phase 50B adds workspace, file-chat, and Local RAG orchestration metadata without adding autonomous
 agents, tool execution, hidden indexing, or cloud retrieval. The active workspace is now a real
 scope for chat context, Brain summaries, attachment metadata, Local RAG metadata, and workspace

@@ -2,6 +2,21 @@
 
 Sentinel defaults to explicit user authority.
 
+## Phase 50C Boundary
+
+- No autonomous execution.
+- No hidden tools.
+- No background approvals.
+- No self-modifying tasks.
+- No recursive task generation.
+- No automatic retries without approval.
+- No cloud activation.
+- Single active controlled task only.
+
+Controlled tasks require explicit user approval before start and explicit user action for each
+visible step. Tool permissions are workspace-scoped metadata choices and do not grant filesystem,
+clipboard, terminal, browser, calendar, email, notes, or download execution in this phase.
+
 ## Phase 50B Boundary
 
 - No telemetry.

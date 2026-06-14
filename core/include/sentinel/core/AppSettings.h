@@ -88,6 +88,10 @@ class AppSettings final : public QObject {
                    onboardingUseCaseChanged)
     Q_PROPERTY(QString recoveryDraftText READ recoveryDraftText WRITE setRecoveryDraftText NOTIFY
                    recoveryDraftTextChanged)
+    Q_PROPERTY(QString controlledAgentTasksJson READ controlledAgentTasksJson WRITE
+                   setControlledAgentTasksJson NOTIFY controlledAgentTasksChanged)
+    Q_PROPERTY(QString controlledAgentPermissionsJson READ controlledAgentPermissionsJson WRITE
+                   setControlledAgentPermissionsJson NOTIFY controlledAgentTasksChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -183,6 +187,10 @@ public:
     void setOnboardingUseCase(const QString& useCase);
     QString recoveryDraftText() const;
     void setRecoveryDraftText(const QString& text);
+    QString controlledAgentTasksJson() const;
+    void setControlledAgentTasksJson(const QString& json);
+    QString controlledAgentPermissionsJson() const;
+    void setControlledAgentPermissionsJson(const QString& json);
 
 signals:
     void themeNameChanged();
@@ -216,6 +224,7 @@ signals:
     void onboardingCompleteChanged();
     void onboardingUseCaseChanged();
     void recoveryDraftTextChanged();
+    void controlledAgentTasksChanged();
 
 private:
     static constexpr auto themeNameKey = "themeName";
@@ -259,6 +268,8 @@ private:
     static constexpr auto onboardingCompleteKey = "onboardingComplete";
     static constexpr auto onboardingUseCaseKey = "onboardingUseCase";
     static constexpr auto recoveryDraftTextKey = "recoveryDraftText";
+    static constexpr auto controlledAgentTasksJsonKey = "controlledAgentTasksJson";
+    static constexpr auto controlledAgentPermissionsJsonKey = "controlledAgentPermissionsJson";
     static constexpr auto defaultThemeName = "Sentinel Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "system";

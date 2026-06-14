@@ -863,4 +863,34 @@ void AppSettings::setRecoveryDraftText(const QString& text) {
     emit recoveryDraftTextChanged();
 }
 
+QString AppSettings::controlledAgentTasksJson() const {
+    return store_ ? store_->value(QString::fromLatin1(controlledAgentTasksJsonKey),
+                                  QStringLiteral("{\"tasks\":[]}"))
+                  : QStringLiteral("{\"tasks\":[]}");
+}
+
+void AppSettings::setControlledAgentTasksJson(const QString& json) {
+    if (json == controlledAgentTasksJson() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(controlledAgentTasksJsonKey), json);
+    emit controlledAgentTasksChanged();
+}
+
+QString AppSettings::controlledAgentPermissionsJson() const {
+    return store_ ? store_->value(QString::fromLatin1(controlledAgentPermissionsJsonKey),
+                                  QStringLiteral("{\"permissions\":[]}"))
+                  : QStringLiteral("{\"permissions\":[]}");
+}
+
+void AppSettings::setControlledAgentPermissionsJson(const QString& json) {
+    if (json == controlledAgentPermissionsJson() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(controlledAgentPermissionsJsonKey), json);
+    emit controlledAgentTasksChanged();
+}
+
 } // namespace sentinel::core

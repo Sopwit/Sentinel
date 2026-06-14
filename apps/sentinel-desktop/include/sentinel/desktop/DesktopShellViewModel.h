@@ -2,6 +2,7 @@
 
 #include "sentinel/core/CompanionService.h"
 #include "sentinel/core/AgentRuntimeService.h"
+#include "sentinel/core/ControlledAgentTasks.h"
 #include "sentinel/core/LocalRagStore.h"
 #include "sentinel/core/PermissionPolicyService.h"
 #include "sentinel/core/SemanticRetrieval.h"
@@ -1301,6 +1302,30 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString agentPlanApprovalState READ agentPlanApprovalState NOTIFY agentRuntimeChanged)
     Q_PROPERTY(QString agentPlanRefusalReason READ agentPlanRefusalReason NOTIFY agentRuntimeChanged)
     Q_PROPERTY(QStringList agentPlanDiagnostics READ agentPlanDiagnostics NOTIFY agentRuntimeChanged)
+    Q_PROPERTY(QString controlledTaskActiveSummary READ controlledTaskActiveSummary NOTIFY
+                   controlledAgentTasksChanged)
+    Q_PROPERTY(QString controlledTaskCurrentStep READ controlledTaskCurrentStep NOTIFY
+                   controlledAgentTasksChanged)
+    Q_PROPERTY(QString controlledTaskProgressSummary READ controlledTaskProgressSummary NOTIFY
+                   controlledAgentTasksChanged)
+    Q_PROPERTY(QStringList controlledTaskPlanSteps READ controlledTaskPlanSteps NOTIFY
+                   controlledAgentTasksChanged)
+    Q_PROPERTY(QStringList controlledTaskQueueSummaries READ controlledTaskQueueSummaries NOTIFY
+                   controlledAgentTasksChanged)
+    Q_PROPERTY(QStringList controlledTaskTimelineSummaries READ controlledTaskTimelineSummaries
+                   NOTIFY controlledAgentTasksChanged)
+    Q_PROPERTY(QStringList controlledTaskExplainabilitySummaries READ
+                   controlledTaskExplainabilitySummaries NOTIFY controlledAgentTasksChanged)
+    Q_PROPERTY(QStringList controlledTaskPermissionSummaries READ controlledTaskPermissionSummaries
+                   NOTIFY controlledAgentTasksChanged)
+    Q_PROPERTY(QStringList controlledTaskNotificationCategories READ
+                   controlledTaskNotificationCategories CONSTANT)
+    Q_PROPERTY(QStringList controlledTaskExportSummaries READ controlledTaskExportSummaries NOTIFY
+                   controlledAgentTasksChanged)
+    Q_PROPERTY(QString controlledTaskDiagnosticsSummary READ controlledTaskDiagnosticsSummary NOTIFY
+                   controlledAgentTasksChanged)
+    Q_PROPERTY(QStringList controlledTaskSafetyGuarantees READ controlledTaskSafetyGuarantees
+                   CONSTANT)
 
 public:
     DesktopShellViewModel(core::ApplicationController& controller, core::ModeManager& modeManager,
@@ -2095,6 +2120,18 @@ public:
     QString agentPlanApprovalState() const;
     QString agentPlanRefusalReason() const;
     QStringList agentPlanDiagnostics() const;
+    QString controlledTaskActiveSummary() const;
+    QString controlledTaskCurrentStep() const;
+    QString controlledTaskProgressSummary() const;
+    QStringList controlledTaskPlanSteps() const;
+    QStringList controlledTaskQueueSummaries() const;
+    QStringList controlledTaskTimelineSummaries() const;
+    QStringList controlledTaskExplainabilitySummaries() const;
+    QStringList controlledTaskPermissionSummaries() const;
+    QStringList controlledTaskNotificationCategories() const;
+    QStringList controlledTaskExportSummaries() const;
+    QString controlledTaskDiagnosticsSummary() const;
+    QStringList controlledTaskSafetyGuarantees() const;
 
     Q_INVOKABLE bool sendMessage(const QString& message);
     Q_INVOKABLE bool cancelLocalInference();
@@ -2119,6 +2156,18 @@ public:
     Q_INVOKABLE bool removeKnowledgeBaseDocument(const QString& documentId);
     Q_INVOKABLE bool reindexKnowledgeBase();
     Q_INVOKABLE bool clearKnowledgeBase();
+    Q_INVOKABLE QString planControlledAgentTask(const QString& goal);
+    Q_INVOKABLE bool modifyControlledAgentPlan(const QString& taskId, const QStringList& steps);
+    Q_INVOKABLE bool approveControlledAgentTask(const QString& taskId, const QString& choice);
+    Q_INVOKABLE bool denyControlledAgentTask(const QString& taskId);
+    Q_INVOKABLE bool startControlledAgentTask(const QString& taskId);
+    Q_INVOKABLE bool executeControlledAgentStep(const QString& taskId);
+    Q_INVOKABLE bool skipControlledAgentStep(const QString& taskId);
+    Q_INVOKABLE bool retryControlledAgentStep(const QString& taskId);
+    Q_INVOKABLE bool cancelControlledAgentTask(const QString& taskId);
+    Q_INVOKABLE bool reorderControlledAgentTask(const QString& taskId, int newIndex);
+    Q_INVOKABLE bool setControlledToolPermission(const QString& category, const QString& choice);
+    Q_INVOKABLE bool exportControlledAgentTask(const QString& taskId, const QString& format);
     Q_INVOKABLE QString createConversation(const QString& title);
     Q_INVOKABLE bool switchConversation(const QString& conversationId);
     Q_INVOKABLE bool renameConversation(const QString& conversationId, const QString& title);
@@ -2193,6 +2242,7 @@ signals:
     void attachmentChanged();
     void permissionPolicyChanged();
     void agentRuntimeChanged();
+    void controlledAgentTasksChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
@@ -2206,6 +2256,7 @@ private:
     core::SkillProfileService skillProfileService_;
     core::ToolExecutionGateway toolExecutionGateway_;
     core::WorkspaceService workspaceService_;
+    core::ControlledAgentTaskService controlledAgentTaskService_;
     std::unique_ptr<core::LocalRagStore> localRagStore_;
     QList<core::RagDocumentRecord> attachments_;
     QString workspaceLastActionStatus_ = QStringLiteral("Ready");

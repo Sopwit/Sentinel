@@ -2,6 +2,36 @@
 
 ## Completed / Stable
 
+### Phase 50C: Controlled Agent Tasks
+
+Completed. Adds safe, foreground-only controlled agent workflows while preserving explicit user
+authority and the QML -> `DesktopShellViewModel` -> core boundary.
+
+Scope:
+
+- Added a real controlled task planner with Draft, Pending Approval, Running, Completed, Failed,
+  and Cancelled states.
+- Task history is persisted locally in settings JSON as workspace-scoped controlled task records.
+- Plans are deterministic, editable, and require explicit approval before start.
+- Execution advances one visible step per user action. Cancel, skip, and retry are explicit actions.
+- Workspace-scoped tool permission metadata covers Files, Clipboard, Terminal, Browser, Calendar,
+  Email, Notes, and Downloads with Allow Once, Allow For Workspace, and Deny choices.
+- Explainability records show model, reason, resources, requested tools, and outcome for every
+  step.
+- Brain summaries expose planned, completed, failed, and cancelled task counts per workspace.
+- Agents > Tasks exposes queue, approval, progress, permission, export, and explainability UI.
+- Notification categories include task planned, approval needed, task started, task completed,
+  task failed, and task cancelled.
+- Export metadata supports task reports, execution summaries, and approval logs in Markdown, PDF,
+  TXT, and JSON.
+- Diagnostics expose active task, last completed task, approval statistics, and failure statistics.
+
+Known limitation:
+
+- Controlled task execution is still metadata-only. It does not execute tools, read files, launch
+  terminal commands, open browsers, call cloud services, spawn autonomous agents, recurse into new
+  tasks, or retry automatically.
+
 ### Phase 50B: Workspace, File Chat & Local RAG
 
 Completed. Adds a professional workspace and document-interaction foundation while preserving
