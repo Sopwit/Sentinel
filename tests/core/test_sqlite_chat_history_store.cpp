@@ -18,6 +18,7 @@ private slots:
     void clearsPersistedMessages();
     void preservesDeterministicOrdering();
     void persistsMessagesAcrossInstances();
+    void persistsExecutionMetadata();
     void initializesSchemaVersion();
     void safelyNoOpsForUnopenableDatabasePath();
     void createsParentDirectories();
@@ -117,12 +118,37 @@ void SQLiteChatHistoryStoreTest::persistsMessagesAcrossInstances() {
     QCOMPARE(messages.at(1).content, QStringLiteral("status"));
 }
 
+void SQLiteChatHistoryStoreTest::persistsExecutionMetadata() {
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    SQLiteChatHistoryStore store(databasePath(dir));
+
+    auto assistant = message(1, ChatRole::Assistant, QStringLiteral("ready"));
+    assistant.providerUsed = QStringLiteral("ollama");
+    assistant.modelUsed = QStringLiteral("llama3.2");
+    assistant.roleUsed = QStringLiteral("primary");
+    assistant.responseDurationMs = 1200;
+    assistant.firstTokenLatencyMs = 300;
+    assistant.approximateTokensPerSecond = 12.5;
+    store.appendMessage(assistant);
+
+    const auto messages = store.loadMessages();
+
+    QCOMPARE(messages.size(), 1);
+    QCOMPARE(messages.first().providerUsed, QStringLiteral("ollama"));
+    QCOMPARE(messages.first().modelUsed, QStringLiteral("llama3.2"));
+    QCOMPARE(messages.first().roleUsed, QStringLiteral("primary"));
+    QCOMPARE(messages.first().responseDurationMs, 1200);
+    QCOMPARE(messages.first().firstTokenLatencyMs, 300);
+    QCOMPARE(messages.first().approximateTokensPerSecond, 12.5);
+}
+
 void SQLiteChatHistoryStoreTest::initializesSchemaVersion() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
     SQLiteChatHistoryStore store(databasePath(dir));
 
-    QCOMPARE(store.schemaVersion(), 1);
+    QCOMPARE(store.schemaVersion(), 2);
 }
 
 void SQLiteChatHistoryStoreTest::safelyNoOpsForUnopenableDatabasePath() {

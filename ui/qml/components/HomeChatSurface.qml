@@ -684,6 +684,34 @@ ShellPanel {
             elide: Text.ElideRight
         }
 
+        Flow {
+            Layout.fillWidth: true
+            visible: homeChat.viewModel.contextExplainabilityVisible
+                     && homeChat.viewModel.conversationRuntimeActiveModel !== "None"
+            spacing: SentinelTheme.spaceSm
+
+            StatusChip {
+                label: qsTr("Answered By")
+                value: homeChat.viewModel.conversationRuntimeActiveModel
+                accent: homeChat.modeAccent
+                muted: false
+            }
+
+            StatusChip {
+                label: qsTr("Provider")
+                value: homeChat.viewModel.conversationRuntimeActiveRoute
+                accent: homeChat.modeAccent
+                muted: false
+            }
+
+            StatusChip {
+                label: qsTr("Reason")
+                value: qsTr("Primary role assignment")
+                accent: homeChat.modeAccent
+                muted: true
+            }
+        }
+
         Label {
             Layout.fillWidth: true
             visible: homeChat.viewModel.conversationSummaryGenerationStatus === "Planned"
@@ -872,13 +900,18 @@ ShellPanel {
                 SentinelButton {
                     id: sendButton
                     visible: true
-                    text: qsTr("Send")
+                    text: homeChat.sendBusy ? qsTr("Stop") : qsTr("Send")
                     Layout.preferredWidth: 82
                     Layout.alignment: Qt.AlignBottom
-                    enabled: promptInput.text.trim().length > 0 && homeChat.canSend
-                             && !homeChat.sendBusy
+                    enabled: homeChat.sendBusy || (promptInput.text.trim().length > 0
+                                                   && homeChat.canSend)
                     opacity: enabled ? 1.0 : 0.58
-                    onClicked: homeChat.sendComposerText()
+                    onClicked: {
+                        if (homeChat.sendBusy)
+                            homeChat.viewModel.cancelLocalInference()
+                        else
+                            homeChat.sendComposerText()
+                    }
                 }
             }
         }

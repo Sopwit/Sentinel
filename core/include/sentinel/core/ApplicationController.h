@@ -797,6 +797,8 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QStringList hybridBridgeChecks READ hybridBridgeChecks NOTIFY contextAssemblyChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
+    Q_PROPERTY(int localInferenceTimeoutMs READ localInferenceTimeoutMs WRITE
+                   setLocalInferenceTimeoutMs NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
     Q_PROPERTY(QString localInferenceRuntimeState READ localInferenceRuntimeState NOTIFY
                    localInferenceChanged)
@@ -1641,6 +1643,8 @@ public:
     QStringList hybridBridgeChecks() const;
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
+    int localInferenceTimeoutMs() const;
+    void setLocalInferenceTimeoutMs(int timeoutMs);
     bool localInferenceBusy() const;
     QString localInferenceRuntimeState() const;
     QString localInferenceStatus() const;
@@ -2049,6 +2053,7 @@ private:
     bool localChatInferenceEnabled_ = false;
     bool promptContextInjectionEnabled_ = false;
     bool localInferenceStreamingEnabled_ = false;
+    int localInferenceTimeoutMs_ = 30000;
     bool localInferenceBusy_ = false;
     bool activeLocalInferenceIsChatRequest_ = false;
     bool activeLocalInferenceIsSummaryRequest_ = false;

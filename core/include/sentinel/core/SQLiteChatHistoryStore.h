@@ -31,7 +31,7 @@ private:
     void initializeSchema();
     void setLastError(QString error) const;
 
-    static constexpr int currentSchemaVersion = 1;
+    static constexpr int currentSchemaVersion = 2;
 
     QString databasePath_;
     QString connectionName_;

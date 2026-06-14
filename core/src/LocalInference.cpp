@@ -12,7 +12,9 @@
 #include <QTimer>
 #include <QVariant>
 
+#include <atomic>
 #include <functional>
+#include <memory>
 #include <utility>
 
 namespace sentinel::core {
@@ -131,6 +133,23 @@ JsonReply postJson(const QUrl& url, const QJsonObject& body, int timeoutMs) {
     }
 
     return JsonReply{true, false, document, {}, QNetworkReply::NoError};
+}
+
+bool cancellationRequested(const LocalInferenceRequest& request) {
+    return request.options.cancellationRequested ||
+           (request.options.cancellationToken && request.options.cancellationToken->load());
+}
+
+int approximateTokenCount(const QString& text) {
+    const auto words = text.simplified().split(QLatin1Char(' '), Qt::SkipEmptyParts).size();
+    return words <= 0 ? 0 : static_cast<int>(words);
+}
+
+double tokensPerSecond(int tokens, qint64 latencyMs) {
+    if (tokens <= 0 || latencyMs <= 0) {
+        return 0.0;
+    }
+    return static_cast<double>(tokens) / (static_cast<double>(latencyMs) / 1000.0);
 }
 
 bool hasRedirectStatus(QNetworkReply* reply) {
@@ -363,30 +382,51 @@ bool LocalInferenceWorker::hasActiveThread() const {
     return activeThread_ && activeThread_->isRunning();
 }
 
+bool LocalInferenceWorker::requestCancelled(const LocalInferenceRequest& request) const {
+    return cancellationRequested(request);
+}
+
 bool LocalInferenceWorker::startInference(const LocalInferenceRequest& request,
                                           LocalInferenceFinishedCallback onFinished) {
     if (!inferenceClient_ || hasActiveThread()) {
         return false;
     }
 
+    auto requestWithToken = request;
+    requestWithToken.options.cancellationToken = std::make_shared<std::atomic_bool>(false);
+    activeCancellationToken_ = requestWithToken.options.cancellationToken;
+
     if (!threadedInference_) {
         QElapsedTimer timer;
         timer.start();
-        auto response = inferenceClient_->infer(request);
+        auto response = inferenceClient_->infer(requestWithToken);
         response.latencyMs = timer.elapsed();
-        if (onFinished) {
-            onFinished(request.id, response);
+        if (!response.text.isEmpty() && response.firstTokenLatencyMs < 0) {
+            response.firstTokenLatencyMs = response.latencyMs;
         }
+        response.approximateOutputTokens = approximateTokenCount(response.text);
+        response.approximateTokensPerSecond =
+            tokensPerSecond(response.approximateOutputTokens, response.latencyMs);
+        if (onFinished) {
+            onFinished(requestWithToken.id, response);
+        }
+        activeCancellationToken_.reset();
         return true;
     }
 
     const QPointer<QObject> context{callbackContext_};
-    auto* thread =
-        QThread::create([this, request, onFinished = std::move(onFinished), context]() mutable {
+    auto* thread = QThread::create([this, request = std::move(requestWithToken),
+                                    onFinished = std::move(onFinished), context]() mutable {
             QElapsedTimer timer;
             timer.start();
             auto response = inferenceClient_->infer(request);
             response.latencyMs = timer.elapsed();
+            if (!response.text.isEmpty() && response.firstTokenLatencyMs < 0) {
+                response.firstTokenLatencyMs = response.latencyMs;
+            }
+            response.approximateOutputTokens = approximateTokenCount(response.text);
+            response.approximateTokensPerSecond =
+                tokensPerSecond(response.approximateOutputTokens, response.latencyMs);
             if (!context) {
                 return;
             }
@@ -401,6 +441,7 @@ bool LocalInferenceWorker::startInference(const LocalInferenceRequest& request,
                         activeThread_->deleteLater();
                     }
                     activeThread_ = nullptr;
+                    activeCancellationToken_.reset();
                 },
                 Qt::QueuedConnection);
         });
@@ -417,21 +458,28 @@ bool LocalInferenceWorker::startStream(const LocalInferenceRequest& request,
         return false;
     }
 
+    auto requestWithToken = request;
+    requestWithToken.options.cancellationToken = std::make_shared<std::atomic_bool>(false);
+    activeCancellationToken_ = requestWithToken.options.cancellationToken;
+
     if (!threadedStream_) {
         auto result = streamClient_->startStream(
-            request, [this, &request, &onChunk](const LocalInferenceStreamChunk& chunk) {
+            requestWithToken, [this, &requestWithToken,
+                               &onChunk](const LocalInferenceStreamChunk& chunk) {
                 if (onChunk) {
-                    onChunk(request.id, chunk);
+                    onChunk(requestWithToken.id, chunk);
                 }
             });
         if (onFinished) {
-            onFinished(request.id, result);
+            onFinished(requestWithToken.id, result);
         }
+        activeCancellationToken_.reset();
         return true;
     }
 
     const QPointer<QObject> context{callbackContext_};
-    auto* thread = QThread::create([this, request, onChunk = std::move(onChunk),
+    auto* thread = QThread::create([this, request = std::move(requestWithToken),
+                                    onChunk = std::move(onChunk),
                                     onFinished = std::move(onFinished), context]() mutable {
         auto result = streamClient_->startStream(
             request, [requestId = request.id, onChunk,
@@ -462,6 +510,7 @@ bool LocalInferenceWorker::startStream(const LocalInferenceRequest& request,
                     activeThread_->deleteLater();
                 }
                 activeThread_ = nullptr;
+                activeCancellationToken_.reset();
             },
             Qt::QueuedConnection);
     });
@@ -473,6 +522,9 @@ bool LocalInferenceWorker::startStream(const LocalInferenceRequest& request,
 
 void LocalInferenceWorker::cancel(const QString& requestId) {
     Q_UNUSED(requestId);
+    if (activeCancellationToken_) {
+        activeCancellationToken_->store(true);
+    }
 }
 
 QString LocalInferenceWorker::statusSummary() const {
@@ -534,7 +586,7 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
         return response;
     }
 
-    if (request.options.cancellationRequested) {
+    if (cancellationRequested(request)) {
         response.status = LocalInferenceStatus::Blocked;
         response.error = LocalInferenceError::RequestFailed;
         response.summary =
@@ -618,6 +670,7 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
     response.status = LocalInferenceStatus::Succeeded;
     response.error = LocalInferenceError::None;
     response.text = text;
+    response.approximateOutputTokens = approximateTokenCount(text);
     response.summary = QStringLiteral("Local inference completed through Ollama /api/generate.");
     response.traces.append(trace(3, QStringLiteral("Generation"), QStringLiteral("Succeeded"),
                                  QStringLiteral("Local Ollama generation completed without "
@@ -709,7 +762,7 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
         return result;
     }
 
-    if (request.options.cancellationRequested) {
+    if (cancellationRequested(request)) {
         result.status = LocalInferenceStreamStatus::Cancelled;
         result.error = LocalInferenceError::RequestFailed;
         result.cancelled = true;
@@ -744,10 +797,14 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     QEventLoop loop;
     QTimer timer;
     timer.setSingleShot(true);
+    QTimer cancellationTimer;
+    cancellationTimer.setInterval(25);
 
     QByteArray pending;
     int sequence = 0;
     bool done = false;
+    QElapsedTimer elapsed;
+    elapsed.start();
 
     QNetworkReply* reply =
         manager.post(networkRequest, QJsonDocument(body).toJson(QJsonDocument::Compact));
@@ -800,6 +857,9 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
         ++sequence;
         done = done || finalChunk;
         result.accumulatedText.append(text);
+        if (!text.isEmpty() && result.firstTokenLatencyMs < 0) {
+            result.firstTokenLatencyMs = elapsed.elapsed();
+        }
         LocalInferenceStreamChunk chunk{
             sequence,
             text,
@@ -828,11 +888,30 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     });
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(&cancellationTimer, &QTimer::timeout, &loop, [&]() {
+        if (cancellationRequested(request)) {
+            reply->abort();
+            loop.quit();
+        }
+    });
     const auto timeoutMs = result.timeoutMs > 0 ? result.timeoutMs : timeoutMs_;
     timer.start(timeoutMs);
+    cancellationTimer.start();
     result.status = LocalInferenceStreamStatus::Streaming;
     result.summary = QStringLiteral("Local Ollama streaming generation is active.");
     loop.exec();
+    cancellationTimer.stop();
+    result.latencyMs = elapsed.elapsed();
+
+    if (cancellationRequested(request)) {
+        reply->abort();
+        result.status = LocalInferenceStreamStatus::Cancelled;
+        result.error = LocalInferenceError::RequestFailed;
+        result.cancelled = true;
+        result.summary = QStringLiteral("Local Ollama streaming generation was cancelled.");
+        reply->deleteLater();
+        return result;
+    }
 
     if (timer.isActive()) {
         timer.stop();
@@ -873,7 +952,7 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
 
     reply->deleteLater();
 
-    if (request.options.cancellationRequested) {
+    if (cancellationRequested(request)) {
         result.status = LocalInferenceStreamStatus::Cancelled;
         result.error = LocalInferenceError::RequestFailed;
         result.cancelled = true;
@@ -892,6 +971,9 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
 
     result.status = LocalInferenceStreamStatus::Completed;
     result.error = LocalInferenceError::None;
+    result.approximateOutputTokens = approximateTokenCount(result.accumulatedText);
+    result.approximateTokensPerSecond =
+        tokensPerSecond(result.approximateOutputTokens, result.latencyMs);
     result.summary = result.malformedChunkCount > 0
                          ? QStringLiteral("Local Ollama streaming completed with %1 malformed "
                                           "chunk(s) ignored.")

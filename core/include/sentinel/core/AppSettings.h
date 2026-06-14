@@ -28,6 +28,8 @@ class AppSettings final : public QObject {
                    setLocalChatInferenceEnabled NOTIFY localChatInferenceEnabledChanged)
     Q_PROPERTY(bool localInferenceStreamingEnabled READ localInferenceStreamingEnabled WRITE
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceStreamingEnabledChanged)
+    Q_PROPERTY(int localInferenceTimeoutMs READ localInferenceTimeoutMs WRITE
+                   setLocalInferenceTimeoutMs NOTIFY localInferenceTimeoutMsChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionEnabledChanged)
     Q_PROPERTY(bool semanticPromptInclusionEnabled READ semanticPromptInclusionEnabled WRITE
@@ -101,6 +103,8 @@ public:
     void setLocalChatInferenceEnabled(bool enabled);
     bool localInferenceStreamingEnabled() const;
     void setLocalInferenceStreamingEnabled(bool enabled);
+    int localInferenceTimeoutMs() const;
+    void setLocalInferenceTimeoutMs(int timeoutMs);
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
     bool semanticPromptInclusionEnabled() const;
@@ -151,6 +155,7 @@ signals:
     void selectedModelRoleChanged();
     void localChatInferenceEnabledChanged();
     void localInferenceStreamingEnabledChanged();
+    void localInferenceTimeoutMsChanged();
     void promptContextInjectionEnabledChanged();
     void semanticPromptInclusionEnabledChanged();
     void contextExplainabilityVisibleChanged();
@@ -183,6 +188,7 @@ private:
     static constexpr auto selectedRoleModelKeyPrefix = "selectedModelRole.";
     static constexpr auto localChatInferenceEnabledKey = "localChatInferenceEnabled";
     static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
+    static constexpr auto localInferenceTimeoutMsKey = "localInferenceTimeoutMs";
     static constexpr auto promptContextInjectionEnabledKey = "promptContextInjectionEnabled";
     static constexpr auto semanticPromptInclusionEnabledKey = "semanticPromptInclusionEnabled";
     static constexpr auto contextExplainabilityVisibleKey = "contextExplainabilityVisible";
@@ -212,6 +218,7 @@ private:
     static constexpr auto defaultUpdateCheckPolicy = "Ask Before Checking";
     static constexpr auto defaultNotificationPolicy = "Important Only";
     static constexpr auto defaultOnboardingUseCase = "General Assistant";
+    static constexpr int defaultLocalInferenceTimeoutMs = 30000;
 
     std::unique_ptr<ISettingsStore> store_;
 };

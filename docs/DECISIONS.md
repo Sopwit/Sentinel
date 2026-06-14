@@ -219,6 +219,34 @@ Out of scope:
   execution, automatic multi-model routing, parallel agentic execution, telemetry, native OS
   notifications, tools, and autonomous agents.
 
+## 1.9 Real Local AI Execution Boundary
+
+Decision: Phase 50A permits foreground local inference execution only through explicit local
+provider boundaries.
+
+Reason: Sentinel needs to become useful as a local AI application while preserving its privacy and
+authority model.
+
+Runtime behavior:
+
+- Ollama is the only provider with real execution in this phase.
+- Ollama calls are loopback HTTP only and use `/api/tags` for installed model metadata and
+  `/api/generate` for chat generation.
+- Streaming is allowed for foreground chat requests and exposes incremental text, generating
+  state, Stop/cancel, stale request rejection, and user-facing errors.
+- Each chat send resolves to one provider and one model. There is no fallback, parallel routing,
+  or agentic fan-out.
+- Execution metadata is local and bounded: provider, model, route/role, timestamps through chat
+  history, total duration, first-token latency, and approximate tokens/sec.
+- OpenAI-compatible Local, LM Studio, and llama.cpp server are selectable local targets but remain
+  configuration-required until explicit loopback endpoint/model configuration and clients exist.
+
+Out of scope:
+
+- Cloud fallback, cloud provider execution, telemetry, autonomous agents, tool execution,
+  subprocesses, filesystem scanning, background indexing, automatic model downloads, `ollama pull`,
+  automatic updates, hidden retries, and background provider probing.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.

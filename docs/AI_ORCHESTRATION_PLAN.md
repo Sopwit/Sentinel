@@ -1,5 +1,16 @@
 # AI Orchestration Plan
 
+Phase 50A activates real foreground local AI execution for the first provider boundary. Ollama is
+the executable local provider through loopback HTTP only. Chat requests resolve to one provider,
+one role, and one model, then execute through `ApplicationController` and the local inference
+worker. Streaming responses are incremental in QML, cancellable, and protected by request-id stale
+response rejection. Runtime diagnostics expose provider/model/role, request id, total duration,
+first-token latency, and approximate tokens/sec. OpenAI-compatible Local, LM Studio, and llama.cpp
+server are selectable local provider targets but remain configuration-required and non-executing
+until endpoint/model configuration and clients are explicitly added. There is no automatic
+multi-agent execution, parallel routing, tool execution, cloud fallback, telemetry, filesystem
+scanning, background indexing, or model download behavior.
+
 Phase 49.7 completes the Local AI Ecosystem Foundation as metadata only. Model Library exposes
 installed Ollama metadata plus disabled/discoverable placeholders for LM Studio, llama.cpp server,
 OpenAI-compatible local endpoints, Hugging Face metadata, and custom catalogs. Provider discovery

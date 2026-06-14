@@ -354,6 +354,25 @@ QByteArray jsonTranscript(const QList<ChatMessage>& messages, const QString& exp
         object.insert(QStringLiteral("status"), chatMessageStatusName(message.status));
         object.insert(QStringLiteral("timestamp"), message.timestamp.toUTC().toString(Qt::ISODate));
         object.insert(QStringLiteral("content"), message.content);
+        if (!message.providerUsed.isEmpty() || !message.modelUsed.isEmpty() ||
+            !message.roleUsed.isEmpty()) {
+            QJsonObject metadata;
+            metadata.insert(QStringLiteral("provider"), message.providerUsed);
+            metadata.insert(QStringLiteral("model"), message.modelUsed);
+            metadata.insert(QStringLiteral("role"), message.roleUsed);
+            if (message.responseDurationMs >= 0) {
+                metadata.insert(QStringLiteral("responseDurationMs"), message.responseDurationMs);
+            }
+            if (message.firstTokenLatencyMs >= 0) {
+                metadata.insert(QStringLiteral("firstTokenLatencyMs"),
+                                message.firstTokenLatencyMs);
+            }
+            if (message.approximateTokensPerSecond > 0.0) {
+                metadata.insert(QStringLiteral("approxTokensPerSecond"),
+                                message.approximateTokensPerSecond);
+            }
+            object.insert(QStringLiteral("execution"), metadata);
+        }
         messageArray.append(object);
     }
 
@@ -1712,6 +1731,9 @@ QString ApplicationController::selectedRuntimeProvider() const {
 void ApplicationController::setSelectedRuntimeProvider(const QString& providerId) {
     const auto normalized = providerId.trimmed().toLower();
     const auto selected = (normalized == QStringLiteral("ollama") ||
+                           normalized == QStringLiteral("openai-compatible-local") ||
+                           normalized == QStringLiteral("lm-studio") ||
+                           normalized == QStringLiteral("llama-cpp-server") ||
                            normalized == QStringLiteral("openai-compatible") ||
                            normalized == QStringLiteral("claude") ||
                            normalized == QStringLiteral("gemini"))
@@ -4406,6 +4428,21 @@ void ApplicationController::setLocalInferenceStreamingEnabled(bool enabled) {
     emit localInferenceChanged();
 }
 
+int ApplicationController::localInferenceTimeoutMs() const {
+    return localInferenceTimeoutMs_;
+}
+
+void ApplicationController::setLocalInferenceTimeoutMs(int timeoutMs) {
+    const auto normalized = std::clamp(timeoutMs, 1000, 300000);
+    if (normalized == localInferenceTimeoutMs_) {
+        return;
+    }
+
+    localInferenceTimeoutMs_ = normalized;
+    emit localInferenceChanged();
+    emit localChatInferenceRoutingChanged();
+}
+
 bool ApplicationController::localInferenceBusy() const {
     return localInferenceBusy_;
 }
@@ -4449,10 +4486,24 @@ QString ApplicationController::localInferenceLastResponseSummary() const {
 }
 
 QString ApplicationController::localInferenceLatencySummary() const {
-    return latestLocalInferenceResponse_.latencyMs >= 0
-               ? QStringLiteral("Last local inference latency: %1 ms.")
-                     .arg(latestLocalInferenceResponse_.latencyMs)
-               : QStringLiteral("No local inference latency recorded.");
+    if (latestLocalInferenceResponse_.latencyMs < 0) {
+        return QStringLiteral("No local inference latency recorded.");
+    }
+
+    QStringList parts{
+        QStringLiteral("Total: %1 ms").arg(latestLocalInferenceResponse_.latencyMs),
+    };
+    if (latestLocalInferenceResponse_.firstTokenLatencyMs >= 0) {
+        parts.append(QStringLiteral("First token: %1 ms")
+                         .arg(latestLocalInferenceResponse_.firstTokenLatencyMs));
+    }
+    if (latestLocalInferenceResponse_.approximateOutputTokens > 0) {
+        parts.append(QStringLiteral("Approx: %1 tokens, %2 tok/s")
+                         .arg(latestLocalInferenceResponse_.approximateOutputTokens)
+                         .arg(QString::number(
+                             latestLocalInferenceResponse_.approximateTokensPerSecond, 'f', 1)));
+    }
+    return parts.join(QStringLiteral(" / "));
 }
 
 QStringList ApplicationController::localInferenceTraceSummaries() const {
@@ -7128,9 +7179,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         LocalInferenceRequest request;
         request.prompt = trimmed;
         request.options.model = effectiveLocalModel({});
-        const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
-        request.options.timeoutMs =
-            localInferenceStreamingEnabled_ ? config.streamTimeoutMs : config.generateTimeoutMs;
+        request.options.timeoutMs = localInferenceTimeoutMs_;
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::BusyRequest,
             QStringLiteral("Local inference request rejected: another request is already "
@@ -7300,8 +7349,7 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         LocalInferenceRequest request;
         request.prompt = prompt.trimmed();
         request.options.model = effectiveLocalModel(model);
-        const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
-        request.options.timeoutMs = config.generateTimeoutMs;
+        request.options.timeoutMs = localInferenceTimeoutMs_;
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::BusyRequest,
             QStringLiteral("Local inference request rejected: another request is already "
@@ -7313,8 +7361,7 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
     LocalInferenceRequest request;
     request.prompt = prompt.trimmed();
     request.options.model = effectiveLocalModel(model);
-    const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
-    request.options.timeoutMs = config.generateTimeoutMs;
+    request.options.timeoutMs = localInferenceTimeoutMs_;
     latestLocalInferenceStreamResult_.accumulatedText.clear();
 
     if (request.prompt.isEmpty()) {
@@ -7523,8 +7570,7 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
         request.prompt = prompt.trimmed();
         request.options.model = effectiveLocalModel(model);
         request.options.streamingRequested = true;
-        const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
-        request.options.timeoutMs = config.streamTimeoutMs;
+        request.options.timeoutMs = localInferenceTimeoutMs_;
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::BusyRequest,
             QStringLiteral("Local streaming request rejected: another request is already "
@@ -7539,8 +7585,7 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
     request.prompt = prompt.trimmed();
     request.options.model = effectiveLocalModel(model);
     request.options.streamingRequested = true;
-    const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
-    request.options.timeoutMs = config.streamTimeoutMs;
+    request.options.timeoutMs = localInferenceTimeoutMs_;
 
     auto blockStream = [this,
                         &request](LocalInferenceError error, const QString& summary,
@@ -7765,8 +7810,7 @@ void ApplicationController::finishLocalInferenceRequest(const QString& requestId
     }
     latestLocalInferenceResponse_ = response;
     if (latestLocalInferenceResponse_.timeoutMs <= 0) {
-        latestLocalInferenceResponse_.timeoutMs =
-            ollamaRuntimeClient_ ? ollamaRuntimeClient_->config().generateTimeoutMs : 30000;
+        latestLocalInferenceResponse_.timeoutMs = localInferenceTimeoutMs_;
     }
     if (latestLocalInferenceResponse_.status != LocalInferenceStatus::Succeeded) {
         latestLocalInferenceResponse_.text.clear();
@@ -7823,8 +7867,7 @@ void ApplicationController::finishLocalInferenceStreamRequest(
     activeLocalInferenceConversationId_.clear();
     latestLocalInferenceStreamResult_ = result;
     if (latestLocalInferenceStreamResult_.timeoutMs <= 0) {
-        latestLocalInferenceStreamResult_.timeoutMs =
-            ollamaRuntimeClient_ ? ollamaRuntimeClient_->config().streamTimeoutMs : 30000;
+        latestLocalInferenceStreamResult_.timeoutMs = localInferenceTimeoutMs_;
     }
     latestLocalInferenceStreamResult_.accumulatedText.clear();
     latestLocalInferenceResponse_.model = result.model;
@@ -7833,6 +7876,11 @@ void ApplicationController::finishLocalInferenceStreamRequest(
     latestLocalInferenceResponse_.error = result.error;
     latestLocalInferenceResponse_.summary = result.summary;
     latestLocalInferenceResponse_.timeoutMs = latestLocalInferenceStreamResult_.timeoutMs;
+    latestLocalInferenceResponse_.latencyMs = result.latencyMs;
+    latestLocalInferenceResponse_.firstTokenLatencyMs = result.firstTokenLatencyMs;
+    latestLocalInferenceResponse_.approximateOutputTokens = result.approximateOutputTokens;
+    latestLocalInferenceResponse_.approximateTokensPerSecond =
+        result.approximateTokensPerSecond;
     if (result.status != LocalInferenceStreamStatus::Completed) {
         latestLocalInferenceResponse_.text.clear();
     }
@@ -7865,10 +7913,17 @@ void ApplicationController::finalizeLocalChatInference(bool succeeded) {
                                  latestLocalInferenceResponse_.latencyMs);
     setChatSendLifecycle(succeeded ? QStringLiteral("completed") : QStringLiteral("failed"),
                          latestLocalInferenceResponse_.summary);
-    const auto assistantMessage = chatSession_->appendAssistantMessage(
+    auto assistantMessage = chatSession_->appendAssistantMessage(
         succeeded ? latestLocalInferenceResponse_.text
                   : localInferenceChatFailureMessage(latestLocalInferenceResponse_),
         succeeded ? ChatMessageStatus::Received : ChatMessageStatus::Error);
+    assistantMessage.providerUsed = QStringLiteral("ollama");
+    assistantMessage.modelUsed = latestLocalInferenceResponse_.model;
+    assistantMessage.roleUsed = QStringLiteral("primary");
+    assistantMessage.responseDurationMs = latestLocalInferenceResponse_.latencyMs;
+    assistantMessage.firstTokenLatencyMs = latestLocalInferenceResponse_.firstTokenLatencyMs;
+    assistantMessage.approximateTokensPerSecond =
+        latestLocalInferenceResponse_.approximateTokensPerSecond;
     persistActiveConversationMessage(assistantMessage);
     if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
         chatHistoryStore_->appendMessage(assistantMessage);
@@ -8336,13 +8391,27 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
     const OllamaRuntimeProvider ollamaProvider{
         ollamaEndpoint(), health, models, selectedLocalModel_, localChatInferenceEnabled_,
         localInferenceBusy_};
-    const OpenAICompatibleRuntimeProvider openAiCompatibleProvider;
-    const ClaudeRuntimeProvider claudeProvider;
-    const GeminiRuntimeProvider geminiProvider;
+    const OpenAICompatibleLocalRuntimeProvider openAiCompatibleLocalProvider{
+        QStringLiteral("openai-compatible-local"),
+        QStringLiteral("OpenAI-compatible Local"),
+        QStringLiteral("Loopback endpoint not configured"),
+        selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local") ? selectedLocalModel_
+                                                                              : QString()};
+    const OpenAICompatibleLocalRuntimeProvider lmStudioProvider{
+        QStringLiteral("lm-studio"),
+        QStringLiteral("LM Studio"),
+        QStringLiteral("OpenAI-compatible loopback endpoint not configured"),
+        selectedRuntimeProvider_ == QStringLiteral("lm-studio") ? selectedLocalModel_ : QString()};
+    const OpenAICompatibleLocalRuntimeProvider llamaCppProvider{
+        QStringLiteral("llama-cpp-server"),
+        QStringLiteral("llama.cpp server"),
+        QStringLiteral("OpenAI-compatible loopback endpoint not configured"),
+        selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ? selectedLocalModel_
+                                                                        : QString()};
 
     return RuntimeProviderRegistry{
-        {ollamaProvider.descriptor(), openAiCompatibleProvider.descriptor(),
-         claudeProvider.descriptor(), geminiProvider.descriptor()},
+        {ollamaProvider.descriptor(), openAiCompatibleLocalProvider.descriptor(),
+         lmStudioProvider.descriptor(), llamaCppProvider.descriptor()},
         selectedRuntimeProvider_,
     };
 }
