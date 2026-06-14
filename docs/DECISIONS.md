@@ -1,5 +1,28 @@
 # Architecture Decisions
 
+## 1.0 Release-Candidate Packaging Does Not Grant Runtime Authority
+
+Decision: Phase 52 release metadata, package metadata, QA plans, and GitHub project templates are
+release-readiness surfaces only.
+
+Reason: Packaging can accidentally introduce hidden update checks, telemetry, signing assumptions,
+or package-manager side effects. Sentinel's release-candidate work must preserve the same explicit
+authority model as the app runtime.
+
+Runtime behavior:
+
+- About and Diagnostics expose safe build metadata: app version, project version, build number, git
+  commit, build type, platform, architecture, and Qt version.
+- macOS, Windows, and Linux metadata is prepared for explicit packaging jobs.
+- Update documentation describes future Sparkle-style, WinSparkle/MSIX-style, Flatpak, AppImage,
+  RPM, and DEB approaches but does not implement update networking.
+
+Out of scope:
+
+- Telemetry, hidden cloud calls, silent update checks, automatic downloads, automatic installs,
+  signing/notarization credentials, package upload credentials, autonomous behavior, new runtime
+  authority, provider fallback, tool execution, and background indexing.
+
 ## 1. Cross-platform Qt Desktop
 
 Decision: Sentinel uses C++20, Qt 6, and QML for a cross-platform desktop application.

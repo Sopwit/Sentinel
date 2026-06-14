@@ -3419,23 +3419,20 @@ QString DesktopShellViewModel::updateWorkflowState() const {
 
 QStringList DesktopShellViewModel::releaseNotesSummaries() const {
     return {
-        QStringLiteral("Sentinel %1 - Phase 51 product-excellence readiness")
+        QStringLiteral("Sentinel %1 - Phase 52 packaging and 1.0 RC readiness")
             .arg(core::AppMetadata::version()),
-        QStringLiteral("Onboarding, About, Notifications, Accessibility, Diagnostics, and Export previews are local UI surfaces."),
+        QStringLiteral("Packaging metadata, release presets, QA plan, and release checklist are prepared without adding runtime authority."),
         QStringLiteral("Manual update check is explicit; no background polling, silent download, or automatic install exists."),
     };
 }
 
 QStringList DesktopShellViewModel::aboutSentinelSummaries() const {
-    return {
-        QStringLiteral("Version: %1").arg(core::AppMetadata::version()),
-        QStringLiteral("Build: Local desktop build"),
-        QStringLiteral("Qt: %1").arg(QString::fromLatin1(qVersion())),
-        QStringLiteral("Commit: local workspace"),
-        QStringLiteral("License: project license and third-party notices in local docs"),
-        QStringLiteral("Docs: docs/PRIVACY.md, docs/SECURITY.md, docs/UPDATES.md, docs/DIAGNOSTICS.md"),
-        QStringLiteral("Platform: %1 / %2").arg(QSysInfo::prettyProductName(), QSysInfo::currentCpuArchitecture()),
-    };
+    auto summaries = core::AppMetadata::safeBuildSummaries();
+    summaries.append(QStringLiteral("Qt: %1").arg(QString::fromLatin1(qVersion())));
+    summaries.append(QStringLiteral("Copyright: %1").arg(core::AppMetadata::copyright()));
+    summaries.append(QStringLiteral("License: project license and third-party notices in local docs"));
+    summaries.append(QStringLiteral("Docs: docs/PRIVACY.md, docs/SECURITY.md, docs/UPDATES.md, docs/DIAGNOSTICS.md"));
+    return summaries;
 }
 
 QStringList DesktopShellViewModel::accessibilitySummaries() const {
@@ -3450,15 +3447,17 @@ QStringList DesktopShellViewModel::accessibilitySummaries() const {
 }
 
 QStringList DesktopShellViewModel::diagnosticsCenterSummaries() const {
-    return {
-        QStringLiteral("Sentinel version: %1").arg(core::AppMetadata::version()),
+    auto summaries = core::AppMetadata::safeBuildSummaries();
+    summaries.append({
         QStringLiteral("Active provider: %1").arg(controller_.activeRuntimeProviderLabel()),
         QStringLiteral("Active model: %1").arg(controller_.activeRuntimeModelLabel()),
         QStringLiteral("Workspace count: %1").arg(workspaceIds().size()),
         QStringLiteral("Brain entries: %1").arg(memoryEntryCount()),
         QStringLiteral("Task statistics: %1").arg(controlledTaskDiagnosticsSummary()),
         QStringLiteral("Notification statistics: %1").arg(notificationLifecycleSummaries().join(QStringLiteral(" / "))),
-    };
+        QStringLiteral("Logs: no automatic log collection or upload"),
+    });
+    return summaries;
 }
 
 QStringList DesktopShellViewModel::exportPreviewSummaries() const {
@@ -4696,6 +4695,13 @@ bool DesktopShellViewModel::exportDiagnostics(const QString& format) {
     if (extension == QStringLiteral("json")) {
         QJsonObject root;
         root.insert(QStringLiteral("version"), core::AppMetadata::version());
+        root.insert(QStringLiteral("projectVersion"), core::AppMetadata::projectVersion());
+        root.insert(QStringLiteral("buildNumber"), core::AppMetadata::buildNumber());
+        root.insert(QStringLiteral("gitCommit"), core::AppMetadata::gitCommit());
+        root.insert(QStringLiteral("buildType"), core::AppMetadata::buildType());
+        root.insert(QStringLiteral("platform"), core::AppMetadata::platform());
+        root.insert(QStringLiteral("architecture"), core::AppMetadata::architecture());
+        root.insert(QStringLiteral("qtVersion"), QString::fromLatin1(qVersion()));
         root.insert(QStringLiteral("activeProvider"), controller_.activeRuntimeProviderLabel());
         root.insert(QStringLiteral("activeModel"), controller_.activeRuntimeModelLabel());
         root.insert(QStringLiteral("workspaceCount"), workspaceIds().size());

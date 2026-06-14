@@ -1,3 +1,9 @@
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/sentinel/core/AppBuildConfig.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/include/sentinel/core/AppBuildConfig.h
+    @ONLY
+)
+
 add_library(sentinel_core STATIC
     include/sentinel/core/AppMetadata.h
     include/sentinel/core/AppSettings.h
@@ -167,6 +173,7 @@ add_library(sentinel_core STATIC
 target_include_directories(sentinel_core
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_BINARY_DIR}/include
 )
 
 target_link_libraries(sentinel_core

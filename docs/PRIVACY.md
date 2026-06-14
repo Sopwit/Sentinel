@@ -2,6 +2,15 @@
 
 Sentinel is local-first and privacy-first.
 
+## Phase 52 Release Guarantees
+
+- Build metadata shown in About and Diagnostics is local static metadata.
+- Diagnostics export remains user-initiated and local.
+- Packaging metadata does not add telemetry, analytics upload, hidden cloud activation, hidden
+  update checks, or package-manager calls.
+- Future update channels must be explicit, signed, user-visible, and separately reviewed before
+  network behavior is enabled.
+
 ## Phase 51 Guarantees
 
 - Onboarding, theme, AI provider choice, accessibility, notification lifecycle, update workflow

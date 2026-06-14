@@ -36,6 +36,7 @@ set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Senti
 set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.icns)
 set(SENTINEL_APP_ICON_ICO ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.ico)
 set(SENTINEL_WINDOWS_RESOURCE ${CMAKE_CURRENT_BINARY_DIR}/sentinel-desktop.rc)
+set(SENTINEL_MACOS_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/macos/Info.plist.in)
 
 set_source_files_properties(${SENTINEL_APP_ICON_PNG}
     PROPERTIES
@@ -154,8 +155,9 @@ set_target_properties(sentinel-desktop PROPERTIES
     MACOSX_BUNDLE_BUNDLE_NAME "Sentinel Desktop"
     MACOSX_BUNDLE_GUI_IDENTIFIER "dev.sentinel.Sentinel"
     MACOSX_BUNDLE_ICON_FILE "dev.sentinel.Sentinel.icns"
+    MACOSX_BUNDLE_INFO_PLIST ${SENTINEL_MACOS_INFO_PLIST}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION}
-    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_BUNDLE_VERSION ${SENTINEL_BUILD_NUMBER}
     WIN32_EXECUTABLE TRUE
 )
 
@@ -178,5 +180,9 @@ if(UNIX AND NOT APPLE)
 
     install(FILES ${SENTINEL_APP_ICON_PNG}
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/icons/hicolor/1024x1024/apps
+    )
+
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dev.sentinel.Sentinel.metainfo.xml
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
     )
 endif()

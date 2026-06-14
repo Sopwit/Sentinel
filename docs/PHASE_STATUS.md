@@ -2,6 +2,34 @@
 
 ## Completed / Stable
 
+### Phase 52: Packaging, Distribution & Sentinel 1.0 Release Candidate Preparation
+
+Completed. Prepares Sentinel for a professional cross-platform 1.0 release-candidate validation
+pass while preserving MVVM boundaries and explicit user authority.
+
+Scope:
+
+- Added generated build metadata for app version, numeric project version, build number, git
+  commit hash when available, build type, platform, architecture, Qt version exposure, and safe
+  diagnostics export.
+- Added/refined CMake presets for Debug, Tests, Release, RelWithDebInfo, and package-ready local
+  validation builds.
+- Prepared macOS bundle metadata, Windows executable/version metadata, Linux desktop metadata,
+  AppStream metadata, and icon installation coverage.
+- Added packaging, QA, CI, release checklist, changelog, release notes, contributing, root security,
+  issue template, and PR template documentation.
+- Documented manual-only update readiness and future Sparkle-style, WinSparkle/MSIX-style, and
+  Linux package-manager/AppImage/Flatpak update strategies.
+- Added Sentinel 1.0 RC checklist coverage for build, tests, packaging, privacy, security,
+  accessibility, update behavior, known limitations, and platform validation.
+
+Known limitation:
+
+- Packaging helpers do not sign, notarize, publish, upload, or contact update feeds.
+- Missing packaging tools are intentionally not required for normal configure/build/test flows.
+- Offscreen smoke launch in the current environment may still exit 139 and remains a known
+  launch-environment limitation after successful build and tests.
+
 ### Phase 51: Product Excellence & Ecosystem
 
 Completed. Adds Sentinel 1.0 Release Candidate product-readiness surfaces while preserving the

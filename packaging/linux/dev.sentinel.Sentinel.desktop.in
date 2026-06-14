@@ -2,9 +2,10 @@
 Type=Application
 Version=1.0
 Name=Sentinel Desktop
-Comment=Local-first AI operating layer desktop shell
+Comment=Local-first AI desktop assistant
 Exec=sentinel-desktop
 Icon=dev.sentinel.Sentinel
 Terminal=false
-Categories=Utility;Qt;
+Categories=Utility;Office;Qt;
+Keywords=AI;Assistant;Local;Privacy;Qt;
 StartupWMClass=Sentinel Desktop
