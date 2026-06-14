@@ -16,6 +16,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ConversationSession.h
     include/sentinel/core/ConversationHistoryMetadata.h
     include/sentinel/core/ConversationStateGraph.h
+    include/sentinel/core/ControlledAgentTasks.h
     include/sentinel/core/CredentialStore.h
     include/sentinel/core/ExecutionLifecycle.h
     include/sentinel/core/IAgentRuntime.h
@@ -110,6 +111,7 @@ add_library(sentinel_core STATIC
     src/ContextAssembly.cpp
     src/ConversationSession.cpp
     src/ConversationStateGraph.cpp
+    src/ControlledAgentTasks.cpp
     src/CredentialStore.cpp
     src/ExecutionLifecycle.cpp
     src/IClock.cpp

@@ -97,6 +97,18 @@ metadata: source document, section/chunk reference, relevance score, and summary
 local metadata only and runs only when the user invokes it. No cloud embedding service, hidden
 update, background indexer, automatic knowledge-base activation, or prompt mutation is added.
 
+Phase 50C adds controlled agent task workflows through `ControlledAgentTaskService`. The service is
+core-owned and value based; QML sees only strings, string lists, and explicit invokable foreground
+actions on `DesktopShellViewModel`. Task history and workspace permission choices are persisted in
+local settings JSON. Plans are generated deterministically, can be edited before execution, and
+enter Pending Approval until the user approves them. Starting and advancing execution are separate
+user actions. Only one task can be Running at a time, and every step transition is visible.
+
+Controlled task execution remains metadata-only in this phase. Step outcomes record visible local
+workflow progress and explainability; they do not run tools, read files, use the clipboard, launch
+terminal commands, open browsers, call providers/cloud services, spawn recursive agents, or run in
+the background.
+
 ## Desktop View Model
 
 `DesktopShellViewModel` is the QML boundary for the desktop app. It forwards safe operations to the core controller, mode manager, and settings object:

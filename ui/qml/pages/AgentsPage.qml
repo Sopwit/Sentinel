@@ -12,6 +12,8 @@ ScrollView {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property string uiSelfCheck: "developer-gated balanced-cards wrapped-contracts bottom-safe-scroll"
     property string selectedSection: "Overview"
+    property string controlledTaskGoal: ""
+    property string selectedControlledTaskId: ""
 
     function sectionLabel(section) {
         if (section === "Overview")
@@ -406,41 +408,115 @@ ScrollView {
                 ShellPanel {
                     Layout.fillWidth: true
                     visible: agentsPage.selectedSection === "Tasks"
-                    implicitHeight: agentsPage.sectionHeight(taskRuntimeContent)
-                    Layout.preferredHeight: 220
+                    implicitHeight: agentsPage.sectionHeight(controlledTasksContent)
+                    Layout.preferredHeight: 520
 
                     ColumnLayout {
-                        id: taskRuntimeContent
+                        id: controlledTasksContent
                         x: agentsPage.panelPadding
                         y: agentsPage.panelPadding
                         width: parent.width - agentsPage.panelPadding * 2
                         spacing: SentinelTheme.spaceSm
 
                         SectionTitle {
-                            title: qsTr("Task Runtime")
-                            subtitle: qsTr("Static runtime state, no workers.")
+                            title: qsTr("Controlled Agent Tasks")
+                            subtitle: qsTr("User-approved, one visible step at a time.")
                             Layout.fillWidth: true
                         }
 
-                        StatusChip {
-                            label: qsTr("Runtime")
-                            value: agentsPage.viewModel.agentTaskRuntimeStatus
-                            accent: agentsPage.modeAccent
-                            selected: true
+                        SentinelTextField {
+                            Layout.fillWidth: true
+                            placeholderText: qsTr("Describe a multi-step task")
+                            text: agentsPage.controlledTaskGoal
+                            onTextChanged: agentsPage.controlledTaskGoal = text
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Plan")
+                                onClicked: {
+                                    var id = agentsPage.viewModel.planControlledAgentTask(
+                                                agentsPage.controlledTaskGoal)
+                                    if (id.length > 0)
+                                        agentsPage.selectedControlledTaskId = id
+                                }
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Approve")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.approveControlledAgentTask(
+                                               agentsPage.selectedControlledTaskId, "Approve Once")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Start")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.startControlledAgentTask(
+                                               agentsPage.selectedControlledTaskId)
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Run Step")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.executeControlledAgentStep(
+                                               agentsPage.selectedControlledTaskId)
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Skip")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.skipControlledAgentStep(
+                                               agentsPage.selectedControlledTaskId)
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Retry")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.retryControlledAgentStep(
+                                               agentsPage.selectedControlledTaskId)
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Cancel")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.cancelControlledAgentTask(
+                                               agentsPage.selectedControlledTaskId)
+                            }
                         }
 
                         InfoRow {
                             compact: true
-                            label: qsTr("Boundary")
-                            value: agentsPage.viewModel.agentTaskRuntimeSummary
+                            label: qsTr("Active")
+                            value: agentsPage.viewModel.controlledTaskActiveSummary
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: qsTr("Current Step")
+                            value: agentsPage.viewModel.controlledTaskCurrentStep
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 4
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: qsTr("Progress")
+                            value: agentsPage.viewModel.controlledTaskProgressSummary
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: true
-                            label: qsTr("Latest")
-                            value: agentsPage.viewModel.latestAgentTaskSummary
+                            label: qsTr("Plan")
+                            value: agentsPage.viewModel.controlledTaskPlanSteps.join("\n")
                             Layout.fillWidth: true
+                            valueMaximumLineCount: 8
                         }
                     }
                 }
@@ -503,8 +579,35 @@ ScrollView {
                         InfoRow {
                             compact: true
                             label: qsTr("Lifecycle")
-                            value: agentsPage.viewModel.latestAgentTaskLifecycleSummary
+                            value: agentsPage.viewModel.controlledTaskQueueSummaries.join("\n")
                             Layout.fillWidth: true
+                            valueMaximumLineCount: 8
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Move Up")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.reorderControlledAgentTask(
+                                               agentsPage.selectedControlledTaskId, 0)
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Export MD")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.exportControlledAgentTask(
+                                               agentsPage.selectedControlledTaskId, "Markdown")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Export JSON")
+                                enabled: agentsPage.selectedControlledTaskId.length > 0
+                                onClicked: agentsPage.viewModel.exportControlledAgentTask(
+                                               agentsPage.selectedControlledTaskId, "JSON")
+                            }
                         }
                     }
                 }
@@ -558,8 +661,34 @@ ScrollView {
                         InfoRow {
                             compact: true
                             label: qsTr("Summary")
-                            value: agentsPage.viewModel.agentPlanningSessionSummary
+                            value: agentsPage.viewModel.controlledTaskExplainabilitySummaries.join("\n")
                             Layout.fillWidth: true
+                            valueMaximumLineCount: 10
+                        }
+
+                        InfoRow {
+                            compact: true
+                            label: qsTr("Permissions")
+                            value: agentsPage.viewModel.controlledTaskPermissionSummaries.join("\n")
+                            Layout.fillWidth: true
+                            valueMaximumLineCount: 8
+                        }
+
+                        Flow {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: qsTr("Allow Notes")
+                                onClicked: agentsPage.viewModel.setControlledToolPermission(
+                                               "Notes", "Allow For Workspace")
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Deny Terminal")
+                                onClicked: agentsPage.viewModel.setControlledToolPermission(
+                                               "Terminal", "Deny")
+                            }
                         }
                     }
                 }

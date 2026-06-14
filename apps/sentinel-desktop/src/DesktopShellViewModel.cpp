@@ -7,8 +7,12 @@
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QJsonDocument>
+#include <QSaveFile>
 #include <QFileInfo>
 #include <QStandardPaths>
+
+#include <algorithm>
 
 namespace sentinel::desktop {
 
@@ -159,6 +163,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::recoveryDraftTextChanged, this,
             &DesktopShellViewModel::nativeExperienceChanged);
+    connect(&settings_, &core::AppSettings::controlledAgentTasksChanged, this,
+            &DesktopShellViewModel::controlledAgentTasksChanged);
     connect(&settings_, &core::AppSettings::selectedSkillProfileChanged, this,
             &DesktopShellViewModel::skillProfileChanged);
     connect(&settings_, &core::AppSettings::selectedSkillProfileChanged, this,
@@ -3222,6 +3228,12 @@ QStringList DesktopShellViewModel::notificationCenterSummaries() const {
         QStringLiteral("Indexing Failed - explicit file or local store failure"),
         QStringLiteral("Retrieval Completed - local explainability metadata only"),
         QStringLiteral("Workspace Changed - %1").arg(selectedWorkspaceName()),
+        QStringLiteral("Task Planned - visible controlled task plan created"),
+        QStringLiteral("Approval Needed - controlled task cannot start without approval"),
+        QStringLiteral("Task Started - foreground single-task execution only"),
+        QStringLiteral("Task Completed - all visible approved steps resolved"),
+        QStringLiteral("Task Failed - controlled task failure metadata"),
+        QStringLiteral("Task Cancelled - user cancelled or denied a task"),
         QStringLiteral("Update Available - check is manual; no hidden polling"),
         QStringLiteral("Permission Needed - future explicit approvals only"),
         QStringLiteral("Brain Saved - local memory events only"),
@@ -3474,11 +3486,35 @@ QStringList DesktopShellViewModel::brainWorkspaceSummaries() const {
             .arg(localKnowledgeBaseStatus())
             .arg(knowledgeBaseDocumentSummaries().size()),
         QStringLiteral("Recent Retrievals - %1 record(s)").arg(recentRetrievalSummaries().size()),
+        QStringLiteral("Planned Tasks - %1").arg(
+            controlledAgentTaskService_
+                .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
+                                       settings_.controlledAgentTasksJson()),
+                                   selectedWorkspaceId(), QStringLiteral("pending approval"))
+                .size()),
+        QStringLiteral("Completed Tasks - %1").arg(
+            controlledAgentTaskService_
+                .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
+                                       settings_.controlledAgentTasksJson()),
+                                   selectedWorkspaceId(), QStringLiteral("completed"))
+                .size()),
+        QStringLiteral("Failed Tasks - %1").arg(
+            controlledAgentTaskService_
+                .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
+                                       settings_.controlledAgentTasksJson()),
+                                   selectedWorkspaceId(), QStringLiteral("failed"))
+                .size()),
+        QStringLiteral("Cancelled Tasks - %1").arg(
+            controlledAgentTaskService_
+                .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
+                                       settings_.controlledAgentTasksJson()),
+                                   selectedWorkspaceId(), QStringLiteral("cancelled"))
+                .size()),
     };
 }
 
 QStringList DesktopShellViewModel::exportCenterSummaries() const {
-    return {
+    auto summaries = QStringList{
         QStringLiteral("Chats - Markdown, PDF, TXT, DOCX, JSON"),
         QStringLiteral("Workspace summaries - %1 default").arg(settings_.exportDefaultFormat()),
         QStringLiteral("Document summaries - citations %1")
@@ -3491,6 +3527,8 @@ QStringList DesktopShellViewModel::exportCenterSummaries() const {
                  settings_.exportIncludeModelMetadata() ? QStringLiteral("included")
                                                         : QStringLiteral("excluded")),
     };
+    summaries.append(controlledAgentTaskService_.exportCenterSummaries());
+    return summaries;
 }
 
 QStringList DesktopShellViewModel::privacyCenterSummaries() const {
@@ -3503,6 +3541,9 @@ QStringList DesktopShellViewModel::privacyCenterSummaries() const {
         QStringLiteral("Cloud Retrieval: Disabled"),
         QStringLiteral("Telemetry: Disabled"),
         QStringLiteral("Hidden filesystem scanning: Disabled"),
+        QStringLiteral("Autonomous agents: Disabled"),
+        QStringLiteral("Hidden task execution: Disabled"),
+        QStringLiteral("Cloud activation from tasks: Disabled"),
     };
 }
 
@@ -3960,6 +4001,297 @@ QStringList DesktopShellViewModel::agentPlanDiagnostics() const {
                      settings_.selectedSkillProfile(), workspaceService_,
                      settings_.selectedWorkspaceId())
         .diagnostics;
+}
+
+QString DesktopShellViewModel::controlledTaskActiveSummary() const {
+    const auto tasks =
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    for (const auto& task : tasks) {
+        if (task.state == core::ControlledTaskState::Running) {
+            return core::controlledAgentTaskSummary(task);
+        }
+    }
+    for (const auto& task : tasks) {
+        if (task.workspaceId == selectedWorkspaceId() &&
+            task.state == core::ControlledTaskState::PendingApproval) {
+            return core::controlledAgentTaskSummary(task);
+        }
+    }
+    return QStringLiteral("No controlled agent task is active.");
+}
+
+QString DesktopShellViewModel::controlledTaskCurrentStep() const {
+    const auto tasks =
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    for (const auto& task : tasks) {
+        if (task.state == core::ControlledTaskState::Running && task.currentStepIndex >= 0 &&
+            task.currentStepIndex < task.steps.size()) {
+            return core::controlledAgentStepSummary(task.steps.at(task.currentStepIndex));
+        }
+    }
+    return QStringLiteral("No visible step is running.");
+}
+
+QString DesktopShellViewModel::controlledTaskProgressSummary() const {
+    const auto tasks =
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    for (const auto& task : tasks) {
+        if (task.state != core::ControlledTaskState::Running) {
+            continue;
+        }
+        int completed = 0;
+        for (const auto& step : task.steps) {
+            if (step.state == core::ControlledTaskState::Completed ||
+                step.state == core::ControlledTaskState::Cancelled) {
+                ++completed;
+            }
+        }
+        return QStringLiteral("%1 of %2 step(s) resolved. Remaining: %3.")
+            .arg(completed)
+            .arg(task.steps.size())
+            .arg(std::max(0, static_cast<int>(task.steps.size()) - completed));
+    }
+    return QStringLiteral("No running task progress.");
+}
+
+QStringList DesktopShellViewModel::controlledTaskPlanSteps() const {
+    const auto tasks =
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    for (auto it = tasks.crbegin(); it != tasks.crend(); ++it) {
+        if (it->workspaceId != selectedWorkspaceId()) {
+            continue;
+        }
+        QStringList steps;
+        for (const auto& step : it->steps) {
+            steps.append(core::controlledAgentStepSummary(step));
+        }
+        return steps;
+    }
+    return {};
+}
+
+QStringList DesktopShellViewModel::controlledTaskQueueSummaries() const {
+    return controlledAgentTaskService_.queueSummaries(
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson()),
+        selectedWorkspaceId());
+}
+
+QStringList DesktopShellViewModel::controlledTaskTimelineSummaries() const {
+    return controlledAgentTaskService_.timelineSummaries(
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson()),
+        selectedWorkspaceId(), QStringLiteral("all"));
+}
+
+QStringList DesktopShellViewModel::controlledTaskExplainabilitySummaries() const {
+    const auto tasks =
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    for (auto it = tasks.crbegin(); it != tasks.crend(); ++it) {
+        if (it->workspaceId == selectedWorkspaceId()) {
+            return controlledAgentTaskService_.explainabilitySummaries(*it);
+        }
+    }
+    return {QStringLiteral("No controlled task explainability record yet.")};
+}
+
+QStringList DesktopShellViewModel::controlledTaskPermissionSummaries() const {
+    return controlledAgentTaskService_.permissionSummaries(
+        controlledAgentTaskService_.permissionsFromJson(
+            settings_.controlledAgentPermissionsJson()),
+        selectedWorkspaceId());
+}
+
+QStringList DesktopShellViewModel::controlledTaskNotificationCategories() const {
+    return controlledAgentTaskService_.notificationCategories();
+}
+
+QStringList DesktopShellViewModel::controlledTaskExportSummaries() const {
+    return controlledAgentTaskService_.exportCenterSummaries();
+}
+
+QString DesktopShellViewModel::controlledTaskDiagnosticsSummary() const {
+    const auto diagnostics = controlledAgentTaskService_.diagnostics(
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson()));
+    return QStringLiteral("%1 / Last completed: %2 / Approvals: %3 / Failures: %4")
+        .arg(diagnostics.activeTask, diagnostics.lastCompletedTask,
+             diagnostics.approvalStatistics, diagnostics.failureStatistics);
+}
+
+QStringList DesktopShellViewModel::controlledTaskSafetyGuarantees() const {
+    return controlledAgentTaskService_.safetyGuarantees();
+}
+
+QString DesktopShellViewModel::planControlledAgentTask(const QString& goal) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    QStringList resources;
+    for (const auto& attachment : attachments_) {
+        if (attachment.workspaceId == selectedWorkspaceId()) {
+            resources.append(attachment.fileName);
+        }
+    }
+    const auto task = controlledAgentTaskService_.createPlan(
+        goal, selectedWorkspaceId(), controller_.activeRuntimeProviderLabel(),
+        controller_.activeRuntimeModelLabel(), resources, tasks);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return task.id;
+}
+
+bool DesktopShellViewModel::modifyControlledAgentPlan(const QString& taskId,
+                                                      const QStringList& steps) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    task = controlledAgentTaskService_.setSteps(task, steps);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::approveControlledAgentTask(const QString& taskId,
+                                                       const QString& choice) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    task = controlledAgentTaskService_.approve(task, choice);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::denyControlledAgentTask(const QString& taskId) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    task = controlledAgentTaskService_.deny(task);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::startControlledAgentTask(const QString& taskId) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    task = controlledAgentTaskService_.start(task, tasks);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return task.state == core::ControlledTaskState::Running;
+}
+
+bool DesktopShellViewModel::executeControlledAgentStep(const QString& taskId) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    task = controlledAgentTaskService_.executeCurrentStep(task);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::skipControlledAgentStep(const QString& taskId) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    task = controlledAgentTaskService_.skipCurrentStep(task);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::retryControlledAgentStep(const QString& taskId) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    task = controlledAgentTaskService_.retryCurrentStep(task);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::cancelControlledAgentTask(const QString& taskId) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    task = controlledAgentTaskService_.cancel(task);
+    tasks = controlledAgentTaskService_.upsertTask(tasks, task);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::reorderControlledAgentTask(const QString& taskId, int newIndex) {
+    auto tasks = controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    tasks = controlledAgentTaskService_.reorderQueue(tasks, taskId, newIndex);
+    settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::setControlledToolPermission(const QString& category,
+                                                        const QString& choice) {
+    auto permissions = controlledAgentTaskService_.permissionsFromJson(
+        settings_.controlledAgentPermissionsJson());
+    permissions = controlledAgentTaskService_.grantPermission(permissions, selectedWorkspaceId(),
+                                                              category.trimmed(), choice.trimmed());
+    settings_.setControlledAgentPermissionsJson(
+        controlledAgentTaskService_.permissionsToJson(permissions));
+    emit controlledAgentTasksChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::exportControlledAgentTask(const QString& taskId,
+                                                      const QString& format) {
+    const auto tasks =
+        controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson());
+    const auto task = controlledAgentTaskService_.taskById(tasks, taskId);
+    if (task.id.isEmpty()) {
+        return false;
+    }
+    QDir directory(appDataPath() + QStringLiteral("/exports"));
+    if (!directory.exists() && !directory.mkpath(QStringLiteral("."))) {
+        return false;
+    }
+    const auto normalized = format.trimmed().toLower();
+    const auto extension = normalized == QStringLiteral("json")
+                               ? QStringLiteral("json")
+                               : (normalized == QStringLiteral("txt")
+                                      ? QStringLiteral("txt")
+                                      : (normalized == QStringLiteral("pdf") ? QStringLiteral("pdf")
+                                                                             : QStringLiteral("md")));
+    const auto path =
+        directory.filePath(QStringLiteral("%1-controlled-task.%2").arg(task.id, extension));
+    QSaveFile file(path);
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        return false;
+    }
+    file.write(controlledAgentTaskService_.exportTaskReport(task, format));
+    const auto committed = file.commit();
+    emit controlledAgentTasksChanged();
+    return committed;
 }
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {

@@ -113,6 +113,7 @@ private slots:
     void exposesPermissionPolicyMetadata();
     void exposesToolGatewayMetadata();
     void exposesAgentRuntimeMetadata();
+    void exposesControlledAgentTaskWorkflow();
     void languageSettingDoesNotChangeRuntimePresentationFlags();
     void keepsSettingsSeparateFromClearActions();
     void tracksNavigationState();
@@ -3239,6 +3240,35 @@ void DesktopShellViewModelTest::languageSettingDoesNotChangeRuntimePresentationF
     QVERIFY(fixture.viewModel.developerModeEnabled());
     QCOMPARE(fixture.viewModel.localRuntimeStatus(), QStringLiteral("Metadata Only"));
     QCOMPARE(fixture.viewModel.providerName(), QStringLiteral("LocalEchoProvider"));
+}
+
+void DesktopShellViewModelTest::exposesControlledAgentTaskWorkflow() {
+    ViewModelFixture fixture;
+
+    const auto taskId =
+        fixture.viewModel.planControlledAgentTask(QStringLiteral("Prepare a summary of documents"));
+    QVERIFY(!taskId.isEmpty());
+    QVERIFY(fixture.viewModel.controlledTaskActiveSummary().contains(
+        QStringLiteral("Pending Approval")));
+    QCOMPARE(fixture.viewModel.controlledTaskPlanSteps().size(), 3);
+    QVERIFY(fixture.viewModel.controlledTaskNotificationCategories().contains(
+        QStringLiteral("Approval Needed")));
+
+    QVERIFY(fixture.viewModel.approveControlledAgentTask(taskId, QStringLiteral("Approve Once")));
+    QVERIFY(fixture.viewModel.startControlledAgentTask(taskId));
+    QVERIFY(fixture.viewModel.controlledTaskCurrentStep().contains(QStringLiteral("Running")));
+
+    QVERIFY(fixture.viewModel.executeControlledAgentStep(taskId));
+    QVERIFY(fixture.viewModel.controlledTaskProgressSummary().contains(QStringLiteral("1 of 3")));
+    QVERIFY(fixture.viewModel.retryControlledAgentStep(taskId));
+    QVERIFY(fixture.viewModel.controlledTaskExplainabilitySummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Step executed by:")));
+
+    QVERIFY(fixture.viewModel.setControlledToolPermission(QStringLiteral("Files"),
+                                                          QStringLiteral("Allow For Workspace")));
+    QVERIFY(fixture.viewModel.controlledTaskPermissionSummaries().join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Files: Allow For Workspace")));
+    QVERIFY(fixture.settings.controlledAgentTasksJson().contains(taskId));
 }
 
 void DesktopShellViewModelTest::keepsSettingsSeparateFromClearActions() {

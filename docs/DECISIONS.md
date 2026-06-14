@@ -274,6 +274,31 @@ Out of scope:
   embedding generation, automatic knowledge base activation, cloud embedding services, cloud
   retrieval, telemetry, autonomous agents, hidden prompt mutation, and automatic memory writes.
 
+## 1.11 Controlled Agent Task Boundary
+
+Decision: Phase 50C introduces controlled agent tasks as user-approved foreground workflows, not
+autonomous agents.
+
+Reason: Sentinel needs multi-step task help while preserving explicit user authority, visible
+execution, workspace isolation, and local-first guarantees.
+
+Runtime behavior:
+
+- Plans are generated locally as deterministic task records and persisted in local settings JSON.
+- Users can edit, remove, or reorder plan steps before approval.
+- Approval and start are separate actions. Deny and cancel are first-class outcomes.
+- Execution advances one visible step at a time; skip and retry require user action.
+- Only one task can be Running at once.
+- Tool permissions are workspace-scoped metadata choices: Allow Once, Allow For Workspace, Deny.
+- Explainability records model, reason, resources, requested tools, and outcome for each step.
+
+Out of scope:
+
+- Autonomous execution, hidden tools, background approvals, self-modifying tasks, recursive task
+  generation, automatic retries, cloud activation, filesystem reads, clipboard access, terminal
+  execution, browser automation, calendar/email access, downloads, telemetry, and hidden provider
+  calls.
+
 ## 2. Modular Monolith
 
 Decision: Keep the repository as a modular monolith with clear internal boundaries.
