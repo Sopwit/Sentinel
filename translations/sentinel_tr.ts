@@ -70,6 +70,7 @@
     <message><source>System Default</source><translation>Sistem Varsayılanı</translation></message>
     <message><source>English</source><translation>İngilizce</translation></message>
     <message><source>Türkçe</source><translation>Türkçe</translation></message>
+    <message><source>Settings are explicit and local. Disabled runtime features stay inactive until a later phase enables them. Language changes take effect immediately.</source><translation>Ayarlar açık ve yereldir. Devre dışı çalışma zamanı özellikleri, sonraki bir aşamada etkinleştirilene kadar etkin olmaz. Dil değişiklikleri hemen geçerli olur.</translation></message>
 </context>
 <context>
     <name>HomeChatSurface</name>

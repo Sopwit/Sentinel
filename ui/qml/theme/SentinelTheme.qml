@@ -4,6 +4,8 @@ import QtQuick
 
 QtObject {
     property string activeTheme: "Sentinel Dark"
+    property bool reducedMotion: false
+    property bool highContrast: false
     readonly property bool midnightTheme: activeTheme === "Midnight"
     readonly property bool auroraTheme: activeTheme === "Aurora"
     readonly property bool graphiteTheme: activeTheme === "Graphite"
@@ -42,18 +44,21 @@ QtObject {
     readonly property color userMessageSurface: "#203b468c"
     readonly property color errorSurface: "#33191a"
 
-    readonly property color textPrimary: graphiteTheme ? "#f2f4f4"
+    readonly property color textPrimary: highContrast ? "#ffffff"
+                                       : graphiteTheme ? "#f2f4f4"
                                        : auroraTheme ? "#effbf7"
                                        : midnightTheme ? "#f0f5ff"
                                        : "#eef8ff"
-    readonly property color textMuted: graphiteTheme ? "#a7adaf"
+    readonly property color textMuted: highContrast ? "#d4e4ec"
+                                     : graphiteTheme ? "#a7adaf"
                                      : auroraTheme ? "#9fb8b4"
                                      : midnightTheme ? "#98a9c8"
                                      : "#94abb8"
-    readonly property color textPlaceholder: graphiteTheme ? "#777f82"
-                                           : auroraTheme ? "#78908c"
-                                           : midnightTheme ? "#6e7f9e"
-                                           : "#6d8490"
+    readonly property color textPlaceholder: highContrast ? "#b0ccda"
+                                            : graphiteTheme ? "#777f82"
+                                            : auroraTheme ? "#78908c"
+                                            : midnightTheme ? "#6e7f9e"
+                                            : "#6d8490"
     readonly property color textOnAccent: "#07131a"
 
     readonly property color accent: graphiteTheme ? "#d0d7dc"
@@ -75,7 +80,7 @@ QtObject {
     readonly property color accentBorder: "#c8ecff26"
     readonly property color accentBorderSubtle: "#ffffff0d"
     readonly property color accentBorderSoft: "#9bdfff1a"
-    readonly property color focusBorder: "#9bdfff66"
+    readonly property color focusBorder: highContrast ? "#ffffff99" : "#9bdfff66"
     readonly property color success: "#9ff0d0"
     readonly property color successBorder: "#9ff0d033"
     readonly property color errorBorder: "#d66b6b66"

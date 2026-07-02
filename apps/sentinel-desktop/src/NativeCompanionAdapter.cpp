@@ -50,8 +50,11 @@ void NativeCompanionAdapter::initialize() {
     menu_->addSeparator();
     quitAction_ = menu_->addAction(QStringLiteral("Quit"));
 
-    trayIcon_ = std::make_unique<QSystemTrayIcon>(
-        QIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png")));
+    QIcon trayIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png"));
+#if defined(Q_OS_MACOS)
+    trayIcon.setIsMask(true);
+#endif
+    trayIcon_ = std::make_unique<QSystemTrayIcon>(trayIcon);
     trayIcon_->setContextMenu(menu_.get());
     trayIcon_->setToolTip(sentinel::core::AppMetadata::displayName());
 
@@ -89,7 +92,7 @@ void NativeCompanionAdapter::refreshVisibility() {
         return;
     }
 
-    if (settings_.companionEnabled() && trayAvailable) {
+    if (trayAvailable) {
         refreshActions();
         trayIcon_->show();
         return;
@@ -99,7 +102,7 @@ void NativeCompanionAdapter::refreshVisibility() {
 }
 
 void NativeCompanionAdapter::refreshActions() {
-    const bool enabled = settings_.companionEnabled() && QSystemTrayIcon::isSystemTrayAvailable();
+    const bool enabled = QSystemTrayIcon::isSystemTrayAvailable();
     const bool paused = viewModel_.companionPaused();
 
     if (openAction_) {

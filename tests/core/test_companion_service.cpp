@@ -16,24 +16,19 @@ private slots:
 void CompanionServiceTest::exposesReadinessOnlyMetadata() {
     const CompanionService service;
 
-    const auto disabled = service.summary(false);
-    QCOMPARE(disabled.available, false);
-    QCOMPARE(disabled.enabledPreference, false);
-    QCOMPARE(disabled.status, QStringLiteral("Disabled"));
-    QCOMPARE(disabled.availability, QStringLiteral("Unavailable"));
-    QVERIFY(disabled.platformCapability.contains(QStringLiteral("native integration unavailable")));
-    QVERIFY(disabled.permissionPostureSummary.contains(QStringLiteral("foreground-safe shell")));
-    QVERIFY(disabled.safetyBoundarySummary.contains(QStringLiteral("no background daemon")));
-    QVERIFY(disabled.quickCaptureSummary.contains(QStringLiteral("no note")));
-    QCOMPARE(disabled.platformSummaries.size(), 3);
-    QCOMPARE(disabled.traceSummaries.size(), 6);
-
-    const auto enabled = service.summary(true);
-    QCOMPARE(enabled.available, false);
-    QCOMPARE(enabled.enabledPreference, true);
-    QCOMPARE(enabled.status, QStringLiteral("Readiness Only"));
-    QVERIFY(enabled.traceSummaries.join(QStringLiteral("\n"))
-                .contains(QStringLiteral("enabled preference")));
+    const auto summary = service.summary(false);
+    QCOMPARE(summary.available, false);
+    QCOMPARE(summary.enabledPreference, true);
+    QCOMPARE(summary.status, QStringLiteral("Readiness Only"));
+    QCOMPARE(summary.availability, QStringLiteral("Unavailable"));
+    QVERIFY(summary.platformCapability.contains(QStringLiteral("native integration unavailable")));
+    QVERIFY(summary.permissionPostureSummary.contains(QStringLiteral("foreground-safe shell")));
+    QVERIFY(summary.safetyBoundarySummary.contains(QStringLiteral("no background daemon")));
+    QVERIFY(summary.quickCaptureSummary.contains(QStringLiteral("no note")));
+    QCOMPARE(summary.platformSummaries.size(), 3);
+    QCOMPARE(summary.traceSummaries.size(), 6);
+    QVERIFY(summary.traceSummaries.join(QStringLiteral("\n"))
+                .contains(QStringLiteral("permanently enabled")));
 }
 
 void CompanionServiceTest::exposesSafeActionModel() {

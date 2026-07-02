@@ -19,12 +19,11 @@ ApplicationWindow {
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
     readonly property int shellEntranceOffset: root.shellReady || MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 8
     readonly property int pageMotionOffset: MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 10
-    readonly property int dockZoneHeight: (compactLayout ? 58 : 62)
-                                          + (compactLayout ? SentinelTheme.spaceMd
-                                                           : SentinelTheme.spaceXl)
-                                          + SentinelTheme.spaceLg
     Component.onCompleted: Qt.callLater(function() {
         SentinelTheme.activeTheme = root.viewModel.themeName
+        SentinelTheme.reducedMotion = root.viewModel.reducedMotionEnabled
+        SentinelTheme.highContrast = root.viewModel.highContrastEnabled
+        MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         root.shellReady = true
         if (!root.viewModel.onboardingComplete)
             onboardingModal.open()
@@ -37,17 +36,14 @@ ApplicationWindow {
         function onThemeNameChanged() {
             SentinelTheme.activeTheme = root.viewModel.themeName
         }
+        function onNativeExperienceChanged() {
+            SentinelTheme.reducedMotion = root.viewModel.reducedMotionEnabled
+            SentinelTheme.highContrast = root.viewModel.highContrastEnabled
+            MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
+        }
     }
 
-    function currentPageIndex() {
-        if (root.viewModel.currentPage === "Dashboard")
-            return 0
-        if (root.viewModel.currentPage === "Memory")
-            return 1
-        if (root.viewModel.currentPage === "Agents")
-            return 2
-        return 0
-    }
+
 
     function navigateToPage(pageName) {
         if (pageName === "Settings") {
@@ -78,7 +74,7 @@ ApplicationWindow {
         anchors.rightMargin: SentinelTheme.pageMargin(root.width)
         anchors.topMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
                            + root.shellEntranceOffset
-        anchors.bottomMargin: root.dockZoneHeight - root.shellEntranceOffset
+        anchors.bottomMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl) - root.shellEntranceOffset
         spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
         opacity: root.shellReady ? 1.0 : 0.0
 
@@ -108,78 +104,12 @@ ApplicationWindow {
                     Layout.preferredHeight: root.compactLayout ? 100 : 112
                 }
 
-                StackLayout {
-                    id: pageStack
+                DashboardPage {
+                    id: dashboardPage
+                    viewModel: root.viewModel
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 0
-                    clip: true
-                    currentIndex: root.currentPageIndex()
-
-                    DashboardPage {
-                        id: dashboardPage
-                        viewModel: root.viewModel
-                        opacity: root.currentPageIndex() === 0 ? 1.0 : 0.0
-                        transform: Translate {
-                            y: root.currentPageIndex() === 0 ? 0 : root.pageMotionOffset
-
-                            Behavior on y {
-                                NumberAnimation {
-                                    duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                                    easing.type: MotionTokens.enter
-                                }
-                            }
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                                easing.type: MotionTokens.standard
-                            }
-                        }
-                    }
-                    MemoryPage {
-                        viewModel: root.viewModel
-                        opacity: root.currentPageIndex() === 1 ? 1.0 : 0.0
-                        transform: Translate {
-                            y: root.currentPageIndex() === 1 ? 0 : root.pageMotionOffset
-
-                            Behavior on y {
-                                NumberAnimation {
-                                    duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                                    easing.type: MotionTokens.enter
-                                }
-                            }
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                                easing.type: MotionTokens.standard
-                            }
-                        }
-                    }
-                    AgentsPage {
-                        viewModel: root.viewModel
-                        opacity: root.currentPageIndex() === 2 ? 1.0 : 0.0
-                        transform: Translate {
-                            y: root.currentPageIndex() === 2 ? 0 : root.pageMotionOffset
-
-                            Behavior on y {
-                                NumberAnimation {
-                                    duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                                    easing.type: MotionTokens.enter
-                                }
-                            }
-                        }
-
-                        Behavior on opacity {
-                            NumberAnimation {
-                                duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                                easing.type: MotionTokens.standard
-                            }
-                        }
-                    }
                 }
 
                 StatusBar {
@@ -191,26 +121,7 @@ ApplicationWindow {
         }
     }
 
-    SentinelDock {
-        id: dock
-        viewModel: root.viewModel
-        compact: root.compactLayout
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
-        width: Math.min(root.width - SentinelTheme.space4Xl,
-                        root.compactLayout ? 360 : 440)
-        height: compact ? 58 : 62
-        opacity: root.shellReady ? 1.0 : 0.0
-        z: 30
 
-        Behavior on opacity {
-            NumberAnimation {
-                duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
-                easing.type: MotionTokens.enter
-            }
-        }
-    }
 
     Button {
         id: settingsFab
@@ -502,15 +413,7 @@ ApplicationWindow {
         onActivated: root.navigateToPage("Dashboard")
     }
 
-    Shortcut {
-        sequences: ["Ctrl+2", "Meta+2"]
-        onActivated: root.navigateToPage("Memory")
-    }
 
-    Shortcut {
-        sequences: ["Ctrl+3", "Meta+3"]
-        onActivated: root.navigateToPage("Agents")
-    }
 
     Shortcut {
         sequences: ["Ctrl+4", "Meta+4"]

@@ -17,14 +17,16 @@
 #include "sentinel/core/StandardPathProvider.h"
 
 #include <QApplication>
+#include <QCoreApplication>
+#include <QEvent>
 #include <QFont>
 #include <QFontDatabase>
 #include <QIcon>
+#include <QLocale>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
 #include <QSGRendererInterface>
-#include <QLocale>
 #include <QTranslator>
 
 #if defined(Q_OS_LINUX) && QT_CONFIG(vulkan)
@@ -127,16 +129,20 @@ QString effectiveLanguageCode(const sentinel::core::AppSettings& settings) {
     return systemLanguage == QStringLiteral("tr") ? QStringLiteral("tr") : QStringLiteral("en");
 }
 
-void installStartupTranslator(QGuiApplication& app, const sentinel::core::AppSettings& settings,
-                              QTranslator& translator) {
-    const auto language = effectiveLanguageCode(settings);
+void installTranslator(QGuiApplication& app, QTranslator& translator, const QString& language) {
+    app.removeTranslator(&translator);
     if (language == QStringLiteral("en")) {
+        // English is the source language; no translation file needed.
         return;
     }
-
     if (translator.load(QStringLiteral(":/i18n/sentinel_%1.qm").arg(language))) {
         app.installTranslator(&translator);
     }
+}
+
+void installStartupTranslator(QGuiApplication& app, const sentinel::core::AppSettings& settings,
+                              QTranslator& translator) {
+    installTranslator(app, translator, effectiveLanguageCode(settings));
 }
 
 } // namespace
@@ -145,6 +151,7 @@ int main(int argc, char* argv[]) {
     configureGraphicsBackend();
 
     QApplication app(argc, argv);
+    app.setQuitOnLastWindowClosed(false);
     configureDefaultUiFont();
     QGuiApplication::setApplicationName(sentinel::core::AppMetadata::displayName());
     QGuiApplication::setOrganizationName(sentinel::core::AppMetadata::organizationName());
@@ -157,6 +164,15 @@ int main(int argc, char* argv[]) {
         std::make_unique<sentinel::core::JsonSettingsStore>(pathProvider.settingsFilePath()));
     QTranslator translator;
     installStartupTranslator(app, settings, translator);
+
+    // Runtime language switching: swap the translator and notify all QML objects.
+    QObject::connect(&settings, &sentinel::core::AppSettings::appLanguageChanged,
+                     &app, [&app, &settings, &translator]() {
+                         const auto lang = effectiveLanguageCode(settings);
+                         installTranslator(app, translator, lang);
+                         // Post LanguageChange so QML engine calls retranslate() on all items.
+                         QCoreApplication::postEvent(&app, new QEvent(QEvent::LanguageChange));
+                     });
     const auto ollamaConfig = sentinel::core::OllamaConfig::fromEndpoint(settings.ollamaEndpoint());
     sentinel::core::ApplicationController controller(
         std::make_unique<sentinel::core::LocalEchoProvider>(),
