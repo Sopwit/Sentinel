@@ -78,12 +78,11 @@ QString companionTraceSummary(const CompanionTrace& trace) {
 
 CompanionSummary CompanionService::summary(bool enabledPreference, bool nativeAvailable,
                                            bool paused) const {
+    Q_UNUSED(enabledPreference);
     CompanionSummary result;
-    result.available = enabledPreference && nativeAvailable;
-    result.enabledPreference = enabledPreference;
-    if (!enabledPreference) {
-        result.status = companionStatusName(CompanionStatus::Disabled);
-    } else if (!nativeAvailable) {
+    result.available = nativeAvailable;
+    result.enabledPreference = true;
+    if (!nativeAvailable) {
         result.status = companionStatusName(CompanionStatus::ReadinessOnly);
     } else if (paused) {
         result.status = companionStatusName(CompanionStatus::Paused);
@@ -168,10 +167,8 @@ QList<CompanionTrace> CompanionService::traces(bool enabledPreference, bool nati
                                                bool paused) const {
     return {
         {QStringLiteral("preference"),
-         enabledPreference ? QStringLiteral("enabled preference")
-                           : QStringLiteral("disabled preference"),
-         QStringLiteral("stored setting controls native tray/menu visibility only; it does not "
-                        "start runtime work")},
+         QStringLiteral("permanently enabled"),
+         QStringLiteral("menu bar / system tray integration is enabled by default and cannot be disabled")},
         {QStringLiteral("platform"),
          nativeAvailable ? QStringLiteral("native available") : QStringLiteral("unavailable"),
          currentPlatformCapability(nativeAvailable)},

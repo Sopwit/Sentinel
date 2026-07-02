@@ -10,20 +10,9 @@ ShellPanel {
     property date now: new Date()
     readonly property int modeButtonWidth: compact ? 124 : 136
     readonly property string dashboardSubtitleText: qsTr("Chat through configured local providers.")
-    readonly property string modeSubtitleText: pageSubtitle(headerBar.viewModel.currentPage)
-    readonly property string subtitleText: headerBar.viewModel.currentPage === "Dashboard"
-                                           ? headerBar.dashboardSubtitleText
-                                           : headerBar.modeSubtitleText
-
-    function pageSubtitle(pageName) {
-        if (pageName === "Memory")
-            return qsTr("Memory, recall, context, summaries, and continuity.")
-        if (pageName === "Agents")
-            return qsTr("Metadata-only agent planning and capability status.")
-        if (pageName === "Settings")
-            return qsTr("Floating local preferences and readiness controls.")
-        return qsTr("Local Ollama chatbot. No cloud provider active.")
-    }
+    readonly property string subtitleText: headerBar.viewModel.currentPage === "Settings"
+                                           ? qsTr("Floating local preferences and readiness controls.")
+                                           : headerBar.dashboardSubtitleText
 
     function greetingFor(dateValue) {
         const hour = dateValue.getHours()
@@ -75,9 +64,7 @@ ShellPanel {
             }
 
             Label {
-                text: headerBar.viewModel.currentPage === "Dashboard" ? headerBar.greetingFor(headerBar.now)
-                      : headerBar.viewModel.currentPage === "Memory" ? qsTr("Brain")
-                      : headerBar.viewModel.currentPage
+                text: headerBar.greetingFor(headerBar.now)
                 color: SentinelTheme.textPrimary
                 font.pixelSize: headerBar.compact ? SentinelTheme.fontTitle : SentinelTheme.fontTitle + 2
                 font.weight: Font.Light

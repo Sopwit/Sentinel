@@ -70,7 +70,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(!settings->promptContextInjectionEnabled());
     QVERIFY(!settings->semanticPromptInclusionEnabled());
     QVERIFY(settings->contextExplainabilityVisible());
-    QVERIFY(!settings->companionEnabled());
+    QVERIFY(settings->companionEnabled());
     QVERIFY(!settings->developerModeEnabled());
     QVERIFY(settings->piperBinaryPath().isEmpty());
     QVERIFY(settings->piperModelPath().isEmpty());
@@ -453,18 +453,18 @@ void AppSettingsTest::persistsCompanionVisibilityPreference() {
     const auto settings = makeSettings();
     QSignalSpy spy(settings.get(), &AppSettings::companionEnabledChanged);
 
-    QVERIFY(!settings->companionEnabled());
-
-    settings->setCompanionEnabled(true);
-
     QVERIFY(settings->companionEnabled());
-    QCOMPARE(spy.count(), 1);
 
-    settings->setCompanionEnabled(true);
+    settings->setCompanionEnabled(false);
+
+    QVERIFY(!settings->companionEnabled());
     QCOMPARE(spy.count(), 1);
 
     settings->setCompanionEnabled(false);
-    QVERIFY(!settings->companionEnabled());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setCompanionEnabled(true);
+    QVERIFY(settings->companionEnabled());
     QCOMPARE(spy.count(), 2);
 }
 

@@ -623,9 +623,9 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
     ViewModelFixture fixture;
     QSignalSpy companionSpy(&fixture.viewModel, &DesktopShellViewModel::companionChanged);
 
-    QVERIFY(!fixture.viewModel.companionEnabled());
+    QVERIFY(fixture.viewModel.companionEnabled());
     QVERIFY(!fixture.viewModel.companionAvailable());
-    QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Readiness Only"));
     QCOMPARE(fixture.viewModel.companionAvailability(), QStringLiteral("Unavailable"));
     QVERIFY(fixture.viewModel.companionPlatformCapability()
                 .contains(QStringLiteral("native integration unavailable")));
@@ -641,20 +641,20 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
     QVERIFY(fixture.viewModel.companionActionSummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Quick Note")));
 
-    fixture.viewModel.setCompanionEnabled(true);
+    // Attempting to disable companion is ignored since it is permanently enabled
+    fixture.viewModel.setCompanionEnabled(false);
 
-    QVERIFY(fixture.settings.companionEnabled());
     QVERIFY(fixture.viewModel.companionEnabled());
     QVERIFY(!fixture.viewModel.companionAvailable());
     QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Readiness Only"));
-    QCOMPARE(companionSpy.count(), 1);
+    QCOMPARE(companionSpy.count(), 0);
 
     fixture.viewModel.setCompanionNativeAvailable(true);
 
     QVERIFY(fixture.viewModel.companionAvailable());
     QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Active"));
     QCOMPARE(fixture.viewModel.companionAvailability(), QStringLiteral("Native Available"));
-    QCOMPARE(companionSpy.count(), 2);
+    QCOMPARE(companionSpy.count(), 1);
 
     fixture.viewModel.setCompanionPaused(true);
 
@@ -662,7 +662,7 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
     QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Paused"));
     QVERIFY(fixture.viewModel.companionActionSummaries().join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Resume Companion")));
-    QCOMPARE(companionSpy.count(), 3);
+    QCOMPARE(companionSpy.count(), 2);
 }
 
 void DesktopShellViewModelTest::exposesOllamaRuntimeBoundaryMetadata() {

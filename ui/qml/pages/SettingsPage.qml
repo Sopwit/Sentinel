@@ -8,53 +8,17 @@ Item {
     required property var viewModel
     readonly property bool compact: width < 820
     readonly property int panelPadding: SentinelTheme.spaceLg
-    readonly property bool developerMode: viewModel.developerModeEnabled
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
-    readonly property string uiSelfCheck: "modal-ready rail-scroll-sync advanced-gated voice-path-wrap profiles-metadata permissions-policy tool-gateway agent-runtime bottom-safe-scroll"
+    readonly property string uiSelfCheck: "modal-ready rail-scroll-sync voice-path-wrap agent-runtime bottom-safe-scroll"
     readonly property var themeChoices: ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
     readonly property var notificationPolicies: ["Disabled", "Important Only", "All", "Custom"]
     readonly property var updatePolicies: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
-    readonly property var categories: developerMode
-                                    ? ["General", "Appearance", "Accessibility", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates", "Diagnostics", "Advanced"]
-                                    : ["General", "Appearance", "Accessibility", "AI", "Models", "Voice", "Brain", "Permissions", "Tools", "Agents", "Workspace", "Notifications", "Updates", "Diagnostics"]
+    readonly property var categories: ["General", "Appearance", "Accessibility", "AI", "Voice", "Notifications", "Updates"]
     property string activeCategory: "General"
-    property bool programmaticScroll: false
 
     function sectionHeight(content) {
         return content.implicitHeight + panelPadding * 2
-    }
-
-    function sectionFor(category) {
-        if (category === "Appearance")
-            return appearanceSection
-        if (category === "Accessibility")
-            return accessibilitySection
-        if (category === "AI")
-            return localAiSection
-        if (category === "Models")
-            return modelSection
-        if (category === "Voice")
-            return voiceSection
-        if (category === "Permissions")
-            return permissionsSection
-        if (category === "Tools")
-            return toolsSection
-        if (category === "Agents")
-            return agentsSection
-        if (category === "Workspace")
-            return workspaceSection
-        if (category === "Brain")
-            return brainSection
-        if (category === "Notifications")
-            return notificationsSection
-        if (category === "Updates")
-            return updatesSection
-        if (category === "Diagnostics")
-            return diagnosticsSection
-        if (category === "Advanced")
-            return developerSection
-        return generalSection
     }
 
     function categoryLabel(category) {
@@ -66,38 +30,18 @@ Item {
             return qsTr("Accessibility")
         if (category === "AI")
             return qsTr("AI")
-        if (category === "Models")
-            return qsTr("Models")
         if (category === "Voice")
             return qsTr("Voice")
-        if (category === "Permissions")
-            return qsTr("Permissions")
-        if (category === "Tools")
-            return qsTr("Tools")
-        if (category === "Agents")
-            return qsTr("Agents")
-        if (category === "Workspace")
-            return qsTr("Workspace")
-        if (category === "Brain")
-            return qsTr("Brain")
         if (category === "Notifications")
             return qsTr("Notifications")
         if (category === "Updates")
             return qsTr("Updates")
-        if (category === "Diagnostics")
-            return qsTr("Diagnostics")
-        if (category === "Advanced")
-            return qsTr("Advanced")
         return category
     }
 
     function jumpTo(category) {
         activeCategory = category
-        var target = sectionFor(category)
-        programmaticScroll = true
-        settingsFlick.contentY = Math.max(0, Math.min(target.y,
-                                                      settingsFlick.contentHeight - settingsFlick.height))
-        scrollSettledTimer.restart()
+        settingsFlick.contentY = 0
     }
 
     function voiceReadinessLine() {
@@ -107,11 +51,6 @@ Item {
                      ? qsTr("Voice prepared, activation disabled. ")
                      : qsTr("Voice readiness metadata. ")
         return prefix + viewModel.voiceConfigurationReadinessSummary
-    }
-
-    onDeveloperModeChanged: {
-        if (!developerMode && activeCategory === "Advanced")
-            jumpTo("General")
     }
 
     RowLayout {
@@ -239,64 +178,16 @@ Item {
                 }
             }
 
-            Behavior on contentY {
-                enabled: settingsPage.programmaticScroll
-                NumberAnimation {
-                    duration: MotionTokens.duration(MotionTokens.slow, settingsPage.viewModel.currentModeName)
-                    easing.type: MotionTokens.enter
-                }
-            }
-
-            onContentYChanged: {
-                if (settingsPage.programmaticScroll)
-                    return
-                var y = contentY + Math.min(settingsFlick.height * 0.36, 180)
-                var atBottom = contentY + settingsFlick.height >= settingsFlick.contentHeight - SentinelTheme.spaceSm
-                if (developerMode && (y >= developerSection.y || atBottom))
-                    activeCategory = "Advanced"
-                else if (y >= diagnosticsSection.y)
-                    activeCategory = "Diagnostics"
-                else if (y >= updatesSection.y)
-                    activeCategory = "Updates"
-                else if (y >= notificationsSection.y)
-                    activeCategory = "Notifications"
-                else if (y >= workspaceSection.y)
-                    activeCategory = "Workspace"
-                else if (y >= toolsSection.y)
-                    activeCategory = "Tools"
-                else if (y >= permissionsSection.y)
-                    activeCategory = "Permissions"
-                else if (y >= brainSection.y)
-                    activeCategory = "Brain"
-                else if (y >= voiceSection.y)
-                    activeCategory = "Voice"
-                else if (y >= modelSection.y)
-                    activeCategory = "Models"
-                else if (y >= localAiSection.y)
-                    activeCategory = "AI"
-                else if (y >= accessibilitySection.y)
-                    activeCategory = "Accessibility"
-                else if (y >= appearanceSection.y)
-                    activeCategory = "Appearance"
-                else
-                    activeCategory = "General"
-            }
-
-            Timer {
-                id: scrollSettledTimer
-                interval: MotionTokens.slow + 30
-                onTriggered: settingsPage.programmaticScroll = false
-            }
-
             Column {
                 id: settingsColumn
                 width: settingsFlick.width
-                spacing: SentinelTheme.spaceLg
+                spacing: 0
 
                 ShellPanel {
                     id: generalSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(generalContent)
+                    visible: settingsPage.activeCategory === "General"
+                    implicitHeight: visible ? settingsPage.sectionHeight(generalContent) : 0
 
                     ColumnLayout {
                         id: generalContent
@@ -399,7 +290,7 @@ Item {
 
                         Label {
                             Layout.fillWidth: true
-                            text: qsTr("Settings are explicit and local. Disabled runtime features stay inactive until a later phase enables them. Language changes are persisted and may require restart.")
+                            text: qsTr("Settings are explicit and local. Disabled runtime features stay inactive until a later phase enables them. Language changes take effect immediately.")
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall
                             wrapMode: Text.WordWrap
@@ -424,86 +315,6 @@ Item {
                             }
                         }
 
-                        Rectangle {
-                            Layout.fillWidth: true
-                            radius: SentinelTheme.radiusMd
-                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
-                            implicitHeight: companionToggleRow.implicitHeight + SentinelTheme.spaceMd
-
-                            RowLayout {
-                                id: companionToggleRow
-                                x: SentinelTheme.spaceSm
-                                y: SentinelTheme.spaceXs
-                                width: parent.width - SentinelTheme.spaceSm * 2
-                                spacing: SentinelTheme.spaceSm
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 2
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: qsTr("Show Sentinel in menu bar / system tray")
-                                        color: SentinelTheme.textPrimary
-                                        font.pixelSize: SentinelTheme.fontBody
-                                    }
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: settingsPage.viewModel.companionStatus
-                                              + qsTr(" / ")
-                                              + settingsPage.viewModel.companionAvailability
-                                              + qsTr(". Uses native tray/menu bar integration when the platform exposes it.")
-                                        color: SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        wrapMode: Text.WordWrap
-                                    }
-                                }
-
-                                Switch {
-                                    id: companionSwitch
-                                    checked: settingsPage.viewModel.companionEnabled
-                                    hoverEnabled: true
-                                    onToggled: settingsPage.viewModel.companionEnabled = checked
-
-                                    indicator: Rectangle {
-                                        implicitWidth: 46
-                                        implicitHeight: 24
-                                        x: companionSwitch.leftPadding
-                                        y: parent.height / 2 - height / 2
-                                        radius: height / 2
-                                        color: companionSwitch.checked
-                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
-                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
-                                        border.color: companionSwitch.activeFocus
-                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
-                                                      : companionSwitch.hovered
-                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
-                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                                        Rectangle {
-                                            x: companionSwitch.checked ? parent.width - width - 3 : 3
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            width: 18
-                                            height: 18
-                                            radius: 9
-                                            color: companionSwitch.checked
-                                                   ? settingsPage.modeAccent
-                                                   : SentinelTheme.textMuted
-
-                                            Behavior on x {
-                                                NumberAnimation {
-                                                    duration: MotionTokens.fast
-                                                    easing.type: MotionTokens.enter
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Companion")
@@ -511,111 +322,14 @@ Item {
                             Layout.fillWidth: true
                             valueMaximumLineCount: 3
                         }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            radius: SentinelTheme.radiusMd
-                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
-                            implicitHeight: developerToggleRow.implicitHeight + SentinelTheme.spaceMd
-
-                            RowLayout {
-                                id: developerToggleRow
-                                x: SentinelTheme.spaceSm
-                                y: SentinelTheme.spaceXs
-                                width: parent.width - SentinelTheme.spaceSm * 2
-                                spacing: SentinelTheme.spaceSm
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 2
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: qsTr("Advanced")
-                                        color: SentinelTheme.textPrimary
-                                        font.pixelSize: SentinelTheme.fontBody
-                                    }
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: qsTr("Shows read-only diagnostics only. It does not enable tools, voice execution, cloud providers, or runtime authority.")
-                                        color: SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        wrapMode: Text.WordWrap
-                                    }
-                                }
-
-                                Switch {
-                                    id: developerSwitch
-                                    checked: settingsPage.viewModel.developerModeEnabled
-                                    hoverEnabled: true
-                                    onToggled: settingsPage.viewModel.developerModeEnabled = checked
-
-                                    indicator: Rectangle {
-                                        implicitWidth: 46
-                                        implicitHeight: 24
-                                        x: developerSwitch.leftPadding
-                                        y: parent.height / 2 - height / 2
-                                        radius: height / 2
-                                        color: developerSwitch.checked
-                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
-                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
-                                        border.color: developerSwitch.activeFocus
-                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
-                                                      : developerSwitch.hovered
-                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
-                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                                        Behavior on color {
-                                            ColorAnimation {
-                                                duration: MotionTokens.fast
-                                                easing.type: MotionTokens.standard
-                                            }
-                                        }
-
-                                        Behavior on border.color {
-                                            ColorAnimation {
-                                                duration: MotionTokens.fast
-                                                easing.type: MotionTokens.standard
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            x: developerSwitch.checked ? parent.width - width - 3 : 3
-                                            anchors.verticalCenter: parent.verticalCenter
-                                            width: 18
-                                            height: 18
-                                            radius: 9
-                                            color: developerSwitch.checked
-                                                   ? settingsPage.modeAccent
-                                                   : SentinelTheme.textMuted
-
-                                            Behavior on x {
-                                                NumberAnimation {
-                                                    duration: MotionTokens.fast
-                                                    easing.type: MotionTokens.enter
-                                                }
-                                            }
-
-                                            Behavior on color {
-                                                ColorAnimation {
-                                                    duration: MotionTokens.fast
-                                                    easing.type: MotionTokens.standard
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
 
                 ShellPanel {
                     id: appearanceSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(appearanceContent)
+                    visible: settingsPage.activeCategory === "Appearance"
+                    implicitHeight: visible ? settingsPage.sectionHeight(appearanceContent) : 0
 
                     ColumnLayout {
                         id: appearanceContent
@@ -706,7 +420,8 @@ Item {
                 ShellPanel {
                     id: accessibilitySection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(accessibilityContent)
+                    visible: settingsPage.activeCategory === "Accessibility"
+                    implicitHeight: visible ? settingsPage.sectionHeight(accessibilityContent) : 0
 
                     ColumnLayout {
                         id: accessibilityContent
@@ -717,44 +432,202 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Accessibility")
-                            subtitle: qsTr("Keyboard-first controls, persistent comfort preferences, and clear focus states.")
+                            subtitle: qsTr("Comfort, motion, contrast, and density preferences. Changes take effect immediately.")
                             Layout.fillWidth: true
                         }
 
-                        GridLayout {
+                        // ── Reduced Motion ──────────────────────────────
+                        Rectangle {
                             Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 3
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
+                            radius: SentinelTheme.radiusMd
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
+                            implicitHeight: reducedMotionRow.implicitHeight + SentinelTheme.spaceMd
 
-                            CheckBox {
-                                text: qsTr("Reduced motion")
-                                checked: settingsPage.viewModel.reducedMotionEnabled
-                                onToggled: settingsPage.viewModel.reducedMotionEnabled = checked
-                                Layout.fillWidth: true
+                            RowLayout {
+                                id: reducedMotionRow
+                                x: SentinelTheme.spaceSm
+                                y: SentinelTheme.spaceXs
+                                width: parent.width - SentinelTheme.spaceSm * 2
+                                spacing: SentinelTheme.spaceSm
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Reduced Motion")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontBody
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Disables all animations and transitions throughout the UI.")
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+
+                                Switch {
+                                    id: reducedMotionSwitch
+                                    checked: settingsPage.viewModel.reducedMotionEnabled
+                                    hoverEnabled: true
+                                    onToggled: settingsPage.viewModel.reducedMotionEnabled = checked
+
+                                    indicator: Rectangle {
+                                        implicitWidth: 46
+                                        implicitHeight: 24
+                                        x: reducedMotionSwitch.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: height / 2
+                                        color: reducedMotionSwitch.checked
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                        border.color: reducedMotionSwitch.activeFocus
+                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                      : reducedMotionSwitch.hovered
+                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: MotionTokens.fast }
+                                        }
+
+                                        Rectangle {
+                                            x: reducedMotionSwitch.checked ? parent.width - width - 3 : 3
+                                            y: parent.height / 2 - height / 2
+                                            width: 18; height: 18
+                                            radius: height / 2
+                                            color: reducedMotionSwitch.checked
+                                                   ? settingsPage.modeAccent
+                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
+
+                                            Behavior on x {
+                                                NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.press }
+                                            }
+                                            Behavior on color {
+                                                ColorAnimation { duration: MotionTokens.fast }
+                                            }
+                                        }
+                                    }
+
+                                    background: Item {}
+                                }
+                            }
+                        }
+
+                        // ── High Contrast ────────────────────────────────
+                        Rectangle {
+                            Layout.fillWidth: true
+                            radius: SentinelTheme.radiusMd
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
+                            implicitHeight: highContrastRow.implicitHeight + SentinelTheme.spaceMd
+
+                            RowLayout {
+                                id: highContrastRow
+                                x: SentinelTheme.spaceSm
+                                y: SentinelTheme.spaceXs
+                                width: parent.width - SentinelTheme.spaceSm * 2
+                                spacing: SentinelTheme.spaceSm
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 2
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("High Contrast")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontBody
+                                    }
+
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Increases text and border contrast for better readability.")
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
+
+                                Switch {
+                                    id: highContrastSwitch
+                                    checked: settingsPage.viewModel.highContrastEnabled
+                                    hoverEnabled: true
+                                    onToggled: settingsPage.viewModel.highContrastEnabled = checked
+
+                                    indicator: Rectangle {
+                                        implicitWidth: 46
+                                        implicitHeight: 24
+                                        x: highContrastSwitch.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: height / 2
+                                        color: highContrastSwitch.checked
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                        border.color: highContrastSwitch.activeFocus
+                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                      : highContrastSwitch.hovered
+                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                        Behavior on color {
+                                            ColorAnimation { duration: MotionTokens.fast }
+                                        }
+
+                                        Rectangle {
+                                            x: highContrastSwitch.checked ? parent.width - width - 3 : 3
+                                            y: parent.height / 2 - height / 2
+                                            width: 18; height: 18
+                                            radius: height / 2
+                                            color: highContrastSwitch.checked
+                                                   ? settingsPage.modeAccent
+                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
+
+                                            Behavior on x {
+                                                NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.press }
+                                            }
+                                            Behavior on color {
+                                                ColorAnimation { duration: MotionTokens.fast }
+                                            }
+                                        }
+                                    }
+
+                                    background: Item {}
+                                }
+                            }
+                        }
+
+                        // ── UI Density ───────────────────────────────────
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                text: qsTr("UI Density")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
-                            CheckBox {
-                                text: qsTr("High contrast")
-                                checked: settingsPage.viewModel.highContrastEnabled
-                                onToggled: settingsPage.viewModel.highContrastEnabled = checked
-                                Layout.fillWidth: true
-                            }
-
-                            ComboBox {
-                                Layout.fillWidth: true
+                            Repeater {
                                 model: settingsPage.densityChoices
-                                currentIndex: settingsPage.densityChoices.indexOf(settingsPage.viewModel.uiDensity)
-                                onActivated: settingsPage.viewModel.uiDensity = currentText
-                            }
-                        }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Support")
-                            value: settingsPage.viewModel.accessibilitySummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 8
+                                SentinelButton {
+                                    required property string modelData
+                                    required property int index
+                                    text: modelData
+                                    Layout.fillWidth: true
+                                    highlighted: settingsPage.viewModel.uiDensity === modelData
+                                    onClicked: settingsPage.viewModel.uiDensity = modelData
+                                }
+                            }
                         }
 
                         InfoRow {
@@ -764,13 +637,15 @@ Item {
                             Layout.fillWidth: true
                             valueMaximumLineCount: 4
                         }
+
                     }
                 }
 
                 ShellPanel {
                     id: localAiSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(localAiContent)
+                    visible: settingsPage.activeCategory === "AI"
+                    implicitHeight: visible ? settingsPage.sectionHeight(localAiContent) : 0
 
                     ColumnLayout {
                         id: localAiContent
@@ -1041,7 +916,8 @@ Item {
                 ShellPanel {
                     id: modelSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(modelContent)
+                    visible: settingsPage.activeCategory === "Models"
+                    implicitHeight: visible ? settingsPage.sectionHeight(modelContent) : 0
 
                     ColumnLayout {
                         id: modelContent
@@ -1361,7 +1237,8 @@ Item {
                 ShellPanel {
                     id: chatSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(chatContent)
+                    visible: settingsPage.activeCategory === "Chat"
+                    implicitHeight: visible ? settingsPage.sectionHeight(chatContent) : 0
 
                     ColumnLayout {
                         id: chatContent
@@ -1731,7 +1608,8 @@ Item {
                 ShellPanel {
                     id: voiceSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(voiceContent)
+                    visible: settingsPage.activeCategory === "Voice"
+                    implicitHeight: visible ? settingsPage.sectionHeight(voiceContent) : 0
 
                     ColumnLayout {
                         id: voiceContent
@@ -1856,7 +1734,8 @@ Item {
                 ShellPanel {
                     id: brainSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(privacyContent)
+                    visible: settingsPage.activeCategory === "Brain"
+                    implicitHeight: visible ? settingsPage.sectionHeight(privacyContent) : 0
 
                     ColumnLayout {
                         id: privacyContent
@@ -2018,7 +1897,8 @@ Item {
                 ShellPanel {
                     id: permissionsSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(permissionsContent)
+                    visible: settingsPage.activeCategory === "Permissions"
+                    implicitHeight: visible ? settingsPage.sectionHeight(permissionsContent) : 0
 
                     ColumnLayout {
                         id: permissionsContent
@@ -2178,7 +2058,8 @@ Item {
                 ShellPanel {
                     id: toolsSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(toolsContent)
+                    visible: settingsPage.activeCategory === "Tools"
+                    implicitHeight: visible ? settingsPage.sectionHeight(toolsContent) : 0
 
                     ColumnLayout {
                         id: toolsContent
@@ -2278,7 +2159,8 @@ Item {
                 ShellPanel {
                     id: agentsSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(agentsContent)
+                    visible: settingsPage.activeCategory === "Agents"
+                    implicitHeight: visible ? settingsPage.sectionHeight(agentsContent) : 0
 
                     ColumnLayout {
                         id: agentsContent
@@ -2379,7 +2261,8 @@ Item {
                 ShellPanel {
                     id: profilesSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(profilesContent)
+                    visible: settingsPage.activeCategory === "Profiles"
+                    implicitHeight: visible ? settingsPage.sectionHeight(profilesContent) : 0
 
                     ColumnLayout {
                         id: profilesContent
@@ -2547,7 +2430,8 @@ Item {
                 ShellPanel {
                     id: workspaceSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(workspaceContent)
+                    visible: settingsPage.activeCategory === "Workspace"
+                    implicitHeight: visible ? settingsPage.sectionHeight(workspaceContent) : 0
 
                     ColumnLayout {
                         id: workspaceContent
@@ -2842,7 +2726,8 @@ Item {
                 ShellPanel {
                     id: notificationsSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(notificationsContent)
+                    visible: settingsPage.activeCategory === "Notifications"
+                    implicitHeight: visible ? settingsPage.sectionHeight(notificationsContent) : 0
 
                     ColumnLayout {
                         id: notificationsContent
@@ -2965,7 +2850,8 @@ Item {
                 ShellPanel {
                     id: updatesSection
                     width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(updatesContent)
+                    visible: settingsPage.activeCategory === "Updates"
+                    implicitHeight: visible ? settingsPage.sectionHeight(updatesContent) : 0
 
                     ColumnLayout {
                         id: updatesContent
@@ -3075,473 +2961,13 @@ Item {
                     }
                 }
 
-                ShellPanel {
-                    id: diagnosticsSection
-                    width: parent.width
-                    implicitHeight: settingsPage.sectionHeight(diagnosticsContent)
-
-                    ColumnLayout {
-                        id: diagnosticsContent
-                        x: settingsPage.panelPadding
-                        y: settingsPage.panelPadding
-                        width: parent.width - settingsPage.panelPadding * 2
-                        spacing: SentinelTheme.spaceSm
-
-                        SectionTitle {
-                            title: qsTr("Diagnostics")
-                            subtitle: qsTr("Local product diagnostics and export preview. No telemetry upload.")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Diagnostics")
-                            value: settingsPage.viewModel.diagnosticsCenterSummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 8
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Export Preview")
-                            value: settingsPage.viewModel.exportPreviewSummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 6
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Brain Insights")
-                            value: settingsPage.viewModel.brainInsightSummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 8
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Recovery")
-                            value: settingsPage.viewModel.recoveryReliabilitySummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 6
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Privacy Guarantees")
-                            value: settingsPage.viewModel.privacyCenterSummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 8
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Polish")
-                            value: settingsPage.viewModel.productPolishSummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 6
-                        }
-
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 4
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            SentinelButton {
-                                text: qsTr("Preview Markdown")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.prepareExportPreview("conversations", "Markdown")
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Preview JSON")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.prepareExportPreview("workspace summaries", "JSON")
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Export Diagnostics TXT")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.exportDiagnostics("txt")
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Export Diagnostics JSON")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.exportDiagnostics("json")
-                            }
-                        }
-                    }
-                }
-
-                ShellPanel {
-                    id: developerSection
-                    width: parent.width
-                    visible: settingsPage.developerMode
-                    implicitHeight: visible ? settingsPage.sectionHeight(developerContent) : 0
-
-                    ColumnLayout {
-                        id: developerContent
-                        x: settingsPage.panelPadding
-                        y: settingsPage.panelPadding
-                        width: parent.width - settingsPage.panelPadding * 2
-                        spacing: SentinelTheme.spaceMd
-
-                        SectionTitle {
-                            title: qsTr("Advanced")
-                            subtitle: qsTr("Diagnostics, logs, runtime status, and trace viewer.")
-                            Layout.fillWidth: true
-                        }
-
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
-                            Repeater {
-                                model: [qsTr("Diagnostics"), qsTr("Logs"), qsTr("Runtime Status"), qsTr("Trace Viewer")]
-                                StatusChip {
-                                    required property string modelData
-                                    label: qsTr("Section")
-                                    value: modelData
-                                    accent: SentinelTheme.textMuted
-                                    muted: true
-                                }
-                            }
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Semantic / Vector Readiness")
-                            subtitle: qsTr("Grouped summaries only. Semantic authority remains disabled unless separately scoped.")
-                            Layout.fillWidth: true
-                        }
-
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 2
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Semantic")
-                                value: settingsPage.viewModel.semanticRetrievalStatus
-                                       + " / "
-                                       + settingsPage.viewModel.semanticActivationReadiness
-                                Layout.fillWidth: true
-                            }
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Provider")
-                                value: settingsPage.viewModel.selectedSemanticProviderName
-                                       + " / "
-                                       + settingsPage.viewModel.semanticProviderMode
-                                Layout.fillWidth: true
-                            }
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Vector")
-                                value: settingsPage.viewModel.vectorPersistenceStatus
-                                       + " / "
-                                       + settingsPage.viewModel.vectorPersistenceIndexedItemCount
-                                       + " indexed"
-                                Layout.fillWidth: true
-                            }
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Prompt Authority")
-                                value: settingsPage.viewModel.semanticPromptAuthorityStatus
-                                       + " / non-authoritative"
-                                Layout.fillWidth: true
-                            }
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Runtime Diagnostics")
-                            subtitle: qsTr("Presentation-only metadata; no permission changes.")
-                            Layout.fillWidth: true
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Profile Boundary")
-                            subtitle: qsTr("Read-only profile metadata. Profiles do not grant runtime authority.")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Profile")
-                            value: settingsPage.viewModel.selectedSkillProfileName + " / "
-                                   + settingsPage.viewModel.selectedSkillProfileReadiness + " / "
-                                   + settingsPage.viewModel.selectedSkillProfileSummary
-                            Layout.fillWidth: true
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Workspace Boundary")
-                            subtitle: qsTr("Read-only workspace diagnostics. Access remains disabled.")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Capabilities")
-                            value: settingsPage.viewModel.skillProfileCapabilitySummaries.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Diagnostics")
-                            value: settingsPage.viewModel.skillProfileDeveloperDiagnostics.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Workspace")
-                            value: settingsPage.viewModel.selectedWorkspaceName + " / "
-                                   + settingsPage.viewModel.workspacePermissionPosture + " / "
-                                   + settingsPage.viewModel.workspaceReadinessSummary
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Boundary")
-                            value: settingsPage.viewModel.workspaceBoundaryDiagnostics.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Routing")
-                            value: settingsPage.viewModel.currentRoutingMode + " / "
-                                   + settingsPage.viewModel.modelRoutingStatus
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Runtime Safety")
-                            value: settingsPage.viewModel.runtimeSafetyDecision + " / "
-                                   + settingsPage.viewModel.runtimeSafetySummary
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Credentials")
-                            value: settingsPage.viewModel.providerCredentialSafetySummaries.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Credential Store")
-                            value: settingsPage.viewModel.credentialStoreSafetySummary + "\n"
-                                   + settingsPage.viewModel.credentialStoreTraceSummaries.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Companion Boundary")
-                            subtitle: qsTr("Native shell presentation with explicit safety boundaries.")
-                            Layout.fillWidth: true
-                        }
-
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 2
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("State")
-                                value: settingsPage.viewModel.companionStatus
-                                       + " / "
-                                       + settingsPage.viewModel.companionAvailability
-                                Layout.fillWidth: true
-                            }
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Preference")
-                                value: settingsPage.viewModel.companionEnabled
-                                       ? qsTr("Enabled preference")
-                                       : qsTr("Disabled preference")
-                                Layout.fillWidth: true
-                            }
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 4
-                            label: qsTr("Platform")
-                            value: settingsPage.viewModel.companionPlatformCapability
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Actions")
-                            value: settingsPage.viewModel.companionActionSummaries.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Traces")
-                            value: settingsPage.viewModel.companionTraceSummaries.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Permissions")
-                            value: settingsPage.viewModel.runtimePermissionDecision + " / "
-                                   + settingsPage.viewModel.runtimePermissionSummary
-                            Layout.fillWidth: true
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Permission Policy")
-                            subtitle: qsTr("Central policy diagnostics. States do not grant execution in this build.")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 4
-                            label: qsTr("Registry")
-                            value: settingsPage.viewModel.defaultPermissionPolicyState + " / "
-                                   + settingsPage.viewModel.permissionPolicySummary
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 10
-                            label: qsTr("Domains")
-                            value: settingsPage.viewModel.permissionPolicyDeveloperDiagnostics.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Tool Gateway")
-                            subtitle: qsTr("Descriptor, posture, and refusal diagnostics only.")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 4
-                            label: qsTr("Registry")
-                            value: settingsPage.viewModel.toolGatewayPermissionPosture + " / "
-                                   + settingsPage.viewModel.toolGatewaySummary
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 12
-                            label: qsTr("Tools")
-                            value: settingsPage.viewModel.toolGatewayDeveloperDiagnostics.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Agent Runtime")
-                            subtitle: qsTr("Dry-run plan diagnostics. Approval cannot execute actions.")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 6
-                            label: qsTr("Runtime")
-                            value: settingsPage.viewModel.agentRuntimeStatus + " / "
-                                   + settingsPage.viewModel.agentRuntimeApprovalPosture + "\n"
-                                   + settingsPage.viewModel.agentRuntimeSummary
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 12
-                            label: qsTr("Plan")
-                            value: settingsPage.viewModel.agentPlanSteps.join("\n")
-                                   + "\n" + settingsPage.viewModel.agentPlanRequiredTools.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 12
-                            label: qsTr("Traces")
-                            value: settingsPage.viewModel.agentRuntimeDeveloperDiagnostics.join("\n")
-                                   + "\n" + settingsPage.viewModel.agentPlanDiagnostics.join("\n")
-                            Layout.fillWidth: true
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Voice Boundary")
-                            subtitle: qsTr("No microphone, playback, Piper, or Whisper execution is enabled here.")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Pipeline")
-                            value: settingsPage.viewModel.voicePipelineSessionStatus + " / "
-                                   + settingsPage.viewModel.voicePipelineSessionSummary
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Safety")
-                            value: settingsPage.viewModel.voiceRuntimeSafetyStatus + " / "
-                                   + settingsPage.viewModel.voiceRuntimeSafetySummary
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Audio File")
-                            value: settingsPage.viewModel.audioFileSessionStatus + " / "
-                                   + settingsPage.viewModel.audioFileSessionReadinessSummary
-                            Layout.fillWidth: true
-                        }
-                    }
-                }
-
-                Item {
-                    width: parent.width
-                    height: SentinelTheme.space2Xl
-                }
             }
         }
     }
 
     SentinelOverlayModal {
         id: clearMemoryDialog
+
         preferredWidth: 420
         preferredHeight: 210
         accent: settingsPage.modeAccent
@@ -3648,3 +3074,4 @@ Item {
         }
     }
 }
+

@@ -3153,11 +3153,11 @@ QString DesktopShellViewModel::languageDisplayName(const QString& language) cons
 }
 
 bool DesktopShellViewModel::companionEnabled() const {
-    return settings_.companionEnabled();
+    return true;
 }
 
 void DesktopShellViewModel::setCompanionEnabled(bool enabled) {
-    settings_.setCompanionEnabled(enabled);
+    Q_UNUSED(enabled);
 }
 
 bool DesktopShellViewModel::companionAvailable() const {

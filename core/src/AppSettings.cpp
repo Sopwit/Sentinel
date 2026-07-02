@@ -478,8 +478,8 @@ void AppSettings::setContextExplainabilityVisible(bool visible) {
 
 bool AppSettings::companionEnabled() const {
     return store_ ? store_->value(QString::fromLatin1(companionEnabledKey),
-                                  QStringLiteral("false")) == QStringLiteral("true")
-                  : false;
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
 }
 
 void AppSettings::setCompanionEnabled(bool enabled) {
