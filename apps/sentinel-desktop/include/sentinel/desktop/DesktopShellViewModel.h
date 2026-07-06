@@ -273,13 +273,13 @@ class DesktopShellViewModel final : public QObject {
                    runtimeProviderRegistryChanged)
     Q_PROPERTY(QString credentialExecutionStatus READ credentialExecutionStatus NOTIFY
                    runtimeProviderRegistryChanged)
-    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint CONSTANT)
-    Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus CONSTANT)
-    Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus CONSTANT)
-    Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary CONSTANT)
-    Q_PROPERTY(int ollamaModelCount READ ollamaModelCount CONSTANT)
-    Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames CONSTANT)
-    Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries CONSTANT)
+    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QString selectedLocalModelStatus READ selectedLocalModelStatus NOTIFY
@@ -2044,6 +2044,7 @@ public:
     void setAppLanguage(const QString& language);
     QStringList availableLanguages() const;
     Q_INVOKABLE QString languageDisplayName(const QString& language) const;
+    Q_INVOKABLE QVariantMap getLocalModelDetails(const QString& modelName) const;
     bool companionEnabled() const;
     void setCompanionEnabled(bool enabled);
     bool companionAvailable() const;
@@ -2299,6 +2300,7 @@ signals:
     void orchestrationSnapshotChanged();
     void runtimeProviderRegistryChanged();
     void localModelSelectionChanged();
+    void ollamaStatusChanged();
     void modelRoleChanged();
     void localChatInferenceRoutingChanged();
     void localInferenceChanged();

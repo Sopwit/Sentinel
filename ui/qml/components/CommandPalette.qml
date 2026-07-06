@@ -25,7 +25,6 @@ SentinelOverlayModal {
         { "title": qsTr("Export Data"), "subtitle": qsTr("Prepare export preview for local data"), "kind": qsTr("Export"), "action": "export-preview", "enabled": true },
         { "title": qsTr("Change Theme"), "subtitle": qsTr("Cycle Sentinel Dark, Midnight, Aurora, Graphite, System Adaptive"), "kind": qsTr("Appearance"), "action": "theme", "enabled": true },
         { "title": qsTr("Switch Model"), "subtitle": qsTr("Open Models settings"), "kind": qsTr("Models"), "action": "settings", "enabled": true },
-        { "title": qsTr("Toggle Focus Mode"), "subtitle": qsTr("Switch to Focus Mode presentation"), "kind": qsTr("Mode"), "action": "focus-mode", "enabled": true },
         { "title": qsTr("Universal Search"), "subtitle": qsTr("Search chats, settings, models, and profiles"), "kind": qsTr("Search"), "action": "universal-search", "enabled": true }
     ]
     readonly property var filteredActions: {
@@ -84,9 +83,6 @@ SentinelOverlayModal {
             var next = (choices.indexOf(viewModel.themeName) + 1) % choices.length
             viewModel.themeName = choices[next]
             actionStatus = qsTr("Theme changed to %1.").arg(viewModel.themeName)
-        } else if (action.action === "focus-mode") {
-            viewModel.currentModeName = "Focus Mode"
-            actionStatus = qsTr("Focus Mode selected.")
         } else if (action.action === "search-chats" || action.action === "universal-search") {
             actionStatus = qsTr("Type to search commands, chats, settings, models, and profiles.")
         } else {

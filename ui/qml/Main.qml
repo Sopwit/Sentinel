@@ -13,8 +13,9 @@ ApplicationWindow {
     title: qsTr("Sentinel Desktop Alpha")
     color: SentinelTheme.backgroundBase
     property var viewModel: shellViewModel
-    property bool shellReady: false
+    property bool shellReady: true
     property string lastPrimaryPage: "Dashboard"
+    property string currentShellPage: "Dashboard"
     readonly property bool compactLayout: root.width < 1080
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
     readonly property int shellEntranceOffset: root.shellReady || MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 8
@@ -23,6 +24,7 @@ ApplicationWindow {
         SentinelTheme.activeTheme = root.viewModel.themeName
         SentinelTheme.reducedMotion = root.viewModel.reducedMotionEnabled
         SentinelTheme.highContrast = root.viewModel.highContrastEnabled
+        SentinelTheme.uiDensity = root.viewModel.uiDensity
         MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         root.shellReady = true
         if (!root.viewModel.onboardingComplete)
@@ -39,6 +41,7 @@ ApplicationWindow {
         function onNativeExperienceChanged() {
             SentinelTheme.reducedMotion = root.viewModel.reducedMotionEnabled
             SentinelTheme.highContrast = root.viewModel.highContrastEnabled
+            SentinelTheme.uiDensity = root.viewModel.uiDensity
             MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         }
     }
@@ -50,6 +53,10 @@ ApplicationWindow {
             root.openSettings()
             return
         }
+        if (pageName === "Dashboard" || pageName === "Models") {
+            root.currentShellPage = pageName
+            return
+        }
         root.viewModel.currentPage = pageName
     }
 
@@ -58,7 +65,7 @@ ApplicationWindow {
     }
 
     function focusChatComposer() {
-        root.viewModel.currentPage = "Dashboard"
+        root.currentShellPage = "Dashboard"
         Qt.callLater(function() {
             dashboardPage.focusComposer()
         })
@@ -91,32 +98,56 @@ ApplicationWindow {
             Layout.minimumHeight: 0
             spacing: root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl
 
-            ColumnLayout {
+        ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 Layout.minimumHeight: 0
                 spacing: SentinelTheme.spaceMd
 
-                HeaderBar {
-                    viewModel: root.viewModel
-                    compact: root.compactLayout
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: root.compactLayout ? 100 : 112
-                }
 
-                DashboardPage {
-                    id: dashboardPage
-                    viewModel: root.viewModel
+                // Page stack: Dashboard / Models
+                StackLayout {
+                    id: pageStack
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 0
-                }
+                    currentIndex: root.currentShellPage === "Models" ? 1 : 0
 
-                StatusBar {
-                    viewModel: root.viewModel
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 34
+                    Behavior on currentIndex {
+                        enabled: false
+                    }
+
+                    DashboardPage {
+                        id: dashboardPage
+                        viewModel: root.viewModel
+                    }
+
+                    ModelsPage {
+                        id: modelsPage
+                    }
                 }
+                // StatusBar is removed/hidden as requested
+            }
+        }
+    }
+
+    // ── Bottom Dock ──────────────────────────────────────────────────────────
+    BottomDock {
+        id: bottomDock
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: SentinelTheme.spaceLg
+        currentPage: root.currentShellPage
+        opacity: root.shellReady ? 1.0 : 0.0
+        z: 100
+        onPageRequested: function(pageName) {
+            root.navigateToPage(pageName)
+        }
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
+                easing.type: MotionTokens.enter
             }
         }
     }
@@ -126,9 +157,8 @@ ApplicationWindow {
     Button {
         id: settingsFab
         anchors.right: parent.right
-        anchors.bottom: parent.bottom
-        anchors.rightMargin: SentinelTheme.space2Xl
-        anchors.bottomMargin: SentinelTheme.space2Xl
+        anchors.rightMargin: SentinelTheme.pageMargin(root.width)
+        anchors.verticalCenter: bottomDock.verticalCenter
         width: 52
         height: 52
         opacity: root.shellReady ? 1.0 : 0.0
@@ -267,7 +297,8 @@ ApplicationWindow {
                 Flow {
                     spacing: SentinelTheme.spaceSm
                     Repeater {
-                        model: ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
+                        model: ["Sentinel Dark", "Midnight", "Aurora", "Graphite",
+                                "Liquid Glass Dark", "Liquid Glass Light", "System Adaptive"]
                         SentinelButton {
                             required property string modelData
                             text: modelData
@@ -413,7 +444,10 @@ ApplicationWindow {
         onActivated: root.navigateToPage("Dashboard")
     }
 
-
+    Shortcut {
+        sequences: ["Ctrl+2", "Meta+2"]
+        onActivated: root.navigateToPage("Models")
+    }
 
     Shortcut {
         sequences: ["Ctrl+4", "Meta+4"]

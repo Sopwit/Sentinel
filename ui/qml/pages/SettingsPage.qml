@@ -10,33 +10,23 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property string uiSelfCheck: "modal-ready rail-scroll-sync voice-path-wrap agent-runtime bottom-safe-scroll"
-    readonly property var themeChoices: ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
+    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
     readonly property var notificationPolicies: ["Disabled", "Important Only", "All", "Custom"]
     readonly property var updatePolicies: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
-    readonly property var categories: ["General", "Appearance", "Accessibility", "AI", "Voice", "Notifications", "Updates"]
+    readonly property var sidebarItems: [
+        { "key": "General", "title": qsTr("General"), "hint": qsTr("Profile and language defaults"), "chip": qsTr("Core") },
+        { "key": "Appearance", "title": qsTr("Appearance"), "hint": qsTr("Theme and visual style"), "chip": qsTr("UI") },
+        { "key": "Accessibility", "title": qsTr("Accessibility"), "hint": qsTr("Motion, contrast, density"), "chip": qsTr("A11y") },
+        { "key": "AI", "title": qsTr("AI"), "hint": qsTr("Runtime and model metadata"), "chip": qsTr("Runtime") },
+        { "key": "Voice", "title": qsTr("Voice"), "hint": qsTr("Voice readiness and controls"), "chip": qsTr("Input") },
+        { "key": "Notifications", "title": qsTr("Notifications"), "hint": qsTr("Delivery and policy preferences"), "chip": qsTr("Alerts") },
+        { "key": "Updates", "title": qsTr("Updates"), "hint": qsTr("Version and update behavior"), "chip": qsTr("System") }
+    ]
     property string activeCategory: "General"
 
     function sectionHeight(content) {
         return content.implicitHeight + panelPadding * 2
-    }
-
-    function categoryLabel(category) {
-        if (category === "General")
-            return qsTr("General")
-        if (category === "Appearance")
-            return qsTr("Appearance")
-        if (category === "Accessibility")
-            return qsTr("Accessibility")
-        if (category === "AI")
-            return qsTr("AI")
-        if (category === "Voice")
-            return qsTr("Voice")
-        if (category === "Notifications")
-            return qsTr("Notifications")
-        if (category === "Updates")
-            return qsTr("Updates")
-        return category
     }
 
     function jumpTo(category) {
@@ -44,112 +34,216 @@ Item {
         settingsFlick.contentY = 0
     }
 
-    function voiceReadinessLine() {
-        var piperReady = viewModel.piperSynthesisStatus === "Ready Metadata"
-        var whisperReady = viewModel.whisperTranscriptionStatus === "Ready Metadata"
-        var prefix = piperReady && whisperReady
-                     ? qsTr("Voice prepared, activation disabled. ")
-                     : qsTr("Voice readiness metadata. ")
-        return prefix + viewModel.voiceConfigurationReadinessSummary
-    }
-
     RowLayout {
         anchors.fill: parent
         spacing: SentinelTheme.spaceLg
 
         ShellPanel {
-            Layout.preferredWidth: settingsPage.compact ? 132 : 172
+            Layout.preferredWidth: settingsPage.compact ? 196 : 278
             Layout.fillHeight: true
-            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.036)
-            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+            color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
+            border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
 
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: SentinelTheme.spaceMd
-                spacing: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceMd
 
-                Label {
+                Rectangle {
                     Layout.fillWidth: true
-                    text: qsTr("Settings")
-                    color: SentinelTheme.textPrimary
-                    font.pixelSize: SentinelTheme.fontCard
-                    maximumLineCount: 1
-                    elide: Text.ElideRight
-                }
+                    radius: SentinelTheme.radiusLg
+                    color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.08)
+                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.26)
+                    implicitHeight: navHeaderColumn.implicitHeight + SentinelTheme.spaceMd * 2
 
-                Repeater {
-                    model: settingsPage.categories
+                    ColumnLayout {
+                        id: navHeaderColumn
+                        x: SentinelTheme.spaceMd
+                        y: SentinelTheme.spaceMd
+                        width: parent.width - SentinelTheme.spaceMd * 2
+                        spacing: 2
 
-                    Button {
-                        id: navButton
-                        required property string modelData
-                        readonly property bool active: settingsPage.activeCategory === navButton.modelData
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: 34
-                        text: settingsPage.categoryLabel(modelData)
-                        hoverEnabled: true
-                        focusPolicy: Qt.StrongFocus
-                        onClicked: settingsPage.jumpTo(modelData)
-
-                        contentItem: Text {
-                            text: navButton.text
-                            leftPadding: SentinelTheme.spaceMd
-                            color: navButton.active
-                                   ? SentinelTheme.textPrimary
-                                   : SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontSmall
-                            verticalAlignment: Text.AlignVCenter
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Settings")
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: SentinelTheme.fontCard
                             maximumLineCount: 1
                             elide: Text.ElideRight
                         }
 
-                        background: Rectangle {
-                            radius: SentinelTheme.radiusMd
-                            color: InteractionTokens.surfaceColor(navButton.hovered, navButton.down, navButton.active,
-                                                                   settingsPage.modeAccent)
-                            border.color: InteractionTokens.borderColor(navButton.activeFocus, navButton.hovered,
-                                                                         navButton.active,
-                                                                         settingsPage.modeAccent)
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Workspace controls")
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontTiny
+                            maximumLineCount: 1
+                            elide: Text.ElideRight
+                        }
 
-                            Rectangle {
-                                width: 3
-                                height: navButton.active ? parent.height - SentinelTheme.spaceSm : 0
-                                radius: 2
-                                anchors.left: parent.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                color: settingsPage.modeAccent
-                                opacity: navButton.active ? 0.86 : 0.0
+                        Label {
+                            Layout.alignment: Qt.AlignLeft
+                            text: qsTr("Premium desktop navigation")
+                            color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.88)
+                            font.pixelSize: SentinelTheme.fontTiny
+                        }
+                    }
+                }
 
-                                Behavior on height {
-                                    NumberAnimation {
-                                        duration: MotionTokens.fast
-                                        easing.type: MotionTokens.enter
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    radius: SentinelTheme.radiusLg
+                    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.028)
+                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+
+                    ColumnLayout {
+                        anchors.fill: parent
+                        anchors.margins: SentinelTheme.spaceSm
+                        spacing: SentinelTheme.spaceXs
+
+                        Repeater {
+                            model: settingsPage.sidebarItems
+                            delegate: Button {
+                                id: navButton
+                                required property var modelData
+                                readonly property bool active: settingsPage.activeCategory === modelData.key
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: settingsPage.compact ? 50 : 56
+                                hoverEnabled: true
+                                focusPolicy: Qt.StrongFocus
+                                onClicked: settingsPage.jumpTo(modelData.key)
+
+                                contentItem: RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: SentinelTheme.spaceSm
+                                    anchors.rightMargin: SentinelTheme.spaceSm
+                                    spacing: SentinelTheme.spaceSm
+
+                                    Rectangle {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        width: 9
+                                        height: 9
+                                        radius: 5
+                                        color: navButton.active
+                                               ? settingsPage.modeAccent
+                                               : SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.50)
+                                    }
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 0
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: modelData.title
+                                            color: navButton.active
+                                                   ? SentinelTheme.textPrimary
+                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.90)
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                            maximumLineCount: 1
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            visible: !settingsPage.compact
+                                            text: modelData.hint
+                                            color: SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontTiny
+                                            maximumLineCount: 1
+                                            elide: Text.ElideRight
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        Layout.alignment: Qt.AlignVCenter
+                                        visible: !settingsPage.compact
+                                        radius: SentinelTheme.radiusPill
+                                        color: navButton.active
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
+                                        border.color: navButton.active
+                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.42)
+                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                        implicitHeight: sectionChipText.implicitHeight + 6
+                                        implicitWidth: sectionChipText.implicitWidth + SentinelTheme.spaceSm
+
+                                        Text {
+                                            id: sectionChipText
+                                            anchors.centerIn: parent
+                                            text: modelData.chip
+                                            color: navButton.active
+                                                   ? settingsPage.modeAccent
+                                                   : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontTiny
+                                        }
                                     }
                                 }
 
-                                Behavior on opacity {
-                                    NumberAnimation {
-                                        duration: MotionTokens.fast
-                                        easing.type: MotionTokens.standard
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: navButton.active
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
+                                           : InteractionTokens.surfaceColor(navButton.hovered, navButton.down, false,
+                                                                            settingsPage.modeAccent)
+                                    border.color: navButton.active
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.48)
+                                                  : InteractionTokens.borderColor(navButton.activeFocus, navButton.hovered,
+                                                                                  false, settingsPage.modeAccent)
+
+                                    Rectangle {
+                                        width: navButton.active ? 4 : 0
+                                        height: parent.height - SentinelTheme.spaceSm
+                                        radius: 3
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: SentinelTheme.spaceXs
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        color: settingsPage.modeAccent
+                                        opacity: navButton.active ? 0.86 : 0.0
+
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: MotionTokens.fast
+                                                easing.type: MotionTokens.enter
+                                            }
+                                        }
+
+                                        Behavior on opacity {
+                                            NumberAnimation {
+                                                duration: MotionTokens.fast
+                                                easing.type: MotionTokens.standard
+                                            }
+                                        }
                                     }
-                                }
-                            }
 
-                            Behavior on color {
-                                ColorAnimation {
-                                    duration: MotionTokens.fast
-                                    easing.type: MotionTokens.standard
-                                }
-                            }
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: MotionTokens.fast
+                                            easing.type: MotionTokens.standard
+                                        }
+                                    }
 
-                            Behavior on border.color {
-                                ColorAnimation {
-                                    duration: MotionTokens.fast
-                                    easing.type: MotionTokens.standard
+                                    Behavior on border.color {
+                                        ColorAnimation {
+                                            duration: MotionTokens.fast
+                                            easing.type: MotionTokens.standard
+                                        }
+                                    }
                                 }
                             }
                         }
                     }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Desktop alpha")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontTiny
+                    horizontalAlignment: Text.AlignHCenter
+                    maximumLineCount: 1
+                    elide: Text.ElideRight
                 }
             }
         }
@@ -288,40 +382,6 @@ Item {
                             }
                         }
 
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("Settings are explicit and local. Disabled runtime features stay inactive until a later phase enables them. Language changes take effect immediately.")
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontSmall
-                            wrapMode: Text.WordWrap
-                        }
-
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 2
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            SentinelButton {
-                                text: qsTr("Replay Onboarding")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.replayOnboarding()
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Save Recovery Draft")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.seedRecoveryDraft(qsTr("Recovered local draft"))
-                            }
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Companion")
-                            value: settingsPage.viewModel.companionSafetyBoundary
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
                     }
                 }
 
@@ -387,33 +447,6 @@ Item {
                             }
                         }
 
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
-
-                            Repeater {
-                                model: settingsPage.themeChoices
-
-                                StatusChip {
-                                    required property string modelData
-                                    label: qsTr("Theme")
-                                    value: modelData
-                                    accent: modelData === settingsPage.viewModel.themeName
-                                            ? settingsPage.modeAccent
-                                            : SentinelTheme.textMuted
-                                    selected: modelData === settingsPage.viewModel.themeName
-                                    muted: modelData !== settingsPage.viewModel.themeName
-                                }
-                            }
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Scope")
-                            value: qsTr("Theme selection is persisted presentation metadata only; it does not change providers, permissions, models, or runtime behavior.")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
                     }
                 }
 
@@ -628,14 +661,6 @@ Item {
                                     onClicked: settingsPage.viewModel.uiDensity = modelData
                                 }
                             }
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Discoverability")
-                            value: qsTr("Command Palette opens with Ctrl/Cmd+K. Settings, notifications, updates, exports, workspaces, themes, and controlled task planner are reachable from the palette.")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 4
                         }
 
                     }
@@ -859,57 +884,6 @@ Item {
                             Layout.fillWidth: true
                         }
 
-                        Repeater {
-                            model: settingsPage.viewModel.runtimeProviderCardSummaries
-
-                            Rectangle {
-                                required property string modelData
-                                Layout.fillWidth: true
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
-                                implicitHeight: runtimeProviderCardLabel.implicitHeight + SentinelTheme.spaceMd
-
-                                Label {
-                                    id: runtimeProviderCardLabel
-                                    x: SentinelTheme.spaceSm
-                                    y: SentinelTheme.spaceXs
-                                    width: parent.width - SentinelTheme.spaceSm * 2
-                                    text: modelData
-                                    color: modelData.indexOf("disabled") >= 0
-                                           ? SentinelTheme.textMuted
-                                           : SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    wrapMode: Text.WordWrap
-                                }
-                            }
-                        }
-
-                        Repeater {
-                            model: settingsPage.viewModel.providerCredentialReadinessSummaries
-
-                            Rectangle {
-                                required property string modelData
-                                Layout.fillWidth: true
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
-                                implicitHeight: credentialCardLabel.implicitHeight + SentinelTheme.spaceMd
-
-                                Label {
-                                    id: credentialCardLabel
-                                    x: SentinelTheme.spaceSm
-                                    y: SentinelTheme.spaceXs
-                                    width: parent.width - SentinelTheme.spaceSm * 2
-                                    text: modelData
-                                    color: modelData.indexOf("execution disabled") >= 0
-                                           ? SentinelTheme.textMuted
-                                           : SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    wrapMode: Text.WordWrap
-                                }
-                            }
-                        }
                     }
                 }
 
@@ -1063,7 +1037,7 @@ Item {
 
                         ColumnLayout {
                             Layout.fillWidth: true
-                            visible: settingsPage.developerMode
+                            visible: settingsPage.viewModel.developerModeEnabled
                             spacing: SentinelTheme.spaceXs
 
                             InfoRow {
@@ -1699,34 +1673,6 @@ Item {
                                 piperModelField.text,
                                 whisperBinaryField.text,
                                 whisperModelField.text)
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Readiness")
-                            value: settingsPage.voiceReadinessLine()
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Whisper")
-                            value: settingsPage.viewModel.whisperTranscriptionStatus
-                                   + " / "
-                                   + settingsPage.viewModel.whisperTranscriptionReadinessSummary
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            valueMaximumLineCount: 8
-                            label: qsTr("Piper")
-                            value: settingsPage.viewModel.piperSynthesisStatus
-                                   + " / "
-                                   + settingsPage.viewModel.piperSynthesisReadinessSummary
-                            Layout.fillWidth: true
                         }
                     }
                 }
@@ -2738,7 +2684,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Notifications")
-                            subtitle: qsTr("In-app notification center. No background polling or hidden notifications.")
+                            subtitle: qsTr("In-app notification preferences.")
                             Layout.fillWidth: true
                         }
 
@@ -2790,30 +2736,6 @@ Item {
                             }
                         }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Center")
-                            value: settingsPage.viewModel.notificationFilteredSummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 8
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Categories")
-                            value: settingsPage.viewModel.notificationCategories.join(", ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Lifecycle")
-                            value: settingsPage.viewModel.notificationLifecycleSummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 4
-                        }
-
                         GridLayout {
                             Layout.fillWidth: true
                             columns: settingsPage.compact ? 1 : 4
@@ -2862,7 +2784,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Updates")
-                            subtitle: qsTr("About and update UX foundation. No network check, auto-download, auto-install, or telemetry.")
+                            subtitle: qsTr("Version and manual update controls.")
                             Layout.fillWidth: true
                         }
 
@@ -2886,39 +2808,6 @@ Item {
                                 Layout.fillWidth: true
                             }
 
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Platform")
-                                value: settingsPage.viewModel.companionPlatformCapability
-                                Layout.fillWidth: true
-                            }
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Build")
-                                value: settingsPage.viewModel.aboutSentinelSummaries.join(" / ")
-                                Layout.fillWidth: true
-                                valueMaximumLineCount: 6
-                            }
-                        }
-
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
-
-                            Repeater {
-                                model: [qsTr("Never"), qsTr("Ask Before Checking"), qsTr("Weekly"), qsTr("On Startup")]
-
-                                StatusChip {
-                                    required property string modelData
-                                    label: qsTr("Check Policy")
-                                    value: modelData
-                                    accent: modelData === settingsPage.viewModel.updateCheckPolicy ? settingsPage.modeAccent
-                                                                                                    : SentinelTheme.textMuted
-                                    selected: modelData === settingsPage.viewModel.updateCheckPolicy
-                                    muted: modelData !== settingsPage.viewModel.updateCheckPolicy
-                                }
-                            }
                         }
 
                         ComboBox {
@@ -2944,20 +2833,6 @@ Item {
                             valueMaximumLineCount: 3
                         }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Release Notes")
-                            value: settingsPage.viewModel.releaseNotesSummaries.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 6
-                        }
-
-                        SentinelButton {
-                            text: qsTr("Confirm Download")
-                            enabled: true
-                            Layout.preferredWidth: 180
-                            onClicked: settingsPage.viewModel.confirmUpdateDownload()
-                        }
                     }
                 }
 
@@ -3074,4 +2949,3 @@ Item {
         }
     }
 }
-

@@ -6,7 +6,7 @@ Popup {
     property color accent: SentinelTheme.calmAccent
     property int preferredWidth: 620
     property int preferredHeight: 420
-    property string modeName: "Companion Mode"
+    property string modeName: "Sentinel"
 
     parent: Overlay.overlay
     width: Math.min(preferredWidth, Math.max(320, parent ? parent.width - SentinelTheme.space4Xl : preferredWidth))

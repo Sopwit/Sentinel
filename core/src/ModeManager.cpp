@@ -22,40 +22,20 @@ QString ModeManager::currentModeName() const {
 }
 
 QStringList ModeManager::availableModes() const {
-    return {
-        modeToName(Mode::Companion), modeToName(Mode::Focus),   modeToName(Mode::Mission),
-        modeToName(Mode::System),    modeToName(Mode::Minimal), modeToName(Mode::Tactical),
-    };
+    return {};
 }
 
 void ModeManager::setModeByName(const QString& modeName) {
-    const auto modes = availableModes();
-    const auto index = modes.indexOf(modeName);
-
-    if (index < 0) {
-        return;
-    }
-
-    setCurrentMode(static_cast<Mode>(index));
+    Q_UNUSED(modeName)
 }
 
 QString ModeManager::modeToName(Mode mode) {
     switch (mode) {
-    case Mode::Companion:
-        return QStringLiteral("Companion Mode");
-    case Mode::Focus:
-        return QStringLiteral("Focus Mode");
-    case Mode::Mission:
-        return QStringLiteral("Mission Mode");
-    case Mode::System:
-        return QStringLiteral("System Mode");
-    case Mode::Minimal:
-        return QStringLiteral("Minimal Mode");
-    case Mode::Tactical:
-        return QStringLiteral("Tactical Mode");
+    case Mode::Default:
+        return QStringLiteral("Sentinel");
     }
 
-    return QStringLiteral("Companion Mode");
+    return QStringLiteral("Sentinel");
 }
 
 } // namespace sentinel::core

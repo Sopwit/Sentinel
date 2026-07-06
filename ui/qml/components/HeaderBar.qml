@@ -8,7 +8,6 @@ ShellPanel {
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property date now: new Date()
-    readonly property int modeButtonWidth: compact ? 124 : 136
     readonly property string dashboardSubtitleText: qsTr("Chat through configured local providers.")
     readonly property string subtitleText: headerBar.viewModel.currentPage === "Settings"
                                            ? qsTr("Floating local preferences and readiness controls.")
@@ -107,131 +106,6 @@ ShellPanel {
                 }
             }
 
-            Button {
-                id: modeButton
-                Layout.preferredWidth: headerBar.modeButtonWidth
-                Layout.preferredHeight: 28
-                hoverEnabled: true
-                focusPolicy: Qt.StrongFocus
-                text: headerBar.viewModel.currentModeName
-                onClicked: modePopup.open()
-
-                contentItem: RowLayout {
-                    anchors.fill: parent
-                    anchors.leftMargin: SentinelTheme.spaceMd
-                    anchors.rightMargin: SentinelTheme.spaceSm
-                    spacing: SentinelTheme.spaceSm
-
-                    Label {
-                        Layout.fillWidth: true
-                        text: modeButton.text
-                        color: SentinelTheme.textPrimary
-                        font.pixelSize: SentinelTheme.fontSmall
-                        elide: Text.ElideRight
-                    }
-
-                    Label {
-                        text: "\u25be"
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontTiny
-                    }
-                }
-
-                background: Rectangle {
-                    radius: 16
-                    color: InteractionTokens.surfaceColor(modeButton.hovered, modeButton.down,
-                                                           modePopup.opened, headerBar.modeAccent)
-                    border.color: InteractionTokens.borderColor(modeButton.activeFocus, modeButton.hovered,
-                                                                 modePopup.opened, headerBar.modeAccent)
-                    border.width: 1
-
-                    Behavior on color {
-                        ColorAnimation {
-                            duration: MotionTokens.fast
-                            easing.type: MotionTokens.standard
-                        }
-                    }
-
-                    Behavior on border.color {
-                        ColorAnimation {
-                            duration: MotionTokens.fast
-                            easing.type: MotionTokens.standard
-                        }
-                    }
-                }
-
-                Popup {
-                    id: modePopup
-                    y: modeButton.height + SentinelTheme.spaceXs
-                    width: headerBar.modeButtonWidth
-                    modal: false
-                    focus: true
-                    closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-                    padding: SentinelTheme.spaceXs
-                    enter: Transition {
-                        NumberAnimation {
-                            property: "opacity"
-                            from: 0.0
-                            to: 1.0
-                            duration: MotionTokens.menu
-                            easing.type: MotionTokens.enter
-                        }
-                    }
-                    exit: Transition {
-                        NumberAnimation {
-                            property: "opacity"
-                            to: 0.0
-                            duration: MotionTokens.fast
-                            easing.type: MotionTokens.exit
-                        }
-                    }
-
-                    background: Rectangle {
-                        radius: SentinelTheme.radiusLg
-                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                        border.color: SentinelTheme.withAlpha(headerBar.modeAccent, 0.18)
-                    }
-
-                    contentItem: ColumnLayout {
-                        spacing: SentinelTheme.spaceXs
-
-                        Repeater {
-                            model: headerBar.viewModel.availableModes
-
-                            Button {
-                                id: modeOption
-                                required property string modelData
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: SentinelTheme.controlHeight
-                                flat: true
-                                hoverEnabled: true
-                                text: modelData
-                                onClicked: {
-                                    headerBar.viewModel.setModeByName(modelData)
-                                    modePopup.close()
-                                }
-
-                                contentItem: Label {
-                                    text: modeOption.text
-                                    color: modeOption.modelData === headerBar.viewModel.currentModeName
-                                           ? SentinelTheme.textPrimary
-                                           : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                }
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: modeOption.hovered
-                                           ? SentinelTheme.withAlpha(headerBar.modeAccent, 0.10)
-                                           : "transparent"
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
     }
 

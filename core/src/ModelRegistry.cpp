@@ -452,6 +452,15 @@ QList<ModelSummary> localAiCatalogPlaceholders() {
                            QStringLiteral("Unknown"), 0,
                            QStringLiteral("Hugging Face appears as a catalog placeholder only; "
                                           "no catalog fetch or cloud call is performed.")),
+        catalogPlaceholder(QStringLiteral("mlx-catalog"),
+                           QStringLiteral("MLX local/community catalog"),
+                           QStringLiteral("mlx-metadata-entry"), QStringLiteral("MLX"),
+                           QStringLiteral("Unknown"),
+                           {QStringLiteral("chat"), QStringLiteral("code"),
+                            QStringLiteral("reasoning")},
+                           QStringLiteral("Apple Silicon dependent"), 0,
+                           QStringLiteral("MLX models catalog optimized for Apple Silicon; "
+                                          "Sentinel does not build or run them directly.")),
         catalogPlaceholder(QStringLiteral("custom-catalog"),
                            QStringLiteral("Future custom catalogs"),
                            QStringLiteral("custom-metadata-entry"), QStringLiteral("Custom"),

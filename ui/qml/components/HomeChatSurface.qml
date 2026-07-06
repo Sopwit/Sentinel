@@ -7,6 +7,7 @@ ShellPanel {
     id: homeChat
     required property var viewModel
     property bool compact: width < 760
+    readonly property bool inChatMode: (viewModel.chatMessages && viewModel.chatMessages.count > 0) || (promptInput.text.trim().length > 0)
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property bool chatReady: viewModel.localChatSendAvailable
     readonly property bool canSend: viewModel.localChatSendAvailable
@@ -22,6 +23,7 @@ ShellPanel {
     readonly property bool sidebarEffectiveOpen: conversationSidebarOpen && !compact
     property bool conversationSidebarOpen: true
     property string conversationFilter: ""
+    readonly property real resolutionScale: Math.max(0.7, Math.min(1.4, homeChat.height / 860.0))
 
     radius: SentinelTheme.radiusPanel
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.58)
@@ -82,7 +84,8 @@ ShellPanel {
 
         ShellPanel {
             id: conversationRail
-            Layout.preferredWidth: homeChat.sidebarEffectiveOpen ? Math.min(300, Math.max(238, homeChat.width * 0.22)) : 44
+            Layout.preferredWidth: homeChat.inChatMode ? (homeChat.sidebarEffectiveOpen ? Math.min(300, Math.max(238, homeChat.width * 0.22)) : 44) : 0
+            visible: Layout.preferredWidth > 0
             Layout.fillHeight: true
             Layout.minimumHeight: 0
             color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.34)
@@ -275,14 +278,63 @@ ShellPanel {
         }
 
         ColumnLayout {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
-        Layout.minimumHeight: 0
-        spacing: SentinelTheme.spaceMd
-
-        RowLayout {
             Layout.fillWidth: true
-            spacing: SentinelTheme.spaceSm
+            Layout.fillHeight: true
+            Layout.minimumHeight: 0
+            spacing: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceMd * homeChat.resolutionScale
+
+            Item {
+                id: topSpacer
+                Layout.fillWidth: true
+                Layout.fillHeight: !homeChat.inChatMode
+                visible: !homeChat.inChatMode
+            }
+
+            ColumnLayout {
+                id: greetingArea
+                Layout.fillWidth: true
+                visible: !homeChat.inChatMode
+                spacing: SentinelTheme.spaceMd * homeChat.resolutionScale
+                Layout.alignment: Qt.AlignHCenter
+
+                Label {
+                    id: greetingLabel
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignHCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    text: {
+                        var hour = new Date().getHours()
+                        if (hour >= 6 && hour < 12) {
+                            return qsTr("Günaydın")
+                        } else if (hour >= 12 && hour < 18) {
+                            return qsTr("İyi günler")
+                        } else if (hour >= 18 && hour < 22) {
+                            return qsTr("İyi akşamlar")
+                        } else {
+                            return qsTr("İyi geceler")
+                        }
+                    }
+                    color: SentinelTheme.textPrimary
+                    font.pixelSize: (homeChat.compact ? SentinelTheme.fontDisplay : SentinelTheme.fontHero) * homeChat.resolutionScale
+                    font.bold: true
+                    font.family: "Outfit"
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    Layout.alignment: Qt.AlignHCenter
+                    horizontalAlignment: Text.AlignHCenter
+                    text: qsTr("Bugün size nasıl yardımcı olabilirim?")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: (homeChat.compact ? SentinelTheme.fontBody : SentinelTheme.fontCard) * homeChat.resolutionScale
+                    wrapMode: Text.WordWrap
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                visible: homeChat.inChatMode
+                spacing: SentinelTheme.spaceSm
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -317,6 +369,7 @@ ShellPanel {
 
         Flow {
             Layout.fillWidth: true
+            visible: homeChat.inChatMode
             spacing: SentinelTheme.spaceSm
 
             StatusChip {
@@ -394,9 +447,9 @@ ShellPanel {
                 return contentHeight <= height || (contentY + height >= contentHeight - 96)
             }
             Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: 210
-            visible: true
+            Layout.fillHeight: homeChat.inChatMode
+            Layout.minimumHeight: homeChat.inChatMode ? 210 : 0
+            visible: homeChat.inChatMode
             clip: true
             spacing: homeChat.compact ? SentinelTheme.spaceSm : SentinelTheme.spaceMd
             model: homeChat.viewModel.chatMessages
@@ -617,7 +670,7 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            visible: homeChat.viewModel.conversationHistoryMessageCount <= 1
+            visible: homeChat.inChatMode && homeChat.viewModel.conversationHistoryMessageCount <= 1
             text: qsTr("Start with a focused question, a draft to revise, or notes to organize. Local Ollama only; no cloud provider is active.")
             color: SentinelTheme.textPrimary
             font.pixelSize: SentinelTheme.fontBody
@@ -635,7 +688,7 @@ ShellPanel {
 
         Rectangle {
             Layout.fillWidth: true
-            visible: homeChat.streamingActive
+            visible: homeChat.inChatMode && homeChat.streamingActive
             radius: SentinelTheme.radiusSm
             color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.055)
             border.color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
@@ -660,7 +713,8 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            visible: homeChat.sendState !== "idle"
+            visible: homeChat.inChatMode
+                     && homeChat.sendState !== "idle"
                      && (homeChat.sendBusy || homeChat.viewModel.developerModeEnabled
                          || homeChat.sendState === "refused" || homeChat.sendState === "failed"
                          || homeChat.sendState === "cancelled")
@@ -677,7 +731,7 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            visible: homeChat.viewModel.promptContextInjectionEnabled
+            visible: homeChat.inChatMode && homeChat.viewModel.promptContextInjectionEnabled
             text: homeChat.viewModel.promptContextUsedSummary
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
@@ -687,7 +741,8 @@ ShellPanel {
 
         Flow {
             Layout.fillWidth: true
-            visible: homeChat.viewModel.contextExplainabilityVisible
+            visible: homeChat.inChatMode
+                     && homeChat.viewModel.contextExplainabilityVisible
                      && homeChat.viewModel.conversationRuntimeActiveModel !== "None"
             spacing: SentinelTheme.spaceSm
 
@@ -715,9 +770,10 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            visible: homeChat.viewModel.conversationSummaryGenerationStatus === "Planned"
-                     || homeChat.viewModel.conversationSummaryAvailable
-                     || homeChat.viewModel.conversationSummaryGenerationStatus === "Blocked"
+            visible: homeChat.inChatMode
+                     && (homeChat.viewModel.conversationSummaryGenerationStatus === "Planned"
+                         || homeChat.viewModel.conversationSummaryAvailable
+                         || homeChat.viewModel.conversationSummaryGenerationStatus === "Blocked")
             text: homeChat.viewModel.conversationSummaryGenerationStatus === "Planned"
                   ? homeChat.viewModel.conversationSummaryReadinessSummary
                   : (homeChat.viewModel.promptContextInjectionEnabled
@@ -734,7 +790,8 @@ ShellPanel {
 
         ColumnLayout {
             Layout.fillWidth: true
-            visible: homeChat.viewModel.contextExplainabilityVisible
+            visible: homeChat.inChatMode
+                     && homeChat.viewModel.contextExplainabilityVisible
                      && homeChat.viewModel.promptContextInjectionEnabled
             spacing: SentinelTheme.spaceXs
 
@@ -790,13 +847,15 @@ ShellPanel {
 
         Rectangle {
             Layout.fillWidth: true
-            radius: SentinelTheme.radiusMd
+            Layout.maximumWidth: homeChat.inChatMode ? 9999 : 720 * homeChat.resolutionScale
+            Layout.alignment: Qt.AlignHCenter
+            radius: SentinelTheme.radiusMd * homeChat.resolutionScale
             color: promptInput.activeFocus
                    ? SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.82)
                    : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.68)
             border.color: InteractionTokens.borderColor(promptInput.activeFocus, composerMouse.containsMouse,
                                                          false, homeChat.modeAccent)
-            implicitHeight: Math.max(76, composerLayout.implicitHeight + SentinelTheme.spaceMd)
+            implicitHeight: Math.max(76 * homeChat.resolutionScale, composerLayout.implicitHeight + SentinelTheme.spaceMd * homeChat.resolutionScale)
 
             MouseArea {
                 id: composerMouse
@@ -815,15 +874,15 @@ ShellPanel {
 
             RowLayout {
                 id: composerLayout
-                x: SentinelTheme.spaceSm
-                y: SentinelTheme.spaceXs
-                width: parent.width - SentinelTheme.spaceSm * 2
-                spacing: SentinelTheme.spaceSm
+                x: SentinelTheme.spaceSm * homeChat.resolutionScale
+                y: SentinelTheme.spaceXs * homeChat.resolutionScale
+                width: parent.width - (SentinelTheme.spaceSm * 2) * homeChat.resolutionScale
+                spacing: SentinelTheme.spaceSm * homeChat.resolutionScale
 
                 Button {
                     id: attachButton
-                    Layout.preferredWidth: 34
-                    Layout.preferredHeight: 34
+                    Layout.preferredWidth: 34 * homeChat.resolutionScale
+                    Layout.preferredHeight: 34 * homeChat.resolutionScale
                     text: "+"
                     hoverEnabled: true
                     ToolTip.visible: hovered
@@ -833,13 +892,13 @@ ShellPanel {
                     contentItem: Text {
                         text: attachButton.text
                         color: SentinelTheme.textPrimary
-                        font.pixelSize: SentinelTheme.fontControl
+                        font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
 
                     background: Rectangle {
-                        radius: 17
+                        radius: 17 * homeChat.resolutionScale
                         color: InteractionTokens.surfaceColor(attachButton.hovered, attachButton.down,
                                                                attachButton.activeFocus,
                                                                homeChat.modeAccent)
@@ -852,8 +911,8 @@ ShellPanel {
 
                 Button {
                     id: pasteAttachButton
-                    Layout.preferredWidth: 54
-                    Layout.preferredHeight: 34
+                    Layout.preferredWidth: 54 * homeChat.resolutionScale
+                    Layout.preferredHeight: 34 * homeChat.resolutionScale
                     text: qsTr("Paste")
                     enabled: promptInput.text.trim().length > 0
                     hoverEnabled: true
@@ -865,14 +924,14 @@ ShellPanel {
                     contentItem: Text {
                         text: pasteAttachButton.text
                         color: pasteAttachButton.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontTiny
+                        font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
                     }
 
                     background: Rectangle {
-                        radius: 17
+                        radius: 17 * homeChat.resolutionScale
                         color: InteractionTokens.surfaceColor(pasteAttachButton.hovered,
                                                                pasteAttachButton.down,
                                                                pasteAttachButton.activeFocus,
@@ -886,8 +945,9 @@ ShellPanel {
 
                 Button {
                     id: summaryAction
-                    Layout.preferredWidth: 116
-                    Layout.preferredHeight: 34
+                    visible: homeChat.inChatMode
+                    Layout.preferredWidth: 116 * homeChat.resolutionScale
+                    Layout.preferredHeight: 34 * homeChat.resolutionScale
                     text: homeChat.viewModel.conversationSummaryAvailable ? qsTr("Summary Ready") : qsTr("Generate Summary")
                     enabled: homeChat.viewModel.localChatSendAvailable && !homeChat.sendBusy
                              && homeChat.viewModel.conversationSummaryGenerationStatus !== "Planned"
@@ -897,14 +957,14 @@ ShellPanel {
                     contentItem: Text {
                         text: summaryAction.text
                         color: summaryAction.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontTiny
+                        font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideRight
                     }
 
                     background: Rectangle {
-                        radius: 17
+                        radius: 17 * homeChat.resolutionScale
                         color: InteractionTokens.surfaceColor(summaryAction.hovered, summaryAction.down,
                                                                summaryAction.activeFocus,
                                                                homeChat.modeAccent)
@@ -920,8 +980,8 @@ ShellPanel {
                 TextArea {
                     id: promptInput
                     Layout.fillWidth: true
-                    Layout.minimumHeight: 48
-                    Layout.maximumHeight: 126
+                    Layout.minimumHeight: 48 * homeChat.resolutionScale
+                    Layout.maximumHeight: 126 * homeChat.resolutionScale
                     placeholderText: homeChat.chatReady ? (homeChat.sendBusy ? qsTr("Sentinel is responding") : qsTr("Ask Sentinel"))
                                                         : homeChat.viewModel.localChatSendAvailabilitySummary
                     enabled: !homeChat.viewModel.activeConversationArchived && !homeChat.sendBusy
@@ -931,6 +991,7 @@ ShellPanel {
                     selectByMouse: true
                     selectionColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.34)
                     selectedTextColor: SentinelTheme.textPrimary
+                    font.pixelSize: (homeChat.compact ? SentinelTheme.fontBody : SentinelTheme.fontControl) * homeChat.resolutionScale
                     onTextChanged: homeChat.viewModel.recoveryDraftText = text
                     background: Rectangle {
                         color: "transparent"
@@ -951,8 +1012,9 @@ ShellPanel {
                     id: sendButton
                     visible: true
                     text: homeChat.sendBusy ? qsTr("Stop") : qsTr("Send")
-                    Layout.preferredWidth: 82
+                    Layout.preferredWidth: 82 * homeChat.resolutionScale
                     Layout.alignment: Qt.AlignBottom
+                    font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
                     enabled: homeChat.sendBusy || (promptInput.text.trim().length > 0
                                                    && homeChat.canSend)
                     opacity: enabled ? 1.0 : 0.58
@@ -968,7 +1030,7 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            visible: !homeChat.chatReady
+            visible: homeChat.inChatMode && !homeChat.chatReady
             text: homeChat.disabledReason + (homeChat.chatReady ? "" : qsTr(" Local Ollama only. No cloud provider active."))
             color: !homeChat.chatReady ? SentinelTheme.textMuted : SentinelTheme.warning
             font.pixelSize: SentinelTheme.fontSmall
@@ -978,6 +1040,7 @@ ShellPanel {
 
         Flow {
             Layout.fillWidth: true
+            visible: homeChat.inChatMode
             spacing: SentinelTheme.spaceSm
 
             StatusChip {
@@ -1009,12 +1072,20 @@ ShellPanel {
 
             InfoRow {
                 required property string modelData
+                visible: homeChat.inChatMode
                 compact: homeChat.compact
                 label: qsTr("Attachment")
                 value: modelData
                 Layout.fillWidth: true
                 valueMaximumLineCount: 2
             }
+        }
+
+        Item {
+            id: bottomSpacer
+            Layout.fillWidth: true
+            Layout.fillHeight: !homeChat.inChatMode
+            visible: !homeChat.inChatMode
         }
     }
 

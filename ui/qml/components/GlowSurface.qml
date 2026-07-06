@@ -31,7 +31,7 @@ Item {
 
         Behavior on scale {
             NumberAnimation {
-                duration: MotionTokens.duration(MotionTokens.slow, reducedMotion ? "Focus Mode" : "")
+                duration: reducedMotion ? 0 : MotionTokens.duration(MotionTokens.slow, "")
                 easing.type: MotionTokens.enter
             }
         }

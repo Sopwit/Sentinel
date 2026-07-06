@@ -235,8 +235,8 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.providerStatus(), QStringLiteral("Ready"));
     QCOMPARE(fixture.viewModel.memoryStatus(), QStringLiteral("Available"));
     QCOMPARE(fixture.viewModel.chatHistoryStatus(), QStringLiteral("Runtime Only"));
-    QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Companion Mode"));
-    QVERIFY(fixture.viewModel.availableModes().contains(QStringLiteral("Tactical Mode")));
+    QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Sentinel"));
+    QVERIFY(fixture.viewModel.availableModes().isEmpty());
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Dark"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
     QCOMPARE(fixture.viewModel.appLanguage(), QStringLiteral("system"));
@@ -2983,10 +2983,10 @@ void DesktopShellViewModelTest::forwardsModeChanges() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::currentModeChanged);
 
-    fixture.viewModel.setModeByName(QStringLiteral("Mission Mode"));
+    fixture.viewModel.setModeByName(QStringLiteral("Workspace"));
 
-    QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Mission Mode"));
-    QCOMPARE(spy.count(), 1);
+    QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Sentinel"));
+    QCOMPARE(spy.count(), 0);
 }
 
 void DesktopShellViewModelTest::forwardsMemoryWrites() {

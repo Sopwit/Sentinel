@@ -24,6 +24,8 @@
 #include <QStandardPaths>
 #include <QSysInfo>
 #include <QTextStream>
+#include <QTimer>
+#include <QThread>
 
 #include <algorithm>
 #include <cstdint>
@@ -855,6 +857,25 @@ ApplicationController::ApplicationController(
     latestSemanticPromptInclusionResult_ = sentinel::core::includeSemanticPromptSupplements(
         latestPromptContextInjectionResult_, semanticSupplementAssemblyResult(),
         semanticPromptAuthorityResult(), semanticPromptInclusionPolicy());
+
+    // Initialize cached health check and models
+    cachedOllamaHealthCheck_.connectionStatus = OllamaConnectionStatus::Unavailable;
+    cachedOllamaHealthCheck_.healthStatus = OllamaHealthStatus::Unavailable;
+    cachedOllamaHealthCheck_.summary = QStringLiteral("Initializing status...");
+
+
+    // Start timer for periodic updates (every 5 seconds)
+    ollamaPollTimer_ = new QTimer(this);
+    connect(ollamaPollTimer_, &QTimer::timeout, this, &ApplicationController::pollOllama);
+    ollamaPollTimer_->start(5000);
+}
+
+ApplicationController::~ApplicationController() {
+    if (ollamaCheckThread_) {
+        ollamaCheckThread_->wait();
+        ollamaCheckThread_->deleteLater();
+        ollamaCheckThread_ = nullptr;
+    }
 }
 
 QString ApplicationController::providerName() const {
@@ -8436,6 +8457,8 @@ ModelRegistry ApplicationController::currentModelRegistry() const {
                                                    QStringLiteral("OpenAI-compatible local endpoint")));
     models.append(disabledProviderModelPlaceholder(QStringLiteral("huggingface-catalog"),
                                                    QStringLiteral("Hugging Face metadata catalog")));
+    models.append(disabledProviderModelPlaceholder(QStringLiteral("mlx-catalog"),
+                                                   QStringLiteral("MLX local/community catalog")));
     models.append(disabledProviderModelPlaceholder(QStringLiteral("custom-catalog"),
                                                    QStringLiteral("Future custom catalogs")));
     const auto selectedModel =
@@ -8444,16 +8467,94 @@ ModelRegistry ApplicationController::currentModelRegistry() const {
 }
 
 OllamaHealthCheckResult ApplicationController::currentOllamaHealthCheck() const {
-    if (!ollamaRuntimeClient_) {
-        return NullOllamaRuntimeClient{}.healthCheck();
+    if (!ollamaCacheInitialized_) {
+        const_cast<ApplicationController*>(this)->initializeOllamaCache();
     }
-
-    return ollamaRuntimeClient_->healthCheck();
+    return cachedOllamaHealthCheck_;
 }
 
 QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
-    return ollamaRuntimeClient_ ? ollamaRuntimeClient_->installedModels()
-                                : QList<OllamaModelSummary>{};
+    if (!ollamaCacheInitialized_) {
+        const_cast<ApplicationController*>(this)->initializeOllamaCache();
+    }
+    return cachedOllamaModels_;
+}
+
+void ApplicationController::initializeOllamaCache() {
+    if (ollamaCacheInitialized_) {
+        return;
+    }
+    ollamaCacheInitialized_ = true;
+    if (ollamaRuntimeClient_) {
+        cachedOllamaHealthCheck_ = ollamaRuntimeClient_->healthCheck();
+        cachedOllamaModels_ = ollamaRuntimeClient_->installedModels();
+    } else {
+        cachedOllamaHealthCheck_ = NullOllamaRuntimeClient{}.healthCheck();
+        cachedOllamaModels_ = {};
+    }
+}
+
+void ApplicationController::pollOllama() {
+    if (ollamaCheckThread_ && ollamaCheckThread_->isRunning()) {
+        return;
+    }
+
+    ollamaCheckThread_ = QThread::create([this]() {
+        OllamaHealthCheckResult health;
+        QList<OllamaModelSummary> models;
+
+        if (ollamaRuntimeClient_) {
+            health = ollamaRuntimeClient_->healthCheck();
+            models = ollamaRuntimeClient_->installedModels();
+        } else {
+            health = NullOllamaRuntimeClient{}.healthCheck();
+        }
+
+        QMetaObject::invokeMethod(this, [this, health = std::move(health), models = std::move(models)]() {
+            bool changed = false;
+            ollamaCacheInitialized_ = true;
+
+            if (cachedOllamaHealthCheck_.connectionStatus != health.connectionStatus ||
+                cachedOllamaHealthCheck_.healthStatus != health.healthStatus ||
+                cachedOllamaHealthCheck_.summary != health.summary) {
+                cachedOllamaHealthCheck_ = health;
+                changed = true;
+            }
+
+            if (cachedOllamaModels_.size() != models.size()) {
+                cachedOllamaModels_ = models;
+                changed = true;
+            } else {
+                for (int i = 0; i < models.size(); ++i) {
+                    if (cachedOllamaModels_[i].name != models[i].name ||
+                        cachedOllamaModels_[i].sizeBytes != models[i].sizeBytes) {
+                        cachedOllamaModels_ = models;
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (ollamaCheckThread_) {
+                ollamaCheckThread_->deleteLater();
+                ollamaCheckThread_ = nullptr;
+            }
+
+            if (changed) {
+                emit ollamaStatusChanged();
+                emit localModelSelectionChanged();
+                emit runtimeProviderRegistryChanged();
+                emit localChatInferenceRoutingChanged();
+            }
+        }, Qt::QueuedConnection);
+    });
+
+    ollamaCheckThread_->setObjectName(QStringLiteral("OllamaStatusPollWorker"));
+    ollamaCheckThread_->start();
+}
+
+void ApplicationController::refreshOllamaStatus() {
+    pollOllama();
 }
 
 QString ApplicationController::effectiveLocalModel(const QString& requestedModel) const {

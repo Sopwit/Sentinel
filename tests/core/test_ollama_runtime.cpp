@@ -16,6 +16,7 @@ private slots:
     void normalizesInvalidEndpointToSafeDefault();
     void acceptsLocalhostEndpointOnly();
     void nullClientIsDeterministicallyUnavailable();
+    void parsesOllamaLibraryHtml();
 };
 
 void OllamaRuntimeTest::defaultEndpointIsLocalLoopback() {
@@ -65,6 +66,61 @@ void OllamaRuntimeTest::nullClientIsDeterministicallyUnavailable() {
     QCOMPARE(health.endpoint, QStringLiteral("http://127.0.0.1:11434"));
     QVERIFY(health.summary.contains(QStringLiteral("no local health check")));
     QVERIFY(client.installedModels().isEmpty());
+}
+
+void OllamaRuntimeTest::parsesOllamaLibraryHtml() {
+    const QString sampleHtml = QStringLiteral(
+        "<ul>"
+        "  <li x-test-model class=\"flex items-baseline py-6\">"
+        "    <a href=\"/library/test-model-1\" class=\"group\">"
+        "      <div class=\"flex flex-col\">"
+        "        <h2>"
+        "          <span class=\"group-hover:underline truncate\">test-model-1</span>"
+        "        </h2>"
+        "        <p class=\"max-w-lg break-words text-neutral-800 text-md\">"
+        "          This is a description of test-model-1."
+        "        </p>"
+        "      </div>"
+        "      <div class=\"flex flex-col\">"
+        "        <div class=\"flex flex-wrap\">"
+        "          <span x-test-capability>tools</span>"
+        "          <span x-test-capability>thinking</span>"
+        "        </div>"
+        "        <p class=\"my-4 text-neutral-500\">"
+        "          <span>"
+        "            <span x-test-pull-count>1,234</span> pulls"
+        "          </span>"
+        "          <span>"
+        "            <span x-test-updated>2 days ago</span>"
+        "          </span>"
+        "        </p>"
+        "      </div>"
+        "    </a>"
+        "  </li>"
+        "</ul>"
+    );
+
+    OllamaLibraryFetcher fetcher;
+    fetcher.parseHtml(sampleHtml);
+
+    const auto models = fetcher.models();
+    QCOMPARE(models.size(), 1);
+
+    const auto model = models.first().toMap();
+    QCOMPARE(model.value(QStringLiteral("id")).toString(), QStringLiteral("test-model-1"));
+    QCOMPARE(model.value(QStringLiteral("ollamaId")).toString(), QStringLiteral("test-model-1"));
+    QCOMPARE(model.value(QStringLiteral("category")).toString(), QStringLiteral("Think"));
+    QCOMPARE(model.value(QStringLiteral("name")).toString(), QStringLiteral("test-model-1"));
+    QCOMPARE(model.value(QStringLiteral("provider")).toString(), QStringLiteral("Ollama Library"));
+    QCOMPARE(model.value(QStringLiteral("size")).toString(), QStringLiteral("1,234 pulls"));
+    QCOMPARE(model.value(QStringLiteral("description")).toString(), QStringLiteral("This is a description of test-model-1."));
+    QCOMPARE(model.value(QStringLiteral("badge")).toString(), QStringLiteral("tools"));
+    QCOMPARE(model.value(QStringLiteral("badgeColor")).toString(), QStringLiteral("#10b981"));
+
+    const auto tags = model.value(QStringLiteral("tags")).toStringList();
+    QVERIFY(tags.contains(QStringLiteral("tools")));
+    QVERIFY(tags.contains(QStringLiteral("thinking")));
+    QVERIFY(tags.contains(QStringLiteral("2 days ago")));
 }
 
 QTEST_MAIN(OllamaRuntimeTest)

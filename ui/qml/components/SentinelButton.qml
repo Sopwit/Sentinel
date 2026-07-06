@@ -10,12 +10,13 @@ Button {
     implicitHeight: SentinelTheme.controlHeight
     scale: down ? InteractionTokens.pressScale
                 : hovered || activeFocus ? InteractionTokens.focusScale : 1.0
+    font.pixelSize: SentinelTheme.fontControl
+    font.bold: false
 
     contentItem: Text {
         text: control.text
         color: control.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-        font.pixelSize: SentinelTheme.fontControl
-        font.bold: false
+        font: control.font
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
         elide: Text.ElideRight
