@@ -12,7 +12,7 @@ class ModeManager final : public QObject {
     Q_PROPERTY(QStringList availableModes READ availableModes CONSTANT)
 
 public:
-    enum class Mode { Companion, Focus, Mission, System, Minimal, Tactical };
+    enum class Mode { Default };
     Q_ENUM(Mode)
 
     explicit ModeManager(QObject* parent = nullptr);
@@ -30,7 +30,7 @@ signals:
 private:
     static QString modeToName(Mode mode);
 
-    Mode currentMode_ = Mode::Companion;
+    Mode currentMode_ = Mode::Default;
 };
 
 } // namespace sentinel::core

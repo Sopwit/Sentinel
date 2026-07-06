@@ -19,7 +19,7 @@ QtObject {
     readonly property int press: Easing.OutQuad
 
     function reduced(modeName) {
-        return reducedMotion || modeName === "Focus Mode" || modeName === "Minimal Mode"
+        return reducedMotion
     }
 
     function duration(baseDuration, modeName) {
@@ -29,8 +29,6 @@ QtObject {
     }
 
     function telemetryScale(modeName) {
-        return modeName === "Mission Mode" || modeName === "System Mode" || modeName === "Tactical Mode"
-               ? 1.08
-               : reduced(modeName) ? 0.72 : 1.0
+        return reduced(modeName) ? 0.72 : 1.0
     }
 }

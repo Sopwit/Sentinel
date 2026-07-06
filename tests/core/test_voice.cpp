@@ -195,10 +195,19 @@ PiperTtsConfig configuredPiperConfig(QTemporaryDir& dir) {
     const auto binaryPath = QDir(dir.path()).filePath(QStringLiteral("piper"));
     const auto modelPath = QDir(dir.path()).filePath(QStringLiteral("voice.onnx"));
     const auto outputDir = QDir(dir.path()).filePath(QStringLiteral("tts-cache"));
-    Q_ASSERT(writeFile(binaryPath, "#!/bin/sh\nexit 0\n"));
-    Q_ASSERT(QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
-                                                   QFileDevice::ExeOwner));
-    Q_ASSERT(writeFile(modelPath, "model"));
+    const bool binaryWritten = writeFile(binaryPath, "#!/bin/sh\nexit 0\n");
+    const bool permissionsSet = QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                                                   QFileDevice::ExeOwner);
+    const bool modelWritten = writeFile(modelPath, "model");
+    if (!binaryWritten) {
+        qFatal("Failed to write mock binary to %s", qPrintable(binaryPath));
+    }
+    if (!permissionsSet) {
+        qFatal("Failed to set executable permissions on %s", qPrintable(binaryPath));
+    }
+    if (!modelWritten) {
+        qFatal("Failed to write mock model to %s", qPrintable(modelPath));
+    }
 
     config.enabled = true;
     config.processExecutionAllowed = false;

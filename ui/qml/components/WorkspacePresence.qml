@@ -19,11 +19,6 @@ ShellPanel {
                                   || viewModel.selectedLocalModelStatus === "Fallback"
     readonly property bool contextActive: viewModel.contextAssemblyAvailableSourceCount > 0
     readonly property bool retrievalActive: viewModel.retrievalPlanningSelectedSourceCount > 0
-    readonly property bool companionMode: viewModel.currentModeName === "Companion Mode"
-    readonly property bool focusMode: viewModel.currentModeName === "Focus Mode"
-    readonly property bool telemetryMode: viewModel.currentModeName === "Mission Mode"
-                                          || viewModel.currentModeName === "System Mode"
-                                          || viewModel.currentModeName === "Tactical Mode"
     readonly property string topLeftStatusText: "OLLAMA / "
                                                 + presence.viewModel.ollamaHealthStatus
                                                 + "\nMODE / "
@@ -85,14 +80,14 @@ ShellPanel {
                 secondaryAccent: presence.secondaryAccent
                 active: presence.activityActive || presence.contextActive || presence.retrievalActive
                 glowScale: SentinelTheme.modeGlowScale(presence.viewModel.currentModeName)
-                reducedMotion: presence.focusMode
+                reducedMotion: false
             }
 
             SentinelOrb {
                 viewModel: presence.viewModel
                 compact: presence.compact
                 active: presence.activityActive || presence.contextActive || presence.retrievalActive
-                reducedMotion: presence.focusMode
+                reducedMotion: false
                 width: Math.min(scene.safeWidth * 0.70, scene.safeHeight * 0.86, presence.compact ? 320 : 500)
                 height: width
                 anchors.centerIn: parent
@@ -110,7 +105,7 @@ ShellPanel {
                     value: presence.retrievalActive ? "deterministic authority" : "standing by"
                     accent: SentinelTheme.success
                     active: presence.retrievalActive
-                    visible: presence.telemetryMode
+                    visible: false
                 }
 
                 RuntimeBadge {
@@ -119,7 +114,7 @@ ShellPanel {
                     accent: SentinelTheme.accentTertiary
                     active: presence.contextActive
                     muted: !presence.contextActive
-                    visible: !presence.companionMode || presence.contextActive
+                    visible: presence.contextActive
                 }
 
                 RuntimeBadge {
@@ -127,7 +122,7 @@ ShellPanel {
                     value: "disabled by policy"
                     accent: SentinelTheme.warning
                     muted: true
-                    visible: presence.telemetryMode
+                    visible: false
                 }
 
                 RuntimeBadge {
@@ -150,7 +145,7 @@ ShellPanel {
             Label {
                 anchors.left: parent.left
                 anchors.top: parent.top
-                visible: !presence.companionMode && !presence.focusMode
+                visible: false
                 text: presence.topLeftStatusText
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontTiny
@@ -161,7 +156,7 @@ ShellPanel {
             Label {
                 anchors.right: parent.right
                 anchors.top: parent.top
-                visible: !presence.companionMode && !presence.focusMode
+                visible: false
                 text: presence.topRightStatusText
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignRight
@@ -184,7 +179,6 @@ ShellPanel {
                 anchors.right: parent.right
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: presence.compact ? 0 : SentinelTheme.spaceXs
-                visible: !presence.focusMode
                 text: "VOICE / " + presence.viewModel.voiceReadinessStatus
                 color: SentinelTheme.textMuted
                 horizontalAlignment: Text.AlignRight
@@ -195,7 +189,6 @@ ShellPanel {
 
         Label {
             Layout.fillWidth: true
-            visible: !presence.focusMode
             text: presence.viewModel.localRuntimeSummary
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.80)
             horizontalAlignment: Text.AlignHCenter

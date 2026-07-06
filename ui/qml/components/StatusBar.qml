@@ -28,14 +28,6 @@ ShellPanel {
         }
 
         Label {
-            text: "Mode: " + statusBar.viewModel.currentModeName
-            color: statusBar.modeAccent
-            font.pixelSize: SentinelTheme.fontSmall
-            maximumLineCount: 1
-            elide: Text.ElideRight
-        }
-
-        Label {
             text: "Model: " + statusBar.viewModel.selectedLocalModelStatus
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall

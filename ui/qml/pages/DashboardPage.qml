@@ -18,11 +18,6 @@ ScrollView {
                                   || dashboardPage.viewModel.selectedLocalModelStatus === "Fallback"
     readonly property bool streamingActive: dashboardPage.viewModel.localInferenceStreamingText.length > 0
                                             || dashboardPage.viewModel.localInferenceRuntimeState === "Streaming"
-    readonly property bool companionMode: dashboardPage.viewModel.currentModeName === "Companion Mode"
-    readonly property bool focusMode: dashboardPage.viewModel.currentModeName === "Focus Mode"
-    readonly property bool telemetryMode: dashboardPage.viewModel.currentModeName === "Mission Mode"
-                                          || dashboardPage.viewModel.currentModeName === "System Mode"
-                                          || dashboardPage.viewModel.currentModeName === "Tactical Mode"
     readonly property string uiSelfCheck: "home-uses-available-height scroll-bottom-padding"
     clip: true
     ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
@@ -52,13 +47,14 @@ ScrollView {
 
             ColumnLayout {
                 Layout.fillWidth: true
+                Layout.fillHeight: true
                 Layout.columnSpan: 1
-                spacing: dashboardPage.focusMode ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
+                spacing: SentinelTheme.spaceLg
 
                 HomeChatSurface {
                     id: homeChatSurface
                     viewModel: dashboardPage.viewModel
-                    compact: dashboardPage.compact || dashboardPage.focusMode
+                    compact: dashboardPage.compact
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 0

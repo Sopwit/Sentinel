@@ -51,6 +51,9 @@
 #include <QStringList>
 #include <memory>
 
+class QTimer;
+class QThread;
+
 namespace sentinel::core {
 
 class ApplicationController final : public QObject {
@@ -301,13 +304,13 @@ class ApplicationController final : public QObject {
                    runtimeProviderRegistryChanged)
     Q_PROPERTY(QString credentialExecutionStatus READ credentialExecutionStatus NOTIFY
                    runtimeProviderRegistryChanged)
-    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint CONSTANT)
-    Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus CONSTANT)
-    Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus CONSTANT)
-    Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary CONSTANT)
-    Q_PROPERTY(int ollamaModelCount READ ollamaModelCount CONSTANT)
-    Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames CONSTANT)
-    Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries CONSTANT)
+    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QString selectedLocalModelStatus READ selectedLocalModelStatus NOTIFY
@@ -1071,6 +1074,7 @@ public:
         std::unique_ptr<ILocalInferenceWorker> localInferenceWorker = nullptr,
         std::unique_ptr<IConversationStore> conversationStore = nullptr,
         std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime = nullptr, QObject* parent = nullptr);
+    ~ApplicationController() override;
 
     QString providerName() const;
     QString providerStatus() const;
@@ -1254,6 +1258,7 @@ public:
     int ollamaModelCount() const;
     QStringList ollamaModelNames() const;
     QStringList ollamaModelSummaries() const;
+    QList<OllamaModelSummary> currentOllamaModels() const;
     QString selectedLocalModel() const;
     void setSelectedLocalModel(const QString& model);
     QString selectedLocalModelStatus() const;
@@ -1830,8 +1835,10 @@ public:
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
     Q_INVOKABLE void remember(const QString& key, const QString& value);
+    Q_INVOKABLE void refreshOllamaStatus();
 
 signals:
+    void ollamaStatusChanged();
     void chatMessagesChanged();
     void memoryEntriesChanged();
     void maintenanceStatusChanged();
@@ -1887,7 +1894,6 @@ private:
     CredentialStore currentCredentialStore() const;
     ProviderCredentialRegistry currentProviderCredentialRegistry() const;
     OllamaHealthCheckResult currentOllamaHealthCheck() const;
-    QList<OllamaModelSummary> currentOllamaModels() const;
     QString effectiveLocalModel(const QString& requestedModel) const;
     bool discoveredModelNamesContain(const QString& model,
                                      const QList<OllamaModelSummary>& models) const;
@@ -2089,6 +2095,15 @@ private:
     QString piperModelPath_;
     QString whisperBinaryPath_;
     QString whisperModelPath_;
+
+    QTimer* ollamaPollTimer_ = nullptr;
+    QThread* ollamaCheckThread_ = nullptr;
+    OllamaHealthCheckResult cachedOllamaHealthCheck_;
+    QList<OllamaModelSummary> cachedOllamaModels_;
+    bool ollamaCacheInitialized_ = false;
+
+    void pollOllama();
+    void initializeOllamaCache();
 };
 
 } // namespace sentinel::core

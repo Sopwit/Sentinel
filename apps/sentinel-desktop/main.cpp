@@ -194,9 +194,23 @@ int main(int argc, char* argv[]) {
     sentinel::core::ModeManager modeManager;
     controller.setRoutingModeByName(settings.routingModeName());
     sentinel::desktop::DesktopShellViewModel shellViewModel(controller, modeManager, settings);
+    OllamaModelPuller ollamaPuller;
+    QObject::connect(&ollamaPuller, &OllamaModelPuller::pullFinished, &controller,
+                     [&controller](const QString&, bool success) {
+                         if (success) {
+                             controller.refreshOllamaStatus();
+                         }
+                     });
+    OllamaLibraryFetcher ollamaLibraryFetcher;
+    OllamaModelDetailFetcher ollamaModelDetailFetcher;
+    LMStudioLibraryFetcher lmStudioLibraryFetcher;
 
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("shellViewModel"), &shellViewModel);
+    engine.rootContext()->setContextProperty(QStringLiteral("ollamaPuller"), &ollamaPuller);
+    engine.rootContext()->setContextProperty(QStringLiteral("ollamaLibraryFetcher"), &ollamaLibraryFetcher);
+    engine.rootContext()->setContextProperty(QStringLiteral("ollamaModelDetailFetcher"), &ollamaModelDetailFetcher);
+    engine.rootContext()->setContextProperty(QStringLiteral("lmStudioLibraryFetcher"), &lmStudioLibraryFetcher);
 
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,

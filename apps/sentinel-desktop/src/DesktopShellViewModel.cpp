@@ -227,6 +227,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::runtimeProviderRegistryChanged);
     connect(&controller_, &core::ApplicationController::localModelSelectionChanged, this,
             &DesktopShellViewModel::localModelSelectionChanged);
+    connect(&controller_, &core::ApplicationController::ollamaStatusChanged, this,
+            &DesktopShellViewModel::ollamaStatusChanged);
     connect(&controller_, &core::ApplicationController::localChatInferenceRoutingChanged, this,
             &DesktopShellViewModel::localChatInferenceRoutingChanged);
     connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
@@ -3150,6 +3152,28 @@ QStringList DesktopShellViewModel::availableLanguages() const {
 
 QString DesktopShellViewModel::languageDisplayName(const QString& language) const {
     return settings_.languageDisplayName(language);
+}
+
+QVariantMap DesktopShellViewModel::getLocalModelDetails(const QString& modelName) const {
+    QVariantMap result;
+    const auto models = controller_.currentOllamaModels();
+    const auto query = modelName.trimmed().toLower();
+    for (const auto& model : models) {
+        const auto current = model.name.trimmed().toLower();
+        if (current == query || 
+            current.startsWith(query + QStringLiteral(":")) || 
+            query.startsWith(current + QStringLiteral(":")) ||
+            (query.length() > 3 && (current.contains(query) || query.contains(current)))) {
+            result[QStringLiteral("name")] = model.name;
+            result[QStringLiteral("sizeBytes")] = model.sizeBytes;
+            result[QStringLiteral("sizeFormatted")] = model.sizeBytes > 0 
+                ? QStringLiteral("%1 GB").arg(QString::number(model.sizeBytes / (1024.0 * 1024.0 * 1024.0), 'f', 1))
+                : QStringLiteral("—");
+            result[QStringLiteral("modifiedAt")] = model.modifiedAt;
+            return result;
+        }
+    }
+    return result;
 }
 
 bool DesktopShellViewModel::companionEnabled() const {
