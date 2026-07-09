@@ -1123,6 +1123,42 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
     emit modelsChanged();
 }
 
+namespace sentinel::core {
+QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs) {
+    const auto reply = getJson(url, timeoutMs);
+    if (!reply.ok) {
+        return {};
+    }
+
+    QList<OllamaModelSummary> models;
+    const auto dataValues = reply.document.object().value(QStringLiteral("data")).toArray();
+    for (const auto& value : dataValues) {
+        const auto object = value.toObject();
+        const auto id = object.value(QStringLiteral("id")).toString().trimmed();
+        if (id.isEmpty()) {
+            continue;
+        }
+
+        QString createdStr;
+        if (object.contains(QStringLiteral("created"))) {
+            const auto createdVal = object.value(QStringLiteral("created"));
+            if (createdVal.isDouble()) {
+                createdStr = QString::number(createdVal.toDouble());
+            } else {
+                createdStr = createdVal.toString();
+            }
+        }
+
+        models.append(OllamaModelSummary{
+            id,
+            createdStr,
+            0
+        });
+    }
+    return models;
+}
+} // namespace sentinel::core
+
 
 
 

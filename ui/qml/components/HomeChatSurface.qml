@@ -23,6 +23,7 @@ ShellPanel {
     readonly property bool sidebarEffectiveOpen: conversationSidebarOpen && !compact
     property bool conversationSidebarOpen: true
     property string conversationFilter: ""
+    property string sidebarView: "recent"   // "recent" | "pinned" | "archived"
     readonly property real resolutionScale: Math.max(0.7, Math.min(1.4, homeChat.height / 860.0))
 
     radius: SentinelTheme.radiusPanel
@@ -57,10 +58,27 @@ ShellPanel {
         }
     }
 
-    function filteredConversationIndexes() {
+    // Returns true if the conversation at the given conversationIds index is pinned
+    function isPinned(index) {
+        return viewModel.conversationPinnedSummaries[index] === "Pinned"
+    }
+
+    // Returns true if the conversation at the given conversationIds index is archived
+    function isArchived(index) {
+        return viewModel.conversationArchivedSummaries[index] === "Archived"
+    }
+
+    // Returns indexes of conversations matching the current view/filter
+    // view: "recent" | "pinned" | "archived"
+    function filteredConversationIndexes(view) {
         var normalized = conversationFilter.trim().toLowerCase()
         var result = []
-        for (var i = 0; i < viewModel.conversationTitles.length; ++i) {
+        for (var i = 0; i < viewModel.conversationIds.length; ++i) {
+            var archived = isArchived(i)
+            var pinned = isPinned(i)
+            if (view === "pinned" && !pinned) continue
+            if (view === "archived" && !archived) continue
+            if (view === "recent" && (pinned || archived)) continue
             var title = viewModel.conversationTitles[i]
             var id = viewModel.conversationIds[i]
             if (normalized.length === 0
@@ -75,6 +93,14 @@ ShellPanel {
     onStreamingActiveChanged: {
         if (!streamingActive)
             scrollToLatest(true)
+    }
+
+    onSidebarViewChanged: {
+        conversationList.model = filteredConversationIndexes(sidebarView)
+    }
+
+    onConversationFilterChanged: {
+        conversationList.model = filteredConversationIndexes(sidebarView)
     }
 
     RowLayout {
@@ -100,178 +126,426 @@ ShellPanel {
                 }
             }
 
+            // Collapsed strip: New Chat + expand toggle
+            ColumnLayout {
+                visible: !homeChat.sidebarEffectiveOpen
+                anchors.top: parent.top
+                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.topMargin: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceXs
+                width: 32
+
+                Button {
+                    id: collapsedNewChatBtn
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
+                    hoverEnabled: true
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("New Chat")
+                    onClicked: homeChat.viewModel.createConversation(qsTr("New Chat"))
+                    contentItem: Text {
+                        text: "+"
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: 20
+                        font.bold: true
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        radius: SentinelTheme.radiusMd
+                        color: InteractionTokens.surfaceColor(collapsedNewChatBtn.hovered, collapsedNewChatBtn.down, false, homeChat.modeAccent)
+                        border.color: InteractionTokens.borderColor(collapsedNewChatBtn.activeFocus, collapsedNewChatBtn.hovered, false, homeChat.modeAccent)
+                    }
+                }
+
+                Button {
+                    id: sidebarToggleCollapsed
+                    Layout.preferredWidth: 32
+                    Layout.preferredHeight: 32
+                    hoverEnabled: true
+                    ToolTip.visible: hovered
+                    ToolTip.text: qsTr("Show sidebar")
+                    onClicked: homeChat.conversationSidebarOpen = true
+                    contentItem: Text {
+                        text: "\u2630"
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: 14
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                    }
+                    background: Rectangle {
+                        radius: SentinelTheme.radiusMd
+                        color: InteractionTokens.surfaceColor(sidebarToggleCollapsed.hovered, sidebarToggleCollapsed.down, false, homeChat.modeAccent)
+                        border.color: InteractionTokens.borderColor(sidebarToggleCollapsed.activeFocus, sidebarToggleCollapsed.hovered, false, homeChat.modeAccent)
+                    }
+                }
+            }
+
+            // Expanded panel
             ColumnLayout {
                 anchors.fill: parent
                 anchors.margins: SentinelTheme.spaceSm
                 spacing: SentinelTheme.spaceSm
+                visible: homeChat.sidebarEffectiveOpen
 
-                Button {
-                    id: sidebarToggle
+                // Top bar: New Chat icon + Search field (with search icon inside) + Hide icon
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.preferredHeight: 34
-                    text: homeChat.sidebarEffectiveOpen ? qsTr("Hide") : "\u2630"
-                    hoverEnabled: true
-                    onClicked: homeChat.conversationSidebarOpen = !homeChat.conversationSidebarOpen
+                    spacing: SentinelTheme.spaceXs
 
-                    contentItem: Text {
-                        text: sidebarToggle.text
-                        color: SentinelTheme.textPrimary
-                        font.pixelSize: SentinelTheme.fontSmall
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideRight
+                    // New Chat icon button
+                    Button {
+                        id: newChatIconBtn
+                        Layout.preferredWidth: 30
+                        Layout.preferredHeight: 30
+                        hoverEnabled: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("New Chat")
+                        onClicked: {
+                            homeChat.viewModel.createConversation(qsTr("New Chat"))
+                            homeChat.conversationSidebarOpen = !homeChat.compact
+                        }
+                        contentItem: Text {
+                            text: "\u2B1C"
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: 13
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusMd
+                            color: InteractionTokens.surfaceColor(newChatIconBtn.hovered, newChatIconBtn.down, false, homeChat.modeAccent)
+                            border.color: InteractionTokens.borderColor(newChatIconBtn.activeFocus, newChatIconBtn.hovered, false, homeChat.modeAccent)
+                        }
                     }
 
-                    background: Rectangle {
+                    // Search field with embedded search icon on the right
+                    Rectangle {
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 30
                         radius: SentinelTheme.radiusMd
-                        color: InteractionTokens.surfaceColor(sidebarToggle.hovered, sidebarToggle.down,
-                                                               homeChat.sidebarEffectiveOpen,
-                                                               homeChat.modeAccent)
-                        border.color: InteractionTokens.borderColor(sidebarToggle.activeFocus,
-                                                                     sidebarToggle.hovered,
-                                                                     homeChat.sidebarEffectiveOpen,
-                                                                     homeChat.modeAccent)
-                    }
-                }
+                        color: conversationSearch.activeFocus
+                               ? SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                               : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
+                        border.color: conversationSearch.activeFocus
+                                      ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.55)
+                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
 
-                ColumnLayout {
-                    Layout.fillWidth: true
-                    Layout.fillHeight: true
-                    visible: homeChat.sidebarEffectiveOpen
-                    spacing: SentinelTheme.spaceSm
+                        TextInput {
+                            id: conversationSearch
+                            anchors.left: parent.left
+                            anchors.right: searchIconBtn.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.leftMargin: SentinelTheme.spaceSm
+                            anchors.rightMargin: SentinelTheme.spaceXs
+                            text: homeChat.conversationFilter
+                            onTextChanged: homeChat.conversationFilter = text
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: SentinelTheme.fontSmall
+                            selectionColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.34)
+                            selectedTextColor: SentinelTheme.textPrimary
+                            clip: true
 
-                    SentinelTextField {
-                        id: conversationSearch
-                        Layout.fillWidth: true
-                        placeholderText: qsTr("Search conversations")
-                        text: homeChat.conversationFilter
-                        onTextChanged: homeChat.conversationFilter = text
-                    }
-
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: SentinelTheme.spaceXs
-
-                        SentinelButton {
-                            text: qsTr("New")
-                            Layout.fillWidth: true
-                            onClicked: {
-                                homeChat.viewModel.createConversation(qsTr("New Chat"))
-                                homeChat.conversationSidebarOpen = !homeChat.compact
+                            Text {
+                                anchors.fill: parent
+                                text: qsTr("Search")
+                                color: SentinelTheme.textPlaceholder
+                                font.pixelSize: SentinelTheme.fontSmall
+                                verticalAlignment: Text.AlignVCenter
+                                visible: conversationSearch.text.length === 0 && !conversationSearch.activeFocus
                             }
                         }
 
-                        SentinelButton {
-                            text: qsTr("Search")
-                            enabled: conversationSearch.text.trim().length > 0
-                            Layout.fillWidth: true
-                            onClicked: homeChat.viewModel.searchConversation(conversationSearch.text)
-                        }
-                    }
-
-                    Label {
-                        Layout.fillWidth: true
-                        text: qsTr("Pinned")
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontTiny
-                        font.bold: true
-                    }
-
-                    ListView {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Math.min(96, contentHeight)
-                        clip: true
-                        spacing: SentinelTheme.spaceXs
-                        model: homeChat.viewModel.conversationPinnedSummaries
-
-                        delegate: Label {
-                            required property string modelData
-                            width: ListView.view.width
-                            text: modelData
-                            color: SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontSmall
-                            maximumLineCount: 2
-                            elide: Text.ElideRight
-                        }
-                    }
-
-                    Label {
-                        Layout.fillWidth: true
-                        text: qsTr("Recent")
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontTiny
-                        font.bold: true
-                    }
-
-                    ListView {
-                        id: conversationList
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
-                        Layout.minimumHeight: 120
-                        clip: true
-                        spacing: SentinelTheme.spaceXs
-                        model: homeChat.filteredConversationIndexes()
-
-                        delegate: Button {
-                            id: conversationButton
-                            required property int modelData
-                            readonly property string conversationId: homeChat.viewModel.conversationIds[modelData]
-                            readonly property string conversationTitle: homeChat.viewModel.conversationTitles[modelData]
-                            readonly property bool active: conversationId === homeChat.viewModel.activeConversationId
-                            width: ListView.view.width
-                            height: 38
+                        // Search icon button (right side of field)
+                        Button {
+                            id: searchIconBtn
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.rightMargin: 3
+                            width: 24
+                            height: 24
                             hoverEnabled: true
-                            onClicked: homeChat.viewModel.switchConversation(conversationId)
-
+                            ToolTip.visible: hovered
+                            ToolTip.text: qsTr("Search")
+                            enabled: conversationSearch.text.trim().length > 0
+                            onClicked: homeChat.viewModel.searchConversation(conversationSearch.text)
                             contentItem: Text {
-                                text: conversationButton.conversationTitle
-                                color: conversationButton.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall
+                                text: "\uD83D\uDD0D"
+                                font.pixelSize: 11
+                                color: searchIconBtn.enabled ? SentinelTheme.textMuted : SentinelTheme.textPlaceholder
+                                horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
-                                maximumLineCount: 1
-                                elide: Text.ElideRight
-                                leftPadding: SentinelTheme.spaceSm
-                                rightPadding: SentinelTheme.spaceSm
+                            }
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusSm
+                                color: searchIconBtn.hovered ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.12) : "transparent"
+                            }
+                        }
+                    }
+
+                    // Hide icon button (compact, right side of sidebar)
+                    Button {
+                        id: sidebarToggleOpen
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 30
+                        hoverEnabled: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Hide sidebar")
+                        onClicked: homeChat.conversationSidebarOpen = false
+                        contentItem: Text {
+                            text: "\u2715"
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: 11
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusMd
+                            color: InteractionTokens.surfaceColor(sidebarToggleOpen.hovered, sidebarToggleOpen.down, false, homeChat.modeAccent)
+                            border.color: InteractionTokens.borderColor(sidebarToggleOpen.activeFocus, sidebarToggleOpen.hovered, false, homeChat.modeAccent)
+                        }
+                    }
+                }
+
+                // Section tabs: Recent | Pinned | Archived
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceXs
+
+                    Button {
+                        id: recentTabBtn
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 26
+                        hoverEnabled: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Recent chats")
+                        onClicked: homeChat.sidebarView = "recent"
+                        contentItem: Text {
+                            text: qsTr("Recent")
+                            color: homeChat.sidebarView === "recent" ? homeChat.modeAccent : SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontTiny
+                            font.bold: homeChat.sidebarView === "recent"
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusSm
+                            color: homeChat.sidebarView === "recent"
+                                   ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
+                                   : (recentTabBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent")
+                            border.color: homeChat.sidebarView === "recent"
+                                          ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.28)
+                                          : "transparent"
+                        }
+                    }
+
+                    Button {
+                        id: pinnedTabBtn
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 26
+                        hoverEnabled: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Pinned chats")
+                        onClicked: homeChat.sidebarView = (homeChat.sidebarView === "pinned" ? "recent" : "pinned")
+                        contentItem: Text {
+                            text: "\uD83D\uDCCC"
+                            font.pixelSize: 12
+                            color: homeChat.sidebarView === "pinned" ? homeChat.modeAccent : SentinelTheme.textMuted
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusSm
+                            color: homeChat.sidebarView === "pinned"
+                                   ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
+                                   : (pinnedTabBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent")
+                            border.color: homeChat.sidebarView === "pinned"
+                                          ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.28)
+                                          : "transparent"
+                        }
+                    }
+
+                    Button {
+                        id: archivedTabBtn
+                        Layout.preferredWidth: 28
+                        Layout.preferredHeight: 26
+                        hoverEnabled: true
+                        ToolTip.visible: hovered
+                        ToolTip.text: qsTr("Archived chats")
+                        onClicked: homeChat.sidebarView = (homeChat.sidebarView === "archived" ? "recent" : "archived")
+                        contentItem: Text {
+                            text: "\uD83D\uDDC4"
+                            font.pixelSize: 12
+                            color: homeChat.sidebarView === "archived" ? homeChat.modeAccent : SentinelTheme.textMuted
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusSm
+                            color: homeChat.sidebarView === "archived"
+                                   ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
+                                   : (archivedTabBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent")
+                            border.color: homeChat.sidebarView === "archived"
+                                          ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.28)
+                                          : "transparent"
+                        }
+                    }
+                }
+
+                // Unified conversation list (Recent / Pinned / Archived views)
+                ListView {
+                    id: conversationList
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    Layout.minimumHeight: 100
+                    clip: true
+                    spacing: SentinelTheme.spaceXs
+                    // Re-evaluate model when view changes or conversation data changes
+                    model: homeChat.filteredConversationIndexes(homeChat.sidebarView)
+
+                    // Force refresh when sidebarView tab changes
+                    onVisibleChanged: {
+                        if (visible)
+                            model = homeChat.filteredConversationIndexes(homeChat.sidebarView)
+                    }
+
+                    // Force refresh when underlying data changes
+                    Connections {
+                        target: homeChat.viewModel
+                        function onConversationIdsChanged() { conversationList.model = homeChat.filteredConversationIndexes(homeChat.sidebarView) }
+                        function onConversationTitlesChanged() { conversationList.model = homeChat.filteredConversationIndexes(homeChat.sidebarView) }
+                        function onConversationPinnedSummariesChanged() { conversationList.model = homeChat.filteredConversationIndexes(homeChat.sidebarView) }
+                        function onConversationArchivedSummariesChanged() { conversationList.model = homeChat.filteredConversationIndexes(homeChat.sidebarView) }
+                    }
+
+                    delegate: Item {
+                        id: convItem
+                        required property int modelData   // this is the sourceIndex into conversationIds
+                        readonly property string convId: homeChat.viewModel.conversationIds[modelData]
+                        readonly property string convTitle: homeChat.viewModel.conversationTitles[modelData]
+                        readonly property bool active: convId === homeChat.viewModel.activeConversationId
+                        readonly property bool pinned: homeChat.isPinned(modelData)
+                        readonly property bool archived: homeChat.isArchived(modelData)
+                        width: ListView.view.width
+                        height: 38
+
+                        Button {
+                            id: convItemBtn
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onClicked: homeChat.viewModel.switchConversation(convItem.convId)
+
+                            contentItem: RowLayout {
+                                spacing: 3
+                                anchors.left: parent.left
+                                anchors.right: convItemMenuBtn.left
+                                anchors.verticalCenter: parent.verticalCenter
+                                anchors.leftMargin: SentinelTheme.spaceSm
+                                anchors.rightMargin: SentinelTheme.spaceXs
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: convItem.convTitle
+                                    color: convItem.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    font.bold: convItem.active
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                Text {
+                                    visible: convItem.pinned
+                                    text: "\uD83D\uDCCC"
+                                    font.pixelSize: 9
+                                    color: homeChat.modeAccent
+                                }
                             }
 
                             background: Rectangle {
                                 radius: SentinelTheme.radiusMd
-                                color: InteractionTokens.surfaceColor(conversationButton.hovered,
-                                                                       conversationButton.down,
-                                                                       conversationButton.active,
-                                                                       homeChat.modeAccent)
-                                border.color: InteractionTokens.borderColor(conversationButton.activeFocus,
-                                                                             conversationButton.hovered,
-                                                                             conversationButton.active,
-                                                                             homeChat.modeAccent)
+                                color: InteractionTokens.surfaceColor(convItemBtn.hovered, convItemBtn.down, convItem.active, homeChat.modeAccent)
+                                border.color: InteractionTokens.borderColor(convItemBtn.activeFocus, convItemBtn.hovered, convItem.active, homeChat.modeAccent)
+                            }
+                        }
+
+                        // Overflow menu button — appears on hover
+                        Button {
+                            id: convItemMenuBtn
+                            anchors.right: parent.right
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.rightMargin: 2
+                            width: 22
+                            height: 22
+                            hoverEnabled: true
+                            visible: convItemBtn.hovered || convItemMenuBtn.hovered
+                            onClicked: convItemMenu.open()
+                            contentItem: Text {
+                                text: "\u22EF"
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusSm
+                                color: convItemMenuBtn.hovered ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.14) : "transparent"
+                            }
+
+                            Menu {
+                                id: convItemMenu
+
+                                // Pin / Unpin
+                                MenuItem {
+                                    text: convItem.pinned ? qsTr("Unpin") : qsTr("Pin")
+                                    onTriggered: {
+                                        if (convItem.pinned)
+                                            homeChat.viewModel.unpinConversation(convItem.convId)
+                                        else
+                                            homeChat.viewModel.pinConversation(convItem.convId)
+                                    }
+                                }
+
+                                // Archive / Unarchive
+                                MenuItem {
+                                    text: convItem.archived ? qsTr("Unarchive") : qsTr("Archive")
+                                    onTriggered: {
+                                        if (convItem.archived)
+                                            homeChat.viewModel.unarchiveConversation(convItem.convId)
+                                        else
+                                            homeChat.viewModel.archiveConversation(convItem.convId)
+                                    }
+                                }
+
+                                // Delete — intentionally disabled at this phase
+                                // Backend always refuses; archive is the available action
+                                MenuSeparator {}
+
+                                MenuItem {
+                                    id: convDeleteDisabledItem
+                                    text: qsTr("Permanent delete not yet available — use Archive")
+                                    enabled: false
+
+                                    contentItem: Text {
+                                        text: convDeleteDisabledItem.text
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontTiny
+                                        wrapMode: Text.WordWrap
+                                    }
+                                }
                             }
                         }
                     }
 
+                    // Empty state
                     Label {
-                        Layout.fillWidth: true
-                        text: qsTr("Archived") + "  " + homeChat.viewModel.archivedConversationCount
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontTiny
-                        font.bold: true
-                    }
-
-                    ListView {
-                        Layout.fillWidth: true
-                        Layout.preferredHeight: Math.min(84, contentHeight)
-                        clip: true
-                        spacing: SentinelTheme.spaceXs
-                        model: homeChat.viewModel.conversationArchivedSummaries
-
-                        delegate: Label {
-                            required property string modelData
-                            width: ListView.view.width
-                            text: modelData
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontTiny
-                            maximumLineCount: 2
-                            elide: Text.ElideRight
-                        }
+                        anchors.centerIn: parent
+                        visible: conversationList.count === 0
+                        text: homeChat.sidebarView === "pinned" ? qsTr("No pinned chats")
+                              : homeChat.sidebarView === "archived" ? qsTr("No archived chats")
+                              : qsTr("No chats yet")
+                        color: SentinelTheme.textPlaceholder
+                        font.pixelSize: SentinelTheme.fontSmall
                     }
                 }
             }
@@ -417,6 +691,7 @@ ShellPanel {
                                     homeChat.viewModel.recoveryDraftText = text
                                     if (text.trim().length > 0) {
                                         promptInput.text = text
+                                        promptInput.cursorPosition = promptInput.text.length
                                         homePromptInput.clear()
                                         promptInput.forceActiveFocus()
                                     }
@@ -471,11 +746,84 @@ ShellPanel {
                             font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                         }
 
-                        StatusChip {
-                            label: homeChat.viewModel.activeRuntimeProviderLabel
-                            value: homeChat.viewModel.ollamaConnectionStatus
-                            accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
-                            muted: !homeChat.chatReady
+                        ComboBox {
+                            id: homeProviderSelector
+                            Layout.preferredWidth: Math.min(200, 160 * homeChat.resolutionScale)
+                            Layout.preferredHeight: 32 * homeChat.resolutionScale
+                            model: homeChat.viewModel.selectableRuntimeProviderLabels
+                            currentIndex: homeChat.viewModel.selectableRuntimeProviderIds.indexOf(homeChat.viewModel.selectedRuntimeProvider)
+                            onActivated: function(index) {
+                                if (index >= 0 && index < homeChat.viewModel.selectableRuntimeProviderIds.length)
+                                    homeChat.viewModel.selectedRuntimeProvider = homeChat.viewModel.selectableRuntimeProviderIds[index]
+                            }
+                            displayText: currentIndex >= 0 ? homeChat.viewModel.selectableRuntimeProviderLabels[currentIndex] : homeChat.viewModel.activeRuntimeProviderLabel
+
+                            contentItem: Text {
+                                text: homeProviderSelector.displayText
+                                color: homeProviderSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: SentinelTheme.spaceSm
+                                rightPadding: SentinelTheme.spaceSm
+                                elide: Text.ElideRight
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd * homeChat.resolutionScale
+                                color: homeProviderSelector.hovered
+                                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
+                                       : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
+                                border.color: homeProviderSelector.activeFocus
+                                              ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.62)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                            }
+
+                            popup: Popup {
+                                y: homeProviderSelector.height + 4
+                                width: homeProviderSelector.width
+                                implicitHeight: Math.min(contentItem.implicitHeight + 2 * padding, 280)
+                                padding: SentinelTheme.spaceXs
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
+                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                }
+
+                                contentItem: ListView {
+                                    clip: true
+                                    implicitHeight: contentHeight
+                                    model: homeProviderSelector.delegateModel
+                                    currentIndex: homeProviderSelector.highlightedIndex
+                                    ScrollBar.vertical: ScrollBar {
+                                        policy: ScrollBar.AsNeeded
+                                    }
+                                }
+                            }
+
+                            delegate: ItemDelegate {
+                                width: homeProviderSelector.width - SentinelTheme.spaceXs * 2
+                                height: 32 * homeChat.resolutionScale
+                                highlighted: homeProviderSelector.highlightedIndex === index
+                                hoverEnabled: true
+
+                                contentItem: Text {
+                                    text: modelData
+                                    color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                                    font.bold: homeChat.viewModel.selectableRuntimeProviderIds[index] === homeChat.viewModel.selectedRuntimeProvider
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                    leftPadding: SentinelTheme.spaceSm
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusSm
+                                    color: highlighted || hovered
+                                           ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
+                                           : "transparent"
+                                }
+                            }
                         }
 
                         Rectangle {
@@ -806,14 +1154,41 @@ ShellPanel {
                                     enabled: recentMessage.messageRole !== "user" && homeChat.canSend && !homeChat.sendBusy
                                     onTriggered: homeChat.viewModel.sendMessage(qsTr("Regenerate the previous response."))
                                 }
+
+                                MenuSeparator {}
+
                                 MenuItem {
-                                    text: qsTr("Pin")
-                                    onTriggered: homeChat.viewModel.pinConversation(homeChat.viewModel.activeConversationId)
+                                    readonly property bool convPinned: {
+                                        var idx = homeChat.viewModel.conversationIds.indexOf(homeChat.viewModel.activeConversationId)
+                                        return idx >= 0 && homeChat.isPinned(idx)
+                                    }
+                                    text: convPinned ? qsTr("Unpin conversation") : qsTr("Pin conversation")
+                                    onTriggered: {
+                                        var idx = homeChat.viewModel.conversationIds.indexOf(homeChat.viewModel.activeConversationId)
+                                        if (idx >= 0) {
+                                            if (convPinned)
+                                                homeChat.viewModel.unpinConversation(homeChat.viewModel.activeConversationId)
+                                            else
+                                                homeChat.viewModel.pinConversation(homeChat.viewModel.activeConversationId)
+                                        }
+                                    }
                                 }
                                 MenuItem {
-                                    text: qsTr("Delete")
-                                    onTriggered: homeChat.viewModel.requestPermanentDeleteConversation(homeChat.viewModel.activeConversationId)
+                                    readonly property bool convArchived: {
+                                        var idx = homeChat.viewModel.conversationIds.indexOf(homeChat.viewModel.activeConversationId)
+                                        return idx >= 0 && homeChat.isArchived(idx)
+                                    }
+                                    text: convArchived ? qsTr("Unarchive conversation") : qsTr("Archive conversation")
+                                    onTriggered: {
+                                        if (convArchived)
+                                            homeChat.viewModel.unarchiveConversation(homeChat.viewModel.activeConversationId)
+                                        else
+                                            homeChat.viewModel.archiveConversation(homeChat.viewModel.activeConversationId)
+                                    }
                                 }
+
+                                MenuSeparator {}
+
                                 MenuItem {
                                     text: qsTr("Export Markdown")
                                     onTriggered: homeChat.viewModel.exportTranscript("markdown")
@@ -821,6 +1196,20 @@ ShellPanel {
                                 MenuItem {
                                     text: qsTr("Export TXT")
                                     onTriggered: homeChat.viewModel.exportTranscript("txt")
+                                }
+
+                                MenuSeparator {}
+
+                                MenuItem {
+                                    id: msgDeleteDisabledItem
+                                    text: qsTr("Permanent delete not yet available — use Archive")
+                                    enabled: false
+                                    contentItem: Text {
+                                        text: msgDeleteDisabledItem.text
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontTiny
+                                        wrapMode: Text.WordWrap
+                                    }
                                 }
                             }
                         }

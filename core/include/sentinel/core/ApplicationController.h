@@ -2100,6 +2100,9 @@ private:
     QThread* ollamaCheckThread_ = nullptr;
     OllamaHealthCheckResult cachedOllamaHealthCheck_;
     QList<OllamaModelSummary> cachedOllamaModels_;
+    QList<OllamaModelSummary> cachedLMStudioModels_;
+    QList<OllamaModelSummary> cachedLlamaCppModels_;
+    QList<OllamaModelSummary> cachedOpenAiCompatibleLocalModels_;
     bool ollamaCacheInitialized_ = false;
 
     void pollOllama();

@@ -14,6 +14,7 @@ CognitionStreamPanel 1.0 components/CognitionStreamPanel.qml
 GlowSurface 1.0 components/GlowSurface.qml
 HeaderBar 1.0 components/HeaderBar.qml
 ModelDetailPopup 1.0 components/ModelDetailPopup.qml
+RuntimeDetailPopup 1.0 components/RuntimeDetailPopup.qml
 HomeChatSurface 1.0 components/HomeChatSurface.qml
 InfoRow 1.0 components/InfoRow.qml
 RuntimeBadge 1.0 components/RuntimeBadge.qml

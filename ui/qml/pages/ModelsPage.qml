@@ -150,7 +150,7 @@ Item {
             id: "hf-llama3-8b",    category: "LLM",
             name: "HuggingFace Llama 3 8B", provider: "HF / Meta",
             size: "4.8 GB",          description: qsTr("HuggingFace community model Llama 3 8B. General-purpose instruction tuned model."),
-            badge: "HuggingFace",    badgeColor: "#ff9c00",
+            badge: "HuggingFace",    badgeColor: "#64748b",
             tags: ["Hugging Face", "LLM", "Meta"],
             downloadable: true,     ollamaId: "llama3:8b",
             context: "8K",          input: "Text"
@@ -159,7 +159,7 @@ Item {
             id: "hf-gemma2-2b",    category: "LLM",
             name: "HuggingFace Gemma 2 2B", provider: "HF / Google",
             size: "1.6 GB",          description: qsTr("HuggingFace community model Gemma 2 2B. Highly efficient and lightweight model."),
-            badge: "HuggingFace",    badgeColor: "#ff9c00",
+            badge: "HuggingFace",    badgeColor: "#64748b",
             tags: ["Hugging Face", "Edge", "Google"],
             downloadable: true,     ollamaId: "gemma2:2b",
             context: "8K",          input: "Text"
@@ -168,7 +168,7 @@ Item {
             id: "hf-phi3.5",       category: "LLM",
             name: "HuggingFace Phi-3.5", provider: "HF / Microsoft",
             size: "2.2 GB",          description: qsTr("HuggingFace community model Phi 3.5. Lightweight 3.8B model with strong reasoning."),
-            badge: "HuggingFace",    badgeColor: "#ff9c00",
+            badge: "HuggingFace",    badgeColor: "#64748b",
             tags: ["Hugging Face", "LLM", "Microsoft"],
             downloadable: true,     ollamaId: "phi3.5",
             context: "128K",        input: "Text"
@@ -196,7 +196,7 @@ Item {
             id: "llava-1.6",       category: "Vision",
             name: "LLaVA 1.6",      provider: "LLaVA Team",
             size: "4.7 GB",          description: qsTr("Multimodal LLM that can answer questions about images and visual content."),
-            badge: "Vision LLM",     badgeColor: "#f59e0b",
+            badge: "Vision LLM",     badgeColor: "#0ea5e9",
             tags: ["Multimodal", "VQA"],
             downloadable: true,     ollamaId: "llava:13b",
             context: "4K",          input: "Text / Image"
@@ -873,8 +873,13 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             onClicked: {
-                                detailPopup.modelInfo = modelDelegate.modelData
-                                detailPopup.open()
+                                if (modelDelegate.modelData.category === "Runtime") {
+                                    runtimePopup.modelInfo = modelDelegate.modelData
+                                    runtimePopup.open()
+                                } else {
+                                    detailPopup.modelInfo = modelDelegate.modelData
+                                    detailPopup.open()
+                                }
                             }
                         }
 
@@ -1001,8 +1006,13 @@ Item {
                                     implicitWidth: dlBtnLabel.implicitWidth + 24
                                     hoverEnabled: true
                                     onClicked: {
-                                        detailPopup.modelInfo     = modelDelegate.modelData
-                                        detailPopup.open()
+                                        if (modelDelegate.modelData.category === "Runtime") {
+                                            runtimePopup.modelInfo = modelDelegate.modelData
+                                            runtimePopup.open()
+                                        } else {
+                                            detailPopup.modelInfo = modelDelegate.modelData
+                                            detailPopup.open()
+                                        }
                                     }
 
                                     scale: dlBtn.down ? 0.97 : (dlBtn.hovered ? 1.02 : 1.0)
@@ -1097,8 +1107,13 @@ Item {
                                         flat: true
                                         hoverEnabled: true
                                         onClicked: {
-                                            detailPopup.modelInfo = modelDelegate.modelData
-                                            detailPopup.open()
+                                            if (modelDelegate.modelData.category === "Runtime") {
+                                                runtimePopup.modelInfo = modelDelegate.modelData
+                                                runtimePopup.open()
+                                            } else {
+                                                detailPopup.modelInfo = modelDelegate.modelData
+                                                detailPopup.open()
+                                            }
                                         }
                                         background: Rectangle {
                                             radius: height / 2
@@ -1154,5 +1169,11 @@ Item {
         onDownloadRequested: function(modelId) {
             ollamaPuller.pull(modelId)
         }
+    }
+
+    // ── Runtime Detail Popup ──────────────────────────────────────────────────
+    RuntimeDetailPopup {
+        id: runtimePopup
+        modelInfo: null
     }
 }
