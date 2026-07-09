@@ -24,24 +24,23 @@ Release-candidate references:
 
 ## Desktop Foundation
 
-This first version includes:
+Sentinel 1.0-RC1 includes a comprehensive desktop companion core and native UI shell:
 
-- CMake + Ninja project structure.
-- Qt 6 + QML desktop shell.
-- Modular C++ core library.
-- `IChatProvider` with a deterministic `LocalEchoProvider`.
-- Structured in-memory `ChatSession` with a QML-safe chat history model.
-- `IMemoryStore` with `InMemoryStore` for tests and `SQLiteMemoryStore` for desktop persistence.
-- `IChatHistoryStore` with `SQLiteChatHistoryStore` for desktop chat history persistence.
-- Generic chat history status and clear-confirmation UX.
-- Memory storage diagnostics and SQLite schema metadata preparation.
-- `IPlugin` and `IContextEngine` interfaces.
-- `ApplicationController` and `ModeManager`.
-- `AppSettings` with `ISettingsStore`, in-memory test storage, and lightweight JSON desktop storage.
-- `DesktopShellViewModel` as the QML boundary.
-- HUD-style dashboard, sidebar navigation, mode switcher, chat panel, settings placeholder, and memory placeholder.
-- Release metadata for version, build number, git commit, build type, platform, and architecture.
-- Cross-platform icon and app metadata foundations for macOS, Windows, and Linux.
+- **CMake & Ninja Build**: Standard cross-platform desktop build framework.
+- **Qt 6 & QML Desktop Shell**: Optimised for Fedora KDE Plasma, with native window controls, layout adaptations, and custom glass styling.
+- **Local AI Execution**: Real local streaming chat integration with Ollama (via loopback HTTP) and support for LM Studio, llama.cpp, and OpenAI-compatible local provider configurations.
+- **Workspace Management**: Standard built-in (Personal, Coding, Student, etc.) and user-created custom workspaces with isolated preferences and data scopes.
+- **Collapsible Sidebar**: Full multi-conversation thread browser with pinning, renaming, filtering, archiving, and chat message count metadata.
+- **Local RAG & File Chat**: Local SQLite-backed Knowledge Base with drag-and-drop document attachments (PDF, TXT, Markdown, CSV, JSON, source code) and retrieval explainability context.
+- **Controlled Agent Tasks**: User-approved foreground agent workflows with plan step editing, skip/retry actions, and granular workspace-scoped tool permissions.
+- **Context Observability**: Detailed explainability panels showing prompt context budget allocations, compression, contribution weights, and retrieval decisions.
+- **Notification Center**: Multi-category center covering Tasks, Models, Updates, Brain, Workspace, and Security alerts.
+- **Command Palette**: Universal keyboard shortcut (`Ctrl/Cmd+K`) for quick navigation, mode toggles, and chat history export actions.
+- **Native Companion Integration**: Native system tray and menu bar adapter backed by `QSystemTrayIcon` for quick access.
+- **Theme & Accessibility**: Curated styles (Sentinel Dark, Midnight, Aurora, Graphite, System Adaptive) with reduced motion, high contrast, and UI density controls.
+- **Security & Privacy Boundaries**: No telemetry, no silent updates, no automatic downloads, and no external cloud calls.
+- **Localization (i18n)**: Translation frameworks and catalog preparation for English and Turkish locales.
+- **Persistence separation**: Safe local SQLite databases for Chat History, Brain Memories, and Local RAG metadata, separated from settings JSON.
 
 ## Build
 
@@ -82,14 +81,56 @@ cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
 
 ## Run
 
+### Linux / macOS
+
+If built manually using the default directory (`cmake -S . -B build`):
+
 ```bash
 ./build/apps/sentinel-desktop/sentinel-desktop
 ```
 
-On macOS bundle builds, the binary may be inside:
+If built using a CMake preset (e.g., `debug`, `release`, or `package-ready`), run the binary from the corresponding directory under `build/`:
 
 ```bash
+./build/<preset-name>/apps/sentinel-desktop/sentinel-desktop
+```
+
+For example, for the `debug` preset:
+
+```bash
+./build/debug/apps/sentinel-desktop/sentinel-desktop
+```
+
+On macOS bundle builds, the binary is inside the application bundle:
+
+```bash
+# Default build directory:
 ./build/apps/sentinel-desktop/sentinel-desktop.app/Contents/MacOS/sentinel-desktop
+
+# Preset-based build directory (e.g., debug):
+./build/debug/apps/sentinel-desktop/sentinel-desktop.app/Contents/MacOS/sentinel-desktop
+```
+
+### Windows
+
+On Windows, executables have the `.exe` extension and use backslashes (`\`) for file paths.
+
+If built manually using the default directory:
+
+```cmd
+build\apps\sentinel-desktop\sentinel-desktop.exe
+```
+
+If built using a CMake preset (e.g., `debug`, `release`, or `package-ready`), run the binary from the corresponding directory under `build/`:
+
+```cmd
+build\<preset-name>\apps\sentinel-desktop\sentinel-desktop.exe
+```
+
+For example, for the `debug` preset:
+
+```cmd
+build\debug\apps\sentinel-desktop\sentinel-desktop.exe
 ```
 
 ## Tests
@@ -102,7 +143,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-Current tests cover `ModeManager`, memory stores, chat history storage, chat/session behavior, settings, providers, `ApplicationController`, and desktop view-model behavior including chat history status. They do not launch the QML UI.
+Current tests cover `ModeManager`, memory/chat/conversation/RAG stores, local AI inference/streaming clients, controlled task planner, secure credentials, path provider, view-model boundaries, and desktop view-model behavior. They do not launch the QML UI.
 
 Preset-based test workflow:
 
@@ -144,15 +185,14 @@ the checked-in `.clangd` compilation database path. For Qt QML module resolution
 
 ## Intentionally Not Included Yet
 
-- Real AI API calls.
-- Network code.
-- Voice input or output.
-- Automation agents.
-- Cloud sync.
-- Runtime plugin loading.
-- Wearable support.
-- Advanced semantic memory.
-- Multi-conversation chat threads.
-- Chat history encryption, export, or pruning.
+- Cloud-based AI API calls (external network connections).
+- External network requests (only local loopback connections are used).
+- Voice processing execution (Whisper STT and Piper TTS remain metadata-only/readiness boundaries).
+- Autonomous or unsupervised agent execution (tasks require step-by-step foreground approval).
+- Cloud sync or remote backup.
+- Dynamic runtime plugin loading.
+- Wearable or IoT hardware support.
+- Fully automated semantic indexing (Local RAG is manual-only, semantic prompt authority is disabled by default).
+- Chat history encryption or automated pruning (local export is supported).
 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for planned phases.
