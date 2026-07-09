@@ -284,50 +284,299 @@ ShellPanel {
             spacing: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceMd * homeChat.resolutionScale
 
             Item {
-                id: topSpacer
+                id: homeCenterWrapper
                 Layout.fillWidth: true
                 Layout.fillHeight: !homeChat.inChatMode
                 visible: !homeChat.inChatMode
-            }
 
-            ColumnLayout {
-                id: greetingArea
-                Layout.fillWidth: true
-                visible: !homeChat.inChatMode
-                spacing: SentinelTheme.spaceMd * homeChat.resolutionScale
-                Layout.alignment: Qt.AlignHCenter
+                ColumnLayout {
+                    anchors.centerIn: parent
+                    width: Math.min(parent.width, 720 * homeChat.resolutionScale)
+                    spacing: SentinelTheme.spaceMd * 1.5 * homeChat.resolutionScale
 
-                Label {
-                    id: greetingLabel
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignHCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    text: {
-                        var hour = new Date().getHours()
-                        if (hour >= 6 && hour < 12) {
-                            return qsTr("Günaydın")
-                        } else if (hour >= 12 && hour < 18) {
-                            return qsTr("İyi günler")
-                        } else if (hour >= 18 && hour < 22) {
-                            return qsTr("İyi akşamlar")
-                        } else {
-                            return qsTr("İyi geceler")
+                    ColumnLayout {
+                        id: greetingArea
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceMd * homeChat.resolutionScale
+                        Layout.alignment: Qt.AlignHCenter
+
+                        Label {
+                            id: greetingLabel
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            text: {
+                                var hour = new Date().getHours()
+                                if (hour >= 6 && hour < 12) {
+                                    return qsTr("Günaydın")
+                                } else if (hour >= 12 && hour < 18) {
+                                    return qsTr("İyi günler")
+                                } else if (hour >= 18 && hour < 22) {
+                                    return qsTr("İyi akşamlar")
+                                } else {
+                                    return qsTr("İyi geceler")
+                                }
+                            }
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: (homeChat.compact ? SentinelTheme.fontDisplay : SentinelTheme.fontHero) * homeChat.resolutionScale
+                            font.bold: true
+                            font.family: "Outfit"
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            Layout.alignment: Qt.AlignHCenter
+                            horizontalAlignment: Text.AlignHCenter
+                            text: qsTr("Bugün size nasıl yardımcı olabilirim?")
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: (homeChat.compact ? SentinelTheme.fontBody : SentinelTheme.fontCard) * homeChat.resolutionScale
+                            wrapMode: Text.WordWrap
                         }
                     }
-                    color: SentinelTheme.textPrimary
-                    font.pixelSize: (homeChat.compact ? SentinelTheme.fontDisplay : SentinelTheme.fontHero) * homeChat.resolutionScale
-                    font.bold: true
-                    font.family: "Outfit"
-                }
 
-                Label {
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignHCenter
-                    horizontalAlignment: Text.AlignHCenter
-                    text: qsTr("Bugün size nasıl yardımcı olabilirim?")
-                    color: SentinelTheme.textMuted
-                    font.pixelSize: (homeChat.compact ? SentinelTheme.fontBody : SentinelTheme.fontCard) * homeChat.resolutionScale
-                    wrapMode: Text.WordWrap
+                    Rectangle {
+                        id: homeComposer
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
+                        radius: SentinelTheme.radiusMd * homeChat.resolutionScale
+                        color: homePromptInput.activeFocus
+                               ? SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.82)
+                               : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.68)
+                        border.color: InteractionTokens.borderColor(homePromptInput.activeFocus, homeComposerMouse.containsMouse,
+                                                                     false, homeChat.modeAccent)
+                        implicitHeight: Math.max(76 * homeChat.resolutionScale, homeComposerLayout.implicitHeight + SentinelTheme.spaceMd * homeChat.resolutionScale)
+
+                        MouseArea {
+                            id: homeComposerMouse
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            acceptedButtons: Qt.NoButton
+                        }
+
+                        DropArea {
+                            anchors.fill: parent
+                            onDropped: function(drop) {
+                                if (drop.hasUrls && drop.urls.length > 0)
+                                    homeChat.viewModel.attachFileToChat(drop.urls[0].toString().replace("file://", ""))
+                            }
+                        }
+
+                        RowLayout {
+                            id: homeComposerLayout
+                            x: SentinelTheme.spaceSm * homeChat.resolutionScale
+                            y: SentinelTheme.spaceXs * homeChat.resolutionScale
+                            width: parent.width - (SentinelTheme.spaceSm * 2) * homeChat.resolutionScale
+                            spacing: SentinelTheme.spaceSm * homeChat.resolutionScale
+
+                            Button {
+                                id: homeAttachButton
+                                Layout.preferredWidth: 34 * homeChat.resolutionScale
+                                Layout.preferredHeight: 34 * homeChat.resolutionScale
+                                text: "+"
+                                hoverEnabled: true
+                                ToolTip.visible: hovered
+                                ToolTip.text: qsTr("Attach file")
+                                onClicked: attachmentDialog.open()
+
+                                contentItem: Text {
+                                    text: homeAttachButton.text
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                }
+
+                                background: Rectangle {
+                                    radius: 17 * homeChat.resolutionScale
+                                    color: InteractionTokens.surfaceColor(homeAttachButton.hovered, homeAttachButton.down,
+                                                                           homeAttachButton.activeFocus,
+                                                                           homeChat.modeAccent)
+                                    border.color: InteractionTokens.borderColor(homeAttachButton.activeFocus,
+                                                                                 homeAttachButton.hovered,
+                                                                                 false,
+                                                                                 homeChat.modeAccent)
+                                }
+                            }
+
+                            TextArea {
+                                id: homePromptInput
+                                Layout.fillWidth: true
+                                Layout.minimumHeight: 48 * homeChat.resolutionScale
+                                Layout.maximumHeight: 126 * homeChat.resolutionScale
+                                placeholderText: homeChat.chatReady ? (homeChat.sendBusy ? qsTr("Sentinel is responding") : qsTr("Ask Sentinel"))
+                                                                    : homeChat.viewModel.localChatSendAvailabilitySummary
+                                enabled: !homeChat.viewModel.activeConversationArchived && !homeChat.sendBusy
+                                color: SentinelTheme.textPrimary
+                                placeholderTextColor: SentinelTheme.textPlaceholder
+                                wrapMode: TextEdit.WordWrap
+                                selectByMouse: true
+                                selectionColor: SentinelTheme.withAlpha(homeChat.modeAccent, 0.34)
+                                selectedTextColor: SentinelTheme.textPrimary
+                                font.pixelSize: (homeChat.compact ? SentinelTheme.fontBody : SentinelTheme.fontControl) * homeChat.resolutionScale
+                                onTextChanged: {
+                                    homeChat.viewModel.recoveryDraftText = text
+                                    if (text.trim().length > 0) {
+                                        promptInput.text = text
+                                        homePromptInput.clear()
+                                        promptInput.forceActiveFocus()
+                                    }
+                                }
+                                background: Rectangle {
+                                    color: "transparent"
+                                }
+                                Keys.onPressed: function(event) {
+                                    if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                                            && !(event.modifiers & Qt.ShiftModifier)) {
+                                        promptInput.text = homePromptInput.text
+                                        homePromptInput.clear()
+                                        homeChat.sendComposerText()
+                                        event.accepted = true
+                                    } else if (event.key === Qt.Key_Escape) {
+                                        focus = false
+                                        event.accepted = true
+                                    }
+                                }
+                            }
+
+                            SentinelButton {
+                                id: homeSendButton
+                                text: homeChat.sendBusy ? qsTr("Stop") : qsTr("Send")
+                                Layout.preferredWidth: 82 * homeChat.resolutionScale
+                                Layout.alignment: Qt.AlignBottom
+                                font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
+                                enabled: homeChat.sendBusy || (homePromptInput.text.trim().length > 0
+                                                               && homeChat.canSend)
+                                opacity: enabled ? 1.0 : 0.58
+                                onClicked: {
+                                    if (homeChat.sendBusy) {
+                                        homeChat.viewModel.cancelLocalInference()
+                                    } else {
+                                        promptInput.text = homePromptInput.text
+                                        homePromptInput.clear()
+                                        homeChat.sendComposerText()
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Layout.alignment: Qt.AlignHCenter
+                        spacing: SentinelTheme.spaceSm * homeChat.resolutionScale
+
+                        Label {
+                            text: qsTr("Provider")
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                        }
+
+                        StatusChip {
+                            label: homeChat.viewModel.activeRuntimeProviderLabel
+                            value: homeChat.viewModel.ollamaConnectionStatus
+                            accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
+                            muted: !homeChat.chatReady
+                        }
+
+                        Rectangle {
+                            Layout.preferredWidth: 1
+                            Layout.preferredHeight: 20 * homeChat.resolutionScale
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                        }
+
+                        Label {
+                            text: qsTr("Model")
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                        }
+
+                        ComboBox {
+                            id: homeModelSelector
+                            Layout.preferredWidth: Math.min(280, 220 * homeChat.resolutionScale)
+                            Layout.preferredHeight: 32 * homeChat.resolutionScale
+                            model: homeChat.viewModel.ollamaModelNames
+                            currentIndex: {
+                                var names = homeChat.viewModel.ollamaModelNames
+                                var selected = homeChat.viewModel.selectedLocalModel
+                                for (var i = 0; i < names.length; ++i) {
+                                    if (names[i] === selected) return i
+                                }
+                                return -1
+                            }
+                            onActivated: function(index) {
+                                if (index >= 0 && index < homeChat.viewModel.ollamaModelNames.length)
+                                    homeChat.viewModel.selectedLocalModel = homeChat.viewModel.ollamaModelNames[index]
+                            }
+                            displayText: currentIndex >= 0 ? homeChat.viewModel.ollamaModelNames[currentIndex] : qsTr("No model")
+
+                            contentItem: Text {
+                                text: homeModelSelector.displayText
+                                color: homeModelSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: SentinelTheme.spaceSm
+                                rightPadding: SentinelTheme.spaceSm
+                                elide: Text.ElideRight
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd * homeChat.resolutionScale
+                                color: homeModelSelector.hovered
+                                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
+                                       : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
+                                border.color: homeModelSelector.activeFocus
+                                              ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.62)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                            }
+
+                            popup: Popup {
+                                y: homeModelSelector.height + 4
+                                width: homeModelSelector.width
+                                implicitHeight: Math.min(contentItem.implicitHeight + 2 * padding, 280)
+                                padding: SentinelTheme.spaceXs
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
+                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                }
+
+                                contentItem: ListView {
+                                    clip: true
+                                    implicitHeight: contentHeight
+                                    model: homeModelSelector.delegateModel
+                                    currentIndex: homeModelSelector.highlightedIndex
+                                    ScrollBar.vertical: ScrollBar {
+                                        policy: ScrollBar.AsNeeded
+                                    }
+                                }
+                            }
+
+                            delegate: ItemDelegate {
+                                width: homeModelSelector.width - SentinelTheme.spaceXs * 2
+                                height: 32 * homeChat.resolutionScale
+                                highlighted: homeModelSelector.highlightedIndex === index
+                                hoverEnabled: true
+
+                                contentItem: Text {
+                                    text: modelData
+                                    color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                                    font.bold: modelData === homeChat.viewModel.selectedLocalModel
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                    leftPadding: SentinelTheme.spaceSm
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusSm
+                                    color: highlighted || hovered
+                                           ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
+                                           : "transparent"
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -364,79 +613,6 @@ ShellPanel {
                 value: homeChat.viewModel.activeRuntimeProviderLabel
                 accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
                 muted: !homeChat.chatReady
-            }
-        }
-
-        Flow {
-            Layout.fillWidth: true
-            visible: homeChat.inChatMode
-            spacing: SentinelTheme.spaceSm
-
-            StatusChip {
-                label: qsTr("Model")
-                value: homeChat.viewModel.selectedLocalModel.length > 0
-                       ? homeChat.viewModel.selectedLocalModel
-                       : qsTr("No model")
-                accent: SentinelTheme.accentTertiary
-                muted: homeChat.viewModel.selectedLocalModelStatus !== "Available"
-            }
-
-            StatusChip {
-                label: qsTr("Role")
-                value: homeChat.viewModel.modelRoleAssignmentSummaries.length > 0
-                       ? homeChat.viewModel.modelRoleAssignmentSummaries[0].split(" - ")[1]
-                       : qsTr("No role")
-                accent: SentinelTheme.calmAccent
-                muted: true
-            }
-
-            StatusChip {
-                label: qsTr("Scope")
-                value: homeChat.viewModel.activeRuntimeLocalOnlySummary
-                accent: SentinelTheme.calmAccent
-                muted: homeChat.viewModel.activeRuntimeLocalOnlySummary !== "Local Only"
-            }
-
-            StatusChip {
-                label: qsTr("Workspace")
-                value: homeChat.viewModel.workspacePermissionPosture
-                accent: SentinelTheme.textMuted
-                muted: true
-            }
-
-            StatusChip {
-                label: qsTr("Permission")
-                value: homeChat.viewModel.defaultPermissionPolicyState
-                accent: SentinelTheme.textMuted
-                muted: true
-            }
-
-            StatusChip {
-                label: qsTr("Profile")
-                value: homeChat.viewModel.selectedSkillProfileName
-                accent: SentinelTheme.calmAccent
-                muted: false
-            }
-
-            StatusChip {
-                label: qsTr("Agent")
-                value: homeChat.viewModel.agentRuntimeStatus
-                accent: SentinelTheme.warning
-                muted: false
-            }
-
-            StatusChip {
-                label: qsTr("Runtime")
-                value: homeChat.viewModel.activeRuntimeReadinessState
-                accent: homeChat.chatReady ? SentinelTheme.success : SentinelTheme.textMuted
-                muted: !homeChat.chatReady
-            }
-
-            StatusChip {
-                label: qsTr("API Keys")
-                value: qsTr("Not stored")
-                accent: SentinelTheme.textMuted
-                muted: true
             }
         }
 
@@ -847,7 +1023,8 @@ ShellPanel {
 
         Rectangle {
             Layout.fillWidth: true
-            Layout.maximumWidth: homeChat.inChatMode ? 9999 : 720 * homeChat.resolutionScale
+            visible: homeChat.inChatMode
+            Layout.maximumWidth: 9999
             Layout.alignment: Qt.AlignHCenter
             radius: SentinelTheme.radiusMd * homeChat.resolutionScale
             color: promptInput.activeFocus
@@ -1038,55 +1215,9 @@ ShellPanel {
         }
         }
 
-        Flow {
-            Layout.fillWidth: true
-            visible: homeChat.inChatMode
-            spacing: SentinelTheme.spaceSm
 
-            StatusChip {
-                label: qsTr("Workspace")
-                value: homeChat.viewModel.selectedWorkspaceName
-                accent: homeChat.modeAccent
-                selected: true
-            }
 
-            StatusChip {
-                label: qsTr("Attachments")
-                value: homeChat.viewModel.attachmentStatus
-                accent: homeChat.viewModel.attachmentSummaries.length > 0 ? SentinelTheme.success
-                                                                           : SentinelTheme.textMuted
-                muted: homeChat.viewModel.attachmentSummaries.length === 0
-            }
 
-            StatusChip {
-                label: qsTr("Knowledge")
-                value: homeChat.viewModel.localKnowledgeBaseStatus
-                accent: homeChat.viewModel.localKnowledgeBaseEnabled ? SentinelTheme.success
-                                                                     : SentinelTheme.textMuted
-                muted: !homeChat.viewModel.localKnowledgeBaseEnabled
-            }
-        }
-
-        Repeater {
-            model: homeChat.viewModel.attachmentSummaries
-
-            InfoRow {
-                required property string modelData
-                visible: homeChat.inChatMode
-                compact: homeChat.compact
-                label: qsTr("Attachment")
-                value: modelData
-                Layout.fillWidth: true
-                valueMaximumLineCount: 2
-            }
-        }
-
-        Item {
-            id: bottomSpacer
-            Layout.fillWidth: true
-            Layout.fillHeight: !homeChat.inChatMode
-            visible: !homeChat.inChatMode
-        }
     }
 
     FileDialog {
