@@ -2310,32 +2310,35 @@ void ApplicationControllerTest::deleteReadinessIsDisabledByDefault() {
     ApplicationController controller{std::make_unique<LocalEchoProvider>(),
                                      std::make_unique<InMemoryStore>()};
 
-    QVERIFY(!controller.conversationDeleteAvailable());
-    QCOMPARE(controller.conversationDeletePolicyStatus(), QStringLiteral("Disabled By Default"));
-    QCOMPARE(controller.conversationDeleteReadinessStatus(), QStringLiteral("Disabled"));
+    QVERIFY(controller.conversationDeleteAvailable());
+    QCOMPARE(controller.conversationDeletePolicyStatus(), QStringLiteral("Enabled"));
+    QCOMPARE(controller.conversationDeleteReadinessStatus(), QStringLiteral("Ready"));
     QVERIFY(controller.conversationDeleteReadinessSummary().contains(
-        QStringLiteral("Permanent delete is not enabled yet")));
+        QStringLiteral("Permanent delete is available")));
     QVERIFY(controller.conversationDeleteReadinessChecks().contains(
-        QStringLiteral("Permanent delete: Not enabled yet")));
+        QStringLiteral("Permanent delete: Enabled")));
 }
 
 void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutMutation() {
     ApplicationController controller{std::make_unique<LocalEchoProvider>(),
                                      std::make_unique<InMemoryStore>()};
     const auto firstId = controller.activeConversationId();
+    // Create a second conversation so there is somewhere to switch after deletion
+    controller.createConversation(QStringLiteral("Second"));
+    QVERIFY(controller.switchConversation(firstId));
     QVERIFY(controller.sendMessage(QStringLiteral("delete safety token")));
     const auto beforeCount = controller.conversationStoreConversationCount();
-    const auto beforeMessages = controller.chatHistory().size();
 
-    QVERIFY(!controller.requestPermanentDeleteConversation(firstId));
+    // Permanent delete is now enabled — it should succeed
+    QVERIFY(controller.requestPermanentDeleteConversation(firstId));
 
-    QCOMPARE(controller.conversationDeleteLastStatus(), QStringLiteral("Refused"));
+    QCOMPARE(controller.conversationDeleteLastStatus(), QStringLiteral("Deleted"));
     QVERIFY(controller.conversationDeleteLastResultSummary().contains(
-        QStringLiteral("Permanent delete is not enabled yet")));
-    QCOMPARE(controller.conversationStoreConversationCount(), beforeCount);
-    QCOMPARE(controller.activeConversationId(), firstId);
-    QCOMPARE(controller.chatHistory().size(), beforeMessages);
-    QVERIFY(controller.switchConversation(firstId));
+        QStringLiteral("deleted successfully")));
+    // The deleted conversation should no longer appear in the active list
+    QVERIFY(controller.activeConversationId() != firstId);
+    // Store count decreases by 1 (deleted records are hidden)
+    QCOMPARE(controller.conversationStoreConversationCount(), beforeCount - 1);
 }
 
 void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutSQLiteMutation() {
@@ -2343,35 +2346,33 @@ void ApplicationControllerTest::deleteRequestRefusesSafelyWithoutSQLiteMutation(
     QVERIFY(dir.isValid());
     const auto databasePath = dir.filePath(QStringLiteral("conversations.sqlite3"));
     QString firstId;
+    QString secondId;
 
     {
         auto controller = makeControllerWithConversationStore(
             std::make_unique<SQLiteConversationStore>(databasePath));
         firstId = controller->activeConversationId();
+        secondId = controller->createConversation(QStringLiteral("Second"));
+        QVERIFY(controller->switchConversation(firstId));
         QVERIFY(controller->sendMessage(QStringLiteral("sqlite delete safety token")));
         const auto beforeCount = controller->conversationStoreConversationCount();
-        const auto beforeMessages = controller->chatHistory().size();
 
-        QVERIFY(!controller->requestPermanentDeleteConversation(firstId));
+        // Permanent delete now succeeds
+        QVERIFY(controller->requestPermanentDeleteConversation(firstId));
 
-        QCOMPARE(controller->conversationDeleteLastStatus(), QStringLiteral("Refused"));
+        QCOMPARE(controller->conversationDeleteLastStatus(), QStringLiteral("Deleted"));
         QVERIFY(controller->conversationDeleteLastResultSummary().contains(
-            QStringLiteral("Permanent delete is not enabled yet")));
-        QCOMPARE(controller->conversationStoreConversationCount(), beforeCount);
-        QCOMPARE(controller->activeConversationId(), firstId);
-        QCOMPARE(controller->chatHistory().size(), beforeMessages);
+            QStringLiteral("deleted successfully")));
+        QCOMPARE(controller->conversationStoreConversationCount(), beforeCount - 1);
+        QVERIFY(controller->activeConversationId() != firstId);
     }
 
+    // After reload, the deleted conversation has deleted=true in the raw store
     SQLiteConversationStore reloaded(databasePath);
+    // listConversations() hides deleted records — only the second should appear
     const auto conversations = reloaded.listConversations();
     QCOMPARE(conversations.size(), 1);
-    QCOMPARE(conversations.first().id, firstId);
-    QVERIFY(!conversations.first().archived);
-    QVERIFY(!conversations.first().deleted);
-
-    const auto messages = reloaded.loadMessages(firstId);
-    QCOMPARE(messages.size(), 3);
-    QCOMPARE(messages.at(1).content, QStringLiteral("sqlite delete safety token"));
+    QCOMPARE(conversations.first().id, secondId);
 }
 
 void ApplicationControllerTest::activeConversationRemainsValidAfterArchiveUnarchive() {

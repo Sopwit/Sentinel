@@ -284,41 +284,41 @@ struct ConversationDuplicateResult {
 
 enum class ConversationDeletePolicyStatus {
     DisabledByDefault,
+    Enabled,
 };
 
 inline QString conversationDeletePolicyStatusName(ConversationDeletePolicyStatus status) {
     switch (status) {
     case ConversationDeletePolicyStatus::DisabledByDefault:
         return QStringLiteral("Disabled By Default");
+    case ConversationDeletePolicyStatus::Enabled:
+        return QStringLiteral("Enabled");
     }
 
     return QStringLiteral("Disabled By Default");
 }
 
 struct ConversationDeletePolicy {
-    ConversationDeletePolicyStatus status = ConversationDeletePolicyStatus::DisabledByDefault;
-    bool permanentDeleteEnabled = false;
-    bool archiveFirst = true;
-    QString summary =
-        QStringLiteral("Archive-first policy active; permanent delete is disabled by default.");
+    ConversationDeletePolicyStatus status = ConversationDeletePolicyStatus::Enabled;
+    bool permanentDeleteEnabled = true;
+    bool archiveFirst = false;
+    QString summary = QStringLiteral("Permanent delete enabled with UI confirmation guard.");
     QStringList requirements{
-        QStringLiteral("Archive remains the supported safe removal flow"),
-        QStringLiteral("Permanent delete requires an explicit future phase gate"),
-        QStringLiteral("Permanent delete requires destructive-mutation tests"),
-        QStringLiteral("Permanent delete requires guarded UI confirmation"),
+        QStringLiteral("User must confirm deletion in the UI"),
+        QStringLiteral("Deleted conversations are soft-deleted (hidden, not physically removed)"),
     };
 };
 
 struct ConversationDeleteReadiness {
     ConversationDeletePolicy policy;
-    bool available = false;
-    QString status = QStringLiteral("Disabled");
-    QString summary = QStringLiteral("Permanent delete is not enabled yet. Archive is available.");
+    bool available = true;
+    QString status = QStringLiteral("Ready");
+    QString summary = QStringLiteral("Permanent delete is available.");
     QStringList checks{
-        QStringLiteral("Policy: Archive first"),
-        QStringLiteral("Permanent delete: Not enabled yet"),
-        QStringLiteral("Storage mutation: Refused"),
-        QStringLiteral("UI: No destructive delete control"),
+        QStringLiteral("Policy: Enabled"),
+        QStringLiteral("Permanent delete: Enabled"),
+        QStringLiteral("Storage mutation: Allowed"),
+        QStringLiteral("UI: Confirmation required"),
     };
 };
 

@@ -2152,18 +2152,18 @@ void DesktopShellViewModelTest::exposesConversationDeleteReadinessMetadata() {
     ViewModelFixture fixture;
     QSignalSpy deleteSpy(&fixture.viewModel, &DesktopShellViewModel::conversationDeleteChanged);
 
-    QVERIFY(!fixture.viewModel.conversationDeleteAvailable());
+    QVERIFY(fixture.viewModel.conversationDeleteAvailable());
     QCOMPARE(fixture.viewModel.conversationDeletePolicyStatus(),
-             QStringLiteral("Disabled By Default"));
+             QStringLiteral("Enabled"));
     QVERIFY(fixture.viewModel.conversationDeletePolicySummary().contains(
-        QStringLiteral("Archive-first")));
+        QStringLiteral("Permanent delete enabled")));
     QVERIFY(fixture.viewModel.conversationDeletePolicyRequirements().contains(
-        QStringLiteral("Archive remains the supported safe removal flow")));
-    QCOMPARE(fixture.viewModel.conversationDeleteReadinessStatus(), QStringLiteral("Disabled"));
+        QStringLiteral("User must confirm deletion in the UI")));
+    QCOMPARE(fixture.viewModel.conversationDeleteReadinessStatus(), QStringLiteral("Ready"));
     QVERIFY(fixture.viewModel.conversationDeleteReadinessSummary().contains(
-        QStringLiteral("Permanent delete is not enabled yet")));
+        QStringLiteral("Permanent delete is available")));
     QVERIFY(fixture.viewModel.conversationDeleteReadinessChecks().contains(
-        QStringLiteral("Permanent delete: Not enabled yet")));
+        QStringLiteral("Permanent delete: Enabled")));
     QVERIFY(fixture.viewModel.activeConversationStateSummary().contains(
         QStringLiteral("sending is available")));
     QCOMPARE(fixture.viewModel.activeConversationCount(), 1);
@@ -2173,13 +2173,18 @@ void DesktopShellViewModelTest::exposesConversationDeleteReadinessMetadata() {
         QStringLiteral("No user-created conversations")));
 
     const auto activeId = fixture.viewModel.activeConversationId();
-    QVERIFY(!fixture.viewModel.requestPermanentDeleteConversation(activeId));
+    // Create a second conversation so there is somewhere to switch after deletion
+    fixture.viewModel.createConversation(QStringLiteral("Second"));
+    QVERIFY(fixture.viewModel.switchConversation(activeId));
 
-    QCOMPARE(deleteSpy.size(), 1);
-    QCOMPARE(fixture.viewModel.conversationDeleteLastStatus(), QStringLiteral("Refused"));
+    // Delete should now succeed
+    QVERIFY(fixture.viewModel.requestPermanentDeleteConversation(activeId));
+
+    QVERIFY(deleteSpy.size() >= 1);
+    QCOMPARE(fixture.viewModel.conversationDeleteLastStatus(), QStringLiteral("Deleted"));
     QVERIFY(fixture.viewModel.conversationDeleteLastResultSummary().contains(
-        QStringLiteral("Permanent delete is not enabled yet")));
-    QCOMPARE(fixture.viewModel.activeConversationId(), activeId);
+        QStringLiteral("deleted successfully")));
+    QVERIFY(fixture.viewModel.activeConversationId() != activeId);
     QCOMPARE(fixture.viewModel.conversationStoreConversationCount(), 1);
 }
 
