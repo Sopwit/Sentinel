@@ -6805,13 +6805,67 @@ bool ApplicationController::requestConversationExport(const QString& format) {
 bool ApplicationController::requestPermanentDeleteConversation(const QString& conversationId) {
     latestConversationDeleteResult_ = ConversationDeleteResult{};
     latestConversationDeleteResult_.conversationId = conversationId.trimmed();
-    latestConversationDeleteResult_.status = QStringLiteral("Refused");
-    latestConversationDeleteResult_.refusalSummary =
-        QStringLiteral("Permanent delete is not enabled yet. Archive is available.");
+
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
+        latestConversationDeleteResult_.status = QStringLiteral("Refused");
+        latestConversationDeleteResult_.refusalSummary =
+            QStringLiteral("Conversation store is not ready.");
+        latestConversationDeleteResult_.summary =
+            QStringLiteral("Delete refused: conversation store unavailable.");
+        emit conversationDeleteChanged();
+        return false;
+    }
+
+    const auto trimmedId = conversationId.trimmed();
+    if (trimmedId.isEmpty()) {
+        latestConversationDeleteResult_.status = QStringLiteral("Refused");
+        latestConversationDeleteResult_.refusalSummary =
+            QStringLiteral("Conversation ID is empty.");
+        latestConversationDeleteResult_.summary =
+            QStringLiteral("Delete refused: no conversation ID provided.");
+        emit conversationDeleteChanged();
+        return false;
+    }
+
+    const bool deleted = conversationStore_->deleteConversation(trimmedId);
+    if (!deleted) {
+        latestConversationDeleteResult_.status = QStringLiteral("Failed");
+        latestConversationDeleteResult_.refusalSummary =
+            QStringLiteral("Store rejected the delete operation.");
+        latestConversationDeleteResult_.summary =
+            QStringLiteral("Delete failed: store could not delete the conversation.");
+        emit conversationDeleteChanged();
+        return false;
+    }
+
+    latestConversationDeleteResult_.accepted = true;
+    latestConversationDeleteResult_.mutatedStorage = true;
+    latestConversationDeleteResult_.status = QStringLiteral("Deleted");
     latestConversationDeleteResult_.summary =
-        QStringLiteral("Permanent delete is not enabled yet. Archive is available.");
+        QStringLiteral("Conversation deleted successfully.");
+
+    // If the deleted conversation was the active one, switch away from it
+    if (trimmedId == activeConversationId_) {
+        if (localInferenceBusy_ && !activeLocalInferenceRequestId_.isEmpty()) {
+            cancelLocalInference();
+        }
+        activeConversationId_.clear();
+        ensureActiveConversation();
+        loadActiveConversationTranscript();
+        resetConversationRuntimeState();
+        conversationStateGraph_.reset();
+        refreshConversationHistorySummary();
+        resetConversationSearchSummary();
+        emit localInferenceChanged();
+        emit conversationRuntimeChanged();
+        emit conversationStateChanged();
+        emit conversationSearchChanged();
+    }
+
+    emit chatMessagesChanged();
+    emit contextAssemblyChanged();
     emit conversationDeleteChanged();
-    return false;
+    return true;
 }
 
 QString ApplicationController::createConversation(const QString& title) {

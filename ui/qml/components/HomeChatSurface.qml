@@ -23,7 +23,9 @@ ShellPanel {
     readonly property bool sidebarEffectiveOpen: conversationSidebarOpen && !compact
     property bool conversationSidebarOpen: true
     property string conversationFilter: ""
-    property string sidebarView: "recent"   // "recent" | "pinned" | "archived"
+    property string sidebarView: "recent"
+    property string pendingDeleteConversationId: ""
+    property string pendingDeleteConversationTitle: ""   // "recent" | "pinned" | "archived"
     readonly property real resolutionScale: Math.max(0.7, Math.min(1.4, homeChat.height / 860.0))
 
     radius: SentinelTheme.radiusPanel
@@ -517,20 +519,15 @@ ShellPanel {
                                     }
                                 }
 
-                                // Delete — intentionally disabled at this phase
-                                // Backend always refuses; archive is the available action
+                                // Delete — opens confirmation dialog
                                 MenuSeparator {}
 
                                 MenuItem {
-                                    id: convDeleteDisabledItem
-                                    text: qsTr("Permanent delete not yet available — use Archive")
-                                    enabled: false
-
-                                    contentItem: Text {
-                                        text: convDeleteDisabledItem.text
-                                        color: SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontTiny
-                                        wrapMode: Text.WordWrap
+                                    text: qsTr("Delete")
+                                    onTriggered: {
+                                        homeChat.pendingDeleteConversationId = convItem.convId
+                                        homeChat.pendingDeleteConversationTitle = convItem.convTitle
+                                        deleteConfirmDialog.open()
                                     }
                                 }
                             }
@@ -1201,14 +1198,12 @@ ShellPanel {
                                 MenuSeparator {}
 
                                 MenuItem {
-                                    id: msgDeleteDisabledItem
-                                    text: qsTr("Permanent delete not yet available — use Archive")
-                                    enabled: false
-                                    contentItem: Text {
-                                        text: msgDeleteDisabledItem.text
-                                        color: SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontTiny
-                                        wrapMode: Text.WordWrap
+                                    text: qsTr("Delete conversation")
+                                    onTriggered: {
+                                        homeChat.pendingDeleteConversationId = homeChat.viewModel.activeConversationId
+                                        var idx = homeChat.viewModel.conversationIds.indexOf(homeChat.viewModel.activeConversationId)
+                                        homeChat.pendingDeleteConversationTitle = idx >= 0 ? homeChat.viewModel.conversationTitles[idx] : homeChat.viewModel.activeConversationId
+                                        deleteConfirmDialog.open()
                                     }
                                 }
                             }
@@ -1619,5 +1614,151 @@ ShellPanel {
             qsTr("All files (*)")
         ]
         onAccepted: homeChat.viewModel.attachFileToChat(selectedFile.toString().replace("file://", ""))
+    }
+
+    // Permanent delete confirmation dialog
+    Dialog {
+        id: deleteConfirmDialog
+        anchors.centerIn: parent
+        modal: true
+        dim: true
+        padding: 0
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+
+        background: Rectangle {
+            radius: SentinelTheme.radiusLg
+            color: SentinelTheme.backgroundRaised
+            border.color: SentinelTheme.withAlpha(SentinelTheme.warning, 0.35)
+        }
+
+        contentItem: ColumnLayout {
+            spacing: 0
+            width: 340
+
+            // Header
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: "transparent"
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.margins: SentinelTheme.spaceLg
+                spacing: SentinelTheme.spaceMd
+
+                // Warning icon + title
+                RowLayout {
+                    spacing: SentinelTheme.spaceSm
+
+                    Text {
+                        text: "\u26A0"
+                        font.pixelSize: 20
+                        color: SentinelTheme.warning
+                    }
+
+                    Label {
+                        text: qsTr("Delete conversation")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontCard
+                        font.bold: true
+                        Layout.fillWidth: true
+                    }
+                }
+
+                // Conversation name
+                Rectangle {
+                    Layout.fillWidth: true
+                    radius: SentinelTheme.radiusMd
+                    color: SentinelTheme.withAlpha(SentinelTheme.warning, 0.07)
+                    border.color: SentinelTheme.withAlpha(SentinelTheme.warning, 0.18)
+                    implicitHeight: deleteConvLabel.implicitHeight + SentinelTheme.spaceSm * 2
+
+                    Label {
+                        id: deleteConvLabel
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.verticalCenter: parent.verticalCenter
+                        anchors.margins: SentinelTheme.spaceSm
+                        text: homeChat.pendingDeleteConversationTitle
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontSmall
+                        font.bold: true
+                        wrapMode: Text.WordWrap
+                        maximumLineCount: 2
+                        elide: Text.ElideRight
+                    }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: qsTr("This action cannot be undone. The conversation will be permanently removed.")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                }
+
+                // Buttons
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm
+
+                    // Cancel
+                    Button {
+                        id: deleteCancelBtn
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 34
+                        text: qsTr("Cancel")
+                        hoverEnabled: true
+                        onClicked: deleteConfirmDialog.close()
+
+                        contentItem: Text {
+                            text: deleteCancelBtn.text
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: SentinelTheme.fontSmall
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusMd
+                            color: InteractionTokens.surfaceColor(deleteCancelBtn.hovered, deleteCancelBtn.down, false, homeChat.modeAccent)
+                            border.color: InteractionTokens.borderColor(deleteCancelBtn.activeFocus, deleteCancelBtn.hovered, false, homeChat.modeAccent)
+                        }
+                    }
+
+                    // Confirm delete
+                    Button {
+                        id: deleteConfirmBtn
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: 34
+                        text: qsTr("Delete")
+                        hoverEnabled: true
+                        onClicked: {
+                            deleteConfirmDialog.close()
+                            homeChat.viewModel.requestPermanentDeleteConversation(
+                                homeChat.pendingDeleteConversationId)
+                            homeChat.pendingDeleteConversationId = ""
+                            homeChat.pendingDeleteConversationTitle = ""
+                        }
+
+                        contentItem: Text {
+                            text: deleteConfirmBtn.text
+                            color: SentinelTheme.warning
+                            font.pixelSize: SentinelTheme.fontSmall
+                            font.bold: true
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: SentinelTheme.radiusMd
+                            color: deleteConfirmBtn.hovered
+                                   ? SentinelTheme.withAlpha(SentinelTheme.warning, 0.14)
+                                   : SentinelTheme.withAlpha(SentinelTheme.warning, 0.07)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.warning, deleteConfirmBtn.hovered ? 0.45 : 0.28)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
