@@ -2045,6 +2045,7 @@ public:
     QStringList availableLanguages() const;
     Q_INVOKABLE QString languageDisplayName(const QString& language) const;
     Q_INVOKABLE QVariantMap getLocalModelDetails(const QString& modelName) const;
+    Q_INVOKABLE bool checkRuntimeInstalled(const QString& runtimeId) const;
     bool companionEnabled() const;
     void setCompanionEnabled(bool enabled);
     bool companionAvailable() const;

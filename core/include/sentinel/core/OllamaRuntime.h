@@ -92,6 +92,7 @@ struct OllamaHealthCheckResult {
 QString ollamaModelSummary(const OllamaModelSummary& model);
 QStringList ollamaModelSummaries(const QList<OllamaModelSummary>& models);
 QString safeOllamaHealthSummary(const OllamaHealthCheckResult& result);
+QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs);
 
 class IOllamaRuntimeClient {
 public:

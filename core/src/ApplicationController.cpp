@@ -1765,9 +1765,11 @@ void ApplicationController::setSelectedRuntimeProvider(const QString& providerId
     }
 
     selectedRuntimeProvider_ = selected;
+    emit ollamaStatusChanged();
     emit runtimeProviderRegistryChanged();
     emit localModelSelectionChanged();
     emit localChatInferenceRoutingChanged();
+    pollOllama();
 }
 
 QString ApplicationController::activeRuntimeProviderId() const {
@@ -8477,6 +8479,13 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
     if (!ollamaCacheInitialized_) {
         const_cast<ApplicationController*>(this)->initializeOllamaCache();
     }
+    if (selectedRuntimeProvider_ == QStringLiteral("lm-studio")) {
+        return cachedLMStudioModels_;
+    } else if (selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server")) {
+        return cachedLlamaCppModels_;
+    } else if (selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local")) {
+        return cachedOpenAiCompatibleLocalModels_;
+    }
     return cachedOllamaModels_;
 }
 
@@ -8501,16 +8510,32 @@ void ApplicationController::pollOllama() {
 
     ollamaCheckThread_ = QThread::create([this]() {
         OllamaHealthCheckResult health;
-        QList<OllamaModelSummary> models;
+        QList<OllamaModelSummary> ollamaModels;
+        QList<OllamaModelSummary> lmStudioModels;
+        QList<OllamaModelSummary> llamaCppModels;
+        QList<OllamaModelSummary> openAiModels;
 
         if (ollamaRuntimeClient_) {
             health = ollamaRuntimeClient_->healthCheck();
-            models = ollamaRuntimeClient_->installedModels();
+            ollamaModels = ollamaRuntimeClient_->installedModels();
         } else {
             health = NullOllamaRuntimeClient{}.healthCheck();
         }
 
-        QMetaObject::invokeMethod(this, [this, health = std::move(health), models = std::move(models)]() {
+        const auto provider = selectedRuntimeProvider_;
+        if (provider == QStringLiteral("lm-studio")) {
+            lmStudioModels = fetchOpenAiCompatibleModels(QUrl(QStringLiteral("http://127.0.0.1:1234/v1/models")), 1000);
+        } else if (provider == QStringLiteral("llama-cpp-server")) {
+            llamaCppModels = fetchOpenAiCompatibleModels(QUrl(QStringLiteral("http://127.0.0.1:8080/v1/models")), 1000);
+        } else if (provider == QStringLiteral("openai-compatible-local")) {
+            openAiModels = fetchOpenAiCompatibleModels(QUrl(QStringLiteral("http://127.0.0.1:8000/v1/models")), 1000);
+        }
+
+        QMetaObject::invokeMethod(this, [this, health = std::move(health),
+                                         ollamaModels = std::move(ollamaModels),
+                                         lmStudioModels = std::move(lmStudioModels),
+                                         llamaCppModels = std::move(llamaCppModels),
+                                         openAiModels = std::move(openAiModels)]() {
             bool changed = false;
             ollamaCacheInitialized_ = true;
 
@@ -8521,14 +8546,53 @@ void ApplicationController::pollOllama() {
                 changed = true;
             }
 
-            if (cachedOllamaModels_.size() != models.size()) {
-                cachedOllamaModels_ = models;
+            if (cachedOllamaModels_.size() != ollamaModels.size()) {
+                cachedOllamaModels_ = ollamaModels;
                 changed = true;
             } else {
-                for (int i = 0; i < models.size(); ++i) {
-                    if (cachedOllamaModels_[i].name != models[i].name ||
-                        cachedOllamaModels_[i].sizeBytes != models[i].sizeBytes) {
-                        cachedOllamaModels_ = models;
+                for (int i = 0; i < ollamaModels.size(); ++i) {
+                    if (cachedOllamaModels_[i].name != ollamaModels[i].name ||
+                        cachedOllamaModels_[i].sizeBytes != ollamaModels[i].sizeBytes) {
+                        cachedOllamaModels_ = ollamaModels;
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (cachedLMStudioModels_.size() != lmStudioModels.size()) {
+                cachedLMStudioModels_ = lmStudioModels;
+                changed = true;
+            } else {
+                for (int i = 0; i < lmStudioModels.size(); ++i) {
+                    if (cachedLMStudioModels_[i].name != lmStudioModels[i].name) {
+                        cachedLMStudioModels_ = lmStudioModels;
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (cachedLlamaCppModels_.size() != llamaCppModels.size()) {
+                cachedLlamaCppModels_ = llamaCppModels;
+                changed = true;
+            } else {
+                for (int i = 0; i < llamaCppModels.size(); ++i) {
+                    if (cachedLlamaCppModels_[i].name != llamaCppModels[i].name) {
+                        cachedLlamaCppModels_ = llamaCppModels;
+                        changed = true;
+                        break;
+                    }
+                }
+            }
+
+            if (cachedOpenAiCompatibleLocalModels_.size() != openAiModels.size()) {
+                cachedOpenAiCompatibleLocalModels_ = openAiModels;
+                changed = true;
+            } else {
+                for (int i = 0; i < openAiModels.size(); ++i) {
+                    if (cachedOpenAiCompatibleLocalModels_[i].name != openAiModels[i].name) {
+                        cachedOpenAiCompatibleLocalModels_ = openAiModels;
                         changed = true;
                         break;
                     }

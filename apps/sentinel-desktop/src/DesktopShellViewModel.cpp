@@ -3176,6 +3176,35 @@ QVariantMap DesktopShellViewModel::getLocalModelDetails(const QString& modelName
     return result;
 }
 
+bool DesktopShellViewModel::checkRuntimeInstalled(const QString& runtimeId) const {
+    const auto lowerId = runtimeId.trimmed().toLower();
+    if (lowerId == QLatin1String("ollama")) {
+#if defined(Q_OS_MAC)
+        return QFileInfo::exists(QStringLiteral("/Applications/Ollama.app")) ||
+               QFileInfo::exists(QStringLiteral("/usr/local/bin/ollama")) ||
+               QFileInfo::exists(QStringLiteral("/usr/bin/ollama"));
+#elif defined(Q_OS_WIN)
+        const QString localAppData = QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/AppData/Local"));
+        return QFileInfo::exists(localAppData + QStringLiteral("/Programs/Ollama/ollama.exe"));
+#else
+        return QFileInfo::exists(QStringLiteral("/usr/local/bin/ollama")) ||
+               QFileInfo::exists(QStringLiteral("/usr/bin/ollama")) ||
+               QFileInfo::exists(QDir::homePath() + QStringLiteral("/.local/share/ollama"));
+#endif
+    } else if (lowerId == QLatin1String("lmstudio")) {
+#if defined(Q_OS_MAC)
+        return QFileInfo::exists(QStringLiteral("/Applications/LM Studio.app"));
+#elif defined(Q_OS_WIN)
+        const QString localAppData = QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/AppData/Local"));
+        return QFileInfo::exists(localAppData + QStringLiteral("/Programs/lm-studio/LM Studio.exe"));
+#else
+        return QFileInfo::exists(QStringLiteral("/usr/local/bin/lm-studio")) ||
+               QFileInfo::exists(QDir::homePath() + QStringLiteral("/.local/share/lm-studio"));
+#endif
+    }
+    return false;
+}
+
 bool DesktopShellViewModel::companionEnabled() const {
     return true;
 }

@@ -71,22 +71,6 @@ Item {
                             maximumLineCount: 1
                             elide: Text.ElideRight
                         }
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("Workspace controls")
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontTiny
-                            maximumLineCount: 1
-                            elide: Text.ElideRight
-                        }
-
-                        Label {
-                            Layout.alignment: Qt.AlignLeft
-                            text: qsTr("Premium desktop navigation")
-                            color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.88)
-                            font.pixelSize: SentinelTheme.fontTiny
-                        }
                     }
                 }
 
@@ -156,29 +140,7 @@ Item {
                                         }
                                     }
 
-                                    Rectangle {
-                                        Layout.alignment: Qt.AlignVCenter
-                                        visible: !settingsPage.compact
-                                        radius: SentinelTheme.radiusPill
-                                        color: navButton.active
-                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
-                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
-                                        border.color: navButton.active
-                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.42)
-                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                        implicitHeight: sectionChipText.implicitHeight + 6
-                                        implicitWidth: sectionChipText.implicitWidth + SentinelTheme.spaceSm
 
-                                        Text {
-                                            id: sectionChipText
-                                            anchors.centerIn: parent
-                                            text: modelData.chip
-                                            color: navButton.active
-                                                   ? settingsPage.modeAccent
-                                                   : SentinelTheme.textMuted
-                                            font.pixelSize: SentinelTheme.fontTiny
-                                        }
-                                    }
                                 }
 
                                 background: Rectangle {
@@ -236,15 +198,7 @@ Item {
                     }
                 }
 
-                Label {
-                    Layout.fillWidth: true
-                    text: qsTr("Desktop alpha")
-                    color: SentinelTheme.textMuted
-                    font.pixelSize: SentinelTheme.fontTiny
-                    horizontalAlignment: Text.AlignHCenter
-                    maximumLineCount: 1
-                    elide: Text.ElideRight
-                }
+
             }
         }
 
@@ -2797,7 +2751,7 @@ Item {
                             InfoRow {
                                 compact: true
                                 label: qsTr("Version")
-                                value: Qt.application.version.length > 0 ? Qt.application.version : qsTr("Desktop Alpha")
+                                value: Qt.application.version.length > 0 ? Qt.application.version : qsTr("1.0.0")
                                 Layout.fillWidth: true
                             }
 

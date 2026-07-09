@@ -81,7 +81,9 @@ ApplicationWindow {
         anchors.rightMargin: SentinelTheme.pageMargin(root.width)
         anchors.topMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
                            + root.shellEntranceOffset
-        anchors.bottomMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl) - root.shellEntranceOffset
+        anchors.bottomMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
+                               + 72 + SentinelTheme.spaceMd
+                               - root.shellEntranceOffset
         spacing: root.compactLayout ? SentinelTheme.spaceSm : SentinelTheme.spaceLg
         opacity: root.shellReady ? 1.0 : 0.0
 
