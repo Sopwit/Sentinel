@@ -183,7 +183,10 @@ QString modelSummaryLine(const ModelSummary& model);
 QString modelLibrarySummaryLine(const ModelSummary& model);
 QString modelDetailSummaryLine(const ModelSummary& model);
 QStringList modelCapabilityLabels(const QList<ModelCapability>& capabilities);
-QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& models);
+QList<ModelSummary> modelSummariesFromOllama(
+    const QList<OllamaModelSummary>& models,
+    const QString& providerId = QStringLiteral("ollama"),
+    const QString& providerLabel = QStringLiteral("Ollama"));
 ModelSummary disabledProviderModelPlaceholder(const QString& providerId,
                                               const QString& providerLabel);
 QList<ModelSummary> localAiCatalogPlaceholders();

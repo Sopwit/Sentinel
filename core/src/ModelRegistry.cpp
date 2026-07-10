@@ -364,7 +364,9 @@ QString modelDetailSummaryLine(const ModelSummary& model) {
                                                            : model.restriction.summary);
 }
 
-QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& models) {
+QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& models,
+                                             const QString& providerId,
+                                             const QString& providerLabel) {
     QList<ModelSummary> summaries;
     for (const auto& model : models) {
         const auto rawName = normalizedModelName(model.name);
@@ -384,13 +386,14 @@ QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& mo
         if (lower.contains(QStringLiteral("embed")) || lower.contains(QStringLiteral("nomic"))) {
             capabilities.append(ModelCapability::Embeddings);
         }
+        const auto badgeLabel = QStringLiteral("Local %1").arg(providerLabel);
         summaries.append(ModelSummary{
-            QStringLiteral("ollama/%1").arg(rawName),
-            QStringLiteral("ollama"),
+            QStringLiteral("%1/%2").arg(providerId, rawName),
+            providerId,
             rawName,
             displayNameFor(rawName),
             familyFor(rawName),
-            QStringLiteral("Ollama"),
+            providerLabel,
             sizeClassFor(rawName),
             capabilities,
             ModelReadiness::Available,
@@ -406,17 +409,18 @@ QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& mo
             sizeClassFor(rawName) == QStringLiteral("3B") ? 8192 : 0,
             ModelRestriction{},
             ModelSafetyReport{},
-            ModelRuntimeBadge{QStringLiteral("Local Ollama"), QStringLiteral("Local Only"),
+            ModelRuntimeBadge{badgeLabel, QStringLiteral("Local Only"),
                               modelReadinessName(ModelReadiness::Available)},
-            QStringLiteral("%1 is available from local Ollama discovery metadata. Disk %2; RAM "
+            QStringLiteral("%1 is available from local %2 discovery metadata. Disk %3; RAM "
                            "and context are unknown unless provided by a later explicit metadata "
                            "phase.")
-                .arg(rawName, diskLabel),
+                .arg(rawName, providerLabel, diskLabel),
         });
     }
     std::sort(summaries.begin(), summaries.end(), modelLessThan);
     return summaries;
 }
+
 
 QList<ModelSummary> localAiCatalogPlaceholders() {
     return {

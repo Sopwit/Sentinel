@@ -28,6 +28,7 @@ SentinelOverlayModal {
 
     // ── Helpers ───────────────────────────────────────────────────────────────
     readonly property bool isDone: installed
+    readonly property bool isLMStudio: shellViewModel.selectedRuntimeProvider === "lm-studio"
 
     // Ollama model install path (platform default)
     readonly property string ollamaModelPath: {
@@ -416,18 +417,18 @@ SentinelOverlayModal {
                         Label { text: qsTr("Runtime"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder }
                         Label {
                             text: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId
-                                ? qsTr("Ollama (local inference)")
+                                ? (root.isLMStudio ? qsTr("LM Studio (loaded models)") : qsTr("Ollama (local inference)"))
                                 : qsTr("External — see provider website")
                             font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPrimary; font.weight: Font.Medium
                         }
 
                         // Install path (Ollama models only)
                         Label {
-                            visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== ""
+                            visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== "" && !root.isLMStudio
                             text: qsTr("Install path"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder
                         }
                         Label {
-                            visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== ""
+                            visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== "" && !root.isLMStudio
                             Layout.fillWidth: true
                             text: root.ollamaModelPath
                             font.pixelSize: SentinelTheme.fontSmall; font.family: "monospace"
@@ -437,11 +438,11 @@ SentinelOverlayModal {
 
                         // Pull command
                         Label {
-                            visible: root.modelInfo && root.modelInfo.ollamaId !== ""
+                            visible: root.modelInfo && root.modelInfo.ollamaId !== "" && !root.isLMStudio
                             text: qsTr("Pull command"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder
                         }
                         RowLayout {
-                            visible: root.modelInfo && root.modelInfo.ollamaId !== ""
+                            visible: root.modelInfo && root.modelInfo.ollamaId !== "" && !root.isLMStudio
                             spacing: SentinelTheme.spaceXs
 
                             Rectangle {
@@ -531,7 +532,9 @@ SentinelOverlayModal {
                             Rectangle { width: 8; height: 8; radius: 4; color: SentinelTheme.success }
                             Label {
                                 Layout.fillWidth: true
-                                text: qsTr("This model is installed on your device at %1").arg(root.ollamaModelPath)
+                                text: root.isLMStudio
+                                    ? qsTr("This model is loaded and ready for inference in LM Studio.")
+                                    : qsTr("This model is installed on your device at %1").arg(root.ollamaModelPath)
                                 font.pixelSize: SentinelTheme.fontSmall
                                 color: SentinelTheme.success
                                 wrapMode: Text.WordWrap
@@ -744,7 +747,7 @@ SentinelOverlayModal {
                 Button {
                     id: actionBtn
                     visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== ""
-                    enabled: !root.activePull && !root.isDone
+                    enabled: !root.isLMStudio && !root.activePull && !root.isDone
                     implicitHeight: 34
                     implicitWidth: actionLbl.implicitWidth + 28
                     hoverEnabled: true
@@ -779,9 +782,10 @@ SentinelOverlayModal {
 
                     contentItem: Label {
                         id: actionLbl
-                        text: root.isDone ? qsTr("✓  Installed")
+                        text: root.isDone
+                            ? (root.isLMStudio ? qsTr("✓  Loaded") : qsTr("✓  Installed"))
                             : root.activePull ? qsTr("Pulling…")
-                            : qsTr("↓  Download via Ollama")
+                            : (root.isLMStudio ? qsTr("Downloads via LM Studio only") : qsTr("↓  Download via Ollama"))
                         font.pixelSize: SentinelTheme.fontSmall
                         font.weight: Font.Medium
                         color: actionBtn.enabled ? SentinelTheme.accent : SentinelTheme.textMuted

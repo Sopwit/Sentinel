@@ -867,9 +867,9 @@ Item {
                             hoverEnabled: true
                             model: settingsPage.viewModel.ollamaModelNames
                             currentIndex: settingsPage.viewModel.ollamaModelNames.indexOf(settingsPage.viewModel.selectedLocalModel)
-                            displayText: currentIndex >= 0 ? currentText
-                                                           : settingsPage.viewModel.selectedLocalModelStatus
-                                                             + qsTr(" / No model selected")
+                            displayText: currentIndex >= 0
+                                ? currentText + " (" + (settingsPage.viewModel.selectedRuntimeProvider === "lm-studio" ? "LM Studio" : "Ollama") + ")"
+                                : settingsPage.viewModel.selectedLocalModelStatus + qsTr(" / No model selected")
                             onActivated: settingsPage.viewModel.selectedLocalModel = currentText
 
                             contentItem: Text {
@@ -895,7 +895,7 @@ Item {
                             delegate: ItemDelegate {
                                 id: modelOption
                                 width: modelCombo.width
-                                text: modelData
+                                text: modelData + " (" + (settingsPage.viewModel.selectedRuntimeProvider === "lm-studio" ? "LM Studio" : "Ollama") + ")"
                                 highlighted: modelCombo.highlightedIndex === index
 
                                 contentItem: Text {

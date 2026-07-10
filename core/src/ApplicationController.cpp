@@ -822,6 +822,11 @@ ApplicationController::ApplicationController(
                                                    ollamaRuntimeClient_->config()),
                   this, localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
 
+    lmStudioInferenceWorker_ = std::make_unique<LocalInferenceWorker>(
+        std::make_unique<LMStudioLocalInferenceClient>(),
+        std::make_unique<LMStudioLocalInferenceStreamClient>(),
+        this, true, true);
+
     const auto persistedMessages = chatHistoryStore_ && chatHistoryStore_->isAvailable()
                                        ? chatHistoryStore_->loadMessages()
                                        : QList<ChatMessage>{};
@@ -1921,6 +1926,22 @@ QStringList ApplicationController::ollamaModelNames() const {
     return names;
 }
 
+QStringList ApplicationController::installedOllamaModelNames() const {
+    QStringList names;
+    for (const auto& model : cachedOllamaModels_) {
+        names.append(model.name);
+    }
+    return names;
+}
+
+QStringList ApplicationController::loadedLMStudioModelNames() const {
+    QStringList names;
+    for (const auto& model : cachedLMStudioModels_) {
+        names.append(model.name);
+    }
+    return names;
+}
+
 QStringList ApplicationController::ollamaModelSummaries() const {
     return sentinel::core::ollamaModelSummaries(currentOllamaModels());
 }
@@ -1957,13 +1978,19 @@ QString ApplicationController::selectedLocalModelStatus() const {
 QString ApplicationController::selectedLocalModelSummary() const {
     const auto models = currentOllamaModels();
     const auto selected = selectedLocalModel_.trimmed();
+    const auto providerLabel = isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
+    const auto installWord = isLMStudioProvider() ? QStringLiteral("loaded") : QStringLiteral("installed");
+    const auto article = isLMStudioProvider() ? QStringLiteral("a") : QStringLiteral("an");
+
     if (selected.isEmpty()) {
         if (!models.isEmpty()) {
-            return QStringLiteral("No local model selected. Choose an installed Ollama model in "
-                                  "Settings before sending.");
+            return QString::fromUtf8("No local model selected. Choose %1 %2 %3 model in "
+                                  "Settings before sending.")
+                .arg(article, installWord, providerLabel);
         }
-        return QStringLiteral("No local model selected and no discovered Ollama models are "
-                              "available; local inference requires a selected or explicit model.");
+        return QString::fromUtf8("No local model selected and no discovered %1 models are "
+                              "available; local inference requires a selected or explicit model.")
+            .arg(providerLabel);
     }
 
     if (!models.isEmpty() && !discoveredModelNamesContain(selected, models)) {
@@ -1972,7 +1999,7 @@ QString ApplicationController::selectedLocalModelSummary() const {
     }
 
     if (models.isEmpty()) {
-        return QStringLiteral("Selected local model %1 is configured; discovery metadata is "
+        return QStringLiteral("Selected local model %1 is configured; local discovery metadata is "
                               "currently unavailable.")
             .arg(selected);
     }
@@ -3052,7 +3079,7 @@ void ApplicationController::setLocalChatInferenceEnabled(bool enabled) {
 }
 
 QString ApplicationController::localChatInferenceStatus() const {
-    if (selectedRuntimeProvider_ != QStringLiteral("ollama")) {
+    if (!isLocalChatProvider()) {
         return QStringLiteral("Provider Disabled");
     }
     if (!localChatInferenceEnabled_) {
@@ -3068,11 +3095,13 @@ QString ApplicationController::localChatInferenceStatus() const {
     if (selected.isEmpty()) {
         return QStringLiteral("Missing Model");
     }
-    const auto health = currentOllamaHealthCheck();
-    if (health.healthStatus != OllamaHealthStatus::Healthy) {
-        return health.connectionStatus == OllamaConnectionStatus::Blocked
-                   ? QStringLiteral("Blocked")
-                   : QStringLiteral("Ollama Unreachable");
+    if (!isLMStudioProvider()) {
+        const auto health = currentOllamaHealthCheck();
+        if (health.healthStatus != OllamaHealthStatus::Healthy) {
+            return health.connectionStatus == OllamaConnectionStatus::Blocked
+                       ? QStringLiteral("Blocked")
+                       : QStringLiteral("Ollama Unreachable");
+        }
     }
     const auto models = currentOllamaModels();
     if (models.isEmpty()) {
@@ -3081,46 +3110,49 @@ QString ApplicationController::localChatInferenceStatus() const {
     if (!discoveredModelNamesContain(selected, models)) {
         return QStringLiteral("Invalid Model");
     }
-    return QStringLiteral("Generation Ready");
+    return QStringLiteral("Ready");
 }
 
 QString ApplicationController::localChatInferenceSummary() const {
-    if (selectedRuntimeProvider_ != QStringLiteral("ollama")) {
+    if (!isLocalChatProvider()) {
         return QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
-                              "Ollama to send.");
+                              "Ollama or LM Studio to send.");
     }
+    const auto providerLabel = isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
     if (!localChatInferenceEnabled_) {
-        return QStringLiteral("Local chat inference is disabled; chat stays on the local safe "
-                              "provider path and no Ollama prompt is sent.");
+        return QString::fromUtf8("Local chat inference is disabled; chat stays on the local safe "
+                               "provider path and no %1 prompt is sent.").arg(providerLabel);
     }
     if (localInferenceBusy_) {
         return QStringLiteral("Sentinel is waiting for the current local response to finish.");
     }
     if (!localInferenceEndpointAllowed()) {
-        return QStringLiteral("Local chat inference is blocked: Ollama endpoint must be local "
-                              "loopback HTTP.");
+        return QString::fromUtf8("Local chat inference is blocked: %1 endpoint must be local "
+                               "loopback HTTP.").arg(providerLabel);
     }
     const auto selected = selectedLocalModel_.trimmed();
     if (selected.isEmpty()) {
-        return QStringLiteral("Select an installed Ollama model in Settings before sending.");
+        return QString::fromUtf8("Select an installed/loaded %1 model in Settings before sending.").arg(providerLabel);
     }
-    const auto health = currentOllamaHealthCheck();
-    if (health.healthStatus != OllamaHealthStatus::Healthy) {
-        return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
+    if (!isLMStudioProvider()) {
+        const auto health = currentOllamaHealthCheck();
+        if (health.healthStatus != OllamaHealthStatus::Healthy) {
+            return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
+        }
     }
     const auto models = currentOllamaModels();
     if (models.isEmpty()) {
-        return QStringLiteral("Ollama is reachable, but no installed model list is available.");
+        return QString::fromUtf8("%1 is reachable, but no loaded/installed model list is available.").arg(providerLabel);
     }
     if (!discoveredModelNamesContain(selected, models)) {
-        return QStringLiteral("Local chat inference is enabled but the selected model is missing "
-                              "from discovered Ollama metadata.");
+        return QString::fromUtf8("Local chat inference is enabled but the selected model is missing "
+                               "from discovered %1 metadata.").arg(providerLabel);
     }
-    return QStringLiteral("Local Ollama generation is ready.");
+    return QString::fromUtf8("Local %1 generation is ready.").arg(providerLabel);
 }
 
 bool ApplicationController::localChatSendAvailable() const {
-    if (selectedRuntimeProvider_ != QStringLiteral("ollama") || !localChatInferenceEnabled_ ||
+    if (!isLocalChatProvider() || !localChatInferenceEnabled_ ||
         localInferenceBusy_ || activeConversationArchived() || !localInferenceEndpointAllowed()) {
         return false;
     }
@@ -3130,9 +3162,11 @@ bool ApplicationController::localChatSendAvailable() const {
         return false;
     }
 
-    const auto health = currentOllamaHealthCheck();
-    if (health.healthStatus != OllamaHealthStatus::Healthy) {
-        return false;
+    if (!isLMStudioProvider()) {
+        const auto health = currentOllamaHealthCheck();
+        if (health.healthStatus != OllamaHealthStatus::Healthy) {
+            return false;
+        }
     }
 
     const auto models = currentOllamaModels();
@@ -3143,42 +3177,50 @@ QString ApplicationController::localChatSendAvailabilitySummary() const {
     if (activeConversationArchived()) {
         return activeConversationStateSummary();
     }
-    if (selectedRuntimeProvider_ != QStringLiteral("ollama")) {
+    if (!isLocalChatProvider()) {
         return QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
-                              "Ollama to send.");
+                              "Ollama or LM Studio to send.");
     }
+    const auto providerLabel = isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
+    const auto installWord = isLMStudioProvider() ? QStringLiteral("loaded") : QStringLiteral("installed");
+    const auto article = isLMStudioProvider() ? QStringLiteral("a") : QStringLiteral("an");
+
     if (!localChatInferenceEnabled_) {
-        return QStringLiteral("Enable Local chat inference in Settings to send with Ollama.");
+        return QString::fromUtf8("Enable Local chat inference in Settings to send with %1.").arg(providerLabel);
     }
     if (localInferenceBusy_) {
         return QStringLiteral("Sentinel is responding. Wait for the current local request to "
                               "finish.");
     }
     if (!localInferenceEndpointAllowed()) {
-        return QStringLiteral("Ollama must use a local loopback HTTP endpoint.");
+        return QString::fromUtf8("%1 must use a local loopback HTTP endpoint.").arg(providerLabel);
     }
 
     const auto selected = selectedLocalModel_.trimmed();
     if (selected.isEmpty()) {
-        return QStringLiteral("Select an installed Ollama model in Settings before sending.");
+        return QString::fromUtf8("Select %1 %2 %3 model in Settings before sending.")
+            .arg(article, installWord, providerLabel);
     }
 
-    const auto health = currentOllamaHealthCheck();
-    if (health.healthStatus != OllamaHealthStatus::Healthy) {
-        return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
+    if (!isLMStudioProvider()) {
+        const auto health = currentOllamaHealthCheck();
+        if (health.healthStatus != OllamaHealthStatus::Healthy) {
+            return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
+        }
     }
 
     const auto models = currentOllamaModels();
     if (models.isEmpty()) {
-        return QStringLiteral("Ollama is reachable, but no installed model list is available.");
+        return QString::fromUtf8("%1 is reachable, but no %2 model list is available.")
+            .arg(providerLabel, installWord);
     }
     if (!discoveredModelNamesContain(selected, models)) {
-        return QStringLiteral("Selected model %1 is not installed in Ollama. Choose an available "
+        return QString::fromUtf8("Selected model %1 is not %2 in %3. Choose an available "
                               "model in Settings.")
-            .arg(selected);
+            .arg(selected, installWord, providerLabel);
     }
 
-    return QStringLiteral("Ready to send with Local Ollama.");
+    return QString::fromUtf8("Ready to send with Local %1.").arg(providerLabel);
 }
 
 QString ApplicationController::chatSendLifecycleState() const {
@@ -4534,8 +4576,9 @@ QStringList ApplicationController::localInferenceTraceSummaries() const {
 }
 
 bool ApplicationController::localInferenceStreamingAvailable() const {
-    return localInferenceStreamingEnabled_ && localInferenceWorker_ &&
-           localInferenceWorker_->streamingAvailable();
+    const auto worker = activeLocalInferenceWorker();
+    return localInferenceStreamingEnabled_ && worker &&
+           worker->streamingAvailable();
 }
 
 QString ApplicationController::localInferenceStreamStatus() const {
@@ -4547,7 +4590,8 @@ QString ApplicationController::localInferenceStreamSummary() const {
         return QStringLiteral("Local inference streaming is disabled; responses finalize through "
                               "normal chat history.");
     }
-    if (!localInferenceWorker_) {
+    const auto worker = activeLocalInferenceWorker();
+    if (!worker) {
         return QStringLiteral("Local inference streaming client is unavailable.");
     }
     if (localInferenceBusy_ &&
@@ -4557,7 +4601,7 @@ QString ApplicationController::localInferenceStreamSummary() const {
                    : latestLocalInferenceStreamResult_.summary;
     }
     if (latestLocalInferenceStreamResult_.status == LocalInferenceStreamStatus::Disabled) {
-        return localInferenceWorker_->streamStatusSummary();
+        return worker->streamStatusSummary();
     }
     return latestLocalInferenceStreamResult_.summary;
 }
@@ -7270,7 +7314,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         return false;
     }
 
-    if ((selectedRuntimeProvider_ != QStringLiteral("ollama") || localChatInferenceEnabled_) &&
+    if ((!isLocalChatProvider() || localChatInferenceEnabled_) &&
         !localChatSendAvailable()) {
         const auto localChatEffectiveModel = effectiveLocalModel({});
         const auto localChatHealth = currentOllamaHealthCheck();
@@ -7280,7 +7324,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         const auto reason = localChatSendAvailabilitySummary();
         auto error = LocalInferenceError::RequestFailed;
         auto status = LocalInferenceStatus::Blocked;
-        if (selectedRuntimeProvider_ != QStringLiteral("ollama") || !localChatInferenceEnabled_) {
+        if (!isLocalChatProvider() || !localChatInferenceEnabled_) {
             error = LocalInferenceError::PermissionDenied;
         } else if (localInferenceBusy_) {
             error = LocalInferenceError::BusyRequest;
@@ -7290,7 +7334,7 @@ bool ApplicationController::sendMessage(const QString& message) {
         } else if (selectedLocalModel_.trimmed().isEmpty() || localChatEffectiveModel.isEmpty()) {
             error = LocalInferenceError::MissingModel;
             status = LocalInferenceStatus::InvalidRequest;
-        } else if (localChatHealth.healthStatus != OllamaHealthStatus::Healthy) {
+        } else if (!isLMStudioProvider() && localChatHealth.healthStatus != OllamaHealthStatus::Healthy) {
             error = LocalInferenceError::OllamaNotRunning;
             status = LocalInferenceStatus::Error;
             request.options.timeoutMs = localChatHealth.timeoutMs;
@@ -7302,8 +7346,9 @@ bool ApplicationController::sendMessage(const QString& message) {
         latestLocalInferenceResponse_.status = status;
         latestLocalInferenceResponse_.timeoutMs = request.options.timeoutMs;
         latestLocalInferenceStreamResult_.accumulatedText.clear();
+        const auto providerLabel = isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
         setConversationRuntimeRequest(QStringLiteral("local-inference-blocked"),
-                                      request.options.model, QStringLiteral("Local Ollama"), false);
+                                      request.options.model, QStringLiteral("Local ") + providerLabel, false);
         setConversationRuntimeResult(false, reason);
         setChatSendLifecycle(QStringLiteral("refused"), reason);
         emit localInferenceChanged();
@@ -7514,9 +7559,10 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         return false;
     }
 
+    const bool isRealOllama = !isLMStudioProvider() && localInferenceClientIsRealOllama_;
     const auto health =
-        localInferenceClientIsRealOllama_ ? currentOllamaHealthCheck() : OllamaHealthCheckResult{};
-    if (localInferenceClientIsRealOllama_ && health.healthStatus != OllamaHealthStatus::Healthy) {
+        isRealOllama ? currentOllamaHealthCheck() : OllamaHealthCheckResult{};
+    if (isRealOllama && health.healthStatus != OllamaHealthStatus::Healthy) {
         const auto summary = health.summary.trimmed().isEmpty()
                                  ? QStringLiteral("Local inference blocked: Ollama health check "
                                                   "did not report a healthy local endpoint.")
@@ -7536,7 +7582,8 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         return false;
     }
 
-    if (!localInferenceWorker_) {
+    const auto worker = activeLocalInferenceWorker();
+    if (!worker) {
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::ClientUnavailable,
             QStringLiteral("Local inference blocked: client is unavailable."));
@@ -7552,9 +7599,10 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
     activeLocalInferenceRequestId_ = request.id;
     activeLocalInferenceConversationId_ = activeConversationId_;
     localInferenceBusy_ = true;
+    const auto providerLabel = isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
     setChatSendLifecycle(QStringLiteral("sending"),
-                         QStringLiteral("Local Ollama request accepted."));
-    setConversationRuntimeRequest(request.id, request.options.model, QStringLiteral("Local Ollama"),
+                         QStringLiteral("Local %1 request accepted.").arg(providerLabel));
+    setConversationRuntimeRequest(request.id, request.options.model, QStringLiteral("Local ") + providerLabel,
                                   false);
     latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
     latestLocalInferenceResponse_.summary = QStringLiteral("Local inference request is running.");
@@ -7562,7 +7610,7 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
     emit localInferenceChanged();
     emit localChatInferenceRoutingChanged();
 
-    const auto started = localInferenceWorker_->startInference(
+    const auto started = worker->startInference(
         request, [this, permissionDecision, safetyReport](const QString& requestId,
                                                           const LocalInferenceResponse& response) {
             auto completedResponse = response;
@@ -7750,9 +7798,10 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
         return blocked;
     }
 
-    const auto health = localInferenceStreamClientIsRealOllama_ ? currentOllamaHealthCheck()
-                                                                : OllamaHealthCheckResult{};
-    if (localInferenceStreamClientIsRealOllama_ &&
+    const bool isRealOllama = !isLMStudioProvider() && localInferenceStreamClientIsRealOllama_;
+    const auto health = isRealOllama ? currentOllamaHealthCheck()
+                                     : OllamaHealthCheckResult{};
+    if (isRealOllama &&
         health.healthStatus != OllamaHealthStatus::Healthy) {
         const auto summary = health.summary.trimmed().isEmpty()
                                  ? QStringLiteral("Local streaming blocked: Ollama health check "
@@ -7772,7 +7821,8 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
         return blocked;
     }
 
-    if (!localInferenceWorker_ || !localInferenceWorker_->streamingAvailable()) {
+    const auto worker = activeLocalInferenceWorker();
+    if (!worker || !worker->streamingAvailable()) {
         return blockStream(LocalInferenceError::ClientUnavailable,
                            QStringLiteral("Local streaming blocked: client is unavailable."));
     }
@@ -7785,9 +7835,10 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
     activeLocalInferenceRequestId_ = request.id;
     activeLocalInferenceConversationId_ = activeConversationId_;
     localInferenceBusy_ = true;
+    const auto providerLabel = isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
     setChatSendLifecycle(QStringLiteral("streaming"),
-                         QStringLiteral("Local Ollama stream accepted."));
-    setConversationRuntimeRequest(request.id, request.options.model, QStringLiteral("Local Ollama"),
+                         QStringLiteral("Local %1 stream accepted.").arg(providerLabel));
+    setConversationRuntimeRequest(request.id, request.options.model, QStringLiteral("Local ") + providerLabel,
                                   true);
     latestLocalInferenceResponse_.status = LocalInferenceStatus::Busy;
     latestLocalInferenceResponse_.model = request.options.model;
@@ -7802,7 +7853,7 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
     emit localInferenceChanged();
     emit localChatInferenceRoutingChanged();
 
-    const auto started = localInferenceWorker_->startStream(
+    const auto started = worker->startStream(
         request,
         [this](const QString& requestId, const LocalInferenceStreamChunk& chunk) {
             updateLocalInferenceStreamRequest(requestId, chunk);
@@ -8502,25 +8553,45 @@ CredentialStore ApplicationController::currentCredentialStore() const {
 }
 
 ModelRegistry ApplicationController::currentModelRegistry() const {
-    auto models = modelSummariesFromOllama(currentOllamaModels());
+    // Resolve the label for the active local runtime so discovered models carry
+    // the right provider attribution instead of always showing "Ollama".
+    struct ProviderMeta { QString id; QString label; };
+    const ProviderMeta activeMeta = [&]() -> ProviderMeta {
+        if (selectedRuntimeProvider_ == QStringLiteral("lm-studio"))
+            return {QStringLiteral("lm-studio"), QStringLiteral("LM Studio")};
+        if (selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server"))
+            return {QStringLiteral("llama-cpp-server"), QStringLiteral("llama.cpp server")};
+        if (selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local"))
+            return {QStringLiteral("openai-compatible-local"), QStringLiteral("OpenAI-compatible Local")};
+        return {QStringLiteral("ollama"), QStringLiteral("Ollama")};
+    }();
+
+    auto models = modelSummariesFromOllama(currentOllamaModels(), activeMeta.id, activeMeta.label);
     models.append(disabledProviderModelPlaceholder(QStringLiteral("openai-compatible"),
                                                    QStringLiteral("OpenAI-Compatible API")));
-    models.append(disabledProviderModelPlaceholder(QStringLiteral("lm-studio"),
-                                                   QStringLiteral("LM Studio")));
-    models.append(disabledProviderModelPlaceholder(QStringLiteral("llama-cpp-server"),
-                                                   QStringLiteral("llama.cpp server")));
-    models.append(disabledProviderModelPlaceholder(QStringLiteral("openai-compatible-local"),
-                                                   QStringLiteral("OpenAI-compatible local endpoint")));
+    // Only append a disabled placeholder for providers that are NOT the active one.
+    if (activeMeta.id != QStringLiteral("lm-studio")) {
+        models.append(disabledProviderModelPlaceholder(QStringLiteral("lm-studio"),
+                                                       QStringLiteral("LM Studio")));
+    }
+    if (activeMeta.id != QStringLiteral("llama-cpp-server")) {
+        models.append(disabledProviderModelPlaceholder(QStringLiteral("llama-cpp-server"),
+                                                       QStringLiteral("llama.cpp server")));
+    }
+    if (activeMeta.id != QStringLiteral("openai-compatible-local")) {
+        models.append(disabledProviderModelPlaceholder(QStringLiteral("openai-compatible-local"),
+                                                       QStringLiteral("OpenAI-compatible local endpoint")));
+    }
     models.append(disabledProviderModelPlaceholder(QStringLiteral("huggingface-catalog"),
                                                    QStringLiteral("Hugging Face metadata catalog")));
     models.append(disabledProviderModelPlaceholder(QStringLiteral("mlx-catalog"),
                                                    QStringLiteral("MLX local/community catalog")));
     models.append(disabledProviderModelPlaceholder(QStringLiteral("custom-catalog"),
                                                    QStringLiteral("Future custom catalogs")));
-    const auto selectedModel =
-        selectedRuntimeProvider_ == QStringLiteral("ollama") ? selectedLocalModel_ : QString();
+    const auto selectedModel = isLocalChatProvider() ? selectedLocalModel_ : QString();
     return ModelRegistry{models, selectedRuntimeProvider_, selectedModel};
 }
+
 
 OllamaHealthCheckResult ApplicationController::currentOllamaHealthCheck() const {
     if (!ollamaCacheInitialized_) {
@@ -8701,6 +8772,9 @@ bool ApplicationController::discoveredModelNamesContain(
 }
 
 bool ApplicationController::localInferenceEndpointAllowed() const {
+    if (selectedRuntimeProvider_ == QStringLiteral("lm-studio")) {
+        return true;
+    }
     const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};
     return config.endpoint.isLoopbackHttp();
 }

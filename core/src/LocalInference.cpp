@@ -1008,4 +1008,419 @@ bool OllamaLocalInferenceStreamClient::endpointAllowed() const {
     return config_.endpoint.isLoopbackHttp();
 }
 
+LMStudioLocalInferenceClient::LMStudioLocalInferenceClient(LMStudioConfig config, int timeoutMs)
+    : config_(std::move(config)), timeoutMs_(timeoutMs) {
+    config_.timeoutMs = timeoutMs_;
+}
+
+LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceRequest& request) {
+    LocalInferenceResponse response;
+    response.endpoint = config_.toString();
+    response.model = request.options.model.trimmed();
+    response.timeoutMs =
+        request.options.timeoutMs > 0 ? request.options.timeoutMs : config_.timeoutMs;
+    response.traces.append(
+        trace(1, QStringLiteral("Request"), QStringLiteral("Received"),
+              QStringLiteral("Local inference request reached LM Studio boundary with %1 ms "
+                             "timeout metadata.")
+                  .arg(response.timeoutMs)));
+
+    if (request.prompt.trimmed().isEmpty()) {
+        response.status = LocalInferenceStatus::InvalidRequest;
+        response.error = LocalInferenceError::BlankPrompt;
+        response.summary = QStringLiteral("Local inference request rejected: prompt is blank.");
+        response.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), response.summary));
+        return response;
+    }
+
+    if (!endpointAllowed()) {
+        response.status = LocalInferenceStatus::Blocked;
+        response.error = LocalInferenceError::EndpointBlocked;
+        response.summary =
+            QStringLiteral("Local inference blocked: endpoint must be local loopback HTTP.");
+        response.traces.append(
+            trace(2, QStringLiteral("Endpoint"), QStringLiteral("Blocked"), response.summary));
+        return response;
+    }
+
+    const auto timeoutMs = response.timeoutMs > 0 ? response.timeoutMs : timeoutMs_;
+    const auto models = fetchOpenAiCompatibleModels(endpointUrl(QStringLiteral("/v1/models")), timeoutMs);
+    bool modelAvailable = false;
+    for (const auto& installedModel : models) {
+        if (installedModel.name == response.model) {
+            modelAvailable = true;
+            break;
+        }
+    }
+    if (!modelAvailable && !models.isEmpty()) {
+        response.status = LocalInferenceStatus::ModelUnavailable;
+        response.error = LocalInferenceError::ModelUnavailable;
+        response.summary =
+            QStringLiteral("Local inference request rejected: model is not loaded in LM Studio.");
+        response.traces.append(trace(2, QStringLiteral("Model Discovery"),
+                                     QStringLiteral("Unavailable"), response.summary));
+        return response;
+    }
+
+    QJsonObject messageObj;
+    messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
+    messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+
+    QJsonArray messagesArr;
+    messagesArr.append(messageObj);
+
+    QJsonObject body;
+    body.insert(QStringLiteral("model"), response.model);
+    body.insert(QStringLiteral("messages"), messagesArr);
+    body.insert(QStringLiteral("stream"), false);
+
+    response.traces.append(trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
+                                  QStringLiteral("Calling local LM Studio /v1/chat/completions; timeout %1 ms.")
+                                      .arg(timeoutMs)));
+
+    const auto reply = postJson(endpointUrl(QStringLiteral("/v1/chat/completions")), body, timeoutMs);
+    if (!reply.ok) {
+        response.status = LocalInferenceStatus::Error;
+        response.error = networkErrorCategory(reply);
+        response.summary =
+            safeNetworkFailureSummary(reply, QStringLiteral("Local LM Studio generation"), timeoutMs);
+        response.traces.append(
+            trace(3, QStringLiteral("Generation"), QStringLiteral("Error"), response.summary));
+        return response;
+    }
+
+    const auto choices = reply.document.object().value(QStringLiteral("choices")).toArray();
+    if (choices.isEmpty()) {
+        response.status = LocalInferenceStatus::Error;
+        response.error = LocalInferenceError::InvalidResponse;
+        response.summary = QStringLiteral("Local LM Studio generation response did not include choices.");
+        response.traces.append(trace(3, QStringLiteral("Generation"),
+                                     QStringLiteral("Invalid Response"), response.summary));
+        return response;
+    }
+
+    const auto choiceObj = choices.first().toObject();
+    const auto messageVal = choiceObj.value(QStringLiteral("message")).toObject();
+    const auto text = messageVal.value(QStringLiteral("content")).toString();
+    if (text.isEmpty()) {
+        response.status = LocalInferenceStatus::Error;
+        response.error = LocalInferenceError::InvalidResponse;
+        response.summary = QStringLiteral("Local LM Studio generation response did not include text.");
+        response.traces.append(trace(3, QStringLiteral("Generation"),
+                                     QStringLiteral("Invalid Response"), response.summary));
+        return response;
+    }
+
+    response.status = LocalInferenceStatus::Succeeded;
+    response.error = LocalInferenceError::None;
+    response.text = text;
+    response.approximateOutputTokens = approximateTokenCount(text);
+    response.summary = QStringLiteral("Local inference completed through LM Studio /v1/chat/completions.");
+    response.traces.append(trace(3, QStringLiteral("Generation"), QStringLiteral("Succeeded"),
+                                 QStringLiteral("Local LM Studio generation completed.")));
+    return response;
+}
+
+QString LMStudioLocalInferenceClient::statusSummary() const {
+    return endpointAllowed() ? QStringLiteral("LM Studio local inference boundary is configured for "
+                                              "loopback-only /v1/chat/completions.")
+                             : QStringLiteral("LM Studio local inference boundary is blocked by "
+                                              "endpoint policy.");
+}
+
+QUrl LMStudioLocalInferenceClient::endpointUrl(const QString& path) const {
+    QUrl url = config_.endpoint;
+    url.setPath(path);
+    url.setQuery(QString());
+    url.setFragment(QString());
+    return url;
+}
+
+bool LMStudioLocalInferenceClient::endpointAllowed() const {
+    return config_.isLoopbackHttp();
+}
+
+LMStudioLocalInferenceStreamClient::LMStudioLocalInferenceStreamClient(LMStudioConfig config, int timeoutMs)
+    : config_(std::move(config)), timeoutMs_(timeoutMs) {
+    config_.timeoutMs = timeoutMs_;
+}
+
+LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
+    const LocalInferenceRequest& request,
+    const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) {
+    LocalInferenceStreamResult result;
+    result.model = request.options.model.trimmed();
+    result.endpoint = config_.toString();
+    result.timeoutMs =
+        request.options.timeoutMs > 0 ? request.options.timeoutMs : config_.timeoutMs;
+    result.traces.append(
+        trace(1, QStringLiteral("Request"), QStringLiteral("Received"),
+              QStringLiteral("Local streaming request reached LM Studio boundary with %1 ms "
+                             "timeout metadata.")
+                  .arg(result.timeoutMs)));
+
+    if (request.prompt.trimmed().isEmpty()) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.error = LocalInferenceError::BlankPrompt;
+        result.summary = QStringLiteral("Local streaming request rejected: prompt is blank.");
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Rejected"), result.summary));
+        return result;
+    }
+
+    if (cancellationRequested(request)) {
+        result.status = LocalInferenceStreamStatus::Cancelled;
+        result.error = LocalInferenceError::RequestFailed;
+        result.cancelled = true;
+        result.summary = QStringLiteral("Local streaming request was cancelled before generation.");
+        result.traces.append(
+            trace(2, QStringLiteral("Validation"), QStringLiteral("Cancelled"), result.summary));
+        return result;
+    }
+
+    if (!endpointAllowed()) {
+        result.status = LocalInferenceStreamStatus::Refused;
+        result.error = LocalInferenceError::EndpointBlocked;
+        result.summary =
+            QStringLiteral("Local streaming blocked: endpoint must be local loopback HTTP.");
+        result.traces.append(
+            trace(2, QStringLiteral("Endpoint"), QStringLiteral("Blocked"), result.summary));
+        return result;
+    }
+
+    QJsonObject messageObj;
+    messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
+    messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+
+    QJsonArray messagesArr;
+    messagesArr.append(messageObj);
+
+    QJsonObject body;
+    body.insert(QStringLiteral("model"), result.model);
+    body.insert(QStringLiteral("messages"), messagesArr);
+    body.insert(QStringLiteral("stream"), true);
+
+    QNetworkAccessManager manager;
+    QNetworkRequest networkRequest{endpointUrl(QStringLiteral("/v1/chat/completions"))};
+    networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
+                             QStringLiteral("application/json"));
+    networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                                QNetworkRequest::ManualRedirectPolicy);
+
+    QEventLoop loop;
+    QTimer timer;
+    timer.setSingleShot(true);
+    QTimer cancellationTimer;
+    cancellationTimer.setInterval(25);
+
+    QByteArray pending;
+    int sequence = 0;
+    bool done = false;
+    QElapsedTimer elapsed;
+    elapsed.start();
+
+    QNetworkReply* reply =
+        manager.post(networkRequest, QJsonDocument(body).toJson(QJsonDocument::Compact));
+
+    auto processLine = [&](const QByteArray& line) {
+        const auto trimmedLine = line.trimmed();
+        if (trimmedLine.isEmpty()) {
+            return;
+        }
+
+        if (!trimmedLine.startsWith("data:")) {
+            return;
+        }
+
+        QByteArray dataPayload = trimmedLine.mid(5).trimmed();
+        if (dataPayload == "[DONE]") {
+            done = true;
+            return;
+        }
+
+        QJsonParseError parseError;
+        const auto document = QJsonDocument::fromJson(dataPayload, &parseError);
+        if (parseError.error != QJsonParseError::NoError || !document.isObject()) {
+            ++sequence;
+            ++result.malformedChunkCount;
+            LocalInferenceStreamChunk chunk{
+                sequence, {}, false, true, QStringLiteral("Malformed local stream chunk ignored."),
+            };
+            result.chunks.append(chunk);
+            result.traces.append(trace(sequence + 2, QStringLiteral("Stream Chunk"),
+                                       QStringLiteral("Malformed"), chunk.summary));
+            if (onChunk) {
+                onChunk(chunk);
+            }
+            return;
+        }
+
+        const auto object = document.object();
+        const auto choices = object.value(QStringLiteral("choices")).toArray();
+        if (choices.isEmpty()) {
+            return;
+        }
+        const auto choice = choices.first().toObject();
+        const auto delta = choice.value(QStringLiteral("delta")).toObject();
+        const auto text = delta.value(QStringLiteral("content")).toString();
+
+        const auto finishReason = choice.value(QStringLiteral("finish_reason")).toString();
+        const bool finalChunk = !finishReason.isEmpty() || done;
+
+        if (text.isEmpty() && !finalChunk) {
+            return;
+        }
+
+        ++sequence;
+        done = done || finalChunk;
+        result.accumulatedText.append(text);
+        if (!text.isEmpty() && result.firstTokenLatencyMs < 0) {
+            result.firstTokenLatencyMs = elapsed.elapsed();
+        }
+        LocalInferenceStreamChunk chunk{
+            sequence,
+            text,
+            finalChunk,
+            false,
+            finalChunk ? QStringLiteral("Final local stream chunk received.")
+                       : QStringLiteral("Local stream chunk received."),
+        };
+        result.chunks.append(chunk);
+        if (onChunk) {
+            onChunk(chunk);
+        }
+    };
+
+    QObject::connect(reply, &QNetworkReply::readyRead, &loop, [&]() {
+        pending.append(reply->readAll());
+        while (true) {
+            const auto newlineIndex = pending.indexOf('\n');
+            if (newlineIndex < 0) {
+                break;
+            }
+            const auto line = pending.left(newlineIndex);
+            pending.remove(0, newlineIndex + 1);
+            processLine(line);
+        }
+    });
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
+    QObject::connect(&cancellationTimer, &QTimer::timeout, &loop, [&]() {
+        if (cancellationRequested(request)) {
+            reply->abort();
+            loop.quit();
+        }
+    });
+    const auto timeoutMs = result.timeoutMs > 0 ? result.timeoutMs : timeoutMs_;
+    timer.start(timeoutMs);
+    cancellationTimer.start();
+    result.status = LocalInferenceStreamStatus::Streaming;
+    result.summary = QStringLiteral("Local LM Studio streaming generation is active.");
+    loop.exec();
+    cancellationTimer.stop();
+    result.latencyMs = elapsed.elapsed();
+
+    if (cancellationRequested(request)) {
+        reply->abort();
+        result.status = LocalInferenceStreamStatus::Cancelled;
+        result.error = LocalInferenceError::RequestFailed;
+        result.cancelled = true;
+        result.summary = QStringLiteral("Local LM Studio streaming generation was cancelled.");
+        reply->deleteLater();
+        return result;
+    }
+
+    if (timer.isActive()) {
+        timer.stop();
+    } else {
+        reply->abort();
+        result.status = LocalInferenceStreamStatus::Error;
+        result.error = LocalInferenceError::Timeout;
+        result.summary = QStringLiteral("Local LM Studio streaming generation timed out after %1 ms.")
+                             .arg(timeoutMs);
+        reply->deleteLater();
+        return result;
+    }
+
+    pending.append(reply->readAll());
+    if (!pending.trimmed().isEmpty()) {
+        processLine(pending);
+    }
+
+    if (hasRedirectStatus(reply)) {
+        result.status = LocalInferenceStreamStatus::Error;
+        result.error = LocalInferenceError::EndpointBlocked;
+        result.summary = QStringLiteral("Local LM Studio streaming blocked: redirects are not allowed.");
+        reply->deleteLater();
+        return result;
+    }
+
+    if (reply->error() != QNetworkReply::NoError) {
+        const auto error = reply->errorString();
+        result.status = LocalInferenceStreamStatus::Error;
+        const JsonReply failedReply{false, false, {}, error, reply->error()};
+        result.error = networkErrorCategory(failedReply);
+        result.summary = safeNetworkFailureSummary(
+            failedReply, QStringLiteral("Local LM Studio streaming generation"), timeoutMs);
+        reply->deleteLater();
+        return result;
+    }
+
+    reply->deleteLater();
+
+    if (cancellationRequested(request)) {
+        result.status = LocalInferenceStreamStatus::Cancelled;
+        result.error = LocalInferenceError::RequestFailed;
+        result.cancelled = true;
+        result.summary = QStringLiteral("Local LM Studio streaming generation was cancelled.");
+        return result;
+    }
+
+    if (result.accumulatedText.trimmed().isEmpty()) {
+        result.status = LocalInferenceStreamStatus::Error;
+        result.error =
+            done ? LocalInferenceError::InvalidResponse : LocalInferenceError::StreamInterrupted;
+        result.summary = QStringLiteral("Local LM Studio streaming response did not complete with assistant text.");
+        return result;
+    }
+
+    result.status = LocalInferenceStreamStatus::Completed;
+    result.error = LocalInferenceError::None;
+    result.approximateOutputTokens = approximateTokenCount(result.accumulatedText);
+    result.approximateTokensPerSecond =
+        tokensPerSecond(result.approximateOutputTokens, result.latencyMs);
+    result.summary = result.malformedChunkCount > 0
+                         ? QStringLiteral("Local LM Studio streaming completed with %1 malformed chunk(s) ignored.")
+                               .arg(result.malformedChunkCount)
+                         : QStringLiteral("Local LM Studio streaming completed.");
+    result.traces.append(trace(static_cast<int>(result.traces.size()) + 1,
+                               QStringLiteral("Stream Generation"), QStringLiteral("Completed"),
+                               result.summary));
+    return result;
+}
+
+QString LMStudioLocalInferenceStreamClient::statusSummary() const {
+    return endpointAllowed() ? QStringLiteral("LM Studio local streaming boundary is configured for "
+                                              "loopback-only /v1/chat/completions.")
+                             : QStringLiteral("LM Studio local streaming boundary is blocked by "
+                                              "endpoint policy.");
+}
+
+bool LMStudioLocalInferenceStreamClient::isAvailable() const {
+    return endpointAllowed();
+}
+
+QUrl LMStudioLocalInferenceStreamClient::endpointUrl(const QString& path) const {
+    QUrl url = config_.endpoint;
+    url.setPath(path);
+    url.setQuery(QString());
+    url.setFragment(QString());
+    return url;
+}
+
+bool LMStudioLocalInferenceStreamClient::endpointAllowed() const {
+    return config_.isLoopbackHttp();
+}
+
 } // namespace sentinel::core
