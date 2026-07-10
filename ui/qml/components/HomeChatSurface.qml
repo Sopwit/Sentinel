@@ -21,6 +21,8 @@ ShellPanel {
                                              ? viewModel.activeConversationStateSummary
                                              : viewModel.localChatSendAvailabilitySummary
     readonly property bool sidebarEffectiveOpen: conversationSidebarOpen && !compact
+    readonly property bool isLMStudio: homeChat.viewModel.selectedRuntimeProvider === "lm-studio"
+    readonly property string localProviderLabel: isLMStudio ? "LM Studio" : "Ollama"
     property bool conversationSidebarOpen: true
     property string conversationFilter: ""
     property string sidebarView: "recent"
@@ -852,7 +854,7 @@ ShellPanel {
                                 if (index >= 0 && index < homeChat.viewModel.ollamaModelNames.length)
                                     homeChat.viewModel.selectedLocalModel = homeChat.viewModel.ollamaModelNames[index]
                             }
-                            displayText: currentIndex >= 0 ? homeChat.viewModel.ollamaModelNames[currentIndex] : qsTr("No model")
+                            displayText: currentIndex >= 0 ? (homeChat.viewModel.ollamaModelNames[currentIndex] + " (" + homeChat.localProviderLabel + ")") : qsTr("No model")
 
                             contentItem: Text {
                                 text: homeModelSelector.displayText
@@ -904,7 +906,7 @@ ShellPanel {
                                 hoverEnabled: true
 
                                 contentItem: Text {
-                                    text: modelData
+                                    text: modelData + " (" + homeChat.localProviderLabel + ")"
                                     color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                     font.bold: modelData === homeChat.viewModel.selectedLocalModel
@@ -1231,7 +1233,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             visible: homeChat.inChatMode && homeChat.viewModel.conversationHistoryMessageCount <= 1
-            text: qsTr("Start with a focused question, a draft to revise, or notes to organize. Local Ollama only; no cloud provider is active.")
+            text: qsTr("Start with a focused question, a draft to revise, or notes to organize. Local %1 only; no cloud provider is active.").arg(homeChat.localProviderLabel)
             color: SentinelTheme.textPrimary
             font.pixelSize: SentinelTheme.fontBody
             wrapMode: Text.WordWrap
@@ -1592,7 +1594,7 @@ ShellPanel {
         Label {
             Layout.fillWidth: true
             visible: homeChat.inChatMode && !homeChat.chatReady
-            text: homeChat.disabledReason + (homeChat.chatReady ? "" : qsTr(" Local Ollama only. No cloud provider active."))
+            text: homeChat.disabledReason + (homeChat.chatReady ? "" : qsTr(" Local %1 only. No cloud provider active.").arg(homeChat.localProviderLabel))
             color: !homeChat.chatReady ? SentinelTheme.textMuted : SentinelTheme.warning
             font.pixelSize: SentinelTheme.fontSmall
             wrapMode: Text.WordWrap

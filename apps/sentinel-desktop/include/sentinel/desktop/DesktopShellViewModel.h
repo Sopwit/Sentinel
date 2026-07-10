@@ -279,6 +279,8 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QStringList installedOllamaModelNames READ installedOllamaModelNames NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QStringList loadedLMStudioModelNames READ loadedLMStudioModelNames NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    localModelSelectionChanged)
@@ -1544,6 +1546,8 @@ public:
     QString ollamaHealthSummary() const;
     int ollamaModelCount() const;
     QStringList ollamaModelNames() const;
+    QStringList installedOllamaModelNames() const;
+    QStringList loadedLMStudioModelNames() const;
     QStringList ollamaModelSummaries() const;
     QString selectedLocalModel() const;
     void setSelectedLocalModel(const QString& model);

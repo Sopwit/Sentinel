@@ -42,96 +42,106 @@ Sentinel 1.0-RC1 includes a comprehensive desktop companion core and native UI s
 - **Localization (i18n)**: Translation frameworks and catalog preparation for English and Turkish locales.
 - **Persistence separation**: Safe local SQLite databases for Chat History, Brain Memories, and Local RAG metadata, separated from settings JSON.
 
-## Build
+## Build & Run
 
-Requirements:
+Sentinel is a cross-platform Qt/C++ application. You can build and run it either using **Qt Creator** (easiest for all platforms, especially Windows/macOS) or via the **Command Line**.
 
-- CMake 3.24 or newer.
-- Ninja.
-- C++20 compiler.
-- Qt 6.5 or newer with `Core`, `Gui`, `Quick`, `Qml`, `Sql`, and `Test`.
+### Prerequisites
 
-Configure and build:
+- **CMake** 3.24 or newer.
+- **C++20 Compiler** (GCC 13+, Clang 15+, or MSVC 2022+).
+- **Qt 6.5 or newer** with `Core`, `Gui`, `Quick`, `Qml`, `Sql`, and `Test`.
+- **Ninja** (optional, recommended for command-line preset builds).
+- **Git** (to manage versioning).
 
+---
+
+### Option A: Qt Creator (Easiest / Recommended)
+
+Qt Creator handles toolchains, compiler paths, and build directories automatically, making it the most straightforward option.
+
+1. Open **Qt Creator**.
+2. Select **File > Open File or Project...** and open the top-level [CMakeLists.txt](file:///D:/GitHub/Sentinel/CMakeLists.txt) file.
+3. Select your Qt 6.x desktop kit (e.g., `Desktop Qt 6.11.1 MinGW 64-bit` on Windows, or `Desktop Qt 6.x.x Clang` on macOS).
+4. Click **Configure Project**.
+5. Click the green **Run (Play)** button in the bottom-left corner to build and launch the application.
+
+---
+
+### Option B: Command Line (CLI)
+
+#### 1. Linux & macOS
+
+If Ninja is installed and Qt is discoverable in your system path:
 ```bash
 cmake -S . -B build -G Ninja
 cmake --build build
 ```
 
-Preset-based debug build:
-
-```bash
-cmake --preset debug
-cmake --build --preset debug
-```
-
-If Qt is not discoverable automatically, pass `CMAKE_PREFIX_PATH`:
-
+If Qt is not automatically found, pass your `CMAKE_PREFIX_PATH`:
 ```bash
 cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH=/path/to/Qt/6.x/gcc_64
 cmake --build build
 ```
+*Common path examples:*
+- macOS (Homebrew): `-DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt`
+- Linux (Qt Installer default): `-DCMAKE_PREFIX_PATH=$HOME/Qt/6.7.0/gcc_64`
 
-Common Qt prefix examples:
+To run:
+- **Linux:** `./build/apps/sentinel-desktop/sentinel-desktop`
+- **macOS:** `./build/apps/sentinel-desktop/sentinel-desktop.app/Contents/MacOS/sentinel-desktop`
 
-```bash
-cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH=$HOME/Qt/6.7.0/gcc_64
-cmake -S . -B build -G Ninja -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt
+#### 2. Windows
+
+On Windows, you can compile using **MinGW** (typically bundled with the Qt Installer) or **MSVC**.
+
+**Building with MinGW (Without Ninja):**
+If you do not have Ninja installed in your path, use the MinGW generator. Open PowerShell and run:
+```powershell
+# 1. Add MinGW bin folder to PATH for this session (adjust to match your compiler version/location)
+$env:PATH += ";C:\Qt\Tools\mingw1310_64\bin"
+
+# 2. Configure using MinGW generator and pointing to your Qt library
+cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:\Qt\6.11.1\mingw_64"
+
+# 3. Build project
+cmake --build build
 ```
 
-## Run
-
-### Linux / macOS
-
-If built manually using the default directory (`cmake -S . -B build`):
-
-```bash
-./build/apps/sentinel-desktop/sentinel-desktop
-```
-
-If built using a CMake preset (e.g., `debug`, `release`, or `package-ready`), run the binary from the corresponding directory under `build/`:
-
-```bash
-./build/<preset-name>/apps/sentinel-desktop/sentinel-desktop
-```
-
-For example, for the `debug` preset:
-
-```bash
-./build/debug/apps/sentinel-desktop/sentinel-desktop
-```
-
-On macOS bundle builds, the binary is inside the application bundle:
-
-```bash
-# Default build directory:
-./build/apps/sentinel-desktop/sentinel-desktop.app/Contents/MacOS/sentinel-desktop
-
-# Preset-based build directory (e.g., debug):
-./build/debug/apps/sentinel-desktop/sentinel-desktop.app/Contents/MacOS/sentinel-desktop
-```
-
-### Windows
-
-On Windows, executables have the `.exe` extension and use backslashes (`\`) for file paths.
-
-If built manually using the default directory:
-
+**Building with Ninja / Preset-based builds:**
+If you have Ninja installed, configure and compile using standard CMake presets:
 ```cmd
+cmake --preset debug
+cmake --build --preset debug
+```
+
+To run:
+```cmd
+# Standard build directory:
 build\apps\sentinel-desktop\sentinel-desktop.exe
-```
 
-If built using a CMake preset (e.g., `debug`, `release`, or `package-ready`), run the binary from the corresponding directory under `build/`:
-
-```cmd
-build\<preset-name>\apps\sentinel-desktop\sentinel-desktop.exe
-```
-
-For example, for the `debug` preset:
-
-```cmd
+# Preset-based build directory (e.g. debug):
 build\debug\apps\sentinel-desktop\sentinel-desktop.exe
 ```
+
+---
+
+## Local AI Setup (Ollama / LM Studio)
+
+Sentinel executes AI models locally via loopback connections to protect privacy and support offline usage.
+
+### 1. Ollama (Default Provider)
+1. Download and install [Ollama](https://ollama.com).
+2. Start the Ollama application.
+3. Download a local LLM from your command prompt/terminal (e.g., `llama3.2` or `qwen2.5`):
+   ```bash
+   ollama pull llama3.2
+   ```
+4. Launch Sentinel. It will automatically detect Ollama and your downloaded model.
+
+### 2. LM Studio / llama.cpp
+Alternatively, you can configure Sentinel to route requests to LM Studio or custom llama.cpp servers in the Workspace & Model Settings within the application.
+
 
 ## Tests
 

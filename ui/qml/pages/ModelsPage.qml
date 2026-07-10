@@ -149,8 +149,8 @@ Item {
         {
             id: "hf-llama3-8b",    category: "LLM",
             name: "HuggingFace Llama 3 8B", provider: "HF / Meta",
-            size: "4.8 GB",          description: qsTr("HuggingFace community model Llama 3 8B. General-purpose instruction tuned model."),
-            badge: "HuggingFace",    badgeColor: "#64748b",
+            size: "4.8 GB",          description: qsTr("HuggingFace community model Llama 3 8B. General-purpose instruction tuned model. (Downloads via Ollama)"),
+            badge: "HF via Ollama",  badgeColor: "#64748b",
             tags: ["Hugging Face", "LLM", "Meta"],
             downloadable: true,     ollamaId: "llama3:8b",
             context: "8K",          input: "Text"
@@ -158,8 +158,8 @@ Item {
         {
             id: "hf-gemma2-2b",    category: "LLM",
             name: "HuggingFace Gemma 2 2B", provider: "HF / Google",
-            size: "1.6 GB",          description: qsTr("HuggingFace community model Gemma 2 2B. Highly efficient and lightweight model."),
-            badge: "HuggingFace",    badgeColor: "#64748b",
+            size: "1.6 GB",          description: qsTr("HuggingFace community model Gemma 2 2B. Highly efficient and lightweight model. (Downloads via Ollama)"),
+            badge: "HF via Ollama",  badgeColor: "#64748b",
             tags: ["Hugging Face", "Edge", "Google"],
             downloadable: true,     ollamaId: "gemma2:2b",
             context: "8K",          input: "Text"
@@ -167,8 +167,8 @@ Item {
         {
             id: "hf-phi3.5",       category: "LLM",
             name: "HuggingFace Phi-3.5", provider: "HF / Microsoft",
-            size: "2.2 GB",          description: qsTr("HuggingFace community model Phi 3.5. Lightweight 3.8B model with strong reasoning."),
-            badge: "HuggingFace",    badgeColor: "#64748b",
+            size: "2.2 GB",          description: qsTr("HuggingFace community model Phi 3.5. Lightweight 3.8B model with strong reasoning. (Downloads via Ollama)"),
+            badge: "HF via Ollama",  badgeColor: "#64748b",
             tags: ["Hugging Face", "LLM", "Microsoft"],
             downloadable: true,     ollamaId: "phi3.5",
             context: "128K",        input: "Text"
@@ -306,10 +306,10 @@ Item {
             }
         }
 
-        // Add local installed models if they are not already in the list
-        var localNames = shellViewModel.ollamaModelNames || []
-        for (var n = 0; n < localNames.length; n++) {
-            var localName = localNames[n]
+        // Add local installed Ollama models if they are not already in the list
+        var ollamaNames = shellViewModel.installedOllamaModelNames || []
+        for (var n = 0; n < ollamaNames.length; n++) {
+            var localName = ollamaNames[n]
             var localOid = localName.toLowerCase()
             var baseLocal = localOid.split(":")[0]
             
@@ -334,18 +334,61 @@ Item {
                 ollamaId: localName,
                 category: category,
                 name: localName,
-                provider: "Local System",
+                provider: "Ollama",
                 size: sizeStr,
-                description: qsTr("Custom model installed locally on this device."),
+                description: qsTr("Custom model installed locally via Ollama."),
                 badge: "Installed",
                 badgeColor: "#10b981",
-                tags: ["Local", "Custom"],
+                tags: ["Local", "Ollama"],
                 downloadable: false
             }
             
             list.push(localModelObj)
             seenIds[localName] = true
             seenOllamaIds[localOid] = true
+        }
+
+        // Add local loaded LM Studio models if they are not already in the list
+        var lmNames = shellViewModel.loadedLMStudioModelNames || []
+        for (var n = 0; n < lmNames.length; n++) {
+            var localName = lmNames[n]
+            var localOid = localName.toLowerCase()
+            var baseLocal = localOid.split(":")[0]
+            
+            // Allow duplicate names across providers but ensure unique IDs in this view
+            var uniqueId = "lmstudio/" + localName
+            if (seenIds[uniqueId]) {
+                continue
+            }
+            
+            var details = shellViewModel.getLocalModelDetails(localName)
+            var sizeStr = (details && details.sizeFormatted) ? details.sizeFormatted : "—"
+            
+            var category = "LLM"
+            if (localOid.indexOf("vision") !== -1 || localOid.indexOf("llava") !== -1) {
+                category = "Vision"
+            } else if (localOid.indexOf("think") !== -1 || localOid.indexOf("deepseek-r1") !== -1) {
+                category = "Think"
+            } else if (localOid.indexOf("whisper") !== -1) {
+                category = "STT"
+            }
+            
+            var localModelObj = {
+                id: uniqueId,
+                ollamaId: localName,
+                category: category,
+                name: localName,
+                provider: "LM Studio",
+                size: sizeStr,
+                description: qsTr("Custom model loaded locally in LM Studio."),
+                badge: "Loaded",
+                badgeColor: "#4f8ef7",
+                tags: ["Local", "LM Studio"],
+                downloadable: false
+            }
+            
+            list.push(localModelObj)
+            seenIds[uniqueId] = true
         }
 
         return list
@@ -403,8 +446,9 @@ Item {
             baseList = allModels.filter(function(m) { return m.category === activeCategory })
         }
 
-        // Force dependency on shellViewModel.ollamaModelNames
-        var names = shellViewModel.ollamaModelNames
+        // Force dependency on model name changes
+        var names1 = shellViewModel.installedOllamaModelNames
+        var names2 = shellViewModel.loadedLMStudioModelNames
 
         return baseList.slice().sort(function(a, b) {
             var aInstalled = isInstalledOnDevice(a)
@@ -415,16 +459,21 @@ Item {
         })
     }
 
-    // ── Installed model detection via Ollama ─────────────────────────────────
-    // shellViewModel.ollamaModelNames is a QStringList exposed by DesktopShellViewModel
+    // ── Installed model detection via Ollama / LM Studio ─────────────────────
     function isInstalledOnDevice(model) {
         if (!model) return false
-        var names = shellViewModel.ollamaModelNames
+        var isLM = (model.provider === "LM Studio" || (model.id && model.id.indexOf("lmstudio/") !== -1))
+        var names = isLM ? (shellViewModel.loadedLMStudioModelNames || [])
+                         : (shellViewModel.installedOllamaModelNames || [])
         if (!names || names.length === 0) return false
 
         var candidates = []
         if (model.ollamaId && model.ollamaId !== "") candidates.push(model.ollamaId.toLowerCase())
-        if (model.id && model.id !== "") candidates.push(model.id.toLowerCase())
+        if (model.id && model.id !== "") {
+            var cleanId = model.id
+            if (cleanId.indexOf("lmstudio/") === 0) cleanId = cleanId.substring(9)
+            candidates.push(cleanId.toLowerCase())
+        }
         if (model.name && model.name !== "") candidates.push(model.name.toLowerCase())
 
         for (var i = 0; i < names.length; i++) {
@@ -586,7 +635,7 @@ Item {
                         Label {
                             id: installedCountLbl
                             anchors.centerIn: parent
-                            text: "● " + shellViewModel.ollamaModelCount + qsTr(" installed")
+                            text: "● " + shellViewModel.ollamaModelCount + (shellViewModel.selectedRuntimeProvider === "lm-studio" ? qsTr(" loaded") : qsTr(" installed"))
                             font.pixelSize: SentinelTheme.fontTiny
                             color: SentinelTheme.success
                         }
@@ -611,7 +660,9 @@ Item {
                 }
 
                 Label {
-                    text: qsTr("Download and manage local AI models. Click a card to see details and install via Ollama.")
+                    text: shellViewModel.selectedRuntimeProvider === "lm-studio"
+                        ? qsTr("Manage local AI models. Models must be downloaded and loaded inside the LM Studio application. Loaded models are listed below.")
+                        : qsTr("Download and manage local AI models. Click a card to see details and install via Ollama.")
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                 }
@@ -1092,7 +1143,9 @@ Item {
                                         spacing: 4
                                         Rectangle { width: 8; height: 8; radius: 4; color: SentinelTheme.success }
                                         Label {
-                                            text: qsTr("On device · ~/.ollama/models")
+                                            text: shellViewModel.selectedRuntimeProvider === "lm-studio"
+                                                ? qsTr("Loaded in LM Studio")
+                                                : qsTr("On device · ~/.ollama/models")
                                             font.pixelSize: SentinelTheme.fontSmall
                                             color: SentinelTheme.success
                                         }
@@ -1155,7 +1208,7 @@ Item {
         modelInfo: null
 
         // Installed state is always live (reads shellViewModel directly)
-        installed: modelInfo ? modelsPage.isInstalledOnDevice({ ollamaId: detailPopup.effectiveOllamaId }) : false
+        installed: modelInfo ? modelsPage.isInstalledOnDevice(modelInfo) : false
 
         // Live pull state for this model
         activePull: modelInfo ? modelsPage.isPulling(detailPopup.effectiveOllamaId) : false

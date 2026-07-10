@@ -1257,6 +1257,8 @@ public:
     QString ollamaHealthSummary() const;
     int ollamaModelCount() const;
     QStringList ollamaModelNames() const;
+    QStringList installedOllamaModelNames() const;
+    QStringList loadedLMStudioModelNames() const;
     QStringList ollamaModelSummaries() const;
     QList<OllamaModelSummary> currentOllamaModels() const;
     QString selectedLocalModel() const;
@@ -2001,8 +2003,18 @@ private:
     std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness_;
     std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient_;
     std::unique_ptr<ILocalInferenceWorker> localInferenceWorker_;
+    std::unique_ptr<ILocalInferenceWorker> lmStudioInferenceWorker_;
     bool localInferenceClientIsRealOllama_ = false;
     bool localInferenceStreamClientIsRealOllama_ = false;
+
+    bool isLMStudioProvider() const { return selectedRuntimeProvider_ == QStringLiteral("lm-studio"); }
+    bool isLocalChatProvider() const {
+        return selectedRuntimeProvider_ == QStringLiteral("ollama") ||
+               selectedRuntimeProvider_ == QStringLiteral("lm-studio");
+    }
+    ILocalInferenceWorker* activeLocalInferenceWorker() const {
+        return isLMStudioProvider() ? lmStudioInferenceWorker_.get() : localInferenceWorker_.get();
+    }
     std::unique_ptr<IModelManagementService> modelManagementService_;
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider_;
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider_;

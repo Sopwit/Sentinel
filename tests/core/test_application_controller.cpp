@@ -823,7 +823,11 @@ static PiperControllerFixture makePiperController(FakePiperTtsClient::Mode mode)
 }
 
 static void configureReadyPiperPaths(ApplicationController& controller, QTemporaryDir& dir) {
+#ifdef Q_OS_WIN
+    const auto piperBinaryPath = dir.filePath(QStringLiteral("piper.exe"));
+#else
     const auto piperBinaryPath = dir.filePath(QStringLiteral("piper"));
+#endif
     const auto piperModelPath = dir.filePath(QStringLiteral("voice.onnx"));
 
     QFile piperBinary{piperBinaryPath};
@@ -1486,7 +1490,11 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
 void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
+#ifdef Q_OS_WIN
+    const auto piperBinaryPath = dir.filePath(QStringLiteral("piper.exe"));
+#else
     const auto piperBinaryPath = dir.filePath(QStringLiteral("piper"));
+#endif
     const auto piperModelPath = dir.filePath(QStringLiteral("voice.onnx"));
     const auto whisperBinaryPath = dir.filePath(QStringLiteral("whisper"));
     const auto whisperModelPath = dir.filePath(QStringLiteral("whisper-models"));
@@ -3169,7 +3177,7 @@ void ApplicationControllerTest::disabledProviderSelectionRefusesBeforeTranscript
     QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Provider Disabled"));
     QCOMPARE(controller->localChatSendAvailabilitySummary(),
              QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
-                            "Ollama to send."));
+                            "Ollama or LM Studio to send."));
 }
 
 void ApplicationControllerTest::enabledLocalChatInferenceAppendsFakeResponse() {

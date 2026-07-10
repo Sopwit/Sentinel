@@ -1075,6 +1075,14 @@ QStringList DesktopShellViewModel::ollamaModelNames() const {
     return controller_.ollamaModelNames();
 }
 
+QStringList DesktopShellViewModel::installedOllamaModelNames() const {
+    return controller_.installedOllamaModelNames();
+}
+
+QStringList DesktopShellViewModel::loadedLMStudioModelNames() const {
+    return controller_.loadedLMStudioModelNames();
+}
+
 QStringList DesktopShellViewModel::ollamaModelSummaries() const {
     return controller_.ollamaModelSummaries();
 }

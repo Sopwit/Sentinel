@@ -258,4 +258,53 @@ private:
     int timeoutMs_ = 30000;
 };
 
+struct LMStudioConfig {
+    QUrl endpoint = QUrl(QStringLiteral("http://127.0.0.1:1234"));
+    int timeoutMs = 30000;
+
+    bool isLoopbackHttp() const {
+        const auto host = endpoint.host().toLower();
+        return (host == QLatin1String("127.0.0.1") || host == QLatin1String("localhost"))
+               && endpoint.scheme() == QLatin1String("http");
+    }
+    QString toString() const { return endpoint.toString(); }
+
+    static LMStudioConfig defaultConfig() { return {}; }
+};
+
+class LMStudioLocalInferenceClient final : public ILocalInferenceClient {
+public:
+    explicit LMStudioLocalInferenceClient(LMStudioConfig config = LMStudioConfig{},
+                                          int timeoutMs = 30000);
+
+    LocalInferenceResponse infer(const LocalInferenceRequest& request) override;
+    QString statusSummary() const override;
+
+private:
+    QUrl endpointUrl(const QString& path) const;
+    bool endpointAllowed() const;
+
+    LMStudioConfig config_;
+    int timeoutMs_ = 30000;
+};
+
+class LMStudioLocalInferenceStreamClient final : public ILocalInferenceStreamClient {
+public:
+    explicit LMStudioLocalInferenceStreamClient(LMStudioConfig config = LMStudioConfig{},
+                                                int timeoutMs = 30000);
+
+    LocalInferenceStreamResult
+    startStream(const LocalInferenceRequest& request,
+                const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) override;
+    QString statusSummary() const override;
+    bool isAvailable() const override;
+
+private:
+    QUrl endpointUrl(const QString& path) const;
+    bool endpointAllowed() const;
+
+    LMStudioConfig config_;
+    int timeoutMs_ = 30000;
+};
+
 } // namespace sentinel::core
