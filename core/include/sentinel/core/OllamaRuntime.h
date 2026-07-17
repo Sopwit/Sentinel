@@ -128,11 +128,9 @@ public:
 private:
     QUrl endpointUrl(const QString& path) const;
     bool endpointAllowed() const;
-    QNetworkAccessManager* networkManager() const;
 
     OllamaConfig config_;
     int timeoutMs_ = 750;
-    mutable std::unique_ptr<QNetworkAccessManager> nam_;
 };
 
 } // namespace sentinel::core

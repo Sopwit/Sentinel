@@ -255,8 +255,7 @@ OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck() const {
 
     const auto timeoutMs =
         config_.healthCheckTimeoutMs > 0 ? config_.healthCheckTimeoutMs : timeoutMs_;
-    const auto reply =
-        getJson(endpointUrl(QStringLiteral("/api/version")), timeoutMs, networkManager());
+    const auto reply = getJson(endpointUrl(QStringLiteral("/api/version")), timeoutMs);
     if (!reply.ok) {
         return OllamaHealthCheckResult{
             OllamaConnectionStatus::Unavailable,
@@ -285,8 +284,7 @@ QList<OllamaModelSummary> OllamaHttpRuntimeClient::installedModels() const {
 
     const auto timeoutMs =
         config_.modelDiscoveryTimeoutMs > 0 ? config_.modelDiscoveryTimeoutMs : timeoutMs_;
-    const auto reply =
-        getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs, networkManager());
+    const auto reply = getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs);
     if (!reply.ok) {
         return {};
     }
@@ -318,13 +316,6 @@ QUrl OllamaHttpRuntimeClient::endpointUrl(const QString& path) const {
 
 bool OllamaHttpRuntimeClient::endpointAllowed() const {
     return config_.healthCheckEnabled && config_.endpoint.isLoopbackHttp();
-}
-
-QNetworkAccessManager* OllamaHttpRuntimeClient::networkManager() const {
-    if (!nam_) {
-        nam_ = std::make_unique<QNetworkAccessManager>();
-    }
-    return nam_.get();
 }
 
 } // namespace sentinel::core
