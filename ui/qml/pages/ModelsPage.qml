@@ -534,15 +534,28 @@ Item {
 
     function categoryIcon(cat) {
         if (cat === "All") return "❖"
-        if (cat === "LLM") return "📝"
+        if (cat === "LLM") return "💬"
         if (cat === "Think") return "🧠"
-        if (cat === "Vision") return "👁"
+        if (cat === "Vision") return "👁️"
         if (cat === "Image") return "🎨"
         if (cat === "Video") return "🎬"
-        if (cat === "STT") return "🎙"
+        if (cat === "STT") return "🎙️"
         if (cat === "TTS") return "🔊"
-        if (cat === "Runtime") return "⚙"
+        if (cat === "Runtime") return "⚙️"
         return "•"
+    }
+
+    function categoryIconSize(cat) {
+        if (cat === "All") return 18
+        if (cat === "LLM") return 14
+        if (cat === "Think") return 14
+        if (cat === "Vision") return 14
+        if (cat === "Image") return 14
+        if (cat === "Video") return 14
+        if (cat === "STT") return 14
+        if (cat === "TTS") return 14
+        if (cat === "Runtime") return 15
+        return 14
     }
 
     function categoryTitle(cat) {
@@ -664,7 +677,7 @@ Item {
                                     color: navButton.active
                                            ? SentinelTheme.textPrimary
                                            : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.pixelSize: modelsPage.categoryIconSize(modelData)
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
                                     Layout.preferredWidth: modelsPage.sidebarCollapsed ? 42 : 18
