@@ -11,6 +11,7 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property bool sidebarCollapsed: false
+    property string searchQuery: ""
 
     // ── Static model catalog ─────────────────────────────────────────────────
     readonly property var modelCatalog: [
@@ -489,7 +490,9 @@ Item {
     property string ollamaSort: "popular"
 
     function fetchOllamaModels() {
-        ollamaLibraryFetcher.fetch(ollamaSort)
+        if (shellViewModel.selectedRuntimeProvider === "ollama") {
+            ollamaLibraryFetcher.fetch(ollamaSort)
+        }
         lmStudioLibraryFetcher.fetch()
     }
 
@@ -498,7 +501,9 @@ Item {
     }
 
     onOllamaSortChanged: {
-        ollamaLibraryFetcher.fetch(ollamaSort)
+        if (shellViewModel.selectedRuntimeProvider === "ollama") {
+            ollamaLibraryFetcher.fetch(ollamaSort)
+        }
     }
 
     readonly property var filteredModels: {
@@ -507,6 +512,17 @@ Item {
             baseList = allModels
         } else {
             baseList = allModels.filter(function(m) { return m.category === activeCategory })
+        }
+
+        var query = searchQuery.trim().toLowerCase()
+        if (query !== "") {
+            baseList = baseList.filter(function(m) {
+                var nameMatch = m.name && m.name.toLowerCase().indexOf(query) !== -1
+                var idMatch = (m.id && m.id.toLowerCase().indexOf(query) !== -1) ||
+                              (m.ollamaId && m.ollamaId.toLowerCase().indexOf(query) !== -1)
+                var descMatch = m.description && m.description.toLowerCase().indexOf(query) !== -1
+                return nameMatch || idMatch || descMatch
+            })
         }
 
         // Force dependency on model name changes
@@ -824,6 +840,30 @@ Item {
 
                         Item { Layout.fillWidth: true }
 
+                        SentinelTextField {
+                            id: searchField
+                            placeholderText: qsTr("🔍 Search models…")
+                            implicitWidth: 180
+                            implicitHeight: 26
+                            font.pixelSize: SentinelTheme.fontTiny
+                            leftPadding: 10
+                            rightPadding: 10
+                            onTextChanged: modelsPage.searchQuery = text
+                            
+                            background: Rectangle {
+                                radius: 13
+                                color: searchField.activeFocus
+                                       ? SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.90)
+                                       : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
+                                border.color: searchField.activeFocus
+                                              ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.46)
+                                              : searchField.hovered
+                                                ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.24)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                border.width: 1
+                            }
+                        }
+
                         // Sort controls / Refresh button / count chips
                         RowLayout {
                             spacing: SentinelTheme.spaceSm
@@ -851,7 +891,7 @@ Item {
 
                             // Sort Popular / Newest / Refresh
                             RowLayout {
-                                visible: modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision"
+                                visible: (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision") && (shellViewModel.selectedRuntimeProvider === "ollama")
                                 spacing: SentinelTheme.spaceSm
 
                                 Button {
