@@ -8,6 +8,8 @@
 #include <QVariant>
 #include <cstdint>
 
+class QNetworkAccessManager;
+
 namespace sentinel::core {
 
 enum class OllamaConnectionStatus : std::uint8_t {
@@ -126,9 +128,11 @@ public:
 private:
     QUrl endpointUrl(const QString& path) const;
     bool endpointAllowed() const;
+    QNetworkAccessManager* networkManager() const;
 
     OllamaConfig config_;
     int timeoutMs_ = 750;
+    mutable std::unique_ptr<QNetworkAccessManager> nam_;
 };
 
 } // namespace sentinel::core
@@ -167,8 +171,8 @@ signals:
     void pullFinished(const QString& modelId, bool success);
 
 private:
-    void setState(bool pulling, const QString& model, qreal progress,
-                  const QString& status, const QString& error);
+    void setState(bool pulling, const QString& model, qreal progress, const QString& status,
+                  const QString& error);
     void processChunk(const QByteArray& chunk);
 
     bool pulling_ = false;
@@ -292,6 +296,3 @@ private:
     class QNetworkAccessManager* nam_ = nullptr;
     class QNetworkReply* reply_ = nullptr;
 };
-
-
-

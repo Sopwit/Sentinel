@@ -195,8 +195,8 @@ SentinelOverlayModal {
 
                 // Category accent bar
                 Rectangle {
-                    width: 4
-                    height: headerCol.implicitHeight + 4
+                    implicitWidth: 4
+                    implicitHeight: headerCol.implicitHeight + 4
                     radius: 2
                     color: root.modelInfo ? Qt.color(root.modelInfo.badgeColor) : SentinelTheme.accent
                     opacity: 0.85
@@ -243,7 +243,7 @@ SentinelOverlayModal {
                             RowLayout {
                                 anchors.centerIn: parent
                                 spacing: 4
-                                Rectangle { width: 6; height: 6; radius: 3; color: SentinelTheme.success }
+                                Rectangle { implicitWidth: 6; implicitHeight: 6; radius: 3; color: SentinelTheme.success }
                                 Label {
                                     id: installedLbl
                                     text: qsTr("Installed")
@@ -312,7 +312,7 @@ SentinelOverlayModal {
 
             // Divider
             Rectangle {
-                Layout.fillWidth: true; height: 1
+                Layout.fillWidth: true; implicitHeight: 1
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.07)
             }
 
@@ -529,7 +529,7 @@ SentinelOverlayModal {
                             id: installedNoteRow
                             anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; margins: SentinelTheme.spaceMd }
                             spacing: SentinelTheme.spaceSm
-                            Rectangle { width: 8; height: 8; radius: 4; color: SentinelTheme.success }
+                            Rectangle { implicitWidth: 8; implicitHeight: 8; radius: 4; color: SentinelTheme.success }
                             Label {
                                 Layout.fillWidth: true
                                 text: root.isLMStudio
@@ -556,7 +556,7 @@ SentinelOverlayModal {
                             id: errorNoteRow
                             anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; margins: SentinelTheme.spaceMd }
                             spacing: SentinelTheme.spaceSm
-                            Rectangle { width: 8; height: 8; radius: 4; color: "#ef4444" }
+                            Rectangle { implicitWidth: 8; implicitHeight: 8; radius: 4; color: "#ef4444" }
                             Label {
                                 Layout.fillWidth: true
                                 text: root.pullError
@@ -575,9 +575,8 @@ SentinelOverlayModal {
                         Layout.topMargin: SentinelTheme.spaceMd
                         
                         Rectangle {
-                            width: 6; height: 6; radius: 3
+                            implicitWidth: 6; implicitHeight: 6; radius: 3
                             color: root.accent
-                            opacity: 1.0
                             SequentialAnimation on opacity {
                                 loops: Animation.Infinite
                                 NumberAnimation { from: 0.2; to: 1.0; duration: 500; easing.type: Easing.InOutQuad }
@@ -605,7 +604,7 @@ SentinelOverlayModal {
                             id: fetchErrorRow
                             anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; margins: SentinelTheme.spaceMd }
                             spacing: SentinelTheme.spaceSm
-                            Rectangle { width: 8; height: 8; radius: 4; color: "#ef4444" }
+                            Rectangle { implicitWidth: 8; implicitHeight: 8; radius: 4; color: "#ef4444" }
                             Label {
                                 Layout.fillWidth: true
                                 text: ollamaModelDetailFetcher.errorText
@@ -618,7 +617,7 @@ SentinelOverlayModal {
 
                     // Readme divider
                     Rectangle {
-                        Layout.fillWidth: true; height: 1
+                        Layout.fillWidth: true; implicitHeight: 1
                         color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.07)
                         visible: ollamaModelDetailFetcher.readme !== ""
                         Layout.topMargin: SentinelTheme.spaceMd
@@ -652,7 +651,7 @@ SentinelOverlayModal {
 
             // Divider
             Rectangle {
-                Layout.fillWidth: true; height: 1
+                Layout.fillWidth: true; implicitHeight: 1
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.07)
             }
 
@@ -668,7 +667,7 @@ SentinelOverlayModal {
                     spacing: 4
 
                     Rectangle {
-                        Layout.fillWidth: true; height: 5; radius: 3
+                        Layout.fillWidth: true; implicitHeight: 5; radius: 3
                         color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                         Rectangle {
                             width: parent.width * root.pullProgress

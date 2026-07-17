@@ -1,8 +1,8 @@
 #pragma once
 
+#include <QList>
 #include <QString>
 #include <QStringList>
-#include <QList>
 
 namespace sentinel::core {
 
@@ -49,7 +49,8 @@ public:
     QStringList permissionPostures() const;
     QStringList actionPlaceholders() const;
     QStringList workspaceSummaries(const QString& catalogJson = {}) const;
-    QString normalizedWorkspaceId(const QString& workspaceId, const QString& catalogJson = {}) const;
+    QString normalizedWorkspaceId(const QString& workspaceId,
+                                  const QString& catalogJson = {}) const;
     QStringList builtInTemplateNames() const;
     QString defaultCatalogJson() const;
     WorkspaceMutationResult createWorkspace(const QString& catalogJson, const QString& name,

@@ -44,44 +44,43 @@ void WorkspaceServiceTest::exposesPermissionPostureAndActions() {
 
     QVERIFY(service.permissionPostures().contains(QStringLiteral("Workspace Only")));
     QVERIFY(service.actionPlaceholders().contains(QStringLiteral("Create Workspace: available")));
-    QVERIFY(service.actionPlaceholders().contains(
-        QStringLiteral("Recursive Scan: disabled")));
+    QVERIFY(service.actionPlaceholders().contains(QStringLiteral("Recursive Scan: disabled")));
 }
 
 void WorkspaceServiceTest::normalizesUnknownSelection() {
     const WorkspaceService service;
 
     QCOMPARE(service.normalizedWorkspaceId(QStringLiteral("unknown")), QStringLiteral("personal"));
-    QCOMPARE(service.selectedWorkspace(QStringLiteral("unknown")).name,
-             QStringLiteral("Personal"));
+    QCOMPARE(service.selectedWorkspace(QStringLiteral("unknown")).name, QStringLiteral("Personal"));
 }
 
 void WorkspaceServiceTest::supportsWorkspaceLifecycle() {
     const WorkspaceService service;
 
-    const auto created =
-        service.createWorkspace(service.defaultCatalogJson(), QStringLiteral("Client Work"),
-                                QStringLiteral("Research"));
+    const auto created = service.createWorkspace(
+        service.defaultCatalogJson(), QStringLiteral("Client Work"), QStringLiteral("Research"));
     QVERIFY(created.success);
     QCOMPARE(service.selectedWorkspace(created.selectedWorkspaceId, created.catalogJson).name,
              QStringLiteral("Client Work"));
 
     const auto renamed = service.renameWorkspace(created.catalogJson, created.selectedWorkspaceId,
-                                                QStringLiteral("Client Research"));
+                                                 QStringLiteral("Client Research"));
     QVERIFY(renamed.success);
     QCOMPARE(service.selectedWorkspace(created.selectedWorkspaceId, renamed.catalogJson).name,
              QStringLiteral("Client Research"));
 
-    const auto archived = service.archiveWorkspace(renamed.catalogJson, created.selectedWorkspaceId);
+    const auto archived =
+        service.archiveWorkspace(renamed.catalogJson, created.selectedWorkspaceId);
     QVERIFY(archived.success);
     QVERIFY(service.selectedWorkspace(created.selectedWorkspaceId, archived.catalogJson).archived);
 
-    const auto duplicated = service.duplicateWorkspace(archived.catalogJson, QStringLiteral("personal"));
+    const auto duplicated =
+        service.duplicateWorkspace(archived.catalogJson, QStringLiteral("personal"));
     QVERIFY(duplicated.success);
     QVERIFY(!duplicated.selectedWorkspaceId.isEmpty());
 
-    const auto deleted = service.deleteWorkspace(duplicated.catalogJson, duplicated.selectedWorkspaceId,
-                                                duplicated.selectedWorkspaceId);
+    const auto deleted = service.deleteWorkspace(
+        duplicated.catalogJson, duplicated.selectedWorkspaceId, duplicated.selectedWorkspaceId);
     QVERIFY(deleted.success);
     QCOMPARE(deleted.selectedWorkspaceId, QStringLiteral("personal"));
 }

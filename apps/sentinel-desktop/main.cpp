@@ -166,8 +166,8 @@ int main(int argc, char* argv[]) {
     installStartupTranslator(app, settings, translator);
 
     // Runtime language switching: swap the translator and notify all QML objects.
-    QObject::connect(&settings, &sentinel::core::AppSettings::appLanguageChanged,
-                     &app, [&app, &settings, &translator]() {
+    QObject::connect(&settings, &sentinel::core::AppSettings::appLanguageChanged, &app,
+                     [&app, &settings, &translator]() {
                          const auto lang = effectiveLanguageCode(settings);
                          installTranslator(app, translator, lang);
                          // Post LanguageChange so QML engine calls retranslate() on all items.
@@ -208,9 +208,12 @@ int main(int argc, char* argv[]) {
     QQmlApplicationEngine engine;
     engine.rootContext()->setContextProperty(QStringLiteral("shellViewModel"), &shellViewModel);
     engine.rootContext()->setContextProperty(QStringLiteral("ollamaPuller"), &ollamaPuller);
-    engine.rootContext()->setContextProperty(QStringLiteral("ollamaLibraryFetcher"), &ollamaLibraryFetcher);
-    engine.rootContext()->setContextProperty(QStringLiteral("ollamaModelDetailFetcher"), &ollamaModelDetailFetcher);
-    engine.rootContext()->setContextProperty(QStringLiteral("lmStudioLibraryFetcher"), &lmStudioLibraryFetcher);
+    engine.rootContext()->setContextProperty(QStringLiteral("ollamaLibraryFetcher"),
+                                             &ollamaLibraryFetcher);
+    engine.rootContext()->setContextProperty(QStringLiteral("ollamaModelDetailFetcher"),
+                                             &ollamaModelDetailFetcher);
+    engine.rootContext()->setContextProperty(QStringLiteral("lmStudioLibraryFetcher"),
+                                             &lmStudioLibraryFetcher);
 
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
@@ -219,7 +222,8 @@ int main(int argc, char* argv[]) {
     engine.loadFromModule(QStringLiteral("Sentinel.Desktop"), QStringLiteral("Main"));
 
     QObject* rootWindow = engine.rootObjects().isEmpty() ? nullptr : engine.rootObjects().first();
-    sentinel::desktop::NativeCompanionAdapter companionAdapter(shellViewModel, settings, rootWindow);
+    sentinel::desktop::NativeCompanionAdapter companionAdapter(shellViewModel, settings,
+                                                               rootWindow);
 
     return QApplication::exec();
 }

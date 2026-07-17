@@ -9,9 +9,9 @@ using sentinel::core::CredentialStoreAction;
 using sentinel::core::CredentialStoreBackend;
 using sentinel::core::CredentialStoreReadiness;
 using sentinel::core::CredentialStoreStatus;
-using sentinel::core::PlaceholderCredentialBackend;
 using sentinel::core::defaultCredentialStore;
 using sentinel::core::inMemoryTestCredentialStore;
+using sentinel::core::PlaceholderCredentialBackend;
 
 class CredentialStoreTest final : public QObject {
     Q_OBJECT
@@ -44,18 +44,18 @@ void CredentialStoreTest::backendReadinessSummaryIsDeterministic() {
     QCOMPARE(store.traces().size(), 5);
     QCOMPARE(store.traceSummaries().size(), 5);
     QVERIFY(store.summary().backendSummary.contains(QStringLiteral("storage unavailable")));
-    QVERIFY(store.traceSummaries().join(QStringLiteral("\n"))
+    QVERIFY(store.traceSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("localUnavailableFallback")));
-    QVERIFY(store.traceSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("inMemoryTest")));
+    QVERIFY(
+        store.traceSummaries().join(QStringLiteral("\n")).contains(QStringLiteral("inMemoryTest")));
 }
 
 void CredentialStoreTest::disabledActionsDoNotMutateOrExecute() {
     const auto store = defaultCredentialStore();
 
-    for (const auto action :
-         {CredentialStoreAction::AddApiKey, CredentialStoreAction::RemoveApiKey,
-          CredentialStoreAction::UpdateApiKey}) {
+    for (const auto action : {CredentialStoreAction::AddApiKey, CredentialStoreAction::RemoveApiKey,
+                              CredentialStoreAction::UpdateApiKey}) {
         const auto result = store.performDisabledAction(action);
         QVERIFY(!result.succeeded);
         QVERIFY(!result.mutatedState);
@@ -133,14 +133,14 @@ void CredentialStoreTest::resultSummariesDoNotExposeRawSecrets() {
     const auto stored = store.storeCredential(key, QStringLiteral("sk-test-secret"));
     const auto read = store.readCredential(key);
 
-    const auto safeText =
-        stored.summary + read.result.summary + sentinel::core::credentialBackendResultSummary(stored)
-        + sentinel::core::credentialBackendResultSummary(read.result) + store.summary().summary
-        + store.summary().backendSummary;
+    const auto safeText = stored.summary + read.result.summary +
+                          sentinel::core::credentialBackendResultSummary(stored) +
+                          sentinel::core::credentialBackendResultSummary(read.result) +
+                          store.summary().summary + store.summary().backendSummary;
     QVERIFY(!safeText.contains(QStringLiteral("sk-test-secret")));
-    QVERIFY(!safeText.contains(QStringLiteral("secret"), Qt::CaseInsensitive)
-            || safeText.contains(QStringLiteral("secret value omitted"))
-            || safeText.contains(QStringLiteral("secrets are stored in memory for tests only")));
+    QVERIFY(!safeText.contains(QStringLiteral("secret"), Qt::CaseInsensitive) ||
+            safeText.contains(QStringLiteral("secret value omitted")) ||
+            safeText.contains(QStringLiteral("secrets are stored in memory for tests only")));
 }
 
 void CredentialStoreTest::safetyPolicyRefusesSecretExposure() {

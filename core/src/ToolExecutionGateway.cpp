@@ -27,8 +27,8 @@ QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
         {QStringLiteral("open-workspace"), QStringLiteral("Open Workspace"),
          QStringLiteral("Workspace"),
          QStringLiteral("Future explicit workspace picker and scope selection."),
-         QStringLiteral("workspace-access"), ToolGatewayRiskLevel::Medium,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Unavailable,
+         QStringLiteral("workspace-access"), ToolGatewayRiskLevel::Medium, ToolGatewayScope::Local,
+         ToolExecutionAvailability::Unavailable,
          QStringLiteral("Workspace opening is unavailable until a later workspace activation "
                         "phase adds user-visible path grants.")},
         {QStringLiteral("read-file"), QStringLiteral("Read File"), QStringLiteral("Filesystem"),
@@ -56,8 +56,8 @@ QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
         {QStringLiteral("export-conversation"), QStringLiteral("Export Conversation"),
          QStringLiteral("Conversation"),
          QStringLiteral("Future explicit transcript export through a user-visible flow."),
-         QStringLiteral("filesystem-write"), ToolGatewayRiskLevel::Medium,
-         ToolGatewayScope::Local, ToolExecutionAvailability::Unavailable,
+         QStringLiteral("filesystem-write"), ToolGatewayRiskLevel::Medium, ToolGatewayScope::Local,
+         ToolExecutionAvailability::Unavailable,
          QStringLiteral("Conversation export through the gateway is unavailable; no gateway file "
                         "write is enabled.")},
         {QStringLiteral("voice-transcribe"), QStringLiteral("Voice Transcribe"),
@@ -70,7 +70,8 @@ QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
          QStringLiteral("Future TTS synthesis and playback pipeline."),
          QStringLiteral("voice-playback"), ToolGatewayRiskLevel::High, ToolGatewayScope::Local,
          ToolExecutionAvailability::Refused,
-         QStringLiteral("Voice playback is refused; audio output and TTS activation are disabled.")},
+         QStringLiteral(
+             "Voice playback is refused; audio output and TTS activation are disabled.")},
         {QStringLiteral("web-search"), QStringLiteral("Web Search"), QStringLiteral("Network"),
          QStringLiteral("Future explicit web lookup through a permission-gated provider."),
          QStringLiteral("cloud-provider-access"), ToolGatewayRiskLevel::High,
@@ -126,9 +127,9 @@ ToolExecutionGateway::toolSummaries(const QString& defaultPermissionState,
     return summaries;
 }
 
-ToolGatewayRegistrySummary ToolExecutionGateway::registrySummary(
-    const QString& defaultPermissionState,
-    const PermissionPolicyService& permissionPolicy) const {
+ToolGatewayRegistrySummary
+ToolExecutionGateway::registrySummary(const QString& defaultPermissionState,
+                                      const PermissionPolicyService& permissionPolicy) const {
     const auto permissionPosture = permissionPolicy.normalizedState(defaultPermissionState);
     ToolGatewayRegistrySummary registry{
         QStringLiteral("Metadata only"),

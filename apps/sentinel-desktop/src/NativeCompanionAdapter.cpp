@@ -66,8 +66,7 @@ void NativeCompanionAdapter::initialize() {
     connect(quitAction_, &QAction::triggered, qApp, &QApplication::quit);
     connect(trayIcon_.get(), &QSystemTrayIcon::activated, this,
             [this](QSystemTrayIcon::ActivationReason reason) {
-                if (reason == QSystemTrayIcon::Trigger ||
-                    reason == QSystemTrayIcon::DoubleClick) {
+                if (reason == QSystemTrayIcon::Trigger || reason == QSystemTrayIcon::DoubleClick) {
                     openSentinel();
                 }
             });

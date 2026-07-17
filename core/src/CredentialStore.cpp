@@ -44,9 +44,9 @@ CredentialStoreTrace traceForBackend(CredentialStoreBackend backend) {
     const auto currentPlatform = isCurrentPlatformBackend(backend);
     const auto fallback = backend == CredentialStoreBackend::LocalUnavailableFallback;
     const auto testOnly = backend == CredentialStoreBackend::InMemoryTest;
-    const auto readiness = fallback ? CredentialStoreReadiness::DisabledFallback
-                                    : testOnly ? CredentialStoreReadiness::TestOnlyReady
-                                    : CredentialStoreReadiness::RequiresFutureImplementation;
+    const auto readiness = fallback   ? CredentialStoreReadiness::DisabledFallback
+                           : testOnly ? CredentialStoreReadiness::TestOnlyReady
+                                      : CredentialStoreReadiness::RequiresFutureImplementation;
     const auto available = testOnly;
     return CredentialStoreTrace{
         backend,
@@ -56,14 +56,13 @@ CredentialStoreTrace traceForBackend(CredentialStoreBackend backend) {
         QStringLiteral("%1: %2 / %3 / non-persistent readiness metadata only")
             .arg(backendDisplayName(backend), credentialStoreReadinessName(readiness),
                  currentPlatform && !testOnly ? QStringLiteral("current platform")
-                                 : QStringLiteral("not current platform")),
+                                              : QStringLiteral("not current platform")),
     };
 }
 
 CredentialBackendResult refusedBackendResult(CredentialBackendOperation operation,
                                              CredentialStoreBackend backend,
-                                             const CredentialKey& key,
-                                             QString reason) {
+                                             const CredentialKey& key, QString reason) {
     return CredentialBackendResult{
         operation,
         backend,
@@ -77,8 +76,7 @@ CredentialBackendResult refusedBackendResult(CredentialBackendOperation operatio
 }
 
 CredentialBackendResult invalidKeyResult(CredentialBackendOperation operation,
-                                         CredentialStoreBackend backend,
-                                         const CredentialKey& key) {
+                                         CredentialStoreBackend backend, const CredentialKey& key) {
     return refusedBackendResult(
         operation, backend, key,
         QStringLiteral("%1 refused: provider id and credential name are required; no credential "
@@ -89,8 +87,7 @@ CredentialBackendResult invalidKeyResult(CredentialBackendOperation operation,
 CredentialStoreSummary summaryForBackend(CredentialStoreBackend backend,
                                          CredentialStoreStatus status,
                                          CredentialStoreReadiness readiness,
-                                         bool secretPersistenceEnabled,
-                                         QString summary,
+                                         bool secretPersistenceEnabled, QString summary,
                                          QString backendSummary) {
     return CredentialStoreSummary{
         status,
@@ -240,10 +237,9 @@ CredentialStoreBackend DisabledCredentialBackend::backend() const {
 
 CredentialStoreSummary DisabledCredentialBackend::summary() const {
     const auto preferredBackend = preferredBackendForPlatform();
-    const auto readiness =
-        preferredBackend == CredentialStoreBackend::LocalUnavailableFallback
-            ? CredentialStoreReadiness::DisabledFallback
-            : CredentialStoreReadiness::RequiresFutureImplementation;
+    const auto readiness = preferredBackend == CredentialStoreBackend::LocalUnavailableFallback
+                               ? CredentialStoreReadiness::DisabledFallback
+                               : CredentialStoreReadiness::RequiresFutureImplementation;
     return summaryForBackend(
         preferredBackend, CredentialStoreStatus::Disabled, readiness, false,
         QStringLiteral("Credential store disabled: no API key storage is active, no plaintext "
@@ -275,8 +271,8 @@ CredentialBackendResult DisabledCredentialBackend::deleteCredential(const Creden
         QStringLiteral("delete refused: disabled credential backend has no credential state."));
 }
 
-CredentialBackendResult DisabledCredentialBackend::containsCredential(
-    const CredentialKey& key) const {
+CredentialBackendResult
+DisabledCredentialBackend::containsCredential(const CredentialKey& key) const {
     return refusedBackendResult(
         CredentialBackendOperation::Contains, backend(), key,
         QStringLiteral("contains refused: disabled credential backend is not configured."));
@@ -322,8 +318,8 @@ CredentialBackendResult PlaceholderCredentialBackend::deleteCredential(const Cre
         QStringLiteral("delete refused: OS credential backend is a non-executing placeholder."));
 }
 
-CredentialBackendResult PlaceholderCredentialBackend::containsCredential(
-    const CredentialKey& key) const {
+CredentialBackendResult
+PlaceholderCredentialBackend::containsCredential(const CredentialKey& key) const {
     return refusedBackendResult(
         CredentialBackendOperation::Contains, backend_, key,
         QStringLiteral("contains refused: OS credential backend is a non-executing placeholder."));
@@ -415,8 +411,8 @@ CredentialBackendResult InMemoryCredentialBackend::deleteCredential(const Creden
     };
 }
 
-CredentialBackendResult InMemoryCredentialBackend::containsCredential(
-    const CredentialKey& key) const {
+CredentialBackendResult
+InMemoryCredentialBackend::containsCredential(const CredentialKey& key) const {
     if (!key.isValid()) {
         return invalidKeyResult(CredentialBackendOperation::Contains, backend(), key);
     }
@@ -438,8 +434,8 @@ CredentialStore::CredentialStore()
     : CredentialStore(std::make_shared<DisabledCredentialBackend>()) {}
 
 CredentialStore::CredentialStore(std::shared_ptr<ICredentialBackend> backend)
-    : backend_(std::move(backend))
-    , traces_{
+    : backend_(std::move(backend)),
+      traces_{
           traceForBackend(CredentialStoreBackend::MacOSKeychain),
           traceForBackend(CredentialStoreBackend::WindowsCredentialManager),
           traceForBackend(CredentialStoreBackend::LinuxSecretService),
@@ -517,11 +513,13 @@ CredentialBackendResult CredentialStore::storeCredential(const CredentialKey& ke
 }
 
 CredentialReadResult CredentialStore::readCredential(const CredentialKey& key) const {
-    return backend_ ? backend_->readCredential(key) : DisabledCredentialBackend{}.readCredential(key);
+    return backend_ ? backend_->readCredential(key)
+                    : DisabledCredentialBackend{}.readCredential(key);
 }
 
 CredentialBackendResult CredentialStore::deleteCredential(const CredentialKey& key) {
-    return backend_ ? backend_->deleteCredential(key) : DisabledCredentialBackend{}.deleteCredential(key);
+    return backend_ ? backend_->deleteCredential(key)
+                    : DisabledCredentialBackend{}.deleteCredential(key);
 }
 
 CredentialBackendResult CredentialStore::containsCredential(const CredentialKey& key) const {

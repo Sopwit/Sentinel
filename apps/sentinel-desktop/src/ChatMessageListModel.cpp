@@ -38,6 +38,63 @@ QHash<int, QByteArray> ChatMessageListModel::roleNames() const {
 }
 
 void ChatMessageListModel::setMessages(const QList<core::ChatMessage>& messages) {
+    if (messages_.isEmpty()) {
+        beginResetModel();
+        messages_ = messages;
+        endResetModel();
+        return;
+    }
+
+    if (messages.size() > messages_.size()) {
+        bool prefixMatches = true;
+        for (int i = 0; i < messages_.size(); ++i) {
+            const auto& oldMsg = messages_.at(i);
+            const auto& newMsg = messages.at(i);
+            if (oldMsg.id != newMsg.id || oldMsg.role != newMsg.role) {
+                prefixMatches = false;
+                break;
+            }
+        }
+
+        if (prefixMatches) {
+            for (int i = 0; i < messages_.size(); ++i) {
+                const auto& oldMsg = messages_.at(i);
+                const auto& newMsg = messages.at(i);
+                if (oldMsg.content != newMsg.content || oldMsg.status != newMsg.status ||
+                    oldMsg.timestamp != newMsg.timestamp) {
+                    messages_[i] = newMsg;
+                    emit dataChanged(index(i), index(i));
+                }
+            }
+
+            beginInsertRows(QModelIndex(), messages_.size(), messages.size() - 1);
+            for (int i = messages_.size(); i < messages.size(); ++i) {
+                messages_.append(messages.at(i));
+            }
+            endInsertRows();
+            return;
+        }
+    }
+
+    if (messages.size() == messages_.size()) {
+        for (int i = 0; i < messages_.size(); ++i) {
+            const auto& oldMsg = messages_.at(i);
+            const auto& newMsg = messages.at(i);
+            if (oldMsg.id != newMsg.id || oldMsg.role != newMsg.role) {
+                beginResetModel();
+                messages_ = messages;
+                endResetModel();
+                return;
+            }
+            if (oldMsg.content != newMsg.content || oldMsg.status != newMsg.status ||
+                oldMsg.timestamp != newMsg.timestamp) {
+                messages_[i] = newMsg;
+                emit dataChanged(index(i), index(i));
+            }
+        }
+        return;
+    }
+
     beginResetModel();
     messages_ = messages;
     endResetModel();

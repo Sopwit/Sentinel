@@ -44,19 +44,18 @@ void ControlledAgentTasksTest::plannerLifecycleRequiresApproval() {
 void ControlledAgentTasksTest::queueAllowsSingleActiveTask() {
     ControlledAgentTaskService service;
     QList<sentinel::core::ControlledAgentTask> tasks;
-    auto first = service.approve(service.createPlan(QStringLiteral("First"), QStringLiteral("coding"),
-                                                    QStringLiteral("Local"), QStringLiteral("model"),
-                                                    {}, tasks),
-                                 QStringLiteral("Approve Once"));
+    auto first = service.approve(
+        service.createPlan(QStringLiteral("First"), QStringLiteral("coding"),
+                           QStringLiteral("Local"), QStringLiteral("model"), {}, tasks),
+        QStringLiteral("Approve Once"));
     tasks = service.upsertTask(tasks, first);
     first = service.start(first, tasks);
     tasks = service.upsertTask(tasks, first);
 
-    auto second =
-        service.approve(service.createPlan(QStringLiteral("Second"), QStringLiteral("coding"),
-                                           QStringLiteral("Local"), QStringLiteral("model"), {},
-                                           tasks),
-                        QStringLiteral("Approve Once"));
+    auto second = service.approve(
+        service.createPlan(QStringLiteral("Second"), QStringLiteral("coding"),
+                           QStringLiteral("Local"), QStringLiteral("model"), {}, tasks),
+        QStringLiteral("Approve Once"));
     second = service.start(second, tasks);
     QCOMPARE(second.state, ControlledTaskState::PendingApproval);
     QVERIFY(second.resultSummary.contains(QStringLiteral("another task is already running")));
@@ -64,9 +63,9 @@ void ControlledAgentTasksTest::queueAllowsSingleActiveTask() {
 
 void ControlledAgentTasksTest::permissionsPersistByWorkspace() {
     ControlledAgentTaskService service;
-    auto permissions = service.grantPermission({}, QStringLiteral("writing"),
-                                               QStringLiteral("Files"),
-                                               QStringLiteral("Allow For Workspace"));
+    auto permissions =
+        service.grantPermission({}, QStringLiteral("writing"), QStringLiteral("Files"),
+                                QStringLiteral("Allow For Workspace"));
     permissions = service.grantPermission(permissions, QStringLiteral("writing"),
                                           QStringLiteral("Terminal"), QStringLiteral("Deny"));
     const auto json = service.permissionsToJson(permissions);
@@ -74,8 +73,9 @@ void ControlledAgentTasksTest::permissionsPersistByWorkspace() {
 
     QCOMPARE(service.permissionChoice(restored, QStringLiteral("writing"), QStringLiteral("Files")),
              QStringLiteral("Allow For Workspace"));
-    QCOMPARE(service.permissionChoice(restored, QStringLiteral("research"), QStringLiteral("Files")),
-             QStringLiteral("Deny"));
+    QCOMPARE(
+        service.permissionChoice(restored, QStringLiteral("research"), QStringLiteral("Files")),
+        QStringLiteral("Deny"));
 }
 
 void ControlledAgentTasksTest::exportContainsApprovalLog() {
@@ -84,7 +84,8 @@ void ControlledAgentTasksTest::exportContainsApprovalLog() {
                                    QStringLiteral("Local"), QStringLiteral("model"), {}, {});
     task = service.approve(task, QStringLiteral("Approve Once"));
 
-    const auto report = QString::fromUtf8(service.exportTaskReport(task, QStringLiteral("Markdown")));
+    const auto report =
+        QString::fromUtf8(service.exportTaskReport(task, QStringLiteral("Markdown")));
     QVERIFY(report.contains(QStringLiteral("Controlled Agent Task Report")));
     QVERIFY(report.contains(QStringLiteral("Approval Log")));
     QVERIFY(report.contains(QStringLiteral("Approve Once")));

@@ -127,8 +127,8 @@ SentinelOverlayModal {
 
                                     // BadgeCheck Icon
                                     Item {
-                                        width: 12
-                                        height: 12
+                                        implicitWidth: 12
+                                        implicitHeight: 12
                                         Layout.alignment: Qt.AlignVCenter
                                         Shape {
                                             anchors.centerIn: parent
@@ -202,7 +202,7 @@ SentinelOverlayModal {
                     // Subtle separator
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 1
+                        implicitHeight: 1
                         color: SentinelTheme.separator
                     }
 
@@ -215,7 +215,7 @@ SentinelOverlayModal {
                             text: qsTr("OVERVIEW")
                             font.family: root.sfProFont
                             font.pixelSize: SentinelTheme.fontTiny
-                            font.weight: Font.SemiBold
+                            font.weight: Font.DemiBold
                             font.letterSpacing: 1.1
                             color: SentinelTheme.textPlaceholder
                         }
@@ -252,7 +252,7 @@ SentinelOverlayModal {
                     // Subtle separator
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 1
+                        implicitHeight: 1
                         color: SentinelTheme.separator
                     }
 
@@ -265,7 +265,7 @@ SentinelOverlayModal {
                             text: qsTr("WHAT CAN IT DO?")
                             font.family: root.sfProFont
                             font.pixelSize: SentinelTheme.fontTiny
-                            font.weight: Font.SemiBold
+                            font.weight: Font.DemiBold
                             font.letterSpacing: 1.1
                             color: SentinelTheme.textPlaceholder
                         }
@@ -300,7 +300,7 @@ SentinelOverlayModal {
                     // Subtle separator
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 1
+                        implicitHeight: 1
                         color: SentinelTheme.separator
                     }
 
@@ -313,7 +313,7 @@ SentinelOverlayModal {
                             text: qsTr("WORKS WITH")
                             font.family: root.sfProFont
                             font.pixelSize: SentinelTheme.fontTiny
-                            font.weight: Font.SemiBold
+                            font.weight: Font.DemiBold
                             font.letterSpacing: 1.1
                             color: SentinelTheme.textPlaceholder
                         }
@@ -356,7 +356,7 @@ SentinelOverlayModal {
                     // Subtle separator
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 1
+                        implicitHeight: 1
                         color: SentinelTheme.separator
                     }
 
@@ -378,8 +378,8 @@ SentinelOverlayModal {
                                 spacing: 6
                                 // Info icon (Lucide)
                                 Item {
-                                    width: 14
-                                    height: 14
+                                    implicitWidth: 14
+                                    implicitHeight: 14
                                     Shape {
                                         anchors.centerIn: parent
                                         width: 24
@@ -401,7 +401,7 @@ SentinelOverlayModal {
                                     text: qsTr("Best For")
                                     font.family: root.sfProFont
                                     font.pixelSize: SentinelTheme.fontSmall
-                                    font.weight: Font.SemiBold
+                                    font.weight: Font.DemiBold
                                     color: SentinelTheme.accent
                                 }
                             }
@@ -421,7 +421,7 @@ SentinelOverlayModal {
                     // Subtle separator
                     Rectangle {
                         Layout.fillWidth: true
-                        height: 1
+                        implicitHeight: 1
                         color: SentinelTheme.separator
                     }
 
@@ -434,7 +434,7 @@ SentinelOverlayModal {
                             text: qsTr("INSTALLATION")
                             font.family: root.sfProFont
                             font.pixelSize: SentinelTheme.fontTiny
-                            font.weight: Font.SemiBold
+                            font.weight: Font.DemiBold
                             font.letterSpacing: 1.1
                             color: SentinelTheme.textPlaceholder
                         }
@@ -459,8 +459,8 @@ SentinelOverlayModal {
                                     spacing: 6
                                     Layout.fillWidth: true
                                     Rectangle {
-                                        width: 8
-                                        height: 8
+                                        implicitWidth: 8
+                                        implicitHeight: 8
                                         radius: 4
                                         color: root.isRunning ? SentinelTheme.success
                                                               : (root.isInstalled ? SentinelTheme.accent : SentinelTheme.textPlaceholder)
@@ -490,7 +490,7 @@ SentinelOverlayModal {
             // Divider above footer
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
+                implicitHeight: 1
                 color: SentinelTheme.separator
             }
 
@@ -558,8 +558,8 @@ SentinelOverlayModal {
                             anchors.centerIn: parent
 
                             Item {
-                                width: 12
-                                height: 12
+                                implicitWidth: 12
+                                implicitHeight: 12
                                 Shape {
                                     anchors.centerIn: parent
                                     width: 24
@@ -609,8 +609,8 @@ SentinelOverlayModal {
                             anchors.centerIn: parent
 
                             Item {
-                                width: 12
-                                height: 12
+                                implicitWidth: 12
+                                implicitHeight: 12
                                 Shape {
                                     anchors.centerIn: parent
                                     width: 24
@@ -662,8 +662,8 @@ SentinelOverlayModal {
                             anchors.centerIn: parent
 
                             Item {
-                                width: 12
-                                height: 12
+                                implicitWidth: 12
+                                implicitHeight: 12
                                 Shape {
                                     anchors.centerIn: parent
                                     width: 24
@@ -686,7 +686,7 @@ SentinelOverlayModal {
                                 text: qsTr("Install Runtime")
                                 font.family: root.sfProFont
                                 font.pixelSize: SentinelTheme.fontSmall
-                                font.weight: Font.SemiBold
+                                font.weight: Font.DemiBold
                                 color: SentinelTheme.textOnAccent
                             }
                         }

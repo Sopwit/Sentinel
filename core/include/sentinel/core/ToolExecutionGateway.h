@@ -70,9 +70,9 @@ public:
     QList<ToolGatewayMetadata> toolMetadata() const;
     QList<ToolGatewaySummary> toolSummaries(const QString& defaultPermissionState,
                                             const PermissionPolicyService& permissionPolicy) const;
-    ToolGatewayRegistrySummary registrySummary(
-        const QString& defaultPermissionState,
-        const PermissionPolicyService& permissionPolicy) const;
+    ToolGatewayRegistrySummary
+    registrySummary(const QString& defaultPermissionState,
+                    const PermissionPolicyService& permissionPolicy) const;
 };
 
 QString toolGatewayRiskLevelName(ToolGatewayRiskLevel riskLevel);

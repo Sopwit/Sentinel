@@ -1,7 +1,7 @@
 #pragma once
 
-#include <QList>
 #include <QHash>
+#include <QList>
 #include <QString>
 #include <QStringList>
 

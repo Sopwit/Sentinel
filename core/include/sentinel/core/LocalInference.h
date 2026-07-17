@@ -9,8 +9,8 @@
 #include <QStringList>
 #include <QThread>
 
-#include <cstdint>
 #include <atomic>
+#include <cstdint>
 #include <functional>
 #include <memory>
 
@@ -264,12 +264,16 @@ struct LMStudioConfig {
 
     bool isLoopbackHttp() const {
         const auto host = endpoint.host().toLower();
-        return (host == QLatin1String("127.0.0.1") || host == QLatin1String("localhost"))
-               && endpoint.scheme() == QLatin1String("http");
+        return (host == QLatin1String("127.0.0.1") || host == QLatin1String("localhost")) &&
+               endpoint.scheme() == QLatin1String("http");
     }
-    QString toString() const { return endpoint.toString(); }
+    QString toString() const {
+        return endpoint.toString();
+    }
 
-    static LMStudioConfig defaultConfig() { return {}; }
+    static LMStudioConfig defaultConfig() {
+        return {};
+    }
 };
 
 class LMStudioLocalInferenceClient final : public ILocalInferenceClient {

@@ -58,8 +58,9 @@ struct JsonReply {
     QNetworkReply::NetworkError networkError = QNetworkReply::NoError;
 };
 
-JsonReply getJson(const QUrl& url, int timeoutMs) {
-    QNetworkAccessManager manager;
+JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager = nullptr) {
+    QNetworkAccessManager localManager;
+    QNetworkAccessManager* activeManager = manager ? manager : &localManager;
     QNetworkRequest request{url};
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::ManualRedirectPolicy);
@@ -68,7 +69,7 @@ JsonReply getJson(const QUrl& url, int timeoutMs) {
     QTimer timer;
     timer.setSingleShot(true);
 
-    QNetworkReply* reply = manager.get(request);
+    QNetworkReply* reply = activeManager->get(request);
     QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
     QObject::connect(&timer, &QTimer::timeout, &loop, &QEventLoop::quit);
     timer.start(timeoutMs);
@@ -254,7 +255,8 @@ OllamaHealthCheckResult OllamaHttpRuntimeClient::healthCheck() const {
 
     const auto timeoutMs =
         config_.healthCheckTimeoutMs > 0 ? config_.healthCheckTimeoutMs : timeoutMs_;
-    const auto reply = getJson(endpointUrl(QStringLiteral("/api/version")), timeoutMs);
+    const auto reply =
+        getJson(endpointUrl(QStringLiteral("/api/version")), timeoutMs, networkManager());
     if (!reply.ok) {
         return OllamaHealthCheckResult{
             OllamaConnectionStatus::Unavailable,
@@ -283,7 +285,8 @@ QList<OllamaModelSummary> OllamaHttpRuntimeClient::installedModels() const {
 
     const auto timeoutMs =
         config_.modelDiscoveryTimeoutMs > 0 ? config_.modelDiscoveryTimeoutMs : timeoutMs_;
-    const auto reply = getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs);
+    const auto reply =
+        getJson(endpointUrl(QStringLiteral("/api/tags")), timeoutMs, networkManager());
     if (!reply.ok) {
         return {};
     }
@@ -317,20 +320,35 @@ bool OllamaHttpRuntimeClient::endpointAllowed() const {
     return config_.healthCheckEnabled && config_.endpoint.isLoopbackHttp();
 }
 
+QNetworkAccessManager* OllamaHttpRuntimeClient::networkManager() const {
+    if (!nam_) {
+        nam_ = std::make_unique<QNetworkAccessManager>();
+    }
+    return nam_.get();
+}
+
 } // namespace sentinel::core
 
 // ── OllamaModelPuller implementation ─────────────────────────────────────────
 
 OllamaModelPuller::OllamaModelPuller(QObject* parent)
-    : QObject(parent)
-    , nam_(new QNetworkAccessManager(this))
-{}
+    : QObject(parent), nam_(new QNetworkAccessManager(this)) {}
 
-bool OllamaModelPuller::pulling() const    { return pulling_; }
-QString OllamaModelPuller::activeModel() const { return activeModel_; }
-qreal OllamaModelPuller::progress() const  { return progress_; }
-QString OllamaModelPuller::statusText() const { return statusText_; }
-QString OllamaModelPuller::errorText() const  { return errorText_; }
+bool OllamaModelPuller::pulling() const {
+    return pulling_;
+}
+QString OllamaModelPuller::activeModel() const {
+    return activeModel_;
+}
+qreal OllamaModelPuller::progress() const {
+    return progress_;
+}
+QString OllamaModelPuller::statusText() const {
+    return statusText_;
+}
+QString OllamaModelPuller::errorText() const {
+    return errorText_;
+}
 
 void OllamaModelPuller::pull(const QString& modelId) {
     if (pulling_) {
@@ -345,12 +363,11 @@ void OllamaModelPuller::pull(const QString& modelId) {
     // Build request to local Ollama /api/pull
     QUrl url(QStringLiteral("http://127.0.0.1:11434/api/pull"));
     QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::ContentTypeHeader,
-                      QByteArrayLiteral("application/json"));
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QByteArrayLiteral("application/json"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::ManualRedirectPolicy);
 
-    const QJsonObject body { { QStringLiteral("name"), trimmed } };
+    const QJsonObject body{{QStringLiteral("name"), trimmed}};
     const QByteArray payload = QJsonDocument(body).toJson(QJsonDocument::Compact);
 
     setState(true, trimmed, 0.0, QStringLiteral("Starting pull…"), QString());
@@ -359,7 +376,8 @@ void OllamaModelPuller::pull(const QString& modelId) {
 
     // Stream chunks as they arrive
     QObject::connect(reply_, &QNetworkReply::readyRead, this, [this]() {
-        if (!reply_) return;
+        if (!reply_)
+            return;
         const QByteArray data = reply_->readAll();
         // Ollama sends newline-delimited JSON — split and process each line
         const auto lines = data.split('\n');
@@ -372,7 +390,8 @@ void OllamaModelPuller::pull(const QString& modelId) {
     });
 
     QObject::connect(reply_, &QNetworkReply::finished, this, [this]() {
-        if (!reply_) return;
+        if (!reply_)
+            return;
 
         const bool networkError = (reply_->error() != QNetworkReply::NoError &&
                                    reply_->error() != QNetworkReply::OperationCanceledError);
@@ -383,8 +402,7 @@ void OllamaModelPuller::pull(const QString& modelId) {
         reply_ = nullptr;
 
         if (cancelled) {
-            setState(false, model, 0.0,
-                     QStringLiteral("Cancelled."), QString());
+            setState(false, model, 0.0, QStringLiteral("Cancelled."), QString());
             emit pullFinished(model, false);
             return;
         }
@@ -397,8 +415,8 @@ void OllamaModelPuller::pull(const QString& modelId) {
         }
 
         // If progress reached 1.0, it's done; otherwise mark complete
-        if (progress_ >= 1.0 || statusText_.contains(QStringLiteral("success"),
-                                                       Qt::CaseInsensitive)) {
+        if (progress_ >= 1.0 ||
+            statusText_.contains(QStringLiteral("success"), Qt::CaseInsensitive)) {
             setState(false, model, 1.0, QStringLiteral("Installed"), QString());
             emit pullFinished(model, true);
         } else {
@@ -424,7 +442,7 @@ void OllamaModelPuller::processChunk(const QByteArray& chunk) {
     const auto obj = doc.object();
     const auto status = obj.value(QStringLiteral("status")).toString();
     const qint64 completed = obj.value(QStringLiteral("completed")).toVariant().toLongLong();
-    const qint64 total    = obj.value(QStringLiteral("total")).toVariant().toLongLong();
+    const qint64 total = obj.value(QStringLiteral("total")).toVariant().toLongLong();
 
     qreal newProgress = progress_;
     if (total > 0 && completed > 0) {
@@ -441,9 +459,7 @@ void OllamaModelPuller::processChunk(const QByteArray& chunk) {
     }
     if (total > 0 && completed > 0 && total != completed) {
         const double pct = newProgress * 100.0;
-        displayStatus = QStringLiteral("%1 — %2%")
-                            .arg(displayStatus)
-                            .arg(static_cast<int>(pct));
+        displayStatus = QStringLiteral("%1 — %2%").arg(displayStatus).arg(static_cast<int>(pct));
     }
 
     if (qAbs(newProgress - progress_) > 0.001 || displayStatus != statusText_) {
@@ -461,14 +477,34 @@ void OllamaModelPuller::processChunk(const QByteArray& chunk) {
 }
 
 void OllamaModelPuller::setState(bool pulling, const QString& model, qreal progress,
-                                  const QString& status, const QString& error) {
+                                 const QString& status, const QString& error) {
     bool changed = false;
 
-    if (pulling_ != pulling) { pulling_ = pulling; emit pullingChanged(); changed = true; }
-    if (activeModel_ != model) { activeModel_ = model; emit activeModelChanged(); changed = true; }
-    if (qAbs(progress_ - progress) > 0.0001) { progress_ = progress; emit progressChanged(); changed = true; }
-    if (statusText_ != status) { statusText_ = status; emit statusTextChanged(); changed = true; }
-    if (errorText_ != error) { errorText_ = error; emit errorTextChanged(); changed = true; }
+    if (pulling_ != pulling) {
+        pulling_ = pulling;
+        emit pullingChanged();
+        changed = true;
+    }
+    if (activeModel_ != model) {
+        activeModel_ = model;
+        emit activeModelChanged();
+        changed = true;
+    }
+    if (qAbs(progress_ - progress) > 0.0001) {
+        progress_ = progress;
+        emit progressChanged();
+        changed = true;
+    }
+    if (statusText_ != status) {
+        statusText_ = status;
+        emit statusTextChanged();
+        changed = true;
+    }
+    if (errorText_ != error) {
+        errorText_ = error;
+        emit errorTextChanged();
+        changed = true;
+    }
 
     Q_UNUSED(changed)
 }
@@ -476,13 +512,17 @@ void OllamaModelPuller::setState(bool pulling, const QString& model, qreal progr
 // ── OllamaLibraryFetcher implementation ───────────────────────────────────────
 
 OllamaLibraryFetcher::OllamaLibraryFetcher(QObject* parent)
-    : QObject(parent)
-    , nam_(new QNetworkAccessManager(this))
-{}
+    : QObject(parent), nam_(new QNetworkAccessManager(this)) {}
 
-bool OllamaLibraryFetcher::fetching() const { return fetching_; }
-QVariantList OllamaLibraryFetcher::models() const { return models_; }
-QString OllamaLibraryFetcher::errorText() const { return errorText_; }
+bool OllamaLibraryFetcher::fetching() const {
+    return fetching_;
+}
+QVariantList OllamaLibraryFetcher::models() const {
+    return models_;
+}
+QString OllamaLibraryFetcher::errorText() const {
+    return errorText_;
+}
 
 void OllamaLibraryFetcher::fetch(const QString& sort) {
     if (fetching_) {
@@ -501,8 +541,10 @@ void OllamaLibraryFetcher::fetch(const QString& sort) {
 
     QUrl url(QStringLiteral("https://ollama.com/library?sort=") + sortParam);
     QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setHeader(QNetworkRequest::UserAgentHeader,
+                      QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
 
     reply_ = nam_->get(request);
 
@@ -516,7 +558,8 @@ void OllamaLibraryFetcher::cancel() {
 }
 
 void OllamaLibraryFetcher::handleReplyFinished() {
-    if (!reply_) return;
+    if (!reply_)
+        return;
 
     QNetworkReply* r = reply_;
     reply_ = nullptr;
@@ -564,10 +607,12 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         }
 
         int liStart = html.lastIndexOf(QStringLiteral("<li"), nextLink);
-        if (liStart == -1) liStart = nextLink;
+        if (liStart == -1)
+            liStart = nextLink;
 
         int liEnd = html.indexOf(QStringLiteral("</li>"), nextLink);
-        if (liEnd == -1) liEnd = nextLink + 2000;
+        if (liEnd == -1)
+            liEnd = nextLink + 2000;
 
         QString block = html.mid(liStart, liEnd - liStart);
         index = liEnd;
@@ -586,12 +631,14 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         }
 
         // Description
-        int descStart = block.indexOf(QStringLiteral("class=\"max-w-lg break-words text-neutral-800 text-md\">"));
+        int descStart = block.indexOf(
+            QStringLiteral("class=\"max-w-lg break-words text-neutral-800 text-md\">"));
         if (descStart == -1) {
             descStart = block.indexOf(QStringLiteral("text-neutral-800"));
             if (descStart != -1) {
                 descStart = block.indexOf(QStringLiteral(">"), descStart);
-                if (descStart != -1) descStart += 1;
+                if (descStart != -1)
+                    descStart += 1;
             }
         } else {
             descStart += 54;
@@ -610,12 +657,15 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         int capIndex = 0;
         while (true) {
             int capStart = block.indexOf(QStringLiteral("x-test-capability"), capIndex);
-            if (capStart == -1) break;
+            if (capStart == -1)
+                break;
             capStart = block.indexOf(QStringLiteral(">"), capStart);
-            if (capStart == -1) break;
+            if (capStart == -1)
+                break;
             capStart += 1;
             int capEnd = block.indexOf(QStringLiteral("</span>"), capStart);
-            if (capEnd == -1) break;
+            if (capEnd == -1)
+                break;
             QString cap = block.mid(capStart, capEnd - capStart).trimmed();
             if (!cap.isEmpty() && !caps.contains(cap)) {
                 caps.append(cap);
@@ -646,11 +696,15 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         }
 
         QString category = QStringLiteral("LLM");
-        if (caps.contains(QStringLiteral("vision")) || ollamaId.contains(QStringLiteral("llava")) || ollamaId.contains(QStringLiteral("bakllava"))) {
+        if (caps.contains(QStringLiteral("vision")) || ollamaId.contains(QStringLiteral("llava")) ||
+            ollamaId.contains(QStringLiteral("bakllava"))) {
             category = QStringLiteral("Vision");
-        } else if (caps.contains(QStringLiteral("thinking")) || ollamaId.contains(QStringLiteral("deepseek-r1")) || ollamaId.contains(QStringLiteral("phi4"))) {
+        } else if (caps.contains(QStringLiteral("thinking")) ||
+                   ollamaId.contains(QStringLiteral("deepseek-r1")) ||
+                   ollamaId.contains(QStringLiteral("phi4"))) {
             category = QStringLiteral("Think");
-        } else if (ollamaId.contains(QStringLiteral("stable-diffusion")) || ollamaId.contains(QStringLiteral("flux"))) {
+        } else if (ollamaId.contains(QStringLiteral("stable-diffusion")) ||
+                   ollamaId.contains(QStringLiteral("flux"))) {
             category = QStringLiteral("Image");
         }
 
@@ -692,15 +746,23 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
 // ── OllamaModelDetailFetcher implementation ───────────────────────────────────
 
 OllamaModelDetailFetcher::OllamaModelDetailFetcher(QObject* parent)
-    : QObject(parent)
-    , nam_(new QNetworkAccessManager(this))
-{}
+    : QObject(parent), nam_(new QNetworkAccessManager(this)) {}
 
-bool OllamaModelDetailFetcher::fetching() const { return fetching_; }
-QString OllamaModelDetailFetcher::errorText() const { return errorText_; }
-QString OllamaModelDetailFetcher::readme() const { return readme_; }
-QVariantList OllamaModelDetailFetcher::tags() const { return tags_; }
-QString OllamaModelDetailFetcher::installCmd() const { return installCmd_; }
+bool OllamaModelDetailFetcher::fetching() const {
+    return fetching_;
+}
+QString OllamaModelDetailFetcher::errorText() const {
+    return errorText_;
+}
+QString OllamaModelDetailFetcher::readme() const {
+    return readme_;
+}
+QVariantList OllamaModelDetailFetcher::tags() const {
+    return tags_;
+}
+QString OllamaModelDetailFetcher::installCmd() const {
+    return installCmd_;
+}
 
 void OllamaModelDetailFetcher::fetchDetails(const QString& modelId) {
     if (fetching_) {
@@ -713,7 +775,7 @@ void OllamaModelDetailFetcher::fetchDetails(const QString& modelId) {
     tags_.clear();
     installCmd_.clear();
     modelId_ = modelId.trimmed();
-    
+
     emit fetchingChanged();
     emit errorTextChanged();
     emit readmeChanged();
@@ -729,8 +791,10 @@ void OllamaModelDetailFetcher::fetchDetails(const QString& modelId) {
 
     QUrl url(QStringLiteral("https://ollama.com/library/") + modelId_.toLower());
     QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setHeader(QNetworkRequest::UserAgentHeader,
+                      QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
 
     reply_ = nam_->get(request);
 
@@ -744,7 +808,8 @@ void OllamaModelDetailFetcher::cancel() {
 }
 
 void OllamaModelDetailFetcher::handleReplyFinished() {
-    if (!reply_) return;
+    if (!reply_)
+        return;
 
     QNetworkReply* r = reply_;
     reply_ = nullptr;
@@ -807,7 +872,8 @@ void OllamaModelDetailFetcher::parseHtml(const QString& html) {
             displayStart = html.indexOf(QStringLiteral(">"), displayStart);
             if (displayStart != -1) {
                 displayStart += 1;
-                int displayEnd = html.indexOf(QStringLiteral("</div>"), displayStart); // A rough end
+                int displayEnd =
+                    html.indexOf(QStringLiteral("</div>"), displayStart); // A rough end
                 if (displayEnd != -1) {
                     readmeText = html.mid(displayStart, displayEnd - displayStart);
                     // Strip html tags
@@ -822,15 +888,18 @@ void OllamaModelDetailFetcher::parseHtml(const QString& html) {
 
     // 2. Extract Tags & Sizes
     QVariantList tagsList;
-    QString searchStr = QStringLiteral("href=\"/library/") + modelId_.toLower() + QStringLiteral(":");
+    QString searchStr =
+        QStringLiteral("href=\"/library/") + modelId_.toLower() + QStringLiteral(":");
     int tagIndex = 0;
     while (true) {
         int pos = html.indexOf(searchStr, tagIndex);
-        if (pos == -1) break;
+        if (pos == -1)
+            break;
 
         int startQuote = pos + 6; // points to "/library/..."
         int endQuote = html.indexOf(QStringLiteral("\""), startQuote);
-        if (endQuote == -1) break;
+        if (endQuote == -1)
+            break;
 
         QString fullTagPath = html.mid(startQuote, endQuote - startQuote); // "/library/llama3.2:1b"
         int colonIdx = fullTagPath.indexOf(':');
@@ -902,13 +971,17 @@ void OllamaModelDetailFetcher::parseHtml(const QString& html) {
 // ── LMStudioLibraryFetcher implementation ─────────────────────────────────────
 
 LMStudioLibraryFetcher::LMStudioLibraryFetcher(QObject* parent)
-    : QObject(parent)
-    , nam_(new QNetworkAccessManager(this))
-{}
+    : QObject(parent), nam_(new QNetworkAccessManager(this)) {}
 
-bool LMStudioLibraryFetcher::fetching() const { return fetching_; }
-QVariantList LMStudioLibraryFetcher::models() const { return models_; }
-QString LMStudioLibraryFetcher::errorText() const { return errorText_; }
+bool LMStudioLibraryFetcher::fetching() const {
+    return fetching_;
+}
+QVariantList LMStudioLibraryFetcher::models() const {
+    return models_;
+}
+QString LMStudioLibraryFetcher::errorText() const {
+    return errorText_;
+}
 
 void LMStudioLibraryFetcher::fetch() {
     if (fetching_) {
@@ -922,8 +995,10 @@ void LMStudioLibraryFetcher::fetch() {
 
     QUrl url(QStringLiteral("https://lmstudio.ai/models?sort=updated"));
     QNetworkRequest request(url);
-    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
-    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setHeader(QNetworkRequest::UserAgentHeader,
+                      QStringLiteral("Mozilla/5.0 (Sentinel Assistant)"));
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
 
     reply_ = nam_->get(request);
 
@@ -937,7 +1012,8 @@ void LMStudioLibraryFetcher::cancel() {
 }
 
 void LMStudioLibraryFetcher::handleReplyFinished() {
-    if (!reply_) return;
+    if (!reply_)
+        return;
 
     QNetworkReply* r = reply_;
     reply_ = nullptr;
@@ -950,7 +1026,8 @@ void LMStudioLibraryFetcher::handleReplyFinished() {
         if (r->error() == QNetworkReply::OperationCanceledError) {
             errorText_ = QStringLiteral("Fetch cancelled.");
         } else {
-            errorText_ = QStringLiteral("Failed to fetch LM Studio models: %1").arg(r->errorString());
+            errorText_ =
+                QStringLiteral("Failed to fetch LM Studio models: %1").arg(r->errorString());
         }
         emit errorTextChanged();
         emit fetchFinished(false);
@@ -985,10 +1062,12 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
         }
 
         int aStart = html.lastIndexOf(QStringLiteral("<a"), nextLink);
-        if (aStart == -1) aStart = nextLink;
+        if (aStart == -1)
+            aStart = nextLink;
 
         int aEnd = html.indexOf(QStringLiteral("</a>"), nextLink);
-        if (aEnd == -1) aEnd = nextLink + 2000;
+        if (aEnd == -1)
+            aEnd = nextLink + 2000;
 
         QString block = html.mid(aStart, aEnd - aStart);
         index = aEnd;
@@ -1009,14 +1088,17 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
         int tagPos = 0;
         while (true) {
             tagPos = block.indexOf(QStringLiteral("font-mono text-xs"), tagPos);
-            if (tagPos == -1) break;
+            if (tagPos == -1)
+                break;
 
             int textStart = block.indexOf(QStringLiteral(">"), tagPos);
-            if (textStart == -1) break;
+            if (textStart == -1)
+                break;
             textStart += 1;
 
             int textEnd = block.indexOf(QStringLiteral("</div>"), textStart);
-            if (textEnd == -1) break;
+            if (textEnd == -1)
+                break;
 
             QString tagVal = block.mid(textStart, textEnd - textStart).trimmed();
             if (!tagVal.isEmpty() && !tags.contains(tagVal)) {
@@ -1050,8 +1132,9 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
             int dEnd = block.indexOf(QStringLiteral("</span>"), dStart);
             if (dEnd != -1) {
                 downloads = block.mid(dStart, dEnd - dStart).trimmed();
-                
-                int starsStart = block.indexOf(QStringLiteral("<span class=\"font-medium\">"), dEnd);
+
+                int starsStart =
+                    block.indexOf(QStringLiteral("<span class=\"font-medium\">"), dEnd);
                 if (starsStart != -1) {
                     starsStart += 26;
                     int starsEnd = block.indexOf(QStringLiteral("</span>"), starsStart);
@@ -1076,19 +1159,19 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
 
         // 6. Category (Vision, Think, and Image check)
         QString category = QStringLiteral("LLM");
-        if (block.contains(QStringLiteral("--lm-yellow")) || 
-            block.contains(QStringLiteral("rgb(var(--lm-yellow))")) || 
+        if (block.contains(QStringLiteral("--lm-yellow")) ||
+            block.contains(QStringLiteral("rgb(var(--lm-yellow))")) ||
             description.toLower().contains(QStringLiteral("vision")) ||
             modelId.contains(QStringLiteral("llava")) ||
             modelId.contains(QStringLiteral("bakllava"))) {
             category = QStringLiteral("Vision");
-        } else if (description.toLower().contains(QStringLiteral("reasoning")) || 
+        } else if (description.toLower().contains(QStringLiteral("reasoning")) ||
                    description.toLower().contains(QStringLiteral("thinking")) ||
                    modelId.contains(QStringLiteral("r1")) ||
                    modelId.contains(QStringLiteral("deepseek")) ||
                    modelId.contains(QStringLiteral("phi-4"))) {
             category = QStringLiteral("Think");
-        } else if (description.toLower().contains(QStringLiteral("image")) || 
+        } else if (description.toLower().contains(QStringLiteral("image")) ||
                    modelId.contains(QStringLiteral("stable-diffusion")) ||
                    modelId.contains(QStringLiteral("flux"))) {
             category = QStringLiteral("Image");
@@ -1114,7 +1197,8 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
         }
         modelObj[QStringLiteral("tags")] = tagsList;
         modelObj[QStringLiteral("downloadable")] = false;
-        modelObj[QStringLiteral("externalUrl")] = QStringLiteral("https://lmstudio.ai/models/") + modelId;
+        modelObj[QStringLiteral("externalUrl")] =
+            QStringLiteral("https://lmstudio.ai/models/") + modelId;
 
         parsedList.append(modelObj);
     }
@@ -1149,16 +1233,8 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
             }
         }
 
-        models.append(OllamaModelSummary{
-            id,
-            createdStr,
-            0
-        });
+        models.append(OllamaModelSummary{id, createdStr, 0});
     }
     return models;
 }
 } // namespace sentinel::core
-
-
-
-

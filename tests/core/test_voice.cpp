@@ -200,8 +200,8 @@ PiperTtsConfig configuredPiperConfig(QTemporaryDir& dir) {
     const auto modelPath = QDir(dir.path()).filePath(QStringLiteral("voice.onnx"));
     const auto outputDir = QDir(dir.path()).filePath(QStringLiteral("tts-cache"));
     const bool binaryWritten = writeFile(binaryPath, "#!/bin/sh\nexit 0\n");
-    const bool permissionsSet = QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
-                                                   QFileDevice::ExeOwner);
+    const bool permissionsSet = QFile::setPermissions(
+        binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
     const bool modelWritten = writeFile(modelPath, "model");
     if (!binaryWritten) {
         qFatal("Failed to write mock binary to %s", qPrintable(binaryPath));

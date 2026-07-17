@@ -4,6 +4,7 @@
 /build-tests/
 /build-noccache/
 /cmake-build-*/
+/Testing/
 /CMakeUserPresets.json
 /compile_commands.json
 

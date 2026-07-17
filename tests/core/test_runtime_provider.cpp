@@ -2,13 +2,13 @@
 
 #include <QtTest/QtTest>
 
+using sentinel::core::ClaudeRuntimeProvider;
+using sentinel::core::GeminiRuntimeProvider;
 using sentinel::core::OllamaConnectionStatus;
 using sentinel::core::OllamaHealthCheckResult;
 using sentinel::core::OllamaHealthStatus;
 using sentinel::core::OllamaModelSummary;
 using sentinel::core::OllamaRuntimeProvider;
-using sentinel::core::ClaudeRuntimeProvider;
-using sentinel::core::GeminiRuntimeProvider;
 using sentinel::core::OpenAICompatibleRuntimeProvider;
 using sentinel::core::RuntimeProviderRegistry;
 using sentinel::core::RuntimeReadinessState;
@@ -36,10 +36,12 @@ static OllamaHealthCheckResult healthyHealth() {
 }
 
 void RuntimeProviderTest::mapsReadyOllamaMetadata() {
-    const OllamaRuntimeProvider provider{
-        QStringLiteral("http://127.0.0.1:11434"), healthyHealth(),
-        {OllamaModelSummary{QStringLiteral("llama3.2"), {}, 1024}},
-        QStringLiteral("llama3.2"), true, false};
+    const OllamaRuntimeProvider provider{QStringLiteral("http://127.0.0.1:11434"),
+                                         healthyHealth(),
+                                         {OllamaModelSummary{QStringLiteral("llama3.2"), {}, 1024}},
+                                         QStringLiteral("llama3.2"),
+                                         true,
+                                         false};
 
     const auto descriptor = provider.descriptor();
     QCOMPARE(descriptor.providerId, QStringLiteral("ollama"));
@@ -61,15 +63,20 @@ void RuntimeProviderTest::reportsReadinessTransitions() {
     QCOMPARE(invalid.descriptor().readiness, RuntimeReadinessState::InvalidEndpoint);
 
     const OllamaRuntimeProvider missingModel{
-        QStringLiteral("http://127.0.0.1:11434"), healthyHealth(),
+        QStringLiteral("http://127.0.0.1:11434"),
+        healthyHealth(),
         {OllamaModelSummary{QStringLiteral("mistral"), {}, 1024}},
-        QStringLiteral("llama3.2"), true, false};
+        QStringLiteral("llama3.2"),
+        true,
+        false};
     QCOMPARE(missingModel.descriptor().readiness, RuntimeReadinessState::MissingModel);
 
-    const OllamaRuntimeProvider busy{
-        QStringLiteral("http://127.0.0.1:11434"), healthyHealth(),
-        {OllamaModelSummary{QStringLiteral("llama3.2"), {}, 1024}},
-        QStringLiteral("llama3.2"), true, true};
+    const OllamaRuntimeProvider busy{QStringLiteral("http://127.0.0.1:11434"),
+                                     healthyHealth(),
+                                     {OllamaModelSummary{QStringLiteral("llama3.2"), {}, 1024}},
+                                     QStringLiteral("llama3.2"),
+                                     true,
+                                     true};
     QCOMPARE(busy.descriptor().readiness, RuntimeReadinessState::Busy);
 }
 
@@ -91,10 +98,12 @@ void RuntimeProviderTest::keepsUnsupportedProviderDisabled() {
 }
 
 void RuntimeProviderTest::fallsBackToEnabledLocalProviderForDisabledSelection() {
-    const OllamaRuntimeProvider ollama{
-        QStringLiteral("http://127.0.0.1:11434"), healthyHealth(),
-        {OllamaModelSummary{QStringLiteral("llama3.2"), {}, 1024}},
-        QStringLiteral("llama3.2"), true, false};
+    const OllamaRuntimeProvider ollama{QStringLiteral("http://127.0.0.1:11434"),
+                                       healthyHealth(),
+                                       {OllamaModelSummary{QStringLiteral("llama3.2"), {}, 1024}},
+                                       QStringLiteral("llama3.2"),
+                                       true,
+                                       false};
     const OpenAICompatibleRuntimeProvider openAi;
     const RuntimeProviderRegistry registry{{ollama.descriptor(), openAi.descriptor()},
                                            QStringLiteral("openai-compatible")};

@@ -323,8 +323,7 @@ void AppSettingsTest::persistsSelectedModelPerProvider() {
     const auto settings = makeSettings();
     QSignalSpy spy(settings.get(), &AppSettings::selectedLocalModelChanged);
 
-    settings->setSelectedModelForProvider(QStringLiteral("ollama"),
-                                          QStringLiteral(" llama3.2 "));
+    settings->setSelectedModelForProvider(QStringLiteral("ollama"), QStringLiteral(" llama3.2 "));
     settings->setSelectedModelForProvider(QStringLiteral("openai-compatible"),
                                           QStringLiteral(" future-model "));
 
@@ -601,7 +600,8 @@ void AppSettingsTest::persistsNativeExperiencePreferences() {
         QVERIFY(settings.reducedMotionEnabled());
         QVERIFY(settings.highContrastEnabled());
         QCOMPARE(settings.uiDensity(), QStringLiteral("Large"));
-        QCOMPARE(settings.notificationCenterJson(), QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
+        QCOMPARE(settings.notificationCenterJson(),
+                 QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
         QCOMPARE(settings.updateWorkflowState(), QStringLiteral("Checked manually"));
         QCOMPARE(updateSpy.count(), 1);
         QCOMPARE(notificationSpy.count(), 1);
@@ -618,7 +618,8 @@ void AppSettingsTest::persistsNativeExperiencePreferences() {
     QVERIFY(reloaded.reducedMotionEnabled());
     QVERIFY(reloaded.highContrastEnabled());
     QCOMPARE(reloaded.uiDensity(), QStringLiteral("Large"));
-    QCOMPARE(reloaded.notificationCenterJson(), QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
+    QCOMPARE(reloaded.notificationCenterJson(),
+             QStringLiteral("{\"notifications\":[{\"id\":\"n1\"}]}"));
     QCOMPARE(reloaded.updateWorkflowState(), QStringLiteral("Checked manually"));
 
     reloaded.setUpdateCheckPolicy(QStringLiteral("unknown"));

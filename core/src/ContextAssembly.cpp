@@ -2133,11 +2133,10 @@ void addDecisionContribution(ContextDecisionSummary& decision, ContextAssemblySo
 
 } // namespace
 
-ContextDecisionSummary
-explainContextDecision(const PromptContextInjectionResult& injection,
-                       const ConversationSalienceSummary& salience,
-                       const MemoryRelevanceSummary& memory,
-                       const ConversationSummaryResult& summary) {
+ContextDecisionSummary explainContextDecision(const PromptContextInjectionResult& injection,
+                                              const ConversationSalienceSummary& salience,
+                                              const MemoryRelevanceSummary& memory,
+                                              const ConversationSummaryResult& summary) {
     ContextDecisionSummary decision;
     decision.trace.orderingStages = {
         QStringLiteral("recent transcript"),
@@ -2234,10 +2233,11 @@ explainContextDecision(const PromptContextInjectionResult& injection,
     }
 
     decision.fallback.active = !summaryInjected;
-    decision.fallback.reason =
-        summaryInjected ? QString() : (summary.fallback.reason.trimmed().isEmpty()
-                                           ? QStringLiteral("summary unavailable or budget-excluded")
-                                           : summary.fallback.reason.simplified());
+    decision.fallback.reason = summaryInjected
+                                   ? QString()
+                                   : (summary.fallback.reason.trimmed().isEmpty()
+                                          ? QStringLiteral("summary unavailable or budget-excluded")
+                                          : summary.fallback.reason.simplified());
     decision.fallback.summary =
         summaryInjected ? QStringLiteral("No fallback required; continuity summary was included.")
                         : QStringLiteral("Fallback active: transcript-only continuity; %1.")
@@ -2246,22 +2246,17 @@ explainContextDecision(const PromptContextInjectionResult& injection,
     decision.trace.reasonSummaries = contextDecisionInclusionSummaries(decision);
     decision.trace.reasonSummaries.append(contextDecisionExclusionSummaries(decision));
     decision.trace.developerSummaries = {
-        decision.budget.summary,
-        salience.budget.summary,
-        memory.budget.summary,
-        summary.budget.summary,
-        decision.fallback.summary,
+        decision.budget.summary, salience.budget.summary,   memory.budget.summary,
+        summary.budget.summary,  decision.fallback.summary,
     };
-    decision.trace.summary =
-        QStringLiteral("Ordering: %1. %2")
-            .arg(decision.trace.orderingStages.join(QStringLiteral(" -> ")),
-                 decision.budget.summary);
-    decision.summary =
-        QStringLiteral("Context reasoning: %1 included / %2 excluded / %3")
-            .arg(salience.includedCount)
-            .arg(salience.excludedCount + (summaryInjected ? 0 : 1))
-            .arg(decision.fallback.active ? QStringLiteral("fallback active")
-                                          : QStringLiteral("continuity preserved"));
+    decision.trace.summary = QStringLiteral("Ordering: %1. %2")
+                                 .arg(decision.trace.orderingStages.join(QStringLiteral(" -> ")),
+                                      decision.budget.summary);
+    decision.summary = QStringLiteral("Context reasoning: %1 included / %2 excluded / %3")
+                           .arg(salience.includedCount)
+                           .arg(salience.excludedCount + (summaryInjected ? 0 : 1))
+                           .arg(decision.fallback.active ? QStringLiteral("fallback active")
+                                                         : QStringLiteral("continuity preserved"));
     return decision;
 }
 

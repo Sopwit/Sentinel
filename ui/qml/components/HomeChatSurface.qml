@@ -7,7 +7,10 @@ ShellPanel {
     id: homeChat
     required property var viewModel
     property bool compact: width < 760
-    readonly property bool inChatMode: (viewModel.chatMessages && viewModel.chatMessages.count > 0) || (promptInput.text.trim().length > 0)
+    readonly property bool inChatMode: (viewModel.chatMessages && viewModel.chatMessages.count > 0)
+                                       || (promptInput.text.trim().length > 0)
+                                       || (viewModel.conversationHistoryMessageCount > 0)
+                                       || sendBusy
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property bool chatReady: viewModel.localChatSendAvailable
     readonly property bool canSend: viewModel.localChatSendAvailable
@@ -1640,7 +1643,7 @@ ShellPanel {
             // Header
             Rectangle {
                 Layout.fillWidth: true
-                height: 1
+                implicitHeight: 1
                 color: "transparent"
             }
 

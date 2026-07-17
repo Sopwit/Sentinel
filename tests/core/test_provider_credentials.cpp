@@ -2,9 +2,9 @@
 
 #include <QtTest>
 
+using sentinel::core::defaultProviderCredentialRegistry;
 using sentinel::core::inMemoryTestCredentialStore;
 using sentinel::core::ProviderCredentialStatus;
-using sentinel::core::defaultProviderCredentialRegistry;
 
 class ProviderCredentialsTest final : public QObject {
     Q_OBJECT
@@ -29,9 +29,8 @@ void ProviderCredentialsTest::exposesMetadataOnlyDefaults() {
 void ProviderCredentialsTest::keepsCloudProvidersMissingAndDisabled() {
     const auto registry = defaultProviderCredentialRegistry();
 
-    for (const auto& providerId :
-         {QStringLiteral("openai-compatible"), QStringLiteral("claude"),
-          QStringLiteral("gemini")}) {
+    for (const auto& providerId : {QStringLiteral("openai-compatible"), QStringLiteral("claude"),
+                                   QStringLiteral("gemini")}) {
         const auto readiness = registry.readinessForProvider(providerId);
         QCOMPARE(readiness.status, ProviderCredentialStatus::Missing);
         QVERIFY(readiness.placeholderReady);
@@ -45,10 +44,12 @@ void ProviderCredentialsTest::includesCredentialStoreReadiness() {
     const auto registry = defaultProviderCredentialRegistry();
 
     QVERIFY(registry.summary().summary.contains(QStringLiteral("credential store is disabled")));
-    QVERIFY(registry.requirementSummaries().join(QStringLiteral("\n"))
-                .contains(QStringLiteral("requiresFutureImplementation"))
-            || registry.requirementSummaries().join(QStringLiteral("\n"))
-                   .contains(QStringLiteral("disabledFallback")));
+    QVERIFY(registry.requirementSummaries()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("requiresFutureImplementation")) ||
+            registry.requirementSummaries()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("disabledFallback")));
 }
 
 void ProviderCredentialsTest::providerReadinessRemainsDisabledWithoutExplicitKeyConfiguration() {
@@ -72,7 +73,8 @@ void ProviderCredentialsTest::refusesSecretPersistenceAndExecutionSafety() {
     QVERIFY(!safety.cloudRequestsAllowed);
     QVERIFY(!safety.backgroundDiscoveryAllowed);
     QVERIFY(!safety.fallbackRoutingAllowed);
-    QVERIFY(registry.safetySummaries().join(QStringLiteral("\n"))
+    QVERIFY(registry.safetySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("plaintextStorage=refused")));
 }
 

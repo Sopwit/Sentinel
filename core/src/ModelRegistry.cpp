@@ -44,10 +44,9 @@ QString familyFor(const QString& rawName) {
 QString sizeClassFor(const QString& rawName) {
     const auto lower = rawName.toLower();
     const QStringList classes{
-        QStringLiteral("1b"),  QStringLiteral("1.5b"), QStringLiteral("3b"),
-        QStringLiteral("4b"),  QStringLiteral("7b"),   QStringLiteral("8b"),
-        QStringLiteral("13b"), QStringLiteral("14b"),  QStringLiteral("32b"),
-        QStringLiteral("70b"),
+        QStringLiteral("1b"),  QStringLiteral("1.5b"), QStringLiteral("3b"),  QStringLiteral("4b"),
+        QStringLiteral("7b"),  QStringLiteral("8b"),   QStringLiteral("13b"), QStringLiteral("14b"),
+        QStringLiteral("32b"), QStringLiteral("70b"),
     };
     for (const auto& sizeClass : classes) {
         if (lower.contains(sizeClass)) {
@@ -357,11 +356,11 @@ QString modelDetailSummaryLine(const ModelSummary& model) {
              model.sizeClass == QStringLiteral("3B") || model.sizeClass == QStringLiteral("1B") ||
                      model.sizeClass == QStringLiteral("1.5B")
                  ? QStringLiteral("Fast class")
-                 : model.sizeClass == QStringLiteral("7B") || model.sizeClass == QStringLiteral("8B")
-                       ? QStringLiteral("Balanced class")
-                       : QStringLiteral("Unknown/manual"),
+             : model.sizeClass == QStringLiteral("7B") || model.sizeClass == QStringLiteral("8B")
+                 ? QStringLiteral("Balanced class")
+                 : QStringLiteral("Unknown/manual"),
              model.readiness == ModelReadiness::Available ? QStringLiteral("None")
-                                                           : model.restriction.summary);
+                                                          : model.restriction.summary);
 }
 
 QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& models,
@@ -374,13 +373,14 @@ QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& mo
             continue;
         }
         const auto diskLabel = bytesLabel(model.sizeBytes);
-        auto capabilities = QList<ModelCapability>{ModelCapability::Chat, ModelCapability::Streaming};
+        auto capabilities =
+            QList<ModelCapability>{ModelCapability::Chat, ModelCapability::Streaming};
         const auto lower = rawName.toLower();
         if (lower.contains(QStringLiteral("coder")) || lower.contains(QStringLiteral("code"))) {
             capabilities.append(ModelCapability::Code);
         }
-        if (lower.contains(QStringLiteral("reason")) || lower.contains(QStringLiteral("deepseek")) ||
-            lower.contains(QStringLiteral("qwen"))) {
+        if (lower.contains(QStringLiteral("reason")) ||
+            lower.contains(QStringLiteral("deepseek")) || lower.contains(QStringLiteral("qwen"))) {
             capabilities.append(ModelCapability::Reasoning);
         }
         if (lower.contains(QStringLiteral("embed")) || lower.contains(QStringLiteral("nomic"))) {
@@ -402,10 +402,10 @@ QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& mo
             model.sizeBytes,
             diskLabel,
             sizeClassFor(rawName) == QStringLiteral("3B") ? QStringLiteral("4-8 GB class")
-                                                          : sizeClassFor(rawName) == QStringLiteral("7B") ||
-                                                                    sizeClassFor(rawName) == QStringLiteral("8B")
-                                                                ? QStringLiteral("8-16 GB class")
-                                                                : QStringLiteral("Unknown"),
+            : sizeClassFor(rawName) == QStringLiteral("7B") ||
+                    sizeClassFor(rawName) == QStringLiteral("8B")
+                ? QStringLiteral("8-16 GB class")
+                : QStringLiteral("Unknown"),
             sizeClassFor(rawName) == QStringLiteral("3B") ? 8192 : 0,
             ModelRestriction{},
             ModelSafetyReport{},
@@ -421,58 +421,53 @@ QList<ModelSummary> modelSummariesFromOllama(const QList<OllamaModelSummary>& mo
     return summaries;
 }
 
-
 QList<ModelSummary> localAiCatalogPlaceholders() {
     return {
-        catalogPlaceholder(QStringLiteral("lm-studio"), QStringLiteral("LM Studio"),
-                           QStringLiteral("local-open-model"), QStringLiteral("Open Local Model"),
+        catalogPlaceholder(
+            QStringLiteral("lm-studio"), QStringLiteral("LM Studio"),
+            QStringLiteral("local-open-model"), QStringLiteral("Open Local Model"),
+            QStringLiteral("Unknown"),
+            {QStringLiteral("chat"), QStringLiteral("code"), QStringLiteral("reasoning")},
+            QStringLiteral("Model dependent"), 0,
+            QStringLiteral("LM Studio local server catalog is represented for "
+                           "readiness only. Sentinel does not probe or call it.")),
+        catalogPlaceholder(QStringLiteral("llama-cpp-server"), QStringLiteral("llama.cpp server"),
+                           QStringLiteral("gguf-local-model"), QStringLiteral("GGUF"),
                            QStringLiteral("Unknown"),
-                           {QStringLiteral("chat"), QStringLiteral("code"),
-                            QStringLiteral("reasoning")},
-                           QStringLiteral("Model dependent"), 0,
-                           QStringLiteral("LM Studio local server catalog is represented for "
-                                          "readiness only. Sentinel does not probe or call it.")),
-        catalogPlaceholder(QStringLiteral("llama-cpp-server"),
-                           QStringLiteral("llama.cpp server"), QStringLiteral("gguf-local-model"),
-                           QStringLiteral("GGUF"), QStringLiteral("Unknown"),
                            {QStringLiteral("chat"), QStringLiteral("code")},
                            QStringLiteral("Quantization dependent"), 0,
                            QStringLiteral("llama.cpp server metadata is future-scoped and "
                                           "loopback-only when explicitly checked later.")),
         catalogPlaceholder(QStringLiteral("openai-compatible-local"),
                            QStringLiteral("OpenAI-compatible local endpoint"),
-                           QStringLiteral("local-endpoint-model"), QStringLiteral("OpenAI-compatible"),
-                           QStringLiteral("Unknown"),
+                           QStringLiteral("local-endpoint-model"),
+                           QStringLiteral("OpenAI-compatible"), QStringLiteral("Unknown"),
                            {QStringLiteral("chat"), QStringLiteral("reasoning")},
                            QStringLiteral("Endpoint dependent"), 0,
                            QStringLiteral("OpenAI-compatible local endpoint metadata is "
                                           "disabled until explicit local configuration exists.")),
-        catalogPlaceholder(QStringLiteral("huggingface-catalog"),
-                           QStringLiteral("Hugging Face catalog placeholder"),
-                           QStringLiteral("hf-metadata-entry"), QStringLiteral("Catalog"),
-                           QStringLiteral("Unknown"),
-                           {QStringLiteral("chat"), QStringLiteral("code"),
-                            QStringLiteral("embeddings")},
-                           QStringLiteral("Unknown"), 0,
-                           QStringLiteral("Hugging Face appears as a catalog placeholder only; "
-                                          "no catalog fetch or cloud call is performed.")),
-        catalogPlaceholder(QStringLiteral("mlx-catalog"),
-                           QStringLiteral("MLX local/community catalog"),
-                           QStringLiteral("mlx-metadata-entry"), QStringLiteral("MLX"),
-                           QStringLiteral("Unknown"),
-                           {QStringLiteral("chat"), QStringLiteral("code"),
-                            QStringLiteral("reasoning")},
-                           QStringLiteral("Apple Silicon dependent"), 0,
-                           QStringLiteral("MLX models catalog optimized for Apple Silicon; "
-                                          "Sentinel does not build or run them directly.")),
-        catalogPlaceholder(QStringLiteral("custom-catalog"),
-                           QStringLiteral("Future custom catalogs"),
-                           QStringLiteral("custom-metadata-entry"), QStringLiteral("Custom"),
-                           QStringLiteral("Unknown"),
-                           {QStringLiteral("chat"), QStringLiteral("embeddings")},
-                           QStringLiteral("Unknown"), 0,
-                           QStringLiteral("Custom catalogs are represented as future metadata "
-                                          "without import, scan, or fetch behavior.")),
+        catalogPlaceholder(
+            QStringLiteral("huggingface-catalog"),
+            QStringLiteral("Hugging Face catalog placeholder"), QStringLiteral("hf-metadata-entry"),
+            QStringLiteral("Catalog"), QStringLiteral("Unknown"),
+            {QStringLiteral("chat"), QStringLiteral("code"), QStringLiteral("embeddings")},
+            QStringLiteral("Unknown"), 0,
+            QStringLiteral("Hugging Face appears as a catalog placeholder only; "
+                           "no catalog fetch or cloud call is performed.")),
+        catalogPlaceholder(
+            QStringLiteral("mlx-catalog"), QStringLiteral("MLX local/community catalog"),
+            QStringLiteral("mlx-metadata-entry"), QStringLiteral("MLX"), QStringLiteral("Unknown"),
+            {QStringLiteral("chat"), QStringLiteral("code"), QStringLiteral("reasoning")},
+            QStringLiteral("Apple Silicon dependent"), 0,
+            QStringLiteral("MLX models catalog optimized for Apple Silicon; "
+                           "Sentinel does not build or run them directly.")),
+        catalogPlaceholder(
+            QStringLiteral("custom-catalog"), QStringLiteral("Future custom catalogs"),
+            QStringLiteral("custom-metadata-entry"), QStringLiteral("Custom"),
+            QStringLiteral("Unknown"), {QStringLiteral("chat"), QStringLiteral("embeddings")},
+            QStringLiteral("Unknown"), 0,
+            QStringLiteral("Custom catalogs are represented as future metadata "
+                           "without import, scan, or fetch behavior.")),
     };
 }
 
@@ -499,9 +494,9 @@ ModelSummary disabledProviderModelPlaceholder(const QString& providerId,
         QStringLiteral("Unknown"),
         QStringLiteral("Unknown"),
         0,
-        ModelRestriction{false, true, true,
-                         QStringLiteral("%1 is disabled; model actions are unavailable.")
-                             .arg(label)},
+        ModelRestriction{
+            false, true, true,
+            QStringLiteral("%1 is disabled; model actions are unavailable.").arg(label)},
         ModelSafetyReport{},
         ModelRuntimeBadge{label, QStringLiteral("Future Scoped"),
                           modelReadinessName(ModelReadiness::Disabled)},
@@ -598,7 +593,8 @@ QStringList ModelRegistry::recommendedModelLibrarySummaries() const {
     for (const auto& model : models_) {
         if (model.status == ModelStatus::Available &&
             (model.sizeClass == QStringLiteral("3B") || model.sizeClass == QStringLiteral("7B") ||
-             model.sizeClass == QStringLiteral("8B") || hasCapability(model, ModelCapability::Code))) {
+             model.sizeClass == QStringLiteral("8B") ||
+             hasCapability(model, ModelCapability::Code))) {
             summaries.append(QStringLiteral("Recommended installed: %1 - %2 - best use: %3")
                                  .arg(model.displayName, model.approximateRamClass,
                                       hasCapability(model, ModelCapability::Code)
@@ -629,7 +625,8 @@ QStringList ModelRegistry::modelDetailSummaries() const {
 
 QStringList ModelRegistry::selectedModelCapabilityLabels() const {
     const auto selected = selectedModel();
-    return selected.rawName.isEmpty() ? QStringList{} : modelCapabilityLabels(selected.capabilities);
+    return selected.rawName.isEmpty() ? QStringList{}
+                                      : modelCapabilityLabels(selected.capabilities);
 }
 
 QString ModelRegistry::selectedModelReadinessSummary() const {
@@ -651,7 +648,8 @@ ModelRegistrySummary ModelRegistry::summary() const {
     registrySummary.selectedModelId = selectedModelId_;
 
     for (const auto& model : models_) {
-        if (model.status == ModelStatus::Available && model.readiness == ModelReadiness::Available) {
+        if (model.status == ModelStatus::Available &&
+            model.readiness == ModelReadiness::Available) {
             ++registrySummary.availableCount;
         }
         if (isPlaceholder(model)) {
@@ -660,8 +658,9 @@ ModelRegistrySummary ModelRegistry::summary() const {
     }
 
     const auto selected = selectedModel();
-    registrySummary.selectedReadiness =
-        selected.rawName.isEmpty() ? QStringLiteral("missing") : modelReadinessName(selected.readiness);
+    registrySummary.selectedReadiness = selected.rawName.isEmpty()
+                                            ? QStringLiteral("missing")
+                                            : modelReadinessName(selected.readiness);
     if (models_.isEmpty()) {
         registrySummary.status = ModelRegistryStatus::Empty;
     } else if (registrySummary.availableCount > 0) {
@@ -694,8 +693,8 @@ QStringList deterministicModelAdvisorRecommendations(const ModelAdvisorInput& in
             continue;
         }
         const bool codeGoal = goal.contains(QStringLiteral("cod"));
-        const bool fastGoal = preference.contains(QStringLiteral("speed")) ||
-                              model.sizeClass == QStringLiteral("3B");
+        const bool fastGoal =
+            preference.contains(QStringLiteral("speed")) || model.sizeClass == QStringLiteral("3B");
         if ((codeGoal && hasCapability(model, ModelCapability::Code)) || fastGoal ||
             recommendations.isEmpty()) {
             recommendations.append(
@@ -730,7 +729,8 @@ QStringList deterministicModelAdvisorAvoidList(const ModelAdvisorInput& input) {
         QStringLiteral("Avoid very large 32B/70B models unless the user explicitly confirms RAM, "
                        "disk, thermal, and provider readiness."),
         QStringLiteral("Avoid unknown-license catalog entries until license review is complete."),
-        QStringLiteral("External tools such as llmfit are future license-reviewed inspiration only."),
+        QStringLiteral(
+            "External tools such as llmfit are future license-reviewed inspiration only."),
     };
 }
 
@@ -764,10 +764,10 @@ QStringList benchmarkHubPlaceholderSummaries(const QList<ModelSummary>& models) 
                              .arg(model.displayName, model.approximateRamClass,
                                   model.sizeClass == QStringLiteral("3B")
                                       ? QStringLiteral("battery-friendly")
-                                      : model.sizeClass == QStringLiteral("7B") ||
-                                                model.sizeClass == QStringLiteral("8B")
-                                            ? QStringLiteral("balanced performance")
-                                            : QStringLiteral("unknown")));
+                                  : model.sizeClass == QStringLiteral("7B") ||
+                                          model.sizeClass == QStringLiteral("8B")
+                                      ? QStringLiteral("balanced performance")
+                                      : QStringLiteral("unknown")));
     }
     if (models.isEmpty()) {
         summaries.append(QStringLiteral("No benchmark records. Tokens/sec, first-token latency, "
