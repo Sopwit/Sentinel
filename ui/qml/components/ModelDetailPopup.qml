@@ -19,6 +19,7 @@ SentinelOverlayModal {
     property string pullError: ""
 
     signal downloadRequested(string modelId)
+    signal cancelRequested()
 
     // ── Geometry ──────────────────────────────────────────────────────────────
     preferredWidth:  500
@@ -349,16 +350,11 @@ SentinelOverlayModal {
                     RowLayout {
                         Layout.fillWidth: true
                         Label {
-                            text: qsTr("Downloading model…")
+                            Layout.fillWidth: true
+                            text: root.pullStatus.length > 0 ? root.pullStatus : qsTr("Downloading model…")
                             font.pixelSize: SentinelTheme.fontSmall
                             color: root.accent
-                        }
-                        Item { Layout.fillWidth: true }
-                        Label {
-                            text: Math.round(root.pullProgress * 100) + "%"
-                            font.pixelSize: SentinelTheme.fontSmall
-                            font.weight: Font.DemiBold
-                            color: root.accent
+                            elide: Text.ElideRight
                         }
                     }
 
