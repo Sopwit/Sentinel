@@ -648,15 +648,15 @@ Item {
                         id: collapseBtn
                         Layout.alignment: Qt.AlignVCenter
                         Layout.rightMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceMd
-                        implicitHeight: 28
-                        implicitWidth: 28
+                        implicitHeight: 36
+                        implicitWidth: 36
                         flat: true
                         onClicked: modelsPage.sidebarCollapsed = !modelsPage.sidebarCollapsed
                         hoverEnabled: true
 
                         contentItem: Label {
                             text: modelsPage.sidebarCollapsed ? "»" : "«"
-                            font.pixelSize: 16
+                            font.pixelSize: 28
                             font.bold: true
                             color: collapseBtn.hovered ? modelsPage.modeAccent : SentinelTheme.textMuted
                             horizontalAlignment: Text.AlignHCenter
