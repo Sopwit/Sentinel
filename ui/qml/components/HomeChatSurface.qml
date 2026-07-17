@@ -442,37 +442,37 @@ ShellPanel {
                             hoverEnabled: true
                             onClicked: homeChat.viewModel.switchConversation(convItem.convId)
 
-                            contentItem: RowLayout {
-                                spacing: 3
-                                anchors.left: parent.left
-                                anchors.right: convItemMenuBtn.left
-                                anchors.verticalCenter: parent.verticalCenter
-                                anchors.leftMargin: SentinelTheme.spaceSm
-                                anchors.rightMargin: SentinelTheme.spaceXs
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: convItem.convTitle
-                                    color: convItem.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    font.bold: convItem.active
-                                    verticalAlignment: Text.AlignVCenter
-                                    maximumLineCount: 1
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    visible: convItem.pinned
-                                    text: "\uD83D\uDCCC"
-                                    font.pixelSize: 9
-                                    color: homeChat.modeAccent
-                                }
-                            }
-
                             background: Rectangle {
                                 radius: SentinelTheme.radiusMd
                                 color: InteractionTokens.surfaceColor(convItemBtn.hovered, convItemBtn.down, convItem.active, homeChat.modeAccent)
                                 border.color: InteractionTokens.borderColor(convItemBtn.activeFocus, convItemBtn.hovered, convItem.active, homeChat.modeAccent)
+                            }
+                        }
+
+                        RowLayout {
+                            spacing: 3
+                            anchors.left: parent.left
+                            anchors.right: convItemMenuBtn.left
+                            anchors.verticalCenter: parent.verticalCenter
+                            anchors.leftMargin: SentinelTheme.spaceSm
+                            anchors.rightMargin: SentinelTheme.spaceXs
+
+                            Text {
+                                Layout.fillWidth: true
+                                text: convItem.convTitle
+                                color: convItem.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                font.bold: convItem.active
+                                verticalAlignment: Text.AlignVCenter
+                                maximumLineCount: 1
+                                elide: Text.ElideRight
+                            }
+
+                            Text {
+                                visible: convItem.pinned
+                                text: "\uD83D\uDCCC"
+                                font.pixelSize: 9
+                                color: homeChat.modeAccent
                             }
                         }
 
