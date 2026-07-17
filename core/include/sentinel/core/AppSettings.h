@@ -50,6 +50,11 @@ class AppSettings final : public QObject {
                    whisperModelPathChanged)
     Q_PROPERTY(bool piperFileOutputExecutionEnabled READ piperFileOutputExecutionEnabled WRITE
                    setPiperFileOutputExecutionEnabled NOTIFY piperFileOutputExecutionEnabledChanged)
+    Q_PROPERTY(QString selectedTtsEngine READ selectedTtsEngine WRITE setSelectedTtsEngine NOTIFY
+                   selectedTtsEngineChanged)
+    Q_PROPERTY(QString kokoroModelPath READ kokoroModelPath WRITE setKokoroModelPath NOTIFY
+                   kokoroModelPathChanged)
+    Q_PROPERTY(QString kokoroVoice READ kokoroVoice WRITE setKokoroVoice NOTIFY kokoroVoiceChanged)
     Q_PROPERTY(QString activeConversationId READ activeConversationId WRITE setActiveConversationId
                    NOTIFY activeConversationIdChanged)
     Q_PROPERTY(QString selectedWorkspaceId READ selectedWorkspaceId WRITE setSelectedWorkspaceId
@@ -160,6 +165,12 @@ public:
     void setWhisperModelPath(const QString& path);
     bool piperFileOutputExecutionEnabled() const;
     void setPiperFileOutputExecutionEnabled(bool enabled);
+    QString selectedTtsEngine() const;
+    void setSelectedTtsEngine(const QString& engine);
+    QString kokoroModelPath() const;
+    void setKokoroModelPath(const QString& path);
+    QString kokoroVoice() const;
+    void setKokoroVoice(const QString& voice);
     QString activeConversationId() const;
     void setActiveConversationId(const QString& conversationId);
     QString selectedWorkspaceId() const;
@@ -237,6 +248,9 @@ signals:
     void whisperBinaryPathChanged();
     void whisperModelPathChanged();
     void piperFileOutputExecutionEnabledChanged();
+    void selectedTtsEngineChanged();
+    void kokoroModelPathChanged();
+    void kokoroVoiceChanged();
     void activeConversationIdChanged();
     void selectedWorkspaceIdChanged();
     void workspaceSettingsChanged();
@@ -273,6 +287,9 @@ private:
     static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";
     static constexpr auto whisperModelPathKey = "whisperModelPath";
     static constexpr auto piperFileOutputExecutionEnabledKey = "piperFileOutputExecutionEnabled";
+    static constexpr auto selectedTtsEngineKey = "selectedTtsEngine";
+    static constexpr auto kokoroModelPathKey = "kokoroModelPath";
+    static constexpr auto kokoroVoiceKey = "kokoroVoice";
     static constexpr auto activeConversationIdKey = "activeConversationId";
     static constexpr auto selectedWorkspaceIdKey = "selectedWorkspaceId";
     static constexpr auto defaultWorkspaceIdKey = "defaultWorkspaceId";
@@ -300,9 +317,9 @@ private:
     static constexpr auto updateWorkflowStateKey = "updateWorkflowState";
     static constexpr auto controlledAgentTasksJsonKey = "controlledAgentTasksJson";
     static constexpr auto controlledAgentPermissionsJsonKey = "controlledAgentPermissionsJson";
-    static constexpr auto defaultThemeName = "Sentinel Dark";
+    static constexpr auto defaultThemeName = "Liquid Glass Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
-    static constexpr auto defaultAppLanguage = "system";
+    static constexpr auto defaultAppLanguage = "en";
     static constexpr auto defaultSelectedRuntimeProvider = "ollama";
     static constexpr auto defaultSelectedWorkspaceId = "personal";
     static constexpr auto defaultAttachmentBehavior = "Manual Attachments Only";
@@ -315,6 +332,8 @@ private:
     static constexpr auto defaultOnboardingAiProvider = "Ollama";
     static constexpr auto defaultUiDensity = "Comfortable";
     static constexpr auto defaultUpdateWorkflowState = "Not Checked";
+    static constexpr auto defaultSelectedTtsEngine = "Piper";
+    static constexpr auto defaultKokoroVoice = "af_bella";
     static constexpr int defaultLocalInferenceTimeoutMs = 30000;
 
     std::unique_ptr<ISettingsStore> store_;

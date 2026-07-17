@@ -237,11 +237,11 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.chatHistoryStatus(), QStringLiteral("Runtime Only"));
     QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Sentinel"));
     QVERIFY(fixture.viewModel.availableModes().isEmpty());
-    QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Sentinel Dark"));
+    QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Liquid Glass Dark"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
-    QCOMPARE(fixture.viewModel.appLanguage(), QStringLiteral("system"));
+    QVERIFY(fixture.viewModel.availableLanguages().contains(fixture.viewModel.appLanguage()));
     QCOMPARE(fixture.viewModel.availableLanguages(),
-             QStringList({QStringLiteral("system"), QStringLiteral("en"), QStringLiteral("tr")}));
+             QStringList({QStringLiteral("en"), QStringLiteral("tr")}));
     QVERIFY(!fixture.viewModel.developerModeEnabled());
     QCOMPARE(fixture.viewModel.updateCheckPolicy(), QStringLiteral("Ask Before Checking"));
     QCOMPARE(fixture.viewModel.notificationPolicy(), QStringLiteral("Important Only"));
@@ -3111,8 +3111,6 @@ void DesktopShellViewModelTest::exposesLanguageSettings() {
     fixture.viewModel.setAppLanguage(QStringLiteral("tr"));
 
     QCOMPARE(fixture.viewModel.appLanguage(), QStringLiteral("tr"));
-    QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("system")),
-             QStringLiteral("System Default"));
     QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("en")),
              QStringLiteral("English"));
     QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("tr")), QStringLiteral("Türkçe"));

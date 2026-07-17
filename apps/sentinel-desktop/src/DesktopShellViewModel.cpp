@@ -1501,6 +1501,33 @@ void DesktopShellViewModel::setPiperModelPath(const QString& path) {
     }
 }
 
+QString DesktopShellViewModel::selectedTtsEngine() const {
+    return settings_.selectedTtsEngine();
+}
+
+void DesktopShellViewModel::setSelectedTtsEngine(const QString& engine) {
+    settings_.setSelectedTtsEngine(engine);
+    emit voiceConfigurationChanged();
+}
+
+QString DesktopShellViewModel::kokoroModelPath() const {
+    return settings_.kokoroModelPath();
+}
+
+void DesktopShellViewModel::setKokoroModelPath(const QString& path) {
+    settings_.setKokoroModelPath(path);
+    emit voiceConfigurationChanged();
+}
+
+QString DesktopShellViewModel::kokoroVoice() const {
+    return settings_.kokoroVoice();
+}
+
+void DesktopShellViewModel::setKokoroVoice(const QString& voice) {
+    settings_.setKokoroVoice(voice);
+    emit voiceConfigurationChanged();
+}
+
 QString DesktopShellViewModel::whisperBinaryPath() const {
     return controller_.whisperBinaryPath();
 }

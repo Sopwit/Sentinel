@@ -3,17 +3,17 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    property string activeTheme: "Sentinel Dark"
+    property string activeTheme: "Liquid Glass Dark"
     property bool reducedMotion: false
     property bool highContrast: false
     property string uiDensity: "Comfortable"
     readonly property real densityScale: uiDensity === "Compact" ? 0.90
                                        : uiDensity === "Large" ? 1.12
                                        : 1.0
-    readonly property bool midnightTheme: activeTheme === "Midnight"
-    readonly property bool auroraTheme: activeTheme === "Aurora"
-    readonly property bool graphiteTheme: activeTheme === "Graphite"
-    readonly property bool systemAdaptiveTheme: activeTheme === "System Adaptive"
+    readonly property bool midnightTheme: activeTheme === "Midnight Blue"
+    readonly property bool auroraTheme: activeTheme === "Aurora Teal"
+    readonly property bool graphiteTheme: activeTheme === "Graphite Grey"
+    readonly property bool systemAdaptiveTheme: activeTheme === "System Sync"
     readonly property bool liquidGlassDarkTheme: activeTheme === "Liquid Glass Dark"
     readonly property bool liquidGlassLightTheme: activeTheme === "Liquid Glass Light"
     readonly property bool liquidGlassTheme: liquidGlassDarkTheme || liquidGlassLightTheme
@@ -69,27 +69,30 @@ QtObject {
     readonly property color userMessageSurface: liquidGlassLightTheme ? "#c8daf08c" : "#203b468c"
     readonly property color errorSurface: liquidGlassLightTheme ? "#fde8e8" : "#33191a"
 
-    readonly property color textPrimary: liquidGlassLightTheme ? (highContrast ? "#000000" : "#0f1724")
+    readonly property color textPrimary: highContrast
+                                       ? (liquidGlassLightTheme ? "#000000" : "#ffffff")
+                                       : liquidGlassLightTheme ? "#0f1724"
                                        : liquidGlassDarkTheme ? "#e8f0ff"
-                                       : highContrast ? "#ffffff"
                                        : graphiteTheme ? "#f2f4f4"
                                        : auroraTheme ? "#effbf7"
                                        : midnightTheme ? "#f0f5ff"
                                        : "#eef8ff"
-    readonly property color textMuted: liquidGlassLightTheme ? "#4a5568"
+    readonly property color textMuted: highContrast
+                                     ? (liquidGlassLightTheme ? "#2d3748" : "#f0f5ff")
+                                     : liquidGlassLightTheme ? "#4a5568"
                                      : liquidGlassDarkTheme ? "#8899bb"
-                                     : highContrast ? "#d4e4ec"
                                      : graphiteTheme ? "#a7adaf"
                                      : auroraTheme ? "#9fb8b4"
                                      : midnightTheme ? "#98a9c8"
                                      : "#94abb8"
-    readonly property color textPlaceholder: liquidGlassLightTheme ? "#8898b0"
-                                            : liquidGlassDarkTheme ? "#5a6a84"
-                                            : highContrast ? "#b0ccda"
-                                            : graphiteTheme ? "#777f82"
-                                            : auroraTheme ? "#78908c"
-                                            : midnightTheme ? "#6e7f9e"
-                                            : "#6d8490"
+    readonly property color textPlaceholder: highContrast
+                                           ? (liquidGlassLightTheme ? "#4a5568" : "#d4e4ec")
+                                           : liquidGlassLightTheme ? "#8898b0"
+                                           : liquidGlassDarkTheme ? "#5a6a84"
+                                           : graphiteTheme ? "#777f82"
+                                           : auroraTheme ? "#78908c"
+                                           : midnightTheme ? "#6e7f9e"
+                                           : "#6d8490"
     readonly property color textOnAccent: liquidGlassLightTheme ? "#ffffff" : "#07131a"
 
     readonly property color accent: liquidGlassLightTheme ? "#4f8ef7"
@@ -119,12 +122,16 @@ QtObject {
     readonly property color accentBorder: liquidGlassLightTheme ? "#4f8ef726" : "#c8ecff26"
     readonly property color accentBorderSubtle: liquidGlassLightTheme ? "#0000000d" : "#ffffff0d"
     readonly property color accentBorderSoft: liquidGlassLightTheme ? "#4f8ef71a" : "#9bdfff1a"
-    readonly property color focusBorder: liquidGlassLightTheme ? "#4f8ef799"
-                                       : highContrast ? "#ffffff99" : "#9bdfff66"
+    readonly property color focusBorder: highContrast
+                                       ? (liquidGlassLightTheme ? "#000000" : "#ffffff")
+                                       : liquidGlassLightTheme ? "#4f8ef799"
+                                       : "#9bdfff66"
     readonly property color success: liquidGlassLightTheme ? "#10b981" : "#9ff0d0"
     readonly property color successBorder: liquidGlassLightTheme ? "#10b98133" : "#9ff0d033"
     readonly property color errorBorder: liquidGlassLightTheme ? "#ef444466" : "#d66b6b66"
-    readonly property color separator: liquidGlassLightTheme ? "#0000000f" : "#ffffff0f"
+    readonly property color separator: highContrast
+                                     ? (liquidGlassLightTheme ? "#33000000" : "#33ffffff")
+                                     : liquidGlassLightTheme ? "#0000000f" : "#ffffff0f"
     readonly property color glowSoft: liquidGlassLightTheme ? "#4f8ef72b" : "#9bdfff2b"
     readonly property color glowStrong: liquidGlassLightTheme ? "#4f8ef759" : "#9bdfff59"
     readonly property color glassSoft: liquidGlassLightTheme ? "#ffffff48" : "#ffffff09"

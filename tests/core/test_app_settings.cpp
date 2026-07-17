@@ -58,11 +58,11 @@ static std::unique_ptr<AppSettings> makeSettings() {
 void AppSettingsTest::exposesDefaults() {
     const auto settings = makeSettings();
 
-    QCOMPARE(settings->themeName(), QStringLiteral("Sentinel Dark"));
+    QCOMPARE(settings->themeName(), QStringLiteral("Liquid Glass Dark"));
     QCOMPARE(settings->configurationProfile(), QStringLiteral("Desktop Alpha"));
-    QCOMPARE(settings->appLanguage(), QStringLiteral("system"));
+    QVERIFY(settings->availableLanguages().contains(settings->appLanguage()));
     QCOMPARE(settings->availableLanguages(),
-             QStringList({QStringLiteral("system"), QStringLiteral("en"), QStringLiteral("tr")}));
+             QStringList({QStringLiteral("en"), QStringLiteral("tr")}));
     QVERIFY(settings->selectedLocalModel().isEmpty());
     QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
     QVERIFY(!settings->localChatInferenceEnabled());
@@ -117,7 +117,7 @@ void AppSettingsTest::ignoresBlankThemeName() {
 
     settings->setThemeName(QStringLiteral("   "));
 
-    QCOMPARE(settings->themeName(), QStringLiteral("Sentinel Dark"));
+    QCOMPARE(settings->themeName(), QStringLiteral("Liquid Glass Dark"));
     QCOMPARE(spy.count(), 0);
 }
 
@@ -134,9 +134,7 @@ void AppSettingsTest::updatesConfigurationProfile() {
 void AppSettingsTest::exposesLanguageDefaults() {
     const auto settings = makeSettings();
 
-    QCOMPARE(settings->appLanguage(), QStringLiteral("system"));
-    QCOMPARE(settings->languageDisplayName(QStringLiteral("system")),
-             QStringLiteral("System Default"));
+    QVERIFY(settings->availableLanguages().contains(settings->appLanguage()));
     QCOMPARE(settings->languageDisplayName(QStringLiteral("en")), QStringLiteral("English"));
     QCOMPARE(settings->languageDisplayName(QStringLiteral("tr")), QStringLiteral("Türkçe"));
 }
@@ -156,10 +154,10 @@ void AppSettingsTest::persistsLanguageSelection() {
         QCOMPARE(spy.count(), 1);
 
         settings.setAppLanguage(QStringLiteral("unsupported"));
-        QCOMPARE(settings.appLanguage(), QStringLiteral("system"));
-        QCOMPARE(spy.count(), 2);
+        QVERIFY(settings.availableLanguages().contains(settings.appLanguage()));
 
         settings.setAppLanguage(QStringLiteral("en"));
+        QCOMPARE(settings.appLanguage(), QStringLiteral("en"));
     }
 
     AppSettings reloaded{std::make_unique<sentinel::core::JsonSettingsStore>(filePath)};
@@ -656,6 +654,25 @@ void AppSettingsTest::persistsVoiceConfigurationPaths() {
     QCOMPARE(piperModelSpy.count(), 1);
     QCOMPARE(whisperBinarySpy.count(), 1);
     QCOMPARE(whisperModelSpy.count(), 1);
+
+    QSignalSpy ttsEngineSpy(settings.get(), &AppSettings::selectedTtsEngineChanged);
+    QSignalSpy kokoroModelSpy(settings.get(), &AppSettings::kokoroModelPathChanged);
+    QSignalSpy kokoroVoiceSpy(settings.get(), &AppSettings::kokoroVoiceChanged);
+
+    QCOMPARE(settings->selectedTtsEngine(), QStringLiteral("Piper"));
+    QCOMPARE(settings->kokoroVoice(), QStringLiteral("af_bella"));
+
+    settings->setSelectedTtsEngine(QStringLiteral("Kokoro"));
+    settings->setKokoroModelPath(QStringLiteral(" /tmp/kokoro.onnx "));
+    settings->setKokoroVoice(QStringLiteral(" af_sky "));
+
+    QCOMPARE(settings->selectedTtsEngine(), QStringLiteral("Kokoro"));
+    QCOMPARE(settings->kokoroModelPath(), QStringLiteral("/tmp/kokoro.onnx"));
+    QCOMPARE(settings->kokoroVoice(), QStringLiteral("af_sky"));
+
+    QCOMPARE(ttsEngineSpy.count(), 1);
+    QCOMPARE(kokoroModelSpy.count(), 1);
+    QCOMPARE(kokoroVoiceSpy.count(), 1);
 }
 
 void AppSettingsTest::persistsPiperFileOutputExecutionOptIn() {

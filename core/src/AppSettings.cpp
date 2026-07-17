@@ -4,6 +4,7 @@
 #include "sentinel/core/ModelRouting.h"
 #include "sentinel/core/OllamaRuntime.h"
 
+#include <QLocale>
 #include <algorithm>
 
 namespace sentinel::core {
@@ -191,7 +192,9 @@ void AppSettings::setConfigurationProfile(const QString& configurationProfile) {
 }
 
 QString AppSettings::appLanguage() const {
-    const auto fallback = QString::fromLatin1(defaultAppLanguage);
+    const auto systemLanguage = QLocale::system().name().left(2).toLower();
+    const auto fallback =
+        (systemLanguage == QStringLiteral("tr")) ? QStringLiteral("tr") : QStringLiteral("en");
     const auto stored =
         store_ ? store_->value(QString::fromLatin1(appLanguageKey), fallback) : fallback;
     const auto normalized = stored.trimmed().toLower();
@@ -200,9 +203,10 @@ QString AppSettings::appLanguage() const {
 
 void AppSettings::setAppLanguage(const QString& language) {
     const auto normalized = language.trimmed().toLower();
-    const auto selected = availableLanguages().contains(normalized)
-                              ? normalized
-                              : QString::fromLatin1(defaultAppLanguage);
+    const auto systemLanguage = QLocale::system().name().left(2).toLower();
+    const auto fallback =
+        (systemLanguage == QStringLiteral("tr")) ? QStringLiteral("tr") : QStringLiteral("en");
+    const auto selected = availableLanguages().contains(normalized) ? normalized : fallback;
     if (selected == appLanguage() || !store_) {
         return;
     }
@@ -212,7 +216,7 @@ void AppSettings::setAppLanguage(const QString& language) {
 }
 
 QStringList AppSettings::availableLanguages() const {
-    return {QStringLiteral("system"), QStringLiteral("en"), QStringLiteral("tr")};
+    return {QStringLiteral("en"), QStringLiteral("tr")};
 }
 
 QString AppSettings::languageDisplayName(const QString& language) const {
@@ -220,10 +224,7 @@ QString AppSettings::languageDisplayName(const QString& language) const {
     if (normalized == QStringLiteral("tr")) {
         return tr("Türkçe");
     }
-    if (normalized == QStringLiteral("en")) {
-        return tr("English");
-    }
-    return tr("System Default");
+    return tr("English");
 }
 
 QString AppSettings::routingModeName() const {
@@ -534,6 +535,55 @@ void AppSettings::setPiperModelPath(const QString& path) {
 
     store_->setValue(QString::fromLatin1(piperModelPathKey), normalized);
     emit piperModelPathChanged();
+}
+
+QString AppSettings::selectedTtsEngine() const {
+    const auto fallback = QString::fromLatin1(defaultSelectedTtsEngine);
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(selectedTtsEngineKey), fallback).trimmed()
+               : fallback;
+    return (stored == QStringLiteral("Kokoro")) ? QStringLiteral("Kokoro")
+                                                : QStringLiteral("Piper");
+}
+
+void AppSettings::setSelectedTtsEngine(const QString& engine) {
+    const auto normalized = engine.trimmed();
+    const auto value = (normalized == QStringLiteral("Kokoro")) ? QStringLiteral("Kokoro")
+                                                                : QStringLiteral("Piper");
+    if (value == selectedTtsEngine() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(selectedTtsEngineKey), value);
+    emit selectedTtsEngineChanged();
+}
+
+QString AppSettings::kokoroModelPath() const {
+    return store_ ? store_->value(QString::fromLatin1(kokoroModelPathKey), {}).trimmed()
+                  : QString();
+}
+
+void AppSettings::setKokoroModelPath(const QString& path) {
+    const auto normalized = path.trimmed();
+    if (normalized == kokoroModelPath() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(kokoroModelPathKey), normalized);
+    emit kokoroModelPathChanged();
+}
+
+QString AppSettings::kokoroVoice() const {
+    const auto fallback = QString::fromLatin1(defaultKokoroVoice);
+    return store_ ? store_->value(QString::fromLatin1(kokoroVoiceKey), fallback).trimmed()
+                  : fallback;
+}
+
+void AppSettings::setKokoroVoice(const QString& voice) {
+    const auto normalized = voice.trimmed();
+    if (normalized == kokoroVoice() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(kokoroVoiceKey), normalized);
+    emit kokoroVoiceChanged();
 }
 
 QString AppSettings::whisperBinaryPath() const {
