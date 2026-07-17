@@ -198,7 +198,7 @@ SentinelOverlayModal {
                     implicitWidth: 4
                     implicitHeight: headerCol.implicitHeight + 4
                     radius: 2
-                    color: root.modelInfo ? Qt.color(root.modelInfo.badgeColor) : SentinelTheme.accent
+                    color: root.accent
                     opacity: 0.85
                 }
 
@@ -215,19 +215,15 @@ SentinelOverlayModal {
                             implicitHeight: 22
                             implicitWidth: popBadgeLbl.implicitWidth + 14
                             radius: 11
-                            color: root.modelInfo
-                                 ? SentinelTheme.withAlpha(Qt.color(root.modelInfo.badgeColor), 0.16)
-                                 : SentinelTheme.withAlpha(SentinelTheme.accent, 0.16)
-                            border.color: root.modelInfo
-                                        ? SentinelTheme.withAlpha(Qt.color(root.modelInfo.badgeColor), 0.35)
-                                        : SentinelTheme.withAlpha(SentinelTheme.accent, 0.35)
+                            color: SentinelTheme.withAlpha(root.accent, 0.16)
+                            border.color: SentinelTheme.withAlpha(root.accent, 0.35)
                             border.width: 1
                             Label {
                                 id: popBadgeLbl
                                 anchors.centerIn: parent
                                 text: root.modelInfo ? root.modelInfo.badge : ""
                                 font.pixelSize: SentinelTheme.fontTiny
-                                color: root.modelInfo ? Qt.color(root.modelInfo.badgeColor) : SentinelTheme.accent
+                                color: root.accent
                             }
                         }
 
@@ -259,14 +255,14 @@ SentinelOverlayModal {
                             implicitHeight: 22
                             implicitWidth: pullingLbl.implicitWidth + 18
                             radius: 11
-                            color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.14)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.35)
+                            color: SentinelTheme.withAlpha(root.accent, 0.14)
+                            border.color: SentinelTheme.withAlpha(root.accent, 0.35)
                             border.width: 1
                             Label {
                                 id: pullingLbl
                                 text: qsTr("Pulling…")
                                 font.pixelSize: SentinelTheme.fontTiny
-                                color: SentinelTheme.accent
+                                color: root.accent
                             }
                         }
 
@@ -475,7 +471,7 @@ SentinelOverlayModal {
                                 background: Rectangle {
                                     radius: SentinelTheme.radiusSm
                                     color: copyBtn.hovered
-                                         ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
+                                         ? SentinelTheme.withAlpha(root.accent, 0.12)
                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
                                     border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                                     border.width: 1
@@ -484,7 +480,7 @@ SentinelOverlayModal {
                                 contentItem: Label {
                                     text: copyFeedback.running ? qsTr("✓") : qsTr("Copy")
                                     font.pixelSize: SentinelTheme.fontTiny
-                                    color: copyFeedback.running ? SentinelTheme.success : SentinelTheme.accent
+                                    color: copyFeedback.running ? SentinelTheme.success : root.accent
                                     horizontalAlignment: Text.AlignHCenter
                                     verticalAlignment: Text.AlignVCenter
                                     Behavior on color { ColorAnimation { duration: 150 } }
@@ -672,7 +668,7 @@ SentinelOverlayModal {
                         Rectangle {
                             width: parent.width * root.pullProgress
                             height: parent.height; radius: parent.radius
-                            color: SentinelTheme.accent
+                            color: root.accent
                             Behavior on width { NumberAnimation { duration: 80 } }
                         }
                     }
@@ -759,13 +755,13 @@ SentinelOverlayModal {
                         radius: height / 2
                         color: actionBtn.enabled
                              ? (actionBtn.down
-                                ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.42)
+                                ? SentinelTheme.withAlpha(root.accent, 0.42)
                                 : actionBtn.hovered
-                                  ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.30)
-                                  : SentinelTheme.withAlpha(SentinelTheme.accent, 0.20))
+                                  ? SentinelTheme.withAlpha(root.accent, 0.30)
+                                  : SentinelTheme.withAlpha(root.accent, 0.20))
                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
                         border.color: actionBtn.enabled
-                                    ? SentinelTheme.withAlpha(SentinelTheme.accent, actionBtn.hovered ? 0.65 : 0.40)
+                                    ? SentinelTheme.withAlpha(root.accent, actionBtn.hovered ? 0.65 : 0.40)
                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                         border.width: 1
                         Rectangle {
@@ -787,7 +783,7 @@ SentinelOverlayModal {
                             : (root.isLMStudio ? qsTr("Downloads via LM Studio only") : qsTr("↓  Download via Ollama"))
                         font.pixelSize: SentinelTheme.fontSmall
                         font.weight: Font.Medium
-                        color: actionBtn.enabled ? SentinelTheme.accent : SentinelTheme.textMuted
+                        color: actionBtn.enabled ? root.accent : SentinelTheme.textMuted
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
@@ -811,10 +807,10 @@ SentinelOverlayModal {
                     background: Rectangle {
                         radius: height / 2
                         color: externalLinkBtn.hovered
-                             ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.08)
+                             ? SentinelTheme.withAlpha(root.accent, 0.08)
                              : "transparent"
                         border.color: externalLinkBtn.hovered
-                                    ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
+                                    ? SentinelTheme.withAlpha(root.accent, 0.20)
                                     : "transparent"
                         border.width: 1
                     }
@@ -822,7 +818,7 @@ SentinelOverlayModal {
                         id: extLbl
                         text: qsTr("Visit provider website ↗")
                         font.pixelSize: SentinelTheme.fontSmall
-                        color: SentinelTheme.accent
+                        color: root.accent
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                     }
