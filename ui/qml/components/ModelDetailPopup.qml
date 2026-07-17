@@ -21,8 +21,8 @@ SentinelOverlayModal {
     signal downloadRequested(string modelId)
 
     // ── Geometry ──────────────────────────────────────────────────────────────
-    preferredWidth:  720
-    preferredHeight: 580
+    preferredWidth:  500
+    preferredHeight: 340
     accent: root.modelInfo ? Qt.color(root.modelInfo.badgeColor) : SentinelTheme.accent
     modeName: "Sentinel"
 
@@ -191,109 +191,17 @@ SentinelOverlayModal {
             // ── Header ────────────────────────────────────────────────────────
             RowLayout {
                 Layout.fillWidth: true
-                spacing: SentinelTheme.spaceMd
-
-                // Category accent bar
-                Rectangle {
-                    implicitWidth: 4
-                    implicitHeight: headerCol.implicitHeight + 4
-                    radius: 2
-                    color: root.accent
-                    opacity: 0.85
-                }
+                spacing: SentinelTheme.spaceSm
 
                 ColumnLayout {
-                    id: headerCol
                     Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceXs
-
-                    RowLayout {
-                        spacing: SentinelTheme.spaceSm
-
-                        // Category badge
-                        Rectangle {
-                            implicitHeight: 22
-                            implicitWidth: popBadgeLbl.implicitWidth + 14
-                            radius: 11
-                            color: SentinelTheme.withAlpha(root.accent, 0.16)
-                            border.color: SentinelTheme.withAlpha(root.accent, 0.35)
-                            border.width: 1
-                            Label {
-                                id: popBadgeLbl
-                                anchors.centerIn: parent
-                                text: root.modelInfo ? root.modelInfo.badge : ""
-                                font.pixelSize: SentinelTheme.fontTiny
-                                color: root.accent
-                            }
-                        }
-
-                        // Installed chip
-                        Rectangle {
-                            visible: root.isDone
-                            implicitHeight: 22
-                            implicitWidth: installedLbl.implicitWidth + 18
-                            radius: 11
-                            color: SentinelTheme.withAlpha(SentinelTheme.success, 0.14)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.35)
-                            border.width: 1
-                            RowLayout {
-                                anchors.centerIn: parent
-                                spacing: 4
-                                Rectangle { implicitWidth: 6; implicitHeight: 6; radius: 3; color: SentinelTheme.success }
-                                Label {
-                                    id: installedLbl
-                                    text: qsTr("Installed")
-                                    font.pixelSize: SentinelTheme.fontTiny
-                                    color: SentinelTheme.success
-                                }
-                            }
-                        }
-
-                        // Pulling chip
-                        Rectangle {
-                            visible: root.activePull
-                            implicitHeight: 22
-                            implicitWidth: pullingLbl.implicitWidth + 18
-                            radius: 11
-                            color: SentinelTheme.withAlpha(root.accent, 0.14)
-                            border.color: SentinelTheme.withAlpha(root.accent, 0.35)
-                            border.width: 1
-                            Label {
-                                id: pullingLbl
-                                text: qsTr("Pulling…")
-                                font.pixelSize: SentinelTheme.fontTiny
-                                color: root.accent
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-
-                        // Close button
-                        Button {
-                            id: closeBtn
-                            implicitWidth: 28; implicitHeight: 28
-                            flat: true; hoverEnabled: true
-                            onClicked: root.close()
-                            background: Rectangle {
-                                radius: height / 2
-                                color: closeBtn.hovered
-                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                                     : "transparent"
-                                Behavior on color { ColorAnimation { duration: 100 } }
-                            }
-                            contentItem: Label {
-                                text: "✕"; font.pixelSize: SentinelTheme.fontSmall
-                                color: SentinelTheme.textMuted
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                        }
-                    }
+                    spacing: 2
 
                     Label {
                         Layout.fillWidth: true
                         text: root.modelInfo ? root.modelInfo.name : ""
-                        font.pixelSize: 22; font.weight: Font.DemiBold
+                        font.pixelSize: 20
+                        font.weight: Font.DemiBold
                         color: SentinelTheme.textPrimary
                         elide: Text.ElideRight
                     }
@@ -301,7 +209,27 @@ SentinelOverlayModal {
                     Label {
                         text: root.modelInfo ? qsTr("by %1").arg(root.modelInfo.provider) : ""
                         font.pixelSize: SentinelTheme.fontSmall
-                        color: SentinelTheme.textPlaceholder
+                        color: SentinelTheme.textMuted
+                    }
+                }
+
+                Button {
+                    id: closeBtn
+                    implicitWidth: 26; implicitHeight: 26
+                    flat: true; hoverEnabled: true
+                    onClicked: root.close()
+                    background: Rectangle {
+                        radius: height / 2
+                        color: closeBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"
+                        Behavior on color { ColorAnimation { duration: 100 } }
+                    }
+                    contentItem: Label {
+                        text: "×"
+                        font.pixelSize: 18
+                        font.bold: true
+                        color: SentinelTheme.textMuted
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
                     }
                 }
             }
@@ -309,457 +237,197 @@ SentinelOverlayModal {
             // Divider
             Rectangle {
                 Layout.fillWidth: true; implicitHeight: 1
-                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.07)
+                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
             }
 
-            // ── Body ──────────────────────────────────────────────────────────
-            ScrollView {
+            // ── Body (Concise Promo Text) ─────────────────────────────────────
+            ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
-                clip: true
+                spacing: SentinelTheme.spaceMd
 
-                ColumnLayout {
-                    width: parent.width
-                    spacing: SentinelTheme.spaceMd
+                // Horizontal Premium Specs (Typography-based)
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceLg
 
-                    // Horizontal Specs Pills
-                    RowLayout {
-                        Layout.fillWidth: true
-                        spacing: SentinelTheme.spaceXs
-
-                        // Size pill
-                        Rectangle {
-                            implicitHeight: 24
-                            implicitWidth: sizeLbl.implicitWidth + 20
-                            radius: 12
-                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                            border.width: 1
-                            RowLayout {
-                                anchors.centerIn: parent; spacing: 4
-                                Text { text: "💾"; font.pixelSize: 11 }
-                                Label { id: sizeLbl; text: root.effectiveSize; font.pixelSize: SentinelTheme.fontTiny; color: SentinelTheme.textMuted }
-                            }
-                        }
-
-                        // Context pill
-                        Rectangle {
-                            implicitHeight: 24
-                            implicitWidth: ctxLbl.implicitWidth + 20
-                            radius: 12
-                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                            border.width: 1
-                            RowLayout {
-                                anchors.centerIn: parent; spacing: 4
-                                Text { text: "⚡"; font.pixelSize: 11 }
-                                Label { id: ctxLbl; text: qsTr("%1 Context").arg(root.effectiveContext); font.pixelSize: SentinelTheme.fontTiny; color: SentinelTheme.textMuted }
-                            }
-                        }
-
-                        // Input Type pill
-                        Rectangle {
-                            implicitHeight: 24
-                            implicitWidth: inputLbl.implicitWidth + 20
-                            radius: 12
-                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                            border.width: 1
-                            RowLayout {
-                                anchors.centerIn: parent; spacing: 4
-                                Text { text: "💬"; font.pixelSize: 11 }
-                                Label { id: inputLbl; text: root.effectiveInput; font.pixelSize: SentinelTheme.fontTiny; color: SentinelTheme.textMuted }
-                            }
-                        }
-
-                        Item { Layout.fillWidth: true }
-                    }
-
-                    // Description text
-                    Label {
-                        Layout.fillWidth: true
-                        text: root.modelInfo ? root.modelInfo.description : ""
-                        font.pixelSize: SentinelTheme.fontControl
-                        color: SentinelTheme.textPrimary
-                        wrapMode: Text.WordWrap
-                        lineHeight: 1.45
-                    }
-
-                    // Best For Card
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: bestForCol.implicitHeight + 16
-                        radius: SentinelTheme.radiusMd
-                        color: SentinelTheme.withAlpha(root.accent, 0.06)
-                        border.color: SentinelTheme.withAlpha(root.accent, 0.16)
-                        border.width: 1
-
-                        ColumnLayout {
-                            id: bestForCol
-                            anchors { fill: parent; margins: 10 }
-                            spacing: 4
-
-                            RowLayout {
-                                spacing: 4
-                                Text { text: "💡"; font.pixelSize: 12 }
-                                Label {
-                                    text: qsTr("Best For")
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    font.weight: Font.Bold
-                                    color: root.accent
-                                }
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                text: root.modelInfo && root.modelInfo.bestFor ? root.modelInfo.bestFor : qsTr("General-purpose local AI tasks.")
-                                font.pixelSize: SentinelTheme.fontSmall
-                                color: SentinelTheme.textMuted
-                                wrapMode: Text.WordWrap
-                            }
-                        }
-                    }
-
-                    // Tags selector
+                    // Size
                     ColumnLayout {
-                        visible: ollamaModelDetailFetcher.tags.length > 0
-                        Layout.fillWidth: true
-                        spacing: 4
-
+                        spacing: 2
                         Label {
-                            text: qsTr("Available Tags")
-                            font.pixelSize: SentinelTheme.fontSmall
-                            font.weight: Font.Medium
-                            color: SentinelTheme.textMuted
-                        }
-
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceXs
-                            
-                            Repeater {
-                                model: ollamaModelDetailFetcher.tags
-                                
-                                Button {
-                                    id: tagBtn
-                                    required property var modelData
-                                    readonly property bool isSelected: root.selectedTagObj && root.selectedTagObj.tag === modelData.tag
-                                    
-                                    implicitHeight: 22
-                                    implicitWidth: tagBtnLbl.implicitWidth + 14
-                                    flat: true
-                                    hoverEnabled: true
-                                    onClicked: root.selectedTagObj = modelData
-                                    
-                                    background: Rectangle {
-                                        radius: 11
-                                        color: tagBtn.isSelected
-                                             ? SentinelTheme.withAlpha(root.accent, 0.16)
-                                             : (tagBtn.hovered
-                                                ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                                                : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04))
-                                        border.color: tagBtn.isSelected
-                                                    ? SentinelTheme.withAlpha(root.accent, 0.45)
-                                                    : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                        border.width: 1
-
-                                        Behavior on color { ColorAnimation { duration: 150 } }
-                                        Behavior on border.color { ColorAnimation { duration: 150 } }
-                                    }
-                                    
-                                    contentItem: Label {
-                                        id: tagBtnLbl
-                                        text: tagBtn.modelData.tag + " (" + tagBtn.modelData.size + ")"
-                                        font.pixelSize: SentinelTheme.fontTiny
-                                        font.weight: tagBtn.isSelected ? Font.Medium : Font.Normal
-                                        color: tagBtn.isSelected ? root.accent : SentinelTheme.textMuted
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    // Pull command & path row (for local Ollama runner only)
-                    ColumnLayout {
-                        visible: root.modelInfo && root.modelInfo.ollamaId !== "" && !root.isLMStudio
-                        Layout.fillWidth: true
-                        spacing: 6
-
-                        Label {
-                            text: qsTr("Local Developer Command")
-                            font.pixelSize: SentinelTheme.fontSmall
-                            font.weight: Font.Medium
-                            color: SentinelTheme.textMuted
-                        }
-
-                        RowLayout {
-                            spacing: SentinelTheme.spaceXs
-
-                            Rectangle {
-                                implicitHeight: cmdLbl.implicitHeight + 8
-                                implicitWidth: cmdLbl.implicitWidth + 20
-                                radius: SentinelTheme.radiusSm
-                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundDeep, 0.70)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                border.width: 1
-                                Label {
-                                    id: cmdLbl
-                                    anchors.centerIn: parent
-                                    text: root.ollamaPullCmd
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    font.family: "monospace"
-                                    color: SentinelTheme.textMuted
-                                }
-                            }
-
-                            Button {
-                                id: copyBtn
-                                implicitWidth: 58
-                                implicitHeight: cmdLbl.implicitHeight + 8
-                                flat: true; hoverEnabled: true
-                                onClicked: {
-                                    root.copyToClipboard(root.ollamaPullCmd)
-                                    copyFeedback.start()
-                                }
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusSm
-                                    color: copyBtn.hovered
-                                         ? SentinelTheme.withAlpha(root.accent, 0.12)
-                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
-                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                    border.width: 1
-                                    Behavior on color { ColorAnimation { duration: 100 } }
-                                }
-                                contentItem: Label {
-                                    text: copyFeedback.running ? qsTr("✓") : qsTr("Copy")
-                                    font.pixelSize: SentinelTheme.fontTiny
-                                    color: copyFeedback.running ? SentinelTheme.success : root.accent
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                    Behavior on color { ColorAnimation { duration: 150 } }
-                                }
-                            }
-                        }
-                    }
-
-                    // Tags
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: SentinelTheme.spaceXs
-                        visible: root.modelInfo && root.modelInfo.tags && root.modelInfo.tags.length > 0
-
-                        Label { text: qsTr("Tags: "); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder }
-
-                        Repeater {
-                            model: root.modelInfo ? root.modelInfo.tags : []
-                            Rectangle {
-                                required property string modelData
-                                implicitHeight: 20; implicitWidth: popTagLbl.implicitWidth + 12
-                                radius: 10
-                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
-                                border.width: 1
-                                Label { id: popTagLbl; anchors.centerIn: parent; text: modelData; font.pixelSize: SentinelTheme.fontTiny; color: SentinelTheme.textMuted }
-                            }
-                        }
-                    }
-
-                    // Installed banner
-                    Rectangle {
-                        Layout.fillWidth: true
-                        visible: root.isDone
-                        implicitHeight: installedNoteRow.implicitHeight + SentinelTheme.spaceSm * 2
-                        radius: SentinelTheme.radiusMd
-                        color: SentinelTheme.withAlpha(SentinelTheme.success, 0.08)
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.22)
-                        border.width: 1
-
-                        RowLayout {
-                            id: installedNoteRow
-                            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; margins: SentinelTheme.spaceMd }
-                            spacing: SentinelTheme.spaceSm
-                            Rectangle { implicitWidth: 8; implicitHeight: 8; radius: 4; color: SentinelTheme.success }
-                            Label {
-                                Layout.fillWidth: true
-                                text: root.isLMStudio
-                                    ? qsTr("This model is loaded and ready for inference in LM Studio.")
-                                    : qsTr("This model is installed on your device at %1").arg(root.ollamaModelPath)
-                                font.pixelSize: SentinelTheme.fontSmall
-                                color: SentinelTheme.success
-                                wrapMode: Text.WordWrap
-                            }
-                        }
-                    }
-
-                    // Error banner
-                    Rectangle {
-                        Layout.fillWidth: true
-                        visible: root.pullError.length > 0
-                        implicitHeight: errorNoteRow.implicitHeight + SentinelTheme.spaceSm * 2
-                        radius: SentinelTheme.radiusMd
-                        color: SentinelTheme.errorSurface
-                        border.color: SentinelTheme.errorBorder
-                        border.width: 1
-
-                        RowLayout {
-                            id: errorNoteRow
-                            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; margins: SentinelTheme.spaceMd }
-                            spacing: SentinelTheme.spaceSm
-                            Rectangle { implicitWidth: 8; implicitHeight: 8; radius: 4; color: "#ef4444" }
-                            Label {
-                                Layout.fillWidth: true
-                                text: root.pullError
-                                font.pixelSize: SentinelTheme.fontSmall
-                                color: "#ef4444"
-                                wrapMode: Text.WordWrap
-                            }
-                        }
-                    }
-
-                    // Loading indicator for details
-                    RowLayout {
-                        visible: ollamaModelDetailFetcher.fetching
-                        spacing: SentinelTheme.spaceXs
-                        Layout.alignment: Qt.AlignHCenter
-                        Layout.topMargin: SentinelTheme.spaceMd
-                        
-                        Rectangle {
-                            implicitWidth: 6; implicitHeight: 6; radius: 3
-                            color: root.accent
-                            SequentialAnimation on opacity {
-                                loops: Animation.Infinite
-                                NumberAnimation { from: 0.2; to: 1.0; duration: 500; easing.type: Easing.InOutQuad }
-                                NumberAnimation { from: 1.0; to: 0.2; duration: 500; easing.type: Easing.InOutQuad }
-                            }
-                        }
-                        Label {
-                            text: qsTr("Loading model details…")
-                            color: SentinelTheme.textMuted
+                            text: qsTr("SIZE")
                             font.pixelSize: SentinelTheme.fontTiny
+                            font.weight: Font.Bold
+                            color: SentinelTheme.textPlaceholder
+                        }
+                        Label {
+                            text: root.effectiveSize
+                            font.pixelSize: SentinelTheme.fontSmall
+                            font.weight: Font.DemiBold
+                            color: SentinelTheme.textPrimary
                         }
                     }
 
-                    // Error fetching details banner
+                    // Vertical Separator
                     Rectangle {
-                        Layout.fillWidth: true
-                        visible: ollamaModelDetailFetcher.errorText !== ""
-                        implicitHeight: fetchErrorRow.implicitHeight + SentinelTheme.spaceSm * 2
-                        radius: SentinelTheme.radiusMd
-                        color: SentinelTheme.errorSurface
-                        border.color: SentinelTheme.errorBorder
-                        border.width: 1
+                        Layout.preferredHeight: 24
+                        implicitWidth: 1
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    // Context Window
+                    ColumnLayout {
+                        spacing: 2
+                        Label {
+                            text: qsTr("CONTEXT")
+                            font.pixelSize: SentinelTheme.fontTiny
+                            font.weight: Font.Bold
+                            color: SentinelTheme.textPlaceholder
+                        }
+                        Label {
+                            text: qsTr("%1 tokens").arg(root.effectiveContext)
+                            font.pixelSize: SentinelTheme.fontSmall
+                            font.weight: Font.DemiBold
+                            color: SentinelTheme.textPrimary
+                        }
+                    }
+
+                    // Vertical Separator
+                    Rectangle {
+                        Layout.preferredHeight: 24
+                        implicitWidth: 1
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                        Layout.alignment: Qt.AlignVCenter
+                    }
+
+                    // Input Type
+                    ColumnLayout {
+                        spacing: 2
+                        Label {
+                            text: qsTr("INPUT TYPE")
+                            font.pixelSize: SentinelTheme.fontTiny
+                            font.weight: Font.Bold
+                            color: SentinelTheme.textPlaceholder
+                        }
+                        Label {
+                            text: root.effectiveInput
+                            font.pixelSize: SentinelTheme.fontSmall
+                            font.weight: Font.DemiBold
+                            color: SentinelTheme.textPrimary
+                        }
+                    }
+
+                    Item { Layout.fillWidth: true }
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: root.modelInfo ? root.modelInfo.description : ""
+                    font.pixelSize: SentinelTheme.fontControl
+                    color: SentinelTheme.textPrimary
+                    wrapMode: Text.WordWrap
+                    lineHeight: 1.45
+                }
+
+                // Highlighted Recommendation Box
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: bestForCol.implicitHeight + 16
+                    radius: 8
+                    color: SentinelTheme.withAlpha(root.accent, 0.05)
+                    border.color: SentinelTheme.withAlpha(root.accent, 0.14)
+                    border.width: 1
+
+                    ColumnLayout {
+                        id: bestForCol
+                        anchors { fill: parent; margins: 10 }
+                        spacing: 2
 
                         RowLayout {
-                            id: fetchErrorRow
-                            anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter; margins: SentinelTheme.spaceMd }
-                            spacing: SentinelTheme.spaceSm
-                            Rectangle { implicitWidth: 8; implicitHeight: 8; radius: 4; color: "#ef4444" }
+                            spacing: 4
+                            Text { text: "💡"; font.pixelSize: 12 }
                             Label {
-                                Layout.fillWidth: true
-                                text: ollamaModelDetailFetcher.errorText
+                                text: qsTr("Best For")
                                 font.pixelSize: SentinelTheme.fontSmall
-                                color: "#ef4444"
-                                wrapMode: Text.WordWrap
+                                font.weight: Font.Bold
+                                color: root.accent
                             }
                         }
-                    }
 
-                    // Readme divider
-                    Rectangle {
-                        Layout.fillWidth: true; implicitHeight: 1
-                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.07)
-                        visible: ollamaModelDetailFetcher.readme !== ""
-                        Layout.topMargin: SentinelTheme.spaceMd
-                    }
-
-                    // Readme header
-                    Label {
-                        text: qsTr("About this Model")
-                        font.pixelSize: SentinelTheme.fontControl
-                        font.weight: Font.DemiBold
-                        color: SentinelTheme.textPrimary
-                        visible: ollamaModelDetailFetcher.readme !== ""
-                    }
-
-                    // Readme content
-                    TextArea {
-                        Layout.fillWidth: true
-                        text: ollamaModelDetailFetcher.readme
-                        textFormat: Text.MarkdownText
-                        readOnly: true
-                        selectByMouse: true
-                        wrapMode: Text.WordWrap
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontSmall
-                        background: null
-                        visible: ollamaModelDetailFetcher.readme !== ""
-                        activeFocusOnTab: false
+                        Label {
+                            Layout.fillWidth: true
+                            text: root.modelInfo && root.modelInfo.bestFor ? root.modelInfo.bestFor : qsTr("General-purpose local AI tasks.")
+                            font.pixelSize: SentinelTheme.fontSmall
+                            color: SentinelTheme.textMuted
+                            wrapMode: Text.WordWrap
+                        }
                     }
                 }
-            }
 
-            // Divider
-            Rectangle {
-                Layout.fillWidth: true; implicitHeight: 1
-                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.07)
-            }
-
-            // ── Bottom action bar ─────────────────────────────────────────────
-            RowLayout {
-                Layout.fillWidth: true
-                spacing: SentinelTheme.spaceSm
-
-                // Live pull progress (inline in action bar)
+                // Progress Indicator (Active download only)
                 ColumnLayout {
                     visible: root.activePull
                     Layout.fillWidth: true
-                    spacing: 4
+                    spacing: SentinelTheme.spaceXs
 
-                    Rectangle {
-                        Layout.fillWidth: true; implicitHeight: 5; radius: 3
-                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                        Rectangle {
-                            width: parent.width * root.pullProgress
-                            height: parent.height; radius: parent.radius
+                    RowLayout {
+                        Layout.fillWidth: true
+                        Label {
+                            text: qsTr("Downloading model…")
+                            font.pixelSize: SentinelTheme.fontSmall
                             color: root.accent
-                            Behavior on width { NumberAnimation { duration: 80 } }
+                        }
+                        Item { Layout.fillWidth: true }
+                        Label {
+                            text: Math.round(root.pullProgress * 100) + "%"
+                            font.pixelSize: SentinelTheme.fontSmall
+                            font.weight: Font.DemiBold
+                            color: root.accent
                         }
                     }
 
-                    Label {
-                        text: root.pullStatus.length > 0
-                            ? root.pullStatus
-                            : qsTr("Pulling via Ollama… %1%").arg(Math.round(root.pullProgress * 100))
-                        font.pixelSize: SentinelTheme.fontTiny
-                        color: SentinelTheme.textPlaceholder
-                        elide: Text.ElideRight
+                    Rectangle {
+                        Layout.fillWidth: true
+                        height: 4
+                        radius: 2
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+
+                        Rectangle {
+                            width: parent.width * root.pullProgress
+                            height: parent.height
+                            radius: parent.radius
+                            color: root.accent
+                        }
                     }
                 }
 
-                Item { Layout.fillWidth: true; visible: !root.activePull }
+                Item { Layout.fillHeight: true }
+            }
 
-                // Cancel pull
+            // ── Footer ────────────────────────────────────────────────────────
+            RowLayout {
+                Layout.fillWidth: true
+                spacing: SentinelTheme.spaceMd
+
+                // Cancel download
                 Button {
                     id: cancelPullBtn
                     visible: root.activePull
-                    implicitHeight: 34
-                    implicitWidth: cancelPullLbl.implicitWidth + 24
-                    flat: true; hoverEnabled: true
-                    onClicked: ollamaPuller.cancel()
+                    implicitHeight: 32
+                    implicitWidth: 80
+                    hoverEnabled: true
+                    onClicked: root.cancelRequested()
                     background: Rectangle {
-                        radius: height / 2
+                        radius: 6
                         color: cancelPullBtn.hovered
-                             ? SentinelTheme.withAlpha("#ef4444", 0.12)
-                             : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                        border.color: SentinelTheme.withAlpha("#ef4444", 0.25)
+                             ? SentinelTheme.withAlpha("#ef4444", 0.08)
+                             : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
+                        border.color: SentinelTheme.withAlpha("#ef4444", 0.20)
                         border.width: 1
                         Behavior on color { ColorAnimation { duration: 100 } }
                     }
                     contentItem: Label {
-                        id: cancelPullLbl
                         text: qsTr("Cancel")
                         font.pixelSize: SentinelTheme.fontSmall
                         color: "#ef4444"
@@ -768,66 +436,29 @@ SentinelOverlayModal {
                     }
                 }
 
-                // Close
-                Button {
-                    id: cancelBtn
-                    implicitHeight: 34
-                    implicitWidth: cancelLbl.implicitWidth + 28
-                    flat: true; hoverEnabled: true
-                    onClicked: root.close()
-                    background: Rectangle {
-                        radius: height / 2
-                        color: cancelBtn.hovered
-                             ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                             : "transparent"
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                        border.width: 1
-                        Behavior on color { ColorAnimation { duration: 100 } }
-                    }
-                    contentItem: Label {
-                        id: cancelLbl
-                        text: qsTr("Close")
-                        font.pixelSize: SentinelTheme.fontSmall
-                        color: SentinelTheme.textMuted
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
+                Item { Layout.fillWidth: true }
 
-                // Download via Ollama
+                // Download Button
                 Button {
                     id: actionBtn
                     visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== ""
                     enabled: !root.isLMStudio && !root.activePull && !root.isDone
-                    implicitHeight: 34
-                    implicitWidth: actionLbl.implicitWidth + 28
+                    implicitHeight: 32
+                    implicitWidth: actionLbl.implicitWidth + 24
                     hoverEnabled: true
                     onClicked: root.downloadRequested(root.modelInfo.ollamaId)
-
-                    scale: actionBtn.down ? 0.96 : actionBtn.hovered ? 1.02 : 1.0
-                    Behavior on scale { NumberAnimation { duration: 100; easing.type: Easing.OutCubic } }
+                    scale: actionBtn.down ? 0.97 : 1.0
 
                     background: Rectangle {
-                        radius: height / 2
+                        radius: 6
                         color: actionBtn.enabled
-                             ? (actionBtn.down
-                                ? SentinelTheme.withAlpha(root.accent, 0.85)
-                                : actionBtn.hovered
-                                  ? root.accent
-                                  : SentinelTheme.withAlpha(root.accent, 0.16))
-                             : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                             ? (actionBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.12))
+                             : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
                         border.color: actionBtn.enabled
-                                    ? (actionBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.35))
-                                    : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                    ? root.accent
+                                    : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
                         border.width: 1
-                        Rectangle {
-                            anchors.top: parent.top; anchors.topMargin: 1
-                            anchors.left: parent.left; anchors.leftMargin: 8
-                            anchors.right: parent.right; anchors.rightMargin: 8
-                            height: 1
-                            color: SentinelTheme.withAlpha("#ffffff", actionBtn.enabled ? 0.45 : 0.10)
-                            radius: 1
-                        }
+
                         Behavior on color { ColorAnimation { duration: 150 } }
                         Behavior on border.color { ColorAnimation { duration: 150 } }
                     }
@@ -836,8 +467,8 @@ SentinelOverlayModal {
                         id: actionLbl
                         text: root.isDone
                             ? (root.isLMStudio ? qsTr("✓  Loaded") : qsTr("✓  Installed"))
-                            : root.activePull ? qsTr("Pulling…")
-                            : (root.isLMStudio ? qsTr("Downloads via LM Studio only") : qsTr("↓  Download via Ollama"))
+                            : root.activePull ? qsTr("Downloading…")
+                            : (root.isLMStudio ? qsTr("Use LM Studio App") : qsTr("Install Model"))
                         font.pixelSize: SentinelTheme.fontSmall
                         font.weight: Font.Medium
                         color: actionBtn.enabled
@@ -849,13 +480,12 @@ SentinelOverlayModal {
                     }
                 }
 
-                // External link for non-Ollama
+                // External website button
                 Button {
                     id: externalLinkBtn
                     visible: root.modelInfo && (!root.modelInfo.downloadable || root.modelInfo.ollamaId === "")
-                    implicitHeight: 34
+                    implicitHeight: 32
                     implicitWidth: extLbl.implicitWidth + 24
-                    flat: true
                     hoverEnabled: true
                     onClicked: {
                         if (root.modelInfo && root.modelInfo.externalUrl) {
@@ -865,13 +495,9 @@ SentinelOverlayModal {
                         }
                     }
                     background: Rectangle {
-                        radius: height / 2
-                        color: externalLinkBtn.hovered
-                             ? root.accent
-                             : "transparent"
-                        border.color: externalLinkBtn.hovered
-                                    ? root.accent
-                                    : SentinelTheme.withAlpha(root.accent, 0.20)
+                        radius: 6
+                        color: externalLinkBtn.hovered ? root.accent : "transparent"
+                        border.color: externalLinkBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.20)
                         border.width: 1
 
                         Behavior on color { ColorAnimation { duration: 150 } }
