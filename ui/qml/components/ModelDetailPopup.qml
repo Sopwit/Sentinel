@@ -323,32 +323,118 @@ SentinelOverlayModal {
                     width: parent.width
                     spacing: SentinelTheme.spaceMd
 
-                    // Description
+                    // Horizontal Specs Pills
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceXs
+
+                        // Size pill
+                        Rectangle {
+                            implicitHeight: 24
+                            implicitWidth: sizeLbl.implicitWidth + 20
+                            radius: 12
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                            border.width: 1
+                            RowLayout {
+                                anchors.centerIn: parent; spacing: 4
+                                Text { text: "💾"; font.pixelSize: 11 }
+                                Label { id: sizeLbl; text: root.effectiveSize; font.pixelSize: SentinelTheme.fontTiny; color: SentinelTheme.textMuted }
+                            }
+                        }
+
+                        // Context pill
+                        Rectangle {
+                            implicitHeight: 24
+                            implicitWidth: ctxLbl.implicitWidth + 20
+                            radius: 12
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                            border.width: 1
+                            RowLayout {
+                                anchors.centerIn: parent; spacing: 4
+                                Text { text: "⚡"; font.pixelSize: 11 }
+                                Label { id: ctxLbl; text: qsTr("%1 Context").arg(root.effectiveContext); font.pixelSize: SentinelTheme.fontTiny; color: SentinelTheme.textMuted }
+                            }
+                        }
+
+                        // Input Type pill
+                        Rectangle {
+                            implicitHeight: 24
+                            implicitWidth: inputLbl.implicitWidth + 20
+                            radius: 12
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                            border.width: 1
+                            RowLayout {
+                                anchors.centerIn: parent; spacing: 4
+                                Text { text: "💬"; font.pixelSize: 11 }
+                                Label { id: inputLbl; text: root.effectiveInput; font.pixelSize: SentinelTheme.fontTiny; color: SentinelTheme.textMuted }
+                            }
+                        }
+
+                        Item { Layout.fillWidth: true }
+                    }
+
+                    // Description text
                     Label {
                         Layout.fillWidth: true
                         text: root.modelInfo ? root.modelInfo.description : ""
                         font.pixelSize: SentinelTheme.fontControl
-                        color: SentinelTheme.textMuted
+                        color: SentinelTheme.textPrimary
                         wrapMode: Text.WordWrap
-                        lineHeight: 1.55
+                        lineHeight: 1.45
                     }
 
-                    // Info grid
-                    GridLayout {
+                    // Best For Card
+                    Rectangle {
                         Layout.fillWidth: true
-                        columns: 2
-                        columnSpacing: SentinelTheme.spaceLg
-                        rowSpacing: SentinelTheme.spaceSm
+                        implicitHeight: bestForCol.implicitHeight + 16
+                        radius: SentinelTheme.radiusMd
+                        color: SentinelTheme.withAlpha(root.accent, 0.06)
+                        border.color: SentinelTheme.withAlpha(root.accent, 0.16)
+                        border.width: 1
 
-                        Label { text: qsTr("Size"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder }
-                        Label { text: root.effectiveSize; font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPrimary; font.weight: Font.Medium }
+                        ColumnLayout {
+                            id: bestForCol
+                            anchors { fill: parent; margins: 10 }
+                            spacing: 4
+
+                            RowLayout {
+                                spacing: 4
+                                Text { text: "💡"; font.pixelSize: 12 }
+                                Label {
+                                    text: qsTr("Best For")
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    font.weight: Font.Bold
+                                    color: root.accent
+                                }
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: root.modelInfo && root.modelInfo.bestFor ? root.modelInfo.bestFor : qsTr("General-purpose local AI tasks.")
+                                font.pixelSize: SentinelTheme.fontSmall
+                                color: SentinelTheme.textMuted
+                                wrapMode: Text.WordWrap
+                            }
+                        }
+                    }
+
+                    // Tags selector
+                    ColumnLayout {
+                        visible: ollamaModelDetailFetcher.tags.length > 0
+                        Layout.fillWidth: true
+                        spacing: 4
 
                         Label {
-                            visible: ollamaModelDetailFetcher.tags.length > 0
-                            text: qsTr("Available Tags"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder
+                            text: qsTr("Available Tags")
+                            font.pixelSize: SentinelTheme.fontSmall
+                            font.weight: Font.Medium
+                            color: SentinelTheme.textMuted
                         }
+
                         Flow {
-                            visible: ollamaModelDetailFetcher.tags.length > 0
                             Layout.fillWidth: true
                             spacing: SentinelTheme.spaceXs
                             
@@ -377,6 +463,9 @@ SentinelOverlayModal {
                                                     ? SentinelTheme.withAlpha(root.accent, 0.45)
                                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                                         border.width: 1
+
+                                        Behavior on color { ColorAnimation { duration: 150 } }
+                                        Behavior on border.color { ColorAnimation { duration: 150 } }
                                     }
                                     
                                     contentItem: Label {
@@ -391,54 +480,22 @@ SentinelOverlayModal {
                                 }
                             }
                         }
+                    }
 
-                        Label { text: qsTr("Category"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder }
-                        Label { text: root.modelInfo ? root.modelInfo.category : "—"; font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPrimary; font.weight: Font.Medium }
-
-                        Label { text: qsTr("Context Window"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder }
-                        Label { text: root.effectiveContext; font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPrimary; font.weight: Font.Medium }
-
-                        Label { text: qsTr("Input Type"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder }
-                        Label { text: root.effectiveInput; font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPrimary; font.weight: Font.Medium }
+                    // Pull command & path row (for local Ollama runner only)
+                    ColumnLayout {
+                        visible: root.modelInfo && root.modelInfo.ollamaId !== "" && !root.isLMStudio
+                        Layout.fillWidth: true
+                        spacing: 6
 
                         Label {
-                            visible: root.effectiveModifiedAt !== ""
-                            text: qsTr("Last Modified"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder
-                        }
-                        Label {
-                            visible: root.effectiveModifiedAt !== ""
-                            text: root.effectiveModifiedAt; font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPrimary; font.weight: Font.Medium
+                            text: qsTr("Local Developer Command")
+                            font.pixelSize: SentinelTheme.fontSmall
+                            font.weight: Font.Medium
+                            color: SentinelTheme.textMuted
                         }
 
-                        Label { text: qsTr("Runtime"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder }
-                        Label {
-                            text: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId
-                                ? (root.isLMStudio ? qsTr("LM Studio (loaded models)") : qsTr("Ollama (local inference)"))
-                                : qsTr("External — see provider website")
-                            font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPrimary; font.weight: Font.Medium
-                        }
-
-                        // Install path (Ollama models only)
-                        Label {
-                            visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== "" && !root.isLMStudio
-                            text: qsTr("Install path"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder
-                        }
-                        Label {
-                            visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== "" && !root.isLMStudio
-                            Layout.fillWidth: true
-                            text: root.ollamaModelPath
-                            font.pixelSize: SentinelTheme.fontSmall; font.family: "monospace"
-                            color: SentinelTheme.textPrimary; font.weight: Font.Medium
-                            wrapMode: Text.WrapAtWordBoundaryOrAnywhere
-                        }
-
-                        // Pull command
-                        Label {
-                            visible: root.modelInfo && root.modelInfo.ollamaId !== "" && !root.isLMStudio
-                            text: qsTr("Pull command"); font.pixelSize: SentinelTheme.fontSmall; color: SentinelTheme.textPlaceholder
-                        }
                         RowLayout {
-                            visible: root.modelInfo && root.modelInfo.ollamaId !== "" && !root.isLMStudio
                             spacing: SentinelTheme.spaceXs
 
                             Rectangle {
@@ -458,7 +515,6 @@ SentinelOverlayModal {
                                 }
                             }
 
-                            // Copy button
                             Button {
                                 id: copyBtn
                                 implicitWidth: 58
@@ -755,13 +811,13 @@ SentinelOverlayModal {
                         radius: height / 2
                         color: actionBtn.enabled
                              ? (actionBtn.down
-                                ? SentinelTheme.withAlpha(root.accent, 0.42)
+                                ? SentinelTheme.withAlpha(root.accent, 0.85)
                                 : actionBtn.hovered
-                                  ? SentinelTheme.withAlpha(root.accent, 0.30)
-                                  : SentinelTheme.withAlpha(root.accent, 0.20))
+                                  ? root.accent
+                                  : SentinelTheme.withAlpha(root.accent, 0.16))
                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
                         border.color: actionBtn.enabled
-                                    ? SentinelTheme.withAlpha(root.accent, actionBtn.hovered ? 0.65 : 0.40)
+                                    ? (actionBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.35))
                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                         border.width: 1
                         Rectangle {
@@ -772,7 +828,8 @@ SentinelOverlayModal {
                             color: SentinelTheme.withAlpha("#ffffff", actionBtn.enabled ? 0.45 : 0.10)
                             radius: 1
                         }
-                        Behavior on color { ColorAnimation { duration: 100 } }
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on border.color { ColorAnimation { duration: 150 } }
                     }
 
                     contentItem: Label {
@@ -783,9 +840,12 @@ SentinelOverlayModal {
                             : (root.isLMStudio ? qsTr("Downloads via LM Studio only") : qsTr("↓  Download via Ollama"))
                         font.pixelSize: SentinelTheme.fontSmall
                         font.weight: Font.Medium
-                        color: actionBtn.enabled ? root.accent : SentinelTheme.textMuted
+                        color: actionBtn.enabled
+                             ? (actionBtn.hovered ? "#ffffff" : root.accent)
+                             : SentinelTheme.textMuted
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
+                        Behavior on color { ColorAnimation { duration: 150 } }
                     }
                 }
 
@@ -807,20 +867,24 @@ SentinelOverlayModal {
                     background: Rectangle {
                         radius: height / 2
                         color: externalLinkBtn.hovered
-                             ? SentinelTheme.withAlpha(root.accent, 0.08)
+                             ? root.accent
                              : "transparent"
                         border.color: externalLinkBtn.hovered
-                                    ? SentinelTheme.withAlpha(root.accent, 0.20)
-                                    : "transparent"
+                                    ? root.accent
+                                    : SentinelTheme.withAlpha(root.accent, 0.20)
                         border.width: 1
+
+                        Behavior on color { ColorAnimation { duration: 150 } }
+                        Behavior on border.color { ColorAnimation { duration: 150 } }
                     }
                     contentItem: Label {
                         id: extLbl
                         text: qsTr("Visit provider website ↗")
                         font.pixelSize: SentinelTheme.fontSmall
-                        color: root.accent
+                        color: externalLinkBtn.hovered ? "#ffffff" : root.accent
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
+                        Behavior on color { ColorAnimation { duration: 150 } }
                     }
                 }
             }
