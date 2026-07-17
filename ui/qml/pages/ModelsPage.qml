@@ -10,6 +10,7 @@ Item {
     readonly property bool compact: width < 820
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+    property bool sidebarCollapsed: false
 
     // ── Static model catalog ─────────────────────────────────────────────────
     readonly property var modelCatalog: [
@@ -531,9 +532,22 @@ Item {
         return ollamaPuller.pulling && ollamaPuller.activeModel === modelId
     }
 
+    function categoryIcon(cat) {
+        if (cat === "All") return "❖"
+        if (cat === "LLM") return "📝"
+        if (cat === "Think") return "🧠"
+        if (cat === "Vision") return "👁"
+        if (cat === "Image") return "🎨"
+        if (cat === "Video") return "🎬"
+        if (cat === "STT") return "🎙"
+        if (cat === "TTS") return "🔊"
+        if (cat === "Runtime") return "⚙"
+        return "•"
+    }
+
     function categoryTitle(cat) {
         if (cat === "All") return qsTr("All Models")
-        if (cat === "LLM") return qsTr("Text Models (LLM)")
+        if (cat === "LLM") return qsTr("Text Models")
         if (cat === "Think") return qsTr("Reasoning Models")
         if (cat === "Vision") return qsTr("Vision Models")
         if (cat === "Image") return qsTr("Image Generation")
@@ -550,30 +564,73 @@ Item {
         spacing: SentinelTheme.spaceLg
 
         ShellPanel {
-            Layout.preferredWidth: modelsPage.compact ? 196 : 278
+            Layout.preferredWidth: modelsPage.sidebarCollapsed ? 68 : (modelsPage.compact ? 196 : 278)
             Layout.fillHeight: true
             color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
             border.color: SentinelTheme.withAlpha(modelsPage.modeAccent, 0.20)
 
+            Behavior on Layout.preferredWidth {
+                NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
+            }
+
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceMd
+                anchors.margins: modelsPage.sidebarCollapsed ? SentinelTheme.spaceXs : SentinelTheme.spaceMd
                 spacing: SentinelTheme.spaceMd
 
-                ColumnLayout {
+                RowLayout {
                     Layout.fillWidth: true
-                    Layout.leftMargin: SentinelTheme.spaceMd
                     Layout.topMargin: SentinelTheme.spaceSm
                     Layout.bottomMargin: SentinelTheme.spaceXs
+                    spacing: 0
+
+                    Item {
+                        visible: modelsPage.sidebarCollapsed
+                        Layout.fillWidth: true
+                    }
 
                     Label {
+                        visible: !modelsPage.sidebarCollapsed
                         Layout.fillWidth: true
+                        Layout.leftMargin: SentinelTheme.spaceMd
                         text: qsTr("Models")
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontTitle
                         font.bold: true
                         maximumLineCount: 1
                         elide: Text.ElideRight
+                    }
+
+                    Button {
+                        id: collapseBtn
+                        Layout.alignment: Qt.AlignVCenter
+                        Layout.rightMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceMd
+                        implicitHeight: 28
+                        implicitWidth: 28
+                        flat: true
+                        onClicked: modelsPage.sidebarCollapsed = !modelsPage.sidebarCollapsed
+                        hoverEnabled: true
+
+                        contentItem: Label {
+                            text: modelsPage.sidebarCollapsed ? "»" : "«"
+                            font.pixelSize: SentinelTheme.fontBody
+                            font.bold: true
+                            color: collapseBtn.hovered ? modelsPage.modeAccent : SentinelTheme.textMuted
+                            horizontalAlignment: Text.AlignHCenter
+                            verticalAlignment: Text.AlignVCenter
+                        }
+
+                        background: Rectangle {
+                            radius: 6
+                            color: collapseBtn.hovered
+                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
+                                 : "transparent"
+                        }
+                    }
+
+                    Item {
+                        visible: modelsPage.sidebarCollapsed
+                        Layout.fillWidth: true
                     }
                 }
 
@@ -596,11 +653,25 @@ Item {
 
                             contentItem: RowLayout {
                                 anchors.fill: parent
-                                anchors.leftMargin: SentinelTheme.spaceLg
-                                anchors.rightMargin: SentinelTheme.spaceMd
-                                spacing: SentinelTheme.spaceSm
+                                anchors.leftMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceLg
+                                anchors.rightMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceMd
+                                spacing: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceSm
 
                                 Text {
+                                    id: iconTxt
+                                    Layout.alignment: Qt.AlignVCenter | (modelsPage.sidebarCollapsed ? Qt.AlignHCenter : Qt.AlignLeft)
+                                    text: modelsPage.categoryIcon(modelData)
+                                    color: navButton.active
+                                           ? SentinelTheme.textPrimary
+                                           : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
+                                    Layout.preferredWidth: modelsPage.sidebarCollapsed ? 42 : 18
+                                }
+
+                                Text {
+                                    visible: !modelsPage.sidebarCollapsed
                                     Layout.fillWidth: true
                                     text: modelsPage.categoryTitle(modelData)
                                     color: navButton.active
@@ -812,6 +883,7 @@ Item {
 
                     Label {
                         Layout.fillWidth: true
+                        Layout.topMargin: SentinelTheme.spaceMd
                         text: shellViewModel.selectedRuntimeProvider === "lm-studio"
                             ? qsTr("Manage local AI models. Models must be downloaded and loaded inside the LM Studio application. Loaded models are listed below.")
                             : qsTr("Download and manage local AI models. Click a card to see details and install via Ollama.")
