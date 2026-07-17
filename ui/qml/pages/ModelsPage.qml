@@ -207,7 +207,8 @@ Item {
             badge: "Image Gen",      badgeColor: "#e05fc4",
             tags: ["Text-to-Image", "Art"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text"
+            context: "—",           input: "Text",
+            externalUrl: "https://stability.ai/news/stable-diffusion-3-5"
         },
         {
             id: "flux-schnell",    category: "Image",
@@ -217,7 +218,8 @@ Item {
             badge: "Image Gen",      badgeColor: "#e05fc4",
             tags: ["Fast", "Text-to-Image"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text"
+            context: "—",           input: "Text",
+            externalUrl: "https://huggingface.co/black-forest-labs/FLUX.1-schnell"
         },
         {
             id: "flux-schnell-mlx", category: "Image",
@@ -227,7 +229,8 @@ Item {
             badge: "MLX / Image",    badgeColor: "#ec4899",
             tags: ["MLX", "Text-to-Image", "BFL"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text"
+            context: "—",           input: "Text",
+            externalUrl: "https://huggingface.co/mlx-community/flux1-schnell-mlx"
         },
         {
             id: "hunyuan-video",   category: "Video",
@@ -237,7 +240,8 @@ Item {
             badge: "Video Gen",      badgeColor: "#8b5cf6",
             tags: ["Text-to-Video", "Local"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text"
+            context: "—",           input: "Text",
+            externalUrl: "https://github.com/Tencent/HunyuanVideo"
         },
         {
             id: "ltx-video",       category: "Video",
@@ -247,7 +251,8 @@ Item {
             badge: "Video Gen",      badgeColor: "#8b5cf6",
             tags: ["Fast", "Text-to-Video"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text"
+            context: "—",           input: "Text",
+            externalUrl: "https://huggingface.co/Lightricks/LTX-Video"
         },
         {
             id: "llava-1.6",       category: "Vision",
@@ -257,7 +262,8 @@ Item {
             badge: "Vision LLM",     badgeColor: "#0ea5e9",
             tags: ["Multimodal", "VQA"],
             downloadable: true,     ollamaId: "llava:13b",
-            context: "4K",          input: "Text / Image"
+            context: "4K",          input: "Text / Image",
+            externalUrl: "https://github.com/haotian-liu/LLaVA"
         },
         // STT / ASR
         {
@@ -268,7 +274,8 @@ Item {
             badge: "ASR",            badgeColor: "#0ea5e9",
             tags: ["Multilingual", "STT"],
             downloadable: false,    ollamaId: "",
-            context: "30s",         input: "Audio"
+            context: "30s",         input: "Audio",
+            externalUrl: "https://github.com/openai/whisper"
         },
         {
             id: "whisper-base",    category: "STT",
@@ -278,7 +285,8 @@ Item {
             badge: "ASR",            badgeColor: "#0ea5e9",
             tags: ["Fast", "STT", "Edge"],
             downloadable: false,    ollamaId: "",
-            context: "30s",         input: "Audio"
+            context: "30s",         input: "Audio",
+            externalUrl: "https://github.com/openai/whisper"
         },
         // TTS
         {
@@ -289,7 +297,8 @@ Item {
             badge: "TTS",            badgeColor: "#14b8a6",
             tags: ["Voices", "TTS"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text"
+            context: "—",           input: "Text",
+            externalUrl: "https://huggingface.co/hexgrad/Kokoro-82M"
         },
         {
             id: "piper-en",        category: "TTS",
@@ -299,7 +308,8 @@ Item {
             badge: "TTS",            badgeColor: "#14b8a6",
             tags: ["Fast", "TTS", "Edge"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "Text"
+            context: "—",           input: "Text",
+            externalUrl: "https://github.com/rhasspy/piper"
         },
         // Runtimes
         {
@@ -310,7 +320,8 @@ Item {
             badge: "Runtime",        badgeColor: "#64748b",
             tags: ["Launcher", "API"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "—"
+            context: "—",           input: "—",
+            externalUrl: "https://ollama.com"
         },
         {
             id: "lmstudio",        category: "Runtime",
@@ -320,7 +331,8 @@ Item {
             badge: "Runtime",        badgeColor: "#64748b",
             tags: ["GUI", "API"],
             downloadable: false,    ollamaId: "",
-            context: "—",           input: "—"
+            context: "—",           input: "—",
+            externalUrl: "https://lmstudio.ai"
         }
     ]
 

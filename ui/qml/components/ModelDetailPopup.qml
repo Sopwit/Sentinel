@@ -23,7 +23,7 @@ SentinelOverlayModal {
 
     // ── Geometry ──────────────────────────────────────────────────────────────
     preferredWidth:  500
-    preferredHeight: 340
+    preferredHeight: 360
     accent: root.modelInfo ? Qt.color(root.modelInfo.badgeColor) : SentinelTheme.accent
     modeName: "Sentinel"
 
@@ -303,11 +303,14 @@ SentinelOverlayModal {
                     font.pixelSize: SentinelTheme.fontControl
                     color: SentinelTheme.textPrimary
                     wrapMode: Text.WordWrap
-                    lineHeight: 1.45
+                    lineHeight: 1.35
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
                 }
 
                 // Highlighted Recommendation Box
                 Rectangle {
+                    visible: !root.activePull
                     Layout.fillWidth: true
                     implicitHeight: bestForCol.implicitHeight + 16
                     radius: 8
@@ -475,7 +478,7 @@ SentinelOverlayModal {
                 // External website button
                 Button {
                     id: externalLinkBtn
-                    visible: root.modelInfo && (!root.modelInfo.downloadable || root.modelInfo.ollamaId === "")
+                    visible: root.modelInfo && root.modelInfo.externalUrl && root.modelInfo.externalUrl !== ""
                     implicitHeight: 32
                     implicitWidth: extLbl.implicitWidth + 24
                     hoverEnabled: true
