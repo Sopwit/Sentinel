@@ -24,7 +24,8 @@ Item {
             badge: "Open Weight",    badgeColor: "#4f8ef7",
             tags: ["Reasoning", "Code", "Multilingual"],
             downloadable: true,     ollamaId: "llama3.3:70b",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/meta-llama/Llama-3.3-70B-Instruct"
         },
         {
             id: "llama3.2-3b",     category: "LLM",
@@ -34,7 +35,8 @@ Item {
             badge: "Edge",           badgeColor: "#10b981",
             tags: ["Fast", "Edge"],
             downloadable: true,     ollamaId: "llama3.2:3b",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct"
         },
         {
             id: "llama3.2-1b",     category: "LLM",
@@ -44,7 +46,19 @@ Item {
             badge: "Edge",           badgeColor: "#10b981",
             tags: ["Fast", "Ultra-light"],
             downloadable: true,     ollamaId: "llama3.2:1b",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/meta-llama/Llama-3.2-1B-Instruct"
+        },
+        {
+            id: "llama3.1-8b",     category: "LLM",
+            name: "Llama 3.1 8B",    provider: "Meta",
+            size: "4.7 GB",          description: qsTr("Meta Llama 3.1 8B Instruct. Highly capable multilingual model with expanded context window."),
+            bestFor: qsTr("General-purpose agent workflows, daily coding assistance, and tool use."),
+            badge: "Open Weight",    badgeColor: "#4f8ef7",
+            tags: ["Meta", "Multilingual", "Agent"],
+            downloadable: true,     ollamaId: "llama3.1:8b",
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct"
         },
         {
             id: "qwen2.5-14b",     category: "LLM",
@@ -54,7 +68,19 @@ Item {
             badge: "Open Weight",    badgeColor: "#4f8ef7",
             tags: ["Math", "Code", "Chinese"],
             downloadable: true,     ollamaId: "qwen2.5:14b",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/Qwen/Qwen2.5-14B-Instruct"
+        },
+        {
+            id: "qwen2.5-32b",     category: "LLM",
+            name: "Qwen 2.5 32B",    provider: "Alibaba",
+            size: "20 GB",           description: qsTr("Large multilingual model with exceptional coding, math and translation capabilities."),
+            bestFor: qsTr("Professional coding, advanced text reasoning, and complex translation."),
+            badge: "Open Weight",    badgeColor: "#4f8ef7",
+            tags: ["Math", "Code", "Multilingual"],
+            downloadable: true,     ollamaId: "qwen2.5:32b",
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/Qwen/Qwen2.5-32B-Instruct"
         },
         {
             id: "qwen2.5-coder-7b", category: "LLM",
@@ -64,7 +90,8 @@ Item {
             badge: "Coding",         badgeColor: "#2563eb",
             tags: ["Code", "Developer", "Fast"],
             downloadable: true,     ollamaId: "qwen2.5-coder:7b",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/Qwen/Qwen2.5-Coder-7B-Instruct"
         },
         {
             id: "gemma2-9b",       category: "LLM",
@@ -74,27 +101,8 @@ Item {
             badge: "Open Weight",    badgeColor: "#4f8ef7",
             tags: ["Google", "Efficient", "Safe"],
             downloadable: true,     ollamaId: "gemma2:9b",
-            context: "8K",          input: "Text"
-        },
-        {
-            id: "deepseek-r1-14b", category: "Think",
-            name: "DeepSeek R1 14B", provider: "DeepSeek",
-            size: "9.0 GB",          description: qsTr("Chain-of-thought reasoning model trained with reinforcement learning."),
-            bestFor: qsTr("Deep mathematical problem solving, code logic verification, and complex logic."),
-            badge: "Reasoning",      badgeColor: "#7c3aed",
-            tags: ["Reasoning", "Math", "CoT"],
-            downloadable: true,     ollamaId: "deepseek-r1:14b",
-            context: "128K",        input: "Text"
-        },
-        {
-            id: "deepseek-r1-8b",  category: "Think",
-            name: "DeepSeek R1 8B",  provider: "DeepSeek",
-            size: "4.7 GB",          description: qsTr("Reasoning model distilled from DeepSeek R1 into Qwen 8B. Excellent logic."),
-            bestFor: qsTr("Distilled step-by-step thinking, fast reasoning, and task planning."),
-            badge: "Reasoning",      badgeColor: "#7c3aed",
-            tags: ["Reasoning", "CoT", "Distilled"],
-            downloadable: true,     ollamaId: "deepseek-r1:8b",
-            context: "128K",        input: "Text"
+            context: "8K",          input: "Text",
+            externalUrl: "https://huggingface.co/google/gemma-2-9b-it"
         },
         {
             id: "mistral-7b",      category: "LLM",
@@ -104,7 +112,64 @@ Item {
             badge: "Open Weight",    badgeColor: "#4f8ef7",
             tags: ["Efficient", "Instruction"],
             downloadable: true,     ollamaId: "mistral:7b",
-            context: "32K",         input: "Text"
+            context: "32K",         input: "Text",
+            externalUrl: "https://huggingface.co/mistralai/Mistral-7B-Instruct-v0.3"
+        },
+        {
+            id: "mistral-nemo",    category: "LLM",
+            name: "Mistral Nemo 12B", provider: "Mistral AI",
+            size: "7.1 GB",          description: qsTr("State-of-the-art 12B model built in collaboration with NVIDIA. Very large token dictionary."),
+            bestFor: qsTr("Multilingual translation, conversational AI, and precise general writing."),
+            badge: "Open Weight",    badgeColor: "#4f8ef7",
+            tags: ["Nvidia", "Multilingual", "128K"],
+            downloadable: true,     ollamaId: "mistral-nemo",
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/mistralai/Mistral-Nemo-Instruct-2407"
+        },
+        // Reasoning / Think
+        {
+            id: "deepseek-r1-32b", category: "Think",
+            name: "DeepSeek R1 32B", provider: "DeepSeek",
+            size: "20 GB",           description: qsTr("Highly capable reasoning model distilled from DeepSeek R1 into Qwen 32B. Elite logical output."),
+            bestFor: qsTr("Scientific analysis, advanced competitive coding, and complex mathematical proofs."),
+            badge: "Reasoning",      badgeColor: "#7c3aed",
+            tags: ["Reasoning", "CoT", "Advanced"],
+            downloadable: true,     ollamaId: "deepseek-r1:32b",
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-32B"
+        },
+        {
+            id: "deepseek-r1-14b", category: "Think",
+            name: "DeepSeek R1 14B", provider: "DeepSeek",
+            size: "9.0 GB",          description: qsTr("Chain-of-thought reasoning model trained with reinforcement learning."),
+            bestFor: qsTr("Deep mathematical problem solving, code logic verification, and complex logic."),
+            badge: "Reasoning",      badgeColor: "#7c3aed",
+            tags: ["Reasoning", "Math", "CoT"],
+            downloadable: true,     ollamaId: "deepseek-r1:14b",
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-14B"
+        },
+        {
+            id: "deepseek-r1-8b",  category: "Think",
+            name: "DeepSeek R1 8B",  provider: "DeepSeek",
+            size: "4.7 GB",          description: qsTr("Reasoning model distilled from DeepSeek R1 into Qwen 8B. Excellent logic."),
+            bestFor: qsTr("Distilled step-by-step thinking, fast reasoning, and task planning."),
+            badge: "Reasoning",      badgeColor: "#7c3aed",
+            tags: ["Reasoning", "CoT", "Distilled"],
+            downloadable: true,     ollamaId: "deepseek-r1:8b",
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-8B"
+        },
+        {
+            id: "deepseek-r1-1.5b", category: "Think",
+            name: "DeepSeek R1 1.5B", provider: "DeepSeek",
+            size: "900 MB",          description: qsTr("Ultra-lightweight reasoning model distilled from DeepSeek R1. Fast reasoning on any device."),
+            bestFor: qsTr("Low-overhead logical tasks, edge reasoning, and instant math/logic answers."),
+            badge: "Reasoning",      badgeColor: "#7c3aed",
+            tags: ["Reasoning", "Edge", "CoT"],
+            downloadable: true,     ollamaId: "deepseek-r1:1.5b",
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
         },
         {
             id: "phi4",            category: "Think",
@@ -114,7 +179,8 @@ Item {
             badge: "Open Weight",    badgeColor: "#4f8ef7",
             tags: ["STEM", "Compact"],
             downloadable: true,     ollamaId: "phi4",
-            context: "16K",         input: "Text"
+            context: "16K",         input: "Text",
+            externalUrl: "https://huggingface.co/microsoft/phi-4"
         },
         // MLX Models (Apple Silicon Optimized)
         {
@@ -125,7 +191,8 @@ Item {
             badge: "MLX / Apple",    badgeColor: "#ec4899",
             tags: ["MLX", "Apple Silicon", "Meta"],
             downloadable: true,     ollamaId: "llama3.2:3b",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/mlx-community/Llama-3.2-3B-Instruct-4bit"
         },
         {
             id: "mlx-deepseek-r1-8b", category: "Think",
@@ -135,7 +202,8 @@ Item {
             badge: "MLX / Reasoning", badgeColor: "#ec4899",
             tags: ["MLX", "Reasoning", "CoT"],
             downloadable: true,     ollamaId: "deepseek-r1:8b",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/mlx-community/DeepSeek-R1-Distill-Qwen-8B-4bit"
         },
         {
             id: "mlx-qwen2.5-coder-7b", category: "LLM",
@@ -145,7 +213,8 @@ Item {
             badge: "MLX / Code",     badgeColor: "#ec4899",
             tags: ["MLX", "Code", "Alibaba"],
             downloadable: true,     ollamaId: "qwen2.5-coder:7b",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/mlx-community/Qwen2.5-Coder-7B-Instruct-4bit"
         },
         {
             id: "mlx-gemma2-9b",    category: "LLM",
@@ -155,7 +224,8 @@ Item {
             badge: "MLX / Apple",    badgeColor: "#ec4899",
             tags: ["MLX", "Apple Silicon", "Google"],
             downloadable: true,     ollamaId: "gemma2:9b",
-            context: "8K",          input: "Text"
+            context: "8K",          input: "Text",
+            externalUrl: "https://huggingface.co/mlx-community/gemma-2-9b-it-4bit"
         },
         {
             id: "mlx-phi4",         category: "Think",
@@ -165,7 +235,8 @@ Item {
             badge: "MLX / Apple",    badgeColor: "#ec4899",
             tags: ["MLX", "STEM", "Microsoft"],
             downloadable: true,     ollamaId: "phi4",
-            context: "16K",         input: "Text"
+            context: "16K",         input: "Text",
+            externalUrl: "https://huggingface.co/mlx-community/phi-4-4bit"
         },
         // Hugging Face / Community Models
         {
@@ -176,7 +247,8 @@ Item {
             badge: "HF via Ollama",  badgeColor: "#64748b",
             tags: ["Hugging Face", "LLM", "Meta"],
             downloadable: true,     ollamaId: "llama3:8b",
-            context: "8K",          input: "Text"
+            context: "8K",          input: "Text",
+            externalUrl: "https://huggingface.co/meta-llama/Meta-Llama-3-8B-Instruct"
         },
         {
             id: "hf-gemma2-2b",    category: "LLM",
@@ -186,7 +258,8 @@ Item {
             badge: "HF via Ollama",  badgeColor: "#64748b",
             tags: ["Hugging Face", "Edge", "Google"],
             downloadable: true,     ollamaId: "gemma2:2b",
-            context: "8K",          input: "Text"
+            context: "8K",          input: "Text",
+            externalUrl: "https://huggingface.co/google/gemma-2-2b-it"
         },
         {
             id: "hf-phi3.5",       category: "LLM",
@@ -196,7 +269,8 @@ Item {
             badge: "HF via Ollama",  badgeColor: "#64748b",
             tags: ["Hugging Face", "LLM", "Microsoft"],
             downloadable: true,     ollamaId: "phi3.5",
-            context: "128K",        input: "Text"
+            context: "128K",        input: "Text",
+            externalUrl: "https://huggingface.co/microsoft/Phi-3.5-mini-instruct"
         },
         // Image / Vision
         {
@@ -208,7 +282,18 @@ Item {
             tags: ["Text-to-Image", "Art"],
             downloadable: false,    ollamaId: "",
             context: "—",           input: "Text",
-            externalUrl: "https://stability.ai/news/stable-diffusion-3-5"
+            externalUrl: "https://huggingface.co/stabilityai/stable-diffusion-3.5-large"
+        },
+        {
+            id: "stable-diff-xl",  category: "Image",
+            name: "Stable Diffusion XL", provider: "Stability AI",
+            size: "6.5 GB",          description: qsTr("High-resolution photo-realistic image generation model. Base + Refiner system."),
+            bestFor: qsTr("Detailed art, photo-realism, textures, and digital painting generation."),
+            badge: "Image Gen",      badgeColor: "#e05fc4",
+            tags: ["SDXL", "Art", "Photo-Realism"],
+            downloadable: false,    ollamaId: "",
+            context: "—",           input: "Text",
+            externalUrl: "https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"
         },
         {
             id: "flux-schnell",    category: "Image",
@@ -255,6 +340,17 @@ Item {
             externalUrl: "https://huggingface.co/Lightricks/LTX-Video"
         },
         {
+            id: "cogvideox-5b",    category: "Video",
+            name: "CogVideoX 5B",    provider: "THUDM",
+            size: "10.0 GB",         description: qsTr("Highly efficient text-to-video generation model with high quality video output."),
+            bestFor: qsTr("Local high-quality cinematic video and animation production."),
+            badge: "Video Gen",      badgeColor: "#8b5cf6",
+            tags: ["Video", "Local", "THUDM"],
+            downloadable: false,    ollamaId: "",
+            context: "—",           input: "Text",
+            externalUrl: "https://huggingface.co/THUDM/CogVideoX-5b"
+        },
+        {
             id: "llava-1.6",       category: "Vision",
             name: "LLaVA 1.6",      provider: "LLaVA Team",
             size: "4.7 GB",          description: qsTr("Multimodal LLM that can answer questions about images and visual content."),
@@ -264,6 +360,17 @@ Item {
             downloadable: true,     ollamaId: "llava:13b",
             context: "4K",          input: "Text / Image",
             externalUrl: "https://github.com/haotian-liu/LLaVA"
+        },
+        {
+            id: "llama3.2-vision-11b", category: "Vision",
+            name: "Llama 3.2 Vision 11B", provider: "Meta",
+            size: "7.9 GB",          description: qsTr("Multimodal model from Meta. Understands visual inputs, charts, images, and text."),
+            bestFor: qsTr("Visual reasoning, document understanding, optical character recognition (OCR), and visual QA."),
+            badge: "Vision LLM",     badgeColor: "#0ea5e9",
+            tags: ["Multimodal", "Vision", "Meta"],
+            downloadable: true,     ollamaId: "llama3.2-vision:11b",
+            context: "128K",        input: "Text / Image",
+            externalUrl: "https://huggingface.co/meta-llama/Llama-3.2-11B-Vision-Instruct"
         },
         // STT / ASR
         {
@@ -309,7 +416,7 @@ Item {
             tags: ["Fast", "TTS", "Edge"],
             downloadable: false,    ollamaId: "",
             context: "—",           input: "Text",
-            externalUrl: "https://github.com/rhasspy/piper"
+            externalUrl: "https://github.com/OHF-Voice/piper1-gpl"
         },
         // Runtimes
         {

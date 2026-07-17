@@ -256,13 +256,15 @@ SentinelOverlayModal {
                     ColumnLayout {
                         spacing: 2
                         Label {
-                            text: qsTr("CONTEXT")
+                            text: root.modelInfo && root.modelInfo.category === "Runtime" ? qsTr("INTERFACE") : qsTr("CONTEXT")
                             font.pixelSize: SentinelTheme.fontTiny
                             font.weight: Font.Bold
                             color: SentinelTheme.textPlaceholder
                         }
                         Label {
-                            text: qsTr("%1 tokens").arg(root.effectiveContext)
+                            text: root.modelInfo && root.modelInfo.category === "Runtime"
+                                ? (root.modelInfo.id === "ollama" ? "Local HTTP API" : "Desktop GUI / API")
+                                : (root.effectiveContext === "—" ? "—" : qsTr("%1 tokens").arg(root.effectiveContext))
                             font.pixelSize: SentinelTheme.fontSmall
                             font.weight: Font.DemiBold
                             color: SentinelTheme.textPrimary
@@ -281,13 +283,15 @@ SentinelOverlayModal {
                     ColumnLayout {
                         spacing: 2
                         Label {
-                            text: qsTr("INPUT TYPE")
+                            text: root.modelInfo && root.modelInfo.category === "Runtime" ? qsTr("DEFAULT PORT") : qsTr("INPUT TYPE")
                             font.pixelSize: SentinelTheme.fontTiny
                             font.weight: Font.Bold
                             color: SentinelTheme.textPlaceholder
                         }
                         Label {
-                            text: root.effectiveInput
+                            text: root.modelInfo && root.modelInfo.category === "Runtime"
+                                ? (root.modelInfo.id === "ollama" ? "11434" : "1234")
+                                : root.effectiveInput
                             font.pixelSize: SentinelTheme.fontSmall
                             font.weight: Font.DemiBold
                             color: SentinelTheme.textPrimary
