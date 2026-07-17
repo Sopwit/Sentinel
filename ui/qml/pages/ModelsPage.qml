@@ -522,6 +522,26 @@ Item {
         })
     }
 
+    property var currentModels: []
+
+    onFilteredModelsChanged: {
+        var newModels = filteredModels || []
+        if (currentModels.length !== newModels.length) {
+            currentModels = newModels
+            return
+        }
+        var changed = false
+        for (var i = 0; i < newModels.length; i++) {
+            if (currentModels[i].id !== newModels[i].id || currentModels[i].badge !== newModels[i].badge) {
+                changed = true
+                break
+            }
+        }
+        if (changed) {
+            currentModels = newModels
+        }
+    }
+
     // ── Installed model detection via Ollama / LM Studio ─────────────────────
     function isInstalledOnDevice(model) {
         if (!model) return false
@@ -1012,7 +1032,7 @@ Item {
                 return Math.floor(width / cols)
             }
             cellHeight: 210
-            model: modelsPage.filteredModels
+            model: modelsPage.currentModels
 
             ScrollBar.vertical: ScrollBar {
                 id: gridScrollBar
@@ -1389,6 +1409,9 @@ Item {
 
         onDownloadRequested: function(modelId) {
             ollamaPuller.pull(modelId)
+        }
+        onCancelRequested: {
+            ollamaPuller.cancel()
         }
     }
 
