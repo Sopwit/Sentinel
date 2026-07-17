@@ -361,6 +361,7 @@ void OllamaModelPuller::pull(const QString& modelId) {
     const QJsonObject body{{QStringLiteral("name"), trimmed}};
     const QByteArray payload = QJsonDocument(body).toJson(QJsonDocument::Compact);
 
+    pullTimer_.start();
     setState(true, trimmed, 0.0, QStringLiteral("Starting pull…"), QString());
 
     reply_ = nam_->post(request, payload);
@@ -475,20 +476,62 @@ void OllamaModelPuller::processChunk(const QByteArray& chunk) {
         const double completedGb = static_cast<double>(completed) / (1024.0 * 1024.0 * 1024.0);
         const double totalGb = static_cast<double>(total) / (1024.0 * 1024.0 * 1024.0);
         
+        QString speedStr;
+        QString etaStr;
+        qint64 elapsedMs = pullTimer_.isValid() ? pullTimer_.elapsed() : 0;
+        if (elapsedMs > 500) {
+            double elapsedSecs = elapsedMs / 1000.0;
+            double speedBytesPerSec = static_cast<double>(completed) / elapsedSecs;
+            
+            if (speedBytesPerSec >= (1024.0 * 1024.0)) {
+                speedStr = QStringLiteral("%1 MB/s").arg(speedBytesPerSec / (1024.0 * 1024.0), 0, 'f', 1);
+            } else {
+                speedStr = QStringLiteral("%1 KB/s").arg(speedBytesPerSec / 1024.0, 0, 'f', 0);
+            }
+            
+            if (speedBytesPerSec > 0.0) {
+                double remainingBytes = static_cast<double>(total - completed);
+                double remainingSecs = remainingBytes / speedBytesPerSec;
+                int h = static_cast<int>(remainingSecs) / 3600;
+                int m = (static_cast<int>(remainingSecs) % 3600) / 60;
+                int s = static_cast<int>(remainingSecs) % 60;
+                
+                if (h > 0) {
+                    etaStr = QStringLiteral("%1h %2m remaining").arg(h).arg(m);
+                } else if (m > 0) {
+                    etaStr = QStringLiteral("%1m %2s remaining").arg(m).arg(s);
+                } else {
+                    etaStr = QStringLiteral("%1s remaining").arg(s);
+                }
+            }
+        }
+
+        QString baseStatus = status;
+        if (!baseStatus.isEmpty()) {
+            baseStatus[0] = baseStatus[0].toUpper();
+        }
+
+        QString sizeInfo;
         if (totalGb >= 0.1) {
-            displayStatus = QStringLiteral("%1 — %2% (%3 GB / %4 GB)")
-                .arg(status)
-                .arg(static_cast<int>(pct))
-                .arg(completedGb, 0, 'f', 2)
-                .arg(totalGb, 0, 'f', 2);
+            sizeInfo = QStringLiteral("%1 GB / %2 GB").arg(completedGb, 0, 'f', 2).arg(totalGb, 0, 'f', 2);
         } else {
             const double completedMb = static_cast<double>(completed) / (1024.0 * 1024.0);
             const double totalMb = static_cast<double>(total) / (1024.0 * 1024.0);
-            displayStatus = QStringLiteral("%1 — %2% (%3 MB / %4 MB)")
-                .arg(status)
+            sizeInfo = QStringLiteral("%1 MB / %2 MB").arg(completedMb, 0, 'f', 1).arg(totalMb, 0, 'f', 1);
+        }
+
+        if (!speedStr.isEmpty() && !etaStr.isEmpty()) {
+            displayStatus = QStringLiteral("%1 — %2% (%3 • %4 • %5)")
+                .arg(baseStatus)
                 .arg(static_cast<int>(pct))
-                .arg(completedMb, 0, 'f', 1)
-                .arg(totalMb, 0, 'f', 1);
+                .arg(sizeInfo)
+                .arg(speedStr)
+                .arg(etaStr);
+        } else {
+            displayStatus = QStringLiteral("%1 — %2% (%3)")
+                .arg(baseStatus)
+                .arg(static_cast<int>(pct))
+                .arg(sizeInfo);
         }
     }
 
@@ -738,14 +781,35 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
             category = QStringLiteral("Image");
         }
 
+        QString provider = QStringLiteral("Ollama Library");
+        QString idLower = ollamaId.toLower();
+        if (idLower.startsWith(QStringLiteral("llama")) || idLower.startsWith(QStringLiteral("codellama"))) {
+            provider = QStringLiteral("Meta");
+        } else if (idLower.startsWith(QStringLiteral("gemma")) || idLower.startsWith(QStringLiteral("codegemma"))) {
+            provider = QStringLiteral("Google");
+        } else if (idLower.startsWith(QStringLiteral("qwen"))) {
+            provider = QStringLiteral("Alibaba");
+        } else if (idLower.startsWith(QStringLiteral("deepseek"))) {
+            provider = QStringLiteral("DeepSeek");
+        } else if (idLower.startsWith(QStringLiteral("mistral")) || idLower.startsWith(QStringLiteral("mixtral"))) {
+            provider = QStringLiteral("Mistral AI");
+        } else if (idLower.startsWith(QStringLiteral("phi"))) {
+            provider = QStringLiteral("Microsoft");
+        } else if (idLower.startsWith(QStringLiteral("smollm"))) {
+            provider = QStringLiteral("Hugging Face");
+        } else if (idLower.contains(QStringLiteral("nemotron"))) {
+            provider = QStringLiteral("NVIDIA");
+        }
+
         QVariantMap modelObj;
         modelObj[QStringLiteral("id")] = ollamaId;
         modelObj[QStringLiteral("ollamaId")] = ollamaId;
         modelObj[QStringLiteral("category")] = category;
         modelObj[QStringLiteral("name")] = name;
-        modelObj[QStringLiteral("provider")] = QStringLiteral("Ollama Library");
+        modelObj[QStringLiteral("provider")] = provider;
         modelObj[QStringLiteral("size")] = pulls + QStringLiteral(" pulls");
         modelObj[QStringLiteral("description")] = description;
+        modelObj[QStringLiteral("externalUrl")] = QStringLiteral("https://ollama.com/library/") + ollamaId;
 
         QString badge = caps.isEmpty() ? QStringLiteral("Ollama") : caps.first();
         QString badgeColor = QStringLiteral("#7c3aed");

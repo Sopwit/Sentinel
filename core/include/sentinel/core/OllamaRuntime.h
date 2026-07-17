@@ -1,5 +1,6 @@
 #pragma once
 
+#include <QElapsedTimer>
 #include <QList>
 #include <QObject>
 #include <QString>
@@ -182,6 +183,7 @@ private:
     QString errorText_;
     class QNetworkAccessManager* nam_ = nullptr;
     class QNetworkReply* reply_ = nullptr;
+    QElapsedTimer pullTimer_;
 };
 
 // ── OllamaLibraryFetcher ──────────────────────────────────────────────────────
