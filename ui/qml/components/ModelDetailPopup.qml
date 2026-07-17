@@ -251,31 +251,6 @@ SentinelOverlayModal {
                     Layout.fillWidth: true
                     spacing: SentinelTheme.spaceLg
 
-                    // Size
-                    ColumnLayout {
-                        spacing: 2
-                        Label {
-                            text: qsTr("SIZE")
-                            font.pixelSize: SentinelTheme.fontTiny
-                            font.weight: Font.Bold
-                            color: SentinelTheme.textPlaceholder
-                        }
-                        Label {
-                            text: root.effectiveSize
-                            font.pixelSize: SentinelTheme.fontSmall
-                            font.weight: Font.DemiBold
-                            color: SentinelTheme.textPrimary
-                        }
-                    }
-
-                    // Vertical Separator
-                    Rectangle {
-                        Layout.preferredHeight: 24
-                        implicitWidth: 1
-                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                        Layout.alignment: Qt.AlignVCenter
-                    }
-
                     // Context Window
                     ColumnLayout {
                         spacing: 2
@@ -438,25 +413,41 @@ SentinelOverlayModal {
 
                 Item { Layout.fillWidth: true }
 
-                // Download Button
+                // Download / Remove Button
                 Button {
                     id: actionBtn
-                    visible: root.modelInfo && root.modelInfo.downloadable && root.modelInfo.ollamaId !== ""
-                    enabled: !root.isLMStudio && !root.activePull && !root.isDone
+                    visible: root.modelInfo && root.modelInfo.ollamaId !== "" && shellViewModel.selectedRuntimeProvider === "ollama" && (root.modelInfo.downloadable || root.isDone)
+                    enabled: !root.activePull
                     implicitHeight: 32
                     implicitWidth: actionLbl.implicitWidth + 24
                     hoverEnabled: true
-                    onClicked: root.downloadRequested(root.modelInfo.ollamaId)
+                    onClicked: {
+                        if (root.isDone) {
+                            ollamaPuller.removeModel(root.modelInfo.ollamaId)
+                        } else {
+                            root.downloadRequested(root.modelInfo.ollamaId)
+                        }
+                    }
                     scale: actionBtn.down ? 0.97 : 1.0
 
                     background: Rectangle {
                         radius: 6
-                        color: actionBtn.enabled
-                             ? (actionBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.12))
-                             : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                        border.color: actionBtn.enabled
-                                    ? root.accent
-                                    : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                        color: {
+                            if (root.isDone) {
+                                return actionBtn.hovered ? "#ef4444" : SentinelTheme.withAlpha("#ef4444", 0.12)
+                            }
+                            return actionBtn.enabled
+                                 ? (actionBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.12))
+                                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                        }
+                        border.color: {
+                            if (root.isDone) {
+                                return "#ef4444"
+                            }
+                            return actionBtn.enabled
+                                 ? root.accent
+                                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                        }
                         border.width: 1
 
                         Behavior on color { ColorAnimation { duration: 150 } }
@@ -466,14 +457,19 @@ SentinelOverlayModal {
                     contentItem: Label {
                         id: actionLbl
                         text: root.isDone
-                            ? (root.isLMStudio ? qsTr("✓  Loaded") : qsTr("✓  Installed"))
+                            ? qsTr("Remove Model")
                             : root.activePull ? qsTr("Downloading…")
-                            : (root.isLMStudio ? qsTr("Use LM Studio App") : qsTr("Install Model"))
+                            : qsTr("Install Model")
                         font.pixelSize: SentinelTheme.fontSmall
                         font.weight: Font.Medium
-                        color: actionBtn.enabled
-                             ? (actionBtn.hovered ? "#ffffff" : root.accent)
-                             : SentinelTheme.textMuted
+                        color: {
+                            if (root.isDone) {
+                                return actionBtn.hovered ? "#ffffff" : "#ef4444"
+                            }
+                            return actionBtn.enabled
+                                 ? (actionBtn.hovered ? "#ffffff" : root.accent)
+                                 : SentinelTheme.textMuted
+                        }
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
                         Behavior on color { ColorAnimation { duration: 150 } }

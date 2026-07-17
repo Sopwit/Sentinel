@@ -60,8 +60,8 @@ Popup {
         id: bgRec
         radius: SentinelTheme.radiusXl
         color: SentinelTheme.lightTheme
-             ? SentinelTheme.withAlpha("#ffffff", 0.88)
-             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.90)
+             ? SentinelTheme.withAlpha("#ffffff", 0.95)
+             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
         border.color: SentinelTheme.lightTheme
                     ? SentinelTheme.withAlpha("#ffffff", 0.88)
                     : SentinelTheme.withAlpha(modal.accent, 0.25)
