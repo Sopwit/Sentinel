@@ -199,15 +199,18 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Language")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
                                 elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
                             ComboBox {
                                 id: languageCombo
                                 Layout.fillWidth: true
+                                implicitHeight: 36
                                 hoverEnabled: true
                                 model: settingsPage.viewModel.availableLanguages
                                 currentIndex: settingsPage.viewModel.availableLanguages.indexOf(settingsPage.viewModel.appLanguage)
@@ -227,40 +230,75 @@ Item {
                                 }
 
                                 background: Rectangle {
+                                    implicitHeight: 36
                                     radius: SentinelTheme.radiusMd
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                    border.color: InteractionTokens.borderColor(languageCombo.activeFocus,
-                                                                                 languageCombo.hovered,
-                                                                                 languageCombo.popup.visible,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: languageCombo.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : languageCombo.hovered || languageCombo.popup.visible
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                }
+
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
                                 }
 
                                 delegate: ItemDelegate {
                                     id: languageOption
                                     width: languageCombo.width
+                                    implicitHeight: 36
                                     text: settingsPage.viewModel.languageDisplayName(modelData)
                                     highlighted: languageCombo.highlightedIndex === index
+                                    hoverEnabled: true
 
-                                    contentItem: Text {
-                                        text: languageOption.text
-                                        color: languageOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        verticalAlignment: Text.AlignVCenter
-                                        maximumLineCount: 1
-                                        elide: Text.ElideRight
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: languageOption.text
+                                            color: languageOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: languageOption.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                            maximumLineCount: 1
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            visible: languageCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: settingsPage.modeAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
                                     }
 
                                     background: Rectangle {
-                                        color: InteractionTokens.surfaceColor(languageOption.highlighted, false, false,
-                                                                               settingsPage.modeAccent)
+                                        color: languageOption.highlighted
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                               : languageOption.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                     }
                                 }
 
                                 popup.background: Rectangle {
                                     radius: SentinelTheme.radiusLg
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                    border.color: InteractionTokens.borderColor(false, true, false,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                    border.width: 1
                                 }
                             }
                         }
@@ -293,15 +331,18 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Theme")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
                                 elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
                             ComboBox {
                                 id: themeCombo
                                 Layout.fillWidth: true
+                                implicitHeight: 36
                                 hoverEnabled: true
                                 model: settingsPage.themeChoices
                                 currentIndex: settingsPage.themeChoices.indexOf(settingsPage.viewModel.themeName)
@@ -320,12 +361,77 @@ Item {
                                 }
 
                                 background: Rectangle {
+                                    implicitHeight: 36
                                     radius: SentinelTheme.radiusMd
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                    border.color: InteractionTokens.borderColor(themeCombo.activeFocus,
-                                                                                 themeCombo.hovered,
-                                                                                 themeCombo.popup.visible,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: themeCombo.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : themeCombo.hovered || themeCombo.popup.visible
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                }
+
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: themeOption
+                                    required property string modelData
+                                    required property int index
+                                    width: themeCombo.width
+                                    implicitHeight: 36
+                                    text: modelData
+                                    highlighted: themeCombo.highlightedIndex === index
+                                    hoverEnabled: true
+
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: themeOption.text
+                                            color: themeOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: themeOption.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                            maximumLineCount: 1
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            visible: themeCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: settingsPage.modeAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
+                                    }
+
+                                    background: Rectangle {
+                                        color: themeOption.highlighted
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                               : themeOption.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                    border.width: 1
                                 }
                             }
                         }
@@ -487,6 +593,7 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("UI Density")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
@@ -576,15 +683,18 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Provider")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
                                 elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
                             ComboBox {
                                 id: runtimeProviderCombo
                                 Layout.fillWidth: true
+                                implicitHeight: 36
                                 hoverEnabled: true
                                 model: settingsPage.viewModel.selectableRuntimeProviderLabels
                                 currentIndex: settingsPage.viewModel.selectableRuntimeProviderIds.indexOf(settingsPage.viewModel.selectedRuntimeProvider)
@@ -606,49 +716,213 @@ Item {
                                 }
 
                                 background: Rectangle {
+                                    implicitHeight: 36
                                     radius: SentinelTheme.radiusMd
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                    border.color: InteractionTokens.borderColor(runtimeProviderCombo.activeFocus,
-                                                                                 runtimeProviderCombo.hovered,
-                                                                                 runtimeProviderCombo.popup.visible,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: runtimeProviderCombo.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : runtimeProviderCombo.hovered || runtimeProviderCombo.popup.visible
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                }
+
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
                                 }
 
                                 delegate: ItemDelegate {
                                     id: runtimeProviderOption
+                                    required property string modelData
+                                    required property int index
                                     width: runtimeProviderCombo.width
+                                    implicitHeight: 36
                                     text: modelData
                                     highlighted: runtimeProviderCombo.highlightedIndex === index
+                                    hoverEnabled: true
 
-                                    contentItem: Text {
-                                        text: runtimeProviderOption.text
-                                        color: runtimeProviderOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        verticalAlignment: Text.AlignVCenter
-                                        maximumLineCount: 1
-                                        elide: Text.ElideRight
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: runtimeProviderOption.text
+                                            color: runtimeProviderOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: runtimeProviderOption.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                            maximumLineCount: 1
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            visible: runtimeProviderCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: settingsPage.modeAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
                                     }
 
                                     background: Rectangle {
-                                        color: InteractionTokens.surfaceColor(runtimeProviderOption.highlighted, false, false,
-                                                                               settingsPage.modeAccent)
+                                        color: runtimeProviderOption.highlighted
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                               : runtimeProviderOption.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                     }
                                 }
 
                                 popup.background: Rectangle {
                                     radius: SentinelTheme.radiusLg
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                    border.color: InteractionTokens.borderColor(false, true, false,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                    border.width: 1
                                 }
                             }
                         }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Active Model")
-                            value: settingsPage.viewModel.activeRuntimeModelLabel
+                        RowLayout {
                             Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
+                                text: qsTr("Model")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            ComboBox {
+                                id: aiModelCombo
+                                Layout.fillWidth: true
+                                implicitHeight: 36
+                                enabled: settingsPage.viewModel.ollamaModelCount > 0
+                                hoverEnabled: true
+                                model: settingsPage.viewModel.ollamaModelNames
+                                currentIndex: settingsPage.viewModel.ollamaModelNames.indexOf(settingsPage.viewModel.selectedLocalModel)
+                                displayText: currentIndex >= 0
+                                    ? currentText
+                                    : (settingsPage.viewModel.ollamaModelCount === 0
+                                       ? qsTr("No models found")
+                                       : qsTr("Select a model"))
+                                onActivated: settingsPage.viewModel.selectedLocalModel = currentText
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: aiModelCombo.displayText
+                                    color: aiModelCombo.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    implicitHeight: 36
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase,
+                                                                   aiModelCombo.enabled ? 0.72 : 0.38)
+                                    border.color: aiModelCombo.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : aiModelCombo.hovered || aiModelCombo.popup.visible
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                }
+
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: aiModelOption
+                                    required property string modelData
+                                    required property int index
+                                    width: aiModelCombo.width
+                                    implicitHeight: 36
+                                    highlighted: aiModelCombo.highlightedIndex === index
+                                    hoverEnabled: true
+
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: aiModelOption.modelData
+                                            color: aiModelOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: aiModelOption.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                            maximumLineCount: 1
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            visible: aiModelCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: settingsPage.modeAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
+                                    }
+
+                                    background: Rectangle {
+                                        color: aiModelOption.highlighted
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                               : aiModelOption.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                    border.width: 1
+                                }
+
+                                popup.enter: Transition {
+                                    NumberAnimation {
+                                        property: "opacity"
+                                        from: 0.0; to: 1.0
+                                        duration: MotionTokens.duration(MotionTokens.menu, settingsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.enter
+                                    }
+                                }
+
+                                popup.exit: Transition {
+                                    NumberAnimation {
+                                        property: "opacity"
+                                        to: 0.0
+                                        duration: MotionTokens.duration(MotionTokens.fast, settingsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.exit
+                                    }
+                                }
+                            }
                         }
 
                         InfoRow {
@@ -687,84 +961,137 @@ Item {
                             Layout.fillWidth: true
                         }
 
-                        ComboBox {
-                            id: modelCombo
+                        RowLayout {
                             Layout.fillWidth: true
-                            enabled: settingsPage.viewModel.ollamaModelCount > 0
-                            hoverEnabled: true
-                            model: settingsPage.viewModel.ollamaModelNames
-                            currentIndex: settingsPage.viewModel.ollamaModelNames.indexOf(settingsPage.viewModel.selectedLocalModel)
-                            displayText: currentIndex >= 0
-                                ? currentText + " (" + (settingsPage.viewModel.selectedRuntimeProvider === "lm-studio" ? "LM Studio" : "Ollama") + ")"
-                                : settingsPage.viewModel.selectedLocalModelStatus + qsTr(" / No model selected")
-                            onActivated: settingsPage.viewModel.selectedLocalModel = currentText
+                            spacing: SentinelTheme.spaceMd
 
-                            contentItem: Text {
-                                leftPadding: SentinelTheme.spaceMd
-                                rightPadding: SentinelTheme.space2Xl
-                                text: modelCombo.displayText
-                                color: modelCombo.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontBody
-                                verticalAlignment: Text.AlignVCenter
-                                maximumLineCount: 1
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
+                                text: qsTr("Model")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
                                 elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
-                            background: Rectangle {
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                border.color: InteractionTokens.borderColor(modelCombo.activeFocus,
-                                                                             modelCombo.hovered,
-                                                                             modelCombo.popup.visible,
-                                                                             settingsPage.modeAccent)
-                            }
-
-                            delegate: ItemDelegate {
-                                id: modelOption
-                                width: modelCombo.width
-                                text: modelData + " (" + (settingsPage.viewModel.selectedRuntimeProvider === "lm-studio" ? "LM Studio" : "Ollama") + ")"
-                                highlighted: modelCombo.highlightedIndex === index
+                            ComboBox {
+                                id: modelCombo
+                                Layout.fillWidth: true
+                                implicitHeight: 36
+                                enabled: settingsPage.viewModel.ollamaModelCount > 0
+                                hoverEnabled: true
+                                model: settingsPage.viewModel.ollamaModelNames
+                                currentIndex: settingsPage.viewModel.ollamaModelNames.indexOf(settingsPage.viewModel.selectedLocalModel)
+                                displayText: currentIndex >= 0
+                                    ? currentText + " (" + (settingsPage.viewModel.selectedRuntimeProvider === "lm-studio" ? "LM Studio" : "Ollama") + ")"
+                                    : settingsPage.viewModel.selectedLocalModelStatus + qsTr(" / No model selected")
+                                onActivated: settingsPage.viewModel.selectedLocalModel = currentText
 
                                 contentItem: Text {
-                                    text: modelOption.text
-                                    color: modelOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: modelCombo.displayText
+                                    color: modelCombo.enabled ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontBody
                                     verticalAlignment: Text.AlignVCenter
-                                    wrapMode: Text.WordWrap
-                                    maximumLineCount: 2
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
                                 }
 
                                 background: Rectangle {
-                                    color: InteractionTokens.surfaceColor(modelOption.highlighted, false, false,
-                                                                           settingsPage.modeAccent)
+                                    implicitHeight: 36
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase,
+                                                                   modelCombo.enabled ? 0.72 : 0.38)
+                                    border.color: modelCombo.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : modelCombo.hovered || modelCombo.popup.visible
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
                                 }
-                            }
 
-                            popup.background: Rectangle {
-                                radius: SentinelTheme.radiusLg
-                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                border.color: InteractionTokens.borderColor(false, true, false,
-                                                                             settingsPage.modeAccent)
-                            }
-
-                            popup.enter: Transition {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    from: 0.0
-                                    to: 1.0
-                                    duration: MotionTokens.duration(MotionTokens.menu,
-                                                                    settingsPage.viewModel.currentModeName)
-                                    easing.type: MotionTokens.enter
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
                                 }
-                            }
 
-                            popup.exit: Transition {
-                                NumberAnimation {
-                                    property: "opacity"
-                                    to: 0.0
-                                    duration: MotionTokens.duration(MotionTokens.fast,
-                                                                    settingsPage.viewModel.currentModeName)
-                                    easing.type: MotionTokens.exit
+                                delegate: ItemDelegate {
+                                    id: modelOption
+                                    required property string modelData
+                                    required property int index
+                                    width: modelCombo.width
+                                    implicitHeight: 40
+                                    highlighted: modelCombo.highlightedIndex === index
+                                    hoverEnabled: true
+
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: modelOption.modelData + " (" + (settingsPage.viewModel.selectedRuntimeProvider === "lm-studio" ? "LM Studio" : "Ollama") + ")"
+                                            color: modelOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: modelOption.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                            wrapMode: Text.WordWrap
+                                            maximumLineCount: 2
+                                        }
+
+                                        Text {
+                                            visible: modelCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: settingsPage.modeAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
+                                    }
+
+                                    background: Rectangle {
+                                        color: modelOption.highlighted
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                               : modelOption.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                    border.width: 1
+                                }
+
+                                popup.enter: Transition {
+                                    NumberAnimation {
+                                        property: "opacity"
+                                        from: 0.0
+                                        to: 1.0
+                                        duration: MotionTokens.duration(MotionTokens.menu,
+                                                                        settingsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.enter
+                                    }
+                                }
+
+                                popup.exit: Transition {
+                                    NumberAnimation {
+                                        property: "opacity"
+                                        to: 0.0
+                                        duration: MotionTokens.duration(MotionTokens.fast,
+                                                                        settingsPage.viewModel.currentModeName)
+                                        easing.type: MotionTokens.exit
+                                    }
                                 }
                             }
                         }
@@ -1008,95 +1335,101 @@ Item {
                             Layout.fillWidth: true
                         }
 
-                        CheckBox {
-                            id: localChatToggle
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: qsTr("Local chat inference")
-                            hoverEnabled: true
-                            leftPadding: localChatToggle.indicator.width + SentinelTheme.spaceSm
-                            checked: settingsPage.viewModel.localChatInferenceEnabled
-                            onToggled: settingsPage.viewModel.localChatInferenceEnabled = checked
-                            contentItem: Text {
-                                text: localChatToggle.text
+                            spacing: SentinelTheme.spaceSm
+                            Layout.topMargin: SentinelTheme.spaceXs
+                            Layout.bottomMargin: SentinelTheme.spaceXs
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Local chat inference")
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontBody
+                                font.bold: true
                                 verticalAlignment: Text.AlignVCenter
-                                wrapMode: Text.WordWrap
                             }
-                            indicator: Rectangle {
-                                implicitWidth: 18
-                                implicitHeight: 18
-                                x: localChatToggle.leftPadding
-                                y: parent.height / 2 - height / 2
-                                radius: SentinelTheme.radiusSm
-                                color: localChatToggle.checked
-                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
-                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                                border.color: InteractionTokens.borderColor(localChatToggle.activeFocus,
-                                                                             localChatToggle.hovered,
-                                                                             localChatToggle.checked,
-                                                                             settingsPage.modeAccent)
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 8
-                                    height: 8
-                                    radius: 4
-                                    visible: localChatToggle.checked
-                                    color: settingsPage.modeAccent
-                                }
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: MotionTokens.fast
-                                        easing.type: MotionTokens.standard
+                            Switch {
+                                id: localChatToggle
+                                checked: settingsPage.viewModel.localChatInferenceEnabled
+                                hoverEnabled: true
+                                onToggled: settingsPage.viewModel.localChatInferenceEnabled = checked
+                                indicator: Rectangle {
+                                    implicitWidth: 46
+                                    implicitHeight: 24
+                                    x: localChatToggle.leftPadding
+                                    y: parent.height / 2 - height / 2
+                                    radius: height / 2
+                                    color: localChatToggle.checked
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                    border.color: localChatToggle.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : localChatToggle.hovered
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Rectangle {
+                                        x: localChatToggle.checked ? parent.width - width - 3 : 3
+                                        y: parent.height / 2 - height / 2
+                                        width: 18; height: 18
+                                        radius: height / 2
+                                        color: localChatToggle.checked ? settingsPage.modeAccent : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
+                                        Behavior on x { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.press } }
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                     }
+                                    Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                 }
+                                background: Item {}
                             }
                         }
 
-                        CheckBox {
-                            id: streamingToggle
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: qsTr("Local response streaming")
-                            hoverEnabled: true
-                            leftPadding: streamingToggle.indicator.width + SentinelTheme.spaceSm
-                            checked: settingsPage.viewModel.localInferenceStreamingEnabled
-                            onToggled: settingsPage.viewModel.localInferenceStreamingEnabled = checked
-                            contentItem: Text {
-                                text: streamingToggle.text
+                            spacing: SentinelTheme.spaceSm
+                            Layout.topMargin: SentinelTheme.spaceXs
+                            Layout.bottomMargin: SentinelTheme.spaceXs
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Local response streaming")
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontBody
+                                font.bold: true
                                 verticalAlignment: Text.AlignVCenter
-                                wrapMode: Text.WordWrap
                             }
-                            indicator: Rectangle {
-                                implicitWidth: 18
-                                implicitHeight: 18
-                                x: streamingToggle.leftPadding
-                                y: parent.height / 2 - height / 2
-                                radius: SentinelTheme.radiusSm
-                                color: streamingToggle.checked
-                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
-                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                                border.color: InteractionTokens.borderColor(streamingToggle.activeFocus,
-                                                                             streamingToggle.hovered,
-                                                                             streamingToggle.checked,
-                                                                             settingsPage.modeAccent)
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 8
-                                    height: 8
-                                    radius: 4
-                                    visible: streamingToggle.checked
-                                    color: settingsPage.modeAccent
-                                }
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: MotionTokens.fast
-                                        easing.type: MotionTokens.standard
+                            Switch {
+                                id: streamingToggle
+                                checked: settingsPage.viewModel.localInferenceStreamingEnabled
+                                hoverEnabled: true
+                                onToggled: settingsPage.viewModel.localInferenceStreamingEnabled = checked
+                                indicator: Rectangle {
+                                    implicitWidth: 46
+                                    implicitHeight: 24
+                                    x: streamingToggle.leftPadding
+                                    y: parent.height / 2 - height / 2
+                                    radius: height / 2
+                                    color: streamingToggle.checked
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                    border.color: streamingToggle.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : streamingToggle.hovered
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Rectangle {
+                                        x: streamingToggle.checked ? parent.width - width - 3 : 3
+                                        y: parent.height / 2 - height / 2
+                                        width: 18; height: 18
+                                        radius: height / 2
+                                        color: streamingToggle.checked ? settingsPage.modeAccent : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
+                                        Behavior on x { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.press } }
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                     }
+                                    Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                 }
+                                background: Item {}
                             }
                         }
 
@@ -1106,143 +1439,182 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Timeout")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
                                 elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
-                            SpinBox {
-                                id: timeoutSpin
-                                Layout.preferredWidth: 150
-                                from: 1000
-                                to: 300000
-                                stepSize: 1000
-                                value: settingsPage.viewModel.localInferenceTimeoutMs
-                                editable: true
-                                onValueModified: settingsPage.viewModel.localInferenceTimeoutMs = value
+                            Rectangle {
+                                implicitHeight: 36
+                                implicitWidth: 180
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                border.color: timeoutInput.activeFocus
+                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                              : timeoutInputMouse.containsMouse
+                                                ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
 
-                                contentItem: TextInput {
-                                    text: timeoutSpin.textFromValue(timeoutSpin.value, timeoutSpin.locale)
-                                    color: SentinelTheme.textPrimary
-                                    selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
-                                    selectedTextColor: SentinelTheme.textPrimary
-                                    horizontalAlignment: Qt.AlignHCenter
-                                    verticalAlignment: Qt.AlignVCenter
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    validator: timeoutSpin.validator
-                                    inputMethodHints: Qt.ImhFormattedNumbersOnly
-                                }
+                                HoverHandler { id: timeoutInputMouse }
 
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                    border.color: InteractionTokens.borderColor(timeoutSpin.activeFocus,
-                                                                                 timeoutSpin.hovered,
-                                                                                 false,
-                                                                                 settingsPage.modeAccent)
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: 2
+                                    anchors.rightMargin: 2
+                                    spacing: 0
+
+                                    Button {
+                                        implicitWidth: 32
+                                        Layout.fillHeight: true
+                                        hoverEnabled: true
+                                        focusPolicy: Qt.NoFocus
+                                        onClicked: {
+                                            let v = settingsPage.viewModel.localInferenceTimeoutMs - 1000
+                                            settingsPage.viewModel.localInferenceTimeoutMs = Math.max(1000, v)
+                                        }
+                                        contentItem: Text { text: "−"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
+                                        background: Rectangle { color: parent.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"; radius: SentinelTheme.radiusSm }
+                                    }
+
+                                    TextInput {
+                                        id: timeoutInput
+                                        Layout.fillWidth: true
+                                        text: settingsPage.viewModel.localInferenceTimeoutMs
+                                        color: SentinelTheme.textPrimary
+                                        selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
+                                        selectedTextColor: SentinelTheme.textPrimary
+                                        horizontalAlignment: Qt.AlignHCenter
+                                        verticalAlignment: Qt.AlignVCenter
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        validator: IntValidator { bottom: 1000; top: 300000 }
+                                        inputMethodHints: Qt.ImhDigitsOnly
+                                        onEditingFinished: settingsPage.viewModel.localInferenceTimeoutMs = parseInt(text) || 30000
+                                    }
+
+                                    Button {
+                                        implicitWidth: 32
+                                        Layout.fillHeight: true
+                                        hoverEnabled: true
+                                        focusPolicy: Qt.NoFocus
+                                        onClicked: {
+                                            let v = settingsPage.viewModel.localInferenceTimeoutMs + 1000
+                                            settingsPage.viewModel.localInferenceTimeoutMs = Math.min(300000, v)
+                                        }
+                                        contentItem: Text { text: "+"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
+                                        background: Rectangle { color: parent.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"; radius: SentinelTheme.radiusSm }
+                                    }
                                 }
                             }
 
                             Label {
-                                Layout.fillWidth: true
                                 text: qsTr("ms")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
-                                elide: Text.ElideRight
                             }
                         }
 
-                        CheckBox {
-                            id: contextToggle
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: qsTr("Use local memory/context in chat")
-                            hoverEnabled: true
-                            leftPadding: contextToggle.indicator.width + SentinelTheme.spaceSm
-                            checked: settingsPage.viewModel.promptContextInjectionEnabled
-                            onToggled: settingsPage.viewModel.promptContextInjectionEnabled = checked
-                            contentItem: Text {
-                                text: contextToggle.text
+                            spacing: SentinelTheme.spaceSm
+                            Layout.topMargin: SentinelTheme.spaceXs
+                            Layout.bottomMargin: SentinelTheme.spaceXs
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Use local memory/context in chat")
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontBody
+                                font.bold: true
                                 verticalAlignment: Text.AlignVCenter
                                 wrapMode: Text.WordWrap
                             }
-                            indicator: Rectangle {
-                                implicitWidth: 18
-                                implicitHeight: 18
-                                x: contextToggle.leftPadding
-                                y: parent.height / 2 - height / 2
-                                radius: SentinelTheme.radiusSm
-                                color: contextToggle.checked
-                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
-                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                                border.color: InteractionTokens.borderColor(contextToggle.activeFocus,
-                                                                             contextToggle.hovered,
-                                                                             contextToggle.checked,
-                                                                             settingsPage.modeAccent)
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 8
-                                    height: 8
-                                    radius: 4
-                                    visible: contextToggle.checked
-                                    color: settingsPage.modeAccent
-                                }
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: MotionTokens.fast
-                                        easing.type: MotionTokens.standard
+                            Switch {
+                                id: contextToggle
+                                checked: settingsPage.viewModel.promptContextInjectionEnabled
+                                hoverEnabled: true
+                                onToggled: settingsPage.viewModel.promptContextInjectionEnabled = checked
+                                indicator: Rectangle {
+                                    implicitWidth: 46
+                                    implicitHeight: 24
+                                    x: contextToggle.leftPadding
+                                    y: parent.height / 2 - height / 2
+                                    radius: height / 2
+                                    color: contextToggle.checked
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                    border.color: contextToggle.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : contextToggle.hovered
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Rectangle {
+                                        x: contextToggle.checked ? parent.width - width - 3 : 3
+                                        y: parent.height / 2 - height / 2
+                                        width: 18; height: 18
+                                        radius: height / 2
+                                        color: contextToggle.checked ? settingsPage.modeAccent : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
+                                        Behavior on x { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.press } }
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                     }
+                                    Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                 }
+                                background: Item {}
                             }
                         }
 
-                        CheckBox {
-                            id: contextReasoningVisibilityToggle
+                        RowLayout {
                             Layout.fillWidth: true
-                            text: qsTr("Show context reasoning")
-                            hoverEnabled: true
-                            focusPolicy: Qt.StrongFocus
-                            leftPadding: contextReasoningVisibilityToggle.indicator.width + SentinelTheme.spaceSm
-                            checked: settingsPage.viewModel.contextExplainabilityVisible
-                            onToggled: settingsPage.viewModel.contextExplainabilityVisible = checked
-                            contentItem: Text {
-                                text: contextReasoningVisibilityToggle.text
+                            spacing: SentinelTheme.spaceSm
+                            Layout.topMargin: SentinelTheme.spaceXs
+                            Layout.bottomMargin: SentinelTheme.spaceXs
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Show context reasoning")
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontBody
+                                font.bold: true
                                 verticalAlignment: Text.AlignVCenter
                                 wrapMode: Text.WordWrap
                             }
-                            indicator: Rectangle {
-                                implicitWidth: 18
-                                implicitHeight: 18
-                                x: contextReasoningVisibilityToggle.leftPadding
-                                y: parent.height / 2 - height / 2
-                                radius: SentinelTheme.radiusSm
-                                color: contextReasoningVisibilityToggle.checked
-                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
-                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                                border.color: InteractionTokens.borderColor(contextReasoningVisibilityToggle.activeFocus,
-                                                                             contextReasoningVisibilityToggle.hovered,
-                                                                             contextReasoningVisibilityToggle.checked,
-                                                                             settingsPage.modeAccent)
-                                Rectangle {
-                                    anchors.centerIn: parent
-                                    width: 8
-                                    height: 8
-                                    radius: 4
-                                    visible: contextReasoningVisibilityToggle.checked
-                                    color: settingsPage.modeAccent
-                                }
 
-                                Behavior on color {
-                                    ColorAnimation {
-                                        duration: MotionTokens.fast
-                                        easing.type: MotionTokens.standard
+                            Switch {
+                                id: contextReasoningVisibilityToggle
+                                checked: settingsPage.viewModel.contextExplainabilityVisible
+                                hoverEnabled: true
+                                focusPolicy: Qt.StrongFocus
+                                onToggled: settingsPage.viewModel.contextExplainabilityVisible = checked
+                                indicator: Rectangle {
+                                    implicitWidth: 46
+                                    implicitHeight: 24
+                                    x: contextReasoningVisibilityToggle.leftPadding
+                                    y: parent.height / 2 - height / 2
+                                    radius: height / 2
+                                    color: contextReasoningVisibilityToggle.checked
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                    border.color: contextReasoningVisibilityToggle.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : contextReasoningVisibilityToggle.hovered
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Rectangle {
+                                        x: contextReasoningVisibilityToggle.checked ? parent.width - width - 3 : 3
+                                        y: parent.height / 2 - height / 2
+                                        width: 18; height: 18
+                                        radius: height / 2
+                                        color: contextReasoningVisibilityToggle.checked ? settingsPage.modeAccent : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
+                                        Behavior on x { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.press } }
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                     }
+                                    Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                 }
+                                background: Item {}
                             }
                         }
 
@@ -1386,19 +1758,24 @@ Item {
                             rowSpacing: SentinelTheme.spaceSm
 
                             Label {
-                                Layout.fillWidth: true
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("TTS Engine")
                                 color: SentinelTheme.textMuted
-                                wrapMode: Text.WordWrap
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
                             ComboBox {
                                 id: ttsEngineCombo
                                 Layout.fillWidth: true
+                                implicitHeight: 36
                                 hoverEnabled: true
                                 model: ["Piper", "Kokoro"]
                                 currentIndex: settingsPage.viewModel.selectedTtsEngine === "Kokoro" ? 1 : 0
                                 onActivated: settingsPage.viewModel.selectedTtsEngine = index === 1 ? "Kokoro" : "Piper"
+
                                 contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
@@ -1409,35 +1786,76 @@ Item {
                                     maximumLineCount: 1
                                     elide: Text.ElideRight
                                 }
+
                                 background: Rectangle {
+                                    implicitHeight: 36
                                     radius: SentinelTheme.radiusMd
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                    border.color: InteractionTokens.borderColor(ttsEngineCombo.activeFocus,
-                                                                                 ttsEngineCombo.hovered,
-                                                                                 ttsEngineCombo.popup.visible,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: ttsEngineCombo.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : ttsEngineCombo.hovered || ttsEngineCombo.popup.visible
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
                                 }
+
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+
                                 delegate: ItemDelegate {
                                     id: ttsEngineOption
+                                    required property string modelData
+                                    required property int index
                                     width: ttsEngineCombo.width
-                                    text: modelData
+                                    implicitHeight: 36
                                     highlighted: ttsEngineCombo.highlightedIndex === index
-                                    contentItem: Text {
-                                        text: ttsEngineOption.text
-                                        color: ttsEngineOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        verticalAlignment: Text.AlignVCenter
+                                    hoverEnabled: true
+
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: ttsEngineOption.modelData
+                                            color: ttsEngineOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: ttsEngineOption.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+
+                                        Text {
+                                            visible: ttsEngineCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: settingsPage.modeAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
                                     }
+
                                     background: Rectangle {
-                                        color: InteractionTokens.surfaceColor(ttsEngineOption.highlighted, false, false,
-                                                                               settingsPage.modeAccent)
+                                        color: ttsEngineOption.highlighted
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                               : ttsEngineOption.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                     }
                                 }
+
                                 popup.background: Rectangle {
                                     radius: SentinelTheme.radiusLg
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                    border.color: InteractionTokens.borderColor(false, true, false,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                    border.width: 1
                                 }
                             }
 
@@ -1769,10 +2187,12 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Default")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
                                 elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
                             ComboBox {
@@ -2133,10 +2553,12 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Selected")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
                                 elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
                             ComboBox {
@@ -2376,10 +2798,12 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Selected")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
                                 elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
                             }
 
                             ComboBox {
@@ -2569,6 +2993,7 @@ Item {
                         ComboBox {
                             id: notificationPolicyCombo
                             Layout.fillWidth: true
+                            implicitHeight: 36
                             hoverEnabled: true
                             model: settingsPage.notificationPolicies
                             currentIndex: settingsPage.notificationPolicies.indexOf(settingsPage.viewModel.notificationPolicy)
@@ -2586,40 +3011,76 @@ Item {
                             }
 
                             background: Rectangle {
+                                implicitHeight: 36
                                 radius: SentinelTheme.radiusMd
                                 color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                border.color: InteractionTokens.borderColor(notificationPolicyCombo.activeFocus,
-                                                                             notificationPolicyCombo.hovered,
-                                                                             notificationPolicyCombo.popup.visible,
-                                                                             settingsPage.modeAccent)
+                                border.color: notificationPolicyCombo.activeFocus
+                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                              : notificationPolicyCombo.hovered || notificationPolicyCombo.popup.visible
+                                                ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                            }
+
+                            indicator: Text {
+                                x: parent.width - width - SentinelTheme.spaceMd
+                                y: parent.height / 2 - height / 2
+                                text: "\u2039\u203a"
+                                rotation: 90
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
                             }
 
                             delegate: ItemDelegate {
                                 id: notificationPolicyOption
+                                required property string modelData
+                                required property int index
                                 width: notificationPolicyCombo.width
-                                text: modelData
+                                implicitHeight: 36
                                 highlighted: notificationPolicyCombo.highlightedIndex === index
+                                hoverEnabled: true
 
-                                contentItem: Text {
-                                    text: notificationPolicyOption.text
-                                    color: notificationPolicyOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    verticalAlignment: Text.AlignVCenter
-                                    maximumLineCount: 1
-                                    elide: Text.ElideRight
+                                contentItem: RowLayout {
+                                    spacing: SentinelTheme.spaceSm
+                                    anchors.fill: parent
+                                    anchors.leftMargin: SentinelTheme.spaceMd
+                                    anchors.rightMargin: SentinelTheme.spaceMd
+
+                                    Text {
+                                        Layout.fillWidth: true
+                                        text: notificationPolicyOption.modelData
+                                        color: notificationPolicyOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        font.bold: notificationPolicyOption.highlighted
+                                        verticalAlignment: Text.AlignVCenter
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    Text {
+                                        visible: notificationPolicyCombo.currentIndex === index
+                                        text: "\u2713"
+                                        color: settingsPage.modeAccent
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                    }
                                 }
 
                                 background: Rectangle {
-                                    color: InteractionTokens.surfaceColor(notificationPolicyOption.highlighted, false, false,
-                                                                           settingsPage.modeAccent)
+                                    color: notificationPolicyOption.highlighted
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                           : notificationPolicyOption.hovered
+                                             ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                           : "transparent"
+                                    radius: SentinelTheme.radiusSm
+                                    Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                 }
                             }
 
                             popup.background: Rectangle {
                                 radius: SentinelTheme.radiusLg
                                 color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                border.color: InteractionTokens.borderColor(false, true, false,
-                                                                             settingsPage.modeAccent)
+                                border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                border.width: 1
                             }
                         }
                     }
@@ -2673,6 +3134,7 @@ Item {
                             ComboBox {
                                 id: updatePolicyCombo
                                 Layout.fillWidth: true
+                                implicitHeight: 36
                                 hoverEnabled: true
                                 model: settingsPage.updatePolicies
                                 currentIndex: settingsPage.updatePolicies.indexOf(settingsPage.viewModel.updateCheckPolicy)
@@ -2690,40 +3152,76 @@ Item {
                                 }
 
                                 background: Rectangle {
+                                    implicitHeight: 36
                                     radius: SentinelTheme.radiusMd
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                    border.color: InteractionTokens.borderColor(updatePolicyCombo.activeFocus,
-                                                                                 updatePolicyCombo.hovered,
-                                                                                 updatePolicyCombo.popup.visible,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: updatePolicyCombo.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : updatePolicyCombo.hovered || updatePolicyCombo.popup.visible
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                }
+
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
                                 }
 
                                 delegate: ItemDelegate {
                                     id: updatePolicyOption
+                                    required property string modelData
+                                    required property int index
                                     width: updatePolicyCombo.width
-                                    text: modelData
+                                    implicitHeight: 36
                                     highlighted: updatePolicyCombo.highlightedIndex === index
+                                    hoverEnabled: true
 
-                                    contentItem: Text {
-                                        text: updatePolicyOption.text
-                                        color: updatePolicyOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        verticalAlignment: Text.AlignVCenter
-                                        maximumLineCount: 1
-                                        elide: Text.ElideRight
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: updatePolicyOption.modelData
+                                            color: updatePolicyOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: updatePolicyOption.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                            maximumLineCount: 1
+                                            elide: Text.ElideRight
+                                        }
+
+                                        Text {
+                                            visible: updatePolicyCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: settingsPage.modeAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
                                     }
 
                                     background: Rectangle {
-                                        color: InteractionTokens.surfaceColor(updatePolicyOption.highlighted, false, false,
-                                                                               settingsPage.modeAccent)
+                                        color: updatePolicyOption.highlighted
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                               : updatePolicyOption.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                     }
                                 }
 
                                 popup.background: Rectangle {
                                     radius: SentinelTheme.radiusLg
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                    border.color: InteractionTokens.borderColor(false, true, false,
-                                                                                 settingsPage.modeAccent)
+                                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                    border.width: 1
                                 }
                             }
 
