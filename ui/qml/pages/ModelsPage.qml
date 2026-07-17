@@ -559,7 +559,19 @@ Item {
 
     // Returns true if ollamaPuller is actively pulling this model
     function isPulling(modelId) {
-        return ollamaPuller.pulling && ollamaPuller.activeModel === modelId
+        if (!ollamaPuller.pulling || !ollamaPuller.activeModel || !modelId) return false
+        var activeLower = ollamaPuller.activeModel.toLowerCase()
+        var targetLower = modelId.toLowerCase()
+        if (activeLower === targetLower) return true
+
+        var activeBase = activeLower.split(":")[0]
+        var targetBase = targetLower.split(":")[0]
+        return activeBase === targetBase
+    }
+
+    function isModelPulling(model) {
+        if (!model) return false
+        return isPulling(model.ollamaId)
     }
 
     function categoryIcon(cat) {
@@ -648,9 +660,10 @@ Item {
                         id: collapseBtn
                         Layout.alignment: Qt.AlignVCenter
                         Layout.rightMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceMd
-                        implicitHeight: 36
-                        implicitWidth: 36
+                        implicitHeight: 40
+                        implicitWidth: 40
                         flat: true
+                        padding: 0
                         onClicked: modelsPage.sidebarCollapsed = !modelsPage.sidebarCollapsed
                         hoverEnabled: true
 
@@ -661,6 +674,7 @@ Item {
                             color: collapseBtn.hovered ? modelsPage.modeAccent : SentinelTheme.textMuted
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
+                            topPadding: -2
                         }
 
                         background: Rectangle {
@@ -986,12 +1000,19 @@ Item {
             }
 
         // Model grid
-        ScrollView {
-            id: gridScroll
+        GridView {
+            id: modelGrid
             Layout.fillWidth: true
             Layout.fillHeight: true
-            ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
             clip: true
+            cellWidth: {
+                var cols = width < 540 ? 1
+                         : width < 900 ? 2
+                         : 3
+                return Math.floor(width / cols)
+            }
+            cellHeight: 210
+            model: modelsPage.filteredModels
 
             ScrollBar.vertical: ScrollBar {
                 id: gridScrollBar
@@ -1005,19 +1026,6 @@ Item {
                     color: "transparent"
                 }
             }
-
-            GridView {
-                id: modelGrid
-                anchors.fill: parent
-                anchors.rightMargin: 4
-                cellWidth: {
-                    var cols = width < 540 ? 1
-                             : width < 900 ? 2
-                             : 3
-                    return Math.floor(width / cols)
-                }
-                cellHeight: 210
-                model: modelsPage.filteredModels
 
                 add: Transition {
                     NumberAnimation { property: "opacity"; from: 0; to: 1; duration: 200; easing.type: Easing.OutQuad }
@@ -1139,6 +1147,7 @@ Item {
                                 spacing: SentinelTheme.spaceSm
 
                                 Rectangle {
+                                    visible: !modelDelegate.effectivelyInstalled
                                     implicitHeight: 20
                                     implicitWidth: badgeLbl.implicitWidth + 12
                                     radius: 10
@@ -1178,12 +1187,6 @@ Item {
                                 }
 
                                 Item { Layout.fillWidth: true }
-
-                                Label {
-                                    text: modelDelegate.modelData.size
-                                    font.pixelSize: SentinelTheme.fontTiny
-                                    color: SentinelTheme.textPlaceholder
-                                }
                             }
 
                             // Row 2: Name + Provider
@@ -1217,24 +1220,7 @@ Item {
                                 Layout.fillHeight: true
                             }
 
-                            // Row 4: Tags
-                            Flow {
-                                Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceXs
-                                Repeater {
-                                    model: modelDelegate.modelData.tags.slice(0, 3)
-                                    Rectangle {
-                                        required property string modelData
-                                        implicitHeight: 18
-                                        implicitWidth: tagLbl.implicitWidth + 10
-                                        radius: 9
-                                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                        border.width: 1
-                                        Label { id: tagLbl; anchors.centerIn: parent; text: modelData; font.pixelSize: SentinelTheme.fontTiny; color: SentinelTheme.textPlaceholder }
-                                    }
-                                }
-                            }
+
 
                             // Row 5: Action
                             Item {
@@ -1244,7 +1230,7 @@ Item {
                                 // Download / Details button — opens popup
                                 Button {
                                     id: dlBtn
-                                    visible: !modelDelegate.activePull && !modelDelegate.effectivelyInstalled
+                                    visible: (!modelDelegate.activePull && !modelDelegate.effectivelyInstalled) && (!modelDelegate.modelData.downloadable || (shellViewModel.selectedRuntimeProvider === "ollama" && modelDelegate.modelData.ollamaId !== ""))
                                     enabled: true
                                     anchors.right: parent.right
                                     implicitHeight: 30
@@ -1333,18 +1319,6 @@ Item {
                                     anchors.verticalCenter: parent.verticalCenter
                                     spacing: SentinelTheme.spaceXs
 
-                                    RowLayout {
-                                        spacing: 4
-                                        Rectangle { width: 8; height: 8; radius: 4; color: SentinelTheme.success }
-                                        Label {
-                                            text: shellViewModel.selectedRuntimeProvider === "lm-studio"
-                                                ? qsTr("Loaded in LM Studio")
-                                                : qsTr("On device · ~/.ollama/models")
-                                            font.pixelSize: SentinelTheme.fontSmall
-                                            color: SentinelTheme.success
-                                        }
-                                    }
-
                                     Item { Layout.fillWidth: true }
 
                                     Button {
@@ -1395,7 +1369,6 @@ Item {
             }
         }
     }
-}
 
     // ── Model Detail Popup ────────────────────────────────────────────────────
     ModelDetailPopup {
@@ -1408,12 +1381,10 @@ Item {
         installed: modelInfo ? modelsPage.isInstalledOnDevice(modelInfo) : false
 
         // Live pull state for this model
-        activePull: modelInfo ? modelsPage.isPulling(detailPopup.effectiveOllamaId) : false
-        pullProgress: ollamaPuller.pulling && modelInfo && ollamaPuller.activeModel === detailPopup.effectiveOllamaId
-                    ? ollamaPuller.progress : 0.0
-        pullStatus:  ollamaPuller.pulling && modelInfo && ollamaPuller.activeModel === detailPopup.effectiveOllamaId
-                    ? ollamaPuller.statusText : ""
-        pullError:   modelInfo && ollamaPuller.activeModel === detailPopup.effectiveOllamaId && !ollamaPuller.pulling
+        activePull: modelInfo ? modelsPage.isModelPulling(modelInfo) : false
+        pullProgress: activePull ? ollamaPuller.progress : 0.0
+        pullStatus:  activePull ? ollamaPuller.statusText : ""
+        pullError:   modelInfo && modelsPage.isModelPulling(modelInfo) && !ollamaPuller.pulling
                     ? ollamaPuller.errorText : ""
 
         onDownloadRequested: function(modelId) {

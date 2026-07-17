@@ -193,6 +193,12 @@ int main(int argc, char* argv[]) {
                              controller.refreshOllamaStatus();
                          }
                      });
+    QObject::connect(&ollamaPuller, &OllamaModelPuller::removeFinished, &controller,
+                     [&controller](const QString&, bool success) {
+                         if (success) {
+                             controller.refreshOllamaStatus();
+                         }
+                     });
     OllamaLibraryFetcher ollamaLibraryFetcher;
     OllamaModelDetailFetcher ollamaModelDetailFetcher;
     LMStudioLibraryFetcher lmStudioLibraryFetcher;

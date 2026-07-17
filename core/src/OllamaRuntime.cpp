@@ -423,6 +423,28 @@ void OllamaModelPuller::cancel() {
     }
 }
 
+void OllamaModelPuller::removeModel(const QString& modelId) {
+    const QString trimmed = modelId.trimmed();
+    if (trimmed.isEmpty()) {
+        return;
+    }
+
+    QUrl url(QStringLiteral("http://127.0.0.1:11434/api/delete"));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QByteArrayLiteral("application/json"));
+
+    const QJsonObject body{{QStringLiteral("name"), trimmed}};
+    const QByteArray payload = QJsonDocument(body).toJson(QJsonDocument::Compact);
+
+    QNetworkReply* reply = nam_->sendCustomRequest(request, "DELETE", payload);
+
+    QObject::connect(reply, &QNetworkReply::finished, this, [this, reply, trimmed]() {
+        const bool success = (reply->error() == QNetworkReply::NoError);
+        reply->deleteLater();
+        emit removeFinished(trimmed, success);
+    });
+}
+
 void OllamaModelPuller::processChunk(const QByteArray& chunk) {
     QJsonParseError err;
     const auto doc = QJsonDocument::fromJson(chunk, &err);
@@ -450,7 +472,24 @@ void OllamaModelPuller::processChunk(const QByteArray& chunk) {
     }
     if (total > 0 && completed > 0 && total != completed) {
         const double pct = newProgress * 100.0;
-        displayStatus = QStringLiteral("%1 — %2%").arg(displayStatus).arg(static_cast<int>(pct));
+        const double completedGb = static_cast<double>(completed) / (1024.0 * 1024.0 * 1024.0);
+        const double totalGb = static_cast<double>(total) / (1024.0 * 1024.0 * 1024.0);
+        
+        if (totalGb >= 0.1) {
+            displayStatus = QStringLiteral("%1 — %2% (%3 GB / %4 GB)")
+                .arg(status)
+                .arg(static_cast<int>(pct))
+                .arg(completedGb, 0, 'f', 2)
+                .arg(totalGb, 0, 'f', 2);
+        } else {
+            const double completedMb = static_cast<double>(completed) / (1024.0 * 1024.0);
+            const double totalMb = static_cast<double>(total) / (1024.0 * 1024.0);
+            displayStatus = QStringLiteral("%1 — %2% (%3 MB / %4 MB)")
+                .arg(status)
+                .arg(static_cast<int>(pct))
+                .arg(completedMb, 0, 'f', 1)
+                .arg(totalMb, 0, 'f', 1);
+        }
     }
 
     if (qAbs(newProgress - progress_) > 0.001 || displayStatus != statusText_) {

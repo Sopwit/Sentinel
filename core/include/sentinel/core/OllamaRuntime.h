@@ -159,6 +159,7 @@ public:
 
     Q_INVOKABLE void pull(const QString& modelId);
     Q_INVOKABLE void cancel();
+    Q_INVOKABLE void removeModel(const QString& modelId);
 
 signals:
     void pullingChanged();
@@ -167,6 +168,7 @@ signals:
     void statusTextChanged();
     void errorTextChanged();
     void pullFinished(const QString& modelId, bool success);
+    void removeFinished(const QString& modelId, bool success);
 
 private:
     void setState(bool pulling, const QString& model, qreal progress, const QString& status,
