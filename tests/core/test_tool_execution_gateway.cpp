@@ -46,9 +46,8 @@ void ToolExecutionGatewayTest::reportsMetadataOnlyDiagnostics() {
     const ToolExecutionGateway gateway;
     const PermissionPolicyService permissions;
     const auto summaries = gateway.toolSummaries(QStringLiteral("Ask Every Time"), permissions);
-    const auto diagnostics =
-        gateway.registrySummary(QStringLiteral("Ask Every Time"), permissions)
-            .developerDiagnostics.join(QStringLiteral("\n"));
+    const auto diagnostics = gateway.registrySummary(QStringLiteral("Ask Every Time"), permissions)
+                                 .developerDiagnostics.join(QStringLiteral("\n"));
 
     QVERIFY(summaries.at(4).summary.contains(QStringLiteral("Metadata safe")));
     QVERIFY(diagnostics.contains(QStringLiteral("Gateway execution grant: none in this phase")));

@@ -64,9 +64,7 @@ QString companionActionKindName(CompanionActionKind kind) {
 
 QString companionActionSummary(const CompanionAction& action) {
     return QStringLiteral("%1 [%2]: %3 permission=%4 available=%5 execution=%6")
-        .arg(action.label,
-             action.id,
-             action.summary,
+        .arg(action.label, action.id, action.summary,
              companionPermissionModeName(action.permissionMode),
              action.available ? QStringLiteral("yes") : QStringLiteral("no"),
              action.executionEnabled ? QStringLiteral("enabled") : QStringLiteral("disabled"));
@@ -89,17 +87,17 @@ CompanionSummary CompanionService::summary(bool enabledPreference, bool nativeAv
     } else {
         result.status = companionStatusName(CompanionStatus::Active);
     }
-    result.availability = companionAvailabilityName(
-        nativeAvailable ? CompanionAvailability::NativeAvailable
-                        : CompanionAvailability::Unavailable);
+    result.availability =
+        companionAvailabilityName(nativeAvailable ? CompanionAvailability::NativeAvailable
+                                                  : CompanionAvailability::Unavailable);
     result.platformCapability = currentPlatformCapability(nativeAvailable);
     result.permissionPostureSummary =
         QStringLiteral("Companion actions are foreground-safe shell actions only; provider, model, "
                        "tool, voice, filesystem, and agent permissions remain disabled.");
-    result.safetyBoundarySummary =
-        QStringLiteral("Companion is native shell presentation only: no background daemon, provider "
-                       "call, tool execution, filesystem scan, microphone capture, playback, "
-                       "memory write, or hidden transcript mutation.");
+    result.safetyBoundarySummary = QStringLiteral(
+        "Companion is native shell presentation only: no background daemon, provider "
+        "call, tool execution, filesystem scan, microphone capture, playback, "
+        "memory write, or hidden transcript mutation.");
     result.quickCaptureSummary =
         QStringLiteral("Quick Capture placeholder is metadata-only; no note, memory, transcript, "
                        "filesystem, or model action is performed.");
@@ -120,70 +118,51 @@ QList<CompanionAction> CompanionService::actions(bool nativeAvailable, bool paus
          companionActionKindName(CompanionActionKind::OpenSentinel),
          QStringLiteral("Open Sentinel"),
          QStringLiteral("foreground navigation; no hidden execution"),
-         CompanionPermissionMode::Disabled,
-         shellActionAvailable,
-         shellActionAvailable},
+         CompanionPermissionMode::Disabled, shellActionAvailable, shellActionAvailable},
         {CompanionActionKind::NewConversation,
          companionActionKindName(CompanionActionKind::NewConversation),
          QStringLiteral("New Conversation"),
          QStringLiteral("uses existing safe conversation creation path when available"),
-         CompanionPermissionMode::Disabled,
-         shellActionAvailable,
-         shellActionAvailable},
-        {CompanionActionKind::QuickNote,
-         companionActionKindName(CompanionActionKind::QuickNote),
+         CompanionPermissionMode::Disabled, shellActionAvailable, shellActionAvailable},
+        {CompanionActionKind::QuickNote, companionActionKindName(CompanionActionKind::QuickNote),
          QStringLiteral("Quick Note"),
          QStringLiteral("Quick Capture placeholder; no filesystem, memory, transcript, or model "
                         "write"),
-         CompanionPermissionMode::Disabled,
-         false,
-         false},
+         CompanionPermissionMode::Disabled, false, false},
         {CompanionActionKind::PauseCompanion,
          companionActionKindName(CompanionActionKind::PauseCompanion),
          paused ? QStringLiteral("Resume Companion") : QStringLiteral("Pause Companion"),
          QStringLiteral("presentation/readiness metadata only; no runtime or model behavior is "
                         "changed"),
-         CompanionPermissionMode::Disabled,
-         shellActionAvailable,
-         shellActionAvailable},
-        {CompanionActionKind::Settings,
-         companionActionKindName(CompanionActionKind::Settings),
+         CompanionPermissionMode::Disabled, shellActionAvailable, shellActionAvailable},
+        {CompanionActionKind::Settings, companionActionKindName(CompanionActionKind::Settings),
          QStringLiteral("Settings"),
          QStringLiteral("foreground navigation; no permission change is applied"),
-         CompanionPermissionMode::Disabled,
-         shellActionAvailable,
-         shellActionAvailable},
-        {CompanionActionKind::Quit,
-         companionActionKindName(CompanionActionKind::Quit),
+         CompanionPermissionMode::Disabled, shellActionAvailable, shellActionAvailable},
+        {CompanionActionKind::Quit, companionActionKindName(CompanionActionKind::Quit),
          QStringLiteral("Quit"),
          QStringLiteral("normal application quit; no background runtime is started"),
-         CompanionPermissionMode::Disabled,
-         shellActionAvailable,
-         shellActionAvailable},
+         CompanionPermissionMode::Disabled, shellActionAvailable, shellActionAvailable},
     };
 }
 
 QList<CompanionTrace> CompanionService::traces(bool enabledPreference, bool nativeAvailable,
                                                bool paused) const {
     return {
-        {QStringLiteral("preference"),
-         QStringLiteral("permanently enabled"),
-         QStringLiteral("menu bar / system tray integration is enabled by default and cannot be disabled")},
+        {QStringLiteral("preference"), QStringLiteral("permanently enabled"),
+         QStringLiteral(
+             "menu bar / system tray integration is enabled by default and cannot be disabled")},
         {QStringLiteral("platform"),
          nativeAvailable ? QStringLiteral("native available") : QStringLiteral("unavailable"),
          currentPlatformCapability(nativeAvailable)},
-        {QStringLiteral("permissions"),
-         QStringLiteral("disabled"),
+        {QStringLiteral("permissions"), QStringLiteral("disabled"),
          QStringLiteral("shell actions do not grant provider, model, tool, voice, filesystem, or "
                         "agent authority")},
-        {QStringLiteral("quick-capture"),
-         QStringLiteral("placeholder"),
+        {QStringLiteral("quick-capture"), QStringLiteral("placeholder"),
          QStringLiteral("no filesystem write, memory write, transcript mutation, or model call")},
-        {QStringLiteral("pause"),
-         paused ? QStringLiteral("paused") : QStringLiteral("ready"),
+        {QStringLiteral("pause"), paused ? QStringLiteral("paused") : QStringLiteral("ready"),
          QStringLiteral("pause changes companion presentation/readiness metadata only")},
-        {QStringLiteral("execution"),
-         QStringLiteral("blocked"),
+        {QStringLiteral("execution"), QStringLiteral("blocked"),
          QStringLiteral("no provider, tool, voice, plugin, background worker, or autonomous "
                         "authority is added")},
     };
@@ -199,9 +178,8 @@ QStringList CompanionService::platformSummaries() const {
 }
 
 QString CompanionService::currentPlatformCapability(bool nativeAvailable) const {
-    const QString availability =
-        nativeAvailable ? QStringLiteral("native integration available")
-                        : QStringLiteral("native integration unavailable");
+    const QString availability = nativeAvailable ? QStringLiteral("native integration available")
+                                                 : QStringLiteral("native integration unavailable");
 #if defined(Q_OS_MACOS)
     return QStringLiteral("Current platform: macOS menu bar/status item through Qt tray; %1.")
         .arg(availability);

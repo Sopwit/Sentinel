@@ -28,15 +28,18 @@ WorkspaceMetadata makeWorkspace(const QString& id, const QString& name, const QS
         archived ? QStringLiteral("Archived") : QStringLiteral("Active"),
         QStringLiteral("Workspace Only"),
         QStringLiteral("No folder selected. Files are attached explicitly by the user only."),
-        QStringLiteral("Workspace-scoped metadata. No folder access, scanning, or background work."),
+        QStringLiteral(
+            "Workspace-scoped metadata. No folder access, scanning, or background work."),
         templateName,
         archived,
         QStringLiteral("Selected model and role assignments are isolated to this workspace."),
-        QStringLiteral("Routing roles are workspace preferences; no automatic multi-model routing."),
+        QStringLiteral(
+            "Routing roles are workspace preferences; no automatic multi-model routing."),
         QStringLiteral("Context settings are workspace-scoped and opt-in."),
         QStringLiteral("Notification settings are workspace-scoped and respect the global policy."),
         QStringLiteral("Local RAG disabled by default; manual indexing only when enabled."),
-        QStringLiteral("Export defaults are workspace-scoped for chats, summaries, and retrieval reports."),
+        QStringLiteral(
+            "Export defaults are workspace-scoped for chats, summaries, and retrieval reports."),
     };
 }
 
@@ -66,11 +69,12 @@ QJsonObject toJson(const WorkspaceMetadata& workspace) {
 }
 
 WorkspaceMetadata fromJson(const QJsonObject& object) {
-    return makeWorkspace(object.value(QStringLiteral("id")).toString().trimmed(),
-                         object.value(QStringLiteral("name")).toString().trimmed(),
-                         object.value(QStringLiteral("kind")).toString(QStringLiteral("Custom")),
-                         object.value(QStringLiteral("templateName")).toString(QStringLiteral("Personal")),
-                         object.value(QStringLiteral("archived")).toBool(false));
+    return makeWorkspace(
+        object.value(QStringLiteral("id")).toString().trimmed(),
+        object.value(QStringLiteral("name")).toString().trimmed(),
+        object.value(QStringLiteral("kind")).toString(QStringLiteral("Custom")),
+        object.value(QStringLiteral("templateName")).toString(QStringLiteral("Personal")),
+        object.value(QStringLiteral("archived")).toBool(false));
 }
 
 QList<WorkspaceMetadata> customWorkspaces(const QString& catalogJson) {
@@ -161,7 +165,8 @@ WorkspaceReadinessSummary WorkspaceService::readiness(const QString& selectedWor
             QStringLiteral("Attachment lifecycle: explicit user-selected files only"),
             QStringLiteral("Local RAG: disabled by default; manual indexing only"),
             QStringLiteral("Runtime boundary: no autonomous agents, no recursive scanning"),
-            QStringLiteral("Data boundary: settings, chat history, memory, and RAG storage remain separate"),
+            QStringLiteral(
+                "Data boundary: settings, chat history, memory, and RAG storage remain separate"),
         },
     };
 }
@@ -224,17 +229,20 @@ WorkspaceMutationResult WorkspaceService::createWorkspace(const QString& catalog
                                         ? templateName.trimmed()
                                         : QStringLiteral("Personal");
     if (normalizedName.isEmpty()) {
-        return {false, {}, catalogJson, QStringLiteral("Refused"),
+        return {false,
+                {},
+                catalogJson,
+                QStringLiteral("Refused"),
                 QStringLiteral("Workspace name is required.")};
     }
 
     auto custom = customWorkspaces(catalogJson);
     const auto id = stableWorkspaceId(normalizedName, normalizedTemplate, catalogJson);
-    custom.append(makeWorkspace(id, normalizedName, QStringLiteral("Custom workspace"),
-                                normalizedTemplate));
+    custom.append(
+        makeWorkspace(id, normalizedName, QStringLiteral("Custom workspace"), normalizedTemplate));
     return {true, id, encodeCustomWorkspaces(custom), QStringLiteral("Created"),
-            QStringLiteral("Created workspace %1 from %2 template.").arg(normalizedName,
-                                                                         normalizedTemplate)};
+            QStringLiteral("Created workspace %1 from %2 template.")
+                .arg(normalizedName, normalizedTemplate)};
 }
 
 WorkspaceMutationResult WorkspaceService::renameWorkspace(const QString& catalogJson,

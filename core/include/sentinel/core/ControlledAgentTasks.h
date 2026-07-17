@@ -97,8 +97,8 @@ public:
     ControlledAgentTask executeCurrentStep(ControlledAgentTask task) const;
     ControlledAgentTask skipCurrentStep(ControlledAgentTask task) const;
     ControlledAgentTask retryCurrentStep(ControlledAgentTask task) const;
-    QList<ControlledAgentTask> reorderQueue(QList<ControlledAgentTask> tasks,
-                                            const QString& taskId, int newIndex) const;
+    QList<ControlledAgentTask> reorderQueue(QList<ControlledAgentTask> tasks, const QString& taskId,
+                                            int newIndex) const;
 
     QList<ControlledWorkspacePermission>
     grantPermission(QList<ControlledWorkspacePermission> permissions, const QString& workspaceId,

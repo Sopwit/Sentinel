@@ -36,6 +36,19 @@ QString boolText(bool value) {
     return value ? QStringLiteral("1") : QStringLiteral("0");
 }
 
+bool tableHasColumn(const QSqlDatabase& database, const QString& table, const QString& column) {
+    QSqlQuery query(database);
+    if (!query.exec(QStringLiteral("PRAGMA table_info(%1)").arg(table))) {
+        return false;
+    }
+    while (query.next()) {
+        if (query.value(1).toString() == column) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 SQLiteConversationStore::SQLiteConversationStore(QString databasePath)
@@ -487,13 +500,11 @@ void SQLiteConversationStore::initializeSchema() {
         return;
     }
 
-    if (!query.exec(QStringLiteral("ALTER TABLE conversations ADD COLUMN pinned INTEGER NOT NULL "
-                                   "DEFAULT 0"))) {
-        const auto errorText = query.lastError().text();
-        if (!errorText.contains(QStringLiteral("duplicate column name"), Qt::CaseInsensitive)) {
-            setLastError(ConversationStoreErrorCode::StorageFailure, errorText);
-            return;
-        }
+    if (!tableHasColumn(database_, QStringLiteral("conversations"), QStringLiteral("pinned")) &&
+        !query.exec(QStringLiteral(
+            "ALTER TABLE conversations ADD COLUMN pinned INTEGER NOT NULL DEFAULT 0"))) {
+        setLastError(ConversationStoreErrorCode::StorageFailure, query.lastError().text());
+        return;
     }
 
     if (!query.exec(QStringLiteral("CREATE TABLE IF NOT EXISTS conversation_messages("

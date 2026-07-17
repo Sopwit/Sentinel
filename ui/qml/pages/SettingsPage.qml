@@ -106,8 +106,8 @@ Item {
 
                                     Rectangle {
                                         Layout.alignment: Qt.AlignVCenter
-                                        width: 9
-                                        height: 9
+                                        implicitWidth: 9
+                                        implicitHeight: 9
                                         radius: 5
                                         color: navButton.active
                                                ? settingsPage.modeAccent

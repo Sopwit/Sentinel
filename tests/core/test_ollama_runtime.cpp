@@ -97,8 +97,7 @@ void OllamaRuntimeTest::parsesOllamaLibraryHtml() {
         "      </div>"
         "    </a>"
         "  </li>"
-        "</ul>"
-    );
+        "</ul>");
 
     OllamaLibraryFetcher fetcher;
     fetcher.parseHtml(sampleHtml);
@@ -113,7 +112,8 @@ void OllamaRuntimeTest::parsesOllamaLibraryHtml() {
     QCOMPARE(model.value(QStringLiteral("name")).toString(), QStringLiteral("test-model-1"));
     QCOMPARE(model.value(QStringLiteral("provider")).toString(), QStringLiteral("Ollama Library"));
     QCOMPARE(model.value(QStringLiteral("size")).toString(), QStringLiteral("1,234 pulls"));
-    QCOMPARE(model.value(QStringLiteral("description")).toString(), QStringLiteral("This is a description of test-model-1."));
+    QCOMPARE(model.value(QStringLiteral("description")).toString(),
+             QStringLiteral("This is a description of test-model-1."));
     QCOMPARE(model.value(QStringLiteral("badge")).toString(), QStringLiteral("tools"));
     QCOMPARE(model.value(QStringLiteral("badgeColor")).toString(), QStringLiteral("#10b981"));
 

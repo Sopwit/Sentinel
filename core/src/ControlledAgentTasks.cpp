@@ -24,12 +24,11 @@ QString normalizedFormat(const QString& format) {
 }
 
 QByteArray simplePdfFromText(const QString& title, const QString& text) {
-    const auto escaped =
-        (title + QStringLiteral("\n\n") + text)
-            .left(12000)
-            .replace(QLatin1Char('\\'), QStringLiteral("\\\\"))
-            .replace(QLatin1Char('('), QStringLiteral("\\("))
-            .replace(QLatin1Char(')'), QStringLiteral("\\)"));
+    const auto escaped = (title + QStringLiteral("\n\n") + text)
+                             .left(12000)
+                             .replace(QLatin1Char('\\'), QStringLiteral("\\\\"))
+                             .replace(QLatin1Char('('), QStringLiteral("\\("))
+                             .replace(QLatin1Char(')'), QStringLiteral("\\)"));
     const auto lines = escaped.split(QLatin1Char('\n'));
     QString content;
     QTextStream stream(&content);
@@ -279,7 +278,8 @@ ControlledAgentTaskService::permissionsFromJson(const QString& json) const {
         const auto workspaceId = object.value(QStringLiteral("workspaceId")).toString();
         const auto category = object.value(QStringLiteral("category")).toString();
         if (!workspaceId.isEmpty() && !category.isEmpty()) {
-            permissions.append({workspaceId, category, object.value(QStringLiteral("choice")).toString(),
+            permissions.append({workspaceId, category,
+                                object.value(QStringLiteral("choice")).toString(),
                                 object.value(QStringLiteral("updatedAtUtc")).toString()});
         }
     }
@@ -306,8 +306,8 @@ QString ControlledAgentTaskService::permissionsToJson(
 ControlledAgentTask ControlledAgentTaskService::createPlan(
     const QString& goal, const QString& workspaceId, const QString& provider, const QString& model,
     const QStringList& resources, const QList<ControlledAgentTask>& existingTasks) const {
-    const auto cleanGoal = goal.trimmed().isEmpty() ? QStringLiteral("Untitled controlled task")
-                                                    : goal.trimmed();
+    const auto cleanGoal =
+        goal.trimmed().isEmpty() ? QStringLiteral("Untitled controlled task") : goal.trimmed();
     ControlledAgentTask task;
     task.id = nextTaskId(existingTasks);
     task.title = cleanGoal.left(80);
@@ -323,13 +323,11 @@ ControlledAgentTask ControlledAgentTaskService::createPlan(
                              QStringLiteral("Extract key findings"),
                              QStringLiteral("Prepare final user-facing result")};
     for (int index = 0; index < titles.size(); ++index) {
-        task.steps.append({QStringLiteral("%1-step-%2").arg(task.id).arg(index + 1), index + 1,
-                           titles.at(index),
-                           QStringLiteral("This step exists to satisfy: %1").arg(cleanGoal),
-                           resources,
-                           QStringList{QStringLiteral("Notes")},
-                           QStringLiteral("Waiting for approval."),
-                           ControlledTaskState::PendingApproval});
+        task.steps.append(
+            {QStringLiteral("%1-step-%2").arg(task.id).arg(index + 1), index + 1, titles.at(index),
+             QStringLiteral("This step exists to satisfy: %1").arg(cleanGoal), resources,
+             QStringList{QStringLiteral("Notes")}, QStringLiteral("Waiting for approval."),
+             ControlledTaskState::PendingApproval});
     }
     task.approvals.append({timestampUtc(), QStringLiteral("Plan Generated"),
                            QStringLiteral("Plan is editable and cannot run until approved.")});
@@ -346,8 +344,9 @@ ControlledAgentTask ControlledAgentTaskService::taskById(const QList<ControlledA
     return {};
 }
 
-QList<ControlledAgentTask> ControlledAgentTaskService::upsertTask(
-    QList<ControlledAgentTask> tasks, const ControlledAgentTask& task) const {
+QList<ControlledAgentTask>
+ControlledAgentTaskService::upsertTask(QList<ControlledAgentTask> tasks,
+                                       const ControlledAgentTask& task) const {
     for (auto& existing : tasks) {
         if (existing.id == task.id) {
             existing = task;
@@ -372,10 +371,14 @@ ControlledAgentTask ControlledAgentTaskService::setSteps(ControlledAgentTask tas
         if (title.isEmpty()) {
             continue;
         }
-        task.steps.append({QStringLiteral("%1-step-%2").arg(task.id).arg(order), order, title,
+        task.steps.append({QStringLiteral("%1-step-%2").arg(task.id).arg(order),
+                           order,
+                           title,
                            QStringLiteral("User-edited plan step."),
-                           {}, QStringList{QStringLiteral("Notes")},
-                           QStringLiteral("Waiting for approval."), ControlledTaskState::PendingApproval});
+                           {},
+                           QStringList{QStringLiteral("Notes")},
+                           QStringLiteral("Waiting for approval."),
+                           ControlledTaskState::PendingApproval});
         ++order;
     }
     task.state = ControlledTaskState::PendingApproval;
@@ -394,10 +397,10 @@ ControlledAgentTask ControlledAgentTaskService::approve(ControlledAgentTask task
         return task;
     }
     task.state = ControlledTaskState::PendingApproval;
-    task.approvals.append({timestampUtc(), choice.trimmed().isEmpty()
-                                               ? QStringLiteral("Approve Once")
-                                               : choice.trimmed(),
-                           QStringLiteral("User approved visible controlled execution.")});
+    task.approvals.append(
+        {timestampUtc(),
+         choice.trimmed().isEmpty() ? QStringLiteral("Approve Once") : choice.trimmed(),
+         QStringLiteral("User approved visible controlled execution.")});
     task.resultSummary = QStringLiteral("Approved once. Start is still explicit.");
     return task;
 }
@@ -420,8 +423,9 @@ ControlledAgentTask ControlledAgentTaskService::cancel(ControlledAgentTask task)
     return task;
 }
 
-ControlledAgentTask ControlledAgentTaskService::start(
-    ControlledAgentTask task, const QList<ControlledAgentTask>& allTasks) const {
+ControlledAgentTask
+ControlledAgentTaskService::start(ControlledAgentTask task,
+                                  const QList<ControlledAgentTask>& allTasks) const {
     for (const auto& other : allTasks) {
         if (other.id != task.id && other.state == ControlledTaskState::Running) {
             task.resultSummary = QStringLiteral("Start refused: another task is already running.");
@@ -442,8 +446,8 @@ ControlledAgentTask ControlledAgentTaskService::start(
     task.state = ControlledTaskState::Running;
     task.currentStepIndex = 0;
     for (qsizetype index = 0; index < task.steps.size(); ++index) {
-        task.steps[index].state = index == 0 ? ControlledTaskState::Running
-                                             : ControlledTaskState::PendingApproval;
+        task.steps[index].state =
+            index == 0 ? ControlledTaskState::Running : ControlledTaskState::PendingApproval;
     }
     task.resultSummary = QStringLiteral("Task started. Execute one visible step at a time.");
     task.approvals.append({timestampUtc(), QStringLiteral("Task Started"),
@@ -459,7 +463,8 @@ ControlledAgentTask ControlledAgentTaskService::executeCurrentStep(ControlledAge
     }
     auto& step = task.steps[task.currentStepIndex];
     step.state = ControlledTaskState::Completed;
-    step.outcome = QStringLiteral("Completed as a visible controlled metadata step. No hidden tools ran.");
+    step.outcome =
+        QStringLiteral("Completed as a visible controlled metadata step. No hidden tools ran.");
     const auto nextIndex = task.currentStepIndex + 1;
     if (nextIndex >= task.steps.size()) {
         task.state = ControlledTaskState::Completed;
@@ -504,14 +509,16 @@ ControlledAgentTask ControlledAgentTaskService::retryCurrentStep(ControlledAgent
     auto& step = task.steps[task.currentStepIndex];
     step.state = ControlledTaskState::Running;
     step.outcome = QStringLiteral("Retry requested by user; no automatic retry occurred.");
-    task.approvals.append({timestampUtc(), QStringLiteral("Retry Step"),
-                           QStringLiteral("User explicitly requested retry for the visible step.")});
+    task.approvals.append(
+        {timestampUtc(), QStringLiteral("Retry Step"),
+         QStringLiteral("User explicitly requested retry for the visible step.")});
     task.resultSummary = QStringLiteral("Retry ready for current visible step.");
     return task;
 }
 
-QList<ControlledAgentTask> ControlledAgentTaskService::reorderQueue(
-    QList<ControlledAgentTask> tasks, const QString& taskId, int newIndex) const {
+QList<ControlledAgentTask>
+ControlledAgentTaskService::reorderQueue(QList<ControlledAgentTask> tasks, const QString& taskId,
+                                         int newIndex) const {
     auto index = -1;
     for (qsizetype i = 0; i < tasks.size(); ++i) {
         if (tasks.at(i).id == taskId.trimmed()) {
@@ -527,13 +534,14 @@ QList<ControlledAgentTask> ControlledAgentTaskService::reorderQueue(
     return tasks;
 }
 
-QList<ControlledWorkspacePermission> ControlledAgentTaskService::grantPermission(
-    QList<ControlledWorkspacePermission> permissions, const QString& workspaceId,
-    const QString& category, const QString& choice) const {
-    const auto normalizedChoice = choice == QStringLiteral("Allow For Workspace")
-                                      ? choice
-                                      : (choice == QStringLiteral("Allow Once") ? choice
-                                                                               : QStringLiteral("Deny"));
+QList<ControlledWorkspacePermission>
+ControlledAgentTaskService::grantPermission(QList<ControlledWorkspacePermission> permissions,
+                                            const QString& workspaceId, const QString& category,
+                                            const QString& choice) const {
+    const auto normalizedChoice =
+        choice == QStringLiteral("Allow For Workspace")
+            ? choice
+            : (choice == QStringLiteral("Allow Once") ? choice : QStringLiteral("Deny"));
     for (auto& permission : permissions) {
         if (permission.workspaceId == workspaceId && permission.category == category) {
             permission.choice = normalizedChoice;
@@ -600,8 +608,8 @@ QStringList ControlledAgentTaskService::permissionSummaries(
     return summaries;
 }
 
-QStringList ControlledAgentTaskService::explainabilitySummaries(
-    const ControlledAgentTask& task) const {
+QStringList
+ControlledAgentTaskService::explainabilitySummaries(const ControlledAgentTask& task) const {
     QStringList summaries;
     for (const auto& step : task.steps) {
         summaries.append(controlledAgentExplainabilitySummary(task, step));
@@ -610,9 +618,9 @@ QStringList ControlledAgentTaskService::explainabilitySummaries(
 }
 
 QStringList ControlledAgentTaskService::notificationCategories() const {
-    return {QStringLiteral("Task Planned"),   QStringLiteral("Approval Needed"),
-            QStringLiteral("Task Started"),   QStringLiteral("Task Completed"),
-            QStringLiteral("Task Failed"),    QStringLiteral("Task Cancelled")};
+    return {QStringLiteral("Task Planned"), QStringLiteral("Approval Needed"),
+            QStringLiteral("Task Started"), QStringLiteral("Task Completed"),
+            QStringLiteral("Task Failed"),  QStringLiteral("Task Cancelled")};
 }
 
 QStringList ControlledAgentTaskService::exportCenterSummaries() const {
@@ -678,8 +686,9 @@ QByteArray ControlledAgentTaskService::exportTaskReport(const ControlledAgentTas
     stream << "Provider: " << task.provider << "\n";
     stream << "Model: " << task.model << "\n";
     stream << "Created: " << task.createdAtUtc << "\n";
-    stream << "Completed: " << (task.completedAtUtc.isEmpty() ? QStringLiteral("not completed")
-                                                               : task.completedAtUtc)
+    stream << "Completed: "
+           << (task.completedAtUtc.isEmpty() ? QStringLiteral("not completed")
+                                             : task.completedAtUtc)
            << "\n\n";
     stream << (markdown ? "## Steps\n" : "Steps\n");
     for (const auto& step : task.steps) {

@@ -252,16 +252,21 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QVERIFY(!fixture.viewModel.reducedMotionEnabled());
     QVERIFY(!fixture.viewModel.highContrastEnabled());
     QCOMPARE(fixture.viewModel.uiDensity(), QStringLiteral("Comfortable"));
-    QVERIFY(fixture.viewModel.activityTimelineSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.activityTimelineSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Chat Created")));
-    QVERIFY(fixture.viewModel.notificationCenterSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.notificationCenterSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Manual updates only")));
     QVERIFY(fixture.viewModel.notificationCategories().contains(QStringLiteral("Security")));
-    QVERIFY(fixture.viewModel.aboutSentinelSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.aboutSentinelSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Version:")));
-    QVERIFY(fixture.viewModel.diagnosticsCenterSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.diagnosticsCenterSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Active provider:")));
-    QVERIFY(fixture.viewModel.exportPreviewSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.exportPreviewSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Markdown")));
     QCOMPARE(fixture.viewModel.currentPage(), QStringLiteral("Dashboard"));
     QCOMPARE(fixture.viewModel.availablePages(),
@@ -575,39 +580,47 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
              QStringList({QStringLiteral("ollama"), QStringLiteral("openai-compatible-local"),
                           QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server")}));
     QCOMPARE(fixture.viewModel.runtimeProviderCardSummaries().size(), 4);
-    QVERIFY(fixture.viewModel.runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.runtimeProviderCardSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("OpenAI-compatible Local")));
-    QVERIFY(fixture.viewModel.runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.runtimeProviderCardSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("LM Studio")));
-    QVERIFY(fixture.viewModel.runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.runtimeProviderCardSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("llama.cpp server")));
-    QVERIFY(fixture.viewModel.runtimeProviderCapabilitySummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.runtimeProviderCapabilitySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("requiresApiKey: no")));
-    QVERIFY(fixture.viewModel.runtimeProviderValidationTraces().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.runtimeProviderValidationTraces()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("readiness=disabled")));
     QCOMPARE(fixture.viewModel.providerCredentialRegistryStatus(), QStringLiteral("missing"));
-    QVERIFY(fixture.viewModel.providerCredentialRegistrySummary()
-                .contains(QStringLiteral("API key values are not stored")));
+    QVERIFY(fixture.viewModel.providerCredentialRegistrySummary().contains(
+        QStringLiteral("API key values are not stored")));
     QCOMPARE(fixture.viewModel.providerCredentialSummaries().size(), 4);
-    QVERIFY(fixture.viewModel.providerCredentialReadinessSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.providerCredentialReadinessSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("execution disabled")));
-    QVERIFY(fixture.viewModel.providerCredentialSafetySummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.providerCredentialSafetySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("plaintextStorage=refused")));
-    QVERIFY(fixture.viewModel.credentialStoreSummary()
-                .contains(QStringLiteral("Credential store disabled")));
-    QVERIFY(fixture.viewModel.credentialStoreBackendSummary()
-                .contains(QStringLiteral("storage unavailable")));
-    QVERIFY(fixture.viewModel.credentialStoreSafetySummary()
-                .contains(QStringLiteral("no plaintext")));
+    QVERIFY(fixture.viewModel.credentialStoreSummary().contains(
+        QStringLiteral("Credential store disabled")));
+    QVERIFY(fixture.viewModel.credentialStoreBackendSummary().contains(
+        QStringLiteral("storage unavailable")));
+    QVERIFY(
+        fixture.viewModel.credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(fixture.viewModel.credentialStoreTraceSummaries().size(), 5);
     QVERIFY(fixture.viewModel.credentialActionReadiness().contains(QStringLiteral("disabled")));
-    QVERIFY(fixture.viewModel.credentialExecutionStatus()
-                .contains(QStringLiteral("Execution disabled")));
+    QVERIFY(fixture.viewModel.credentialExecutionStatus().contains(
+        QStringLiteral("Execution disabled")));
     const auto exposedCredentialText =
-        fixture.viewModel.credentialStoreSummary() + fixture.viewModel.credentialStoreBackendSummary()
-        + fixture.viewModel.credentialStoreSafetySummary()
-        + fixture.viewModel.providerCredentialSummaries().join(QStringLiteral("\n"))
-        + fixture.viewModel.providerCredentialReadinessSummaries().join(QStringLiteral("\n"));
+        fixture.viewModel.credentialStoreSummary() +
+        fixture.viewModel.credentialStoreBackendSummary() +
+        fixture.viewModel.credentialStoreSafetySummary() +
+        fixture.viewModel.providerCredentialSummaries().join(QStringLiteral("\n")) +
+        fixture.viewModel.providerCredentialReadinessSummaries().join(QStringLiteral("\n"));
     QVERIFY(!exposedCredentialText.contains(QStringLiteral("sk-test-secret")));
     QVERIFY(!exposedCredentialText.contains(QStringLiteral("apiKey"), Qt::CaseInsensitive));
 
@@ -627,18 +640,18 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
     QVERIFY(!fixture.viewModel.companionAvailable());
     QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Readiness Only"));
     QCOMPARE(fixture.viewModel.companionAvailability(), QStringLiteral("Unavailable"));
-    QVERIFY(fixture.viewModel.companionPlatformCapability()
-                .contains(QStringLiteral("native integration unavailable")));
-    QVERIFY(fixture.viewModel.companionPermissionPosture()
-                .contains(QStringLiteral("foreground-safe shell")));
-    QVERIFY(fixture.viewModel.companionSafetyBoundary()
-                .contains(QStringLiteral("no background daemon")));
-    QVERIFY(fixture.viewModel.companionQuickCaptureSummary()
-                .contains(QStringLiteral("no note")));
+    QVERIFY(fixture.viewModel.companionPlatformCapability().contains(
+        QStringLiteral("native integration unavailable")));
+    QVERIFY(fixture.viewModel.companionPermissionPosture().contains(
+        QStringLiteral("foreground-safe shell")));
+    QVERIFY(fixture.viewModel.companionSafetyBoundary().contains(
+        QStringLiteral("no background daemon")));
+    QVERIFY(fixture.viewModel.companionQuickCaptureSummary().contains(QStringLiteral("no note")));
     QCOMPARE(fixture.viewModel.companionActionSummaries().size(), 6);
     QCOMPARE(fixture.viewModel.companionPlatformSummaries().size(), 3);
     QCOMPARE(fixture.viewModel.companionTraceSummaries().size(), 6);
-    QVERIFY(fixture.viewModel.companionActionSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.companionActionSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Quick Note")));
 
     // Attempting to disable companion is ignored since it is permanently enabled
@@ -660,7 +673,8 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
 
     QVERIFY(fixture.viewModel.companionPaused());
     QCOMPARE(fixture.viewModel.companionStatus(), QStringLiteral("Paused"));
-    QVERIFY(fixture.viewModel.companionActionSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.companionActionSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Resume Companion")));
     QCOMPARE(companionSpy.count(), 2);
 }
@@ -721,7 +735,8 @@ void DesktopShellViewModelTest::exposesDiscoveredModelSelectionMetadata() {
     QCOMPARE(viewModel.selectedLocalModelStatus(), QStringLiteral("Missing"));
     QCOMPARE(viewModel.modelRegistryStatus(), QStringLiteral("ready"));
     QVERIFY(viewModel.modelRegistrySummary().contains(QStringLiteral("2 available")));
-    QVERIFY(viewModel.modelRegistryModelSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.modelRegistryModelSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("llama3.2")));
     QCOMPARE(viewModel.selectedLocalModelMetadataSummary(),
              QStringLiteral("Fallback model: llama3.2 (2.0 GiB, modified "
@@ -831,23 +846,32 @@ void DesktopShellViewModelTest::exposesLocalAiEcosystemFoundationMetadata() {
     viewModel.setSelectedLocalModel(QStringLiteral("qwen2.5-coder:7b"));
     viewModel.assignModelRole(QStringLiteral("coding"), QStringLiteral("qwen2.5-coder:7b"));
 
-    QVERIFY(viewModel.modelLibraryInstalledSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.modelLibraryInstalledSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("qwen2.5-coder:7b")));
-    QVERIFY(viewModel.modelLibraryAvailableSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.modelLibraryAvailableSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("LM Studio")));
-    QVERIFY(viewModel.providerDiscoverySummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.providerDiscoverySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("llama.cpp server")));
-    QVERIFY(viewModel.modelRoleAssignmentSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.modelRoleAssignmentSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Coding Model - qwen2.5-coder:7b")));
-    QVERIFY(viewModel.modelAdvisorRecommendationSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.modelAdvisorRecommendationSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("qwen2.5-coder:7b")));
-    QVERIFY(viewModel.modelAdvisorAvoidSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.modelAdvisorAvoidSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("cloud-only")));
-    QVERIFY(viewModel.downloadsCenterSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.downloadsCenterSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Execution Disabled")));
-    QVERIFY(viewModel.benchmarkHubSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.benchmarkHubSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("tokens/sec")));
-    QVERIFY(viewModel.notificationCenterSummaries().join(QStringLiteral("\n"))
+    QVERIFY(viewModel.notificationCenterSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Model Role Changed")));
 }
 
@@ -1859,8 +1883,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         {QStringLiteral("contextReasoningBudgetSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("contextReasoningOrderingSummary"), QByteArrayLiteral("QString")},
         {QStringLiteral("contextReasoningFallbackSummary"), QByteArrayLiteral("QString")},
-        {QStringLiteral("contextReasoningContributionSummaries"),
-         QByteArrayLiteral("QStringList")},
+        {QStringLiteral("contextReasoningContributionSummaries"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("contextReasoningInclusionHints"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("contextReasoningExclusionHints"), QByteArrayLiteral("QStringList")},
         {QStringLiteral("contextReasoningDeveloperTraces"), QByteArrayLiteral("QStringList")},
@@ -2157,8 +2180,7 @@ void DesktopShellViewModelTest::exposesConversationDeleteReadinessMetadata() {
     QSignalSpy deleteSpy(&fixture.viewModel, &DesktopShellViewModel::conversationDeleteChanged);
 
     QVERIFY(fixture.viewModel.conversationDeleteAvailable());
-    QCOMPARE(fixture.viewModel.conversationDeletePolicyStatus(),
-             QStringLiteral("Enabled"));
+    QCOMPARE(fixture.viewModel.conversationDeletePolicyStatus(), QStringLiteral("Enabled"));
     QVERIFY(fixture.viewModel.conversationDeletePolicySummary().contains(
         QStringLiteral("Permanent delete enabled")));
     QVERIFY(fixture.viewModel.conversationDeletePolicyRequirements().contains(
@@ -2500,7 +2522,8 @@ void DesktopShellViewModelTest::exposesManualConversationSummaryGenerationMetada
         QStringLiteral("Continuity budget")));
     QVERIFY(fixture.viewModel.contextExplainabilityEnabled());
     QVERIFY(fixture.viewModel.contextExplainabilityVisible());
-    QVERIFY(fixture.viewModel.contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
+    QVERIFY(
+        fixture.viewModel.contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
     QVERIFY(fixture.viewModel.contextReasoningBudgetSummary().contains(QStringLiteral("chars")));
     QVERIFY(fixture.viewModel.contextReasoningOrderingSummary().contains(
         QStringLiteral("recent transcript")));
@@ -3056,7 +3079,8 @@ void DesktopShellViewModelTest::forwardsSettingsChanges() {
     QVERIFY(!fixture.viewModel.contextExplainabilityVisible());
     QVERIFY(!fixture.settings.contextExplainabilityVisible());
     QVERIFY(fixture.controller.contextExplainabilityEnabled());
-    QVERIFY(fixture.viewModel.contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
+    QVERIFY(
+        fixture.viewModel.contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
     QVERIFY(fixture.viewModel.developerModeEnabled());
     QVERIFY(fixture.settings.developerModeEnabled());
     QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("researcher"));
@@ -3089,7 +3113,8 @@ void DesktopShellViewModelTest::exposesLanguageSettings() {
     QCOMPARE(fixture.viewModel.appLanguage(), QStringLiteral("tr"));
     QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("system")),
              QStringLiteral("System Default"));
-    QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("en")), QStringLiteral("English"));
+    QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("en")),
+             QStringLiteral("English"));
     QCOMPARE(fixture.viewModel.languageDisplayName(QStringLiteral("tr")), QStringLiteral("Türkçe"));
     QCOMPARE(spy.count(), 1);
 }
@@ -3102,7 +3127,8 @@ void DesktopShellViewModelTest::exposesWorkspaceReadinessMetadata() {
     QCOMPARE(fixture.viewModel.selectedWorkspaceName(), QStringLiteral("Personal"));
     QCOMPARE(fixture.viewModel.selectedWorkspaceAccessState(), QStringLiteral("Active"));
     QCOMPARE(fixture.viewModel.workspacePermissionPosture(), QStringLiteral("Workspace Only"));
-    QVERIFY(fixture.viewModel.workspacePermissionPostures().contains(QStringLiteral("Workspace Only")));
+    QVERIFY(
+        fixture.viewModel.workspacePermissionPostures().contains(QStringLiteral("Workspace Only")));
     QVERIFY(fixture.viewModel.workspaceTemplateNames().contains(QStringLiteral("Research")));
     QVERIFY(fixture.viewModel.workspaceReadinessSummary().contains(
         QStringLiteral("isolated by workspace")));
@@ -3110,13 +3136,15 @@ void DesktopShellViewModelTest::exposesWorkspaceReadinessMetadata() {
         QStringLiteral("Filesystem scanning: disabled")));
     QVERIFY(fixture.viewModel.workspaceBoundaryDiagnostics().contains(
         QStringLiteral("Local RAG: disabled by default; manual indexing only")));
-    QVERIFY(fixture.viewModel.workspaceActionPlaceholders().contains(QStringLiteral(
-        "Create Workspace: available")));
+    QVERIFY(fixture.viewModel.workspaceActionPlaceholders().contains(
+        QStringLiteral("Create Workspace: available")));
     QVERIFY(fixture.viewModel.workspaceIds().contains(QStringLiteral("personal")));
     QVERIFY(fixture.viewModel.workspaceIds().contains(QStringLiteral("coding")));
     QCOMPARE(fixture.viewModel.localKnowledgeBaseStatus(), QStringLiteral("Disabled"));
-    QVERIFY(fixture.viewModel.privacyCenterSummaries().contains(QStringLiteral("Indexing: Manual Only")));
-    QVERIFY(fixture.viewModel.brainWorkspaceSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.privacyCenterSummaries().contains(
+        QStringLiteral("Indexing: Manual Only")));
+    QVERIFY(fixture.viewModel.brainWorkspaceSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Knowledge Base Summary")));
 
     fixture.viewModel.setSelectedWorkspaceId(QStringLiteral("unknown"));
@@ -3150,9 +3178,11 @@ void DesktopShellViewModelTest::exposesSkillProfileMetadata() {
                           QStringLiteral("researcher"), QStringLiteral("personal-assistant"),
                           QStringLiteral("custom")}));
     QVERIFY(fixture.viewModel.skillProfileNames().contains(QStringLiteral("Personal Assistant")));
-    QVERIFY(fixture.viewModel.skillProfileSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.skillProfileSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Custom")));
-    QVERIFY(fixture.viewModel.skillProfileCapabilitySummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.skillProfileCapabilitySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Prompt mutation: disabled")));
     QVERIFY(fixture.viewModel.skillProfileReadinessChecks().contains(
         QStringLiteral("Hidden system prompt changes: disabled")));
@@ -3185,9 +3215,11 @@ void DesktopShellViewModelTest::exposesPermissionPolicyMetadata() {
     QVERIFY(fixture.viewModel.permissionPolicyDomainNames().contains(
         QStringLiteral("Workspace Access")));
     QCOMPARE(fixture.viewModel.permissionPolicyDomainSummaries().size(), 10);
-    QVERIFY(fixture.viewModel.permissionPolicyDomainSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.permissionPolicyDomainSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Tool Execution / Disabled")));
-    QVERIFY(fixture.viewModel.permissionPolicyDeveloperDiagnostics().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.permissionPolicyDeveloperDiagnostics()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("No subprocess launch")));
 
     fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("ask-every-time"));
@@ -3210,16 +3242,18 @@ void DesktopShellViewModelTest::exposesToolGatewayMetadata() {
     QCOMPARE(fixture.viewModel.toolGatewayMetadataSafeCount(), 1);
     QCOMPARE(fixture.viewModel.toolGatewayUnavailableCount(), 2);
     QCOMPARE(fixture.viewModel.toolGatewayRefusedCount(), 7);
-    QVERIFY(fixture.viewModel.toolGatewaySummary().contains(
-        QStringLiteral("does not run tools")));
-    QVERIFY(fixture.viewModel.toolGatewayToolSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.toolGatewaySummary().contains(QStringLiteral("does not run tools")));
+    QVERIFY(fixture.viewModel.toolGatewayToolSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Run Command / Refused / Disabled")));
-    QVERIFY(fixture.viewModel.toolGatewayDeveloperDiagnostics().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.toolGatewayDeveloperDiagnostics()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Gateway execution grant: none in this phase")));
 
     fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
     QCOMPARE(fixture.viewModel.toolGatewayPermissionPosture(), QStringLiteral("Trusted"));
-    QVERIFY(fixture.viewModel.toolGatewayToolSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.toolGatewayToolSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Run Command / Refused / Trusted")));
     QCOMPARE(spy.count(), 1);
 }
@@ -3234,13 +3268,16 @@ void DesktopShellViewModelTest::exposesAgentRuntimeMetadata() {
     QCOMPARE(fixture.viewModel.agentRuntimeAgentCount(), 5);
     QCOMPARE(fixture.viewModel.agentRuntimeReadyAgentCount(), 5);
     QCOMPARE(fixture.viewModel.agentRuntimeRefusedAgentCount(), 0);
-    QVERIFY(fixture.viewModel.agentRuntimeSummary().contains(
-        QStringLiteral("cannot execute tools")));
-    QVERIFY(fixture.viewModel.agentRuntimeAgentSummaries().join(QStringLiteral("\n"))
+    QVERIFY(
+        fixture.viewModel.agentRuntimeSummary().contains(QStringLiteral("cannot execute tools")));
+    QVERIFY(fixture.viewModel.agentRuntimeAgentSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Voice Assistant")));
-    QVERIFY(fixture.viewModel.agentRuntimeReadinessSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.agentRuntimeReadinessSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Dry-run ready / Disabled")));
-    QVERIFY(fixture.viewModel.agentRuntimeDeveloperDiagnostics().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.agentRuntimeDeveloperDiagnostics()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Runtime execution grant: none")));
 
     QCOMPARE(fixture.viewModel.agentPlanId(), QStringLiteral("dry-run-general-assistant"));
@@ -3248,19 +3285,24 @@ void DesktopShellViewModelTest::exposesAgentRuntimeMetadata() {
     QCOMPARE(fixture.viewModel.agentPlanApprovalState(),
              QStringLiteral("Approval disabled / dry-run only"));
     QVERIFY(fixture.viewModel.agentPlanGoalSummary().contains(QStringLiteral("safe next steps")));
-    QVERIFY(fixture.viewModel.agentPlanSteps().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.agentPlanSteps()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("without reading files")));
-    QVERIFY(fixture.viewModel.agentPlanRequiredTools().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.agentPlanRequiredTools()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Summarize Current Conversation")));
-    QVERIFY(fixture.viewModel.agentPlanRequiredPermissions().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.agentPlanRequiredPermissions()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("agent-execution / Disabled")));
     QVERIFY(fixture.viewModel.agentPlanRefusalReason().contains(
         QStringLiteral("execution is disabled")));
-    QVERIFY(fixture.viewModel.agentPlanDiagnostics().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.agentPlanDiagnostics()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Execution grant: none")));
 
     fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
-    QCOMPARE(fixture.viewModel.agentRuntimeReadinessSummaries().join(QStringLiteral("\n"))
+    QCOMPARE(fixture.viewModel.agentRuntimeReadinessSummaries()
+                 .join(QStringLiteral("\n"))
                  .contains(QStringLiteral("Dry-run ready / Trusted")),
              true);
     QCOMPARE(runtimeSpy.count(), 1);
@@ -3306,12 +3348,14 @@ void DesktopShellViewModelTest::exposesControlledAgentTaskWorkflow() {
     QVERIFY(fixture.viewModel.executeControlledAgentStep(taskId));
     QVERIFY(fixture.viewModel.controlledTaskProgressSummary().contains(QStringLiteral("1 of 3")));
     QVERIFY(fixture.viewModel.retryControlledAgentStep(taskId));
-    QVERIFY(fixture.viewModel.controlledTaskExplainabilitySummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.controlledTaskExplainabilitySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Step executed by:")));
 
     QVERIFY(fixture.viewModel.setControlledToolPermission(QStringLiteral("Files"),
                                                           QStringLiteral("Allow For Workspace")));
-    QVERIFY(fixture.viewModel.controlledTaskPermissionSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.controlledTaskPermissionSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Files: Allow For Workspace")));
     QVERIFY(fixture.settings.controlledAgentTasksJson().contains(taskId));
 }
@@ -3329,33 +3373,41 @@ void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {
     QVERIFY(fixture.viewModel.reducedMotionEnabled());
     QVERIFY(fixture.viewModel.highContrastEnabled());
     QCOMPARE(fixture.viewModel.uiDensity(), QStringLiteral("Compact"));
-    QVERIFY(fixture.viewModel.accessibilitySummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.accessibilitySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Reduced motion: Enabled")));
 
     fixture.viewModel.setNotificationSearchQuery(QStringLiteral("privacy"));
     fixture.viewModel.setNotificationCategoryFilter(QStringLiteral("Security"));
-    QVERIFY(fixture.viewModel.notificationFilteredSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.notificationFilteredSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Privacy guarantees active")));
     QVERIFY(fixture.viewModel.markNotificationRead(QStringLiteral("security-privacy")));
     QVERIFY(fixture.viewModel.archiveNotification(QStringLiteral("workspace-active")));
     QVERIFY(fixture.viewModel.clearArchivedNotifications());
-    QVERIFY(fixture.viewModel.notificationLifecycleSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.notificationLifecycleSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Persistence: local settings JSON")));
 
     QVERIFY(!fixture.viewModel.checkForUpdates());
     QVERIFY(fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Checked manually")));
     QVERIFY(!fixture.viewModel.confirmUpdateDownload());
-    QVERIFY(fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Download confirmation")));
+    QVERIFY(
+        fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Download confirmation")));
 
     QVERIFY(fixture.viewModel.prepareExportPreview(QStringLiteral("Brain entries"),
                                                    QStringLiteral("JSON")));
-    QVERIFY(fixture.viewModel.exportPreviewSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.exportPreviewSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Brain entries")));
-    QVERIFY(fixture.viewModel.diagnosticsCenterSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.diagnosticsCenterSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Notification statistics:")));
-    QVERIFY(fixture.viewModel.brainInsightSummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.brainInsightSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Visualization only")));
-    QVERIFY(fixture.viewModel.recoveryReliabilitySummaries().join(QStringLiteral("\n"))
+    QVERIFY(fixture.viewModel.recoveryReliabilitySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Crash recovery draft:")));
     QVERIFY(nativeSpy.count() > 0);
 }

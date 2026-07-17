@@ -99,9 +99,9 @@ PermissionPolicyService::registrySummary(const QString& defaultState) const {
     QStringList developerDiagnostics;
     for (const auto& summary : permissionSummaries(state)) {
         domainSummaries.append(permissionPolicySummaryLine(summary));
-        developerDiagnostics.append(QStringLiteral("%1 [%2]: %3")
-                                        .arg(summary.domainName, summary.state,
-                                             summary.safetyBoundary));
+        developerDiagnostics.append(
+            QStringLiteral("%1 [%2]: %3")
+                .arg(summary.domainName, summary.state, summary.safetyBoundary));
     }
 
     return {
@@ -159,8 +159,7 @@ QString permissionPolicyStateName(PermissionPolicyState state) {
 }
 
 QString permissionPolicySummaryLine(const PermissionPolicySummary& summary) {
-    return QStringLiteral("%1 / %2 / %3")
-        .arg(summary.domainName, summary.state, summary.summary);
+    return QStringLiteral("%1 / %2 / %3").arg(summary.domainName, summary.state, summary.summary);
 }
 
 } // namespace sentinel::core

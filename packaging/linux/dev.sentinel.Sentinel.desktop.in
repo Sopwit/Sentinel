@@ -8,4 +8,4 @@ Icon=dev.sentinel.Sentinel
 Terminal=false
 Categories=Utility;Office;Qt;
 Keywords=AI;Assistant;Local;Privacy;Qt;
-StartupWMClass=Sentinel Desktop
+StartupWMClass=dev.sentinel.Sentinel

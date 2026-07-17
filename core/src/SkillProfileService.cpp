@@ -118,7 +118,8 @@ SkillProfileMetadata SkillProfileService::selectedProfile(const QString& selecte
     return defaultProfile();
 }
 
-SkillProfileReadinessSummary SkillProfileService::readiness(const QString& selectedProfileId) const {
+SkillProfileReadinessSummary
+SkillProfileService::readiness(const QString& selectedProfileId) const {
     const auto profile = selectedProfile(selectedProfileId);
     return {
         profile.readiness,
@@ -164,8 +165,7 @@ QString SkillProfileService::normalizedProfileId(const QString& profileId) const
 }
 
 QString skillProfileSummary(const SkillProfileMetadata& profile) {
-    return QStringLiteral("%1 / %2 / %3")
-        .arg(profile.name, profile.readiness, profile.summary);
+    return QStringLiteral("%1 / %2 / %3").arg(profile.name, profile.readiness, profile.summary);
 }
 
 } // namespace sentinel::core

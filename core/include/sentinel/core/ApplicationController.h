@@ -280,10 +280,10 @@ class ApplicationController final : public QObject {
                    NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QStringList configuredRuntimeProviderSummaries READ
                    configuredRuntimeProviderSummaries NOTIFY runtimeProviderRegistryChanged)
-    Q_PROPERTY(QStringList availableLocalRuntimeSummaries READ availableLocalRuntimeSummaries
-                   NOTIFY runtimeProviderRegistryChanged)
-    Q_PROPERTY(QString providerCredentialRegistryStatus READ providerCredentialRegistryStatus
-                   NOTIFY runtimeProviderRegistryChanged)
+    Q_PROPERTY(QStringList availableLocalRuntimeSummaries READ availableLocalRuntimeSummaries NOTIFY
+                   runtimeProviderRegistryChanged)
+    Q_PROPERTY(QString providerCredentialRegistryStatus READ providerCredentialRegistryStatus NOTIFY
+                   runtimeProviderRegistryChanged)
     Q_PROPERTY(QString providerCredentialRegistrySummary READ providerCredentialRegistrySummary
                    NOTIFY runtimeProviderRegistryChanged)
     Q_PROPERTY(QStringList providerCredentialSummaries READ providerCredentialSummaries NOTIFY
@@ -305,12 +305,14 @@ class ApplicationController final : public QObject {
     Q_PROPERTY(QString credentialExecutionStatus READ credentialExecutionStatus NOTIFY
                    runtimeProviderRegistryChanged)
     Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint NOTIFY ollamaStatusChanged)
-    Q_PROPERTY(QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(
+        QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
-    Q_PROPERTY(QStringList ollamaModelSummaries READ ollamaModelSummaries NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(
+        QStringList ollamaModelSummaries READ ollamaModelSummaries NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QString selectedLocalModelStatus READ selectedLocalModelStatus NOTIFY
@@ -321,18 +323,18 @@ class ApplicationController final : public QObject {
                    NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QString activeLocalRuntimeBadge READ activeLocalRuntimeBadge NOTIFY
                    localModelSelectionChanged)
-    Q_PROPERTY(QString modelRegistryStatus READ modelRegistryStatus NOTIFY
-                   localModelSelectionChanged)
-    Q_PROPERTY(QString modelRegistrySummary READ modelRegistrySummary NOTIFY
-                   localModelSelectionChanged)
+    Q_PROPERTY(
+        QString modelRegistryStatus READ modelRegistryStatus NOTIFY localModelSelectionChanged)
+    Q_PROPERTY(
+        QString modelRegistrySummary READ modelRegistrySummary NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QStringList modelRegistryModelSummaries READ modelRegistryModelSummaries NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QStringList modelLibraryInstalledSummaries READ modelLibraryInstalledSummaries NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QStringList modelLibraryAvailableSummaries READ modelLibraryAvailableSummaries NOTIFY
                    localModelSelectionChanged)
-    Q_PROPERTY(QStringList modelLibraryRecommendedSummaries READ
-                   modelLibraryRecommendedSummaries NOTIFY localModelSelectionChanged)
+    Q_PROPERTY(QStringList modelLibraryRecommendedSummaries READ modelLibraryRecommendedSummaries
+                   NOTIFY localModelSelectionChanged)
     Q_PROPERTY(QStringList modelLibraryDetailSummaries READ modelLibraryDetailSummaries NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QStringList providerDiscoverySummaries READ providerDiscoverySummaries NOTIFY
@@ -657,18 +659,18 @@ class ApplicationController final : public QObject {
                    conversationSummaryPersistenceSummary NOTIFY contextAssemblyChanged)
     Q_PROPERTY(QString conversationSummaryInjectionSummary READ conversationSummaryInjectionSummary
                    NOTIFY promptContextInjectionChanged)
-    Q_PROPERTY(QString summaryContinuityStatus READ summaryContinuityStatus NOTIFY
-                   contextAssemblyChanged)
-    Q_PROPERTY(QString summaryContinuityFreshnessSummary READ
-                   summaryContinuityFreshnessSummary NOTIFY contextAssemblyChanged)
-    Q_PROPERTY(QString summaryContinuityCoverageSummary READ summaryContinuityCoverageSummary
+    Q_PROPERTY(
+        QString summaryContinuityStatus READ summaryContinuityStatus NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityFreshnessSummary READ summaryContinuityFreshnessSummary
                    NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityCoverageSummary READ summaryContinuityCoverageSummary NOTIFY
+                   contextAssemblyChanged)
     Q_PROPERTY(QString summaryContinuityContributionSummary READ
                    summaryContinuityContributionSummary NOTIFY promptContextInjectionChanged)
-    Q_PROPERTY(QString summaryContinuityFallbackSummary READ summaryContinuityFallbackSummary
-                   NOTIFY contextAssemblyChanged)
-    Q_PROPERTY(QString summaryContinuityOrderingSummary READ summaryContinuityOrderingSummary
-                   NOTIFY contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityFallbackSummary READ summaryContinuityFallbackSummary NOTIFY
+                   contextAssemblyChanged)
+    Q_PROPERTY(QString summaryContinuityOrderingSummary READ summaryContinuityOrderingSummary NOTIFY
+                   contextAssemblyChanged)
     Q_PROPERTY(QString summaryContinuityBudgetTrace READ summaryContinuityBudgetTrace NOTIFY
                    promptContextInjectionChanged)
     Q_PROPERTY(bool contextExplainabilityEnabled READ contextExplainabilityEnabled NOTIFY
@@ -683,10 +685,10 @@ class ApplicationController final : public QObject {
                    promptContextInjectionChanged)
     Q_PROPERTY(QStringList contextReasoningContributionSummaries READ
                    contextReasoningContributionSummaries NOTIFY promptContextInjectionChanged)
-    Q_PROPERTY(QStringList contextReasoningInclusionHints READ contextReasoningInclusionHints
-                   NOTIFY promptContextInjectionChanged)
-    Q_PROPERTY(QStringList contextReasoningExclusionHints READ contextReasoningExclusionHints
-                   NOTIFY promptContextInjectionChanged)
+    Q_PROPERTY(QStringList contextReasoningInclusionHints READ contextReasoningInclusionHints NOTIFY
+                   promptContextInjectionChanged)
+    Q_PROPERTY(QStringList contextReasoningExclusionHints READ contextReasoningExclusionHints NOTIFY
+                   promptContextInjectionChanged)
     Q_PROPERTY(QStringList contextReasoningDeveloperTraces READ contextReasoningDeveloperTraces
                    NOTIFY promptContextInjectionChanged)
     Q_PROPERTY(QStringList conversationSummaryCandidateSegments READ
@@ -2007,7 +2009,9 @@ private:
     bool localInferenceClientIsRealOllama_ = false;
     bool localInferenceStreamClientIsRealOllama_ = false;
 
-    bool isLMStudioProvider() const { return selectedRuntimeProvider_ == QStringLiteral("lm-studio"); }
+    bool isLMStudioProvider() const {
+        return selectedRuntimeProvider_ == QStringLiteral("lm-studio");
+    }
     bool isLocalChatProvider() const {
         return selectedRuntimeProvider_ == QStringLiteral("ollama") ||
                selectedRuntimeProvider_ == QStringLiteral("lm-studio");

@@ -1213,26 +1213,34 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
              QStringList({QStringLiteral("ollama"), QStringLiteral("openai-compatible-local"),
                           QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server")}));
     QCOMPARE(controller->runtimeProviderCardSummaries().size(), 4);
-    QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+    QVERIFY(controller->runtimeProviderCardSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("OpenAI-compatible Local")));
-    QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+    QVERIFY(controller->runtimeProviderCardSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("LM Studio")));
-    QVERIFY(controller->runtimeProviderCardSummaries().join(QStringLiteral("\n"))
+    QVERIFY(controller->runtimeProviderCardSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("llama.cpp server")));
-    QVERIFY(controller->runtimeProviderCapabilitySummaries().join(QStringLiteral("\n"))
+    QVERIFY(controller->runtimeProviderCapabilitySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("requiresApiKey: no")));
-    QVERIFY(controller->runtimeProviderValidationTraces().join(QStringLiteral("\n"))
+    QVERIFY(controller->runtimeProviderValidationTraces()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("readiness=disabled")));
-    QVERIFY(controller->providerCredentialRegistrySummary()
-                .contains(QStringLiteral("API key values are not stored")));
-    QVERIFY(controller->credentialStoreSummary().contains(QStringLiteral("Credential store disabled")));
-    QVERIFY(controller->credentialStoreBackendSummary().contains(QStringLiteral("storage unavailable")));
+    QVERIFY(controller->providerCredentialRegistrySummary().contains(
+        QStringLiteral("API key values are not stored")));
+    QVERIFY(
+        controller->credentialStoreSummary().contains(QStringLiteral("Credential store disabled")));
+    QVERIFY(controller->credentialStoreBackendSummary().contains(
+        QStringLiteral("storage unavailable")));
     QVERIFY(controller->credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(controller->credentialStoreTraceSummaries().size(), 5);
     QVERIFY(controller->credentialActionReadiness().contains(QStringLiteral("disabled")));
     QVERIFY(controller->credentialExecutionStatus().contains(QStringLiteral("Execution disabled")));
     QCOMPARE(controller->providerCredentialSummaries().size(), 4);
-    QVERIFY(controller->providerCredentialSafetySummaries().join(QStringLiteral("\n"))
+    QVERIFY(controller->providerCredentialSafetySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("cloudRequests=refused")));
     QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 4);
 }
@@ -1253,7 +1261,8 @@ void ApplicationControllerTest::disabledRuntimeProviderSelectionFallsBackToLocal
     QCOMPARE(controller->selectedRuntimeProvider(), QStringLiteral("openai-compatible"));
     QCOMPARE(controller->activeRuntimeProviderId(), QStringLiteral("ollama"));
     QCOMPARE(controller->activeRuntimeReadinessState(), QStringLiteral("ready"));
-    QVERIFY(controller->configuredRuntimeProviderSummaries().join(QStringLiteral("\n"))
+    QVERIFY(controller->configuredRuntimeProviderSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Local Ollama")));
 }
 
@@ -4635,8 +4644,8 @@ void ApplicationControllerTest::summaryContinuityInjectsPersistedSummaryAfterRes
         QVERIFY(storePtr->saveSummaryMetadata(metadata));
     }
 
-    auto reloaded = makeControllerWithConversationStore(
-        std::make_unique<SQLiteConversationStore>(dbPath));
+    auto reloaded =
+        makeControllerWithConversationStore(std::make_unique<SQLiteConversationStore>(dbPath));
     QCOMPARE(reloaded->activeConversationId(), conversationId);
     reloaded->setPromptContextInjectionEnabled(true);
     QVERIFY(reloaded->sendMessage(QStringLiteral("continuity followup")));
@@ -4647,8 +4656,10 @@ void ApplicationControllerTest::summaryContinuityInjectsPersistedSummaryAfterRes
     QVERIFY(reloaded->contextExplainabilityEnabled());
     QVERIFY(reloaded->contextReasoningSummary().contains(QStringLiteral("Context reasoning")));
     QVERIFY(reloaded->contextReasoningBudgetSummary().contains(QStringLiteral("summary")));
-    QVERIFY(reloaded->contextReasoningOrderingSummary().contains(QStringLiteral("recent transcript")));
-    QVERIFY(!reloaded->contextReasoningDeveloperTraces().join(QStringLiteral("\n"))
+    QVERIFY(
+        reloaded->contextReasoningOrderingSummary().contains(QStringLiteral("recent transcript")));
+    QVERIFY(!reloaded->contextReasoningDeveloperTraces()
+                 .join(QStringLiteral("\n"))
                  .contains(QStringLiteral("[Sentinel Local Context]")));
 }
 
@@ -4685,10 +4696,13 @@ void ApplicationControllerTest::staleSummaryContinuityFallsBackToTranscriptOnly(
     QCOMPARE(controller->summaryContinuityStatus(), QStringLiteral("Stale"));
     QVERIFY(controller->summaryContinuityFallbackSummary().contains(QStringLiteral("fallback"),
                                                                     Qt::CaseInsensitive));
-    QVERIFY(controller->contextReasoningFallbackSummary().contains(QStringLiteral("Fallback active")));
-    QVERIFY(controller->contextReasoningExclusionHints().join(QStringLiteral("\n"))
+    QVERIFY(
+        controller->contextReasoningFallbackSummary().contains(QStringLiteral("Fallback active")));
+    QVERIFY(controller->contextReasoningExclusionHints()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("summary is stale")));
-    QVERIFY(!controller->promptContextSourceSummary().contains(QStringLiteral("Conversation Summary")));
+    QVERIFY(
+        !controller->promptContextSourceSummary().contains(QStringLiteral("Conversation Summary")));
     QVERIFY(controller->chatMessages().size() > beforeMessages.size());
     QCOMPARE(controller->memoryEntries(), beforeMemory);
 }

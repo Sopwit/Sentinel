@@ -70,9 +70,10 @@ RagStoreResult LocalRagStore::addDocument(const RagDocumentRecord& record) {
         "INSERT OR REPLACE INTO rag_documents "
         "(id, workspace_id, file_name, file_type, size_bytes, status, source_summary, updated_at) "
         "VALUES (?, ?, ?, ?, ?, ?, ?, ?)"));
-    const auto id = record.id.trimmed().isEmpty()
-                        ? stableId(record.workspaceId + record.fileName + QString::number(record.sizeBytes))
-                        : record.id.trimmed();
+    const auto id =
+        record.id.trimmed().isEmpty()
+            ? stableId(record.workspaceId + record.fileName + QString::number(record.sizeBytes))
+            : record.id.trimmed();
     query.addBindValue(id);
     query.addBindValue(record.workspaceId.trimmed());
     query.addBindValue(record.fileName.trimmed());
@@ -85,11 +86,13 @@ RagStoreResult LocalRagStore::addDocument(const RagDocumentRecord& record) {
     if (!query.exec()) {
         return {false, QStringLiteral("Failed"), query.lastError().text()};
     }
-    return {true, QStringLiteral("Added"),
-            QStringLiteral("Added document %1 to workspace knowledge metadata.").arg(record.fileName)};
+    return {
+        true, QStringLiteral("Added"),
+        QStringLiteral("Added document %1 to workspace knowledge metadata.").arg(record.fileName)};
 }
 
-RagStoreResult LocalRagStore::removeDocument(const QString& workspaceId, const QString& documentId) {
+RagStoreResult LocalRagStore::removeDocument(const QString& workspaceId,
+                                             const QString& documentId) {
     if (!ensureSchema()) {
         return {false, QStringLiteral("Failed"), QStringLiteral("RAG schema unavailable.")};
     }
@@ -101,7 +104,8 @@ RagStoreResult LocalRagStore::removeDocument(const QString& workspaceId, const Q
     if (!query.exec()) {
         return {false, QStringLiteral("Failed"), query.lastError().text()};
     }
-    return {true, QStringLiteral("Removed"), QStringLiteral("Removed document from workspace RAG metadata.")};
+    return {true, QStringLiteral("Removed"),
+            QStringLiteral("Removed document from workspace RAG metadata.")};
 }
 
 RagStoreResult LocalRagStore::markReindexed(const QString& workspaceId) {
@@ -110,8 +114,8 @@ RagStoreResult LocalRagStore::markReindexed(const QString& workspaceId) {
     }
     auto db = openDatabase(connectionName(), databasePath_);
     QSqlQuery query(db);
-    query.prepare(QStringLiteral(
-        "UPDATE rag_documents SET status = 'Indexed Manually', updated_at = ? WHERE workspace_id = ?"));
+    query.prepare(QStringLiteral("UPDATE rag_documents SET status = 'Indexed Manually', updated_at "
+                                 "= ? WHERE workspace_id = ?"));
     query.addBindValue(nowUtc());
     query.addBindValue(workspaceId.trimmed());
     if (!query.exec()) {
@@ -133,9 +137,11 @@ RagStoreResult LocalRagStore::clearWorkspace(const QString& workspaceId) {
     retrievals.prepare(QStringLiteral("DELETE FROM rag_retrievals WHERE workspace_id = ?"));
     retrievals.addBindValue(workspaceId.trimmed());
     if (!docs.exec() || !retrievals.exec()) {
-        return {false, QStringLiteral("Failed"), docs.lastError().text() + retrievals.lastError().text()};
+        return {false, QStringLiteral("Failed"),
+                docs.lastError().text() + retrievals.lastError().text()};
     }
-    return {true, QStringLiteral("Cleared"), QStringLiteral("Cleared workspace knowledge base metadata.")};
+    return {true, QStringLiteral("Cleared"),
+            QStringLiteral("Cleared workspace knowledge base metadata.")};
 }
 
 QList<RagDocumentRecord> LocalRagStore::documents(const QString& workspaceId) const {

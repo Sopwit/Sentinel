@@ -61,28 +61,21 @@ struct AgentRuntimeSummary {
 
 class AgentPlanRegistry final {
 public:
-    AgentPlanRecord previewPlan(const QString& goal,
-                                const AgentRecord& agent,
-                                const QString& defaultPermissionState,
-                                const PermissionPolicyService& permissionPolicy,
-                                const ToolExecutionGateway& toolGateway,
-                                const SkillProfileService& skillProfileService,
-                                const QString& selectedSkillProfileId,
-                                const WorkspaceService& workspaceService,
-                                const QString& selectedWorkspaceId) const;
+    AgentPlanRecord previewPlan(
+        const QString& goal, const AgentRecord& agent, const QString& defaultPermissionState,
+        const PermissionPolicyService& permissionPolicy, const ToolExecutionGateway& toolGateway,
+        const SkillProfileService& skillProfileService, const QString& selectedSkillProfileId,
+        const WorkspaceService& workspaceService, const QString& selectedWorkspaceId) const;
 };
 
 class AgentRuntimeService final {
 public:
-    QList<AgentRecord> agents(const QString& defaultPermissionState,
-                              const PermissionPolicyService& permissionPolicy,
-                              const ToolExecutionGateway& toolGateway,
-                              const SkillProfileService& skillProfileService,
-                              const QString& selectedSkillProfileId,
-                              const WorkspaceService& workspaceService,
-                              const QString& selectedWorkspaceId) const;
-    AgentRecord selectedAgent(const QString& agentId,
-                              const QString& defaultPermissionState,
+    QList<AgentRecord>
+    agents(const QString& defaultPermissionState, const PermissionPolicyService& permissionPolicy,
+           const ToolExecutionGateway& toolGateway, const SkillProfileService& skillProfileService,
+           const QString& selectedSkillProfileId, const WorkspaceService& workspaceService,
+           const QString& selectedWorkspaceId) const;
+    AgentRecord selectedAgent(const QString& agentId, const QString& defaultPermissionState,
                               const PermissionPolicyService& permissionPolicy,
                               const ToolExecutionGateway& toolGateway,
                               const SkillProfileService& skillProfileService,
@@ -96,15 +89,11 @@ public:
                                        const QString& selectedSkillProfileId,
                                        const WorkspaceService& workspaceService,
                                        const QString& selectedWorkspaceId) const;
-    AgentPlanRecord previewPlan(const QString& goal,
-                                const QString& agentId,
-                                const QString& defaultPermissionState,
-                                const PermissionPolicyService& permissionPolicy,
-                                const ToolExecutionGateway& toolGateway,
-                                const SkillProfileService& skillProfileService,
-                                const QString& selectedSkillProfileId,
-                                const WorkspaceService& workspaceService,
-                                const QString& selectedWorkspaceId) const;
+    AgentPlanRecord previewPlan(
+        const QString& goal, const QString& agentId, const QString& defaultPermissionState,
+        const PermissionPolicyService& permissionPolicy, const ToolExecutionGateway& toolGateway,
+        const SkillProfileService& skillProfileService, const QString& selectedSkillProfileId,
+        const WorkspaceService& workspaceService, const QString& selectedWorkspaceId) const;
 };
 
 QString agentReadinessStateName(AgentReadinessState state);

@@ -20,8 +20,8 @@ ProviderCredentialRequirement unknownRequirement(const QString& providerId) {
     };
 }
 
-ProviderCredentialSafetyReport safetyReportForRequirement(
-    const ProviderCredentialRequirement& requirement) {
+ProviderCredentialSafetyReport
+safetyReportForRequirement(const ProviderCredentialRequirement& requirement) {
     return ProviderCredentialSafetyReport{
         requirement.providerId,
         false,
@@ -80,8 +80,7 @@ QString providerCredentialScopeName(ProviderCredentialScope scope) {
     return QStringLiteral("cloudApiPlaceholder");
 }
 
-QString providerCredentialRequirementSummary(
-    const ProviderCredentialRequirement& requirement) {
+QString providerCredentialRequirementSummary(const ProviderCredentialRequirement& requirement) {
     return QStringLiteral("%1 (%2): %3 / %4 / %5 / %6 / API keys not stored")
         .arg(requirement.displayName, requirement.providerId,
              providerCredentialScopeName(requirement.scope),
@@ -95,12 +94,10 @@ QString providerCredentialSafetySummary(const ProviderCredentialSafetyReport& re
     return QStringLiteral("%1: plaintextStorage=%2 / secretLogging=%3 / cloudRequests=%4 / "
                           "fallbackRouting=%5 / backgroundDiscovery=%6")
         .arg(report.providerId,
-             report.plaintextStorageAllowed ? QStringLiteral("allowed")
-                                            : QStringLiteral("refused"),
+             report.plaintextStorageAllowed ? QStringLiteral("allowed") : QStringLiteral("refused"),
              report.secretLoggingAllowed ? QStringLiteral("allowed") : QStringLiteral("refused"),
              report.cloudRequestsAllowed ? QStringLiteral("allowed") : QStringLiteral("refused"),
-             report.fallbackRoutingAllowed ? QStringLiteral("allowed")
-                                           : QStringLiteral("refused"),
+             report.fallbackRoutingAllowed ? QStringLiteral("allowed") : QStringLiteral("refused"),
              report.backgroundDiscoveryAllowed ? QStringLiteral("allowed")
                                                : QStringLiteral("refused"));
 }
@@ -116,15 +113,15 @@ QString providerCredentialReadinessSummary(const ProviderCredentialReadiness& re
 ProviderCredentialRegistry::ProviderCredentialRegistry(
     QList<ProviderCredentialRequirement> requirements,
     CredentialStoreSummary credentialStoreSummary)
-    : requirements_(std::move(requirements))
-    , credentialStoreSummary_(std::move(credentialStoreSummary)) {}
+    : requirements_(std::move(requirements)),
+      credentialStoreSummary_(std::move(credentialStoreSummary)) {}
 
 QList<ProviderCredentialRequirement> ProviderCredentialRegistry::requirements() const {
     return requirements_;
 }
 
-ProviderCredentialRequirement ProviderCredentialRegistry::requirementForProvider(
-    const QString& providerId) const {
+ProviderCredentialRequirement
+ProviderCredentialRegistry::requirementForProvider(const QString& providerId) const {
     const auto normalized = providerId.trimmed().toLower();
     for (const auto& requirement : requirements_) {
         if (requirement.providerId == normalized) {
@@ -134,8 +131,8 @@ ProviderCredentialRequirement ProviderCredentialRegistry::requirementForProvider
     return unknownRequirement(normalized);
 }
 
-ProviderCredentialReadiness ProviderCredentialRegistry::readinessForProvider(
-    const QString& providerId) const {
+ProviderCredentialReadiness
+ProviderCredentialRegistry::readinessForProvider(const QString& providerId) const {
     const auto requirement = requirementForProvider(providerId);
     const auto configured = requirement.status == ProviderCredentialStatus::Configured ||
                             requirement.status == ProviderCredentialStatus::NotRequired;
@@ -161,8 +158,8 @@ QList<ProviderCredentialReadiness> ProviderCredentialRegistry::readinessEntries(
     return entries;
 }
 
-ProviderCredentialSafetyReport ProviderCredentialRegistry::safetyReportForProvider(
-    const QString& providerId) const {
+ProviderCredentialSafetyReport
+ProviderCredentialRegistry::safetyReportForProvider(const QString& providerId) const {
     return safetyReportForRequirement(requirementForProvider(providerId));
 }
 
@@ -213,14 +210,14 @@ QStringList ProviderCredentialRegistry::readinessSummaries() const {
 QStringList ProviderCredentialRegistry::safetySummaries() const {
     QStringList summaries;
     for (const auto& requirement : requirements_) {
-        summaries.append(providerCredentialSafetySummary(
-            safetyReportForProvider(requirement.providerId)));
+        summaries.append(
+            providerCredentialSafetySummary(safetyReportForProvider(requirement.providerId)));
     }
     return summaries;
 }
 
-ProviderCredentialRegistry defaultProviderCredentialRegistry(
-    CredentialStoreSummary credentialStoreSummary) {
+ProviderCredentialRegistry
+defaultProviderCredentialRegistry(CredentialStoreSummary credentialStoreSummary) {
     const auto backendSummary = credentialStoreSummary.backendSummary;
     const auto storeReadiness = credentialStoreSummary.readiness;
     return ProviderCredentialRegistry{

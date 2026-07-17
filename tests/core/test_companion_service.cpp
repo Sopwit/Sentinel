@@ -42,8 +42,8 @@ void CompanionServiceTest::exposesSafeActionModel() {
     for (const auto& action : actions) {
         QVERIFY(!action.available);
         QVERIFY(!action.executionEnabled);
-        QVERIFY(sentinel::core::companionActionSummary(action)
-                    .contains(QStringLiteral("execution=disabled")));
+        QVERIFY(sentinel::core::companionActionSummary(action).contains(
+            QStringLiteral("execution=disabled")));
     }
 
     const auto summary = service.summary(true).actionSummaries.join(QStringLiteral("\n"));

@@ -65,9 +65,10 @@ void ModelRegistryTest::exposesSelectedModelReadinessSummary() {
 
 void ModelRegistryTest::disabledProviderPlaceholderDoesNotEnableExecutionMetadata() {
     const ModelRegistry registry{
-        {sentinel::core::disabledProviderModelPlaceholder(
-            QStringLiteral("openai-compatible"), QStringLiteral("OpenAI-Compatible API"))},
-        QStringLiteral("openai-compatible"), QStringLiteral("gpt-placeholder")};
+        {sentinel::core::disabledProviderModelPlaceholder(QStringLiteral("openai-compatible"),
+                                                          QStringLiteral("OpenAI-Compatible API"))},
+        QStringLiteral("openai-compatible"),
+        QStringLiteral("gpt-placeholder")};
 
     const auto summary = registry.summary();
     QCOMPARE(summary.status, ModelRegistryStatus::Disabled);
@@ -82,18 +83,22 @@ void ModelRegistryTest::disabledProviderPlaceholderDoesNotEnableExecutionMetadat
 void ModelRegistryTest::exposesLocalAiEcosystemFoundationMetadata() {
     const ModelRegistry registry{
         sentinel::core::modelSummariesFromOllama({
-            OllamaModelSummary{QStringLiteral("qwen2.5-coder:7b"), {},
-                               5LL * 1024LL * 1024LL * 1024LL},
+            OllamaModelSummary{
+                QStringLiteral("qwen2.5-coder:7b"), {}, 5LL * 1024LL * 1024LL * 1024LL},
         }),
         QStringLiteral("ollama"), QStringLiteral("qwen2.5-coder:7b")};
 
-    QVERIFY(registry.installedModelLibrarySummaries().join(QStringLiteral("\n"))
+    QVERIFY(registry.installedModelLibrarySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Installed")));
-    QVERIFY(registry.availableModelLibrarySummaries().join(QStringLiteral("\n"))
+    QVERIFY(registry.availableModelLibrarySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("LM Studio")));
-    QVERIFY(registry.recommendedModelLibrarySummaries().join(QStringLiteral("\n"))
+    QVERIFY(registry.recommendedModelLibrarySummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("coding")));
-    QVERIFY(registry.modelDetailSummaries().join(QStringLiteral("\n"))
+    QVERIFY(registry.modelDetailSummaries()
+                .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("quantization")));
 
     const auto advisor = sentinel::core::deterministicModelAdvisorRecommendations(

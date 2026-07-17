@@ -417,34 +417,34 @@ bool LocalInferenceWorker::startInference(const LocalInferenceRequest& request,
     const QPointer<QObject> context{callbackContext_};
     auto* thread = QThread::create([this, request = std::move(requestWithToken),
                                     onFinished = std::move(onFinished), context]() mutable {
-            QElapsedTimer timer;
-            timer.start();
-            auto response = inferenceClient_->infer(request);
-            response.latencyMs = timer.elapsed();
-            if (!response.text.isEmpty() && response.firstTokenLatencyMs < 0) {
-                response.firstTokenLatencyMs = response.latencyMs;
-            }
-            response.approximateOutputTokens = approximateTokenCount(response.text);
-            response.approximateTokensPerSecond =
-                tokensPerSecond(response.approximateOutputTokens, response.latencyMs);
-            if (!context) {
-                return;
-            }
-            QMetaObject::invokeMethod(
-                context,
-                [this, requestId = request.id, response = std::move(response),
-                 onFinished = std::move(onFinished)]() mutable {
-                    if (onFinished) {
-                        onFinished(requestId, response);
-                    }
-                    if (activeThread_) {
-                        activeThread_->deleteLater();
-                    }
-                    activeThread_ = nullptr;
-                    activeCancellationToken_.reset();
-                },
-                Qt::QueuedConnection);
-        });
+        QElapsedTimer timer;
+        timer.start();
+        auto response = inferenceClient_->infer(request);
+        response.latencyMs = timer.elapsed();
+        if (!response.text.isEmpty() && response.firstTokenLatencyMs < 0) {
+            response.firstTokenLatencyMs = response.latencyMs;
+        }
+        response.approximateOutputTokens = approximateTokenCount(response.text);
+        response.approximateTokensPerSecond =
+            tokensPerSecond(response.approximateOutputTokens, response.latencyMs);
+        if (!context) {
+            return;
+        }
+        QMetaObject::invokeMethod(
+            context,
+            [this, requestId = request.id, response = std::move(response),
+             onFinished = std::move(onFinished)]() mutable {
+                if (onFinished) {
+                    onFinished(requestId, response);
+                }
+                if (activeThread_) {
+                    activeThread_->deleteLater();
+                }
+                activeThread_ = nullptr;
+                activeCancellationToken_.reset();
+            },
+            Qt::QueuedConnection);
+    });
     thread->setObjectName(QStringLiteral("SentinelLocalInferenceWorker"));
     activeThread_ = thread;
     thread->start();
@@ -464,8 +464,8 @@ bool LocalInferenceWorker::startStream(const LocalInferenceRequest& request,
 
     if (!threadedStream_) {
         auto result = streamClient_->startStream(
-            requestWithToken, [this, &requestWithToken,
-                               &onChunk](const LocalInferenceStreamChunk& chunk) {
+            requestWithToken,
+            [this, &requestWithToken, &onChunk](const LocalInferenceStreamChunk& chunk) {
                 if (onChunk) {
                     onChunk(requestWithToken.id, chunk);
                 }
@@ -478,42 +478,42 @@ bool LocalInferenceWorker::startStream(const LocalInferenceRequest& request,
     }
 
     const QPointer<QObject> context{callbackContext_};
-    auto* thread = QThread::create([this, request = std::move(requestWithToken),
-                                    onChunk = std::move(onChunk),
-                                    onFinished = std::move(onFinished), context]() mutable {
-        auto result = streamClient_->startStream(
-            request, [requestId = request.id, onChunk,
-                      context](const LocalInferenceStreamChunk& chunk) mutable {
-                if (!context) {
-                    return;
-                }
-                QMetaObject::invokeMethod(
-                    context,
-                    [requestId, chunk, onChunk]() mutable {
-                        if (onChunk) {
-                            onChunk(requestId, chunk);
-                        }
-                    },
-                    Qt::QueuedConnection);
-            });
-        if (!context) {
-            return;
-        }
-        QMetaObject::invokeMethod(
-            context,
-            [this, requestId = request.id, result = std::move(result),
-             onFinished = std::move(onFinished)]() mutable {
-                if (onFinished) {
-                    onFinished(requestId, result);
-                }
-                if (activeThread_) {
-                    activeThread_->deleteLater();
-                }
-                activeThread_ = nullptr;
-                activeCancellationToken_.reset();
-            },
-            Qt::QueuedConnection);
-    });
+    auto* thread =
+        QThread::create([this, request = std::move(requestWithToken), onChunk = std::move(onChunk),
+                         onFinished = std::move(onFinished), context]() mutable {
+            auto result = streamClient_->startStream(
+                request, [requestId = request.id, onChunk,
+                          context](const LocalInferenceStreamChunk& chunk) mutable {
+                    if (!context) {
+                        return;
+                    }
+                    QMetaObject::invokeMethod(
+                        context,
+                        [requestId, chunk, onChunk]() mutable {
+                            if (onChunk) {
+                                onChunk(requestId, chunk);
+                            }
+                        },
+                        Qt::QueuedConnection);
+                });
+            if (!context) {
+                return;
+            }
+            QMetaObject::invokeMethod(
+                context,
+                [this, requestId = request.id, result = std::move(result),
+                 onFinished = std::move(onFinished)]() mutable {
+                    if (onFinished) {
+                        onFinished(requestId, result);
+                    }
+                    if (activeThread_) {
+                        activeThread_->deleteLater();
+                    }
+                    activeThread_ = nullptr;
+                    activeCancellationToken_.reset();
+                },
+                Qt::QueuedConnection);
+        });
     thread->setObjectName(QStringLiteral("SentinelLocalInferenceStreamWorker"));
     activeThread_ = thread;
     thread->start();
@@ -1045,7 +1045,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     }
 
     const auto timeoutMs = response.timeoutMs > 0 ? response.timeoutMs : timeoutMs_;
-    const auto models = fetchOpenAiCompatibleModels(endpointUrl(QStringLiteral("/v1/models")), timeoutMs);
+    const auto models =
+        fetchOpenAiCompatibleModels(endpointUrl(QStringLiteral("/v1/models")), timeoutMs);
     bool modelAvailable = false;
     for (const auto& installedModel : models) {
         if (installedModel.name == response.model) {
@@ -1075,16 +1076,18 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     body.insert(QStringLiteral("messages"), messagesArr);
     body.insert(QStringLiteral("stream"), false);
 
-    response.traces.append(trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
-                                  QStringLiteral("Calling local LM Studio /v1/chat/completions; timeout %1 ms.")
-                                      .arg(timeoutMs)));
+    response.traces.append(
+        trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
+              QStringLiteral("Calling local LM Studio /v1/chat/completions; timeout %1 ms.")
+                  .arg(timeoutMs)));
 
-    const auto reply = postJson(endpointUrl(QStringLiteral("/v1/chat/completions")), body, timeoutMs);
+    const auto reply =
+        postJson(endpointUrl(QStringLiteral("/v1/chat/completions")), body, timeoutMs);
     if (!reply.ok) {
         response.status = LocalInferenceStatus::Error;
         response.error = networkErrorCategory(reply);
-        response.summary =
-            safeNetworkFailureSummary(reply, QStringLiteral("Local LM Studio generation"), timeoutMs);
+        response.summary = safeNetworkFailureSummary(
+            reply, QStringLiteral("Local LM Studio generation"), timeoutMs);
         response.traces.append(
             trace(3, QStringLiteral("Generation"), QStringLiteral("Error"), response.summary));
         return response;
@@ -1094,7 +1097,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     if (choices.isEmpty()) {
         response.status = LocalInferenceStatus::Error;
         response.error = LocalInferenceError::InvalidResponse;
-        response.summary = QStringLiteral("Local LM Studio generation response did not include choices.");
+        response.summary =
+            QStringLiteral("Local LM Studio generation response did not include choices.");
         response.traces.append(trace(3, QStringLiteral("Generation"),
                                      QStringLiteral("Invalid Response"), response.summary));
         return response;
@@ -1106,7 +1110,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     if (text.isEmpty()) {
         response.status = LocalInferenceStatus::Error;
         response.error = LocalInferenceError::InvalidResponse;
-        response.summary = QStringLiteral("Local LM Studio generation response did not include text.");
+        response.summary =
+            QStringLiteral("Local LM Studio generation response did not include text.");
         response.traces.append(trace(3, QStringLiteral("Generation"),
                                      QStringLiteral("Invalid Response"), response.summary));
         return response;
@@ -1116,17 +1121,19 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     response.error = LocalInferenceError::None;
     response.text = text;
     response.approximateOutputTokens = approximateTokenCount(text);
-    response.summary = QStringLiteral("Local inference completed through LM Studio /v1/chat/completions.");
+    response.summary =
+        QStringLiteral("Local inference completed through LM Studio /v1/chat/completions.");
     response.traces.append(trace(3, QStringLiteral("Generation"), QStringLiteral("Succeeded"),
                                  QStringLiteral("Local LM Studio generation completed.")));
     return response;
 }
 
 QString LMStudioLocalInferenceClient::statusSummary() const {
-    return endpointAllowed() ? QStringLiteral("LM Studio local inference boundary is configured for "
-                                              "loopback-only /v1/chat/completions.")
-                             : QStringLiteral("LM Studio local inference boundary is blocked by "
-                                              "endpoint policy.");
+    return endpointAllowed()
+               ? QStringLiteral("LM Studio local inference boundary is configured for "
+                                "loopback-only /v1/chat/completions.")
+               : QStringLiteral("LM Studio local inference boundary is blocked by "
+                                "endpoint policy.");
 }
 
 QUrl LMStudioLocalInferenceClient::endpointUrl(const QString& path) const {
@@ -1141,7 +1148,8 @@ bool LMStudioLocalInferenceClient::endpointAllowed() const {
     return config_.isLoopbackHttp();
 }
 
-LMStudioLocalInferenceStreamClient::LMStudioLocalInferenceStreamClient(LMStudioConfig config, int timeoutMs)
+LMStudioLocalInferenceStreamClient::LMStudioLocalInferenceStreamClient(LMStudioConfig config,
+                                                                       int timeoutMs)
     : config_(std::move(config)), timeoutMs_(timeoutMs) {
     config_.timeoutMs = timeoutMs_;
 }
@@ -1337,8 +1345,9 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         reply->abort();
         result.status = LocalInferenceStreamStatus::Error;
         result.error = LocalInferenceError::Timeout;
-        result.summary = QStringLiteral("Local LM Studio streaming generation timed out after %1 ms.")
-                             .arg(timeoutMs);
+        result.summary =
+            QStringLiteral("Local LM Studio streaming generation timed out after %1 ms.")
+                .arg(timeoutMs);
         reply->deleteLater();
         return result;
     }
@@ -1351,7 +1360,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     if (hasRedirectStatus(reply)) {
         result.status = LocalInferenceStreamStatus::Error;
         result.error = LocalInferenceError::EndpointBlocked;
-        result.summary = QStringLiteral("Local LM Studio streaming blocked: redirects are not allowed.");
+        result.summary =
+            QStringLiteral("Local LM Studio streaming blocked: redirects are not allowed.");
         reply->deleteLater();
         return result;
     }
@@ -1381,7 +1391,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         result.status = LocalInferenceStreamStatus::Error;
         result.error =
             done ? LocalInferenceError::InvalidResponse : LocalInferenceError::StreamInterrupted;
-        result.summary = QStringLiteral("Local LM Studio streaming response did not complete with assistant text.");
+        result.summary = QStringLiteral(
+            "Local LM Studio streaming response did not complete with assistant text.");
         return result;
     }
 
@@ -1390,10 +1401,12 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     result.approximateOutputTokens = approximateTokenCount(result.accumulatedText);
     result.approximateTokensPerSecond =
         tokensPerSecond(result.approximateOutputTokens, result.latencyMs);
-    result.summary = result.malformedChunkCount > 0
-                         ? QStringLiteral("Local LM Studio streaming completed with %1 malformed chunk(s) ignored.")
-                               .arg(result.malformedChunkCount)
-                         : QStringLiteral("Local LM Studio streaming completed.");
+    result.summary =
+        result.malformedChunkCount > 0
+            ? QStringLiteral(
+                  "Local LM Studio streaming completed with %1 malformed chunk(s) ignored.")
+                  .arg(result.malformedChunkCount)
+            : QStringLiteral("Local LM Studio streaming completed.");
     result.traces.append(trace(static_cast<int>(result.traces.size()) + 1,
                                QStringLiteral("Stream Generation"), QStringLiteral("Completed"),
                                result.summary));
@@ -1401,10 +1414,11 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
 }
 
 QString LMStudioLocalInferenceStreamClient::statusSummary() const {
-    return endpointAllowed() ? QStringLiteral("LM Studio local streaming boundary is configured for "
-                                              "loopback-only /v1/chat/completions.")
-                             : QStringLiteral("LM Studio local streaming boundary is blocked by "
-                                              "endpoint policy.");
+    return endpointAllowed()
+               ? QStringLiteral("LM Studio local streaming boundary is configured for "
+                                "loopback-only /v1/chat/completions.")
+               : QStringLiteral("LM Studio local streaming boundary is blocked by "
+                                "endpoint policy.");
 }
 
 bool LMStudioLocalInferenceStreamClient::isAvailable() const {

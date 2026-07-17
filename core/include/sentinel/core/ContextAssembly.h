@@ -821,11 +821,10 @@ conversationCompressionCandidateSummaries(const ConversationCompressionSummary& 
 QStringList conversationCompressionTraceSummaries(const ConversationCompressionSummary& summary);
 QStringList conversationSummarySegmentSummaries(const ConversationSummaryResult& result);
 QStringList conversationSummaryTraceSummaries(const ConversationSummaryResult& result);
-ContextDecisionSummary
-explainContextDecision(const PromptContextInjectionResult& injection,
-                       const ConversationSalienceSummary& salience,
-                       const MemoryRelevanceSummary& memory,
-                       const ConversationSummaryResult& summary);
+ContextDecisionSummary explainContextDecision(const PromptContextInjectionResult& injection,
+                                              const ConversationSalienceSummary& salience,
+                                              const MemoryRelevanceSummary& memory,
+                                              const ConversationSummaryResult& summary);
 QStringList contextDecisionContributionSummaries(const ContextDecisionSummary& summary);
 QStringList contextDecisionInclusionSummaries(const ContextDecisionSummary& summary);
 QStringList contextDecisionExclusionSummaries(const ContextDecisionSummary& summary);

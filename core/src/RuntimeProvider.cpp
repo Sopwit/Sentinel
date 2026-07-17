@@ -14,8 +14,8 @@ bool modelNamesContain(const QString& model, const QList<OllamaModelSummary>& mo
 }
 
 QString capabilityFlag(bool enabled, const QString& label) {
-    return QStringLiteral("%1: %2").arg(label, enabled ? QStringLiteral("yes")
-                                                       : QStringLiteral("no"));
+    return QStringLiteral("%1: %2").arg(label,
+                                        enabled ? QStringLiteral("yes") : QStringLiteral("no"));
 }
 
 RuntimeProviderDescriptor disabledCloudProviderDescriptor(const QString& providerId,
@@ -31,8 +31,18 @@ RuntimeProviderDescriptor disabledCloudProviderDescriptor(const QString& provide
         QStringLiteral("%1 is placeholder-ready for future configuration metadata only.")
             .arg(displayName),
         RuntimeCapabilitySet{
-            false, true, false, true,  true,  true,
-            true,  false, true, false, true,  false,
+            false,
+            true,
+            false,
+            true,
+            true,
+            true,
+            true,
+            false,
+            true,
+            false,
+            true,
+            false,
         },
         {},
         false,
@@ -83,7 +93,8 @@ QString runtimeCapabilitySummary(const RuntimeCapabilitySet& capabilities) {
         capabilityFlag(capabilities.supportsTools, QStringLiteral("supportsTools")),
         capabilityFlag(capabilities.supportsVision, QStringLiteral("supportsVision")),
         capabilityFlag(capabilities.supportsEmbeddings, QStringLiteral("supportsEmbeddings")),
-    }.join(QStringLiteral(" / "));
+    }
+        .join(QStringLiteral(" / "));
 }
 
 QString runtimeProviderSummary(const RuntimeProviderDescriptor& provider) {
@@ -110,13 +121,11 @@ QStringList runtimeProviderSummaries(const QList<RuntimeProviderDescriptor>& pro
     return summaries;
 }
 
-QStringList runtimeProviderCapabilitySummaries(
-    const QList<RuntimeProviderDescriptor>& providers) {
+QStringList runtimeProviderCapabilitySummaries(const QList<RuntimeProviderDescriptor>& providers) {
     QStringList summaries;
     for (const auto& provider : providers) {
-        summaries.append(QStringLiteral("%1: %2")
-                             .arg(provider.displayName,
-                                  runtimeCapabilitySummary(provider.capabilities)));
+        summaries.append(QStringLiteral("%1: %2").arg(
+            provider.displayName, runtimeCapabilitySummary(provider.capabilities)));
     }
     return summaries;
 }
@@ -175,8 +184,18 @@ RuntimeProviderDescriptor OllamaRuntimeProvider::descriptor() const {
                            : QStringLiteral("Selected model: %1").arg(selected),
         reason,
         RuntimeCapabilitySet{
-            true,  false, true,  false, false, false,
-            false, false, true,  false, false, false,
+            true,
+            false,
+            true,
+            false,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
         },
         names,
         true,
@@ -190,8 +209,10 @@ RuntimeProviderDescriptor OpenAICompatibleRuntimeProvider::descriptor() const {
                                            QStringLiteral("OpenAI-Compatible API"));
 }
 
-OpenAICompatibleLocalRuntimeProvider::OpenAICompatibleLocalRuntimeProvider(
-    QString providerId, QString displayName, QString endpointSummary, QString selectedModel)
+OpenAICompatibleLocalRuntimeProvider::OpenAICompatibleLocalRuntimeProvider(QString providerId,
+                                                                           QString displayName,
+                                                                           QString endpointSummary,
+                                                                           QString selectedModel)
     : providerId_(std::move(providerId)), displayName_(std::move(displayName)),
       endpointSummary_(std::move(endpointSummary)), selectedModel_(std::move(selectedModel)) {}
 
@@ -212,8 +233,18 @@ RuntimeProviderDescriptor OpenAICompatibleLocalRuntimeProvider::descriptor() con
                        "cloud fallback, API key, or automatic model discovery is enabled.")
             .arg(displayName_),
         RuntimeCapabilitySet{
-            true,  false, true,  true,  false, false,
-            false, false, true,  false, false, false,
+            true,
+            false,
+            true,
+            true,
+            false,
+            false,
+            false,
+            false,
+            true,
+            false,
+            false,
+            false,
         },
         selectedModel_.trimmed().isEmpty() ? QStringList{} : QStringList{selectedModel_.trimmed()},
         true,
@@ -329,11 +360,10 @@ QStringList RuntimeProviderRegistry::availableLocalRuntimeSummaries() const {
 QStringList RuntimeProviderRegistry::validationTraceSummaries() const {
     QStringList summaries;
     for (const auto& provider : providers_) {
-        summaries.append(QStringLiteral("%1: readiness=%2; endpoint=%3; model=%4; reason=%5")
-                             .arg(provider.providerId,
-                                  runtimeReadinessStateName(provider.readiness),
-                                  provider.endpointSummary, provider.modelSummary,
-                                  provider.readinessReason));
+        summaries.append(
+            QStringLiteral("%1: readiness=%2; endpoint=%3; model=%4; reason=%5")
+                .arg(provider.providerId, runtimeReadinessStateName(provider.readiness),
+                     provider.endpointSummary, provider.modelSummary, provider.readinessReason));
     }
     return summaries;
 }

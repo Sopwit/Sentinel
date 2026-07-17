@@ -1,8 +1,8 @@
 #pragma once
 
+#include <QList>
 #include <QString>
 #include <QStringList>
-#include <QList>
 
 namespace sentinel::core {
 

@@ -54,22 +54,22 @@ class AppSettings final : public QObject {
                    NOTIFY activeConversationIdChanged)
     Q_PROPERTY(QString selectedWorkspaceId READ selectedWorkspaceId WRITE setSelectedWorkspaceId
                    NOTIFY selectedWorkspaceIdChanged)
-    Q_PROPERTY(QString defaultWorkspaceId READ defaultWorkspaceId WRITE setDefaultWorkspaceId
-                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(QString defaultWorkspaceId READ defaultWorkspaceId WRITE setDefaultWorkspaceId NOTIFY
+                   workspaceSettingsChanged)
     Q_PROPERTY(QString workspaceCatalogJson READ workspaceCatalogJson WRITE setWorkspaceCatalogJson
                    NOTIFY workspaceSettingsChanged)
     Q_PROPERTY(bool localKnowledgeBaseEnabled READ localKnowledgeBaseEnabled WRITE
                    setLocalKnowledgeBaseEnabled NOTIFY workspaceSettingsChanged)
     Q_PROPERTY(bool retrievalExplainabilityEnabled READ retrievalExplainabilityEnabled WRITE
                    setRetrievalExplainabilityEnabled NOTIFY workspaceSettingsChanged)
-    Q_PROPERTY(QString attachmentBehavior READ attachmentBehavior WRITE setAttachmentBehavior
-                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(QString attachmentBehavior READ attachmentBehavior WRITE setAttachmentBehavior NOTIFY
+                   workspaceSettingsChanged)
     Q_PROPERTY(QString exportDefaultFormat READ exportDefaultFormat WRITE setExportDefaultFormat
                    NOTIFY workspaceSettingsChanged)
     Q_PROPERTY(bool exportIncludeTimestamps READ exportIncludeTimestamps WRITE
                    setExportIncludeTimestamps NOTIFY workspaceSettingsChanged)
-    Q_PROPERTY(bool exportIncludeCitations READ exportIncludeCitations WRITE setExportIncludeCitations
-                   NOTIFY workspaceSettingsChanged)
+    Q_PROPERTY(bool exportIncludeCitations READ exportIncludeCitations WRITE
+                   setExportIncludeCitations NOTIFY workspaceSettingsChanged)
     Q_PROPERTY(bool exportAnonymizeNames READ exportAnonymizeNames WRITE setExportAnonymizeNames
                    NOTIFY workspaceSettingsChanged)
     Q_PROPERTY(bool exportIncludeModelMetadata READ exportIncludeModelMetadata WRITE
@@ -92,8 +92,8 @@ class AppSettings final : public QObject {
                    recoveryDraftTextChanged)
     Q_PROPERTY(bool reducedMotionEnabled READ reducedMotionEnabled WRITE setReducedMotionEnabled
                    NOTIFY productExperienceChanged)
-    Q_PROPERTY(bool highContrastEnabled READ highContrastEnabled WRITE setHighContrastEnabled
-                   NOTIFY productExperienceChanged)
+    Q_PROPERTY(bool highContrastEnabled READ highContrastEnabled WRITE setHighContrastEnabled NOTIFY
+                   productExperienceChanged)
     Q_PROPERTY(QString uiDensity READ uiDensity WRITE setUiDensity NOTIFY productExperienceChanged)
     Q_PROPERTY(QString notificationCenterJson READ notificationCenterJson WRITE
                    setNotificationCenterJson NOTIFY productExperienceChanged)

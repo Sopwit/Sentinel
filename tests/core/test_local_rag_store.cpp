@@ -24,10 +24,10 @@ void LocalRagStoreTest::persistsDocumentsPerWorkspace() {
     {
         LocalRagStore store(path);
         QVERIFY(store.isAvailable());
-        const auto result = store.addDocument({QStringLiteral("doc-1"), QStringLiteral("personal"),
-                                               QStringLiteral("notes.md"), QStringLiteral("Markdown"),
-                                               42, QStringLiteral("Added / Not Indexed"),
-                                               QStringLiteral("explicit test document")});
+        const auto result = store.addDocument(
+            {QStringLiteral("doc-1"), QStringLiteral("personal"), QStringLiteral("notes.md"),
+             QStringLiteral("Markdown"), 42, QStringLiteral("Added / Not Indexed"),
+             QStringLiteral("explicit test document")});
         QVERIFY(result.success);
     }
 
@@ -43,9 +43,10 @@ void LocalRagStoreTest::recordsRetrievalExplainabilityMetadata() {
     QVERIFY(dir.isValid());
     LocalRagStore store(dir.filePath(QStringLiteral("rag.sqlite3")));
 
-    QVERIFY(store.addDocument({QStringLiteral("doc-1"), QStringLiteral("personal"),
-                               QStringLiteral("paper.pdf"), QStringLiteral("PDF"), 100,
-                               QStringLiteral("Indexed Manually"), QStringLiteral("paper")})
+    QVERIFY(store
+                .addDocument({QStringLiteral("doc-1"), QStringLiteral("personal"),
+                              QStringLiteral("paper.pdf"), QStringLiteral("PDF"), 100,
+                              QStringLiteral("Indexed Manually"), QStringLiteral("paper")})
                 .success);
     QVERIFY(store
                 .recordRetrieval({QStringLiteral("ret-1"), QStringLiteral("personal"),
@@ -65,9 +66,10 @@ void LocalRagStoreTest::clearsWorkspaceKnowledgeBase() {
     QVERIFY(dir.isValid());
     LocalRagStore store(dir.filePath(QStringLiteral("rag.sqlite3")));
 
-    QVERIFY(store.addDocument({QStringLiteral("doc-1"), QStringLiteral("personal"),
-                               QStringLiteral("notes.txt"), QStringLiteral("TXT"), 20,
-                               QStringLiteral("Added"), QStringLiteral("notes")})
+    QVERIFY(store
+                .addDocument({QStringLiteral("doc-1"), QStringLiteral("personal"),
+                              QStringLiteral("notes.txt"), QStringLiteral("TXT"), 20,
+                              QStringLiteral("Added"), QStringLiteral("notes")})
                 .success);
     QVERIFY(store.clearWorkspace(QStringLiteral("personal")).success);
     QVERIFY(store.documents(QStringLiteral("personal")).isEmpty());

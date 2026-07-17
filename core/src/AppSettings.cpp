@@ -192,8 +192,8 @@ void AppSettings::setConfigurationProfile(const QString& configurationProfile) {
 
 QString AppSettings::appLanguage() const {
     const auto fallback = QString::fromLatin1(defaultAppLanguage);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(appLanguageKey), fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(appLanguageKey), fallback) : fallback;
     const auto normalized = stored.trimmed().toLower();
     return availableLanguages().contains(normalized) ? normalized : fallback;
 }
@@ -267,9 +267,9 @@ void AppSettings::setOllamaEndpoint(const QString& endpoint) {
 
 QString AppSettings::selectedRuntimeProvider() const {
     const auto fallback = QString::fromLatin1(defaultSelectedRuntimeProvider);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(selectedRuntimeProviderKey),
-                                               fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(selectedRuntimeProviderKey), fallback)
+               : fallback;
     const auto normalized = stored.trimmed().toLower();
     if (isKnownRuntimeProviderId(normalized)) {
         return normalized;
@@ -349,8 +349,7 @@ QString AppSettings::selectedModelForRole(const QString& roleId) const {
         return {};
     }
 
-    return store_
-        ->value(QString::fromLatin1(selectedRoleModelKeyPrefix) + normalizedRole, {})
+    return store_->value(QString::fromLatin1(selectedRoleModelKeyPrefix) + normalizedRole, {})
         .trimmed();
 }
 
@@ -600,8 +599,8 @@ void AppSettings::setActiveConversationId(const QString& conversationId) {
 
 QString AppSettings::selectedWorkspaceId() const {
     const auto fallback = QString::fromLatin1(defaultSelectedWorkspaceId);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(selectedWorkspaceIdKey), fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(selectedWorkspaceIdKey), fallback) : fallback;
     return normalizedWorkspaceIdSetting(stored);
 }
 
@@ -617,8 +616,8 @@ void AppSettings::setSelectedWorkspaceId(const QString& workspaceId) {
 
 QString AppSettings::defaultWorkspaceId() const {
     const auto fallback = QString::fromLatin1(defaultSelectedWorkspaceId);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(defaultWorkspaceIdKey), fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(defaultWorkspaceIdKey), fallback) : fallback;
     return normalizedWorkspaceIdSetting(stored);
 }
 
@@ -679,8 +678,8 @@ void AppSettings::setRetrievalExplainabilityEnabled(bool enabled) {
 
 QString AppSettings::attachmentBehavior() const {
     const auto fallback = QString::fromLatin1(defaultAttachmentBehavior);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(attachmentBehaviorKey), fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(attachmentBehaviorKey), fallback) : fallback;
     return normalizedAttachmentBehavior(stored);
 }
 
@@ -696,8 +695,8 @@ void AppSettings::setAttachmentBehavior(const QString& behavior) {
 
 QString AppSettings::exportDefaultFormat() const {
     const auto fallback = QString::fromLatin1(defaultExportFormat);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(exportDefaultFormatKey), fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(exportDefaultFormatKey), fallback) : fallback;
     return normalizedExportFormat(stored);
 }
 
@@ -777,9 +776,8 @@ void AppSettings::setExportIncludeModelMetadata(bool enabled) {
 
 QString AppSettings::selectedSkillProfile() const {
     const auto fallback = QString::fromLatin1(defaultSelectedSkillProfile);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(selectedSkillProfileKey),
-                                               fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(selectedSkillProfileKey), fallback) : fallback;
     const auto normalized = stored.trimmed().toLower();
     return isKnownSkillProfileId(normalized) ? normalized : fallback;
 }
@@ -817,8 +815,8 @@ void AppSettings::setDefaultPermissionPolicyState(const QString& state) {
 
 QString AppSettings::updateCheckPolicy() const {
     const auto fallback = QString::fromLatin1(defaultUpdateCheckPolicy);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(updateCheckPolicyKey), fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(updateCheckPolicyKey), fallback) : fallback;
     return normalizedUpdatePolicy(stored);
 }
 
@@ -834,8 +832,8 @@ void AppSettings::setUpdateCheckPolicy(const QString& policy) {
 
 QString AppSettings::notificationPolicy() const {
     const auto fallback = QString::fromLatin1(defaultNotificationPolicy);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(notificationPolicyKey), fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(notificationPolicyKey), fallback) : fallback;
     return normalizedNotificationPolicy(stored);
 }
 
@@ -867,8 +865,8 @@ void AppSettings::setOnboardingComplete(bool complete) {
 
 QString AppSettings::onboardingUseCase() const {
     const auto fallback = QString::fromLatin1(defaultOnboardingUseCase);
-    const auto stored = store_ ? store_->value(QString::fromLatin1(onboardingUseCaseKey), fallback)
-                               : fallback;
+    const auto stored =
+        store_ ? store_->value(QString::fromLatin1(onboardingUseCaseKey), fallback) : fallback;
     return normalizedOnboardingUseCase(stored);
 }
 

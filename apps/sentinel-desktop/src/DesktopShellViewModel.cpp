@@ -3,18 +3,18 @@
 #include "sentinel/core/AppMetadata.h"
 #include "sentinel/core/AppSettings.h"
 #include "sentinel/core/ApplicationController.h"
-#include "sentinel/core/ModelRegistry.h"
 #include "sentinel/core/ModeManager.h"
+#include "sentinel/core/ModelRegistry.h"
 
 #include <QCryptographicHash>
 #include <QDir>
+#include <QFileInfo>
+#include <QIODevice>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QIODevice>
-#include <QSaveFile>
-#include <QFileInfo>
 #include <QLibraryInfo>
+#include <QSaveFile>
 #include <QStandardPaths>
 #include <QSysInfo>
 
@@ -35,8 +35,8 @@ QString localRagPath() {
 }
 
 QString attachmentId(const QString& workspaceId, const QString& name, qint64 size) {
-    const auto seed = workspaceId + QStringLiteral("|") + name + QStringLiteral("|") +
-                      QString::number(size);
+    const auto seed =
+        workspaceId + QStringLiteral("|") + name + QStringLiteral("|") + QString::number(size);
     return QString::fromLatin1(
         QCryptographicHash::hash(seed.toUtf8(), QCryptographicHash::Sha1).toHex().left(16));
 }
@@ -109,7 +109,8 @@ QJsonArray defaultNotifications() {
         false);
     add(QStringLiteral("models-local"), QStringLiteral("Models"),
         QStringLiteral("Local provider selected"),
-        QStringLiteral("Ollama can execute foreground local chat; other local endpoints require configuration."),
+        QStringLiteral("Ollama can execute foreground local chat; other local endpoints require "
+                       "configuration."),
         false);
     add(QStringLiteral("models-role"), QStringLiteral("Models"),
         QStringLiteral("Model Role Changed"),
@@ -130,10 +131,9 @@ QString notificationsToJson(const QJsonArray& notifications) {
 }
 
 QString notificationSummary(const QJsonObject& item) {
-    const auto state = item.value(QStringLiteral("archived")).toBool()
-                           ? QStringLiteral("Archived")
-                           : item.value(QStringLiteral("read")).toBool() ? QStringLiteral("Read")
-                                                                          : QStringLiteral("Unread");
+    const auto state = item.value(QStringLiteral("archived")).toBool() ? QStringLiteral("Archived")
+                       : item.value(QStringLiteral("read")).toBool()   ? QStringLiteral("Read")
+                                                                       : QStringLiteral("Unread");
     const auto pin = item.value(QStringLiteral("pinned")).toBool() ? QStringLiteral("Pinned")
                                                                    : QStringLiteral("Unpinned");
     return QStringLiteral("%1 - %2 - %3 - %4")
@@ -283,11 +283,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::chatMessagesChanged);
     connect(&settings_, &core::AppSettings::routingModeNameChanged, this,
             &DesktopShellViewModel::modelRoutingChanged);
-    connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this,
-            [this]() {
-                controller_.setSelectedLocalModel(
-                    settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
-            });
+    connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this, [this]() {
+        controller_.setSelectedLocalModel(
+            settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
+    });
     connect(&settings_, &core::AppSettings::selectedModelRoleChanged, this,
             &DesktopShellViewModel::modelRoleChanged);
     connect(&settings_, &core::AppSettings::selectedRuntimeProviderChanged, this, [this]() {
@@ -945,7 +944,8 @@ void DesktopShellViewModel::setSelectedRuntimeProvider(const QString& providerId
     if (controller_.selectedRuntimeProvider() != settings_.selectedRuntimeProvider()) {
         controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
     }
-    const auto providerModel = settings_.selectedModelForProvider(settings_.selectedRuntimeProvider());
+    const auto providerModel =
+        settings_.selectedModelForProvider(settings_.selectedRuntimeProvider());
     if (controller_.selectedLocalModel() != providerModel) {
         controller_.setSelectedLocalModel(providerModel);
     }
@@ -1093,7 +1093,8 @@ QString DesktopShellViewModel::selectedLocalModel() const {
 
 void DesktopShellViewModel::setSelectedLocalModel(const QString& model) {
     settings_.setSelectedModelForProvider(settings_.selectedRuntimeProvider(), model);
-    const auto providerModel = settings_.selectedModelForProvider(settings_.selectedRuntimeProvider());
+    const auto providerModel =
+        settings_.selectedModelForProvider(settings_.selectedRuntimeProvider());
     if (controller_.selectedLocalModel() != providerModel) {
         controller_.setSelectedLocalModel(providerModel);
     }
@@ -1161,11 +1162,11 @@ QStringList DesktopShellViewModel::modelRoleAssignmentSummaries() const {
     for (const auto role : roles) {
         const auto roleId = core::modelRoleId(role);
         const auto selected = settings_.selectedModelForRole(roleId);
-        summaries.append(QStringLiteral("%1 - %2 - routing metadata only; automatic multi-model "
-                                        "execution is disabled.")
-                             .arg(core::modelRoleDisplayName(role),
-                                  selected.isEmpty() ? QStringLiteral("No model assigned")
-                                                     : selected));
+        summaries.append(
+            QStringLiteral("%1 - %2 - routing metadata only; automatic multi-model "
+                           "execution is disabled.")
+                .arg(core::modelRoleDisplayName(role),
+                     selected.isEmpty() ? QStringLiteral("No model assigned") : selected));
     }
     return summaries;
 }
@@ -3168,15 +3169,15 @@ QVariantMap DesktopShellViewModel::getLocalModelDetails(const QString& modelName
     const auto query = modelName.trimmed().toLower();
     for (const auto& model : models) {
         const auto current = model.name.trimmed().toLower();
-        if (current == query || 
-            current.startsWith(query + QStringLiteral(":")) || 
+        if (current == query || current.startsWith(query + QStringLiteral(":")) ||
             query.startsWith(current + QStringLiteral(":")) ||
             (query.length() > 3 && (current.contains(query) || query.contains(current)))) {
             result[QStringLiteral("name")] = model.name;
             result[QStringLiteral("sizeBytes")] = model.sizeBytes;
-            result[QStringLiteral("sizeFormatted")] = model.sizeBytes > 0 
-                ? QStringLiteral("%1 GB").arg(QString::number(model.sizeBytes / (1024.0 * 1024.0 * 1024.0), 'f', 1))
-                : QStringLiteral("—");
+            result[QStringLiteral("sizeFormatted")] =
+                model.sizeBytes > 0 ? QStringLiteral("%1 GB").arg(QString::number(
+                                          model.sizeBytes / (1024.0 * 1024.0 * 1024.0), 'f', 1))
+                                    : QStringLiteral("—");
             result[QStringLiteral("modifiedAt")] = model.modifiedAt;
             return result;
         }
@@ -3192,7 +3193,8 @@ bool DesktopShellViewModel::checkRuntimeInstalled(const QString& runtimeId) cons
                QFileInfo::exists(QStringLiteral("/usr/local/bin/ollama")) ||
                QFileInfo::exists(QStringLiteral("/usr/bin/ollama"));
 #elif defined(Q_OS_WIN)
-        const QString localAppData = QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/AppData/Local"));
+        const QString localAppData =
+            QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/AppData/Local"));
         return QFileInfo::exists(localAppData + QStringLiteral("/Programs/Ollama/ollama.exe"));
 #else
         return QFileInfo::exists(QStringLiteral("/usr/local/bin/ollama")) ||
@@ -3203,8 +3205,10 @@ bool DesktopShellViewModel::checkRuntimeInstalled(const QString& runtimeId) cons
 #if defined(Q_OS_MAC)
         return QFileInfo::exists(QStringLiteral("/Applications/LM Studio.app"));
 #elif defined(Q_OS_WIN)
-        const QString localAppData = QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/AppData/Local"));
-        return QFileInfo::exists(localAppData + QStringLiteral("/Programs/lm-studio/LM Studio.exe"));
+        const QString localAppData =
+            QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/AppData/Local"));
+        return QFileInfo::exists(localAppData +
+                                 QStringLiteral("/Programs/lm-studio/LM Studio.exe"));
 #else
         return QFileInfo::exists(QStringLiteral("/usr/local/bin/lm-studio")) ||
                QFileInfo::exists(QDir::homePath() + QStringLiteral("/.local/share/lm-studio"));
@@ -3222,8 +3226,8 @@ void DesktopShellViewModel::setCompanionEnabled(bool enabled) {
 }
 
 bool DesktopShellViewModel::companionAvailable() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .available;
 }
 
@@ -3253,56 +3257,56 @@ void DesktopShellViewModel::setCompanionPaused(bool paused) {
 }
 
 QString DesktopShellViewModel::companionStatus() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .status;
 }
 
 QString DesktopShellViewModel::companionAvailability() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .availability;
 }
 
 QString DesktopShellViewModel::companionPlatformCapability() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .platformCapability;
 }
 
 QString DesktopShellViewModel::companionPermissionPosture() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .permissionPostureSummary;
 }
 
 QString DesktopShellViewModel::companionSafetyBoundary() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .safetyBoundarySummary;
 }
 
 QString DesktopShellViewModel::companionQuickCaptureSummary() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .quickCaptureSummary;
 }
 
 QStringList DesktopShellViewModel::companionActionSummaries() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .actionSummaries;
 }
 
 QStringList DesktopShellViewModel::companionPlatformSummaries() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .platformSummaries;
 }
 
 QStringList DesktopShellViewModel::companionTraceSummaries() const {
-    return companionService_.summary(settings_.companionEnabled(), companionNativeAvailable_,
-                                     companionPaused_)
+    return companionService_
+        .summary(settings_.companionEnabled(), companionNativeAvailable_, companionPaused_)
         .traceSummaries;
 }
 
@@ -3402,8 +3406,8 @@ QStringList DesktopShellViewModel::notificationCenterSummaries() const {
 }
 
 QStringList DesktopShellViewModel::notificationCategories() const {
-    return {QStringLiteral("All"),      QStringLiteral("Tasks"),   QStringLiteral("Models"),
-            QStringLiteral("Updates"),  QStringLiteral("Brain"),   QStringLiteral("Workspace"),
+    return {QStringLiteral("All"),     QStringLiteral("Tasks"), QStringLiteral("Models"),
+            QStringLiteral("Updates"), QStringLiteral("Brain"), QStringLiteral("Workspace"),
             QStringLiteral("Security")};
 }
 
@@ -3466,7 +3470,8 @@ QString DesktopShellViewModel::notificationCategoryFilter() const {
 }
 
 void DesktopShellViewModel::setNotificationCategoryFilter(const QString& category) {
-    const auto selected = notificationCategories().contains(category) ? category : QStringLiteral("All");
+    const auto selected =
+        notificationCategories().contains(category) ? category : QStringLiteral("All");
     if (selected == notificationCategoryFilter_) {
         return;
     }
@@ -3482,8 +3487,10 @@ QStringList DesktopShellViewModel::releaseNotesSummaries() const {
     return {
         QStringLiteral("Sentinel %1 - Phase 52 packaging and 1.0 RC readiness")
             .arg(core::AppMetadata::version()),
-        QStringLiteral("Packaging metadata, release presets, QA plan, and release checklist are prepared without adding runtime authority."),
-        QStringLiteral("Manual update check is explicit; no background polling, silent download, or automatic install exists."),
+        QStringLiteral("Packaging metadata, release presets, QA plan, and release checklist are "
+                       "prepared without adding runtime authority."),
+        QStringLiteral("Manual update check is explicit; no background polling, silent download, "
+                       "or automatic install exists."),
     };
 }
 
@@ -3491,17 +3498,24 @@ QStringList DesktopShellViewModel::aboutSentinelSummaries() const {
     auto summaries = core::AppMetadata::safeBuildSummaries();
     summaries.append(QStringLiteral("Qt: %1").arg(QString::fromLatin1(qVersion())));
     summaries.append(QStringLiteral("Copyright: %1").arg(core::AppMetadata::copyright()));
-    summaries.append(QStringLiteral("License: project license and third-party notices in local docs"));
-    summaries.append(QStringLiteral("Docs: docs/PRIVACY.md, docs/SECURITY.md, docs/UPDATES.md, docs/DIAGNOSTICS.md"));
+    summaries.append(
+        QStringLiteral("License: project license and third-party notices in local docs"));
+    summaries.append(QStringLiteral(
+        "Docs: docs/PRIVACY.md, docs/SECURITY.md, docs/UPDATES.md, docs/DIAGNOSTICS.md"));
     return summaries;
 }
 
 QStringList DesktopShellViewModel::accessibilitySummaries() const {
     return {
-        QStringLiteral("Keyboard navigation: enabled across shell, settings, command palette, and dialogs"),
+        QStringLiteral(
+            "Keyboard navigation: enabled across shell, settings, command palette, and dialogs"),
         QStringLiteral("Focus indicators: tokenized focus borders on interactive controls"),
-        QStringLiteral("Reduced motion: %1").arg(settings_.reducedMotionEnabled() ? QStringLiteral("Enabled") : QStringLiteral("Disabled")),
-        QStringLiteral("High contrast: %1").arg(settings_.highContrastEnabled() ? QStringLiteral("Enabled") : QStringLiteral("Disabled")),
+        QStringLiteral("Reduced motion: %1")
+            .arg(settings_.reducedMotionEnabled() ? QStringLiteral("Enabled")
+                                                  : QStringLiteral("Disabled")),
+        QStringLiteral("High contrast: %1")
+            .arg(settings_.highContrastEnabled() ? QStringLiteral("Enabled")
+                                                 : QStringLiteral("Disabled")),
         QStringLiteral("UI density: %1").arg(settings_.uiDensity()),
         QStringLiteral("Screen reader labels: primary controls expose descriptive labels in QML"),
     };
@@ -3515,7 +3529,8 @@ QStringList DesktopShellViewModel::diagnosticsCenterSummaries() const {
         QStringLiteral("Workspace count: %1").arg(workspaceIds().size()),
         QStringLiteral("Brain entries: %1").arg(memoryEntryCount()),
         QStringLiteral("Task statistics: %1").arg(controlledTaskDiagnosticsSummary()),
-        QStringLiteral("Notification statistics: %1").arg(notificationLifecycleSummaries().join(QStringLiteral(" / "))),
+        QStringLiteral("Notification statistics: %1")
+            .arg(notificationLifecycleSummaries().join(QStringLiteral(" / "))),
         QStringLiteral("Logs: no automatic log collection or upload"),
     });
     return summaries;
@@ -3525,7 +3540,8 @@ QStringList DesktopShellViewModel::exportPreviewSummaries() const {
     return {
         QStringLiteral("Source: %1").arg(exportPreviewSource_),
         QStringLiteral("Format: %1").arg(exportPreviewFormat_),
-        QStringLiteral("Preview: conversations, Brain entries, task reports, and workspace summaries support Markdown, TXT, JSON, and PDF."),
+        QStringLiteral("Preview: conversations, Brain entries, task reports, and workspace "
+                       "summaries support Markdown, TXT, JSON, and PDF."),
         QStringLiteral("Output: App-controlled export directory"),
         QStringLiteral("Privacy: export is foreground-only and user initiated"),
     };
@@ -3536,17 +3552,22 @@ QStringList DesktopShellViewModel::brainInsightSummaries() const {
         QStringLiteral("Recent activity: %1").arg(activityTimelineSummaries().value(0)),
         QStringLiteral("Workspace activity: %1").arg(brainWorkspaceSummaries().value(0)),
         QStringLiteral("Task completion trends: %1").arg(controlledTaskDiagnosticsSummary()),
-        QStringLiteral("Model usage trends: active %1 / %2").arg(controller_.activeRuntimeProviderLabel(), controller_.activeRuntimeModelLabel()),
+        QStringLiteral("Model usage trends: active %1 / %2")
+            .arg(controller_.activeRuntimeProviderLabel(), controller_.activeRuntimeModelLabel()),
         QStringLiteral("Visualization only: no analytics upload"),
     };
 }
 
 QStringList DesktopShellViewModel::recoveryReliabilitySummaries() const {
     return {
-        QStringLiteral("Crash recovery draft: %1").arg(settings_.recoveryDraftText().isEmpty() ? QStringLiteral("No draft saved") : QStringLiteral("Draft available")),
+        QStringLiteral("Crash recovery draft: %1")
+            .arg(settings_.recoveryDraftText().isEmpty() ? QStringLiteral("No draft saved")
+                                                         : QStringLiteral("Draft available")),
         QStringLiteral("Recovery notifications: local in-app notices only"),
-        QStringLiteral("Unsaved work detection: composer drafts can be restored or discarded explicitly"),
-        QStringLiteral("Safe shutdown summary: chats, Brain, settings, tasks, notifications, and Local RAG remain separate local stores"),
+        QStringLiteral(
+            "Unsaved work detection: composer drafts can be restored or discarded explicitly"),
+        QStringLiteral("Safe shutdown summary: chats, Brain, settings, tasks, notifications, and "
+                       "Local RAG remain separate local stores"),
     };
 }
 
@@ -3555,7 +3576,8 @@ QStringList DesktopShellViewModel::productPolishSummaries() const {
         QStringLiteral("Home remains chat-first"),
         QStringLiteral("Conversation sidebar remains collapsible"),
         QStringLiteral("Smooth transitions respect reduced-motion preference"),
-        QStringLiteral("Consistent spacing, responsive layouts, compact mode, large mode, empty, loading, and error states are surfaced through shared QML components"),
+        QStringLiteral("Consistent spacing, responsive layouts, compact mode, large mode, empty, "
+                       "loading, and error states are surfaced through shared QML components"),
     };
 }
 
@@ -3608,7 +3630,8 @@ QStringList DesktopShellViewModel::skillProfileSummaries() const {
 }
 
 QStringList DesktopShellViewModel::skillProfileCapabilitySummaries() const {
-    return skillProfileService_.selectedProfile(settings_.selectedSkillProfile()).capabilitySummaries;
+    return skillProfileService_.selectedProfile(settings_.selectedSkillProfile())
+        .capabilitySummaries;
 }
 
 QStringList DesktopShellViewModel::skillProfileReadinessChecks() const {
@@ -3654,11 +3677,15 @@ QString DesktopShellViewModel::selectedWorkspaceRootSummary() const {
 }
 
 QString DesktopShellViewModel::workspaceReadinessStatus() const {
-    return workspaceService_.readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson()).status;
+    return workspaceService_
+        .readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .status;
 }
 
 QString DesktopShellViewModel::workspaceReadinessSummary() const {
-    return workspaceService_.readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson()).summary;
+    return workspaceService_
+        .readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .summary;
 }
 
 QString DesktopShellViewModel::workspacePermissionSummary() const {
@@ -3669,7 +3696,8 @@ QString DesktopShellViewModel::workspacePermissionSummary() const {
 
 QStringList DesktopShellViewModel::workspaceIds() const {
     QStringList ids;
-    for (const auto& workspace : workspaceService_.availableWorkspaces(settings_.workspaceCatalogJson())) {
+    for (const auto& workspace :
+         workspaceService_.availableWorkspaces(settings_.workspaceCatalogJson())) {
         ids.append(workspace.id);
     }
     return ids;
@@ -3677,7 +3705,8 @@ QStringList DesktopShellViewModel::workspaceIds() const {
 
 QStringList DesktopShellViewModel::workspaceNames() const {
     QStringList names;
-    for (const auto& workspace : workspaceService_.availableWorkspaces(settings_.workspaceCatalogJson())) {
+    for (const auto& workspace :
+         workspaceService_.availableWorkspaces(settings_.workspaceCatalogJson())) {
         names.append(workspace.name);
     }
     return names;
@@ -3696,11 +3725,15 @@ QStringList DesktopShellViewModel::workspaceActionPlaceholders() const {
 }
 
 QStringList DesktopShellViewModel::workspaceReadinessChecks() const {
-    return workspaceService_.readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson()).checks;
+    return workspaceService_
+        .readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .checks;
 }
 
 QStringList DesktopShellViewModel::workspaceBoundaryDiagnostics() const {
-    return workspaceService_.readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson()).boundaryDiagnostics;
+    return workspaceService_
+        .readiness(settings_.selectedWorkspaceId(), settings_.workspaceCatalogJson())
+        .boundaryDiagnostics;
 }
 
 QStringList DesktopShellViewModel::workspaceTemplateNames() const {
@@ -3796,37 +3829,37 @@ QStringList DesktopShellViewModel::retrievalExplainabilitySummaries() const {
 
 QStringList DesktopShellViewModel::brainWorkspaceSummaries() const {
     return {
-        QStringLiteral("Workspace Timeline - %1 / %2").arg(selectedWorkspaceName(),
-                                                           workspaceLastActionSummary_),
+        QStringLiteral("Workspace Timeline - %1 / %2")
+            .arg(selectedWorkspaceName(), workspaceLastActionSummary_),
         QStringLiteral("Attached Documents - %1").arg(attachmentStatus()),
         QStringLiteral("Knowledge Base Summary - %1 / %2 document(s)")
             .arg(localKnowledgeBaseStatus())
             .arg(knowledgeBaseDocumentSummaries().size()),
         QStringLiteral("Recent Retrievals - %1 record(s)").arg(recentRetrievalSummaries().size()),
-        QStringLiteral("Planned Tasks - %1").arg(
-            controlledAgentTaskService_
-                .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
-                                       settings_.controlledAgentTasksJson()),
-                                   selectedWorkspaceId(), QStringLiteral("pending approval"))
-                .size()),
-        QStringLiteral("Completed Tasks - %1").arg(
-            controlledAgentTaskService_
-                .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
-                                       settings_.controlledAgentTasksJson()),
-                                   selectedWorkspaceId(), QStringLiteral("completed"))
-                .size()),
-        QStringLiteral("Failed Tasks - %1").arg(
-            controlledAgentTaskService_
-                .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
-                                       settings_.controlledAgentTasksJson()),
-                                   selectedWorkspaceId(), QStringLiteral("failed"))
-                .size()),
-        QStringLiteral("Cancelled Tasks - %1").arg(
-            controlledAgentTaskService_
-                .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
-                                       settings_.controlledAgentTasksJson()),
-                                   selectedWorkspaceId(), QStringLiteral("cancelled"))
-                .size()),
+        QStringLiteral("Planned Tasks - %1")
+            .arg(controlledAgentTaskService_
+                     .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
+                                            settings_.controlledAgentTasksJson()),
+                                        selectedWorkspaceId(), QStringLiteral("pending approval"))
+                     .size()),
+        QStringLiteral("Completed Tasks - %1")
+            .arg(controlledAgentTaskService_
+                     .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
+                                            settings_.controlledAgentTasksJson()),
+                                        selectedWorkspaceId(), QStringLiteral("completed"))
+                     .size()),
+        QStringLiteral("Failed Tasks - %1")
+            .arg(controlledAgentTaskService_
+                     .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
+                                            settings_.controlledAgentTasksJson()),
+                                        selectedWorkspaceId(), QStringLiteral("failed"))
+                     .size()),
+        QStringLiteral("Cancelled Tasks - %1")
+            .arg(controlledAgentTaskService_
+                     .timelineSummaries(controlledAgentTaskService_.tasksFromJson(
+                                            settings_.controlledAgentTasksJson()),
+                                        selectedWorkspaceId(), QStringLiteral("cancelled"))
+                     .size()),
     };
 }
 
@@ -3954,12 +3987,13 @@ bool DesktopShellViewModel::attachFileToChat(const QString& filePath) {
 }
 
 bool DesktopShellViewModel::pasteAttachment(const QString& name, const QString& text) {
-    const auto fileName = name.trimmed().isEmpty() ? QStringLiteral("pasted-attachment.txt")
-                                                   : name.trimmed();
+    const auto fileName =
+        name.trimmed().isEmpty() ? QStringLiteral("pasted-attachment.txt") : name.trimmed();
     const auto type = fileTypeForPath(fileName);
     if (!supportedAttachmentType(type) || text.trimmed().isEmpty()) {
         workspaceLastActionStatus_ = QStringLiteral("Refused");
-        workspaceLastActionSummary_ = QStringLiteral("Paste attachment requires supported name and text.");
+        workspaceLastActionSummary_ =
+            QStringLiteral("Paste attachment requires supported name and text.");
         emit workspaceChanged();
         return false;
     }
@@ -4007,7 +4041,8 @@ bool DesktopShellViewModel::addKnowledgeBaseDocument(const QString& filePath) {
     const auto type = fileTypeForPath(filePath);
     if (!info.exists() || !info.isFile() || !supportedAttachmentType(type)) {
         workspaceLastActionStatus_ = QStringLiteral("Indexing Failed");
-        workspaceLastActionSummary_ = QStringLiteral("Knowledge base accepts explicit supported files only.");
+        workspaceLastActionSummary_ =
+            QStringLiteral("Knowledge base accepts explicit supported files only.");
         emit workspaceChanged();
         return false;
     }
@@ -4035,7 +4070,8 @@ bool DesktopShellViewModel::removeKnowledgeBaseDocument(const QString& documentI
 bool DesktopShellViewModel::reindexKnowledgeBase() {
     if (!settings_.localKnowledgeBaseEnabled() || !localRagStore_) {
         workspaceLastActionStatus_ = QStringLiteral("Refused");
-        workspaceLastActionSummary_ = QStringLiteral("Manual re-index requires an enabled knowledge base.");
+        workspaceLastActionSummary_ =
+            QStringLiteral("Manual re-index requires an enabled knowledge base.");
         emit workspaceChanged();
         return false;
     }
@@ -4066,11 +4102,13 @@ void DesktopShellViewModel::setDefaultPermissionPolicyState(const QString& state
 }
 
 QString DesktopShellViewModel::permissionPolicyStatus() const {
-    return permissionPolicyService_.registrySummary(settings_.defaultPermissionPolicyState()).status;
+    return permissionPolicyService_.registrySummary(settings_.defaultPermissionPolicyState())
+        .status;
 }
 
 QString DesktopShellViewModel::permissionPolicySummary() const {
-    return permissionPolicyService_.registrySummary(settings_.defaultPermissionPolicyState()).summary;
+    return permissionPolicyService_.registrySummary(settings_.defaultPermissionPolicyState())
+        .summary;
 }
 
 QStringList DesktopShellViewModel::permissionPolicyStateLabels() const {
@@ -4412,8 +4450,7 @@ QStringList DesktopShellViewModel::controlledTaskExplainabilitySummaries() const
 
 QStringList DesktopShellViewModel::controlledTaskPermissionSummaries() const {
     return controlledAgentTaskService_.permissionSummaries(
-        controlledAgentTaskService_.permissionsFromJson(
-            settings_.controlledAgentPermissionsJson()),
+        controlledAgentTaskService_.permissionsFromJson(settings_.controlledAgentPermissionsJson()),
         selectedWorkspaceId());
 }
 
@@ -4429,8 +4466,8 @@ QString DesktopShellViewModel::controlledTaskDiagnosticsSummary() const {
     const auto diagnostics = controlledAgentTaskService_.diagnostics(
         controlledAgentTaskService_.tasksFromJson(settings_.controlledAgentTasksJson()));
     return QStringLiteral("%1 / Last completed: %2 / Approvals: %3 / Failures: %4")
-        .arg(diagnostics.activeTask, diagnostics.lastCompletedTask,
-             diagnostics.approvalStatistics, diagnostics.failureStatistics);
+        .arg(diagnostics.activeTask, diagnostics.lastCompletedTask, diagnostics.approvalStatistics,
+             diagnostics.failureStatistics);
 }
 
 QStringList DesktopShellViewModel::controlledTaskSafetyGuarantees() const {
@@ -4570,8 +4607,8 @@ bool DesktopShellViewModel::reorderControlledAgentTask(const QString& taskId, in
 
 bool DesktopShellViewModel::setControlledToolPermission(const QString& category,
                                                         const QString& choice) {
-    auto permissions = controlledAgentTaskService_.permissionsFromJson(
-        settings_.controlledAgentPermissionsJson());
+    auto permissions =
+        controlledAgentTaskService_.permissionsFromJson(settings_.controlledAgentPermissionsJson());
     permissions = controlledAgentTaskService_.grantPermission(permissions, selectedWorkspaceId(),
                                                               category.trimmed(), choice.trimmed());
     settings_.setControlledAgentPermissionsJson(
@@ -4593,12 +4630,13 @@ bool DesktopShellViewModel::exportControlledAgentTask(const QString& taskId,
         return false;
     }
     const auto normalized = format.trimmed().toLower();
-    const auto extension = normalized == QStringLiteral("json")
-                               ? QStringLiteral("json")
-                               : (normalized == QStringLiteral("txt")
-                                      ? QStringLiteral("txt")
-                                      : (normalized == QStringLiteral("pdf") ? QStringLiteral("pdf")
-                                                                             : QStringLiteral("md")));
+    const auto extension =
+        normalized == QStringLiteral("json")
+            ? QStringLiteral("json")
+            : (normalized == QStringLiteral("txt")
+                   ? QStringLiteral("txt")
+                   : (normalized == QStringLiteral("pdf") ? QStringLiteral("pdf")
+                                                          : QStringLiteral("md")));
     const auto path =
         directory.filePath(QStringLiteral("%1-controlled-task.%2").arg(task.id, extension));
     QSaveFile file(path);
@@ -4640,16 +4678,19 @@ bool DesktopShellViewModel::exportTranscript(const QString& format) {
 }
 
 bool DesktopShellViewModel::checkForUpdates() {
-    settings_.setUpdateWorkflowState(QStringLiteral("Checked manually - no automatic update check was started"));
+    settings_.setUpdateWorkflowState(
+        QStringLiteral("Checked manually - no automatic update check was started"));
     QString updatedJson;
-    if (updateNotification(settings_.notificationCenterJson(), QStringLiteral("updates-manual"),
-                           [](QJsonObject& item) {
-                               item.insert(QStringLiteral("read"), false);
-                               item.insert(QStringLiteral("archived"), false);
-                               item.insert(QStringLiteral("body"),
-                                           QStringLiteral("Manual check completed locally. Release notes are available; download requires explicit confirmation."));
-                           },
-                           &updatedJson)) {
+    if (updateNotification(
+            settings_.notificationCenterJson(), QStringLiteral("updates-manual"),
+            [](QJsonObject& item) {
+                item.insert(QStringLiteral("read"), false);
+                item.insert(QStringLiteral("archived"), false);
+                item.insert(QStringLiteral("body"),
+                            QStringLiteral("Manual check completed locally. Release notes are "
+                                           "available; download requires explicit confirmation."));
+            },
+            &updatedJson)) {
         settings_.setNotificationCenterJson(updatedJson);
     }
     emit nativeExperienceChanged();
@@ -4657,8 +4698,8 @@ bool DesktopShellViewModel::checkForUpdates() {
 }
 
 bool DesktopShellViewModel::confirmUpdateDownload() {
-    settings_.setUpdateWorkflowState(
-        QStringLiteral("Download confirmation shown - downloader is not implemented in this build"));
+    settings_.setUpdateWorkflowState(QStringLiteral(
+        "Download confirmation shown - downloader is not implemented in this build"));
     emit nativeExperienceChanged();
     return false;
 }
@@ -4673,12 +4714,13 @@ void DesktopShellViewModel::seedRecoveryDraft(const QString& text) {
 
 bool DesktopShellViewModel::pinNotification(const QString& notificationId) {
     QString updatedJson;
-    if (!updateNotification(settings_.notificationCenterJson(), notificationId,
-                            [](QJsonObject& item) {
-                                item.insert(QStringLiteral("pinned"),
-                                            !item.value(QStringLiteral("pinned")).toBool());
-                            },
-                            &updatedJson)) {
+    if (!updateNotification(
+            settings_.notificationCenterJson(), notificationId,
+            [](QJsonObject& item) {
+                item.insert(QStringLiteral("pinned"),
+                            !item.value(QStringLiteral("pinned")).toBool());
+            },
+            &updatedJson)) {
         return false;
     }
     settings_.setNotificationCenterJson(updatedJson);
@@ -4687,12 +4729,13 @@ bool DesktopShellViewModel::pinNotification(const QString& notificationId) {
 
 bool DesktopShellViewModel::archiveNotification(const QString& notificationId) {
     QString updatedJson;
-    if (!updateNotification(settings_.notificationCenterJson(), notificationId,
-                            [](QJsonObject& item) {
-                                item.insert(QStringLiteral("archived"), true);
-                                item.insert(QStringLiteral("read"), true);
-                            },
-                            &updatedJson)) {
+    if (!updateNotification(
+            settings_.notificationCenterJson(), notificationId,
+            [](QJsonObject& item) {
+                item.insert(QStringLiteral("archived"), true);
+                item.insert(QStringLiteral("read"), true);
+            },
+            &updatedJson)) {
         return false;
     }
     settings_.setNotificationCenterJson(updatedJson);
@@ -4701,11 +4744,9 @@ bool DesktopShellViewModel::archiveNotification(const QString& notificationId) {
 
 bool DesktopShellViewModel::markNotificationRead(const QString& notificationId) {
     QString updatedJson;
-    if (!updateNotification(settings_.notificationCenterJson(), notificationId,
-                            [](QJsonObject& item) {
-                                item.insert(QStringLiteral("read"), true);
-                            },
-                            &updatedJson)) {
+    if (!updateNotification(
+            settings_.notificationCenterJson(), notificationId,
+            [](QJsonObject& item) { item.insert(QStringLiteral("read"), true); }, &updatedJson)) {
         return false;
     }
     settings_.setNotificationCenterJson(updatedJson);
@@ -4726,10 +4767,10 @@ bool DesktopShellViewModel::clearArchivedNotifications() {
 }
 
 bool DesktopShellViewModel::prepareExportPreview(const QString& source, const QString& format) {
-    const auto normalizedSource = source.trimmed().isEmpty() ? QStringLiteral("conversations")
-                                                            : source.trimmed();
-    const auto normalizedFormat = format.trimmed().isEmpty() ? QStringLiteral("Markdown")
-                                                            : format.trimmed();
+    const auto normalizedSource =
+        source.trimmed().isEmpty() ? QStringLiteral("conversations") : source.trimmed();
+    const auto normalizedFormat =
+        format.trimmed().isEmpty() ? QStringLiteral("Markdown") : format.trimmed();
     if (normalizedSource == exportPreviewSource_ && normalizedFormat == exportPreviewFormat_) {
         return true;
     }
@@ -4740,13 +4781,15 @@ bool DesktopShellViewModel::prepareExportPreview(const QString& source, const QS
 }
 
 bool DesktopShellViewModel::exportDiagnostics(const QString& format) {
-    const auto extension = format.trimmed().toLower() == QStringLiteral("json") ? QStringLiteral("json")
-                                                                                : QStringLiteral("txt");
+    const auto extension = format.trimmed().toLower() == QStringLiteral("json")
+                               ? QStringLiteral("json")
+                               : QStringLiteral("txt");
     QDir directory(appDataPath() + QStringLiteral("/exports"));
     if (!directory.exists() && !directory.mkpath(QStringLiteral("."))) {
         return false;
     }
-    const auto outputPath = directory.filePath(QStringLiteral("sentinel-diagnostics.%1").arg(extension));
+    const auto outputPath =
+        directory.filePath(QStringLiteral("sentinel-diagnostics.%1").arg(extension));
     QSaveFile file(outputPath);
     if (!file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         return false;
