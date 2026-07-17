@@ -6,6 +6,11 @@ import Sentinel.Desktop
 Item {
     id: modelsPage
 
+    property var viewModel: shellViewModel
+    readonly property bool compact: width < 820
+    readonly property int panelPadding: SentinelTheme.spaceLg
+    readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
+
     // ── Static model catalog ─────────────────────────────────────────────────
     readonly property var modelCatalog: [
         // LLM - Ollama
@@ -189,6 +194,33 @@ Item {
             size: "23.8 GB",         description: qsTr("Ultra-fast 12B transformer model for high-quality image synthesis."),
             badge: "Image Gen",      badgeColor: "#e05fc4",
             tags: ["Fast", "Text-to-Image"],
+            downloadable: false,    ollamaId: "",
+            context: "—",           input: "Text"
+        },
+        {
+            id: "flux-schnell-mlx", category: "Image",
+            name: "FLUX.1 Schnell MLX", provider: "MLX / BFL",
+            size: "12.0 GB",         description: qsTr("Apple Silicon optimized FLUX.1 Schnell for rapid on-device image generation using MLX."),
+            badge: "MLX / Image",    badgeColor: "#ec4899",
+            tags: ["MLX", "Text-to-Image", "BFL"],
+            downloadable: false,    ollamaId: "",
+            context: "—",           input: "Text"
+        },
+        {
+            id: "hunyuan-video",   category: "Video",
+            name: "HunyuanVideo",    provider: "Tencent",
+            size: "11.5 GB",         description: qsTr("Open-source text-to-video generation model with high quality physics and prompt following."),
+            badge: "Video Gen",      badgeColor: "#8b5cf6",
+            tags: ["Text-to-Video", "Local"],
+            downloadable: false,    ollamaId: "",
+            context: "—",           input: "Text"
+        },
+        {
+            id: "ltx-video",       category: "Video",
+            name: "LTX-Video",       provider: "Lightricks",
+            size: "5.4 GB",          description: qsTr("Highly efficient real-time local text-to-video generation model."),
+            badge: "Video Gen",      badgeColor: "#8b5cf6",
+            tags: ["Fast", "Text-to-Video"],
             downloadable: false,    ollamaId: "",
             context: "—",           input: "Text"
         },
@@ -396,7 +428,7 @@ Item {
 
     readonly property var categories: {
         var cats = ["All"]
-        var standardOrder = ["LLM", "Think", "Vision", "Image", "STT", "TTS", "Runtime"]
+        var standardOrder = ["LLM", "Think", "Vision", "Image", "Video", "STT", "TTS", "Runtime"]
         
         var presentCats = []
         for (var i = 0; i < allModels.length; i++) {
@@ -499,310 +531,344 @@ Item {
         return ollamaPuller.pulling && ollamaPuller.activeModel === modelId
     }
 
-    // ── Layout ───────────────────────────────────────────────────────────────
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 0
+    function categoryTitle(cat) {
+        if (cat === "All") return qsTr("All Models")
+        if (cat === "LLM") return qsTr("Text Models (LLM)")
+        if (cat === "Think") return qsTr("Reasoning Models")
+        if (cat === "Vision") return qsTr("Vision Models")
+        if (cat === "Image") return qsTr("Image Generation")
+        if (cat === "Video") return qsTr("Video Generation")
+        if (cat === "STT") return qsTr("Speech to Text")
+        if (cat === "TTS") return qsTr("Text to Speech")
+        if (cat === "Runtime") return qsTr("Local Runtimes")
+        return cat
+    }
 
-        // Header
-        Item {
-            Layout.fillWidth: true
-            implicitHeight: headerContent.implicitHeight + SentinelTheme.spaceLg * 2
+    // ── Layout ───────────────────────────────────────────────────────────────
+    RowLayout {
+        anchors.fill: parent
+        spacing: SentinelTheme.spaceLg
+
+        ShellPanel {
+            Layout.preferredWidth: modelsPage.compact ? 196 : 278
+            Layout.fillHeight: true
+            color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
+            border.color: SentinelTheme.withAlpha(modelsPage.modeAccent, 0.20)
 
             ColumnLayout {
-                id: headerContent
-                anchors {
-                    left: parent.left; right: parent.right
-                    verticalCenter: parent.verticalCenter
+                anchors.fill: parent
+                anchors.margins: SentinelTheme.spaceMd
+                spacing: SentinelTheme.spaceMd
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.leftMargin: SentinelTheme.spaceMd
+                    Layout.topMargin: SentinelTheme.spaceSm
+                    Layout.bottomMargin: SentinelTheme.spaceXs
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Models")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontTitle
+                        font.bold: true
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
+                    }
                 }
-                spacing: SentinelTheme.spaceXs
+
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    Layout.fillHeight: true
+                    spacing: SentinelTheme.spaceXs
+
+                    Repeater {
+                        model: modelsPage.categories
+                        delegate: Button {
+                            id: navButton
+                            required property var modelData
+                            readonly property bool active: modelsPage.activeCategory === modelData
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: modelsPage.compact ? 36 : 42
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            onClicked: modelsPage.activeCategory = modelData
+
+                            contentItem: RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: SentinelTheme.spaceLg
+                                anchors.rightMargin: SentinelTheme.spaceMd
+                                spacing: SentinelTheme.spaceSm
+
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelsPage.categoryTitle(modelData)
+                                    color: navButton.active
+                                           ? SentinelTheme.textPrimary
+                                           : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: navButton.active
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd
+                                color: navButton.active
+                                       ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.12)
+                                       : navButton.hovered
+                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                         : "transparent"
+
+                                Rectangle {
+                                    width: navButton.active ? 3 : 0
+                                    height: parent.height - SentinelTheme.spaceSm * 2
+                                    radius: 1.5
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: SentinelTheme.spaceSm
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: modelsPage.modeAccent
+                                }
+                            }
+                        }
+                    }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
+                }
+            }
+        }
+
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            spacing: 0
+
+            // Header Section of the Content Area
+            Item {
+                Layout.fillWidth: true
+                implicitHeight: headerContent.implicitHeight + SentinelTheme.spaceLg * 2
+
+                ColumnLayout {
+                    id: headerContent
+                    anchors {
+                        left: parent.left
+                        right: parent.right
+                        verticalCenter: parent.verticalCenter
+                        leftMargin: SentinelTheme.spaceSm
+                        rightMargin: SentinelTheme.spaceSm
+                    }
+                    spacing: SentinelTheme.spaceXs
+
+                    RowLayout {
+                        Layout.fillWidth: true
+                        spacing: SentinelTheme.spaceSm
+
+                        Label {
+                            text: modelsPage.categoryTitle(modelsPage.activeCategory).toUpperCase()
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontTiny
+                            font.letterSpacing: 1.8
+                        }
+
+                        Item { Layout.fillWidth: true }
+
+                        // Sort controls / Refresh button / count chips
+                        RowLayout {
+                            spacing: SentinelTheme.spaceSm
+
+                            // Loading Indicator
+                            RowLayout {
+                                visible: ollamaLibraryFetcher.fetching
+                                spacing: SentinelTheme.spaceXs
+                                Rectangle {
+                                    width: 8; height: 8; radius: 4
+                                    color: SentinelTheme.accent
+                                    opacity: 1.0
+                                    SequentialAnimation on opacity {
+                                        loops: Animation.Infinite
+                                        NumberAnimation { from: 0.3; to: 1.0; duration: 600; easing.type: Easing.InOutQuad }
+                                        NumberAnimation { from: 1.0; to: 0.3; duration: 600; easing.type: Easing.InOutQuad }
+                                    }
+                                }
+                                Label {
+                                    text: qsTr("Fetching…")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                }
+                            }
+
+                            // Sort Popular / Newest / Refresh
+                            RowLayout {
+                                visible: modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision"
+                                spacing: SentinelTheme.spaceSm
+
+                                Button {
+                                    id: sortPopularBtn
+                                    implicitHeight: 22
+                                    implicitWidth: 64
+                                    flat: true
+                                    checkable: true
+                                    checked: modelsPage.ollamaSort === "popular"
+                                    onClicked: modelsPage.ollamaSort = "popular"
+                                    contentItem: Label {
+                                        text: qsTr("Popular")
+                                        font.pixelSize: SentinelTheme.fontTiny
+                                        font.weight: sortPopularBtn.checked ? Font.Medium : Font.Normal
+                                        color: sortPopularBtn.checked ? SentinelTheme.accent : SentinelTheme.textMuted
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    background: Rectangle {
+                                        radius: 11
+                                        color: sortPopularBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"
+                                        border.color: sortPopularBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.3) : "transparent"
+                                    }
+                                }
+
+                                Button {
+                                    id: sortNewestBtn
+                                    implicitHeight: 22
+                                    implicitWidth: 64
+                                    flat: true
+                                    checkable: true
+                                    checked: modelsPage.ollamaSort === "newest"
+                                    onClicked: modelsPage.ollamaSort = "newest"
+                                    contentItem: Label {
+                                        text: qsTr("Newest")
+                                        font.pixelSize: SentinelTheme.fontTiny
+                                        font.weight: sortNewestBtn.checked ? Font.Medium : Font.Normal
+                                        color: sortNewestBtn.checked ? SentinelTheme.accent : SentinelTheme.textMuted
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    background: Rectangle {
+                                        radius: 11
+                                        color: sortNewestBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"
+                                        border.color: sortNewestBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.3) : "transparent"
+                                    }
+                                }
+
+                                Button {
+                                    id: refreshBtn
+                                    implicitHeight: 22
+                                    implicitWidth: 54
+                                    flat: true
+                                    onClicked: modelsPage.fetchOllamaModels()
+                                    contentItem: Label {
+                                        text: qsTr("Refresh")
+                                        font.pixelSize: SentinelTheme.fontTiny
+                                        color: refreshBtn.hovered ? SentinelTheme.accent : SentinelTheme.textMuted
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    background: Rectangle {
+                                        radius: 11
+                                        color: refreshBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.08) : "transparent"
+                                        border.color: refreshBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.2) : "transparent"
+                                    }
+                                }
+                            }
+
+                            // Ollama installed count chip
+                            Rectangle {
+                                visible: shellViewModel.ollamaModelCount > 0
+                                implicitHeight: 22
+                                implicitWidth: installedCountLbl.implicitWidth + 16
+                                radius: 11
+                                color: SentinelTheme.withAlpha(SentinelTheme.success, 0.12)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.25)
+                                border.width: 1
+                                Label {
+                                    id: installedCountLbl
+                                    anchors.centerIn: parent
+                                    text: "● " + shellViewModel.ollamaModelCount + (shellViewModel.selectedRuntimeProvider === "lm-studio" ? qsTr(" loaded") : qsTr(" installed"))
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                    color: SentinelTheme.success
+                                }
+                            }
+
+                            // Model count chip
+                            Rectangle {
+                                implicitHeight: 22
+                                implicitWidth: countLabel.implicitWidth + 16
+                                radius: 11
+                                color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.22)
+                                border.width: 1
+                                Label {
+                                    id: countLabel
+                                    anchors.centerIn: parent
+                                    text: modelsPage.filteredModels.length + " " + (modelsPage.activeCategory === "All" ? qsTr("models") : modelsPage.activeCategory)
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                    color: SentinelTheme.accent
+                                }
+                            }
+                        }
+                    }
+
+                    Label {
+                        Layout.fillWidth: true
+                        text: shellViewModel.selectedRuntimeProvider === "lm-studio"
+                            ? qsTr("Manage local AI models. Models must be downloaded and loaded inside the LM Studio application. Loaded models are listed below.")
+                            : qsTr("Download and manage local AI models. Click a card to see details and install via Ollama.")
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+
+            // Error banner
+            Rectangle {
+                visible: ollamaLibraryFetcher.errorText.length > 0 && (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision")
+                Layout.fillWidth: true
+                implicitHeight: errLabel.implicitHeight + 20
+                color: SentinelTheme.withAlpha(SentinelTheme.errorSurface, 0.4)
+                border.color: SentinelTheme.withAlpha("#ef4444", 0.3)
+                border.width: 1
+                radius: SentinelTheme.radiusLg
+                Layout.margins: SentinelTheme.spaceSm
 
                 RowLayout {
-                    Layout.fillWidth: true
+                    anchors.fill: parent
+                    anchors.margins: SentinelTheme.spaceSm
                     spacing: SentinelTheme.spaceSm
 
                     Label {
-                        text: qsTr("MODEL LIBRARY")
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontTiny
-                        font.letterSpacing: 1.8
+                        id: errLabel
+                        Layout.fillWidth: true
+                        text: ollamaLibraryFetcher.errorText
+                        color: "#ef4444"
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
                     }
-
-                    Item { Layout.fillWidth: true }
-
-                    // Sort controls / Refresh button
-                    RowLayout {
-                        visible: modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision"
-                        spacing: SentinelTheme.spaceSm
-
-                        // Loading Indicator
-                        RowLayout {
-                            visible: ollamaLibraryFetcher.fetching
-                            spacing: SentinelTheme.spaceXs
-                            Rectangle {
-                                width: 8; height: 8; radius: 4
-                                color: SentinelTheme.accent
-                                opacity: 1.0
-                                SequentialAnimation on opacity {
-                                    loops: Animation.Infinite
-                                    NumberAnimation { from: 0.3; to: 1.0; duration: 600; easing.type: Easing.InOutQuad }
-                                    NumberAnimation { from: 1.0; to: 0.3; duration: 600; easing.type: Easing.InOutQuad }
-                                }
-                            }
-                            Label {
-                                text: qsTr("Fetching…")
-                                color: SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontTiny
-                            }
-                        }
-
-                        Button {
-                            id: sortPopularBtn
-                            implicitHeight: 22
-                            implicitWidth: 64
-                            flat: true
-                            checkable: true
-                            checked: modelsPage.ollamaSort === "popular"
-                            onClicked: modelsPage.ollamaSort = "popular"
-                            contentItem: Label {
-                                text: qsTr("Popular")
-                                font.pixelSize: SentinelTheme.fontTiny
-                                font.weight: sortPopularBtn.checked ? Font.Medium : Font.Normal
-                                color: sortPopularBtn.checked ? SentinelTheme.accent : SentinelTheme.textMuted
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            background: Rectangle {
-                                radius: 11
-                                color: sortPopularBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"
-                                border.color: sortPopularBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.3) : "transparent"
-                            }
-                        }
-
-                        Button {
-                            id: sortNewestBtn
-                            implicitHeight: 22
-                            implicitWidth: 64
-                            flat: true
-                            checkable: true
-                            checked: modelsPage.ollamaSort === "newest"
-                            onClicked: modelsPage.ollamaSort = "newest"
-                            contentItem: Label {
-                                text: qsTr("Newest")
-                                font.pixelSize: SentinelTheme.fontTiny
-                                font.weight: sortNewestBtn.checked ? Font.Medium : Font.Normal
-                                color: sortNewestBtn.checked ? SentinelTheme.accent : SentinelTheme.textMuted
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            background: Rectangle {
-                                radius: 11
-                                color: sortNewestBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"
-                                border.color: sortNewestBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.3) : "transparent"
-                            }
-                        }
-
-                        Button {
-                            id: refreshBtn
-                            implicitHeight: 22
-                            implicitWidth: 54
-                            flat: true
-                            onClicked: modelsPage.fetchOllamaModels()
-                            contentItem: Label {
-                                text: qsTr("Refresh")
-                                font.pixelSize: SentinelTheme.fontTiny
-                                color: refreshBtn.hovered ? SentinelTheme.accent : SentinelTheme.textMuted
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-                            background: Rectangle {
-                                radius: 11
-                                color: refreshBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.08) : "transparent"
-                                border.color: refreshBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.2) : "transparent"
-                            }
-                        }
-                    }
-
-                    // Ollama installed count chip
-                    Rectangle {
-                        visible: shellViewModel.ollamaModelCount > 0
-                        implicitHeight: 22
-                        implicitWidth: installedCountLbl.implicitWidth + 16
-                        radius: 11
-                        color: SentinelTheme.withAlpha(SentinelTheme.success, 0.12)
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.25)
-                        border.width: 1
-                        Label {
-                            id: installedCountLbl
-                            anchors.centerIn: parent
-                            text: "● " + shellViewModel.ollamaModelCount + (shellViewModel.selectedRuntimeProvider === "lm-studio" ? qsTr(" loaded") : qsTr(" installed"))
-                            font.pixelSize: SentinelTheme.fontTiny
-                            color: SentinelTheme.success
-                        }
-                    }
-
-                    // Model count chip
-                    Rectangle {
-                        implicitHeight: 22
-                        implicitWidth: countLabel.implicitWidth + 16
-                        radius: 11
-                        color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.22)
-                        border.width: 1
-                        Label {
-                            id: countLabel
-                            anchors.centerIn: parent
-                            text: modelsPage.filteredModels.length + " " + (modelsPage.activeCategory === "All" ? qsTr("models") : modelsPage.activeCategory)
-                            font.pixelSize: SentinelTheme.fontTiny
-                            color: SentinelTheme.accent
-                        }
-                    }
-                }
-
-                Label {
-                    text: shellViewModel.selectedRuntimeProvider === "lm-studio"
-                        ? qsTr("Manage local AI models. Models must be downloaded and loaded inside the LM Studio application. Loaded models are listed below.")
-                        : qsTr("Download and manage local AI models. Click a card to see details and install via Ollama.")
-                    color: SentinelTheme.textMuted
-                    font.pixelSize: SentinelTheme.fontSmall
-                }
-            }
-        }
-
-        // Category filter pills
-        Item {
-            Layout.fillWidth: true
-            implicitHeight: filterRow.implicitHeight + SentinelTheme.spaceMd
-
-            Row {
-                id: filterRow
-                anchors {
-                    left: parent.left; right: parent.right
-                    verticalCenter: parent.verticalCenter
-                }
-                spacing: SentinelTheme.spaceSm
-
-                Repeater {
-                    model: modelsPage.categories
 
                     Button {
-                        id: filterBtn
-                        required property string modelData
-                        readonly property bool active: modelsPage.activeCategory === modelData
-
-                        implicitHeight: 30
-                        implicitWidth: filterLabel.implicitWidth + 22
+                        id: retryBtn
+                        implicitHeight: 24
+                        implicitWidth: 60
                         flat: true
-                        hoverEnabled: true
-                        onClicked: modelsPage.activeCategory = modelData
-
-                        scale: filterBtn.down ? 0.97 : 1.0
-                        Behavior on scale {
-                            NumberAnimation { duration: 80; easing.type: Easing.OutCubic }
-                        }
-
-                        background: Rectangle {
-                            radius: height / 2
-                            color: filterBtn.active
-                                 ? SentinelTheme.withAlpha(SentinelTheme.accent, SentinelTheme.lightTheme ? 0.16 : 0.18)
-                                 : (filterBtn.hovered
-                                    ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                                    : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04))
-                            border.color: filterBtn.active
-                                        ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.40)
-                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                            border.width: 1
-
-                            Rectangle {
-                                visible: filterBtn.active
-                                anchors.top: parent.top
-                                anchors.left: parent.left
-                                anchors.right: parent.right
-                                anchors.topMargin: 1
-                                anchors.leftMargin: 6
-                                anchors.rightMargin: 6
-                                height: 1
-                                color: SentinelTheme.withAlpha("#ffffff", 0.55)
-                                radius: 1
-                            }
-
-                            Behavior on color {
-                                ColorAnimation { duration: 110; easing.type: Easing.InOutQuad }
-                            }
-                            Behavior on border.color {
-                                ColorAnimation { duration: 110; easing.type: Easing.InOutQuad }
-                            }
-                        }
-
+                        onClicked: modelsPage.fetchOllamaModels()
                         contentItem: Label {
-                            id: filterLabel
-                            text: filterBtn.modelData
-                            font.pixelSize: SentinelTheme.fontSmall
-                            font.weight: filterBtn.active ? Font.Medium : Font.Normal
-                            color: filterBtn.active
-                                 ? SentinelTheme.accent
-                                 : (filterBtn.hovered
-                                    ? SentinelTheme.textPrimary
-                                    : SentinelTheme.textMuted)
-                            verticalAlignment: Text.AlignVCenter
+                            text: qsTr("Retry")
+                            font.pixelSize: SentinelTheme.fontTiny
+                            font.weight: Font.Medium
+                            color: SentinelTheme.accent
                             horizontalAlignment: Text.AlignHCenter
-
-                            Behavior on color {
-                                ColorAnimation { duration: 110; easing.type: Easing.InOutQuad }
-                            }
+                            verticalAlignment: Text.AlignVCenter
+                        }
+                        background: Rectangle {
+                            radius: 12
+                            color: retryBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.08) : "transparent"
+                            border.color: retryBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.2) : "transparent"
                         }
                     }
                 }
             }
-        }
-
-        // Error banner
-        Rectangle {
-            visible: ollamaLibraryFetcher.errorText.length > 0 && (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision")
-            Layout.fillWidth: true
-            implicitHeight: errLabel.implicitHeight + 20
-            color: SentinelTheme.withAlpha(SentinelTheme.errorSurface, 0.4)
-            border.color: SentinelTheme.withAlpha("#ef4444", 0.3)
-            border.width: 1
-            radius: SentinelTheme.radiusLg
-            Layout.margins: SentinelTheme.spaceSm
-
-            RowLayout {
-                anchors.fill: parent
-                anchors.margins: SentinelTheme.spaceSm
-                spacing: SentinelTheme.spaceSm
-
-                Label {
-                    id: errLabel
-                    Layout.fillWidth: true
-                    text: ollamaLibraryFetcher.errorText
-                    color: "#ef4444"
-                    font.pixelSize: SentinelTheme.fontSmall
-                    wrapMode: Text.WordWrap
-                }
-
-                Button {
-                    id: retryBtn
-                    implicitHeight: 24
-                    implicitWidth: 60
-                    flat: true
-                    onClicked: modelsPage.fetchOllamaModels()
-                    contentItem: Label {
-                        text: qsTr("Retry")
-                        font.pixelSize: SentinelTheme.fontTiny
-                        font.weight: Font.Medium
-                        color: SentinelTheme.accent
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                    background: Rectangle {
-                        radius: 12
-                        color: retryBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.08) : "transparent"
-                        border.color: retryBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.2) : "transparent"
-                    }
-                }
-            }
-        }
 
         // Model grid
         ScrollView {
@@ -812,13 +878,26 @@ Item {
             ScrollBar.horizontal.policy: ScrollBar.AlwaysOff
             clip: true
 
+            ScrollBar.vertical: ScrollBar {
+                id: gridScrollBar
+                policy: ScrollBar.AsNeeded
+                contentItem: Rectangle {
+                    implicitWidth: 4
+                    radius: 2
+                    color: SentinelTheme.withAlpha(modelsPage.modeAccent, gridScrollBar.active ? 0.34 : 0.18)
+                }
+                background: Rectangle {
+                    color: "transparent"
+                }
+            }
+
             GridView {
                 id: modelGrid
                 anchors.fill: parent
                 anchors.rightMargin: 4
                 cellWidth: {
-                    var cols = modelsPage.width < 760 ? 1
-                             : modelsPage.width < 1100 ? 2
+                    var cols = width < 540 ? 1
+                             : width < 900 ? 2
                              : 3
                     return Math.floor(width / cols)
                 }
@@ -1201,11 +1280,14 @@ Item {
             }
         }
     }
+}
 
     // ── Model Detail Popup ────────────────────────────────────────────────────
     ModelDetailPopup {
         id: detailPopup
         modelInfo: null
+        modeName: modelsPage.viewModel ? modelsPage.viewModel.currentModeName : "Sentinel"
+        accent: modelInfo ? Qt.color(modelInfo.badgeColor) : modelsPage.modeAccent
 
         // Installed state is always live (reads shellViewModel directly)
         installed: modelInfo ? modelsPage.isInstalledOnDevice(modelInfo) : false
@@ -1228,5 +1310,7 @@ Item {
     RuntimeDetailPopup {
         id: runtimePopup
         modelInfo: null
+        modeName: modelsPage.viewModel ? modelsPage.viewModel.currentModeName : "Sentinel"
+        accent: modelsPage.modeAccent
     }
 }
