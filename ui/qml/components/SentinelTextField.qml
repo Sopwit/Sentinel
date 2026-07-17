@@ -8,7 +8,10 @@ TextField {
     placeholderTextColor: SentinelTheme.textPlaceholder
     selectByMouse: true
     hoverEnabled: true
-    implicitHeight: SentinelTheme.controlHeight
+    implicitHeight: 36
+    leftPadding: SentinelTheme.spaceMd
+    rightPadding: SentinelTheme.spaceMd
+    font.pixelSize: SentinelTheme.fontBody
     selectionColor: SentinelTheme.withAlpha(SentinelTheme.calmAccent, 0.34)
     selectedTextColor: SentinelTheme.textPrimary
 
@@ -17,9 +20,12 @@ TextField {
         color: control.enabled
                ? SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
                : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
-        border.color: InteractionTokens.borderColor(control.activeFocus, control.hovered, false, SentinelTheme.calmAccent)
+        border.color: control.activeFocus
+                      ? SentinelTheme.withAlpha(SentinelTheme.calmAccent, 0.46)
+                      : control.hovered
+                        ? SentinelTheme.withAlpha(SentinelTheme.calmAccent, 0.24)
+                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
         border.width: 1
-        scale: control.activeFocus ? InteractionTokens.focusScale : 1.0
 
         Behavior on border.color {
             ColorAnimation {
@@ -32,13 +38,6 @@ TextField {
             ColorAnimation {
                 duration: MotionTokens.fast
                 easing.type: MotionTokens.standard
-            }
-        }
-
-        Behavior on scale {
-            NumberAnimation {
-                duration: MotionTokens.fast
-                easing.type: MotionTokens.enter
             }
         }
     }
