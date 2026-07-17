@@ -489,8 +489,6 @@ SentinelOverlayModal {
                     onClicked: {
                         if (root.modelInfo && root.modelInfo.externalUrl) {
                             Qt.openUrlExternally(root.modelInfo.externalUrl)
-                        } else {
-                            Qt.openUrlExternally("https://lmstudio.ai/models")
                         }
                     }
                     background: Rectangle {
