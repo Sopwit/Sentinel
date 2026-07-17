@@ -1271,12 +1271,45 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
             category = QStringLiteral("Image");
         }
 
+        // Infer real provider from model ID slug
+        QString lmsProvider = QStringLiteral("Community");
+        QString lmsIdLower = modelId.toLower();
+        if (lmsIdLower.contains(QStringLiteral("meta")) ||
+            lmsIdLower.contains(QStringLiteral("llama"))) {
+            lmsProvider = QStringLiteral("Meta");
+        } else if (lmsIdLower.contains(QStringLiteral("google")) ||
+                   lmsIdLower.contains(QStringLiteral("gemma"))) {
+            lmsProvider = QStringLiteral("Google");
+        } else if (lmsIdLower.contains(QStringLiteral("qwen")) ||
+                   lmsIdLower.contains(QStringLiteral("alibaba"))) {
+            lmsProvider = QStringLiteral("Alibaba");
+        } else if (lmsIdLower.contains(QStringLiteral("deepseek"))) {
+            lmsProvider = QStringLiteral("DeepSeek");
+        } else if (lmsIdLower.contains(QStringLiteral("mistral")) ||
+                   lmsIdLower.contains(QStringLiteral("mixtral"))) {
+            lmsProvider = QStringLiteral("Mistral AI");
+        } else if (lmsIdLower.contains(QStringLiteral("microsoft")) ||
+                   lmsIdLower.contains(QStringLiteral("phi"))) {
+            lmsProvider = QStringLiteral("Microsoft");
+        } else if (lmsIdLower.contains(QStringLiteral("nvidia")) ||
+                   lmsIdLower.contains(QStringLiteral("nemotron"))) {
+            lmsProvider = QStringLiteral("NVIDIA");
+        } else if (lmsIdLower.contains(QStringLiteral("huggingface")) ||
+                   lmsIdLower.contains(QStringLiteral("smollm"))) {
+            lmsProvider = QStringLiteral("Hugging Face");
+        } else if (lmsIdLower.contains(QStringLiteral("bartowski")) ||
+                   lmsIdLower.contains(QStringLiteral("unsloth")) ||
+                   lmsIdLower.contains(QStringLiteral("mradermacher")) ||
+                   lmsIdLower.contains(QStringLiteral("lmstudio-community"))) {
+            lmsProvider = QStringLiteral("LM Studio Community");
+        }
+
         QVariantMap modelObj;
         modelObj[QStringLiteral("id")] = QStringLiteral("lmstudio-") + modelId;
         modelObj[QStringLiteral("ollamaId")] = QStringLiteral("");
         modelObj[QStringLiteral("category")] = category;
         modelObj[QStringLiteral("name")] = name;
-        modelObj[QStringLiteral("provider")] = QStringLiteral("LM Studio Catalog");
+        modelObj[QStringLiteral("provider")] = lmsProvider;
         modelObj[QStringLiteral("size")] = downloads + QStringLiteral(" downloads");
         modelObj[QStringLiteral("description")] = description;
         modelObj[QStringLiteral("badge")] = QStringLiteral("LM Studio");
