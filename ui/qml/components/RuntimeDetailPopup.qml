@@ -463,7 +463,7 @@ SentinelOverlayModal {
                                         implicitHeight: 8
                                         radius: 4
                                         color: root.isRunning ? SentinelTheme.success
-                                                              : (root.isInstalled ? SentinelTheme.accent : SentinelTheme.textPlaceholder)
+                                                              : (root.isInstalled ? root.accent : SentinelTheme.textPlaceholder)
                                     }
                                     Label {
                                         text: root.isRunning ? qsTr("Running")
@@ -650,10 +650,10 @@ SentinelOverlayModal {
 
                         background: Rectangle {
                             radius: SentinelTheme.radiusSm
-                            color: installBtn.down ? SentinelTheme.accentHover
-                                                   : installBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.9)
-                                                                        : SentinelTheme.accent
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.2)
+                            color: installBtn.down ? root.accent
+                                                   : installBtn.hovered ? SentinelTheme.withAlpha(root.accent, 0.9)
+                                                                        : root.accent
+                            border.color: SentinelTheme.withAlpha(root.accent, 0.2)
                             border.width: 1
                         }
                         contentItem: RowLayout {
