@@ -160,7 +160,7 @@ Item {
                 width: settingsFlick.width
                 spacing: 0
 
-                ShellPanel {
+                Item {
                     id: generalSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "General"
@@ -268,7 +268,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: appearanceSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Appearance"
@@ -333,7 +333,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: accessibilitySection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Accessibility"
@@ -353,168 +353,130 @@ Item {
                         }
 
                         // ── Reduced Motion ──────────────────────────────
-                        Rectangle {
+                        RowLayout {
                             Layout.fillWidth: true
-                            radius: SentinelTheme.radiusMd
-                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
-                            implicitHeight: reducedMotionRow.implicitHeight + SentinelTheme.spaceMd
+                            spacing: SentinelTheme.spaceSm
+                            Layout.topMargin: SentinelTheme.spaceXs
+                            Layout.bottomMargin: SentinelTheme.spaceXs
 
-                            RowLayout {
-                                id: reducedMotionRow
-                                x: SentinelTheme.spaceSm
-                                y: SentinelTheme.spaceXs
-                                width: parent.width - SentinelTheme.spaceSm * 2
-                                spacing: SentinelTheme.spaceSm
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
 
-                                ColumnLayout {
+                                Label {
                                     Layout.fillWidth: true
-                                    spacing: 2
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: qsTr("Reduced Motion")
-                                        color: SentinelTheme.textPrimary
-                                        font.pixelSize: SentinelTheme.fontBody
-                                    }
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: qsTr("Disables all animations and transitions throughout the UI.")
-                                        color: SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        wrapMode: Text.WordWrap
-                                    }
+                                    text: qsTr("Reduced Motion")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
                                 }
 
-                                Switch {
-                                    id: reducedMotionSwitch
-                                    checked: settingsPage.viewModel.reducedMotionEnabled
-                                    hoverEnabled: true
-                                    onToggled: settingsPage.viewModel.reducedMotionEnabled = checked
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Disables all animations and transitions throughout the UI.")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
 
-                                    indicator: Rectangle {
-                                        implicitWidth: 46
-                                        implicitHeight: 24
-                                        x: reducedMotionSwitch.leftPadding
+                            Switch {
+                                id: reducedMotionSwitch
+                                checked: settingsPage.viewModel.reducedMotionEnabled
+                                hoverEnabled: true
+                                onToggled: settingsPage.viewModel.reducedMotionEnabled = checked
+
+                                indicator: Rectangle {
+                                    implicitWidth: 46
+                                    implicitHeight: 24
+                                    x: reducedMotionSwitch.leftPadding
+                                    y: parent.height / 2 - height / 2
+                                    radius: height / 2
+                                    color: reducedMotionSwitch.checked
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                    border.color: reducedMotionSwitch.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : reducedMotionSwitch.hovered
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                    Rectangle {
+                                        x: reducedMotionSwitch.checked ? parent.width - width - 3 : 3
                                         y: parent.height / 2 - height / 2
+                                        width: 18; height: 18
                                         radius: height / 2
                                         color: reducedMotionSwitch.checked
-                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
-                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
-                                        border.color: reducedMotionSwitch.activeFocus
-                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
-                                                      : reducedMotionSwitch.hovered
-                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
-                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                                        Behavior on color {
-                                            ColorAnimation { duration: MotionTokens.fast }
-                                        }
-
-                                        Rectangle {
-                                            x: reducedMotionSwitch.checked ? parent.width - width - 3 : 3
-                                            y: parent.height / 2 - height / 2
-                                            width: 18; height: 18
-                                            radius: height / 2
-                                            color: reducedMotionSwitch.checked
-                                                   ? settingsPage.modeAccent
-                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
-
-                                            Behavior on x {
-                                                NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.press }
-                                            }
-                                            Behavior on color {
-                                                ColorAnimation { duration: MotionTokens.fast }
-                                            }
-                                        }
+                                               ? settingsPage.modeAccent
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
                                     }
-
-                                    background: Item {}
                                 }
+
+                                background: Item {}
                             }
                         }
 
                         // ── High Contrast ────────────────────────────────
-                        Rectangle {
+                        RowLayout {
                             Layout.fillWidth: true
-                            radius: SentinelTheme.radiusMd
-                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
-                            implicitHeight: highContrastRow.implicitHeight + SentinelTheme.spaceMd
+                            spacing: SentinelTheme.spaceSm
+                            Layout.topMargin: SentinelTheme.spaceXs
+                            Layout.bottomMargin: SentinelTheme.spaceXs
 
-                            RowLayout {
-                                id: highContrastRow
-                                x: SentinelTheme.spaceSm
-                                y: SentinelTheme.spaceXs
-                                width: parent.width - SentinelTheme.spaceSm * 2
-                                spacing: SentinelTheme.spaceSm
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 2
 
-                                ColumnLayout {
+                                Label {
                                     Layout.fillWidth: true
-                                    spacing: 2
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: qsTr("High Contrast")
-                                        color: SentinelTheme.textPrimary
-                                        font.pixelSize: SentinelTheme.fontBody
-                                    }
-
-                                    Label {
-                                        Layout.fillWidth: true
-                                        text: qsTr("Increases text and border contrast for better readability.")
-                                        color: SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        wrapMode: Text.WordWrap
-                                    }
+                                    text: qsTr("High Contrast")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
                                 }
 
-                                Switch {
-                                    id: highContrastSwitch
-                                    checked: settingsPage.viewModel.highContrastEnabled
-                                    hoverEnabled: true
-                                    onToggled: settingsPage.viewModel.highContrastEnabled = checked
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Increases text and border contrast for better readability.")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
 
-                                    indicator: Rectangle {
-                                        implicitWidth: 46
-                                        implicitHeight: 24
-                                        x: highContrastSwitch.leftPadding
+                            Switch {
+                                id: highContrastSwitch
+                                checked: settingsPage.viewModel.highContrastEnabled
+                                hoverEnabled: true
+                                onToggled: settingsPage.viewModel.highContrastEnabled = checked
+
+                                indicator: Rectangle {
+                                    implicitWidth: 46
+                                    implicitHeight: 24
+                                    x: highContrastSwitch.leftPadding
+                                    y: parent.height / 2 - height / 2
+                                    radius: height / 2
+                                    color: highContrastSwitch.checked
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                    border.color: highContrastSwitch.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : highContrastSwitch.hovered
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                    Rectangle {
+                                        x: highContrastSwitch.checked ? parent.width - width - 3 : 3
                                         y: parent.height / 2 - height / 2
+                                        width: 18; height: 18
                                         radius: height / 2
                                         color: highContrastSwitch.checked
-                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
-                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
-                                        border.color: highContrastSwitch.activeFocus
-                                                      ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
-                                                      : highContrastSwitch.hovered
-                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
-                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                                        Behavior on color {
-                                            ColorAnimation { duration: MotionTokens.fast }
-                                        }
-
-                                        Rectangle {
-                                            x: highContrastSwitch.checked ? parent.width - width - 3 : 3
-                                            y: parent.height / 2 - height / 2
-                                            width: 18; height: 18
-                                            radius: height / 2
-                                            color: highContrastSwitch.checked
-                                                   ? settingsPage.modeAccent
-                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
-
-                                            Behavior on x {
-                                                NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.press }
-                                            }
-                                            Behavior on color {
-                                                ColorAnimation { duration: MotionTokens.fast }
-                                            }
-                                        }
+                                               ? settingsPage.modeAccent
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
                                     }
-
-                                    background: Item {}
                                 }
+
+                                background: Item {}
                             }
                         }
 
@@ -532,16 +494,56 @@ Item {
                                 verticalAlignment: Text.AlignVCenter
                             }
 
-                            Repeater {
-                                model: settingsPage.densityChoices
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 36
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
 
-                                SentinelButton {
-                                    required property string modelData
-                                    required property int index
-                                    text: modelData
-                                    Layout.fillWidth: true
-                                    highlighted: settingsPage.viewModel.uiDensity === modelData
-                                    onClicked: settingsPage.viewModel.uiDensity = modelData
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.margins: 2
+                                    spacing: 2
+
+                                    Repeater {
+                                        model: settingsPage.densityChoices
+
+                                        Button {
+                                            id: densityBtn
+                                            required property string modelData
+                                            required property int index
+                                            Layout.fillWidth: true
+                                            Layout.fillHeight: true
+                                            hoverEnabled: true
+                                            focusPolicy: Qt.NoFocus
+
+                                            contentItem: Text {
+                                                text: densityBtn.modelData
+                                                color: (settingsPage.viewModel.uiDensity === densityBtn.modelData)
+                                                       ? SentinelTheme.textPrimary
+                                                       : SentinelTheme.textMuted
+                                                font.pixelSize: SentinelTheme.fontSmall
+                                                font.bold: (settingsPage.viewModel.uiDensity === densityBtn.modelData)
+                                                horizontalAlignment: Text.AlignHCenter
+                                                verticalAlignment: Text.AlignVCenter
+                                            }
+
+                                            background: Rectangle {
+                                                radius: SentinelTheme.radiusSm
+                                                color: (settingsPage.viewModel.uiDensity === densityBtn.modelData)
+                                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
+                                                       : densityBtn.hovered
+                                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                                         : "transparent"
+                                                border.color: (settingsPage.viewModel.uiDensity === densityBtn.modelData)
+                                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.36)
+                                                              : "transparent"
+                                            }
+
+                                            onClicked: settingsPage.viewModel.uiDensity = densityBtn.modelData
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -549,7 +551,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: localAiSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "AI"
@@ -666,7 +668,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: modelSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Models"
@@ -987,7 +989,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: chatSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Chat"
@@ -1358,7 +1360,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: voiceSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Voice"
@@ -1553,7 +1555,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: brainSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Brain"
@@ -1716,7 +1718,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: permissionsSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Permissions"
@@ -1877,7 +1879,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: toolsSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Tools"
@@ -1978,7 +1980,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: agentsSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Agents"
@@ -2080,7 +2082,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: profilesSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Profiles"
@@ -2249,7 +2251,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: workspaceSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Workspace"
@@ -2545,7 +2547,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: notificationsSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Notifications"
@@ -2623,7 +2625,7 @@ Item {
                     }
                 }
 
-                ShellPanel {
+                Item {
                     id: updatesSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Updates"
