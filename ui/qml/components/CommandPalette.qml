@@ -23,7 +23,7 @@ SentinelOverlayModal {
         { "title": qsTr("Open Notifications"), "subtitle": qsTr("Open notification center controls"), "kind": qsTr("Notifications"), "action": "settings", "enabled": true },
         { "title": qsTr("Export Current Chat"), "subtitle": qsTr("Save Markdown in the controlled export directory"), "kind": qsTr("Export"), "action": "export-md", "enabled": true },
         { "title": qsTr("Export Data"), "subtitle": qsTr("Prepare export preview for local data"), "kind": qsTr("Export"), "action": "export-preview", "enabled": true },
-        { "title": qsTr("Change Theme"), "subtitle": qsTr("Cycle Sentinel Dark, Midnight, Aurora, Graphite, System Adaptive"), "kind": qsTr("Appearance"), "action": "theme", "enabled": true },
+        { "title": qsTr("Change Theme"), "subtitle": qsTr("Cycle through available Light, Dark, Glass, and Adaptive themes"), "kind": qsTr("Appearance"), "action": "theme", "enabled": true },
         { "title": qsTr("Switch Model"), "subtitle": qsTr("Open Models settings"), "kind": qsTr("Models"), "action": "settings", "enabled": true },
         { "title": qsTr("Universal Search"), "subtitle": qsTr("Search chats, settings, models, and profiles"), "kind": qsTr("Search"), "action": "universal-search", "enabled": true }
     ]
@@ -79,7 +79,7 @@ SentinelOverlayModal {
             viewModel.prepareExportPreview("conversations", "Markdown")
             actionStatus = viewModel.exportPreviewSummaries.join(" / ")
         } else if (action.action === "theme") {
-            var choices = ["Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
+            var choices = ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "System Sync"]
             var next = (choices.indexOf(viewModel.themeName) + 1) % choices.length
             viewModel.themeName = choices[next]
             actionStatus = qsTr("Theme changed to %1.").arg(viewModel.themeName)

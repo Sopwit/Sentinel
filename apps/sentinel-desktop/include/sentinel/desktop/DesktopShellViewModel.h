@@ -435,6 +435,12 @@ class DesktopShellViewModel final : public QObject {
                    voiceConfigurationChanged)
     Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
                    voiceConfigurationChanged)
+    Q_PROPERTY(QString selectedTtsEngine READ selectedTtsEngine WRITE setSelectedTtsEngine NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(QString kokoroModelPath READ kokoroModelPath WRITE setKokoroModelPath NOTIFY
+                   voiceConfigurationChanged)
+    Q_PROPERTY(
+        QString kokoroVoice READ kokoroVoice WRITE setKokoroVoice NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString whisperBinaryPath READ whisperBinaryPath WRITE setWhisperBinaryPath NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString whisperModelPath READ whisperModelPath WRITE setWhisperModelPath NOTIFY
@@ -1661,6 +1667,12 @@ public:
     void setPiperBinaryPath(const QString& path);
     QString piperModelPath() const;
     void setPiperModelPath(const QString& path);
+    QString selectedTtsEngine() const;
+    void setSelectedTtsEngine(const QString& engine);
+    QString kokoroModelPath() const;
+    void setKokoroModelPath(const QString& path);
+    QString kokoroVoice() const;
+    void setKokoroVoice(const QString& voice);
     QString whisperBinaryPath() const;
     void setWhisperBinaryPath(const QString& path);
     QString whisperModelPath() const;

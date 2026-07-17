@@ -10,18 +10,18 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property string uiSelfCheck: "modal-ready rail-scroll-sync voice-path-wrap agent-runtime bottom-safe-scroll"
-    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Dark", "Midnight", "Aurora", "Graphite", "System Adaptive"]
+    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "System Sync"]
     readonly property var notificationPolicies: ["Disabled", "Important Only", "All", "Custom"]
     readonly property var updatePolicies: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
     readonly property var sidebarItems: [
-        { "key": "General", "title": qsTr("General"), "hint": qsTr("Profile and language defaults"), "chip": qsTr("Core") },
-        { "key": "Appearance", "title": qsTr("Appearance"), "hint": qsTr("Theme and visual style"), "chip": qsTr("UI") },
-        { "key": "Accessibility", "title": qsTr("Accessibility"), "hint": qsTr("Motion, contrast, density"), "chip": qsTr("A11y") },
-        { "key": "AI", "title": qsTr("AI"), "hint": qsTr("Runtime and model metadata"), "chip": qsTr("Runtime") },
-        { "key": "Voice", "title": qsTr("Voice"), "hint": qsTr("Voice readiness and controls"), "chip": qsTr("Input") },
-        { "key": "Notifications", "title": qsTr("Notifications"), "hint": qsTr("Delivery and policy preferences"), "chip": qsTr("Alerts") },
-        { "key": "Updates", "title": qsTr("Updates"), "hint": qsTr("Version and update behavior"), "chip": qsTr("System") }
+        { "key": "General", "title": qsTr("General") },
+        { "key": "Appearance", "title": qsTr("Appearance") },
+        { "key": "Accessibility", "title": qsTr("Accessibility") },
+        { "key": "AI", "title": qsTr("AI") },
+        { "key": "Voice", "title": qsTr("Voice") },
+        { "key": "Notifications", "title": qsTr("Notifications") },
+        { "key": "Updates", "title": qsTr("Updates") }
     ]
     property string activeCategory: "General"
 
@@ -49,156 +49,85 @@ Item {
                 anchors.margins: SentinelTheme.spaceMd
                 spacing: SentinelTheme.spaceMd
 
-                Rectangle {
+                ColumnLayout {
                     Layout.fillWidth: true
-                    radius: SentinelTheme.radiusLg
-                    color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.08)
-                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.26)
-                    implicitHeight: navHeaderColumn.implicitHeight + SentinelTheme.spaceMd * 2
+                    Layout.leftMargin: SentinelTheme.spaceMd
+                    Layout.topMargin: SentinelTheme.spaceSm
+                    Layout.bottomMargin: SentinelTheme.spaceXs
 
-                    ColumnLayout {
-                        id: navHeaderColumn
-                        x: SentinelTheme.spaceMd
-                        y: SentinelTheme.spaceMd
-                        width: parent.width - SentinelTheme.spaceMd * 2
-                        spacing: 2
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("Settings")
-                            color: SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontCard
-                            maximumLineCount: 1
-                            elide: Text.ElideRight
-                        }
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Settings")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontTitle
+                        font.bold: true
+                        maximumLineCount: 1
+                        elide: Text.ElideRight
                     }
                 }
 
-                Rectangle {
+                ColumnLayout {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    radius: SentinelTheme.radiusLg
-                    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.028)
-                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                    spacing: SentinelTheme.spaceXs
 
-                    ColumnLayout {
-                        anchors.fill: parent
-                        anchors.margins: SentinelTheme.spaceSm
-                        spacing: SentinelTheme.spaceXs
+                    Repeater {
+                        model: settingsPage.sidebarItems
+                        delegate: Button {
+                            id: navButton
+                            required property var modelData
+                            readonly property bool active: settingsPage.activeCategory === modelData.key
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: settingsPage.compact ? 36 : 42
+                            hoverEnabled: true
+                            focusPolicy: Qt.StrongFocus
+                            onClicked: settingsPage.jumpTo(modelData.key)
 
-                        Repeater {
-                            model: settingsPage.sidebarItems
-                            delegate: Button {
-                                id: navButton
-                                required property var modelData
-                                readonly property bool active: settingsPage.activeCategory === modelData.key
-                                Layout.fillWidth: true
-                                Layout.preferredHeight: settingsPage.compact ? 50 : 56
-                                hoverEnabled: true
-                                focusPolicy: Qt.StrongFocus
-                                onClicked: settingsPage.jumpTo(modelData.key)
+                            contentItem: RowLayout {
+                                anchors.fill: parent
+                                anchors.leftMargin: SentinelTheme.spaceLg
+                                anchors.rightMargin: SentinelTheme.spaceMd
+                                spacing: SentinelTheme.spaceSm
 
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: SentinelTheme.spaceSm
-                                    anchors.rightMargin: SentinelTheme.spaceSm
-                                    spacing: SentinelTheme.spaceSm
-
-                                    Rectangle {
-                                        Layout.alignment: Qt.AlignVCenter
-                                        implicitWidth: 9
-                                        implicitHeight: 9
-                                        radius: 5
-                                        color: navButton.active
-                                               ? settingsPage.modeAccent
-                                               : SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.50)
-                                    }
-
-                                    ColumnLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 0
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            text: modelData.title
-                                            color: navButton.active
-                                                   ? SentinelTheme.textPrimary
-                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.90)
-                                            font.pixelSize: SentinelTheme.fontSmall
-                                            maximumLineCount: 1
-                                            elide: Text.ElideRight
-                                        }
-
-                                        Text {
-                                            Layout.fillWidth: true
-                                            visible: !settingsPage.compact
-                                            text: modelData.hint
-                                            color: SentinelTheme.textMuted
-                                            font.pixelSize: SentinelTheme.fontTiny
-                                            maximumLineCount: 1
-                                            elide: Text.ElideRight
-                                        }
-                                    }
-
-
-                                }
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusLg
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: modelData.title
                                     color: navButton.active
-                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.16)
-                                           : InteractionTokens.surfaceColor(navButton.hovered, navButton.down, false,
-                                                                            settingsPage.modeAccent)
-                                    border.color: navButton.active
-                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.48)
-                                                  : InteractionTokens.borderColor(navButton.activeFocus, navButton.hovered,
-                                                                                  false, settingsPage.modeAccent)
+                                           ? SentinelTheme.textPrimary
+                                           : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: navButton.active
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+                            }
 
-                                    Rectangle {
-                                        width: navButton.active ? 4 : 0
-                                        height: parent.height - SentinelTheme.spaceSm
-                                        radius: 3
-                                        anchors.left: parent.left
-                                        anchors.leftMargin: SentinelTheme.spaceXs
-                                        anchors.verticalCenter: parent.verticalCenter
-                                        color: settingsPage.modeAccent
-                                        opacity: navButton.active ? 0.86 : 0.0
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd
+                                color: navButton.active
+                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                       : navButton.hovered
+                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                         : "transparent"
 
-                                        Behavior on width {
-                                            NumberAnimation {
-                                                duration: MotionTokens.fast
-                                                easing.type: MotionTokens.enter
-                                            }
-                                        }
-
-                                        Behavior on opacity {
-                                            NumberAnimation {
-                                                duration: MotionTokens.fast
-                                                easing.type: MotionTokens.standard
-                                            }
-                                        }
-                                    }
-
-                                    Behavior on color {
-                                        ColorAnimation {
-                                            duration: MotionTokens.fast
-                                            easing.type: MotionTokens.standard
-                                        }
-                                    }
-
-                                    Behavior on border.color {
-                                        ColorAnimation {
-                                            duration: MotionTokens.fast
-                                            easing.type: MotionTokens.standard
-                                        }
-                                    }
+                                Rectangle {
+                                    width: navButton.active ? 3 : 0
+                                    height: parent.height - SentinelTheme.spaceSm * 2
+                                    radius: 1.5
+                                    anchors.left: parent.left
+                                    anchors.leftMargin: SentinelTheme.spaceSm
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    color: settingsPage.modeAccent
                                 }
                             }
                         }
                     }
+
+                    Item {
+                        Layout.fillWidth: true
+                        Layout.fillHeight: true
+                    }
                 }
-
-
             }
         }
 
@@ -635,112 +564,8 @@ Item {
 
                         SectionTitle {
                             title: qsTr("AI")
-                            subtitle: qsTr("Local-first provider readiness. Future API providers are disabled placeholders.")
+                            subtitle: qsTr("Configure and inspect local AI inference runtimes.")
                             Layout.fillWidth: true
-                        }
-
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
-
-                            StatusChip {
-                                label: qsTr("Readiness")
-                                value: settingsPage.viewModel.activeRuntimeReadinessState
-                                accent: settingsPage.viewModel.activeRuntimeReadinessState === "ready"
-                                        ? SentinelTheme.success
-                                        : SentinelTheme.textMuted
-                                muted: settingsPage.viewModel.activeRuntimeReadinessState !== "ready"
-                            }
-
-                            StatusChip {
-                                label: qsTr("Provider")
-                                value: settingsPage.viewModel.activeRuntimeProviderLabel
-                                accent: SentinelTheme.accentTertiary
-                            }
-
-                            StatusChip {
-                                label: qsTr("Scope")
-                                value: settingsPage.viewModel.activeRuntimeLocalOnlySummary
-                                accent: SentinelTheme.calmAccent
-                                muted: settingsPage.viewModel.activeRuntimeLocalOnlySummary !== "Local Only"
-                            }
-
-                            StatusChip {
-                                label: qsTr("API Keys")
-                                value: qsTr("Not stored")
-                                accent: SentinelTheme.textMuted
-                                muted: true
-                            }
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Cloud Providers")
-                            value: qsTr("Not configured / disabled")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Credentials")
-                            value: settingsPage.viewModel.providerCredentialRegistrySummary
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Credential Security")
-                            subtitle: qsTr("OS secret-store readiness only; cloud execution remains disabled.")
-                            Layout.fillWidth: true
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Store")
-                            value: settingsPage.viewModel.credentialStoreSummary
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("OS Backend")
-                            value: settingsPage.viewModel.credentialStoreBackendSummary
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 2
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Actions")
-                            value: settingsPage.viewModel.credentialActionReadiness
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
-
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 3
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            SentinelButton {
-                                text: qsTr("Add API Key")
-                                enabled: false
-                                Layout.fillWidth: true
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Update API Key")
-                                enabled: false
-                                Layout.fillWidth: true
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Remove API Key")
-                                enabled: false
-                                Layout.fillWidth: true
-                            }
                         }
 
                         RowLayout {
@@ -1560,6 +1385,64 @@ Item {
 
                             Label {
                                 Layout.fillWidth: true
+                                text: qsTr("TTS Engine")
+                                color: SentinelTheme.textMuted
+                                wrapMode: Text.WordWrap
+                            }
+
+                            ComboBox {
+                                id: ttsEngineCombo
+                                Layout.fillWidth: true
+                                hoverEnabled: true
+                                model: ["Piper", "Kokoro"]
+                                currentIndex: settingsPage.viewModel.selectedTtsEngine === "Kokoro" ? 1 : 0
+                                onActivated: settingsPage.viewModel.selectedTtsEngine = index === 1 ? "Kokoro" : "Piper"
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: ttsEngineCombo.currentText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(ttsEngineCombo.activeFocus,
+                                                                                 ttsEngineCombo.hovered,
+                                                                                 ttsEngineCombo.popup.visible,
+                                                                                 settingsPage.modeAccent)
+                                }
+                                delegate: ItemDelegate {
+                                    id: ttsEngineOption
+                                    width: ttsEngineCombo.width
+                                    text: modelData
+                                    highlighted: ttsEngineCombo.highlightedIndex === index
+                                    contentItem: Text {
+                                        text: ttsEngineOption.text
+                                        color: ttsEngineOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+                                    background: Rectangle {
+                                        color: InteractionTokens.surfaceColor(ttsEngineOption.highlighted, false, false,
+                                                                               settingsPage.modeAccent)
+                                    }
+                                }
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: InteractionTokens.borderColor(false, true, false,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+
+                            // ── Piper TTS settings ──
+                            Label {
+                                visible: settingsPage.viewModel.selectedTtsEngine === "Piper"
+                                Layout.fillWidth: true
                                 text: qsTr("Piper binary")
                                 color: SentinelTheme.textMuted
                                 wrapMode: Text.WordWrap
@@ -1567,6 +1450,7 @@ Item {
 
                             SentinelTextField {
                                 id: piperBinaryField
+                                visible: settingsPage.viewModel.selectedTtsEngine === "Piper"
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.piperBinaryPath
                                 placeholderText: qsTr("Piper binary path")
@@ -1574,6 +1458,7 @@ Item {
                             }
 
                             Label {
+                                visible: settingsPage.viewModel.selectedTtsEngine === "Piper"
                                 Layout.fillWidth: true
                                 text: qsTr("Piper model")
                                 color: SentinelTheme.textMuted
@@ -1582,12 +1467,49 @@ Item {
 
                             SentinelTextField {
                                 id: piperModelField
+                                visible: settingsPage.viewModel.selectedTtsEngine === "Piper"
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.piperModelPath
                                 placeholderText: qsTr("Piper .onnx model path")
                                 onEditingFinished: settingsPage.viewModel.piperModelPath = text
                             }
 
+                            // ── Kokoro TTS settings ──
+                            Label {
+                                visible: settingsPage.viewModel.selectedTtsEngine === "Kokoro"
+                                Layout.fillWidth: true
+                                text: qsTr("Kokoro model")
+                                color: SentinelTheme.textMuted
+                                wrapMode: Text.WordWrap
+                            }
+
+                            SentinelTextField {
+                                id: kokoroModelField
+                                visible: settingsPage.viewModel.selectedTtsEngine === "Kokoro"
+                                Layout.fillWidth: true
+                                text: settingsPage.viewModel.kokoroModelPath
+                                placeholderText: qsTr("Kokoro model file path (e.g. kokoro.onnx)")
+                                onEditingFinished: settingsPage.viewModel.kokoroModelPath = text
+                            }
+
+                            Label {
+                                visible: settingsPage.viewModel.selectedTtsEngine === "Kokoro"
+                                Layout.fillWidth: true
+                                text: qsTr("Kokoro voice")
+                                color: SentinelTheme.textMuted
+                                wrapMode: Text.WordWrap
+                            }
+
+                            SentinelTextField {
+                                id: kokoroVoiceField
+                                visible: settingsPage.viewModel.selectedTtsEngine === "Kokoro"
+                                Layout.fillWidth: true
+                                text: settingsPage.viewModel.kokoroVoice
+                                placeholderText: qsTr("Kokoro voice name (e.g. af_sky)")
+                                onEditingFinished: settingsPage.viewModel.kokoroVoice = text
+                            }
+
+                            // ── Whisper STT settings ──
                             Label {
                                 Layout.fillWidth: true
                                 text: qsTr("Whisper binary")
@@ -2642,82 +2564,60 @@ Item {
                             Layout.fillWidth: true
                         }
 
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
-
-                            Repeater {
-                                model: [qsTr("Disabled"), qsTr("Important Only"), qsTr("All"), qsTr("Custom")]
-
-                                StatusChip {
-                                    required property string modelData
-                                    label: qsTr("Policy")
-                                    value: modelData
-                                    accent: modelData === settingsPage.viewModel.notificationPolicy ? settingsPage.modeAccent
-                                                                                                     : SentinelTheme.textMuted
-                                    selected: modelData === settingsPage.viewModel.notificationPolicy
-                                    muted: modelData !== settingsPage.viewModel.notificationPolicy
-                                }
-                            }
-                        }
-
                         ComboBox {
                             id: notificationPolicyCombo
                             Layout.fillWidth: true
+                            hoverEnabled: true
                             model: settingsPage.notificationPolicies
                             currentIndex: settingsPage.notificationPolicies.indexOf(settingsPage.viewModel.notificationPolicy)
                             onActivated: settingsPage.viewModel.notificationPolicy = currentText
-                        }
 
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 2
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            SentinelTextField {
-                                Layout.fillWidth: true
-                                placeholderText: qsTr("Search notifications")
-                                text: settingsPage.viewModel.notificationSearchQuery
-                                onTextChanged: settingsPage.viewModel.notificationSearchQuery = text
+                            contentItem: Text {
+                                leftPadding: SentinelTheme.spaceMd
+                                rightPadding: SentinelTheme.space2Xl
+                                text: notificationPolicyCombo.currentText
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                verticalAlignment: Text.AlignVCenter
+                                maximumLineCount: 1
+                                elide: Text.ElideRight
                             }
 
-                            ComboBox {
-                                Layout.fillWidth: true
-                                model: settingsPage.viewModel.notificationCategories
-                                currentIndex: settingsPage.viewModel.notificationCategories.indexOf(settingsPage.viewModel.notificationCategoryFilter)
-                                onActivated: settingsPage.viewModel.notificationCategoryFilter = currentText
-                            }
-                        }
-
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 4
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            SentinelButton {
-                                text: qsTr("Pin Update")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.pinNotification("updates-manual")
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                border.color: InteractionTokens.borderColor(notificationPolicyCombo.activeFocus,
+                                                                             notificationPolicyCombo.hovered,
+                                                                             notificationPolicyCombo.popup.visible,
+                                                                             settingsPage.modeAccent)
                             }
 
-                            SentinelButton {
-                                text: qsTr("Mark Security Read")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.markNotificationRead("security-privacy")
+                            delegate: ItemDelegate {
+                                id: notificationPolicyOption
+                                width: notificationPolicyCombo.width
+                                text: modelData
+                                highlighted: notificationPolicyCombo.highlightedIndex === index
+
+                                contentItem: Text {
+                                    text: notificationPolicyOption.text
+                                    color: notificationPolicyOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    color: InteractionTokens.surfaceColor(notificationPolicyOption.highlighted, false, false,
+                                                                           settingsPage.modeAccent)
+                                }
                             }
 
-                            SentinelButton {
-                                text: qsTr("Archive Workspace")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.archiveNotification("workspace-active")
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Clear Archived")
-                                Layout.fillWidth: true
-                                onClicked: settingsPage.viewModel.clearArchivedNotifications()
+                            popup.background: Rectangle {
+                                radius: SentinelTheme.radiusLg
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                border.color: InteractionTokens.borderColor(false, true, false,
+                                                                             settingsPage.modeAccent)
                             }
                         }
                     }
@@ -2764,19 +2664,73 @@ Item {
 
                         }
 
-                        ComboBox {
-                            id: updatePolicyCombo
+                        RowLayout {
                             Layout.fillWidth: true
-                            model: settingsPage.updatePolicies
-                            currentIndex: settingsPage.updatePolicies.indexOf(settingsPage.viewModel.updateCheckPolicy)
-                            onActivated: settingsPage.viewModel.updateCheckPolicy = currentText
-                        }
+                            spacing: SentinelTheme.spaceMd
 
-                        SentinelButton {
-                            text: qsTr("Check for Updates")
-                            enabled: true
-                            Layout.preferredWidth: 180
-                            onClicked: settingsPage.viewModel.checkForUpdates()
+                            ComboBox {
+                                id: updatePolicyCombo
+                                Layout.fillWidth: true
+                                hoverEnabled: true
+                                model: settingsPage.updatePolicies
+                                currentIndex: settingsPage.updatePolicies.indexOf(settingsPage.viewModel.updateCheckPolicy)
+                                onActivated: settingsPage.viewModel.updateCheckPolicy = currentText
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: updatePolicyCombo.currentText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: InteractionTokens.borderColor(updatePolicyCombo.activeFocus,
+                                                                                 updatePolicyCombo.hovered,
+                                                                                 updatePolicyCombo.popup.visible,
+                                                                                 settingsPage.modeAccent)
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: updatePolicyOption
+                                    width: updatePolicyCombo.width
+                                    text: modelData
+                                    highlighted: updatePolicyCombo.highlightedIndex === index
+
+                                    contentItem: Text {
+                                        text: updatePolicyOption.text
+                                        color: updatePolicyOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        verticalAlignment: Text.AlignVCenter
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                    }
+
+                                    background: Rectangle {
+                                        color: InteractionTokens.surfaceColor(updatePolicyOption.highlighted, false, false,
+                                                                               settingsPage.modeAccent)
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: InteractionTokens.borderColor(false, true, false,
+                                                                                 settingsPage.modeAccent)
+                                }
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Check for Updates")
+                                enabled: true
+                                Layout.preferredWidth: 160
+                                onClicked: settingsPage.viewModel.checkForUpdates()
+                            }
                         }
 
                         InfoRow {

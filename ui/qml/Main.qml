@@ -299,8 +299,7 @@ ApplicationWindow {
                 Flow {
                     spacing: SentinelTheme.spaceSm
                     Repeater {
-                        model: ["Sentinel Dark", "Midnight", "Aurora", "Graphite",
-                                "Liquid Glass Dark", "Liquid Glass Light", "System Adaptive"]
+                        model: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "System Sync"]
                         SentinelButton {
                             required property string modelData
                             text: modelData

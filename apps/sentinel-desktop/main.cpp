@@ -165,14 +165,6 @@ int main(int argc, char* argv[]) {
     QTranslator translator;
     installStartupTranslator(app, settings, translator);
 
-    // Runtime language switching: swap the translator and notify all QML objects.
-    QObject::connect(&settings, &sentinel::core::AppSettings::appLanguageChanged, &app,
-                     [&app, &settings, &translator]() {
-                         const auto lang = effectiveLanguageCode(settings);
-                         installTranslator(app, translator, lang);
-                         // Post LanguageChange so QML engine calls retranslate() on all items.
-                         QCoreApplication::postEvent(&app, new QEvent(QEvent::LanguageChange));
-                     });
     const auto ollamaConfig = sentinel::core::OllamaConfig::fromEndpoint(settings.ollamaEndpoint());
     sentinel::core::ApplicationController controller(
         std::make_unique<sentinel::core::LocalEchoProvider>(),
@@ -214,6 +206,14 @@ int main(int argc, char* argv[]) {
                                              &ollamaModelDetailFetcher);
     engine.rootContext()->setContextProperty(QStringLiteral("lmStudioLibraryFetcher"),
                                              &lmStudioLibraryFetcher);
+
+    // Runtime language switching: swap the translator and notify all QML objects.
+    QObject::connect(&settings, &sentinel::core::AppSettings::appLanguageChanged, &app,
+                     [&app, &settings, &translator, &engine]() {
+                         const auto lang = effectiveLanguageCode(settings);
+                         installTranslator(app, translator, lang);
+                         engine.retranslate();
+                     });
 
     QObject::connect(
         &engine, &QQmlApplicationEngine::objectCreationFailed, &app,
