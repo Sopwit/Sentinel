@@ -43,8 +43,7 @@ SentinelOverlayModal {
         qsTr("Tool Calling"),
         qsTr("GPU Acceleration"),
         qsTr("Background Service"),
-        qsTr("CLI"),
-        qsTr("Automatic Downloads")
+        qsTr("CLI")
     ] : [
         qsTr("Run Local Models"),
         qsTr("OpenAI API"),
@@ -360,70 +359,7 @@ SentinelOverlayModal {
                         color: SentinelTheme.separator
                     }
 
-                    // ── BEST FOR ──────────────────────────────────────────────
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: bestForCol.implicitHeight + 24
-                        radius: SentinelTheme.radiusMd
-                        color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.05)
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.15)
-                        border.width: 1
 
-                        ColumnLayout {
-                            id: bestForCol
-                            anchors { fill: parent; margins: 12 }
-                            spacing: 6
-
-                            RowLayout {
-                                spacing: 6
-                                // Info icon (Lucide)
-                                Item {
-                                    implicitWidth: 14
-                                    implicitHeight: 14
-                                    Shape {
-                                        anchors.centerIn: parent
-                                        width: 24
-                                        height: 24
-                                        scale: 14 / 24
-                                        ShapePath {
-                                            strokeColor: SentinelTheme.accent
-                                            strokeWidth: 2
-                                            fillColor: "transparent"
-                                            capStyle: ShapePath.RoundCap
-                                            joinStyle: ShapePath.RoundJoin
-                                            PathSvg { path: "M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" }
-                                            PathSvg { path: "M12 16v-4" }
-                                            PathSvg { path: "M12 8h.01" }
-                                        }
-                                    }
-                                }
-                                Label {
-                                    text: qsTr("Best For")
-                                    font.family: root.sfProFont
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    font.weight: Font.DemiBold
-                                    color: SentinelTheme.accent
-                                }
-                            }
-
-                            Label {
-                                Layout.fillWidth: true
-                                text: root.bestForText
-                                font.family: root.sfProFont
-                                font.pixelSize: SentinelTheme.fontSmall
-                                color: SentinelTheme.textPrimary
-                                wrapMode: Text.Wrap
-                                lineHeight: 1.25
-                            }
-                        }
-                    }
-
-                    // Subtle separator
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 1
-                        color: SentinelTheme.separator
-                    }
 
                     // ── INSTALLATION ──────────────────────────────────────────
                     ColumnLayout {
@@ -636,61 +572,7 @@ SentinelOverlayModal {
                         }
                     }
 
-                    Item { Layout.fillWidth: true }
 
-                    // Primary Action: Install Runtime
-                    Button {
-                        id: installBtn
-                        implicitHeight: 30
-                        implicitWidth: installLbl.implicitWidth + 20
-                        hoverEnabled: true
-                        onClicked: Qt.openUrlExternally(root.downloadUrl)
-                        scale: down ? 0.98 : (hovered ? 1.02 : 1.0)
-                        Behavior on scale { NumberAnimation { duration: 80 } }
-
-                        background: Rectangle {
-                            radius: SentinelTheme.radiusSm
-                            color: installBtn.down ? root.accent
-                                                   : installBtn.hovered ? SentinelTheme.withAlpha(root.accent, 0.9)
-                                                                        : root.accent
-                            border.color: SentinelTheme.withAlpha(root.accent, 0.2)
-                            border.width: 1
-                        }
-                        contentItem: RowLayout {
-                            id: installLbl
-                            spacing: 4
-                            anchors.centerIn: parent
-
-                            Item {
-                                implicitWidth: 12
-                                implicitHeight: 12
-                                Shape {
-                                    anchors.centerIn: parent
-                                    width: 24
-                                    height: 24
-                                    scale: 12 / 24
-                                    ShapePath {
-                                        strokeColor: SentinelTheme.textOnAccent
-                                        strokeWidth: 2
-                                        fillColor: "transparent"
-                                        capStyle: ShapePath.RoundCap
-                                        joinStyle: ShapePath.RoundJoin
-                                        PathSvg { path: "M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" }
-                                        PathSvg { path: "M7 10l5 5l5-5" }
-                                        PathSvg { path: "M12 15V3" }
-                                    }
-                                }
-                            }
-
-                            Label {
-                                text: qsTr("Install Runtime")
-                                font.family: root.sfProFont
-                                font.pixelSize: SentinelTheme.fontSmall
-                                font.weight: Font.DemiBold
-                                color: SentinelTheme.textOnAccent
-                            }
-                        }
-                    }
                 }
             }
         }

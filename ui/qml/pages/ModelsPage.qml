@@ -1118,6 +1118,7 @@ Item {
                     }
 
                     Label {
+                        visible: modelsPage.activeCategory !== "Runtime"
                         Layout.fillWidth: true
                         Layout.topMargin: SentinelTheme.spaceMd
                         text: shellViewModel.selectedRuntimeProvider === "lm-studio"
@@ -1305,13 +1306,8 @@ Item {
                             anchors.fill: parent
                             hoverEnabled: true
                             onClicked: {
-                                if (modelDelegate.modelData.category === "Runtime") {
-                                    runtimePopup.modelInfo = modelDelegate.modelData
-                                    runtimePopup.open()
-                                } else {
-                                    detailPopup.modelInfo = modelDelegate.modelData
-                                    detailPopup.open()
-                                }
+                                detailPopup.modelInfo = modelDelegate.modelData
+                                detailPopup.open()
                             }
                         }
 
@@ -1416,13 +1412,8 @@ Item {
                                     implicitWidth: dlBtnLabel.implicitWidth + 24
                                     hoverEnabled: true
                                     onClicked: {
-                                        if (modelDelegate.modelData.category === "Runtime") {
-                                            runtimePopup.modelInfo = modelDelegate.modelData
-                                            runtimePopup.open()
-                                        } else {
-                                            detailPopup.modelInfo = modelDelegate.modelData
-                                            detailPopup.open()
-                                        }
+                                        detailPopup.modelInfo = modelDelegate.modelData
+                                        detailPopup.open()
                                     }
 
                                     scale: dlBtn.down ? 0.97 : (dlBtn.hovered ? 1.02 : 1.0)
@@ -1507,13 +1498,8 @@ Item {
                                         flat: true
                                         hoverEnabled: true
                                         onClicked: {
-                                            if (modelDelegate.modelData.category === "Runtime") {
-                                                runtimePopup.modelInfo = modelDelegate.modelData
-                                                runtimePopup.open()
-                                            } else {
-                                                detailPopup.modelInfo = modelDelegate.modelData
-                                                detailPopup.open()
-                                            }
+                                            detailPopup.modelInfo = modelDelegate.modelData
+                                            detailPopup.open()
                                         }
                                         background: Rectangle {
                                             radius: height / 2
@@ -1574,11 +1560,5 @@ Item {
         }
     }
 
-    // ── Runtime Detail Popup ──────────────────────────────────────────────────
-    RuntimeDetailPopup {
-        id: runtimePopup
-        modelInfo: null
-        modeName: modelsPage.viewModel ? modelsPage.viewModel.currentModeName : "Sentinel"
-        accent: modelsPage.modeAccent
-    }
+
 }

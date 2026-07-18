@@ -1254,6 +1254,7 @@ public:
     QString credentialActionReadiness() const;
     QString credentialExecutionStatus() const;
     QString ollamaEndpoint() const;
+    void setOllamaEndpoint(const QString& endpoint);
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;

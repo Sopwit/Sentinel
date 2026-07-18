@@ -1898,6 +1898,19 @@ QString ApplicationController::ollamaEndpoint() const {
                                 : OllamaEndpoint::defaultEndpoint().toString();
 }
 
+void ApplicationController::setOllamaEndpoint(const QString& endpoint) {
+    if (ollamaCheckThread_ && ollamaCheckThread_->isRunning()) {
+        ollamaCheckThread_->wait();
+    }
+    const auto config = OllamaConfig::fromEndpoint(endpoint);
+    ollamaRuntimeClient_ = std::make_unique<OllamaHttpRuntimeClient>(config);
+    localInferenceWorker_ = std::make_unique<LocalInferenceWorker>(
+        std::make_unique<OllamaLocalInferenceClient>(config),
+        std::make_unique<OllamaLocalInferenceStreamClient>(config),
+        this, localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
+    emit ollamaStatusChanged();
+}
+
 QString ApplicationController::ollamaConnectionStatus() const {
     return ollamaConnectionStatusName(currentOllamaHealthCheck().connectionStatus);
 }
@@ -4730,31 +4743,32 @@ bool ApplicationController::ensureActiveConversation() {
 }
 
 void ApplicationController::initializeActiveConversation() {
-    if (!ensureActiveConversation()) {
+    if (!conversationStore_ || conversationStore_->status() != ConversationStoreStatus::Ready) {
         return;
     }
 
-    const auto storedMessages = conversationStore_->loadMessages(activeConversationId_);
-    if (!storedMessages.isEmpty()) {
-        QList<ChatMessage> messages;
-        messages.reserve(storedMessages.size());
-        for (const auto& message : storedMessages) {
-            messages.append(chatMessageFromConversationMessageRecord(message));
+    // Purge/delete any empty conversations from the store to prevent database clutter
+    const auto records = conversationStore_->listConversations();
+    for (const auto& record : records) {
+        if (!record.deleted) {
+            const auto msgs = conversationStore_->loadMessages(record.id);
+            if (msgs.isEmpty()) {
+                conversationStore_->deleteConversation(record.id);
+            }
         }
-        chatSession_->loadMessages(messages);
-        conversationHistorySummary_.lastRestoredStatus =
-            QStringLiteral("Restored %1 active conversation messages.").arg(storedMessages.size());
-        conversationHistorySummary_.lastSavedStatus = QStringLiteral("Active conversation loaded.");
-        latestConversationSummaryMetadata_ =
-            conversationStore_->loadSummaryMetadata(activeConversationId_);
-        return;
     }
 
-    for (const auto& message : chatSession_->messages()) {
-        persistActiveConversationMessage(message);
-    }
+    // Always start with a fresh new conversation at launch (Gemini/ChatGPT style)
+    const auto record = conversationStore_->createConversation(QStringLiteral("New Chat"));
+    activeConversationId_ = record.id;
+    
+    // Initialize empty messages list in the active session
+    chatSession_->loadMessages({});
+    
     latestConversationSummaryMetadata_ =
         conversationStore_->loadSummaryMetadata(activeConversationId_);
+    conversationHistorySummary_.lastRestoredStatus = QStringLiteral("Started fresh conversation session.");
+    conversationHistorySummary_.lastSavedStatus = QStringLiteral("Fresh conversation initialized.");
 }
 
 void ApplicationController::loadActiveConversationTranscript() {
@@ -4985,7 +4999,7 @@ QStringList ApplicationController::conversationHistorySummaryLines() const {
 }
 
 int ApplicationController::conversationHistoryMessageCount() const {
-    return conversationHistorySummary_.messageCount;
+    return conversationHistorySummary_.userMessageCount + conversationHistorySummary_.assistantMessageCount;
 }
 
 QString ApplicationController::conversationPersistenceStatus() const {
