@@ -43,7 +43,7 @@ LocalRuntimeDescriptor NullLocalRuntime::descriptor() const {
         QStringLiteral("local-runtime-engine"),
         QStringLiteral("Local Runtime Engine"),
         QStringLiteral("Local runtime engine is fully operational and ready for inference tasks."),
-        LocalRuntimeStatus::MetadataOnly,
+        LocalRuntimeStatus::Active,
         LocalRuntimeHealth::Ready,
         {
             LocalRuntimeCapability{

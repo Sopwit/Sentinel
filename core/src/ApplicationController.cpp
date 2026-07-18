@@ -55,8 +55,10 @@ AgentActivityStatus sandboxActivityStatus(SandboxStatus status) {
 }
 
 AgentActivityStatus executionActivityStatus(ToolExecutionStatus status) {
-    return status == ToolExecutionStatus::PlaceholderSucceeded ? AgentActivityStatus::Completed
-                                                               : AgentActivityStatus::Blocked;
+    return (status == ToolExecutionStatus::PlaceholderSucceeded ||
+            status == ToolExecutionStatus::Succeeded)
+               ? AgentActivityStatus::Completed
+               : AgentActivityStatus::Blocked;
 }
 
 OrchestrationHealthStatus healthStatusFor(const QString& routingStatus,
@@ -8142,7 +8144,9 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         transitionConversationState(ConversationState::WaitingForApproval,
                                     QStringLiteral("approval metadata required"));
     } else if (latestAgentPipelineResult_.executionStatus() ==
-               ToolExecutionStatus::PlaceholderSucceeded) {
+                   ToolExecutionStatus::PlaceholderSucceeded ||
+               latestAgentPipelineResult_.executionStatus() ==
+                   ToolExecutionStatus::Succeeded) {
         transitionConversationState(ConversationState::ReadyToRespond,
                                     QStringLiteral("agent response metadata ready"));
         transitionConversationState(ConversationState::Responding,
@@ -8206,7 +8210,7 @@ void ApplicationController::appendPipelineActivity(const AgentPipelineResult& re
                                  .arg(sandboxStatusName(result.sandboxStatus())));
     agentActivityLog_.append(AgentActivityType::PlaceholderExecutionEvaluated,
                              executionActivityStatus(result.executionStatus()),
-                             QStringLiteral("Placeholder execution evaluated: %1")
+                             QStringLiteral("Tool execution evaluated: %1")
                                  .arg(toolExecutionStatusName(result.executionStatus())));
     agentActivityLog_.append(
         AgentActivityType::PipelineCompleted, executionActivityStatus(result.executionStatus()),
