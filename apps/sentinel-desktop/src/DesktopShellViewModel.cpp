@@ -15,8 +15,9 @@
 #include <QJsonObject>
 #include <QLibraryInfo>
 #include <QSaveFile>
-#include <QStandardPaths>
-#include <QSysInfo>
+#include <QProcess>
+#include <QRegularExpression>
+#include <QFile>
 
 #include <algorithm>
 #include <functional>
@@ -336,9 +337,6 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         settings_.setPiperFileOutputExecutionEnabled(false);
     }
     controller_.setPiperFileOutputExecutionEnabled(false);
-    if (!settings_.activeConversationId().isEmpty()) {
-        controller_.switchConversation(settings_.activeConversationId());
-    }
     if (controller_.activeConversationId() != QStringLiteral("single-transcript")) {
         settings_.setActiveConversationId(controller_.activeConversationId());
     }
@@ -1055,6 +1053,13 @@ QString DesktopShellViewModel::ollamaEndpoint() const {
     return controller_.ollamaEndpoint();
 }
 
+void DesktopShellViewModel::setOllamaEndpoint(const QString& endpoint) {
+    if (controller_.ollamaEndpoint() != endpoint) {
+        settings_.setOllamaEndpoint(endpoint);
+        controller_.setOllamaEndpoint(endpoint);
+    }
+}
+
 QString DesktopShellViewModel::ollamaConnectionStatus() const {
     return controller_.ollamaConnectionStatus();
 }
@@ -1221,6 +1226,10 @@ QString DesktopShellViewModel::voiceRuntimeMode() const {
 
 bool DesktopShellViewModel::voiceEnabled() const {
     return controller_.voiceEnabled();
+}
+
+bool DesktopShellViewModel::voiceRecordingActive() const {
+    return voiceRecordingActive_;
 }
 
 QString DesktopShellViewModel::voiceReadinessStatus() const {
@@ -1705,6 +1714,140 @@ void DesktopShellViewModel::applyVoiceConfigurationPaths(const QString& piperBin
     setPiperModelPath(piperModelPath);
     setWhisperBinaryPath(whisperBinaryPath);
     setWhisperModelPath(whisperModelPath);
+}
+
+void DesktopShellViewModel::startVoiceCapture() {
+    if (voiceRecordingActive_) {
+        return;
+    }
+
+    QString ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+    if (ffmpegPath.isEmpty()) {
+        ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"), {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
+    }
+    QString recPath = QStandardPaths::findExecutable(QStringLiteral("rec"));
+    if (recPath.isEmpty()) {
+        recPath = QStandardPaths::findExecutable(QStringLiteral("rec"), {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
+    }
+
+    bool hasFfmpeg = !ffmpegPath.isEmpty();
+    bool hasRec = !recPath.isEmpty();
+
+    if (!hasFfmpeg && !hasRec) {
+        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Sisteminizde 'ffmpeg' veya 'sox' (rec) bulunamadı. Lütfen terminalden 'brew install ffmpeg' çalıştırıp yükleyin."));
+        return;
+    }
+
+    voiceRecordingFile_ = QDir::tempPath() + QStringLiteral("/sentinel_voice.wav");
+    QFile::remove(voiceRecordingFile_);
+
+    recordingProcess_ = new QProcess(this);
+    
+    if (hasFfmpeg) {
+        recordingProcess_->start(ffmpegPath, {
+            QStringLiteral("-y"),
+            QStringLiteral("-f"), QStringLiteral("avfoundation"),
+            QStringLiteral("-i"), QStringLiteral(":0"),
+            QStringLiteral("-ar"), QStringLiteral("16000"),
+            QStringLiteral("-ac"), QStringLiteral("1"),
+            voiceRecordingFile_
+        });
+    } else {
+        recordingProcess_->start(recPath, {
+            QStringLiteral("-r"), QStringLiteral("16000"),
+            QStringLiteral("-c"), QStringLiteral("1"),
+            QStringLiteral("-b"), QStringLiteral("16"),
+            voiceRecordingFile_
+        });
+    }
+
+    if (recordingProcess_->waitForStarted(1500)) {
+        voiceRecordingActive_ = true;
+        emit voiceRecordingActiveChanged();
+    } else {
+        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Ses kayıt işlemi başlatılamadı. Mikrofon izinlerini kontrol edin."));
+        recordingProcess_->deleteLater();
+        recordingProcess_ = nullptr;
+    }
+}
+
+void DesktopShellViewModel::stopVoiceCapture() {
+    if (!voiceRecordingActive_ || !recordingProcess_) {
+        return;
+    }
+
+    voiceRecordingActive_ = false;
+    emit voiceRecordingActiveChanged();
+
+    recordingProcess_->terminate();
+    if (!recordingProcess_->waitForFinished(3000)) {
+        recordingProcess_->kill();
+        recordingProcess_->waitForFinished();
+    }
+    recordingProcess_->deleteLater();
+    recordingProcess_ = nullptr;
+
+    QString whisperPath = settings_.whisperBinaryPath();
+    QString modelPath = settings_.whisperModelPath();
+
+    if (whisperPath.isEmpty() || whisperPath == QStringLiteral("not configured") ||
+        modelPath.isEmpty() || modelPath == QStringLiteral("not configured")) {
+        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper binary veya model yolu ayarlanmamış. Lütfen Settings -> Voice sekmesinden whisper-cli ve model yollarını belirtin."));
+        return;
+    }
+
+    if (!QFile::exists(whisperPath)) {
+        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper binary dosyası bulunamadı: ") + whisperPath);
+        return;
+    }
+    if (!QFile::exists(modelPath)) {
+        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper model dosyası bulunamadı: ") + modelPath);
+        return;
+    }
+    if (!QFile::exists(voiceRecordingFile_)) {
+        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Kaydedilen ses dosyası bulunamadı."));
+        return;
+    }
+
+    whisperProcess_ = new QProcess(this);
+    
+    connect(whisperProcess_, &QProcess::finished, this, [this](int exitCode) {
+        Q_UNUSED(exitCode);
+        QByteArray outputBytes = whisperProcess_->readAllStandardOutput();
+        QString transcript = QString::fromUtf8(outputBytes).trimmed();
+        
+        static const QRegularExpression timestampRegex(QStringLiteral("\\[\\d\\d:\\d\\d\\.\\d\\d\\d\\s*->\\s*\\d\\d:\\d\\d\\.\\d\\d\\d\\]\\s*"));
+        transcript.replace(timestampRegex, QString());
+        
+        transcript = transcript.simplified();
+
+        if (transcript.isEmpty()) {
+            QByteArray errorBytes = whisperProcess_->readAllStandardError();
+            QString errorMsg = QString::fromUtf8(errorBytes).trimmed();
+            if (errorMsg.contains("failed to read WAV")) {
+                emit voiceTranscriptionCompleted(QStringLiteral("Hata: WAV dosyası okunamadı. 16kHz 16-bit Mono WAV formatı gerekli."));
+            } else {
+                emit voiceTranscriptionCompleted(QStringLiteral("Hata: Ses deşifre edilemedi (boş yanıt)."));
+            }
+        } else {
+            emit voiceTranscriptionCompleted(transcript);
+        }
+        
+        whisperProcess_->deleteLater();
+        whisperProcess_ = nullptr;
+    });
+
+    whisperProcess_->start(whisperPath, {
+        QStringLiteral("-m"), modelPath,
+        QStringLiteral("-f"), voiceRecordingFile_,
+        QStringLiteral("-nt")
+    });
+
+    if (!whisperProcess_->waitForStarted(2000)) {
+        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper deşifre işlemi başlatılamadı."));
+        whisperProcess_->deleteLater();
+        whisperProcess_ = nullptr;
+    }
 }
 
 bool DesktopShellViewModel::generatePiperTtsFile(const QString& text) {
@@ -4631,6 +4774,8 @@ bool DesktopShellViewModel::reorderControlledAgentTask(const QString& taskId, in
     emit controlledAgentTasksChanged();
     return true;
 }
+
+
 
 bool DesktopShellViewModel::setControlledToolPermission(const QString& category,
                                                         const QString& choice) {

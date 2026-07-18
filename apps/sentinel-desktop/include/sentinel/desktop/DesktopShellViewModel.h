@@ -273,7 +273,7 @@ class DesktopShellViewModel final : public QObject {
                    runtimeProviderRegistryChanged)
     Q_PROPERTY(QString credentialExecutionStatus READ credentialExecutionStatus NOTIFY
                    runtimeProviderRegistryChanged)
-    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint WRITE setOllamaEndpoint NOTIFY ollamaStatusChanged)
     Q_PROPERTY(
         QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
@@ -286,6 +286,7 @@ class DesktopShellViewModel final : public QObject {
                    ollamaStatusChanged)
     Q_PROPERTY(
         QStringList ollamaModelSummaries READ ollamaModelSummaries NOTIFY ollamaStatusChanged)
+
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QString selectedLocalModelStatus READ selectedLocalModelStatus NOTIFY
@@ -473,6 +474,7 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString voiceRuntimeReadinessSummary READ voiceRuntimeReadinessSummary NOTIFY
                    voiceConfigurationChanged)
+    Q_PROPERTY(bool voiceRecordingActive READ voiceRecordingActive NOTIFY voiceRecordingActiveChanged)
     Q_PROPERTY(QString voiceRuntimeHealth READ voiceRuntimeHealth NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(int voiceRuntimeConfiguredCount READ voiceRuntimeConfiguredCount NOTIFY
                    voiceConfigurationChanged)
@@ -1562,6 +1564,7 @@ public:
     QString credentialActionReadiness() const;
     QString credentialExecutionStatus() const;
     QString ollamaEndpoint() const;
+    void setOllamaEndpoint(const QString& endpoint);
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
@@ -1570,6 +1573,7 @@ public:
     QStringList installedOllamaModelNames() const;
     QStringList loadedLMStudioModelNames() const;
     QStringList ollamaModelSummaries() const;
+
     QString selectedLocalModel() const;
     void setSelectedLocalModel(const QString& model);
     QString selectedLocalModelStatus() const;
@@ -1599,6 +1603,7 @@ public:
     QStringList modelRequirementSummaries() const;
     QString voiceRuntimeMode() const;
     bool voiceEnabled() const;
+    bool voiceRecordingActive() const;
     QString voiceReadinessStatus() const;
     QString voiceReadinessSummary() const;
     QStringList voiceReadinessChecks() const;
@@ -2294,6 +2299,8 @@ public:
                                                   const QString& piperModelPath,
                                                   const QString& whisperBinaryPath,
                                                   const QString& whisperModelPath);
+    Q_INVOKABLE void startVoiceCapture();
+    Q_INVOKABLE void stopVoiceCapture();
 
 signals:
     void currentModeChanged();
@@ -2320,6 +2327,8 @@ signals:
     void conversationStateChanged();
     void conversationRuntimeChanged();
     void conversationSearchChanged();
+    void voiceRecordingActiveChanged();
+    void voiceTranscriptionCompleted(const QString& transcript);
     void conversationExportChanged();
     void conversationDuplicateChanged();
     void conversationDeleteChanged();
@@ -2370,6 +2379,10 @@ private:
     QString currentPage_ = QStringLiteral("Dashboard");
     bool companionNativeAvailable_ = false;
     bool companionPaused_ = false;
+    bool voiceRecordingActive_ = false;
+    class QProcess* recordingProcess_ = nullptr;
+    class QProcess* whisperProcess_ = nullptr;
+    QString voiceRecordingFile_;
 };
 
 } // namespace sentinel::desktop

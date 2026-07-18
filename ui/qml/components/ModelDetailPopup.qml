@@ -312,42 +312,6 @@ SentinelOverlayModal {
                     elide: Text.ElideRight
                 }
 
-                // Highlighted Recommendation Box
-                Rectangle {
-                    visible: !root.activePull
-                    Layout.fillWidth: true
-                    implicitHeight: bestForCol.implicitHeight + 16
-                    radius: 8
-                    color: SentinelTheme.withAlpha(root.accent, 0.05)
-                    border.color: SentinelTheme.withAlpha(root.accent, 0.14)
-                    border.width: 1
-
-                    ColumnLayout {
-                        id: bestForCol
-                        anchors { fill: parent; margins: 10 }
-                        spacing: 2
-
-                        RowLayout {
-                            spacing: 4
-                            Text { text: "💡"; font.pixelSize: 12 }
-                            Label {
-                                text: qsTr("Best For")
-                                font.pixelSize: SentinelTheme.fontSmall
-                                font.weight: Font.Bold
-                                color: root.accent
-                            }
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: root.modelInfo && root.modelInfo.bestFor ? root.modelInfo.bestFor : qsTr("General-purpose local AI tasks.")
-                            font.pixelSize: SentinelTheme.fontSmall
-                            color: SentinelTheme.textMuted
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-                }
-
                 // Progress Indicator (Active download only)
                 ColumnLayout {
                     visible: root.activePull
