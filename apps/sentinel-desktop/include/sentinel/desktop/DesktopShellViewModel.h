@@ -15,6 +15,11 @@
 #include <QString>
 #include <QStringList>
 #include <memory>
+#include <QSet>
+
+class QProcess;
+class QSystemTrayIcon;
+class QNetworkAccessManager;
 
 namespace sentinel::core {
 class AppSettings;
@@ -1201,6 +1206,10 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(bool highContrastEnabled READ highContrastEnabled WRITE setHighContrastEnabled NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QString uiDensity READ uiDensity WRITE setUiDensity NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool notifyModelDownloads READ notifyModelDownloads WRITE setNotifyModelDownloads NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool notifyModelRemovals READ notifyModelRemovals WRITE setNotifyModelRemovals NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool notifyAgentResponses READ notifyAgentResponses WRITE setNotifyAgentResponses NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY nativeExperienceChanged)
     Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationCenterSummaries READ notificationCenterSummaries NOTIFY
@@ -2117,6 +2126,14 @@ public:
     void setHighContrastEnabled(bool enabled);
     QString uiDensity() const;
     void setUiDensity(const QString& density);
+    bool notifyModelDownloads() const;
+    void setNotifyModelDownloads(bool enabled);
+    bool notifyModelRemovals() const;
+    void setNotifyModelRemovals(bool enabled);
+    bool notifyAgentResponses() const;
+    void setNotifyAgentResponses(bool enabled);
+    bool notifySystemUpdates() const;
+    void setNotifySystemUpdates(bool enabled);
     QStringList activityTimelineSummaries() const;
     QStringList notificationCenterSummaries() const;
     QStringList notificationCategories() const;
@@ -2293,6 +2310,7 @@ public:
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
+    Q_INVOKABLE void addNotification(const QString& category, const QString& title, const QString& body);
     Q_INVOKABLE void setModeByName(const QString& modeName);
     Q_INVOKABLE void remember(const QString& key, const QString& value);
     Q_INVOKABLE void applyVoiceConfigurationPaths(const QString& piperBinaryPath,
@@ -2314,6 +2332,7 @@ signals:
     void contextExplainabilityVisibleChanged();
     void currentPageChanged();
     void nativeExperienceChanged();
+    void requestWindowActive(const QString& pageName);
     void maintenanceStatusChanged();
     void agentStatusChanged();
     void agentResponseChanged();
@@ -2356,6 +2375,7 @@ signals:
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
+    void tryNextVoiceCaptureConfig(const QString& ffmpegPath, const QString& recPath);
 
     core::ApplicationController& controller_;
     core::ModeManager& modeManager_;
@@ -2380,9 +2400,19 @@ private:
     bool companionNativeAvailable_ = false;
     bool companionPaused_ = false;
     bool voiceRecordingActive_ = false;
-    class QProcess* recordingProcess_ = nullptr;
-    class QProcess* whisperProcess_ = nullptr;
+    QProcess* recordingProcess_ = nullptr;
+    QProcess* whisperProcess_ = nullptr;
     QString voiceRecordingFile_;
+    int currentFfmpegConfigIndex_ = 0;
+    QString lastRecordingError_;
+    
+    QSystemTrayIcon* trayIcon_ = nullptr;
+    QNetworkAccessManager* networkManager_ = nullptr;
+    QString lastReleaseUrl_;
+    QSet<QString> notifiedIds_;
+    QString lastAgentStatus_;
+    QString lastNotifiedCategory_;
+    qint64 lastNotificationTime_ = 0;
 };
 
 } // namespace sentinel::desktop

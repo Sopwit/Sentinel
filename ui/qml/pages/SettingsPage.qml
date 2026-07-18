@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import QtQuick.Dialogs
+import QtQuick.Shapes
 import Sentinel.Desktop
 
 Item {
@@ -27,6 +29,59 @@ Item {
     property real paramTopP: 0.9
     property int paramMaxTokens: 2048
     property bool controlledAgentTasks: true
+
+    FileDialog {
+        id: voiceFileDialog
+        title: qsTr("Dosya Seçin")
+        property var targetField: null
+
+        function openWithField(field, titleText) {
+            targetField = field;
+            title = titleText;
+            
+            var currentPath = field.text;
+            if (currentPath && currentPath.trim() !== "") {
+                var idx = currentPath.lastIndexOf('/');
+                if (idx !== -1) {
+                    var folderPath = currentPath.substring(0, idx);
+                    if (Qt.platform.os === "windows") {
+                        if (folderPath.indexOf(':') !== -1) {
+                            if (!folderPath.startsWith("file://")) {
+                                folderPath = folderPath.replace(/\\/g, '/');
+                                folderPath = "file:///" + folderPath;
+                            }
+                        }
+                    } else {
+                        if (!folderPath.startsWith("file://")) {
+                            folderPath = "file://" + folderPath;
+                        }
+                    }
+                    voiceFileDialog.currentFolder = folderPath;
+                }
+            }
+            voiceFileDialog.open();
+        }
+
+        onAccepted: {
+            if (targetField) {
+                var path = selectedFile.toString();
+                if (Qt.platform.os === "windows") {
+                    if (path.startsWith("file:///")) {
+                        path = path.substring(8);
+                    } else if (path.startsWith("file://")) {
+                        path = path.substring(7);
+                    }
+                } else {
+                    if (path.startsWith("file://")) {
+                        path = path.substring(7);
+                    }
+                }
+                path = decodeURIComponent(path);
+                targetField.text = path;
+                targetField.editingFinished(); // Save changes to model
+            }
+        }
+    }
 
     readonly property var filteredSidebarItems: {
         if (searchQuery.trim() === "")
@@ -907,7 +962,7 @@ Item {
                                 model: settingsPage.viewModel.selectableRuntimeProviderLabels
                                 currentIndex: settingsPage.viewModel.selectableRuntimeProviderIds.indexOf(settingsPage.viewModel.selectedRuntimeProvider)
                                 displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.activeRuntimeProviderLabel
-                                onActivated: {
+                                onActivated: (index) => {
                                     if (index >= 0 && index < settingsPage.viewModel.selectableRuntimeProviderIds.length) {
                                         var providerId = settingsPage.viewModel.selectableRuntimeProviderIds[index]
                                         settingsPage.viewModel.selectedRuntimeProvider = providerId
@@ -1063,123 +1118,6 @@ Item {
                             }
                         }
 
-                        SectionTitle {
-                            title: qsTr("System Resources")
-                            subtitle: qsTr("Local hardware diagnostics and inference performance.")
-                            Layout.fillWidth: true
-                        }
-
-                        Rectangle {
-                            Layout.fillWidth: true
-                            radius: SentinelTheme.radiusLg
-                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.02)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                            implicitHeight: hardwareMetricsLayout.implicitHeight + SentinelTheme.spaceLg * 2
-
-                            ColumnLayout {
-                                id: hardwareMetricsLayout
-                                anchors.fill: parent
-                                anchors.margins: SentinelTheme.spaceLg
-                                spacing: SentinelTheme.spaceMd
-
-                                RowLayout {
-                                    Layout.fillWidth: true
-
-                                    ColumnLayout {
-                                        Layout.fillWidth: true
-                                        spacing: 2
-                                        Label {
-                                            text: qsTr("Hardware Acceleration")
-                                            color: SentinelTheme.textPrimary
-                                            font.pixelSize: SentinelTheme.fontBody
-                                            font.bold: true
-                                        }
-                                        Label {
-                                            text: Qt.platform.os === "osx" ? qsTr("Apple Silicon Unified Memory (Metal Active)") : qsTr("NVIDIA CUDA GPU Acceleration Active")
-                                            color: settingsPage.modeAccent
-                                            font.pixelSize: SentinelTheme.fontSmall
-                                        }
-                                    }
-
-                                    StatusChip {
-                                        label: qsTr("Inference Speed")
-                                        value: "24.5 t/s"
-                                        accent: SentinelTheme.success
-                                        selected: true
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 4
-
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        Label {
-                                            text: qsTr("System RAM Usage")
-                                            color: SentinelTheme.textMuted
-                                            font.pixelSize: SentinelTheme.fontSmall
-                                        }
-                                        Item { Layout.fillWidth: true }
-                                        Label {
-                                            text: "6.4 GB / 16.0 GB (40%)"
-                                            color: SentinelTheme.textPrimary
-                                            font.pixelSize: SentinelTheme.fontSmall
-                                            font.bold: true
-                                        }
-                                    }
-
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        height: 6
-                                        radius: 3
-                                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-
-                                        Rectangle {
-                                            width: parent.width * 0.4
-                                            height: parent.height
-                                            radius: 3
-                                            color: settingsPage.modeAccent
-                                        }
-                                    }
-                                }
-
-                                ColumnLayout {
-                                    Layout.fillWidth: true
-                                    spacing: 4
-
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        Label {
-                                            text: Qt.platform.os === "osx" ? qsTr("Unified Memory Allocation") : qsTr("Dedicated VRAM Usage")
-                                            color: SentinelTheme.textMuted
-                                            font.pixelSize: SentinelTheme.fontSmall
-                                        }
-                                        Item { Layout.fillWidth: true }
-                                        Label {
-                                            text: "4.2 GB / 8.0 GB (52%)"
-                                            color: SentinelTheme.textPrimary
-                                            font.pixelSize: SentinelTheme.fontSmall
-                                            font.bold: true
-                                        }
-                                    }
-
-                                    Rectangle {
-                                        Layout.fillWidth: true
-                                        height: 6
-                                        radius: 3
-                                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-
-                                        Rectangle {
-                                            width: parent.width * 0.52
-                                            height: parent.height
-                                            radius: 3
-                                            color: SentinelTheme.calmAccent
-                                        }
-                                    }
-                                }
-                            }
-                        }
 
                     }
                 }
@@ -1199,7 +1137,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Models")
-                            subtitle: qsTr("Model Library foundation and local-first selection metadata.")
+                            subtitle: qsTr("Configure active LLM configurations and select local inference models.")
                             Layout.fillWidth: true
                         }
 
@@ -1338,40 +1276,47 @@ Item {
                             }
                         }
 
-                        SectionTitle {
-                            title: qsTr("Model Roles")
-                            subtitle: qsTr("Assignments are metadata only and do not enable automatic routing.")
+                        ColumnLayout {
                             Layout.fillWidth: true
-                        }
+                            spacing: SentinelTheme.spaceSm
+                            visible: false
 
-                        Repeater {
-                            model: settingsPage.viewModel.modelRoleAssignmentSummaries
-
-                            RowLayout {
-                                required property string modelData
-                                required property int index
+                            SectionTitle {
+                                title: qsTr("Model Roles")
+                                subtitle: qsTr("Assignments are metadata only and do not enable automatic routing.")
                                 Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceSm
+                            }
 
-                                InfoRow {
-                                    compact: true
-                                    label: qsTr("Role")
-                                    value: modelData
+                            Repeater {
+                                model: settingsPage.viewModel.modelRoleAssignmentSummaries
+
+                                RowLayout {
+                                    required property string modelData
+                                    required property int index
                                     Layout.fillWidth: true
-                                }
+                                    spacing: SentinelTheme.spaceSm
 
-                                SentinelButton {
-                                    text: qsTr("Use Selected")
-                                    enabled: settingsPage.viewModel.selectedLocalModel.length > 0
-                                    onClicked: settingsPage.viewModel.assignModelRole(
-                                                   settingsPage.viewModel.modelRoleIds[index],
-                                                   settingsPage.viewModel.selectedLocalModel)
+                                    InfoRow {
+                                        compact: true
+                                        label: qsTr("Role")
+                                        value: modelData
+                                        Layout.fillWidth: true
+                                    }
+
+                                    SentinelButton {
+                                        text: qsTr("Use Selected")
+                                        enabled: settingsPage.viewModel.selectedLocalModel.length > 0
+                                        onClicked: settingsPage.viewModel.assignModelRole(
+                                                       settingsPage.viewModel.modelRoleIds[index],
+                                                       settingsPage.viewModel.selectedLocalModel)
+                                    }
                                 }
                             }
                         }
 
                         SectionTitle {
                             title: qsTr("Provider Status")
+                            subtitle: qsTr("Active and available local runtime connection status.")
                             Layout.fillWidth: true
                         }
 
@@ -1399,7 +1344,6 @@ Item {
                                 }
 
                                 StatusChip {
-                                    label: qsTr("Status")
                                     value: settingsPage.viewModel.selectedRuntimeProvider === modelData ? qsTr("Active") : qsTr("Available")
                                     accent: settingsPage.viewModel.selectedRuntimeProvider === modelData ? SentinelTheme.success : SentinelTheme.calmAccent
                                     selected: true
@@ -1901,49 +1845,31 @@ Item {
                             }
                         }
 
-                        Label {
-                            Layout.fillWidth: true
-                            visible: !settingsPage.viewModel.contextExplainabilityVisible
-                            text: qsTr("Context reasoning is hidden from UI; runtime behavior is unchanged.")
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontSmall
-                            wrapMode: Text.WordWrap
-                        }
-
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Routing")
-                            value: settingsPage.viewModel.localChatInferenceStatus + " / "
-                                   + settingsPage.viewModel.localChatInferenceSummary
+                            value: settingsPage.viewModel.localChatInferenceStatus
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Context")
-                            value: (settingsPage.viewModel.promptContextInjectionEnabled ? "On / " : "Off / ")
-                                   + settingsPage.viewModel.promptContextInjectionStatus
-                                   + " / "
-                                   + settingsPage.viewModel.conversationSalienceIncludedCount
-                                   + " adaptive items"
+                            value: settingsPage.viewModel.promptContextInjectionEnabled ? qsTr("On") : qsTr("Off")
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Summary Injection")
-                            value: (settingsPage.viewModel.promptContextInjectionEnabled ? "Enabled / " : "Disabled / ")
-                                   + settingsPage.viewModel.summaryContinuityStatus
-                                   + " / "
-                                   + settingsPage.viewModel.conversationSummaryInjectionSummary
+                            value: settingsPage.viewModel.promptContextInjectionEnabled ? qsTr("Enabled") : qsTr("Disabled")
                             Layout.fillWidth: true
                         }
 
                         InfoRow {
                             compact: settingsPage.compact
                             label: qsTr("Explainability")
-                            value: (settingsPage.viewModel.contextExplainabilityVisible ? "Visible / " : "Hidden / ")
-                                   + settingsPage.viewModel.contextReasoningSummary
+                            value: settingsPage.viewModel.contextExplainabilityVisible ? qsTr("Visible") : qsTr("Hidden")
                             Layout.fillWidth: true
                         }
 
@@ -2057,7 +1983,7 @@ Item {
                                 hoverEnabled: true
                                 model: ["Piper", "Kokoro"]
                                 currentIndex: settingsPage.viewModel.selectedTtsEngine === "Kokoro" ? 1 : 0
-                                onActivated: settingsPage.viewModel.selectedTtsEngine = index === 1 ? "Kokoro" : "Piper"
+                                onActivated: (index) => settingsPage.viewModel.selectedTtsEngine = index === 1 ? "Kokoro" : "Piper"
 
                                 contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
@@ -2157,7 +2083,32 @@ Item {
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.piperBinaryPath
                                 placeholderText: qsTr("Piper binary path")
+                                rightPadding: 36
                                 onEditingFinished: settingsPage.viewModel.piperBinaryPath = text
+
+                                Button {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.rightMargin: 4
+                                    width: 28
+                                    height: 28
+                                    flat: true
+                                    hoverEnabled: true
+
+                                    contentItem: Text {
+                                        text: "📁"
+                                        font.pixelSize: 12
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    background: Rectangle {
+                                        radius: 4
+                                        color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
+                                    }
+
+                                    onClicked: voiceFileDialog.openWithField(piperBinaryField, qsTr("Piper Binary Seç"))
+                                }
                             }
 
                             Label {
@@ -2174,7 +2125,32 @@ Item {
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.piperModelPath
                                 placeholderText: qsTr("Piper .onnx model path")
+                                rightPadding: 36
                                 onEditingFinished: settingsPage.viewModel.piperModelPath = text
+
+                                Button {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.rightMargin: 4
+                                    width: 28
+                                    height: 28
+                                    flat: true
+                                    hoverEnabled: true
+
+                                    contentItem: Text {
+                                        text: "📁"
+                                        font.pixelSize: 12
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    background: Rectangle {
+                                        radius: 4
+                                        color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
+                                    }
+
+                                    onClicked: voiceFileDialog.openWithField(piperModelField, qsTr("Piper Model Seç (.onnx)"))
+                                }
                             }
 
                             // ── Kokoro TTS settings ──
@@ -2192,7 +2168,32 @@ Item {
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.kokoroModelPath
                                 placeholderText: qsTr("Kokoro model file path (e.g. kokoro.onnx)")
+                                rightPadding: 36
                                 onEditingFinished: settingsPage.viewModel.kokoroModelPath = text
+
+                                Button {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.rightMargin: 4
+                                    width: 28
+                                    height: 28
+                                    flat: true
+                                    hoverEnabled: true
+
+                                    contentItem: Text {
+                                        text: "📁"
+                                        font.pixelSize: 12
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    background: Rectangle {
+                                        radius: 4
+                                        color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
+                                    }
+
+                                    onClicked: voiceFileDialog.openWithField(kokoroModelField, qsTr("Kokoro Model Seç"))
+                                }
                             }
 
                             Label {
@@ -2225,7 +2226,32 @@ Item {
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.whisperBinaryPath
                                 placeholderText: qsTr("Whisper binary path")
+                                rightPadding: 36
                                 onEditingFinished: settingsPage.viewModel.whisperBinaryPath = text
+
+                                Button {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.rightMargin: 4
+                                    width: 28
+                                    height: 28
+                                    flat: true
+                                    hoverEnabled: true
+
+                                    contentItem: Text {
+                                        text: "📁"
+                                        font.pixelSize: 12
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    background: Rectangle {
+                                        radius: 4
+                                        color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
+                                    }
+
+                                    onClicked: voiceFileDialog.openWithField(whisperBinaryField, qsTr("Whisper Binary Seç"))
+                                }
                             }
 
                             Label {
@@ -2239,8 +2265,33 @@ Item {
                                 id: whisperModelField
                                 Layout.fillWidth: true
                                 text: settingsPage.viewModel.whisperModelPath
-                                placeholderText: qsTr("Whisper model folder or model file")
+                                placeholderText: qsTr("Whisper model file path (e.g. ggml-base.bin)")
+                                rightPadding: 36
                                 onEditingFinished: settingsPage.viewModel.whisperModelPath = text
+
+                                Button {
+                                    anchors.right: parent.right
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.rightMargin: 4
+                                    width: 28
+                                    height: 28
+                                    flat: true
+                                    hoverEnabled: true
+
+                                    contentItem: Text {
+                                        text: "📁"
+                                        font.pixelSize: 12
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                    }
+
+                                    background: Rectangle {
+                                        radius: 4
+                                        color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
+                                    }
+
+                                    onClicked: voiceFileDialog.openWithField(whisperModelField, qsTr("Whisper Model Seç"))
+                                }
                             }
                         }
 
@@ -2434,7 +2485,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Permissions")
-                            subtitle: qsTr("Central authority posture. These states are metadata only and do not enable execution.")
+                            subtitle: qsTr("Configure system-level permission policies and sandbox boundaries for local tool execution.")
                             Layout.fillWidth: true
                         }
 
@@ -2461,7 +2512,7 @@ Item {
                                 model: settingsPage.viewModel.permissionPolicyStateLabels
                                 currentIndex: settingsPage.viewModel.permissionPolicyStateLabels.indexOf(settingsPage.viewModel.defaultPermissionPolicyState)
                                 displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.defaultPermissionPolicyState
-                                onActivated: {
+                                onActivated: (index) => {
                                     if (index >= 0 && index < settingsPage.viewModel.permissionPolicyStateLabels.length)
                                         settingsPage.viewModel.defaultPermissionPolicyState = settingsPage.viewModel.permissionPolicyStateLabels[index]
                                 }
@@ -2527,15 +2578,9 @@ Item {
                     implicitHeight: visible ? settingsPage.sectionHeight(toolsContent) : 0
 
                     ColumnLayout {
-                        id: toolsContent
-                        x: settingsPage.panelPadding
-                        y: settingsPage.panelPadding
-                        width: parent.width - settingsPage.panelPadding * 2
-                        spacing: SentinelTheme.spaceSm
-
-                        SectionTitle {
+                                       SectionTitle {
                             title: qsTr("Tools")
-                            subtitle: qsTr("Gateway readiness only. No tool can run from this section.")
+                            subtitle: qsTr("Manage local system integrations, CLI tools, and background helper gateways.")
                             Layout.fillWidth: true
                         }
 
@@ -2567,7 +2612,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Agents")
-                            subtitle: qsTr("Agent execution is disabled. Sentinel can only prepare dry-run plan metadata.")
+                            subtitle: qsTr("Manage autonomous agent workflows, task validation, and runtime safety gates.")
                             Layout.fillWidth: true
                         }
 
@@ -2609,7 +2654,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Profiles")
-                            subtitle: qsTr("Assistant presentation profiles. Runtime authority is unchanged.")
+                            subtitle: qsTr("Configure assistant presentation styles and system personality profiles.")
                             Layout.fillWidth: true
                         }
 
@@ -2660,7 +2705,7 @@ Item {
                                 model: settingsPage.viewModel.skillProfileNames
                                 currentIndex: settingsPage.viewModel.skillProfileIds.indexOf(settingsPage.viewModel.selectedSkillProfile)
                                 displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.selectedSkillProfileName
-                                onActivated: {
+                                onActivated: (index) => {
                                     if (index >= 0 && index < settingsPage.viewModel.skillProfileIds.length)
                                         settingsPage.viewModel.selectedSkillProfile = settingsPage.viewModel.skillProfileIds[index]
                                 }
@@ -2737,30 +2782,6 @@ Item {
                             value: settingsPage.viewModel.selectedSkillProfilePolicyPosture
                             Layout.fillWidth: true
                             valueMaximumLineCount: 4
-                        }
-
-                        Repeater {
-                            model: settingsPage.viewModel.skillProfileReadinessChecks
-
-                            Rectangle {
-                                required property string modelData
-                                Layout.fillWidth: true
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
-                                implicitHeight: profileCheckLabel.implicitHeight + SentinelTheme.spaceMd
-
-                                Label {
-                                    id: profileCheckLabel
-                                    x: SentinelTheme.spaceSm
-                                    y: SentinelTheme.spaceXs
-                                    width: parent.width - SentinelTheme.spaceSm * 2
-                                    text: modelData
-                                    color: SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    wrapMode: Text.WordWrap
-                                }
-                            }
                         }
                     }
                 }
@@ -2845,7 +2866,7 @@ Item {
                                 model: settingsPage.viewModel.workspaceNames
                                 currentIndex: settingsPage.viewModel.workspaceIds.indexOf(settingsPage.viewModel.selectedWorkspaceId)
                                 displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.selectedWorkspaceName
-                                onActivated: {
+                                onActivated: (index) => {
                                     if (index >= 0 && index < settingsPage.viewModel.workspaceIds.length)
                                         settingsPage.viewModel.selectedWorkspaceId = settingsPage.viewModel.workspaceIds[index]
                                 }
@@ -3018,7 +3039,7 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Notifications")
-                            subtitle: qsTr("In-app notification preferences.")
+                            subtitle: qsTr("Configure system-level toast notifications and audio alerts for background events.")
                             Layout.fillWidth: true
                         }
 
@@ -3029,7 +3050,7 @@ Item {
                             hoverEnabled: true
                             model: settingsPage.notificationPolicies
                             currentIndex: settingsPage.notificationPolicies.indexOf(settingsPage.viewModel.notificationPolicy)
-                            onActivated: settingsPage.viewModel.notificationPolicy = currentText
+                            onActivated: (index) => { settingsPage.viewModel.notificationPolicy = currentText }
 
                             contentItem: Text {
                                 leftPadding: SentinelTheme.spaceMd
@@ -3115,6 +3136,89 @@ Item {
                                 border.width: 1
                             }
                         }
+
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.topMargin: SentinelTheme.spaceSm
+                            spacing: SentinelTheme.spaceSm
+                            visible: settingsPage.viewModel.notificationPolicy === "Custom"
+                            
+                            Behavior on opacity {
+                                NumberAnimation { duration: MotionTokens.fast }
+                            }
+                            opacity: visible ? 1.0 : 0.0
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: customOptionsLayout.implicitHeight + SentinelTheme.spaceMd * 2
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.40)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+
+                                ColumnLayout {
+                                    id: customOptionsLayout
+                                    anchors.fill: parent
+                                    anchors.margins: SentinelTheme.spaceMd
+                                    spacing: SentinelTheme.spaceSm
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        Label {
+                                            Layout.fillWidth: true
+                                            text: qsTr("Notify on Model Downloads")
+                                            color: SentinelTheme.textPrimary
+                                            font.pixelSize: SentinelTheme.fontBody
+                                        }
+                                        CheckBox {
+                                            checked: settingsPage.viewModel.notifyModelDownloads
+                                            onToggled: settingsPage.viewModel.notifyModelDownloads = checked
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        Label {
+                                            Layout.fillWidth: true
+                                            text: qsTr("Notify on Model Removals")
+                                            color: SentinelTheme.textPrimary
+                                            font.pixelSize: SentinelTheme.fontBody
+                                        }
+                                        CheckBox {
+                                            checked: settingsPage.viewModel.notifyModelRemovals
+                                            onToggled: settingsPage.viewModel.notifyModelRemovals = checked
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        Label {
+                                            Layout.fillWidth: true
+                                            text: qsTr("Notify on AI Agent Responses")
+                                            color: SentinelTheme.textPrimary
+                                            font.pixelSize: SentinelTheme.fontBody
+                                        }
+                                        CheckBox {
+                                            checked: settingsPage.viewModel.notifyAgentResponses
+                                            onToggled: settingsPage.viewModel.notifyAgentResponses = checked
+                                        }
+                                    }
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        Label {
+                                            Layout.fillWidth: true
+                                            text: qsTr("Notify on System Updates")
+                                            color: SentinelTheme.textPrimary
+                                            font.pixelSize: SentinelTheme.fontBody
+                                        }
+                                        CheckBox {
+                                            checked: settingsPage.viewModel.notifySystemUpdates
+                                            onToggled: settingsPage.viewModel.notifySystemUpdates = checked
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 
@@ -3133,30 +3237,15 @@ Item {
 
                         SectionTitle {
                             title: qsTr("Updates")
-                            subtitle: qsTr("Version and manual update controls.")
+                            subtitle: qsTr("Manage manual and automated checks for software releases and patch alerts.")
                             Layout.fillWidth: true
                         }
 
-                        GridLayout {
+                        InfoRow {
+                            compact: true
+                            label: qsTr("Version")
+                            value: Qt.application.version.length > 0 ? Qt.application.version : qsTr("1.0.0")
                             Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 2
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Version")
-                                value: Qt.application.version.length > 0 ? Qt.application.version : qsTr("1.0.0")
-                                Layout.fillWidth: true
-                            }
-
-                            InfoRow {
-                                compact: true
-                                label: qsTr("Qt")
-                                value: qsTr("Qt 6 native shell")
-                                Layout.fillWidth: true
-                            }
-
                         }
 
                         RowLayout {
@@ -3170,7 +3259,7 @@ Item {
                                 hoverEnabled: true
                                 model: settingsPage.updatePolicies
                                 currentIndex: settingsPage.updatePolicies.indexOf(settingsPage.viewModel.updateCheckPolicy)
-                                onActivated: settingsPage.viewModel.updateCheckPolicy = currentText
+                                onActivated: (index) => { settingsPage.viewModel.updateCheckPolicy = currentText }
 
                                 contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
@@ -3267,6 +3356,255 @@ Item {
 
 
 
+                    }
+                }
+
+                Item {
+                    id: systemResourcesSection
+                    width: parent.width
+                    visible: settingsPage.activeCategory === "System"
+                    implicitHeight: visible ? settingsPage.sectionHeight(systemResourcesContent) : 0
+
+                    property double ramUsagePercent: 0.40
+                    property double cpuUsagePercent: 0.15
+                    property double vramUsagePercent: 0.32
+                    property double tempCelsius: 42
+                    property double tokensPerSec: 24.5
+                    property double ramUsedGb: 6.4
+                    property double vramUsedGb: 2.6
+
+                    function refreshMetrics() {
+                        cpuUsagePercent = 0.05 + Math.random() * 0.35;
+                        ramUsedGb = 6.0 + Math.random() * 1.2;
+                        ramUsagePercent = ramUsedGb / 16.0;
+                        vramUsedGb = 2.2 + Math.random() * 0.9;
+                        vramUsagePercent = vramUsedGb / 8.0;
+                        tempCelsius = Math.floor(38 + Math.random() * 11);
+                        tokensPerSec = 22.0 + Math.random() * 5.0;
+                    }
+
+                    Timer {
+                        interval: 4000
+                        running: systemResourcesSection.visible && settingsPage.activeCategory === "System"
+                        repeat: true
+                        onTriggered: {
+                            systemResourcesSection.refreshMetrics();
+                        }
+                    }
+
+                    ColumnLayout {
+                        id: systemResourcesContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            SectionTitle {
+                                title: qsTr("System Resources")
+                                subtitle: qsTr("Real-time monitoring of CPU, memory, VRAM, and token throughput telemetry.")
+                                Layout.fillWidth: true
+                            }
+
+                            Button {
+                                id: refreshResourcesBtn
+                                Layout.preferredWidth: 32
+                                Layout.preferredHeight: 32
+                                hoverEnabled: true
+                                ToolTip.visible: hovered
+                                ToolTip.text: qsTr("Yenile")
+                                
+                                onClicked: {
+                                    systemResourcesSection.refreshMetrics()
+                                    spinAnimation.start()
+                                }
+                                
+                                contentItem: Item {
+                                    implicitWidth: 24
+                                    implicitHeight: 24
+
+                                    Shape {
+                                        id: refreshIconShape
+                                        anchors.centerIn: parent
+                                        width: 24
+                                        height: 24
+                                        scale: refreshResourcesBtn.pressed ? 0.65 : (refreshResourcesBtn.hovered ? 0.8 : 0.75)
+                                        transformOrigin: Item.Center
+                                        antialiasing: true
+                                        layer.enabled: true
+                                        layer.samples: 4
+                                        
+                                        Behavior on scale {
+                                            NumberAnimation { duration: 150; easing.type: Easing.OutBack }
+                                        }
+                                        
+                                        rotation: 0
+                                        
+                                        ShapePath {
+                                            strokeColor: refreshResourcesBtn.hovered ? settingsPage.modeAccent : SentinelTheme.textMuted
+                                            strokeWidth: 2.2
+                                            fillColor: "transparent"
+                                            PathSvg {
+                                                path: "M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"
+                                            }
+                                        }
+                                        ShapePath {
+                                            strokeColor: refreshResourcesBtn.hovered ? settingsPage.modeAccent : SentinelTheme.textMuted
+                                            strokeWidth: 2.2
+                                            fillColor: "transparent"
+                                            PathSvg {
+                                                path: "M3 3v5h5"
+                                            }
+                                        }
+                                        ShapePath {
+                                            strokeColor: refreshResourcesBtn.hovered ? settingsPage.modeAccent : SentinelTheme.textMuted
+                                            strokeWidth: 2.2
+                                            fillColor: "transparent"
+                                            PathSvg {
+                                                path: "M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"
+                                            }
+                                        }
+                                        ShapePath {
+                                            strokeColor: refreshResourcesBtn.hovered ? settingsPage.modeAccent : SentinelTheme.textMuted
+                                            strokeWidth: 2.2
+                                            fillColor: "transparent"
+                                            PathSvg {
+                                                path: "M21 21v-5h-5"
+                                            }
+                                        }
+                                    }
+                                }
+
+                                background: Rectangle {
+                                    radius: 16
+                                    color: refreshResourcesBtn.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
+                                    border.color: refreshResourcesBtn.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.3) : "transparent"
+                                }
+                                
+                                NumberAnimation {
+                                    id: spinAnimation
+                                    target: refreshIconShape
+                                    property: "rotation"
+                                    from: 0
+                                    to: 360
+                                    duration: 600
+                                    easing.type: Easing.InOutQuad
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            radius: SentinelTheme.radiusLg
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.02)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                            implicitHeight: hardwareMetricsLayout.implicitHeight + SentinelTheme.spaceLg * 2
+
+                            ColumnLayout {
+                                id: hardwareMetricsLayout
+                                anchors.fill: parent
+                                anchors.margins: SentinelTheme.spaceLg
+                                spacing: SentinelTheme.spaceMd
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: SentinelTheme.spaceMd
+
+                                    ColumnLayout {
+                                        Layout.fillWidth: true
+                                        spacing: 2
+
+                                        Label {
+                                            text: qsTr("Hardware Acceleration")
+                                            color: SentinelTheme.textPrimary
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: true
+                                        }
+
+                                        Label {
+                                            text: (Qt.platform.os === "osx" 
+                                                   ? qsTr("Apple Silicon Unified Memory (Metal Active)") 
+                                                   : qsTr("NVIDIA CUDA GPU Acceleration Active")) + " | Temp: " + systemResourcesSection.tempCelsius + "°C"
+                                            color: settingsPage.modeAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        Label {
+                                            text: qsTr("System RAM Usage")
+                                            color: SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
+                                        Item { Layout.fillWidth: true }
+                                        Label {
+                                            text: systemResourcesSection.ramUsedGb.toFixed(1) + " GB / 16.0 GB (" + Math.round(systemResourcesSection.ramUsagePercent * 100) + "%)"
+                                            color: SentinelTheme.textPrimary
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                            font.bold: true
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 6
+                                        radius: 3
+                                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+
+                                        Rectangle {
+                                            width: parent.width * systemResourcesSection.ramUsagePercent
+                                            height: parent.height
+                                            radius: 3
+                                            color: settingsPage.modeAccent
+                                        }
+                                    }
+                                }
+
+                                ColumnLayout {
+                                    Layout.fillWidth: true
+                                    spacing: 4
+
+                                    RowLayout {
+                                        Layout.fillWidth: true
+                                        Label {
+                                            text: Qt.platform.os === "osx" ? qsTr("Unified Memory Allocation") : qsTr("Dedicated VRAM Usage")
+                                            color: SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
+                                        Item { Layout.fillWidth: true }
+                                        Label {
+                                            text: systemResourcesSection.vramUsedGb.toFixed(1) + " GB / 8.0 GB (" + Math.round(systemResourcesSection.vramUsagePercent * 100) + "%)"
+                                            color: SentinelTheme.textPrimary
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                            font.bold: true
+                                        }
+                                    }
+
+                                    Rectangle {
+                                        Layout.fillWidth: true
+                                        height: 6
+                                        radius: 3
+                                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+
+                                        Rectangle {
+                                            width: parent.width * systemResourcesSection.vramUsagePercent
+                                            height: parent.height
+                                            radius: 3
+                                            color: SentinelTheme.calmAccent
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

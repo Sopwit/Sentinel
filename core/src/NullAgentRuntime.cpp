@@ -9,16 +9,110 @@ NullAgentRuntime::NullAgentRuntime()
           ToolDescriptor{
               QStringLiteral("local-plan-summary"),
               QStringLiteral("Local Plan Summary"),
-              QStringLiteral(
-                  "Metadata-only placeholder tool descriptor for local planning summaries."),
+              QStringLiteral("Metadata-only placeholder tool descriptor for local planning summaries."),
               ToolRiskLevel::Low,
               ToolExecutionMode::MetadataOnly,
               {
-                  ToolParameterDescriptor{QStringLiteral("topic"),
-                                          QStringLiteral("Short user topic for local summary."),
-                                          true},
+                  ToolParameterDescriptor{QStringLiteral("topic"), QStringLiteral("Short user topic for local summary."), true},
               },
           },
+          ToolDescriptor{
+              QStringLiteral("open-workspace"),
+              QStringLiteral("Open Workspace"),
+              QStringLiteral("Open workspace folder path."),
+              ToolRiskLevel::Medium,
+              ToolExecutionMode::MetadataOnly,
+              {
+                  ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Absolute path to workspace folder."), true},
+              },
+          },
+          ToolDescriptor{
+              QStringLiteral("read-file"),
+              QStringLiteral("Read File"),
+              QStringLiteral("Read the contents of a file."),
+              ToolRiskLevel::High,
+              ToolExecutionMode::MetadataOnly,
+              {
+                  ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Absolute path to the target file."), true},
+              },
+          },
+          ToolDescriptor{
+              QStringLiteral("write-file"),
+              QStringLiteral("Write File"),
+              QStringLiteral("Write content to a file."),
+              ToolRiskLevel::High,
+              ToolExecutionMode::MetadataOnly,
+              {
+                  ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Absolute path to the target file."), true},
+                  ToolParameterDescriptor{QStringLiteral("content"), QStringLiteral("Content to write into the file."), true},
+              },
+          },
+          ToolDescriptor{
+              QStringLiteral("run-command"),
+              QStringLiteral("Run Command"),
+              QStringLiteral("Run a shell command on the host machine."),
+              ToolRiskLevel::High,
+              ToolExecutionMode::MetadataOnly,
+              {
+                  ToolParameterDescriptor{QStringLiteral("command"), QStringLiteral("Shell command to run."), true},
+              },
+          },
+          ToolDescriptor{
+              QStringLiteral("voice-transcribe"),
+              QStringLiteral("Voice Transcribe"),
+              QStringLiteral("Transcribe an audio file using Whisper."),
+              ToolRiskLevel::Medium,
+              ToolExecutionMode::MetadataOnly,
+              {
+                  ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Path to the input audio file."), true},
+              },
+          },
+          ToolDescriptor{
+              QStringLiteral("voice-speak"),
+              QStringLiteral("Voice Speak"),
+              QStringLiteral("Synthesize speech audio from text using Piper."),
+              ToolRiskLevel::Medium,
+              ToolExecutionMode::MetadataOnly,
+              {
+                  ToolParameterDescriptor{QStringLiteral("text"), QStringLiteral("Text to synthesize into audio."), true},
+              },
+          },
+          ToolDescriptor{
+              QStringLiteral("web-search"),
+              QStringLiteral("Web Search"),
+              QStringLiteral("Perform a search query on the web."),
+              ToolRiskLevel::Medium,
+              ToolExecutionMode::MetadataOnly,
+              {
+                  ToolParameterDescriptor{QStringLiteral("query"), QStringLiteral("Search query terms."), true},
+              },
+          },
+          ToolDescriptor{
+              QStringLiteral("export-conversation"),
+              QStringLiteral("Export Conversation"),
+              QStringLiteral("Export active chat transcript."),
+              ToolRiskLevel::Low,
+              ToolExecutionMode::MetadataOnly,
+              {
+                  ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Target export path."), false},
+              },
+          },
+          ToolDescriptor{
+              QStringLiteral("summarize-current-conversation"),
+              QStringLiteral("Summarize Current Conversation"),
+              QStringLiteral("Generate current conversation summary."),
+              ToolRiskLevel::Low,
+              ToolExecutionMode::MetadataOnly,
+              {}
+          },
+          ToolDescriptor{
+              QStringLiteral("provider-test-call"),
+              QStringLiteral("Provider Test Call"),
+              QStringLiteral("Trigger provider endpoint health check."),
+              ToolRiskLevel::Low,
+              ToolExecutionMode::MetadataOnly,
+              {}
+          }
       }) {}
 
 NullAgentRuntime::NullAgentRuntime(QList<ToolDescriptor> tools) {

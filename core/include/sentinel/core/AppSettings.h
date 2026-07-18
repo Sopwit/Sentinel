@@ -108,6 +108,10 @@ class AppSettings final : public QObject {
                    setControlledAgentTasksJson NOTIFY controlledAgentTasksChanged)
     Q_PROPERTY(QString controlledAgentPermissionsJson READ controlledAgentPermissionsJson WRITE
                    setControlledAgentPermissionsJson NOTIFY controlledAgentTasksChanged)
+    Q_PROPERTY(bool notifyModelDownloads READ notifyModelDownloads WRITE setNotifyModelDownloads NOTIFY productExperienceChanged)
+    Q_PROPERTY(bool notifyModelRemovals READ notifyModelRemovals WRITE setNotifyModelRemovals NOTIFY productExperienceChanged)
+    Q_PROPERTY(bool notifyAgentResponses READ notifyAgentResponses WRITE setNotifyAgentResponses NOTIFY productExperienceChanged)
+    Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY productExperienceChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -225,6 +229,15 @@ public:
     void setControlledAgentTasksJson(const QString& json);
     QString controlledAgentPermissionsJson() const;
     void setControlledAgentPermissionsJson(const QString& json);
+    
+    bool notifyModelDownloads() const;
+    void setNotifyModelDownloads(bool enabled);
+    bool notifyModelRemovals() const;
+    void setNotifyModelRemovals(bool enabled);
+    bool notifyAgentResponses() const;
+    void setNotifyAgentResponses(bool enabled);
+    bool notifySystemUpdates() const;
+    void setNotifySystemUpdates(bool enabled);
 
 signals:
     void themeNameChanged();
@@ -317,6 +330,10 @@ private:
     static constexpr auto updateWorkflowStateKey = "updateWorkflowState";
     static constexpr auto controlledAgentTasksJsonKey = "controlledAgentTasksJson";
     static constexpr auto controlledAgentPermissionsJsonKey = "controlledAgentPermissionsJson";
+    static constexpr auto notifyModelDownloadsKey = "notifyModelDownloads";
+    static constexpr auto notifyModelRemovalsKey = "notifyModelRemovals";
+    static constexpr auto notifyAgentResponsesKey = "notifyAgentResponses";
+    static constexpr auto notifySystemUpdatesKey = "notifySystemUpdates";
     static constexpr auto defaultThemeName = "Liquid Glass Dark";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";
