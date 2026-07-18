@@ -9,7 +9,7 @@ NullAgentRuntime::NullAgentRuntime()
           ToolDescriptor{
               QStringLiteral("local-plan-summary"),
               QStringLiteral("Local Plan Summary"),
-              QStringLiteral("Metadata-only placeholder tool descriptor for local planning summaries."),
+              QStringLiteral("Local planning summary tool."),
               ToolRiskLevel::Low,
               ToolExecutionMode::MetadataOnly,
               {
@@ -21,7 +21,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Open Workspace"),
               QStringLiteral("Open workspace folder path."),
               ToolRiskLevel::Medium,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {
                   ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Absolute path to workspace folder."), true},
               },
@@ -31,7 +31,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Read File"),
               QStringLiteral("Read the contents of a file."),
               ToolRiskLevel::High,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {
                   ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Absolute path to the target file."), true},
               },
@@ -41,7 +41,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Write File"),
               QStringLiteral("Write content to a file."),
               ToolRiskLevel::High,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {
                   ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Absolute path to the target file."), true},
                   ToolParameterDescriptor{QStringLiteral("content"), QStringLiteral("Content to write into the file."), true},
@@ -52,7 +52,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Run Command"),
               QStringLiteral("Run a shell command on the host machine."),
               ToolRiskLevel::High,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {
                   ToolParameterDescriptor{QStringLiteral("command"), QStringLiteral("Shell command to run."), true},
               },
@@ -62,7 +62,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Voice Transcribe"),
               QStringLiteral("Transcribe an audio file using Whisper."),
               ToolRiskLevel::Medium,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {
                   ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Path to the input audio file."), true},
               },
@@ -72,7 +72,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Voice Speak"),
               QStringLiteral("Synthesize speech audio from text using Piper."),
               ToolRiskLevel::Medium,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {
                   ToolParameterDescriptor{QStringLiteral("text"), QStringLiteral("Text to synthesize into audio."), true},
               },
@@ -82,7 +82,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Web Search"),
               QStringLiteral("Perform a search query on the web."),
               ToolRiskLevel::Medium,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {
                   ToolParameterDescriptor{QStringLiteral("query"), QStringLiteral("Search query terms."), true},
               },
@@ -92,7 +92,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Export Conversation"),
               QStringLiteral("Export active chat transcript."),
               ToolRiskLevel::Low,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {
                   ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Target export path."), false},
               },
@@ -102,7 +102,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Summarize Current Conversation"),
               QStringLiteral("Generate current conversation summary."),
               ToolRiskLevel::Low,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {}
           },
           ToolDescriptor{
@@ -110,7 +110,7 @@ NullAgentRuntime::NullAgentRuntime()
               QStringLiteral("Provider Test Call"),
               QStringLiteral("Trigger provider endpoint health check."),
               ToolRiskLevel::Low,
-              ToolExecutionMode::MetadataOnly,
+              ToolExecutionMode::Local,
               {}
           }
       }) {}

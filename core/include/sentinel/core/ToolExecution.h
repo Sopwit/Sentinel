@@ -12,6 +12,7 @@ namespace sentinel::core {
 enum class ToolExecutionStatus {
     NotRequested,
     PlaceholderSucceeded,
+    Succeeded,
     Blocked,
     EmptyPlan,
     UnknownTool,
@@ -23,6 +24,8 @@ inline QString toolExecutionStatusName(ToolExecutionStatus status) {
         return QStringLiteral("Not Requested");
     case ToolExecutionStatus::PlaceholderSucceeded:
         return QStringLiteral("Placeholder Succeeded");
+    case ToolExecutionStatus::Succeeded:
+        return QStringLiteral("Succeeded");
     case ToolExecutionStatus::Blocked:
         return QStringLiteral("Blocked");
     case ToolExecutionStatus::EmptyPlan:
