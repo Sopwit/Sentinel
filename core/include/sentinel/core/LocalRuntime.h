@@ -10,6 +10,7 @@ namespace sentinel::core {
 
 enum class LocalRuntimeStatus : std::uint8_t {
     MetadataOnly,
+    Active,
     Disabled,
     Unavailable,
 };
@@ -18,6 +19,8 @@ inline QString localRuntimeStatusName(LocalRuntimeStatus status) {
     switch (status) {
     case LocalRuntimeStatus::MetadataOnly:
         return QStringLiteral("Metadata Only");
+    case LocalRuntimeStatus::Active:
+        return QStringLiteral("Active");
     case LocalRuntimeStatus::Disabled:
         return QStringLiteral("Disabled");
     case LocalRuntimeStatus::Unavailable:

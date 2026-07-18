@@ -23,6 +23,7 @@ enum class ToolGatewayScope {
 
 enum class ToolExecutionAvailability {
     MetadataSafe,
+    Available,
     Unavailable,
     Refused,
 };

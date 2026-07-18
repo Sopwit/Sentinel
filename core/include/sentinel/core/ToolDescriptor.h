@@ -13,6 +13,7 @@ enum class ToolRiskLevel {
 
 enum class ToolExecutionMode {
     MetadataOnly,
+    Local,
 };
 
 struct ToolParameterDescriptor {
