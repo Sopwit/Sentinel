@@ -44,6 +44,13 @@ ApplicationWindow {
             SentinelTheme.uiDensity = root.viewModel.uiDensity
             MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         }
+        function onRequestWindowActive(pageName) {
+            root.raise()
+            root.requestActivate()
+            if (pageName.length > 0) {
+                root.navigateToPage(pageName)
+            }
+        }
     }
 
 

@@ -9,6 +9,7 @@
 #include "sentinel/core/LocalInference.h"
 #include "sentinel/core/ModeManager.h"
 #include "sentinel/core/NullAgentRuntime.h"
+#include "sentinel/core/RealToolExecutor.h"
 #include "sentinel/core/OllamaRuntime.h"
 #include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/SQLiteChatHistoryStore.h"
@@ -172,7 +173,7 @@ int main(int argc, char* argv[]) {
         nullptr,
         std::make_unique<sentinel::core::SQLiteChatHistoryStore>(
             pathProvider.chatHistoryDatabasePath()),
-        std::make_unique<sentinel::core::NullAgentRuntime>(), nullptr, nullptr, nullptr, nullptr,
+        std::make_unique<sentinel::core::NullAgentRuntime>(), nullptr, nullptr, std::make_unique<sentinel::core::RealToolExecutor>(), nullptr,
         nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
         std::make_unique<sentinel::core::LocalOnlyRuntimePermissionPolicy>(), nullptr, nullptr,
         nullptr, nullptr, nullptr, nullptr, nullptr,
@@ -187,16 +188,35 @@ int main(int argc, char* argv[]) {
     controller.setRoutingModeByName(settings.routingModeName());
     sentinel::desktop::DesktopShellViewModel shellViewModel(controller, modeManager, settings);
     OllamaModelPuller ollamaPuller;
+    QObject::connect(&ollamaPuller, &OllamaModelPuller::activeModelChanged, &shellViewModel,
+                     [&ollamaPuller, &shellViewModel]() {
+                         const QString active = ollamaPuller.activeModel();
+                         if (ollamaPuller.pulling() && !active.isEmpty()) {
+                             shellViewModel.addNotification(QStringLiteral("Models"),
+                                 QStringLiteral("Downloading Model"),
+                                 QStringLiteral("Retrieving '%1' from registry. You can monitor progress in the modelfiles panel.").arg(active));
+                         }
+                     });
     QObject::connect(&ollamaPuller, &OllamaModelPuller::pullFinished, &controller,
-                     [&controller](const QString&, bool success) {
+                     [&controller, &shellViewModel](const QString& modelId, bool success) {
                          if (success) {
                              controller.refreshOllamaStatus();
+                             shellViewModel.addNotification(QStringLiteral("Models"),
+                                 QStringLiteral("Model Installed"),
+                                 QStringLiteral("'%1' has been successfully downloaded and is ready for local inference.").arg(modelId));
+                         } else {
+                             shellViewModel.addNotification(QStringLiteral("Models"),
+                                 QStringLiteral("Installation Failed"),
+                                 QStringLiteral("Could not retrieve '%1'. Please ensure your server is active and try again.").arg(modelId));
                          }
                      });
     QObject::connect(&ollamaPuller, &OllamaModelPuller::removeFinished, &controller,
-                     [&controller](const QString&, bool success) {
+                     [&controller, &shellViewModel](const QString& modelId, bool success) {
                          if (success) {
                              controller.refreshOllamaStatus();
+                             shellViewModel.addNotification(QStringLiteral("Models"),
+                                 QStringLiteral("Model Removed"),
+                                 QStringLiteral("'%1' has been deleted. Disk space has been reclaimed.").arg(modelId));
                          }
                      });
     OllamaLibraryFetcher ollamaLibraryFetcher;

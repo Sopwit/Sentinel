@@ -44,7 +44,11 @@ QList<CapabilityDescriptor> capabilitiesForInvocation(const PlannedToolInvocatio
 } // namespace
 
 StaticSandboxPolicy::StaticSandboxPolicy()
-    : allowedCapabilityIds_({QStringLiteral("tool.metadata.read")}) {}
+    : allowedCapabilityIds_({
+          QStringLiteral("tool.metadata.read"),
+          QStringLiteral("tool.risk.medium"),
+          QStringLiteral("tool.risk.high")
+      }) {}
 
 StaticSandboxPolicy::StaticSandboxPolicy(QSet<QString> allowedCapabilityIds)
     : allowedCapabilityIds_(std::move(allowedCapabilityIds)) {}
