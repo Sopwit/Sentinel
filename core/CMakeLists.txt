@@ -68,6 +68,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ModelRouting.h
     include/sentinel/core/NullAgentRuntime.h
     include/sentinel/core/NullToolExecutor.h
+    include/sentinel/core/RealToolExecutor.h
     include/sentinel/core/OllamaRuntime.h
     include/sentinel/core/OrchestrationDiagnostics.h
     include/sentinel/core/OrchestrationSnapshot.h
@@ -140,6 +141,7 @@ add_library(sentinel_core STATIC
     src/ModelRegistry.cpp
     src/NullAgentRuntime.cpp
     src/NullToolExecutor.cpp
+    src/RealToolExecutor.cpp
     src/OllamaRuntime.cpp
     src/OrchestrationDiagnostics.cpp
     src/PiperTts.cpp

@@ -1009,6 +1009,66 @@ void AppSettings::setUiDensity(const QString& density) {
     emit productExperienceChanged();
 }
 
+bool AppSettings::notifyModelDownloads() const {
+    return store_ ? store_->value(QString::fromLatin1(notifyModelDownloadsKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setNotifyModelDownloads(bool enabled) {
+    if (enabled == notifyModelDownloads() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(notifyModelDownloadsKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit productExperienceChanged();
+}
+
+bool AppSettings::notifyModelRemovals() const {
+    return store_ ? store_->value(QString::fromLatin1(notifyModelRemovalsKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setNotifyModelRemovals(bool enabled) {
+    if (enabled == notifyModelRemovals() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(notifyModelRemovalsKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit productExperienceChanged();
+}
+
+bool AppSettings::notifyAgentResponses() const {
+    return store_ ? store_->value(QString::fromLatin1(notifyAgentResponsesKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setNotifyAgentResponses(bool enabled) {
+    if (enabled == notifyAgentResponses() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(notifyAgentResponsesKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit productExperienceChanged();
+}
+
+bool AppSettings::notifySystemUpdates() const {
+    return store_ ? store_->value(QString::fromLatin1(notifySystemUpdatesKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setNotifySystemUpdates(bool enabled) {
+    if (enabled == notifySystemUpdates() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(notifySystemUpdatesKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit productExperienceChanged();
+}
+
 QString AppSettings::notificationCenterJson() const {
     return store_ ? store_->value(QString::fromLatin1(notificationCenterJsonKey),
                                   QStringLiteral("{\"notifications\":[]}"))

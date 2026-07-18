@@ -32,5 +32,7 @@
     <true/>
     <key>NSSupportsAutomaticGraphicsSwitching</key>
     <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Sentinel needs microphone access to capture voice commands and transcribe them.</string>
 </dict>
 </plist>

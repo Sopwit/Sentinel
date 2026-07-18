@@ -14,6 +14,8 @@ target_link_libraries(sentinel_desktop_viewmodels
     PUBLIC
         sentinel_core
         Qt6::Core
+        Qt6::Widgets
+        Qt6::Network
 )
 
 qt_add_executable(sentinel-desktop
