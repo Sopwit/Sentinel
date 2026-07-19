@@ -28,7 +28,7 @@ ApplicationWindow {
         MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         root.shellReady = true
         if (!root.viewModel.onboardingComplete)
-            onboardingModal.open()
+            onboardingScreen.active = true
         else if (root.viewModel.recoveryDraftText.length > 0)
             recoveryModal.open()
     })
@@ -49,6 +49,12 @@ ApplicationWindow {
             root.requestActivate()
             if (pageName.length > 0) {
                 root.navigateToPage(pageName)
+            }
+        }
+        function onOnboardingCompleteChanged() {
+            if (!root.viewModel.onboardingComplete && !onboardingScreen.active) {
+                onboardingScreen.step = 0
+                onboardingScreen.active = true
             }
         }
     }
@@ -236,135 +242,13 @@ ApplicationWindow {
         onFocusChatRequested: root.focusChatComposer()
     }
 
-    SentinelOverlayModal {
-        id: onboardingModal
-        accent: SentinelTheme.modeAccent(root.viewModel.currentModeName)
-        modeName: root.viewModel.currentModeName
-        preferredWidth: Math.min(720, root.width - SentinelTheme.space4Xl)
-        preferredHeight: Math.min(620, root.height - SentinelTheme.space4Xl)
-        closePolicy: Popup.NoAutoClose
-
-        property int step: 0
-        readonly property var titles: [
-            qsTr("Welcome to Sentinel"),
-            qsTr("Privacy Philosophy"),
-            qsTr("Choose Theme"),
-            qsTr("Configure AI"),
-            qsTr("Workspace Introduction"),
-            qsTr("Finish")
-        ]
-
-        contentItem: ColumnLayout {
-            spacing: SentinelTheme.spaceLg
-
-            Label {
-                Layout.fillWidth: true
-                Layout.margins: SentinelTheme.spaceLg
-                Layout.bottomMargin: 0
-                text: onboardingModal.titles[onboardingModal.step]
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontTitle
-                font.bold: true
-            }
-
-            StackLayout {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                Layout.leftMargin: SentinelTheme.spaceLg
-                Layout.rightMargin: SentinelTheme.spaceLg
-                currentIndex: onboardingModal.step
-
-                ColumnLayout {
-                    spacing: SentinelTheme.spaceSm
-                    Label {
-                        Layout.fillWidth: true
-                        text: qsTr("Sentinel is a local-first desktop assistant for chat, Brain, workspaces, controlled tasks, and notifications.")
-                        color: SentinelTheme.textMuted
-                        wrapMode: Text.WordWrap
-                    }
-                    Flow {
-                        Layout.fillWidth: true
-                        spacing: SentinelTheme.spaceSm
-                        Repeater {
-                            model: ["Coding", "Study", "Writing", "General Assistant"]
-                            SentinelButton {
-                                required property string modelData
-                                text: modelData
-                                onClicked: root.viewModel.onboardingUseCase = modelData
-                            }
-                        }
-                    }
-                }
-
-                ColumnLayout {
-                    spacing: SentinelTheme.spaceSm
-                    InfoRow { label: qsTr("Local-first"); value: qsTr("Settings, memory, chat history, notifications, diagnostics, and recovery data stay local."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
-                    InfoRow { label: qsTr("No telemetry"); value: qsTr("Telemetry is disabled by default and no analytics uploads are added."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
-                    InfoRow { label: qsTr("User control"); value: qsTr("Updates, exports, tasks, providers, and sensitive operations require visible user action."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
-                }
-
-                Flow {
-                    spacing: SentinelTheme.spaceSm
-                    Repeater {
-                        model: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "System Sync"]
-                        SentinelButton {
-                            required property string modelData
-                            text: modelData
-                            onClicked: root.viewModel.themeName = modelData
-                        }
-                    }
-                }
-
-                Flow {
-                    spacing: SentinelTheme.spaceSm
-                    Repeater {
-                        model: ["Ollama", "LM Studio", "llama.cpp server", "OpenAI-compatible local endpoint"]
-                        SentinelButton {
-                            required property string modelData
-                            text: modelData
-                            onClicked: root.viewModel.onboardingAiProvider = modelData
-                        }
-                    }
-                }
-
-                ColumnLayout {
-                    spacing: SentinelTheme.spaceSm
-                    InfoRow { label: qsTr("Brain"); value: qsTr("Local memory, recall, context, summaries, and insights."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
-                    InfoRow { label: qsTr("Workspaces"); value: qsTr("Personal, Coding, Research, Writing, and Student scopes without folder scans."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
-                    InfoRow { label: qsTr("Tasks"); value: qsTr("Controlled task plans require approval and visible step-by-step progress."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
-                    InfoRow { label: qsTr("Notifications"); value: qsTr("Local in-app center with categories, pin, archive, read state, filtering, and search."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
-                }
-
-                ColumnLayout {
-                    spacing: SentinelTheme.spaceSm
-                    InfoRow { label: qsTr("Use Case"); value: root.viewModel.onboardingUseCase; Layout.fillWidth: true }
-                    InfoRow { label: qsTr("Theme"); value: root.viewModel.themeName; Layout.fillWidth: true }
-                    InfoRow { label: qsTr("AI"); value: root.viewModel.onboardingAiProvider + qsTr(" / no downloads are started."); Layout.fillWidth: true; valueMaximumLineCount: 2 }
-                    InfoRow { label: qsTr("Privacy"); value: qsTr("No telemetry, no hidden uploads, no silent updates, no hidden indexing, no hidden cloud activation."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.margins: SentinelTheme.spaceLg
-                SentinelButton {
-                    text: qsTr("Back")
-                    enabled: onboardingModal.step > 0
-                    onClicked: onboardingModal.step--
-                }
-                Item { Layout.fillWidth: true }
-                SentinelButton {
-                    text: onboardingModal.step < 5 ? qsTr("Next") : qsTr("Start")
-                    onClicked: {
-                        if (onboardingModal.step < 5) {
-                            onboardingModal.step++
-                        } else {
-                            root.viewModel.onboardingComplete = true
-                            onboardingModal.close()
-                        }
-                    }
-                }
-            }
+    OnboardingScreen {
+        id: onboardingScreen
+        viewModel: root.viewModel
+        anchors.fill: parent
+        onFinished: {
+            root.viewModel.onboardingComplete = true
+            onboardingScreen.active = false
         }
     }
 

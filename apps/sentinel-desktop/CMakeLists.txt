@@ -102,6 +102,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/ModelsPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/SettingsPage.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/OnboardingScreen.qml
 )
 
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
@@ -135,6 +136,7 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml PROPE
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml PROPERTIES QT_RESOURCE_ALIAS DashboardPage.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/ModelsPage.qml PROPERTIES QT_RESOURCE_ALIAS ModelsPage.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/SettingsPage.qml PROPERTIES QT_RESOURCE_ALIAS SettingsPage.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/OnboardingScreen.qml PROPERTIES QT_RESOURCE_ALIAS OnboardingScreen.qml)
 
 qt_add_qml_module(sentinel-desktop
     URI Sentinel.Desktop
