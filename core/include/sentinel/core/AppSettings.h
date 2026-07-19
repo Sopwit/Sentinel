@@ -40,6 +40,8 @@ class AppSettings final : public QObject {
                    companionEnabledChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeEnabledChanged)
+    Q_PROPERTY(bool agentAutonomousMode READ agentAutonomousMode WRITE setAgentAutonomousMode
+                   NOTIFY agentAutonomousModeChanged)
     Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
                    piperBinaryPathChanged)
     Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
@@ -91,6 +93,8 @@ class AppSettings final : public QObject {
                    onboardingCompleteChanged)
     Q_PROPERTY(QString onboardingUseCase READ onboardingUseCase WRITE setOnboardingUseCase NOTIFY
                    onboardingUseCaseChanged)
+    Q_PROPERTY(QString selectedSystemMode READ selectedSystemMode WRITE setSelectedSystemMode NOTIFY
+                   selectedSystemModeChanged)
     Q_PROPERTY(QString onboardingAiProvider READ onboardingAiProvider WRITE setOnboardingAiProvider
                    NOTIFY onboardingUseCaseChanged)
     Q_PROPERTY(QString recoveryDraftText READ recoveryDraftText WRITE setRecoveryDraftText NOTIFY
@@ -159,6 +163,8 @@ public:
     void setCompanionEnabled(bool enabled);
     bool developerModeEnabled() const;
     void setDeveloperModeEnabled(bool enabled);
+    bool agentAutonomousMode() const;
+    void setAgentAutonomousMode(bool enabled);
     QString piperBinaryPath() const;
     void setPiperBinaryPath(const QString& path);
     QString piperModelPath() const;
@@ -213,6 +219,8 @@ public:
     void setOnboardingUseCase(const QString& useCase);
     QString onboardingAiProvider() const;
     void setOnboardingAiProvider(const QString& provider);
+    QString selectedSystemMode() const;
+    void setSelectedSystemMode(const QString& mode);
     QString recoveryDraftText() const;
     void setRecoveryDraftText(const QString& text);
     bool reducedMotionEnabled() const;
@@ -256,6 +264,7 @@ signals:
     void contextExplainabilityVisibleChanged();
     void companionEnabledChanged();
     void developerModeEnabledChanged();
+    void agentAutonomousModeChanged();
     void piperBinaryPathChanged();
     void piperModelPathChanged();
     void whisperBinaryPathChanged();
@@ -273,6 +282,7 @@ signals:
     void notificationPolicyChanged();
     void onboardingCompleteChanged();
     void onboardingUseCaseChanged();
+    void selectedSystemModeChanged();
     void recoveryDraftTextChanged();
     void productExperienceChanged();
     void controlledAgentTasksChanged();
@@ -295,6 +305,7 @@ private:
     static constexpr auto contextExplainabilityVisibleKey = "contextExplainabilityVisible";
     static constexpr auto companionEnabledKey = "companionEnabled";
     static constexpr auto developerModeEnabledKey = "developerModeEnabled";
+    static constexpr auto agentAutonomousModeKey = "agentAutonomousMode";
     static constexpr auto piperBinaryPathKey = "piperBinaryPath";
     static constexpr auto piperModelPathKey = "piperModelPath";
     static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";
@@ -322,6 +333,7 @@ private:
     static constexpr auto onboardingCompleteKey = "onboardingComplete";
     static constexpr auto onboardingUseCaseKey = "onboardingUseCase";
     static constexpr auto onboardingAiProviderKey = "onboardingAiProvider";
+    static constexpr auto selectedSystemModeKey = "selectedSystemMode";
     static constexpr auto recoveryDraftTextKey = "recoveryDraftText";
     static constexpr auto reducedMotionEnabledKey = "reducedMotionEnabled";
     static constexpr auto highContrastEnabledKey = "highContrastEnabled";

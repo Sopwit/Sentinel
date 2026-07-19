@@ -508,6 +508,22 @@ void AppSettings::setDeveloperModeEnabled(bool enabled) {
     emit developerModeEnabledChanged();
 }
 
+bool AppSettings::agentAutonomousMode() const {
+    return store_ ? store_->value(QString::fromLatin1(agentAutonomousModeKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setAgentAutonomousMode(bool enabled) {
+    if (enabled == agentAutonomousMode() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(agentAutonomousModeKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit agentAutonomousModeChanged();
+}
+
 QString AppSettings::piperBinaryPath() const {
     return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
                   : QString();
@@ -945,6 +961,20 @@ void AppSettings::setOnboardingAiProvider(const QString& provider) {
 
     store_->setValue(QString::fromLatin1(onboardingAiProviderKey), selected);
     emit onboardingUseCaseChanged();
+}
+
+QString AppSettings::selectedSystemMode() const {
+    return store_ ? store_->value(QString::fromLatin1(selectedSystemModeKey), QStringLiteral("Chat"))
+                  : QStringLiteral("Chat");
+}
+
+void AppSettings::setSelectedSystemMode(const QString& mode) {
+    if (mode == selectedSystemMode() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(selectedSystemModeKey), mode);
+    emit selectedSystemModeChanged();
 }
 
 QString AppSettings::recoveryDraftText() const {

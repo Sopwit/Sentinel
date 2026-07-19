@@ -7,8 +7,10 @@ ShellPanel {
     id: homeChat
     required property var viewModel
     property bool compact: width < 760
+    property bool forceChatView: false
     readonly property bool inChatMode: (viewModel.conversationHistoryMessageCount > 0)
                                        || sendBusy
+                                       || forceChatView
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property bool chatReady: viewModel.localChatSendAvailable
     readonly property bool canSend: viewModel.localChatSendAvailable
@@ -45,6 +47,11 @@ ShellPanel {
             } else {
                 homePromptInput.text = transcript
                 homePromptInput.forceActiveFocus()
+            }
+        }
+        function onChatMessagesChanged() {
+            if (homeChat.viewModel.conversationHistoryMessageCount === 0) {
+                homeChat.forceChatView = false;
             }
         }
     }
@@ -1099,6 +1106,93 @@ ShellPanel {
                         Layout.fillWidth: true
                         Layout.alignment: Qt.AlignHCenter
                         spacing: SentinelTheme.spaceSm * homeChat.resolutionScale
+
+                        Label {
+                            text: qsTr("Mode")
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                        }
+
+                        ComboBox {
+                            id: homeModeSelector
+                            Layout.preferredWidth: Math.min(140, 110 * homeChat.resolutionScale)
+                            Layout.preferredHeight: 32 * homeChat.resolutionScale
+                            model: homeChat.viewModel.availableModes
+                            currentIndex: homeChat.viewModel.availableModes.indexOf(homeChat.viewModel.currentModeName)
+                            onActivated: function(index) {
+                                if (index >= 0 && index < homeChat.viewModel.availableModes.length)
+                                    homeChat.viewModel.currentModeName = homeChat.viewModel.availableModes[index]
+                            }
+                            displayText: currentIndex >= 0 ? homeChat.viewModel.availableModes[currentIndex] : qsTr("Mode")
+
+                            contentItem: Text {
+                                text: homeModeSelector.displayText
+                                color: homeModeSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                                verticalAlignment: Text.AlignVCenter
+                                leftPadding: SentinelTheme.spaceSm
+                                rightPadding: SentinelTheme.spaceSm
+                                elide: Text.ElideRight
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd * homeChat.resolutionScale
+                                color: homeModeSelector.hovered
+                                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
+                                       : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
+                                border.color: homeModeSelector.activeFocus
+                                              ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.62)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                            }
+
+                            popup: Popup {
+                                id: homeModePopup
+                                y: homeModeSelector.height + 4
+                                width: homeModeSelector.width
+                                implicitHeight: Math.min(contentItem.implicitHeight + 2 * padding, 280)
+                                padding: SentinelTheme.spaceXs
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd * homeChat.resolutionScale
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
+                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                }
+
+                                contentItem: ListView {
+                                    clip: true
+                                    implicitHeight: contentHeight
+                                    model: homeModeSelector.popup.visible ? homeModeSelector.delegateModel : null
+                                    currentIndex: homeModeSelector.highlightedIndex
+                                    ScrollBar.vertical: ScrollBar {
+                                        policy: ScrollBar.AsNeeded
+                                    }
+                                }
+                            }
+
+                            delegate: ItemDelegate {
+                                width: homeModeSelector.width - SentinelTheme.spaceXs * 2
+                                height: 32 * homeChat.resolutionScale
+                                highlighted: homeModeSelector.highlightedIndex === index
+                                hoverEnabled: true
+
+                                contentItem: Text {
+                                    text: modelData
+                                    color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
+                                    font.bold: homeChat.viewModel.availableModes[index] === homeChat.viewModel.currentModeName
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                    leftPadding: SentinelTheme.spaceSm
+                                }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusSm
+                                    color: highlighted || hovered
+                                           ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
+                                           : "transparent"
+                                }
+                            }
+                        }
 
                         Label {
                             text: qsTr("Provider")

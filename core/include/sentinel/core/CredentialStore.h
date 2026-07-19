@@ -206,5 +206,6 @@ private:
 
 CredentialStore defaultCredentialStore();
 CredentialStore inMemoryTestCredentialStore();
+CredentialStore platformCredentialStore();
 
 } // namespace sentinel::core

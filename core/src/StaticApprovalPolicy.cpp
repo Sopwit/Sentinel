@@ -56,8 +56,8 @@ ApprovalDecision StaticApprovalPolicy::evaluate(const ToolInvocationPlan& plan) 
 
     if (!requests.isEmpty()) {
         return {
-            ApprovalStatus::Approved,
-            QStringLiteral("All planned tool invocations are auto-approved by runtime policy."),
+            ApprovalStatus::RequiresApproval,
+            QStringLiteral("One or more planned tool invocations require approval."),
             requests,
         };
     }

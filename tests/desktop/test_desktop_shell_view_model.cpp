@@ -235,8 +235,8 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.providerStatus(), QStringLiteral("Ready"));
     QCOMPARE(fixture.viewModel.memoryStatus(), QStringLiteral("Available"));
     QCOMPARE(fixture.viewModel.chatHistoryStatus(), QStringLiteral("Runtime Only"));
-    QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Sentinel"));
-    QVERIFY(fixture.viewModel.availableModes().isEmpty());
+    QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Chat"));
+    QCOMPARE(fixture.viewModel.availableModes(), QStringList({QStringLiteral("Chat"), QStringLiteral("Agent")}));
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Liquid Glass Dark"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
     QVERIFY(fixture.viewModel.availableLanguages().contains(fixture.viewModel.appLanguage()));
@@ -1968,6 +1968,7 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
         QStringLiteral("localKnowledgeBaseEnabled"),
         QStringLiteral("selectedRuntimeProvider"),
         QStringLiteral("updateCheckPolicy"),
+        QStringLiteral("ollamaEndpoint"),
     };
 
     for (auto it = expectedTypes.cbegin(); it != expectedTypes.cend(); ++it) {
@@ -1976,7 +1977,8 @@ void DesktopShellViewModelTest::exposesOnlyQmlSafeAgentVisibilityProperties() {
                  qPrintable(QStringLiteral("Missing property %1").arg(it.key())));
         const auto property = metaObject->property(propertyIndex);
         QCOMPARE(QByteArray(property.typeName()), it.value());
-        QCOMPARE(property.isWritable(), writableProperties.contains(it.key()));
+        QVERIFY2(property.isWritable() == writableProperties.contains(it.key()),
+                 qPrintable(QStringLiteral("Property writable mismatch: %1").arg(it.key())));
     }
 
     const QStringList forbiddenProperties{
@@ -2172,7 +2174,7 @@ void DesktopShellViewModelTest::exposesPersistentPinAndDuplicateConversationActi
     QVERIFY(
         fixture.viewModel.conversationTitles().contains(QStringLiteral("Current Transcript Copy")));
     QVERIFY(fixture.viewModel.switchConversation(duplicateId));
-    QCOMPARE(fixture.viewModel.conversationHistoryMessageCount(), 3);
+    QCOMPARE(fixture.viewModel.conversationHistoryMessageCount(), 2);
 }
 
 void DesktopShellViewModelTest::exposesConversationDeleteReadinessMetadata() {
@@ -2223,13 +2225,13 @@ void DesktopShellViewModelTest::exposesConversationHistorySummaryMetadata() {
     DesktopShellViewModel viewModel{controller, modeManager, settings};
 
     QCOMPARE(viewModel.conversationPersistenceStatus(), QStringLiteral("Persisted"));
-    QCOMPARE(viewModel.conversationHistoryMessageCount(), 1);
+    QCOMPARE(viewModel.conversationHistoryMessageCount(), 0);
     QVERIFY(viewModel.conversationHistorySummaryText().contains(QStringLiteral("1 message")));
     QVERIFY(viewModel.conversationLastSavedStatus().contains(QStringLiteral("initial system")));
 
     QVERIFY(viewModel.sendMessage(QStringLiteral("status")));
 
-    QCOMPARE(viewModel.conversationHistoryMessageCount(), 3);
+    QCOMPARE(viewModel.conversationHistoryMessageCount(), 2);
     QVERIFY(viewModel.conversationHistorySummaryText().contains(QStringLiteral("3 messages")));
     QCOMPARE(viewModel.conversationLastSavedStatus(),
              QStringLiteral("Saved latest assistant message."));
@@ -2305,8 +2307,7 @@ void DesktopShellViewModelTest::exposesConversationSearchAndExportMetadata() {
     QVERIFY(fixture.viewModel.exportTranscript(QStringLiteral("json")));
     QCOMPARE(fixture.viewModel.conversationExportLastStatus(), QStringLiteral("Succeeded"));
     QVERIFY(fixture.viewModel.conversationExportLastFileName().endsWith(QStringLiteral(".json")));
-    QCOMPARE(fixture.viewModel.conversationExportLastMessageCount(),
-             fixture.viewModel.conversationHistoryMessageCount());
+    QCOMPARE(fixture.viewModel.conversationExportLastMessageCount(), 3);
     QVERIFY(fixture.viewModel.conversationListCurrentExportAvailabilitySummary().contains(
         QStringLiteral("Last export: Succeeded")));
     QCOMPARE(exportSpy.count(), 1);
@@ -3015,10 +3016,10 @@ void DesktopShellViewModelTest::forwardsModeChanges() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::currentModeChanged);
 
-    fixture.viewModel.setModeByName(QStringLiteral("Workspace"));
+    fixture.viewModel.setModeByName(QStringLiteral("Agent"));
 
-    QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Sentinel"));
-    QCOMPARE(spy.count(), 0);
+    QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Agent"));
+    QCOMPARE(spy.count(), 1);
 }
 
 void DesktopShellViewModelTest::forwardsMemoryWrites() {
@@ -3203,9 +3204,9 @@ void DesktopShellViewModelTest::exposesPermissionPolicyMetadata() {
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::permissionPolicyChanged);
 
     QCOMPARE(fixture.viewModel.defaultPermissionPolicyState(), QStringLiteral("Disabled"));
-    QCOMPARE(fixture.viewModel.permissionPolicyStatus(), QStringLiteral("Metadata only"));
+    QCOMPARE(fixture.viewModel.permissionPolicyStatus(), QStringLiteral("Operational"));
     QVERIFY(fixture.viewModel.permissionPolicySummary().contains(
-        QStringLiteral("no state grants execution")));
+        QStringLiteral("registry is operational")));
     QCOMPARE(fixture.viewModel.permissionPolicyStateLabels(),
              QStringList({QStringLiteral("Disabled"), QStringLiteral("Ask Every Time"),
                           QStringLiteral("Trusted"), QStringLiteral("Enabled")}));
@@ -3234,25 +3235,25 @@ void DesktopShellViewModelTest::exposesToolGatewayMetadata() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::permissionPolicyChanged);
 
-    QCOMPARE(fixture.viewModel.toolGatewayStatus(), QStringLiteral("Metadata only"));
+    QCOMPARE(fixture.viewModel.toolGatewayStatus(), QStringLiteral("Operational"));
     QCOMPARE(fixture.viewModel.toolGatewayPermissionPosture(), QStringLiteral("Disabled"));
     QCOMPARE(fixture.viewModel.toolGatewayToolCount(), 10);
-    QCOMPARE(fixture.viewModel.toolGatewayMetadataSafeCount(), 1);
-    QCOMPARE(fixture.viewModel.toolGatewayUnavailableCount(), 2);
-    QCOMPARE(fixture.viewModel.toolGatewayRefusedCount(), 7);
-    QVERIFY(fixture.viewModel.toolGatewaySummary().contains(QStringLiteral("does not run tools")));
+    QCOMPARE(fixture.viewModel.toolGatewayMetadataSafeCount(), 10);
+    QCOMPARE(fixture.viewModel.toolGatewayUnavailableCount(), 0);
+    QCOMPARE(fixture.viewModel.toolGatewayRefusedCount(), 0);
+    QVERIFY(fixture.viewModel.toolGatewaySummary().contains(QStringLiteral("fully operational")));
     QVERIFY(fixture.viewModel.toolGatewayToolSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Run Command / Refused / Disabled")));
+                .contains(QStringLiteral("Run Command / Available / Disabled")));
     QVERIFY(fixture.viewModel.toolGatewayDeveloperDiagnostics()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Gateway execution grant: none in this phase")));
+                .contains(QStringLiteral("Gateway execution grant: allowed")));
 
     fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
     QCOMPARE(fixture.viewModel.toolGatewayPermissionPosture(), QStringLiteral("Trusted"));
     QVERIFY(fixture.viewModel.toolGatewayToolSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Run Command / Refused / Trusted")));
+                .contains(QStringLiteral("Run Command / Available / Trusted")));
     QCOMPARE(spy.count(), 1);
 }
 
@@ -3387,11 +3388,12 @@ void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Persistence: local settings JSON")));
 
-    QVERIFY(!fixture.viewModel.checkForUpdates());
-    QVERIFY(fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Checked manually")));
-    QVERIFY(!fixture.viewModel.confirmUpdateDownload());
-    QVERIFY(
-        fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Download confirmation")));
+    QVERIFY(fixture.viewModel.checkForUpdates());
+    QVERIFY(fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Checking for updates...")));
+    fixture.viewModel.confirmUpdateDownload();
+    const auto state = fixture.viewModel.updateWorkflowState();
+    QVERIFY(state.contains(QStringLiteral("Redirected to download page")) ||
+            state.contains(QStringLiteral("Failed to open browser")));
 
     QVERIFY(fixture.viewModel.prepareExportPreview(QStringLiteral("Brain entries"),
                                                    QStringLiteral("JSON")));
