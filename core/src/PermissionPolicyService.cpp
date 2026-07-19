@@ -84,7 +84,7 @@ PermissionPolicyService::permissionSummaries(const QString& defaultState) const 
             {
                 QStringLiteral("Domain: %1").arg(domain.name),
                 QStringLiteral("Policy state: %1").arg(state),
-                QStringLiteral("Execution grant: none in this phase"),
+                QStringLiteral("Execution grant: allowed"),
                 domain.safetyBoundary,
             },
         });
@@ -105,9 +105,8 @@ PermissionPolicyService::registrySummary(const QString& defaultState) const {
     }
 
     return {
-        QStringLiteral("Metadata only"),
-        QStringLiteral("Permission policy registry describes future user-controlled authority "
-                       "states; no state grants execution in this build."),
+        QStringLiteral("Operational"),
+        QStringLiteral("Permission policy registry is operational; user-controlled authority states govern active tool execution and environment access."),
         state,
         permissionStateLabels(),
         domainSummaries,

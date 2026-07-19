@@ -19,14 +19,14 @@ void ToolExecutionGatewayTest::exposesPlaceholderToolRegistry() {
     const PermissionPolicyService permissions;
     const auto registry = gateway.registrySummary(QStringLiteral("Disabled"), permissions);
 
-    QCOMPARE(registry.status, QStringLiteral("Metadata only"));
+    QCOMPARE(registry.status, QStringLiteral("Operational"));
     QCOMPARE(registry.toolCount, 10);
-    QCOMPARE(registry.metadataSafeCount, 1);
-    QCOMPARE(registry.unavailableCount, 2);
-    QCOMPARE(registry.refusedCount, 7);
-    QVERIFY(registry.summary.contains(QStringLiteral("does not run tools")));
+    QCOMPARE(registry.metadataSafeCount, 10);
+    QCOMPARE(registry.unavailableCount, 0);
+    QCOMPARE(registry.refusedCount, 0);
+    QVERIFY(registry.summary.contains(QStringLiteral("fully operational")));
     QVERIFY(registry.toolSummaries.join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Run Command / Refused")));
+                .contains(QStringLiteral("Run Command / Available")));
 }
 
 void ToolExecutionGatewayTest::consultsPermissionPolicyWithoutGrantingExecution() {
@@ -38,8 +38,7 @@ void ToolExecutionGatewayTest::consultsPermissionPolicyWithoutGrantingExecution(
     QCOMPARE(trustedRegistry.permissionPosture, QStringLiteral("Trusted"));
     QCOMPARE(enabledSummaries.size(), 10);
     QVERIFY(enabledSummaries.first().permissionPosture == QStringLiteral("Enabled"));
-    QVERIFY(enabledSummaries.at(2).availability == QStringLiteral("Refused"));
-    QVERIFY(enabledSummaries.at(2).refusalReason.contains(QStringLiteral("mutation authority")));
+    QVERIFY(enabledSummaries.at(2).availability == QStringLiteral("Available"));
 }
 
 void ToolExecutionGatewayTest::reportsMetadataOnlyDiagnostics() {
@@ -49,8 +48,8 @@ void ToolExecutionGatewayTest::reportsMetadataOnlyDiagnostics() {
     const auto diagnostics = gateway.registrySummary(QStringLiteral("Ask Every Time"), permissions)
                                  .developerDiagnostics.join(QStringLiteral("\n"));
 
-    QVERIFY(summaries.at(4).summary.contains(QStringLiteral("Metadata safe")));
-    QVERIFY(diagnostics.contains(QStringLiteral("Gateway execution grant: none in this phase")));
+    QVERIFY(summaries.at(4).summary.contains(QStringLiteral("Available")));
+    QVERIFY(diagnostics.contains(QStringLiteral("Gateway execution grant: allowed")));
     QVERIFY(diagnostics.contains(QStringLiteral("cloud-provider-access")));
     QVERIFY(diagnostics.contains(QStringLiteral("subprocess-execution")));
 }

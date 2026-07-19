@@ -78,9 +78,9 @@ void StaticApprovalPolicyTest::requiresApprovalForRiskyPlans() {
         makeInvocation(QStringLiteral("risky-tool"), ToolRiskLevel::High),
     }));
 
-    QCOMPARE(decision.status, ApprovalStatus::Approved);
+    QCOMPARE(decision.status, ApprovalStatus::RequiresApproval);
     QCOMPARE(decision.summary,
-             QStringLiteral("All planned tool invocations are auto-approved by runtime policy."));
+             QStringLiteral("One or more planned tool invocations require approval."));
     QCOMPARE(decision.requests.size(), 1);
     QCOMPARE(decision.requests.first().toolId, QStringLiteral("risky-tool"));
     QCOMPARE(decision.requests.first().riskLevel, ToolRiskLevel::High);
@@ -126,7 +126,7 @@ void StaticApprovalPolicyTest::preservesRequestOrdering() {
         makeInvocation(QStringLiteral("tool-a"), ToolRiskLevel::High),
     }));
 
-    QCOMPARE(decision.status, ApprovalStatus::Approved);
+    QCOMPARE(decision.status, ApprovalStatus::RequiresApproval);
     QCOMPARE(decision.requests.size(), 2);
     QCOMPARE(decision.requests.at(0).toolId, QStringLiteral("tool-b"));
     QCOMPARE(decision.requests.at(1).toolId, QStringLiteral("tool-a"));

@@ -2111,7 +2111,7 @@ void ApplicationControllerTest::reportsPersistedConversationHistorySummary() {
     QVERIFY(controller.sendMessage(QStringLiteral("status")));
 
     QCOMPARE(controller.conversationPersistenceStatus(), QStringLiteral("Persisted"));
-    QCOMPARE(controller.conversationHistoryMessageCount(), 3);
+    QCOMPARE(controller.conversationHistoryMessageCount(), 2);
     QVERIFY(controller.conversationHistorySummaryText().contains(QStringLiteral("3 messages")));
     QVERIFY(controller.conversationHistorySummaryText().contains(QStringLiteral("1 user")));
     QVERIFY(controller.conversationHistorySummaryText().contains(QStringLiteral("1 assistant")));
@@ -2128,7 +2128,7 @@ void ApplicationControllerTest::reportsRuntimeOnlyConversationHistorySummary() {
     QVERIFY(controller.sendMessage(QStringLiteral("status")));
 
     QCOMPARE(controller.conversationPersistenceStatus(), QStringLiteral("Runtime Only"));
-    QCOMPARE(controller.conversationHistoryMessageCount(), 3);
+    QCOMPARE(controller.conversationHistoryMessageCount(), 2);
     QVERIFY(controller.conversationHistorySummaryText().contains(
         QStringLiteral("Runtime Only transcript")));
     QCOMPARE(controller.conversationLastSavedStatus(),

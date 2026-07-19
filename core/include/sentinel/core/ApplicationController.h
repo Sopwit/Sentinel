@@ -1837,6 +1837,8 @@ public:
     Q_INVOKABLE bool recallLocalMemory(const QString& query);
     Q_INVOKABLE void clearLocalMemoryRecall();
     Q_INVOKABLE bool runAgentRequest(const QString& request);
+    Q_INVOKABLE bool agentAutonomousMode() const;
+    Q_INVOKABLE void setAgentAutonomousMode(bool enabled);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
     Q_INVOKABLE void remember(const QString& key, const QString& value);
@@ -2074,6 +2076,8 @@ private:
     QString selectedLocalModel_;
     QString selectedRuntimeProvider_ = QStringLiteral("ollama");
     bool localChatInferenceEnabled_ = false;
+    bool agentAutonomousMode_ = false;
+    QString pendingCommand_;
     bool promptContextInjectionEnabled_ = false;
     bool localInferenceStreamingEnabled_ = false;
     int localInferenceTimeoutMs_ = 30000;

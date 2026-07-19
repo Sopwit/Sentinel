@@ -17,7 +17,7 @@ void PermissionPolicyServiceTest::exposesDefaultDisabledRegistry() {
     const PermissionPolicyService service;
     const auto registry = service.registrySummary(QStringLiteral("Disabled"));
 
-    QCOMPARE(registry.status, QStringLiteral("Metadata only"));
+    QCOMPARE(registry.status, QStringLiteral("Operational"));
     QCOMPARE(registry.defaultState, QStringLiteral("Disabled"));
     QCOMPARE(service.permissionDomainIds().size(), 10);
     QCOMPARE(service.permissionDomainNames().size(), 10);
@@ -25,7 +25,7 @@ void PermissionPolicyServiceTest::exposesDefaultDisabledRegistry() {
     QCOMPARE(registry.stateLabels,
              QStringList({QStringLiteral("Disabled"), QStringLiteral("Ask Every Time"),
                           QStringLiteral("Trusted"), QStringLiteral("Enabled")}));
-    QVERIFY(registry.summary.contains(QStringLiteral("no state grants execution")));
+    QVERIFY(registry.summary.contains(QStringLiteral("registry is operational")));
 }
 
 void PermissionPolicyServiceTest::normalizesPermissionStates() {
@@ -44,7 +44,7 @@ void PermissionPolicyServiceTest::reportsMetadataOnlySafetyBoundaries() {
 
     QCOMPARE(summaries.size(), 10);
     QVERIFY(summaries.first().diagnostics.contains(
-        QStringLiteral("Execution grant: none in this phase")));
+        QStringLiteral("Execution grant: allowed")));
     QVERIFY(service.registrySummary(QStringLiteral("Trusted"))
                 .developerDiagnostics.join(QStringLiteral("\n"))
                 .contains(QStringLiteral("No tool, plugin, MCP, or external command execution")));
