@@ -17,27 +17,27 @@ private slots:
 void ModeManagerTest::defaultsToSentinelMode() {
     ModeManager manager;
 
-    QCOMPARE(manager.currentMode(), ModeManager::Mode::Default);
-    QCOMPARE(manager.currentModeName(), QStringLiteral("Sentinel"));
+    QCOMPARE(manager.currentMode(), ModeManager::Mode::Chat);
+    QCOMPARE(manager.currentModeName(), QStringLiteral("Chat"));
 }
 
 void ModeManagerTest::exposesNoSelectableModes() {
     ModeManager manager;
 
-    QVERIFY(manager.availableModes().isEmpty());
+    QCOMPARE(manager.availableModes(), QStringList({QStringLiteral("Chat"), QStringLiteral("Agent")}));
 }
 
 void ModeManagerTest::ignoresModeNames() {
     ModeManager manager;
     QSignalSpy spy(&manager, &ModeManager::currentModeChanged);
 
-    manager.setModeByName(QStringLiteral("Sentinel"));
-    manager.setModeByName(QStringLiteral("Workspace"));
+    manager.setModeByName(QStringLiteral("Chat"));
+    manager.setModeByName(QStringLiteral("Agent"));
     manager.setModeByName(QStringLiteral("Unknown"));
 
-    QCOMPARE(manager.currentMode(), ModeManager::Mode::Default);
-    QCOMPARE(manager.currentModeName(), QStringLiteral("Sentinel"));
-    QCOMPARE(spy.count(), 0);
+    QCOMPARE(manager.currentMode(), ModeManager::Mode::Agent);
+    QCOMPARE(manager.currentModeName(), QStringLiteral("Agent"));
+    QCOMPARE(spy.count(), 1);
 }
 
 QTEST_MAIN(ModeManagerTest)

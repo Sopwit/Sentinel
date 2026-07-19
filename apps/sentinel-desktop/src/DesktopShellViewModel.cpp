@@ -202,6 +202,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings),
       chatMessages_(this), localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())) {
     lastAgentStatus_ = controller_.agentStatus();
+    const QString savedMode = settings_.selectedSystemMode();
+    if (!savedMode.isEmpty()) {
+        modeManager_.setModeByName(savedMode);
+    }
     controller_.setRoutingModeByName(settings_.routingModeName());
     chatMessages_.setMessages(controller_.chatHistory());
     connect(&controller_, &core::ApplicationController::chatMessagesChanged, this, [this]() {
@@ -293,6 +297,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::companionChanged);
     connect(&settings_, &core::AppSettings::developerModeEnabledChanged, this,
             &DesktopShellViewModel::developerModeChanged);
+    connect(&settings_, &core::AppSettings::agentAutonomousModeChanged, this,
+            &DesktopShellViewModel::agentAutonomousModeChanged);
+    connect(&settings_, &core::AppSettings::selectedSystemModeChanged, this,
+            &DesktopShellViewModel::currentModeChanged);
     connect(&settings_, &core::AppSettings::updateCheckPolicyChanged, this,
             &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::notificationPolicyChanged, this,
@@ -364,6 +372,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::piperFileOutputExecutionEnabledChanged, this, [this]() {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     });
+    connect(&settings_, &core::AppSettings::agentAutonomousModeChanged, this, [this]() {
+        controller_.setAgentAutonomousMode(settings_.agentAutonomousMode());
+    });
     controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
     controller_.setSelectedLocalModel(
         settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
@@ -380,6 +391,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         settings_.setPiperFileOutputExecutionEnabled(false);
     }
     controller_.setPiperFileOutputExecutionEnabled(false);
+    controller_.setAgentAutonomousMode(settings_.agentAutonomousMode());
     if (controller_.activeConversationId() != QStringLiteral("single-transcript")) {
         settings_.setActiveConversationId(controller_.activeConversationId());
     }
@@ -3491,6 +3503,7 @@ QString DesktopShellViewModel::currentModeName() const {
 
 void DesktopShellViewModel::setCurrentModeName(const QString& modeName) {
     modeManager_.setModeByName(modeName);
+    settings_.setSelectedSystemMode(modeName);
 }
 
 QStringList DesktopShellViewModel::availableModes() const {
@@ -3712,6 +3725,16 @@ bool DesktopShellViewModel::developerModeEnabled() const {
 
 void DesktopShellViewModel::setDeveloperModeEnabled(bool enabled) {
     settings_.setDeveloperModeEnabled(enabled);
+}
+
+bool DesktopShellViewModel::agentAutonomousMode() const {
+    return settings_.agentAutonomousMode();
+}
+
+void DesktopShellViewModel::setAgentAutonomousMode(bool enabled) {
+    settings_.setAgentAutonomousMode(enabled);
+    controller_.setAgentAutonomousMode(enabled);
+    emit agentAutonomousModeChanged();
 }
 
 QString DesktopShellViewModel::updateCheckPolicy() const {
@@ -5048,6 +5071,9 @@ bool DesktopShellViewModel::exportControlledAgentTask(const QString& taskId,
 }
 
 bool DesktopShellViewModel::sendMessage(const QString& message) {
+    if (currentModeName() == QStringLiteral("Agent")) {
+        return runAgentRequest(message);
+    }
     return controller_.sendMessage(message);
 }
 

@@ -22,20 +22,27 @@ QString ModeManager::currentModeName() const {
 }
 
 QStringList ModeManager::availableModes() const {
-    return {};
+    return {QStringLiteral("Chat"), QStringLiteral("Agent")};
 }
 
 void ModeManager::setModeByName(const QString& modeName) {
-    Q_UNUSED(modeName)
+    const auto trimmed = modeName.trimmed().toLower();
+    if (trimmed == QStringLiteral("chat")) {
+        setCurrentMode(Mode::Chat);
+    } else if (trimmed == QStringLiteral("agent")) {
+        setCurrentMode(Mode::Agent);
+    }
 }
 
 QString ModeManager::modeToName(Mode mode) {
     switch (mode) {
-    case Mode::Default:
-        return QStringLiteral("Sentinel");
+    case Mode::Chat:
+        return QStringLiteral("Chat");
+    case Mode::Agent:
+        return QStringLiteral("Agent");
     }
 
-    return QStringLiteral("Sentinel");
+    return QStringLiteral("Chat");
 }
 
 } // namespace sentinel::core

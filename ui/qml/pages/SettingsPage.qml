@@ -1074,6 +1074,150 @@ Item {
                             Label {
                                 Layout.preferredWidth: settingsPage.compact ? 88 : 132
                                 Layout.alignment: Qt.AlignVCenter
+                                text: qsTr("System Mode")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            ComboBox {
+                                id: settingsModeCombo
+                                Layout.fillWidth: true
+                                implicitHeight: 36
+                                hoverEnabled: true
+                                model: settingsPage.viewModel.availableModes
+                                currentIndex: settingsPage.viewModel.availableModes.indexOf(settingsPage.viewModel.currentModeName)
+                                displayText: currentIndex >= 0 ? currentText : qsTr("Chat")
+                                onActivated: (index) => {
+                                    if (index >= 0 && index < settingsPage.viewModel.availableModes.length) {
+                                        settingsPage.viewModel.currentModeName = settingsPage.viewModel.availableModes[index]
+                                    }
+                                }
+
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: settingsModeCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
+
+                                background: Rectangle {
+                                    implicitHeight: 36
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: settingsModeCombo.activeFocus
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                                  : settingsModeCombo.hovered || settingsModeCombo.popup.visible
+                                                    ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                }
+
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+
+                                delegate: ItemDelegate {
+                                    id: settingsModeOption
+                                    required property string modelData
+                                    required property int index
+                                    width: settingsModeCombo.width
+                                    implicitHeight: 36
+                                    highlighted: settingsModeCombo.currentIndex === index
+                                    hoverEnabled: true
+
+                                    contentItem: Text {
+                                        text: settingsModeOption.modelData
+                                        color: settingsModeOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
+
+                                    background: Rectangle {
+                                        color: settingsModeOption.highlighted
+                                               ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
+                                               : settingsModeOption.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                }
+
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+                                    border.width: 1
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
+                                text: qsTr("Autonomous Mode")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                elide: Text.ElideRight
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            Switch {
+                                id: autonomousSwitch
+                                checked: settingsPage.viewModel.agentAutonomousMode
+                                hoverEnabled: true
+                                onToggled: settingsPage.viewModel.agentAutonomousMode = checked
+
+                                indicator: Rectangle {
+                                    implicitWidth: 46
+                                    implicitHeight: 24
+                                    x: autonomousSwitch.leftPadding
+                                    y: parent.height / 2 - height / 2
+                                    radius: height / 2
+                                    color: autonomousSwitch.checked
+                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                    border.color: autonomousSwitch.checked
+                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.44)
+                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                    Rectangle {
+                                        x: autonomousSwitch.checked ? parent.width - width - 2 : 2
+                                        y: 2
+                                        width: 20
+                                        height: 20
+                                        radius: 10
+                                        color: autonomousSwitch.checked ? settingsPage.modeAccent : SentinelTheme.textPrimary
+                                        opacity: autonomousSwitch.hovered ? 0.90 : 0.74
+                                        Behavior on x { NumberAnimation { duration: MotionTokens.duration(MotionTokens.fast, settingsPage.viewModel.currentModeName) } }
+                                    }
+                                }
+                            }
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
+                                Layout.alignment: Qt.AlignVCenter
                                 text: qsTr("Endpoint")
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
@@ -2410,6 +2554,12 @@ Item {
                                 text: qsTr("Clear Chat History")
                                 Layout.fillWidth: true
                                 onClicked: clearChatDialog.open()
+                            }
+
+                            SentinelButton {
+                                text: qsTr("Rerun Installation Wizard")
+                                Layout.fillWidth: true
+                                onClicked: settingsPage.viewModel.onboardingComplete = false
                             }
 
                             SentinelButton {

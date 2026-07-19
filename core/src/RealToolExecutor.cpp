@@ -109,12 +109,21 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                                 .arg(command));
                 continue;
             }
-            const QString stdoutContent = QString::fromUtf8(process.readAllStandardOutput());
-            const QString stderrContent = QString::fromUtf8(process.readAllStandardError());
+            const QString stdoutContent = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+            const QString stderrContent = QString::fromUtf8(process.readAllStandardError()).trimmed();
             const int exitCode = process.exitCode();
-            logs.append(
-                QStringLiteral("run-command: exit=%1\nSTDOUT:\n%2\nSTDERR:\n%3")
+            if (exitCode == 0) {
+                if (stdoutContent.isEmpty() && stderrContent.isEmpty()) {
+                    logs.append(QStringLiteral("Command executed successfully. (exit=0)"));
+                } else if (!stdoutContent.isEmpty() && stderrContent.isEmpty()) {
+                    logs.append(QStringLiteral("Command executed successfully. (exit=0)\n\n[STDOUT]:\n%1").arg(stdoutContent));
+                } else {
+                    logs.append(QStringLiteral("Command executed successfully. (exit=0)\n\n[STDOUT]:\n%1\n\n[STDERR]:\n%2").arg(stdoutContent, stderrContent));
+                }
+            } else {
+                logs.append(QStringLiteral("Command execution failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
                     .arg(QString::number(exitCode), stdoutContent, stderrContent));
+            }
         }
         // 4. voice-transcribe
         else if (invocation.toolId == QLatin1String("voice-transcribe")) {

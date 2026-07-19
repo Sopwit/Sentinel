@@ -10,6 +10,7 @@
 #include "sentinel/core/ModeManager.h"
 #include "sentinel/core/NullAgentRuntime.h"
 #include "sentinel/core/RealToolExecutor.h"
+#include "sentinel/core/StaticSandboxPolicy.h"
 #include "sentinel/core/OllamaRuntime.h"
 #include "sentinel/core/RuntimePermissions.h"
 #include "sentinel/core/SQLiteChatHistoryStore.h"
@@ -173,7 +174,7 @@ int main(int argc, char* argv[]) {
         nullptr,
         std::make_unique<sentinel::core::SQLiteChatHistoryStore>(
             pathProvider.chatHistoryDatabasePath()),
-        std::make_unique<sentinel::core::NullAgentRuntime>(), nullptr, nullptr, std::make_unique<sentinel::core::RealToolExecutor>(), nullptr,
+        std::make_unique<sentinel::core::NullAgentRuntime>(sentinel::core::NullAgentRuntime::standardTools()), nullptr, std::make_unique<sentinel::core::StaticSandboxPolicy>(QSet<QString>{QStringLiteral("tool.metadata.read"), QStringLiteral("tool.risk.medium"), QStringLiteral("tool.risk.high")}), std::make_unique<sentinel::core::RealToolExecutor>(), nullptr,
         nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr,
         std::make_unique<sentinel::core::LocalOnlyRuntimePermissionPolicy>(), nullptr, nullptr,
         nullptr, nullptr, nullptr, nullptr, nullptr,

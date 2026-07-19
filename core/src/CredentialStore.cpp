@@ -1,6 +1,8 @@
 #include "sentinel/core/CredentialStore.h"
 
 #include <QtGlobal>
+#include <QProcess>
+#include <QCoreApplication>
 
 #include <utility>
 
@@ -430,8 +432,372 @@ InMemoryCredentialBackend::containsCredential(const CredentialKey& key) const {
     };
 }
 
+class MacKeychainCredentialBackend final : public ICredentialBackend {
+public:
+    CredentialStoreBackend backend() const override {
+        return CredentialStoreBackend::MacOSKeychain;
+    }
+    CredentialStoreSummary summary() const override {
+        return summaryForBackend(
+            CredentialStoreBackend::MacOSKeychain, CredentialStoreStatus::Ready,
+            CredentialStoreReadiness::TestOnlyReady, true,
+            QStringLiteral("macOS Keychain backend ready: credentials are saved securely in macOS Keychain system."),
+            QStringLiteral("macOS Keychain / Ready / secure persistent storage."));
+    }
+    CredentialBackendResult storeCredential(const CredentialKey& key, const QString& secret) override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Store, backend(), key);
+        }
+        QProcess process;
+        QStringList arguments;
+        arguments << "add-generic-password" << "-a" << "Sentinel" << "-s" << key.storageKey() << "-w" << secret << "-U";
+        process.start("security", arguments);
+        if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+            return refusedBackendResult(CredentialBackendOperation::Store, backend(), key, "macOS Keychain store failed");
+        }
+        return CredentialBackendResult{
+            CredentialBackendOperation::Store,
+            backend(),
+            true,
+            true,
+            false,
+            key.normalizedProviderId(),
+            key.normalizedCredentialName(),
+            "Saved to macOS Keychain successfully"
+        };
+    }
+    CredentialReadResult readCredential(const CredentialKey& key) const override {
+        if (!key.isValid()) {
+            return {invalidKeyResult(CredentialBackendOperation::Read, backend(), key), std::nullopt};
+        }
+        QProcess process;
+        QStringList arguments;
+        arguments << "find-generic-password" << "-a" << "Sentinel" << "-s" << key.storageKey() << "-w";
+        process.start("security", arguments);
+        if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+            return {
+                refusedBackendResult(CredentialBackendOperation::Read, backend(), key, "macOS Keychain read failed or credential not found"),
+                std::nullopt
+            };
+        }
+        QString secret = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+        return {
+            CredentialBackendResult{
+                CredentialBackendOperation::Read,
+                backend(),
+                true,
+                false,
+                true,
+                key.normalizedProviderId(),
+                key.normalizedCredentialName(),
+                "Read from macOS Keychain successfully"
+            },
+            secret
+        };
+    }
+    CredentialBackendResult deleteCredential(const CredentialKey& key) override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Delete, backend(), key);
+        }
+        QProcess process;
+        QStringList arguments;
+        arguments << "delete-generic-password" << "-a" << "Sentinel" << "-s" << key.storageKey();
+        process.start("security", arguments);
+        if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+            return refusedBackendResult(CredentialBackendOperation::Delete, backend(), key, "macOS Keychain delete failed");
+        }
+        return CredentialBackendResult{
+            CredentialBackendOperation::Delete,
+            backend(),
+            true,
+            true,
+            false,
+            key.normalizedProviderId(),
+            key.normalizedCredentialName(),
+            "Deleted from macOS Keychain successfully"
+        };
+    }
+    CredentialBackendResult containsCredential(const CredentialKey& key) const override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Contains, backend(), key);
+        }
+        const auto readRes = readCredential(key);
+        if (readRes.result.succeeded && readRes.secret.has_value()) {
+            return CredentialBackendResult{
+                CredentialBackendOperation::Contains,
+                backend(),
+                true,
+                false,
+                false,
+                key.normalizedProviderId(),
+                key.normalizedCredentialName(),
+                "Credential exists in macOS Keychain"
+            };
+        }
+        return refusedBackendResult(CredentialBackendOperation::Contains, backend(), key, "Credential not found in macOS Keychain");
+    }
+};
+
+class SecretServiceCredentialBackend final : public ICredentialBackend {
+public:
+    CredentialStoreBackend backend() const override {
+        return CredentialStoreBackend::LinuxSecretService;
+    }
+    CredentialStoreSummary summary() const override {
+        return summaryForBackend(
+            CredentialStoreBackend::LinuxSecretService, CredentialStoreStatus::Ready,
+            CredentialStoreReadiness::TestOnlyReady, true,
+            QStringLiteral("Linux Secret Service backend ready: credentials are saved securely in Linux Secret Service."),
+            QStringLiteral("Linux Secret Service / Ready / secure persistent storage."));
+    }
+    CredentialBackendResult storeCredential(const CredentialKey& key, const QString& secret) override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Store, backend(), key);
+        }
+        QProcess process;
+        QStringList arguments;
+        arguments << "store" << "--label=Sentinel Credential" << "service" << "sentinel" << "key" << key.storageKey();
+        process.start("secret-tool", arguments);
+        if (!process.waitForStarted()) {
+            return refusedBackendResult(CredentialBackendOperation::Store, backend(), key, "Linux Secret Service (secret-tool) failed to start");
+        }
+        process.write(secret.toUtf8());
+        process.closeWriteChannel();
+        if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+            return refusedBackendResult(CredentialBackendOperation::Store, backend(), key, "Linux Secret Service store failed");
+        }
+        return CredentialBackendResult{
+            CredentialBackendOperation::Store,
+            backend(),
+            true,
+            true,
+            false,
+            key.normalizedProviderId(),
+            key.normalizedCredentialName(),
+            "Saved to Linux Secret Service successfully"
+        };
+    }
+    CredentialReadResult readCredential(const CredentialKey& key) const override {
+        if (!key.isValid()) {
+            return {invalidKeyResult(CredentialBackendOperation::Read, backend(), key), std::nullopt};
+        }
+        QProcess process;
+        QStringList arguments;
+        arguments << "lookup" << "service" << "sentinel" << "key" << key.storageKey();
+        process.start("secret-tool", arguments);
+        if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+            return {
+                refusedBackendResult(CredentialBackendOperation::Read, backend(), key, "Linux Secret Service read failed"),
+                std::nullopt
+            };
+        }
+        QString secret = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+        return {
+            CredentialBackendResult{
+                CredentialBackendOperation::Read,
+                backend(),
+                true,
+                false,
+                true,
+                key.normalizedProviderId(),
+                key.normalizedCredentialName(),
+                "Read from Linux Secret Service successfully"
+            },
+            secret
+        };
+    }
+    CredentialBackendResult deleteCredential(const CredentialKey& key) override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Delete, backend(), key);
+        }
+        QProcess process;
+        QStringList arguments;
+        arguments << "clear" << "service" << "sentinel" << "key" << key.storageKey();
+        process.start("secret-tool", arguments);
+        if (!process.waitForFinished(3000) || process.exitCode() != 0) {
+            return refusedBackendResult(CredentialBackendOperation::Delete, backend(), key, "Linux Secret Service delete failed");
+        }
+        return CredentialBackendResult{
+            CredentialBackendOperation::Delete,
+            backend(),
+            true,
+            true,
+            false,
+            key.normalizedProviderId(),
+            key.normalizedCredentialName(),
+            "Deleted from Linux Secret Service successfully"
+        };
+    }
+    CredentialBackendResult containsCredential(const CredentialKey& key) const override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Contains, backend(), key);
+        }
+        const auto readRes = readCredential(key);
+        if (readRes.result.succeeded && readRes.secret.has_value()) {
+            return CredentialBackendResult{
+                CredentialBackendOperation::Contains,
+                backend(),
+                true,
+                false,
+                false,
+                key.normalizedProviderId(),
+                key.normalizedCredentialName(),
+                "Credential exists in Linux Secret Service"
+            };
+        }
+        return refusedBackendResult(CredentialBackendOperation::Contains, backend(), key, "Credential not found in Linux Secret Service");
+    }
+};
+
+class WinCredentialBackend final : public ICredentialBackend {
+public:
+    CredentialStoreBackend backend() const override {
+        return CredentialStoreBackend::WindowsCredentialManager;
+    }
+    CredentialStoreSummary summary() const override {
+        return summaryForBackend(
+            CredentialStoreBackend::WindowsCredentialManager, CredentialStoreStatus::Ready,
+            CredentialStoreReadiness::TestOnlyReady, true,
+            QStringLiteral("Windows Credential Manager backend ready: credentials are saved securely in Windows Credential Manager."),
+            QStringLiteral("Windows Credential Manager / Ready / secure persistent storage."));
+    }
+    CredentialBackendResult storeCredential(const CredentialKey& key, const QString& secret) override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Store, backend(), key);
+        }
+#if defined(Q_OS_WIN)
+        CREDENTIALW cred;
+        memset(&cred, 0, sizeof(cred));
+        cred.Type = CRED_TYPE_GENERIC;
+        
+        std::wstring targetName = (QStringLiteral("Sentinel:") + key.storageKey()).toStdWString();
+        cred.TargetName = const_cast<LPWSTR>(targetName.c_str());
+        
+        std::wstring userName = L"Sentinel";
+        cred.UserName = const_cast<LPWSTR>(userName.c_str());
+        
+        QByteArray secretData = secret.toUtf8();
+        cred.CredentialBlobSize = secretData.size();
+        cred.CredentialBlob = reinterpret_cast<LPBYTE>(secretData.data());
+        cred.Persist = CRED_PERSIST_LOCAL_MACHINE;
+        
+        if (!CredWriteW(&cred, 0)) {
+            return refusedBackendResult(CredentialBackendOperation::Store, backend(), key, "Windows Credential Manager write failed");
+        }
+        return CredentialBackendResult{
+            CredentialBackendOperation::Store,
+            backend(),
+            true,
+            true,
+            false,
+            key.normalizedProviderId(),
+            key.normalizedCredentialName(),
+            "Saved to Windows Credential Manager successfully"
+        };
+#else
+        return refusedBackendResult(CredentialBackendOperation::Store, backend(), key, "Windows Credential Manager unavailable on this platform");
+#endif
+    }
+    CredentialReadResult readCredential(const CredentialKey& key) const override {
+        if (!key.isValid()) {
+            return {invalidKeyResult(CredentialBackendOperation::Read, backend(), key), std::nullopt};
+        }
+#if defined(Q_OS_WIN)
+        PCREDENTIALW cred = nullptr;
+        std::wstring targetName = (QStringLiteral("Sentinel:") + key.storageKey()).toStdWString();
+        if (!CredReadW(targetName.c_str(), CRED_TYPE_GENERIC, 0, &cred)) {
+            return {
+                refusedBackendResult(CredentialBackendOperation::Read, backend(), key, "Windows Credential Manager read failed"),
+                std::nullopt
+            };
+        }
+        QString secret = QString::fromUtf8(reinterpret_cast<char*>(cred->CredentialBlob), cred->CredentialBlobSize);
+        CredFree(cred);
+        return {
+            CredentialBackendResult{
+                CredentialBackendOperation::Read,
+                backend(),
+                true,
+                false,
+                true,
+                key.normalizedProviderId(),
+                key.normalizedCredentialName(),
+                "Read from Windows Credential Manager successfully"
+            },
+            secret
+        };
+#else
+        return {
+            refusedBackendResult(CredentialBackendOperation::Read, backend(), key, "Windows Credential Manager unavailable on this platform"),
+            std::nullopt
+        };
+#endif
+    }
+    CredentialBackendResult deleteCredential(const CredentialKey& key) override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Delete, backend(), key);
+        }
+#if defined(Q_OS_WIN)
+        std::wstring targetName = (QStringLiteral("Sentinel:") + key.storageKey()).toStdWString();
+        if (!CredDeleteW(targetName.c_str(), CRED_TYPE_GENERIC, 0)) {
+            return refusedBackendResult(CredentialBackendOperation::Delete, backend(), key, "Windows Credential Manager delete failed");
+        }
+        return CredentialBackendResult{
+            CredentialBackendOperation::Delete,
+            backend(),
+            true,
+            true,
+            false,
+            key.normalizedProviderId(),
+            key.normalizedCredentialName(),
+            "Deleted from Windows Credential Manager successfully"
+        };
+#else
+        return refusedBackendResult(CredentialBackendOperation::Delete, backend(), key, "Windows Credential Manager unavailable on this platform");
+#endif
+    }
+    CredentialBackendResult containsCredential(const CredentialKey& key) const override {
+        if (!key.isValid()) {
+            return invalidKeyResult(CredentialBackendOperation::Contains, backend(), key);
+        }
+#if defined(Q_OS_WIN)
+        const auto readRes = readCredential(key);
+        if (readRes.result.succeeded && readRes.secret.has_value()) {
+            return CredentialBackendResult{
+                CredentialBackendOperation::Contains,
+                backend(),
+                true,
+                false,
+                false,
+                key.normalizedProviderId(),
+                key.normalizedCredentialName(),
+                "Credential exists in Windows Credential Manager"
+            };
+        }
+        return refusedBackendResult(CredentialBackendOperation::Contains, backend(), key, "Credential not found in Windows Credential Manager");
+#else
+        return refusedBackendResult(CredentialBackendOperation::Contains, backend(), key, "Windows Credential Manager unavailable on this platform");
+#endif
+    }
+};
+
+std::shared_ptr<ICredentialBackend> createPlatformCredentialBackend() {
+#if defined(Q_OS_MACOS)
+    return std::make_shared<MacKeychainCredentialBackend>();
+#elif defined(Q_OS_WIN)
+    return std::make_shared<WinCredentialBackend>();
+#elif defined(Q_OS_LINUX)
+    return std::make_shared<SecretServiceCredentialBackend>();
+#else
+    return std::make_shared<DisabledCredentialBackend>();
+#endif
+}
+
 CredentialStore::CredentialStore()
-    : CredentialStore(std::make_shared<DisabledCredentialBackend>()) {}
+    : CredentialStore(QCoreApplication::instance() && 
+                      QCoreApplication::applicationName() == QStringLiteral("Sentinel")
+                          ? createPlatformCredentialBackend()
+                          : std::make_shared<DisabledCredentialBackend>()) {}
 
 CredentialStore::CredentialStore(std::shared_ptr<ICredentialBackend> backend)
     : backend_(std::move(backend)),
@@ -533,6 +899,10 @@ CredentialStore defaultCredentialStore() {
 
 CredentialStore inMemoryTestCredentialStore() {
     return CredentialStore{std::make_shared<InMemoryCredentialBackend>()};
+}
+
+CredentialStore platformCredentialStore() {
+    return CredentialStore{createPlatformCredentialBackend()};
 }
 
 } // namespace sentinel::core

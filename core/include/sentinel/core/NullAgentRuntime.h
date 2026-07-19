@@ -9,6 +9,7 @@ class NullAgentRuntime final : public IAgentRuntime {
 public:
     NullAgentRuntime();
     explicit NullAgentRuntime(QList<ToolDescriptor> tools);
+    static QList<ToolDescriptor> standardTools();
 
     QString name() const override;
     AgentStatus status() const override;

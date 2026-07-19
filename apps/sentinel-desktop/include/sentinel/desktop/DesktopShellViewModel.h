@@ -1189,6 +1189,8 @@ class DesktopShellViewModel final : public QObject {
         QStringList companionTraceSummaries READ companionTraceSummaries NOTIFY companionChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeChanged)
+    Q_PROPERTY(bool agentAutonomousMode READ agentAutonomousMode WRITE setAgentAutonomousMode
+                   NOTIFY agentAutonomousModeChanged)
     Q_PROPERTY(QString updateCheckPolicy READ updateCheckPolicy WRITE setUpdateCheckPolicy NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QString notificationPolicy READ notificationPolicy WRITE setNotificationPolicy NOTIFY
@@ -2108,6 +2110,8 @@ public:
     QStringList companionTraceSummaries() const;
     bool developerModeEnabled() const;
     void setDeveloperModeEnabled(bool enabled);
+    bool agentAutonomousMode() const;
+    void setAgentAutonomousMode(bool enabled);
     QString updateCheckPolicy() const;
     void setUpdateCheckPolicy(const QString& policy);
     QString notificationPolicy() const;
@@ -2329,6 +2333,7 @@ signals:
     void appLanguageChanged();
     void companionChanged();
     void developerModeChanged();
+    void agentAutonomousModeChanged();
     void contextExplainabilityVisibleChanged();
     void currentPageChanged();
     void nativeExperienceChanged();
