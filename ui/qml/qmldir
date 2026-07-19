@@ -5,6 +5,7 @@ singleton MotionTokens 1.0 theme/MotionTokens.qml
 singleton InteractionTokens 1.0 theme/InteractionTokens.qml
 
 Main 1.0 Main.qml
+OnboardingScreen 1.0 OnboardingScreen.qml
 
 ActiveAgentsPanel 1.0 components/ActiveAgentsPanel.qml
 Atmosphere 1.0 components/Atmosphere.qml
