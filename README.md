@@ -37,7 +37,7 @@ Sentinel 1.0-RC1 includes a comprehensive desktop companion core and native UI s
 - **Notification Center**: Multi-category center covering Tasks, Models, Updates, Brain, Workspace, and Security alerts.
 - **Command Palette**: Universal keyboard shortcut (`Ctrl/Cmd+K`) for quick navigation, mode toggles, and chat history export actions.
 - **Native Companion Integration**: Native system tray and menu bar adapter backed by `QSystemTrayIcon` for quick access.
-- **Theme & Accessibility**: Curated styles (Sentinel Dark, Midnight, Aurora, Graphite, System Adaptive) with reduced motion, high contrast, and UI density controls.
+- **Theme & Accessibility**: Curated styles (Liquid Glass Light - default, Liquid Glass Dark, Sentinel Classic, Midnight Blue, Aurora Teal, Graphite Grey, System Sync) with transparency, reduced motion, high contrast, and UI density controls.
 - **Security & Privacy Boundaries**: No telemetry, no silent updates, no automatic downloads, and no external cloud calls.
 - **Localization (i18n)**: Translation frameworks and catalog preparation for English and Turkish locales.
 - **Persistence separation**: Safe local SQLite databases for Chat History, Brain Memories, and Local RAG metadata, separated from settings JSON.
@@ -167,6 +167,8 @@ Development workflow details are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). 
 
 ## Release Builds
 
+For local manual release builds:
+
 ```bash
 cmake --preset release
 cmake --build --preset release --target sentinel-desktop
@@ -179,8 +181,14 @@ cmake --preset package-ready -DSENTINEL_BUILD_NUMBER=52
 cmake --build --preset package-ready
 ```
 
-Packaging tools, signing credentials, notarization credentials, package upload credentials, and
-update feeds are intentionally not required by normal builds.
+### CI/CD Automated Releases
+
+GitHub Actions automatically builds and packages native binaries for all three major platforms on tag pushes (e.g., `v*`) or manual triggers via the **Release Build** workflow (`.github/workflows/release.yml`):
+- **Windows (x64):** Packages a portable `.zip` file using `windeployqt` with MSVC 2022.
+- **macOS (Apple Silicon ARM64):** Packages a native `.dmg` Disk Image using `macdeployqt` on a macOS 14 runner.
+- **Linux (x64):** Packages a portable `.tar.gz` archive.
+
+These packages are automatically uploaded and published to the GitHub Releases page upon successful completion of the workflow.
 
 ## Open With CLion
 
