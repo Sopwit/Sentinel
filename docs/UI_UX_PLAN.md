@@ -70,7 +70,7 @@ Guidelines:
   `developerModeEnabled` may remain as a compatibility flag.
 - Settings categories are General, Appearance, AI, Models, Voice, Brain, Permissions, Tools,
   Agents, Workspace, Notifications, Updates, and Advanced.
-- Theme choices are Sentinel Dark, Midnight, Aurora, Graphite, and System Adaptive. Theme changes
+- Theme choices are Liquid Glass Light (default), Liquid Glass Dark, Sentinel Classic, Midnight Blue, Aurora Teal, Graphite Grey, and System Sync. Theme changes
   are presentation-only.
 - Model Library, multi-model roles, Model Advisor, Companion/Quick Panel, notifications,
   updates/about, chat productivity, and focus/session modes are roadmap/foundation surfaces only
