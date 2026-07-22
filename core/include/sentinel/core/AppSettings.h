@@ -346,14 +346,14 @@ private:
     static constexpr auto notifyModelRemovalsKey = "notifyModelRemovals";
     static constexpr auto notifyAgentResponsesKey = "notifyAgentResponses";
     static constexpr auto notifySystemUpdatesKey = "notifySystemUpdates";
-    static constexpr auto defaultThemeName = "Liquid Glass Dark";
+    static constexpr auto defaultThemeName = "Liquid Glass Light";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";
     static constexpr auto defaultSelectedRuntimeProvider = "ollama";
     static constexpr auto defaultSelectedWorkspaceId = "personal";
     static constexpr auto defaultAttachmentBehavior = "Manual Attachments Only";
     static constexpr auto defaultExportFormat = "Markdown";
-    static constexpr auto defaultSelectedSkillProfile = "developer";
+    static constexpr auto defaultSelectedSkillProfile = "personal-assistant";
     static constexpr auto defaultPermissionPolicyStateValue = "Disabled";
     static constexpr auto defaultUpdateCheckPolicy = "Ask Before Checking";
     static constexpr auto defaultNotificationPolicy = "Important Only";

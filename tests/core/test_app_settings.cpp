@@ -58,7 +58,7 @@ static std::unique_ptr<AppSettings> makeSettings() {
 void AppSettingsTest::exposesDefaults() {
     const auto settings = makeSettings();
 
-    QCOMPARE(settings->themeName(), QStringLiteral("Liquid Glass Dark"));
+    QCOMPARE(settings->themeName(), QStringLiteral("Liquid Glass Light"));
     QCOMPARE(settings->configurationProfile(), QStringLiteral("Desktop Alpha"));
     QVERIFY(settings->availableLanguages().contains(settings->appLanguage()));
     QCOMPARE(settings->availableLanguages(),
@@ -78,7 +78,7 @@ void AppSettingsTest::exposesDefaults() {
     QVERIFY(settings->whisperModelPath().isEmpty());
     QVERIFY(!settings->piperFileOutputExecutionEnabled());
     QCOMPARE(settings->selectedWorkspaceId(), QStringLiteral("personal"));
-    QCOMPARE(settings->selectedSkillProfile(), QStringLiteral("developer"));
+    QCOMPARE(settings->selectedSkillProfile(), QStringLiteral("personal-assistant"));
     QCOMPARE(settings->defaultWorkspaceId(), QStringLiteral("personal"));
     QVERIFY(!settings->localKnowledgeBaseEnabled());
     QVERIFY(settings->retrievalExplainabilityEnabled());
@@ -117,7 +117,7 @@ void AppSettingsTest::ignoresBlankThemeName() {
 
     settings->setThemeName(QStringLiteral("   "));
 
-    QCOMPARE(settings->themeName(), QStringLiteral("Liquid Glass Dark"));
+    QCOMPARE(settings->themeName(), QStringLiteral("Liquid Glass Light"));
     QCOMPARE(spy.count(), 0);
 }
 
@@ -539,10 +539,10 @@ void AppSettingsTest::persistsSelectedSkillProfile() {
     QCOMPARE(spy.count(), 1);
 
     settings->setSelectedSkillProfile(QStringLiteral("unknown"));
-    QCOMPARE(settings->selectedSkillProfile(), QStringLiteral("developer"));
+    QCOMPARE(settings->selectedSkillProfile(), QStringLiteral("personal-assistant"));
     QCOMPARE(spy.count(), 2);
 
-    settings->setSelectedSkillProfile(QStringLiteral("developer"));
+    settings->setSelectedSkillProfile(QStringLiteral("personal-assistant"));
     QCOMPARE(spy.count(), 2);
 }
 

@@ -3,7 +3,7 @@ pragma Singleton
 import QtQuick
 
 QtObject {
-    property string activeTheme: "Liquid Glass Dark"
+    property string activeTheme: "Liquid Glass Light"
     property bool reducedMotion: false
     property bool highContrast: false
     property string uiDensity: "Comfortable"
@@ -224,7 +224,7 @@ QtObject {
     }
 
     function modePanelColor(_modeName) {
-        return "#25364366"
+        return liquidGlassLightTheme ? "#f0f4fa8c" : "#25364366"
     }
 
     function modeStatusText(_modeName) {

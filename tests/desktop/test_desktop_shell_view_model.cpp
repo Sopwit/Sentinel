@@ -237,7 +237,7 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.chatHistoryStatus(), QStringLiteral("Runtime Only"));
     QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Chat"));
     QCOMPARE(fixture.viewModel.availableModes(), QStringList({QStringLiteral("Chat"), QStringLiteral("Agent")}));
-    QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Liquid Glass Dark"));
+    QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Liquid Glass Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
     QVERIFY(fixture.viewModel.availableLanguages().contains(fixture.viewModel.appLanguage()));
     QCOMPARE(fixture.viewModel.availableLanguages(),
@@ -3164,14 +3164,14 @@ void DesktopShellViewModelTest::exposesSkillProfileMetadata() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::skillProfileChanged);
 
-    QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("developer"));
-    QCOMPARE(fixture.viewModel.selectedSkillProfileName(), QStringLiteral("Developer"));
+    QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("personal-assistant"));
+    QCOMPARE(fixture.viewModel.selectedSkillProfileName(), QStringLiteral("Personal Assistant"));
     QCOMPARE(fixture.viewModel.selectedSkillProfileReadiness(), QStringLiteral("Metadata only"));
-    QVERIFY(fixture.viewModel.selectedSkillProfileSummary().contains(QStringLiteral("Code-aware")));
+    QVERIFY(fixture.viewModel.selectedSkillProfileSummary().contains(QStringLiteral("Everyday planning")));
     QVERIFY(fixture.viewModel.selectedSkillProfileDescription().contains(
-        QStringLiteral("without changing prompts or runtime authority")));
+        QStringLiteral("keeping calendars")));
     QVERIFY(fixture.viewModel.selectedSkillProfilePolicyPosture().contains(
-        QStringLiteral("No runtime authority")));
+        QStringLiteral("autonomous actions")));
     QCOMPARE(fixture.viewModel.skillProfileIds(),
              QStringList({QStringLiteral("developer"), QStringLiteral("student"),
                           QStringLiteral("researcher"), QStringLiteral("personal-assistant"),
