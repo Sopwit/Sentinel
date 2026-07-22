@@ -3378,10 +3378,10 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
     QVERIFY(ran);
     QCOMPARE(controller.agentStatus(), QStringLiteral("Ready"));
     QCOMPARE(controller.lastAgentResponse(),
-             QStringLiteral("Local agent placeholder processed: check local plan"));
+             QStringLiteral("Agent executed command successfully: check local plan"));
     QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
     QCOMPARE(controller.latestToolPlanSummary(),
-             QStringLiteral("Metadata-only tool plan prepared."));
+             QStringLiteral("Tool plan prepared: Local Plan Summary"));
     QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
     QCOMPARE(controller.latestApprovalSummary(),
              QStringLiteral("Planned tool invocations do not require approval."));
@@ -3446,7 +3446,7 @@ void ApplicationControllerTest::exposesLatestToolPlanStatusWithRuntime() {
     QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
     QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
     QCOMPARE(controller.latestToolPlanSummary(),
-             QStringLiteral("Metadata-only tool plan prepared."));
+             QStringLiteral("Tool plan prepared: Local Plan Summary"));
 }
 
 void ApplicationControllerTest::exposesLatestApprovalStatusWithRuntime() {
@@ -3581,10 +3581,10 @@ void ApplicationControllerTest::reportsRiskyToolPlanRequiresApproval() {
              QStringLiteral("Sandbox capability evaluation is blocked by approval metadata."));
     QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Blocked"));
     QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("Execution boundary blocked by approval metadata."));
+             QStringLiteral("Execution paused: pending user approval in chat."));
     QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Blocked"));
     QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Execution boundary blocked by approval metadata."));
+             QStringLiteral("Execution paused: pending user approval in chat."));
     QCOMPARE(controller.agentActivityCount(), 6);
     QCOMPARE(controller.latestAgentActivitySummary(),
              QStringLiteral("Agent pipeline finished: Blocked"));
