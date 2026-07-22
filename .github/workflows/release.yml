@@ -66,8 +66,8 @@ jobs:
       - name: Bundle and Package (macOS)
         if: matrix.os == 'macos-14'
         run: |
-          macdeployqt dist/Sentinel\ Desktop.app -qmldir=ui/qml -dmg
-          mv "Sentinel Desktop.dmg" sentinel-desktop-macos-arm64.dmg || mv dist/"Sentinel Desktop.dmg" sentinel-desktop-macos-arm64.dmg || true
+          macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -dmg
+          mv sentinel-desktop.dmg sentinel-desktop-macos-arm64.dmg || mv dist/sentinel-desktop.dmg sentinel-desktop-macos-arm64.dmg || true
 
       - name: Bundle and Package (Windows)
         if: matrix.os == 'windows-2022'
