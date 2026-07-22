@@ -179,11 +179,20 @@ if(WIN32)
     get_filename_component(_qt_bin_dir "${_qmake_path}" DIRECTORY)
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
 
-    install(CODE "
-        execute_process(
-            COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/sentinel-desktop.exe\" --qmldir \"${CMAKE_SOURCE_DIR}/ui/qml\" --compiler-runtime
-        )
-    ")
+    if(WINDEPLOYQT_EXECUTABLE)
+        install(CODE "
+            message(STATUS \"Running windeployqt on \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/sentinel-desktop.exe\")
+            execute_process(
+                COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/sentinel-desktop.exe\" --qmldir \"${CMAKE_SOURCE_DIR}/ui/qml\" --compiler-runtime
+                RESULT_VARIABLE windeployqt_res
+            )
+            if(NOT windeployqt_res EQUAL 0)
+                message(WARNING \"windeployqt failed with code \${windeployqt_res}\")
+            endif()
+        ")
+    else()
+        message(WARNING "windeployqt executable not found!")
+    endif()
 endif()
 
 if(UNIX AND NOT APPLE)
