@@ -174,6 +174,18 @@ install(TARGETS sentinel-desktop
     RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 )
 
+if(WIN32)
+    get_target_property(_qmake_path Qt6::qmake IMPORTED_LOCATION)
+    get_filename_component(_qt_bin_dir "${_qmake_path}" DIRECTORY)
+    find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
+
+    install(CODE "
+        execute_process(
+            COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/sentinel-desktop.exe\" --qmldir \"${CMAKE_SOURCE_DIR}/ui/qml\" --compiler-runtime
+        )
+    ")
+endif()
+
 if(UNIX AND NOT APPLE)
     install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dev.sentinel.Sentinel.desktop.in
         RENAME dev.sentinel.Sentinel.desktop
