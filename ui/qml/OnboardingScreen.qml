@@ -67,7 +67,7 @@ Item {
         "System Sync":        { bg: "#11181c", raised: "#1b2327", accent: "#79dcff", text: "#eef8ff", muted: "#94abb8" }
     })
 
-    function paletteFor(name) { return onboarding.themePalette[name] || onboarding.themePalette["Liquid Glass Dark"] }
+    function paletteFor(name) { return onboarding.themePalette[name] || onboarding.themePalette["Liquid Glass Light"] }
 
     Behavior on opacity {
         NumberAnimation {

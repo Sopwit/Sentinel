@@ -419,12 +419,12 @@
     </message>
     <message>
         <location filename="../ui/qml/components/CommandPalette.qml" line="26"/>
-        <source>Cycle Sentinel Dark, Midnight, Aurora, Graphite, System Adaptive</source>
+        <source>Appearance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/components/CommandPalette.qml" line="26"/>
-        <source>Appearance</source>
+        <source>Cycle through available Light, Dark, Glass, and Adaptive themes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -524,301 +524,817 @@
 <context>
     <name>HomeChatSurface</name>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="746"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="962"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1322"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1198"/>
         <source>Provider</source>
         <translation>Provider</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1147"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1594"/>
         <source>Edit</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1155"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1602"/>
         <source>Regenerate</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1157"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1604"/>
         <source>Regenerate the previous response.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1167"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1614"/>
         <source>Unpin conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1167"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1614"/>
         <source>Pin conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1183"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1630"/>
         <source>Unarchive conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1183"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1630"/>
         <source>Archive conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1195"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1642"/>
         <source>Export Markdown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1199"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1646"/>
         <source>Export TXT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1206"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1666"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1653"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="2030"/>
         <source>Delete conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1239"/>
-        <source>Start with a focused question, a draft to revise, or notes to organize. Local %1 only; no cloud provider is active.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1315"/>
-        <source>Answered By</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1329"/>
-        <source>Reason</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1330"/>
-        <source>Primary role assignment</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1367"/>
         <source>Context reasoning -</source>
-        <translation>Context reasoning -</translation>
+        <translation type="vanished">Context reasoning -</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1367"/>
         <source>Context reasoning +</source>
-        <translation>Context reasoning +</translation>
+        <translation type="vanished">Context reasoning +</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1482"/>
-        <source>Paste</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1517"/>
         <source>Summary Ready</source>
-        <translation>Summary Ready</translation>
+        <translation type="vanished">Summary Ready</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1517"/>
         <source>Generate Summary</source>
-        <translation>Generate Summary</translation>
+        <translation type="vanished">Generate Summary</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="682"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1551"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1004"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1855"/>
         <source>Ask Sentinel</source>
         <translation>Ask Sentinel</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="151"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="152"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="210"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="212"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="235"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="237"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="298"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="300"/>
         <source>New Chat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="174"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="36"/>
+        <source>Merhaba, Operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="36"/>
+        <source>Sentinel tüm yerel yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="63"/>
+        <source>Günaydın, Operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="63"/>
+        <source>Bugün yeni projeler üretmek ve hedeflerine ulaşmak için harika bir gün. Nasıl yardımcı olabilirim?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="64"/>
+        <source>Güzel Bir Sabah</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="64"/>
+        <source>Zihnini taze tut, üretkenlik senin elinde. Bugün birlikte ne inşa edelim?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="65"/>
+        <source>Günaydın, Sentinel Hazır</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="65"/>
+        <source>Yeni bir güne başlarken tüm yerel RAG, kodlama ve yapay zeka araçlarınla yanındayım.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="66"/>
+        <source>Sabah Odaklanması Başladı</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="66"/>
+        <source>Taze bir zihinle kodları derlemeye, planları yapmaya veya yeni araştırmalara başlamaya hazırız.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="67"/>
+        <source>Günaydın! Yeni Hedefler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="67"/>
+        <source>Günün ilk saatlerinde zihnindeki o parlak fikri birlikte hayata geçirelim mi?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="68"/>
+        <source>Harika Bir Sabah Başlangıcı</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="68"/>
+        <source>Günün üretkenliğini tetikleyecek en iyi çözümleri, yerel veri tabanındaki bilgilerle harmanlayalım.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="71"/>
+        <source>İyi Günler, Operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="71"/>
+        <source>İş akışını hızlandırmak ve operasyonlarını yönetmek için hazır mıyım? Nasıl destek olabilirim?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="72"/>
+        <source>Tünaydın! Üretkenliğe Devam</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="72"/>
+        <source>Günün en verimli saatindeyiz. Projelerindeki tıkanıklıkları birlikte çözelim mi?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="73"/>
+        <source>Verimli Bir Gün</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="73"/>
+        <source>Geliştirme hedeflerini gerçekleştirelim. Kodlarında, planlarında veya analizlerinde yardım etmeye hazırım.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="74"/>
+        <source>Tünaydın! Odaklanma Zamanı</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="74"/>
+        <source>Hız kesmeden projelere devam ediyoruz. Hata ayıklama veya kod yazma süreçlerinde yanındayım.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="75"/>
+        <source>Tünaydın! Sentinel Göreve Hazır</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="75"/>
+        <source>Günün temposunu yakalamışken, yerel yapay zeka gücüyle iş akışını bir üst seviyeye taşıyalım.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="76"/>
+        <source>Öğleden Sonra Sinerjisi</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="76"/>
+        <source>Zorlu algoritmaları, mimari kararları ve doküman analizlerini birlikte çözmenin tam vakti.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="79"/>
+        <source>İyi Akşamlar, Operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="79"/>
+        <source>Günün geri kalanını başarılı ve verimli bir şekilde kapatmana nasıl yardımcı olabilirim?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="80"/>
+        <source>Keyifli Bir Akşam Seansı</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="80"/>
+        <source>Günün yorgunluğunu hafifletelim. Sentinel tüm yerel zekasıyla seni destekliyor.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="81"/>
+        <source>İyi Akşamlar! Fikirler Canlansın</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="81"/>
+        <source>Teknik hedeflerini tamamlayalım. Akşam sessizliğinde üretkenliği zirveye çıkarabiliriz.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="82"/>
+        <source>Akşam Saatleri ve Geliştirme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="82"/>
+        <source>Günün raporlarını gözden geçirelim, yarım kalan işleri toparlayalım veya yeni fikirleri test edelim.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="83"/>
+        <source>İyi Akşamlar! Sentinel Yanında</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="83"/>
+        <source>Sakin bir akşam seansında, en karmaşık problemleri adım adım analiz etmek için buradayım.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="84"/>
+        <source>Akşam Üretkenliği</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="84"/>
+        <source>Günün son adımlarını atarken yerel RAG bellek arama motorunla en kritik belgelere ulaş.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="87"/>
+        <source>İyi Geceler, Operator</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="87"/>
+        <source>Son detayları gözden geçirmek, planlarını hazırlamak veya gece kodlaması yapmak için burayım.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="88"/>
+        <source>Gece Sessizliği ve Odaklanma</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="88"/>
+        <source>Sessiz ve odaklanmış bir çalışma seansı için hazırım. Zihnindeki fikirleri kodlara dökelim mi?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="89"/>
+        <source>İyi Geceler! Sentinel Aktif</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="89"/>
+        <source>Günü kapatmadan önce yarım kalan işleri veya yarına dair planları organize edebiliriz.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="90"/>
+        <source>Gece Kodcuları İçin Aktif</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="90"/>
+        <source>Gece sessizliğinin getirdiği o benzersiz odakla, en zorlu bug&apos;ları ve algoritmaları avlayalım.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="91"/>
+        <source>İyi Geceler! Gece Seansı Başladı</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="91"/>
+        <source>Uykudan önce son bir derleme mi? Yoksa yarına dair hedeflerin yapılandırılması mı?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="92"/>
+        <source>Gece Yarısı Yaratıcılığı</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="92"/>
+        <source>Herkes uyurken yeni projelerin temellerini yerel yapay zeka asistanınla güvenle at.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="262"/>
         <source>Show sidebar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="258"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="276"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="349"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="367"/>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="300"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="391"/>
         <source>Hide sidebar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="328"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="419"/>
         <source>Recent chats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="331"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="422"/>
         <source>Recent</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="355"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="446"/>
         <source>Pinned chats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="381"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="472"/>
         <source>Archived chats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="507"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="598"/>
         <source>Unpin</source>
         <translation type="unfinished">Unpin</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="507"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="598"/>
         <source>Pin</source>
         <translation type="unfinished">Pin</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="518"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="609"/>
         <source>Unarchive</source>
         <translation type="unfinished">Unarchive</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="518"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="609"/>
         <source>Archive</source>
         <translation type="unfinished">Archive</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="531"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1739"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="622"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="2103"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="546"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="637"/>
         <source>No pinned chats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="547"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="638"/>
         <source>No archived chats</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="548"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="639"/>
         <source>No chats yet</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="587"/>
-        <source>Günaydın</source>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="750"/>
+        <source>Python CSV İşleme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="589"/>
-        <source>İyi günler</source>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="750"/>
+        <source>İki CSV dosyasını birleştiren ve filtreleyen bir Python betiği yaz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="591"/>
-        <source>İyi akşamlar</source>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="751"/>
+        <source>Özet Çıkarma</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="593"/>
-        <source>İyi geceler</source>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="751"/>
+        <source>Eklediğim PDF belgesinin yönetici özetini ve ana hatlarını çıkar</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="606"/>
-        <source>Bugün size nasıl yardımcı olabilirim?</source>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="752"/>
+        <source>İş E-postası</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="654"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1455"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1614"/>
-        <source>Attach file</source>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="752"/>
+        <source>Müşteriye teknik gecikmeyi açıklayan kibar ve profesyonel bir e-posta taslağı yaz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="682"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1551"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="753"/>
+        <source>Blog Fikirleri</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="753"/>
+        <source>Yazılım geliştiriciler için yapay zeka araçları hakkında 5 yaratıcı blog başlığı bul</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="754"/>
+        <source>C++ Bellek Yönetimi</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="754"/>
+        <source>C++ kodunda dynamic memory yönetimi ve akıllı işaretçi (smart pointer) kullanım rehberi hazırla</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="755"/>
+        <source>Modern CSS Cam Efekti</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="755"/>
+        <source>Mat cam (glassmorphism) tasarımı için CSS backdrop-filter ve gölge kodlarını ver</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="756"/>
+        <source>API Güvenliği</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="756"/>
+        <source>RESTful API&apos;lerde JWT tabanlı kimlik doğrulama için en iyi güvenlik pratiklerini sırala</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="757"/>
+        <source>SQL Optimizasyonu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="757"/>
+        <source>Çoklu JOIN içeren yavaş bir SQL sorgusunu optimize etmek için indeksleme stratejilerini açıkla</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="758"/>
+        <source>Dockerizing Go App</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="758"/>
+        <source>Bir Go (Golang) web uygulaması için çok aşamalı (multi-stage) Dockerfile yaz</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="759"/>
+        <source>Rust Hata Yönetimi</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="759"/>
+        <source>Rust dilindeki Result ve Option tiplerini ve Result yayılımı (propagation) pratiklerini göster</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="760"/>
+        <source>React Performans</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="760"/>
+        <source>React bileşenlerinde gereksiz yeniden çizimleri (re-render) önlemek için useMemo ve useCallback kullanımını açıkla</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="761"/>
+        <source>Proje Dokümantasyonu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="761"/>
+        <source>Açık kaynaklı bir yazılım projesi için örnek bir README.md şablonu oluştur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="762"/>
+        <source>RegEx Arama</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="762"/>
+        <source>E-posta adreslerini ve telefon numaralarını doğrulayan güvenli Regex desenleri yaz</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="763"/>
+        <source>Git Commit Standartı</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="763"/>
+        <source>Conventional Commits standardına uygun örnek git commit mesajları ve kurallarını listele</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="764"/>
+        <source>CI/CD Pipeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="764"/>
+        <source>GitHub Actions kullanarak testleri çalıştıran ve build alan temel bir CI workflow&apos;u tasarla</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="765"/>
+        <source>Algoritma Tasarımı</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="765"/>
+        <source>İkili arama (Binary Search) algoritmasının çalışma mantığını görselleştirerek kodla açıkla</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="766"/>
+        <source>Mobil Responsive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="766"/>
+        <source>Mobil cihazlar için CSS Grid ve Flexbox kullanarak 3 kolonlu responsive bir düzen oluştur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="767"/>
+        <source>AWS Deployment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="767"/>
+        <source>Bir web uygulamasını AWS S3 ve CloudFront kullanarak statik olarak nasıl yayınlayacağımı anlat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="768"/>
+        <source>Kriptografi</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="768"/>
+        <source>Hassas verileri güvenli şekilde saklamak için PBKDF2 ile şifre tuzlama (salting) mantığını açıkla</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="769"/>
+        <source>Birim Test (Unit Test)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="769"/>
+        <source>JavaScript/Jest kullanarak asenkron API isteklerini test eden mock test örnekleri yaz</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="770"/>
+        <source>Müşteri İletişimi</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="770"/>
+        <source>Proje kapsamındaki değişiklikleri (scope creep) müşteriye bildiren diplomatik bir dil şablonu hazırla</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="771"/>
+        <source>Kod İnceleme (Code Review)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="771"/>
+        <source>Bir pull request incelemesinde yapıcı ve geliştirici geri bildirim vermenin altın kurallarını listele</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="772"/>
+        <source>Redis Cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="772"/>
+        <source>Veritabanı yükünü azaltmak için Redis önbellekleme (caching) stratejilerini ve cache invalidation&apos;ı açıkla</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="773"/>
+        <source>Temiz Kod (Clean Code)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="773"/>
+        <source>SOLID prensiplerini gerçek hayat yazılım geliştirme örnekleriyle sade bir dille anlat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="774"/>
+        <source>Toplantı Tutanakları</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="774"/>
+        <source>Geliştirici toplantısından alınan notları maddeler halinde düzenli bir toplantı özetine dönüştür</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="775"/>
+        <source>Mikroservisler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="775"/>
+        <source>Monolitik bir mimariyi mikroservislere bölerken dikkat edilmesi gereken veri tutarlılığı kurallarını anlat</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="776"/>
+        <source>Bash Otomasyonu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="776"/>
+        <source>Sunucudaki log dosyalarını sıkıştırıp eskiyenleri silen bir cronjob bash betiği yaz</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="777"/>
+        <source>Hedef Planlama</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="777"/>
+        <source>Bir yazılım projesinin çeyreklik (OKR) hedeflerini belirlemek için bir çerçeve öner</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="903"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1723"/>
+        <source>Ekle veya İşlemler</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="963"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1783"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1967"/>
+        <source>Görsel Yükle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="989"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1809"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1978"/>
+        <source>Dosya Yükle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1970"/>
+        <source>Görseller (*.png *.jpg *.jpeg *.webp *.gif *.bmp)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1971"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1983"/>
+        <source>Tüm dosyalar (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1981"/>
+        <source>Dokümanlar (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1982"/>
+        <source>Kaynak kod dosyaları (*.cpp *.h *.hpp *.qml *.js *.ts *.py *.java *.cs *.go *.rs *.swift)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1004"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1855"/>
         <source>Sentinel is responding</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="720"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1580"/>
-        <source>Send</source>
-        <translation>Send</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="720"/>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1580"/>
-        <source>Stop</source>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1041"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1888"/>
+        <source>Kayıt Durdur</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="838"/>
-        <source>Model</source>
-        <translation type="unfinished">Model</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="860"/>
-        <source>No model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1073"/>
-        <source>You</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1073"/>
-        <source>Sentinel</source>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1041"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1888"/>
+        <source>Sesli Yaz</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/components/HomeChatSurface.qml" line="1085"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1933"/>
+        <source>Send</source>
+        <translation>Send</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1085"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1933"/>
+        <source>Stop</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1111"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1126"/>
+        <source>Mode</source>
+        <translation type="unfinished">Mode</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1290"/>
+        <source>Model</source>
+        <translation type="unfinished">Model</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1312"/>
+        <source>No model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1520"/>
+        <source>You</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1520"/>
+        <source>Sentinel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1532"/>
         <source>Copy</source>
         <translation>Copy</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1600"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1839"/>
+        <source>Özet Oluştur</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1953"/>
         <source> Local %1 only. No cloud provider active.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1617"/>
-        <source>Documents (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1618"/>
-        <source>Source files (*.cpp *.h *.hpp *.qml *.js *.ts *.py *.java *.cs *.go *.rs *.swift)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1619"/>
-        <source>All files (*)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1700"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="2064"/>
         <source>This action cannot be undone. The conversation will be permanently removed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/HomeChatSurface.qml" line="1716"/>
+        <location filename="../ui/qml/components/HomeChatSurface.qml" line="2080"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -831,172 +1347,26 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/Main.qml" line="242"/>
-        <source>Welcome to Sentinel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="243"/>
-        <source>Privacy Philosophy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="244"/>
-        <source>Choose Theme</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="245"/>
-        <source>Configure AI</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="246"/>
-        <source>Workspace Introduction</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="247"/>
-        <source>Finish</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="274"/>
-        <source>Sentinel is a local-first desktop assistant for chat, Brain, workspaces, controlled tasks, and notifications.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="294"/>
-        <source>Local-first</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="294"/>
-        <source>Settings, memory, chat history, notifications, diagnostics, and recovery data stay local.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="295"/>
-        <source>No telemetry</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="295"/>
-        <source>Telemetry is disabled by default and no analytics uploads are added.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="296"/>
-        <source>User control</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="296"/>
-        <source>Updates, exports, tasks, providers, and sensitive operations require visible user action.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="326"/>
-        <source>Brain</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="326"/>
-        <source>Local memory, recall, context, summaries, and insights.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="327"/>
-        <source>Workspaces</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="327"/>
-        <source>Personal, Coding, Research, Writing, and Student scopes without folder scans.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="328"/>
         <source>Tasks</source>
-        <translation type="unfinished">Tasks</translation>
+        <translation type="obsolete">Tasks</translation>
     </message>
     <message>
-        <location filename="../ui/qml/Main.qml" line="328"/>
-        <source>Controlled task plans require approval and visible step-by-step progress.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="329"/>
-        <source>Notifications</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="329"/>
-        <source>Local in-app center with categories, pin, archive, read state, filtering, and search.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="334"/>
-        <source>Use Case</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="335"/>
-        <source>Theme</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="336"/>
-        <source>AI</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="336"/>
-        <source> / no downloads are started.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="337"/>
-        <source>Privacy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="337"/>
-        <source>No telemetry, no hidden uploads, no silent updates, no hidden indexing, no hidden cloud activation.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="345"/>
-        <source>Back</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="351"/>
-        <source>Next</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="351"/>
-        <source>Start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/Main.qml" line="377"/>
+        <location filename="../ui/qml/Main.qml" line="267"/>
         <source>Restore previous session?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/Main.qml" line="386"/>
+        <location filename="../ui/qml/Main.qml" line="276"/>
         <source>Sentinel saved your last draft locally. Restore it into the composer or discard it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/Main.qml" line="394"/>
+        <location filename="../ui/qml/Main.qml" line="284"/>
         <source>Discard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/Main.qml" line="402"/>
+        <location filename="../ui/qml/Main.qml" line="292"/>
         <source>Restore</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1023,153 +1393,66 @@
 <context>
     <name>ModelDetailPopup</name>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="249"/>
-        <source>Installed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="267"/>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="787"/>
-        <source>Pulling…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="306"/>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="211"/>
         <source>by %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="347"/>
-        <source>Size</source>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="259"/>
+        <source>INTERFACE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="352"/>
-        <source>Available Tags</source>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="259"/>
+        <source>CONTEXT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="399"/>
-        <source>Category</source>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="267"/>
+        <source>%1 tokens</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="402"/>
-        <source>Context Window</source>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="286"/>
+        <source>DEFAULT PORT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="405"/>
-        <source>Input Type</source>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="286"/>
+        <source>INPUT TYPE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="410"/>
-        <source>Last Modified</source>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="325"/>
+        <source>Downloading model…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="417"/>
-        <source>Runtime</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="420"/>
-        <source>LM Studio (loaded models)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="420"/>
-        <source>Ollama (local inference)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="421"/>
-        <source>External — see provider website</source>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="427"/>
+        <source>Remove Model</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/components/ModelDetailPopup.qml" line="428"/>
-        <source>Install path</source>
+        <source>Downloading…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="442"/>
-        <source>Pull command</source>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="429"/>
+        <source>Install Model</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="485"/>
-        <source>✓</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="485"/>
         <source>Copy</source>
-        <translation type="unfinished">Copy</translation>
+        <translation type="obsolete">Copy</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="502"/>
-        <source>Tags: </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="536"/>
-        <source>This model is loaded and ready for inference in LM Studio.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="537"/>
-        <source>This model is installed on your device at %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="588"/>
-        <source>Loading model details…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="629"/>
-        <source>About this Model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="684"/>
-        <source>Pulling via Ollama… %1%</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="712"/>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="373"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="738"/>
-        <source>Close</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="786"/>
-        <source>✓  Loaded</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="786"/>
-        <source>✓  Installed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="788"/>
-        <source>Downloads via LM Studio only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="788"/>
-        <source>↓  Download via Ollama</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="824"/>
+        <location filename="../ui/qml/components/ModelDetailPopup.qml" line="469"/>
         <source>Visit provider website ↗</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1177,238 +1460,837 @@
 <context>
     <name>ModelsPage</name>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="15"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="22"/>
         <source>High-capacity multilingual open-weight model. Strong at reasoning, coding, and long-context tasks.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="24"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="33"/>
         <source>Lightweight on-device model ideal for edge inference and fast response.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="33"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="44"/>
         <source>Ultra-compact model designed for low-latency Edge devices and mobile usage.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="42"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="66"/>
         <source>Balanced multilingual model with strong math and code capabilities.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="51"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="88"/>
         <source>State-of-the-art coding specialist with broad programming language support and chat usability.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="60"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="99"/>
         <source>Google&apos;s highly efficient open-weight model, delivering high quality and safety features.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="69"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="144"/>
         <source>Chain-of-thought reasoning model trained with reinforcement learning.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="78"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="155"/>
         <source>Reasoning model distilled from DeepSeek R1 into Qwen 8B. Excellent logic.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="87"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="110"/>
         <source>Efficient 7B instruction-tuned model with sliding window attention.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="96"/>
-        <source>Small model with strong STEM reasoning. Punches well above its weight class.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="23"/>
+        <source>Complex reasoning, developer workflows, and multi-turn agents.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="106"/>
-        <source>Apple Silicon optimized Llama 3.2 3B Instruct model using Apple&apos;s MLX framework.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="34"/>
+        <source>Fast local chat, low-overhead agent automation, and daily assistance.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="115"/>
-        <source>Apple Silicon optimized DeepSeek R1 8B reasoning model using Apple&apos;s MLX framework.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="45"/>
+        <source>Ultra-fast autocomplete and resource-constrained edge computing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="124"/>
-        <source>Apple Silicon optimized Qwen 2.5 Coder 7B coding model using Apple&apos;s MLX framework.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="55"/>
+        <source>Meta Llama 3.1 8B Instruct. Highly capable multilingual model with expanded context window.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="56"/>
+        <source>General-purpose agent workflows, daily coding assistance, and tool use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="67"/>
+        <source>Structured JSON formatting, multilingual writing, and mathematical queries.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="77"/>
+        <source>Large multilingual model with exceptional coding, math and translation capabilities.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="78"/>
+        <source>Professional coding, advanced text reasoning, and complex translation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="89"/>
+        <source>Inline code completion, refactoring, unit test generation, and debugging.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="100"/>
+        <source>Analytical text processing, summarization, and safe content generation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="111"/>
+        <source>General text editing, summarization, and context-aware chat.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="121"/>
+        <source>State-of-the-art 12B model built in collaboration with NVIDIA. Very large token dictionary.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="122"/>
+        <source>Multilingual translation, conversational AI, and precise general writing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ModelsPage.qml" line="133"/>
-        <source>Apple Silicon optimized Gemma 2 9B instruction model using Apple&apos;s MLX framework.</source>
+        <source>Highly capable reasoning model distilled from DeepSeek R1 into Qwen 32B. Elite logical output.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="142"/>
-        <source>Apple Silicon optimized Phi-4 STEM reasoning model using Apple&apos;s MLX framework.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="134"/>
+        <source>Scientific analysis, advanced competitive coding, and complex mathematical proofs.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="152"/>
-        <source>HuggingFace community model Llama 3 8B. General-purpose instruction tuned model. (Downloads via Ollama)</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="145"/>
+        <source>Deep mathematical problem solving, code logic verification, and complex logic.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="161"/>
-        <source>HuggingFace community model Gemma 2 2B. Highly efficient and lightweight model. (Downloads via Ollama)</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="156"/>
+        <source>Distilled step-by-step thinking, fast reasoning, and task planning.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="170"/>
-        <source>HuggingFace community model Phi 3.5. Lightweight 3.8B model with strong reasoning. (Downloads via Ollama)</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="166"/>
+        <source>Ultra-lightweight reasoning model distilled from DeepSeek R1. Fast reasoning on any device.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="180"/>
-        <source>Text-to-image generation with high fidelity and prompt adherence.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="167"/>
+        <source>Low-overhead logical tasks, edge reasoning, and instant math/logic answers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="177"/>
+        <source>Small model with strong STEM reasoning. Punches well above its weight class.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="178"/>
+        <source>STEM reasoning, scientific logic, and quick logic puzzles.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ModelsPage.qml" line="189"/>
-        <source>Ultra-fast 12B transformer model for high-quality image synthesis.</source>
+        <source>Apple Silicon optimized Llama 3.2 3B Instruct model using Apple&apos;s MLX framework.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="198"/>
-        <source>Multimodal LLM that can answer questions about images and visual content.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="190"/>
+        <source>Mac-native low-latency chat and light task orchestration.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="208"/>
-        <source>State-of-the-art multilingual speech recognition model.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="200"/>
+        <source>Apple Silicon optimized DeepSeek R1 8B reasoning model using Apple&apos;s MLX framework.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="217"/>
-        <source>Compact speech recognition for real-time transcription on-device.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="201"/>
+        <source>Apple Silicon accelerated logical reasoning and step-by-step thinking.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="227"/>
-        <source>High-quality neural text-to-speech with multiple voice styles.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="211"/>
+        <source>Apple Silicon optimized Qwen 2.5 Coder 7B coding model using Apple&apos;s MLX framework.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="236"/>
-        <source>Fast local TTS with natural-sounding voices. Low latency.</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="212"/>
+        <source>Mac-optimized code completion, scripting, and developer tools integration.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="222"/>
+        <source>Apple Silicon optimized Gemma 2 9B instruction model using Apple&apos;s MLX framework.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="223"/>
+        <source>Efficient Google-grade conversational queries on Apple Silicon.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="233"/>
+        <source>Apple Silicon optimized Phi-4 STEM reasoning model using Apple&apos;s MLX framework.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="234"/>
+        <source>Mac-accelerated STEM logical problem solving and mathematical proofs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="245"/>
+        <source>HuggingFace community model Llama 3 8B. General-purpose instruction tuned model. (Downloads via Ollama)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ModelsPage.qml" line="246"/>
+        <source>Community-led fine-tunes, generic text generation, and roleplay.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="256"/>
+        <source>HuggingFace community model Gemma 2 2B. Highly efficient and lightweight model. (Downloads via Ollama)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="257"/>
+        <source>Lightweight local task orchestration and edge device prototyping.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="267"/>
+        <source>HuggingFace community model Phi 3.5. Lightweight 3.8B model with strong reasoning. (Downloads via Ollama)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="268"/>
+        <source>Long context text analysis, document summarization, and logical reasoning.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="279"/>
+        <source>Text-to-image generation with high fidelity and prompt adherence.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="280"/>
+        <source>Creative artwork, graphic design, and precise text rendering in images.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="290"/>
+        <source>High-resolution photo-realistic image generation model. Base + Refiner system.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="291"/>
+        <source>Detailed art, photo-realism, textures, and digital painting generation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="301"/>
+        <source>Ultra-fast 12B transformer model for high-quality image synthesis.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="302"/>
+        <source>Photorealistic image synthesis, fast high-quality art generation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="312"/>
+        <source>Apple Silicon optimized FLUX.1 Schnell for rapid on-device image generation using MLX.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="313"/>
+        <source>Apple Silicon hardware-accelerated instant local text-to-image creation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="323"/>
+        <source>Open-source text-to-video generation model with high quality physics and prompt following.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="324"/>
+        <source>High-fidelity physics-guided video generation and clip creation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="334"/>
+        <source>Highly efficient real-time local text-to-video generation model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="335"/>
+        <source>Real-time local text-to-video prototyping and fast animations.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="345"/>
+        <source>Highly efficient text-to-video generation model with high quality video output.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="346"/>
+        <source>Local high-quality cinematic video and animation production.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="356"/>
+        <source>Multimodal LLM that can answer questions about images and visual content.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="357"/>
+        <source>Describing images, analyzing graphs, and solving visual queries.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="367"/>
+        <source>Multimodal model from Meta. Understands visual inputs, charts, images, and text.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="368"/>
+        <source>Visual reasoning, document understanding, optical character recognition (OCR), and visual QA.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="379"/>
+        <source>State-of-the-art multilingual speech recognition model.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="380"/>
+        <source>State-of-the-art multilingual voice transcription and dictation.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="390"/>
+        <source>Compact speech recognition for real-time transcription on-device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="391"/>
+        <source>Real-time low-latency English dictation and voice commands.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="402"/>
+        <source>High-quality neural text-to-speech with multiple voice styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="403"/>
+        <source>Studio-quality natural text-to-speech voicing for screen readers.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="413"/>
+        <source>Fast local TTS with natural-sounding voices. Low latency.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="414"/>
+        <source>Ultra-low-latency real-time voice synthesis and speech feedback.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="425"/>
         <source>Local model runner with OpenAI-compatible API. Supports Llama, Mistral, Qwen and more.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="255"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="426"/>
+        <source>Hosting local models, hosting APIs, and orchestrating edge runtimes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="436"/>
         <source>Desktop app for local inference. GUI model browser and OpenAI endpoint.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="339"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="437"/>
+        <source>Exploring Hugging Face models, GUI playground, and running local endpoints.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="522"/>
         <source>Custom model installed locally via Ollama.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="383"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="566"/>
         <source>Custom model loaded locally in LM Studio.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="525"/>
-        <source>MODEL LIBRARY</source>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="759"/>
+        <source>All Models</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="553"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="760"/>
+        <source>Text Models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="761"/>
+        <source>Reasoning Models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="762"/>
+        <source>Vision Models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="763"/>
+        <source>Image Generation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="764"/>
+        <source>Video Generation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="765"/>
+        <source>Speech to Text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="766"/>
+        <source>Text to Speech</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="767"/>
+        <source>Local Runtimes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="806"/>
+        <source>Models</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="964"/>
+        <source>🔍 Search models…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1005"/>
         <source>Fetching…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="568"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1025"/>
         <source>Popular</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="591"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1048"/>
         <source>Newest</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="612"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1069"/>
         <source>Refresh</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="638"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1095"/>
         <source> loaded</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="638"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1095"/>
         <source> installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="655"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1112"/>
         <source>models</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="664"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1125"/>
         <source>Manage local AI models. Models must be downloaded and loaded inside the LM Studio application. Loaded models are listed below.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="665"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1126"/>
         <source>Download and manage local AI models. Click a card to see details and install via Ollama.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="791"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1166"/>
         <source>Retry</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="979"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1357"/>
         <source>Installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="1096"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1446"/>
         <source>↓ Download</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="1096"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1446"/>
         <source>External ↗</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="1127"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1477"/>
         <source>Pulling via Ollama… %1%</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="1147"/>
-        <source>Loaded in LM Studio</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="1148"/>
-        <source>On device · ~/.ollama/models</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/ModelsPage.qml" line="1182"/>
+        <location filename="../ui/qml/pages/ModelsPage.qml" line="1515"/>
         <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>OnboardingScreen</name>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="23"/>
+        <source>Welcome</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="23"/>
+        <source>A calm assistant built around you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="24"/>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="736"/>
+        <source>Privacy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="24"/>
+        <source>Your data stays on your device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="25"/>
+        <source>Appearance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="25"/>
+        <source>Make Sentinel feel like home.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="26"/>
+        <source>AI Setup</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="26"/>
+        <source>Connect to models, your way.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="27"/>
+        <source>Capabilities</source>
+        <translation type="unfinished">Capabilities</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="27"/>
+        <source>Everything Sentinel can do.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="28"/>
+        <source>Finish</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="28"/>
+        <source>You&apos;re ready to begin.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="32"/>
+        <source>Build &amp; create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="32"/>
+        <source>Write, plan, and solve problems with a private copilot.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="33"/>
+        <source>Learn &amp; explore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="33"/>
+        <source>Summarize, explain, and remember what matters to you.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="34"/>
+        <source>Draft &amp; express</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="34"/>
+        <source>Letters, reports, stories, and everyday writing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="35"/>
+        <source>Daily companion</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="35"/>
+        <source>A helpful partner for whatever life or work brings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="41"/>
+        <source>Popular local runtime, easy to start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="42"/>
+        <source>Friendly desktop app for local models.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="43"/>
+        <source>Lightweight server for advanced users.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="44"/>
+        <source>Bring your own local endpoint.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="48"/>
+        <source>Local-first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="48"/>
+        <source>Your settings, memory, chats, notes, and history stay on your own device.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="49"/>
+        <source>No tracking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="49"/>
+        <source>Nothing is sent to us. No analytics, no ads, no hidden uploads.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="50"/>
+        <source>You stay in control</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="50"/>
+        <source>Updates, exports, and sensitive actions always ask for your permission first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="54"/>
+        <source>Brain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="54"/>
+        <source>Your personal memory: recall, context, summaries, and insights.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="55"/>
+        <source>Workspaces</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="55"/>
+        <source>Separate spaces for home, work, study, writing, and more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="56"/>
+        <source>Tasks</source>
+        <translation type="unfinished">Tasks</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="56"/>
+        <source>Step-by-step plans that check with you before acting.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="57"/>
+        <source>Notifications</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="57"/>
+        <source>A tidy in-app center for reminders and updates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="124"/>
+        <source>Sentinel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="133"/>
+        <source>A personal assistant that respects your privacy and adapts to how you work, learn, and create.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="193"/>
+        <source>Takes about a minute. You can change anything later in Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="218"/>
+        <source>Welcome to Sentinel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="225"/>
+        <source>Sentinel is a private, local-first assistant for everyone — students, professionals, families, creators, and curious minds. Let&apos;s make it yours.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="232"/>
+        <source>What will you mostly use Sentinel for?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="318"/>
+        <source>Private by design</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="325"/>
+        <source>Sentinel is built so your information can stay entirely on your computer. These are promises we keep, always.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="388"/>
+        <source>Choose your look</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="395"/>
+        <source>Pick a theme. Each card shows a live preview of how Sentinel will look — and you can change it anytime.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="552"/>
+        <source>Connect your AI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="559"/>
+        <source>Sentinel runs AI privately on your device or a local runtime you choose. Nothing is downloaded now, and you can switch anytime.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="635"/>
+        <source>What Sentinel can do</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="642"/>
+        <source>A quick tour of the spaces you&apos;ll use every day.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="718"/>
+        <source>You&apos;re all set</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="725"/>
+        <source>Here&apos;s your setup. You can revisit everything later from Settings.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="733"/>
+        <source>Use Case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="734"/>
+        <source>Theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="735"/>
+        <source>AI</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="735"/>
+        <source> · nothing downloaded yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="736"/>
+        <source>No tracking, no hidden uploads, no silent updates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="757"/>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="772"/>
+        <source>Continue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/OnboardingScreen.qml" line="772"/>
+        <source>Start using Sentinel</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1446,37 +2328,37 @@
     </message>
     <message>
         <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="39"/>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="49"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="48"/>
         <source>Run Local Models</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="40"/>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="50"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="49"/>
         <source>OpenAI API</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="41"/>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="51"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="50"/>
         <source>Streaming</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="42"/>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="52"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="51"/>
         <source>Embeddings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="43"/>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="53"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="52"/>
         <source>Tool Calling</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="44"/>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="54"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="53"/>
         <source>GPU Acceleration</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1491,173 +2373,158 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="47"/>
-        <source>Automatic Downloads</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="55"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="54"/>
         <source>GUI Model Browser</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="56"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="55"/>
         <source>Local Playground</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="57"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="56"/>
         <source>Multi-Model Server</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="58"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="57"/>
         <source>Server Logs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="72"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="71"/>
         <source>Running local models for coding assistants, AI agents, automation workflows, backend services and developer tools.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="73"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="72"/>
         <source>Visual model exploration, testing different quantization levels in a GUI playground, and zero-config local server setup.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="162"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="161"/>
         <source>Verified Runtime</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="183"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="182"/>
         <source>by %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="215"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="214"/>
         <source>OVERVIEW</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="229"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="228"/>
         <source>Category</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="230"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="229"/>
         <source>Runtime</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="232"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="231"/>
         <source>Type</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="235"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="234"/>
         <source>License</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="238"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="237"/>
         <source>Open Source</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="241"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="240"/>
         <source>Platforms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="244"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="243"/>
         <source>API</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="247"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="246"/>
         <source>Default Port</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="265"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="264"/>
         <source>WHAT CAN IT DO?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="313"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="312"/>
         <source>WORKS WITH</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="348"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="347"/>
         <source>Supports most GGUF-based language models.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="401"/>
-        <source>Best For</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="434"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="370"/>
         <source>INSTALLATION</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="457"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="393"/>
         <source>Status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="469"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="405"/>
         <source>Running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="470"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="406"/>
         <source>Installed (Stopped)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="470"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="406"/>
         <source>Not Installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="479"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="415"/>
         <source>Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="482"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="418"/>
         <source>Auto Update</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="483"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="419"/>
         <source>Supported</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="528"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="464"/>
         <source>Close</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="580"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="516"/>
         <source>Documentation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="631"/>
+        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="567"/>
         <source>Website</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/RuntimeDetailPopup.qml" line="686"/>
-        <source>Install Runtime</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1794,109 +2661,38 @@
 <context>
     <name>SettingsPage</name>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="68"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="135"/>
         <source>Settings</source>
         <translation>Settings</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="18"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="248"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="342"/>
         <source>General</source>
         <translation>General</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="18"/>
-        <source>Profile and language defaults</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="18"/>
-        <source>Core</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="19"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="356"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="476"/>
         <source>Appearance</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="19"/>
-        <source>Theme and visual style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="19"/>
-        <source>UI</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="20"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="421"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="719"/>
         <source>Accessibility</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="20"/>
-        <source>Motion, contrast, density</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="20"/>
-        <source>A11y</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="21"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="637"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="938"/>
         <source>AI</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="21"/>
-        <source>Runtime and model metadata</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="21"/>
-        <source>Runtime</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="22"/>
-        <source>Voice readiness and controls</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="22"/>
-        <source>Input</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="23"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2640"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3191"/>
         <source>Notifications</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="23"/>
-        <source>Delivery and policy preferences</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="23"/>
-        <source>Alerts</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="24"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2740"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3389"/>
         <source>Updates</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="24"/>
-        <source>Version and update behavior</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1905,870 +2701,687 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="249"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="343"/>
         <source>Desktop shell preferences.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="255"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="367"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="488"/>
         <source>Theme</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="262"/>
-        <source>Profile</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="273"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="356"/>
         <source>Language</source>
         <translation>Language</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="357"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="477"/>
         <source>Theme foundation for a calm native desktop UI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="422"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="593"/>
+        <source>Visual Theme Presets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="720"/>
         <source>Comfort, motion, contrast, and density preferences. Changes take effect immediately.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="447"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="737"/>
         <source>Reduced Motion</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="454"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="745"/>
         <source>Disables all animations and transitions throughout the UI.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="530"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="801"/>
         <source>High Contrast</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="537"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="809"/>
         <source>Increases text and border contrast for better readability.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="599"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="860"/>
         <source>UI Density</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="638"/>
-        <source>Local-first provider readiness. Future API providers are disabled placeholders.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="647"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="829"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="954"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2192"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2361"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2823"/>
         <source>Readiness</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="656"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="752"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="947"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1059"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="950"/>
         <source>Provider</source>
         <translation type="unfinished">Provider</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="662"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="962"/>
-        <source>Scope</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="669"/>
-        <source>API Keys</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="670"/>
-        <source>Not stored</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="678"/>
-        <source>Cloud Providers</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="679"/>
-        <source>Not configured / disabled</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="685"/>
-        <source>Credentials</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="692"/>
-        <source>Credential Security</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="693"/>
-        <source>OS secret-store readiness only; cloud execution remains disabled.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="699"/>
-        <source>Store</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="707"/>
-        <source>OS Backend</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="715"/>
-        <source>Actions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="728"/>
-        <source>Add API Key</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="734"/>
-        <source>Update API Key</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="740"/>
-        <source>Remove API Key</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="822"/>
-        <source>Active Model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="836"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1221"/>
         <source>Endpoint</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="858"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1283"/>
         <source>Models</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="859"/>
-        <source>Model Library foundation and local-first selection metadata.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="872"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1312"/>
         <source> / No model selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="969"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2185"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2212"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2455"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2412"/>
+        <source>Whisper model file path (e.g. ggml-base.bin)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2437"/>
+        <source>Whisper Model Seç</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2638"/>
+        <source>Configure system-level permission policies and sandbox boundaries for local tool execution.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2733"/>
+        <source>Manage local system integrations, CLI tools, and background helper gateways.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2765"/>
+        <source>Manage autonomous agent workflows, task validation, and runtime safety gates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2777"/>
+        <source>Require manual approval for agent tasks</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2807"/>
+        <source>Configure assistant presentation styles and system personality profiles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2816"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2844"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3005"/>
         <source>Selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="984"/>
-        <source>Capability</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="999"/>
-        <source>Registry</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1010"/>
-        <source>Model Metadata</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1018"/>
-        <source>Model Library</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1019"/>
-        <source>Installed, discoverable, and recommended local AI metadata.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1029"/>
-        <source>Installed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1029"/>
-        <source>Installed Model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1041"/>
-        <source>Recommended</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1041"/>
-        <source>Recommendation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1048"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1462"/>
         <source>Provider Status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1049"/>
-        <source>Discovery metadata only. No background probing or hidden network calls.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1066"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1429"/>
         <source>Model Roles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1067"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1430"/>
         <source>Assignments are metadata only and do not enable automatic routing.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1082"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1445"/>
         <source>Role</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1088"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1451"/>
         <source>Use Selected</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1098"/>
-        <source>Model Advisor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1099"/>
-        <source>Deterministic local recommendations from static metadata.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1109"/>
-        <source>Advisor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1121"/>
-        <source>Avoid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1128"/>
-        <source>Downloads</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1129"/>
-        <source>Download center foundation. Actions are disabled.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1139"/>
-        <source>Download</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1146"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1157"/>
-        <source>Benchmark</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1147"/>
-        <source>Manual/placeholder performance metadata only.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1180"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1515"/>
         <source>Explicit local chat routing controls.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1187"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1527"/>
         <source>Local chat inference</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1233"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1576"/>
         <source>Local response streaming</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1282"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1624"/>
         <source>Timeout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1322"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1695"/>
         <source>ms</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1332"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1899"/>
         <source>Use local memory/context in chat</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1378"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1949"/>
         <source>Show context reasoning</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1425"/>
-        <source>Context reasoning is hidden from UI; runtime behavior is unchanged.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1433"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1994"/>
         <source>Routing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1441"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1674"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2001"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2494"/>
         <source>Context</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1452"/>
-        <source>Summary Injection</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1462"/>
-        <source>Explainability</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1471"/>
-        <source>Adaptive Budget</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1479"/>
-        <source>Compression</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1488"/>
-        <source>Summary Pipeline</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1500"/>
-        <source>Continuity Budget</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1508"/>
-        <source>Context Diagnostics</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1517"/>
-        <source>Context Trace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1525"/>
-        <source>Memory Relevance</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1551"/>
-        <source>Readiness metadata only. No microphone, playback, STT, or TTS execution.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1563"/>
-        <source>Piper binary</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1572"/>
-        <source>Piper binary path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1578"/>
-        <source>Piper model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1587"/>
-        <source>Piper .onnx model path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1593"/>
-        <source>Whisper binary</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1602"/>
-        <source>Whisper binary path</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1608"/>
-        <source>Whisper model</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1617"/>
-        <source>Whisper model folder or model file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1623"/>
-        <source>Apply Paths</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1648"/>
-        <source>Brain</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1649"/>
-        <source>Memory, recall, context, summaries, and continuity remain local and explicit.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1658"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1686"/>
-        <source>Memory</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1667"/>
-        <source>Recall</source>
-        <translation type="unfinished">Recall</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1675"/>
-        <source>opt-in on</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1676"/>
-        <source>opt-in off</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1694"/>
-        <source>Continuity</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1703"/>
-        <source>Chat History</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1713"/>
-        <source>Active Conversation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1727"/>
-        <source>Clear Local Memory</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1734"/>
-        <source>Clear Chat History</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1740"/>
-        <source>Export Markdown</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1747"/>
-        <source>Export JSON</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1754"/>
-        <source>Export TXT</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1761"/>
-        <source>Export PDF</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1770"/>
-        <source>Brain Export</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1771"/>
-        <source>Backup foundation: .sentinelbackup package metadata for Brain, chats, and settings. Restore metadata UI is prepared; no cloud sync.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1783"/>
-        <source>Backup Metadata</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1789"/>
-        <source>Restore Metadata</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1811"/>
-        <source>Permissions</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1812"/>
-        <source>Central authority posture. These states are metadata only and do not enable execution.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1821"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1982"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2083"/>
-        <source>Status</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1828"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1848"/>
-        <source>Default</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1835"/>
-        <source>Domains</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1918"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2027"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2112"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2298"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2525"/>
-        <source>Boundary</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1926"/>
-        <source>States</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1972"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1989"/>
-        <source>Tools</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1973"/>
-        <source>Gateway readiness only. No tool can run from this section.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1996"/>
-        <source>Metadata</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2002"/>
+        <source>On</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/SettingsPage.qml" line="2002"/>
-        <source>Unavailable</source>
+        <source>Off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2008"/>
+        <source>Summary Injection</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/SettingsPage.qml" line="2009"/>
-        <source>Refused</source>
+        <source>Enabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2020"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2375"/>
-        <source>Permission</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2015"/>
+        <source>Explainability</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2073"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2090"/>
-        <source>Agents</source>
-        <translation type="unfinished">Agents</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2074"/>
-        <source>Agent execution is disabled. Sentinel can only prepare dry-run plan metadata.</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2016"/>
+        <source>Visible</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2097"/>
-        <source>Ready</source>
-        <translation type="unfinished">Ready</translation>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2016"/>
+        <source>Hidden</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2023"/>
+        <source>Adaptive Budget</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2031"/>
+        <source>Compression</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2040"/>
+        <source>Summary Pipeline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2052"/>
+        <source>Continuity Budget</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2060"/>
+        <source>Context Diagnostics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2069"/>
+        <source>Context Trace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2077"/>
+        <source>Memory Relevance</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/SettingsPage.qml" line="2103"/>
-        <source>Approval</source>
+        <source>Readiness metadata only. No microphone, playback, STT, or TTS execution.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2120"/>
-        <source>Plan Preview</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2116"/>
+        <source>TTS Engine</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2129"/>
-        <source>Refusal</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2219"/>
+        <source>Piper binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2175"/>
-        <source>Profiles</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2229"/>
+        <source>Piper binary path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2176"/>
-        <source>Assistant presentation profiles. Runtime authority is unchanged.</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2254"/>
+        <source>Piper Binary Seç</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2199"/>
-        <source>Authority</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2261"/>
+        <source>Piper model</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2200"/>
-        <source>Unchanged</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2271"/>
+        <source>Piper .onnx model path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2282"/>
-        <source>Summary</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2296"/>
+        <source>Piper Model Seç (.onnx)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2290"/>
-        <source>Description</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2304"/>
+        <source>Kokoro model</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2344"/>
-        <source>Workspace</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2314"/>
+        <source>Kokoro model file path (e.g. kokoro.onnx)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2345"/>
-        <source>Workspace scope for chat context, Brain summaries, attachments, and optional local knowledge.</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2339"/>
+        <source>Kokoro Model Seç</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2354"/>
-        <source>Access</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2346"/>
+        <source>Kokoro voice</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2368"/>
-        <source>Mode</source>
-        <translation type="unfinished">Mode</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2369"/>
-        <source>Workspace only</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2356"/>
+        <source>Kokoro voice name (e.g. af_sky)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2402"/>
-        <source>Local Knowledge Base</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2363"/>
+        <source>Whisper binary</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2410"/>
-        <source> / indexing is manual only / document scope is workspace only</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2372"/>
+        <source>Whisper binary path</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2431"/>
-        <source>Privacy</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2397"/>
+        <source>Whisper Binary Seç</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2403"/>
+        <source>Whisper model</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3192"/>
+        <source>Configure system-level toast notifications and audio alerts for background events.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3318"/>
+        <source>Notify on Model Downloads</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3332"/>
+        <source>Notify on Model Removals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3346"/>
+        <source>Notify on AI Agent Responses</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3360"/>
+        <source>Notify on System Updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3390"/>
+        <source>Manage manual and automated checks for software releases and patch alerts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3557"/>
+        <source>System Resources</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3558"/>
+        <source>Real-time monitoring of CPU, memory, VRAM, and token throughput telemetry.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3568"/>
+        <source>Yenile</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3671"/>
+        <source>Hardware Acceleration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3679"/>
+        <source>Apple Silicon Unified Memory (Metal Active)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3680"/>
+        <source>NVIDIA CUDA GPU Acceleration Active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3694"/>
+        <source>System RAM Usage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3729"/>
+        <source>Unified Memory Allocation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3729"/>
+        <source>Dedicated VRAM Usage</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/SettingsPage.qml" line="2443"/>
-        <source>Export</source>
+        <source>Apply Paths</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2468"/>
+        <source>Brain</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2469"/>
+        <source>Memory, recall, context, summaries, and continuity remain local and explicit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2478"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2506"/>
+        <source>Memory</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2487"/>
+        <source>Recall</source>
+        <translation type="unfinished">Recall</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2495"/>
+        <source>opt-in on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2496"/>
+        <source>opt-in off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2514"/>
+        <source>Continuity</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2523"/>
+        <source>Chat History</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/SettingsPage.qml" line="2533"/>
-        <source>Root</source>
+        <source>Active Conversation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2541"/>
-        <source>Posture</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2547"/>
+        <source>Clear Local Memory</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2551"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2654"/>
-        <source>Policy</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2554"/>
+        <source>Clear Chat History</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2612"/>
-        <source>Choose Workspace</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2560"/>
+        <source>Rerun Installation Wizard</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2618"/>
-        <source>Clear Workspace</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2566"/>
+        <source>Export Markdown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2641"/>
-        <source>In-app notification preferences.</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2573"/>
+        <source>Export JSON</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2650"/>
-        <source>Disabled</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2580"/>
+        <source>Export TXT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2650"/>
-        <source>Important Only</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2587"/>
+        <source>Export PDF</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2650"/>
-        <source>All</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2596"/>
+        <source>Brain Export</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2650"/>
-        <source>Custom</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2597"/>
+        <source>Backup foundation: .sentinelbackup package metadata for Brain, chats, and settings. Restore metadata UI is prepared; no cloud sync.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2680"/>
-        <source>Search notifications</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2609"/>
+        <source>Backup Metadata</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2700"/>
-        <source>Pin Update</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2615"/>
+        <source>Restore Metadata</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2706"/>
-        <source>Mark Security Read</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2637"/>
+        <source>Permissions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2712"/>
-        <source>Archive Workspace</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2651"/>
+        <source>Default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2718"/>
-        <source>Clear Archived</source>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2931"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3076"/>
+        <source>Boundary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2732"/>
+        <source>Tools</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/SettingsPage.qml" line="2741"/>
-        <source>Version and manual update controls.</source>
+        <source>Permission</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2753"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2764"/>
+        <source>Agents</source>
+        <translation type="unfinished">Agents</translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="obsolete">Ready</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2806"/>
+        <source>Profiles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2830"/>
+        <source>Authority</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2831"/>
+        <source>Unchanged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2915"/>
+        <source>Summary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2923"/>
+        <source>Description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2953"/>
+        <source>Workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2954"/>
+        <source>Workspace scope for chat context, Brain summaries, attachments, and optional local knowledge.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mode</source>
+        <translation type="obsolete">Mode</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2980"/>
+        <source>Local Knowledge Base</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3084"/>
+        <source>Root</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3092"/>
+        <source>Posture</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3102"/>
+        <source>Policy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3163"/>
+        <source>Choose Workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3169"/>
+        <source>Clear Workspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2009"/>
+        <source>Disabled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3396"/>
         <source>Version</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2754"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3397"/>
         <source>1.0.0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2760"/>
-        <source>Qt</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2761"/>
-        <source>Qt 6 native shell</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2776"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3500"/>
         <source>Check for Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2784"/>
-        <source>State</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2812"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3780"/>
         <source>Clear local memory?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2820"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3788"/>
         <source>This clears local memory entries only. Settings are kept.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2835"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2889"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3803"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3857"/>
         <source>Cancel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2841"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2895"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3809"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3863"/>
         <source>Clear</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2866"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3834"/>
         <source>Clear chat history?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="2874"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="3842"/>
         <source>This clears the runtime transcript and persisted local chat history when available, then restores the single initial system message. Settings and memory are kept.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -2777,17 +3390,103 @@
         <translation type="vanished">Local AI</translation>
     </message>
     <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1295"/>
         <source>Model</source>
-        <translation type="vanished">Model</translation>
+        <translation>Model</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1179"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1091"/>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1514"/>
         <source>Chat</source>
         <translation>Chat</translation>
     </message>
     <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="20"/>
+        <source>Interface</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="21"/>
+        <source>AI Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../ui/qml/pages/SettingsPage.qml" line="22"/>
-        <location filename="../ui/qml/pages/SettingsPage.qml" line="1550"/>
+        <source>Memory &amp; Knowledge</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="23"/>
+        <source>Security &amp; Agents</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="35"/>
+        <source>Dosya Seçin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="182"/>
+        <source>Search settings...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="939"/>
+        <source>Configure and inspect local AI inference runtimes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1077"/>
+        <source>System Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1174"/>
+        <source>Autonomous Mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1284"/>
+        <source>Configure active LLM configurations and select local inference models.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1463"/>
+        <source>Active and available local runtime connection status.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1491"/>
+        <source>Active</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1491"/>
+        <source>Available</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1702"/>
+        <source>Inference Parameters (Advanced)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1716"/>
+        <source>Temperature</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1776"/>
+        <source>Top-P</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="1837"/>
+        <source>Max Tokens</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/SettingsPage.qml" line="2102"/>
         <source>Voice</source>
         <translation>Voice</translation>
     </message>
@@ -2823,19 +3522,18 @@
 <context>
     <name>sentinel::core::AppSettings</name>
     <message>
-        <location filename="../core/src/AppSettings.cpp" line="221"/>
+        <location filename="../core/src/AppSettings.cpp" line="225"/>
         <source>Türkçe</source>
         <translation type="unfinished">Türkçe</translation>
     </message>
     <message>
-        <location filename="../core/src/AppSettings.cpp" line="224"/>
+        <location filename="../core/src/AppSettings.cpp" line="227"/>
         <source>English</source>
         <translation type="unfinished">English</translation>
     </message>
     <message>
-        <location filename="../core/src/AppSettings.cpp" line="226"/>
         <source>System Default</source>
-        <translation type="unfinished">System Default</translation>
+        <translation type="obsolete">System Default</translation>
     </message>
 </context>
 </TS>
