@@ -35,6 +35,8 @@ jobs:
         run: cmake --build --preset tests
 
       - name: Test
+        env:
+          QT_QPA_PLATFORM: offscreen
         run: ctest --preset tests
 
       - name: Format check

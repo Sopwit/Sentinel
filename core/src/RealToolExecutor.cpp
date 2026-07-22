@@ -131,9 +131,9 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             process.setProcessEnvironment(env);
 
 #if defined(Q_OS_WIN)
-            process.start(QStringLiteral("cmd.exe"), {QStringLiteral("/c"), command});
+            process.start(QStringLiteral("cmd.exe"), QStringList{QStringLiteral("/c"), command});
 #else
-            process.start(QStringLiteral("/bin/sh"), {QStringLiteral("-c"), command});
+            process.start(QStringLiteral("/bin/sh"), QStringList{QStringLiteral("-c"), command});
 #endif
 
             if (!process.waitForFinished(30000)) {
