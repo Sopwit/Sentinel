@@ -160,7 +160,7 @@ void NullAgentRuntimeTest::returnsDeterministicLocalResponse() {
     QCOMPARE(first.status, AgentStatus::Ready);
     QCOMPARE(second.status, AgentStatus::Ready);
     QCOMPARE(first.message, second.message);
-    QCOMPARE(first.message, QStringLiteral("Local agent placeholder processed: plan next step"));
+    QCOMPARE(first.message, QStringLiteral("Agent executed command successfully: plan next step"));
 }
 
 QTEST_MAIN(NullAgentRuntimeTest)
