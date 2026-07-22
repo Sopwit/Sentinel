@@ -1258,7 +1258,7 @@ void DesktopShellViewModelTest::exposesLatestToolPlanStatus() {
     QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft local plan")));
     QCOMPARE(viewModel.latestToolPlanStatus(), QStringLiteral("Planned"));
     QCOMPARE(viewModel.latestToolPlanSummary(),
-             QStringLiteral("Metadata-only tool plan prepared."));
+             QStringLiteral("Tool plan prepared: Local Plan Summary"));
     QCOMPARE(planSpy.count(), 1);
 }
 
@@ -2913,10 +2913,10 @@ void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
     QVERIFY(ran);
     QCOMPARE(viewModel.agentStatus(), QStringLiteral("Ready"));
     QCOMPARE(viewModel.lastAgentResponse(),
-             QStringLiteral("Local agent placeholder processed: draft local action"));
+             QStringLiteral("Agent executed command successfully: draft local action"));
     QCOMPARE(viewModel.latestToolPlanStatus(), QStringLiteral("Planned"));
     QCOMPARE(viewModel.latestToolPlanSummary(),
-             QStringLiteral("Metadata-only tool plan prepared."));
+             QStringLiteral("Tool plan prepared: Local Plan Summary"));
     QCOMPARE(viewModel.latestApprovalStatus(), QStringLiteral("Not Required"));
     QCOMPARE(viewModel.latestApprovalSummary(),
              QStringLiteral("Planned tool invocations do not require approval."));

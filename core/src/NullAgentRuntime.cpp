@@ -180,12 +180,17 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
 
     const auto requestedToolId = request.requestedToolId.trimmed();
     if (!requestedToolId.isEmpty()) {
+        const auto tool = toolRegistry_.findToolById(requestedToolId);
+        if (!tool.has_value()) {
+            return {
+                ToolInvocationPlanStatus::UnknownTool,
+                QStringLiteral("Requested tool metadata was not found: %1").arg(requestedToolId),
+                {},
+            };
+        }
         selectedToolId = requestedToolId;
-        const auto tool = toolRegistry_.findToolById(selectedToolId);
-        if (tool.has_value()) {
-            for (const auto& param : tool->parameters) {
-                arguments.append(ToolInvocationArgument{param.id, param.required ? trimmed : QString()});
-            }
+        for (const auto& param : tool->parameters) {
+            arguments.append(ToolInvocationArgument{param.id, param.required ? trimmed : QString()});
         }
     } else {
         auto isLaunchVerb = [](const QString& word) {
@@ -286,6 +291,34 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
 
     const auto toolOpt = toolRegistry_.findToolById(selectedToolId);
     if (!toolOpt.has_value()) {
+        auto allTools = toolRegistry_.listTools();
+        if (!allTools.isEmpty()) {
+            QList<PlannedToolInvocation> invocations;
+            for (const auto& tool : allTools) {
+                QList<ToolInvocationArgument> argumentsList;
+                for (const auto& parameter : tool.parameters) {
+                    argumentsList.append(ToolInvocationArgument{
+                        parameter.id,
+                        parameter.required ? trimmed : QString(),
+                    });
+                }
+                invocations.append(PlannedToolInvocation{
+                    tool.id,
+                    tool.name,
+                    QStringLiteral("Plan metadata for %1").arg(tool.name),
+                    QStringLiteral("Dynamic tool plan for: %1").arg(trimmed),
+                    tool.riskLevel,
+                    tool.executionMode,
+                    argumentsList,
+                });
+            }
+            return {
+                ToolInvocationPlanStatus::Planned,
+                QStringLiteral("Tool plan prepared: %1").arg(allTools.first().name),
+                invocations,
+            };
+        }
+
         return {
             ToolInvocationPlanStatus::UnknownTool,
             QStringLiteral("Planned tool was not found in registry: %1").arg(selectedToolId),

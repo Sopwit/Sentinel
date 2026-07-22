@@ -3,6 +3,8 @@
 #include <QFile>
 #include <QProcess>
 #include <QDir>
+#include <QFileInfo>
+#include <QProcessEnvironment>
 
 namespace sentinel::core {
 
@@ -54,6 +56,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
     }
 
     QStringList logs;
+    QString currentWorkingDirectory = QDir::currentPath();
 
     for (const auto& invocation : request.plan.invocations) {
         // 1. read-file
@@ -65,6 +68,10 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             if (path.isEmpty()) {
                 logs.append(QStringLiteral("read-file: No path argument provided."));
                 continue;
+            }
+            QFileInfo fileInfo(path);
+            if (fileInfo.isRelative()) {
+                path = QDir(currentWorkingDirectory).absoluteFilePath(path);
             }
             QFile file(path);
             if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
@@ -79,11 +86,15 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
         }
         // 2. write-file
         else if (invocation.toolId == QLatin1String("write-file")) {
-            const QString path = getArgument(invocation, QStringLiteral("path"));
+            QString path = getArgument(invocation, QStringLiteral("path"));
             const QString content = getArgument(invocation, QStringLiteral("content"));
             if (path.isEmpty()) {
                 logs.append(QStringLiteral("write-file: No path argument provided."));
                 continue;
+            }
+            QFileInfo fileInfo(path);
+            if (fileInfo.isRelative()) {
+                path = QDir(currentWorkingDirectory).absoluteFilePath(path);
             }
             QFile file(path);
             if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
@@ -103,8 +114,29 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 continue;
             }
             QProcess process;
-            process.startCommand(command);
-            if (!process.waitForFinished(10000)) {
+            process.setWorkingDirectory(currentWorkingDirectory);
+
+            QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+            QString pathEnv = env.value(QStringLiteral("PATH"));
+#if defined(Q_OS_MACOS)
+            if (!pathEnv.contains(QStringLiteral("/opt/homebrew/bin"))) {
+                pathEnv = QStringLiteral("/opt/homebrew/bin:/usr/local/bin:") + pathEnv;
+            }
+#elif defined(Q_OS_UNIX)
+            if (!pathEnv.contains(QStringLiteral("/usr/local/bin"))) {
+                pathEnv = QStringLiteral("/usr/local/bin:") + pathEnv;
+            }
+#endif
+            env.insert(QStringLiteral("PATH"), pathEnv);
+            process.setProcessEnvironment(env);
+
+#if defined(Q_OS_WIN)
+            process.start(QStringLiteral("cmd.exe"), QStringList() << QStringLiteral("/c") << command);
+#else
+            process.start(QStringLiteral("/bin/sh"), QStringList() << QStringLiteral("-c") << command);
+#endif
+
+            if (!process.waitForFinished(30000)) {
                 logs.append(QStringLiteral("run-command: Timed out or failed to start: %1")
                                 .arg(command));
                 continue;
@@ -174,6 +206,9 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
         // 7. open-workspace
         else if (invocation.toolId == QLatin1String("open-workspace")) {
             const QString path = getArgument(invocation, QStringLiteral("path"));
+            if (!path.isEmpty()) {
+                currentWorkingDirectory = path;
+            }
             logs.append(QStringLiteral("open-workspace: Workspace context set → '%1'").arg(path));
         }
         // 8. summarize-current-conversation
