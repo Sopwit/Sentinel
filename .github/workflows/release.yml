@@ -41,7 +41,7 @@ jobs:
 
       - name: Set up Developer Command Prompt (Windows)
         if: matrix.os == 'windows-2022'
-        uses: step-security/msvc-dev-cmd@v1
+        uses: ilammy/msvc-dev-cmd@v1
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
