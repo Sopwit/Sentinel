@@ -31,7 +31,7 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-24.04'
@@ -41,7 +41,7 @@ jobs:
 
       - name: Set up Developer Command Prompt (Windows)
         if: matrix.os == 'windows-2022'
-        uses: ilammy/msvc-dev-cmd@v1
+        uses: step-security/msvc-dev-cmd@v1
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
