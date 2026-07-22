@@ -93,8 +93,11 @@ jobs:
         if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
-          windeployqt dist/bin/sentinel-desktop.exe --qmldir ui/qml --compiler-runtime
+          # 1. Zip portable files (windeployqt ran automatically during target install)
           Compress-Archive -Path dist/* -DestinationPath sentinel-desktop-windows-x64.zip
+
+          # 2. Build MSI and EXE installers using CPack
+          cpack --config build/CPackConfig.cmake
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
