@@ -37,7 +37,7 @@ jobs:
         if: matrix.os == 'ubuntu-24.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev clang-format fonts-noto-core
+          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev clang-format fonts-noto-core rpm
 
       - name: Set up Developer Command Prompt (Windows)
         if: matrix.os == 'windows-2022'
@@ -61,7 +61,27 @@ jobs:
       - name: Bundle and Package (Linux)
         if: matrix.os == 'ubuntu-24.04'
         run: |
+          # 1. Create standard portable tarball
           tar -czvf sentinel-desktop-linux-x64.tar.gz -C dist .
+
+          # 2. Build DEB and RPM packages using CPack
+          cpack --config build/CPackConfig.cmake
+
+          # 3. Build AppImage using linuxdeploy and linuxdeploy-plugin-qt
+          wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
+          chmod +x linuxdeploy*.AppImage
+
+          export QMAKE="${QT_PATH}/bin/qmake"
+          export LD_LIBRARY_PATH="${QT_PATH}/lib:${LD_LIBRARY_PATH}"
+          export PATH="${QT_PATH}/bin:${PATH}"
+
+          ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
+            --appdir dist \
+            --plugin qt \
+            --output appimage
+
+          mv Sentinel_Desktop-*.AppImage sentinel-desktop-linux-x86_64.AppImage || mv Sentinel-Desktop-*.AppImage sentinel-desktop-linux-x86_64.AppImage || true
 
       - name: Bundle and Package (macOS)
         if: matrix.os == 'macos-14'

@@ -51,3 +51,18 @@ add_subdirectory(apps/sentinel-desktop)
 
 enable_testing()
 add_subdirectory(tests)
+
+# ── CPack Packaging ──────────────────────────────────────────────────────────
+if(UNIX AND NOT APPLE)
+    set(CPACK_PACKAGE_NAME "sentinel-desktop")
+    set(CPACK_PACKAGE_VENDOR "Sentinel Team")
+    set(CPACK_PACKAGE_VERSION "${PROJECT_VERSION}")
+    set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Local-first AI desktop assistant")
+    set(CPACK_PACKAGE_CONTACT "support@sentinel.dev")
+    set(CPACK_PACKAGE_FILE_NAME "sentinel-desktop-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}")
+    set(CPACK_GENERATOR "DEB;RPM")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libc6, libgl1, libqt6core6, libqt6gui6, libqt6qml6, libqt6quick6, libqt6widgets6, libqt6network6, libqt6sql6")
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "Sentinel Team <support@sentinel.dev>")
+    set(CPACK_RPM_PACKAGE_REQUIRES "qt6-qtbase, qt6-qtdeclarative")
+    include(CPack)
+endif()
