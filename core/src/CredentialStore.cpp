@@ -4,6 +4,11 @@
 #include <QProcess>
 #include <QCoreApplication>
 
+#if defined(Q_OS_WIN)
+#include <windows.h>
+#include <wincred.h>
+#endif
+
 #include <utility>
 
 namespace sentinel::core {
