@@ -96,6 +96,9 @@ jobs:
           wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
           chmod +x linuxdeploy*.AppImage
 
+          # Clean up unused SQL drivers to prevent missing dependency errors (e.g. libmimerapi.so) and shrink bundle size
+          find "${QT_ROOT_DIR}/plugins/sqldrivers/" -type f ! -name "libqsqlite.so" -delete
+
           export QMAKE="${QT_ROOT_DIR}/bin/qmake"
           export LD_LIBRARY_PATH="${QT_ROOT_DIR}/lib:${LD_LIBRARY_PATH}"
           export PATH="${QT_ROOT_DIR}/bin:${PATH}"
