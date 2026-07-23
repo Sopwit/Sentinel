@@ -5,18 +5,17 @@
 namespace sentinel::core {
 
 NullAgentRuntime::NullAgentRuntime()
-    : NullAgentRuntime(QList<ToolDescriptor>{
-          ToolDescriptor{
-              QStringLiteral("local-plan-summary"),
-              QStringLiteral("Local Plan Summary"),
-              QStringLiteral("Local planning summary tool."),
-              ToolRiskLevel::Low,
-              ToolExecutionMode::MetadataOnly,
-              {
-                  ToolParameterDescriptor{QStringLiteral("topic"), QStringLiteral("Short user topic for local summary."), true},
-              },
-          }
-      }) {}
+    : NullAgentRuntime(QList<ToolDescriptor>{ToolDescriptor{
+          QStringLiteral("local-plan-summary"),
+          QStringLiteral("Local Plan Summary"),
+          QStringLiteral("Local planning summary tool."),
+          ToolRiskLevel::Low,
+          ToolExecutionMode::MetadataOnly,
+          {
+              ToolParameterDescriptor{QStringLiteral("topic"),
+                                      QStringLiteral("Short user topic for local summary."), true},
+          },
+      }}) {}
 
 NullAgentRuntime::NullAgentRuntime(QList<ToolDescriptor> tools) {
     for (auto& tool : tools) {
@@ -48,37 +47,36 @@ QList<ToolDescriptor> NullAgentRuntime::availableTools() const {
 
 QList<ToolDescriptor> NullAgentRuntime::standardTools() {
     return {
-        ToolDescriptor{
-            QStringLiteral("local-plan-summary"),
-            QStringLiteral("Local Plan Summary"),
-            QStringLiteral("Local planning summary tool."),
-            ToolRiskLevel::Low,
-            ToolExecutionMode::MetadataOnly,
-            {
-                ToolParameterDescriptor{QStringLiteral("topic"), QStringLiteral("Short user topic for local summary."), true},
-            }
-        },
-        ToolDescriptor{
-            QStringLiteral("read-file"),
-            QStringLiteral("Read File"),
-            QStringLiteral("Scoped file read inside an approved workspace path."),
-            ToolRiskLevel::Medium,
-            ToolExecutionMode::Local,
-            {
-                ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Absolute path to read."), true},
-            }
-        },
-        ToolDescriptor{
-            QStringLiteral("write-file"),
-            QStringLiteral("Write File"),
-            QStringLiteral("Scoped file write after approval and validation checks."),
-            ToolRiskLevel::High,
-            ToolExecutionMode::Local,
-            {
-                ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Absolute path to write."), true},
-                ToolParameterDescriptor{QStringLiteral("content"), QStringLiteral("File contents."), true},
-            }
-        },
+        ToolDescriptor{QStringLiteral("local-plan-summary"),
+                       QStringLiteral("Local Plan Summary"),
+                       QStringLiteral("Local planning summary tool."),
+                       ToolRiskLevel::Low,
+                       ToolExecutionMode::MetadataOnly,
+                       {
+                           ToolParameterDescriptor{
+                               QStringLiteral("topic"),
+                               QStringLiteral("Short user topic for local summary."), true},
+                       }},
+        ToolDescriptor{QStringLiteral("read-file"),
+                       QStringLiteral("Read File"),
+                       QStringLiteral("Scoped file read inside an approved workspace path."),
+                       ToolRiskLevel::Medium,
+                       ToolExecutionMode::Local,
+                       {
+                           ToolParameterDescriptor{QStringLiteral("path"),
+                                                   QStringLiteral("Absolute path to read."), true},
+                       }},
+        ToolDescriptor{QStringLiteral("write-file"),
+                       QStringLiteral("Write File"),
+                       QStringLiteral("Scoped file write after approval and validation checks."),
+                       ToolRiskLevel::High,
+                       ToolExecutionMode::Local,
+                       {
+                           ToolParameterDescriptor{QStringLiteral("path"),
+                                                   QStringLiteral("Absolute path to write."), true},
+                           ToolParameterDescriptor{QStringLiteral("content"),
+                                                   QStringLiteral("File contents."), true},
+                       }},
         ToolDescriptor{
             QStringLiteral("run-command"),
             QStringLiteral("Run Command"),
@@ -86,74 +84,63 @@ QList<ToolDescriptor> NullAgentRuntime::standardTools() {
             ToolRiskLevel::High,
             ToolExecutionMode::Local,
             {
-                ToolParameterDescriptor{QStringLiteral("command"), QStringLiteral("The shell command to run."), true},
-            }
-        },
-        ToolDescriptor{
-            QStringLiteral("voice-transcribe"),
-            QStringLiteral("Voice Transcribe"),
-            QStringLiteral("Microphone audio capture and STT speech-to-text pipeline."),
-            ToolRiskLevel::High,
-            ToolExecutionMode::Local,
-            {
-                ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("Path to the audio file."), true},
-            }
-        },
-        ToolDescriptor{
-            QStringLiteral("voice-speak"),
-            QStringLiteral("Voice Speak"),
-            QStringLiteral("TTS text-to-speech audio synthesis and playback."),
-            ToolRiskLevel::High,
-            ToolExecutionMode::Local,
-            {
-                ToolParameterDescriptor{QStringLiteral("text"), QStringLiteral("The text to speak."), true},
-            }
-        },
-        ToolDescriptor{
-            QStringLiteral("web-search"),
-            QStringLiteral("Web Search"),
-            QStringLiteral("Web lookup querying the network via local client."),
-            ToolRiskLevel::High,
-            ToolExecutionMode::Local,
-            {
-                ToolParameterDescriptor{QStringLiteral("query"), QStringLiteral("The search query."), true},
-            }
-        },
-        ToolDescriptor{
-            QStringLiteral("open-workspace"),
-            QStringLiteral("Open Workspace"),
-            QStringLiteral("Workspace context set."),
-            ToolRiskLevel::Medium,
-            ToolExecutionMode::Local,
-            {
-                ToolParameterDescriptor{QStringLiteral("path"), QStringLiteral("The workspace path."), true},
-            }
-        },
-        ToolDescriptor{
-            QStringLiteral("summarize-current-conversation"),
-            QStringLiteral("Summarize Current Conversation"),
-            QStringLiteral("Conversation summary generation and prompt injection."),
-            ToolRiskLevel::Low,
-            ToolExecutionMode::Local,
-            {}
-        },
-        ToolDescriptor{
-            QStringLiteral("provider-test-call"),
-            QStringLiteral("Provider Test Call"),
-            QStringLiteral("Connectivity check passed."),
-            ToolRiskLevel::Low,
-            ToolExecutionMode::Local,
-            {}
-        },
-        ToolDescriptor{
-            QStringLiteral("export-conversation"),
-            QStringLiteral("Export Conversation"),
-            QStringLiteral("Explicit transcript export to local disk file."),
-            ToolRiskLevel::Medium,
-            ToolExecutionMode::Local,
-            {}
-        }
-    };
+                ToolParameterDescriptor{QStringLiteral("command"),
+                                        QStringLiteral("The shell command to run."), true},
+            }},
+        ToolDescriptor{QStringLiteral("voice-transcribe"),
+                       QStringLiteral("Voice Transcribe"),
+                       QStringLiteral("Microphone audio capture and STT speech-to-text pipeline."),
+                       ToolRiskLevel::High,
+                       ToolExecutionMode::Local,
+                       {
+                           ToolParameterDescriptor{QStringLiteral("path"),
+                                                   QStringLiteral("Path to the audio file."), true},
+                       }},
+        ToolDescriptor{QStringLiteral("voice-speak"),
+                       QStringLiteral("Voice Speak"),
+                       QStringLiteral("TTS text-to-speech audio synthesis and playback."),
+                       ToolRiskLevel::High,
+                       ToolExecutionMode::Local,
+                       {
+                           ToolParameterDescriptor{QStringLiteral("text"),
+                                                   QStringLiteral("The text to speak."), true},
+                       }},
+        ToolDescriptor{QStringLiteral("web-search"),
+                       QStringLiteral("Web Search"),
+                       QStringLiteral("Web lookup querying the network via local client."),
+                       ToolRiskLevel::High,
+                       ToolExecutionMode::Local,
+                       {
+                           ToolParameterDescriptor{QStringLiteral("query"),
+                                                   QStringLiteral("The search query."), true},
+                       }},
+        ToolDescriptor{QStringLiteral("open-workspace"),
+                       QStringLiteral("Open Workspace"),
+                       QStringLiteral("Workspace context set."),
+                       ToolRiskLevel::Medium,
+                       ToolExecutionMode::Local,
+                       {
+                           ToolParameterDescriptor{QStringLiteral("path"),
+                                                   QStringLiteral("The workspace path."), true},
+                       }},
+        ToolDescriptor{QStringLiteral("summarize-current-conversation"),
+                       QStringLiteral("Summarize Current Conversation"),
+                       QStringLiteral("Conversation summary generation and prompt injection."),
+                       ToolRiskLevel::Low,
+                       ToolExecutionMode::Local,
+                       {}},
+        ToolDescriptor{QStringLiteral("provider-test-call"),
+                       QStringLiteral("Provider Test Call"),
+                       QStringLiteral("Connectivity check passed."),
+                       ToolRiskLevel::Low,
+                       ToolExecutionMode::Local,
+                       {}},
+        ToolDescriptor{QStringLiteral("export-conversation"),
+                       QStringLiteral("Export Conversation"),
+                       QStringLiteral("Explicit transcript export to local disk file."),
+                       ToolRiskLevel::Medium,
+                       ToolExecutionMode::Local,
+                       {}}};
 }
 
 ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
@@ -190,7 +177,8 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
         }
         selectedToolId = requestedToolId;
         for (const auto& param : tool->parameters) {
-            arguments.append(ToolInvocationArgument{param.id, param.required ? trimmed : QString()});
+            arguments.append(
+                ToolInvocationArgument{param.id, param.required ? trimmed : QString()});
         }
     } else {
         auto isLaunchVerb = [](const QString& word) {
@@ -210,8 +198,9 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
         }
 
         if (!programName.isEmpty()) {
-            if (programName.endsWith(QChar('\'')) || programName.endsWith(QStringLiteral("'ı")) || 
-                programName.endsWith(QStringLiteral("'i")) || programName.endsWith(QStringLiteral("'u")) || 
+            if (programName.endsWith(QChar('\'')) || programName.endsWith(QStringLiteral("'ı")) ||
+                programName.endsWith(QStringLiteral("'i")) ||
+                programName.endsWith(QStringLiteral("'u")) ||
                 programName.endsWith(QStringLiteral("'ü"))) {
                 int index = programName.indexOf(QChar('\''));
                 if (index > 0) {
@@ -222,23 +211,23 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
                 programName[0] = programName[0].toUpper();
             }
             selectedToolId = QStringLiteral("run-command");
-            arguments.append(ToolInvocationArgument{QStringLiteral("command"), QStringLiteral("open -a \"%1\"").arg(programName)});
-        }
-        else if (trimmed.startsWith(QStringLiteral("run ")) || 
-                 trimmed.startsWith(QStringLiteral("cmd ")) || 
-                 trimmed.contains(QStringLiteral("open -a")) ||
-                 trimmed.startsWith(QStringLiteral("ls ")) ||
-                 trimmed.startsWith(QStringLiteral("pwd")) ||
-                 trimmed.startsWith(QStringLiteral("echo ")) ||
-                 trimmed.startsWith(QStringLiteral("open ")) ||
-                 trimmed.startsWith(QStringLiteral("./")) ||
-                 trimmed.startsWith(QStringLiteral("/")) ||
-                 trimmed.startsWith(QStringLiteral("git ")) ||
-                 trimmed.startsWith(QStringLiteral("brew ")) ||
-                 trimmed.startsWith(QStringLiteral("python ")) ||
-                 trimmed.startsWith(QStringLiteral("node ")) ||
-                 trimmed.startsWith(QStringLiteral("npm "))) {
-            
+            arguments.append(ToolInvocationArgument{
+                QStringLiteral("command"), QStringLiteral("open -a \"%1\"").arg(programName)});
+        } else if (trimmed.startsWith(QStringLiteral("run ")) ||
+                   trimmed.startsWith(QStringLiteral("cmd ")) ||
+                   trimmed.contains(QStringLiteral("open -a")) ||
+                   trimmed.startsWith(QStringLiteral("ls ")) ||
+                   trimmed.startsWith(QStringLiteral("pwd")) ||
+                   trimmed.startsWith(QStringLiteral("echo ")) ||
+                   trimmed.startsWith(QStringLiteral("open ")) ||
+                   trimmed.startsWith(QStringLiteral("./")) ||
+                   trimmed.startsWith(QStringLiteral("/")) ||
+                   trimmed.startsWith(QStringLiteral("git ")) ||
+                   trimmed.startsWith(QStringLiteral("brew ")) ||
+                   trimmed.startsWith(QStringLiteral("python ")) ||
+                   trimmed.startsWith(QStringLiteral("node ")) ||
+                   trimmed.startsWith(QStringLiteral("npm "))) {
+
             selectedToolId = QStringLiteral("run-command");
             QString command = trimmed;
             if (command.startsWith(QStringLiteral("run "))) {
@@ -247,8 +236,8 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
                 command = command.mid(4).trimmed();
             }
             arguments.append(ToolInvocationArgument{QStringLiteral("command"), command});
-        }
-        else if (trimmed.startsWith(QStringLiteral("read ")) || trimmed.startsWith(QStringLiteral("cat "))) {
+        } else if (trimmed.startsWith(QStringLiteral("read ")) ||
+                   trimmed.startsWith(QStringLiteral("cat "))) {
             selectedToolId = QStringLiteral("read-file");
             QString path = trimmed;
             if (path.startsWith(QStringLiteral("read "))) {
@@ -257,8 +246,8 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
                 path = path.mid(4).trimmed();
             }
             arguments.append(ToolInvocationArgument{QStringLiteral("path"), path});
-        }
-        else if (trimmed.startsWith(QStringLiteral("search ")) || trimmed.startsWith(QStringLiteral("web "))) {
+        } else if (trimmed.startsWith(QStringLiteral("search ")) ||
+                   trimmed.startsWith(QStringLiteral("web "))) {
             selectedToolId = QStringLiteral("web-search");
             QString query = trimmed;
             if (query.startsWith(QStringLiteral("search "))) {
@@ -267,8 +256,8 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
                 query = query.mid(4).trimmed();
             }
             arguments.append(ToolInvocationArgument{QStringLiteral("query"), query});
-        }
-        else if (trimmed.startsWith(QStringLiteral("speak ")) || trimmed.startsWith(QStringLiteral("say "))) {
+        } else if (trimmed.startsWith(QStringLiteral("speak ")) ||
+                   trimmed.startsWith(QStringLiteral("say "))) {
             selectedToolId = QStringLiteral("voice-speak");
             QString text = trimmed;
             if (text.startsWith(QStringLiteral("speak "))) {
@@ -277,8 +266,7 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
                 text = text.mid(4).trimmed();
             }
             arguments.append(ToolInvocationArgument{QStringLiteral("text"), text});
-        }
-        else {
+        } else {
             if (toolRegistry_.findToolById(QStringLiteral("run-command")).has_value()) {
                 selectedToolId = QStringLiteral("run-command");
                 arguments.append(ToolInvocationArgument{QStringLiteral("command"), trimmed});

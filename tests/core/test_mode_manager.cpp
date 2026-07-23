@@ -24,7 +24,8 @@ void ModeManagerTest::defaultsToSentinelMode() {
 void ModeManagerTest::exposesNoSelectableModes() {
     ModeManager manager;
 
-    QCOMPARE(manager.availableModes(), QStringList({QStringLiteral("Chat"), QStringLiteral("Agent")}));
+    QCOMPARE(manager.availableModes(),
+             QStringList({QStringLiteral("Chat"), QStringLiteral("Agent")}));
 }
 
 void ModeManagerTest::ignoresModeNames() {

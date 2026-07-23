@@ -1909,8 +1909,8 @@ void ApplicationController::setOllamaEndpoint(const QString& endpoint) {
     ollamaRuntimeClient_ = std::make_unique<OllamaHttpRuntimeClient>(config);
     localInferenceWorker_ = std::make_unique<LocalInferenceWorker>(
         std::make_unique<OllamaLocalInferenceClient>(config),
-        std::make_unique<OllamaLocalInferenceStreamClient>(config),
-        this, localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
+        std::make_unique<OllamaLocalInferenceStreamClient>(config), this,
+        localInferenceClientIsRealOllama_, localInferenceStreamClientIsRealOllama_);
     emit ollamaStatusChanged();
 }
 
@@ -4774,7 +4774,8 @@ void ApplicationController::initializeActiveConversation() {
         }
     }
 
-    bool isTestEnv = !QCoreApplication::instance() || QCoreApplication::applicationName() != QStringLiteral("Sentinel");
+    bool isTestEnv = !QCoreApplication::instance() ||
+                     QCoreApplication::applicationName() != QStringLiteral("Sentinel");
     if (isTestEnv && !latestId.isEmpty()) {
         activeConversationId_ = latestId;
         loadActiveConversationTranscript();
@@ -4791,28 +4792,32 @@ void ApplicationController::initializeActiveConversation() {
         }
     }
     if (hasNonSystemMessages) {
-        const auto record = conversationStore_->createConversation(QStringLiteral("Current Transcript"));
+        const auto record =
+            conversationStore_->createConversation(QStringLiteral("Current Transcript"));
         activeConversationId_ = record.id;
         for (const auto& message : chatSession_->messages()) {
             persistActiveConversationMessage(message);
         }
         latestConversationSummaryMetadata_ =
             conversationStore_->loadSummaryMetadata(activeConversationId_);
-        conversationHistorySummary_.lastRestoredStatus = QStringLiteral("Restored legacy persisted transcript.");
-        conversationHistorySummary_.lastSavedStatus = QStringLiteral("Legacy transcript persisted.");
+        conversationHistorySummary_.lastRestoredStatus =
+            QStringLiteral("Restored legacy persisted transcript.");
+        conversationHistorySummary_.lastSavedStatus =
+            QStringLiteral("Legacy transcript persisted.");
         return;
     }
 
     // Always start with a fresh new conversation at launch (Gemini/ChatGPT style)
-    const auto record = conversationStore_->createConversation(QStringLiteral("Current Transcript"));
+    const auto record =
+        conversationStore_->createConversation(QStringLiteral("Current Transcript"));
     activeConversationId_ = record.id;
-    
+
     // Initialize empty messages list in the active session
     chatSession_->loadMessages({});
-    const auto message = chatSession_->appendSystemMessage(
-        QStringLiteral("Sentinel Core online."), ChatMessageStatus::Received);
+    const auto message = chatSession_->appendSystemMessage(QStringLiteral("Sentinel Core online."),
+                                                           ChatMessageStatus::Received);
     persistActiveConversationMessage(message);
-    
+
     latestConversationSummaryMetadata_ =
         conversationStore_->loadSummaryMetadata(activeConversationId_);
 }
@@ -5045,7 +5050,8 @@ QStringList ApplicationController::conversationHistorySummaryLines() const {
 }
 
 int ApplicationController::conversationHistoryMessageCount() const {
-    return conversationHistorySummary_.userMessageCount + conversationHistorySummary_.assistantMessageCount;
+    return conversationHistorySummary_.userMessageCount +
+           conversationHistorySummary_.assistantMessageCount;
 }
 
 QString ApplicationController::conversationPersistenceStatus() const {
@@ -8156,7 +8162,8 @@ bool ApplicationController::runAgentRequest(const QString& request) {
 
     if (!pendingCommand_.isEmpty()) {
         const auto lowerRequest = trimmed.toLower();
-        if (lowerRequest == QStringLiteral("onayla") || lowerRequest == QStringLiteral("approve") || lowerRequest == QStringLiteral("y")) {
+        if (lowerRequest == QStringLiteral("onayla") || lowerRequest == QStringLiteral("approve") ||
+            lowerRequest == QStringLiteral("y")) {
             const QString cmdToRun = pendingCommand_;
             pendingCommand_.clear();
 
@@ -8171,20 +8178,19 @@ bool ApplicationController::runAgentRequest(const QString& request) {
             ToolInvocationPlan planToRun;
             planToRun.status = ToolInvocationPlanStatus::Planned;
             planToRun.summary = QStringLiteral("User approved pending command.");
-            
+
             QList<ToolInvocationArgument> args;
             args.append(ToolInvocationArgument{QStringLiteral("command"), cmdToRun});
-            
-            planToRun.invocations.append(PlannedToolInvocation{
-                QStringLiteral("run-command"),
-                QStringLiteral("Run Command"),
-                QStringLiteral("User approved running command."),
-                QStringLiteral("Execution of approved command."),
-                ToolRiskLevel::High,
-                ToolExecutionMode::Local,
-                args,
-                {}
-            });
+
+            planToRun.invocations.append(
+                PlannedToolInvocation{QStringLiteral("run-command"),
+                                      QStringLiteral("Run Command"),
+                                      QStringLiteral("User approved running command."),
+                                      QStringLiteral("Execution of approved command."),
+                                      ToolRiskLevel::High,
+                                      ToolExecutionMode::Local,
+                                      args,
+                                      {}});
 
             ApprovalDecision approvedDecision{
                 ApprovalStatus::Approved,
@@ -8200,16 +8206,18 @@ bool ApplicationController::runAgentRequest(const QString& request) {
                 availableToolIds(),
             });
 
-            QString assistantText = QStringLiteral("🟢 **Eylem Başarıyla Tamamlandı (Execution Succeeded)**\n\n"
-                                                   "**Çalıştırılan Komut / Executed Command:**\n"
-                                                   "```bash\n"
-                                                   "%1\n"
-                                                   "```\n\n"
-                                                   "**Sonuç / Output:**\n"
-                                                   "%2")
-                .arg(cmdToRun, execResult.summary);
+            QString assistantText =
+                QStringLiteral("🟢 **Eylem Başarıyla Tamamlandı (Execution Succeeded)**\n\n"
+                               "**Çalıştırılan Komut / Executed Command:**\n"
+                               "```bash\n"
+                               "%1\n"
+                               "```\n\n"
+                               "**Sonuç / Output:**\n"
+                               "%2")
+                    .arg(cmdToRun, execResult.summary);
 
-            auto assistantMsg = chatSession_->appendAssistantMessage(assistantText, ChatMessageStatus::Received);
+            auto assistantMsg =
+                chatSession_->appendAssistantMessage(assistantText, ChatMessageStatus::Received);
             assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
             assistantMsg.roleUsed = QStringLiteral("agent");
             persistActiveConversationMessage(assistantMsg);
@@ -8219,8 +8227,9 @@ bool ApplicationController::runAgentRequest(const QString& request) {
             refreshConversationHistorySummary();
             emit chatMessagesChanged();
             return true;
-        } 
-        else if (lowerRequest == QStringLiteral("iptal") || lowerRequest == QStringLiteral("cancel") || lowerRequest == QStringLiteral("n")) {
+        } else if (lowerRequest == QStringLiteral("iptal") ||
+                   lowerRequest == QStringLiteral("cancel") ||
+                   lowerRequest == QStringLiteral("n")) {
             pendingCommand_.clear();
 
             const auto userMessage = chatSession_->appendUserMessage(trimmed);
@@ -8285,7 +8294,8 @@ bool ApplicationController::runAgentRequest(const QString& request) {
     appendPipelineActivity(latestAgentPipelineResult_);
     runtimeSession_.attachPipelineResult(latestAgentPipelineResult_);
 
-    if (!agentAutonomousMode_ && latestAgentPipelineResult_.approvalStatus() == ApprovalStatus::RequiresApproval) {
+    if (!agentAutonomousMode_ &&
+        latestAgentPipelineResult_.approvalStatus() == ApprovalStatus::RequiresApproval) {
         QString commandToRun;
         for (const auto& invocation : latestAgentPipelineResult_.plan.invocations) {
             if (invocation.toolId == QStringLiteral("run-command")) {
@@ -8302,15 +8312,18 @@ bool ApplicationController::runAgentRequest(const QString& request) {
 
         pendingCommand_ = commandToRun;
 
-        QString approvalText = QStringLiteral("⚠️ **Onay Bekliyor (Approval Required)**\n\n"
-                                              "Ajan aşağıdaki terminal komutunu çalıştırmak istiyor:\n"
-                                              "```bash\n"
-                                              "%1\n"
-                                              "```\n"
-                                              "Çalıştırmak için lütfen **onayla** (veya **approve**), iptal etmek için **iptal** (veya **cancel**) yazın.")
-            .arg(commandToRun);
+        QString approvalText =
+            QStringLiteral("⚠️ **Onay Bekliyor (Approval Required)**\n\n"
+                           "Ajan aşağıdaki terminal komutunu çalıştırmak istiyor:\n"
+                           "```bash\n"
+                           "%1\n"
+                           "```\n"
+                           "Çalıştırmak için lütfen **onayla** (veya **approve**), iptal etmek "
+                           "için **iptal** (veya **cancel**) yazın.")
+                .arg(commandToRun);
 
-        auto assistantMsg = chatSession_->appendAssistantMessage(approvalText, ChatMessageStatus::Received);
+        auto assistantMsg =
+            chatSession_->appendAssistantMessage(approvalText, ChatMessageStatus::Received);
         assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
         assistantMsg.roleUsed = QStringLiteral("agent");
         persistActiveConversationMessage(assistantMsg);
@@ -8322,8 +8335,7 @@ bool ApplicationController::runAgentRequest(const QString& request) {
 
         transitionConversationState(ConversationState::WaitingForApproval,
                                     QStringLiteral("approval metadata required"));
-    } 
-    else {
+    } else {
         QString assistantText;
         if (latestAgentPipelineResult_.executionStatus() == ToolExecutionStatus::Succeeded) {
             QString detailsText;
@@ -8335,17 +8347,22 @@ bool ApplicationController::runAgentRequest(const QString& request) {
                             cmd = arg.value;
                         }
                     }
-                    detailsText += QStringLiteral("**Çalıştırılan Komut / Executed Command:**\n```bash\n%1\n```\n").arg(cmd);
+                    detailsText +=
+                        QStringLiteral(
+                            "**Çalıştırılan Komut / Executed Command:**\n```bash\n%1\n```\n")
+                            .arg(cmd);
                 } else {
-                    detailsText += QStringLiteral("**Eylem / Action:** `%1`\n").arg(invocation.toolName);
+                    detailsText +=
+                        QStringLiteral("**Eylem / Action:** `%1`\n").arg(invocation.toolName);
                 }
             }
 
-            assistantText = QStringLiteral("🟢 **Eylem Başarıyla Tamamlandı (Execution Succeeded)**\n\n"
-                                           "%1\n"
-                                           "**Sonuç / Output:**\n"
-                                           "%2")
-                .arg(detailsText, latestAgentPipelineResult_.execution.summary);
+            assistantText =
+                QStringLiteral("🟢 **Eylem Başarıyla Tamamlandı (Execution Succeeded)**\n\n"
+                               "%1\n"
+                               "**Sonuç / Output:**\n"
+                               "%2")
+                    .arg(detailsText, latestAgentPipelineResult_.execution.summary);
         } else {
             QString detailsText;
             for (const auto& invocation : latestAgentPipelineResult_.plan.invocations) {
@@ -8356,23 +8373,29 @@ bool ApplicationController::runAgentRequest(const QString& request) {
                             cmd = arg.value;
                         }
                     }
-                    detailsText += QStringLiteral("**Çalıştırılmak İstenen Komut / Attempted Command:**\n```bash\n%1\n```\n").arg(cmd);
+                    detailsText += QStringLiteral("**Çalıştırılmak İstenen Komut / Attempted "
+                                                  "Command:**\n```bash\n%1\n```\n")
+                                       .arg(cmd);
                 } else {
-                    detailsText += QStringLiteral("**Eylem / Action:** `%1`\n").arg(invocation.toolName);
+                    detailsText +=
+                        QStringLiteral("**Eylem / Action:** `%1`\n").arg(invocation.toolName);
                 }
             }
 
-            assistantText = QStringLiteral("🔴 **Eylem Başarısız Oldu veya Engellendi (Execution Failed/Blocked)**\n\n"
-                                           "%1\n"
-                                           "**Detaylar / Details:**\n"
-                                           "* **Durum / Status:** `%2`\n"
-                                           "* **Açıklama / Explanation:** %3")
-                .arg(detailsText, 
-                     toolExecutionStatusName(latestAgentPipelineResult_.executionStatus()),
-                     latestAgentPipelineResult_.execution.summary);
+            assistantText =
+                QStringLiteral(
+                    "🔴 **Eylem Başarısız Oldu veya Engellendi (Execution Failed/Blocked)**\n\n"
+                    "%1\n"
+                    "**Detaylar / Details:**\n"
+                    "* **Durum / Status:** `%2`\n"
+                    "* **Açıklama / Explanation:** %3")
+                    .arg(detailsText,
+                         toolExecutionStatusName(latestAgentPipelineResult_.executionStatus()),
+                         latestAgentPipelineResult_.execution.summary);
         }
 
-        auto assistantMsg = chatSession_->appendAssistantMessage(assistantText, ChatMessageStatus::Received);
+        auto assistantMsg =
+            chatSession_->appendAssistantMessage(assistantText, ChatMessageStatus::Received);
         assistantMsg.providerUsed = QStringLiteral("AgentRuntime");
         assistantMsg.roleUsed = QStringLiteral("agent");
         persistActiveConversationMessage(assistantMsg);
@@ -8383,9 +8406,8 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         emit chatMessagesChanged();
 
         if (latestAgentPipelineResult_.executionStatus() ==
-                       ToolExecutionStatus::PlaceholderSucceeded ||
-                   latestAgentPipelineResult_.executionStatus() ==
-                       ToolExecutionStatus::Succeeded) {
+                ToolExecutionStatus::PlaceholderSucceeded ||
+            latestAgentPipelineResult_.executionStatus() == ToolExecutionStatus::Succeeded) {
             transitionConversationState(ConversationState::ReadyToRespond,
                                         QStringLiteral("agent response metadata ready"));
             transitionConversationState(ConversationState::Responding,
@@ -8439,7 +8461,8 @@ ApplicationController::buildAgentPipelineResult(const AgentRequest& request) con
 
     if (!agentAutonomousMode_ && result.approval.status == ApprovalStatus::RequiresApproval) {
         result.execution.status = ToolExecutionStatus::Blocked;
-        result.execution.summary = QStringLiteral("Execution paused: pending user approval in chat.");
+        result.execution.summary =
+            QStringLiteral("Execution paused: pending user approval in chat.");
     } else {
         result.execution = toolExecutor_->execute(ToolExecutionRequest{
             result.plan,
