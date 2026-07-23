@@ -128,7 +128,7 @@ jobs:
           # 2. Build MSI and EXE installers using CPack
           cpack --config build/CPackConfig.cmake
           Get-ChildItem Sentinel-Desktop-*.exe | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.exe" -ErrorAction SilentlyContinue
-          Get-ChildItem Sentinel_Desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
+          Get-ChildItem sentinel-desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
           
           # Note: To enable Windows Code Signing, sign the built binaries using signtool:
           # signtool sign /f cert.pfx /p "${{ secrets.WIN_CERT_PASSWORD }}" /tr http://timestamp.digicert.com /td sha256 build/Sentinel-Desktop-*.exe
