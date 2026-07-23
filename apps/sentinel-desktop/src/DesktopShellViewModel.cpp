@@ -6,27 +6,27 @@
 #include "sentinel/core/ModeManager.h"
 #include "sentinel/core/ModelRegistry.h"
 
+#include <QApplication>
 #include <QCryptographicHash>
+#include <QDateTime>
+#include <QDesktopServices>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QIODevice>
+#include <QIcon>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QLibraryInfo>
-#include <QSaveFile>
-#include <QProcess>
-#include <QStandardPaths>
-#include <QRegularExpression>
-#include <QFile>
-#include <QApplication>
-#include <QDateTime>
 #include <QNetworkAccessManager>
-#include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QProcess>
+#include <QRegularExpression>
+#include <QSaveFile>
+#include <QStandardPaths>
 #include <QSystemTrayIcon>
-#include <QIcon>
-#include <QDesktopServices>
 #include <QUrl>
 
 #include <algorithm>
@@ -182,14 +182,20 @@ struct FfmpegConfig {
 QList<FfmpegConfig> getFfmpegConfigs() {
     QList<FfmpegConfig> configs;
 #if defined(Q_OS_MAC)
-    configs.append({QStringLiteral("avfoundation"), QStringLiteral(":default"), QStringLiteral("macOS AVFoundation (Default)")});
-    configs.append({QStringLiteral("avfoundation"), QStringLiteral(":0"), QStringLiteral("macOS AVFoundation (Index 0)")});
+    configs.append({QStringLiteral("avfoundation"), QStringLiteral(":default"),
+                    QStringLiteral("macOS AVFoundation (Default)")});
+    configs.append({QStringLiteral("avfoundation"), QStringLiteral(":0"),
+                    QStringLiteral("macOS AVFoundation (Index 0)")});
 #elif defined(Q_OS_WIN)
-    configs.append({QStringLiteral("wasapi"), QStringLiteral("default"), QStringLiteral("Windows WASAPI (Default)")});
-    configs.append({QStringLiteral("dshow"), QStringLiteral("audio=default"), QStringLiteral("Windows DirectShow (Default)")});
+    configs.append({QStringLiteral("wasapi"), QStringLiteral("default"),
+                    QStringLiteral("Windows WASAPI (Default)")});
+    configs.append({QStringLiteral("dshow"), QStringLiteral("audio=default"),
+                    QStringLiteral("Windows DirectShow (Default)")});
 #else
-    configs.append({QStringLiteral("pulse"), QStringLiteral("default"), QStringLiteral("Linux PulseAudio")});
-    configs.append({QStringLiteral("alsa"), QStringLiteral("default"), QStringLiteral("Linux ALSA")});
+    configs.append(
+        {QStringLiteral("pulse"), QStringLiteral("default"), QStringLiteral("Linux PulseAudio")});
+    configs.append(
+        {QStringLiteral("alsa"), QStringLiteral("default"), QStringLiteral("Linux ALSA")});
 #endif
     return configs;
 }
@@ -222,9 +228,11 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
         if (currentStatus == QLatin1String("Ready") && lastAgentStatus_ == QLatin1String("Busy")) {
             const QString response = controller_.lastAgentResponse();
             if (!response.isEmpty()) {
-                addNotification(QStringLiteral("Agent"),
-                    QStringLiteral("Sentinel Assistant"),
-                    QStringLiteral("New response received: \"%1\"").arg(response.left(120) + (response.length() > 120 ? QStringLiteral("...") : QStringLiteral(""))));
+                addNotification(
+                    QStringLiteral("Agent"), QStringLiteral("Sentinel Assistant"),
+                    QStringLiteral("New response received: \"%1\"")
+                        .arg(response.left(120) + (response.length() > 120 ? QStringLiteral("...")
+                                                                           : QStringLiteral(""))));
             }
         }
         lastAgentStatus_ = currentStatus;
@@ -372,9 +380,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::piperFileOutputExecutionEnabledChanged, this, [this]() {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     });
-    connect(&settings_, &core::AppSettings::agentAutonomousModeChanged, this, [this]() {
-        controller_.setAgentAutonomousMode(settings_.agentAutonomousMode());
-    });
+    connect(&settings_, &core::AppSettings::agentAutonomousModeChanged, this,
+            [this]() { controller_.setAgentAutonomousMode(settings_.agentAutonomousMode()); });
     controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
     controller_.setSelectedLocalModel(
         settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
@@ -399,7 +406,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     // Pre-populate already existing notifications to avoid duplicate startup alerts
     const QString initialJson = settings_.notificationCenterJson();
     const QJsonDocument initialDoc = QJsonDocument::fromJson(initialJson.toUtf8());
-    const QJsonArray initialArr = initialDoc.object().value(QStringLiteral("notifications")).toArray();
+    const QJsonArray initialArr =
+        initialDoc.object().value(QStringLiteral("notifications")).toArray();
     for (const auto& val : initialArr) {
         notifiedIds_.insert(val.toObject().value(QStringLiteral("id")).toString());
     }
@@ -420,25 +428,31 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                 if (title.isEmpty()) {
                     title = QStringLiteral("Sentinel Assistant");
                 }
-                
+
                 // Send native system notification
                 const QString policy = settings_.notificationPolicy();
-                if (policy != QLatin1String("None") && policy != QLatin1String("Disabled") && QSystemTrayIcon::isSystemTrayAvailable()) {
+                if (policy != QLatin1String("None") && policy != QLatin1String("Disabled") &&
+                    QSystemTrayIcon::isSystemTrayAvailable()) {
                     const QString category = item.value(QStringLiteral("category")).toString();
                     const QString title = item.value(QStringLiteral("title")).toString();
 
                     // Custom policy filtering
                     if (policy == QLatin1String("Custom")) {
                         if (category == QLatin1String("Models")) {
-                            if (title.contains(QLatin1String("Removed")) || title.contains(QLatin1String("Deleted"))) {
-                                if (!settings_.notifyModelRemovals()) continue;
+                            if (title.contains(QLatin1String("Removed")) ||
+                                title.contains(QLatin1String("Deleted"))) {
+                                if (!settings_.notifyModelRemovals())
+                                    continue;
                             } else {
-                                if (!settings_.notifyModelDownloads()) continue;
+                                if (!settings_.notifyModelDownloads())
+                                    continue;
                             }
                         } else if (category == QLatin1String("Agent")) {
-                            if (!settings_.notifyAgentResponses()) continue;
+                            if (!settings_.notifyAgentResponses())
+                                continue;
                         } else if (category == QLatin1String("Updates")) {
-                            if (!settings_.notifySystemUpdates()) continue;
+                            if (!settings_.notifySystemUpdates())
+                                continue;
                         }
                     }
 
@@ -451,10 +465,12 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
 
                     if (!trayIcon_) {
                         trayIcon_ = new QSystemTrayIcon(this);
-                        QIcon appIcon = QIcon::fromTheme(QStringLiteral("preferences-desktop-notification"), QIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png")));
+                        QIcon appIcon = QIcon::fromTheme(
+                            QStringLiteral("preferences-desktop-notification"),
+                            QIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png")));
                         trayIcon_->setIcon(appIcon);
                         trayIcon_->show();
-                        
+
                         connect(trayIcon_, &QSystemTrayIcon::messageClicked, this, [this]() {
                             QString page = QStringLiteral("Dashboard");
                             if (lastNotifiedCategory_ == QLatin1String("Models")) {
@@ -1854,11 +1870,15 @@ void DesktopShellViewModel::startVoiceCapture() {
 
     QString ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
     if (ffmpegPath.isEmpty()) {
-        ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"), {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
+        ffmpegPath = QStandardPaths::findExecutable(
+            QStringLiteral("ffmpeg"),
+            {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
     }
     QString recPath = QStandardPaths::findExecutable(QStringLiteral("rec"));
     if (recPath.isEmpty()) {
-        recPath = QStandardPaths::findExecutable(QStringLiteral("rec"), {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
+        recPath = QStandardPaths::findExecutable(
+            QStringLiteral("rec"),
+            {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
     }
 
     voiceRecordingFile_ = QDir::tempPath() + QStringLiteral("/sentinel_voice.wav");
@@ -1872,7 +1892,8 @@ void DesktopShellViewModel::startVoiceCapture() {
     tryNextVoiceCaptureConfig(ffmpegPath, recPath);
 }
 
-void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath, const QString& recPath) {
+void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
+                                                      const QString& recPath) {
     auto configs = getFfmpegConfigs();
     bool hasFfmpeg = !ffmpegPath.isEmpty();
 
@@ -1885,40 +1906,40 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
         voiceRecordingActive_ = true;
         emit voiceRecordingActiveChanged();
 
-        connect(recordingProcess_, &QProcess::finished, this, [this, ffmpegPath, recPath](int exitCode, QProcess::ExitStatus exitStatus) {
-            Q_UNUSED(exitCode);
-            Q_UNUSED(exitStatus);
-            if (voiceRecordingActive_) {
-                // Read standard error output to capture permission or hardware issues
-                QByteArray errorOutput = recordingProcess_->readAllStandardError();
-                lastRecordingError_ = QString::fromUtf8(errorOutput).trimmed();
+        connect(recordingProcess_, &QProcess::finished, this,
+                [this, ffmpegPath, recPath](int exitCode, QProcess::ExitStatus exitStatus) {
+                    Q_UNUSED(exitCode);
+                    Q_UNUSED(exitStatus);
+                    if (voiceRecordingActive_) {
+                        // Read standard error output to capture permission or hardware issues
+                        QByteArray errorOutput = recordingProcess_->readAllStandardError();
+                        lastRecordingError_ = QString::fromUtf8(errorOutput).trimmed();
 
-                recordingProcess_->deleteLater();
-                recordingProcess_ = nullptr;
+                        recordingProcess_->deleteLater();
+                        recordingProcess_ = nullptr;
 
-                // Move to next configuration
-                currentFfmpegConfigIndex_++;
-                tryNextVoiceCaptureConfig(ffmpegPath, recPath);
-            }
-        });
+                        // Move to next configuration
+                        currentFfmpegConfigIndex_++;
+                        tryNextVoiceCaptureConfig(ffmpegPath, recPath);
+                    }
+                });
 
-        // Start ffmpeg with specified format, input device, and output format conversion (16kHz 16-bit Mono PCM WAV)
-        recordingProcess_->start(ffmpegPath, {
-            QStringLiteral("-y"),
-            QStringLiteral("-f"), config.format,
-            QStringLiteral("-i"), config.device,
-            QStringLiteral("-acodec"), QStringLiteral("pcm_s16le"),
-            QStringLiteral("-ar"), QStringLiteral("16000"),
-            QStringLiteral("-ac"), QStringLiteral("1"),
-            voiceRecordingFile_
-        });
+        // Start ffmpeg with specified format, input device, and output format conversion (16kHz
+        // 16-bit Mono PCM WAV)
+        recordingProcess_->start(ffmpegPath,
+                                 {QStringLiteral("-y"), QStringLiteral("-f"), config.format,
+                                  QStringLiteral("-i"), config.device, QStringLiteral("-acodec"),
+                                  QStringLiteral("pcm_s16le"), QStringLiteral("-ar"),
+                                  QStringLiteral("16000"), QStringLiteral("-ac"),
+                                  QStringLiteral("1"), voiceRecordingFile_});
 
         if (!recordingProcess_->waitForStarted(1500)) {
             // Process failed to start, reset active state and try next config
             voiceRecordingActive_ = false;
             emit voiceRecordingActiveChanged();
 
-            lastRecordingError_ = QStringLiteral("QProcess failed to start (binary permission or path issue).");
+            lastRecordingError_ =
+                QStringLiteral("QProcess failed to start (binary permission or path issue).");
 
             recordingProcess_->deleteLater();
             recordingProcess_ = nullptr;
@@ -1933,34 +1954,37 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
             voiceRecordingActive_ = true;
             emit voiceRecordingActiveChanged();
 
-            connect(recordingProcess_, &QProcess::finished, this, [this](int exitCode, QProcess::ExitStatus exitStatus) {
-                Q_UNUSED(exitCode);
-                Q_UNUSED(exitStatus);
-                if (voiceRecordingActive_) {
-                    QByteArray errorOutput = recordingProcess_->readAllStandardError();
-                    QString errorMsg = QString::fromUtf8(errorOutput).trimmed();
+            connect(recordingProcess_, &QProcess::finished, this,
+                    [this](int exitCode, QProcess::ExitStatus exitStatus) {
+                        Q_UNUSED(exitCode);
+                        Q_UNUSED(exitStatus);
+                        if (voiceRecordingActive_) {
+                            QByteArray errorOutput = recordingProcess_->readAllStandardError();
+                            QString errorMsg = QString::fromUtf8(errorOutput).trimmed();
 
-                    voiceRecordingActive_ = false;
-                    emit voiceRecordingActiveChanged();
+                            voiceRecordingActive_ = false;
+                            emit voiceRecordingActiveChanged();
 
-                    emit voiceTranscriptionCompleted(QStringLiteral("Hata: Ses kayıt işlemi (rec) beklenmedik şekilde durdu.\nDetay: ") + errorMsg);
+                            emit voiceTranscriptionCompleted(
+                                QStringLiteral("Hata: Ses kayıt işlemi (rec) beklenmedik şekilde "
+                                               "durdu.\nDetay: ") +
+                                errorMsg);
 
-                    recordingProcess_->deleteLater();
-                    recordingProcess_ = nullptr;
-                }
-            });
+                            recordingProcess_->deleteLater();
+                            recordingProcess_ = nullptr;
+                        }
+                    });
 
-            recordingProcess_->start(recPath, {
-                QStringLiteral("-r"), QStringLiteral("16000"),
-                QStringLiteral("-c"), QStringLiteral("1"),
-                QStringLiteral("-b"), QStringLiteral("16"),
-                voiceRecordingFile_
-            });
+            recordingProcess_->start(recPath, {QStringLiteral("-r"), QStringLiteral("16000"),
+                                               QStringLiteral("-c"), QStringLiteral("1"),
+                                               QStringLiteral("-b"), QStringLiteral("16"),
+                                               voiceRecordingFile_});
 
             if (!recordingProcess_->waitForStarted(1500)) {
                 voiceRecordingActive_ = false;
                 emit voiceRecordingActiveChanged();
-                emit voiceTranscriptionCompleted(QStringLiteral("Hata: Ses kayıt işlemi (rec) başlatılamadı."));
+                emit voiceTranscriptionCompleted(
+                    QStringLiteral("Hata: Ses kayıt işlemi (rec) başlatılamadı."));
                 recordingProcess_->deleteLater();
                 recordingProcess_ = nullptr;
             }
@@ -1971,12 +1995,16 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
 
             QString errorMsg = QStringLiteral("Hata: Ses kaydı başlatılamadı. ");
             if (hasFfmpeg) {
-                errorMsg += QStringLiteral("Sistemdeki ses giriş aygıtları açılamadı. Lütfen mikrofon izinlerini ve varsayılan ses giriş aygıtını kontrol edin.");
+                errorMsg +=
+                    QStringLiteral("Sistemdeki ses giriş aygıtları açılamadı. Lütfen mikrofon "
+                                   "izinlerini ve varsayılan ses giriş aygıtını kontrol edin.");
                 if (!lastRecordingError_.isEmpty()) {
                     errorMsg += QStringLiteral("\nDetay: ") + lastRecordingError_;
                 }
             } else {
-                errorMsg += QStringLiteral("Sisteminizde 'ffmpeg' veya 'sox' (rec) bulunamadı. Lütfen 'brew install ffmpeg' (macOS) veya paket yöneticinizden ffmpeg yükleyin.");
+                errorMsg += QStringLiteral(
+                    "Sisteminizde 'ffmpeg' veya 'sox' (rec) bulunamadı. Lütfen 'brew install "
+                    "ffmpeg' (macOS) veya paket yöneticinizden ffmpeg yükleyin.");
             }
             emit voiceTranscriptionCompleted(errorMsg);
         }
@@ -1994,7 +2022,7 @@ void DesktopShellViewModel::stopVoiceCapture() {
     if (recordingProcess_) {
         // Disconnect to avoid triggering the finished callback logic during controlled shutdown
         recordingProcess_->disconnect(this);
-        
+
         recordingProcess_->terminate();
         if (!recordingProcess_->waitForFinished(3000)) {
             recordingProcess_->kill();
@@ -2009,78 +2037,90 @@ void DesktopShellViewModel::stopVoiceCapture() {
 
     if (whisperPath.isEmpty() || whisperPath == QStringLiteral("not configured") ||
         modelPath.isEmpty() || modelPath == QStringLiteral("not configured")) {
-        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper binary veya model yolu ayarlanmamış. Lütfen Settings -> Voice sekmesinden whisper-cli ve model yollarını belirtin."));
+        emit voiceTranscriptionCompleted(
+            QStringLiteral("Hata: Whisper binary veya model yolu ayarlanmamış. Lütfen Settings -> "
+                           "Voice sekmesinden whisper-cli ve model yollarını belirtin."));
         return;
     }
 
     if (!QFile::exists(whisperPath)) {
-        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper binary dosyası bulunamadı: ") + whisperPath);
+        emit voiceTranscriptionCompleted(
+            QStringLiteral("Hata: Whisper binary dosyası bulunamadı: ") + whisperPath);
         return;
     }
     QFileInfo whisperInfo(whisperPath);
     if (whisperInfo.isDir()) {
-        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Seçilen Whisper program yolu bir klasördür: ") + whisperPath +
-                                         QStringLiteral("\nLütfen bu klasörün içindeki 'whisper-cli' veya 'whisper' çalıştırılabilir dosyasını seçin."));
+        emit voiceTranscriptionCompleted(
+            QStringLiteral("Hata: Seçilen Whisper program yolu bir klasördür: ") + whisperPath +
+            QStringLiteral("\nLütfen bu klasörün içindeki 'whisper-cli' veya 'whisper' "
+                           "çalıştırılabilir dosyasını seçin."));
         return;
     }
 
     if (!QFile::exists(modelPath)) {
-        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper model dosyası bulunamadı: ") + modelPath);
+        emit voiceTranscriptionCompleted(
+            QStringLiteral("Hata: Whisper model dosyası bulunamadı: ") + modelPath);
         return;
     }
     QFileInfo modelInfo(modelPath);
     if (modelInfo.isDir()) {
-        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Seçilen Whisper model yolu bir klasördür: ") + modelPath +
-                                         QStringLiteral("\nLütfen bu klasörün içindeki 'ggml-*.bin' uzantılı model dosyasını seçin."));
+        emit voiceTranscriptionCompleted(
+            QStringLiteral("Hata: Seçilen Whisper model yolu bir klasördür: ") + modelPath +
+            QStringLiteral(
+                "\nLütfen bu klasörün içindeki 'ggml-*.bin' uzantılı model dosyasını seçin."));
         return;
     }
 
     if (!QFile::exists(voiceRecordingFile_)) {
-        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Kaydedilen ses dosyası bulunamadı."));
+        emit voiceTranscriptionCompleted(
+            QStringLiteral("Hata: Kaydedilen ses dosyası bulunamadı."));
         return;
     }
 
     whisperProcess_ = new QProcess(this);
     QProcess* proc = whisperProcess_;
 
-    connect(proc, &QProcess::finished, this, [this, proc](int exitCode, QProcess::ExitStatus exitStatus) {
-        if (exitStatus == QProcess::CrashExit || exitCode != 0) {
-            QByteArray errorBytes = proc->readAllStandardError();
-            QString errorMsg = QString::fromUtf8(errorBytes).trimmed();
-            if (errorMsg.isEmpty()) {
-                errorMsg = QStringLiteral("Whisper işlemi beklenmedik şekilde kapandı veya hata kodu döndürdü.");
-            }
-            emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper deşifre işlemi başarısız oldu. ") + errorMsg);
-        } else {
-            QByteArray outputBytes = proc->readAllStandardOutput();
-            QString transcript = QString::fromUtf8(outputBytes).trimmed();
+    connect(proc, &QProcess::finished, this,
+            [this, proc](int exitCode, QProcess::ExitStatus exitStatus) {
+                if (exitStatus == QProcess::CrashExit || exitCode != 0) {
+                    QByteArray errorBytes = proc->readAllStandardError();
+                    QString errorMsg = QString::fromUtf8(errorBytes).trimmed();
+                    if (errorMsg.isEmpty()) {
+                        errorMsg = QStringLiteral(
+                            "Whisper işlemi beklenmedik şekilde kapandı veya hata kodu döndürdü.");
+                    }
+                    emit voiceTranscriptionCompleted(
+                        QStringLiteral("Hata: Whisper deşifre işlemi başarısız oldu. ") + errorMsg);
+                } else {
+                    QByteArray outputBytes = proc->readAllStandardOutput();
+                    QString transcript = QString::fromUtf8(outputBytes).trimmed();
 
-            static const QRegularExpression timestampRegex(QStringLiteral("\\[\\d\\d:\\d\\d\\.\\d\\d\\d\\s*->\\s*\\d\\d:\\d\\d\\.\\d\\d\\d\\]\\s*"));
-            transcript.replace(timestampRegex, QString());
+                    static const QRegularExpression timestampRegex(QStringLiteral(
+                        "\\[\\d\\d:\\d\\d\\.\\d\\d\\d\\s*->\\s*\\d\\d:\\d\\d\\.\\d\\d\\d\\]\\s*"));
+                    transcript.replace(timestampRegex, QString());
 
-            transcript = transcript.simplified();
+                    transcript = transcript.simplified();
 
-            if (transcript.isEmpty()) {
-                emit voiceTranscriptionCompleted(QStringLiteral("Hata: Ses deşifre edilemedi (deşifre sonucu boş)."));
-            } else {
-                emit voiceTranscriptionCompleted(transcript);
-            }
-        }
+                    if (transcript.isEmpty()) {
+                        emit voiceTranscriptionCompleted(
+                            QStringLiteral("Hata: Ses deşifre edilemedi (deşifre sonucu boş)."));
+                    } else {
+                        emit voiceTranscriptionCompleted(transcript);
+                    }
+                }
 
-        proc->deleteLater();
-        if (whisperProcess_ == proc) {
-            whisperProcess_ = nullptr;
-        }
-    });
+                proc->deleteLater();
+                if (whisperProcess_ == proc) {
+                    whisperProcess_ = nullptr;
+                }
+            });
 
-    whisperProcess_->start(whisperPath, {
-        QStringLiteral("-m"), modelPath,
-        QStringLiteral("-f"), voiceRecordingFile_,
-        QStringLiteral("-nt")
-    });
+    whisperProcess_->start(whisperPath, {QStringLiteral("-m"), modelPath, QStringLiteral("-f"),
+                                         voiceRecordingFile_, QStringLiteral("-nt")});
 
     if (!whisperProcess_->waitForStarted(2000)) {
-        emit voiceTranscriptionCompleted(QStringLiteral("Hata: Whisper deşifre işlemi başlatılamadı."));
+        emit voiceTranscriptionCompleted(
+            QStringLiteral("Hata: Whisper deşifre işlemi başlatılamadı."));
         if (whisperProcess_) {
             whisperProcess_->deleteLater();
             whisperProcess_ = nullptr;
@@ -5024,8 +5064,6 @@ bool DesktopShellViewModel::reorderControlledAgentTask(const QString& taskId, in
     return true;
 }
 
-
-
 bool DesktopShellViewModel::setControlledToolPermission(const QString& category,
                                                         const QString& choice) {
     auto permissions =
@@ -5109,7 +5147,8 @@ bool DesktopShellViewModel::checkForUpdates() {
         networkManager_ = new QNetworkAccessManager(this);
     }
 
-    QNetworkRequest request(QUrl(QStringLiteral("https://api.github.com/repos/Sopwit/Sentinel/releases/latest")));
+    QNetworkRequest request(
+        QUrl(QStringLiteral("https://api.github.com/repos/Sopwit/Sentinel/releases/latest")));
     request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Sentinel-Desktop/1.0.0"));
 
     QNetworkReply* reply = networkManager_->get(request);
@@ -5123,7 +5162,8 @@ bool DesktopShellViewModel::checkForUpdates() {
             // Fallback to local simulated check on network failure
             latestTag = QStringLiteral("v1.0.1-alpha");
             htmlUrl = QStringLiteral("https://github.com/Sopwit/Sentinel");
-            bodyText = QStringLiteral("Update check successfully fell back to local cache (v1.0.1-alpha). Includes performance fixes.");
+            bodyText = QStringLiteral("Update check successfully fell back to local cache "
+                                      "(v1.0.1-alpha). Includes performance fixes.");
         } else {
             const QByteArray data = reply->readAll();
             const QJsonDocument doc = QJsonDocument::fromJson(data);
@@ -5135,7 +5175,8 @@ bool DesktopShellViewModel::checkForUpdates() {
             if (latestTag.isEmpty()) {
                 latestTag = QStringLiteral("v1.0.1-alpha");
                 htmlUrl = QStringLiteral("https://github.com/Sopwit/Sentinel");
-                bodyText = QStringLiteral("System updates are now fully operational. Version 1.0.1 includes optimizations and bug fixes.");
+                bodyText = QStringLiteral("System updates are now fully operational. Version 1.0.1 "
+                                          "includes optimizations and bug fixes.");
             }
         }
 
@@ -5151,7 +5192,8 @@ bool DesktopShellViewModel::checkForUpdates() {
                     item.insert(QStringLiteral("title"), QStringLiteral("Update Available"));
                     item.insert(QStringLiteral("body"),
                                 QStringLiteral("New version %1 is available! Details: %2")
-                                    .arg(latestTag).arg(bodyText.left(120)));
+                                    .arg(latestTag)
+                                    .arg(bodyText.left(120)));
                 },
                 &updatedJson)) {
             settings_.setNotificationCenterJson(updatedJson);
@@ -5177,15 +5219,17 @@ bool DesktopShellViewModel::confirmUpdateDownload() {
     return opened;
 }
 
-void DesktopShellViewModel::addNotification(const QString& category, const QString& title, const QString& body) {
+void DesktopShellViewModel::addNotification(const QString& category, const QString& title,
+                                            const QString& body) {
     const QString json = settings_.notificationCenterJson();
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
     QJsonObject root = doc.object();
     QJsonArray arr = root.value(QStringLiteral("notifications")).toArray();
 
     QJsonObject item;
-    const QString newId = QStringLiteral("notif-%1-%2").arg(QDateTime::currentMSecsSinceEpoch())
-                          .arg(qHash(title) % 10000);
+    const QString newId = QStringLiteral("notif-%1-%2")
+                              .arg(QDateTime::currentMSecsSinceEpoch())
+                              .arg(qHash(title) % 10000);
     item.insert(QStringLiteral("id"), newId);
     item.insert(QStringLiteral("category"), category);
     item.insert(QStringLiteral("title"), title);
@@ -5197,7 +5241,8 @@ void DesktopShellViewModel::addNotification(const QString& category, const QStri
     arr.prepend(item);
     root.insert(QStringLiteral("notifications"), arr);
 
-    settings_.setNotificationCenterJson(QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact)));
+    settings_.setNotificationCenterJson(
+        QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact)));
     emit nativeExperienceChanged();
 }
 

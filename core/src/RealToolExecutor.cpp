@@ -1,9 +1,9 @@
 #include "sentinel/core/RealToolExecutor.h"
 
-#include <QFile>
-#include <QProcess>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
+#include <QProcess>
 #include <QProcessEnvironment>
 
 namespace sentinel::core {
@@ -137,24 +137,32 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
 #endif
 
             if (!process.waitForFinished(30000)) {
-                logs.append(QStringLiteral("run-command: Timed out or failed to start: %1")
-                                .arg(command));
+                logs.append(
+                    QStringLiteral("run-command: Timed out or failed to start: %1").arg(command));
                 continue;
             }
-            const QString stdoutContent = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
-            const QString stderrContent = QString::fromUtf8(process.readAllStandardError()).trimmed();
+            const QString stdoutContent =
+                QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+            const QString stderrContent =
+                QString::fromUtf8(process.readAllStandardError()).trimmed();
             const int exitCode = process.exitCode();
             if (exitCode == 0) {
                 if (stdoutContent.isEmpty() && stderrContent.isEmpty()) {
                     logs.append(QStringLiteral("Command executed successfully. (exit=0)"));
                 } else if (!stdoutContent.isEmpty() && stderrContent.isEmpty()) {
-                    logs.append(QStringLiteral("Command executed successfully. (exit=0)\n\n[STDOUT]:\n%1").arg(stdoutContent));
+                    logs.append(
+                        QStringLiteral("Command executed successfully. (exit=0)\n\n[STDOUT]:\n%1")
+                            .arg(stdoutContent));
                 } else {
-                    logs.append(QStringLiteral("Command executed successfully. (exit=0)\n\n[STDOUT]:\n%1\n\n[STDERR]:\n%2").arg(stdoutContent, stderrContent));
+                    logs.append(QStringLiteral("Command executed successfully. "
+                                               "(exit=0)\n\n[STDOUT]:\n%1\n\n[STDERR]:\n%2")
+                                    .arg(stdoutContent, stderrContent));
                 }
             } else {
-                logs.append(QStringLiteral("Command execution failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
-                    .arg(QString::number(exitCode), stdoutContent, stderrContent));
+                logs.append(
+                    QStringLiteral(
+                        "Command execution failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
+                        .arg(QString::number(exitCode), stdoutContent, stderrContent));
             }
         }
         // 4. voice-transcribe
@@ -167,12 +175,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             QProcess process;
             process.start(QStringLiteral("/opt/homebrew/bin/whisper-cli"), {path});
             if (!process.waitForFinished(15000)) {
-                logs.append(QStringLiteral("voice-transcribe: Whisper timed out for '%1'")
-                                .arg(path));
+                logs.append(
+                    QStringLiteral("voice-transcribe: Whisper timed out for '%1'").arg(path));
                 continue;
             }
-            const QString transcript =
-                QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+            const QString transcript = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
             logs.append(QStringLiteral("voice-transcribe: OK\n%1").arg(transcript));
         }
         // 5. voice-speak
@@ -183,12 +190,10 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 continue;
             }
             QProcess process;
-            process.start(
-                QStringLiteral("piper"),
-                {QStringLiteral("--model"),
-                 QStringLiteral("en_US-lessac-medium.onnx"),
-                 QStringLiteral("--output_file"),
-                 QDir::tempPath() + QStringLiteral("/sentinel_tts.wav")});
+            process.start(QStringLiteral("piper"),
+                          {QStringLiteral("--model"), QStringLiteral("en_US-lessac-medium.onnx"),
+                           QStringLiteral("--output_file"),
+                           QDir::tempPath() + QStringLiteral("/sentinel_tts.wav")});
             process.write(text.toUtf8());
             process.closeWriteChannel();
             if (!process.waitForFinished(10000)) {

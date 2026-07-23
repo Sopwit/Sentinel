@@ -40,8 +40,8 @@ class AppSettings final : public QObject {
                    companionEnabledChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeEnabledChanged)
-    Q_PROPERTY(bool agentAutonomousMode READ agentAutonomousMode WRITE setAgentAutonomousMode
-                   NOTIFY agentAutonomousModeChanged)
+    Q_PROPERTY(bool agentAutonomousMode READ agentAutonomousMode WRITE setAgentAutonomousMode NOTIFY
+                   agentAutonomousModeChanged)
     Q_PROPERTY(QString piperBinaryPath READ piperBinaryPath WRITE setPiperBinaryPath NOTIFY
                    piperBinaryPathChanged)
     Q_PROPERTY(QString piperModelPath READ piperModelPath WRITE setPiperModelPath NOTIFY
@@ -112,10 +112,14 @@ class AppSettings final : public QObject {
                    setControlledAgentTasksJson NOTIFY controlledAgentTasksChanged)
     Q_PROPERTY(QString controlledAgentPermissionsJson READ controlledAgentPermissionsJson WRITE
                    setControlledAgentPermissionsJson NOTIFY controlledAgentTasksChanged)
-    Q_PROPERTY(bool notifyModelDownloads READ notifyModelDownloads WRITE setNotifyModelDownloads NOTIFY productExperienceChanged)
-    Q_PROPERTY(bool notifyModelRemovals READ notifyModelRemovals WRITE setNotifyModelRemovals NOTIFY productExperienceChanged)
-    Q_PROPERTY(bool notifyAgentResponses READ notifyAgentResponses WRITE setNotifyAgentResponses NOTIFY productExperienceChanged)
-    Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY productExperienceChanged)
+    Q_PROPERTY(bool notifyModelDownloads READ notifyModelDownloads WRITE setNotifyModelDownloads
+                   NOTIFY productExperienceChanged)
+    Q_PROPERTY(bool notifyModelRemovals READ notifyModelRemovals WRITE setNotifyModelRemovals NOTIFY
+                   productExperienceChanged)
+    Q_PROPERTY(bool notifyAgentResponses READ notifyAgentResponses WRITE setNotifyAgentResponses
+                   NOTIFY productExperienceChanged)
+    Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY
+                   productExperienceChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -237,7 +241,7 @@ public:
     void setControlledAgentTasksJson(const QString& json);
     QString controlledAgentPermissionsJson() const;
     void setControlledAgentPermissionsJson(const QString& json);
-    
+
     bool notifyModelDownloads() const;
     void setNotifyModelDownloads(bool enabled);
     bool notifyModelRemovals() const;

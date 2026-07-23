@@ -964,8 +964,9 @@ void AppSettings::setOnboardingAiProvider(const QString& provider) {
 }
 
 QString AppSettings::selectedSystemMode() const {
-    return store_ ? store_->value(QString::fromLatin1(selectedSystemModeKey), QStringLiteral("Chat"))
-                  : QStringLiteral("Chat");
+    return store_
+               ? store_->value(QString::fromLatin1(selectedSystemModeKey), QStringLiteral("Chat"))
+               : QStringLiteral("Chat");
 }
 
 void AppSettings::setSelectedSystemMode(const QString& mode) {

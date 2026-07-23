@@ -25,26 +25,29 @@ QString toolSummaryLine(const ToolGatewaySummary& summary) {
 QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
     return {
         {QStringLiteral("open-workspace"), QStringLiteral("Open Workspace"),
-         QStringLiteral("Workspace"),
-         QStringLiteral("Workspace picker and scope selection."),
+         QStringLiteral("Workspace"), QStringLiteral("Workspace picker and scope selection."),
          QStringLiteral("workspace-access"), ToolGatewayRiskLevel::Medium, ToolGatewayScope::Local,
          ToolExecutionAvailability::Available,
-         QStringLiteral("Workspace gateway is operational and allows defining active context path grants.")},
+         QStringLiteral(
+             "Workspace gateway is operational and allows defining active context path grants.")},
         {QStringLiteral("read-file"), QStringLiteral("Read File"), QStringLiteral("Filesystem"),
          QStringLiteral("Scoped file read inside an approved workspace path."),
          QStringLiteral("workspace-access"), ToolGatewayRiskLevel::High, ToolGatewayScope::Local,
          ToolExecutionAvailability::Available,
-         QStringLiteral("File reading is operational; files can be read inside active workspaces.")},
+         QStringLiteral(
+             "File reading is operational; files can be read inside active workspaces.")},
         {QStringLiteral("write-file"), QStringLiteral("Write File"), QStringLiteral("Filesystem"),
          QStringLiteral("Scoped file write after approval and validation checks."),
          QStringLiteral("filesystem-write"), ToolGatewayRiskLevel::Critical,
          ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("File writing is operational; files can be edited/created inside active workspaces.")},
+         QStringLiteral(
+             "File writing is operational; files can be edited/created inside active workspaces.")},
         {QStringLiteral("run-command"), QStringLiteral("Run Command"), QStringLiteral("System"),
          QStringLiteral("Subprocess execution inside an audited sandbox environment."),
          QStringLiteral("subprocess-execution"), ToolGatewayRiskLevel::Critical,
          ToolGatewayScope::Local, ToolExecutionAvailability::Available,
-         QStringLiteral("Subprocess execution is operational; commands can be run synchronously via QProcess.")},
+         QStringLiteral("Subprocess execution is operational; commands can be run synchronously "
+                        "via QProcess.")},
         {QStringLiteral("summarize-current-conversation"),
          QStringLiteral("Summarize Current Conversation"), QStringLiteral("Conversation"),
          QStringLiteral("Conversation summary generation and prompt injection."),
@@ -58,7 +61,8 @@ QList<ToolGatewayMetadata> ToolExecutionGateway::toolMetadata() const {
          ToolExecutionAvailability::Available,
          QStringLiteral("Conversation export is operational.")},
         {QStringLiteral("voice-transcribe"), QStringLiteral("Voice Transcribe"),
-         QStringLiteral("Voice"), QStringLiteral("Microphone audio capture and STT speech-to-text pipeline."),
+         QStringLiteral("Voice"),
+         QStringLiteral("Microphone audio capture and STT speech-to-text pipeline."),
          QStringLiteral("voice-capture"), ToolGatewayRiskLevel::High, ToolGatewayScope::Local,
          ToolExecutionAvailability::Available,
          QStringLiteral("Voice transcription is operational via local Whisper CLI client.")},
@@ -128,7 +132,8 @@ ToolExecutionGateway::registrySummary(const QString& defaultPermissionState,
     const auto permissionPosture = permissionPolicy.normalizedState(defaultPermissionState);
     ToolGatewayRegistrySummary registry{
         QStringLiteral("Operational"),
-        QStringLiteral("Tool Execution Gateway is fully operational and processes local system and cloud tools safely."),
+        QStringLiteral("Tool Execution Gateway is fully operational and processes local system and "
+                       "cloud tools safely."),
         permissionPosture,
         0,
         0,
@@ -142,9 +147,9 @@ ToolExecutionGateway::registrySummary(const QString& defaultPermissionState,
     registry.toolCount = summaries.size();
     for (const auto& summary : summaries) {
         if (summary.availability ==
-            toolExecutionAvailabilityName(ToolExecutionAvailability::MetadataSafe) ||
+                toolExecutionAvailabilityName(ToolExecutionAvailability::MetadataSafe) ||
             summary.availability ==
-            toolExecutionAvailabilityName(ToolExecutionAvailability::Available)) {
+                toolExecutionAvailabilityName(ToolExecutionAvailability::Available)) {
             ++registry.metadataSafeCount;
         } else if (summary.availability ==
                    toolExecutionAvailabilityName(ToolExecutionAvailability::Unavailable)) {

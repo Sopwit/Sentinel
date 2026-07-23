@@ -475,27 +475,28 @@ void OllamaModelPuller::processChunk(const QByteArray& chunk) {
         const double pct = newProgress * 100.0;
         const double completedGb = static_cast<double>(completed) / (1024.0 * 1024.0 * 1024.0);
         const double totalGb = static_cast<double>(total) / (1024.0 * 1024.0 * 1024.0);
-        
+
         QString speedStr;
         QString etaStr;
         qint64 elapsedMs = pullTimer_.isValid() ? pullTimer_.elapsed() : 0;
         if (elapsedMs > 500) {
             double elapsedSecs = elapsedMs / 1000.0;
             double speedBytesPerSec = static_cast<double>(completed) / elapsedSecs;
-            
+
             if (speedBytesPerSec >= (1024.0 * 1024.0)) {
-                speedStr = QStringLiteral("%1 MB/s").arg(speedBytesPerSec / (1024.0 * 1024.0), 0, 'f', 1);
+                speedStr =
+                    QStringLiteral("%1 MB/s").arg(speedBytesPerSec / (1024.0 * 1024.0), 0, 'f', 1);
             } else {
                 speedStr = QStringLiteral("%1 KB/s").arg(speedBytesPerSec / 1024.0, 0, 'f', 0);
             }
-            
+
             if (speedBytesPerSec > 0.0) {
                 double remainingBytes = static_cast<double>(total - completed);
                 double remainingSecs = remainingBytes / speedBytesPerSec;
                 int h = static_cast<int>(remainingSecs) / 3600;
                 int m = (static_cast<int>(remainingSecs) % 3600) / 60;
                 int s = static_cast<int>(remainingSecs) % 60;
-                
+
                 if (h > 0) {
                     etaStr = QStringLiteral("%1h %2m remaining").arg(h).arg(m);
                 } else if (m > 0) {
@@ -513,25 +514,27 @@ void OllamaModelPuller::processChunk(const QByteArray& chunk) {
 
         QString sizeInfo;
         if (totalGb >= 0.1) {
-            sizeInfo = QStringLiteral("%1 GB / %2 GB").arg(completedGb, 0, 'f', 2).arg(totalGb, 0, 'f', 2);
+            sizeInfo =
+                QStringLiteral("%1 GB / %2 GB").arg(completedGb, 0, 'f', 2).arg(totalGb, 0, 'f', 2);
         } else {
             const double completedMb = static_cast<double>(completed) / (1024.0 * 1024.0);
             const double totalMb = static_cast<double>(total) / (1024.0 * 1024.0);
-            sizeInfo = QStringLiteral("%1 MB / %2 MB").arg(completedMb, 0, 'f', 1).arg(totalMb, 0, 'f', 1);
+            sizeInfo =
+                QStringLiteral("%1 MB / %2 MB").arg(completedMb, 0, 'f', 1).arg(totalMb, 0, 'f', 1);
         }
 
         if (!speedStr.isEmpty() && !etaStr.isEmpty()) {
             displayStatus = QStringLiteral("%1 — %2% (%3 • %4 • %5)")
-                .arg(baseStatus)
-                .arg(static_cast<int>(pct))
-                .arg(sizeInfo)
-                .arg(speedStr)
-                .arg(etaStr);
+                                .arg(baseStatus)
+                                .arg(static_cast<int>(pct))
+                                .arg(sizeInfo)
+                                .arg(speedStr)
+                                .arg(etaStr);
         } else {
             displayStatus = QStringLiteral("%1 — %2% (%3)")
-                .arg(baseStatus)
-                .arg(static_cast<int>(pct))
-                .arg(sizeInfo);
+                                .arg(baseStatus)
+                                .arg(static_cast<int>(pct))
+                                .arg(sizeInfo);
         }
     }
 
@@ -783,15 +786,18 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
 
         QString provider = QStringLiteral("Ollama Library");
         QString idLower = ollamaId.toLower();
-        if (idLower.startsWith(QStringLiteral("llama")) || idLower.startsWith(QStringLiteral("codellama"))) {
+        if (idLower.startsWith(QStringLiteral("llama")) ||
+            idLower.startsWith(QStringLiteral("codellama"))) {
             provider = QStringLiteral("Meta");
-        } else if (idLower.startsWith(QStringLiteral("gemma")) || idLower.startsWith(QStringLiteral("codegemma"))) {
+        } else if (idLower.startsWith(QStringLiteral("gemma")) ||
+                   idLower.startsWith(QStringLiteral("codegemma"))) {
             provider = QStringLiteral("Google");
         } else if (idLower.startsWith(QStringLiteral("qwen"))) {
             provider = QStringLiteral("Alibaba");
         } else if (idLower.startsWith(QStringLiteral("deepseek"))) {
             provider = QStringLiteral("DeepSeek");
-        } else if (idLower.startsWith(QStringLiteral("mistral")) || idLower.startsWith(QStringLiteral("mixtral"))) {
+        } else if (idLower.startsWith(QStringLiteral("mistral")) ||
+                   idLower.startsWith(QStringLiteral("mixtral"))) {
             provider = QStringLiteral("Mistral AI");
         } else if (idLower.startsWith(QStringLiteral("phi"))) {
             provider = QStringLiteral("Microsoft");
@@ -809,7 +815,8 @@ void OllamaLibraryFetcher::parseHtml(const QString& html) {
         modelObj[QStringLiteral("provider")] = provider;
         modelObj[QStringLiteral("size")] = pulls + QStringLiteral(" pulls");
         modelObj[QStringLiteral("description")] = description;
-        modelObj[QStringLiteral("externalUrl")] = QStringLiteral("https://ollama.com/library/") + ollamaId;
+        modelObj[QStringLiteral("externalUrl")] =
+            QStringLiteral("https://ollama.com/library/") + ollamaId;
 
         QString badge = caps.isEmpty() ? QStringLiteral("Ollama") : caps.first();
         QString badgeColor = QStringLiteral("#7c3aed");

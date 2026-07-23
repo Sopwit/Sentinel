@@ -106,7 +106,8 @@ PermissionPolicyService::registrySummary(const QString& defaultState) const {
 
     return {
         QStringLiteral("Operational"),
-        QStringLiteral("Permission policy registry is operational; user-controlled authority states govern active tool execution and environment access."),
+        QStringLiteral("Permission policy registry is operational; user-controlled authority "
+                       "states govern active tool execution and environment access."),
         state,
         permissionStateLabels(),
         domainSummaries,
