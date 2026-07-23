@@ -363,6 +363,15 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::localInferenceTimeoutMsChanged, this, [this]() {
         controller_.setLocalInferenceTimeoutMs(settings_.localInferenceTimeoutMs());
     });
+    connect(&settings_, &core::AppSettings::localInferenceTemperatureChanged, this, [this]() {
+        controller_.setLocalInferenceTemperature(settings_.localInferenceTemperature());
+    });
+    connect(&settings_, &core::AppSettings::localInferenceTopPChanged, this, [this]() {
+        controller_.setLocalInferenceTopP(settings_.localInferenceTopP());
+    });
+    connect(&settings_, &core::AppSettings::localInferenceMaxTokensChanged, this, [this]() {
+        controller_.setLocalInferenceMaxTokens(settings_.localInferenceMaxTokens());
+    });
     connect(&settings_, &core::AppSettings::promptContextInjectionEnabledChanged, this, [this]() {
         controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
     });
@@ -388,6 +397,9 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.setLocalChatInferenceEnabled(settings_.localChatInferenceEnabled());
     controller_.setLocalInferenceStreamingEnabled(settings_.localInferenceStreamingEnabled());
     controller_.setLocalInferenceTimeoutMs(settings_.localInferenceTimeoutMs());
+    controller_.setLocalInferenceTemperature(settings_.localInferenceTemperature());
+    controller_.setLocalInferenceTopP(settings_.localInferenceTopP());
+    controller_.setLocalInferenceMaxTokens(settings_.localInferenceMaxTokens());
     controller_.setPromptContextInjectionEnabled(settings_.promptContextInjectionEnabled());
     controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
     controller_.setPiperBinaryPath(settings_.piperBinaryPath());
@@ -3025,6 +3037,39 @@ void DesktopShellViewModel::setLocalInferenceTimeoutMs(int timeoutMs) {
     }
 }
 
+double DesktopShellViewModel::localInferenceTemperature() const {
+    return controller_.localInferenceTemperature();
+}
+
+void DesktopShellViewModel::setLocalInferenceTemperature(double temperature) {
+    settings_.setLocalInferenceTemperature(temperature);
+    if (controller_.localInferenceTemperature() != settings_.localInferenceTemperature()) {
+        controller_.setLocalInferenceTemperature(settings_.localInferenceTemperature());
+    }
+}
+
+double DesktopShellViewModel::localInferenceTopP() const {
+    return controller_.localInferenceTopP();
+}
+
+void DesktopShellViewModel::setLocalInferenceTopP(double topP) {
+    settings_.setLocalInferenceTopP(topP);
+    if (controller_.localInferenceTopP() != settings_.localInferenceTopP()) {
+        controller_.setLocalInferenceTopP(settings_.localInferenceTopP());
+    }
+}
+
+int DesktopShellViewModel::localInferenceMaxTokens() const {
+    return controller_.localInferenceMaxTokens();
+}
+
+void DesktopShellViewModel::setLocalInferenceMaxTokens(int maxTokens) {
+    settings_.setLocalInferenceMaxTokens(maxTokens);
+    if (controller_.localInferenceMaxTokens() != settings_.localInferenceMaxTokens()) {
+        controller_.setLocalInferenceMaxTokens(settings_.localInferenceMaxTokens());
+    }
+}
+
 bool DesktopShellViewModel::localInferenceBusy() const {
     return controller_.localInferenceBusy();
 }
@@ -4481,6 +4526,14 @@ bool DesktopShellViewModel::removeAttachment(const QString& attachmentIdValue) {
     return false;
 }
 
+void DesktopShellViewModel::clearAttachments() {
+    attachments_.clear();
+    workspaceLastActionStatus_ = QStringLiteral("Attachments Cleared");
+    workspaceLastActionSummary_ = QStringLiteral("Cleared all attachments.");
+    emit attachmentChanged();
+    emit workspaceChanged();
+}
+
 bool DesktopShellViewModel::replaceAttachment(const QString& attachmentIdValue,
                                               const QString& filePath) {
     if (!removeAttachment(attachmentIdValue)) {
@@ -5217,6 +5270,11 @@ bool DesktopShellViewModel::confirmUpdateDownload() {
     }
     emit nativeExperienceChanged();
     return opened;
+}
+
+void DesktopShellViewModel::relaunchApplication() {
+    QProcess::startDetached(QCoreApplication::applicationFilePath(), QCoreApplication::arguments());
+    QCoreApplication::quit();
 }
 
 void DesktopShellViewModel::addNotification(const QString& category, const QString& title,

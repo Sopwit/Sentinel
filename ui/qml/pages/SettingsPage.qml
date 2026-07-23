@@ -25,9 +25,6 @@ Item {
     ]
     property string activeCategory: "Interface"
     property string searchQuery: ""
-    property real paramTemperature: 0.7
-    property real paramTopP: 0.9
-    property int paramMaxTokens: 2048
     property bool controlledAgentTasks: true
 
     FileDialog {
@@ -329,6 +326,7 @@ Item {
                     id: generalSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Interface"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(generalContent) : 0
 
                     ColumnLayout {
@@ -463,6 +461,7 @@ Item {
                     id: appearanceSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Interface"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(appearanceContent) : 0
 
                     ColumnLayout {
@@ -706,6 +705,7 @@ Item {
                     id: accessibilitySection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Interface"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(accessibilityContent) : 0
 
                     ColumnLayout {
@@ -925,6 +925,7 @@ Item {
                     id: localAiSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "AI"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(localAiContent) : 0
 
                     ColumnLayout {
@@ -1270,6 +1271,7 @@ Item {
                     id: modelSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "AI"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(modelContent) : 0
 
                     ColumnLayout {
@@ -1501,6 +1503,7 @@ Item {
                     id: chatSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "AI"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(chatContent) : 0
 
                     ColumnLayout {
@@ -1724,8 +1727,8 @@ Item {
                                 from: 0.0
                                 to: 2.0
                                 stepSize: 0.1
-                                value: settingsPage.paramTemperature
-                                onMoved: settingsPage.paramTemperature = parseFloat(value.toFixed(1))
+                                value: settingsPage.viewModel.localInferenceTemperature
+                                onMoved: settingsPage.viewModel.localInferenceTemperature = parseFloat(value.toFixed(1))
 
                                 background: Rectangle {
                                     x: tempSlider.leftPadding
@@ -1759,7 +1762,7 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: 40
-                                text: settingsPage.paramTemperature.toFixed(1)
+                                text: settingsPage.viewModel.localInferenceTemperature.toFixed(1)
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontSmall
                                 font.bold: true
@@ -1784,8 +1787,8 @@ Item {
                                 from: 0.0
                                 to: 1.0
                                 stepSize: 0.05
-                                value: settingsPage.paramTopP
-                                onMoved: settingsPage.paramTopP = parseFloat(value.toFixed(2))
+                                value: settingsPage.viewModel.localInferenceTopP
+                                onMoved: settingsPage.viewModel.localInferenceTopP = parseFloat(value.toFixed(2))
 
                                 background: Rectangle {
                                     x: topPSlider.leftPadding
@@ -1819,7 +1822,7 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: 40
-                                text: settingsPage.paramTopP.toFixed(2)
+                                text: settingsPage.viewModel.localInferenceTopP.toFixed(2)
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontSmall
                                 font.bold: true
@@ -1845,8 +1848,8 @@ Item {
                                 from: 256
                                 to: 8192
                                 stepSize: 256
-                                value: settingsPage.paramMaxTokens
-                                onMoved: settingsPage.paramMaxTokens = parseInt(value)
+                                value: settingsPage.viewModel.localInferenceMaxTokens
+                                onMoved: settingsPage.viewModel.localInferenceMaxTokens = parseInt(value)
 
                                 background: Rectangle {
                                     x: maxTokensSlider.leftPadding
@@ -1880,7 +1883,7 @@ Item {
 
                             Label {
                                 Layout.preferredWidth: 40
-                                text: settingsPage.paramMaxTokens
+                                text: settingsPage.viewModel.localInferenceMaxTokens
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: SentinelTheme.fontSmall
                                 font.bold: true
@@ -2089,6 +2092,7 @@ Item {
                     id: voiceSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "AI"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(voiceContent) : 0
 
                     ColumnLayout {
@@ -2455,6 +2459,7 @@ Item {
                     id: brainSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Memory"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(privacyContent) : 0
 
                     ColumnLayout {
@@ -2468,37 +2473,6 @@ Item {
                             title: qsTr("Brain")
                             subtitle: qsTr("Memory, recall, context, summaries, and continuity remain local and explicit.")
                             Layout.fillWidth: true
-                        }
-
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
-
-                            StatusChip {
-                                label: qsTr("Memory")
-                                value: settingsPage.viewModel.memoryStatus
-                                accent: settingsPage.viewModel.memoryStatus === "Available"
-                                        ? SentinelTheme.success
-                                        : SentinelTheme.textMuted
-                                muted: settingsPage.viewModel.memoryStatus !== "Available"
-                            }
-
-                            StatusChip {
-                                label: qsTr("Recall")
-                                value: settingsPage.viewModel.memoryRecallStatus
-                                accent: SentinelTheme.calmAccent
-                                muted: settingsPage.viewModel.memoryRecallResultCount === 0
-                            }
-
-                            StatusChip {
-                                label: qsTr("Context")
-                                value: settingsPage.viewModel.promptContextInjectionEnabled ? qsTr("opt-in on")
-                                                                                            : qsTr("opt-in off")
-                                accent: settingsPage.viewModel.promptContextInjectionEnabled
-                                        ? SentinelTheme.success
-                                        : SentinelTheme.textMuted
-                                muted: !settingsPage.viewModel.promptContextInjectionEnabled
-                            }
                         }
 
                         InfoRow {
@@ -2624,6 +2598,7 @@ Item {
                     id: permissionsSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Security"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(permissionsContent) : 0
 
                     ColumnLayout {
@@ -2725,16 +2700,21 @@ Item {
                     id: toolsSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Security"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(toolsContent) : 0
 
                     ColumnLayout {
-                                       SectionTitle {
+                        id: toolsContent
+                        x: settingsPage.panelPadding
+                        y: settingsPage.panelPadding
+                        width: parent.width - settingsPage.panelPadding * 2
+                        spacing: SentinelTheme.spaceSm
+
+                        SectionTitle {
                             title: qsTr("Tools")
                             subtitle: qsTr("Manage local system integrations, CLI tools, and background helper gateways.")
                             Layout.fillWidth: true
                         }
-
-
 
                         InfoRow {
                             compact: settingsPage.compact
@@ -2742,57 +2722,16 @@ Item {
                             value: settingsPage.viewModel.toolGatewayPermissionPosture
                             Layout.fillWidth: true
                         }
-
-
                     }
                 }
 
-                Item {
-                    id: agentsSection
-                    width: parent.width
-                    visible: settingsPage.activeCategory === "Security"
-                    implicitHeight: visible ? settingsPage.sectionHeight(agentsContent) : 0
 
-                    ColumnLayout {
-                        id: agentsContent
-                        x: settingsPage.panelPadding
-                        y: settingsPage.panelPadding
-                        width: parent.width - settingsPage.panelPadding * 2
-                        spacing: SentinelTheme.spaceSm
-
-                        SectionTitle {
-                            title: qsTr("Agents")
-                            subtitle: qsTr("Manage autonomous agent workflows, task validation, and runtime safety gates.")
-                            Layout.fillWidth: true
-                        }
-
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
-                            Layout.topMargin: SentinelTheme.spaceXs
-                            Layout.bottomMargin: SentinelTheme.spaceXs
-
-                            Label {
-                                Layout.fillWidth: true
-                                text: qsTr("Require manual approval for agent tasks")
-                                color: SentinelTheme.textPrimary
-                                font.pixelSize: SentinelTheme.fontBody
-                                font.bold: true
-                            }
-
-                            CheckBox {
-                                id: controlledAgentTasksCheck
-                                checked: settingsPage.controlledAgentTasks
-                                onToggled: settingsPage.controlledAgentTasks = checked
-                            }
-                        }
-                    }
-                }
 
                 Item {
                     id: profilesSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "AI"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(profilesContent) : 0
 
                     ColumnLayout {
@@ -2808,31 +2747,7 @@ Item {
                             Layout.fillWidth: true
                         }
 
-                        Flow {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
 
-                            StatusChip {
-                                label: qsTr("Selected")
-                                value: settingsPage.viewModel.selectedSkillProfileName
-                                accent: SentinelTheme.calmAccent
-                                muted: false
-                            }
-
-                            StatusChip {
-                                label: qsTr("Readiness")
-                                value: settingsPage.viewModel.selectedSkillProfileReadiness
-                                accent: SentinelTheme.textMuted
-                                muted: true
-                            }
-
-                            StatusChip {
-                                label: qsTr("Authority")
-                                value: qsTr("Unchanged")
-                                accent: SentinelTheme.textMuted
-                                muted: true
-                            }
-                        }
 
                         RowLayout {
                             Layout.fillWidth: true
@@ -2910,29 +2825,28 @@ Item {
                             }
                         }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Summary")
-                            value: settingsPage.viewModel.selectedSkillProfileSummary
+                        RowLayout {
                             Layout.fillWidth: true
-                            valueMaximumLineCount: 3
+                            spacing: SentinelTheme.spaceSm
+                            Layout.topMargin: SentinelTheme.spaceXs
+                            Layout.bottomMargin: SentinelTheme.spaceXs
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Require manual approval for agent tasks (Autonomous Mode)")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                font.bold: true
+                            }
+
+                            Switch {
+                                id: controlledAgentTasksSwitch
+                                checked: settingsPage.controlledAgentTasks
+                                onToggled: settingsPage.controlledAgentTasks = checked
+                            }
                         }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Description")
-                            value: settingsPage.viewModel.selectedSkillProfileDescription
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 4
-                        }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Boundary")
-                            value: settingsPage.viewModel.selectedSkillProfilePolicyPosture
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 4
-                        }
                     }
                 }
 
@@ -2940,6 +2854,7 @@ Item {
                     id: workspaceSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "Memory"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(workspaceContent) : 0
 
                     ColumnLayout {
@@ -3071,106 +2986,7 @@ Item {
                             }
                         }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Boundary")
-                            value: settingsPage.viewModel.workspaceReadinessSummary
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 4
-                        }
 
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Root")
-                            value: settingsPage.viewModel.selectedWorkspaceRootSummary
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Posture")
-                            value: settingsPage.viewModel.workspacePermissionPosture
-                                   + " / "
-                                   + settingsPage.viewModel.workspacePermissionPostures.join(" / ")
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
-
-                        InfoRow {
-                            compact: settingsPage.compact
-                            label: qsTr("Policy")
-                            value: settingsPage.viewModel.workspacePermissionSummary
-                            Layout.fillWidth: true
-                            valueMaximumLineCount: 3
-                        }
-
-                        Repeater {
-                            model: settingsPage.viewModel.workspaceReadinessChecks
-
-                            Rectangle {
-                                required property string modelData
-                                Layout.fillWidth: true
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.024)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.050)
-                                implicitHeight: workspaceCheckLabel.implicitHeight + SentinelTheme.spaceMd
-
-                                Label {
-                                    id: workspaceCheckLabel
-                                    x: SentinelTheme.spaceSm
-                                    y: SentinelTheme.spaceXs
-                                    width: parent.width - SentinelTheme.spaceSm * 2
-                                    text: modelData
-                                    color: SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    wrapMode: Text.WordWrap
-                                }
-                            }
-                        }
-
-                        Repeater {
-                            model: settingsPage.viewModel.workspaceActionPlaceholders
-
-                            Rectangle {
-                                required property string modelData
-                                Layout.fillWidth: true
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
-                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.045)
-                                implicitHeight: workspaceActionLabel.implicitHeight + SentinelTheme.spaceMd
-
-                                Label {
-                                    id: workspaceActionLabel
-                                    x: SentinelTheme.spaceSm
-                                    y: SentinelTheme.spaceXs
-                                    width: parent.width - SentinelTheme.spaceSm * 2
-                                    text: modelData
-                                    color: SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                    wrapMode: Text.WordWrap
-                                }
-                            }
-                        }
-
-                        GridLayout {
-                            Layout.fillWidth: true
-                            columns: settingsPage.compact ? 1 : 2
-                            columnSpacing: SentinelTheme.spaceSm
-                            rowSpacing: SentinelTheme.spaceSm
-
-                            SentinelButton {
-                                text: qsTr("Choose Workspace")
-                                enabled: false
-                                Layout.fillWidth: true
-                            }
-
-                            SentinelButton {
-                                text: qsTr("Clear Workspace")
-                                enabled: false
-                                Layout.fillWidth: true
-                            }
-                        }
                     }
                 }
 
@@ -3178,6 +2994,7 @@ Item {
                     id: notificationsSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "System"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(notificationsContent) : 0
 
                     ColumnLayout {
@@ -3376,6 +3193,7 @@ Item {
                     id: updatesSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "System"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(updatesContent) : 0
 
                     ColumnLayout {
@@ -3513,6 +3331,7 @@ Item {
                     id: systemResourcesSection
                     width: parent.width
                     visible: settingsPage.activeCategory === "System"
+                    height: implicitHeight
                     implicitHeight: visible ? settingsPage.sectionHeight(systemResourcesContent) : 0
 
                     property double ramUsagePercent: 0.40
@@ -3565,7 +3384,7 @@ Item {
                                 Layout.preferredHeight: 32
                                 hoverEnabled: true
                                 ToolTip.visible: hovered
-                                ToolTip.text: qsTr("Yenile")
+                                ToolTip.text: qsTr("Refresh")
                                 
                                 onClicked: {
                                     systemResourcesSection.refreshMetrics()

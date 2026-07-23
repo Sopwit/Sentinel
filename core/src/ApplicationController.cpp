@@ -4538,6 +4538,48 @@ void ApplicationController::setLocalInferenceTimeoutMs(int timeoutMs) {
     emit localChatInferenceRoutingChanged();
 }
 
+double ApplicationController::localInferenceTemperature() const {
+    return localInferenceTemperature_;
+}
+
+void ApplicationController::setLocalInferenceTemperature(double temperature) {
+    const auto normalized = std::clamp(temperature, 0.0, 2.0);
+    if (qFuzzyCompare(normalized, localInferenceTemperature_)) {
+        return;
+    }
+
+    localInferenceTemperature_ = normalized;
+    emit localInferenceChanged();
+}
+
+double ApplicationController::localInferenceTopP() const {
+    return localInferenceTopP_;
+}
+
+void ApplicationController::setLocalInferenceTopP(double topP) {
+    const auto normalized = std::clamp(topP, 0.0, 1.0);
+    if (qFuzzyCompare(normalized, localInferenceTopP_)) {
+        return;
+    }
+
+    localInferenceTopP_ = normalized;
+    emit localInferenceChanged();
+}
+
+int ApplicationController::localInferenceMaxTokens() const {
+    return localInferenceMaxTokens_;
+}
+
+void ApplicationController::setLocalInferenceMaxTokens(int maxTokens) {
+    const auto normalized = std::clamp(maxTokens, 1, 16384);
+    if (normalized == localInferenceMaxTokens_) {
+        return;
+    }
+
+    localInferenceMaxTokens_ = normalized;
+    emit localInferenceChanged();
+}
+
 bool ApplicationController::localInferenceBusy() const {
     return localInferenceBusy_;
 }
@@ -7380,6 +7422,9 @@ bool ApplicationController::sendMessage(const QString& message) {
         request.prompt = trimmed;
         request.options.model = effectiveLocalModel({});
         request.options.timeoutMs = localInferenceTimeoutMs_;
+        request.options.temperature = localInferenceTemperature_;
+        request.options.topP = localInferenceTopP_;
+        request.options.maxTokens = localInferenceMaxTokens_;
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::BusyRequest,
             QStringLiteral("Local inference request rejected: another request is already "
@@ -7553,6 +7598,9 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
         request.prompt = prompt.trimmed();
         request.options.model = effectiveLocalModel(model);
         request.options.timeoutMs = localInferenceTimeoutMs_;
+        request.options.temperature = localInferenceTemperature_;
+        request.options.topP = localInferenceTopP_;
+        request.options.maxTokens = localInferenceMaxTokens_;
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::BusyRequest,
             QStringLiteral("Local inference request rejected: another request is already "
@@ -7565,6 +7613,9 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
     request.prompt = prompt.trimmed();
     request.options.model = effectiveLocalModel(model);
     request.options.timeoutMs = localInferenceTimeoutMs_;
+    request.options.temperature = localInferenceTemperature_;
+    request.options.topP = localInferenceTopP_;
+    request.options.maxTokens = localInferenceMaxTokens_;
     latestLocalInferenceStreamResult_.accumulatedText.clear();
 
     if (request.prompt.isEmpty()) {
@@ -7777,6 +7828,9 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
         request.options.model = effectiveLocalModel(model);
         request.options.streamingRequested = true;
         request.options.timeoutMs = localInferenceTimeoutMs_;
+        request.options.temperature = localInferenceTemperature_;
+        request.options.topP = localInferenceTopP_;
+        request.options.maxTokens = localInferenceMaxTokens_;
         latestLocalInferenceResponse_ = blockedLocalInferenceResponse(
             request, LocalInferenceError::BusyRequest,
             QStringLiteral("Local streaming request rejected: another request is already "
@@ -7792,6 +7846,9 @@ bool ApplicationController::runLocalInferenceStream(const QString& prompt, const
     request.options.model = effectiveLocalModel(model);
     request.options.streamingRequested = true;
     request.options.timeoutMs = localInferenceTimeoutMs_;
+    request.options.temperature = localInferenceTemperature_;
+    request.options.topP = localInferenceTopP_;
+    request.options.maxTokens = localInferenceMaxTokens_;
 
     auto blockStream = [this,
                         &request](LocalInferenceError error, const QString& summary,

@@ -30,6 +30,12 @@ class AppSettings final : public QObject {
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceStreamingEnabledChanged)
     Q_PROPERTY(int localInferenceTimeoutMs READ localInferenceTimeoutMs WRITE
                    setLocalInferenceTimeoutMs NOTIFY localInferenceTimeoutMsChanged)
+    Q_PROPERTY(double localInferenceTemperature READ localInferenceTemperature WRITE
+                   setLocalInferenceTemperature NOTIFY localInferenceTemperatureChanged)
+    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE
+                   setLocalInferenceTopP NOTIFY localInferenceTopPChanged)
+    Q_PROPERTY(int localInferenceMaxTokens READ localInferenceMaxTokens WRITE
+                   setLocalInferenceMaxTokens NOTIFY localInferenceMaxTokensChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
                    setPromptContextInjectionEnabled NOTIFY promptContextInjectionEnabledChanged)
     Q_PROPERTY(bool semanticPromptInclusionEnabled READ semanticPromptInclusionEnabled WRITE
@@ -157,6 +163,12 @@ public:
     void setLocalInferenceStreamingEnabled(bool enabled);
     int localInferenceTimeoutMs() const;
     void setLocalInferenceTimeoutMs(int timeoutMs);
+    double localInferenceTemperature() const;
+    void setLocalInferenceTemperature(double temperature);
+    double localInferenceTopP() const;
+    void setLocalInferenceTopP(double topP);
+    int localInferenceMaxTokens() const;
+    void setLocalInferenceMaxTokens(int maxTokens);
     bool promptContextInjectionEnabled() const;
     void setPromptContextInjectionEnabled(bool enabled);
     bool semanticPromptInclusionEnabled() const;
@@ -263,6 +275,9 @@ signals:
     void localChatInferenceEnabledChanged();
     void localInferenceStreamingEnabledChanged();
     void localInferenceTimeoutMsChanged();
+    void localInferenceTemperatureChanged();
+    void localInferenceTopPChanged();
+    void localInferenceMaxTokensChanged();
     void promptContextInjectionEnabledChanged();
     void semanticPromptInclusionEnabledChanged();
     void contextExplainabilityVisibleChanged();
@@ -304,6 +319,9 @@ private:
     static constexpr auto localChatInferenceEnabledKey = "localChatInferenceEnabled";
     static constexpr auto localInferenceStreamingEnabledKey = "localInferenceStreamingEnabled";
     static constexpr auto localInferenceTimeoutMsKey = "localInferenceTimeoutMs";
+    static constexpr auto localInferenceTemperatureKey = "localInferenceTemperature";
+    static constexpr auto localInferenceTopPKey = "localInferenceTopP";
+    static constexpr auto localInferenceMaxTokensKey = "localInferenceMaxTokens";
     static constexpr auto promptContextInjectionEnabledKey = "promptContextInjectionEnabled";
     static constexpr auto semanticPromptInclusionEnabledKey = "semanticPromptInclusionEnabled";
     static constexpr auto contextExplainabilityVisibleKey = "contextExplainabilityVisible";
@@ -368,6 +386,9 @@ private:
     static constexpr auto defaultSelectedTtsEngine = "Piper";
     static constexpr auto defaultKokoroVoice = "af_bella";
     static constexpr int defaultLocalInferenceTimeoutMs = 30000;
+    static constexpr double defaultLocalInferenceTemperature = 0.7;
+    static constexpr double defaultLocalInferenceTopP = 0.9;
+    static constexpr int defaultLocalInferenceMaxTokens = 2048;
 
     std::unique_ptr<ISettingsStore> store_;
 };
