@@ -804,6 +804,12 @@ class ApplicationController final : public QObject {
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(int localInferenceTimeoutMs READ localInferenceTimeoutMs WRITE
                    setLocalInferenceTimeoutMs NOTIFY localInferenceChanged)
+    Q_PROPERTY(double localInferenceTemperature READ localInferenceTemperature WRITE
+                   setLocalInferenceTemperature NOTIFY localInferenceChanged)
+    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE
+                   setLocalInferenceTopP NOTIFY localInferenceChanged)
+    Q_PROPERTY(int localInferenceMaxTokens READ localInferenceMaxTokens WRITE
+                   setLocalInferenceMaxTokens NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
     Q_PROPERTY(QString localInferenceRuntimeState READ localInferenceRuntimeState NOTIFY
                    localInferenceChanged)
@@ -1655,6 +1661,12 @@ public:
     void setLocalInferenceStreamingEnabled(bool enabled);
     int localInferenceTimeoutMs() const;
     void setLocalInferenceTimeoutMs(int timeoutMs);
+    double localInferenceTemperature() const;
+    void setLocalInferenceTemperature(double temperature);
+    double localInferenceTopP() const;
+    void setLocalInferenceTopP(double topP);
+    int localInferenceMaxTokens() const;
+    void setLocalInferenceMaxTokens(int maxTokens);
     bool localInferenceBusy() const;
     QString localInferenceRuntimeState() const;
     QString localInferenceStatus() const;
@@ -2081,6 +2093,9 @@ private:
     bool promptContextInjectionEnabled_ = false;
     bool localInferenceStreamingEnabled_ = false;
     int localInferenceTimeoutMs_ = 30000;
+    double localInferenceTemperature_ = 0.7;
+    double localInferenceTopP_ = 0.9;
+    int localInferenceMaxTokens_ = 2048;
     bool localInferenceBusy_ = false;
     bool activeLocalInferenceIsChatRequest_ = false;
     bool activeLocalInferenceIsSummaryRequest_ = false;

@@ -65,6 +65,8 @@ if(NOT APPLE)
     if(WIN32)
         set(CPACK_GENERATOR "NSIS;WIX")
         set(CPACK_PACKAGE_INSTALL_DIRECTORY "Sentinel Desktop")
+        set(CPACK_PACKAGE_EXECUTABLES "sentinel-desktop" "Sentinel Desktop")
+        set(CPACK_CREATE_DESKTOP_LINKS "sentinel-desktop")
         
         # NSIS (EXE) Settings
         set(CPACK_NSIS_DISPLAY_NAME "Sentinel Desktop")

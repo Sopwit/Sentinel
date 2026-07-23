@@ -62,33 +62,33 @@ ShellPanel {
         var morningGreetings = [
             { title: qsTr("Günaydın, Operator"), subtitle: qsTr("Bugün yeni projeler üretmek ve hedeflerine ulaşmak için harika bir gün. Nasıl yardımcı olabilirim?") },
             { title: qsTr("Güzel Bir Sabah"), subtitle: qsTr("Zihnini taze tut, üretkenlik senin elinde. Bugün birlikte ne inşa edelim?") },
-            { title: qsTr("Günaydın, Sentinel Hazır"), subtitle: qsTr("Yeni bir güne başlarken tüm yerel RAG, kodlama ve yapay zeka araçlarınla yanındayım.") },
-            { title: qsTr("Sabah Odaklanması Başladı"), subtitle: qsTr("Taze bir zihinle kodları derlemeye, planları yapmaya veya yeni araştırmalara başlamaya hazırız.") },
+            { title: qsTr("Günaydın, Sentinel Hazır"), subtitle: qsTr("Yeni bir güne başlarken tüm yerel arama, analiz ve yapay zeka araçlarınla yanındayım.") },
+            { title: qsTr("Sabah Odaklanması Başladı"), subtitle: qsTr("Taze bir zihinle günlük planları yapmaya, işleri organize etmeye veya yeni araştırmalara başlamaya hazırız.") },
             { title: qsTr("Günaydın! Yeni Hedefler"), subtitle: qsTr("Günün ilk saatlerinde zihnindeki o parlak fikri birlikte hayata geçirelim mi?") },
-            { title: qsTr("Harika Bir Sabah Başlangıcı"), subtitle: qsTr("Günün üretkenliğini tetikleyecek en iyi çözümleri, yerel veri tabanındaki bilgilerle harmanlayalım.") }
+            { title: qsTr("Harika Bir Sabah Başlangıcı"), subtitle: qsTr("Günün üretkenliğini tetikleyecek en iyi çözümleri, yerel zekamızla harmanlayalım.") }
         ];
         var afternoonGreetings = [
             { title: qsTr("İyi Günler, Operator"), subtitle: qsTr("İş akışını hızlandırmak ve operasyonlarını yönetmek için hazır mıyım? Nasıl destek olabilirim?") },
             { title: qsTr("Tünaydın! Üretkenliğe Devam"), subtitle: qsTr("Günün en verimli saatindeyiz. Projelerindeki tıkanıklıkları birlikte çözelim mi?") },
-            { title: qsTr("Verimli Bir Gün"), subtitle: qsTr("Geliştirme hedeflerini gerçekleştirelim. Kodlarında, planlarında veya analizlerinde yardım etmeye hazırım.") },
-            { title: qsTr("Tünaydın! Odaklanma Zamanı"), subtitle: qsTr("Hız kesmeden projelere devam ediyoruz. Hata ayıklama veya kod yazma süreçlerinde yanındayım.") },
+            { title: qsTr("Verimli Bir Gün"), subtitle: qsTr("Kişisel ve profesyonel hedeflerini gerçekleştirelim. Yazılarında, planlarında veya analizlerinde yardım etmeye hazırım.") },
+            { title: qsTr("Tünaydın! Odaklanma Zamanı"), subtitle: qsTr("Hız kesmeden projelere devam ediyoruz. Metin yazma, araştırma yapma veya analiz süreçlerinde yanındayım.") },
             { title: qsTr("Tünaydın! Sentinel Göreve Hazır"), subtitle: qsTr("Günün temposunu yakalamışken, yerel yapay zeka gücüyle iş akışını bir üst seviyeye taşıyalım.") },
-            { title: qsTr("Öğleden Sonra Sinerjisi"), subtitle: qsTr("Zorlu algoritmaları, mimari kararları ve doküman analizlerini birlikte çözmenin tam vakti.") }
+            { title: qsTr("Öğleden Sonra Sinerjisi"), subtitle: qsTr("Yaratıcı fikirleri, raporları ve doküman analizlerini birlikte çözmenin tam vakti.") }
         ];
         var eveningGreetings = [
             { title: qsTr("İyi Akşamlar, Operator"), subtitle: qsTr("Günün geri kalanını başarılı ve verimli bir şekilde kapatmana nasıl yardımcı olabilirim?") },
             { title: qsTr("Keyifli Bir Akşam Seansı"), subtitle: qsTr("Günün yorgunluğunu hafifletelim. Sentinel tüm yerel zekasıyla seni destekliyor.") },
-            { title: qsTr("İyi Akşamlar! Fikirler Canlansın"), subtitle: qsTr("Teknik hedeflerini tamamlayalım. Akşam sessizliğinde üretkenliği zirveye çıkarabiliriz.") },
-            { title: qsTr("Akşam Saatleri ve Geliştirme"), subtitle: qsTr("Günün raporlarını gözden geçirelim, yarım kalan işleri toparlayalım veya yeni fikirleri test edelim.") },
+            { title: qsTr("İyi Akşamlar! Fikirler Canlansın"), subtitle: qsTr("Günün hedeflerini tamamlayalım. Akşam sessizliğinde üretkenliği zirveye çıkarabiliriz.") },
+            { title: qsTr("Akşam Saatleri ve Odaklanma"), subtitle: qsTr("Günün raporlarını gözden geçirelim, yarım kalan işleri toparlayalım veya yeni fikirleri hayata geçirelim.") },
             { title: qsTr("İyi Akşamlar! Sentinel Yanında"), subtitle: qsTr("Sakin bir akşam seansında, en karmaşık problemleri adım adım analiz etmek için buradayım.") },
-            { title: qsTr("Akşam Üretkenliği"), subtitle: qsTr("Günün son adımlarını atarken yerel RAG bellek arama motorunla en kritik belgelere ulaş.") }
+            { title: qsTr("Akşam Üretkenliği"), subtitle: qsTr("Günün son adımlarını atarken yerel arama gücüyle en kritik belgelere ve bilgilere ulaş.") }
         ];
         var nightGreetings = [
-            { title: qsTr("İyi Geceler, Operator"), subtitle: qsTr("Son detayları gözden geçirmek, planlarını hazırlamak veya gece kodlaması yapmak için burayım.") },
-            { title: qsTr("Gece Sessizliği ve Odaklanma"), subtitle: qsTr("Sessiz ve odaklanmış bir çalışma seansı için hazırım. Zihnindeki fikirleri kodlara dökelim mi?") },
+            { title: qsTr("İyi Geceler, Operator"), subtitle: qsTr("Son detayları gözden geçirmek, planlarını hazırlamak veya yaratıcı yazılar yazmak için burayım.") },
+            { title: qsTr("Gece Sessizliği ve Odaklanma"), subtitle: qsTr("Sessiz ve odaklanmış bir çalışma seansı için hazırım. Zihnindeki fikirleri hayata geçirelim mi?") },
             { title: qsTr("İyi Geceler! Sentinel Aktif"), subtitle: qsTr("Günü kapatmadan önce yarım kalan işleri veya yarına dair planları organize edebiliriz.") },
-            { title: qsTr("Gece Kodcuları İçin Aktif"), subtitle: qsTr("Gece sessizliğinin getirdiği o benzersiz odakla, en zorlu bug'ları ve algoritmaları avlayalım.") },
-            { title: qsTr("İyi Geceler! Gece Seansı Başladı"), subtitle: qsTr("Uykudan önce son bir derleme mi? Yoksa yarına dair hedeflerin yapılandırılması mı?") },
+            { title: qsTr("Gece Boyu Üretkenlik"), subtitle: qsTr("Gece sessizliğinin getirdiği o benzersiz odakla, en karmaşık soruları ve projeleri birlikte analiz edelim.") },
+            { title: qsTr("İyi Geceler! Gece Seansı Başladı"), subtitle: qsTr("Uykudan önce son bir okuma mı? Yoksa yarına dair hedeflerin yapılandırılması mı?") },
             { title: qsTr("Gece Yarısı Yaratıcılığı"), subtitle: qsTr("Herkes uyurken yeni projelerin temellerini yerel yapay zeka asistanınla güvenle at.") }
         ];
 
@@ -593,6 +593,35 @@ ShellPanel {
                             Menu {
                                 id: convItemMenu
 
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    border.width: 1
+                                }
+
+                                delegate: MenuItem {
+                                    id: convMenuItem
+                                    contentItem: Text {
+                                        text: convMenuItem.text
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        color: convMenuItem.enabled 
+                                               ? (convMenuItem.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted) 
+                                               : SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.4)
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        leftPadding: SentinelTheme.spaceSm
+                                        rightPadding: SentinelTheme.spaceSm
+                                    }
+                                    background: Rectangle {
+                                        implicitHeight: 32
+                                        color: convMenuItem.highlighted
+                                               ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                    }
+                                }
+
                                 // Pin / Unpin
                                 MenuItem {
                                     text: convItem.pinned ? qsTr("Unpin") : qsTr("Pin")
@@ -747,34 +776,30 @@ ShellPanel {
                             property var suggestions: []
 
                             readonly property var allSuggestions: [
-                                { icon: "💻", title: qsTr("Python CSV İşleme"), prompt: qsTr("İki CSV dosyasını birleştiren ve filtreleyen bir Python betiği yaz") },
                                 { icon: "📚", title: qsTr("Özet Çıkarma"), prompt: qsTr("Eklediğim PDF belgesinin yönetici özetini ve ana hatlarını çıkar") },
-                                { icon: "📝", title: qsTr("İş E-postası"), prompt: qsTr("Müşteriye teknik gecikmeyi açıklayan kibar ve profesyonel bir e-posta taslağı yaz") },
-                                { icon: "💡", title: qsTr("Blog Fikirleri"), prompt: qsTr("Yazılım geliştiriciler için yapay zeka araçları hakkında 5 yaratıcı blog başlığı bul") },
-                                { icon: "⚡", title: qsTr("C++ Bellek Yönetimi"), prompt: qsTr("C++ kodunda dynamic memory yönetimi ve akıllı işaretçi (smart pointer) kullanım rehberi hazırla") },
-                                { icon: "🎨", title: qsTr("Modern CSS Cam Efekti"), prompt: qsTr("Mat cam (glassmorphism) tasarımı için CSS backdrop-filter ve gölge kodlarını ver") },
-                                { icon: "🛡️", title: qsTr("API Güvenliği"), prompt: qsTr("RESTful API'lerde JWT tabanlı kimlik doğrulama için en iyi güvenlik pratiklerini sırala") },
-                                { icon: "🗄️", title: qsTr("SQL Optimizasyonu"), prompt: qsTr("Çoklu JOIN içeren yavaş bir SQL sorgusunu optimize etmek için indeksleme stratejilerini açıkla") },
-                                { icon: "🌐", title: qsTr("Dockerizing Go App"), prompt: qsTr("Bir Go (Golang) web uygulaması için çok aşamalı (multi-stage) Dockerfile yaz") },
-                                { icon: "🦀", title: qsTr("Rust Hata Yönetimi"), prompt: qsTr("Rust dilindeki Result ve Option tiplerini ve Result yayılımı (propagation) pratiklerini göster") },
-                                { icon: "🚀", title: qsTr("React Performans"), prompt: qsTr("React bileşenlerinde gereksiz yeniden çizimleri (re-render) önlemek için useMemo ve useCallback kullanımını açıkla") },
-                                { icon: "📓", title: qsTr("Proje Dokümantasyonu"), prompt: qsTr("Açık kaynaklı bir yazılım projesi için örnek bir README.md şablonu oluştur") },
-                                { icon: "🔍", title: qsTr("RegEx Arama"), prompt: qsTr("E-posta adreslerini ve telefon numaralarını doğrulayan güvenli Regex desenleri yaz") },
-                                { icon: "📊", title: qsTr("Git Commit Standartı"), prompt: qsTr("Conventional Commits standardına uygun örnek git commit mesajları ve kurallarını listele") },
-                                { icon: "⚙️", title: qsTr("CI/CD Pipeline"), prompt: qsTr("GitHub Actions kullanarak testleri çalıştıran ve build alan temel bir CI workflow'u tasarla") },
-                                { icon: "🧠", title: qsTr("Algoritma Tasarımı"), prompt: qsTr("İkili arama (Binary Search) algoritmasının çalışma mantığını görselleştirerek kodla açıkla") },
-                                { icon: "📲", title: qsTr("Mobil Responsive"), prompt: qsTr("Mobil cihazlar için CSS Grid ve Flexbox kullanarak 3 kolonlu responsive bir düzen oluştur") },
-                                { icon: "☁️", title: qsTr("AWS Deployment"), prompt: qsTr("Bir web uygulamasını AWS S3 ve CloudFront kullanarak statik olarak nasıl yayınlayacağımı anlat") },
-                                { icon: "🔐", title: qsTr("Kriptografi"), prompt: qsTr("Hassas verileri güvenli şekilde saklamak için PBKDF2 ile şifre tuzlama (salting) mantığını açıkla") },
-                                { icon: "🧪", title: qsTr("Birim Test (Unit Test)"), prompt: qsTr("JavaScript/Jest kullanarak asenkron API isteklerini test eden mock test örnekleri yaz") },
-                                { icon: "🤝", title: qsTr("Müşteri İletişimi"), prompt: qsTr("Proje kapsamındaki değişiklikleri (scope creep) müşteriye bildiren diplomatik bir dil şablonu hazırla") },
-                                { icon: "📋", title: qsTr("Kod İnceleme (Code Review)"), prompt: qsTr("Bir pull request incelemesinde yapıcı ve geliştirici geri bildirim vermenin altın kurallarını listele") },
-                                { icon: "📈", title: qsTr("Redis Cache"), prompt: qsTr("Veritabanı yükünü azaltmak için Redis önbellekleme (caching) stratejilerini ve cache invalidation'ı açıkla") },
-                                { icon: "🧹", title: qsTr("Temiz Kod (Clean Code)"), prompt: qsTr("SOLID prensiplerini gerçek hayat yazılım geliştirme örnekleriyle sade bir dille anlat") },
-                                { icon: "💬", title: qsTr("Toplantı Tutanakları"), prompt: qsTr("Geliştirici toplantısından alınan notları maddeler halinde düzenli bir toplantı özetine dönüştür") },
-                                { icon: "🧭", title: qsTr("Mikroservisler"), prompt: qsTr("Monolitik bir mimariyi mikroservislere bölerken dikkat edilmesi gereken veri tutarlılığı kurallarını anlat") },
-                                { icon: "🛠️", title: qsTr("Bash Otomasyonu"), prompt: qsTr("Sunucudaki log dosyalarını sıkıştırıp eskiyenleri silen bir cronjob bash betiği yaz") },
-                                { icon: "🎯", title: qsTr("Hedef Planlama"), prompt: qsTr("Bir yazılım projesinin çeyreklik (OKR) hedeflerini belirlemek için bir çerçeve öner") }
+                                { icon: "📊", title: qsTr("Excel Formül Asistanı"), prompt: qsTr("İki farklı sütundaki verileri karşılaştırıp eşleşmeyenleri bulan bir Excel formülü yaz") },
+                                { icon: "📝", title: qsTr("İş E-postası"), prompt: qsTr("Müşteriye veya yöneticiye durumu açıklayan kibar ve profesyonel bir e-posta taslağı yaz") },
+                                { icon: "💡", title: qsTr("İçerik Fikirleri"), prompt: qsTr("Sosyal medya veya blog için ilgi çekici 5 içerik fikri ve başlığı bul") },
+                                { icon: "🧠", title: qsTr("Basitçe Açıkla"), prompt: qsTr("Karmaşık bir kavramı veya teoriyi 10 yaşındaki birine anlatır gibi sade ve anlaşılır biçimde açıkla") },
+                                { icon: "🌐", title: qsTr("Dil Öğrenimi"), prompt: qsTr("Verilen bir metni İngilizceye doğal ve akıcı bir şekilde çevir ve kullanılan önemli kalıpları göster") },
+                                { icon: "📅", title: qsTr("Haftalık Yemek Planı"), prompt: qsTr("Sağlıklı, pratik ve bütçe dostu 5 günlük akşam yemeği menüsü ve alışveriş listesi oluştur") },
+                                { icon: "✈️", title: qsTr("Seyahat Rotası"), prompt: qsTr("3 günlük bir şehir gezisi (örneğin Kapadokya veya Roma) için ayrıntılı ve optimize edilmiş bir rota planla") },
+                                { icon: "🎁", title: qsTr("Hediye Önerileri"), prompt: qsTr("Belirli bir bütçeye ve ilgi alanlarına göre arkadaşım/ailem için 5 özgün hediye önerisi sun") },
+                                { icon: "⏱️", title: qsTr("Zaman Yönetimi"), prompt: qsTr("Günün yoğun temposunu yönetmek ve ertelemeyi önlemek için Pomodoro tabanlı bir günlük plan hazırlamamda yardımcı ol") },
+                                { icon: "📋", title: qsTr("Toplantı Tutanakları"), prompt: qsTr("Toplantıda karışık olarak aldığım notları maddeler halinde düzenli bir toplantı özetine dönüştür") },
+                                { icon: "🛠️", title: qsTr("Temel Otomasyon"), prompt: qsTr("Bilgisayardaki dosya adlarını topluca değiştiren veya düzenleyen basit bir betik veya komut satırı kodu yaz") },
+                                { icon: "🔍", title: qsTr("Metin Düzenleme"), prompt: qsTr("Yazdığım bu metni dil bilgisi, imla ve anlatım bozuklukları açısından inceleyip daha profesyonel hale getir") },
+                                { icon: "🎯", title: qsTr("Hedef Planlama"), prompt: qsTr("Kişisel hedeflerimi veya bir projenin çeyreklik hedeflerini (OKR) belirlemek için bir çerçeve öner") },
+                                { icon: "📈", title: qsTr("Veri Analizi"), prompt: qsTr("Bir tablo veya veri setindeki önemli eğilimleri, desenleri ve anomalileri özetleyen bir rapor taslağı hazırla") },
+                                { icon: "🤝", title: qsTr("Diplomatik Yanıt"), prompt: qsTr("Müşteri veya iş ortağından gelen beklenmedik bir talebe ya da gecikmeye karşı profesyonel ve yapıcı bir yanıt yaz") },
+                                { icon: "📓", title: qsTr("Yaratıcı Yazarlık"), prompt: qsTr("Belirli bir tema etrafında ilgi çekici bir kısa hikaye başlangıcı veya yaratıcı yazı taslağı oluştur") },
+                                { icon: "📣", title: qsTr("Bülten Hazırlama"), prompt: qsTr("Aylık güncellemelerimizi veya ürün lansmanımızı duyuran ilgi çekici bir e-bülten taslağı yaz") },
+                                { icon: "💻", title: qsTr("Python CSV İşleme"), prompt: qsTr("İki CSV dosyasını birleştiren ve filtreleyen basit bir Python betiği yaz") },
+                                { icon: "📐", title: qsTr("Sunum Taslağı"), prompt: qsTr("Belirli bir konuda etkileyici ve akıcı bir sunum slayt yapısı ve konuşma notları tasarla") },
+                                { icon: "⚡", title: qsTr("Klavye Kısayolları"), prompt: qsTr("İşletim sisteminde veya sık kullanılan bir uygulamada iş akışını hızlandıracak en pratik kısayolları listele") },
+                                { icon: "🏫", title: qsTr("Öğrenme Planı"), prompt: qsTr("Yeni bir konuyu sıfırdan öğrenmek için (örneğin temel finans veya temel fotoğrafçılık) 4 haftalık adım adım çalışma planı hazırla") },
+                                { icon: "🩺", title: qsTr("Sağlıklı Yaşam"), prompt: qsTr("Masa başında çalışanlar için gün içinde yapılabilecek esneme egzersizleri ve duruş düzeltme önerileri listele") },
+                                { icon: "✍️", title: qsTr("Blog Yazısı Taslağı"), prompt: qsTr("Belirli bir konuda SEO uyumlu, alt başlıkları ve giriş paragrafı hazır olan detaylı bir blog yazısı şablonu oluştur") }
                             ]
 
                             function shuffleSuggestions() {
@@ -869,7 +894,7 @@ ShellPanel {
                                : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.68)
                         border.color: InteractionTokens.borderColor(homePromptInput.activeFocus, homeComposerMouse.containsMouse,
                                                                      false, homeChat.modeAccent)
-                        implicitHeight: Math.max(76 * homeChat.resolutionScale, homeComposerLayout.implicitHeight + SentinelTheme.spaceMd * homeChat.resolutionScale)
+                        implicitHeight: Math.max(76 * homeChat.resolutionScale, homeComposerMainLayout.implicitHeight + SentinelTheme.spaceSm * homeChat.resolutionScale)
 
                         MouseArea {
                             id: homeComposerMouse
@@ -886,12 +911,59 @@ ShellPanel {
                             }
                         }
 
-                        RowLayout {
-                            id: homeComposerLayout
-                            x: SentinelTheme.spaceSm * homeChat.resolutionScale
-                            y: SentinelTheme.spaceXs * homeChat.resolutionScale
-                            width: parent.width - (SentinelTheme.spaceSm * 2) * homeChat.resolutionScale
-                            spacing: SentinelTheme.spaceSm * homeChat.resolutionScale
+                        ColumnLayout {
+                            id: homeComposerMainLayout
+                            anchors.fill: parent
+                            anchors.margins: SentinelTheme.spaceSm * homeChat.resolutionScale
+                            spacing: SentinelTheme.spaceXs * homeChat.resolutionScale
+
+                            // Attachment Preview Bar
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: 28 * homeChat.resolutionScale
+                                radius: SentinelTheme.radiusSm
+                                color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.1)
+                                border.color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.2)
+                                border.width: 1
+                                visible: homeChat.viewModel.attachmentSummaries.length > 0
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: SentinelTheme.spaceSm
+                                    anchors.rightMargin: SentinelTheme.spaceSm
+                                    spacing: SentinelTheme.spaceSm
+
+                                    Text {
+                                        text: "📎 " + (homeChat.viewModel.attachmentSummaries.length > 0 ? homeChat.viewModel.attachmentSummaries[0] : "")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
+                                        elide: Text.ElideMiddle
+                                        Layout.fillWidth: true
+                                    }
+
+                                    Button {
+                                        id: homeRemoveAttachmentBtn
+                                        Layout.preferredWidth: 20 * homeChat.resolutionScale
+                                        Layout.preferredHeight: 20 * homeChat.resolutionScale
+                                        flat: true
+                                        hoverEnabled: true
+                                        onClicked: homeChat.viewModel.clearAttachments()
+                                        background: Rectangle { color: "transparent" }
+                                        contentItem: Text {
+                                            text: "×"
+                                            color: homeRemoveAttachmentBtn.hovered ? SentinelTheme.error : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                id: homeComposerLayout
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceSm * homeChat.resolutionScale
 
                             Button {
                                 id: homeAttachButton
@@ -900,7 +972,7 @@ ShellPanel {
                                 text: "+"
                                 hoverEnabled: true
                                 ToolTip.visible: hovered
-                                ToolTip.text: qsTr("Ekle veya İşlemler")
+                                ToolTip.text: qsTr("Add or Actions")
                                 onClicked: homeAttachMenu.open()
 
                                 contentItem: Text {
@@ -1038,7 +1110,7 @@ ShellPanel {
                                 Layout.alignment: Qt.AlignBottom
                                 hoverEnabled: true
                                 ToolTip.visible: hovered
-                                ToolTip.text: recordingActive ? qsTr("Kayıt Durdur") : qsTr("Sesli Yaz")
+                                ToolTip.text: recordingActive ? qsTr("Stop Recording") : qsTr("Voice Input")
 
                                 property bool recordingActive: homeChat.viewModel.voiceRecordingActive
 
@@ -1101,6 +1173,7 @@ ShellPanel {
                             }
                         }
                     }
+                }
 
                     RowLayout {
                         Layout.fillWidth: true
@@ -1590,6 +1663,36 @@ ShellPanel {
 
                             Menu {
                                 id: messageMenu
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    border.width: 1
+                                }
+
+                                delegate: MenuItem {
+                                    id: msgMenuItem
+                                    contentItem: Text {
+                                        text: msgMenuItem.text
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        color: msgMenuItem.enabled 
+                                               ? (msgMenuItem.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted) 
+                                               : SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.4)
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        leftPadding: SentinelTheme.spaceSm
+                                        rightPadding: SentinelTheme.spaceSm
+                                    }
+                                    background: Rectangle {
+                                        implicitHeight: 32
+                                        color: msgMenuItem.highlighted
+                                               ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                    }
+                                }
+
                                 MenuItem {
                                     text: qsTr("Edit")
                                     enabled: recentMessage.messageRole === "user"
@@ -1602,6 +1705,13 @@ ShellPanel {
                                     text: qsTr("Regenerate")
                                     enabled: recentMessage.messageRole !== "user" && homeChat.canSend && !homeChat.sendBusy
                                     onTriggered: homeChat.viewModel.sendMessage(qsTr("Regenerate the previous response."))
+                                }
+
+                                Action {
+                                    text: qsTr("Copy Text")
+                                    onTriggered: {
+                                        // Quick copy action if needed
+                                    }
                                 }
 
                                 MenuSeparator {}
@@ -1691,7 +1801,7 @@ ShellPanel {
                    : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.68)
             border.color: InteractionTokens.borderColor(promptInput.activeFocus, composerMouse.containsMouse,
                                                          false, homeChat.modeAccent)
-            implicitHeight: Math.max(76 * homeChat.resolutionScale, composerLayout.implicitHeight + SentinelTheme.spaceMd * homeChat.resolutionScale)
+            implicitHeight: Math.max(76 * homeChat.resolutionScale, composerMainLayout.implicitHeight + SentinelTheme.spaceSm * homeChat.resolutionScale)
 
             MouseArea {
                 id: composerMouse
@@ -1708,19 +1818,68 @@ ShellPanel {
                 }
             }
 
-            RowLayout {
-                id: composerLayout
-                x: SentinelTheme.spaceSm * homeChat.resolutionScale
-                y: SentinelTheme.spaceXs * homeChat.resolutionScale
-                width: parent.width - (SentinelTheme.spaceSm * 2) * homeChat.resolutionScale
-                     Button {
-                    id: attachButton
+            ColumnLayout {
+                id: composerMainLayout
+                anchors.fill: parent
+                anchors.margins: SentinelTheme.spaceSm * homeChat.resolutionScale
+                spacing: SentinelTheme.spaceXs * homeChat.resolutionScale
+
+                // Attachment Preview Bar
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.preferredHeight: 28 * homeChat.resolutionScale
+                    radius: SentinelTheme.radiusSm
+                    color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.1)
+                    border.color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.2)
+                    border.width: 1
+                    visible: homeChat.viewModel.attachmentSummaries.length > 0
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: SentinelTheme.spaceSm
+                        anchors.rightMargin: SentinelTheme.spaceSm
+                        spacing: SentinelTheme.spaceSm
+
+                        Text {
+                            text: "📎 " + (homeChat.viewModel.attachmentSummaries.length > 0 ? homeChat.viewModel.attachmentSummaries[0] : "")
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
+                            elide: Text.ElideMiddle
+                            Layout.fillWidth: true
+                        }
+
+                        Button {
+                            id: removeAttachmentBtn
+                            Layout.preferredWidth: 20 * homeChat.resolutionScale
+                            Layout.preferredHeight: 20 * homeChat.resolutionScale
+                            flat: true
+                            hoverEnabled: true
+                            onClicked: homeChat.viewModel.clearAttachments()
+                            background: Rectangle { color: "transparent" }
+                            contentItem: Text {
+                                text: "×"
+                                color: removeAttachmentBtn.hovered ? SentinelTheme.error : SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontBody
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+                        }
+                    }
+                }
+
+                RowLayout {
+                    id: composerLayout
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm * homeChat.resolutionScale
+
+                    Button {
+                        id: attachButton
                     Layout.preferredWidth: 34 * homeChat.resolutionScale
                     Layout.preferredHeight: 34 * homeChat.resolutionScale
                     text: "+"
                     hoverEnabled: true
                     ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Ekle veya İşlemler")
+                    ToolTip.text: qsTr("Add or Actions")
                     onClicked: attachMenu.open()
 
                     contentItem: Text {
@@ -1885,7 +2044,7 @@ ShellPanel {
                     Layout.alignment: Qt.AlignBottom
                     hoverEnabled: true
                     ToolTip.visible: hovered
-                    ToolTip.text: recordingActive ? qsTr("Kayıt Durdur") : qsTr("Sesli Yaz")
+                    ToolTip.text: recordingActive ? qsTr("Stop Recording") : qsTr("Voice Input")
 
                     property bool recordingActive: homeChat.viewModel.voiceRecordingActive
 
@@ -1946,6 +2105,7 @@ ShellPanel {
                 }
             }
         }
+    }
 
         Label {
             Layout.fillWidth: true

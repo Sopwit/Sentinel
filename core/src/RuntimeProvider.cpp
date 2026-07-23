@@ -249,7 +249,7 @@ RuntimeProviderDescriptor OpenAICompatibleLocalRuntimeProvider::descriptor() con
         selectedModel_.trimmed().isEmpty() ? QStringList{} : QStringList{selectedModel_.trimmed()},
         true,
         false,
-        true,
+        providerId_ != QStringLiteral("openai-compatible-local"),
     };
 }
 

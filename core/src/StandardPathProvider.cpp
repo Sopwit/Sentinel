@@ -12,6 +12,11 @@ QString writableDirectoryOrFallback(QStandardPaths::StandardLocation location) {
     return path.isEmpty() ? QDir::currentPath() : path;
 }
 
+QString sentinelDocumentsPath() {
+    return writableDirectoryOrFallback(QStandardPaths::DocumentsLocation) +
+           QStringLiteral("/Sentinel");
+}
+
 } // namespace
 
 QString StandardPathProvider::settingsFilePath() const {
@@ -20,27 +25,27 @@ QString StandardPathProvider::settingsFilePath() const {
 }
 
 QString StandardPathProvider::memoryDatabasePath() const {
-    return writableDirectoryOrFallback(QStandardPaths::AppDataLocation) +
+    return sentinelDocumentsPath() +
            QStringLiteral("/memory.sqlite3");
 }
 
 QString StandardPathProvider::chatHistoryDatabasePath() const {
-    return writableDirectoryOrFallback(QStandardPaths::AppDataLocation) +
+    return sentinelDocumentsPath() +
            QStringLiteral("/chat_history.sqlite3");
 }
 
 QString StandardPathProvider::conversationDatabasePath() const {
-    return writableDirectoryOrFallback(QStandardPaths::AppDataLocation) +
+    return sentinelDocumentsPath() +
            QStringLiteral("/conversations.sqlite3");
 }
 
 QString StandardPathProvider::conversationExportDirectoryPath() const {
-    return writableDirectoryOrFallback(QStandardPaths::AppDataLocation) +
+    return sentinelDocumentsPath() +
            QStringLiteral("/exports");
 }
 
 QString StandardPathProvider::localRagDatabasePath() const {
-    return writableDirectoryOrFallback(QStandardPaths::AppDataLocation) +
+    return sentinelDocumentsPath() +
            QStringLiteral("/local_rag.sqlite3");
 }
 

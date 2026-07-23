@@ -462,6 +462,28 @@ ShellPanel {
                                                                                  chatPanel.modeAccent)
                                 }
 
+                                delegate: MenuItem {
+                                    id: panelMenuItem
+                                    contentItem: Text {
+                                        text: panelMenuItem.text
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        color: panelMenuItem.enabled 
+                                               ? (panelMenuItem.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted) 
+                                               : SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.4)
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                        leftPadding: SentinelTheme.spaceSm
+                                        rightPadding: SentinelTheme.spaceSm
+                                    }
+                                    background: Rectangle {
+                                        implicitHeight: 32
+                                        color: panelMenuItem.highlighted
+                                               ? SentinelTheme.withAlpha(chatPanel.modeAccent, 0.12)
+                                               : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                    }
+                                }
+
                                 MenuItem {
                                     text: qsTr("Rename")
                                     onTriggered: {

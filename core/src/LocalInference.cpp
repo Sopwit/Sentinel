@@ -642,6 +642,12 @@ LocalInferenceResponse OllamaLocalInferenceClient::infer(const LocalInferenceReq
     body.insert(QStringLiteral("prompt"), request.prompt.trimmed());
     body.insert(QStringLiteral("stream"), false);
 
+    QJsonObject options;
+    options.insert(QStringLiteral("temperature"), request.options.temperature);
+    options.insert(QStringLiteral("top_p"), request.options.topP);
+    options.insert(QStringLiteral("num_predict"), request.options.maxTokens);
+    body.insert(QStringLiteral("options"), options);
+
     response.traces.append(trace(2, QStringLiteral("Generation"), QStringLiteral("Started"),
                                  QStringLiteral("Calling local Ollama /api/generate without "
                                                 "streaming; timeout %1 ms.")
@@ -786,6 +792,12 @@ LocalInferenceStreamResult OllamaLocalInferenceStreamClient::startStream(
     body.insert(QStringLiteral("model"), result.model);
     body.insert(QStringLiteral("prompt"), request.prompt.trimmed());
     body.insert(QStringLiteral("stream"), true);
+
+    QJsonObject options;
+    options.insert(QStringLiteral("temperature"), request.options.temperature);
+    options.insert(QStringLiteral("top_p"), request.options.topP);
+    options.insert(QStringLiteral("num_predict"), request.options.maxTokens);
+    body.insert(QStringLiteral("options"), options);
 
     QNetworkAccessManager manager;
     QNetworkRequest networkRequest{endpointUrl(QStringLiteral("/api/generate"))};

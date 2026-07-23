@@ -428,6 +428,72 @@ void AppSettings::setLocalInferenceTimeoutMs(int timeoutMs) {
     emit localInferenceTimeoutMsChanged();
 }
 
+double AppSettings::localInferenceTemperature() const {
+    const auto fallback = QString::number(defaultLocalInferenceTemperature);
+    bool ok = false;
+    const auto value =
+        store_ ? store_->value(QString::fromLatin1(localInferenceTemperatureKey), fallback).toDouble(&ok)
+               : defaultLocalInferenceTemperature;
+    if (!ok) {
+        return defaultLocalInferenceTemperature;
+    }
+    return std::clamp(value, 0.0, 2.0);
+}
+
+void AppSettings::setLocalInferenceTemperature(double temperature) {
+    const auto normalized = std::clamp(temperature, 0.0, 2.0);
+    if (qFuzzyCompare(normalized, localInferenceTemperature()) || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(localInferenceTemperatureKey), QString::number(normalized, 'f', 2));
+    emit localInferenceTemperatureChanged();
+}
+
+double AppSettings::localInferenceTopP() const {
+    const auto fallback = QString::number(defaultLocalInferenceTopP);
+    bool ok = false;
+    const auto value =
+        store_ ? store_->value(QString::fromLatin1(localInferenceTopPKey), fallback).toDouble(&ok)
+               : defaultLocalInferenceTopP;
+    if (!ok) {
+        return defaultLocalInferenceTopP;
+    }
+    return std::clamp(value, 0.0, 1.0);
+}
+
+void AppSettings::setLocalInferenceTopP(double topP) {
+    const auto normalized = std::clamp(topP, 0.0, 1.0);
+    if (qFuzzyCompare(normalized, localInferenceTopP()) || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(localInferenceTopPKey), QString::number(normalized, 'f', 2));
+    emit localInferenceTopPChanged();
+}
+
+int AppSettings::localInferenceMaxTokens() const {
+    const auto fallback = QString::number(defaultLocalInferenceMaxTokens);
+    bool ok = false;
+    const auto value =
+        store_ ? store_->value(QString::fromLatin1(localInferenceMaxTokensKey), fallback).toInt(&ok)
+               : defaultLocalInferenceMaxTokens;
+    if (!ok) {
+        return defaultLocalInferenceMaxTokens;
+    }
+    return std::clamp(value, 1, 16384);
+}
+
+void AppSettings::setLocalInferenceMaxTokens(int maxTokens) {
+    const auto normalized = std::clamp(maxTokens, 1, 16384);
+    if (normalized == localInferenceMaxTokens() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(localInferenceMaxTokensKey), QString::number(normalized));
+    emit localInferenceMaxTokensChanged();
+}
+
 bool AppSettings::promptContextInjectionEnabled() const {
     return store_ ? store_->value(QString::fromLatin1(promptContextInjectionEnabledKey),
                                   QStringLiteral("false")) == QStringLiteral("true")
