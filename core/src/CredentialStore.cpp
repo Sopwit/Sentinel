@@ -5,8 +5,10 @@
 #include <QtGlobal>
 
 #if defined(Q_OS_WIN)
-#include <wincred.h>
+// clang-format off
 #include <windows.h>
+#include <wincred.h>
+// clang-format on
 #endif
 
 #include <utility>
