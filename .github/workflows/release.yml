@@ -31,6 +31,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v5
 
+      - name: Get App Version
+        id: get_version
+        shell: bash
+        run: |
+          VERSION=$(grep -oE 'SENTINEL_APP_VERSION "[^"]+"' CMakeLists.txt | cut -d'"' -f2)
+          echo "APP_VERSION=$VERSION" >> $GITHUB_ENV
+
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-22.04'
         run: |
@@ -60,10 +67,12 @@ jobs:
         if: matrix.os == 'ubuntu-22.04'
         run: |
           # 1. Create standard portable tarball
-          tar -czvf sentinel-desktop-linux-x64.tar.gz -C dist .
+          tar -czvf Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.tar.gz -C dist .
 
           # 2. Build DEB and RPM packages using CPack
           cpack --config build/CPackConfig.cmake
+          mv sentinel-desktop-*Linux.deb Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.deb || mv sentinel-desktop-*.deb Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.deb || true
+          mv sentinel-desktop-*Linux.rpm Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.rpm || mv sentinel-desktop-*.rpm Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.rpm || true
 
           # 3. Build AppImage using linuxdeploy and linuxdeploy-plugin-qt
           wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
@@ -79,7 +88,7 @@ jobs:
             --plugin qt \
             --output appimage
 
-          mv Sentinel_Desktop-*.AppImage sentinel-desktop-linux-x86_64.AppImage || mv Sentinel-Desktop-*.AppImage sentinel-desktop-linux-x86_64.AppImage || true
+          mv Sentinel_Desktop-*.AppImage Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.AppImage || mv Sentinel-Desktop-*.AppImage Sentinel-Desktop-Linux-${{ env.APP_VERSION }}.AppImage || true
 
       - name: Bundle and Package (macOS)
         if: matrix.os == 'macos-14'
@@ -87,17 +96,19 @@ jobs:
           # Note: To enable macOS Code Signing and Notarization, add development certs to the runner and run:
           # macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -codesign="Developer ID Application: YourOrg (TeamID)" -timestamp -dmg
           macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -dmg
-          mv sentinel-desktop.dmg sentinel-desktop-macos-arm64.dmg || mv dist/sentinel-desktop.dmg sentinel-desktop-macos-arm64.dmg || true
+          mv sentinel-desktop.dmg Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg || mv dist/sentinel-desktop.dmg Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg || true
 
       - name: Bundle and Package (Windows)
         if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
           # 1. Zip portable files (windeployqt ran automatically during target install)
-          Compress-Archive -Path dist/* -DestinationPath sentinel-desktop-windows-x64.zip
-
+          Compress-Archive -Path dist/* -DestinationPath Sentinel-Desktop-Windows-${env:APP_VERSION}.zip
+ 
           # 2. Build MSI and EXE installers using CPack
           cpack --config build/CPackConfig.cmake
+          Get-ChildItem Sentinel-Desktop-*.exe | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.exe" -ErrorAction SilentlyContinue
+          Get-ChildItem Sentinel_Desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
           
           # Note: To enable Windows Code Signing, sign the built binaries using signtool:
           # signtool sign /f cert.pfx /p "${{ secrets.WIN_CERT_PASSWORD }}" /tr http://timestamp.digicert.com /td sha256 build/Sentinel-Desktop-*.exe
@@ -106,7 +117,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.os }}-artifact
-          path: sentinel-desktop-*
+          path: |
+            Sentinel-Desktop-*
+            sentinel-desktop-*
           if-no-files-found: error
 
   create-release:
@@ -123,13 +136,13 @@ jobs:
       - name: Flatten directory structure
         run: |
           mkdir -p final-artifacts
-          find release-artifacts -type f -name "sentinel-desktop-*" -exec cp {} final-artifacts/ \;
+          find release-artifacts -type f -iname "sentinel-desktop-*" -exec cp {} final-artifacts/ \;
           ls -R final-artifacts
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: final-artifacts/sentinel-desktop-*
+          files: final-artifacts/*
           draft: false
           prerelease: false
         env:
