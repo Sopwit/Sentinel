@@ -9,7 +9,7 @@ professional validation.
   architecture when available.
 - Release build presets are available for `debug`, `tests`, `release`, `relwithdebinfo`, and
   `package-ready`.
-- macOS, Windows, and Linux application metadata is prepared.
+- macOS, Windows, and Linux application metadata is prepared, and the application is licensed under GPLv3.
 - Linux AppStream and desktop metadata are included.
 - Packaging, QA, CI, and Sentinel 1.0 RC checklists are documented.
 
@@ -24,7 +24,7 @@ professional validation.
 
 ## Known Limitations
 
-- Packaging scripts and docs do not sign, notarize, publish, or upload packages.
+- Packaging scripts do not sign, notarize, or publish packages automatically to production stores, but compile and publish release artifacts to GitHub Releases.
 - Future update systems are documented only and do not perform network calls.
 - Some provider/tool/agent/voice capabilities remain disabled or metadata-only unless explicitly
   activated by later phases.
