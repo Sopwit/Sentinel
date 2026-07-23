@@ -15,9 +15,9 @@ The current CI baseline is `.github/workflows/linux-ci.yml`.
 ## Release Builds (CI/CD)
 
 The project includes an automated multi-platform release pipeline (`.github/workflows/release.yml`) that triggers on tag pushes matching `v*` (or via manual run):
-- **Linux (GCC / Ubuntu 24.04):** Produces a portable `.tar.gz` package.
-- **macOS (Clang / macOS 14 Apple Silicon):** Produces a native `.dmg` Disk Image.
-- **Windows (MSVC / Windows 2022):** Produces a portable `.zip` package.
+- **Linux (GCC / Ubuntu 22.04):** Produces a portable `.tar.gz` package, native `.deb` and `.rpm` (Fedora) packages, and a self-contained `.AppImage`.
+- **macOS (Clang / macOS 14 Apple Silicon):** Produces a native `.dmg` Disk Image containing a self-contained `.app` bundle.
+- **Windows (MSVC / Windows 2022):** Produces a portable `.zip` package, and native `.exe` and `.msi` installers.
 
 Upon successful completion, compiled artifacts are published directly to a GitHub Release.
 
