@@ -13,13 +13,11 @@ jobs:
   build-release:
     name: Build on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
     strategy:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-24.04
+          - os: ubuntu-22.04
             qt-arch: linux_gcc_64
             artifact-name: sentinel-desktop-linux-x64.tar.gz
           - os: macos-14
@@ -34,7 +32,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install Linux dependencies
-        if: matrix.os == 'ubuntu-24.04'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev clang-format fonts-noto-core rpm
@@ -59,7 +57,7 @@ jobs:
           cmake --build build --target install
 
       - name: Bundle and Package (Linux)
-        if: matrix.os == 'ubuntu-24.04'
+        if: matrix.os == 'ubuntu-22.04'
         run: |
           # 1. Create standard portable tarball
           tar -czvf sentinel-desktop-linux-x64.tar.gz -C dist .
@@ -72,9 +70,9 @@ jobs:
           wget https://github.com/linuxdeploy/linuxdeploy-plugin-qt/releases/download/continuous/linuxdeploy-plugin-qt-x86_64.AppImage
           chmod +x linuxdeploy*.AppImage
 
-          export QMAKE="${QT_PATH}/bin/qmake"
-          export LD_LIBRARY_PATH="${QT_PATH}/lib:${LD_LIBRARY_PATH}"
-          export PATH="${QT_PATH}/bin:${PATH}"
+          export QMAKE="${QT_ROOT_DIR}/bin/qmake"
+          export LD_LIBRARY_PATH="${QT_ROOT_DIR}/lib:${LD_LIBRARY_PATH}"
+          export PATH="${QT_ROOT_DIR}/bin:${PATH}"
 
           ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
             --appdir dist \
@@ -86,6 +84,8 @@ jobs:
       - name: Bundle and Package (macOS)
         if: matrix.os == 'macos-14'
         run: |
+          # Note: To enable macOS Code Signing and Notarization, add development certs to the runner and run:
+          # macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -codesign="Developer ID Application: YourOrg (TeamID)" -timestamp -dmg
           macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -dmg
           mv sentinel-desktop.dmg sentinel-desktop-macos-arm64.dmg || mv dist/sentinel-desktop.dmg sentinel-desktop-macos-arm64.dmg || true
 
@@ -98,6 +98,9 @@ jobs:
 
           # 2. Build MSI and EXE installers using CPack
           cpack --config build/CPackConfig.cmake
+          
+          # Note: To enable Windows Code Signing, sign the built binaries using signtool:
+          # signtool sign /f cert.pfx /p "${{ secrets.WIN_CERT_PASSWORD }}" /tr http://timestamp.digicert.com /td sha256 build/Sentinel-Desktop-*.exe
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
@@ -109,7 +112,7 @@ jobs:
   create-release:
     name: Create GitHub Release
     needs: build-release
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
     steps:
       - name: Download all artifacts
