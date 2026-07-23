@@ -85,6 +85,9 @@ jobs:
 
           ./linuxdeploy-x86_64.AppImage --appimage-extract-and-run \
             --appdir dist \
+            -e dist/bin/sentinel-desktop \
+            -d dist/share/applications/dev.sentinel.Sentinel.desktop \
+            -i dist/share/icons/hicolor/scalable/apps/dev.sentinel.Sentinel.svg \
             --plugin qt \
             --output appimage
 
