@@ -236,7 +236,8 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.memoryStatus(), QStringLiteral("Available"));
     QCOMPARE(fixture.viewModel.chatHistoryStatus(), QStringLiteral("Runtime Only"));
     QCOMPARE(fixture.viewModel.currentModeName(), QStringLiteral("Chat"));
-    QCOMPARE(fixture.viewModel.availableModes(), QStringList({QStringLiteral("Chat"), QStringLiteral("Agent")}));
+    QCOMPARE(fixture.viewModel.availableModes(),
+             QStringList({QStringLiteral("Chat"), QStringLiteral("Agent")}));
     QCOMPARE(fixture.viewModel.themeName(), QStringLiteral("Liquid Glass Light"));
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
     QVERIFY(fixture.viewModel.availableLanguages().contains(fixture.viewModel.appLanguage()));
@@ -3167,7 +3168,8 @@ void DesktopShellViewModelTest::exposesSkillProfileMetadata() {
     QCOMPARE(fixture.viewModel.selectedSkillProfile(), QStringLiteral("personal-assistant"));
     QCOMPARE(fixture.viewModel.selectedSkillProfileName(), QStringLiteral("Personal Assistant"));
     QCOMPARE(fixture.viewModel.selectedSkillProfileReadiness(), QStringLiteral("Metadata only"));
-    QVERIFY(fixture.viewModel.selectedSkillProfileSummary().contains(QStringLiteral("Everyday planning")));
+    QVERIFY(fixture.viewModel.selectedSkillProfileSummary().contains(
+        QStringLiteral("Everyday planning")));
     QVERIFY(fixture.viewModel.selectedSkillProfileDescription().contains(
         QStringLiteral("keeping calendars")));
     QVERIFY(fixture.viewModel.selectedSkillProfilePolicyPosture().contains(
@@ -3389,7 +3391,8 @@ void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {
                 .contains(QStringLiteral("Persistence: local settings JSON")));
 
     QVERIFY(fixture.viewModel.checkForUpdates());
-    QVERIFY(fixture.viewModel.updateWorkflowState().contains(QStringLiteral("Checking for updates...")));
+    QVERIFY(fixture.viewModel.updateWorkflowState().contains(
+        QStringLiteral("Checking for updates...")));
     fixture.viewModel.confirmUpdateDownload();
     const auto state = fixture.viewModel.updateWorkflowState();
     QVERIFY(state.contains(QStringLiteral("Redirected to download page")) ||

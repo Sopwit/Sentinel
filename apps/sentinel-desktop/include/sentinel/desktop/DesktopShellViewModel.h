@@ -12,10 +12,10 @@
 #include "sentinel/desktop/ChatMessageListModel.h"
 
 #include <QObject>
+#include <QSet>
 #include <QString>
 #include <QStringList>
 #include <memory>
-#include <QSet>
 
 class QProcess;
 class QSystemTrayIcon;
@@ -278,7 +278,8 @@ class DesktopShellViewModel final : public QObject {
                    runtimeProviderRegistryChanged)
     Q_PROPERTY(QString credentialExecutionStatus READ credentialExecutionStatus NOTIFY
                    runtimeProviderRegistryChanged)
-    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint WRITE setOllamaEndpoint NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint WRITE setOllamaEndpoint NOTIFY
+                   ollamaStatusChanged)
     Q_PROPERTY(
         QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
@@ -479,7 +480,8 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString voiceRuntimeReadinessSummary READ voiceRuntimeReadinessSummary NOTIFY
                    voiceConfigurationChanged)
-    Q_PROPERTY(bool voiceRecordingActive READ voiceRecordingActive NOTIFY voiceRecordingActiveChanged)
+    Q_PROPERTY(
+        bool voiceRecordingActive READ voiceRecordingActive NOTIFY voiceRecordingActiveChanged)
     Q_PROPERTY(QString voiceRuntimeHealth READ voiceRuntimeHealth NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(int voiceRuntimeConfiguredCount READ voiceRuntimeConfiguredCount NOTIFY
                    voiceConfigurationChanged)
@@ -1189,8 +1191,8 @@ class DesktopShellViewModel final : public QObject {
         QStringList companionTraceSummaries READ companionTraceSummaries NOTIFY companionChanged)
     Q_PROPERTY(bool developerModeEnabled READ developerModeEnabled WRITE setDeveloperModeEnabled
                    NOTIFY developerModeChanged)
-    Q_PROPERTY(bool agentAutonomousMode READ agentAutonomousMode WRITE setAgentAutonomousMode
-                   NOTIFY agentAutonomousModeChanged)
+    Q_PROPERTY(bool agentAutonomousMode READ agentAutonomousMode WRITE setAgentAutonomousMode NOTIFY
+                   agentAutonomousModeChanged)
     Q_PROPERTY(QString updateCheckPolicy READ updateCheckPolicy WRITE setUpdateCheckPolicy NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QString notificationPolicy READ notificationPolicy WRITE setNotificationPolicy NOTIFY
@@ -1208,10 +1210,14 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(bool highContrastEnabled READ highContrastEnabled WRITE setHighContrastEnabled NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QString uiDensity READ uiDensity WRITE setUiDensity NOTIFY nativeExperienceChanged)
-    Q_PROPERTY(bool notifyModelDownloads READ notifyModelDownloads WRITE setNotifyModelDownloads NOTIFY nativeExperienceChanged)
-    Q_PROPERTY(bool notifyModelRemovals READ notifyModelRemovals WRITE setNotifyModelRemovals NOTIFY nativeExperienceChanged)
-    Q_PROPERTY(bool notifyAgentResponses READ notifyAgentResponses WRITE setNotifyAgentResponses NOTIFY nativeExperienceChanged)
-    Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool notifyModelDownloads READ notifyModelDownloads WRITE setNotifyModelDownloads
+                   NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool notifyModelRemovals READ notifyModelRemovals WRITE setNotifyModelRemovals NOTIFY
+                   nativeExperienceChanged)
+    Q_PROPERTY(bool notifyAgentResponses READ notifyAgentResponses WRITE setNotifyAgentResponses
+                   NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY
+                   nativeExperienceChanged)
     Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationCenterSummaries READ notificationCenterSummaries NOTIFY
@@ -2314,7 +2320,8 @@ public:
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
-    Q_INVOKABLE void addNotification(const QString& category, const QString& title, const QString& body);
+    Q_INVOKABLE void addNotification(const QString& category, const QString& title,
+                                     const QString& body);
     Q_INVOKABLE void setModeByName(const QString& modeName);
     Q_INVOKABLE void remember(const QString& key, const QString& value);
     Q_INVOKABLE void applyVoiceConfigurationPaths(const QString& piperBinaryPath,
@@ -2410,7 +2417,7 @@ private:
     QString voiceRecordingFile_;
     int currentFfmpegConfigIndex_ = 0;
     QString lastRecordingError_;
-    
+
     QSystemTrayIcon* trayIcon_ = nullptr;
     QNetworkAccessManager* networkManager_ = nullptr;
     QString lastReleaseUrl_;

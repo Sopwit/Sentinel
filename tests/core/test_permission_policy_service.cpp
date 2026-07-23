@@ -43,8 +43,7 @@ void PermissionPolicyServiceTest::reportsMetadataOnlySafetyBoundaries() {
     const auto summaries = service.permissionSummaries(QStringLiteral("Trusted"));
 
     QCOMPARE(summaries.size(), 10);
-    QVERIFY(summaries.first().diagnostics.contains(
-        QStringLiteral("Execution grant: allowed")));
+    QVERIFY(summaries.first().diagnostics.contains(QStringLiteral("Execution grant: allowed")));
     QVERIFY(service.registrySummary(QStringLiteral("Trusted"))
                 .developerDiagnostics.join(QStringLiteral("\n"))
                 .contains(QStringLiteral("No tool, plugin, MCP, or external command execution")));

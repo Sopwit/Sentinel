@@ -160,19 +160,19 @@ void CredentialStoreTest::safetyPolicyRefusesSecretExposure() {
 void CredentialStoreTest::testPlatformCredentialBackend() {
     auto store = sentinel::core::platformCredentialStore();
     const CredentialKey key{QStringLiteral("open-ai-test"), QStringLiteral("apiKey")};
-    
+
     const auto summary = store.summary();
     if (summary.status == sentinel::core::CredentialStoreStatus::Ready) {
         // Test storing a credential
         const auto stored = store.storeCredential(key, QStringLiteral("sk-sentinel-test-value"));
         if (stored.succeeded) {
             QVERIFY(store.containsCredential(key).succeeded);
-            
+
             const auto read = store.readCredential(key);
             QVERIFY(read.result.succeeded);
             QVERIFY(read.secret.has_value());
             QCOMPARE(*read.secret, QStringLiteral("sk-sentinel-test-value"));
-            
+
             QVERIFY(store.deleteCredential(key).succeeded);
             QVERIFY(!store.containsCredential(key).succeeded);
         }
