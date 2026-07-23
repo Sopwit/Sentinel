@@ -61,8 +61,8 @@ Sentinel is a cross-platform Qt/C++ application. You can build and run it either
 Qt Creator handles toolchains, compiler paths, and build directories automatically, making it the most straightforward option.
 
 1. Open **Qt Creator**.
-2. Select **File > Open File or Project...** and open the top-level [CMakeLists.txt](file:///D:/GitHub/Sentinel/CMakeLists.txt) file.
-3. Select your Qt 6.x desktop kit (e.g., `Desktop Qt 6.11.1 MinGW 64-bit` on Windows, or `Desktop Qt 6.x.x Clang` on macOS).
+2. Select **File > Open File or Project...** and open the top-level [CMakeLists.txt](CMakeLists.txt) file at the root of the repository.
+3. Select your Qt 6.x desktop kit (e.g., `Desktop Qt 6.x.x MinGW 64-bit` on Windows, or `Desktop Qt 6.x.x Clang` on macOS).
 4. Click **Configure Project**.
 5. Click the green **Run (Play)** button in the bottom-left corner to build and launch the application.
 
@@ -102,7 +102,7 @@ If you do not have Ninja installed in your path, use the MinGW generator. Open P
 $env:PATH += ";C:\Qt\Tools\mingw1310_64\bin"
 
 # 2. Configure using MinGW generator and pointing to your Qt library
-cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:\Qt\6.11.1\mingw_64"
+cmake -S . -B build -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:\Qt\6.x.x\mingw_64"
 
 # 3. Build project
 cmake --build build
