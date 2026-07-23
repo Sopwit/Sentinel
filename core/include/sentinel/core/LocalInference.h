@@ -60,6 +60,9 @@ QString localInferenceErrorName(LocalInferenceError error);
 struct LocalInferenceOptions {
     QString model;
     int timeoutMs = 30000;
+    double temperature = 0.7;
+    double topP = 0.9;
+    int maxTokens = 2048;
     bool streamingRequested = false;
     bool cancellationRequested = false;
     std::shared_ptr<std::atomic_bool> cancellationToken;

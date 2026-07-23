@@ -924,6 +924,12 @@ class DesktopShellViewModel final : public QObject {
                    setLocalInferenceStreamingEnabled NOTIFY localInferenceChanged)
     Q_PROPERTY(int localInferenceTimeoutMs READ localInferenceTimeoutMs WRITE
                    setLocalInferenceTimeoutMs NOTIFY localInferenceChanged)
+    Q_PROPERTY(double localInferenceTemperature READ localInferenceTemperature WRITE
+                   setLocalInferenceTemperature NOTIFY localInferenceChanged)
+    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE
+                   setLocalInferenceTopP NOTIFY localInferenceChanged)
+    Q_PROPERTY(int localInferenceMaxTokens READ localInferenceMaxTokens WRITE
+                   setLocalInferenceMaxTokens NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
     Q_PROPERTY(QString localInferenceRuntimeState READ localInferenceRuntimeState NOTIFY
                    localInferenceChanged)
@@ -1953,6 +1959,12 @@ public:
     void setLocalInferenceStreamingEnabled(bool enabled);
     int localInferenceTimeoutMs() const;
     void setLocalInferenceTimeoutMs(int timeoutMs);
+    double localInferenceTemperature() const;
+    void setLocalInferenceTemperature(double temperature);
+    double localInferenceTopP() const;
+    void setLocalInferenceTopP(double topP);
+    int localInferenceMaxTokens() const;
+    void setLocalInferenceMaxTokens(int maxTokens);
     bool localInferenceBusy() const;
     QString localInferenceRuntimeState() const;
     QString localInferenceStatus() const;
@@ -2266,6 +2278,7 @@ public:
     Q_INVOKABLE bool exportTranscript(const QString& format);
     Q_INVOKABLE bool checkForUpdates();
     Q_INVOKABLE bool confirmUpdateDownload();
+    Q_INVOKABLE void relaunchApplication();
     Q_INVOKABLE void replayOnboarding();
     Q_INVOKABLE void seedRecoveryDraft(const QString& text);
     Q_INVOKABLE bool pinNotification(const QString& notificationId);
@@ -2283,6 +2296,7 @@ public:
     Q_INVOKABLE bool attachFileToChat(const QString& filePath);
     Q_INVOKABLE bool pasteAttachment(const QString& name, const QString& text);
     Q_INVOKABLE bool removeAttachment(const QString& attachmentId);
+    Q_INVOKABLE void clearAttachments();
     Q_INVOKABLE bool replaceAttachment(const QString& attachmentId, const QString& filePath);
     Q_INVOKABLE bool addKnowledgeBaseDocument(const QString& filePath);
     Q_INVOKABLE bool removeKnowledgeBaseDocument(const QString& documentId);

@@ -27,7 +27,7 @@ void StandardPathProviderTest::returnsExpectedFileNamesInStandardLocations() {
     const auto configDir = QDir::fromNativeSeparators(
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
     const auto dataDir = QDir::fromNativeSeparators(
-        QStandardPaths::writableLocation(QStandardPaths::AppDataLocation));
+        QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) + QStringLiteral("/Sentinel"));
     const auto settingsPath = QDir::fromNativeSeparators(provider->settingsFilePath());
     const auto memoryPath = QDir::fromNativeSeparators(provider->memoryDatabasePath());
     const auto chatPath = QDir::fromNativeSeparators(provider->chatHistoryDatabasePath());

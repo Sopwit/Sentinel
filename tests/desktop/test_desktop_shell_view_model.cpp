@@ -578,7 +578,7 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
     QCOMPARE(fixture.viewModel.activeRuntimeReadinessState(), QStringLiteral("unavailable"));
     QCOMPARE(fixture.viewModel.activeRuntimeLocalOnlySummary(), QStringLiteral("Local Only"));
     QCOMPARE(fixture.viewModel.selectableRuntimeProviderIds(),
-             QStringList({QStringLiteral("ollama"), QStringLiteral("openai-compatible-local"),
+             QStringList({QStringLiteral("ollama"),
                           QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server")}));
     QCOMPARE(fixture.viewModel.runtimeProviderCardSummaries().size(), 4);
     QVERIFY(fixture.viewModel.runtimeProviderCardSummaries()

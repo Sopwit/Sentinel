@@ -40,8 +40,7 @@ Item {
     readonly property var providers: [
         { id: "Ollama",                   note: qsTr("Popular local runtime, easy to start.") },
         { id: "LM Studio",                note: qsTr("Friendly desktop app for local models.") },
-        { id: "llama.cpp server",         note: qsTr("Lightweight server for advanced users.") },
-        { id: "OpenAI-compatible local endpoint", note: qsTr("Bring your own local endpoint.") }
+        { id: "llama.cpp server",         note: qsTr("Lightweight server for advanced users.") }
     ]
 
     readonly property var privacyPoints: [
