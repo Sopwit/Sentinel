@@ -116,10 +116,27 @@ jobs:
       - name: Bundle and Package (macOS)
         if: matrix.os == 'macos-14'
         run: |
-          # Note: To enable macOS Code Signing and Notarization, add development certs to the runner and run:
-          # macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -codesign="Developer ID Application: YourOrg (TeamID)" -timestamp -dmg
-          macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -codesign=- -dmg
-          mv sentinel-desktop.dmg Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg || mv dist/sentinel-desktop.dmg Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg || true
+          # 1. Rename to user-friendly name
+          mv dist/sentinel-desktop.app "dist/Sentinel Desktop.app"
+
+          # 2. Run macdeployqt (without -dmg, but with -codesign=- to do ad-hoc signing)
+          macdeployqt "dist/Sentinel Desktop.app" -qmldir=ui/qml -codesign=-
+
+          # 3. Install create-dmg tool via brew
+          brew install create-dmg
+
+          # 4. Build a beautiful, stylized drag-and-drop DMG
+          create-dmg \
+            --volname "Sentinel Desktop Installer" \
+            --volicon "resources/icons/dev.sentinel.Sentinel.icns" \
+            --window-pos 200 120 \
+            --window-size 600 300 \
+            --icon-size 100 \
+            --icon "Sentinel Desktop.app" 175 120 \
+            --hide-extension "Sentinel Desktop.app" \
+            --app-drop-link 425 120 \
+            "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg" \
+            "dist/"
 
       - name: Bundle and Package (Windows)
         if: matrix.os == 'windows-2022'
