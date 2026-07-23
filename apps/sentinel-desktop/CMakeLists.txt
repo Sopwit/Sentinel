@@ -169,21 +169,33 @@ set_target_properties(sentinel-desktop PROPERTIES
 
 include(GNUInstallDirs)
 
+set(SENTINEL_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}")
+if(WIN32)
+    # Native Windows industry standard: place main executable in the installation root
+    set(SENTINEL_INSTALL_DIR ".")
+endif()
+
 install(TARGETS sentinel-desktop
     BUNDLE DESTINATION .
-    RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
+    RUNTIME DESTINATION ${SENTINEL_INSTALL_DIR}
 )
 
 if(WIN32)
+    # Set properties for CPack WiX generator to create Start Menu and Desktop shortcuts natively
+    set_target_properties(sentinel-desktop PROPERTIES
+        CPACK_DESKTOP_SHORTCUTS "Sentinel Desktop"
+        CPACK_START_MENU_SHORTCUTS "Sentinel Desktop"
+    )
+
     get_target_property(_qmake_path Qt6::qmake IMPORTED_LOCATION)
     get_filename_component(_qt_bin_dir "${_qmake_path}" DIRECTORY)
     find_program(WINDEPLOYQT_EXECUTABLE windeployqt HINTS "${_qt_bin_dir}")
 
     if(WINDEPLOYQT_EXECUTABLE)
         install(CODE "
-            message(STATUS \"Running windeployqt on \${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/sentinel-desktop.exe\")
+            message(STATUS \"Running windeployqt on \${CMAKE_INSTALL_PREFIX}/${SENTINEL_INSTALL_DIR}/sentinel-desktop.exe\")
             execute_process(
-                COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" \"\${CMAKE_INSTALL_PREFIX}/${CMAKE_INSTALL_BINDIR}/sentinel-desktop.exe\" --qmldir \"${CMAKE_SOURCE_DIR}/ui/qml\" --compiler-runtime
+                COMMAND \"${WINDEPLOYQT_EXECUTABLE}\" \"\${CMAKE_INSTALL_PREFIX}/${SENTINEL_INSTALL_DIR}/sentinel-desktop.exe\" --qmldir \"${CMAKE_SOURCE_DIR}/ui/qml\" --compiler-runtime
                 RESULT_VARIABLE windeployqt_res
             )
             if(NOT windeployqt_res EQUAL 0)
