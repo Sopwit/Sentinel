@@ -182,27 +182,27 @@ cmake --build --preset package-ready
 ```
 
 ### CI/CD Automated Releases
-
+ 
 GitHub Actions automatically builds and packages native binaries for all three major platforms on tag pushes (e.g., `v*`) or manual triggers via the **Release Build** workflow (`.github/workflows/release.yml`):
-- **Windows (x64):** Packages a portable `.zip` file using `windeployqt` with MSVC 2022.
-- **macOS (Apple Silicon ARM64):** Packages a native `.dmg` Disk Image using `macdeployqt` on a macOS 14 runner.
-- **Linux (x64):** Packages a portable `.tar.gz` archive.
-
+- **Windows (x64):** Packages a portable `.zip` file, and native `.exe` and `.msi` installers.
+- **macOS (Apple Silicon ARM64):** Packages a native `.dmg` Disk Image containing a self-contained `.app` bundle.
+- **Linux (x64):** Packages a portable `.tar.gz` archive, native `.deb` and `.rpm` (Fedora) packages, and a self-contained `.AppImage`.
+ 
 These packages are automatically uploaded and published to the GitHub Releases page upon successful completion of the workflow.
-
+ 
 ## Open With CLion
-
+ 
 Open the repository root in CLion. CLion should detect the top-level `CMakeLists.txt`. Use a Ninja-based CMake profile and ensure Qt 6 is available through your environment or `CMAKE_PREFIX_PATH`.
-
+ 
 ## Open With VS Code
-
+ 
 Open the repository root directly. Configure the `no-ccache` CMake preset once so clangd can use
 the checked-in `.clangd` compilation database path. For Qt QML module resolution, set
 `QML_IMPORT_PATH` and `QML2_IMPORT_PATH` to your Qt `qml` directory (examples are in
 `docs/DEVELOPMENT.md`).
-
+ 
 ## Intentionally Not Included Yet
-
+ 
 - Cloud-based AI API calls (external network connections).
 - External network requests (only local loopback connections are used).
 - Voice processing execution (Whisper STT and Piper TTS remain metadata-only/readiness boundaries).
@@ -212,5 +212,9 @@ the checked-in `.clangd` compilation database path. For Qt QML module resolution
 - Wearable or IoT hardware support.
 - Fully automated semantic indexing (Local RAG is manual-only, semantic prompt authority is disabled by default).
 - Chat history encryption or automated pruning (local export is supported).
-
+ 
 See [docs/ROADMAP.md](docs/ROADMAP.md) for planned phases.
+
+## License
+
+Sentinel is open-source software licensed under the [GNU General Public License v3.0 (GPLv3)](LICENSE).
