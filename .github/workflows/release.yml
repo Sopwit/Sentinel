@@ -115,7 +115,7 @@ jobs:
         run: |
           # Note: To enable macOS Code Signing and Notarization, add development certs to the runner and run:
           # macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -codesign="Developer ID Application: YourOrg (TeamID)" -timestamp -dmg
-          macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -dmg
+          macdeployqt dist/sentinel-desktop.app -qmldir=ui/qml -codesign=- -dmg
           mv sentinel-desktop.dmg Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg || mv dist/sentinel-desktop.dmg Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg || true
 
       - name: Bundle and Package (Windows)
