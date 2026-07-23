@@ -10,11 +10,11 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 7.6 is complete.
+Phase 9.2 is complete.
 
-Most recent work: Phase 7.6, Runtime Architecture Checkpoint and Cleanup.
+Most recent work: Phase 9.0-9.2, Ollama Local Health And Discovery Boundary.
 
-Current planning focus: Phase 8 readiness while keeping real provider/model/tool/runtime execution
+Current planning focus: Phase 9.3 readiness while keeping real prompt/model execution
 non-operational unless a later phase explicitly scopes it.
 
 ## Stack
@@ -105,5 +105,6 @@ out of scope until explicitly approved.
 
 Keep model/provider routing, catalog, task planning, agent registry, memory taxonomy,
 orchestration snapshots/diagnostics, conversation session context, conversation state graph, and
-local runtime boundary/session/capability/permission/safety/pipeline metadata-only until an
-explicit later provider/model/agent/memory/runtime execution phase.
+local runtime boundary/session/capability/permission/safety/pipeline/execution lifecycle metadata-only
+until an explicit later provider/model/agent/memory/runtime execution phase. Ollama health checking and
+discovery are operational, but model prompt execution/generation remains disabled/out of scope.
