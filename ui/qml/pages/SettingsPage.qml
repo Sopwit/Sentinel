@@ -29,7 +29,7 @@ Item {
 
     FileDialog {
         id: voiceFileDialog
-        title: qsTr("Dosya Seçin")
+        title: qsTr("Select File")
         property var targetField: null
 
         function openWithField(field, titleText) {
@@ -113,8 +113,12 @@ Item {
         ShellPanel {
             Layout.preferredWidth: settingsPage.compact ? 196 : 278
             Layout.fillHeight: true
-            color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
-            border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+            color: SentinelTheme.lightTheme
+                 ? "#ffffff"
+                 : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
+            border.color: SentinelTheme.lightTheme
+                        ? SentinelTheme.withAlpha("#e2e8f4", 0.90)
+                        : SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
 
             ColumnLayout {
                 anchors.fill: parent
@@ -1084,7 +1088,8 @@ Item {
 
                             ComboBox {
                                 id: settingsModeCombo
-                                Layout.fillWidth: true
+                                Layout.preferredWidth: 160
+                                Layout.fillWidth: false
                                 implicitHeight: 36
                                 hoverEnabled: true
                                 model: settingsPage.viewModel.availableModes
@@ -1163,53 +1168,105 @@ Item {
                                     border.width: 1
                                 }
                             }
-                        }
 
-                        RowLayout {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceMd
+                             // Side-by-side Autonomous Mode control (visible only when not compact)
+                             RowLayout {
+                                 visible: !settingsPage.compact
+                                 spacing: SentinelTheme.spaceSm
+                                 Layout.leftMargin: SentinelTheme.spaceLg
 
-                            Label {
-                                Layout.preferredWidth: settingsPage.compact ? 88 : 132
-                                Layout.alignment: Qt.AlignVCenter
-                                text: qsTr("Autonomous Mode")
-                                color: SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall
-                                elide: Text.ElideRight
-                                verticalAlignment: Text.AlignVCenter
-                            }
+                                 Label {
+                                     text: qsTr("Autonomous Mode")
+                                     color: SentinelTheme.textMuted
+                                     font.pixelSize: SentinelTheme.fontSmall
+                                     verticalAlignment: Text.AlignVCenter
+                                 }
 
-                            Switch {
-                                id: autonomousSwitch
-                                checked: settingsPage.viewModel.agentAutonomousMode
-                                hoverEnabled: true
-                                onToggled: settingsPage.viewModel.agentAutonomousMode = checked
+                                 Switch {
+                                     id: autonomousSwitchInline
+                                     checked: settingsPage.viewModel.agentAutonomousMode
+                                     hoverEnabled: true
+                                     onToggled: settingsPage.viewModel.agentAutonomousMode = checked
 
-                                indicator: Rectangle {
-                                    implicitWidth: 46
-                                    implicitHeight: 24
-                                    x: autonomousSwitch.leftPadding
-                                    y: parent.height / 2 - height / 2
-                                    radius: height / 2
-                                    color: autonomousSwitch.checked
-                                           ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
-                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
-                                    border.color: autonomousSwitch.checked
-                                                  ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.44)
-                                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                     indicator: Rectangle {
+                                         implicitWidth: 46
+                                         implicitHeight: 24
+                                         x: autonomousSwitchInline.leftPadding
+                                         y: parent.height / 2 - height / 2
+                                         radius: height / 2
+                                         color: autonomousSwitchInline.checked
+                                                ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                                : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                         border.color: autonomousSwitchInline.checked
+                                                       ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.44)
+                                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
 
-                                    Rectangle {
-                                        x: autonomousSwitch.checked ? parent.width - width - 2 : 2
-                                        y: 2
-                                        width: 20
-                                        height: 20
-                                        radius: 10
-                                        color: autonomousSwitch.checked ? settingsPage.modeAccent : SentinelTheme.textPrimary
-                                        opacity: autonomousSwitch.hovered ? 0.90 : 0.74
-                                        Behavior on x { NumberAnimation { duration: MotionTokens.duration(MotionTokens.fast, settingsPage.viewModel.currentModeName) } }
-                                    }
-                                }
-                            }
+                                         Rectangle {
+                                             x: autonomousSwitchInline.checked ? parent.width - width - 2 : 2
+                                             y: 2
+                                             width: 20
+                                             height: 20
+                                             radius: 10
+                                             color: autonomousSwitchInline.checked ? settingsPage.modeAccent : SentinelTheme.textPrimary
+                                             opacity: autonomousSwitchInline.hovered ? 0.90 : 0.74
+                                             Behavior on x { NumberAnimation { duration: MotionTokens.duration(MotionTokens.fast, settingsPage.viewModel.currentModeName) } }
+                                         }
+                                     }
+                                 }
+                             }
+
+                             Item {
+                                 Layout.fillWidth: true
+                             }
+                         }
+
+                         // Standalone Autonomous Mode row for compact/mobile view
+                         RowLayout {
+                             visible: settingsPage.compact
+                             Layout.fillWidth: true
+                             spacing: SentinelTheme.spaceMd
+
+                             Label {
+                                 Layout.preferredWidth: 88
+                                 Layout.alignment: Qt.AlignVCenter
+                                 text: qsTr("Autonomous Mode")
+                                 color: SentinelTheme.textMuted
+                                 font.pixelSize: SentinelTheme.fontSmall
+                                 elide: Text.ElideRight
+                                 verticalAlignment: Text.AlignVCenter
+                             }
+
+                             Switch {
+                                 id: autonomousSwitch
+                                 checked: settingsPage.viewModel.agentAutonomousMode
+                                 hoverEnabled: true
+                                 onToggled: settingsPage.viewModel.agentAutonomousMode = checked
+
+                                 indicator: Rectangle {
+                                     implicitWidth: 46
+                                     implicitHeight: 24
+                                     x: autonomousSwitch.leftPadding
+                                     y: parent.height / 2 - height / 2
+                                     radius: height / 2
+                                     color: autonomousSwitch.checked
+                                            ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.18)
+                                            : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                     border.color: autonomousSwitch.checked
+                                                   ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.44)
+                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                     Rectangle {
+                                         x: autonomousSwitch.checked ? parent.width - width - 2 : 2
+                                         y: 2
+                                         width: 20
+                                         height: 20
+                                         radius: 10
+                                         color: autonomousSwitch.checked ? settingsPage.modeAccent : SentinelTheme.textPrimary
+                                         opacity: autonomousSwitch.hovered ? 0.90 : 0.74
+                                         Behavior on x { NumberAnimation { duration: MotionTokens.duration(MotionTokens.fast, settingsPage.viewModel.currentModeName) } }
+                                     }
+                                 }
+                             }
                         }
 
                         RowLayout {
@@ -2255,7 +2312,7 @@ Item {
                                         color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
                                     }
 
-                                    onClicked: voiceFileDialog.openWithField(piperBinaryField, qsTr("Piper Binary Seç"))
+                                    onClicked: voiceFileDialog.openWithField(piperBinaryField, qsTr("Select Piper Binary"))
                                 }
                             }
 
@@ -2297,7 +2354,7 @@ Item {
                                         color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
                                     }
 
-                                    onClicked: voiceFileDialog.openWithField(piperModelField, qsTr("Piper Model Seç (.onnx)"))
+                                    onClicked: voiceFileDialog.openWithField(piperModelField, qsTr("Select Piper Model (.onnx)"))
                                 }
                             }
 
@@ -2340,7 +2397,7 @@ Item {
                                         color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
                                     }
 
-                                    onClicked: voiceFileDialog.openWithField(kokoroModelField, qsTr("Kokoro Model Seç"))
+                                    onClicked: voiceFileDialog.openWithField(kokoroModelField, qsTr("Select Kokoro Model"))
                                 }
                             }
 
@@ -2398,7 +2455,7 @@ Item {
                                         color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
                                     }
 
-                                    onClicked: voiceFileDialog.openWithField(whisperBinaryField, qsTr("Whisper Binary Seç"))
+                                    onClicked: voiceFileDialog.openWithField(whisperBinaryField, qsTr("Select Whisper Binary"))
                                 }
                             }
 
@@ -2438,7 +2495,7 @@ Item {
                                         color: parent.hovered ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.15) : "transparent"
                                     }
 
-                                    onClicked: voiceFileDialog.openWithField(whisperModelField, qsTr("Whisper Model Seç"))
+                                    onClicked: voiceFileDialog.openWithField(whisperModelField, qsTr("Select Whisper Model"))
                                 }
                             }
                         }

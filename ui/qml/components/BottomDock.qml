@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import Sentinel.Desktop
 
 Item {
     id: dock
@@ -45,7 +46,7 @@ Item {
 
         // Layered glass effect
         color: SentinelTheme.lightTheme
-             ? SentinelTheme.withAlpha("#ffffff", 0.70)
+             ? "#ffffff"
              : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.72)
 
         border.color: SentinelTheme.lightTheme
@@ -74,7 +75,7 @@ Item {
             anchors.margins: 1
             radius: parent.radius - 1
             color: SentinelTheme.lightTheme
-                 ? SentinelTheme.withAlpha("#f8faff", 0.52)
+                 ? "#ffffff"
                  : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.22)
         }
 
