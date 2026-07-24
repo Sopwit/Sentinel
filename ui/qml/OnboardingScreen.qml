@@ -1,6 +1,8 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Layouts
+import QtQuick.Dialogs
+import Sentinel.Desktop
 
 Item {
     id: onboarding
@@ -8,7 +10,7 @@ Item {
 
     property int step: 0
     property bool active: false
-    readonly property int totalSteps: 6
+    readonly property int totalSteps: 9
     readonly property color brandAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property bool reducedMotion: viewModel.reducedMotionEnabled
 
@@ -19,13 +21,61 @@ Item {
     enabled: active
     z: 300
 
+    function isModelInstalled(ollamaId) {
+        if (!ollamaId) return false;
+        var names = viewModel.installedOllamaModelNames || [];
+        var target = ollamaId.toLowerCase();
+        for (var i = 0; i < names.length; i++) {
+            var n = names[i].toLowerCase();
+            if (n === target) return true;
+            var base = target.split(":")[0];
+            if (n === base || n.startsWith(base + ":") || n.startsWith(base + "-")) return true;
+            if (n.startsWith(target)) return true;
+        }
+        return false;
+    }
+
+    readonly property var recommendedModels: [
+        {
+            ollamaId: "deepseek-r1:14b",
+            name: "DeepSeek R1 14B",
+            provider: "DeepSeek",
+            size: "9.0 GB",
+            description: qsTr("High-performance reasoning model. Distilled from Qwen 2.5 14B, offers exceptionally smart analytical capabilities.")
+        },
+        {
+            ollamaId: "gemma2:9b",
+            name: "Gemma 2 9B",
+            provider: "Google",
+            size: "5.5 GB",
+            description: qsTr("Google's highly efficient open-weight powerhouse. Excellent balance of speed, intelligence, and safety.")
+        },
+        {
+            ollamaId: "qwen2.5-coder:7b",
+            name: "Qwen 2.5 Coder 7B",
+            provider: "Alibaba",
+            size: "4.7 GB",
+            description: qsTr("State-of-the-art specialist model. Superb at software development, coding, and mathematical reasoning.")
+        },
+        {
+            ollamaId: "deepseek-r1:8b",
+            name: "DeepSeek R1 8B",
+            provider: "DeepSeek",
+            size: "4.7 GB",
+            description: qsTr("Extremely popular reasoning model. Bounded yet powerful logic capabilities for medium-spec hardware.")
+        }
+    ]
+
     readonly property var stepMeta: [
-        { key: "welcome",      title: qsTr("Welcome"),     caption: qsTr("A calm assistant built around you.") },
-        { key: "privacy",      title: qsTr("Privacy"),     caption: qsTr("Your data stays on your device.") },
-        { key: "appearance",   title: qsTr("Appearance"),  caption: qsTr("Make Sentinel feel like home.") },
-        { key: "provider",     title: qsTr("AI Setup"),    caption: qsTr("Connect to models, your way.") },
-        { key: "capabilities", title: qsTr("Capabilities"),caption: qsTr("Everything Sentinel can do.") },
-        { key: "finish",       title: qsTr("Finish"),      caption: qsTr("You're ready to begin.") }
+        { key: "welcome",      title: qsTr("Welcome"),      caption: qsTr("A calm assistant built around you.") },
+        { key: "privacy",      title: qsTr("Privacy"),      caption: qsTr("Your data stays on your device.") },
+        { key: "appearance",   title: qsTr("Appearance"),   caption: qsTr("Make Sentinel feel like home.") },
+        { key: "provider",     title: qsTr("AI Provider"),  caption: qsTr("Connect to models, your way.") },
+        { key: "model",        title: qsTr("AI Model"),     caption: qsTr("Choose and download a model.") },
+        { key: "settings",     title: qsTr("Preferences"),  caption: qsTr("Fine-tune your local assistant.") },
+        { key: "voice",        title: qsTr("Voice Setup"),  caption: qsTr("Configure voice engines and models.") },
+        { key: "capabilities", title: qsTr("Capabilities"), caption: qsTr("Everything Sentinel can do.") },
+        { key: "finish",       title: qsTr("Finish"),       caption: qsTr("You're ready to begin.") }
     ]
 
     readonly property var useCases: [
@@ -67,6 +117,57 @@ Item {
     })
 
     function paletteFor(name) { return onboarding.themePalette[name] || onboarding.themePalette["Liquid Glass Light"] }
+
+    FileDialog {
+        id: voiceFileDialog
+        title: qsTr("Select File")
+        property var targetField: null
+
+        function openWithField(field, titleText) {
+            targetField = field;
+            title = titleText;
+            
+            var currentPath = field.text;
+            if (currentPath && currentPath.trim() !== "") {
+                var idx = currentPath.lastIndexOf('/');
+                if (idx !== -1) {
+                    var folderPath = currentPath.substring(0, idx);
+                    if (Qt.platform.os === "windows") {
+                        if (folderPath.indexOf(':') !== -1) {
+                            if (!folderPath.startsWith("file://")) {
+                                folderPath = folderPath.replace(/\\/g, '/');
+                                folderPath = "file:///" + folderPath;
+                            }
+                        }
+                    } else {
+                        if (!folderPath.startsWith("file://")) {
+                            folderPath = "file://" + folderPath;
+                        }
+                    }
+                    voiceFileDialog.currentFolder = folderPath;
+                }
+            }
+            voiceFileDialog.open();
+        }
+
+        onAccepted: {
+            if (targetField) {
+                var path = selectedFile.toString();
+                if (Qt.platform.os === "windows") {
+                    if (path.startsWith("file:///")) {
+                        path = path.substring(8);
+                    }
+                    path = path.replace(/\//g, '\\');
+                } else {
+                    if (path.startsWith("file://")) {
+                        path = path.substring(7);
+                    }
+                }
+                targetField.text = path;
+                targetField.editingFinished(); // Trigger update on viewModel
+            }
+        }
+    }
 
     Behavior on opacity {
         NumberAnimation {
@@ -616,7 +717,16 @@ Item {
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
-                                        onClicked: viewModel.onboardingAiProvider = modelData.id
+                                        onClicked: {
+                                            viewModel.onboardingAiProvider = modelData.id
+                                            if (modelData.id === "Ollama") {
+                                                viewModel.selectedRuntimeProvider = "ollama"
+                                            } else if (modelData.id === "LM Studio") {
+                                                viewModel.selectedRuntimeProvider = "lm-studio"
+                                            } else if (modelData.id === "llama.cpp server") {
+                                                viewModel.selectedRuntimeProvider = "llama-cpp-server"
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -625,7 +735,765 @@ Item {
                     }
                 }
 
-                // Step 4 — Capabilities
+                // Step 4 — AI Model Setup (Recommended models & tracking)
+                ScrollView {
+                    contentData: ColumnLayout {
+                        spacing: SentinelTheme.spaceMd
+                        width: stack.width
+                        Label {
+                            text: qsTr("Select AI Model")
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: SentinelTheme.fontDisplay
+                            font.bold: true
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Sentinel requires an AI model to generate responses. Below are the recommended models for your selected provider.")
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontBody
+                            wrapMode: Text.WordWrap
+                        }
+
+                        // Ollama Specific Model Selection & Installation
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: viewModel.selectedRuntimeProvider === "ollama"
+                            spacing: SentinelTheme.spaceMd
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceMd
+                                Repeater {
+                                    model: onboarding.recommendedModels
+                                    Rectangle {
+                                        required property var modelData
+                                        readonly property bool installed: onboarding.isModelInstalled(modelData.ollamaId)
+                                        readonly property bool activePull: ollamaPuller.pulling && ollamaPuller.activeModel === modelData.ollamaId
+                                        readonly property bool selected: viewModel.selectedLocalModel === modelData.ollamaId
+
+                                        Layout.fillWidth: true
+                                        radius: SentinelTheme.radiusLg
+                                        color: selected ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
+                                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.034)
+                                        border.color: selected ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.5)
+                                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                        border.width: selected ? 1.5 : 1
+                                        implicitHeight: mCardCol.implicitHeight + SentinelTheme.spaceLg * 2
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
+                                        Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
+
+                                        ColumnLayout {
+                                            id: mCardCol
+                                            anchors.fill: parent
+                                            anchors.margins: SentinelTheme.spaceLg
+                                            spacing: SentinelTheme.spaceSm
+
+                                            RowLayout {
+                                                Layout.fillWidth: true
+                                                spacing: SentinelTheme.spaceMd
+                                                ColumnLayout {
+                                                    spacing: 2
+                                                    Layout.fillWidth: true
+                                                    RowLayout {
+                                                        spacing: SentinelTheme.spaceSm
+                                                        Label {
+                                                            text: modelData.name
+                                                            color: SentinelTheme.textPrimary
+                                                            font.pixelSize: SentinelTheme.fontCard
+                                                            font.bold: true
+                                                        }
+                                                        Rectangle {
+                                                            radius: 4
+                                                            color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.1)
+                                                            border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.2)
+                                                            border.width: 1
+                                                            implicitWidth: tagLabel.implicitWidth + 8
+                                                            implicitHeight: tagLabel.implicitHeight + 4
+                                                            Label {
+                                                                id: tagLabel
+                                                                anchors.centerIn: parent
+                                                                text: modelData.provider
+                                                                color: onboarding.brandAccent
+                                                                font.pixelSize: SentinelTheme.fontTiny
+                                                                font.bold: true
+                                                            }
+                                                        }
+                                                        Label {
+                                                            text: modelData.size
+                                                            color: SentinelTheme.textMuted
+                                                            font.pixelSize: SentinelTheme.fontSmall
+                                                        }
+                                                    }
+                                                    Label {
+                                                        Layout.fillWidth: true
+                                                        text: modelData.description
+                                                        color: SentinelTheme.textMuted
+                                                        font.pixelSize: SentinelTheme.fontBody
+                                                        wrapMode: Text.WordWrap
+                                                    }
+                                                }
+
+                                                // Action / Status indicators
+                                                RowLayout {
+                                                    spacing: SentinelTheme.spaceSm
+                                                    Layout.alignment: Qt.AlignVCenter
+
+                                                    // Download button
+                                                    SentinelButton {
+                                                        text: qsTr("Install")
+                                                        visible: !installed && !activePull
+                                                        onClicked: {
+                                                            ollamaPuller.pull(modelData.ollamaId)
+                                                        }
+                                                    }
+
+                                                    // Cancel button
+                                                    SentinelButton {
+                                                        text: qsTr("Cancel")
+                                                        visible: activePull
+                                                        onClicked: {
+                                                            ollamaPuller.cancel()
+                                                        }
+                                                    }
+
+                                                    // Select button
+                                                    SentinelButton {
+                                                        text: selected ? qsTr("Selected") : qsTr("Select")
+                                                        enabled: installed
+                                                        highlighted: selected
+                                                        visible: installed && !activePull
+                                                        onClicked: {
+                                                            viewModel.selectedLocalModel = modelData.ollamaId
+                                                        }
+                                                    }
+                                                }
+                                            }
+
+                                            // Progress bar for active pull
+                                            ColumnLayout {
+                                                Layout.fillWidth: true
+                                                visible: activePull
+                                                spacing: 4
+                                                RowLayout {
+                                                    Layout.fillWidth: true
+                                                    Label {
+                                                        text: ollamaPuller.statusText
+                                                        color: SentinelTheme.textMuted
+                                                        font.pixelSize: SentinelTheme.fontTiny
+                                                        Layout.fillWidth: true
+                                                    }
+                                                    Label {
+                                                        text: Math.round(ollamaPuller.progress * 100) + "%"
+                                                        color: onboarding.brandAccent
+                                                        font.pixelSize: SentinelTheme.fontTiny
+                                                        font.bold: true
+                                                    }
+                                                }
+                                                // Progress track
+                                                Rectangle {
+                                                    Layout.fillWidth: true
+                                                    height: 4
+                                                    radius: 2
+                                                    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                                    Rectangle {
+                                                        width: parent.width * ollamaPuller.progress
+                                                        height: parent.height
+                                                        radius: parent.radius
+                                                        color: onboarding.brandAccent
+                                                    }
+                                                }
+                                            }
+                                        }
+
+                                        MouseArea {
+                                            anchors.fill: parent
+                                            enabled: installed && !activePull && !selected
+                                            cursorShape: Qt.PointingHandCursor
+                                            onClicked: {
+                                                viewModel.selectedLocalModel = modelData.ollamaId
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.topMargin: SentinelTheme.spaceMd
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceMd
+                                Label {
+                                    text: qsTr("Or select an already installed model:")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                    Layout.fillWidth: true
+                                }
+                                ComboBox {
+                                    id: modelSelectCombo
+                                    Layout.preferredWidth: 280
+                                    model: viewModel.installedOllamaModelNames.length > 0 ? viewModel.installedOllamaModelNames : [qsTr("No models found")]
+                                    currentIndex: viewModel.installedOllamaModelNames.indexOf(viewModel.selectedLocalModel)
+                                    enabled: viewModel.installedOllamaModelNames.length > 0
+                                    onActivated: (index) => {
+                                        if (currentText !== qsTr("No models found")) {
+                                            viewModel.selectedLocalModel = currentText
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // LM Studio Specific Instructions
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: viewModel.selectedRuntimeProvider === "lm-studio"
+                            spacing: SentinelTheme.spaceMd
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Configure LM Studio:")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontCard
+                                font.bold: true
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("1. Open LM Studio on your computer.\n2. Search for and download your preferred model (e.g. Llama 3.2 3B).\n3. Go to the local server tab (double-headed arrow icon) and load the model.\n4. Start the server (usually on port 1234).\n5. Select the loaded model from the dropdown below.")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontBody
+                                wrapMode: Text.WordWrap
+                            }
+                            RowLayout {
+                                Layout.topMargin: SentinelTheme.spaceMd
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceMd
+                                Label {
+                                    text: qsTr("Active LM Studio Model:")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                    Layout.fillWidth: true
+                                }
+                                ComboBox {
+                                    id: lmStudioModelCombo
+                                    Layout.preferredWidth: 280
+                                    model: viewModel.loadedLMStudioModelNames.length > 0 ? viewModel.loadedLMStudioModelNames : [qsTr("No models loaded")]
+                                    currentIndex: viewModel.loadedLMStudioModelNames.indexOf(viewModel.selectedLocalModel)
+                                    enabled: viewModel.loadedLMStudioModelNames.length > 0
+                                    onActivated: (index) => {
+                                        if (currentText !== qsTr("No models loaded")) {
+                                            viewModel.selectedLocalModel = currentText
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        // llama.cpp Server Specific Instructions
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: viewModel.selectedRuntimeProvider === "llama-cpp-server"
+                            spacing: SentinelTheme.spaceMd
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("llama.cpp Server Configuration:")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontCard
+                                font.bold: true
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Make sure your llama.cpp server is running locally (default endpoint http://127.0.0.1:8080). Write the identifier or model path below so Sentinel can target it.")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontBody
+                                wrapMode: Text.WordWrap
+                            }
+                            RowLayout {
+                                Layout.topMargin: SentinelTheme.spaceMd
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceMd
+                                Label {
+                                    text: qsTr("Model Identifier:")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                }
+                                SentinelTextField {
+                                    Layout.fillWidth: true
+                                    text: viewModel.selectedLocalModel
+                                    placeholderText: "e.g. llama-3.2-3b"
+                                    onTextChanged: {
+                                        viewModel.selectedLocalModel = text
+                                    }
+                                }
+                            }
+                        }
+
+                        Item { Layout.fillHeight: true }
+                    }
+                }
+
+                // Step 5 — AI & System Preferences
+                ScrollView {
+                    contentData: ColumnLayout {
+                        spacing: SentinelTheme.spaceMd
+                        width: stack.width
+                        Label {
+                            text: qsTr("AI & System Preferences")
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: SentinelTheme.fontDisplay
+                            font.bold: true
+                        }
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Configure options for local memory integration, generation parameters, and performance.")
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontBody
+                            wrapMode: Text.WordWrap
+                        }
+
+                        // Local Context toggle
+                        RowLayout {
+                            Layout.fillWidth: true
+                            Layout.topMargin: SentinelTheme.spaceMd
+                            spacing: SentinelTheme.spaceMd
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+                                Label {
+                                    text: qsTr("Use local memory/context in chat")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontCard
+                                    font.bold: true
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Automatically retrieves and appends relevant memory notes and recent chat history to the prompt context.")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                            Switch {
+                                checked: viewModel.promptContextInjectionEnabled
+                                onToggled: viewModel.promptContextInjectionEnabled = checked
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 1
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                        }
+
+                        // Creativity (Temperature)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Label {
+                                    text: qsTr("Creativity (Temperature): ") + viewModel.localInferenceTemperature.toFixed(2)
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontCard
+                                    font.bold: true
+                                    Layout.fillWidth: true
+                                }
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Slider {
+                                    Layout.fillWidth: true
+                                    from: 0.0
+                                    to: 2.0
+                                    stepSize: 0.05
+                                    value: viewModel.localInferenceTemperature
+                                    onMoved: {
+                                        viewModel.localInferenceTemperature = value
+                                    }
+                                }
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Lower values are focused and deterministic; higher values are creative.")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontTiny
+                            }
+                        }
+
+                        // Max tokens
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: 4
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Label {
+                                    text: qsTr("Max Response Tokens: ") + viewModel.localInferenceMaxTokens
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontCard
+                                    font.bold: true
+                                    Layout.fillWidth: true
+                                }
+                            }
+                            RowLayout {
+                                Layout.fillWidth: true
+                                Slider {
+                                    Layout.fillWidth: true
+                                    from: 256
+                                    to: 8192
+                                    stepSize: 256
+                                    value: viewModel.localInferenceMaxTokens
+                                    onMoved: {
+                                        viewModel.localInferenceMaxTokens = Math.round(value)
+                                    }
+                                }
+                            }
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Controls response length limits. High limits require more hardware resources.")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontTiny
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            height: 1
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                        }
+
+                        // Reduced Motion
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+                                Label {
+                                    text: qsTr("Reduced Motion (Animations)")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontCard
+                                    font.bold: true
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Disables sliding pages, glass drifts, and high-motion transitions to save power.")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                            Switch {
+                                checked: viewModel.reducedMotionEnabled
+                                onToggled: viewModel.reducedMotionEnabled = checked
+                            }
+                        }
+
+                        // Check updates
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+                                Label {
+                                    text: qsTr("Check for Updates")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontCard
+                                    font.bold: true
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Choose how often Sentinel checks for updates. Checked locally without sharing logs.")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                            ComboBox {
+                                model: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
+                                currentIndex: model.indexOf(viewModel.updateCheckPolicy)
+                                onActivated: (index) => {
+                                    viewModel.updateCheckPolicy = currentText
+                                }
+                            }
+                        }
+
+                        Item { Layout.fillHeight: true }
+                    }
+                }
+
+                // Step 6 — Voice & Speech Setup
+                ScrollView {
+                    contentData: ColumnLayout {
+                        spacing: SentinelTheme.spaceLg
+                        width: stack.width
+
+                        Label {
+                            text: qsTr("Voice & Speech Setup")
+                            color: SentinelTheme.textPrimary
+                            font.pixelSize: SentinelTheme.fontDisplay
+                            font.bold: true
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            text: qsTr("Sentinel supports local Text-to-Speech (TTS) and Speech-to-Text (STT) for hands-free operations. Select your preferred engine and model files below.")
+                            color: SentinelTheme.textMuted
+                            font.pixelSize: SentinelTheme.fontBody
+                            wrapMode: Text.WordWrap
+                        }
+
+                        // ── TTS Section ──
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            Label {
+                                text: qsTr("Text-to-Speech (TTS) Engine")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontCard
+                                font.bold: true
+                            }
+
+                            RowLayout {
+                                spacing: SentinelTheme.spaceMd
+                                Layout.fillWidth: true
+                                Label {
+                                    text: qsTr("Engine:")
+                                    color: SentinelTheme.textMuted
+                                    Layout.preferredWidth: 60
+                                }
+                                ComboBox {
+                                    id: ttsEngineCombo
+                                    model: ["Piper", "Kokoro"]
+                                    currentIndex: model.indexOf(viewModel.selectedTtsEngine)
+                                    onActivated: {
+                                        viewModel.selectedTtsEngine = currentText
+                                    }
+                                }
+                            }
+                        }
+
+                        // ── Piper Config ──
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+                            visible: viewModel.selectedTtsEngine === "Piper"
+
+                            Label {
+                                text: qsTr("Piper Configuration (Local ONNX)")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                font.bold: true
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                Label {
+                                    text: qsTr("Piper Binary Path")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    SentinelTextField {
+                                        id: piperBinaryField
+                                        Layout.fillWidth: true
+                                        text: viewModel.piperBinaryPath
+                                        placeholderText: qsTr("Enter path or browse (e.g. /usr/local/bin/piper)")
+                                        onEditingFinished: viewModel.piperBinaryPath = text
+                                    }
+                                    SentinelButton {
+                                        text: "📁"
+                                        Layout.preferredWidth: 40
+                                        onClicked: voiceFileDialog.openWithField(piperBinaryField, qsTr("Select Piper Binary"))
+                                    }
+                                }
+                                Label {
+                                    text: piperBinaryField.text !== "" ? qsTr("✓ Detected on system") : qsTr("✗ Not detected. Enter path manually.")
+                                    color: piperBinaryField.text !== "" ? "#4caf50" : "#ff9800"
+                                    font.pixelSize: SentinelTheme.fontSmall - 1
+                                    font.bold: true
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                Label {
+                                    text: qsTr("Piper Model File (.onnx)")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    SentinelTextField {
+                                        id: piperModelField
+                                        Layout.fillWidth: true
+                                        text: viewModel.piperModelPath
+                                        placeholderText: qsTr("Select .onnx voice model file path")
+                                        onEditingFinished: viewModel.piperModelPath = text
+                                    }
+                                    SentinelButton {
+                                        text: "📁"
+                                        Layout.preferredWidth: 40
+                                        onClicked: voiceFileDialog.openWithField(piperModelField, qsTr("Select Piper Model (.onnx)"))
+                                    }
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Recommended voice: en_US-lessac-medium.onnx")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall - 1
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
+                        // ── Kokoro Config ──
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+                            visible: viewModel.selectedTtsEngine === "Kokoro"
+
+                            Label {
+                                text: qsTr("Kokoro Configuration (Ultra-Realistic)")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontBody
+                                font.bold: true
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                Label {
+                                    text: qsTr("Kokoro Model File")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    SentinelTextField {
+                                        id: kokoroModelField
+                                        Layout.fillWidth: true
+                                        text: viewModel.kokoroModelPath
+                                        placeholderText: qsTr("Select Kokoro model file path (e.g. kokoro.onnx)")
+                                        onEditingFinished: viewModel.kokoroModelPath = text
+                                    }
+                                    SentinelButton {
+                                        text: "📁"
+                                        Layout.preferredWidth: 40
+                                        onClicked: voiceFileDialog.openWithField(kokoroModelField, qsTr("Select Kokoro Model"))
+                                    }
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Recommended: kokoro.onnx (ONNX weights with Python runner)")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall - 1
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                Label {
+                                    text: qsTr("Kokoro Voice Name")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                SentinelTextField {
+                                    Layout.fillWidth: true
+                                    text: viewModel.kokoroVoice
+                                    placeholderText: qsTr("Enter voice name (e.g. af_sky)")
+                                    onEditingFinished: viewModel.kokoroVoice = text
+                                }
+                            }
+                        }
+
+                        // ── Whisper STT Config ──
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                text: qsTr("Speech-to-Text (STT) Configuration (Whisper)")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontCard
+                                font.bold: true
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                Label {
+                                    text: qsTr("Whisper Binary Path")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    SentinelTextField {
+                                        id: whisperBinaryField
+                                        Layout.fillWidth: true
+                                        text: viewModel.whisperBinaryPath
+                                        placeholderText: qsTr("Enter path or browse (e.g. /usr/local/bin/whisper-cpp)")
+                                        onEditingFinished: viewModel.whisperBinaryPath = text
+                                    }
+                                    SentinelButton {
+                                        text: "📁"
+                                        Layout.preferredWidth: 40
+                                        onClicked: voiceFileDialog.openWithField(whisperBinaryField, qsTr("Select Whisper Binary"))
+                                    }
+                                }
+                                Label {
+                                    text: whisperBinaryField.text !== "" ? qsTr("✓ Detected on system") : qsTr("✗ Not detected. Enter path manually.")
+                                    color: whisperBinaryField.text !== "" ? "#4caf50" : "#ff9800"
+                                    font.pixelSize: SentinelTheme.fontSmall - 1
+                                    font.bold: true
+                                }
+                            }
+
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: 4
+                                Label {
+                                    text: qsTr("Whisper Model File (.bin)")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    SentinelTextField {
+                                        id: whisperModelField
+                                        Layout.fillWidth: true
+                                        text: viewModel.whisperModelPath
+                                        placeholderText: qsTr("Select ggml-base.bin model file path")
+                                        onEditingFinished: viewModel.whisperModelPath = text
+                                    }
+                                    SentinelButton {
+                                        text: "📁"
+                                        Layout.preferredWidth: 40
+                                        onClicked: voiceFileDialog.openWithField(whisperModelField, qsTr("Select Whisper Model"))
+                                    }
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: qsTr("Recommended: ggml-base.bin (~140 MB for fast transcription)")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall - 1
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
+                        }
+
+                        Item { Layout.fillHeight: true }
+                    }
+                }
+
+                // Step 7 — Capabilities
                 ScrollView {
                     contentData: ColumnLayout {
                         spacing: SentinelTheme.spaceMd
@@ -731,8 +1599,11 @@ Item {
                             spacing: SentinelTheme.spaceSm
                             InfoRow { label: qsTr("Use Case"); value: viewModel.onboardingUseCase; Layout.fillWidth: true }
                             InfoRow { label: qsTr("Theme"); value: viewModel.themeName; Layout.fillWidth: true }
-                            InfoRow { label: qsTr("AI"); value: viewModel.onboardingAiProvider + qsTr(" · nothing downloaded yet"); Layout.fillWidth: true; valueMaximumLineCount: 2 }
-                            InfoRow { label: qsTr("Privacy"); value: qsTr("No tracking, no hidden uploads, no silent updates."); Layout.fillWidth: true; valueMaximumLineCount: 3 }
+                            InfoRow { label: qsTr("AI Provider"); value: viewModel.onboardingAiProvider; Layout.fillWidth: true }
+                            InfoRow { label: qsTr("Selected Model"); value: viewModel.selectedLocalModel ? viewModel.selectedLocalModel : qsTr("None selected"); Layout.fillWidth: true }
+                            InfoRow { label: qsTr("Memory Context"); value: viewModel.promptContextInjectionEnabled ? qsTr("Enabled") : qsTr("Disabled"); Layout.fillWidth: true }
+                            InfoRow { label: qsTr("TTS Engine"); value: viewModel.selectedTtsEngine; Layout.fillWidth: true }
+                            InfoRow { label: qsTr("System Updates"); value: viewModel.updateCheckPolicy; Layout.fillWidth: true }
                         }
                         Item { Layout.fillHeight: true }
                     }
@@ -771,6 +1642,14 @@ Item {
                         text: onboarding.step < onboarding.totalSteps - 1 ? qsTr("Continue") : qsTr("Start using Sentinel")
                         highlighted: true
                         onClicked: {
+                            if (onboarding.step === 6) {
+                                viewModel.applyVoiceConfigurationPaths(
+                                    piperBinaryField.text,
+                                    piperModelField.text,
+                                    whisperBinaryField.text,
+                                    whisperModelField.text
+                                );
+                            }
                             if (onboarding.step < onboarding.totalSteps - 1) {
                                 onboarding.step++
                             } else {

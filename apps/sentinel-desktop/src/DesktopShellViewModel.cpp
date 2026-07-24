@@ -57,6 +57,11 @@ QString fileTypeForPath(const QString& pathOrName) {
     if (suffix == QStringLiteral("pdf")) {
         return QStringLiteral("PDF");
     }
+    if (QStringList({QStringLiteral("png"), QStringLiteral("jpg"), QStringLiteral("jpeg"),
+                     QStringLiteral("webp"), QStringLiteral("gif"), QStringLiteral("bmp")})
+            .contains(suffix)) {
+        return QStringLiteral("Image");
+    }
     if (suffix == QStringLiteral("txt")) {
         return QStringLiteral("TXT");
     }
