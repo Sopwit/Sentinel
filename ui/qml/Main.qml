@@ -33,6 +33,12 @@ ApplicationWindow {
             recoveryModal.open()
     })
 
+    Binding {
+        target: SentinelTheme
+        property: "activeTheme"
+        value: root.viewModel.themeName
+    }
+
     Connections {
         target: root.viewModel
         function onThemeNameChanged() {

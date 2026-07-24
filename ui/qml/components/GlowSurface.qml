@@ -1,4 +1,5 @@
 import QtQuick
+import Sentinel.Desktop
 
 Item {
     id: glow

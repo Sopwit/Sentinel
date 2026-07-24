@@ -20,7 +20,9 @@ Popup {
     padding: 0
 
     Overlay.modal: Rectangle {
-        color: SentinelTheme.withAlpha(SentinelTheme.backgroundDeep, 0.58)
+        color: SentinelTheme.lightTheme
+             ? SentinelTheme.withAlpha("#0f1724", 0.20)
+             : SentinelTheme.withAlpha("#000000", 0.60)
 
         Behavior on opacity {
             NumberAnimation {
@@ -60,10 +62,10 @@ Popup {
         id: bgRec
         radius: SentinelTheme.radiusXl
         color: SentinelTheme.lightTheme
-             ? SentinelTheme.withAlpha("#ffffff", 0.95)
+             ? "#ffffff"
              : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
         border.color: SentinelTheme.lightTheme
-                    ? SentinelTheme.withAlpha("#ffffff", 0.88)
+                    ? SentinelTheme.withAlpha(modal.accent, 0.25)
                     : SentinelTheme.withAlpha(modal.accent, 0.25)
         border.width: 1
 

@@ -5,6 +5,7 @@
 #include "sentinel/core/OllamaRuntime.h"
 
 #include <QLocale>
+#include <QFile>
 #include <algorithm>
 
 namespace sentinel::core {
@@ -591,8 +592,22 @@ void AppSettings::setAgentAutonomousMode(bool enabled) {
 }
 
 QString AppSettings::piperBinaryPath() const {
-    return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
-                  : QString();
+    QString path = store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
+                          : QString();
+    if (path.isEmpty()) {
+        const QStringList candidates{
+            QStringLiteral("/opt/homebrew/bin/piper"),
+            QStringLiteral("/usr/local/bin/piper"),
+            QStringLiteral("/usr/bin/piper"),
+            QStringLiteral("/bin/piper")
+        };
+        for (const auto& c : candidates) {
+            if (QFile::exists(c)) {
+                return c;
+            }
+        }
+    }
+    return path;
 }
 
 void AppSettings::setPiperBinaryPath(const QString& path) {
@@ -669,8 +684,25 @@ void AppSettings::setKokoroVoice(const QString& voice) {
 }
 
 QString AppSettings::whisperBinaryPath() const {
-    return store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed()
-                  : QString();
+    QString path = store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed()
+                          : QString();
+    if (path.isEmpty()) {
+        const QStringList candidates{
+            QStringLiteral("/opt/homebrew/bin/whisper"),
+            QStringLiteral("/usr/local/bin/whisper"),
+            QStringLiteral("/usr/bin/whisper"),
+            QStringLiteral("/bin/whisper"),
+            QStringLiteral("/opt/homebrew/bin/whisper-cpp"),
+            QStringLiteral("/usr/local/bin/whisper-cpp"),
+            QStringLiteral("/usr/bin/whisper-cpp")
+        };
+        for (const auto& c : candidates) {
+            if (QFile::exists(c)) {
+                return c;
+            }
+        }
+    }
+    return path;
 }
 
 void AppSettings::setWhisperBinaryPath(const QString& path) {

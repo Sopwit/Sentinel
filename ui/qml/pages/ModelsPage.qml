@@ -776,8 +776,12 @@ Item {
         ShellPanel {
             Layout.preferredWidth: modelsPage.sidebarCollapsed ? 68 : (modelsPage.compact ? 196 : 278)
             Layout.fillHeight: true
-            color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
-            border.color: SentinelTheme.withAlpha(modelsPage.modeAccent, 0.20)
+            color: SentinelTheme.lightTheme
+                 ? "#ffffff"
+                 : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
+            border.color: SentinelTheme.lightTheme
+                        ? SentinelTheme.withAlpha("#e2e8f4", 0.90)
+                        : SentinelTheme.withAlpha(modelsPage.modeAccent, 0.20)
 
             Behavior on Layout.preferredWidth {
                 NumberAnimation { duration: 180; easing.type: Easing.OutCubic }
@@ -846,80 +850,84 @@ Item {
                     }
                 }
 
-                ColumnLayout {
+                Flickable {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    spacing: SentinelTheme.spaceXs
+                    clip: true
+                    contentWidth: width
+                    contentHeight: sidebarButtonsColumn.implicitHeight
+                    boundsBehavior: Flickable.StopAtBounds
 
-                    Repeater {
-                        model: modelsPage.categories
-                        delegate: Button {
-                            id: navButton
-                            required property var modelData
-                            readonly property bool active: modelsPage.activeCategory === modelData
-                            Layout.fillWidth: true
-                            Layout.preferredHeight: modelsPage.compact ? 36 : 42
-                            hoverEnabled: true
-                            focusPolicy: Qt.StrongFocus
-                            onClicked: modelsPage.activeCategory = modelData
+                    ColumnLayout {
+                        id: sidebarButtonsColumn
+                        width: parent.width
+                        spacing: SentinelTheme.spaceXs
 
-                            contentItem: RowLayout {
-                                anchors.fill: parent
-                                anchors.leftMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceLg
-                                anchors.rightMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceMd
-                                spacing: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceSm
+                        Repeater {
+                            model: modelsPage.categories
+                            delegate: Button {
+                                id: navButton
+                                required property var modelData
+                                readonly property bool active: modelsPage.activeCategory === modelData
+                                Layout.fillWidth: true
+                                Layout.preferredHeight: modelsPage.compact ? 36 : 42
+                                hoverEnabled: true
+                                focusPolicy: Qt.StrongFocus
+                                onClicked: modelsPage.activeCategory = modelData
 
-                                Text {
-                                    id: iconTxt
-                                    Layout.alignment: Qt.AlignVCenter | (modelsPage.sidebarCollapsed ? Qt.AlignHCenter : Qt.AlignLeft)
-                                    text: modelsPage.categoryIcon(modelData)
-                                    color: navButton.active
-                                           ? SentinelTheme.textPrimary
-                                           : SentinelTheme.textMuted
-                                    font.pixelSize: modelsPage.categoryIconSize(modelData)
-                                    horizontalAlignment: Text.AlignHCenter
-                                    verticalAlignment: Text.AlignVCenter
-                                    Layout.preferredWidth: modelsPage.sidebarCollapsed ? 42 : 18
+                                contentItem: RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceLg
+                                    anchors.rightMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceMd
+                                    spacing: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceSm
+
+                                    Text {
+                                        id: iconTxt
+                                        Layout.alignment: Qt.AlignVCenter | (modelsPage.sidebarCollapsed ? Qt.AlignHCenter : Qt.AlignLeft)
+                                        text: modelsPage.categoryIcon(modelData)
+                                        color: navButton.active
+                                               ? SentinelTheme.textPrimary
+                                               : SentinelTheme.textMuted
+                                        font.pixelSize: modelsPage.categoryIconSize(modelData)
+                                        horizontalAlignment: Text.AlignHCenter
+                                        verticalAlignment: Text.AlignVCenter
+                                        Layout.preferredWidth: modelsPage.sidebarCollapsed ? 42 : 18
+                                    }
+
+                                    Text {
+                                        visible: !modelsPage.sidebarCollapsed
+                                        Layout.fillWidth: true
+                                        text: modelsPage.categoryTitle(modelData)
+                                        color: navButton.active
+                                               ? SentinelTheme.textPrimary
+                                               : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        font.bold: navButton.active
+                                        maximumLineCount: 1
+                                        elide: Text.ElideRight
+                                    }
                                 }
 
-                                Text {
-                                    visible: !modelsPage.sidebarCollapsed
-                                    Layout.fillWidth: true
-                                    text: modelsPage.categoryTitle(modelData)
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusMd
                                     color: navButton.active
-                                           ? SentinelTheme.textPrimary
-                                           : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    font.bold: navButton.active
-                                    maximumLineCount: 1
-                                    elide: Text.ElideRight
-                                }
-                            }
+                                           ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.12)
+                                           : navButton.hovered
+                                             ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                             : "transparent"
 
-                            background: Rectangle {
-                                radius: SentinelTheme.radiusMd
-                                color: navButton.active
-                                       ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.12)
-                                       : navButton.hovered
-                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                                         : "transparent"
-
-                                Rectangle {
-                                    width: navButton.active ? 3 : 0
-                                    height: parent.height - SentinelTheme.spaceSm * 2
-                                    radius: 1.5
-                                    anchors.left: parent.left
-                                    anchors.leftMargin: SentinelTheme.spaceSm
-                                    anchors.verticalCenter: parent.verticalCenter
-                                    color: modelsPage.modeAccent
+                                    Rectangle {
+                                        width: navButton.active ? 3 : 0
+                                        height: parent.height - SentinelTheme.spaceSm * 2
+                                        radius: 1.5
+                                        anchors.left: parent.left
+                                        anchors.leftMargin: SentinelTheme.spaceSm
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        color: modelsPage.modeAccent
+                                    }
                                 }
                             }
                         }
-                    }
-
-                    Item {
-                        Layout.fillWidth: true
-                        Layout.fillHeight: true
                     }
                 }
             }
@@ -1091,7 +1099,10 @@ Item {
                                 border.width: 1
                                 Label {
                                     id: installedCountLbl
-                                    anchors.centerIn: parent
+                                    anchors.verticalCenter: parent.verticalCenter
+                                    anchors.left: parent.left
+                                    anchors.right: parent.right
+                                    horizontalAlignment: Text.AlignHCenter
                                     text: "● " + shellViewModel.ollamaModelCount + (shellViewModel.selectedRuntimeProvider === "lm-studio" ? qsTr(" loaded") : qsTr(" installed"))
                                     font.pixelSize: SentinelTheme.fontTiny
                                     color: SentinelTheme.success
@@ -1241,18 +1252,17 @@ Item {
                         radius: SentinelTheme.radiusXl
 
                         color: SentinelTheme.lightTheme
-                             ? SentinelTheme.withAlpha("#ffffff", cardArea.containsMouse ? 0.84 : 0.70)
+                             ? "#ffffff"
                              : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised,
                                                         cardArea.containsMouse ? 0.76 : 0.60)
 
                         border.color: modelDelegate.effectivelyInstalled
                                     ? SentinelTheme.withAlpha(SentinelTheme.success, cardArea.containsMouse ? 0.45 : 0.28)
                                     : (SentinelTheme.lightTheme
-                                       ? SentinelTheme.withAlpha("#ffffff", cardArea.containsMouse ? 0.95 : 0.80)
+                                       ? SentinelTheme.withAlpha("#e2e8f4", cardArea.containsMouse ? 0.95 : 0.80)
                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary,
                                                                    cardArea.containsMouse ? 0.14 : 0.07))
                         border.width: 1
-                        layer.enabled: true
 
                         Behavior on color {
                             ColorAnimation { duration: 140; easing.type: Easing.InOutQuad }
@@ -1277,7 +1287,7 @@ Item {
                             anchors.fill: parent; anchors.margins: 1
                             radius: parent.radius - 1
                             color: SentinelTheme.lightTheme
-                                 ? SentinelTheme.withAlpha("#f4f7ff", 0.38)
+                                 ? "#ffffff"
                                  : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.14)
                         }
 

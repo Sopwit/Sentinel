@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Dialogs
 import QtQuick.Layouts
+import Sentinel.Desktop
 
 ShellPanel {
     id: homeChat
@@ -107,6 +108,44 @@ ShellPanel {
         activeGreeting = list[index];
     }
 
+    function formatAttachmentSummary(summary) {
+        if (!summary) return "";
+        var parts = summary.split(" / ");
+        if (parts.length < 3) return summary;
+        
+        var fileName = parts[0];
+        var fileType = parts[1];
+        var sizeBytes = parseInt(parts[2]);
+        
+        var sizeStr = "";
+        if (sizeBytes < 1024) {
+            sizeStr = sizeBytes + " B";
+        } else if (sizeBytes < 1024 * 1024) {
+            sizeStr = (sizeBytes / 1024).toFixed(1) + " KB";
+        } else {
+            sizeStr = (sizeBytes / (1024 * 1024)).toFixed(1) + " MB";
+        }
+        
+        return fileName + " (" + sizeStr + ")";
+    }
+
+    function getAttachmentIcon(summary) {
+        if (!summary) return "📎";
+        var parts = summary.split(" / ");
+        if (parts.length < 2) return "📎";
+        var fileType = parts[1].toLowerCase();
+        
+        if (fileType === "image") {
+            return "🖼️";
+        } else if (fileType === "pdf" || fileType === "docx") {
+            return "📄";
+        } else if (fileType === "source code") {
+            return "💻";
+        } else {
+            return "📎";
+        }
+    }
+
     function scrollToLatest(force) {
         if (force || recentMessages.followNewMessages)
             Qt.callLater(recentMessages.positionViewAtEnd)
@@ -205,8 +244,12 @@ ShellPanel {
             visible: true
             Layout.fillHeight: true
             Layout.minimumHeight: 0
-            color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
-            border.color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.20)
+            color: SentinelTheme.lightTheme
+                 ? "#ffffff"
+                 : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
+            border.color: SentinelTheme.lightTheme
+                        ? SentinelTheme.withAlpha("#e2e8f4", 0.90)
+                        : SentinelTheme.withAlpha(homeChat.modeAccent, 0.20)
             showBrackets: false
             clip: true
 
@@ -235,8 +278,11 @@ ShellPanel {
                     ToolTip.text: qsTr("New Chat")
                     onClicked: {
                         homeChat.viewModel.createConversation(qsTr("New Chat"))
+                        homeChat.inChatMode = true
                         promptInput.clear()
                         homePromptInput.clear()
+                        if (homeChat.compact)
+                            homeChat.conversationSidebarOpen = false
                     }
                     contentItem: Text {
                         text: "+"
@@ -298,6 +344,7 @@ ShellPanel {
                         ToolTip.text: qsTr("New Chat")
                         onClicked: {
                             homeChat.viewModel.createConversation(qsTr("New Chat"))
+                            homeChat.inChatMode = true
                             homeChat.conversationSidebarOpen = !homeChat.compact
                             promptInput.clear()
                             homePromptInput.clear()
@@ -527,133 +574,126 @@ ShellPanel {
                         width: ListView.view.width
                         height: 38
 
+                        // Background button for selecting conversation (left side)
                         Button {
                             id: convItemBtn
-                            anchors.fill: parent
+                            anchors.left: parent.left
+                            anchors.right: convItemMenuBtn.left
+                            anchors.top: parent.top
+                            anchors.bottom: parent.bottom
+                            anchors.rightMargin: 2
                             hoverEnabled: true
-                            onClicked: homeChat.viewModel.switchConversation(convItem.convId)
+                            onClicked: {
+                                homeChat.viewModel.switchConversation(convItem.convId)
+                                homeChat.inChatMode = true
+                                if (homeChat.compact)
+                                    homeChat.conversationSidebarOpen = false
+                                homeChat.scrollToLatest(true)
+                            }
 
                             background: Rectangle {
                                 radius: SentinelTheme.radiusMd
                                 color: InteractionTokens.surfaceColor(convItemBtn.hovered, convItemBtn.down, convItem.active, homeChat.modeAccent)
                                 border.color: InteractionTokens.borderColor(convItemBtn.activeFocus, convItemBtn.hovered, convItem.active, homeChat.modeAccent)
                             }
-                        }
 
-                        RowLayout {
-                            spacing: 3
-                            anchors.left: parent.left
-                            anchors.right: convItemMenuBtn.left
-                            anchors.verticalCenter: parent.verticalCenter
-                            anchors.leftMargin: SentinelTheme.spaceSm
-                            anchors.rightMargin: SentinelTheme.spaceXs
+                            contentItem: RowLayout {
+                                spacing: 4
+                                anchors.fill: parent
+                                anchors.leftMargin: SentinelTheme.spaceSm
+                                anchors.rightMargin: SentinelTheme.spaceXs
 
-                            Text {
-                                Layout.fillWidth: true
-                                text: convItem.convTitle
-                                color: convItem.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall
-                                font.bold: convItem.active
-                                verticalAlignment: Text.AlignVCenter
-                                maximumLineCount: 1
-                                elide: Text.ElideRight
-                            }
+                                Text {
+                                    Layout.fillWidth: true
+                                    text: convItem.convTitle
+                                    color: convItem.active ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    font.bold: convItem.active
+                                    verticalAlignment: Text.AlignVCenter
+                                    maximumLineCount: 1
+                                    elide: Text.ElideRight
+                                }
 
-                            Text {
-                                visible: convItem.pinned
-                                text: "\uD83D\uDCCC"
-                                font.pixelSize: 9
-                                color: homeChat.modeAccent
+                                Text {
+                                    visible: convItem.pinned
+                                    text: "📌"
+                                    font.pixelSize: 10
+                                    color: homeChat.modeAccent
+                                }
                             }
                         }
 
-                        // Overflow menu button — appears on hover
+                        // Overflow 3-dots Menu button (right side, on top with z: 2)
                         Button {
                             id: convItemMenuBtn
                             anchors.right: parent.right
                             anchors.verticalCenter: parent.verticalCenter
-                            anchors.rightMargin: 2
-                            width: 22
-                            height: 22
+                            anchors.rightMargin: 4
+                            width: 28
+                            height: 28
+                            z: 2
                             hoverEnabled: true
-                            visible: convItemBtn.hovered || convItemMenuBtn.hovered
-                            onClicked: convItemMenu.open()
+                            opacity: (convItemBtn.hovered || convItemMenuBtn.hovered || convItemMenu.opened || convItem.active) ? 1.0 : 0.45
+                            onClicked: convItemMenu.popup()
+
                             contentItem: Text {
-                                text: "\u22EF"
-                                color: SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall
+                                text: "⋮"
+                                color: convItemMenuBtn.hovered ? homeChat.modeAccent : SentinelTheme.textPrimary
+                                font.pixelSize: 14
+                                font.bold: true
                                 horizontalAlignment: Text.AlignHCenter
                                 verticalAlignment: Text.AlignVCenter
                             }
                             background: Rectangle {
                                 radius: SentinelTheme.radiusSm
-                                color: convItemMenuBtn.hovered ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.14) : "transparent"
+                                color: convItemMenuBtn.hovered ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.20) : "transparent"
+                                border.color: convItemMenuBtn.hovered ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.3) : "transparent"
+                                border.width: 1
+                            }
+                        }
+
+                        Menu {
+                            id: convItemMenu
+                            width: 180
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.94)
+                                border.color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.25)
+                                border.width: 1
                             }
 
-                            Menu {
-                                id: convItemMenu
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                    border.width: 1
+                            // Pin / Unpin
+                            MenuItem {
+                                text: convItem.pinned ? "📍  " + qsTr("Unpin") : "📌  " + qsTr("Pin")
+                                onTriggered: {
+                                    if (convItem.pinned)
+                                        homeChat.viewModel.unpinConversation(convItem.convId)
+                                    else
+                                        homeChat.viewModel.pinConversation(convItem.convId)
                                 }
+                            }
 
-                                delegate: MenuItem {
-                                    id: convMenuItem
-                                    contentItem: Text {
-                                        text: convMenuItem.text
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        color: convMenuItem.enabled 
-                                               ? (convMenuItem.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted) 
-                                               : SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.4)
-                                        verticalAlignment: Text.AlignVCenter
-                                        elide: Text.ElideRight
-                                        leftPadding: SentinelTheme.spaceSm
-                                        rightPadding: SentinelTheme.spaceSm
-                                    }
-                                    background: Rectangle {
-                                        implicitHeight: 32
-                                        color: convMenuItem.highlighted
-                                               ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
-                                               : "transparent"
-                                        radius: SentinelTheme.radiusSm
-                                    }
+                            // Archive / Unarchive
+                            MenuItem {
+                                text: convItem.archived ? "📥  " + qsTr("Unarchive") : "📦  " + qsTr("Archive")
+                                onTriggered: {
+                                    if (convItem.archived)
+                                        homeChat.viewModel.unarchiveConversation(convItem.convId)
+                                    else
+                                        homeChat.viewModel.archiveConversation(convItem.convId)
                                 }
+                            }
 
-                                // Pin / Unpin
-                                MenuItem {
-                                    text: convItem.pinned ? qsTr("Unpin") : qsTr("Pin")
-                                    onTriggered: {
-                                        if (convItem.pinned)
-                                            homeChat.viewModel.unpinConversation(convItem.convId)
-                                        else
-                                            homeChat.viewModel.pinConversation(convItem.convId)
-                                    }
-                                }
+                            // Delete — opens confirmation dialog
+                            MenuSeparator {}
 
-                                // Archive / Unarchive
-                                MenuItem {
-                                    text: convItem.archived ? qsTr("Unarchive") : qsTr("Archive")
-                                    onTriggered: {
-                                        if (convItem.archived)
-                                            homeChat.viewModel.unarchiveConversation(convItem.convId)
-                                        else
-                                            homeChat.viewModel.archiveConversation(convItem.convId)
-                                    }
-                                }
-
-                                // Delete — opens confirmation dialog
-                                MenuSeparator {}
-
-                                MenuItem {
-                                    text: qsTr("Delete")
-                                    onTriggered: {
-                                        homeChat.pendingDeleteConversationId = convItem.convId
-                                        homeChat.pendingDeleteConversationTitle = convItem.convTitle
-                                        deleteConfirmDialog.open()
-                                    }
+                            MenuItem {
+                                text: "🗑️  " + qsTr("Delete")
+                                onTriggered: {
+                                    homeChat.pendingDeleteConversationId = convItem.convId
+                                    homeChat.pendingDeleteConversationTitle = convItem.convTitle
+                                    deleteConfirmDialog.open()
                                 }
                             }
                         }
@@ -934,7 +974,9 @@ ShellPanel {
                                     spacing: SentinelTheme.spaceSm
 
                                     Text {
-                                        text: "📎 " + (homeChat.viewModel.attachmentSummaries.length > 0 ? homeChat.viewModel.attachmentSummaries[0] : "")
+                                        text: (homeChat.viewModel.attachmentSummaries.length > 0)
+                                              ? (homeChat.getAttachmentIcon(homeChat.viewModel.attachmentSummaries[0]) + " " + homeChat.formatAttachmentSummary(homeChat.viewModel.attachmentSummaries[0]))
+                                              : ""
                                         color: SentinelTheme.textPrimary
                                         font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
                                         elide: Text.ElideMiddle
@@ -1032,7 +1074,7 @@ ShellPanel {
                                             Text {
                                                 anchors.fill: parent
                                                 anchors.leftMargin: SentinelTheme.spaceSm
-                                                text: "🖼️  " + qsTr("Görsel Yükle")
+                                                text: "🖼️  " + qsTr("Upload Image")
                                                 color: homeImgMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary
                                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                                 verticalAlignment: Text.AlignVCenter
@@ -1058,7 +1100,7 @@ ShellPanel {
                                             Text {
                                                 anchors.fill: parent
                                                 anchors.leftMargin: SentinelTheme.spaceSm
-                                                text: "📄  " + qsTr("Dosya Yükle")
+                                                text: "📄  " + qsTr("Upload File")
                                                 color: homeDocMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary
                                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                                 verticalAlignment: Text.AlignVCenter
@@ -1550,9 +1592,13 @@ ShellPanel {
                 height: displayable ? recentMessageColumn.implicitHeight + SentinelTheme.spaceMd : 0
                 visible: displayable
                 radius: SentinelTheme.radiusMd
-                color: messageRole === "user"
-                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.105)
-                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026)
+                color: SentinelTheme.lightTheme
+                       ? (messageRole === "user"
+                          ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.16)
+                          : SentinelTheme.withAlpha("#ffffff", 0.95))
+                       : (messageRole === "user"
+                          ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.105)
+                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026))
                 border.color: SentinelTheme.withAlpha(messageRole === "user"
                                                       ? homeChat.modeAccent
                                                       : SentinelTheme.textPrimary,
@@ -1636,10 +1682,10 @@ ShellPanel {
                             id: messageMenuButton
                             Layout.preferredWidth: 32
                             Layout.preferredHeight: 24
-                            text: "\u22ef"
+                            text: "⋮"
                             hoverEnabled: true
                             focusPolicy: Qt.StrongFocus
-                            onClicked: messageMenu.open()
+                            onClicked: messageMenu.popup()
 
                             contentItem: Text {
                                 text: messageMenuButton.text
@@ -1663,34 +1709,13 @@ ShellPanel {
 
                             Menu {
                                 id: messageMenu
+                                width: 200
 
                                 background: Rectangle {
                                     radius: SentinelTheme.radiusMd
-                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.94)
+                                    border.color: SentinelTheme.withAlpha(homeChat.modeAccent, 0.25)
                                     border.width: 1
-                                }
-
-                                delegate: MenuItem {
-                                    id: msgMenuItem
-                                    contentItem: Text {
-                                        text: msgMenuItem.text
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        color: msgMenuItem.enabled 
-                                               ? (msgMenuItem.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted) 
-                                               : SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.4)
-                                        verticalAlignment: Text.AlignVCenter
-                                        elide: Text.ElideRight
-                                        leftPadding: SentinelTheme.spaceSm
-                                        rightPadding: SentinelTheme.spaceSm
-                                    }
-                                    background: Rectangle {
-                                        implicitHeight: 32
-                                        color: msgMenuItem.highlighted
-                                               ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.12)
-                                               : "transparent"
-                                        radius: SentinelTheme.radiusSm
-                                    }
                                 }
 
                                 MenuItem {
@@ -1707,10 +1732,13 @@ ShellPanel {
                                     onTriggered: homeChat.viewModel.sendMessage(qsTr("Regenerate the previous response."))
                                 }
 
-                                Action {
+                                MenuItem {
                                     text: qsTr("Copy Text")
                                     onTriggered: {
-                                        // Quick copy action if needed
+                                        messageBody.forceActiveFocus()
+                                        messageBody.selectAll()
+                                        messageBody.copy()
+                                        messageBody.deselect()
                                     }
                                 }
 
@@ -1841,7 +1869,9 @@ ShellPanel {
                         spacing: SentinelTheme.spaceSm
 
                         Text {
-                            text: "📎 " + (homeChat.viewModel.attachmentSummaries.length > 0 ? homeChat.viewModel.attachmentSummaries[0] : "")
+                            text: (homeChat.viewModel.attachmentSummaries.length > 0)
+                                  ? (homeChat.getAttachmentIcon(homeChat.viewModel.attachmentSummaries[0]) + " " + homeChat.formatAttachmentSummary(homeChat.viewModel.attachmentSummaries[0]))
+                                  : ""
                             color: SentinelTheme.textPrimary
                             font.pixelSize: SentinelTheme.fontTiny * homeChat.resolutionScale
                             elide: Text.ElideMiddle
@@ -1939,7 +1969,7 @@ ShellPanel {
                                 Text {
                                     anchors.fill: parent
                                     anchors.leftMargin: SentinelTheme.spaceSm
-                                    text: "🖼️  " + qsTr("Görsel Yükle")
+                                    text: "🖼️  " + qsTr("Upload Image")
                                     color: imgMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                     verticalAlignment: Text.AlignVCenter
@@ -1965,7 +1995,7 @@ ShellPanel {
                                 Text {
                                     anchors.fill: parent
                                     anchors.leftMargin: SentinelTheme.spaceSm
-                                    text: "📄  " + qsTr("Dosya Yükle")
+                                    text: "📄  " + qsTr("Upload File")
                                     color: docMouse.containsMouse ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                     verticalAlignment: Text.AlignVCenter
@@ -2124,23 +2154,23 @@ ShellPanel {
 
     FileDialog {
         id: imageFileDialog
-        title: qsTr("Görsel Yükle")
+        title: qsTr("Upload Image")
         fileMode: FileDialog.OpenFile
         nameFilters: [
-            qsTr("Görseller (*.png *.jpg *.jpeg *.webp *.gif *.bmp)"),
-            qsTr("Tüm dosyalar (*)")
+            qsTr("Images (*.png *.jpg *.jpeg *.webp *.gif *.bmp)"),
+            qsTr("All files (*)")
         ]
         onAccepted: homeChat.viewModel.attachFileToChat(selectedFile.toString().replace("file://", ""))
     }
 
     FileDialog {
         id: documentFileDialog
-        title: qsTr("Dosya Yükle")
+        title: qsTr("Upload File")
         fileMode: FileDialog.OpenFile
         nameFilters: [
-            qsTr("Dokümanlar (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)"),
-            qsTr("Kaynak kod dosyaları (*.cpp *.h *.hpp *.qml *.js *.ts *.py *.java *.cs *.go *.rs *.swift)"),
-            qsTr("Tüm dosyalar (*)")
+            qsTr("Documents (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)"),
+            qsTr("Source code files (*.cpp *.h *.hpp *.qml *.js *.ts *.py *.java *.cs *.go *.rs *.swift)"),
+            qsTr("All files (*)")
         ]
         onAccepted: homeChat.viewModel.attachFileToChat(selectedFile.toString().replace("file://", ""))
     }
