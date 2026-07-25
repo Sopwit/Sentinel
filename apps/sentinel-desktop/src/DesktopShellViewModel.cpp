@@ -296,6 +296,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::localInferenceChanged);
     connect(&settings_, &core::AppSettings::cloudApiKeysChanged, this,
             &DesktopShellViewModel::cloudApiKeysChanged);
+    connect(&settings_, &core::AppSettings::selectedCloudProviderChanged, this,
+            &DesktopShellViewModel::selectedCloudProviderChanged);
     connect(&controller_, &core::ApplicationController::promptContextInjectionChanged, this,
             &DesktopShellViewModel::promptContextInjectionChanged);
     connect(&controller_, &core::ApplicationController::voiceConfigurationChanged, this,
@@ -3600,6 +3602,14 @@ void DesktopShellViewModel::setCurrentModeName(const QString& modeName) {
 
 QStringList DesktopShellViewModel::availableModes() const {
     return modeManager_.availableModes();
+}
+
+QString DesktopShellViewModel::selectedCloudProvider() const {
+    return settings_.selectedCloudProvider();
+}
+
+void DesktopShellViewModel::setSelectedCloudProvider(const QString& provider) {
+    settings_.setSelectedCloudProvider(provider);
 }
 
 QString DesktopShellViewModel::currentPage() const {

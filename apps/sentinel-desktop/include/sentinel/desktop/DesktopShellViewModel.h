@@ -1227,6 +1227,7 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString selectedCloudProvider READ selectedCloudProvider WRITE setSelectedCloudProvider NOTIFY selectedCloudProviderChanged)
     Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationCenterSummaries READ notificationCenterSummaries NOTIFY
@@ -2353,6 +2354,8 @@ public:
                                                   const QString& whisperModelPath);
     Q_INVOKABLE void startVoiceCapture();
     Q_INVOKABLE void stopVoiceCapture();
+    QString selectedCloudProvider() const;
+    void setSelectedCloudProvider(const QString& provider);
 
 signals:
     void currentModeChanged();
@@ -2408,6 +2411,7 @@ signals:
     void agentRuntimeChanged();
     void controlledAgentTasksChanged();
     void updateCheckCompleted(bool available, const QString& version, const QString& releaseNotes, const QString& downloadUrl);
+    void selectedCloudProviderChanged();
     void cloudApiKeysChanged();
 
 private:

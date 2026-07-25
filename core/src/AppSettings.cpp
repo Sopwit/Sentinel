@@ -292,6 +292,25 @@ void AppSettings::setSelectedRuntimeProvider(const QString& providerId) {
     emit selectedRuntimeProviderChanged();
 }
 
+QString AppSettings::selectedCloudProvider() const {
+    if (!store_) {
+        return QStringLiteral("openai");
+    }
+    const auto stored = store_->value(QString::fromLatin1(selectedCloudProviderKey), QStringLiteral("openai")).trimmed().toLower();
+    return (stored == QStringLiteral("claude") || stored == QStringLiteral("gemini")) ? stored : QStringLiteral("openai");
+}
+
+void AppSettings::setSelectedCloudProvider(const QString& providerId) {
+    const auto normalized = providerId.trimmed().toLower();
+    const auto selected = (normalized == QStringLiteral("claude") || normalized == QStringLiteral("gemini")) ? normalized : QStringLiteral("openai");
+    if (selected == selectedCloudProvider() || !store_) {
+        return;
+    }
+
+    store_->setValue(QString::fromLatin1(selectedCloudProviderKey), selected);
+    emit selectedCloudProviderChanged();
+}
+
 QString AppSettings::selectedLocalModel() const {
     return selectedModelForProvider(QStringLiteral("ollama"));
 }

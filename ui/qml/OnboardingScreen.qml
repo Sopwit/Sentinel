@@ -90,6 +90,7 @@ Item {
     readonly property var providers: [
         { id: "Ollama",                   note: qsTr("Popular local runtime, easy to start.") },
         { id: "LM Studio",                note: qsTr("Friendly desktop app for local models.") },
+        { id: "Cloud API",                note: qsTr("Direct Cloud APIs: OpenAI ChatGPT, Anthropic Claude & Google Gemini.") },
         { id: "llama.cpp server",         note: qsTr("Lightweight server for advanced users.") }
     ]
 
@@ -723,6 +724,8 @@ Item {
                                                 viewModel.selectedRuntimeProvider = "ollama"
                                             } else if (modelData.id === "LM Studio") {
                                                 viewModel.selectedRuntimeProvider = "lm-studio"
+                                            } else if (modelData.id === "Cloud API") {
+                                                viewModel.selectedRuntimeProvider = "cloud-api"
                                             } else if (modelData.id === "llama.cpp server") {
                                                 viewModel.selectedRuntimeProvider = "llama-cpp-server"
                                             }
@@ -1023,6 +1026,153 @@ Item {
                                     placeholderText: "e.g. llama-3.2-3b"
                                     onTextChanged: {
                                         viewModel.selectedLocalModel = text
+                                    }
+                                }
+                            }
+                        }
+
+                        // Cloud API Specific Setup (OpenAI, Claude, Gemini)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: viewModel.selectedRuntimeProvider === "cloud-api" ||
+                                     viewModel.selectedRuntimeProvider === "openai" ||
+                                     viewModel.selectedRuntimeProvider === "claude" ||
+                                     viewModel.selectedRuntimeProvider === "gemini"
+                            spacing: SentinelTheme.spaceMd
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Cloud API Configuration:")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontCard
+                                font.bold: true
+                            }
+
+                            Label {
+                                Layout.fillWidth: true
+                                text: qsTr("Select your cloud AI provider distribution and enter your API key to connect natively.")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontBody
+                                wrapMode: Text.WordWrap
+                            }
+
+                            // Sub-Provider Selection Buttons
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceSm
+
+                                SentinelButton {
+                                    text: "OpenAI (ChatGPT)"
+                                    highlighted: viewModel.selectedCloudProvider === "openai"
+                                    onClicked: {
+                                        viewModel.selectedCloudProvider = "openai"
+                                        if (!viewModel.selectedLocalModel || viewModel.selectedLocalModel.startsWith("claude") || viewModel.selectedLocalModel.startsWith("gemini")) {
+                                            viewModel.selectedLocalModel = "gpt-4o"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "Anthropic Claude"
+                                    highlighted: viewModel.selectedCloudProvider === "claude"
+                                    onClicked: {
+                                        viewModel.selectedCloudProvider = "claude"
+                                        if (!viewModel.selectedLocalModel || viewModel.selectedLocalModel.startsWith("gpt") || viewModel.selectedLocalModel.startsWith("gemini") || viewModel.selectedLocalModel.startsWith("o1") || viewModel.selectedLocalModel.startsWith("o3")) {
+                                            viewModel.selectedLocalModel = "claude-3-5-sonnet-20241022"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "Google Gemini"
+                                    highlighted: viewModel.selectedCloudProvider === "gemini"
+                                    onClicked: {
+                                        viewModel.selectedCloudProvider = "gemini"
+                                        if (!viewModel.selectedLocalModel || viewModel.selectedLocalModel.startsWith("gpt") || viewModel.selectedLocalModel.startsWith("claude") || viewModel.selectedLocalModel.startsWith("o1") || viewModel.selectedLocalModel.startsWith("o3")) {
+                                            viewModel.selectedLocalModel = "gemini-1.5-flash"
+                                        }
+                                    }
+                                }
+                            }
+
+                            // API Key Field
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceXs
+
+                                Label {
+                                    text: viewModel.selectedCloudProvider === "claude" ? qsTr("Anthropic Claude API Key:") :
+                                          viewModel.selectedCloudProvider === "gemini" ? qsTr("Google Gemini API Key:") :
+                                          qsTr("OpenAI (ChatGPT) API Key:")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 38
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                                    property bool showKey: false
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceSm
+                                        spacing: SentinelTheme.spaceSm
+
+                                        TextInput {
+                                            Layout.fillWidth: true
+                                            text: viewModel.selectedCloudProvider === "claude" ? viewModel.claudeApiKey :
+                                                  viewModel.selectedCloudProvider === "gemini" ? viewModel.geminiApiKey :
+                                                  viewModel.openAiApiKey
+                                            echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
+                                            color: SentinelTheme.textPrimary
+                                            verticalAlignment: Text.AlignVCenter
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            selectByMouse: true
+                                            clip: true
+                                            onEditingFinished: {
+                                                if (viewModel.selectedCloudProvider === "claude") viewModel.claudeApiKey = text
+                                                else if (viewModel.selectedCloudProvider === "gemini") viewModel.geminiApiKey = text
+                                                else viewModel.openAiApiKey = text
+                                            }
+                                        }
+
+                                        SentinelButton {
+                                            text: parent.parent.showKey ? "🔒" : "👁️"
+                                            onClicked: parent.parent.showKey = !parent.parent.showKey
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Cloud Model Selection
+                            RowLayout {
+                                Layout.topMargin: SentinelTheme.spaceSm
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceMd
+
+                                Label {
+                                    text: qsTr("Cloud Model:")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                    Layout.fillWidth: true
+                                }
+
+                                ComboBox {
+                                    Layout.preferredWidth: 280
+                                    model: viewModel.selectedCloudProvider === "claude" ?
+                                           ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"] :
+                                           viewModel.selectedCloudProvider === "gemini" ?
+                                           ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"] :
+                                           ["gpt-4o", "gpt-4o-mini", "o1", "o3-mini", "gpt-4-turbo"]
+                                    currentIndex: Math.max(0, model.indexOf(viewModel.selectedLocalModel))
+                                    onActivated: (idx) => {
+                                        viewModel.selectedLocalModel = model[idx]
                                     }
                                 }
                             }
