@@ -1514,7 +1514,23 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     if (httpStatus >= 400 || reply->error() != QNetworkReply::NoError) {
         result.status = LocalInferenceStreamStatus::Error;
         result.error = LocalInferenceError::RequestFailed;
-        if (httpStatus == 404) {
+
+        // Extract API-provided error details from response JSON body if available
+        QString apiErrorMsg;
+        const auto doc = QJsonDocument::fromJson(pending);
+        if (doc.isObject()) {
+            const auto errVal = doc.object().value(QStringLiteral("error"));
+            if (errVal.isObject()) {
+                apiErrorMsg = errVal.toObject().value(QStringLiteral("message")).toString();
+            } else if (errVal.isString()) {
+                apiErrorMsg = errVal.toString();
+            }
+        }
+
+        if (!apiErrorMsg.isEmpty()) {
+            result.summary = QStringLiteral("%1 error (HTTP %2): %3")
+                                 .arg(providerLabel).arg(httpStatus).arg(apiErrorMsg.trimmed());
+        } else if (httpStatus == 404) {
             result.summary = QStringLiteral("%1 error: Model '%2' was not found (HTTP 404). Check model selection in Settings.")
                                  .arg(providerLabel, result.model);
         } else if (httpStatus == 400) {
