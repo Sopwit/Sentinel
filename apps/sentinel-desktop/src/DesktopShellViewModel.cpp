@@ -8,11 +8,13 @@
 
 #include <QApplication>
 #include <QCryptographicHash>
+#include <QCursor>
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QGuiApplication>
 #include <QIODevice>
 #include <QIcon>
 #include <QJsonArray>
@@ -25,6 +27,7 @@
 #include <QProcess>
 #include <QRegularExpression>
 #include <QSaveFile>
+#include <QScreen>
 #include <QStandardPaths>
 #include <QSystemTrayIcon>
 #include <QUrl>
@@ -149,12 +152,26 @@ QString notificationsToJson(const QJsonArray& notifications) {
 QString notificationSummary(const QJsonObject& item) {
     const auto state = item.value(QStringLiteral("archived")).toBool() ? QStringLiteral("Archived")
                        : item.value(QStringLiteral("read")).toBool()   ? QStringLiteral("Read")
-                                                                       : QStringLiteral("Unread");
+                                                                        : QStringLiteral("Unread");
     const auto pin = item.value(QStringLiteral("pinned")).toBool() ? QStringLiteral("Pinned")
-                                                                   : QStringLiteral("Unpinned");
+                                                                    : QStringLiteral("Unpinned");
     return QStringLiteral("%1 - %2 - %3 - %4")
         .arg(item.value(QStringLiteral("category")).toString(),
              item.value(QStringLiteral("title")).toString(), state, pin);
+}
+
+QJsonObject notificationJsonObject(const QJsonObject& item) {
+    QJsonObject obj;
+    obj.insert(QStringLiteral("id"), item.value(QStringLiteral("id")).toString());
+    obj.insert(QStringLiteral("category"), item.value(QStringLiteral("category")).toString());
+    obj.insert(QStringLiteral("title"), item.value(QStringLiteral("title")).toString());
+    obj.insert(QStringLiteral("body"), item.value(QStringLiteral("body")).toString());
+    obj.insert(QStringLiteral("priority"), item.value(QStringLiteral("priority")).toString(QStringLiteral("Normal")));
+    obj.insert(QStringLiteral("timestamp"), item.value(QStringLiteral("timestamp")).toDouble(QDateTime::currentMSecsSinceEpoch()));
+    obj.insert(QStringLiteral("pinned"), item.value(QStringLiteral("pinned")).toBool());
+    obj.insert(QStringLiteral("archived"), item.value(QStringLiteral("archived")).toBool());
+    obj.insert(QStringLiteral("read"), item.value(QStringLiteral("read")).toBool());
+    return obj;
 }
 
 bool updateNotification(const QString& json, const QString& notificationId,
@@ -3610,6 +3627,7 @@ QString DesktopShellViewModel::selectedCloudProvider() const {
 
 void DesktopShellViewModel::setSelectedCloudProvider(const QString& provider) {
     settings_.setSelectedCloudProvider(provider);
+    controller_.refreshOllamaStatus();
 }
 
 QString DesktopShellViewModel::currentPage() const {
@@ -3746,6 +3764,39 @@ bool DesktopShellViewModel::companionPaused() const {
     return companionPaused_;
 }
 
+bool DesktopShellViewModel::companionChatVisible() const {
+    return companionChatVisible_;
+}
+
+void DesktopShellViewModel::setCompanionChatVisible(bool visible) {
+    if (companionChatVisible_ == visible) {
+        return;
+    }
+    companionChatVisible_ = visible;
+    emit companionChatVisibleChanged();
+}
+
+void DesktopShellViewModel::toggleCompanionChat() {
+    companionChatVisible_ = !companionChatVisible_;
+    emit companionChatVisibleChanged();
+    emit requestCompanionChat();
+}
+
+void DesktopShellViewModel::openCompanionChat() {
+    if (!companionChatVisible_) {
+        companionChatVisible_ = true;
+        emit companionChatVisibleChanged();
+    }
+    emit requestCompanionChat();
+}
+
+void DesktopShellViewModel::hideCompanionChat() {
+    if (companionChatVisible_) {
+        companionChatVisible_ = false;
+        emit companionChatVisibleChanged();
+    }
+}
+
 void DesktopShellViewModel::setCompanionNativeAvailable(bool available) {
     if (available == companionNativeAvailable_) {
         return;
@@ -3765,6 +3816,10 @@ void DesktopShellViewModel::setCompanionPaused(bool paused) {
 
     companionPaused_ = paused;
     emit companionChanged();
+}
+
+void DesktopShellViewModel::toggleCompanionPause() {
+    setCompanionPaused(!companionPaused_);
 }
 
 QString DesktopShellViewModel::companionStatus() const {
@@ -3952,6 +4007,18 @@ QStringList DesktopShellViewModel::notificationLifecycleSummaries() const {
     return summaries;
 }
 
+int DesktopShellViewModel::unreadNotificationCount() const {
+    int count = 0;
+    const auto notifications = notificationsFromJson(settings_.notificationCenterJson());
+    for (const auto& value : notifications) {
+        const auto item = value.toObject();
+        if (!item.value(QStringLiteral("read")).toBool() && !item.value(QStringLiteral("archived")).toBool()) {
+            ++count;
+        }
+    }
+    return count;
+}
+
 QStringList DesktopShellViewModel::notificationFilteredSummaries() const {
     QStringList summaries;
     const auto query = notificationSearchQuery_.trimmed().toLower();
@@ -3968,10 +4035,9 @@ QStringList DesktopShellViewModel::notificationFilteredSummaries() const {
             !item.value(QStringLiteral("body")).toString().toLower().contains(query)) {
             continue;
         }
-        summaries.append(line);
+        summaries.append(QString::fromUtf8(QJsonDocument(notificationJsonObject(item)).toJson(QJsonDocument::Compact)));
     }
-    return summaries.isEmpty() ? QStringList{QStringLiteral("No notifications match the filter.")}
-                               : summaries;
+    return summaries;
 }
 
 QString DesktopShellViewModel::notificationSearchQuery() const {
@@ -5297,19 +5363,29 @@ void DesktopShellViewModel::relaunchApplication() {
 
 void DesktopShellViewModel::addNotification(const QString& category, const QString& title,
                                             const QString& body) {
+    addNotificationWithPriority(category, title, body, QStringLiteral("Normal"));
+}
+
+void DesktopShellViewModel::addNotificationWithPriority(const QString& category,
+                                                        const QString& title,
+                                                        const QString& body,
+                                                        const QString& priority) {
     const QString json = settings_.notificationCenterJson();
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
     QJsonObject root = doc.object();
     QJsonArray arr = root.value(QStringLiteral("notifications")).toArray();
 
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
     QJsonObject item;
     const QString newId = QStringLiteral("notif-%1-%2")
-                              .arg(QDateTime::currentMSecsSinceEpoch())
+                              .arg(now)
                               .arg(qHash(title) % 10000);
     item.insert(QStringLiteral("id"), newId);
     item.insert(QStringLiteral("category"), category);
     item.insert(QStringLiteral("title"), title);
     item.insert(QStringLiteral("body"), body);
+    item.insert(QStringLiteral("priority"), priority);
+    item.insert(QStringLiteral("timestamp"), now);
     item.insert(QStringLiteral("pinned"), false);
     item.insert(QStringLiteral("archived"), false);
     item.insert(QStringLiteral("read"), false);
@@ -5320,6 +5396,116 @@ void DesktopShellViewModel::addNotification(const QString& category, const QStri
     settings_.setNotificationCenterJson(
         QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact)));
     emit nativeExperienceChanged();
+}
+
+bool DesktopShellViewModel::dndEnabled() const {
+    return dndEnabled_;
+}
+
+void DesktopShellViewModel::setDndEnabled(bool enabled) {
+    if (enabled == dndEnabled_) return;
+    dndEnabled_ = enabled;
+    emit dndEnabledChanged();
+}
+
+bool DesktopShellViewModel::snoozeNotification(const QString& notificationId, int minutes) {
+    const qint64 snoozeUntil = QDateTime::currentMSecsSinceEpoch() + static_cast<qint64>(minutes) * 60000;
+    QString updatedJson;
+    if (!updateNotification(
+            settings_.notificationCenterJson(), notificationId,
+            [snoozeUntil](QJsonObject& item) {
+                item.insert(QStringLiteral("snoozed"), true);
+                item.insert(QStringLiteral("snoozeUntil"), snoozeUntil);
+            },
+            &updatedJson)) {
+        return false;
+    }
+    settings_.setNotificationCenterJson(updatedJson);
+    emit nativeExperienceChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::unsnoozeNotification(const QString& notificationId) {
+    QString updatedJson;
+    if (!updateNotification(
+            settings_.notificationCenterJson(), notificationId,
+            [](QJsonObject& item) {
+                item.insert(QStringLiteral("snoozed"), false);
+                item.remove(QStringLiteral("snoozeUntil"));
+            },
+            &updatedJson)) {
+        return false;
+    }
+    settings_.setNotificationCenterJson(updatedJson);
+    emit nativeExperienceChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::isChannelMuted(const QString& category) const {
+    return mutedChannelNames().contains(category);
+}
+
+void DesktopShellViewModel::setChannelMuted(const QString& category, bool muted) {
+    auto channels = mutedChannelNames();
+    if (muted) {
+        if (!channels.contains(category)) channels.append(category);
+    } else {
+        channels.removeAll(category);
+    }
+    QJsonArray arr;
+    for (const auto& ch : channels) {
+        arr.append(ch);
+    }
+    auto doc = QJsonDocument::fromJson(settings_.notificationCenterJson().toUtf8());
+    auto root = doc.object();
+    root.insert(QStringLiteral("mutedChannels"), arr);
+    settings_.setNotificationCenterJson(
+        QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact)));
+    emit nativeExperienceChanged();
+}
+
+QStringList DesktopShellViewModel::mutedChannelNames() const {
+    const auto json = settings_.notificationCenterJson();
+    const auto doc = QJsonDocument::fromJson(json.toUtf8());
+    const auto arr = doc.object().value(QStringLiteral("mutedChannels")).toArray();
+    QStringList result;
+    for (const auto& v : arr) {
+        result.append(v.toString());
+    }
+    return result;
+}
+
+void DesktopShellViewModel::playNotificationSound() {
+    QApplication::beep();
+}
+
+QVariantMap DesktopShellViewModel::cursorScreenGeometry() {
+    const auto cursorPos = QCursor::pos();
+    const auto screens = QGuiApplication::screens();
+    for (const auto* screen : screens) {
+        if (screen && screen->geometry().contains(cursorPos)) {
+            return {
+                {QStringLiteral("x"), screen->availableGeometry().x()},
+                {QStringLiteral("y"), screen->availableGeometry().y()},
+                {QStringLiteral("width"), screen->availableGeometry().width()},
+                {QStringLiteral("height"), screen->availableGeometry().height()},
+                {QStringLiteral("screenWidth"), screen->geometry().width()},
+                {QStringLiteral("screenHeight"), screen->geometry().height()},
+            };
+        }
+    }
+    const auto* primary = QGuiApplication::primaryScreen();
+    if (primary) {
+        return {
+            {QStringLiteral("x"), primary->availableGeometry().x()},
+            {QStringLiteral("y"), primary->availableGeometry().y()},
+            {QStringLiteral("width"), primary->availableGeometry().width()},
+            {QStringLiteral("height"), primary->availableGeometry().height()},
+            {QStringLiteral("screenWidth"), primary->geometry().width()},
+            {QStringLiteral("screenHeight"), primary->geometry().height()},
+        };
+    }
+    return {};
 }
 
 void DesktopShellViewModel::replayOnboarding() {
@@ -5381,6 +5567,42 @@ bool DesktopShellViewModel::clearArchivedNotifications() {
         }
     }
     settings_.setNotificationCenterJson(notificationsToJson(kept));
+    return true;
+}
+
+bool DesktopShellViewModel::removeNotificationById(const QString& notificationId) {
+    const auto notifications = notificationsFromJson(settings_.notificationCenterJson());
+    QJsonArray kept;
+    bool found = false;
+    for (const auto& value : notifications) {
+        const auto item = value.toObject();
+        if (item.value(QStringLiteral("id")).toString() == notificationId) {
+            found = true;
+            continue;
+        }
+        kept.append(item);
+    }
+    if (!found) return false;
+    settings_.setNotificationCenterJson(notificationsToJson(kept));
+    emit nativeExperienceChanged();
+    return true;
+}
+
+bool DesktopShellViewModel::markAllNotificationsRead() {
+    const auto notifications = notificationsFromJson(settings_.notificationCenterJson());
+    QJsonArray updated;
+    bool changed = false;
+    for (const auto& value : notifications) {
+        auto item = value.toObject();
+        if (!item.value(QStringLiteral("read")).toBool()) {
+            item.insert(QStringLiteral("read"), true);
+            changed = true;
+        }
+        updated.append(item);
+    }
+    if (!changed) return false;
+    settings_.setNotificationCenterJson(notificationsToJson(updated));
+    emit nativeExperienceChanged();
     return true;
 }
 
@@ -5628,6 +5850,20 @@ QString DesktopShellViewModel::mistralApiKey() const {
 
 void DesktopShellViewModel::setMistralApiKey(const QString& key) {
     settings_.setMistralApiKey(key);
+}
+
+bool DesktopShellViewModel::notificationCenterVisible() const {
+    return notificationCenterVisible_;
+}
+
+void DesktopShellViewModel::setNotificationCenterVisible(bool visible) {
+    if (visible == notificationCenterVisible_) return;
+    notificationCenterVisible_ = visible;
+    emit notificationCenterVisibleChanged();
+}
+
+void DesktopShellViewModel::toggleNotificationCenter() {
+    setNotificationCenterVisible(!notificationCenterVisible_);
 }
 
 QString DesktopShellViewModel::normalizedPageOrDefault(const QString& page) {

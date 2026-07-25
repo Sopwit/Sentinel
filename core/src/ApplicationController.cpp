@@ -9036,7 +9036,28 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
             QStringLiteral("/settings.json");
         AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
         const QString cloudProv = settings.selectedCloudProvider();
-        if (cloudProv == QStringLiteral("claude") || selectedRuntimeProvider_ == QStringLiteral("claude")) {
+        const bool isClaude = cloudProv == QStringLiteral("claude") || selectedRuntimeProvider_ == QStringLiteral("claude");
+        const bool isGemini = cloudProv == QStringLiteral("gemini") || selectedRuntimeProvider_ == QStringLiteral("gemini");
+        const bool isDeepSeek = cloudProv == QStringLiteral("deepseek") || selectedRuntimeProvider_ == QStringLiteral("deepseek");
+        const bool isGroq = cloudProv == QStringLiteral("groq") || selectedRuntimeProvider_ == QStringLiteral("groq");
+        const bool isMistral = cloudProv == QStringLiteral("mistral") || selectedRuntimeProvider_ == QStringLiteral("mistral");
+        const bool isOpenAi = (!isClaude && !isGemini && !isDeepSeek && !isGroq && !isMistral) ||
+                             selectedRuntimeProvider_ == QStringLiteral("openai");
+
+        // Use dynamically fetched models when cache matches the current provider
+        if (!cachedCloudProviderModels_.isEmpty() && !cachedCloudProviderOriginId_.isEmpty()) {
+            if ((isGemini && cachedCloudProviderOriginId_ == QStringLiteral("gemini")) ||
+                (isClaude && cachedCloudProviderOriginId_ == QStringLiteral("claude")) ||
+                (isDeepSeek && cachedCloudProviderOriginId_ == QStringLiteral("deepseek")) ||
+                (isGroq && cachedCloudProviderOriginId_ == QStringLiteral("groq")) ||
+                (isMistral && cachedCloudProviderOriginId_ == QStringLiteral("mistral")) ||
+                (isOpenAi && cachedCloudProviderOriginId_ == QStringLiteral("openai"))) {
+                return cachedCloudProviderModels_;
+            }
+        }
+
+        // Fall back to hardcoded model lists
+        if (isClaude) {
             return {
                 OllamaModelSummary{QStringLiteral("claude-3-5-sonnet-20241022"), QStringLiteral("Anthropic Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("claude-3-5-haiku-20241022"), QStringLiteral("Anthropic Cloud"), 0},
@@ -9044,29 +9065,29 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
                 OllamaModelSummary{QStringLiteral("claude-3-sonnet-20240229"), QStringLiteral("Anthropic Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("claude-3-haiku-20240307"), QStringLiteral("Anthropic Cloud"), 0}
             };
-        } else if (cloudProv == QStringLiteral("gemini") || selectedRuntimeProvider_ == QStringLiteral("gemini")) {
+        } else if (isGemini) {
             return {
+                OllamaModelSummary{QStringLiteral("gemini-2.0-flash"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-2.5-flash"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-2.5-pro"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-2.0-flash"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-2.0-flash-lite"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-1.5-flash"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-1.5-pro"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"), QStringLiteral("Google Cloud"), 0}
             };
-        } else if (cloudProv == QStringLiteral("deepseek") || selectedRuntimeProvider_ == QStringLiteral("deepseek")) {
+        } else if (isDeepSeek) {
             return {
                 OllamaModelSummary{QStringLiteral("deepseek-chat"), QStringLiteral("DeepSeek Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("deepseek-reasoner"), QStringLiteral("DeepSeek Cloud"), 0}
             };
-        } else if (cloudProv == QStringLiteral("groq") || selectedRuntimeProvider_ == QStringLiteral("groq")) {
+        } else if (isGroq) {
             return {
                 OllamaModelSummary{QStringLiteral("llama-3.3-70b-versatile"), QStringLiteral("Groq Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("llama-3.1-8b-instant"), QStringLiteral("Groq Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("mixtral-8x7b-32768"), QStringLiteral("Groq Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("deepseek-r1-distill-llama-70b"), QStringLiteral("Groq Cloud"), 0}
             };
-        } else if (cloudProv == QStringLiteral("mistral") || selectedRuntimeProvider_ == QStringLiteral("mistral")) {
+        } else if (isMistral) {
             return {
                 OllamaModelSummary{QStringLiteral("mistral-large-latest"), QStringLiteral("Mistral Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("pixtral-large-latest"), QStringLiteral("Mistral Cloud"), 0},
@@ -9115,6 +9136,8 @@ void ApplicationController::pollOllama() {
         QList<OllamaModelSummary> lmStudioModels;
         QList<OllamaModelSummary> llamaCppModels;
         QList<OllamaModelSummary> openAiModels;
+        QList<OllamaModelSummary> cloudModels;
+        QString cloudOriginId;
 
         if (ollamaRuntimeClient_) {
             health = ollamaRuntimeClient_->healthCheck();
@@ -9137,14 +9160,60 @@ void ApplicationController::pollOllama() {
                    provider == QStringLiteral("claude") || provider == QStringLiteral("gemini") ||
                    provider == QStringLiteral("deepseek") || provider == QStringLiteral("groq") ||
                    provider == QStringLiteral("mistral")) {
-            // Cloud APIs are static/on-demand and should NOT be polled continuously in background loops.
+            const QString settingsPath =
+                QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
+                QStringLiteral("/settings.json");
+            AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
+            const QString cloudProv = settings.selectedCloudProvider();
+
+            const bool isGemini = provider == QStringLiteral("gemini") ||
+                                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("gemini"));
+            const bool isClaude = provider == QStringLiteral("claude") ||
+                                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("claude"));
+            const bool isDeepSeek = provider == QStringLiteral("deepseek") ||
+                                   (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("deepseek"));
+            const bool isGroq = provider == QStringLiteral("groq") ||
+                               (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("groq"));
+            const bool isMistral = provider == QStringLiteral("mistral") ||
+                                  (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("mistral"));
+            const bool isOpenAi = provider == QStringLiteral("openai") ||
+                                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("openai"));
+
+            if (isGemini) {
+                cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000);
+                cloudOriginId = QStringLiteral("gemini");
+            } else if (isClaude) {
+                cloudModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 4000);
+                cloudOriginId = QStringLiteral("claude");
+            } else if (isDeepSeek) {
+                cloudModels = fetchOpenAiCloudModels(
+                    QUrl(QStringLiteral("https://api.deepseek.com/v1/models")),
+                    settings.deepseekApiKey(), 4000);
+                cloudOriginId = QStringLiteral("deepseek");
+            } else if (isGroq) {
+                cloudModels = fetchOpenAiCloudModels(
+                    QUrl(QStringLiteral("https://api.groq.com/openai/v1/models")),
+                    settings.groqApiKey(), 4000);
+                cloudOriginId = QStringLiteral("groq");
+            } else if (isMistral) {
+                cloudModels = fetchOpenAiCloudModels(
+                    QUrl(QStringLiteral("https://api.mistral.ai/v1/models")),
+                    settings.mistralApiKey(), 4000);
+                cloudOriginId = QStringLiteral("mistral");
+            } else if (isOpenAi) {
+                cloudModels = fetchOpenAiCloudModels(
+                    QUrl(QStringLiteral("https://api.openai.com/v1/models")),
+                    settings.openAiApiKey(), 4000);
+                cloudOriginId = QStringLiteral("openai");
+            }
         }
 
         QMetaObject::invokeMethod(
             this,
             [this, health = std::move(health), ollamaModels = std::move(ollamaModels),
              lmStudioModels = std::move(lmStudioModels), llamaCppModels = std::move(llamaCppModels),
-             openAiModels = std::move(openAiModels)]() {
+             openAiModels = std::move(openAiModels), cloudModels = std::move(cloudModels),
+             cloudOriginId = std::move(cloudOriginId)]() {
                 bool changed = false;
                 ollamaCacheInitialized_ = true;
 
@@ -9202,6 +9271,21 @@ void ApplicationController::pollOllama() {
                     for (int i = 0; i < openAiModels.size(); ++i) {
                         if (cachedOpenAiCompatibleLocalModels_[i].name != openAiModels[i].name) {
                             cachedOpenAiCompatibleLocalModels_ = openAiModels;
+                            changed = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (cachedCloudProviderOriginId_ != cloudOriginId ||
+                    cachedCloudProviderModels_.size() != cloudModels.size()) {
+                    cachedCloudProviderOriginId_ = cloudOriginId;
+                    cachedCloudProviderModels_ = cloudModels;
+                    changed = true;
+                } else {
+                    for (int i = 0; i < cloudModels.size(); ++i) {
+                        if (cachedCloudProviderModels_[i].name != cloudModels[i].name) {
+                            cachedCloudProviderModels_ = cloudModels;
                             changed = true;
                             break;
                         }

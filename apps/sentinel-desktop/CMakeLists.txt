@@ -96,6 +96,9 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/GlowSurface.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/ModelDetailPopup.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationCenterPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationItemDelegate.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationToast.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeDetailPopup.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/HomeChatSurface.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml
@@ -111,6 +114,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusChip.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusPulse.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/TrayCompanionWindow.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/MotionTokens.qml
@@ -130,6 +134,9 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStrea
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/GlowSurface.qml PROPERTIES QT_RESOURCE_ALIAS GlowSurface.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS HeaderBar.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ModelDetailPopup.qml PROPERTIES QT_RESOURCE_ALIAS ModelDetailPopup.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationCenterPanel.qml PROPERTIES QT_RESOURCE_ALIAS NotificationCenterPanel.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationItemDelegate.qml PROPERTIES QT_RESOURCE_ALIAS NotificationItemDelegate.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationToast.qml PROPERTIES QT_RESOURCE_ALIAS NotificationToast.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeDetailPopup.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeDetailPopup.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HomeChatSurface.qml PROPERTIES QT_RESOURCE_ALIAS HomeChatSurface.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml PROPERTIES QT_RESOURCE_ALIAS InfoRow.qml)
@@ -145,6 +152,7 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusChip.qml PROPERTIES QT_RESOURCE_ALIAS StatusChip.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusPulse.qml PROPERTIES QT_RESOURCE_ALIAS StatusPulse.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml PROPERTIES QT_RESOURCE_ALIAS StatusBar.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/TrayCompanionWindow.qml PROPERTIES QT_RESOURCE_ALIAS TrayCompanionWindow.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml PROPERTIES QT_RESOURCE_ALIAS WorkspacePresence.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTheme.qml QT_QML_SINGLETON_TYPE TRUE)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/MotionTokens.qml PROPERTIES QT_RESOURCE_ALIAS MotionTokens.qml QT_QML_SINGLETON_TYPE TRUE)

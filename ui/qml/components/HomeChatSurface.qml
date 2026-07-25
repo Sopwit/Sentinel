@@ -775,7 +775,7 @@ ShellPanel {
                                 color: SentinelTheme.textPrimary
                                 font.pixelSize: (homeChat.compact ? SentinelTheme.fontDisplay : SentinelTheme.fontHero) * homeChat.resolutionScale
                                 font.bold: true
-                                font.family: "Outfit"
+                                font.family: SentinelTheme.fontFamily
                             }
 
                             Label {

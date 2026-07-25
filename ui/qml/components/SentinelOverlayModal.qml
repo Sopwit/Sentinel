@@ -18,6 +18,7 @@ Popup {
     focus: true
     closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
     padding: 0
+    clip: true
 
     Overlay.modal: Rectangle {
         color: SentinelTheme.lightTheme
