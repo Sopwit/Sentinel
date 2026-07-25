@@ -1260,4 +1260,43 @@ void AppSettings::setControlledAgentPermissionsJson(const QString& json) {
     emit controlledAgentTasksChanged();
 }
 
+QString AppSettings::openAiApiKey() const {
+    return store_ ? store_->value(QString::fromLatin1(openAiApiKeyKey), QString()) : QString();
+}
+
+void AppSettings::setOpenAiApiKey(const QString& key) {
+    const QString trimmed = key.trimmed();
+    if (trimmed == openAiApiKey() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(openAiApiKeyKey), trimmed);
+    emit cloudApiKeysChanged();
+}
+
+QString AppSettings::claudeApiKey() const {
+    return store_ ? store_->value(QString::fromLatin1(claudeApiKeyKey), QString()) : QString();
+}
+
+void AppSettings::setClaudeApiKey(const QString& key) {
+    const QString trimmed = key.trimmed();
+    if (trimmed == claudeApiKey() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(claudeApiKeyKey), trimmed);
+    emit cloudApiKeysChanged();
+}
+
+QString AppSettings::geminiApiKey() const {
+    return store_ ? store_->value(QString::fromLatin1(geminiApiKeyKey), QString()) : QString();
+}
+
+void AppSettings::setGeminiApiKey(const QString& key) {
+    const QString trimmed = key.trimmed();
+    if (trimmed == geminiApiKey() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(geminiApiKeyKey), trimmed);
+    emit cloudApiKeysChanged();
+}
+
 } // namespace sentinel::core

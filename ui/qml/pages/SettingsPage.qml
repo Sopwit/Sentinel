@@ -1553,6 +1553,205 @@ Item {
                                 }
                             }
                         }
+
+                        SectionTitle {
+                            title: qsTr("Cloud API Credentials")
+                            subtitle: qsTr("Configure API keys for OpenAI (ChatGPT), Anthropic Claude, and Google Gemini.")
+                            Layout.fillWidth: true
+                            Layout.topMargin: SentinelTheme.spaceMd
+                        }
+
+                        // OpenAI API Key Input Card
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceXs
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceSm
+
+                                Label {
+                                    text: qsTr("OpenAI (ChatGPT) API Key")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                StatusChip {
+                                    value: settingsPage.viewModel.openAiApiKey ? qsTr("Configured") : qsTr("Not Set")
+                                    accent: settingsPage.viewModel.openAiApiKey ? SentinelTheme.success : SentinelTheme.textMuted
+                                    selected: true
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 38
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                border.color: openAiKeyInput.activeFocus
+                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                property bool showKey: false
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: SentinelTheme.spaceMd
+                                    anchors.rightMargin: SentinelTheme.spaceSm
+                                    spacing: SentinelTheme.spaceSm
+
+                                    TextInput {
+                                        id: openAiKeyInput
+                                        Layout.fillWidth: true
+                                        text: settingsPage.viewModel.openAiApiKey
+                                        echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
+                                        color: SentinelTheme.textPrimary
+                                        selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
+                                        verticalAlignment: Text.AlignVCenter
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        selectByMouse: true
+                                        clip: true
+                                        onEditingFinished: settingsPage.viewModel.openAiApiKey = text
+                                    }
+
+                                    SentinelButton {
+                                        text: parent.parent.showKey ? "🔒" : "👁️"
+                                        onClicked: parent.parent.showKey = !parent.parent.showKey
+                                    }
+                                }
+                            }
+                        }
+
+                        // Anthropic Claude API Key Input Card
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceXs
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceSm
+
+                                Label {
+                                    text: qsTr("Anthropic Claude API Key")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                StatusChip {
+                                    value: settingsPage.viewModel.claudeApiKey ? qsTr("Configured") : qsTr("Not Set")
+                                    accent: settingsPage.viewModel.claudeApiKey ? SentinelTheme.success : SentinelTheme.textMuted
+                                    selected: true
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 38
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                border.color: claudeKeyInput.activeFocus
+                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                property bool showKey: false
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: SentinelTheme.spaceMd
+                                    anchors.rightMargin: SentinelTheme.spaceSm
+                                    spacing: SentinelTheme.spaceSm
+
+                                    TextInput {
+                                        id: claudeKeyInput
+                                        Layout.fillWidth: true
+                                        text: settingsPage.viewModel.claudeApiKey
+                                        echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
+                                        color: SentinelTheme.textPrimary
+                                        selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
+                                        verticalAlignment: Text.AlignVCenter
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        selectByMouse: true
+                                        clip: true
+                                        onEditingFinished: settingsPage.viewModel.claudeApiKey = text
+                                    }
+
+                                    SentinelButton {
+                                        text: parent.parent.showKey ? "🔒" : "👁️"
+                                        onClicked: parent.parent.showKey = !parent.parent.showKey
+                                    }
+                                }
+                            }
+                        }
+
+                        // Google Gemini API Key Input Card
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceXs
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceSm
+
+                                Label {
+                                    text: qsTr("Google Gemini API Key")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                }
+
+                                Item { Layout.fillWidth: true }
+
+                                StatusChip {
+                                    value: settingsPage.viewModel.geminiApiKey ? qsTr("Configured") : qsTr("Not Set")
+                                    accent: settingsPage.viewModel.geminiApiKey ? SentinelTheme.success : SentinelTheme.textMuted
+                                    selected: true
+                                }
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 38
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                border.color: geminiKeyInput.activeFocus
+                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+
+                                property bool showKey: false
+
+                                RowLayout {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: SentinelTheme.spaceMd
+                                    anchors.rightMargin: SentinelTheme.spaceSm
+                                    spacing: SentinelTheme.spaceSm
+
+                                    TextInput {
+                                        id: geminiKeyInput
+                                        Layout.fillWidth: true
+                                        text: settingsPage.viewModel.geminiApiKey
+                                        echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
+                                        color: SentinelTheme.textPrimary
+                                        selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
+                                        verticalAlignment: Text.AlignVCenter
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        selectByMouse: true
+                                        clip: true
+                                        onEditingFinished: settingsPage.viewModel.geminiApiKey = text
+                                    }
+
+                                    SentinelButton {
+                                        text: parent.parent.showKey ? "🔒" : "👁️"
+                                        onClicked: parent.parent.showKey = !parent.parent.showKey
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
 

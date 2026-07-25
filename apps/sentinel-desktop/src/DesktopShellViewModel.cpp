@@ -294,6 +294,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::localChatInferenceRoutingChanged);
     connect(&controller_, &core::ApplicationController::localInferenceChanged, this,
             &DesktopShellViewModel::localInferenceChanged);
+    connect(&settings_, &core::AppSettings::cloudApiKeysChanged, this,
+            &DesktopShellViewModel::cloudApiKeysChanged);
     connect(&controller_, &core::ApplicationController::promptContextInjectionChanged, this,
             &DesktopShellViewModel::promptContextInjectionChanged);
     connect(&controller_, &core::ApplicationController::voiceConfigurationChanged, this,
@@ -5568,6 +5570,30 @@ bool DesktopShellViewModel::notifySystemUpdates() const {
 
 void DesktopShellViewModel::setNotifySystemUpdates(bool enabled) {
     settings_.setNotifySystemUpdates(enabled);
+}
+
+QString DesktopShellViewModel::openAiApiKey() const {
+    return settings_.openAiApiKey();
+}
+
+void DesktopShellViewModel::setOpenAiApiKey(const QString& key) {
+    settings_.setOpenAiApiKey(key);
+}
+
+QString DesktopShellViewModel::claudeApiKey() const {
+    return settings_.claudeApiKey();
+}
+
+void DesktopShellViewModel::setClaudeApiKey(const QString& key) {
+    settings_.setClaudeApiKey(key);
+}
+
+QString DesktopShellViewModel::geminiApiKey() const {
+    return settings_.geminiApiKey();
+}
+
+void DesktopShellViewModel::setGeminiApiKey(const QString& key) {
+    settings_.setGeminiApiKey(key);
 }
 
 QString DesktopShellViewModel::normalizedPageOrDefault(const QString& page) {
