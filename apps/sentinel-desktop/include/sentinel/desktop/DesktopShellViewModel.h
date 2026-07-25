@@ -1180,6 +1180,8 @@ class DesktopShellViewModel final : public QObject {
                    companionChanged)
     Q_PROPERTY(bool companionAvailable READ companionAvailable NOTIFY companionChanged)
     Q_PROPERTY(bool companionPaused READ companionPaused NOTIFY companionChanged)
+    Q_PROPERTY(bool companionChatVisible READ companionChatVisible WRITE setCompanionChatVisible
+                   NOTIFY companionChatVisibleChanged)
     Q_PROPERTY(QString companionStatus READ companionStatus NOTIFY companionChanged)
     Q_PROPERTY(QString companionAvailability READ companionAvailability NOTIFY companionChanged)
     Q_PROPERTY(QString companionPlatformCapability READ companionPlatformCapability NOTIFY
@@ -1241,10 +1243,13 @@ class DesktopShellViewModel final : public QObject {
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationFilteredSummaries READ notificationFilteredSummaries NOTIFY
                    nativeExperienceChanged)
+    Q_PROPERTY(int unreadNotificationCount READ unreadNotificationCount NOTIFY
+                   nativeExperienceChanged)
     Q_PROPERTY(QString notificationSearchQuery READ notificationSearchQuery WRITE
                    setNotificationSearchQuery NOTIFY nativeExperienceChanged)
     Q_PROPERTY(QString notificationCategoryFilter READ notificationCategoryFilter WRITE
                    setNotificationCategoryFilter NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(bool notificationCenterVisible READ notificationCenterVisible WRITE setNotificationCenterVisible NOTIFY notificationCenterVisibleChanged)
     Q_PROPERTY(QString updateWorkflowState READ updateWorkflowState NOTIFY nativeExperienceChanged)
     Q_PROPERTY(
         QStringList releaseNotesSummaries READ releaseNotesSummaries NOTIFY nativeExperienceChanged)
@@ -2134,8 +2139,14 @@ public:
     void setCompanionEnabled(bool enabled);
     bool companionAvailable() const;
     bool companionPaused() const;
+    bool companionChatVisible() const;
+    void setCompanionChatVisible(bool visible);
+    Q_INVOKABLE void toggleCompanionChat();
+    Q_INVOKABLE void openCompanionChat();
+    Q_INVOKABLE void hideCompanionChat();
     void setCompanionNativeAvailable(bool available);
-    void setCompanionPaused(bool paused);
+    Q_INVOKABLE void setCompanionPaused(bool paused);
+    Q_INVOKABLE void toggleCompanionPause();
     QString companionStatus() const;
     QString companionAvailability() const;
     QString companionPlatformCapability() const;
@@ -2180,6 +2191,7 @@ public:
     QStringList notificationCategories() const;
     QStringList notificationLifecycleSummaries() const;
     QStringList notificationFilteredSummaries() const;
+    int unreadNotificationCount() const;
     QString notificationSearchQuery() const;
     void setNotificationSearchQuery(const QString& query);
     QString notificationCategoryFilter() const;
@@ -2355,6 +2367,23 @@ public:
     Q_INVOKABLE bool clearChat();
     Q_INVOKABLE void addNotification(const QString& category, const QString& title,
                                      const QString& body);
+    Q_INVOKABLE void addNotificationWithPriority(const QString& category, const QString& title,
+                                                  const QString& body, const QString& priority);
+    Q_INVOKABLE bool removeNotificationById(const QString& notificationId);
+    Q_INVOKABLE bool markAllNotificationsRead();
+    Q_INVOKABLE void toggleNotificationCenter();
+    Q_PROPERTY(bool dndEnabled READ dndEnabled WRITE setDndEnabled NOTIFY dndEnabledChanged)
+    bool dndEnabled() const;
+    void setDndEnabled(bool enabled);
+    Q_INVOKABLE bool snoozeNotification(const QString& notificationId, int minutes);
+    Q_INVOKABLE bool unsnoozeNotification(const QString& notificationId);
+    Q_INVOKABLE bool isChannelMuted(const QString& category) const;
+    Q_INVOKABLE void setChannelMuted(const QString& category, bool muted);
+    Q_INVOKABLE QStringList mutedChannelNames() const;
+    Q_INVOKABLE void playNotificationSound();
+    Q_INVOKABLE QVariantMap cursorScreenGeometry();
+    bool notificationCenterVisible() const;
+    void setNotificationCenterVisible(bool visible);
     Q_INVOKABLE void setModeByName(const QString& modeName);
     Q_INVOKABLE void remember(const QString& key, const QString& value);
     Q_INVOKABLE void applyVoiceConfigurationPaths(const QString& piperBinaryPath,
@@ -2374,6 +2403,10 @@ signals:
     void configurationProfileChanged();
     void appLanguageChanged();
     void companionChanged();
+    void companionChatVisibleChanged();
+    void notificationCenterVisibleChanged();
+    void dndEnabledChanged();
+    void requestCompanionChat();
     void developerModeChanged();
     void agentAutonomousModeChanged();
     void contextExplainabilityVisibleChanged();
@@ -2443,12 +2476,15 @@ private:
     QString workspaceLastActionSummary_ = QStringLiteral("No workspace action has run.");
     QString notificationSearchQuery_;
     QString notificationCategoryFilter_ = QStringLiteral("All");
+    bool notificationCenterVisible_ = false;
+    bool dndEnabled_ = false;
     QString exportPreviewSource_ = QStringLiteral("conversations");
     QString exportPreviewFormat_ = QStringLiteral("Markdown");
     ChatMessageListModel chatMessages_;
     QString currentPage_ = QStringLiteral("Dashboard");
     bool companionNativeAvailable_ = false;
     bool companionPaused_ = false;
+    bool companionChatVisible_ = false;
     bool voiceRecordingActive_ = false;
     QProcess* recordingProcess_ = nullptr;
     QProcess* whisperProcess_ = nullptr;

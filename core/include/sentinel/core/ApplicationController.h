@@ -2156,6 +2156,8 @@ private:
     QList<OllamaModelSummary> cachedLMStudioModels_;
     QList<OllamaModelSummary> cachedLlamaCppModels_;
     QList<OllamaModelSummary> cachedOpenAiCompatibleLocalModels_;
+    QList<OllamaModelSummary> cachedCloudProviderModels_;
+    QString cachedCloudProviderOriginId_;
     bool ollamaCacheInitialized_ = false;
 
     void pollOllama();

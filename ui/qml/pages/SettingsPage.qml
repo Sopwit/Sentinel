@@ -1866,17 +1866,21 @@ Item {
                                 implicitHeight: 36
                                 hoverEnabled: true
 
-                                model: settingsPage.viewModel.selectedCloudProvider === "claude" ?
-                                       ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"] :
-                                       settingsPage.viewModel.selectedCloudProvider === "gemini" ?
-                                       ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b"] :
-                                       settingsPage.viewModel.selectedCloudProvider === "deepseek" ?
-                                       ["deepseek-chat", "deepseek-reasoner"] :
-                                       settingsPage.viewModel.selectedCloudProvider === "groq" ?
-                                       ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "deepseek-r1-distill-llama-70b"] :
-                                       settingsPage.viewModel.selectedCloudProvider === "mistral" ?
-                                       ["mistral-large-latest", "pixtral-large-latest", "codestral-latest", "mistral-small-latest"] :
-                                       ["gpt-4o", "gpt-4o-mini", "o1", "o1-preview", "o1-mini", "o3-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
+                                model: {
+                                    const names = settingsPage.viewModel.ollamaModelNames
+                                    return names.length > 0 ? names :
+                                        settingsPage.viewModel.selectedCloudProvider === "claude" ?
+                                        ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"] :
+                                        settingsPage.viewModel.selectedCloudProvider === "gemini" ?
+                                        ["gemini-2.0-flash", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b"] :
+                                        settingsPage.viewModel.selectedCloudProvider === "deepseek" ?
+                                        ["deepseek-chat", "deepseek-reasoner"] :
+                                        settingsPage.viewModel.selectedCloudProvider === "groq" ?
+                                        ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "deepseek-r1-distill-llama-70b"] :
+                                        settingsPage.viewModel.selectedCloudProvider === "mistral" ?
+                                        ["mistral-large-latest", "pixtral-large-latest", "codestral-latest", "mistral-small-latest"] :
+                                        ["gpt-4o", "gpt-4o-mini", "o1", "o1-preview", "o1-mini", "o3-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
+                                }
 
                                 currentIndex: Math.max(0, model.indexOf(settingsPage.viewModel.selectedLocalModel))
                                 onActivated: (idx) => {

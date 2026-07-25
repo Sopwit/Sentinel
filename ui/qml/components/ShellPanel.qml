@@ -5,10 +5,13 @@ Rectangle {
     id: panel
 
     radius: SentinelTheme.radiusPanel
-    color: SentinelTheme.panel
-    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
-    border.width: 1
+    color: panelColor
+    border.color: borderColor
+    border.width: borderWidth
 
+    property color panelColor: SentinelTheme.panel
+    property color borderColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)
+    property int borderWidth: 1
     property color bracketColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.0)
     property bool showBrackets: false
     property int bracketSize: 12

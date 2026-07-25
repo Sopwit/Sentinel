@@ -34,16 +34,22 @@ private:
     void newConversation();
     void openSettings();
     void togglePaused();
+    void checkUpdates();
+    void applyMenuStylesheet();
 
     DesktopShellViewModel& viewModel_;
     sentinel::core::AppSettings& settings_;
     QWindow* window_ = nullptr;
     std::unique_ptr<QSystemTrayIcon> trayIcon_;
     std::unique_ptr<QMenu> menu_;
+    QAction* headerAction_ = nullptr;
     QAction* openAction_ = nullptr;
+    QAction* quickChatAction_ = nullptr;
     QAction* newConversationAction_ = nullptr;
     QAction* quickNoteAction_ = nullptr;
+    QAction* clearChatAction_ = nullptr;
     QAction* pauseAction_ = nullptr;
+    QAction* updateAction_ = nullptr;
     QAction* settingsAction_ = nullptr;
     QAction* quitAction_ = nullptr;
 };

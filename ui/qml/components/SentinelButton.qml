@@ -4,6 +4,11 @@ import QtQuick.Controls.Basic
 Button {
     id: control
 
+    property string tooltipText: ""
+
+    ToolTip.visible: control.hovered && control.tooltipText.length > 0
+    ToolTip.text: control.tooltipText
+
     hoverEnabled: true
     focusPolicy: Qt.StrongFocus
     opacity: enabled ? 1.0 : InteractionTokens.disabledOpacity

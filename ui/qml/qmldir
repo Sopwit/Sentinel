@@ -18,6 +18,9 @@ ModelDetailPopup 1.0 components/ModelDetailPopup.qml
 RuntimeDetailPopup 1.0 components/RuntimeDetailPopup.qml
 HomeChatSurface 1.0 components/HomeChatSurface.qml
 InfoRow 1.0 components/InfoRow.qml
+NotificationCenterPanel 1.0 components/NotificationCenterPanel.qml
+NotificationItemDelegate 1.0 components/NotificationItemDelegate.qml
+NotificationToast 1.0 components/NotificationToast.qml
 RuntimeBadge 1.0 components/RuntimeBadge.qml
 SectionTitle 1.0 components/SectionTitle.qml
 SentinelButton 1.0 components/SentinelButton.qml

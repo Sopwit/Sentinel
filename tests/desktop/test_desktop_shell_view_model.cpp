@@ -678,6 +678,19 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Resume Companion")));
     QCOMPARE(companionSpy.count(), 2);
+
+    QSignalSpy requestSpy(&fixture.viewModel, &DesktopShellViewModel::requestCompanionChat);
+    QSignalSpy visibleSpy(&fixture.viewModel, &DesktopShellViewModel::companionChatVisibleChanged);
+
+    QVERIFY(!fixture.viewModel.companionChatVisible());
+    fixture.viewModel.toggleCompanionChat();
+    QVERIFY(fixture.viewModel.companionChatVisible());
+    QCOMPARE(requestSpy.count(), 1);
+    QCOMPARE(visibleSpy.count(), 1);
+
+    fixture.viewModel.hideCompanionChat();
+    QVERIFY(!fixture.viewModel.companionChatVisible());
+    QCOMPARE(visibleSpy.count(), 2);
 }
 
 void DesktopShellViewModelTest::exposesOllamaRuntimeBoundaryMetadata() {
