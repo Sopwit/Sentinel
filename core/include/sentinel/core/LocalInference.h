@@ -268,8 +268,10 @@ struct LMStudioConfig {
 
     bool isAllowedEndpoint() const {
         if (isLoopbackHttp()) return true;
-        if (endpoint.scheme() == QLatin1String("https")) return true;
-        return !apiKey.isEmpty();
+        if (isCloud()) {
+            return !apiKey.trimmed().isEmpty();
+        }
+        return false;
     }
 
     bool isLoopbackHttp() const {

@@ -9268,7 +9268,24 @@ LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
         QStringLiteral("/settings.json");
     AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
     LMStudioConfig config;
-    const QString cloudProv = settings.selectedCloudProvider();
+    QString cloudProv = settings.selectedCloudProvider();
+
+    // Infer cloud provider from selected model name if cloud-api is active
+    const auto modelLower = selectedLocalModel_.trimmed().toLower();
+    if (modelLower.startsWith(QLatin1String("gemini"))) {
+        cloudProv = QStringLiteral("gemini");
+    } else if (modelLower.startsWith(QLatin1String("claude"))) {
+        cloudProv = QStringLiteral("claude");
+    } else if (modelLower.startsWith(QLatin1String("deepseek"))) {
+        cloudProv = QStringLiteral("deepseek");
+    } else if (modelLower.startsWith(QLatin1String("llama")) || modelLower.startsWith(QLatin1String("mixtral"))) {
+        cloudProv = QStringLiteral("groq");
+    } else if (modelLower.startsWith(QLatin1String("mistral")) || modelLower.startsWith(QLatin1String("pixtral")) || modelLower.startsWith(QLatin1String("codestral"))) {
+        cloudProv = QStringLiteral("mistral");
+    } else if (modelLower.startsWith(QLatin1String("gpt")) || modelLower.startsWith(QLatin1String("o1")) || modelLower.startsWith(QLatin1String("o3"))) {
+        cloudProv = QStringLiteral("openai");
+    }
+
     if (selectedRuntimeProvider_ == QStringLiteral("claude") ||
         (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("claude"))) {
         config.endpoint = QUrl(QStringLiteral("https://api.anthropic.com"));

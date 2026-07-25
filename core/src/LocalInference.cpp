@@ -1376,15 +1376,21 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
                 const auto delta = choice.value(QStringLiteral("delta")).toObject();
                 text = delta.value(QStringLiteral("content")).toString();
                 const auto finishReason = choice.value(QStringLiteral("finish_reason")).toString();
-                if (!finishReason.isEmpty()) isFinal = true;
+                if (!finishReason.isEmpty()) {
+                    isFinal = true;
+                    done = true;
+                }
             }
         }
-        // Anthropic Claude format (delta.text)
-        else if (object.contains(QStringLiteral("delta"))) {
+        // Anthropic Claude format
+        else if (object.contains(QStringLiteral("delta")) || object.value(QStringLiteral("type")).toString() == QLatin1String("message_stop")) {
             const auto delta = object.value(QStringLiteral("delta")).toObject();
             text = delta.value(QStringLiteral("text")).toString();
-            if (object.value(QStringLiteral("type")).toString() == QLatin1String("message_stop")) {
+            const auto msgType = object.value(QStringLiteral("type")).toString();
+            const auto stopReason = delta.value(QStringLiteral("stop_reason")).toString();
+            if (msgType == QLatin1String("message_stop") || !stopReason.isEmpty()) {
                 isFinal = true;
+                done = true;
             }
         }
         // Google Gemini format (candidates[0].content.parts[0].text)
