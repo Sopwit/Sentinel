@@ -22,6 +22,8 @@ class AppSettings final : public QObject {
                    ollamaEndpointChanged)
     Q_PROPERTY(QString selectedRuntimeProvider READ selectedRuntimeProvider WRITE
                    setSelectedRuntimeProvider NOTIFY selectedRuntimeProviderChanged)
+    Q_PROPERTY(QString selectedCloudProvider READ selectedCloudProvider WRITE
+                   setSelectedCloudProvider NOTIFY selectedCloudProviderChanged)
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    selectedLocalModelChanged)
     Q_PROPERTY(bool localChatInferenceEnabled READ localChatInferenceEnabled WRITE
@@ -152,6 +154,8 @@ public:
     void setOllamaEndpoint(const QString& endpoint);
     QString selectedRuntimeProvider() const;
     void setSelectedRuntimeProvider(const QString& providerId);
+    QString selectedCloudProvider() const;
+    void setSelectedCloudProvider(const QString& providerId);
 
     QString selectedLocalModel() const;
     void setSelectedLocalModel(const QString& model);
@@ -281,6 +285,7 @@ signals:
     void routingModeNameChanged();
     void ollamaEndpointChanged();
     void selectedRuntimeProviderChanged();
+    void selectedCloudProviderChanged();
     void selectedLocalModelChanged();
     void selectedModelRoleChanged();
     void localChatInferenceEnabledChanged();
@@ -324,6 +329,7 @@ private:
     static constexpr auto routingModeKey = "routingMode";
     static constexpr auto ollamaEndpointKey = "ollamaEndpoint";
     static constexpr auto selectedRuntimeProviderKey = "selectedRuntimeProvider";
+    static constexpr auto selectedCloudProviderKey = "selectedCloudProvider";
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";
     static constexpr auto selectedProviderModelKeyPrefix = "selectedModel.";
     static constexpr auto selectedRoleModelKeyPrefix = "selectedModelRole.";

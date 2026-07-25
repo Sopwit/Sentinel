@@ -1518,6 +1518,119 @@ Item {
                         }
 
                         SectionTitle {
+                            title: qsTr("AI Provider & Runtime Selection")
+                            subtitle: qsTr("Choose whether Sentinel connects to a local runtime (Ollama / LM Studio) or direct Cloud APIs.")
+                            Layout.fillWidth: true
+                        }
+
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceSm
+
+                            SentinelButton {
+                                text: "🦙 Ollama (Local)"
+                                highlighted: settingsPage.viewModel.selectedRuntimeProvider === "ollama"
+                                onClicked: settingsPage.viewModel.selectedRuntimeProvider = "ollama"
+                            }
+
+                            SentinelButton {
+                                text: "💻 LM Studio (Local)"
+                                highlighted: settingsPage.viewModel.selectedRuntimeProvider === "lm-studio"
+                                onClicked: settingsPage.viewModel.selectedRuntimeProvider = "lm-studio"
+                            }
+
+                            SentinelButton {
+                                text: "☁️ Cloud API"
+                                highlighted: settingsPage.viewModel.selectedRuntimeProvider === "cloud-api" ||
+                                             settingsPage.viewModel.selectedRuntimeProvider === "openai" ||
+                                             settingsPage.viewModel.selectedRuntimeProvider === "claude" ||
+                                             settingsPage.viewModel.selectedRuntimeProvider === "gemini"
+                                onClicked: settingsPage.viewModel.selectedRuntimeProvider = "cloud-api"
+                            }
+                        }
+
+                        // Cloud Sub-Provider & Model Selection (Visible when Cloud API is selected)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            visible: settingsPage.viewModel.selectedRuntimeProvider === "cloud-api" ||
+                                     settingsPage.viewModel.selectedRuntimeProvider === "openai" ||
+                                     settingsPage.viewModel.selectedRuntimeProvider === "claude" ||
+                                     settingsPage.viewModel.selectedRuntimeProvider === "gemini"
+                            spacing: SentinelTheme.spaceMd
+                            Layout.topMargin: SentinelTheme.spaceSm
+
+                            SectionTitle {
+                                title: qsTr("Cloud API Distribution & Model Selection")
+                                subtitle: qsTr("Choose active Cloud Provider distribution (OpenAI, Claude, Gemini) and model.")
+                                Layout.fillWidth: true
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceSm
+
+                                SentinelButton {
+                                    text: "OpenAI (ChatGPT)"
+                                    highlighted: settingsPage.viewModel.selectedCloudProvider === "openai"
+                                    onClicked: {
+                                        settingsPage.viewModel.selectedCloudProvider = "openai"
+                                        if (!settingsPage.viewModel.selectedLocalModel || settingsPage.viewModel.selectedLocalModel.startsWith("claude") || settingsPage.viewModel.selectedLocalModel.startsWith("gemini")) {
+                                            settingsPage.viewModel.selectedLocalModel = "gpt-4o"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "Anthropic Claude"
+                                    highlighted: settingsPage.viewModel.selectedCloudProvider === "claude"
+                                    onClicked: {
+                                        settingsPage.viewModel.selectedCloudProvider = "claude"
+                                        if (!settingsPage.viewModel.selectedLocalModel || settingsPage.viewModel.selectedLocalModel.startsWith("gpt") || settingsPage.viewModel.selectedLocalModel.startsWith("gemini") || settingsPage.viewModel.selectedLocalModel.startsWith("o1") || settingsPage.viewModel.selectedLocalModel.startsWith("o3")) {
+                                            settingsPage.viewModel.selectedLocalModel = "claude-3-5-sonnet-20241022"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "Google Gemini"
+                                    highlighted: settingsPage.viewModel.selectedCloudProvider === "gemini"
+                                    onClicked: {
+                                        settingsPage.viewModel.selectedCloudProvider = "gemini"
+                                        if (!settingsPage.viewModel.selectedLocalModel || settingsPage.viewModel.selectedLocalModel.startsWith("gpt") || settingsPage.viewModel.selectedLocalModel.startsWith("claude") || settingsPage.viewModel.selectedLocalModel.startsWith("o1") || settingsPage.viewModel.selectedLocalModel.startsWith("o3")) {
+                                            settingsPage.viewModel.selectedLocalModel = "gemini-1.5-flash"
+                                        }
+                                    }
+                                }
+                            }
+
+                            RowLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceMd
+
+                                Label {
+                                    text: qsTr("Active Cloud Model:")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
+                                    Layout.fillWidth: true
+                                }
+
+                                ComboBox {
+                                    Layout.preferredWidth: 280
+                                    model: settingsPage.viewModel.selectedCloudProvider === "claude" ?
+                                           ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"] :
+                                           settingsPage.viewModel.selectedCloudProvider === "gemini" ?
+                                           ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"] :
+                                           ["gpt-4o", "gpt-4o-mini", "o1", "o3-mini", "gpt-4-turbo"]
+                                    currentIndex: Math.max(0, model.indexOf(settingsPage.viewModel.selectedLocalModel))
+                                    onActivated: (idx) => {
+                                        settingsPage.viewModel.selectedLocalModel = model[idx]
+                                    }
+                                }
+                            }
+                        }
+
+                        SectionTitle {
                             title: qsTr("Provider Status")
                             subtitle: qsTr("Active and available local runtime connection status.")
                             Layout.fillWidth: true
@@ -1536,6 +1649,7 @@ Item {
                                     text: {
                                         if (modelData === "ollama") return "Ollama"
                                         if (modelData === "lm-studio") return "LM Studio"
+                                        if (modelData === "cloud-api") return "Cloud API"
                                         if (modelData === "llama-cpp-server") return "llama.cpp server"
                                         if (modelData === "openai-compatible-local") return "OpenAI-compatible Local"
                                         return modelData
