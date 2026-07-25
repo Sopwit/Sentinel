@@ -3150,7 +3150,10 @@ QString ApplicationController::localChatInferenceSummary() const {
         return QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
                               "Ollama or LM Studio to send.");
     }
-    const auto providerLabel = currentCloudOrLMStudioConfig().providerDisplayName();
+    // For cloud and LM Studio we read the display name from config; Ollama uses its own label.
+    const auto providerLabel = isLMStudioProvider()
+        ? currentCloudOrLMStudioConfig().providerDisplayName()
+        : QStringLiteral("Ollama");
     if (!localChatInferenceEnabled_) {
         return QString::fromUtf8("Local chat inference is disabled; chat stays on the local safe "
                                  "provider path and no %1 prompt is sent.")
@@ -3225,22 +3228,29 @@ QString ApplicationController::localChatSendAvailabilitySummary() const {
         return QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
                               "Ollama or LM Studio to send.");
     }
-    const auto providerLabel = currentCloudOrLMStudioConfig().providerDisplayName();
+    // For cloud and LM Studio we read the display name from config; Ollama uses its own label.
+    const auto providerLabel = isLMStudioProvider()
+        ? currentCloudOrLMStudioConfig().providerDisplayName()
+        : QStringLiteral("Ollama");
     if (!localChatInferenceEnabled_) {
-        return QString::fromUtf8("Enable chat inference in Settings to send with %1.")
-            .arg(providerLabel);
+        return isLMStudioProvider()
+            ? QString::fromUtf8("Enable chat inference in Settings to send with %1.").arg(providerLabel)
+            : QStringLiteral("Enable Local chat inference in Settings to send with Ollama.");
     }
     if (localInferenceBusy_) {
         return QStringLiteral("Sentinel is responding. Wait for the current request to finish.");
     }
     if (!localInferenceEndpointAllowed()) {
-        return QString::fromUtf8("%1 API key is missing or endpoint is not allowed.").arg(providerLabel);
+        return isLMStudioProvider()
+            ? QString::fromUtf8("%1 API key is missing or endpoint is not allowed.").arg(providerLabel)
+            : QStringLiteral("Ollama must use a local loopback HTTP endpoint.");
     }
 
     const auto selected = selectedLocalModel_.trimmed();
     if (selected.isEmpty()) {
-        return QString::fromUtf8("Select a model for %1 in Settings before sending.")
-            .arg(providerLabel);
+        return isLMStudioProvider()
+            ? QString::fromUtf8("Select a model for %1 in Settings before sending.").arg(providerLabel)
+            : QStringLiteral("Select an installed Ollama model in Settings before sending.");
     }
 
     // Cloud and LM Studio providers do not use Ollama model discovery.
@@ -9036,11 +9046,13 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
             };
         } else if (cloudProv == QStringLiteral("gemini") || selectedRuntimeProvider_ == QStringLiteral("gemini")) {
             return {
+                OllamaModelSummary{QStringLiteral("gemini-2.5-flash"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-2.5-pro"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-2.0-flash"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-2.0-flash-lite"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-1.5-flash"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-1.5-pro"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-2.0-flash-lite-preview-02-05"), QStringLiteral("Google Cloud"), 0}
+                OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"), QStringLiteral("Google Cloud"), 0}
             };
         } else if (cloudProv == QStringLiteral("deepseek") || selectedRuntimeProvider_ == QStringLiteral("deepseek")) {
             return {

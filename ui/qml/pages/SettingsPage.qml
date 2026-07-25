@@ -1868,7 +1868,7 @@ Item {
                                 model: settingsPage.viewModel.selectedCloudProvider === "claude" ?
                                        ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"] :
                                        settingsPage.viewModel.selectedCloudProvider === "gemini" ?
-                                       ["gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b", "gemini-2.0-flash-lite-preview-02-05"] :
+                                       ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-flash", "gemini-1.5-pro", "gemini-1.5-flash-8b"] :
                                        settingsPage.viewModel.selectedCloudProvider === "deepseek" ?
                                        ["deepseek-chat", "deepseek-reasoner"] :
                                        settingsPage.viewModel.selectedCloudProvider === "groq" ?
