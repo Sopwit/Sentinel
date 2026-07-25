@@ -264,6 +264,13 @@ private:
 struct LMStudioConfig {
     QUrl endpoint = QUrl(QStringLiteral("http://127.0.0.1:1234"));
     int timeoutMs = 30000;
+    QString apiKey;
+
+    bool isAllowedEndpoint() const {
+        if (isLoopbackHttp()) return true;
+        if (endpoint.scheme() == QLatin1String("https")) return true;
+        return !apiKey.isEmpty();
+    }
 
     bool isLoopbackHttp() const {
         const auto host = endpoint.host().toLower();

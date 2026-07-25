@@ -1,5 +1,7 @@
 #include "sentinel/core/ApplicationController.h"
 
+#include "sentinel/core/AppSettings.h"
+#include "sentinel/core/JsonSettingsStore.h"
 #include "sentinel/core/InMemoryConversationStore.h"
 #include "sentinel/core/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/LocalRuntime.h"
@@ -9145,8 +9147,45 @@ bool ApplicationController::discoveredModelNamesContain(
     return false;
 }
 
+LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
+    const QString settingsPath =
+        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
+        QStringLiteral("/settings.json");
+    AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
+    LMStudioConfig config;
+    if (selectedRuntimeProvider_ == QStringLiteral("claude")) {
+        config.endpoint = QUrl(QStringLiteral("https://api.anthropic.com"));
+        config.apiKey = settings.claudeApiKey();
+    } else if (selectedRuntimeProvider_ == QStringLiteral("gemini")) {
+        config.endpoint = QUrl(QStringLiteral("https://generativelanguage.googleapis.com"));
+        config.apiKey = settings.geminiApiKey();
+    } else if (selectedRuntimeProvider_ == QStringLiteral("openai") ||
+               selectedRuntimeProvider_ == QStringLiteral("openai-compatible")) {
+        config.endpoint = QUrl(QStringLiteral("https://api.openai.com"));
+        config.apiKey = settings.openAiApiKey();
+    } else if (selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server")) {
+        config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:8080"));
+    } else {
+        config.endpoint = QUrl(QStringLiteral("http://127.0.0.1:1234"));
+    }
+    return config;
+}
+
+ILocalInferenceWorker* ApplicationController::activeLocalInferenceWorker() const {
+    if (isLMStudioProvider()) {
+        const auto config = currentCloudOrLMStudioConfig();
+        const_cast<ApplicationController*>(this)->lmStudioInferenceWorker_ =
+            std::make_unique<LocalInferenceWorker>(
+                std::make_unique<LMStudioLocalInferenceClient>(config),
+                std::make_unique<LMStudioLocalInferenceStreamClient>(config),
+                const_cast<ApplicationController*>(this), true, true);
+        return lmStudioInferenceWorker_.get();
+    }
+    return localInferenceWorker_.get();
+}
+
 bool ApplicationController::localInferenceEndpointAllowed() const {
-    if (selectedRuntimeProvider_ == QStringLiteral("lm-studio")) {
+    if (isLMStudioProvider()) {
         return true;
     }
     const auto config = ollamaRuntimeClient_ ? ollamaRuntimeClient_->config() : OllamaConfig{};

@@ -2031,9 +2031,8 @@ private:
         return selectedRuntimeProvider_ == QStringLiteral("ollama") ||
                selectedRuntimeProvider_ == QStringLiteral("lm-studio");
     }
-    ILocalInferenceWorker* activeLocalInferenceWorker() const {
-        return isLMStudioProvider() ? lmStudioInferenceWorker_.get() : localInferenceWorker_.get();
-    }
+    LMStudioConfig currentCloudOrLMStudioConfig() const;
+    ILocalInferenceWorker* activeLocalInferenceWorker() const;
     std::unique_ptr<IModelManagementService> modelManagementService_;
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider_;
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider_;
