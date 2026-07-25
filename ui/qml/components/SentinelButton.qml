@@ -1,10 +1,12 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 
 Button {
     id: control
 
     property string tooltipText: ""
+    property bool premium: false
 
     ToolTip.visible: control.hovered && control.tooltipText.length > 0
     ToolTip.text: control.tooltipText
@@ -35,10 +37,20 @@ Button {
     }
 
     background: Rectangle {
+        id: bg
         radius: SentinelTheme.radiusMd
         color: InteractionTokens.surfaceColor(control.hovered, control.down, false, SentinelTheme.calmAccent)
         border.color: InteractionTokens.borderColor(control.activeFocus, control.hovered, false, SentinelTheme.calmAccent)
         border.width: 1
+
+        layer.enabled: control.enabled && control.premium
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: Qt.rgba(0, 0, 0, 0.12)
+            shadowVerticalOffset: 1
+            shadowBlur: 0.08
+            shadowOpacity: 1.0
+        }
 
         Behavior on color {
             ColorAnimation {
@@ -52,6 +64,22 @@ Button {
                 duration: MotionTokens.fast
                 easing.type: MotionTokens.standard
             }
+        }
+    }
+
+    // Focus glow ring (visible on keyboard focus)
+    Rectangle {
+        anchors.fill: parent
+        anchors.margins: -3
+        radius: SentinelTheme.radiusMd + 3
+        color: "transparent"
+        border.color: SentinelTheme.calmFocusGlow
+        border.width: 2
+        opacity: control.activeFocus ? 1.0 : 0.0
+        z: -1
+
+        Behavior on opacity {
+            NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.standard }
         }
     }
 

@@ -12,6 +12,7 @@
 #include <QDateTime>
 #include <QDesktopServices>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
@@ -38,6 +39,52 @@
 namespace sentinel::desktop {
 
 namespace {
+
+QStringList numericParts(const QString& version) {
+    QStringList parts;
+    QString current;
+    for (const QChar c : version) {
+        if (c.isDigit()) {
+            current += c;
+        } else if (!current.isEmpty()) {
+            parts.append(current);
+            current.clear();
+        }
+    }
+    if (!current.isEmpty())
+        parts.append(current);
+    return parts;
+}
+
+bool isNewerVersion(const QString& current, const QString& latest) {
+    auto stripV = [](QString v) {
+        if (v.startsWith(u'v') || v.startsWith(u'V'))
+            return v.mid(1);
+        return v;
+    };
+    const QStringList curParts = numericParts(stripV(current));
+    const QStringList latParts = numericParts(stripV(latest));
+    const int maxLen = qMax(curParts.size(), latParts.size());
+    for (int i = 0; i < maxLen; ++i) {
+        const int curNum = i < curParts.size() ? curParts[i].toInt() : 0;
+        const int latNum = i < latParts.size() ? latParts[i].toInt() : 0;
+        if (latNum > curNum) return true;
+        if (latNum < curNum) return false;
+    }
+    return false;
+}
+
+QString platformAssetSuffix() {
+#ifdef Q_OS_MACOS
+    return QStringLiteral(".dmg");
+#elif defined(Q_OS_LINUX)
+    return QStringLiteral(".AppImage");
+#elif defined(Q_OS_WIN)
+    return QStringLiteral(".exe");
+#else
+    return QString();
+#endif
+}
 
 QString appDataPath() {
     const auto path = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
@@ -4070,6 +4117,10 @@ QString DesktopShellViewModel::updateWorkflowState() const {
     return settings_.updateWorkflowState();
 }
 
+QString DesktopShellViewModel::lastAssetUrl() const {
+    return lastAssetUrl_;
+}
+
 QStringList DesktopShellViewModel::releaseNotesSummaries() const {
     return {
         QStringLiteral("Sentinel %1 - Phase 52 packaging and 1.0 RC readiness")
@@ -5283,66 +5334,228 @@ bool DesktopShellViewModel::checkForUpdates() {
         networkManager_ = new QNetworkAccessManager(this);
     }
 
+    const QString userAgent = QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version());
     QNetworkRequest request(
         QUrl(QStringLiteral("https://api.github.com/repos/Sopwit/Sentinel/releases/latest")));
-    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Sentinel-Desktop/1.0.0"));
+    request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
 
     QNetworkReply* reply = networkManager_->get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
-        QString latestTag;
-        QString htmlUrl;
-        QString bodyText;
 
         if (reply->error() != QNetworkReply::NoError) {
-            // Fallback to local simulated check on network failure
-            latestTag = QStringLiteral("v1.0.1-alpha");
-            htmlUrl = QStringLiteral("https://github.com/Sopwit/Sentinel");
-            bodyText = QStringLiteral("Update check successfully fell back to local cache "
-                                      "(v1.0.1-alpha). Includes performance fixes.");
-        } else {
-            const QByteArray data = reply->readAll();
-            const QJsonDocument doc = QJsonDocument::fromJson(data);
-            const QJsonObject root = doc.object();
-            latestTag = root.value(QStringLiteral("tag_name")).toString();
-            htmlUrl = root.value(QStringLiteral("html_url")).toString();
-            bodyText = root.value(QStringLiteral("body")).toString();
+            settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: %1").arg(reply->errorString()));
+            emit nativeExperienceChanged();
+            emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
+            return;
+        }
 
-            if (latestTag.isEmpty()) {
-                latestTag = QStringLiteral("v1.0.1-alpha");
-                htmlUrl = QStringLiteral("https://github.com/Sopwit/Sentinel");
-                bodyText = QStringLiteral("System updates are now fully operational. Version 1.0.1 "
-                                          "includes optimizations and bug fixes.");
+        const QByteArray data = reply->readAll();
+        QJsonParseError parseError;
+        const QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
+        if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+            settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: invalid response"));
+            emit nativeExperienceChanged();
+            emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
+            return;
+        }
+
+        const QJsonObject root = doc.object();
+        const QString latestTag = root.value(QStringLiteral("tag_name")).toString();
+        const QString htmlUrl = root.value(QStringLiteral("html_url")).toString();
+        const QString bodyText = root.value(QStringLiteral("body")).toString();
+
+        if (latestTag.isEmpty()) {
+            settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: empty tag"));
+            emit nativeExperienceChanged();
+            emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
+            return;
+        }
+
+        // Find the best asset for the current platform
+        const QString suffix = platformAssetSuffix();
+        QString assetName;
+        qint64 assetSize = 0;
+        QString assetDownloadUrl;
+
+        const QJsonArray assets = root.value(QStringLiteral("assets")).toArray();
+        for (const QJsonValue& val : assets) {
+            const QJsonObject asset = val.toObject();
+            const QString name = asset.value(QStringLiteral("name")).toString();
+            if (!suffix.isEmpty() && name.endsWith(suffix, Qt::CaseInsensitive)) {
+                assetName = name;
+                assetSize = static_cast<qint64>(asset.value(QStringLiteral("size")).toDouble());
+                assetDownloadUrl = asset.value(QStringLiteral("browser_download_url")).toString();
+                break;
             }
         }
 
-        lastReleaseUrl_ = htmlUrl;
-        settings_.setUpdateWorkflowState(QStringLiteral("Available: %1").arg(latestTag));
-
-        QString updatedJson;
-        if (updateNotification(
-                settings_.notificationCenterJson(), QStringLiteral("updates-manual"),
-                [latestTag, bodyText](QJsonObject& item) {
-                    item.insert(QStringLiteral("read"), false);
-                    item.insert(QStringLiteral("archived"), false);
-                    item.insert(QStringLiteral("title"), QStringLiteral("Update Available"));
-                    item.insert(QStringLiteral("body"),
-                                QStringLiteral("New version %1 is available! Details: %2")
-                                    .arg(latestTag)
-                                    .arg(bodyText.left(120)));
-                },
-                &updatedJson)) {
-            settings_.setNotificationCenterJson(updatedJson);
+        // Fallback: use first asset if no platform match or no suffix
+        if (assetDownloadUrl.isEmpty() && !assets.isEmpty()) {
+            const QJsonObject first = assets.first().toObject();
+            assetName = first.value(QStringLiteral("name")).toString();
+            assetSize = static_cast<qint64>(first.value(QStringLiteral("size")).toDouble());
+            assetDownloadUrl = first.value(QStringLiteral("browser_download_url")).toString();
         }
+
+        lastReleaseUrl_ = htmlUrl;
+        lastAssetUrl_ = assetDownloadUrl;
+        lastAssetName_ = assetName;
+        lastAssetSize_ = assetSize;
+
+        const QString currentVersion = core::AppMetadata::version();
+        const bool available = isNewerVersion(currentVersion, latestTag);
+
+        settings_.setUpdateWorkflowState(
+            available ? QStringLiteral("Available: %1").arg(latestTag)
+                      : QStringLiteral("Up to date: %1").arg(currentVersion));
+
+        if (available) {
+            QString updatedJson;
+            if (updateNotification(
+                    settings_.notificationCenterJson(), QStringLiteral("updates-manual"),
+                    [latestTag, bodyText](QJsonObject& item) {
+                        item.insert(QStringLiteral("read"), false);
+                        item.insert(QStringLiteral("archived"), false);
+                        item.insert(QStringLiteral("title"), QStringLiteral("Update Available"));
+                        item.insert(QStringLiteral("body"),
+                                    QStringLiteral("New version %1 is available! Details: %2")
+                                        .arg(latestTag)
+                                        .arg(bodyText.left(120)));
+                    },
+                    &updatedJson)) {
+                settings_.setNotificationCenterJson(updatedJson);
+            }
+        }
+
         emit nativeExperienceChanged();
-        emit updateCheckCompleted(true, latestTag, bodyText, lastReleaseUrl_);
+        emit updateCheckCompleted(available, latestTag, bodyText, htmlUrl, assetSize);
     });
 
     return true;
 }
 
+bool DesktopShellViewModel::startDownload(const QString& assetUrl) {
+    if (downloadReply_) {
+        return false;
+    }
+
+    const QString downloadsDir = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
+    QDir().mkpath(downloadsDir);
+
+    const QString fileName = lastAssetName_.isEmpty()
+        ? QStringLiteral("Sentinel-Update")
+        : lastAssetName_;
+
+    downloadPath_ = downloadsDir + QStringLiteral("/") + fileName;
+
+    if (downloadFile_) {
+        downloadFile_->close();
+        downloadFile_->remove();
+        delete downloadFile_;
+        downloadFile_ = nullptr;
+    }
+
+    downloadFile_ = new QFile(downloadPath_, this);
+    if (!downloadFile_->open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        delete downloadFile_;
+        downloadFile_ = nullptr;
+        settings_.setUpdateWorkflowState(QStringLiteral("Download failed: cannot write file"));
+        emit nativeExperienceChanged();
+        return false;
+    }
+
+    if (!networkManager_) {
+        networkManager_ = new QNetworkAccessManager(this);
+    }
+
+    lastBytesReceived_ = 0;
+    downloadElapsed_.start();
+
+    const QUrl reqUrl(assetUrl);
+    QNetworkRequest request(reqUrl);
+    request.setHeader(QNetworkRequest::UserAgentHeader,
+                      QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version()));
+
+    downloadReply_ = networkManager_->get(request);
+
+    connect(downloadReply_, &QNetworkReply::downloadProgress, this,
+            [this](qint64 bytesReceived, qint64 bytesTotal) {
+                if (bytesTotal <= 0) return;
+
+                const qint64 elapsed = downloadElapsed_.elapsed();
+                const double speed = elapsed > 0
+                    ? (bytesReceived - lastBytesReceived_) / (elapsed / 1000.0)
+                    : 0.0;
+                if (elapsed >= 500) {
+                    lastBytesReceived_ = bytesReceived;
+                    downloadElapsed_.start();
+                }
+
+                emit updateDownloadProgressChanged(bytesReceived, bytesTotal, speed);
+            });
+
+    connect(downloadReply_, &QNetworkReply::readyRead, this, [this]() {
+        if (downloadFile_ && downloadReply_) {
+            downloadFile_->write(downloadReply_->readAll());
+        }
+    });
+
+    connect(downloadReply_, &QNetworkReply::finished, this, [this]() {
+        if (downloadReply_) {
+            downloadReply_->deleteLater();
+            downloadReply_ = nullptr;
+        }
+
+        if (downloadFile_) {
+            downloadFile_->close();
+            downloadFile_->deleteLater();
+            downloadFile_ = nullptr;
+        }
+
+        const bool success = QFileInfo::exists(downloadPath_) && QFileInfo(downloadPath_).size() > 0;
+        if (success) {
+            settings_.setUpdateWorkflowState(
+                QStringLiteral("Downloaded: %1").arg(downloadPath_));
+            QDesktopServices::openUrl(QUrl::fromLocalFile(
+                QFileInfo(downloadPath_).absolutePath()));
+        } else {
+            settings_.setUpdateWorkflowState(QStringLiteral("Download failed"));
+            if (QFileInfo::exists(downloadPath_)) {
+                QFile::remove(downloadPath_);
+            }
+        }
+
+        emit nativeExperienceChanged();
+        emit updateDownloadFinished(success, downloadPath_);
+    });
+
+    settings_.setUpdateWorkflowState(QStringLiteral("Downloading update..."));
+    emit nativeExperienceChanged();
+    return true;
+}
+
+void DesktopShellViewModel::cancelDownload() {
+    if (downloadReply_) {
+        downloadReply_->abort();
+        downloadReply_->deleteLater();
+        downloadReply_ = nullptr;
+    }
+    if (downloadFile_) {
+        downloadFile_->close();
+        downloadFile_->remove();
+        downloadFile_->deleteLater();
+        downloadFile_ = nullptr;
+    }
+    if (!downloadPath_.isEmpty() && QFileInfo::exists(downloadPath_)) {
+        QFile::remove(downloadPath_);
+    }
+    settings_.setUpdateWorkflowState(QStringLiteral("Download cancelled"));
+    emit nativeExperienceChanged();
+}
+
 bool DesktopShellViewModel::confirmUpdateDownload() {
-    QString urlStr = lastReleaseUrl_;
+    QString urlStr = lastAssetUrl_.isEmpty() ? lastReleaseUrl_ : lastAssetUrl_;
     if (urlStr.isEmpty()) {
         urlStr = QStringLiteral("https://github.com/Sopwit/Sentinel/releases");
     }

@@ -718,11 +718,24 @@ ShellPanel {
             }
         }
 
-        ColumnLayout {
+        ShellPanel {
+            id: mainChatSurfacePanel
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumHeight: 0
-            spacing: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceMd * homeChat.resolutionScale
+            color: SentinelTheme.lightTheme
+                 ? "#ffffff"
+                 : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
+            border.color: SentinelTheme.lightTheme
+                        ? SentinelTheme.withAlpha("#e2e8f4", 0.90)
+                        : SentinelTheme.withAlpha(homeChat.modeAccent, 0.20)
+            showBrackets: false
+            clip: true
+
+            ColumnLayout {
+                anchors.fill: parent
+                anchors.margins: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceLg
+                spacing: homeChat.inChatMode ? SentinelTheme.spaceMd : SentinelTheme.spaceMd * homeChat.resolutionScale
 
             Item {
                 id: homeCenterWrapper
@@ -2151,11 +2164,8 @@ ShellPanel {
             wrapMode: Text.WordWrap
         }
         }
-
-
-
-
     }
+}
 
     FileDialog {
         id: imageFileDialog

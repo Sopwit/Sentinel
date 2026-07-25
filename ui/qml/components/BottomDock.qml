@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -36,6 +37,19 @@ Item {
         }
     }
 
+    // ── Drop shadow for the dock pill ─────────────────────────────────────────
+    RectangularShadow {
+        id: dockShadow
+        anchors.fill: dockPill
+        offset: Qt.vector2d(0, SentinelTheme.lightTheme ? 3 : 6)
+        color: SentinelTheme.lightTheme
+               ? Qt.rgba(0, 0, 0, 0.20)
+               : Qt.rgba(0, 0, 0, 0.55)
+        blur: 4.0
+        radius: dockPill.radius
+        spread: 0.0
+    }
+
     // ── Pill container (Liquid Glass surface) ────────────────────────────────
     Rectangle {
         id: dockPill
@@ -46,8 +60,8 @@ Item {
 
         // Layered glass effect
         color: SentinelTheme.lightTheme
-             ? "#ffffff"
-             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.72)
+             ? SentinelTheme.withAlpha("#ffffff", 0.72)
+             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.62)
 
         border.color: SentinelTheme.lightTheme
                     ? SentinelTheme.withAlpha("#ffffff", 0.88)
@@ -60,8 +74,8 @@ Item {
             anchors.margins: 1
             radius: parent.radius - 1
             color: SentinelTheme.lightTheme
-                 ? "#ffffff"
-                 : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.22)
+                 ? SentinelTheme.withAlpha("#ffffff", 0.55)
+                 : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.18)
         }
 
         Behavior on color {

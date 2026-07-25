@@ -184,6 +184,28 @@ QtObject {
     readonly property int durationFast: 90
     readonly property int durationNormal: 140
     readonly property int durationSlow: 220
+
+    // Elevation / shadow system
+    readonly property int shadowElevationNone: 0
+    readonly property int shadowElevationCard: 4
+    readonly property int shadowElevationPanel: 8
+    readonly property int shadowElevationModal: 16
+    readonly property int shadowElevationDock: 12
+
+    readonly property real shadowOpacityCard: liquidGlassLightTheme ? 0.12 : 0.40
+    readonly property real shadowOpacityPanel: liquidGlassLightTheme ? 0.15 : 0.50
+    readonly property real shadowOpacityModal: liquidGlassLightTheme ? 0.20 : 0.60
+    readonly property real shadowOpacityDock: liquidGlassLightTheme ? 0.14 : 0.45
+
+    readonly property real shadowBlurCard: 8
+    readonly property real shadowBlurPanel: 16
+    readonly property real shadowBlurModal: 32
+    readonly property real shadowBlurDock: 24
+
+    // Blur radius tokens for live glass
+    readonly property int blurRadiusGlass: 12
+    readonly property int blurRadiusStrong: 24
+    readonly property int blurRadiusSubtle: 6
     readonly property int durationAmbient: 3200
     readonly property int durationOrbit: 22000
     readonly property int easingStandard: Easing.InOutQuad

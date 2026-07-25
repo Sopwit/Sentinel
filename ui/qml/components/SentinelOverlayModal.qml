@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 
 Popup {
     id: modal
@@ -43,7 +44,7 @@ Popup {
         }
         NumberAnimation {
             property: "scale"
-            from: MotionTokens.reduced(modal.modeName) ? 1.0 : 0.985
+            from: MotionTokens.reduced(modal.modeName) ? 1.0 : 0.975
             to: 1.0
             duration: MotionTokens.duration(MotionTokens.menu, modal.modeName)
             easing.type: MotionTokens.enter
@@ -54,6 +55,12 @@ Popup {
         NumberAnimation {
             property: "opacity"
             to: 0.0
+            duration: MotionTokens.duration(MotionTokens.fast, modal.modeName)
+            easing.type: MotionTokens.exit
+        }
+        NumberAnimation {
+            property: "scale"
+            to: 0.975
             duration: MotionTokens.duration(MotionTokens.fast, modal.modeName)
             easing.type: MotionTokens.exit
         }
@@ -70,11 +77,23 @@ Popup {
                     : SentinelTheme.withAlpha(modal.accent, 0.25)
         border.width: 1
 
+        // Drop shadow on the modal
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: SentinelTheme.lightTheme
+                         ? Qt.rgba(0, 0, 0, 0.22)
+                         : Qt.rgba(0, 0, 0, 0.65)
+            shadowVerticalOffset: SentinelTheme.lightTheme ? 4 : 8
+            shadowBlur: SentinelTheme.shadowBlurModal * 0.025
+            shadowOpacity: 1.0
+        }
+
         // Subtle gradient glow from the accent color
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
-            opacity: 0.04
+            opacity: 0.05
             gradient: Gradient {
                 GradientStop { position: 0.0; color: modal.accent }
                 GradientStop { position: 1.0; color: "transparent" }
