@@ -1097,7 +1097,7 @@ Item {
                                     onClicked: {
                                         viewModel.selectedCloudProvider = "gemini"
                                         if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("gemini")) {
-                                            viewModel.selectedLocalModel = "gemini-2.0-flash-exp"
+                                            viewModel.selectedLocalModel = "gemini-2.0-flash"
                                         }
                                     }
                                 }
@@ -1221,7 +1221,7 @@ Item {
                                     model: viewModel.selectedCloudProvider === "claude" ?
                                            ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"] :
                                            viewModel.selectedCloudProvider === "gemini" ?
-                                           ["gemini-2.0-flash-exp", "gemini-2.0-flash-thinking-exp-01-21", "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-1.5-flash", "gemini-1.5-flash-8b"] :
+                                           ["gemini-2.5-flash", "gemini-2.5-pro", "gemini-2.0-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.5-flash-8b"] :
                                            viewModel.selectedCloudProvider === "deepseek" ?
                                            ["deepseek-chat", "deepseek-reasoner"] :
                                            viewModel.selectedCloudProvider === "groq" ?
