@@ -126,6 +126,9 @@ class AppSettings final : public QObject {
                    NOTIFY productExperienceChanged)
     Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY
                    productExperienceChanged)
+    Q_PROPERTY(QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -263,7 +266,15 @@ public:
     bool notifySystemUpdates() const;
     void setNotifySystemUpdates(bool enabled);
 
+    QString openAiApiKey() const;
+    void setOpenAiApiKey(const QString& key);
+    QString claudeApiKey() const;
+    void setClaudeApiKey(const QString& key);
+    QString geminiApiKey() const;
+    void setGeminiApiKey(const QString& key);
+
 signals:
+    void cloudApiKeysChanged();
     void themeNameChanged();
     void configurationProfileChanged();
     void appLanguageChanged();
@@ -368,6 +379,9 @@ private:
     static constexpr auto notifyModelRemovalsKey = "notifyModelRemovals";
     static constexpr auto notifyAgentResponsesKey = "notifyAgentResponses";
     static constexpr auto notifySystemUpdatesKey = "notifySystemUpdates";
+    static constexpr auto openAiApiKeyKey = "openAiApiKey";
+    static constexpr auto claudeApiKeyKey = "claudeApiKey";
+    static constexpr auto geminiApiKeyKey = "geminiApiKey";
     static constexpr auto defaultThemeName = "Liquid Glass Light";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";

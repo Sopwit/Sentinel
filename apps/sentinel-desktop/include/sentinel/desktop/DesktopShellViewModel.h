@@ -1224,6 +1224,9 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY nativeExperienceChanged)
     Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY
                    nativeExperienceChanged)
+    Q_PROPERTY(QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationCenterSummaries READ notificationCenterSummaries NOTIFY
@@ -1831,6 +1834,12 @@ public:
     bool contextExplainabilityEnabled() const;
     bool contextExplainabilityVisible() const;
     void setContextExplainabilityVisible(bool visible);
+    QString openAiApiKey() const;
+    void setOpenAiApiKey(const QString& key);
+    QString claudeApiKey() const;
+    void setClaudeApiKey(const QString& key);
+    QString geminiApiKey() const;
+    void setGeminiApiKey(const QString& key);
     QString contextReasoningSummary() const;
     QString contextReasoningBudgetSummary() const;
     QString contextReasoningOrderingSummary() const;
@@ -2399,6 +2408,7 @@ signals:
     void agentRuntimeChanged();
     void controlledAgentTasksChanged();
     void updateCheckCompleted(bool available, const QString& version, const QString& releaseNotes, const QString& downloadUrl);
+    void cloudApiKeysChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
