@@ -1057,23 +1057,25 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
     }
 
     const auto timeoutMs = response.timeoutMs > 0 ? response.timeoutMs : timeoutMs_;
-    const auto models =
-        fetchOpenAiCompatibleModels(endpointUrl(QStringLiteral("/v1/models")), timeoutMs);
-    bool modelAvailable = false;
-    for (const auto& installedModel : models) {
-        if (installedModel.name == response.model) {
-            modelAvailable = true;
-            break;
+    if (endpointAllowed()) {
+        const auto models =
+            fetchOpenAiCompatibleModels(endpointUrl(QStringLiteral("/v1/models")), timeoutMs);
+        bool modelAvailable = false;
+        for (const auto& installedModel : models) {
+            if (installedModel.name == response.model) {
+                modelAvailable = true;
+                break;
+            }
         }
-    }
-    if (!modelAvailable && !models.isEmpty()) {
-        response.status = LocalInferenceStatus::ModelUnavailable;
-        response.error = LocalInferenceError::ModelUnavailable;
-        response.summary =
-            QStringLiteral("Local inference request rejected: model is not loaded in LM Studio.");
-        response.traces.append(trace(2, QStringLiteral("Model Discovery"),
-                                     QStringLiteral("Unavailable"), response.summary));
-        return response;
+        if (!modelAvailable && !models.isEmpty()) {
+            response.status = LocalInferenceStatus::ModelUnavailable;
+            response.error = LocalInferenceError::ModelUnavailable;
+            response.summary =
+                QStringLiteral("Local inference request rejected: model is not loaded in LM Studio.");
+            response.traces.append(trace(2, QStringLiteral("Model Discovery"),
+                                         QStringLiteral("Unavailable"), response.summary));
+            return response;
+        }
     }
 
     QJsonObject messageObj;
@@ -1150,7 +1152,12 @@ QString LMStudioLocalInferenceClient::statusSummary() const {
 
 QUrl LMStudioLocalInferenceClient::endpointUrl(const QString& path) const {
     QUrl url = config_.endpoint;
-    url.setPath(path);
+    QString basePath = url.path();
+    if (basePath == QStringLiteral("/")) basePath.clear();
+    if (basePath.endsWith(QLatin1Char('/'))) basePath.chop(1);
+    QString addPath = path;
+    if (!addPath.startsWith(QLatin1Char('/'))) addPath.prepend(QLatin1Char('/'));
+    url.setPath(basePath + addPath);
     url.setQuery(QString());
     url.setFragment(QString());
     return url;
@@ -1170,15 +1177,43 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     const LocalInferenceRequest& request,
     const std::function<void(const LocalInferenceStreamChunk&)>& onChunk) {
     LocalInferenceStreamResult result;
-    result.model = request.options.model.trimmed();
+    const QString providerHost = config_.endpoint.host().toLower();
+    QString modelName = request.options.model.trimmed();
+
+    if (providerHost.contains(QLatin1String("googleapis.com"))) {
+        if (modelName.isEmpty() || modelName == QLatin1String("gemini-2.5-flash") || !modelName.startsWith(QLatin1String("gemini-"))) {
+            modelName = QStringLiteral("gemini-2.0-flash");
+        }
+    } else if (providerHost.contains(QLatin1String("anthropic.com"))) {
+        if (modelName.isEmpty() || !modelName.startsWith(QLatin1String("claude-"))) {
+            modelName = QStringLiteral("claude-3-5-sonnet-20241022");
+        }
+    } else if (providerHost.contains(QLatin1String("deepseek.com"))) {
+        if (modelName.isEmpty() || !modelName.startsWith(QLatin1String("deepseek-"))) {
+            modelName = QStringLiteral("deepseek-chat");
+        }
+    } else if (providerHost.contains(QLatin1String("groq.com"))) {
+        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("llama")) && !modelName.startsWith(QLatin1String("mixtral")) && !modelName.startsWith(QLatin1String("deepseek")))) {
+            modelName = QStringLiteral("llama-3.3-70b-versatile");
+        }
+    } else if (providerHost.contains(QLatin1String("mistral.ai"))) {
+        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("mistral")) && !modelName.startsWith(QLatin1String("pixtral")) && !modelName.startsWith(QLatin1String("codestral")))) {
+            modelName = QStringLiteral("mistral-large-latest");
+        }
+    } else if (providerHost.contains(QLatin1String("openai.com"))) {
+        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("gpt-")) && !modelName.startsWith(QLatin1String("o1")) && !modelName.startsWith(QLatin1String("o3")))) {
+            modelName = QStringLiteral("gpt-4o");
+        }
+    }
+
+    result.model = modelName;
     result.endpoint = config_.toString();
     result.timeoutMs =
         request.options.timeoutMs > 0 ? request.options.timeoutMs : config_.timeoutMs;
     result.traces.append(
         trace(1, QStringLiteral("Request"), QStringLiteral("Received"),
-              QStringLiteral("Local streaming request reached LM Studio boundary with %1 ms "
-                             "timeout metadata.")
-                  .arg(result.timeoutMs)));
+              QStringLiteral("%1 streaming request reached boundary with %2 ms timeout metadata.")
+                  .arg(config_.providerDisplayName()).arg(result.timeoutMs)));
 
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;
@@ -1209,34 +1244,64 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         return result;
     }
 
-    QJsonObject messageObj;
-    messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
-    messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
-
-    QJsonArray messagesArr;
-    messagesArr.append(messageObj);
-
-    QJsonObject body;
-    body.insert(QStringLiteral("model"), result.model);
-    body.insert(QStringLiteral("messages"), messagesArr);
-    body.insert(QStringLiteral("stream"), true);
-
     QNetworkAccessManager manager;
-    QNetworkRequest networkRequest{endpointUrl(QStringLiteral("/v1/chat/completions"))};
-    if (config_.endpoint.host().contains(QLatin1String("anthropic.com"))) {
+    QNetworkRequest networkRequest;
+    QJsonObject body;
+
+    const bool isAnthropic = config_.endpoint.host().contains(QLatin1String("anthropic.com"));
+    const bool isGemini = config_.endpoint.host().contains(QLatin1String("googleapis.com"));
+
+    if (isAnthropic) {
         networkRequest.setUrl(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")));
         if (!config_.apiKey.isEmpty()) {
             networkRequest.setRawHeader("x-api-key", config_.apiKey.toUtf8());
         }
         networkRequest.setRawHeader("anthropic-version", "2023-06-01");
-    } else if (config_.endpoint.host().contains(QLatin1String("googleapis.com"))) {
+
+        QJsonObject messageObj;
+        messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
+        messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+        QJsonArray messagesArr;
+        messagesArr.append(messageObj);
+
+        body.insert(QStringLiteral("model"), result.model);
+        body.insert(QStringLiteral("messages"), messagesArr);
+        body.insert(QStringLiteral("max_tokens"), 2048);
+        body.insert(QStringLiteral("stream"), true);
+    } else if (isGemini) {
         const QString modelId = result.model.isEmpty() ? QStringLiteral("gemini-1.5-flash") : result.model;
         networkRequest.setUrl(QUrl(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/%1:streamGenerateContent?key=%2&alt=sse")
                                   .arg(modelId, config_.apiKey)));
+
+        QJsonObject partObj;
+        partObj.insert(QStringLiteral("text"), request.prompt.trimmed());
+        QJsonArray partsArr;
+        partsArr.append(partObj);
+
+        QJsonObject contentObj;
+        contentObj.insert(QStringLiteral("role"), QStringLiteral("user"));
+        contentObj.insert(QStringLiteral("parts"), partsArr);
+        QJsonArray contentsArr;
+        contentsArr.append(contentObj);
+
+        body.insert(QStringLiteral("contents"), contentsArr);
     } else {
+        networkRequest.setUrl(endpointUrl(config_.endpoint.path().endsWith(QLatin1String("v1"))
+                                              ? QStringLiteral("/chat/completions")
+                                              : QStringLiteral("/v1/chat/completions")));
         if (!config_.apiKey.isEmpty()) {
             networkRequest.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
         }
+
+        QJsonObject messageObj;
+        messageObj.insert(QStringLiteral("role"), QStringLiteral("user"));
+        messageObj.insert(QStringLiteral("content"), request.prompt.trimmed());
+        QJsonArray messagesArr;
+        messagesArr.append(messageObj);
+
+        body.insert(QStringLiteral("model"), result.model);
+        body.insert(QStringLiteral("messages"), messagesArr);
+        body.insert(QStringLiteral("stream"), true);
     }
     networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
                              QStringLiteral("application/json"));
@@ -1421,13 +1486,28 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         return result;
     }
 
-    if (reply->error() != QNetworkReply::NoError) {
-        const auto error = reply->errorString();
+    const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+    const QString providerLabel = config_.providerDisplayName();
+
+    if (httpStatus >= 400 || reply->error() != QNetworkReply::NoError) {
         result.status = LocalInferenceStreamStatus::Error;
-        const JsonReply failedReply{false, false, {}, error, reply->error()};
-        result.error = networkErrorCategory(failedReply);
-        result.summary = safeNetworkFailureSummary(
-            failedReply, QStringLiteral("Local LM Studio streaming generation"), timeoutMs);
+        result.error = LocalInferenceError::RequestFailed;
+        if (httpStatus == 404) {
+            result.summary = QStringLiteral("%1 error: Model '%2' was not found (HTTP 404). Check model selection in Settings.")
+                                 .arg(providerLabel, result.model);
+        } else if (httpStatus == 401 || httpStatus == 403) {
+            result.summary = QStringLiteral("%1 error: API Key is missing or unauthorized (HTTP %2). Check API Key in Settings.")
+                                 .arg(providerLabel).arg(httpStatus);
+        } else if (httpStatus == 429) {
+            result.summary = QStringLiteral("%1 error: Rate limit exceeded (HTTP 429). Please try again later.")
+                                 .arg(providerLabel);
+        } else {
+            const auto error = reply->errorString();
+            const JsonReply failedReply{false, false, {}, error, reply->error()};
+            result.error = networkErrorCategory(failedReply);
+            result.summary = safeNetworkFailureSummary(
+                failedReply, QStringLiteral("%1 streaming generation").arg(providerLabel), timeoutMs);
+        }
         reply->deleteLater();
         return result;
     }
@@ -1482,7 +1562,12 @@ bool LMStudioLocalInferenceStreamClient::isAvailable() const {
 
 QUrl LMStudioLocalInferenceStreamClient::endpointUrl(const QString& path) const {
     QUrl url = config_.endpoint;
-    url.setPath(path);
+    QString basePath = url.path();
+    if (basePath == QStringLiteral("/")) basePath.clear();
+    if (basePath.endsWith(QLatin1Char('/'))) basePath.chop(1);
+    QString addPath = path;
+    if (!addPath.startsWith(QLatin1Char('/'))) addPath.prepend(QLatin1Char('/'));
+    url.setPath(basePath + addPath);
     url.setQuery(QString());
     url.setFragment(QString());
     return url;

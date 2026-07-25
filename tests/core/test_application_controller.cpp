@@ -1211,8 +1211,8 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
     QVERIFY(controller->activeRuntimeModelLabel().contains(QStringLiteral("llama3.2")));
     QCOMPARE(controller->selectableRuntimeProviderIds(),
              QStringList({QStringLiteral("ollama"),
-                          QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server")}));
-    QCOMPARE(controller->runtimeProviderCardSummaries().size(), 4);
+                          QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server"), QStringLiteral("cloud-api")}));
+    QCOMPARE(controller->runtimeProviderCardSummaries().size(), 5);
     QVERIFY(controller->runtimeProviderCardSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("OpenAI-compatible Local")));
@@ -1242,7 +1242,7 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
     QVERIFY(controller->providerCredentialSafetySummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("cloudRequests=refused")));
-    QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 3);
+    QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 4);
 }
 
 void ApplicationControllerTest::disabledRuntimeProviderSelectionFallsBackToLocalOllama() {

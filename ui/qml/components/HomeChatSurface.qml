@@ -26,7 +26,12 @@ ShellPanel {
                                              : viewModel.localChatSendAvailabilitySummary
     readonly property bool sidebarEffectiveOpen: conversationSidebarOpen && !compact
     readonly property bool isLMStudio: homeChat.viewModel.selectedRuntimeProvider === "lm-studio"
-    readonly property string localProviderLabel: isLMStudio ? "LM Studio" : "Ollama"
+    readonly property bool isLlamaCpp: homeChat.viewModel.selectedRuntimeProvider === "llama-cpp-server"
+    readonly property bool isCloud: {
+        var p = homeChat.viewModel.selectedRuntimeProvider
+        return p === "cloud-api" || p === "openai" || p === "claude" || p === "gemini" || p === "deepseek" || p === "groq" || p === "mistral"
+    }
+    readonly property string localProviderLabel: isCloud ? "Cloud API" : (isLMStudio ? "LM Studio" : (isLlamaCpp ? "llama.cpp" : "Ollama"))
     property bool conversationSidebarOpen: true
     property string conversationFilter: ""
     property string sidebarView: "recent"
@@ -34,7 +39,7 @@ ShellPanel {
     property string pendingDeleteConversationTitle: ""   // "recent" | "pinned" | "archived"
     readonly property real resolutionScale: Math.max(0.7, Math.min(1.4, homeChat.height / 860.0))
     property bool showSuggestions: true
-    property var activeGreeting: ({ title: qsTr("Merhaba, Operator"), subtitle: qsTr("Sentinel tüm yerel yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?") })
+    property var activeGreeting: ({ title: qsTr("Merhaba, Operator"), subtitle: isCloud ? qsTr("Sentinel bulut yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?") : qsTr("Sentinel tüm yerel yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?") })
 
     radius: SentinelTheme.radiusPanel
     color: "transparent"
@@ -1424,11 +1429,11 @@ ShellPanel {
                                 if (index >= 0 && index < homeChat.viewModel.ollamaModelNames.length)
                                     homeChat.viewModel.selectedLocalModel = homeChat.viewModel.ollamaModelNames[index]
                             }
-                            displayText: currentIndex >= 0 ? homeChat.viewModel.ollamaModelNames[currentIndex] : qsTr("No model")
+                            displayText: currentIndex >= 0 ? homeChat.viewModel.ollamaModelNames[currentIndex] : (homeChat.viewModel.selectedLocalModel !== "" ? homeChat.viewModel.selectedLocalModel : qsTr("No model"))
 
                             contentItem: Text {
                                 text: homeModelSelector.displayText
-                                color: homeModelSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                color: (homeModelSelector.currentIndex >= 0 || homeChat.viewModel.selectedLocalModel !== "") ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                                 verticalAlignment: Text.AlignVCenter
                                 leftPadding: SentinelTheme.spaceSm
