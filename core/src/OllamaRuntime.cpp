@@ -58,12 +58,16 @@ struct JsonReply {
     QNetworkReply::NetworkError networkError = QNetworkReply::NoError;
 };
 
-JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager = nullptr) {
+JsonReply getJson(const QUrl& url, int timeoutMs, QNetworkAccessManager* manager = nullptr,
+                 const QMap<QByteArray, QByteArray>& headers = {}) {
     QNetworkAccessManager localManager;
     QNetworkAccessManager* activeManager = manager ? manager : &localManager;
     QNetworkRequest request{url};
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
                          QNetworkRequest::ManualRedirectPolicy);
+    for (auto it = headers.constBegin(); it != headers.constEnd(); ++it) {
+        request.setRawHeader(it.key(), it.value());
+    }
 
     QEventLoop loop;
     QTimer timer;
@@ -1342,8 +1346,9 @@ void LMStudioLibraryFetcher::parseHtml(const QString& html) {
 }
 
 namespace sentinel::core {
-QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeoutMs) {
-    const auto reply = getJson(url, timeoutMs);
+QList<OllamaModelSummary> fetchOpenAiCompatibleModels(
+    const QUrl& url, int timeoutMs, const QMap<QByteArray, QByteArray>& headers) {
+    const auto reply = getJson(url, timeoutMs, nullptr, headers);
     if (!reply.ok) {
         return {};
     }
@@ -1370,5 +1375,52 @@ QList<OllamaModelSummary> fetchOpenAiCompatibleModels(const QUrl& url, int timeo
         models.append(OllamaModelSummary{id, createdStr, 0});
     }
     return models;
+}
+
+QList<OllamaModelSummary> fetchGeminiCloudModels(const QString& apiKey, int timeoutMs) {
+    if (apiKey.trimmed().isEmpty()) {
+        return {};
+    }
+    const QUrl url(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models?key=") + apiKey.trimmed());
+    const auto reply = getJson(url, timeoutMs);
+    if (!reply.ok) {
+        return {};
+    }
+
+    QList<OllamaModelSummary> models;
+    const auto modelsArray = reply.document.object().value(QStringLiteral("models")).toArray();
+    for (const auto& val : modelsArray) {
+        const auto obj = val.toObject();
+        auto name = obj.value(QStringLiteral("name")).toString().trimmed();
+        if (name.startsWith(QStringLiteral("models/"))) {
+            name = name.mid(7);
+        }
+        if (name.isEmpty()) continue;
+        const auto displayName = obj.value(QStringLiteral("displayName")).toString().trimmed();
+        models.append(OllamaModelSummary{name, displayName.isEmpty() ? QStringLiteral("Google Cloud") : displayName, 0});
+    }
+    return models;
+}
+
+QList<OllamaModelSummary> fetchAnthropicCloudModels(const QString& apiKey, int timeoutMs) {
+    if (apiKey.trimmed().isEmpty()) {
+        return {};
+    }
+    const QUrl url(QStringLiteral("https://api.anthropic.com/v1/models"));
+    const QMap<QByteArray, QByteArray> headers{
+        {"x-api-key", apiKey.trimmed().toUtf8()},
+        {"anthropic-version", "2023-06-01"}
+    };
+    return fetchOpenAiCompatibleModels(url, timeoutMs, headers);
+}
+
+QList<OllamaModelSummary> fetchOpenAiCloudModels(const QUrl& url, const QString& apiKey, int timeoutMs) {
+    if (apiKey.trimmed().isEmpty()) {
+        return {};
+    }
+    const QMap<QByteArray, QByteArray> headers{
+        {"Authorization", ("Bearer " + apiKey.trimmed()).toUtf8()}
+    };
+    return fetchOpenAiCompatibleModels(url, timeoutMs, headers);
 }
 } // namespace sentinel::core
