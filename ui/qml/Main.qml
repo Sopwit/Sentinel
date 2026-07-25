@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -133,28 +134,34 @@ ApplicationWindow {
                 spacing: SentinelTheme.spaceMd
 
 
-                // Page stack: Dashboard / Models
-                StackLayout {
+                // Page stack: Dashboard / Models with crossfade
+                Item {
                     id: pageStack
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 0
-                    currentIndex: root.currentShellPage === "Models" ? 1 : 0
-
-                    Behavior on currentIndex {
-                        enabled: false
-                    }
 
                     DashboardPage {
                         id: dashboardPage
                         viewModel: root.viewModel
+                        anchors.fill: parent
+                        visible: root.currentShellPage === "Dashboard"
+                        opacity: root.currentShellPage === "Dashboard" ? 1.0 : 0.0
+                        Behavior on opacity {
+                            NumberAnimation { duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName); easing.type: Easing.OutCubic }
+                        }
                     }
 
                     ModelsPage {
                         id: modelsPage
+                        anchors.fill: parent
+                        visible: opacity > 0
+                        opacity: root.currentShellPage === "Models" ? 1.0 : 0.0
+                        Behavior on opacity {
+                            NumberAnimation { duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName); easing.type: Easing.OutCubic }
+                        }
                     }
                 }
-                // StatusBar is removed/hidden as requested
             }
         }
     }
@@ -209,6 +216,7 @@ ApplicationWindow {
         }
 
         background: Rectangle {
+            id: fabBg
             radius: width / 2
             color: InteractionTokens.surfaceColor(settingsFab.hovered, settingsFab.down,
                                                    settingsModal.opened,
@@ -217,6 +225,15 @@ ApplicationWindow {
                                                          settingsModal.opened,
                                                          SentinelTheme.calmAccent)
             border.width: 1
+
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: Qt.rgba(0, 0, 0, 0.18)
+                shadowVerticalOffset: 2
+                shadowBlur: 0.15
+                shadowOpacity: 1.0
+            }
 
             Behavior on color {
                 ColorAnimation {
@@ -273,10 +290,20 @@ ApplicationWindow {
 
     UpdateProgressModal {
         id: updateModal
-        currentVersion: "1.0.0"
-        availableVersion: "1.0.1-alpha"
+        viewModel: root.viewModel
+        currentVersion: Qt.application.version
         modeName: root.viewModel.currentModeName
         accent: SentinelTheme.modeAccent(root.viewModel.currentModeName)
+        onCheckRequested: {
+            root.viewModel.checkForUpdates()
+        }
+        onDownloadRequested: {
+            var downloadUrl = root.viewModel.lastAssetUrl
+            if (downloadUrl && downloadUrl.length > 0) {
+                updateModal.startDownload()
+                root.viewModel.startDownload(downloadUrl)
+            }
+        }
         onUpdateCompleted: {
             root.viewModel.relaunchApplication()
         }
@@ -413,13 +440,51 @@ ApplicationWindow {
             }
             root.lastPrimaryPage = root.viewModel.currentPage
         }
-        function onUpdateCheckCompleted(available, version, releaseNotes, downloadUrl) {
+        function onUpdateCheckCompleted(available, version, releaseNotes, downloadUrl, assetSize) {
             updateModal.availableVersion = version
             if (releaseNotes && releaseNotes.length > 0) {
                 updateModal.releaseNotesText = releaseNotes
             }
-            updateModal.updateState = available ? "available" : "idle"
-            updateModal.open()
+            if (assetSize > 0) {
+                var sizeMB = (assetSize / (1024 * 1024)).toFixed(1)
+                updateModal.packageSizeText = sizeMB + " MB"
+            }
+            if (available) {
+                updateModal.updateState = "available"
+                updateModal.open()
+            } else {
+                updateModal.updateState = "upToDate"
+                updateModal.open()
+            }
+        }
+        function onUpdateDownloadProgressChanged(bytesReceived, bytesTotal, speedBytesPerSec) {
+            updateModal.updateState = "downloading"
+            updateModal.downloadProgress = bytesTotal > 0 ? bytesReceived / bytesTotal : 0.0
+
+            var receivedMB = (bytesReceived / (1024 * 1024)).toFixed(1)
+            var totalMB = (bytesTotal / (1024 * 1024)).toFixed(1)
+            updateModal.downloadedBytesText = receivedMB + " MB / " + totalMB + " MB"
+
+            if (speedBytesPerSec > 0) {
+                var speedText
+                if (speedBytesPerSec > 1024 * 1024) {
+                    speedText = (speedBytesPerSec / (1024 * 1024)).toFixed(1) + " MB/s"
+                } else if (speedBytesPerSec > 1024) {
+                    speedText = (speedBytesPerSec / 1024).toFixed(1) + " KB/s"
+                } else {
+                    speedText = speedBytesPerSec.toFixed(0) + " B/s"
+                }
+                updateModal.downloadSpeedText = speedText
+            }
+        }
+        function onUpdateDownloadFinished(success, filePath) {
+            if (success) {
+                updateModal.updateState = "completed"
+                updateModal.downloadProgress = 1.0
+            } else {
+                updateModal.updateState = "error"
+                updateModal.errorMessage = qsTr("Download failed. Please check your network connection and try again.")
+            }
         }
     }
 

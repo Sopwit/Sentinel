@@ -926,12 +926,31 @@ Item {
                                 }
 
                                 background: Rectangle {
+                                    id: navBtnBg
                                     radius: SentinelTheme.radiusMd
                                     color: navButton.active
                                            ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.14)
                                            : (navButton.hovered
                                               ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
                                               : "transparent")
+
+                                    layer.enabled: navButton.active || navButton.hovered
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: navButton.active
+                                                     ? Qt.rgba(0, 0, 0, 0.20)
+                                                     : Qt.rgba(0, 0, 0, 0.10)
+                                        shadowVerticalOffset: navButton.active ? 2 : 1
+                                        shadowBlur: 0.12
+                                        shadowOpacity: 1.0
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: MotionTokens.fast
+                                            easing.type: MotionTokens.standard
+                                        }
+                                    }
 
                                     Rectangle {
                                         width: navButton.active ? 3 : 0
@@ -941,6 +960,13 @@ Item {
                                         anchors.leftMargin: modelsPage.sidebarCollapsed ? 3 : 6
                                         anchors.verticalCenter: parent.verticalCenter
                                         color: modelsPage.modeAccent
+
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: MotionTokens.fast
+                                                easing.type: MotionTokens.enter
+                                            }
+                                        }
                                     }
                                 }
                             }

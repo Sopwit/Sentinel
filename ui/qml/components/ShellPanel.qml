@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Sentinel.Desktop
 
 Rectangle {
@@ -8,6 +9,18 @@ Rectangle {
     color: panelColor
     border.color: borderColor
     border.width: borderWidth
+
+    // Drop shadow
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        shadowEnabled: true
+        shadowColor: SentinelTheme.lightTheme
+                     ? Qt.rgba(0, 0, 0, 0.10)
+                     : Qt.rgba(0, 0, 0, 0.35)
+        shadowVerticalOffset: SentinelTheme.lightTheme ? 2 : 4
+        shadowBlur: SentinelTheme.shadowBlurPanel * 0.03
+        shadowOpacity: 1.0
+    }
 
     property color panelColor: SentinelTheme.panel
     property color borderColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.070)

@@ -9,17 +9,21 @@ SentinelOverlayModal {
     id: updateModal
 
     // ── Public API ────────────────────────────────────────────────────────────
-    property string currentVersion: "1.0.0"
-    property string availableVersion: "1.0.1-alpha"
+    property string currentVersion: ""
+    property string availableVersion: ""
     property string updateState: "idle" // "idle" | "checking" | "available" | "downloading" | "verifying" | "completed" | "upToDate" | "error"
     property real downloadProgress: 0.0 // 0.0 .. 1.0
-    property string downloadSpeedText: "12.4 MB/s"
-    property string downloadedBytesText: "28.5 MB / 42.0 MB"
+    property string downloadSpeedText: ""
+    property string downloadedBytesText: ""
     property string releaseNotesText: ""
     property string errorMessage: ""
+    property string packageName: ""
+    property string packageSizeText: ""
+    property var viewModel: null
 
     signal updateCompleted()
     signal checkRequested()
+    signal downloadRequested()
 
     // ── Geometry & Layout ─────────────────────────────────────────────────────
     preferredWidth: 580
@@ -30,66 +34,27 @@ SentinelOverlayModal {
     function startCheckAndDownload() {
         errorMessage = ""
         updateState = "checking"
-        checkTimer.start()
         checkRequested()
     }
 
+    function startDownload() {
+        if (updateModal.updateState !== "downloading") {
+            downloadProgress = 0.0
+            downloadSpeedText = ""
+            downloadedBytesText = ""
+        }
+    }
+
     function cancelUpdate() {
-        checkTimer.stop()
-        downloadTimer.stop()
-        verifyTimer.stop()
+        if (updateState === "downloading") {
+            if (typeof viewModel !== "undefined" && viewModel)
+                viewModel.cancelDownload()
+        }
         if (updateState === "downloading" || updateState === "checking" || updateState === "verifying") {
             updateState = "idle"
             downloadProgress = 0.0
         }
         updateModal.close()
-    }
-
-    Timer {
-        id: checkTimer
-        interval: 1200
-        repeat: false
-        onTriggered: {
-            if (updateModal.updateState === "checking") {
-                updateModal.updateState = "downloading"
-                updateModal.downloadProgress = 0.05
-                downloadTimer.start()
-            }
-        }
-    }
-
-    Timer {
-        id: downloadTimer
-        interval: 180
-        repeat: true
-        onTriggered: {
-            if (updateModal.updateState !== "downloading") {
-                downloadTimer.stop()
-                return
-            }
-
-            if (updateModal.downloadProgress < 0.95) {
-                updateModal.downloadProgress += 0.05 + Math.random() * 0.03
-                var currentMB = (42.0 * Math.min(1.0, updateModal.downloadProgress)).toFixed(1)
-                updateModal.downloadedBytesText = currentMB + " MB / 42.0 MB"
-            } else {
-                downloadTimer.stop()
-                updateModal.downloadProgress = 1.0
-                updateModal.updateState = "verifying"
-                verifyTimer.start()
-            }
-        }
-    }
-
-    Timer {
-        id: verifyTimer
-        interval: 1400
-        repeat: false
-        onTriggered: {
-            if (updateModal.updateState === "verifying") {
-                updateModal.updateState = "completed"
-            }
-        }
     }
 
     contentItem: Item {
@@ -107,7 +72,6 @@ SentinelOverlayModal {
                 Layout.fillWidth: true
                 spacing: SentinelTheme.spaceMd
 
-                // Icon Box
                 Rectangle {
                     implicitWidth: 36
                     implicitHeight: 36
@@ -118,9 +82,9 @@ SentinelOverlayModal {
 
                     Label {
                         anchors.centerIn: parent
-                        text: updateModal.updateState === "completed" || updateModal.updateState === "upToDate" ? "✓"
+                        text: updateModal.updateState === "completed" || updateModal.updateState === "upToDate" ? "\u2713"
                             : updateModal.updateState === "error" ? "!"
-                            : "⟳"
+                            : "\u27F3"
                         font.pixelSize: 18
                         font.bold: true
                         color: updateModal.updateState === "completed" || updateModal.updateState === "upToDate" ? SentinelTheme.success
@@ -129,7 +93,6 @@ SentinelOverlayModal {
                     }
                 }
 
-                // Title & Subtitle
                 ColumnLayout {
                     Layout.fillWidth: true
                     spacing: 2
@@ -152,7 +115,6 @@ SentinelOverlayModal {
                     }
                 }
 
-                // State Badge Chip
                 Rectangle {
                     implicitHeight: 24
                     implicitWidth: stateBadgeLabel.implicitWidth + 16
@@ -171,14 +133,15 @@ SentinelOverlayModal {
                     Label {
                         id: stateBadgeLabel
                         anchors.centerIn: parent
-                        text: updateModal.updateState === "checking" ? qsTr("Checking…")
+                        text: updateModal.updateState === "checking" ? qsTr("Checking\u2026")
                             : updateModal.updateState === "downloading" ? qsTr("Downloading")
                             : updateModal.updateState === "verifying" ? qsTr("Verifying")
                             : updateModal.updateState === "completed" ? qsTr("Ready to Install")
                             : updateModal.updateState === "upToDate" ? qsTr("Up to Date")
                             : updateModal.updateState === "error" ? qsTr("Check Failed")
                             : updateModal.updateState === "available" ? qsTr("v%1 Available").arg(updateModal.availableVersion)
-                            : qsTr("v%1").arg(updateModal.currentVersion)
+                            : updateModal.currentVersion.length > 0 ? qsTr("v%1").arg(updateModal.currentVersion)
+                            : qsTr("Update")
                         font.pixelSize: SentinelTheme.fontTiny
                         font.bold: true
                         color: updateModal.updateState === "completed" || updateModal.updateState === "upToDate" ? SentinelTheme.success
@@ -188,7 +151,6 @@ SentinelOverlayModal {
                     }
                 }
 
-                // Close Button
                 Button {
                     id: closeBtn
                     implicitWidth: 28
@@ -201,7 +163,7 @@ SentinelOverlayModal {
                         color: closeBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08) : "transparent"
                     }
                     contentItem: Label {
-                        text: "×"
+                        text: "\u00D7"
                         font.pixelSize: 20
                         font.bold: true
                         color: SentinelTheme.textMuted
@@ -211,20 +173,19 @@ SentinelOverlayModal {
                 }
             }
 
-            // Top Separator
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 1
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
             }
 
-            // ── Main Body Content (State-dependent) ─────────────────────────
+            // ── Main Body Content ───────────────────────────────────────────
             Item {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
                 clip: true
 
-                // ── STATE 1: IDLE / AVAILABLE PREVIEW ───────────────────────
+                // ── STATE: IDLE / AVAILABLE ──────────────────────────────────
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: SentinelTheme.spaceMd
@@ -234,7 +195,6 @@ SentinelOverlayModal {
                         Layout.fillWidth: true
                         spacing: SentinelTheme.spaceMd
 
-                        // Version badge card
                         Rectangle {
                             Layout.preferredWidth: 160
                             Layout.preferredHeight: 74
@@ -267,21 +227,25 @@ SentinelOverlayModal {
                             }
                         }
 
-                        // Version details
                         ColumnLayout {
                             Layout.fillWidth: true
                             spacing: 4
 
                             Label {
-                                text: qsTr("Current Installed Version: v%1").arg(updateModal.currentVersion)
+                                text: updateModal.currentVersion.length > 0
+                                    ? qsTr("Current Installed Version: v%1").arg(updateModal.currentVersion)
+                                    : ""
                                 font.pixelSize: SentinelTheme.fontSmall
                                 color: SentinelTheme.textMuted
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
+                                visible: text.length > 0
                             }
 
                             Label {
-                                text: qsTr("Package: Sentinel-Desktop-v%1.dmg (42.0 MB)").arg(updateModal.availableVersion)
+                                text: updateModal.packageName.length > 0
+                                    ? qsTr("Package: %1 (%2)").arg(updateModal.packageName).arg(updateModal.packageSizeText)
+                                    : qsTr("Package: GitHub Release")
                                 font.pixelSize: SentinelTheme.fontSmall
                                 font.bold: true
                                 color: SentinelTheme.textPrimary
@@ -300,7 +264,6 @@ SentinelOverlayModal {
                         }
                     }
 
-                    // Release notes container
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
@@ -315,7 +278,9 @@ SentinelOverlayModal {
                             spacing: SentinelTheme.spaceSm
 
                             Label {
-                                text: qsTr("Release Highlights (v%1):").arg(updateModal.availableVersion)
+                                text: updateModal.availableVersion.length > 0
+                                    ? qsTr("Release Highlights (v%1):").arg(updateModal.availableVersion)
+                                    : qsTr("Release Highlights:")
                                 font.pixelSize: SentinelTheme.fontBody
                                 font.bold: true
                                 color: SentinelTheme.textPrimary
@@ -333,7 +298,6 @@ SentinelOverlayModal {
                                     width: releaseNotesScroll.width > 0 ? releaseNotesScroll.width : parent.width
                                     spacing: 8
 
-                                    // Dynamic release notes if provided
                                     Text {
                                         visible: updateModal.releaseNotesText.length > 0
                                         text: updateModal.releaseNotesText
@@ -341,95 +305,16 @@ SentinelOverlayModal {
                                         font.family: SentinelTheme.fontFamily
                                         color: SentinelTheme.textPrimary
                                         wrapMode: Text.WordWrap
-                                        textFormat: Text.PlainText
+                                        textFormat: TextEdit.Markdown
                                         Layout.fillWidth: true
                                     }
 
-                                    // Fallback highlights if releaseNotesText is empty
-                                    ColumnLayout {
+                                    Label {
                                         visible: updateModal.releaseNotesText.length === 0
+                                        text: qsTr("No release notes available.")
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                        color: SentinelTheme.textMuted
                                         Layout.fillWidth: true
-                                        spacing: 6
-
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            implicitHeight: itemCol1.implicitHeight + 12
-                                            radius: SentinelTheme.radiusSm
-                                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
-
-                                            ColumnLayout {
-                                                id: itemCol1
-                                                anchors.fill: parent
-                                                anchors.margins: 6
-                                                Label {
-                                                    text: "• " + qsTr("Liquid Glass Light theme rendering & panel palette overhaul")
-                                                    font.pixelSize: SentinelTheme.fontSmall
-                                                    color: SentinelTheme.textPrimary
-                                                    wrapMode: Text.WordWrap
-                                                    Layout.fillWidth: true
-                                                }
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            implicitHeight: itemCol2.implicitHeight + 12
-                                            radius: SentinelTheme.radiusSm
-                                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
-
-                                            ColumnLayout {
-                                                id: itemCol2
-                                                anchors.fill: parent
-                                                anchors.margins: 6
-                                                Label {
-                                                    text: "• " + qsTr("Documents/Sentinel standard path provider database persistence")
-                                                    font.pixelSize: SentinelTheme.fontSmall
-                                                    color: SentinelTheme.textPrimary
-                                                    wrapMode: Text.WordWrap
-                                                    Layout.fillWidth: true
-                                                }
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            implicitHeight: itemCol3.implicitHeight + 12
-                                            radius: SentinelTheme.radiusSm
-                                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
-
-                                            ColumnLayout {
-                                                id: itemCol3
-                                                anchors.fill: parent
-                                                anchors.margins: 6
-                                                Label {
-                                                    text: "• " + qsTr("Ollama local runtime health checking & model catalog discovery")
-                                                    font.pixelSize: SentinelTheme.fontSmall
-                                                    color: SentinelTheme.textPrimary
-                                                    wrapMode: Text.WordWrap
-                                                    Layout.fillWidth: true
-                                                }
-                                            }
-                                        }
-
-                                        Rectangle {
-                                            Layout.fillWidth: true
-                                            implicitHeight: itemCol4.implicitHeight + 12
-                                            radius: SentinelTheme.radiusSm
-                                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
-
-                                            ColumnLayout {
-                                                id: itemCol4
-                                                anchors.fill: parent
-                                                anchors.margins: 6
-                                                Label {
-                                                    text: "• " + qsTr("Interactive options menu & conversation navigation stability fixes")
-                                                    font.pixelSize: SentinelTheme.fontSmall
-                                                    color: SentinelTheme.textPrimary
-                                                    wrapMode: Text.WordWrap
-                                                    Layout.fillWidth: true
-                                                }
-                                            }
-                                        }
                                     }
                                 }
                             }
@@ -437,7 +322,7 @@ SentinelOverlayModal {
                     }
                 }
 
-                // ── STATE 2: CHECKING / DOWNLOADING / VERIFYING ─────────────
+                // ── STATE: CHECKING / DOWNLOADING / VERIFYING ───────────────
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: SentinelTheme.spaceLg
@@ -445,7 +330,6 @@ SentinelOverlayModal {
 
                     Item { Layout.fillHeight: true }
 
-                    // Animated Spinner / Orb Ring
                     Item {
                         Layout.preferredWidth: 64
                         Layout.preferredHeight: 64
@@ -485,15 +369,14 @@ SentinelOverlayModal {
                         }
                     }
 
-                    // Dynamic Status Text
                     ColumnLayout {
                         Layout.fillWidth: true
                         spacing: 4
 
                         Label {
-                            text: updateModal.updateState === "checking" ? qsTr("Checking GitHub release boundary…")
-                                : updateModal.updateState === "verifying" ? qsTr("Verifying SHA-256 checksum & payload signature…")
-                                : qsTr("Downloading Sentinel v%1 update…").arg(updateModal.availableVersion)
+                            text: updateModal.updateState === "checking" ? qsTr("Checking GitHub release boundary\u2026")
+                                : updateModal.updateState === "verifying" ? qsTr("Verifying SHA-256 checksum & payload signature\u2026")
+                                : qsTr("Downloading Sentinel v%1 update\u2026").arg(updateModal.availableVersion)
                             font.pixelSize: SentinelTheme.fontBody
                             font.bold: true
                             color: SentinelTheme.textPrimary
@@ -504,7 +387,12 @@ SentinelOverlayModal {
 
                         Label {
                             text: updateModal.updateState === "downloading"
-                                ? (updateModal.downloadedBytesText + " • " + updateModal.downloadSpeedText)
+                                ? (updateModal.downloadedBytesText.length > 0
+                                    ? updateModal.downloadedBytesText
+                                    : "")
+                                  + (updateModal.downloadSpeedText.length > 0 && updateModal.downloadedBytesText.length > 0
+                                    ? " \u2022 " + updateModal.downloadSpeedText
+                                    : updateModal.downloadSpeedText.length > 0 ? updateModal.downloadSpeedText : "")
                                 : qsTr("Local encrypted payload verification")
                             font.pixelSize: SentinelTheme.fontSmall
                             color: SentinelTheme.textMuted
@@ -514,7 +402,6 @@ SentinelOverlayModal {
                         }
                     }
 
-                    // Animated Progress Bar Track
                     Rectangle {
                         Layout.fillWidth: true
                         Layout.leftMargin: SentinelTheme.spaceLg
@@ -541,7 +428,7 @@ SentinelOverlayModal {
                     Item { Layout.fillHeight: true }
                 }
 
-                // ── STATE 3: UP TO DATE ──────────────────────────────────────
+                // ── STATE: UP TO DATE ────────────────────────────────────────
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: SentinelTheme.spaceMd
@@ -560,7 +447,7 @@ SentinelOverlayModal {
 
                         Label {
                             anchors.centerIn: parent
-                            text: "✓"
+                            text: "\u2713"
                             font.pixelSize: 32
                             font.bold: true
                             color: SentinelTheme.success
@@ -577,7 +464,9 @@ SentinelOverlayModal {
                     }
 
                     Label {
-                        text: qsTr("You are currently running version %1. No new updates are available at this time.").arg(updateModal.currentVersion)
+                        text: updateModal.currentVersion.length > 0
+                            ? qsTr("You are currently running version %1. No new updates are available at this time.").arg(updateModal.currentVersion)
+                            : qsTr("No new updates are available at this time.")
                         font.pixelSize: SentinelTheme.fontBody
                         color: SentinelTheme.textMuted
                         horizontalAlignment: Text.AlignHCenter
@@ -590,7 +479,7 @@ SentinelOverlayModal {
                     Item { Layout.fillHeight: true }
                 }
 
-                // ── STATE 4: COMPLETED ───────────────────────────────────────
+                // ── STATE: COMPLETED ─────────────────────────────────────────
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: SentinelTheme.spaceMd
@@ -609,7 +498,7 @@ SentinelOverlayModal {
 
                         Label {
                             anchors.centerIn: parent
-                            text: "✓"
+                            text: "\u2713"
                             font.pixelSize: 32
                             font.bold: true
                             color: SentinelTheme.success
@@ -617,7 +506,7 @@ SentinelOverlayModal {
                     }
 
                     Label {
-                        text: qsTr("Sentinel v%1 Update Ready!").arg(updateModal.availableVersion)
+                        text: qsTr("Sentinel v%1 Update Downloaded!").arg(updateModal.availableVersion)
                         font.pixelSize: SentinelTheme.fontCard
                         font.bold: true
                         color: SentinelTheme.textPrimary
@@ -626,7 +515,7 @@ SentinelOverlayModal {
                     }
 
                     Label {
-                        text: qsTr("The update package has been downloaded, verified, and extracted. Restart the app to apply the update.")
+                        text: qsTr("The update package has been downloaded to your Downloads folder. Open the file to install the update.")
                         font.pixelSize: SentinelTheme.fontBody
                         color: SentinelTheme.textMuted
                         horizontalAlignment: Text.AlignHCenter
@@ -639,7 +528,7 @@ SentinelOverlayModal {
                     Item { Layout.fillHeight: true }
                 }
 
-                // ── STATE 5: ERROR ───────────────────────────────────────────
+                // ── STATE: ERROR ─────────────────────────────────────────────
                 ColumnLayout {
                     anchors.fill: parent
                     spacing: SentinelTheme.spaceMd
@@ -691,7 +580,6 @@ SentinelOverlayModal {
                 }
             }
 
-            // Bottom Separator
             Rectangle {
                 Layout.fillWidth: true
                 implicitHeight: 1
@@ -704,14 +592,13 @@ SentinelOverlayModal {
                 spacing: SentinelTheme.spaceSm
 
                 Label {
-                    text: qsTr("Manual update boundary • Local execution")
+                    text: qsTr("Manual update boundary \u2022 Local execution")
                     font.pixelSize: SentinelTheme.fontTiny
                     color: SentinelTheme.textMuted
                 }
 
                 Item { Layout.fillWidth: true }
 
-                // Cancel / Secondary Button
                 Button {
                     id: cancelBtn
                     implicitHeight: 36
@@ -734,16 +621,15 @@ SentinelOverlayModal {
                     }
                 }
 
-                // Primary Action Button
                 Button {
                     id: actionBtn
                     implicitHeight: 36
                     implicitWidth: 160
-                    text: updateModal.updateState === "completed" ? qsTr("Restart Application")
+                    text: updateModal.updateState === "completed" ? qsTr("Open Downloads Folder")
                         : updateModal.updateState === "upToDate" ? qsTr("Check Again")
                         : updateModal.updateState === "error" ? qsTr("Try Again")
                         : (updateModal.updateState === "idle" || updateModal.updateState === "available") ? qsTr("Update Now")
-                        : qsTr("Updating…")
+                        : qsTr("Updating\u2026")
 
                     enabled: updateModal.updateState !== "checking" && updateModal.updateState !== "downloading" && updateModal.updateState !== "verifying"
 
@@ -751,6 +637,8 @@ SentinelOverlayModal {
                         if (updateModal.updateState === "completed") {
                             updateModal.updateCompleted()
                             updateModal.close()
+                        } else if (updateModal.updateState === "available") {
+                            updateModal.downloadRequested()
                         } else {
                             updateModal.startCheckAndDownload()
                         }

@@ -12,14 +12,17 @@
 #include "sentinel/desktop/ChatMessageListModel.h"
 
 #include <QObject>
+#include <QElapsedTimer>
 #include <QSet>
 #include <QString>
 #include <QStringList>
 #include <memory>
 
+class QFile;
 class QProcess;
 class QSystemTrayIcon;
 class QNetworkAccessManager;
+class QNetworkReply;
 
 namespace sentinel::core {
 class AppSettings;
@@ -1251,6 +1254,7 @@ class DesktopShellViewModel final : public QObject {
                    setNotificationCategoryFilter NOTIFY nativeExperienceChanged)
     Q_PROPERTY(bool notificationCenterVisible READ notificationCenterVisible WRITE setNotificationCenterVisible NOTIFY notificationCenterVisibleChanged)
     Q_PROPERTY(QString updateWorkflowState READ updateWorkflowState NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(QString lastAssetUrl READ lastAssetUrl NOTIFY nativeExperienceChanged)
     Q_PROPERTY(
         QStringList releaseNotesSummaries READ releaseNotesSummaries NOTIFY nativeExperienceChanged)
     Q_PROPERTY(QStringList aboutSentinelSummaries READ aboutSentinelSummaries NOTIFY
@@ -2197,6 +2201,7 @@ public:
     QString notificationCategoryFilter() const;
     void setNotificationCategoryFilter(const QString& category);
     QString updateWorkflowState() const;
+    QString lastAssetUrl() const;
     QStringList releaseNotesSummaries() const;
     QStringList aboutSentinelSummaries() const;
     QStringList accessibilitySummaries() const;
@@ -2308,6 +2313,8 @@ public:
     Q_INVOKABLE void clearConversationSearch();
     Q_INVOKABLE bool exportTranscript(const QString& format);
     Q_INVOKABLE bool checkForUpdates();
+    Q_INVOKABLE bool startDownload(const QString& assetUrl);
+    Q_INVOKABLE void cancelDownload();
     Q_INVOKABLE bool confirmUpdateDownload();
     Q_INVOKABLE void relaunchApplication();
     Q_INVOKABLE void replayOnboarding();
@@ -2452,7 +2459,9 @@ signals:
     void permissionPolicyChanged();
     void agentRuntimeChanged();
     void controlledAgentTasksChanged();
-    void updateCheckCompleted(bool available, const QString& version, const QString& releaseNotes, const QString& downloadUrl);
+    void updateCheckCompleted(bool available, const QString& version, const QString& releaseNotes, const QString& downloadUrl, qint64 assetSize = 0);
+    void updateDownloadProgressChanged(qint64 bytesReceived, qint64 bytesTotal, double speedBytesPerSec);
+    void updateDownloadFinished(bool success, const QString& filePath);
     void selectedCloudProviderChanged();
     void cloudApiKeysChanged();
 
@@ -2495,6 +2504,14 @@ private:
     QSystemTrayIcon* trayIcon_ = nullptr;
     QNetworkAccessManager* networkManager_ = nullptr;
     QString lastReleaseUrl_;
+    QString lastAssetUrl_;
+    QString lastAssetName_;
+    qint64 lastAssetSize_ = 0;
+    QNetworkReply* downloadReply_ = nullptr;
+    QFile* downloadFile_ = nullptr;
+    QString downloadPath_;
+    qint64 lastBytesReceived_ = 0;
+    QElapsedTimer downloadElapsed_;
     QSet<QString> notifiedIds_;
     QString lastAgentStatus_;
     QString lastNotifiedCategory_;

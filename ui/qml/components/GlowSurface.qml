@@ -1,4 +1,5 @@
 import QtQuick
+import QtQuick.Effects
 import Sentinel.Desktop
 
 Item {
@@ -22,6 +23,15 @@ Item {
         color: SentinelTheme.withAlpha(glow.accent, (glow.active ? 0.060 : 0.028) * glow.glowScale)
         border.color: SentinelTheme.withAlpha(glow.accent, glow.active ? 0.050 : 0.026)
         scale: glow.active ? 1.018 : 1.0
+
+        // Real glow via MultiEffect shadow
+        layer.enabled: glow.active
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: SentinelTheme.withAlpha(glow.accent, 0.20)
+            shadowBlur: 0.5
+            shadowOpacity: 1.0
+        }
 
         Behavior on color {
             ColorAnimation {
