@@ -3125,13 +3125,15 @@ QString ApplicationController::localChatInferenceStatus() const {
     if (selected.isEmpty()) {
         return QStringLiteral("Missing Model");
     }
-    if (!isLMStudioProvider()) {
-        const auto health = currentOllamaHealthCheck();
-        if (health.healthStatus != OllamaHealthStatus::Healthy) {
-            return health.connectionStatus == OllamaConnectionStatus::Blocked
-                       ? QStringLiteral("Blocked")
-                       : QStringLiteral("Ollama Unreachable");
-        }
+    // Cloud and LM Studio providers do not rely on Ollama model discovery.
+    if (isLMStudioProvider()) {
+        return QStringLiteral("Ready");
+    }
+    const auto health = currentOllamaHealthCheck();
+    if (health.healthStatus != OllamaHealthStatus::Healthy) {
+        return health.connectionStatus == OllamaConnectionStatus::Blocked
+                   ? QStringLiteral("Blocked")
+                   : QStringLiteral("Ollama Unreachable");
     }
     const auto models = currentOllamaModels();
     if (models.isEmpty()) {
@@ -3148,31 +3150,31 @@ QString ApplicationController::localChatInferenceSummary() const {
         return QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
                               "Ollama or LM Studio to send.");
     }
-    const auto providerLabel =
-        isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
+    const auto providerLabel = currentCloudOrLMStudioConfig().providerDisplayName();
     if (!localChatInferenceEnabled_) {
         return QString::fromUtf8("Local chat inference is disabled; chat stays on the local safe "
                                  "provider path and no %1 prompt is sent.")
             .arg(providerLabel);
     }
     if (localInferenceBusy_) {
-        return QStringLiteral("Sentinel is waiting for the current local response to finish.");
+        return QStringLiteral("Sentinel is waiting for the current response to finish.");
     }
     if (!localInferenceEndpointAllowed()) {
-        return QString::fromUtf8("Local chat inference is blocked: %1 endpoint must be local "
-                                 "loopback HTTP.")
+        return QString::fromUtf8("%1 API key is missing or endpoint is not allowed.")
             .arg(providerLabel);
     }
     const auto selected = selectedLocalModel_.trimmed();
     if (selected.isEmpty()) {
-        return QString::fromUtf8("Select an installed/loaded %1 model in Settings before sending.")
+        return QString::fromUtf8("Select a model for %1 in Settings before sending.")
             .arg(providerLabel);
     }
-    if (!isLMStudioProvider()) {
-        const auto health = currentOllamaHealthCheck();
-        if (health.healthStatus != OllamaHealthStatus::Healthy) {
-            return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
-        }
+    // Cloud and LM Studio providers do not rely on Ollama model discovery.
+    if (isLMStudioProvider()) {
+        return QString::fromUtf8("%1 is ready to send.").arg(providerLabel);
+    }
+    const auto health = currentOllamaHealthCheck();
+    if (health.healthStatus != OllamaHealthStatus::Healthy) {
+        return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
     }
     const auto models = currentOllamaModels();
     if (models.isEmpty()) {
@@ -3200,11 +3202,15 @@ bool ApplicationController::localChatSendAvailable() const {
         return false;
     }
 
-    if (!isLMStudioProvider()) {
-        const auto health = currentOllamaHealthCheck();
-        if (health.healthStatus != OllamaHealthStatus::Healthy) {
-            return false;
-        }
+    // Cloud and LM Studio providers do not rely on Ollama model discovery.
+    // If the endpoint is allowed and a model is set, they are ready to send.
+    if (isLMStudioProvider()) {
+        return true;
+    }
+
+    const auto health = currentOllamaHealthCheck();
+    if (health.healthStatus != OllamaHealthStatus::Healthy) {
+        return false;
     }
 
     const auto models = currentOllamaModels();
@@ -3219,46 +3225,41 @@ QString ApplicationController::localChatSendAvailabilitySummary() const {
         return QStringLiteral("Selected runtime provider is disabled for execution. Choose Local "
                               "Ollama or LM Studio to send.");
     }
-    const auto providerLabel =
-        isLMStudioProvider() ? QStringLiteral("LM Studio") : QStringLiteral("Ollama");
-    const auto installWord =
-        isLMStudioProvider() ? QStringLiteral("loaded") : QStringLiteral("installed");
-    const auto article = isLMStudioProvider() ? QStringLiteral("a") : QStringLiteral("an");
-
+    const auto providerLabel = currentCloudOrLMStudioConfig().providerDisplayName();
     if (!localChatInferenceEnabled_) {
-        return QString::fromUtf8("Enable Local chat inference in Settings to send with %1.")
+        return QString::fromUtf8("Enable chat inference in Settings to send with %1.")
             .arg(providerLabel);
     }
     if (localInferenceBusy_) {
-        return QStringLiteral("Sentinel is responding. Wait for the current local request to "
-                              "finish.");
+        return QStringLiteral("Sentinel is responding. Wait for the current request to finish.");
     }
     if (!localInferenceEndpointAllowed()) {
-        return QString::fromUtf8("%1 must use a local loopback HTTP endpoint.").arg(providerLabel);
+        return QString::fromUtf8("%1 API key is missing or endpoint is not allowed.").arg(providerLabel);
     }
 
     const auto selected = selectedLocalModel_.trimmed();
     if (selected.isEmpty()) {
-        return QString::fromUtf8("Select %1 %2 %3 model in Settings before sending.")
-            .arg(article, installWord, providerLabel);
+        return QString::fromUtf8("Select a model for %1 in Settings before sending.")
+            .arg(providerLabel);
     }
 
-    if (!isLMStudioProvider()) {
-        const auto health = currentOllamaHealthCheck();
-        if (health.healthStatus != OllamaHealthStatus::Healthy) {
-            return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
-        }
+    // Cloud and LM Studio providers do not use Ollama model discovery.
+    if (isLMStudioProvider()) {
+        return QString::fromUtf8("Ready to send with %1.").arg(providerLabel);
     }
 
+    const auto health = currentOllamaHealthCheck();
+    if (health.healthStatus != OllamaHealthStatus::Healthy) {
+        return QStringLiteral("Ollama is not reachable. Start Ollama locally, then try again.");
+    }
     const auto models = currentOllamaModels();
     if (models.isEmpty()) {
-        return QString::fromUtf8("%1 is reachable, but no %2 model list is available.")
-            .arg(providerLabel, installWord);
+        return QStringLiteral("Ollama is reachable, but no installed model list is available.");
     }
     if (!discoveredModelNamesContain(selected, models)) {
-        return QString::fromUtf8("Selected model %1 is not %2 in %3. Choose an available "
-                                 "model in Settings.")
-            .arg(selected, installWord, providerLabel);
+        return QString::fromUtf8("Selected model %1 is not installed in Ollama. Choose an "
+                                 "available model in Settings.")
+            .arg(selected);
     }
 
     return QString::fromUtf8("Ready to send with Local %1.").arg(providerLabel);
