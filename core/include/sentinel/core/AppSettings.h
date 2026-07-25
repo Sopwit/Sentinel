@@ -276,6 +276,12 @@ public:
     void setClaudeApiKey(const QString& key);
     QString geminiApiKey() const;
     void setGeminiApiKey(const QString& key);
+    QString deepseekApiKey() const;
+    void setDeepseekApiKey(const QString& key);
+    QString groqApiKey() const;
+    void setGroqApiKey(const QString& key);
+    QString mistralApiKey() const;
+    void setMistralApiKey(const QString& key);
 
 signals:
     void cloudApiKeysChanged();
@@ -388,6 +394,9 @@ private:
     static constexpr auto openAiApiKeyKey = "openAiApiKey";
     static constexpr auto claudeApiKeyKey = "claudeApiKey";
     static constexpr auto geminiApiKeyKey = "geminiApiKey";
+    static constexpr auto deepseekApiKeyKey = "deepseekApiKey";
+    static constexpr auto groqApiKeyKey = "groqApiKey";
+    static constexpr auto mistralApiKeyKey = "mistralApiKey";
     static constexpr auto defaultThemeName = "Liquid Glass Light";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";

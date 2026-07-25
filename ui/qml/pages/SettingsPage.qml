@@ -1544,37 +1544,47 @@ Item {
                                 highlighted: settingsPage.viewModel.selectedRuntimeProvider === "cloud-api" ||
                                              settingsPage.viewModel.selectedRuntimeProvider === "openai" ||
                                              settingsPage.viewModel.selectedRuntimeProvider === "claude" ||
-                                             settingsPage.viewModel.selectedRuntimeProvider === "gemini"
+                                             settingsPage.viewModel.selectedRuntimeProvider === "gemini" ||
+                                             settingsPage.viewModel.selectedRuntimeProvider === "deepseek" ||
+                                             settingsPage.viewModel.selectedRuntimeProvider === "groq" ||
+                                             settingsPage.viewModel.selectedRuntimeProvider === "mistral"
                                 onClicked: settingsPage.viewModel.selectedRuntimeProvider = "cloud-api"
                             }
                         }
 
-                        // Cloud Sub-Provider & Model Selection (Visible when Cloud API is selected)
+                        // Cloud Sub-Provider, Key Input & Model Selection (Visible when Cloud API is selected)
                         ColumnLayout {
                             Layout.fillWidth: true
                             visible: settingsPage.viewModel.selectedRuntimeProvider === "cloud-api" ||
                                      settingsPage.viewModel.selectedRuntimeProvider === "openai" ||
                                      settingsPage.viewModel.selectedRuntimeProvider === "claude" ||
-                                     settingsPage.viewModel.selectedRuntimeProvider === "gemini"
+                                     settingsPage.viewModel.selectedRuntimeProvider === "gemini" ||
+                                     settingsPage.viewModel.selectedRuntimeProvider === "deepseek" ||
+                                     settingsPage.viewModel.selectedRuntimeProvider === "groq" ||
+                                     settingsPage.viewModel.selectedRuntimeProvider === "mistral"
                             spacing: SentinelTheme.spaceMd
                             Layout.topMargin: SentinelTheme.spaceSm
 
                             SectionTitle {
                                 title: qsTr("Cloud API Distribution & Model Selection")
-                                subtitle: qsTr("Choose active Cloud Provider distribution (OpenAI, Claude, Gemini) and model.")
+                                subtitle: qsTr("Select active Cloud AI Provider distribution, enter API Key, and pick model.")
                                 Layout.fillWidth: true
                             }
 
-                            RowLayout {
+                            // Sub-Provider Buttons (6 providers)
+                            GridLayout {
                                 Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceSm
+                                columns: width < 700 ? 3 : 6
+                                rowSpacing: SentinelTheme.spaceSm
+                                columnSpacing: SentinelTheme.spaceSm
 
                                 SentinelButton {
                                     text: "OpenAI (ChatGPT)"
+                                    Layout.fillWidth: true
                                     highlighted: settingsPage.viewModel.selectedCloudProvider === "openai"
                                     onClicked: {
                                         settingsPage.viewModel.selectedCloudProvider = "openai"
-                                        if (!settingsPage.viewModel.selectedLocalModel || settingsPage.viewModel.selectedLocalModel.startsWith("claude") || settingsPage.viewModel.selectedLocalModel.startsWith("gemini")) {
+                                        if (!settingsPage.viewModel.selectedLocalModel || !settingsPage.viewModel.selectedLocalModel.startsWith("gpt") && !settingsPage.viewModel.selectedLocalModel.startsWith("o1") && !settingsPage.viewModel.selectedLocalModel.startsWith("o3")) {
                                             settingsPage.viewModel.selectedLocalModel = "gpt-4o"
                                         }
                                     }
@@ -1582,10 +1592,11 @@ Item {
 
                                 SentinelButton {
                                     text: "Anthropic Claude"
+                                    Layout.fillWidth: true
                                     highlighted: settingsPage.viewModel.selectedCloudProvider === "claude"
                                     onClicked: {
                                         settingsPage.viewModel.selectedCloudProvider = "claude"
-                                        if (!settingsPage.viewModel.selectedLocalModel || settingsPage.viewModel.selectedLocalModel.startsWith("gpt") || settingsPage.viewModel.selectedLocalModel.startsWith("gemini") || settingsPage.viewModel.selectedLocalModel.startsWith("o1") || settingsPage.viewModel.selectedLocalModel.startsWith("o3")) {
+                                        if (!settingsPage.viewModel.selectedLocalModel || !settingsPage.viewModel.selectedLocalModel.startsWith("claude")) {
                                             settingsPage.viewModel.selectedLocalModel = "claude-3-5-sonnet-20241022"
                                         }
                                     }
@@ -1593,17 +1604,138 @@ Item {
 
                                 SentinelButton {
                                     text: "Google Gemini"
+                                    Layout.fillWidth: true
                                     highlighted: settingsPage.viewModel.selectedCloudProvider === "gemini"
                                     onClicked: {
                                         settingsPage.viewModel.selectedCloudProvider = "gemini"
-                                        if (!settingsPage.viewModel.selectedLocalModel || settingsPage.viewModel.selectedLocalModel.startsWith("gpt") || settingsPage.viewModel.selectedLocalModel.startsWith("claude") || settingsPage.viewModel.selectedLocalModel.startsWith("o1") || settingsPage.viewModel.selectedLocalModel.startsWith("o3")) {
-                                            settingsPage.viewModel.selectedLocalModel = "gemini-1.5-flash"
+                                        if (!settingsPage.viewModel.selectedLocalModel || !settingsPage.viewModel.selectedLocalModel.startsWith("gemini")) {
+                                            settingsPage.viewModel.selectedLocalModel = "gemini-2.0-flash-exp"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "DeepSeek API"
+                                    Layout.fillWidth: true
+                                    highlighted: settingsPage.viewModel.selectedCloudProvider === "deepseek"
+                                    onClicked: {
+                                        settingsPage.viewModel.selectedCloudProvider = "deepseek"
+                                        if (!settingsPage.viewModel.selectedLocalModel || !settingsPage.viewModel.selectedLocalModel.startsWith("deepseek")) {
+                                            settingsPage.viewModel.selectedLocalModel = "deepseek-chat"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "Groq Cloud"
+                                    Layout.fillWidth: true
+                                    highlighted: settingsPage.viewModel.selectedCloudProvider === "groq"
+                                    onClicked: {
+                                        settingsPage.viewModel.selectedCloudProvider = "groq"
+                                        if (!settingsPage.viewModel.selectedLocalModel || (!settingsPage.viewModel.selectedLocalModel.startsWith("llama") && !settingsPage.viewModel.selectedLocalModel.startsWith("mixtral"))) {
+                                            settingsPage.viewModel.selectedLocalModel = "llama-3.3-70b-versatile"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "Mistral AI"
+                                    Layout.fillWidth: true
+                                    highlighted: settingsPage.viewModel.selectedCloudProvider === "mistral"
+                                    onClicked: {
+                                        settingsPage.viewModel.selectedCloudProvider = "mistral"
+                                        if (!settingsPage.viewModel.selectedLocalModel || (!settingsPage.viewModel.selectedLocalModel.startsWith("mistral") && !settingsPage.viewModel.selectedLocalModel.startsWith("pixtral") && !settingsPage.viewModel.selectedLocalModel.startsWith("codestral"))) {
+                                            settingsPage.viewModel.selectedLocalModel = "mistral-large-latest"
                                         }
                                     }
                                 }
                             }
 
+                            // API Key Field for Selected Sub-Provider
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                spacing: SentinelTheme.spaceXs
+
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: SentinelTheme.spaceSm
+
+                                    Label {
+                                        text: settingsPage.viewModel.selectedCloudProvider === "claude" ? qsTr("Anthropic Claude API Key:") :
+                                              settingsPage.viewModel.selectedCloudProvider === "gemini" ? qsTr("Google Gemini API Key:") :
+                                              settingsPage.viewModel.selectedCloudProvider === "deepseek" ? qsTr("DeepSeek API Key:") :
+                                              settingsPage.viewModel.selectedCloudProvider === "groq" ? qsTr("Groq Cloud API Key:") :
+                                              settingsPage.viewModel.selectedCloudProvider === "mistral" ? qsTr("Mistral AI API Key:") :
+                                              qsTr("OpenAI (ChatGPT) API Key:")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        font.bold: true
+                                    }
+
+                                    Item { Layout.fillWidth: true }
+
+                                    StatusChip {
+                                        readonly property string activeKey: settingsPage.viewModel.selectedCloudProvider === "claude" ? settingsPage.viewModel.claudeApiKey :
+                                                                            settingsPage.viewModel.selectedCloudProvider === "gemini" ? settingsPage.viewModel.geminiApiKey :
+                                                                            settingsPage.viewModel.selectedCloudProvider === "deepseek" ? settingsPage.viewModel.deepseekApiKey :
+                                                                            settingsPage.viewModel.selectedCloudProvider === "groq" ? settingsPage.viewModel.groqApiKey :
+                                                                            settingsPage.viewModel.selectedCloudProvider === "mistral" ? settingsPage.viewModel.mistralApiKey :
+                                                                            settingsPage.viewModel.openAiApiKey
+                                        value: activeKey ? qsTr("Configured") : qsTr("Not Set")
+                                        accent: activeKey ? SentinelTheme.success : SentinelTheme.textMuted
+                                        selected: true
+                                    }
+                                }
+
+                                Rectangle {
+                                    Layout.fillWidth: true
+                                    implicitHeight: 38
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                                    property bool showKey: false
+
+                                    RowLayout {
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceSm
+                                        spacing: SentinelTheme.spaceSm
+
+                                        TextInput {
+                                            Layout.fillWidth: true
+                                            text: settingsPage.viewModel.selectedCloudProvider === "claude" ? settingsPage.viewModel.claudeApiKey :
+                                                  settingsPage.viewModel.selectedCloudProvider === "gemini" ? settingsPage.viewModel.geminiApiKey :
+                                                  settingsPage.viewModel.selectedCloudProvider === "deepseek" ? settingsPage.viewModel.deepseekApiKey :
+                                                  settingsPage.viewModel.selectedCloudProvider === "groq" ? settingsPage.viewModel.groqApiKey :
+                                                  settingsPage.viewModel.selectedCloudProvider === "mistral" ? settingsPage.viewModel.mistralApiKey :
+                                                  settingsPage.viewModel.openAiApiKey
+                                            echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
+                                            color: SentinelTheme.textPrimary
+                                            verticalAlignment: Text.AlignVCenter
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            selectByMouse: true
+                                            clip: true
+                                            onEditingFinished: {
+                                                if (settingsPage.viewModel.selectedCloudProvider === "claude") settingsPage.viewModel.claudeApiKey = text
+                                                else if (settingsPage.viewModel.selectedCloudProvider === "gemini") settingsPage.viewModel.geminiApiKey = text
+                                                else if (settingsPage.viewModel.selectedCloudProvider === "deepseek") settingsPage.viewModel.deepseekApiKey = text
+                                                else if (settingsPage.viewModel.selectedCloudProvider === "groq") settingsPage.viewModel.groqApiKey = text
+                                                else if (settingsPage.viewModel.selectedCloudProvider === "mistral") settingsPage.viewModel.mistralApiKey = text
+                                                else settingsPage.viewModel.openAiApiKey = text
+                                            }
+                                        }
+
+                                        SentinelButton {
+                                            text: parent.parent.showKey ? "🔒" : "👁️"
+                                            onClicked: parent.parent.showKey = !parent.parent.showKey
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Expanded Model Selection
                             RowLayout {
+                                Layout.topMargin: SentinelTheme.spaceSm
                                 Layout.fillWidth: true
                                 spacing: SentinelTheme.spaceMd
 
@@ -1616,12 +1748,18 @@ Item {
                                 }
 
                                 ComboBox {
-                                    Layout.preferredWidth: 280
+                                    Layout.preferredWidth: 320
                                     model: settingsPage.viewModel.selectedCloudProvider === "claude" ?
-                                           ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"] :
+                                           ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"] :
                                            settingsPage.viewModel.selectedCloudProvider === "gemini" ?
-                                           ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"] :
-                                           ["gpt-4o", "gpt-4o-mini", "o1", "o3-mini", "gpt-4-turbo"]
+                                           ["gemini-2.0-flash-exp", "gemini-2.0-flash-thinking-exp-01-21", "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-1.5-flash", "gemini-1.5-flash-8b"] :
+                                           settingsPage.viewModel.selectedCloudProvider === "deepseek" ?
+                                           ["deepseek-chat", "deepseek-reasoner"] :
+                                           settingsPage.viewModel.selectedCloudProvider === "groq" ?
+                                           ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "deepseek-r1-distill-llama-70b"] :
+                                           settingsPage.viewModel.selectedCloudProvider === "mistral" ?
+                                           ["mistral-large-latest", "pixtral-large-latest", "codestral-latest", "mistral-small-latest"] :
+                                           ["gpt-4o", "gpt-4o-mini", "o1", "o1-preview", "o1-mini", "o3-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
                                     currentIndex: Math.max(0, model.indexOf(settingsPage.viewModel.selectedLocalModel))
                                     onActivated: (idx) => {
                                         settingsPage.viewModel.selectedLocalModel = model[idx]
@@ -1664,205 +1802,6 @@ Item {
                                     value: settingsPage.viewModel.selectedRuntimeProvider === modelData ? qsTr("Active") : qsTr("Available")
                                     accent: settingsPage.viewModel.selectedRuntimeProvider === modelData ? SentinelTheme.success : SentinelTheme.calmAccent
                                     selected: true
-                                }
-                            }
-                        }
-
-                        SectionTitle {
-                            title: qsTr("Cloud API Credentials")
-                            subtitle: qsTr("Configure API keys for OpenAI (ChatGPT), Anthropic Claude, and Google Gemini.")
-                            Layout.fillWidth: true
-                            Layout.topMargin: SentinelTheme.spaceMd
-                        }
-
-                        // OpenAI API Key Input Card
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceXs
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceSm
-
-                                Label {
-                                    text: qsTr("OpenAI (ChatGPT) API Key")
-                                    color: SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    font.bold: true
-                                }
-
-                                Item { Layout.fillWidth: true }
-
-                                StatusChip {
-                                    value: settingsPage.viewModel.openAiApiKey ? qsTr("Configured") : qsTr("Not Set")
-                                    accent: settingsPage.viewModel.openAiApiKey ? SentinelTheme.success : SentinelTheme.textMuted
-                                    selected: true
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 38
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                border.color: openAiKeyInput.activeFocus
-                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                                property bool showKey: false
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: SentinelTheme.spaceMd
-                                    anchors.rightMargin: SentinelTheme.spaceSm
-                                    spacing: SentinelTheme.spaceSm
-
-                                    TextInput {
-                                        id: openAiKeyInput
-                                        Layout.fillWidth: true
-                                        text: settingsPage.viewModel.openAiApiKey
-                                        echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
-                                        color: SentinelTheme.textPrimary
-                                        selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
-                                        verticalAlignment: Text.AlignVCenter
-                                        font.pixelSize: SentinelTheme.fontBody
-                                        selectByMouse: true
-                                        clip: true
-                                        onEditingFinished: settingsPage.viewModel.openAiApiKey = text
-                                    }
-
-                                    SentinelButton {
-                                        text: parent.parent.showKey ? "🔒" : "👁️"
-                                        onClicked: parent.parent.showKey = !parent.parent.showKey
-                                    }
-                                }
-                            }
-                        }
-
-                        // Anthropic Claude API Key Input Card
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceXs
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceSm
-
-                                Label {
-                                    text: qsTr("Anthropic Claude API Key")
-                                    color: SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    font.bold: true
-                                }
-
-                                Item { Layout.fillWidth: true }
-
-                                StatusChip {
-                                    value: settingsPage.viewModel.claudeApiKey ? qsTr("Configured") : qsTr("Not Set")
-                                    accent: settingsPage.viewModel.claudeApiKey ? SentinelTheme.success : SentinelTheme.textMuted
-                                    selected: true
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 38
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                border.color: claudeKeyInput.activeFocus
-                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                                property bool showKey: false
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: SentinelTheme.spaceMd
-                                    anchors.rightMargin: SentinelTheme.spaceSm
-                                    spacing: SentinelTheme.spaceSm
-
-                                    TextInput {
-                                        id: claudeKeyInput
-                                        Layout.fillWidth: true
-                                        text: settingsPage.viewModel.claudeApiKey
-                                        echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
-                                        color: SentinelTheme.textPrimary
-                                        selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
-                                        verticalAlignment: Text.AlignVCenter
-                                        font.pixelSize: SentinelTheme.fontBody
-                                        selectByMouse: true
-                                        clip: true
-                                        onEditingFinished: settingsPage.viewModel.claudeApiKey = text
-                                    }
-
-                                    SentinelButton {
-                                        text: parent.parent.showKey ? "🔒" : "👁️"
-                                        onClicked: parent.parent.showKey = !parent.parent.showKey
-                                    }
-                                }
-                            }
-                        }
-
-                        // Google Gemini API Key Input Card
-                        ColumnLayout {
-                            Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceXs
-
-                            RowLayout {
-                                Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceSm
-
-                                Label {
-                                    text: qsTr("Google Gemini API Key")
-                                    color: SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    font.bold: true
-                                }
-
-                                Item { Layout.fillWidth: true }
-
-                                StatusChip {
-                                    value: settingsPage.viewModel.geminiApiKey ? qsTr("Configured") : qsTr("Not Set")
-                                    accent: settingsPage.viewModel.geminiApiKey ? SentinelTheme.success : SentinelTheme.textMuted
-                                    selected: true
-                                }
-                            }
-
-                            Rectangle {
-                                Layout.fillWidth: true
-                                implicitHeight: 38
-                                radius: SentinelTheme.radiusMd
-                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                                border.color: geminiKeyInput.activeFocus
-                                              ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.46)
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                                property bool showKey: false
-
-                                RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: SentinelTheme.spaceMd
-                                    anchors.rightMargin: SentinelTheme.spaceSm
-                                    spacing: SentinelTheme.spaceSm
-
-                                    TextInput {
-                                        id: geminiKeyInput
-                                        Layout.fillWidth: true
-                                        text: settingsPage.viewModel.geminiApiKey
-                                        echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
-                                        color: SentinelTheme.textPrimary
-                                        selectionColor: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.34)
-                                        verticalAlignment: Text.AlignVCenter
-                                        font.pixelSize: SentinelTheme.fontBody
-                                        selectByMouse: true
-                                        clip: true
-                                        onEditingFinished: settingsPage.viewModel.geminiApiKey = text
-                                    }
-
-                                    SentinelButton {
-                                        text: parent.parent.showKey ? "🔒" : "👁️"
-                                        onClicked: parent.parent.showKey = !parent.parent.showKey
-                                    }
                                 }
                             }
                         }

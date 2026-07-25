@@ -1227,6 +1227,9 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString deepseekApiKey READ deepseekApiKey WRITE setDeepseekApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString groqApiKey READ groqApiKey WRITE setGroqApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString mistralApiKey READ mistralApiKey WRITE setMistralApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(QString selectedCloudProvider READ selectedCloudProvider WRITE setSelectedCloudProvider NOTIFY selectedCloudProviderChanged)
     Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
                    nativeExperienceChanged)
@@ -1841,6 +1844,12 @@ public:
     void setClaudeApiKey(const QString& key);
     QString geminiApiKey() const;
     void setGeminiApiKey(const QString& key);
+    QString deepseekApiKey() const;
+    void setDeepseekApiKey(const QString& key);
+    QString groqApiKey() const;
+    void setGroqApiKey(const QString& key);
+    QString mistralApiKey() const;
+    void setMistralApiKey(const QString& key);
     QString contextReasoningSummary() const;
     QString contextReasoningBudgetSummary() const;
     QString contextReasoningOrderingSummary() const;

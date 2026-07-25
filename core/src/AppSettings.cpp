@@ -297,12 +297,19 @@ QString AppSettings::selectedCloudProvider() const {
         return QStringLiteral("openai");
     }
     const auto stored = store_->value(QString::fromLatin1(selectedCloudProviderKey), QStringLiteral("openai")).trimmed().toLower();
-    return (stored == QStringLiteral("claude") || stored == QStringLiteral("gemini")) ? stored : QStringLiteral("openai");
+    if (stored == QStringLiteral("claude") || stored == QStringLiteral("gemini") ||
+        stored == QStringLiteral("deepseek") || stored == QStringLiteral("groq") ||
+        stored == QStringLiteral("mistral")) {
+        return stored;
+    }
+    return QStringLiteral("openai");
 }
 
 void AppSettings::setSelectedCloudProvider(const QString& providerId) {
     const auto normalized = providerId.trimmed().toLower();
-    const auto selected = (normalized == QStringLiteral("claude") || normalized == QStringLiteral("gemini")) ? normalized : QStringLiteral("openai");
+    const auto selected = (normalized == QStringLiteral("claude") || normalized == QStringLiteral("gemini") ||
+                            normalized == QStringLiteral("deepseek") || normalized == QStringLiteral("groq") ||
+                            normalized == QStringLiteral("mistral")) ? normalized : QStringLiteral("openai");
     if (selected == selectedCloudProvider() || !store_) {
         return;
     }
@@ -1315,6 +1322,45 @@ void AppSettings::setGeminiApiKey(const QString& key) {
         return;
     }
     store_->setValue(QString::fromLatin1(geminiApiKeyKey), trimmed);
+    emit cloudApiKeysChanged();
+}
+
+QString AppSettings::deepseekApiKey() const {
+    return store_ ? store_->value(QString::fromLatin1(deepseekApiKeyKey), QString()) : QString();
+}
+
+void AppSettings::setDeepseekApiKey(const QString& key) {
+    const QString trimmed = key.trimmed();
+    if (trimmed == deepseekApiKey() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(deepseekApiKeyKey), trimmed);
+    emit cloudApiKeysChanged();
+}
+
+QString AppSettings::groqApiKey() const {
+    return store_ ? store_->value(QString::fromLatin1(groqApiKeyKey), QString()) : QString();
+}
+
+void AppSettings::setGroqApiKey(const QString& key) {
+    const QString trimmed = key.trimmed();
+    if (trimmed == groqApiKey() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(groqApiKeyKey), trimmed);
+    emit cloudApiKeysChanged();
+}
+
+QString AppSettings::mistralApiKey() const {
+    return store_ ? store_->value(QString::fromLatin1(mistralApiKeyKey), QString()) : QString();
+}
+
+void AppSettings::setMistralApiKey(const QString& key) {
+    const QString trimmed = key.trimmed();
+    if (trimmed == mistralApiKey() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(mistralApiKeyKey), trimmed);
     emit cloudApiKeysChanged();
 }
 
