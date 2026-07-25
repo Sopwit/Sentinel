@@ -1031,13 +1031,16 @@ Item {
                             }
                         }
 
-                        // Cloud API Specific Setup (OpenAI, Claude, Gemini)
+                        // Cloud API Specific Setup (OpenAI, Claude, Gemini, DeepSeek, Groq, Mistral)
                         ColumnLayout {
                             Layout.fillWidth: true
                             visible: viewModel.selectedRuntimeProvider === "cloud-api" ||
                                      viewModel.selectedRuntimeProvider === "openai" ||
                                      viewModel.selectedRuntimeProvider === "claude" ||
-                                     viewModel.selectedRuntimeProvider === "gemini"
+                                     viewModel.selectedRuntimeProvider === "gemini" ||
+                                     viewModel.selectedRuntimeProvider === "deepseek" ||
+                                     viewModel.selectedRuntimeProvider === "groq" ||
+                                     viewModel.selectedRuntimeProvider === "mistral"
                             spacing: SentinelTheme.spaceMd
 
                             Label {
@@ -1057,16 +1060,19 @@ Item {
                             }
 
                             // Sub-Provider Selection Buttons
-                            RowLayout {
+                            GridLayout {
                                 Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceSm
+                                columns: width < 700 ? 3 : 6
+                                rowSpacing: SentinelTheme.spaceSm
+                                columnSpacing: SentinelTheme.spaceSm
 
                                 SentinelButton {
                                     text: "OpenAI (ChatGPT)"
+                                    Layout.fillWidth: true
                                     highlighted: viewModel.selectedCloudProvider === "openai"
                                     onClicked: {
                                         viewModel.selectedCloudProvider = "openai"
-                                        if (!viewModel.selectedLocalModel || viewModel.selectedLocalModel.startsWith("claude") || viewModel.selectedLocalModel.startsWith("gemini")) {
+                                        if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("gpt") && !viewModel.selectedLocalModel.startsWith("o1") && !viewModel.selectedLocalModel.startsWith("o3")) {
                                             viewModel.selectedLocalModel = "gpt-4o"
                                         }
                                     }
@@ -1074,10 +1080,11 @@ Item {
 
                                 SentinelButton {
                                     text: "Anthropic Claude"
+                                    Layout.fillWidth: true
                                     highlighted: viewModel.selectedCloudProvider === "claude"
                                     onClicked: {
                                         viewModel.selectedCloudProvider = "claude"
-                                        if (!viewModel.selectedLocalModel || viewModel.selectedLocalModel.startsWith("gpt") || viewModel.selectedLocalModel.startsWith("gemini") || viewModel.selectedLocalModel.startsWith("o1") || viewModel.selectedLocalModel.startsWith("o3")) {
+                                        if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("claude")) {
                                             viewModel.selectedLocalModel = "claude-3-5-sonnet-20241022"
                                         }
                                     }
@@ -1085,11 +1092,48 @@ Item {
 
                                 SentinelButton {
                                     text: "Google Gemini"
+                                    Layout.fillWidth: true
                                     highlighted: viewModel.selectedCloudProvider === "gemini"
                                     onClicked: {
                                         viewModel.selectedCloudProvider = "gemini"
-                                        if (!viewModel.selectedLocalModel || viewModel.selectedLocalModel.startsWith("gpt") || viewModel.selectedLocalModel.startsWith("claude") || viewModel.selectedLocalModel.startsWith("o1") || viewModel.selectedLocalModel.startsWith("o3")) {
-                                            viewModel.selectedLocalModel = "gemini-1.5-flash"
+                                        if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("gemini")) {
+                                            viewModel.selectedLocalModel = "gemini-2.0-flash-exp"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "DeepSeek API"
+                                    Layout.fillWidth: true
+                                    highlighted: viewModel.selectedCloudProvider === "deepseek"
+                                    onClicked: {
+                                        viewModel.selectedCloudProvider = "deepseek"
+                                        if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("deepseek")) {
+                                            viewModel.selectedLocalModel = "deepseek-chat"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "Groq Cloud"
+                                    Layout.fillWidth: true
+                                    highlighted: viewModel.selectedCloudProvider === "groq"
+                                    onClicked: {
+                                        viewModel.selectedCloudProvider = "groq"
+                                        if (!viewModel.selectedLocalModel || (!viewModel.selectedLocalModel.startsWith("llama") && !viewModel.selectedLocalModel.startsWith("mixtral"))) {
+                                            viewModel.selectedLocalModel = "llama-3.3-70b-versatile"
+                                        }
+                                    }
+                                }
+
+                                SentinelButton {
+                                    text: "Mistral AI"
+                                    Layout.fillWidth: true
+                                    highlighted: viewModel.selectedCloudProvider === "mistral"
+                                    onClicked: {
+                                        viewModel.selectedCloudProvider = "mistral"
+                                        if (!viewModel.selectedLocalModel || (!viewModel.selectedLocalModel.startsWith("mistral") && !viewModel.selectedLocalModel.startsWith("pixtral") && !viewModel.selectedLocalModel.startsWith("codestral"))) {
+                                            viewModel.selectedLocalModel = "mistral-large-latest"
                                         }
                                     }
                                 }
@@ -1103,6 +1147,9 @@ Item {
                                 Label {
                                     text: viewModel.selectedCloudProvider === "claude" ? qsTr("Anthropic Claude API Key:") :
                                           viewModel.selectedCloudProvider === "gemini" ? qsTr("Google Gemini API Key:") :
+                                          viewModel.selectedCloudProvider === "deepseek" ? qsTr("DeepSeek API Key:") :
+                                          viewModel.selectedCloudProvider === "groq" ? qsTr("Groq Cloud API Key:") :
+                                          viewModel.selectedCloudProvider === "mistral" ? qsTr("Mistral AI API Key:") :
                                           qsTr("OpenAI (ChatGPT) API Key:")
                                     color: SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontBody
@@ -1127,6 +1174,9 @@ Item {
                                             Layout.fillWidth: true
                                             text: viewModel.selectedCloudProvider === "claude" ? viewModel.claudeApiKey :
                                                   viewModel.selectedCloudProvider === "gemini" ? viewModel.geminiApiKey :
+                                                  viewModel.selectedCloudProvider === "deepseek" ? viewModel.deepseekApiKey :
+                                                  viewModel.selectedCloudProvider === "groq" ? viewModel.groqApiKey :
+                                                  viewModel.selectedCloudProvider === "mistral" ? viewModel.mistralApiKey :
                                                   viewModel.openAiApiKey
                                             echoMode: parent.parent.showKey ? TextInput.Normal : TextInput.Password
                                             color: SentinelTheme.textPrimary
@@ -1137,6 +1187,9 @@ Item {
                                             onEditingFinished: {
                                                 if (viewModel.selectedCloudProvider === "claude") viewModel.claudeApiKey = text
                                                 else if (viewModel.selectedCloudProvider === "gemini") viewModel.geminiApiKey = text
+                                                else if (viewModel.selectedCloudProvider === "deepseek") viewModel.deepseekApiKey = text
+                                                else if (viewModel.selectedCloudProvider === "groq") viewModel.groqApiKey = text
+                                                else if (viewModel.selectedCloudProvider === "mistral") viewModel.mistralApiKey = text
                                                 else viewModel.openAiApiKey = text
                                             }
                                         }
@@ -1164,12 +1217,18 @@ Item {
                                 }
 
                                 ComboBox {
-                                    Layout.preferredWidth: 280
+                                    Layout.preferredWidth: 320
                                     model: viewModel.selectedCloudProvider === "claude" ?
-                                           ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229"] :
+                                           ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"] :
                                            viewModel.selectedCloudProvider === "gemini" ?
-                                           ["gemini-1.5-flash", "gemini-1.5-pro", "gemini-2.0-flash-exp"] :
-                                           ["gpt-4o", "gpt-4o-mini", "o1", "o3-mini", "gpt-4-turbo"]
+                                           ["gemini-2.0-flash-exp", "gemini-2.0-flash-thinking-exp-01-21", "gemini-1.5-pro", "gemini-1.5-pro-latest", "gemini-1.5-flash", "gemini-1.5-flash-8b"] :
+                                           viewModel.selectedCloudProvider === "deepseek" ?
+                                           ["deepseek-chat", "deepseek-reasoner"] :
+                                           viewModel.selectedCloudProvider === "groq" ?
+                                           ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "deepseek-r1-distill-llama-70b"] :
+                                           viewModel.selectedCloudProvider === "mistral" ?
+                                           ["mistral-large-latest", "pixtral-large-latest", "codestral-latest", "mistral-small-latest"] :
+                                           ["gpt-4o", "gpt-4o-mini", "o1", "o1-preview", "o1-mini", "o3-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
                                     currentIndex: Math.max(0, model.indexOf(viewModel.selectedLocalModel))
                                     onActivated: (idx) => {
                                         viewModel.selectedLocalModel = model[idx]

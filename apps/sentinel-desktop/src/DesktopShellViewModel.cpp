@@ -5606,6 +5606,30 @@ void DesktopShellViewModel::setGeminiApiKey(const QString& key) {
     settings_.setGeminiApiKey(key);
 }
 
+QString DesktopShellViewModel::deepseekApiKey() const {
+    return settings_.deepseekApiKey();
+}
+
+void DesktopShellViewModel::setDeepseekApiKey(const QString& key) {
+    settings_.setDeepseekApiKey(key);
+}
+
+QString DesktopShellViewModel::groqApiKey() const {
+    return settings_.groqApiKey();
+}
+
+void DesktopShellViewModel::setGroqApiKey(const QString& key) {
+    settings_.setGroqApiKey(key);
+}
+
+QString DesktopShellViewModel::mistralApiKey() const {
+    return settings_.mistralApiKey();
+}
+
+void DesktopShellViewModel::setMistralApiKey(const QString& key) {
+    settings_.setMistralApiKey(key);
+}
+
 QString DesktopShellViewModel::normalizedPageOrDefault(const QString& page) {
     const auto trimmed = page.trimmed();
     const QStringList pages{

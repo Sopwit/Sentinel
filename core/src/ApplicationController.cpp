@@ -9153,14 +9153,30 @@ LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
         QStringLiteral("/settings.json");
     AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
     LMStudioConfig config;
-    if (selectedRuntimeProvider_ == QStringLiteral("claude")) {
+    const QString cloudProv = settings.selectedCloudProvider();
+    if (selectedRuntimeProvider_ == QStringLiteral("claude") ||
+        (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("claude"))) {
         config.endpoint = QUrl(QStringLiteral("https://api.anthropic.com"));
         config.apiKey = settings.claudeApiKey();
-    } else if (selectedRuntimeProvider_ == QStringLiteral("gemini")) {
+    } else if (selectedRuntimeProvider_ == QStringLiteral("gemini") ||
+               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("gemini"))) {
         config.endpoint = QUrl(QStringLiteral("https://generativelanguage.googleapis.com"));
         config.apiKey = settings.geminiApiKey();
+    } else if (selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
+               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("deepseek"))) {
+        config.endpoint = QUrl(QStringLiteral("https://api.deepseek.com"));
+        config.apiKey = settings.deepseekApiKey();
+    } else if (selectedRuntimeProvider_ == QStringLiteral("groq") ||
+               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("groq"))) {
+        config.endpoint = QUrl(QStringLiteral("https://api.groq.com/openai"));
+        config.apiKey = settings.groqApiKey();
+    } else if (selectedRuntimeProvider_ == QStringLiteral("mistral") ||
+               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("mistral"))) {
+        config.endpoint = QUrl(QStringLiteral("https://api.mistral.ai"));
+        config.apiKey = settings.mistralApiKey();
     } else if (selectedRuntimeProvider_ == QStringLiteral("openai") ||
-               selectedRuntimeProvider_ == QStringLiteral("openai-compatible")) {
+               selectedRuntimeProvider_ == QStringLiteral("openai-compatible") ||
+               selectedRuntimeProvider_ == QStringLiteral("cloud-api")) {
         config.endpoint = QUrl(QStringLiteral("https://api.openai.com"));
         config.apiKey = settings.openAiApiKey();
     } else if (selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server")) {
