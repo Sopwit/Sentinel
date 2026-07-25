@@ -1523,24 +1523,29 @@ Item {
                             Layout.fillWidth: true
                         }
 
-                        RowLayout {
+                        GridLayout {
                             Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceSm
+                            columns: width < 700 ? 2 : 5
+                            rowSpacing: SentinelTheme.spaceSm
+                            columnSpacing: SentinelTheme.spaceSm
 
                             SentinelButton {
                                 text: "🦙 Ollama (Local)"
+                                Layout.fillWidth: true
                                 highlighted: settingsPage.viewModel.selectedRuntimeProvider === "ollama"
                                 onClicked: settingsPage.viewModel.selectedRuntimeProvider = "ollama"
                             }
 
                             SentinelButton {
                                 text: "💻 LM Studio (Local)"
+                                Layout.fillWidth: true
                                 highlighted: settingsPage.viewModel.selectedRuntimeProvider === "lm-studio"
                                 onClicked: settingsPage.viewModel.selectedRuntimeProvider = "lm-studio"
                             }
 
                             SentinelButton {
                                 text: "☁️ Cloud API"
+                                Layout.fillWidth: true
                                 highlighted: settingsPage.viewModel.selectedRuntimeProvider === "cloud-api" ||
                                              settingsPage.viewModel.selectedRuntimeProvider === "openai" ||
                                              settingsPage.viewModel.selectedRuntimeProvider === "claude" ||
@@ -1549,6 +1554,20 @@ Item {
                                              settingsPage.viewModel.selectedRuntimeProvider === "groq" ||
                                              settingsPage.viewModel.selectedRuntimeProvider === "mistral"
                                 onClicked: settingsPage.viewModel.selectedRuntimeProvider = "cloud-api"
+                            }
+
+                            SentinelButton {
+                                text: "⚡ llama.cpp server"
+                                Layout.fillWidth: true
+                                highlighted: settingsPage.viewModel.selectedRuntimeProvider === "llama-cpp-server"
+                                onClicked: settingsPage.viewModel.selectedRuntimeProvider = "llama-cpp-server"
+                            }
+
+                            SentinelButton {
+                                text: "🔌 OpenAI-Compatible Local"
+                                Layout.fillWidth: true
+                                highlighted: settingsPage.viewModel.selectedRuntimeProvider === "openai-compatible-local"
+                                onClicked: settingsPage.viewModel.selectedRuntimeProvider = "openai-compatible-local"
                             }
                         }
 
