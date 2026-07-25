@@ -37,35 +37,70 @@ NativeCompanionAdapter::~NativeCompanionAdapter() = default;
 void NativeCompanionAdapter::applyMenuStylesheet() {
     if (!menu_) return;
 
-    menu_->setStyleSheet(QStringLiteral(R"(
-        QMenu {
-            background-color: #111827;
-            color: #f3f4f6;
-            border: 1px solid rgba(56, 189, 248, 0.30);
-            border-radius: 10px;
-            padding: 6px;
-        }
-        QMenu::item {
-            padding: 7px 28px 7px 12px;
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 500;
-        }
-        QMenu::item:disabled {
-            color: #9ca3af;
-            background-color: transparent;
-            font-weight: 600;
-        }
-        QMenu::item:selected:enabled {
-            background-color: rgba(56, 189, 248, 0.20);
-            color: #38bdf8;
-        }
-        QMenu::separator {
-            height: 1px;
-            background-color: rgba(255, 255, 255, 0.10);
-            margin: 4px 8px;
-        }
-    )"));
+    const QString theme = settings_.themeName();
+    const bool isLight = theme.contains(QStringLiteral("Light"), Qt::CaseInsensitive);
+
+    if (isLight) {
+        menu_->setStyleSheet(QStringLiteral(R"(
+            QMenu {
+                background-color: #ffffff;
+                color: #1f2937;
+                border: 1px solid rgba(79, 142, 247, 0.35);
+                border-radius: 10px;
+                padding: 6px;
+            }
+            QMenu::item {
+                padding: 7px 28px 7px 12px;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 500;
+            }
+            QMenu::item:disabled {
+                color: #9ca3af;
+                background-color: transparent;
+                font-weight: 600;
+            }
+            QMenu::item:selected:enabled {
+                background-color: rgba(79, 142, 247, 0.15);
+                color: #2563eb;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: rgba(0, 0, 0, 0.08);
+                margin: 4px 8px;
+            }
+        )"));
+    } else {
+        menu_->setStyleSheet(QStringLiteral(R"(
+            QMenu {
+                background-color: #111827;
+                color: #f3f4f6;
+                border: 1px solid rgba(56, 189, 248, 0.30);
+                border-radius: 10px;
+                padding: 6px;
+            }
+            QMenu::item {
+                padding: 7px 28px 7px 12px;
+                border-radius: 6px;
+                font-size: 13px;
+                font-weight: 500;
+            }
+            QMenu::item:disabled {
+                color: #9ca3af;
+                background-color: transparent;
+                font-weight: 600;
+            }
+            QMenu::item:selected:enabled {
+                background-color: rgba(56, 189, 248, 0.20);
+                color: #38bdf8;
+            }
+            QMenu::separator {
+                height: 1px;
+                background-color: rgba(255, 255, 255, 0.10);
+                margin: 4px 8px;
+            }
+        )"));
+    }
 }
 
 void NativeCompanionAdapter::initialize() {
@@ -149,6 +184,8 @@ void NativeCompanionAdapter::initialize() {
             });
     connect(&settings_, &sentinel::core::AppSettings::companionEnabledChanged, this,
             &NativeCompanionAdapter::refreshVisibility);
+    connect(&settings_, &sentinel::core::AppSettings::themeNameChanged, this,
+            &NativeCompanionAdapter::applyMenuStylesheet);
     connect(&viewModel_, &DesktopShellViewModel::companionChanged, this,
             &NativeCompanionAdapter::refreshActions);
 
