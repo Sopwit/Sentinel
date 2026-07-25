@@ -79,6 +79,18 @@ add_sentinel_core_test(test_local_echo_provider core/test_local_echo_provider.cp
 add_sentinel_core_test(test_null_agent_runtime core/test_null_agent_runtime.cpp)
 add_sentinel_core_test(test_desktop_shell_view_model desktop/test_desktop_shell_view_model.cpp)
 
+qt_add_executable(test_graphics_backend
+    desktop/test_graphics_backend.cpp
+)
+
+target_link_libraries(test_graphics_backend
+    PRIVATE
+        sentinel_desktop_startup
+        Qt6::Test
+)
+
+add_test(NAME test_graphics_backend COMMAND $<TARGET_FILE:test_graphics_backend>)
+
 target_link_libraries(test_desktop_shell_view_model
     PRIVATE
         sentinel_desktop_viewmodels

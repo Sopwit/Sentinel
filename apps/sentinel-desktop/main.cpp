@@ -1,4 +1,5 @@
 #include "sentinel/desktop/DesktopShellViewModel.h"
+#include "sentinel/desktop/GraphicsBackend.h"
 #include "sentinel/desktop/NativeCompanionAdapter.h"
 
 #include "sentinel/core/AppMetadata.h"
@@ -31,65 +32,61 @@
 #include <QSGRendererInterface>
 #include <QTranslator>
 
-#if defined(Q_OS_LINUX) && QT_CONFIG(vulkan)
-#include <QVulkanInstance>
-#endif
-
 #include <memory>
 
 namespace {
 
-QString graphicsApiName(QSGRendererInterface::GraphicsApi api) {
-    if (api == QSGRendererInterface::Unknown) {
-        return QStringLiteral("automatic");
-    }
-    if (api == QSGRendererInterface::Software) {
-        return QStringLiteral("software");
-    }
-    if (api == QSGRendererInterface::OpenVG) {
-        return QStringLiteral("OpenVG");
-    }
-    if (api == QSGRendererInterface::OpenGL) {
-        return QStringLiteral("OpenGL");
-    }
-    if (api == QSGRendererInterface::Direct3D11) {
-        return QStringLiteral("Direct3D 11");
-    }
-    if (api == QSGRendererInterface::Vulkan) {
-        return QStringLiteral("Vulkan");
-    }
-    if (api == QSGRendererInterface::Metal) {
-        return QStringLiteral("Metal");
-    }
-    if (api == QSGRendererInterface::Null) {
-        return QStringLiteral("null");
-    }
-
-    return QStringLiteral("unknown");
-}
-
 void configureGraphicsBackend() {
+    qInfo().noquote() << "Sentinel Qt version:" << qVersion();
 #if defined(Q_OS_MACOS)
     QQuickWindow::setGraphicsApi(QSGRendererInterface::Metal);
     qInfo().noquote() << "Sentinel graphics backend requested:"
-                      << graphicsApiName(QSGRendererInterface::Metal);
+                      << sentinel::desktop::graphicsApiName(QSGRendererInterface::Metal);
 #elif defined(Q_OS_WIN)
     QQuickWindow::setGraphicsApi(QSGRendererInterface::Direct3D11);
     qInfo().noquote() << "Sentinel graphics backend requested:"
-                      << graphicsApiName(QSGRendererInterface::Direct3D11);
+                      << sentinel::desktop::graphicsApiName(QSGRendererInterface::Direct3D11);
 #elif defined(Q_OS_LINUX)
-#if QT_CONFIG(vulkan)
-    QVulkanInstance vulkanInstance;
-    if (vulkanInstance.create()) {
-        QQuickWindow::setGraphicsApi(QSGRendererInterface::Vulkan);
+    const QByteArray qsgRhiBackend = qgetenv("QSG_RHI_BACKEND");
+    const QByteArray qtQuickBackend = qgetenv("QT_QUICK_BACKEND");
+    const auto defaultApi =
+        sentinel::desktop::linuxDefaultGraphicsApi(qsgRhiBackend, qtQuickBackend);
+    if (defaultApi.has_value()) {
+        QQuickWindow::setGraphicsApi(*defaultApi);
         qInfo().noquote() << "Sentinel graphics backend requested:"
-                          << graphicsApiName(QSGRendererInterface::Vulkan);
-        return;
+                          << sentinel::desktop::graphicsApiName(*defaultApi);
+    } else {
+        qInfo().noquote() << "Sentinel graphics backend requested: Qt environment override"
+                          << "(QSG_RHI_BACKEND="
+                          << (qsgRhiBackend.isEmpty() ? QByteArrayLiteral("<unset>")
+                                                      : qsgRhiBackend)
+                          << ", QT_QUICK_BACKEND="
+                          << (qtQuickBackend.isEmpty() ? QByteArrayLiteral("<unset>")
+                                                       : qtQuickBackend)
+                          << ')';
     }
+
+    qInfo().noquote()
+        << "Sentinel Vulkan instance request: delegated to Qt Quick; errorCode: not applicable;"
+           " layers: []; extensions: []";
 #endif
-    qInfo().noquote() << "Sentinel graphics backend requested:"
-                      << graphicsApiName(QSGRendererInterface::Unknown);
-#endif
+}
+
+void installGraphicsDiagnostics(QQuickWindow& window) {
+    const auto logSelectedBackend = [&window]() {
+        qInfo().noquote() << "Sentinel graphics backend selected:"
+                          << sentinel::desktop::graphicsApiName(
+                                 window.rendererInterface()->graphicsApi());
+    };
+
+    QObject::connect(&window, &QQuickWindow::sceneGraphInitialized, &window, logSelectedBackend,
+                     Qt::DirectConnection);
+    QObject::connect(&window, &QQuickWindow::sceneGraphError, &window,
+                     [](QQuickWindow::SceneGraphError error, const QString& message) {
+                         qCritical().noquote()
+                             << "Sentinel scene graph initialization failed; error:" << error
+                             << "message:" << message;
+                     });
 }
 
 QString preferredUiFontFamily() {
@@ -150,9 +147,8 @@ void installStartupTranslator(QGuiApplication& app, const sentinel::core::AppSet
 } // namespace
 
 int main(int argc, char* argv[]) {
-    configureGraphicsBackend();
-
     QApplication app(argc, argv);
+    configureGraphicsBackend();
     app.setQuitOnLastWindowClosed(false);
     configureDefaultUiFont();
     QGuiApplication::setApplicationName(sentinel::core::AppMetadata::displayName());
@@ -264,6 +260,12 @@ int main(int argc, char* argv[]) {
     engine.loadFromModule(QStringLiteral("Sentinel.Desktop"), QStringLiteral("Main"));
 
     QObject* rootWindow = engine.rootObjects().isEmpty() ? nullptr : engine.rootObjects().first();
+    if (auto* quickWindow = qobject_cast<QQuickWindow*>(rootWindow)) {
+        installGraphicsDiagnostics(*quickWindow);
+    } else {
+        qWarning()
+            << "Sentinel graphics diagnostics unavailable: root object is not a QQuickWindow";
+    }
     sentinel::desktop::NativeCompanionAdapter companionAdapter(shellViewModel, settings,
                                                                rootWindow);
 
