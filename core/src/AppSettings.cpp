@@ -18,6 +18,11 @@ bool isKnownRuntimeProviderId(const QString& providerId) {
            providerId == QStringLiteral("lm-studio") ||
            providerId == QStringLiteral("llama-cpp-server") ||
            providerId == QStringLiteral("openai-compatible") ||
+           providerId == QStringLiteral("cloud-api") ||
+           providerId == QStringLiteral("openai") ||
+           providerId == QStringLiteral("deepseek") ||
+           providerId == QStringLiteral("groq") ||
+           providerId == QStringLiteral("mistral") ||
            providerId == QStringLiteral("claude") || providerId == QStringLiteral("gemini");
 }
 

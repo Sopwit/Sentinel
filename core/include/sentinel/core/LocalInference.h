@@ -277,6 +277,23 @@ struct LMStudioConfig {
         return (host == QLatin1String("127.0.0.1") || host == QLatin1String("localhost")) &&
                endpoint.scheme() == QLatin1String("http");
     }
+
+    bool isCloud() const {
+        return !isLoopbackHttp();
+    }
+
+    QString providerDisplayName() const {
+        const auto host = endpoint.host().toLower();
+        if (host.contains(QLatin1String("googleapis.com"))) return QStringLiteral("Google Gemini API");
+        if (host.contains(QLatin1String("anthropic.com"))) return QStringLiteral("Anthropic Claude API");
+        if (host.contains(QLatin1String("openai.com"))) return QStringLiteral("OpenAI API");
+        if (host.contains(QLatin1String("deepseek.com"))) return QStringLiteral("DeepSeek API");
+        if (host.contains(QLatin1String("groq.com"))) return QStringLiteral("Groq Cloud API");
+        if (host.contains(QLatin1String("mistral.ai"))) return QStringLiteral("Mistral AI API");
+        if (isLoopbackHttp()) return QStringLiteral("LM Studio / Local Server");
+        return QStringLiteral("Cloud API");
+    }
+
     QString toString() const {
         return endpoint.toString();
     }

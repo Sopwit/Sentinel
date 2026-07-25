@@ -2025,11 +2025,29 @@ private:
     bool localInferenceStreamClientIsRealOllama_ = false;
 
     bool isLMStudioProvider() const {
-        return selectedRuntimeProvider_ == QStringLiteral("lm-studio");
+        return selectedRuntimeProvider_ == QStringLiteral("lm-studio") ||
+               selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ||
+               selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local") ||
+               selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
+               selectedRuntimeProvider_ == QStringLiteral("openai") ||
+               selectedRuntimeProvider_ == QStringLiteral("claude") ||
+               selectedRuntimeProvider_ == QStringLiteral("gemini") ||
+               selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
+               selectedRuntimeProvider_ == QStringLiteral("groq") ||
+               selectedRuntimeProvider_ == QStringLiteral("mistral");
     }
     bool isLocalChatProvider() const {
         return selectedRuntimeProvider_ == QStringLiteral("ollama") ||
-               selectedRuntimeProvider_ == QStringLiteral("lm-studio");
+               selectedRuntimeProvider_ == QStringLiteral("lm-studio") ||
+               selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ||
+               selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local") ||
+               selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
+               selectedRuntimeProvider_ == QStringLiteral("openai") ||
+               selectedRuntimeProvider_ == QStringLiteral("claude") ||
+               selectedRuntimeProvider_ == QStringLiteral("gemini") ||
+               selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
+               selectedRuntimeProvider_ == QStringLiteral("groq") ||
+               selectedRuntimeProvider_ == QStringLiteral("mistral");
     }
     LMStudioConfig currentCloudOrLMStudioConfig() const;
     ILocalInferenceWorker* activeLocalInferenceWorker() const;

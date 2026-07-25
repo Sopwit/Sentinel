@@ -113,9 +113,16 @@ QString localInferenceChatFailureMessage(const LocalInferenceResponse& response)
                               "to finish before sending another message.");
     case LocalInferenceError::RequestFailed:
         if (!response.summary.trimmed().isEmpty()) {
-            return QStringLiteral("Local inference failed: %1").arg(response.summary.trimmed());
+            const QString sum = response.summary.trimmed();
+            if (sum.contains(QLatin1String("API")) || sum.startsWith(QLatin1String("Google")) ||
+                sum.startsWith(QLatin1String("Anthropic")) || sum.startsWith(QLatin1String("OpenAI")) ||
+                sum.startsWith(QLatin1String("DeepSeek")) || sum.startsWith(QLatin1String("Groq")) ||
+                sum.startsWith(QLatin1String("Mistral")) || sum.startsWith(QLatin1String("Cloud"))) {
+                return sum;
+            }
+            return QStringLiteral("Inference failed: %1").arg(sum);
         }
-        return QStringLiteral("Local inference failed before a response was produced.");
+        return QStringLiteral("Inference failed before a response was produced.");
     case LocalInferenceError::None:
         break;
     }
@@ -1764,6 +1771,11 @@ void ApplicationController::setSelectedRuntimeProvider(const QString& providerId
          normalized == QStringLiteral("lm-studio") ||
          normalized == QStringLiteral("llama-cpp-server") ||
          normalized == QStringLiteral("openai-compatible") ||
+         normalized == QStringLiteral("cloud-api") ||
+         normalized == QStringLiteral("openai") ||
+         normalized == QStringLiteral("deepseek") ||
+         normalized == QStringLiteral("groq") ||
+         normalized == QStringLiteral("mistral") ||
          normalized == QStringLiteral("claude") || normalized == QStringLiteral("gemini"))
             ? normalized
             : QStringLiteral("ollama");
@@ -8904,10 +8916,21 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
         QStringLiteral("OpenAI-compatible loopback endpoint not configured"),
         selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ? selectedLocalModel_
                                                                        : QString()};
+    const OpenAICompatibleLocalRuntimeProvider cloudApiProvider{
+        QStringLiteral("cloud-api"), QStringLiteral("Cloud API"),
+        QStringLiteral("Cloud API endpoint"),
+        (selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
+         selectedRuntimeProvider_ == QStringLiteral("openai") ||
+         selectedRuntimeProvider_ == QStringLiteral("claude") ||
+         selectedRuntimeProvider_ == QStringLiteral("gemini") ||
+         selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
+         selectedRuntimeProvider_ == QStringLiteral("groq") ||
+         selectedRuntimeProvider_ == QStringLiteral("mistral")) ? selectedLocalModel_
+                                                                : QString()};
 
     return RuntimeProviderRegistry{
         {ollamaProvider.descriptor(), openAiCompatibleLocalProvider.descriptor(),
-         lmStudioProvider.descriptor(), llamaCppProvider.descriptor()},
+         lmStudioProvider.descriptor(), llamaCppProvider.descriptor(), cloudApiProvider.descriptor()},
         selectedRuntimeProvider_,
     };
 }
@@ -8935,6 +8958,14 @@ ModelRegistry ApplicationController::currentModelRegistry() const {
         if (selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local"))
             return {QStringLiteral("openai-compatible-local"),
                     QStringLiteral("OpenAI-compatible Local")};
+        if (selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
+            selectedRuntimeProvider_ == QStringLiteral("openai") ||
+            selectedRuntimeProvider_ == QStringLiteral("claude") ||
+            selectedRuntimeProvider_ == QStringLiteral("gemini") ||
+            selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
+            selectedRuntimeProvider_ == QStringLiteral("groq") ||
+            selectedRuntimeProvider_ == QStringLiteral("mistral"))
+            return {QStringLiteral("cloud-api"), QStringLiteral("Cloud API")};
         return {QStringLiteral("ollama"), QStringLiteral("Ollama")};
     }();
 
@@ -8989,9 +9020,6 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
                selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
                selectedRuntimeProvider_ == QStringLiteral("groq") ||
                selectedRuntimeProvider_ == QStringLiteral("mistral")) {
-        if (!cachedOpenAiCompatibleLocalModels_.isEmpty()) {
-            return cachedOpenAiCompatibleLocalModels_;
-        }
         const QString settingsPath =
             QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
             QStringLiteral("/settings.json");
@@ -9007,12 +9035,11 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
             };
         } else if (cloudProv == QStringLiteral("gemini") || selectedRuntimeProvider_ == QStringLiteral("gemini")) {
             return {
-                OllamaModelSummary{QStringLiteral("gemini-2.0-flash-exp"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-2.0-flash-thinking-exp-01-21"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-1.5-pro"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-1.5-pro-latest"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-2.0-flash"), QStringLiteral("Google Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("gemini-1.5-flash"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"), QStringLiteral("Google Cloud"), 0}
+                OllamaModelSummary{QStringLiteral("gemini-1.5-pro"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-2.0-flash-lite-preview-02-05"), QStringLiteral("Google Cloud"), 0}
             };
         } else if (cloudProv == QStringLiteral("deepseek") || selectedRuntimeProvider_ == QStringLiteral("deepseek")) {
             return {
@@ -9097,24 +9124,7 @@ void ApplicationController::pollOllama() {
                    provider == QStringLiteral("claude") || provider == QStringLiteral("gemini") ||
                    provider == QStringLiteral("deepseek") || provider == QStringLiteral("groq") ||
                    provider == QStringLiteral("mistral")) {
-            const QString settingsPath =
-            QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
-            QStringLiteral("/settings.json");
-        AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
-            const QString cloudProv = settings.selectedCloudProvider();
-            if (cloudProv == QStringLiteral("claude")) {
-                openAiModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 3000);
-            } else if (cloudProv == QStringLiteral("gemini")) {
-                openAiModels = fetchGeminiCloudModels(settings.geminiApiKey(), 3000);
-            } else if (cloudProv == QStringLiteral("deepseek")) {
-                openAiModels = fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.deepseek.com/v1/models")), settings.deepseekApiKey(), 3000);
-            } else if (cloudProv == QStringLiteral("groq")) {
-                openAiModels = fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.groq.com/openai/v1/models")), settings.groqApiKey(), 3000);
-            } else if (cloudProv == QStringLiteral("mistral")) {
-                openAiModels = fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.mistral.ai/v1/models")), settings.mistralApiKey(), 3000);
-            } else {
-                openAiModels = fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.openai.com/v1/models")), settings.openAiApiKey(), 3000);
-            }
+            // Cloud APIs are static/on-demand and should NOT be polled continuously in background loops.
         }
 
         QMetaObject::invokeMethod(
