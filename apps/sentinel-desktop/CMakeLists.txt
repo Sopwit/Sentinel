@@ -87,6 +87,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOverlayModal.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/UpdateProgressModal.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml
@@ -120,6 +121,7 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeBadge.q
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml PROPERTIES QT_RESOURCE_ALIAS SectionTitle.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml PROPERTIES QT_RESOURCE_ALIAS SentinelButton.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOverlayModal.qml PROPERTIES QT_RESOURCE_ALIAS SentinelOverlayModal.qml)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/UpdateProgressModal.qml PROPERTIES QT_RESOURCE_ALIAS UpdateProgressModal.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qml PROPERTIES QT_RESOURCE_ALIAS SentinelOrb.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTelemetry.qml)
 set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTextField.qml)

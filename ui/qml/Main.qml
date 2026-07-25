@@ -83,6 +83,10 @@ ApplicationWindow {
         settingsModal.open()
     }
 
+    function openUpdateModal() {
+        updateModal.open()
+    }
+
     function focusChatComposer() {
         root.currentShellPage = "Dashboard"
         Qt.callLater(function() {
@@ -245,6 +249,7 @@ ApplicationWindow {
         id: commandPalette
         viewModel: root.viewModel
         onOpenSettingsRequested: root.openSettings()
+        onOpenUpdateRequested: root.openUpdateModal()
         onFocusChatRequested: root.focusChatComposer()
     }
 
@@ -255,6 +260,17 @@ ApplicationWindow {
         onFinished: {
             root.viewModel.onboardingComplete = true
             onboardingScreen.active = false
+        }
+    }
+
+    UpdateProgressModal {
+        id: updateModal
+        currentVersion: "1.0.0"
+        availableVersion: "1.0.1-alpha"
+        modeName: root.viewModel.currentModeName
+        accent: SentinelTheme.modeAccent(root.viewModel.currentModeName)
+        onUpdateCompleted: {
+            root.viewModel.relaunchApplication()
         }
     }
 
@@ -329,6 +345,14 @@ ApplicationWindow {
                 return
             }
             root.lastPrimaryPage = root.viewModel.currentPage
+        }
+        function onUpdateCheckCompleted(available, version, releaseNotes, downloadUrl) {
+            updateModal.availableVersion = version
+            if (releaseNotes && releaseNotes.length > 0) {
+                updateModal.releaseNotesText = releaseNotes
+            }
+            updateModal.updateState = available ? "available" : "idle"
+            updateModal.open()
         }
     }
 

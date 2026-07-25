@@ -774,7 +774,7 @@ Item {
         spacing: SentinelTheme.spaceLg
 
         ShellPanel {
-            Layout.preferredWidth: modelsPage.sidebarCollapsed ? 68 : (modelsPage.compact ? 196 : 278)
+            Layout.preferredWidth: modelsPage.sidebarCollapsed ? 64 : (modelsPage.compact ? 196 : 278)
             Layout.fillHeight: true
             color: SentinelTheme.lightTheme
                  ? "#ffffff"
@@ -789,7 +789,7 @@ Item {
 
             ColumnLayout {
                 anchors.fill: parent
-                anchors.margins: modelsPage.sidebarCollapsed ? SentinelTheme.spaceXs : SentinelTheme.spaceMd
+                anchors.margins: modelsPage.sidebarCollapsed ? SentinelTheme.spaceSm : SentinelTheme.spaceMd
                 spacing: SentinelTheme.spaceMd
 
                 RowLayout {
@@ -797,11 +797,6 @@ Item {
                     Layout.topMargin: SentinelTheme.spaceSm
                     Layout.bottomMargin: SentinelTheme.spaceXs
                     spacing: 0
-
-                    Item {
-                        visible: modelsPage.sidebarCollapsed
-                        Layout.fillWidth: true
-                    }
 
                     Label {
                         visible: !modelsPage.sidebarCollapsed
@@ -815,12 +810,17 @@ Item {
                         elide: Text.ElideRight
                     }
 
+                    Item {
+                        visible: modelsPage.sidebarCollapsed
+                        Layout.fillWidth: true
+                    }
+
                     Button {
                         id: collapseBtn
                         Layout.alignment: Qt.AlignVCenter
                         Layout.rightMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceMd
-                        implicitHeight: 40
-                        implicitWidth: 40
+                        implicitHeight: 36
+                        implicitWidth: 36
                         flat: true
                         padding: 0
                         onClicked: modelsPage.sidebarCollapsed = !modelsPage.sidebarCollapsed
@@ -828,20 +828,23 @@ Item {
 
                         contentItem: Label {
                             text: modelsPage.sidebarCollapsed ? "»" : "«"
-                            font.pixelSize: 28
+                            font.pixelSize: 22
                             font.bold: true
                             color: collapseBtn.hovered ? modelsPage.modeAccent : SentinelTheme.textMuted
                             horizontalAlignment: Text.AlignHCenter
                             verticalAlignment: Text.AlignVCenter
-                            topPadding: -2
                         }
 
                         background: Rectangle {
-                            radius: 6
+                            radius: 8
                             color: collapseBtn.hovered
-                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
+                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                                  : "transparent"
                         }
+
+                        ToolTip.visible: collapseBtn.hovered
+                        ToolTip.text: modelsPage.sidebarCollapsed ? qsTr("Expand Sidebar") : qsTr("Collapse Sidebar")
+                        ToolTip.delay: 400
                     }
 
                     Item {
@@ -861,7 +864,7 @@ Item {
                     ColumnLayout {
                         id: sidebarButtonsColumn
                         width: parent.width
-                        spacing: SentinelTheme.spaceXs
+                        spacing: modelsPage.sidebarCollapsed ? 6 : SentinelTheme.spaceXs
 
                         Repeater {
                             model: modelsPage.categories
@@ -870,37 +873,51 @@ Item {
                                 required property var modelData
                                 readonly property bool active: modelsPage.activeCategory === modelData
                                 Layout.fillWidth: true
-                                Layout.preferredHeight: modelsPage.compact ? 36 : 42
+                                Layout.preferredHeight: 40
                                 hoverEnabled: true
                                 focusPolicy: Qt.StrongFocus
                                 onClicked: modelsPage.activeCategory = modelData
 
-                                contentItem: RowLayout {
-                                    anchors.fill: parent
-                                    anchors.leftMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceLg
-                                    anchors.rightMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceMd
-                                    spacing: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceSm
+                                ToolTip.visible: navButton.hovered && modelsPage.sidebarCollapsed
+                                ToolTip.text: modelsPage.categoryTitle(modelData)
+                                ToolTip.delay: 200
 
-                                    Text {
-                                        id: iconTxt
-                                        Layout.alignment: Qt.AlignVCenter | (modelsPage.sidebarCollapsed ? Qt.AlignHCenter : Qt.AlignLeft)
-                                        text: modelsPage.categoryIcon(modelData)
-                                        color: navButton.active
-                                               ? SentinelTheme.textPrimary
-                                               : SentinelTheme.textMuted
-                                        font.pixelSize: modelsPage.categoryIconSize(modelData)
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                        Layout.preferredWidth: modelsPage.sidebarCollapsed ? 42 : 18
+                                contentItem: Item {
+                                    // Fixed geometry icon container for exact alignment
+                                    Item {
+                                        id: iconContainer
+                                        width: 24
+                                        height: 24
+                                        anchors.verticalCenter: parent.verticalCenter
+                                        anchors.left: modelsPage.sidebarCollapsed ? undefined : parent.left
+                                        anchors.leftMargin: modelsPage.sidebarCollapsed ? 0 : SentinelTheme.spaceLg
+                                        anchors.horizontalCenter: modelsPage.sidebarCollapsed ? parent.horizontalCenter : undefined
+
+                                        Text {
+                                            anchors.centerIn: parent
+                                            text: modelsPage.categoryIcon(modelData)
+                                            font.family: SentinelTheme.iconFontFamily
+                                            color: navButton.active
+                                                   ? SentinelTheme.textPrimary
+                                                   : (navButton.hovered ? SentinelTheme.textPrimary : SentinelTheme.textMuted)
+                                            font.pixelSize: 15
+                                            horizontalAlignment: Text.AlignHCenter
+                                            verticalAlignment: Text.AlignVCenter
+                                        }
                                     }
 
+                                    // Category Title Label (visible only when expanded)
                                     Text {
                                         visible: !modelsPage.sidebarCollapsed
-                                        Layout.fillWidth: true
+                                        anchors.left: iconContainer.right
+                                        anchors.leftMargin: SentinelTheme.spaceSm
+                                        anchors.right: parent.right
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+                                        anchors.verticalCenter: parent.verticalCenter
                                         text: modelsPage.categoryTitle(modelData)
                                         color: navButton.active
                                                ? SentinelTheme.textPrimary
-                                               : SentinelTheme.textMuted
+                                               : (navButton.hovered ? SentinelTheme.textPrimary : SentinelTheme.textMuted)
                                         font.pixelSize: SentinelTheme.fontBody
                                         font.bold: navButton.active
                                         maximumLineCount: 1
@@ -911,17 +928,17 @@ Item {
                                 background: Rectangle {
                                     radius: SentinelTheme.radiusMd
                                     color: navButton.active
-                                           ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.12)
-                                           : navButton.hovered
-                                             ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                                             : "transparent"
+                                           ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.14)
+                                           : (navButton.hovered
+                                              ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
+                                              : "transparent")
 
                                     Rectangle {
                                         width: navButton.active ? 3 : 0
-                                        height: parent.height - SentinelTheme.spaceSm * 2
+                                        height: 20
                                         radius: 1.5
                                         anchors.left: parent.left
-                                        anchors.leftMargin: SentinelTheme.spaceSm
+                                        anchors.leftMargin: modelsPage.sidebarCollapsed ? 3 : 6
                                         anchors.verticalCenter: parent.verticalCenter
                                         color: modelsPage.modeAccent
                                     }
@@ -1258,10 +1275,11 @@ Item {
 
                         border.color: modelDelegate.effectivelyInstalled
                                     ? SentinelTheme.withAlpha(SentinelTheme.success, cardArea.containsMouse ? 0.45 : 0.28)
-                                    : (SentinelTheme.lightTheme
-                                       ? SentinelTheme.withAlpha("#e2e8f4", cardArea.containsMouse ? 0.95 : 0.80)
-                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary,
-                                                                   cardArea.containsMouse ? 0.14 : 0.07))
+                                    : (cardArea.containsMouse
+                                       ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.35)
+                                       : (SentinelTheme.lightTheme
+                                          ? SentinelTheme.withAlpha("#e2e8f4", 0.80)
+                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)))
                         border.width: 1
 
                         Behavior on color {
@@ -1271,17 +1289,6 @@ Item {
                             ColorAnimation { duration: 140; easing.type: Easing.InOutQuad }
                         }
 
-                        // Top sheen
-                        Rectangle {
-                            anchors.top: parent.top; anchors.left: parent.left; anchors.right: parent.right
-                            anchors.topMargin: 1; anchors.leftMargin: 14; anchors.rightMargin: 14
-                            height: 1
-                            color: SentinelTheme.lightTheme
-                                 ? SentinelTheme.withAlpha("#ffffff", 0.90)
-                                 : SentinelTheme.withAlpha("#ffffff", 0.22)
-                            radius: 1
-                        }
-
                         // Frosted inner layer
                         Rectangle {
                             anchors.fill: parent; anchors.margins: 1
@@ -1289,26 +1296,6 @@ Item {
                             color: SentinelTheme.lightTheme
                                  ? "#ffffff"
                                  : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.14)
-                        }
-
-                        // Installed glow ring
-                        Rectangle {
-                            visible: modelDelegate.effectivelyInstalled
-                            anchors.fill: parent; anchors.margins: -1
-                            radius: parent.radius + 1
-                            color: "transparent"
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.30)
-                            border.width: 1
-                        }
-
-                        // Hover accent ring
-                        Rectangle {
-                            anchors.fill: parent; anchors.margins: -1
-                            radius: parent.radius + 1
-                            color: "transparent"
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.accent, cardArea.containsMouse ? 0.18 : 0.0)
-                            border.width: 1
-                            Behavior on border.color { ColorAnimation { duration: 160 } }
                         }
 
                         MouseArea {
@@ -1440,14 +1427,6 @@ Item {
                                                : SentinelTheme.withAlpha(SentinelTheme.accent, 0.14)
                                         border.color: SentinelTheme.withAlpha(SentinelTheme.accent, dlBtn.hovered ? 0.50 : 0.30)
                                         border.width: 1
-                                        Rectangle {
-                                            anchors.top: parent.top; anchors.topMargin: 1
-                                            anchors.left: parent.left; anchors.leftMargin: 6
-                                            anchors.right: parent.right; anchors.rightMargin: 6
-                                            height: 1
-                                            color: SentinelTheme.withAlpha("#ffffff", 0.50)
-                                            radius: 1
-                                        }
                                         Behavior on color { ColorAnimation { duration: 100 } }
                                     }
 

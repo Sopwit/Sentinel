@@ -54,21 +54,6 @@ Item {
                     : SentinelTheme.withAlpha(SentinelTheme.accent, 0.18)
         border.width: 1
 
-        // Inner top sheen — the key Liquid Glass highlight
-        Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.topMargin: 1
-            anchors.leftMargin: 14
-            anchors.rightMargin: 14
-            height: 1
-            color: SentinelTheme.lightTheme
-                 ? SentinelTheme.withAlpha("#ffffff", 0.95)
-                 : SentinelTheme.withAlpha("#ffffff", 0.28)
-            radius: 1
-        }
-
         // Frosted inner fill
         Rectangle {
             anchors.fill: parent
@@ -125,19 +110,6 @@ Item {
                  : SentinelTheme.withAlpha(SentinelTheme.accent, 0.20)
             border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.30)
             border.width: 1
-
-            // Sheen on active indicator
-            Rectangle {
-                anchors.top: parent.top
-                anchors.left: parent.left
-                anchors.right: parent.right
-                anchors.topMargin: 1
-                anchors.leftMargin: 8
-                anchors.rightMargin: 8
-                height: 1
-                color: SentinelTheme.withAlpha("#ffffff", 0.60)
-                radius: 1
-            }
 
             Behavior on x {
                 NumberAnimation {
