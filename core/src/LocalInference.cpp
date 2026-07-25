@@ -1157,7 +1157,7 @@ QUrl LMStudioLocalInferenceClient::endpointUrl(const QString& path) const {
 }
 
 bool LMStudioLocalInferenceClient::endpointAllowed() const {
-    return config_.isLoopbackHttp();
+    return config_.isAllowedEndpoint();
 }
 
 LMStudioLocalInferenceStreamClient::LMStudioLocalInferenceStreamClient(LMStudioConfig config,
@@ -1223,6 +1223,21 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
 
     QNetworkAccessManager manager;
     QNetworkRequest networkRequest{endpointUrl(QStringLiteral("/v1/chat/completions"))};
+    if (config_.endpoint.host().contains(QLatin1String("anthropic.com"))) {
+        networkRequest.setUrl(QUrl(QStringLiteral("https://api.anthropic.com/v1/messages")));
+        if (!config_.apiKey.isEmpty()) {
+            networkRequest.setRawHeader("x-api-key", config_.apiKey.toUtf8());
+        }
+        networkRequest.setRawHeader("anthropic-version", "2023-06-01");
+    } else if (config_.endpoint.host().contains(QLatin1String("googleapis.com"))) {
+        const QString modelId = result.model.isEmpty() ? QStringLiteral("gemini-1.5-flash") : result.model;
+        networkRequest.setUrl(QUrl(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/%1:streamGenerateContent?key=%2&alt=sse")
+                                  .arg(modelId, config_.apiKey)));
+    } else {
+        if (!config_.apiKey.isEmpty()) {
+            networkRequest.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
+        }
+    }
     networkRequest.setHeader(QNetworkRequest::ContentTypeHeader,
                              QStringLiteral("application/json"));
     networkRequest.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
@@ -1265,7 +1280,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
             ++sequence;
             ++result.malformedChunkCount;
             LocalInferenceStreamChunk chunk{
-                sequence, {}, false, true, QStringLiteral("Malformed local stream chunk ignored."),
+                sequence, {}, false, true, QStringLiteral("Malformed stream chunk ignored."),
             };
             result.chunks.append(chunk);
             result.traces.append(trace(sequence + 2, QStringLiteral("Stream Chunk"),
@@ -1277,16 +1292,44 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         }
 
         const auto object = document.object();
-        const auto choices = object.value(QStringLiteral("choices")).toArray();
-        if (choices.isEmpty()) {
-            return;
-        }
-        const auto choice = choices.first().toObject();
-        const auto delta = choice.value(QStringLiteral("delta")).toObject();
-        const auto text = delta.value(QStringLiteral("content")).toString();
+        QString text;
+        bool isFinal = false;
 
-        const auto finishReason = choice.value(QStringLiteral("finish_reason")).toString();
-        const bool finalChunk = !finishReason.isEmpty() || done;
+        // OpenAI format (choices[0].delta.content)
+        if (object.contains(QStringLiteral("choices"))) {
+            const auto choices = object.value(QStringLiteral("choices")).toArray();
+            if (!choices.isEmpty()) {
+                const auto choice = choices.first().toObject();
+                const auto delta = choice.value(QStringLiteral("delta")).toObject();
+                text = delta.value(QStringLiteral("content")).toString();
+                const auto finishReason = choice.value(QStringLiteral("finish_reason")).toString();
+                if (!finishReason.isEmpty()) isFinal = true;
+            }
+        }
+        // Anthropic Claude format (delta.text)
+        else if (object.contains(QStringLiteral("delta"))) {
+            const auto delta = object.value(QStringLiteral("delta")).toObject();
+            text = delta.value(QStringLiteral("text")).toString();
+            if (object.value(QStringLiteral("type")).toString() == QLatin1String("message_stop")) {
+                isFinal = true;
+            }
+        }
+        // Google Gemini format (candidates[0].content.parts[0].text)
+        else if (object.contains(QStringLiteral("candidates"))) {
+            const auto candidates = object.value(QStringLiteral("candidates")).toArray();
+            if (!candidates.isEmpty()) {
+                const auto candObj = candidates.first().toObject();
+                const auto contentObj = candObj.value(QStringLiteral("content")).toObject();
+                const auto parts = contentObj.value(QStringLiteral("parts")).toArray();
+                if (!parts.isEmpty()) {
+                    text = parts.first().toObject().value(QStringLiteral("text")).toString();
+                }
+                const auto finishReason = candObj.value(QStringLiteral("finishReason")).toString();
+                if (!finishReason.isEmpty()) isFinal = true;
+            }
+        }
+
+        const bool finalChunk = isFinal || done;
 
         if (text.isEmpty() && !finalChunk) {
             return;
@@ -1446,7 +1489,7 @@ QUrl LMStudioLocalInferenceStreamClient::endpointUrl(const QString& path) const 
 }
 
 bool LMStudioLocalInferenceStreamClient::endpointAllowed() const {
-    return config_.isLoopbackHttp();
+    return config_.isAllowedEndpoint();
 }
 
 } // namespace sentinel::core
