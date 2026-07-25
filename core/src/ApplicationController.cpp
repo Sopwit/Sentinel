@@ -9237,12 +9237,18 @@ QString ApplicationController::effectiveLocalModel(const QString& requestedModel
         return explicitModel;
     }
 
+    const auto models = currentOllamaModels();
     auto selectedModel = selectedLocalModel_.trimmed();
     if (!selectedModel.isEmpty()) {
+        if (!models.isEmpty() && discoveredModelNamesContain(selectedModel, models)) {
+            return selectedModel;
+        }
+        if (!models.isEmpty() && isLMStudioProvider()) {
+            return models.first().name;
+        }
         return selectedModel;
     }
 
-    const auto models = currentOllamaModels();
     return models.isEmpty() ? QString() : models.first().name;
 }
 
