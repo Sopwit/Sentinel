@@ -120,7 +120,7 @@ QString localInferenceChatFailureMessage(const LocalInferenceResponse& response)
                 sum.startsWith(QLatin1String("Mistral")) || sum.startsWith(QLatin1String("Cloud"))) {
                 return sum;
             }
-            return QStringLiteral("Inference failed: %1").arg(sum);
+            return QStringLiteral("Local inference failed: %1").arg(sum);
         }
         return QStringLiteral("Inference failed before a response was produced.");
     case LocalInferenceError::None:

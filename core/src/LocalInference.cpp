@@ -1181,7 +1181,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     QString modelName = request.options.model.trimmed();
 
     if (providerHost.contains(QLatin1String("googleapis.com"))) {
-        if (modelName.isEmpty() || modelName == QLatin1String("gemini-2.5-flash") || !modelName.startsWith(QLatin1String("gemini-"))) {
+        if (modelName.isEmpty() || !modelName.startsWith(QLatin1String("gemini-"))) {
             modelName = QStringLiteral("gemini-2.0-flash");
         }
     } else if (providerHost.contains(QLatin1String("anthropic.com"))) {
@@ -1237,8 +1237,10 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     if (!endpointAllowed()) {
         result.status = LocalInferenceStreamStatus::Refused;
         result.error = LocalInferenceError::EndpointBlocked;
-        result.summary =
-            QStringLiteral("Local streaming blocked: endpoint must be local loopback HTTP.");
+        result.summary = config_.isCloud()
+            ? QStringLiteral("%1 streaming blocked: API key is missing or endpoint is not allowed.")
+                  .arg(config_.providerDisplayName())
+            : QStringLiteral("Local streaming blocked: endpoint must be local loopback HTTP.");
         result.traces.append(
             trace(2, QStringLiteral("Endpoint"), QStringLiteral("Blocked"), result.summary));
         return result;
@@ -1269,7 +1271,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         body.insert(QStringLiteral("max_tokens"), 2048);
         body.insert(QStringLiteral("stream"), true);
     } else if (isGemini) {
-        const QString modelId = result.model.isEmpty() ? QStringLiteral("gemini-1.5-flash") : result.model;
+        const QString modelId = result.model.isEmpty() ? QStringLiteral("gemini-2.0-flash") : result.model;
         networkRequest.setUrl(QUrl(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/%1:streamGenerateContent?key=%2&alt=sse")
                                   .arg(modelId, config_.apiKey)));
 
@@ -1285,6 +1287,12 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         contentsArr.append(contentObj);
 
         body.insert(QStringLiteral("contents"), contentsArr);
+
+        QJsonObject generationConfig;
+        generationConfig.insert(QStringLiteral("temperature"), request.options.temperature);
+        generationConfig.insert(QStringLiteral("topP"), request.options.topP);
+        generationConfig.insert(QStringLiteral("maxOutputTokens"), request.options.maxTokens);
+        body.insert(QStringLiteral("generationConfig"), generationConfig);
     } else {
         networkRequest.setUrl(endpointUrl(config_.endpoint.path().endsWith(QLatin1String("v1"))
                                               ? QStringLiteral("/chat/completions")
@@ -1390,7 +1398,10 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
                     text = parts.first().toObject().value(QStringLiteral("text")).toString();
                 }
                 const auto finishReason = candObj.value(QStringLiteral("finishReason")).toString();
-                if (!finishReason.isEmpty()) isFinal = true;
+                if (!finishReason.isEmpty()) {
+                    isFinal = true;
+                    done = true;  // Gemini does not send [DONE]; finishReason signals completion
+                }
             }
         }
 
@@ -1480,8 +1491,10 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     if (hasRedirectStatus(reply)) {
         result.status = LocalInferenceStreamStatus::Error;
         result.error = LocalInferenceError::EndpointBlocked;
-        result.summary =
-            QStringLiteral("Local LM Studio streaming blocked: redirects are not allowed.");
+        result.summary = config_.isCloud()
+            ? QStringLiteral("%1 streaming blocked: unexpected redirect from API endpoint.")
+                  .arg(config_.providerDisplayName())
+            : QStringLiteral("Local LM Studio streaming blocked: redirects are not allowed.");
         reply->deleteLater();
         return result;
     }
@@ -1489,6 +1502,9 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     const int httpStatus = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
     const QString providerLabel = config_.providerDisplayName();
 
+    // Check HTTP error status BEFORE checking accumulated text, so that API errors
+    // (401, 429, 500, etc.) surface the correct error message rather than a generic
+    // "stream did not complete" failure.
     if (httpStatus >= 400 || reply->error() != QNetworkReply::NoError) {
         result.status = LocalInferenceStreamStatus::Error;
         result.error = LocalInferenceError::RequestFailed;
@@ -1499,14 +1515,25 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
             result.summary = QStringLiteral("%1 error: API Key is missing or unauthorized (HTTP %2). Check API Key in Settings.")
                                  .arg(providerLabel).arg(httpStatus);
         } else if (httpStatus == 429) {
-            result.summary = QStringLiteral("%1 error: Rate limit exceeded (HTTP 429). Please try again later.")
+            result.summary = QStringLiteral("%1 error: Rate limit exceeded (HTTP 429). Please wait and try again later.")
                                  .arg(providerLabel);
-        } else {
-            const auto error = reply->errorString();
-            const JsonReply failedReply{false, false, {}, error, reply->error()};
+        } else if (httpStatus == 500 || httpStatus == 503) {
+            result.summary = QStringLiteral("%1 error: Service temporarily unavailable (HTTP %2). Please try again later.")
+                                 .arg(providerLabel).arg(httpStatus);
+        } else if (reply->error() != QNetworkReply::NoError) {
+            const auto netError = reply->errorString();
+            const JsonReply failedReply{false, false, {}, netError, reply->error()};
             result.error = networkErrorCategory(failedReply);
-            result.summary = safeNetworkFailureSummary(
-                failedReply, QStringLiteral("%1 streaming generation").arg(providerLabel), timeoutMs);
+            if (config_.isCloud()) {
+                result.summary = QStringLiteral("%1 streaming failed: %2")
+                    .arg(providerLabel, netError.isEmpty() ? QStringLiteral("network error") : netError);
+            } else {
+                result.summary = safeNetworkFailureSummary(
+                    failedReply, QStringLiteral("%1 streaming generation").arg(providerLabel), timeoutMs);
+            }
+        } else {
+            result.summary = QStringLiteral("%1 error: Request failed (HTTP %2).")
+                                 .arg(providerLabel).arg(httpStatus);
         }
         reply->deleteLater();
         return result;
@@ -1526,8 +1553,10 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         result.status = LocalInferenceStreamStatus::Error;
         result.error =
             done ? LocalInferenceError::InvalidResponse : LocalInferenceError::StreamInterrupted;
-        result.summary = QStringLiteral(
-            "Local LM Studio streaming response did not complete with assistant text.");
+        result.summary = config_.isCloud()
+            ? QStringLiteral("%1 streaming response did not contain any text.")
+                  .arg(config_.providerDisplayName())
+            : QStringLiteral("Local LM Studio streaming response did not complete with assistant text.");
         return result;
     }
 
