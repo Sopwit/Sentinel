@@ -8982,6 +8982,70 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
         return cachedLlamaCppModels_;
     } else if (selectedRuntimeProvider_ == QStringLiteral("openai-compatible-local")) {
         return cachedOpenAiCompatibleLocalModels_;
+    } else if (selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
+               selectedRuntimeProvider_ == QStringLiteral("openai") ||
+               selectedRuntimeProvider_ == QStringLiteral("claude") ||
+               selectedRuntimeProvider_ == QStringLiteral("gemini") ||
+               selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
+               selectedRuntimeProvider_ == QStringLiteral("groq") ||
+               selectedRuntimeProvider_ == QStringLiteral("mistral")) {
+        if (!cachedOpenAiCompatibleLocalModels_.isEmpty()) {
+            return cachedOpenAiCompatibleLocalModels_;
+        }
+        const QString settingsPath =
+            QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
+            QStringLiteral("/settings.json");
+        AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
+        const QString cloudProv = settings.selectedCloudProvider();
+        if (cloudProv == QStringLiteral("claude") || selectedRuntimeProvider_ == QStringLiteral("claude")) {
+            return {
+                OllamaModelSummary{QStringLiteral("claude-3-5-sonnet-20241022"), QStringLiteral("Anthropic Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("claude-3-5-haiku-20241022"), QStringLiteral("Anthropic Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("claude-3-opus-20240229"), QStringLiteral("Anthropic Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("claude-3-sonnet-20240229"), QStringLiteral("Anthropic Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("claude-3-haiku-20240307"), QStringLiteral("Anthropic Cloud"), 0}
+            };
+        } else if (cloudProv == QStringLiteral("gemini") || selectedRuntimeProvider_ == QStringLiteral("gemini")) {
+            return {
+                OllamaModelSummary{QStringLiteral("gemini-2.0-flash-exp"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-2.0-flash-thinking-exp-01-21"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-1.5-pro"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-1.5-pro-latest"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-1.5-flash"), QStringLiteral("Google Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"), QStringLiteral("Google Cloud"), 0}
+            };
+        } else if (cloudProv == QStringLiteral("deepseek") || selectedRuntimeProvider_ == QStringLiteral("deepseek")) {
+            return {
+                OllamaModelSummary{QStringLiteral("deepseek-chat"), QStringLiteral("DeepSeek Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("deepseek-reasoner"), QStringLiteral("DeepSeek Cloud"), 0}
+            };
+        } else if (cloudProv == QStringLiteral("groq") || selectedRuntimeProvider_ == QStringLiteral("groq")) {
+            return {
+                OllamaModelSummary{QStringLiteral("llama-3.3-70b-versatile"), QStringLiteral("Groq Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("llama-3.1-8b-instant"), QStringLiteral("Groq Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("mixtral-8x7b-32768"), QStringLiteral("Groq Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("deepseek-r1-distill-llama-70b"), QStringLiteral("Groq Cloud"), 0}
+            };
+        } else if (cloudProv == QStringLiteral("mistral") || selectedRuntimeProvider_ == QStringLiteral("mistral")) {
+            return {
+                OllamaModelSummary{QStringLiteral("mistral-large-latest"), QStringLiteral("Mistral Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("pixtral-large-latest"), QStringLiteral("Mistral Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("codestral-latest"), QStringLiteral("Mistral Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("mistral-small-latest"), QStringLiteral("Mistral Cloud"), 0}
+            };
+        } else {
+            return {
+                OllamaModelSummary{QStringLiteral("gpt-4o"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gpt-4o-mini"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("o1"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("o1-preview"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("o1-mini"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("o3-mini"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gpt-4-turbo"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gpt-4"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gpt-3.5-turbo"), QStringLiteral("OpenAI Cloud"), 0}
+            };
+        }
     }
     return cachedOllamaModels_;
 }
@@ -9029,6 +9093,28 @@ void ApplicationController::pollOllama() {
         } else if (provider == QStringLiteral("openai-compatible-local")) {
             openAiModels = fetchOpenAiCompatibleModels(
                 QUrl(QStringLiteral("http://127.0.0.1:8000/v1/models")), 1000);
+        } else if (provider == QStringLiteral("cloud-api") || provider == QStringLiteral("openai") ||
+                   provider == QStringLiteral("claude") || provider == QStringLiteral("gemini") ||
+                   provider == QStringLiteral("deepseek") || provider == QStringLiteral("groq") ||
+                   provider == QStringLiteral("mistral")) {
+            const QString settingsPath =
+            QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
+            QStringLiteral("/settings.json");
+        AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
+            const QString cloudProv = settings.selectedCloudProvider();
+            if (cloudProv == QStringLiteral("claude")) {
+                openAiModels = fetchAnthropicCloudModels(settings.claudeApiKey(), 3000);
+            } else if (cloudProv == QStringLiteral("gemini")) {
+                openAiModels = fetchGeminiCloudModels(settings.geminiApiKey(), 3000);
+            } else if (cloudProv == QStringLiteral("deepseek")) {
+                openAiModels = fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.deepseek.com/v1/models")), settings.deepseekApiKey(), 3000);
+            } else if (cloudProv == QStringLiteral("groq")) {
+                openAiModels = fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.groq.com/openai/v1/models")), settings.groqApiKey(), 3000);
+            } else if (cloudProv == QStringLiteral("mistral")) {
+                openAiModels = fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.mistral.ai/v1/models")), settings.mistralApiKey(), 3000);
+            } else {
+                openAiModels = fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.openai.com/v1/models")), settings.openAiApiKey(), 3000);
+            }
         }
 
         QMetaObject::invokeMethod(
