@@ -1511,6 +1511,9 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         if (httpStatus == 404) {
             result.summary = QStringLiteral("%1 error: Model '%2' was not found (HTTP 404). Check model selection in Settings.")
                                  .arg(providerLabel, result.model);
+        } else if (httpStatus == 400) {
+            result.summary = QStringLiteral("%1 error: Bad request or invalid API key (HTTP 400). Check API Key and model in Settings.")
+                                 .arg(providerLabel);
         } else if (httpStatus == 401 || httpStatus == 403) {
             result.summary = QStringLiteral("%1 error: API Key is missing or unauthorized (HTTP %2). Check API Key in Settings.")
                                  .arg(providerLabel).arg(httpStatus);

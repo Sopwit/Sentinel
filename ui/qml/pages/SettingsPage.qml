@@ -1662,6 +1662,7 @@ Item {
                                 onActivated: (idx) => {
                                     var pid = providerIds[idx]
                                     settingsPage.viewModel.selectedCloudProvider = pid
+                                    settingsPage.viewModel.selectedRuntimeProvider = "cloud-api"
                                     var cur = settingsPage.viewModel.selectedLocalModel
                                     var fits = (pid === "openai"   && (cur.startsWith("gpt") || cur.startsWith("o1") || cur.startsWith("o3"))) ||
                                                (pid === "claude"   && cur.startsWith("claude"))   ||
