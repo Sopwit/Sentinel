@@ -154,8 +154,8 @@ QtObject {
     readonly property int radiusPanel: scaleSize(22)
     readonly property int radiusPill: 999
 
-    readonly property string fontFamily: "Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
-    readonly property string iconFontFamily: "-apple-system, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji', 'DejaVu Sans', sans-serif"
+    readonly property string fontFamily: Qt.platform.os === "osx" || Qt.platform.os === "macos" ? ".AppleSystemUIFont" : (Qt.platform.os === "windows" ? "Segoe UI" : "sans-serif")
+    readonly property string iconFontFamily: Qt.platform.os === "osx" || Qt.platform.os === "macos" ? "Apple Color Emoji" : (Qt.platform.os === "windows" ? "Segoe UI Emoji" : "sans-serif")
 
     readonly property int fontTiny: scaleSize(11)
     readonly property int fontSmall: scaleSize(12)
