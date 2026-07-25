@@ -11,6 +11,7 @@ SentinelOverlayModal {
     property string query: ""
     property string actionStatus: ""
     signal openSettingsRequested()
+    signal openUpdateRequested()
     signal focusChatRequested()
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property var actions: [
@@ -19,8 +20,8 @@ SentinelOverlayModal {
         { "title": qsTr("Search Chats"), "subtitle": qsTr("Filter conversations by title or id"), "kind": qsTr("Search"), "action": "search-chats", "enabled": true },
         { "title": qsTr("Open Workspace"), "subtitle": qsTr("Open workspace controls in Settings"), "kind": qsTr("Workspace"), "action": "settings", "enabled": true },
         { "title": qsTr("Open Settings"), "subtitle": qsTr("Open floating preferences"), "kind": qsTr("Modal"), "action": "settings", "enabled": true },
-        { "title": qsTr("Check Updates"), "subtitle": qsTr("Manual stub; no hidden network polling"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
-        { "title": qsTr("Open Updates"), "subtitle": qsTr("Open manual update and release notes surfaces"), "kind": qsTr("Updates"), "action": "settings", "enabled": true },
+        { "title": qsTr("Check Updates"), "subtitle": qsTr("Check release boundary and open update installer modal"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
+        { "title": qsTr("Open Updates"), "subtitle": qsTr("Open manual update and release notes surfaces"), "kind": qsTr("Updates"), "action": "updates", "enabled": true },
         { "title": qsTr("Open Notifications"), "subtitle": qsTr("Open notification center controls"), "kind": qsTr("Notifications"), "action": "settings", "enabled": true },
         { "title": qsTr("Export Current Chat"), "subtitle": qsTr("Save Markdown in the controlled export directory"), "kind": qsTr("Export"), "action": "export-md", "enabled": true },
         { "title": qsTr("Export Data"), "subtitle": qsTr("Prepare export preview for local data"), "kind": qsTr("Export"), "action": "export-preview", "enabled": true },
@@ -46,7 +47,7 @@ SentinelOverlayModal {
     preferredHeight: Math.min(520, Math.max(360, (parent ? parent.height : 720) - SentinelTheme.space4Xl))
     onOpened: {
         query = ""
-        actionStatus = qsTr("Local navigation only. Quick actions are visible as metadata and do not execute.")
+        actionStatus = qsTr("Select an action or search commands.")
         searchField.forceActiveFocus()
     }
 
@@ -71,8 +72,8 @@ SentinelOverlayModal {
             close()
             palette.openSettingsRequested()
         } else if (action.action === "updates") {
-            viewModel.checkForUpdates()
-            actionStatus = qsTr("No update check was sent. Manual update networking is not implemented.")
+            close()
+            palette.openUpdateRequested()
         } else if (action.action === "export-md") {
             viewModel.exportTranscript("markdown")
             actionStatus = viewModel.conversationExportLastResultSummary

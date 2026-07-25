@@ -5257,6 +5257,7 @@ bool DesktopShellViewModel::checkForUpdates() {
             settings_.setNotificationCenterJson(updatedJson);
         }
         emit nativeExperienceChanged();
+        emit updateCheckCompleted(true, latestTag, bodyText, lastReleaseUrl_);
     });
 
     return true;

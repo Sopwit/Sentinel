@@ -3375,7 +3375,12 @@ Item {
                                 text: qsTr("Check for Updates")
                                 enabled: true
                                 Layout.preferredWidth: 160
-                                onClicked: settingsPage.viewModel.checkForUpdates()
+                                onClicked: {
+                                    settingsPage.viewModel.checkForUpdates()
+                                    if (typeof root !== "undefined" && root.openUpdateModal) {
+                                        root.openUpdateModal()
+                                    }
+                                }
                             }
                         }
 

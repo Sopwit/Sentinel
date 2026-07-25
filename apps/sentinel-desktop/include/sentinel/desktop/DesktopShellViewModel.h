@@ -2398,6 +2398,7 @@ signals:
     void permissionPolicyChanged();
     void agentRuntimeChanged();
     void controlledAgentTasksChanged();
+    void updateCheckCompleted(bool available, const QString& version, const QString& releaseNotes, const QString& downloadUrl);
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
