@@ -27,48 +27,46 @@ QtObject {
         return ""
     }
 
-    SoundEffect {
-        id: notificationSound
-        readonly property string primarySource: root.systemSoundPath("notification")
-        readonly property string fallbackSource: "qrc:/sounds/notification.wav"
-        source: primarySource
+    readonly property string notificationPrimary: root.systemSoundPath("notification")
+    readonly property string errorPrimary: root.systemSoundPath("error")
+    readonly property string successPrimary: root.systemSoundPath("success")
+    readonly property string notificationFallback: "qrc:/sounds/notification.wav"
+    readonly property string errorFallback: "qrc:/sounds/error.wav"
+    readonly property string successFallback: "qrc:/sounds/success.wav"
+
+    property SoundEffect notificationSound: SoundEffect {
+        source: root.notificationPrimary
         volume: 0.4
     }
 
-    SoundEffect {
-        id: errorSound
-        readonly property string primarySource: root.systemSoundPath("error")
-        readonly property string fallbackSource: "qrc:/sounds/error.wav"
-        source: primarySource
+    property SoundEffect errorSound: SoundEffect {
+        source: root.errorPrimary
         volume: 0.5
     }
 
-    SoundEffect {
-        id: successSound
-        readonly property string primarySource: root.systemSoundPath("success")
-        readonly property string fallbackSource: "qrc:/sounds/success.wav"
-        source: primarySource
+    property SoundEffect successSound: SoundEffect {
+        source: root.successPrimary
         volume: 0.3
     }
 
     function playNotification() {
         if (!root.enabled) return
-        if (notificationSound.status !== SoundEffect.Ready && notificationSound.source !== notificationSound.fallbackSource)
-            notificationSound.source = notificationSound.fallbackSource
+        if (notificationSound.status !== SoundEffect.Ready && notificationSound.source.toString() !== notificationFallback)
+            notificationSound.source = notificationFallback
         notificationSound.play()
     }
 
     function playError() {
         if (!root.enabled) return
-        if (errorSound.status !== SoundEffect.Ready && errorSound.source !== errorSound.fallbackSource)
-            errorSound.source = errorSound.fallbackSource
+        if (errorSound.status !== SoundEffect.Ready && errorSound.source.toString() !== errorFallback)
+            errorSound.source = errorFallback
         errorSound.play()
     }
 
     function playSuccess() {
         if (!root.enabled) return
-        if (successSound.status !== SoundEffect.Ready && successSound.source !== successSound.fallbackSource)
-            successSound.source = successSound.fallbackSource
+        if (successSound.status !== SoundEffect.Ready && successSound.source.toString() !== successFallback)
+            successSound.source = successFallback
         successSound.play()
     }
 }
