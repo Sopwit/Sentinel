@@ -22,9 +22,7 @@ Item {
 
     Rectangle {
         anchors.fill: parent
-        color: SentinelTheme.lightTheme
-             ? "#f8fafc"
-             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+        color: SentinelTheme.backgroundBase
         opacity: 0.96
 
         RowLayout {
