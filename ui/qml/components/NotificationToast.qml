@@ -28,7 +28,7 @@ Item {
             case "Critical": return SentinelTheme.liquidGlassLightTheme ? "#ef4444" : "#d66b6b"
             case "High": return SentinelTheme.warning
             case "Low": return SentinelTheme.textMuted
-            default: return viewModel ? viewModel.currentModeAccent : SentinelTheme.accent
+            default: return SentinelTheme.accent
         }
     }
 
@@ -55,6 +55,18 @@ Item {
 
     ListModel { id: toastQueue }
 
+    // Track notification IDs that have already been shown as toasts
+    // to prevent re-showing the same notification on every keystroke.
+    property var shownIds: ({})
+    property int shownIdLimit: 200
+
+    function trimShownIds() {
+        var keys = Object.keys(shownIds)
+        if (keys.length > shownIdLimit) {
+            shownIds = ({})
+        }
+    }
+
     Connections {
         target: viewModel
         function onNativeExperienceChanged() {
@@ -67,15 +79,21 @@ Item {
             if (viewModel && viewModel.dndEnabled) return
             if (viewModel && viewModel.isChannelMuted && viewModel.isChannelMuted(latest.category)) return
 
+            // Skip if this notification ID has already been shown
+            if (shownIds[latest.id]) return
+
             for (let i = 0; i < toastQueue.count; ++i) {
                 if (toastQueue.get(i).id === latest.id) return
             }
+
+            shownIds[latest.id] = true
+            trimShownIds()
 
             if (toastQueue.count >= maxVisible) {
                 toastQueue.remove(toastQueue.count - 1, 1)
             }
 
-            toastQueue.prepend({
+            toastQueue.insert(0, {
                 id: latest.id,
                 category: latest.category,
                 title: latest.title,
@@ -129,7 +147,7 @@ Item {
                 implicitHeight: bodyLabel.implicitHeight + 48
                 panelColor: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.95)
                 borderWidth: 1
-                borderColor: Qt.alpha(priorityColor(model.priority), 0.3)
+                borderColor: SentinelTheme.withAlpha(priorityColor(model.priority), 0.3)
 
                 layer.enabled: true
                 layer.effect: MultiEffect {
@@ -175,7 +193,7 @@ Item {
                         property: "opacity"
                         from: 1.0
                         to: 0.0
-                        duration: MotionTokens.medium
+                        duration: MotionTokens.normal
                         easing.type: Easing.InCubic
                     }
                     onFinished: root.dismiss(model.id)

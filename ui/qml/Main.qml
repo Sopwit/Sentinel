@@ -367,6 +367,9 @@ ApplicationWindow {
         enabled: !root.viewModel.dndEnabled
     }
 
+    // Prevent replaying sound for the same notification on every keystroke
+    property var notifSoundShownIds: ({})
+
     Connections {
         target: root.viewModel
         function onNativeExperienceChanged() {
@@ -374,9 +377,17 @@ ApplicationWindow {
             if (!lastNotif || lastNotif.length === 0) return
             try {
                 var parsed = JSON.parse(lastNotif[0])
-                if (parsed && parsed.priority === "Critical") {
+                if (!parsed) return
+                if (notifSoundShownIds[parsed.id]) return
+                notifSoundShownIds[parsed.id] = true
+                // Trim to 200 entries to prevent unbounded growth
+                var keys = Object.keys(notifSoundShownIds)
+                if (keys.length > 200)
+                    notifSoundShownIds = ({})
+
+                if (parsed.priority === "Critical") {
                     soundManager.playError()
-                } else if (parsed && parsed.category === "Updates") {
+                } else if (parsed.category === "Updates") {
                     soundManager.playSuccess()
                 } else {
                     soundManager.playNotification()
@@ -520,8 +531,8 @@ ApplicationWindow {
         }
 
         enter: Transition {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: MotionTokens.medium; easing.type: Easing.OutCubic }
-            NumberAnimation { property: "y"; from: 56; to: 72; duration: MotionTokens.medium; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: MotionTokens.normal; easing.type: Easing.OutCubic }
+            NumberAnimation { property: "y"; from: 56; to: 72; duration: MotionTokens.normal; easing.type: Easing.OutCubic }
         }
 
         exit: Transition {
@@ -550,6 +561,7 @@ ApplicationWindow {
 
         contentItem: SettingsPage {
             viewModel: root.viewModel
+            soundManager: soundManager
             width: settingsModal.width
             height: settingsModal.height
         }
