@@ -16,6 +16,7 @@ ShellPanel {
     showBrackets: false
 
     layer.enabled: true
+    layer.smooth: false
     layer.effect: MultiEffect {
         shadowEnabled: true
         shadowColor: "#000000"

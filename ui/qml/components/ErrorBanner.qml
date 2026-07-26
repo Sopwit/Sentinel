@@ -50,6 +50,7 @@ Item {
         visible: root.show
 
         layer.enabled: true
+        layer.smooth: false
         layer.effect: MultiEffect {
             shadowEnabled: true
             shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)

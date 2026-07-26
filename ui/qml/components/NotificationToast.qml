@@ -25,7 +25,7 @@ Item {
 
     function priorityColor(priority) {
         switch (priority) {
-            case "Critical": return SentinelTheme.errorBorder
+            case "Critical": return SentinelTheme.liquidGlassLightTheme ? "#ef4444" : "#d66b6b"
             case "High": return SentinelTheme.warning
             case "Low": return SentinelTheme.textMuted
             default: return viewModel ? viewModel.currentModeAccent : SentinelTheme.accent

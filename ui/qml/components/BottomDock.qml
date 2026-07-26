@@ -59,13 +59,9 @@ Item {
         radius: height / 2
 
         // Layered glass effect
-        color: SentinelTheme.lightTheme
-             ? SentinelTheme.withAlpha("#ffffff", 0.72)
-             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.62)
+        color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.82)
 
-        border.color: SentinelTheme.lightTheme
-                    ? SentinelTheme.withAlpha("#ffffff", 0.88)
-                    : SentinelTheme.withAlpha(SentinelTheme.accent, 0.18)
+        border.color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.92)
         border.width: 1
 
         // Frosted inner fill
@@ -73,9 +69,7 @@ Item {
             anchors.fill: parent
             anchors.margins: 1
             radius: parent.radius - 1
-            color: SentinelTheme.lightTheme
-                 ? SentinelTheme.withAlpha("#ffffff", 0.55)
-                 : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.18)
+            color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.60)
         }
 
         Behavior on color {

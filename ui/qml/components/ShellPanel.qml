@@ -12,6 +12,7 @@ Rectangle {
 
     // Drop shadow
     layer.enabled: true
+    layer.smooth: false
     layer.effect: MultiEffect {
         shadowEnabled: true
         shadowColor: SentinelTheme.lightTheme

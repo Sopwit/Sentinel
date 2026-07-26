@@ -20,12 +20,15 @@
 #include "sentinel/core/StaticSandboxPolicy.h"
 
 #include <QApplication>
+#include <QCommandLineOption>
+#include <QCommandLineParser>
 #include <QCoreApplication>
 #include <QEvent>
 #include <QFont>
 #include <QFontDatabase>
 #include <QIcon>
 #include <QLocale>
+#include <QLoggingCategory>
 #include <QQmlApplicationEngine>
 #include <QQmlContext>
 #include <QQuickWindow>
@@ -35,6 +38,27 @@
 #include <memory>
 
 namespace {
+
+void configureLogging(bool verbose, bool quiet) {
+    if (quiet) {
+        QLoggingCategory::setFilterRules(QStringLiteral("*.debug=false\n*.info=false\n*.warning=false"));
+        return;
+    }
+
+    if (!verbose && qgetenv("QT_LOGGING_RULES").isEmpty()) {
+        QLoggingCategory::setFilterRules(QStringLiteral(
+            "*.debug=false\n"
+            "*.info=false\n"
+            "qt.*=false\n"
+            "qt.qml.*=false\n"
+            "qt.scenegraph.*=false\n"
+            "qt.rhi.*=false\n"
+            "qt.pointer.*=false\n"
+            "qt.accessibility.*=false\n"
+            "qt.qpa.*=false"
+        ));
+    }
+}
 
 void configureGraphicsBackend() {
     qInfo().noquote() << "Sentinel Qt version:" << qVersion();
@@ -148,14 +172,36 @@ void installStartupTranslator(QGuiApplication& app, const sentinel::core::AppSet
 
 int main(int argc, char* argv[]) {
     QApplication app(argc, argv);
-    configureGraphicsBackend();
-    app.setQuitOnLastWindowClosed(false);
-    configureDefaultUiFont();
     QGuiApplication::setApplicationName(sentinel::core::AppMetadata::displayName());
     QGuiApplication::setOrganizationName(sentinel::core::AppMetadata::organizationName());
     QGuiApplication::setApplicationVersion(sentinel::core::AppMetadata::version());
     QGuiApplication::setDesktopFileName(sentinel::core::AppMetadata::appId());
     QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/icons/dev.sentinel.Sentinel.png")));
+
+    QCommandLineParser parser;
+    parser.setApplicationDescription(QStringLiteral("Sentinel AI Desktop Assistant"));
+    parser.addHelpOption();
+    parser.addVersionOption();
+
+    QCommandLineOption verboseOption(
+        {QStringLiteral("v"), QStringLiteral("verbose")},
+        QCoreApplication::translate("main", "Enable verbose diagnostic logging in terminal."));
+    parser.addOption(verboseOption);
+
+    QCommandLineOption quietOption(
+        {QStringLiteral("q"), QStringLiteral("quiet")},
+        QCoreApplication::translate("main", "Suppress diagnostic terminal output."));
+    parser.addOption(quietOption);
+
+    parser.process(app);
+
+    const bool verbose = parser.isSet(verboseOption);
+    const bool quiet = parser.isSet(quietOption);
+    configureLogging(verbose, quiet);
+
+    configureGraphicsBackend();
+    app.setQuitOnLastWindowClosed(false);
+    configureDefaultUiFont();
 
     sentinel::core::StandardPathProvider pathProvider;
     sentinel::core::AppSettings settings(
