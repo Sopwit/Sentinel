@@ -13,6 +13,7 @@
 
 #include <QObject>
 #include <QElapsedTimer>
+#include <QHash>
 #include <QSet>
 #include <QString>
 #include <QStringList>
@@ -1215,7 +1216,7 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString onboardingAiProvider READ onboardingAiProvider WRITE setOnboardingAiProvider
                    NOTIFY nativeExperienceChanged)
     Q_PROPERTY(QString recoveryDraftText READ recoveryDraftText WRITE setRecoveryDraftText NOTIFY
-                   nativeExperienceChanged)
+                   recoveryDraftTextChanged)
     Q_PROPERTY(bool reducedMotionEnabled READ reducedMotionEnabled WRITE setReducedMotionEnabled
                    NOTIFY nativeExperienceChanged)
     Q_PROPERTY(bool highContrastEnabled READ highContrastEnabled WRITE setHighContrastEnabled NOTIFY
@@ -2429,6 +2430,7 @@ signals:
     void agentAutonomousModeChanged();
     void contextExplainabilityVisibleChanged();
     void currentPageChanged();
+    void recoveryDraftTextChanged();
     void nativeExperienceChanged();
     void requestWindowActive(const QString& pageName);
     void maintenanceStatusChanged();
@@ -2532,6 +2534,7 @@ private:
     QString lastAgentStatus_;
     QString lastNotifiedCategory_;
     qint64 lastNotificationTime_ = 0;
+    QHash<QString, qint64> notificationCooldowns_;
 };
 
 } // namespace sentinel::desktop

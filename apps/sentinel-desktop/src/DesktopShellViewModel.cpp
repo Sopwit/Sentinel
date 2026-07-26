@@ -390,7 +390,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::onboardingUseCaseChanged, this,
             &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::recoveryDraftTextChanged, this,
-            &DesktopShellViewModel::nativeExperienceChanged);
+            &DesktopShellViewModel::recoveryDraftTextChanged);
     connect(&settings_, &core::AppSettings::productExperienceChanged, this,
             &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::controlledAgentTasksChanged, this,
@@ -5425,6 +5425,26 @@ bool DesktopShellViewModel::checkForUpdates() {
                     &updatedJson)) {
                 settings_.setNotificationCenterJson(updatedJson);
             }
+        } else {
+            // Reset stale "Update Available" notification when up-to-date
+            QString updatedJson;
+            if (updateNotification(
+                    settings_.notificationCenterJson(), QStringLiteral("updates-manual"),
+                    [](QJsonObject& item) {
+                        if (item.value(QStringLiteral("title")).toString() ==
+                            QStringLiteral("Update Available")) {
+                            item.insert(QStringLiteral("title"),
+                                        QStringLiteral("Manual updates only"));
+                            item.insert(QStringLiteral("body"),
+                                        QStringLiteral("Update checks are performed on demand "
+                                                       "or per schedule. No automatic updates."));
+                            item.insert(QStringLiteral("read"), true);
+                            item.insert(QStringLiteral("archived"), false);
+                        }
+                    },
+                    &updatedJson)) {
+                settings_.setNotificationCenterJson(updatedJson);
+            }
         }
 
         emit nativeExperienceChanged();
@@ -5614,12 +5634,53 @@ void DesktopShellViewModel::addNotificationWithPriority(const QString& category,
                                                         const QString& title,
                                                         const QString& body,
                                                         const QString& priority) {
+    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    constexpr qint64 cooldownMs = 3000;
+
     const QString json = settings_.notificationCenterJson();
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
     QJsonObject root = doc.object();
     QJsonArray arr = root.value(QStringLiteral("notifications")).toArray();
 
-    const qint64 now = QDateTime::currentMSecsSinceEpoch();
+    // Coalesce: if an unread notification with the same category and title exists,
+    // update its body and timestamp instead of creating a new entry
+    for (qsizetype i = 0; i < arr.size(); ++i) {
+        auto item = arr.at(i).toObject();
+        if (item.value(QStringLiteral("category")).toString() == category &&
+            item.value(QStringLiteral("title")).toString() == title &&
+            !item.value(QStringLiteral("read")).toBool()) {
+            int sameCount = 1;
+            for (qsizetype j = 0; j < arr.size(); ++j) {
+                if (i != j) {
+                    auto other = arr.at(j).toObject();
+                    if (other.value(QStringLiteral("category")).toString() == category &&
+                        other.value(QStringLiteral("title")).toString() == title &&
+                        !other.value(QStringLiteral("read")).toBool()) {
+                        ++sameCount;
+                    }
+                }
+            }
+            const QString prefix = sameCount > 1
+                ? QStringLiteral("[%1x] ").arg(sameCount)
+                : QString();
+            item.insert(QStringLiteral("body"), prefix + body);
+            item.insert(QStringLiteral("timestamp"), now);
+            arr.replace(i, item);
+            root.insert(QStringLiteral("notifications"), arr);
+            settings_.setNotificationCenterJson(
+                QString::fromUtf8(QJsonDocument(root).toJson(QJsonDocument::Compact)));
+            emit nativeExperienceChanged();
+            return;
+        }
+    }
+
+    // Rate limit: skip new notification creation if same category was recently notified
+    auto cooldownIt = notificationCooldowns_.find(category);
+    if (cooldownIt != notificationCooldowns_.end() && (now - cooldownIt.value()) < cooldownMs) {
+        return;
+    }
+    notificationCooldowns_[category] = now;
+
     QJsonObject item;
     const QString newId = QStringLiteral("notif-%1-%2")
                               .arg(now)
