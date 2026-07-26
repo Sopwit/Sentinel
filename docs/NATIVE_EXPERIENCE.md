@@ -13,7 +13,7 @@ foreground-only behavior.
   Windows/Linux, and `Cmd+,` on macOS.
 - Advanced replaces user-facing Developer Mode. The internal `developerModeEnabled` setting
   remains for compatibility.
-- Themes are Liquid Glass Light (default), Liquid Glass Dark, Sentinel Classic, Midnight Blue, Aurora Teal, Graphite Grey, and System Sync. Theme selection
+- Themes are Liquid Glass Light (default), Liquid Glass Dark, Sentinel Classic, Midnight Blue, Aurora Teal, and Graphite Grey. Theme selection
   updates shared QML presentation tokens only.
 - Brain contains Overview, Memory, Recall, Context, Continuity, and Advanced. Activity Timeline is
   local-only.

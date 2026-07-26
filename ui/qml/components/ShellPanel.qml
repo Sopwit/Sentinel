@@ -15,8 +15,8 @@ Rectangle {
     layer.effect: MultiEffect {
         shadowEnabled: true
         shadowColor: SentinelTheme.lightTheme
-                     ? Qt.rgba(0, 0, 0, 0.10)
-                     : Qt.rgba(0, 0, 0, 0.35)
+                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.35)
         shadowVerticalOffset: SentinelTheme.lightTheme ? 2 : 4
         shadowBlur: SentinelTheme.shadowBlurPanel * 0.03
         shadowOpacity: 1.0

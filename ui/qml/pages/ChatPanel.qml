@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -263,8 +264,43 @@ ShellPanel {
                         border.color: InteractionTokens.borderColor(filterButton.activeFocus, filterButton.hovered,
                                                                      chatPanel.conversationFilter === filterButton.text,
                                                                      chatPanel.modeAccent)
+                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                        Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                        layer.enabled: filterButton.hovered || chatPanel.conversationFilter === filterButton.text
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                            shadowVerticalOffset: 1
+                            shadowBlur: 0.08
+                            shadowOpacity: 1.0
+                        }
                     }
                 }
+            }
+        }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: conversationRows.count === 0
+            z: 1
+
+            EmptyState {
+                visible: true
+                icon: chatPanel.conversationFilter === "Pinned" ? "\u{1F4CC}"
+                       : chatPanel.conversationSearchText.length > 0 ? "\u{1F50D}" : "\u{1F4AC}"
+                title: chatPanel.conversationFilter === "Pinned"
+                       ? qsTr("No pinned conversations yet")
+                       : chatPanel.conversationSearchText.length > 0
+                         ? qsTr("No conversations match your search")
+                         : qsTr("Start a conversation")
+                description: chatPanel.conversationFilter === "Pinned"
+                             ? qsTr("Pin a conversation to see it here.")
+                             : chatPanel.conversationSearchText.length > 0
+                               ? qsTr("Try a different search term.")
+                               : qsTr("Your conversations will appear here once you start chatting.")
+                compact: true
+                anchors.centerIn: parent
             }
         }
 
@@ -282,6 +318,8 @@ ShellPanel {
             flickDeceleration: 5200
             bottomMargin: SentinelTheme.spaceMd
             activeFocusOnTab: true
+            keyNavigationWraps: true
+            focusPolicy: Qt.StrongFocus
             ScrollBar.vertical: ScrollBar {
                 id: conversationListScrollBar
                 policy: ScrollBar.AsNeeded
@@ -332,6 +370,15 @@ ShellPanel {
                                                                                                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.055)
                     opacity: conversationDelegate.archived && !conversationDelegate.active ? 0.72 : 1.0
                     implicitHeight: conversationRow.implicitHeight + SentinelTheme.spaceMd
+
+                    layer.enabled: conversationClick.containsMouse
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                        shadowVerticalOffset: 1
+                        shadowBlur: 0.08
+                        shadowOpacity: 1.0
+                    }
 
                     Behavior on color {
                         ColorAnimation {
@@ -396,11 +443,23 @@ ShellPanel {
                                     elide: Text.ElideRight
                                 }
 
-                                Text {
+                                Rectangle {
                                     visible: conversationDelegate.pinned
-                                    text: "PIN"
-                                    color: chatPanel.modeAccent
-                                    font.pixelSize: SentinelTheme.fontTiny
+                                    radius: 3
+                                    color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.12)
+                                    border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.25)
+                                    Layout.alignment: Qt.AlignVCenter
+                                    implicitWidth: pinLabel.implicitWidth + SentinelTheme.spaceSm
+                                    implicitHeight: pinLabel.implicitHeight + 4
+
+                                    Text {
+                                        id: pinLabel
+                                        anchors.centerIn: parent
+                                        text: qsTr("PIN")
+                                        color: chatPanel.modeAccent
+                                        font.pixelSize: 10
+                                        font.weight: Font.DemiBold
+                                    }
                                 }
                             }
 
@@ -459,7 +518,15 @@ ShellPanel {
                                     radius: SentinelTheme.radiusLg
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
                                     border.color: InteractionTokens.borderColor(false, true, false,
-                                                                                 chatPanel.modeAccent)
+                                                                                  chatPanel.modeAccent)
+                                    layer.enabled: true
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                        shadowVerticalOffset: 1
+                                        shadowBlur: 0.08
+                                        shadowOpacity: 1.0
+                                    }
                                 }
 
                                 delegate: MenuItem {
@@ -553,33 +620,17 @@ ShellPanel {
 
         Rectangle {
             Layout.fillWidth: true
-            visible: conversationRows.count === 0
-            radius: SentinelTheme.radiusMd
-            color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.045)
-            border.color: SentinelTheme.withAlpha(chatPanel.modeAccent, 0.12)
-            implicitHeight: emptyLabel.implicitHeight + SentinelTheme.spaceMd
-
-            Label {
-                id: emptyLabel
-                x: SentinelTheme.spaceSm
-                y: SentinelTheme.spaceXs
-                width: parent.width - SentinelTheme.spaceSm * 2
-                text: chatPanel.conversationFilter === "Pinned"
-                      ? qsTr("No pinned conversations yet.")
-                      : chatPanel.conversationSearchText.trim().length > 0
-                        ? qsTr("No local conversation metadata matches this filter.")
-                        : chatPanel.viewModel.conversationBrowserEmptyStateSummary
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontSmall
-                wrapMode: Text.WordWrap
-            }
-        }
-
-        Rectangle {
-            Layout.fillWidth: true
             radius: SentinelTheme.radiusMd
             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.028)
             border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                shadowVerticalOffset: 1
+                shadowBlur: 0.08
+                shadowOpacity: 1.0
+            }
             implicitHeight: selectedStatusColumn.implicitHeight + SentinelTheme.spaceMd
 
             ColumnLayout {

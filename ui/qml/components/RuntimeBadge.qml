@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -18,6 +19,16 @@ Rectangle {
     implicitWidth: Math.max(132, content.implicitWidth + SentinelTheme.spaceMd * 2)
     implicitHeight: 44
     opacity: badge.muted ? 0.74 : 1.0
+
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        shadowEnabled: true
+        shadowColor: "#000000"
+        shadowOpacity: 0.06
+        shadowBlur: 0.06
+        shadowHorizontalOffset: 1
+        shadowVerticalOffset: 1
+    }
 
     Behavior on color {
         ColorAnimation {

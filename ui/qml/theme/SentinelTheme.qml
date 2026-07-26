@@ -13,47 +13,48 @@ QtObject {
     readonly property bool midnightTheme: activeTheme === "Midnight Blue"
     readonly property bool auroraTheme: activeTheme === "Aurora Teal"
     readonly property bool graphiteTheme: activeTheme === "Graphite Grey"
-    readonly property bool systemAdaptiveTheme: activeTheme === "System Sync"
     readonly property bool liquidGlassDarkTheme: activeTheme === "Liquid Glass Dark" || activeTheme === "Sentinel Classic"
     readonly property bool liquidGlassLightTheme: !liquidGlassDarkTheme && !midnightTheme && !auroraTheme && !graphiteTheme
     readonly property bool liquidGlassTheme: liquidGlassDarkTheme || liquidGlassLightTheme
     readonly property bool lightTheme: liquidGlassLightTheme
 
-    readonly property color backgroundBase: liquidGlassDarkTheme ? "#0e1117"
-                                          : graphiteTheme ? "#151719"
-                                          : auroraTheme ? "#121b1d"
-                                          : midnightTheme ? "#0a1020"
+    readonly property color backgroundBase: liquidGlassDarkTheme ? "#0d1117"
+                                          : graphiteTheme ? "#121416"
+                                          : auroraTheme ? "#0f1a1c"
+                                          : midnightTheme ? "#080d1a"
                                           : "#f4f6f9"
-    readonly property color backgroundRaised: liquidGlassDarkTheme ? "#161b27"
-                                            : graphiteTheme ? "#202326"
-                                            : auroraTheme ? "#1b2a2d"
-                                            : midnightTheme ? "#111a31"
+    readonly property color backgroundRaised: liquidGlassDarkTheme ? "#151a26"
+                                            : graphiteTheme ? "#1c1f21"
+                                            : auroraTheme ? "#1a282b"
+                                            : midnightTheme ? "#10182e"
                                             : "#ffffff"
     readonly property color backgroundDeep: liquidGlassDarkTheme ? "#070a10"
                                           : graphiteTheme ? "#08090a"
                                           : auroraTheme ? "#071112"
-                                          : midnightTheme ? "#040713"
+                                          : midnightTheme ? "#030610"
                                           : "#e8ecf2"
     readonly property color panel: liquidGlassDarkTheme ? "#6e1e273a"
-                                 : graphiteTheme ? "#73273744"
+                                 : graphiteTheme ? "#6e1e252e"
+                                 : auroraTheme ? "#6e163032"
+                                 : midnightTheme ? "#6e121f38"
                                  : "#ffffff"
     readonly property color panelMuted: liquidGlassDarkTheme ? "#4a12192a"
-                                      : graphiteTheme ? "#5e17222b"
-                                      : "#f8fafc"
+                                       : graphiteTheme ? "#4a131a22"
+                                       : "#f8fafc"
     readonly property color panelStrong: liquidGlassDarkTheme ? "#902a364e"
-                                       : graphiteTheme ? "#82334958"
-                                       : "#ffffff"
+                                        : graphiteTheme ? "#82222b38"
+                                        : "#ffffff"
     readonly property color panelGlass: liquidGlassDarkTheme ? "#0cffffff"
                                       : "#ffffff"
     readonly property color panelVeil: liquidGlassDarkTheme ? "#08ffffff"
                                      : "#f8fafc"
     readonly property color panelGhost: liquidGlassDarkTheme ? "#05ffffff"
                                       : "#ffffff"
-    readonly property color surface: liquidGlassDarkTheme ? "#1c2436"
-                                   : graphiteTheme ? "#25292d"
-                                   : auroraTheme ? "#213538"
-                                   : midnightTheme ? "#15213d"
-                                   : "#f0f4fa"
+    readonly property color surface: liquidGlassDarkTheme ? "#1a2233"
+                                    : graphiteTheme ? "#202427"
+                                    : auroraTheme ? "#1e3033"
+                                    : midnightTheme ? "#121d38"
+                                    : "#f0f4fa"
     readonly property color surfaceSoft: liquidGlassDarkTheme ? "#0cffffff" : "#08000000"
     readonly property color surfaceMuted: liquidGlassDarkTheme ? "#10ffffff" : "#12000000"
     readonly property color surfaceHover: liquidGlassDarkTheme ? "#2a404c" : "#e2e8f4"
@@ -64,24 +65,24 @@ QtObject {
     readonly property color textPrimary: highContrast
                                        ? (liquidGlassLightTheme ? "#000000" : "#ffffff")
                                        : liquidGlassDarkTheme ? "#e8f0ff"
-                                       : graphiteTheme ? "#f2f4f4"
+                                       : graphiteTheme ? "#eef0f0"
                                        : auroraTheme ? "#effbf7"
-                                       : midnightTheme ? "#f0f5ff"
+                                       : midnightTheme ? "#eef3ff"
                                        : "#0f1724"
     readonly property color textMuted: highContrast
-                                     ? (liquidGlassLightTheme ? "#2d3748" : "#f0f5ff")
-                                     : liquidGlassDarkTheme ? "#8899bb"
-                                     : graphiteTheme ? "#a7adaf"
-                                     : auroraTheme ? "#9fb8b4"
-                                     : midnightTheme ? "#98a9c8"
-                                     : "#4a5568"
+                                      ? (liquidGlassLightTheme ? "#2d3748" : "#f0f5ff")
+                                      : liquidGlassDarkTheme ? "#8899bb"
+                                      : graphiteTheme ? "#9ea6a8"
+                                      : auroraTheme ? "#9fb8b4"
+                                      : midnightTheme ? "#98a9c8"
+                                      : "#4a5568"
     readonly property color textPlaceholder: highContrast
-                                           ? (liquidGlassLightTheme ? "#4a5568" : "#d4e4ec")
-                                           : liquidGlassDarkTheme ? "#5a6a84"
-                                           : graphiteTheme ? "#777f82"
-                                           : auroraTheme ? "#78908c"
-                                           : midnightTheme ? "#6e7f9e"
-                                           : "#6d8490"
+                                            ? (liquidGlassLightTheme ? "#4a5568" : "#d4e4ec")
+                                            : liquidGlassDarkTheme ? "#5a6a84"
+                                            : graphiteTheme ? "#6d7578"
+                                            : auroraTheme ? "#78908c"
+                                            : midnightTheme ? "#6e7f9e"
+                                            : "#6d8490"
     readonly property color textOnAccent: liquidGlassLightTheme ? "#ffffff" : "#07131a"
 
     readonly property color accent: liquidGlassLightTheme ? "#4f8ef7"
@@ -89,7 +90,6 @@ QtObject {
                                   : graphiteTheme ? "#d0d7dc"
                                   : auroraTheme ? "#7de0b9"
                                   : midnightTheme ? "#8fb4ff"
-                                  : systemAdaptiveTheme ? "#4f8ef7"
                                   : "#79dcff"
     readonly property color accentHover: liquidGlassLightTheme ? "#3b7ee8"
                                        : liquidGlassDarkTheme ? "#99c8ff"
@@ -154,7 +154,7 @@ QtObject {
     readonly property int radiusPanel: scaleSize(22)
     readonly property int radiusPill: 999
 
-    readonly property string fontFamily: Qt.platform.os === "osx" || Qt.platform.os === "macos" ? ".AppleSystemUIFont" : (Qt.platform.os === "windows" ? "Segoe UI" : "sans-serif")
+    property string fontFamily: Qt.platform.os === "osx" || Qt.platform.os === "macos" ? ".AppleSystemUIFont" : (Qt.platform.os === "windows" ? "Segoe UI" : "sans-serif")
     readonly property string iconFontFamily: Qt.platform.os === "osx" || Qt.platform.os === "macos" ? "Apple Color Emoji" : (Qt.platform.os === "windows" ? "Segoe UI Emoji" : "sans-serif")
 
     readonly property int fontTiny: scaleSize(11)
@@ -192,10 +192,10 @@ QtObject {
     readonly property int shadowElevationModal: 16
     readonly property int shadowElevationDock: 12
 
-    readonly property real shadowOpacityCard: liquidGlassLightTheme ? 0.12 : 0.40
-    readonly property real shadowOpacityPanel: liquidGlassLightTheme ? 0.15 : 0.50
-    readonly property real shadowOpacityModal: liquidGlassLightTheme ? 0.20 : 0.60
-    readonly property real shadowOpacityDock: liquidGlassLightTheme ? 0.14 : 0.45
+    readonly property real shadowOpacityCard: liquidGlassLightTheme ? 0.10 : 0.35
+    readonly property real shadowOpacityPanel: liquidGlassLightTheme ? 0.12 : 0.45
+    readonly property real shadowOpacityModal: liquidGlassLightTheme ? 0.18 : 0.55
+    readonly property real shadowOpacityDock: liquidGlassLightTheme ? 0.12 : 0.40
 
     readonly property real shadowBlurCard: 8
     readonly property real shadowBlurPanel: 16
@@ -212,9 +212,9 @@ QtObject {
     readonly property int easingEmphasized: Easing.OutCubic
     readonly property color calmAccent: accent
     readonly property color calmAccentHover: accentHover
-    readonly property color calmAccentBorder: liquidGlassLightTheme ? "#304f8ef7" : "#309bdfff"
-    readonly property color calmFocusGlow: liquidGlassLightTheme ? "#524f8ef7" : "#529bdfff"
-    readonly property color cardShadow: liquidGlassLightTheme ? "#18000000" : "#4a000000"
+    readonly property color calmAccentBorder: liquidGlassLightTheme ? "#304f8ef7" : "#307eb8ff"
+    readonly property color calmFocusGlow: liquidGlassLightTheme ? "#424f8ef7" : "#427eb8ff"
+    readonly property color cardShadow: liquidGlassLightTheme ? "#14000000" : "#40000000"
     // Liquid Glass specific tokens
     readonly property color glassBackdrop: liquidGlassLightTheme ? "#70ffffff" : "#0affffff"
     readonly property color glassBackdropStrong: liquidGlassLightTheme ? "#b0ffffff" : "#16ffffff"

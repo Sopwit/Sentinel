@@ -1,5 +1,6 @@
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -24,10 +25,10 @@ Item {
 
     function priorityColor(priority) {
         switch (priority) {
-            case "Critical": return "#e74c3c"
-            case "High": return "#e67e22"
-            case "Low": return "#7f8c8d"
-            default: return viewModel ? viewModel.currentModeAccent : "#3498db"
+            case "Critical": return SentinelTheme.errorBorder
+            case "High": return SentinelTheme.warning
+            case "Low": return SentinelTheme.textMuted
+            default: return viewModel ? viewModel.currentModeAccent : SentinelTheme.accent
         }
     }
 
@@ -129,6 +130,15 @@ Item {
                 panelColor: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.95)
                 borderWidth: 1
                 borderColor: Qt.alpha(priorityColor(model.priority), 0.3)
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                    shadowBlur: 0.10
+                    shadowHorizontalOffset: 2
+                    shadowVerticalOffset: 2
+                }
 
                 Accessible.role: Accessible.Button
                 Accessible.name: model.category + ": " + model.title + ". " + model.body

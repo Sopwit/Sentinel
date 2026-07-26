@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -220,8 +221,19 @@ SentinelOverlayModal {
                     flat: true; hoverEnabled: true
                     onClicked: root.close()
                     background: Rectangle {
+                        id: closeBtnBg
                         radius: height / 2
                         color: closeBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"
+
+                        layer.enabled: closeBtn.hovered
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                            shadowVerticalOffset: 1
+                            shadowBlur: 0.06
+                            shadowOpacity: 1.0
+                        }
+
                         Behavior on color { ColorAnimation { duration: 100 } }
                     }
                     contentItem: Label {
@@ -361,12 +373,23 @@ SentinelOverlayModal {
                     hoverEnabled: true
                     onClicked: root.cancelRequested()
                     background: Rectangle {
+                        id: cancelBg
                         radius: 6
                         color: cancelPullBtn.hovered
                              ? SentinelTheme.withAlpha("#ef4444", 0.08)
                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
                         border.color: SentinelTheme.withAlpha("#ef4444", 0.20)
                         border.width: 1
+
+                        layer.enabled: cancelPullBtn.hovered
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                            shadowVerticalOffset: 1
+                            shadowBlur: 0.08
+                            shadowOpacity: 1.0
+                        }
+
                         Behavior on color { ColorAnimation { duration: 100 } }
                     }
                     contentItem: Label {
@@ -398,6 +421,7 @@ SentinelOverlayModal {
                     scale: actionBtn.down ? 0.97 : 1.0
 
                     background: Rectangle {
+                        id: actionBg
                         radius: 6
                         color: {
                             if (root.isDone) {
@@ -416,6 +440,15 @@ SentinelOverlayModal {
                                  : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
                         }
                         border.width: 1
+
+                        layer.enabled: actionBtn.enabled && (actionBtn.hovered || root.isDone)
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                            shadowVerticalOffset: 2
+                            shadowBlur: 0.10
+                            shadowOpacity: 1.0
+                        }
 
                         Behavior on color { ColorAnimation { duration: 150 } }
                         Behavior on border.color { ColorAnimation { duration: 150 } }
@@ -456,10 +489,20 @@ SentinelOverlayModal {
                         }
                     }
                     background: Rectangle {
+                        id: extBg
                         radius: 6
                         color: externalLinkBtn.hovered ? root.accent : "transparent"
                         border.color: externalLinkBtn.hovered ? root.accent : SentinelTheme.withAlpha(root.accent, 0.20)
                         border.width: 1
+
+                        layer.enabled: externalLinkBtn.hovered
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                            shadowVerticalOffset: 2
+                            shadowBlur: 0.10
+                            shadowOpacity: 1.0
+                        }
 
                         Behavior on color { ColorAnimation { duration: 150 } }
                         Behavior on border.color { ColorAnimation { duration: 150 } }

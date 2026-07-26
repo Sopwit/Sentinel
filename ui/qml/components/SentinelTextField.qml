@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 
 TextField {
     id: control
@@ -26,6 +27,15 @@ TextField {
                         ? SentinelTheme.withAlpha(SentinelTheme.calmAccent, 0.24)
                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
         border.width: 1
+
+        layer.enabled: control.activeFocus
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+            shadowVerticalOffset: 1
+            shadowBlur: 0.08
+            shadowOpacity: 1.0
+        }
 
         Behavior on border.color {
             ColorAnimation {

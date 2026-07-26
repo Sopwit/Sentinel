@@ -21,6 +21,20 @@ Popup {
     padding: 0
     clip: true
 
+    onOpened: {
+        Qt.callLater(function() {
+            if (contentItem && contentItem.children.length > 0) {
+                for (var i = 0; i < contentItem.children.length; i++) {
+                    var child = contentItem.children[i]
+                    if (child.visible && child.enabled && child.activeFocusOnTab) {
+                        child.forceActiveFocus()
+                        return
+                    }
+                }
+            }
+        })
+    }
+
     Overlay.modal: Rectangle {
         color: SentinelTheme.lightTheme
              ? SentinelTheme.withAlpha("#0f1724", 0.20)
@@ -77,19 +91,17 @@ Popup {
                     : SentinelTheme.withAlpha(modal.accent, 0.25)
         border.width: 1
 
-        // Drop shadow on the modal
         layer.enabled: true
         layer.effect: MultiEffect {
             shadowEnabled: true
             shadowColor: SentinelTheme.lightTheme
-                         ? Qt.rgba(0, 0, 0, 0.22)
-                         : Qt.rgba(0, 0, 0, 0.65)
+                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.22)
+                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.65)
             shadowVerticalOffset: SentinelTheme.lightTheme ? 4 : 8
             shadowBlur: SentinelTheme.shadowBlurModal * 0.025
             shadowOpacity: 1.0
         }
 
-        // Subtle gradient glow from the accent color
         Rectangle {
             anchors.fill: parent
             radius: parent.radius
@@ -100,7 +112,6 @@ Popup {
             }
         }
 
-        // Top highlight sheen for premium liquid glass feel
         Rectangle {
             anchors.top: parent.top
             anchors.left: parent.left

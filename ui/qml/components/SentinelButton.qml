@@ -43,10 +43,10 @@ Button {
         border.color: InteractionTokens.borderColor(control.activeFocus, control.hovered, false, SentinelTheme.calmAccent)
         border.width: 1
 
-        layer.enabled: control.enabled && control.premium
+        layer.enabled: control.enabled && (control.premium || control.highlighted)
         layer.effect: MultiEffect {
             shadowEnabled: true
-            shadowColor: Qt.rgba(0, 0, 0, 0.12)
+            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
             shadowVerticalOffset: 1
             shadowBlur: 0.08
             shadowOpacity: 1.0

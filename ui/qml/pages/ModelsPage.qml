@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -938,8 +939,8 @@ Item {
                                     layer.effect: MultiEffect {
                                         shadowEnabled: true
                                         shadowColor: navButton.active
-                                                     ? Qt.rgba(0, 0, 0, 0.20)
-                                                     : Qt.rgba(0, 0, 0, 0.10)
+                                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.20)
+                                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                                         shadowVerticalOffset: navButton.active ? 2 : 1
                                         shadowBlur: 0.12
                                         shadowOpacity: 1.0
@@ -1021,6 +1022,7 @@ Item {
                             onTextChanged: modelsPage.searchQuery = text
                             
                             background: Rectangle {
+                                id: searchFieldBg
                                 radius: 13
                                 color: searchField.activeFocus
                                        ? SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.90)
@@ -1031,6 +1033,15 @@ Item {
                                                 ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.24)
                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                                 border.width: 1
+
+                                layer.enabled: searchField.activeFocus || searchField.hovered
+                                layer.effect: MultiEffect {
+                                    shadowEnabled: true
+                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                                    shadowVerticalOffset: 1
+                                    shadowBlur: 0.08
+                                    shadowOpacity: 1.0
+                                }
                             }
                         }
 
@@ -1081,9 +1092,18 @@ Item {
                                         verticalAlignment: Text.AlignVCenter
                                     }
                                     background: Rectangle {
+                                        id: sortPopularBg
                                         radius: 11
                                         color: sortPopularBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"
                                         border.color: sortPopularBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.3) : "transparent"
+                                        layer.enabled: sortPopularBtn.checked
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                            shadowVerticalOffset: 1
+                                            shadowBlur: 0.06
+                                            shadowOpacity: 1.0
+                                        }
                                     }
                                 }
 
@@ -1104,9 +1124,18 @@ Item {
                                         verticalAlignment: Text.AlignVCenter
                                     }
                                     background: Rectangle {
+                                        id: sortNewestBg
                                         radius: 11
                                         color: sortNewestBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.12) : "transparent"
                                         border.color: sortNewestBtn.checked ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.3) : "transparent"
+                                        layer.enabled: sortNewestBtn.checked
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                            shadowVerticalOffset: 1
+                                            shadowBlur: 0.06
+                                            shadowOpacity: 1.0
+                                        }
                                     }
                                 }
 
@@ -1124,15 +1153,25 @@ Item {
                                         verticalAlignment: Text.AlignVCenter
                                     }
                                     background: Rectangle {
+                                        id: refreshBg
                                         radius: 11
                                         color: refreshBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.08) : "transparent"
                                         border.color: refreshBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.2) : "transparent"
+                                        layer.enabled: refreshBtn.hovered
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                            shadowVerticalOffset: 1
+                                            shadowBlur: 0.06
+                                            shadowOpacity: 1.0
+                                        }
                                     }
                                 }
                             }
 
                             // Ollama installed count chip
                             Rectangle {
+                                id: installedChip
                                 visible: shellViewModel.ollamaModelCount > 0
                                 implicitHeight: 22
                                 implicitWidth: installedCountLbl.implicitWidth + 16
@@ -1140,6 +1179,16 @@ Item {
                                 color: SentinelTheme.withAlpha(SentinelTheme.success, 0.12)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.25)
                                 border.width: 1
+
+                                layer.enabled: true
+                                layer.effect: MultiEffect {
+                                    shadowEnabled: true
+                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                    shadowVerticalOffset: 1
+                                    shadowBlur: 0.04
+                                    shadowOpacity: 1.0
+                                }
+
                                 Label {
                                     id: installedCountLbl
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1154,12 +1203,23 @@ Item {
 
                             // Model count chip
                             Rectangle {
+                                id: modelCountChip
                                 implicitHeight: 22
                                 implicitWidth: countLabel.implicitWidth + 16
                                 radius: 11
                                 color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.22)
                                 border.width: 1
+
+                                layer.enabled: true
+                                layer.effect: MultiEffect {
+                                    shadowEnabled: true
+                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                    shadowVerticalOffset: 1
+                                    shadowBlur: 0.04
+                                    shadowOpacity: 1.0
+                                }
+
                                 Label {
                                     id: countLabel
                                     anchors.centerIn: parent
@@ -1187,6 +1247,7 @@ Item {
 
             // Error banner
             Rectangle {
+                id: errorBanner
                 visible: ollamaLibraryFetcher.errorText.length > 0 && (modelsPage.activeCategory === "All" || modelsPage.activeCategory === "LLM" || modelsPage.activeCategory === "Think" || modelsPage.activeCategory === "Vision")
                 Layout.fillWidth: true
                 implicitHeight: errLabel.implicitHeight + 20
@@ -1195,6 +1256,15 @@ Item {
                 border.width: 1
                 radius: SentinelTheme.radiusLg
                 Layout.margins: SentinelTheme.spaceSm
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                    shadowVerticalOffset: 2
+                    shadowBlur: 0.10
+                    shadowOpacity: 1.0
+                }
 
                 RowLayout {
                     anchors.fill: parent
@@ -1225,13 +1295,84 @@ Item {
                             verticalAlignment: Text.AlignVCenter
                         }
                         background: Rectangle {
+                            id: retryBg
                             radius: 12
                             color: retryBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.08) : "transparent"
                             border.color: retryBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.2) : "transparent"
+
+                            layer.enabled: retryBtn.hovered
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                shadowVerticalOffset: 1
+                                shadowBlur: 0.06
+                                shadowOpacity: 1.0
+                            }
                         }
                     }
                 }
             }
+
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: modelsPage.currentModels.length === 0 && !ollamaLibraryFetcher.fetching
+            z: 1
+
+            EmptyState {
+                visible: true
+                icon: modelsPage.searchQuery.length > 0 ? "\u{1F50D}" : "\u{1F9E0}"
+                title: modelsPage.searchQuery.length > 0 ? qsTr("No models match your search")
+                       : modelsPage.activeCategory === "Installed" ? qsTr("No installed models yet")
+                       : qsTr("No models available")
+                description: modelsPage.searchQuery.length > 0 ? qsTr("Try a different search term or browse categories.")
+                             : modelsPage.activeCategory === "Installed" ? qsTr("Download a model from the catalog to get started.")
+                             : qsTr("Check your Ollama connection or try a different provider.")
+                compact: modelsPage.compact
+                anchors.centerIn: parent
+            }
+        }
+
+        // Shimmer skeleton loading for model grid
+        Item {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            visible: ollamaLibraryFetcher.fetching && modelsPage.currentModels.length === 0
+            z: 1
+
+            Flickable {
+                anchors.fill: parent
+                clip: true
+                contentHeight: shimmerColumn.implicitHeight
+                interactive: false
+
+            ColumnLayout {
+                id: shimmerColumn
+                anchors.left: parent.left
+                anchors.right: parent.right
+                anchors.top: parent.top
+                spacing: SentinelTheme.spaceMd
+
+                Repeater {
+                    model: 4
+
+                    Item {
+                        Layout.fillWidth: true
+                        implicitHeight: 190
+
+                        ShimmerEffect {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            anchors.top: parent.top
+                            height: 180
+                            radius: SentinelTheme.radiusXl
+                            active: true
+                        }
+                    }
+                }
+            }
+        }
+        }
 
         // Model grid
         GridView {
@@ -1247,6 +1388,34 @@ Item {
             }
             cellHeight: 210
             model: modelsPage.currentModels
+            activeFocusOnTab: true
+            keyNavigationWraps: true
+            focusPolicy: Qt.StrongFocus
+
+            Keys.onLeftPressed: {
+                if (currentIndex % columns > 0)
+                    currentIndex = Math.max(0, currentIndex - 1)
+            }
+            Keys.onRightPressed: {
+                if (currentIndex % columns < columns - 1 && currentIndex < count - 1)
+                    currentIndex = Math.min(count - 1, currentIndex + 1)
+            }
+            Keys.onUpPressed: {
+                var prev = currentIndex - columns
+                if (prev >= 0)
+                    currentIndex = prev
+            }
+            Keys.onDownPressed: {
+                var next = currentIndex + columns
+                if (next < count)
+                    currentIndex = next
+            }
+            Keys.onReturnPressed: {
+                var item = currentItem
+                if (item) {
+                    item.forceActiveFocus()
+                }
+            }
 
             ScrollBar.vertical: ScrollBar {
                 id: gridScrollBar
@@ -1308,6 +1477,17 @@ Item {
                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)))
                         border.width: 1
 
+                        layer.enabled: cardArea.containsMouse
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.lightTheme
+                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.14)
+                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.35)
+                            shadowVerticalOffset: SentinelTheme.lightTheme ? 2 : 4
+                            shadowBlur: 0.15
+                            shadowOpacity: 1.0
+                        }
+
                         Behavior on color {
                             ColorAnimation { duration: 140; easing.type: Easing.InOutQuad }
                         }
@@ -1353,6 +1533,16 @@ Item {
                                     border.color: SentinelTheme.withAlpha(badgeColorValue, 0.32)
                                     border.width: 1
                                     readonly property color badgeColorValue: modelDelegate.modelData.badgeColor
+
+                                    layer.enabled: true
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                                        shadowVerticalOffset: 1
+                                        shadowBlur: 0.04
+                                        shadowOpacity: 1.0
+                                    }
+
                                     Label {
                                         id: badgeLbl
                                         anchors.centerIn: parent
@@ -1371,6 +1561,16 @@ Item {
                                     color: SentinelTheme.withAlpha(SentinelTheme.success, 0.14)
                                     border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.30)
                                     border.width: 1
+
+                                    layer.enabled: true
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                                        shadowVerticalOffset: 1
+                                        shadowBlur: 0.04
+                                        shadowOpacity: 1.0
+                                    }
+
                                     RowLayout {
                                         anchors.centerIn: parent
                                         spacing: 4
@@ -1445,6 +1645,7 @@ Item {
                                     }
 
                                     background: Rectangle {
+                                        id: dlBtnBg
                                         radius: height / 2
                                         color: dlBtn.down
                                              ? SentinelTheme.withAlpha(SentinelTheme.accent, 0.32)
@@ -1453,6 +1654,16 @@ Item {
                                                : SentinelTheme.withAlpha(SentinelTheme.accent, 0.14)
                                         border.color: SentinelTheme.withAlpha(SentinelTheme.accent, dlBtn.hovered ? 0.50 : 0.30)
                                         border.width: 1
+
+                                        layer.enabled: dlBtn.hovered || dlBtn.down
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                                            shadowVerticalOffset: 1
+                                            shadowBlur: 0.08
+                                            shadowOpacity: 1.0
+                                        }
+
                                         Behavior on color { ColorAnimation { duration: 100 } }
                                     }
 
@@ -1517,12 +1728,23 @@ Item {
                                             detailPopup.open()
                                         }
                                         background: Rectangle {
+                                            id: detailsBtnBg
                                             radius: height / 2
                                             color: detailsBtnInstalled.hovered
                                                  ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
                                                  : "transparent"
                                             border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                                             border.width: 1
+
+                                            layer.enabled: detailsBtnInstalled.hovered
+                                            layer.effect: MultiEffect {
+                                                shadowEnabled: true
+                                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                                shadowVerticalOffset: 1
+                                                shadowBlur: 0.06
+                                                shadowOpacity: 1.0
+                                            }
+
                                             Behavior on color { ColorAnimation { duration: 100 } }
                                         }
                                         contentItem: Label {
