@@ -83,9 +83,7 @@ Popup {
     background: Rectangle {
         id: bgRec
         radius: SentinelTheme.radiusXl
-        color: SentinelTheme.lightTheme
-             ? "#ffffff"
-             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
+        color: SentinelTheme.backgroundBase
         border.color: SentinelTheme.lightTheme
                     ? SentinelTheme.withAlpha(modal.accent, 0.25)
                     : SentinelTheme.withAlpha(modal.accent, 0.25)
@@ -121,9 +119,7 @@ Popup {
             anchors.leftMargin: SentinelTheme.radiusXl
             anchors.rightMargin: SentinelTheme.radiusXl
             height: 1
-            color: SentinelTheme.lightTheme
-                 ? SentinelTheme.withAlpha("#ffffff", 0.95)
-                 : SentinelTheme.withAlpha("#ffffff", 0.35)
+            color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.95)
             radius: 1
         }
     }

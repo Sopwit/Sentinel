@@ -143,9 +143,7 @@ Window {
         id: mainCard
         anchors.fill: parent
         radius: 12
-        color: SentinelTheme.lightTheme
-               ? SentinelTheme.withAlpha("#f8fafc", 0.96)
-               : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.94)
+        color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.96)
         border.color: Qt.alpha(
             SentinelTheme.modeAccent(viewModel ? viewModel.currentModeName : "Sentinel"), 0.25)
         border.width: 1
@@ -1290,7 +1288,7 @@ Window {
         anchors.bottom: parent.bottom
         width: 16
         height: 16
-    color: SentinelTheme.lightTheme ? "#f8fafc" : SentinelTheme.backgroundRaised
+    color: SentinelTheme.backgroundBase
 
         Accessible.role: Accessible.Graphic
         Accessible.name: "Resize window"

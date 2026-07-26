@@ -1459,10 +1459,7 @@ Item {
                         }
                         radius: SentinelTheme.radiusXl
 
-                        color: SentinelTheme.lightTheme
-                             ? "#ffffff"
-                             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised,
-                                                        cardArea.containsMouse ? 0.76 : 0.60)
+                        color: SentinelTheme.backgroundBase
 
                         border.color: modelDelegate.effectivelyInstalled
                                     ? SentinelTheme.withAlpha(SentinelTheme.success, cardArea.containsMouse ? 0.45 : 0.28)
@@ -1495,9 +1492,7 @@ Item {
                         Rectangle {
                             anchors.fill: parent; anchors.margins: 1
                             radius: parent.radius - 1
-                            color: SentinelTheme.lightTheme
-                                 ? "#ffffff"
-                                 : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.14)
+                            color: SentinelTheme.withAlpha(SentinelTheme.panel, 0.40)
                         }
 
                         MouseArea {

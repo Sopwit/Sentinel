@@ -211,7 +211,7 @@ SentinelOverlayModal {
                             Layout.preferredWidth: 160
                             Layout.preferredHeight: 74
                             radius: SentinelTheme.radiusMd
-                            color: SentinelTheme.lightTheme ? "#f8fafc" : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.60)
+                            color: SentinelTheme.backgroundBase
                             border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.25)
                             border.width: 1
 
