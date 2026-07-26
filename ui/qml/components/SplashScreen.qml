@@ -27,9 +27,7 @@ Window {
     Rectangle {
         anchors.fill: parent
         radius: SentinelTheme.radiusPanel
-        color: SentinelTheme.lightTheme
-             ? "#ffffff"
-             : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+        color: SentinelTheme.backgroundBase
         border.color: SentinelTheme.withAlpha(SentinelTheme.modeAccent(root.modeName), 0.25)
         border.width: 1
 

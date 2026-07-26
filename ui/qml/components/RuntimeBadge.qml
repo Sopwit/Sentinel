@@ -21,6 +21,7 @@ Rectangle {
     opacity: badge.muted ? 0.74 : 1.0
 
     layer.enabled: true
+    layer.smooth: false
     layer.effect: MultiEffect {
         shadowEnabled: true
         shadowColor: "#000000"

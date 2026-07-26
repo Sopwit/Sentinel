@@ -114,12 +114,8 @@ Item {
         ShellPanel {
             Layout.preferredWidth: settingsPage.compact ? 196 : 278
             Layout.fillHeight: true
-            color: SentinelTheme.lightTheme
-                 ? "#ffffff"
-                 : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
-            border.color: SentinelTheme.lightTheme
-                        ? SentinelTheme.withAlpha("#e2e8f4", 0.90)
-                        : SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
+            color: SentinelTheme.backgroundBase
+            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
 
             ColumnLayout {
                 anchors.fill: parent
@@ -215,7 +211,7 @@ Item {
                                 radius: width/2
                                 color: clearSearchBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08) : "transparent"
                             }
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: "×"
                                 font.pixelSize: SentinelTheme.fontBody
                                 color: SentinelTheme.textMuted
@@ -409,7 +405,7 @@ Item {
                                 displayText: settingsPage.viewModel.languageDisplayName(currentValue)
                                 onActivated: settingsPage.viewModel.appLanguage = currentValue
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: languageCombo.displayText
@@ -541,7 +537,7 @@ Item {
                                 displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.themeName
                                 onActivated: settingsPage.viewModel.themeName = currentText
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: themeCombo.displayText
@@ -950,7 +946,7 @@ Item {
                                             hoverEnabled: true
                                             focusPolicy: Qt.NoFocus
 
-                                            contentItem: Label {
+                                            contentItem: Text {
                                                 text: densityBtn.modelData
                                                 color: (settingsPage.viewModel.uiDensity === densityBtn.modelData)
                                                        ? SentinelTheme.textPrimary
@@ -1066,7 +1062,7 @@ Item {
                                     }
                                 }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: runtimeProviderCombo.displayText
@@ -1180,7 +1176,7 @@ Item {
                                     }
                                 }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: settingsModeCombo.displayText
@@ -1221,7 +1217,7 @@ Item {
                                     highlighted: settingsModeCombo.currentIndex === index
                                     hoverEnabled: true
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: settingsModeOption.modelData
                                         color: settingsModeOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontBody
@@ -1462,7 +1458,7 @@ Item {
                                     : settingsPage.viewModel.selectedLocalModelStatus + qsTr(" / No model selected")
                                 onActivated: settingsPage.viewModel.selectedLocalModel = currentText
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: modelCombo.displayText
@@ -1732,7 +1728,7 @@ Item {
                                         settingsPage.viewModel.selectedLocalModel = defaultModels[idx]
                                 }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: cloudDistributionCombo.displayText
@@ -1945,7 +1941,7 @@ Item {
                                     settingsPage.viewModel.selectedLocalModel = model[idx]
                                 }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: cloudModelCombo.displayText
@@ -2196,7 +2192,7 @@ Item {
                                             let v = settingsPage.viewModel.localInferenceTimeoutMs - 1000
                                             settingsPage.viewModel.localInferenceTimeoutMs = Math.max(1000, v)
                                         }
-                                        contentItem: Label { text: "−"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
+                                        contentItem: Text { text: "−"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
                                         background: Rectangle { color: parent.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"; radius: SentinelTheme.radiusSm }
                                     }
 
@@ -2224,7 +2220,7 @@ Item {
                                             let v = settingsPage.viewModel.localInferenceTimeoutMs + 1000
                                             settingsPage.viewModel.localInferenceTimeoutMs = Math.min(300000, v)
                                         }
-                                        contentItem: Label { text: "+"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
+                                        contentItem: Text { text: "+"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
                                         background: Rectangle { color: parent.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"; radius: SentinelTheme.radiusSm }
                                     }
                                 }
@@ -2669,7 +2665,7 @@ Item {
                                 currentIndex: settingsPage.viewModel.selectedTtsEngine === "Kokoro" ? 1 : 0
                                 onActivated: (index) => settingsPage.viewModel.selectedTtsEngine = index === 1 ? "Kokoro" : "Piper"
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: ttsEngineCombo.currentText
@@ -2779,7 +2775,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -2821,7 +2817,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -2864,7 +2860,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -2922,7 +2918,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -2962,7 +2958,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -3178,7 +3174,7 @@ Item {
                                         settingsPage.viewModel.defaultPermissionPolicyState = settingsPage.viewModel.permissionPolicyStateLabels[index]
                                 }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: permissionStateCombo.displayText
@@ -3204,7 +3200,7 @@ Item {
                                     text: modelData
                                     highlighted: permissionStateCombo.highlightedIndex === index
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: permissionStateOption.text
                                         color: permissionStateOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
@@ -3311,7 +3307,7 @@ Item {
                                         settingsPage.viewModel.selectedSkillProfile = settingsPage.viewModel.skillProfileIds[index]
                                 }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: profileCombo.displayText
@@ -3337,7 +3333,7 @@ Item {
                                     text: modelData
                                     highlighted: profileCombo.highlightedIndex === index
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: profileOption.text
                                         color: profileOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
@@ -3472,7 +3468,7 @@ Item {
                                         settingsPage.viewModel.selectedWorkspaceId = settingsPage.viewModel.workspaceIds[index]
                                 }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: workspaceCombo.displayText
@@ -3498,7 +3494,7 @@ Item {
                                     text: modelData
                                     highlighted: workspaceCombo.highlightedIndex === index
 
-                                    contentItem: Label {
+                                    contentItem: Text {
                                         text: workspaceOption.text
                                         color: workspaceOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
@@ -3555,7 +3551,7 @@ Item {
                             currentIndex: settingsPage.notificationPolicies.indexOf(settingsPage.viewModel.notificationPolicy)
                             onActivated: (index) => { settingsPage.viewModel.notificationPolicy = currentText }
 
-                            contentItem: Label {
+                            contentItem: Text {
                                 leftPadding: SentinelTheme.spaceMd
                                 rightPadding: SentinelTheme.space2Xl
                                 text: notificationPolicyCombo.currentText
@@ -3765,7 +3761,7 @@ Item {
                                 currentIndex: settingsPage.updatePolicies.indexOf(settingsPage.viewModel.updateCheckPolicy)
                                 onActivated: (index) => { settingsPage.viewModel.updateCheckPolicy = currentText }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: updatePolicyCombo.currentText

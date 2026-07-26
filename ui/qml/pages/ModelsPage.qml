@@ -777,12 +777,8 @@ Item {
         ShellPanel {
             Layout.preferredWidth: modelsPage.sidebarCollapsed ? 64 : (modelsPage.compact ? 196 : 278)
             Layout.fillHeight: true
-            color: SentinelTheme.lightTheme
-                 ? "#ffffff"
-                 : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
-            border.color: SentinelTheme.lightTheme
-                        ? SentinelTheme.withAlpha("#e2e8f4", 0.90)
-                        : SentinelTheme.withAlpha(modelsPage.modeAccent, 0.20)
+            color: SentinelTheme.backgroundBase
+            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
 
             Behavior on Layout.preferredWidth {
                 NumberAnimation { duration: 180; easing.type: Easing.OutCubic }

@@ -171,9 +171,7 @@ Window {
             anchors.leftMargin: 16
             anchors.rightMargin: 16
             height: 1
-            color: SentinelTheme.lightTheme
-                   ? SentinelTheme.withAlpha("#ffffff", 0.95)
-                   : SentinelTheme.withAlpha("#ffffff", 0.18)
+            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
             radius: 1
         }
 
@@ -1180,9 +1178,7 @@ Window {
                 Layout.fillWidth: true
                 implicitHeight: Math.min(Math.max(promptInput.implicitHeight + 16, 44), 120)
                 radius: 12
-                color: SentinelTheme.lightTheme
-                       ? "#ffffff"
-                       : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.8)
+                color: SentinelTheme.backgroundBase
                 border.color: promptInput.activeFocus
                               ? SentinelTheme.modeAccent(viewModel ? viewModel.currentModeName : "Sentinel")
                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)

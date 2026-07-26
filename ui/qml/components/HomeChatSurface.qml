@@ -250,12 +250,8 @@ ShellPanel {
             visible: true
             Layout.fillHeight: true
             Layout.minimumHeight: 0
-            color: SentinelTheme.lightTheme
-                 ? "#ffffff"
-                 : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
-            border.color: SentinelTheme.lightTheme
-                        ? SentinelTheme.withAlpha("#e2e8f4", 0.90)
-                        : SentinelTheme.withAlpha(homeChat.modeAccent, 0.20)
+            color: SentinelTheme.backgroundBase
+            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
             showBrackets: false
             clip: true
 
@@ -290,7 +286,7 @@ ShellPanel {
                         if (homeChat.compact)
                             homeChat.conversationSidebarOpen = false
                     }
-                    contentItem: Label {
+                    contentItem: Text {
                         text: "+"
                         color: SentinelTheme.textPrimary
                         font.pixelSize: 20
@@ -313,7 +309,7 @@ ShellPanel {
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("Show sidebar")
                     onClicked: homeChat.conversationSidebarOpen = true
-                    contentItem: Label {
+                    contentItem: Text {
                         text: "\u2630"
                         color: SentinelTheme.textPrimary
                         font.pixelSize: 14
@@ -355,7 +351,7 @@ ShellPanel {
                             promptInput.clear()
                             homePromptInput.clear()
                         }
-                        contentItem: Label {
+                        contentItem: Text {
                             text: "+"
                             color: SentinelTheme.textPrimary
                             font.pixelSize: 18
@@ -428,7 +424,7 @@ ShellPanel {
                             ToolTip.text: qsTr("Search")
                             enabled: conversationSearch.text.trim().length > 0
                             onClicked: homeChat.viewModel.searchConversation(conversationSearch.text)
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: "\uD83D\uDD0D"
                                 font.pixelSize: 11
                                 color: searchIconBtn.enabled ? SentinelTheme.textMuted : SentinelTheme.textPlaceholder
@@ -451,7 +447,7 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Hide sidebar")
                         onClicked: homeChat.conversationSidebarOpen = false
-                        contentItem: Label {
+                        contentItem: Text {
                             text: "\u2715"
                             color: SentinelTheme.textMuted
                             font.pixelSize: 11
@@ -479,7 +475,7 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Recent chats")
                         onClicked: homeChat.sidebarView = "recent"
-                        contentItem: Label {
+                        contentItem: Text {
                             text: qsTr("Recent")
                             color: homeChat.sidebarView === "recent" ? homeChat.modeAccent : SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontTiny
@@ -506,7 +502,7 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Pinned chats")
                         onClicked: homeChat.sidebarView = (homeChat.sidebarView === "pinned" ? "recent" : "pinned")
-                        contentItem: Label {
+                        contentItem: Text {
                             text: "\uD83D\uDCCC"
                             font.pixelSize: 12
                             color: homeChat.sidebarView === "pinned" ? homeChat.modeAccent : SentinelTheme.textMuted
@@ -532,7 +528,7 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Archived chats")
                         onClicked: homeChat.sidebarView = (homeChat.sidebarView === "archived" ? "recent" : "archived")
-                        contentItem: Label {
+                        contentItem: Text {
                             text: "\uD83D\uDDC4"
                             font.pixelSize: 12
                             color: homeChat.sidebarView === "archived" ? homeChat.modeAccent : SentinelTheme.textMuted
@@ -650,7 +646,7 @@ ShellPanel {
                             opacity: (convItemBtn.hovered || convItemMenuBtn.hovered || convItemMenu.opened || convItem.active) ? 1.0 : 0.45
                             onClicked: convItemMenu.popup()
 
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: "⋮"
                                 color: convItemMenuBtn.hovered ? homeChat.modeAccent : SentinelTheme.textPrimary
                                 font.pixelSize: 14
@@ -731,7 +727,7 @@ ShellPanel {
                             shadowOpacity: 1.0
                         }
 
-                        Label {
+                        Text {
                             id: noChatsLabel
                             anchors.centerIn: parent
                             text: homeChat.sidebarView === "pinned" ? qsTr("No pinned chats")
@@ -750,12 +746,8 @@ ShellPanel {
             Layout.fillWidth: true
             Layout.fillHeight: true
             Layout.minimumHeight: 0
-            color: SentinelTheme.lightTheme
-                 ? "#ffffff"
-                 : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.70)
-            border.color: SentinelTheme.lightTheme
-                        ? SentinelTheme.withAlpha("#e2e8f4", 0.90)
-                        : SentinelTheme.withAlpha(homeChat.modeAccent, 0.20)
+            color: SentinelTheme.backgroundBase
+            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
             showBrackets: false
             clip: true
 
@@ -806,7 +798,7 @@ ShellPanel {
                             anchors.top: parent.top
                             spacing: SentinelTheme.spaceMd * homeChat.resolutionScale
 
-                            Label {
+                            Text {
                                 id: greetingLabel
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignHCenter
@@ -818,7 +810,7 @@ ShellPanel {
                                 font.family: SentinelTheme.fontFamily
                             }
 
-                            Label {
+                            Text {
                                 Layout.fillWidth: true
                                 Layout.alignment: Qt.AlignHCenter
                                 horizontalAlignment: Text.AlignHCenter
@@ -955,14 +947,14 @@ ShellPanel {
                                             spacing: 2
                                             Layout.alignment: Qt.AlignVCenter
 
-                                            Label {
+                                            Text {
                                                 text: modelData.title
                                                 font.pixelSize: SentinelTheme.fontSmall
                                                 font.bold: true
                                                 color: SentinelTheme.textPrimary
                                             }
 
-                                            Label {
+                                            Text {
                                                 text: modelData.prompt
                                                 font.pixelSize: SentinelTheme.fontTiny
                                                 color: SentinelTheme.textMuted
@@ -1052,7 +1044,7 @@ ShellPanel {
                                         hoverEnabled: true
                                         onClicked: homeChat.viewModel.clearAttachments()
                                         background: Rectangle { color: "transparent" }
-                                        contentItem: Label {
+                                        contentItem: Text {
                                             text: "×"
                                             color: homeRemoveAttachmentBtn.hovered ? SentinelTheme.error : SentinelTheme.textMuted
                                             font.pixelSize: SentinelTheme.fontBody
@@ -1078,7 +1070,7 @@ ShellPanel {
                                 ToolTip.text: qsTr("Add or Actions")
                                 onClicked: homeAttachMenu.open()
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     text: homeAttachButton.text
                                     color: SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
@@ -1225,7 +1217,7 @@ ShellPanel {
                                     }
                                 }
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     text: homeMicButton.recordingActive ? "🔴" : "🎤"
                                     font.pixelSize: 16 * homeChat.resolutionScale
                                     horizontalAlignment: Text.AlignHCenter
@@ -1283,7 +1275,7 @@ ShellPanel {
                         Layout.alignment: Qt.AlignHCenter
                         spacing: SentinelTheme.spaceSm * homeChat.resolutionScale
 
-                        Label {
+                        Text {
                             text: qsTr("Mode")
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1301,7 +1293,7 @@ ShellPanel {
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.availableModes[currentIndex] : qsTr("Mode")
 
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: homeModeSelector.displayText
                                 color: homeModeSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1351,7 +1343,7 @@ ShellPanel {
                                 highlighted: homeModeSelector.highlightedIndex === index
                                 hoverEnabled: true
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     text: modelData
                                     color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1370,7 +1362,7 @@ ShellPanel {
                             }
                         }
 
-                        Label {
+                        Text {
                             text: qsTr("Provider")
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1388,7 +1380,7 @@ ShellPanel {
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.selectableRuntimeProviderLabels[currentIndex] : homeChat.viewModel.activeRuntimeProviderLabel
 
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: homeProviderSelector.displayText
                                 color: homeProviderSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1437,7 +1429,7 @@ ShellPanel {
                                 highlighted: homeProviderSelector.highlightedIndex === index
                                 hoverEnabled: true
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     text: modelData
                                     color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1462,7 +1454,7 @@ ShellPanel {
                             color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                         }
 
-                        Label {
+                        Text {
                             text: qsTr("Model")
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1487,7 +1479,7 @@ ShellPanel {
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.ollamaModelNames[currentIndex] : (homeChat.viewModel.selectedLocalModel !== "" ? homeChat.viewModel.selectedLocalModel : qsTr("No model"))
 
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: homeModelSelector.displayText
                                 color: (homeModelSelector.currentIndex >= 0 || homeChat.viewModel.selectedLocalModel !== "") ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1536,7 +1528,7 @@ ShellPanel {
                                 highlighted: homeModelSelector.highlightedIndex === index
                                 hoverEnabled: true
 
-                                contentItem: Label {
+                                contentItem: Text {
                                     text: modelData + " (" + homeChat.localProviderLabel + ")"
                                     color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1567,7 +1559,7 @@ ShellPanel {
                 Layout.fillWidth: true
                 spacing: SentinelTheme.spaceXs
 
-                Label {
+                Text {
                     Layout.fillWidth: true
                     text: homeChat.viewModel.conversationListCurrentTitle
                     color: SentinelTheme.textPrimary
@@ -1576,7 +1568,7 @@ ShellPanel {
                     elide: Text.ElideRight
                 }
 
-                Label {
+                Text {
                     Layout.fillWidth: true
                     text: homeChat.viewModel.conversationLastRestoredStatus
                     color: SentinelTheme.textMuted
@@ -1656,17 +1648,13 @@ ShellPanel {
                 height: displayable ? recentMessageColumn.implicitHeight + SentinelTheme.spaceMd : 0
                 visible: displayable
                 radius: SentinelTheme.radiusMd
-                color: SentinelTheme.lightTheme
-                       ? (messageRole === "user"
-                          ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.16)
-                          : SentinelTheme.withAlpha("#ffffff", 0.95))
-                       : (messageRole === "user"
-                          ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.105)
-                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.026))
+                color: messageRole === "user"
+                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
+                       : SentinelTheme.panel
                 border.color: SentinelTheme.withAlpha(messageRole === "user"
-                                                      ? homeChat.modeAccent
-                                                      : SentinelTheme.textPrimary,
-                                                      messageRole === "user" ? 0.13 : 0.07)
+                                                       ? homeChat.modeAccent
+                                                       : SentinelTheme.textPrimary,
+                                                       messageRole === "user" ? 0.12 : 0.08)
                 opacity: 1.0
                 scale: 1.0
                 layer.enabled: msgArea.containsMouse
@@ -1713,7 +1701,7 @@ ShellPanel {
                     RowLayout {
                         Layout.fillWidth: true
 
-                        Label {
+                        Text {
                             Layout.fillWidth: true
                             text: recentMessage.messageRole === "user" ? qsTr("You") : qsTr("Sentinel")
                             color: recentMessage.messageRole === "user"
@@ -1737,7 +1725,7 @@ ShellPanel {
                                 messageBody.deselect()
                             }
 
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: copyButton.text
                                 color: copyButton.enabled ? SentinelTheme.textMuted : SentinelTheme.textPlaceholder
                                 font.pixelSize: SentinelTheme.fontTiny
@@ -1766,7 +1754,7 @@ ShellPanel {
                             focusPolicy: Qt.StrongFocus
                             onClicked: messageMenu.popup()
 
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: messageMenuButton.text
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
@@ -1973,7 +1961,7 @@ ShellPanel {
                             hoverEnabled: true
                             onClicked: homeChat.viewModel.clearAttachments()
                             background: Rectangle { color: "transparent" }
-                            contentItem: Label {
+                            contentItem: Text {
                                 text: "×"
                                 color: removeAttachmentBtn.hovered ? SentinelTheme.error : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontBody
@@ -1999,7 +1987,7 @@ ShellPanel {
                     ToolTip.text: qsTr("Add or Actions")
                     onClicked: attachMenu.open()
 
-                    contentItem: Label {
+                    contentItem: Text {
                         text: attachButton.text
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
@@ -2173,7 +2161,7 @@ ShellPanel {
                         }
                     }
 
-                    contentItem: Label {
+                    contentItem: Text {
                         text: micButton.recordingActive ? "🔴" : "🎤"
                         font.pixelSize: 16 * homeChat.resolutionScale
                         horizontalAlignment: Text.AlignHCenter
@@ -2224,7 +2212,7 @@ ShellPanel {
         }
     }
 
-        Label {
+        Text {
             Layout.fillWidth: true
             visible: homeChat.inChatMode && !homeChat.chatReady
             text: homeChat.disabledReason + (homeChat.chatReady ? "" : qsTr(" Local %1 only. No cloud provider active.").arg(homeChat.localProviderLabel))
@@ -2308,7 +2296,7 @@ ShellPanel {
                         color: SentinelTheme.warning
                     }
 
-                    Label {
+                    Text {
                         text: qsTr("Delete conversation")
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontCard
@@ -2325,7 +2313,7 @@ ShellPanel {
                     border.color: SentinelTheme.withAlpha(SentinelTheme.warning, 0.18)
                     implicitHeight: deleteConvLabel.implicitHeight + SentinelTheme.spaceSm * 2
 
-                    Label {
+                    Text {
                         id: deleteConvLabel
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -2341,7 +2329,7 @@ ShellPanel {
                     }
                 }
 
-                Label {
+                Text {
                     Layout.fillWidth: true
                     text: qsTr("This action cannot be undone. The conversation will be permanently removed.")
                     color: SentinelTheme.textMuted
@@ -2363,7 +2351,7 @@ ShellPanel {
                         hoverEnabled: true
                         onClicked: deleteConfirmDialog.close()
 
-                        contentItem: Label {
+                        contentItem: Text {
                             text: deleteCancelBtn.text
                             color: SentinelTheme.textPrimary
                             font.pixelSize: SentinelTheme.fontSmall
@@ -2392,7 +2380,7 @@ ShellPanel {
                             homeChat.pendingDeleteConversationTitle = ""
                         }
 
-                        contentItem: Label {
+                        contentItem: Text {
                             text: deleteConfirmBtn.text
                             color: SentinelTheme.warning
                             font.pixelSize: SentinelTheme.fontSmall

@@ -92,6 +92,7 @@ Popup {
         border.width: 1
 
         layer.enabled: true
+        layer.smooth: false
         layer.effect: MultiEffect {
             shadowEnabled: true
             shadowColor: SentinelTheme.lightTheme

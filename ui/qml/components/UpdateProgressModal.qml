@@ -280,7 +280,7 @@ SentinelOverlayModal {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
                         radius: SentinelTheme.radiusMd
-                        color: SentinelTheme.lightTheme ? "#ffffff" : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
+                        color: SentinelTheme.backgroundBase
                         border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                         border.width: 1
 
