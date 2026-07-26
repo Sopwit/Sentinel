@@ -21,6 +21,8 @@ ApplicationWindow {
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
     readonly property int shellEntranceOffset: root.shellReady || MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 8
     readonly property int pageMotionOffset: MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 10
+    readonly property bool nativeTitlebar: Qt.platform.os === "osx" || Qt.platform.os === "macos"
+
     Component.onCompleted: Qt.callLater(function() {
         SentinelTheme.activeTheme = root.viewModel.themeName
         SentinelTheme.reducedMotion = root.viewModel.reducedMotionEnabled
@@ -28,6 +30,7 @@ ApplicationWindow {
         SentinelTheme.uiDensity = root.viewModel.uiDensity
         MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         root.shellReady = true
+        splashScreen.close()
         if (!root.viewModel.onboardingComplete)
             onboardingScreen.active = true
         else if (root.viewModel.recoveryDraftText.length > 0)
@@ -102,11 +105,33 @@ ApplicationWindow {
         modeName: root.viewModel.currentModeName
     }
 
+    TitleBar {
+        id: titleBar
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        z: 200
+        frameless: !root.nativeTitlebar
+        title: root.title
+        modeName: root.viewModel.currentModeName
+        compact: root.compactLayout
+        maximized: root.visibility === Window.Maximized
+        onMinimizeRequested: root.showMinimized()
+        onMaximizeRequested: {
+            if (root.visibility === Window.Maximized)
+                root.showNormal()
+            else
+                root.showMaximized()
+        }
+        onCloseRequested: root.close()
+    }
+
     ColumnLayout {
         anchors.fill: parent
         anchors.leftMargin: SentinelTheme.pageMargin(root.width)
         anchors.rightMargin: SentinelTheme.pageMargin(root.width)
-        anchors.topMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
+        anchors.topMargin: (root.nativeTitlebar ? 0 : titleBar.height + SentinelTheme.spaceSm)
+                           + (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
                            + root.shellEntranceOffset
         anchors.bottomMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
                                + 72 + SentinelTheme.spaceMd
@@ -134,12 +159,26 @@ ApplicationWindow {
                 spacing: SentinelTheme.spaceMd
 
 
-                // Page stack: Dashboard / Models with crossfade
+                ErrorBanner {
+                    id: globalErrorBanner
+                    Layout.fillWidth: true
+                    Layout.maximumHeight: root.viewModel.globalErrorVisible ? 48 : 0
+                    show: root.viewModel.globalErrorVisible
+                    message: root.viewModel.globalErrorMessage
+                    severity: root.viewModel.globalErrorSeverity
+                    modeName: root.viewModel.currentModeName
+                    onDismissed: root.viewModel.dismissGlobalError()
+                }
+
+                // Page stack: Dashboard / Models with slide + crossfade transitions
                 Item {
                     id: pageStack
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     Layout.minimumHeight: 0
+
+                    property real dashSlide: root.currentShellPage === "Models" ? -1 : 0
+                    property real modelsSlide: root.currentShellPage === "Dashboard" ? 1 : 0
 
                     DashboardPage {
                         id: dashboardPage
@@ -147,6 +186,12 @@ ApplicationWindow {
                         anchors.fill: parent
                         visible: root.currentShellPage === "Dashboard"
                         opacity: root.currentShellPage === "Dashboard" ? 1.0 : 0.0
+
+                        transform: Translate {
+                            id: dashTranslate
+                            x: pageStack.dashSlide * root.pageMotionOffset * 2
+                        }
+
                         Behavior on opacity {
                             NumberAnimation { duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName); easing.type: Easing.OutCubic }
                         }
@@ -157,8 +202,28 @@ ApplicationWindow {
                         anchors.fill: parent
                         visible: opacity > 0
                         opacity: root.currentShellPage === "Models" ? 1.0 : 0.0
+
+                        transform: Translate {
+                            id: modelsTranslate
+                            x: pageStack.modelsSlide * root.pageMotionOffset * 2
+                        }
+
                         Behavior on opacity {
                             NumberAnimation { duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName); easing.type: Easing.OutCubic }
+                        }
+                    }
+
+                    Behavior on dashSlide {
+                        NumberAnimation {
+                            duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    Behavior on modelsSlide {
+                        NumberAnimation {
+                            duration: MotionTokens.duration(MotionTokens.page, root.viewModel.currentModeName)
+                            easing.type: Easing.OutCubic
                         }
                     }
                 }
@@ -203,16 +268,48 @@ ApplicationWindow {
                                 : settingsFab.hovered || settingsFab.activeFocus
                                   ? InteractionTokens.focusScale
                                   : 1.0
-        text: "\u2699"
-        font.pixelSize: 22
         onClicked: root.openSettings()
 
-        contentItem: Text {
-            text: settingsFab.text
-            color: SentinelTheme.textPrimary
-            font.pixelSize: settingsFab.font.pixelSize
-            horizontalAlignment: Text.AlignHCenter
-            verticalAlignment: Text.AlignVCenter
+        contentItem: Item {
+            implicitWidth: 22
+            implicitHeight: 22
+
+            Canvas {
+                anchors.centerIn: parent
+                width: 20
+                height: 20
+                antialiasing: true
+
+                onPaint: {
+                    var ctx = getContext("2d")
+                    ctx.reset()
+                    var c = SentinelTheme.textPrimary
+                    ctx.strokeStyle = Qt.rgba(c.r, c.g, c.b, 0.9)
+                    ctx.lineWidth = 1.6
+                    ctx.lineJoin = "round"
+                    ctx.lineCap = "round"
+
+                    var cx = width / 2
+                    var cy = height / 2
+
+                    // Outer gear ring
+                    for (var i = 0; i < 8; i++) {
+                        var a = i * Math.PI / 4
+                        var innerR = 7
+                        var outerR = 10
+                        ctx.beginPath()
+                        ctx.moveTo(cx + Math.cos(a - 0.25) * innerR, cy + Math.sin(a - 0.25) * innerR)
+                        ctx.lineTo(cx + Math.cos(a) * outerR, cy + Math.sin(a) * outerR)
+                        ctx.lineTo(cx + Math.cos(a + 0.25) * innerR, cy + Math.sin(a + 0.25) * innerR)
+                        ctx.stroke()
+                    }
+
+                    // Inner circle
+                    ctx.beginPath()
+                    ctx.arc(cx, cy, 4.5, 0, Math.PI * 2)
+                    ctx.stroke()
+                }
+            }
         }
 
         background: Rectangle {
@@ -229,7 +326,7 @@ ApplicationWindow {
             layer.enabled: true
             layer.effect: MultiEffect {
                 shadowEnabled: true
-                shadowColor: Qt.rgba(0, 0, 0, 0.18)
+                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.18)
                 shadowVerticalOffset: 2
                 shadowBlur: 0.15
                 shadowOpacity: 1.0
@@ -263,6 +360,34 @@ ApplicationWindow {
                 easing.type: MotionTokens.enter
             }
         }
+    }
+
+    SoundManager {
+        id: soundManager
+        enabled: !root.viewModel.dndEnabled
+    }
+
+    Connections {
+        target: root.viewModel
+        function onNativeExperienceChanged() {
+            var lastNotif = root.viewModel.notificationFilteredSummaries
+            if (!lastNotif || lastNotif.length === 0) return
+            try {
+                var parsed = JSON.parse(lastNotif[0])
+                if (parsed && parsed.priority === "Critical") {
+                    soundManager.playError()
+                } else if (parsed && parsed.category === "Updates") {
+                    soundManager.playSuccess()
+                } else {
+                    soundManager.playNotification()
+                }
+            } catch(e) {}
+        }
+    }
+
+    SplashScreen {
+        id: splashScreen
+        modeName: root.viewModel.currentModeName
     }
 
     CommandPalette {

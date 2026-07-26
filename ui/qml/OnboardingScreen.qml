@@ -1,7 +1,8 @@
 import QtQuick
 import QtQuick.Controls.Basic
-import QtQuick.Layouts
 import QtQuick.Dialogs
+import QtQuick.Effects
+import QtQuick.Layouts
 import Sentinel.Desktop
 
 Item {
@@ -85,7 +86,7 @@ Item {
         { id: "General Assistant", tag: qsTr("Daily companion"),  desc: qsTr("A helpful partner for whatever life or work brings.") }
     ]
 
-    readonly property var themes: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "System Sync"]
+    readonly property var themes: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey"]
 
     readonly property var providers: [
         { id: "Ollama",                   note: qsTr("Popular local runtime, easy to start.") },
@@ -109,12 +110,11 @@ Item {
 
     readonly property var themePalette: ({
         "Liquid Glass Light": { bg: "#f4f6f9", raised: "#ffffff", accent: "#4f8ef7", text: "#0f1724", muted: "#5a6b82" },
-        "Liquid Glass Dark":  { bg: "#0e1117", raised: "#161b27", accent: "#7eb8ff", text: "#e8f0ff", muted: "#8899bb" },
-        "Sentinel Classic":   { bg: "#10181f", raised: "#18242d", accent: "#79dcff", text: "#eef8ff", muted: "#94abb8" },
-        "Midnight Blue":      { bg: "#0a1020", raised: "#111a31", accent: "#8fb4ff", text: "#f0f5ff", muted: "#98a9c8" },
-        "Aurora Teal":        { bg: "#121b1d", raised: "#1b2a2d", accent: "#7de0b9", text: "#effbf7", muted: "#9fb8b4" },
-        "Graphite Grey":      { bg: "#151719", raised: "#202326", accent: "#d0d7dc", text: "#f2f4f4", muted: "#a7adaf" },
-        "System Sync":        { bg: "#11181c", raised: "#1b2327", accent: "#79dcff", text: "#eef8ff", muted: "#94abb8" }
+        "Liquid Glass Dark":  { bg: "#0d1117", raised: "#161b27", accent: "#7eb8ff", text: "#e8f0ff", muted: "#8899bb" },
+        "Sentinel Classic":   { bg: "#0d1117", raised: "#18242d", accent: "#7eb8ff", text: "#eef8ff", muted: "#94abb8" },
+        "Midnight Blue":      { bg: "#0a0f1e", raised: "#111a31", accent: "#8fb4ff", text: "#f0f5ff", muted: "#98a9c8" },
+        "Aurora Teal":        { bg: "#0f1a1c", raised: "#1b2a2d", accent: "#7de0b9", text: "#effbf7", muted: "#9fb8b4" },
+        "Graphite Grey":      { bg: "#121416", raised: "#202326", accent: "#d0d7dc", text: "#f2f4f4", muted: "#a7adaf" }
     })
 
     function paletteFor(name) { return onboarding.themePalette[name] || onboarding.themePalette["Liquid Glass Light"] }
@@ -249,6 +249,7 @@ Item {
                         spacing: SentinelTheme.spaceMd
 
                         Rectangle {
+                            id: stepIndicator
                             Layout.preferredWidth: 26; Layout.preferredHeight: 26; radius: 13
                             color: index < onboarding.step ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.18)
                                  : index === onboarding.step ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.24)
@@ -258,6 +259,14 @@ Item {
                             border.width: 1
                             Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                             Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
+                            layer.enabled: index <= onboarding.step
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                                shadowVerticalOffset: 1
+                                shadowBlur: 0.08
+                                shadowOpacity: 1.0
+                            }
                             Label {
                                 anchors.centerIn: parent
                                 text: index < onboarding.step ? "✓" : (index + 1).toString()
@@ -344,6 +353,7 @@ Item {
                             Repeater {
                                 model: onboarding.useCases
                                 Rectangle {
+                                    id: ucCard
                                     required property var modelData
                                     readonly property bool chosen: viewModel.onboardingUseCase === modelData.id
                                     Layout.fillWidth: true
@@ -358,6 +368,14 @@ Item {
                                     Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                     Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                     Behavior on scale { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.enter } }
+                                    layer.enabled: ucHover.hovered
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+                                        shadowVerticalOffset: 2
+                                        shadowBlur: 0.12
+                                        shadowOpacity: 1.0
+                                    }
                                     ColumnLayout {
                                         id: ucRow
                                         anchors.fill: parent
@@ -434,6 +452,7 @@ Item {
                             Repeater {
                                 model: onboarding.privacyPoints
                                 Rectangle {
+                                    id: privCard
                                     required property var modelData
                                     Layout.fillWidth: true
                                     radius: SentinelTheme.radiusLg
@@ -441,6 +460,14 @@ Item {
                                     border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
                                     border.width: 1
                                     implicitHeight: pvRow.implicitHeight + SentinelTheme.spaceLg * 2
+                                    layer.enabled: privHover.hovered
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+                                        shadowVerticalOffset: 2
+                                        shadowBlur: 0.12
+                                        shadowOpacity: 1.0
+                                    }
                                     RowLayout {
                                         id: pvRow
                                         anchors.fill: parent
@@ -473,6 +500,7 @@ Item {
                                             }
                                         }
                                     }
+                                    HoverHandler { id: privHover }
                                 }
                             }
                         }
@@ -507,6 +535,7 @@ Item {
                             Repeater {
                                 model: onboarding.themes
                                 Rectangle {
+                                    id: themeCard
                                     required property string modelData
                                     readonly property bool chosen: viewModel.themeName === modelData
                                     readonly property var pal: onboarding.paletteFor(modelData)
@@ -520,6 +549,14 @@ Item {
                                     scale: themeHover.hovered && !chosen ? 1.015 : 1.0
                                     Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                     Behavior on scale { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.enter } }
+                                    layer.enabled: themeHover.hovered
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+                                        shadowVerticalOffset: 2
+                                        shadowBlur: 0.12
+                                        shadowOpacity: 1.0
+                                    }
 
                                     // Mini preview mock
                                     Rectangle {
@@ -668,6 +705,7 @@ Item {
                             Repeater {
                                 model: onboarding.providers
                                 Rectangle {
+                                    id: provCard
                                     required property var modelData
                                     readonly property bool chosen: viewModel.onboardingAiProvider === modelData.id
                                     Layout.fillWidth: true
@@ -680,6 +718,14 @@ Item {
                                     implicitHeight: prRow.implicitHeight + SentinelTheme.spaceLg * 2
                                     Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                     Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
+                                    layer.enabled: provHover.hovered
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+                                        shadowVerticalOffset: 2
+                                        shadowBlur: 0.12
+                                        shadowOpacity: 1.0
+                                    }
                                     RowLayout {
                                         id: prRow
                                         anchors.fill: parent
@@ -715,6 +761,7 @@ Item {
                                             }
                                         }
                                     }
+                                    HoverHandler { id: provHover }
                                     MouseArea {
                                         anchors.fill: parent
                                         cursorShape: Qt.PointingHandCursor
@@ -769,6 +816,7 @@ Item {
                                 Repeater {
                                     model: onboarding.recommendedModels
                                     Rectangle {
+                                        id: modelCard
                                         required property var modelData
                                         readonly property bool installed: onboarding.isModelInstalled(modelData.ollamaId)
                                         readonly property bool activePull: ollamaPuller.pulling && ollamaPuller.activeModel === modelData.ollamaId
@@ -784,6 +832,14 @@ Item {
                                         implicitHeight: mCardCol.implicitHeight + SentinelTheme.spaceLg * 2
                                         Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                         Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
+                                        layer.enabled: modelHover.hovered
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+                                            shadowVerticalOffset: 2
+                                            shadowBlur: 0.12
+                                            shadowOpacity: 1.0
+                                        }
 
                                         ColumnLayout {
                                             id: mCardCol
@@ -898,6 +954,14 @@ Item {
                                                     height: 4
                                                     radius: 2
                                                     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                                    layer.enabled: true
+                                                    layer.effect: MultiEffect {
+                                                        shadowEnabled: true
+                                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                                        shadowVerticalOffset: 1
+                                                        shadowBlur: 0.06
+                                                        shadowOpacity: 1.0
+                                                    }
                                                     Rectangle {
                                                         width: parent.width * ollamaPuller.progress
                                                         height: parent.height
@@ -908,6 +972,7 @@ Item {
                                             }
                                         }
 
+                                        HoverHandler { id: modelHover }
                                         MouseArea {
                                             anchors.fill: parent
                                             enabled: installed && !activePull && !selected
@@ -1525,7 +1590,7 @@ Item {
                                 }
                                 Label {
                                     text: piperBinaryField.text !== "" ? qsTr("✓ Detected on system") : qsTr("✗ Not detected. Enter path manually.")
-                                    color: piperBinaryField.text !== "" ? "#4caf50" : "#ff9800"
+                                    color: piperBinaryField.text !== "" ? SentinelTheme.success : SentinelTheme.warning
                                     font.pixelSize: SentinelTheme.fontSmall - 1
                                     font.bold: true
                                 }
@@ -1663,7 +1728,7 @@ Item {
                                 }
                                 Label {
                                     text: whisperBinaryField.text !== "" ? qsTr("✓ Detected on system") : qsTr("✗ Not detected. Enter path manually.")
-                                    color: whisperBinaryField.text !== "" ? "#4caf50" : "#ff9800"
+                                    color: whisperBinaryField.text !== "" ? SentinelTheme.success : SentinelTheme.warning
                                     font.pixelSize: SentinelTheme.fontSmall - 1
                                     font.bold: true
                                 }
@@ -1776,7 +1841,7 @@ Item {
                     }
                 }
 
-                // Step 5 — Finish
+                // Step 8 — Finish
                 ScrollView {
                     contentData: ColumnLayout {
                         spacing: SentinelTheme.spaceMd
@@ -1807,16 +1872,36 @@ Item {
                             font.pixelSize: SentinelTheme.fontBody
                             wrapMode: Text.WordWrap
                         }
-                        ColumnLayout {
+                        Rectangle {
+                            Layout.fillWidth: true
                             Layout.topMargin: SentinelTheme.spaceLg
-                            spacing: SentinelTheme.spaceSm
-                            InfoRow { label: qsTr("Use Case"); value: viewModel.onboardingUseCase; Layout.fillWidth: true }
-                            InfoRow { label: qsTr("Theme"); value: viewModel.themeName; Layout.fillWidth: true }
-                            InfoRow { label: qsTr("AI Provider"); value: viewModel.onboardingAiProvider; Layout.fillWidth: true }
-                            InfoRow { label: qsTr("Selected Model"); value: viewModel.selectedLocalModel ? viewModel.selectedLocalModel : qsTr("None selected"); Layout.fillWidth: true }
-                            InfoRow { label: qsTr("Memory Context"); value: viewModel.promptContextInjectionEnabled ? qsTr("Enabled") : qsTr("Disabled"); Layout.fillWidth: true }
-                            InfoRow { label: qsTr("TTS Engine"); value: viewModel.selectedTtsEngine; Layout.fillWidth: true }
-                            InfoRow { label: qsTr("System Updates"); value: viewModel.updateCheckPolicy; Layout.fillWidth: true }
+                            radius: SentinelTheme.radiusMd
+                            color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.5)
+                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                            implicitHeight: infoRows.implicitHeight + SentinelTheme.spaceLg
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                shadowVerticalOffset: 2
+                                shadowBlur: 0.12
+                                shadowOpacity: 1.0
+                            }
+
+                            ColumnLayout {
+                                id: infoRows
+                                anchors.fill: parent
+                                anchors.margins: SentinelTheme.spaceMd
+                                spacing: SentinelTheme.spaceSm
+                                InfoRow { label: qsTr("Use Case"); value: viewModel.onboardingUseCase; Layout.fillWidth: true }
+                                InfoRow { label: qsTr("Theme"); value: viewModel.themeName; Layout.fillWidth: true }
+                                InfoRow { label: qsTr("AI Provider"); value: viewModel.onboardingAiProvider; Layout.fillWidth: true }
+                                InfoRow { label: qsTr("Selected Model"); value: viewModel.selectedLocalModel ? viewModel.selectedLocalModel : qsTr("None selected"); Layout.fillWidth: true }
+                                InfoRow { label: qsTr("Memory Context"); value: viewModel.promptContextInjectionEnabled ? qsTr("Enabled") : qsTr("Disabled"); Layout.fillWidth: true }
+                                InfoRow { label: qsTr("TTS Engine"); value: viewModel.selectedTtsEngine; Layout.fillWidth: true }
+                                InfoRow { label: qsTr("System Updates"); value: viewModel.updateCheckPolicy; Layout.fillWidth: true }
+                            }
                         }
                         Item { Layout.fillHeight: true }
                     }
@@ -1825,12 +1910,21 @@ Item {
 
             // ── Footer ──────────────────────────────────────────────────────
             Rectangle {
+                id: footerRect
                 Layout.fillWidth: true
                 radius: SentinelTheme.radiusLg
                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.030)
                 border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
                 border.width: 1
                 implicitHeight: footerRow.implicitHeight + SentinelTheme.spaceMd * 2
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                    shadowVerticalOffset: -1
+                    shadowBlur: 0.08
+                    shadowOpacity: 1.0
+                }
                 RowLayout {
                     id: footerRow
                     anchors.fill: parent

@@ -2,7 +2,9 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
+import QtQuick.Shapes
 import Sentinel.Desktop
 
 SentinelOverlayModal {
@@ -61,6 +63,16 @@ SentinelOverlayModal {
         id: contentRoot
         anchors.fill: parent
         clip: true
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: "#000000"
+            shadowOpacity: 0.08
+            shadowBlur: 0.08
+            shadowHorizontalOffset: 1
+            shadowVerticalOffset: 1
+        }
 
         ColumnLayout {
             anchors.fill: parent
@@ -411,6 +423,16 @@ SentinelOverlayModal {
                         color: SentinelTheme.lightTheme ? "#e2e8f4" : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                         clip: true
 
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: "#000000"
+                            shadowOpacity: 0.08
+                            shadowBlur: 0.06
+                            shadowHorizontalOffset: 1
+                            shadowVerticalOffset: 1
+                        }
+
                         Rectangle {
                             width: updateModal.updateState === "checking" ? parent.width * 0.25
                                  : updateModal.updateState === "verifying" ? parent.width * 0.95
@@ -618,6 +640,16 @@ SentinelOverlayModal {
                         radius: SentinelTheme.radiusSm
                         color: cancelBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08) : "transparent"
                         border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+
+                        layer.enabled: cancelBtn.hovered
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: "#000000"
+                            shadowOpacity: 0.10
+                            shadowBlur: 0.08
+                            shadowHorizontalOffset: 1
+                            shadowVerticalOffset: 1
+                        }
                     }
                 }
 
@@ -658,6 +690,16 @@ SentinelOverlayModal {
                         color: actionBtn.enabled
                              ? (actionBtn.hovered ? SentinelTheme.accentHover : SentinelTheme.accent)
                              : SentinelTheme.withAlpha(SentinelTheme.accent, 0.40)
+
+                        layer.enabled: actionBtn.hovered && actionBtn.enabled
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: "#000000"
+                            shadowOpacity: 0.12
+                            shadowBlur: 0.08
+                            shadowHorizontalOffset: 1
+                            shadowVerticalOffset: 1
+                        }
                     }
                 }
             }

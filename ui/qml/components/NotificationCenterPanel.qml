@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -80,19 +81,19 @@ ShellPanel {
                 spacing: 8
 
                 Text {
-                    text: "Notifications"
+                    text: qsTr("Notifications")
                     font.pixelSize: SentinelTheme.fontCard
                     font.bold: true
                     color: SentinelTheme.textPrimary
 
                     Accessible.role: Accessible.StaticText
-                    Accessible.name: "Notifications"
+                    Accessible.name: qsTr("Notifications")
                 }
 
                 Text {
                     text: {
                         var unreadCount = viewModel ? viewModel.unreadNotificationCount : 0
-                        return unreadCount > 0 ? "(" + unreadCount + " unread)" : ""
+                        return unreadCount > 0 ? qsTr("(%1 unread)").arg(unreadCount) : ""
                     }
                     font.pixelSize: SentinelTheme.fontSmall
                     color: SentinelTheme.accent
@@ -107,8 +108,8 @@ ShellPanel {
                     implicitWidth: 32
                     implicitHeight: 32
                     flat: true
-                    tooltipText: viewModel && viewModel.dndEnabled ? "Do Not Disturb is on" : "Do Not Disturb is off"
-                    Accessible.name: viewModel && viewModel.dndEnabled ? "Disable do not disturb" : "Enable do not disturb"
+                    tooltipText: viewModel && viewModel.dndEnabled ? qsTr("Do Not Disturb is on") : qsTr("Do Not Disturb is off")
+                    Accessible.name: viewModel && viewModel.dndEnabled ? qsTr("Disable do not disturb") : qsTr("Enable do not disturb")
                     highlighted: viewModel && viewModel.dndEnabled
                     onClicked: {
                         if (viewModel) viewModel.dndEnabled = !viewModel.dndEnabled
@@ -116,20 +117,20 @@ ShellPanel {
                 }
 
                 SentinelButton {
-                    text: "Mark all read"
+                    text: qsTr("Mark all read")
                     flat: true
                     font.pixelSize: SentinelTheme.fontSmall
-                    Accessible.name: "Mark all notifications as read"
+                    Accessible.name: qsTr("Mark all notifications as read")
                     onClicked: {
                         if (viewModel) viewModel.markAllNotificationsRead()
                     }
                 }
 
                 SentinelButton {
-                    text: "Clear archived"
+                    text: qsTr("Clear archived")
                     flat: true
                     font.pixelSize: SentinelTheme.fontSmall
-                    Accessible.name: "Clear all archived notifications"
+                    Accessible.name: qsTr("Clear all archived notifications")
                     onClicked: {
                         if (viewModel) viewModel.clearArchivedNotifications()
                     }
@@ -141,7 +142,7 @@ ShellPanel {
                     implicitHeight: 32
                     flat: true
                     font.pixelSize: SentinelTheme.fontCard
-                    Accessible.name: "Close notification center"
+                    Accessible.name: qsTr("Close notification center")
                     onClicked: root.closeRequested()
                 }
             }
@@ -297,11 +298,11 @@ ShellPanel {
                 spacing: 4
 
                 Text {
-                    text: "Channels:"
+                    text: qsTr("Channels:")
                     font.pixelSize: SentinelTheme.fontSmall - 1
                     color: SentinelTheme.textMuted
                     Accessible.role: Accessible.StaticText
-                    Accessible.name: "Notification channels"
+                    Accessible.name: qsTr("Notification channels")
                 }
 
                 Repeater {
@@ -342,10 +343,10 @@ ShellPanel {
                 }
 
                 SentinelButton {
-                    text: "Settings"
+                    text: qsTr("Settings")
                     flat: true
                     font.pixelSize: SentinelTheme.fontSmall
-                    Accessible.name: "Open notification settings"
+                    Accessible.name: qsTr("Open notification settings")
                     onClicked: {
                         root.closeRequested()
                         if (viewModel) viewModel.currentPage = "Settings"
@@ -395,6 +396,15 @@ ShellPanel {
                     radius: 9
                     color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.15)
                     visible: model.groupCount > 0
+
+                    layer.enabled: true
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                        shadowVerticalOffset: 1
+                        shadowBlur: 0.06
+                        shadowOpacity: 1.0
+                    }
 
                     Text {
                         anchors.centerIn: parent

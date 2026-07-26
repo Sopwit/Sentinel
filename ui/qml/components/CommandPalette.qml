@@ -2,6 +2,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -81,7 +82,7 @@ SentinelOverlayModal {
             viewModel.prepareExportPreview("conversations", "Markdown")
             actionStatus = viewModel.exportPreviewSummaries.join(" / ")
         } else if (action.action === "theme") {
-            var choices = ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "System Sync"]
+            var choices = ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey"]
             var next = (choices.indexOf(viewModel.themeName) + 1) % choices.length
             viewModel.themeName = choices[next]
             actionStatus = qsTr("Theme changed to %1.").arg(viewModel.themeName)
@@ -94,6 +95,16 @@ SentinelOverlayModal {
 
     contentItem: ColumnLayout {
         spacing: SentinelTheme.spaceMd
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: "#000000"
+            shadowOpacity: 0.10
+            shadowBlur: 0.10
+            shadowHorizontalOffset: 2
+            shadowVerticalOffset: 2
+        }
 
         ColumnLayout {
             Layout.fillWidth: true
@@ -245,6 +256,16 @@ SentinelOverlayModal {
                                                                  actionButton.hovered,
                                                                  actionButton.active,
                                                                  palette.modeAccent)
+
+                    layer.enabled: actionButton.hovered
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: "#000000"
+                        shadowOpacity: 0.12
+                        shadowBlur: 0.08
+                        shadowHorizontalOffset: 1
+                        shadowVerticalOffset: 1
+                    }
                 }
             }
         }

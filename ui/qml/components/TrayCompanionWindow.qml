@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Window
 import Sentinel.Desktop
@@ -148,6 +149,15 @@ Window {
         border.color: Qt.alpha(
             SentinelTheme.modeAccent(viewModel ? viewModel.currentModeName : "Sentinel"), 0.25)
         border.width: 1
+
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.30)
+            shadowVerticalOffset: 4
+            shadowBlur: 0.25
+            shadowOpacity: 1.0
+        }
 
         Accessible.role: Accessible.Grouping
         Accessible.name: "Companion chat window"
@@ -408,6 +418,15 @@ Window {
                                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.07)
                                         border.width: 1
 
+                                        layer.enabled: mouseInBubble.containsMouse
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                            shadowVerticalOffset: 1
+                                            shadowBlur: 0.08
+                                            shadowOpacity: 1.0
+                                        }
+
                                         // Slide-in animation
                                         NumberAnimation on opacity {
                                             from: 0
@@ -570,6 +589,7 @@ Window {
 
                         // Scroll-to-bottom button
                         Rectangle {
+                            id: scrollBtn
                             anchors.right: parent.right
                             anchors.rightMargin: 8
                             anchors.bottom: parent.bottom
@@ -582,6 +602,15 @@ Window {
                             border.width: 1
                             visible: scrolledUp
 
+                            layer.enabled: scrollBtnMouse.containsMouse
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                shadowVerticalOffset: 1
+                                shadowBlur: 0.06
+                                shadowOpacity: 1.0
+                            }
+
                             Text {
                                 anchors.centerIn: parent
                                 text: "\u2193"
@@ -591,6 +620,8 @@ Window {
                             }
 
                             MouseArea {
+                                id: scrollBtnMouse
+                                hoverEnabled: true
                                 anchors.fill: parent
                                 cursorShape: Qt.PointingHandCursor
                                 onClicked: {
@@ -614,6 +645,7 @@ Window {
 
                         // Typing indicator
                         Rectangle {
+                            id: typingIndicator
                             anchors.left: parent.left
                             anchors.leftMargin: 4
                             anchors.bottom: parent.bottom
@@ -625,6 +657,15 @@ Window {
                             border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.07)
                             border.width: 1
                             visible: aiResponding
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                shadowVerticalOffset: 1
+                                shadowBlur: 0.06
+                                shadowOpacity: 1.0
+                            }
 
                             Accessible.role: Accessible.Indicator
                             Accessible.name: "AI is typing"
@@ -679,6 +720,7 @@ Window {
                             ]
 
                             delegate: Rectangle {
+                                id: chipRect
                                 required property var modelData
                                 height: 26
                                 width: chipText.implicitWidth + 16
@@ -686,6 +728,15 @@ Window {
                                 color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
                                 border.width: 1
+
+                                layer.enabled: chipMouse.containsMouse
+                                layer.effect: MultiEffect {
+                                    shadowEnabled: true
+                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                    shadowVerticalOffset: 1
+                                    shadowBlur: 0.06
+                                    shadowOpacity: 1.0
+                                }
 
                                 Accessible.role: Accessible.Button
                                 Accessible.name: modelData.label
@@ -699,6 +750,8 @@ Window {
                                 }
 
                                 MouseArea {
+                                    id: chipMouse
+                                    hoverEnabled: true
                                     anchors.fill: parent
                                     cursorShape: Qt.PointingHandCursor
                                     onClicked: {
@@ -731,6 +784,15 @@ Window {
                             color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.08)
                             border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.25)
                             border.width: 1
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                shadowVerticalOffset: 1
+                                shadowBlur: 0.06
+                                shadowOpacity: 1.0
+                            }
 
                             RowLayout {
                                 anchors.fill: parent
@@ -797,9 +859,9 @@ Window {
 
                         Repeater {
                             model: [
-                                { icon: "💬", text: "Quick Prompt", shortcut: "Ctrl+Shift+C", action: "quickChat" },
-                                { icon: "✨", text: "New Conversation", shortcut: "Ctrl+N", action: "newChat" },
-                                { icon: "🗑️", text: "Clear Current Chat", shortcut: "", action: "clearChat" }
+                                { icon: "💬", text: qsTr("Quick Prompt"), shortcut: "Ctrl+Shift+C", action: "quickChat" },
+                                { icon: "✨", text: qsTr("New Conversation"), shortcut: "Ctrl+N", action: "newChat" },
+                                { icon: "🗑️", text: qsTr("Clear Current Chat"), shortcut: "", action: "clearChat" }
                             ]
 
                             delegate: Rectangle {
@@ -811,6 +873,15 @@ Window {
                                        ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.02)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+
+                                layer.enabled: optMouseOver1.containsMouse
+                                layer.effect: MultiEffect {
+                                    shadowEnabled: true
+                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                    shadowVerticalOffset: 1
+                                    shadowBlur: 0.06
+                                    shadowOpacity: 1.0
+                                }
 
                                 Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -882,11 +953,11 @@ Window {
                         Repeater {
                             model: [
                                 { icon: companionWin.alwaysOnTop ? "📌" : "📍",
-                                  text: "Always On Top",
+                                  text: qsTr("Always On Top"),
                                   shortcut: companionWin.alwaysOnTop ? "ON" : "OFF",
                                   action: "togglePin" },
                                 { icon: viewModel && viewModel.companionPaused ? "▶" : "⏸",
-                                  text: viewModel && viewModel.companionPaused ? "Resume Companion" : "Pause Companion",
+                                  text: viewModel && viewModel.companionPaused ? qsTr("Resume Companion") : qsTr("Pause Companion"),
                                   shortcut: viewModel && viewModel.companionPaused ? "PAUSED" : "ACTIVE",
                                   action: "togglePause" }
                             ]
@@ -900,6 +971,15 @@ Window {
                                        ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.02)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+
+                                layer.enabled: optMouseOver2.containsMouse
+                                layer.effect: MultiEffect {
+                                    shadowEnabled: true
+                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                    shadowVerticalOffset: 1
+                                    shadowBlur: 0.06
+                                    shadowOpacity: 1.0
+                                }
 
                                 Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -969,10 +1049,10 @@ Window {
 
                         Repeater {
                             model: [
-                                { icon: "🖥️", text: "Open Full App", shortcut: "Ctrl+1", action: "dashboard" },
-                                { icon: "⚙️", text: "Settings", shortcut: "Ctrl+,", action: "settings" },
-                                { icon: "🔄", text: "Check Updates", shortcut: "", action: "updates" },
-                                { icon: "🚪", text: "Quit Sentinel", shortcut: "Ctrl+Q", action: "quit" }
+                                { icon: "🖥️", text: qsTr("Open Full App"), shortcut: "Ctrl+1", action: "dashboard" },
+                                { icon: "⚙️", text: qsTr("Settings"), shortcut: "Ctrl+,", action: "settings" },
+                                { icon: "🔄", text: qsTr("Check Updates"), shortcut: "", action: "updates" },
+                                { icon: "🚪", text: qsTr("Quit Sentinel"), shortcut: "Ctrl+Q", action: "quit" }
                             ]
 
                             delegate: Rectangle {
@@ -984,6 +1064,15 @@ Window {
                                        ? (modelData.action === "quit" ? SentinelTheme.withAlpha(SentinelTheme.warning, 0.15) : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08))
                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.02)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+
+                                layer.enabled: optMouseOver3.containsMouse
+                                layer.effect: MultiEffect {
+                                    shadowEnabled: true
+                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                    shadowVerticalOffset: 1
+                                    shadowBlur: 0.06
+                                    shadowOpacity: 1.0
+                                }
 
                                 Behavior on color { ColorAnimation { duration: 150 } }
 
@@ -1098,6 +1187,16 @@ Window {
                               ? SentinelTheme.modeAccent(viewModel ? viewModel.currentModeName : "Sentinel")
                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
                 border.width: promptInput.activeFocus ? 1.5 : 1
+
+                layer.enabled: true
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                    shadowVerticalOffset: -1
+                    shadowBlur: 0.06
+                    shadowOpacity: 1.0
+                }
+
                 visible: !companionWin.menuOpen
 
                 Accessible.role: Accessible.EditableText

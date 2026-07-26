@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -13,6 +14,16 @@ ShellPanel {
     color: "transparent"
     border.color: "transparent"
     showBrackets: false
+
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        shadowEnabled: true
+        shadowColor: "#000000"
+        shadowOpacity: 0.06
+        shadowBlur: 0.06
+        shadowHorizontalOffset: 1
+        shadowVerticalOffset: 1
+    }
 
     RowLayout {
         anchors.fill: parent
@@ -29,7 +40,7 @@ ShellPanel {
         }
 
         Label {
-            text: "Model: " + statusBar.viewModel.selectedLocalModelStatus
+            text: qsTr("Model: %1").arg(statusBar.viewModel.selectedLocalModelStatus)
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             maximumLineCount: 1
@@ -37,16 +48,7 @@ ShellPanel {
         }
 
         Label {
-            text: "Chat: " + statusBar.viewModel.localChatInferenceStatus
-            color: SentinelTheme.textMuted
-            font.pixelSize: SentinelTheme.fontSmall
-            visible: !statusBar.compact
-            maximumLineCount: 1
-            elide: Text.ElideRight
-        }
-
-        Label {
-            text: "Stream: " + statusBar.viewModel.localInferenceStreamStatus
+            text: qsTr("Chat: %1").arg(statusBar.viewModel.localChatInferenceStatus)
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             visible: !statusBar.compact
@@ -55,7 +57,16 @@ ShellPanel {
         }
 
         Label {
-            text: "Voice: " + statusBar.viewModel.voiceReadinessStatus
+            text: qsTr("Stream: %1").arg(statusBar.viewModel.localInferenceStreamStatus)
+            color: SentinelTheme.textMuted
+            font.pixelSize: SentinelTheme.fontSmall
+            visible: !statusBar.compact
+            maximumLineCount: 1
+            elide: Text.ElideRight
+        }
+
+        Label {
+            text: qsTr("Voice: %1").arg(statusBar.viewModel.voiceReadinessStatus)
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontSmall
             visible: !statusBar.compact

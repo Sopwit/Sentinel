@@ -2382,6 +2382,17 @@ public:
     Q_PROPERTY(bool dndEnabled READ dndEnabled WRITE setDndEnabled NOTIFY dndEnabledChanged)
     bool dndEnabled() const;
     void setDndEnabled(bool enabled);
+    Q_PROPERTY(QString globalErrorMessage READ globalErrorMessage NOTIFY globalErrorChanged)
+    QString globalErrorMessage() const;
+    Q_PROPERTY(QString globalErrorSeverity READ globalErrorSeverity NOTIFY globalErrorChanged)
+    QString globalErrorSeverity() const;
+    Q_PROPERTY(bool globalErrorVisible READ globalErrorVisible NOTIFY globalErrorChanged)
+    bool globalErrorVisible() const;
+    Q_PROPERTY(QString globalErrorActionLabel READ globalErrorActionLabel NOTIFY globalErrorChanged)
+    QString globalErrorActionLabel() const;
+    void setGlobalError(const QString& message, const QString& severity = QStringLiteral("Error"),
+                        const QString& actionLabel = QString());
+    Q_INVOKABLE void dismissGlobalError();
     Q_INVOKABLE bool snoozeNotification(const QString& notificationId, int minutes);
     Q_INVOKABLE bool unsnoozeNotification(const QString& notificationId);
     Q_INVOKABLE bool isChannelMuted(const QString& category) const;
@@ -2464,6 +2475,7 @@ signals:
     void updateDownloadFinished(bool success, const QString& filePath);
     void selectedCloudProviderChanged();
     void cloudApiKeysChanged();
+    void globalErrorChanged();
 
 private:
     static QString normalizedPageOrDefault(const QString& page);
@@ -2512,6 +2524,10 @@ private:
     QString downloadPath_;
     qint64 lastBytesReceived_ = 0;
     QElapsedTimer downloadElapsed_;
+    QString globalErrorMessage_;
+    QString globalErrorSeverity_ = QStringLiteral("Error");
+    bool globalErrorVisible_ = false;
+    QString globalErrorActionLabel_;
     QSet<QString> notifiedIds_;
     QString lastAgentStatus_;
     QString lastNotifiedCategory_;

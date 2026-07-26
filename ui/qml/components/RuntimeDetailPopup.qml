@@ -1,7 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
-import QtQuick.Shapes
 import Sentinel.Desktop
 
 SentinelOverlayModal {
@@ -82,6 +82,16 @@ SentinelOverlayModal {
     contentItem: Item {
         anchors.fill: parent
 
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: "#000000"
+            shadowOpacity: 0.08
+            shadowBlur: 0.08
+            shadowHorizontalOffset: 1
+            shadowVerticalOffset: 1
+        }
+
         ColumnLayout {
             anchors.fill: parent
             spacing: 0
@@ -118,6 +128,16 @@ SentinelOverlayModal {
                                 color: SentinelTheme.withAlpha("#3b82f6", 0.08)
                                 border.color: SentinelTheme.withAlpha("#3b82f6", 0.24)
                                 border.width: 1
+
+                                layer.enabled: true
+                                layer.effect: MultiEffect {
+                                    shadowEnabled: true
+                                    shadowColor: "#000000"
+                                    shadowOpacity: 0.06
+                                    shadowBlur: 0.06
+                                    shadowHorizontalOffset: 1
+                                    shadowVerticalOffset: 1
+                                }
 
                                 RowLayout {
                                     id: badgeRow
@@ -382,6 +402,16 @@ SentinelOverlayModal {
                             color: SentinelTheme.surfaceSoft
                             border.color: SentinelTheme.separator
                             border.width: 1
+
+                            layer.enabled: true
+                            layer.effect: MultiEffect {
+                                shadowEnabled: true
+                                shadowColor: "#000000"
+                                shadowOpacity: 0.06
+                                shadowBlur: 0.06
+                                shadowHorizontalOffset: 1
+                                shadowVerticalOffset: 1
+                            }
 
                             GridLayout {
                                 id: instGrid

@@ -155,32 +155,31 @@ QJsonArray defaultNotifications() {
         item.insert(QStringLiteral("read"), false);
         notifications.append(item);
     };
-    add(QStringLiteral("updates-manual"), QStringLiteral("Updates"),
-        QStringLiteral("Manual updates only"),
-        QStringLiteral("Sentinel checks for updates only after explicit user action."), true);
-    add(QStringLiteral("security-privacy"), QStringLiteral("Security"),
-        QStringLiteral("Privacy guarantees active"),
-        QStringLiteral("No telemetry, hidden uploads, silent updates, or hidden cloud activation."),
+    add(QStringLiteral("updates-manual"), QCoreApplication::translate("DesktopShellViewModel", "Updates"),
+        QCoreApplication::translate("DesktopShellViewModel", "Manual updates only"),
+        QCoreApplication::translate("DesktopShellViewModel", "Sentinel checks for updates only after explicit user action."), true);
+    add(QStringLiteral("security-privacy"), QCoreApplication::translate("DesktopShellViewModel", "Security"),
+        QCoreApplication::translate("DesktopShellViewModel", "Privacy guarantees active"),
+        QCoreApplication::translate("DesktopShellViewModel", "No telemetry, hidden uploads, silent updates, or hidden cloud activation."),
         true);
-    add(QStringLiteral("tasks-controlled"), QStringLiteral("Tasks"),
-        QStringLiteral("Controlled tasks require approval"),
-        QStringLiteral("Task execution advances only through visible user actions."), false);
-    add(QStringLiteral("brain-local"), QStringLiteral("Brain"),
-        QStringLiteral("Brain data stays local"),
-        QStringLiteral("Memory, chat history, Local RAG metadata, and diagnostics remain local."),
+    add(QStringLiteral("tasks-controlled"), QCoreApplication::translate("DesktopShellViewModel", "Tasks"),
+        QCoreApplication::translate("DesktopShellViewModel", "Controlled tasks require approval"),
+        QCoreApplication::translate("DesktopShellViewModel", "Task execution advances only through visible user actions."), false);
+    add(QStringLiteral("brain-local"), QCoreApplication::translate("DesktopShellViewModel", "Brain"),
+        QCoreApplication::translate("DesktopShellViewModel", "Brain data stays local"),
+        QCoreApplication::translate("DesktopShellViewModel", "Memory, chat history, Local RAG metadata, and diagnostics remain local."),
         false);
-    add(QStringLiteral("workspace-active"), QStringLiteral("Workspace"),
-        QStringLiteral("Workspace scope selected"),
-        QStringLiteral("Workspace metadata does not grant folder scans or filesystem authority."),
+    add(QStringLiteral("workspace-active"), QCoreApplication::translate("DesktopShellViewModel", "Workspace"),
+        QCoreApplication::translate("DesktopShellViewModel", "Workspace scope selected"),
+        QCoreApplication::translate("DesktopShellViewModel", "Workspace metadata does not grant folder scans or filesystem authority."),
         false);
-    add(QStringLiteral("models-local"), QStringLiteral("Models"),
-        QStringLiteral("Local provider selected"),
-        QStringLiteral("Ollama can execute foreground local chat; other local endpoints require "
-                       "configuration."),
+    add(QStringLiteral("models-local"), QCoreApplication::translate("DesktopShellViewModel", "Models"),
+        QCoreApplication::translate("DesktopShellViewModel", "Local provider selected"),
+        QCoreApplication::translate("DesktopShellViewModel", "Ollama can execute foreground local chat; other local endpoints require configuration."),
         false);
-    add(QStringLiteral("models-role"), QStringLiteral("Models"),
-        QStringLiteral("Model Role Changed"),
-        QStringLiteral("Shown when the user changes local model-role metadata."), false);
+    add(QStringLiteral("models-role"), QCoreApplication::translate("DesktopShellViewModel", "Models"),
+        QCoreApplication::translate("DesktopShellViewModel", "Model Role Changed"),
+        QCoreApplication::translate("DesktopShellViewModel", "Shown when the user changes local model-role metadata."), false);
     return notifications;
 }
 
@@ -5567,6 +5566,38 @@ bool DesktopShellViewModel::confirmUpdateDownload() {
     }
     emit nativeExperienceChanged();
     return opened;
+}
+
+QString DesktopShellViewModel::globalErrorMessage() const {
+    return globalErrorMessage_;
+}
+
+QString DesktopShellViewModel::globalErrorSeverity() const {
+    return globalErrorSeverity_;
+}
+
+bool DesktopShellViewModel::globalErrorVisible() const {
+    return globalErrorVisible_;
+}
+
+QString DesktopShellViewModel::globalErrorActionLabel() const {
+    return globalErrorActionLabel_;
+}
+
+void DesktopShellViewModel::setGlobalError(const QString& message, const QString& severity,
+                                           const QString& actionLabel) {
+    globalErrorMessage_ = message;
+    globalErrorSeverity_ = severity;
+    globalErrorActionLabel_ = actionLabel;
+    globalErrorVisible_ = !message.isEmpty();
+    emit globalErrorChanged();
+}
+
+void DesktopShellViewModel::dismissGlobalError() {
+    if (!globalErrorVisible_) return;
+    globalErrorVisible_ = false;
+    globalErrorMessage_.clear();
+    emit globalErrorChanged();
 }
 
 void DesktopShellViewModel::relaunchApplication() {

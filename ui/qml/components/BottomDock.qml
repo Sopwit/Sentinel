@@ -43,8 +43,8 @@ Item {
         anchors.fill: dockPill
         offset: Qt.vector2d(0, SentinelTheme.lightTheme ? 3 : 6)
         color: SentinelTheme.lightTheme
-               ? Qt.rgba(0, 0, 0, 0.20)
-               : Qt.rgba(0, 0, 0, 0.55)
+               ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.20)
+               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.55)
         blur: 4.0
         radius: dockPill.radius
         spread: 0.0
@@ -183,21 +183,96 @@ Item {
                         spacing: 3
                         anchors.centerIn: parent
 
-                        // Icon
-                        Label {
+                        // Premium vector icon (Canvas-drawn)
+                        Item {
                             Layout.alignment: Qt.AlignHCenter
-                            text: tabBtn.modelData.icon
-                            font.pixelSize: tabBtn.active ? 18 : 16
-                            color: tabBtn.active
-                                 ? SentinelTheme.accent
-                                 : (tabBtn.hovered
+                            width: 22
+                            height: 22
+
+                            readonly property color iconColor: tabBtn.active
+                                ? SentinelTheme.accent
+                                : (tabBtn.hovered
                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.80)
                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.45))
 
-                            Behavior on color {
-                                ColorAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.standard }
+                            Canvas {
+                                id: iconCanvas
+                                anchors.fill: parent
+                                antialiasing: true
+                                property string iconId: tabBtn.modelData.id
+                                property var c: parent.iconColor
+
+                                onPaint: {
+                                    var ctx = getContext("2d")
+                                    ctx.reset()
+                                    ctx.fillStyle = Qt.rgba(c.r, c.g, c.b, c.a)
+                                    ctx.strokeStyle = Qt.rgba(c.r, c.g, c.b, c.a)
+                                    ctx.lineWidth = 1.8
+                                    ctx.lineJoin = "round"
+                                    ctx.lineCap = "round"
+
+                                    var cx = width / 2
+                                    var cy = height / 2
+
+                                    if (iconId === "Dashboard") {
+                                        ctx.beginPath()
+                                        ctx.moveTo(cx, 3)
+                                        ctx.lineTo(3, cy + 2)
+                                        ctx.stroke()
+                                        ctx.beginPath()
+                                        ctx.moveTo(cx, 3)
+                                        ctx.lineTo(width - 3, cy + 2)
+                                        ctx.stroke()
+                                        ctx.beginPath()
+                                        ctx.rect(cx - 6, cy + 2, 12, 10)
+                                        ctx.stroke()
+                                        ctx.beginPath()
+                                        ctx.rect(cx - 3, cy + 5, 6, 7)
+                                        ctx.fill()
+                                    } else if (iconId === "Models") {
+                                        var r = 2.5
+                                        ctx.beginPath()
+                                        ctx.arc(cx - 6, cy - 5, r, 0, Math.PI * 2)
+                                        ctx.fill()
+                                        ctx.beginPath()
+                                        ctx.arc(cx + 6, cy - 5, r, 0, Math.PI * 2)
+                                        ctx.fill()
+                                        ctx.beginPath()
+                                        ctx.arc(cx, cy, r, 0, Math.PI * 2)
+                                        ctx.fill()
+                                        ctx.beginPath()
+                                        ctx.arc(cx - 6, cy + 5, r, 0, Math.PI * 2)
+                                        ctx.fill()
+                                        ctx.beginPath()
+                                        ctx.arc(cx + 6, cy + 5, r, 0, Math.PI * 2)
+                                        ctx.fill()
+                                        ctx.beginPath()
+                                        ctx.moveTo(cx - 6, cy - 5)
+                                        ctx.lineTo(cx, cy)
+                                        ctx.stroke()
+                                        ctx.beginPath()
+                                        ctx.moveTo(cx + 6, cy - 5)
+                                        ctx.lineTo(cx, cy)
+                                        ctx.stroke()
+                                        ctx.beginPath()
+                                        ctx.moveTo(cx - 6, cy + 5)
+                                        ctx.lineTo(cx, cy)
+                                        ctx.stroke()
+                                        ctx.beginPath()
+                                        ctx.moveTo(cx + 6, cy + 5)
+                                        ctx.lineTo(cx, cy)
+                                        ctx.stroke()
+                                    }
+                                }
+
+                                Connections {
+                                    target: tabBtn
+                                    function onActiveChanged() { iconCanvas.requestPaint() }
+                                    function onHoveredChanged() { iconCanvas.requestPaint() }
+                                }
                             }
-                            Behavior on font.pixelSize {
+
+                            Behavior on scale {
                                 NumberAnimation { duration: MotionTokens.fast }
                             }
                         }

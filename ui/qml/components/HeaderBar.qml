@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -26,6 +27,16 @@ ShellPanel {
     color: "transparent"
     border.color: "transparent"
     showBrackets: false
+
+    layer.enabled: true
+    layer.effect: MultiEffect {
+        shadowEnabled: true
+        shadowColor: "#000000"
+        shadowOpacity: 0.08
+        shadowBlur: 0.08
+        shadowHorizontalOffset: 1
+        shadowVerticalOffset: 1
+    }
 
     GridLayout {
         anchors.fill: parent

@@ -1,5 +1,6 @@
 import QtQuick
-import QtQuick.Controls
+import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -20,6 +21,15 @@ Rectangle {
         if (mouseArea.containsMouse) return SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.15)
         if (notifData && !notifData.read && !notifData.archived) return SentinelTheme.withAlpha(SentinelTheme.accent, 0.06)
         return "transparent"
+    }
+
+    layer.enabled: mouseArea.containsMouse
+    layer.effect: MultiEffect {
+        shadowEnabled: true
+        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+        shadowVerticalOffset: 1
+        shadowBlur: 0.06
+        shadowOpacity: 1.0
     }
 
     Behavior on color { ColorAnimation { duration: MotionTokens.fast } }

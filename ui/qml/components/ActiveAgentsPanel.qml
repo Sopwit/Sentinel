@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -18,7 +19,7 @@ ShellPanel {
         spacing: SentinelTheme.spaceMd
 
         Label {
-            text: "AGENT METADATA"
+            text: qsTr("AGENT METADATA")
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontTiny
             font.letterSpacing: 2.4
@@ -40,6 +41,18 @@ ShellPanel {
                 width: agentList.width
                 height: 48
                 spacing: SentinelTheme.spaceMd
+
+                HoverHandler { id: agHover }
+
+                layer.enabled: agHover.hovered
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: "#000000"
+                    shadowOpacity: 0.12
+                    shadowBlur: 0.08
+                    shadowHorizontalOffset: 1
+                    shadowVerticalOffset: 1
+                }
 
                 Rectangle {
                     Layout.preferredWidth: 34
@@ -75,7 +88,7 @@ ShellPanel {
                         }
 
                         Label {
-                            text: "metadata"
+                            text: qsTr("metadata")
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontTiny
                         }

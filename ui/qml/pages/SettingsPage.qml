@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Dialogs
 import QtQuick.Shapes
@@ -12,7 +13,7 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property string uiSelfCheck: "modal-ready rail-scroll-sync voice-path-wrap agent-runtime bottom-safe-scroll"
-    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "System Sync"]
+    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey"]
     readonly property var notificationPolicies: ["Disabled", "Important Only", "All", "Custom"]
     readonly property var updatePolicies: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
@@ -158,6 +159,15 @@ Item {
                                     ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.24)
                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
 
+                    layer.enabled: searchInput.activeFocus
+                    layer.effect: MultiEffect {
+                        shadowEnabled: true
+                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                        shadowVerticalOffset: 1
+                        shadowBlur: 0.08
+                        shadowOpacity: 1.0
+                    }
+
                     RowLayout {
                         anchors.fill: parent
                         anchors.leftMargin: SentinelTheme.spaceSm
@@ -205,7 +215,7 @@ Item {
                                 radius: width/2
                                 color: clearSearchBtn.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08) : "transparent"
                             }
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: "×"
                                 font.pixelSize: SentinelTheme.fontBody
                                 color: SentinelTheme.textMuted
@@ -273,12 +283,31 @@ Item {
                                 }
 
                                 background: Rectangle {
+                                    id: navBtnBg
                                     radius: SentinelTheme.radiusMd
                                     color: navButton.active
                                            ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
                                            : navButton.hovered
                                              ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
                                              : "transparent"
+
+                                    layer.enabled: navButton.active || navButton.hovered
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: navButton.active
+                                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+                                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                        shadowVerticalOffset: navButton.active ? 2 : 1
+                                        shadowBlur: 0.10
+                                        shadowOpacity: 1.0
+                                    }
+
+                                    Behavior on color {
+                                        ColorAnimation {
+                                            duration: MotionTokens.fast
+                                            easing.type: MotionTokens.standard
+                                        }
+                                    }
 
                                     Rectangle {
                                         width: navButton.active ? 3 : 0
@@ -288,6 +317,13 @@ Item {
                                         anchors.leftMargin: SentinelTheme.spaceSm
                                         anchors.verticalCenter: parent.verticalCenter
                                         color: settingsPage.modeAccent
+
+                                        Behavior on width {
+                                            NumberAnimation {
+                                                duration: MotionTokens.fast
+                                                easing.type: MotionTokens.enter
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -373,7 +409,7 @@ Item {
                                 displayText: settingsPage.viewModel.languageDisplayName(currentValue)
                                 onActivated: settingsPage.viewModel.appLanguage = currentValue
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: languageCombo.displayText
@@ -505,7 +541,7 @@ Item {
                                 displayText: currentIndex >= 0 ? currentText : settingsPage.viewModel.themeName
                                 onActivated: settingsPage.viewModel.themeName = currentText
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: themeCombo.displayText
@@ -584,10 +620,20 @@ Item {
                                 }
 
                                 popup.background: Rectangle {
+                                    id: comboPopupBg
                                     radius: SentinelTheme.radiusLg
                                     color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
                                     border.color: SentinelTheme.withAlpha(settingsPage.modeAccent, 0.20)
                                     border.width: 1
+
+                                    layer.enabled: true
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.20)
+                                        shadowVerticalOffset: 4
+                                        shadowBlur: 0.20
+                                        shadowOpacity: 1.0
+                                    }
                                 }
                             }
                         }
@@ -621,6 +667,7 @@ Item {
                                     onClicked: settingsPage.viewModel.themeName = modelData
 
                                     background: Rectangle {
+                                        id: themeCardBg
                                         radius: SentinelTheme.radiusLg
                                         color: themeCard.isSelected 
                                                ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.12)
@@ -628,11 +675,23 @@ Item {
                                                  ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
                                                  : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
                                         border.color: themeCard.isSelected
-                                                      ? settingsPage.modeAccent
-                                                      : themeCard.hovered
-                                                        ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.30)
-                                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                                       ? settingsPage.modeAccent
+                                                       : themeCard.hovered
+                                                         ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.30)
+                                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                                         border.width: themeCard.isSelected ? 2 : 1
+
+                                        layer.enabled: themeCard.isSelected || themeCard.hovered
+                                        layer.effect: MultiEffect {
+                                            shadowEnabled: true
+                                            shadowColor: themeCard.isSelected
+                                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.18)
+                                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                            shadowVerticalOffset: themeCard.isSelected ? 3 : 1
+                                            shadowBlur: 0.12
+                                            shadowOpacity: 1.0
+                                        }
+
                                         Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
                                         Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
 
@@ -648,12 +707,12 @@ Item {
                                             clip: true
                                             
                                             color: {
-                                                if (modelData === "Liquid Glass Light") return "#f5f6f8"
-                                                if (modelData === "Liquid Glass Dark" || modelData === "Midnight Blue") return "#0b0f19"
-                                                if (modelData === "Sentinel Classic") return "#121212"
-                                                if (modelData === "Aurora Teal") return "#04141a"
-                                                if (modelData === "Graphite Grey") return "#1a1a1a"
-                                                return "#141721" // System Sync
+                                                if (modelData === "Liquid Glass Light") return "#f4f6f9"
+                                                if (modelData === "Liquid Glass Dark" || modelData === "Sentinel Classic") return "#0d1117"
+                                                if (modelData === "Midnight Blue") return "#0a0f1e"
+                                                if (modelData === "Aurora Teal") return "#0f1a1c"
+                                                if (modelData === "Graphite Grey") return "#121416"
+                                                return "#141721"
                                             }
 
                                             Rectangle {
@@ -664,12 +723,11 @@ Item {
                                                 anchors.bottom: parent.bottom
                                                 anchors.margins: 6
                                                 color: {
-                                                    if (modelData === "Liquid Glass Light") return "#3b82f6"
-                                                    if (modelData === "Liquid Glass Dark") return "#60a5fa"
-                                                    if (modelData === "Sentinel Classic") return "#9b51e0"
-                                                    if (modelData === "Midnight Blue") return "#2f80ed"
-                                                    if (modelData === "Aurora Teal") return "#00b4d8"
-                                                    if (modelData === "Graphite Grey") return "#828282"
+                                                    if (modelData === "Liquid Glass Light") return "#4f8ef7"
+                                                    if (modelData === "Liquid Glass Dark" || modelData === "Sentinel Classic") return "#7eb8ff"
+                                                    if (modelData === "Midnight Blue") return "#8fb4ff"
+                                                    if (modelData === "Aurora Teal") return "#7de0b9"
+                                                    if (modelData === "Graphite Grey") return "#d0d7dc"
                                                     return settingsPage.modeAccent
                                                 }
                                             }
@@ -679,8 +737,8 @@ Item {
                                                 anchors.top: parent.top
                                                 anchors.margins: 6
                                                 spacing: 4
-                                                Rectangle { width: 16; height: 4; radius: 2; color: themeCard.isSelected ? "#ffffff" : "#888888" }
-                                                Rectangle { width: 8; height: 4; radius: 2; color: themeCard.isSelected ? "#ffffff" : "#666666" }
+                                                Rectangle { width: 16; height: 4; radius: 2; color: themeCard.isSelected ? "#ffffff" : SentinelTheme.textMuted }
+                                                Rectangle { width: 8; height: 4; radius: 2; color: themeCard.isSelected ? "#ffffff" : SentinelTheme.textPlaceholder }
                                             }
                                         }
 
@@ -892,7 +950,7 @@ Item {
                                             hoverEnabled: true
                                             focusPolicy: Qt.NoFocus
 
-                                            contentItem: Text {
+                                            contentItem: Label {
                                                 text: densityBtn.modelData
                                                 color: (settingsPage.viewModel.uiDensity === densityBtn.modelData)
                                                        ? SentinelTheme.textPrimary
@@ -1008,7 +1066,7 @@ Item {
                                     }
                                 }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: runtimeProviderCombo.displayText
@@ -1122,7 +1180,7 @@ Item {
                                     }
                                 }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: settingsModeCombo.displayText
@@ -1163,7 +1221,7 @@ Item {
                                     highlighted: settingsModeCombo.currentIndex === index
                                     hoverEnabled: true
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: settingsModeOption.modelData
                                         color: settingsModeOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontBody
@@ -1404,7 +1462,7 @@ Item {
                                     : settingsPage.viewModel.selectedLocalModelStatus + qsTr(" / No model selected")
                                 onActivated: settingsPage.viewModel.selectedLocalModel = currentText
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: modelCombo.displayText
@@ -1674,7 +1732,7 @@ Item {
                                         settingsPage.viewModel.selectedLocalModel = defaultModels[idx]
                                 }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: cloudDistributionCombo.displayText
@@ -1887,7 +1945,7 @@ Item {
                                     settingsPage.viewModel.selectedLocalModel = model[idx]
                                 }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: cloudModelCombo.displayText
@@ -2138,7 +2196,7 @@ Item {
                                             let v = settingsPage.viewModel.localInferenceTimeoutMs - 1000
                                             settingsPage.viewModel.localInferenceTimeoutMs = Math.max(1000, v)
                                         }
-                                        contentItem: Text { text: "−"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
+                                        contentItem: Label { text: "−"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
                                         background: Rectangle { color: parent.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"; radius: SentinelTheme.radiusSm }
                                     }
 
@@ -2166,7 +2224,7 @@ Item {
                                             let v = settingsPage.viewModel.localInferenceTimeoutMs + 1000
                                             settingsPage.viewModel.localInferenceTimeoutMs = Math.min(300000, v)
                                         }
-                                        contentItem: Text { text: "+"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
+                                        contentItem: Label { text: "+"; color: SentinelTheme.textMuted; horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.pixelSize: SentinelTheme.fontBody }
                                         background: Rectangle { color: parent.hovered ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06) : "transparent"; radius: SentinelTheme.radiusSm }
                                     }
                                 }
@@ -2232,7 +2290,7 @@ Item {
                                     implicitWidth: 16
                                     implicitHeight: 16
                                     radius: 8
-                                    color: tempSlider.pressed ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.8) : "#ffffff"
+                                    color: tempSlider.pressed ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.8) : SentinelTheme.surface
                                     border.color: settingsPage.modeAccent
                                     border.width: 1
                                 }
@@ -2292,7 +2350,7 @@ Item {
                                     implicitWidth: 16
                                     implicitHeight: 16
                                     radius: 8
-                                    color: topPSlider.pressed ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.8) : "#ffffff"
+                                    color: topPSlider.pressed ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.8) : SentinelTheme.surface
                                     border.color: settingsPage.modeAccent
                                     border.width: 1
                                 }
@@ -2353,7 +2411,7 @@ Item {
                                     implicitWidth: 16
                                     implicitHeight: 16
                                     radius: 8
-                                    color: maxTokensSlider.pressed ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.8) : "#ffffff"
+                                    color: maxTokensSlider.pressed ? SentinelTheme.withAlpha(settingsPage.modeAccent, 0.8) : SentinelTheme.surface
                                     border.color: settingsPage.modeAccent
                                     border.width: 1
                                 }
@@ -2611,7 +2669,7 @@ Item {
                                 currentIndex: settingsPage.viewModel.selectedTtsEngine === "Kokoro" ? 1 : 0
                                 onActivated: (index) => settingsPage.viewModel.selectedTtsEngine = index === 1 ? "Kokoro" : "Piper"
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: ttsEngineCombo.currentText
@@ -2721,7 +2779,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -2763,7 +2821,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -2806,7 +2864,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -2864,7 +2922,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -2904,7 +2962,7 @@ Item {
                                     flat: true
                                     hoverEnabled: true
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: "📁"
                                         font.pixelSize: 12
                                         horizontalAlignment: Text.AlignHCenter
@@ -3120,7 +3178,7 @@ Item {
                                         settingsPage.viewModel.defaultPermissionPolicyState = settingsPage.viewModel.permissionPolicyStateLabels[index]
                                 }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: permissionStateCombo.displayText
@@ -3146,7 +3204,7 @@ Item {
                                     text: modelData
                                     highlighted: permissionStateCombo.highlightedIndex === index
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: permissionStateOption.text
                                         color: permissionStateOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
@@ -3253,7 +3311,7 @@ Item {
                                         settingsPage.viewModel.selectedSkillProfile = settingsPage.viewModel.skillProfileIds[index]
                                 }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: profileCombo.displayText
@@ -3279,7 +3337,7 @@ Item {
                                     text: modelData
                                     highlighted: profileCombo.highlightedIndex === index
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: profileOption.text
                                         color: profileOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
@@ -3414,7 +3472,7 @@ Item {
                                         settingsPage.viewModel.selectedWorkspaceId = settingsPage.viewModel.workspaceIds[index]
                                 }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: workspaceCombo.displayText
@@ -3440,7 +3498,7 @@ Item {
                                     text: modelData
                                     highlighted: workspaceCombo.highlightedIndex === index
 
-                                    contentItem: Text {
+                                    contentItem: Label {
                                         text: workspaceOption.text
                                         color: workspaceOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                         font.pixelSize: SentinelTheme.fontSmall
@@ -3497,7 +3555,7 @@ Item {
                             currentIndex: settingsPage.notificationPolicies.indexOf(settingsPage.viewModel.notificationPolicy)
                             onActivated: (index) => { settingsPage.viewModel.notificationPolicy = currentText }
 
-                            contentItem: Text {
+                            contentItem: Label {
                                 leftPadding: SentinelTheme.spaceMd
                                 rightPadding: SentinelTheme.space2Xl
                                 text: notificationPolicyCombo.currentText
@@ -3707,7 +3765,7 @@ Item {
                                 currentIndex: settingsPage.updatePolicies.indexOf(settingsPage.viewModel.updateCheckPolicy)
                                 onActivated: (index) => { settingsPage.viewModel.updateCheckPolicy = currentText }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     leftPadding: SentinelTheme.spaceMd
                                     rightPadding: SentinelTheme.space2Xl
                                     text: updatePolicyCombo.currentText

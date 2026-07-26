@@ -1,6 +1,7 @@
 import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Dialogs
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -289,7 +290,7 @@ ShellPanel {
                         if (homeChat.compact)
                             homeChat.conversationSidebarOpen = false
                     }
-                    contentItem: Text {
+                    contentItem: Label {
                         text: "+"
                         color: SentinelTheme.textPrimary
                         font.pixelSize: 20
@@ -312,7 +313,7 @@ ShellPanel {
                     ToolTip.visible: hovered
                     ToolTip.text: qsTr("Show sidebar")
                     onClicked: homeChat.conversationSidebarOpen = true
-                    contentItem: Text {
+                    contentItem: Label {
                         text: "\u2630"
                         color: SentinelTheme.textPrimary
                         font.pixelSize: 14
@@ -354,7 +355,7 @@ ShellPanel {
                             promptInput.clear()
                             homePromptInput.clear()
                         }
-                        contentItem: Text {
+                        contentItem: Label {
                             text: "+"
                             color: SentinelTheme.textPrimary
                             font.pixelSize: 18
@@ -380,6 +381,14 @@ ShellPanel {
                         border.color: conversationSearch.activeFocus
                                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.55)
                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                        layer.enabled: conversationSearch.activeFocus
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                            shadowVerticalOffset: 1
+                            shadowBlur: 0.08
+                            shadowOpacity: 1.0
+                        }
 
                         TextInput {
                             id: conversationSearch
@@ -419,7 +428,7 @@ ShellPanel {
                             ToolTip.text: qsTr("Search")
                             enabled: conversationSearch.text.trim().length > 0
                             onClicked: homeChat.viewModel.searchConversation(conversationSearch.text)
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: "\uD83D\uDD0D"
                                 font.pixelSize: 11
                                 color: searchIconBtn.enabled ? SentinelTheme.textMuted : SentinelTheme.textPlaceholder
@@ -442,7 +451,7 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Hide sidebar")
                         onClicked: homeChat.conversationSidebarOpen = false
-                        contentItem: Text {
+                        contentItem: Label {
                             text: "\u2715"
                             color: SentinelTheme.textMuted
                             font.pixelSize: 11
@@ -470,7 +479,7 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Recent chats")
                         onClicked: homeChat.sidebarView = "recent"
-                        contentItem: Text {
+                        contentItem: Label {
                             text: qsTr("Recent")
                             color: homeChat.sidebarView === "recent" ? homeChat.modeAccent : SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontTiny
@@ -497,7 +506,7 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Pinned chats")
                         onClicked: homeChat.sidebarView = (homeChat.sidebarView === "pinned" ? "recent" : "pinned")
-                        contentItem: Text {
+                        contentItem: Label {
                             text: "\uD83D\uDCCC"
                             font.pixelSize: 12
                             color: homeChat.sidebarView === "pinned" ? homeChat.modeAccent : SentinelTheme.textMuted
@@ -523,7 +532,7 @@ ShellPanel {
                         ToolTip.visible: hovered
                         ToolTip.text: qsTr("Archived chats")
                         onClicked: homeChat.sidebarView = (homeChat.sidebarView === "archived" ? "recent" : "archived")
-                        contentItem: Text {
+                        contentItem: Label {
                             text: "\uD83D\uDDC4"
                             font.pixelSize: 12
                             color: homeChat.sidebarView === "archived" ? homeChat.modeAccent : SentinelTheme.textMuted
@@ -641,7 +650,7 @@ ShellPanel {
                             opacity: (convItemBtn.hovered || convItemMenuBtn.hovered || convItemMenu.opened || convItem.active) ? 1.0 : 0.45
                             onClicked: convItemMenu.popup()
 
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: "⋮"
                                 color: convItemMenuBtn.hovered ? homeChat.modeAccent : SentinelTheme.textPrimary
                                 font.pixelSize: 14
@@ -705,14 +714,32 @@ ShellPanel {
                     }
 
                     // Empty state
-                    Label {
+                    Rectangle {
                         anchors.centerIn: parent
                         visible: conversationList.count === 0
-                        text: homeChat.sidebarView === "pinned" ? qsTr("No pinned chats")
-                              : homeChat.sidebarView === "archived" ? qsTr("No archived chats")
-                              : qsTr("No chats yet")
-                        color: SentinelTheme.textPlaceholder
-                        font.pixelSize: SentinelTheme.fontSmall
+                        implicitWidth: noChatsLabel.implicitWidth + SentinelTheme.spaceLg
+                        implicitHeight: noChatsLabel.implicitHeight + SentinelTheme.spaceSm
+                        radius: SentinelTheme.radiusSm
+                        color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
+                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                            shadowVerticalOffset: 1
+                            shadowBlur: 0.06
+                            shadowOpacity: 1.0
+                        }
+
+                        Label {
+                            id: noChatsLabel
+                            anchors.centerIn: parent
+                            text: homeChat.sidebarView === "pinned" ? qsTr("No pinned chats")
+                                  : homeChat.sidebarView === "archived" ? qsTr("No archived chats")
+                                  : qsTr("No chats yet")
+                            color: SentinelTheme.textPlaceholder
+                            font.pixelSize: SentinelTheme.fontSmall
+                        }
                     }
                 }
             }
@@ -756,7 +783,7 @@ ShellPanel {
                         
                         scale: greetingMouse.containsMouse ? 1.012 : 1.0
                         Behavior on scale {
-                            NumberAnimation { duration: 150; easing.type: Easing.OutQuad }
+                            NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.enter }
                         }
 
                         MouseArea {
@@ -889,9 +916,17 @@ ShellPanel {
                                                   ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.28)
                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
                                     border.width: 1
+                                    layer.enabled: sugMouse.containsMouse || sugMouse.pressed
+                                    layer.effect: MultiEffect {
+                                        shadowEnabled: true
+                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+                                        shadowVerticalOffset: 2
+                                        shadowBlur: 0.10
+                                        shadowOpacity: 1.0
+                                    }
 
-                                    Behavior on color { ColorAnimation { duration: 120 } }
-                                    Behavior on border.color { ColorAnimation { duration: 120 } }
+                                    Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
 
                                     MouseArea {
                                         id: sugMouse
@@ -953,6 +988,14 @@ ShellPanel {
                         border.color: InteractionTokens.borderColor(homePromptInput.activeFocus, homeComposerMouse.containsMouse,
                                                                      false, homeChat.modeAccent)
                         implicitHeight: Math.max(76 * homeChat.resolutionScale, homeComposerMainLayout.implicitHeight + SentinelTheme.spaceSm * homeChat.resolutionScale)
+                        layer.enabled: true
+                        layer.effect: MultiEffect {
+                            shadowEnabled: true
+                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                            shadowVerticalOffset: 1
+                            shadowBlur: 0.08
+                            shadowOpacity: 1.0
+                        }
 
                         MouseArea {
                             id: homeComposerMouse
@@ -1009,7 +1052,7 @@ ShellPanel {
                                         hoverEnabled: true
                                         onClicked: homeChat.viewModel.clearAttachments()
                                         background: Rectangle { color: "transparent" }
-                                        contentItem: Text {
+                                        contentItem: Label {
                                             text: "×"
                                             color: homeRemoveAttachmentBtn.hovered ? SentinelTheme.error : SentinelTheme.textMuted
                                             font.pixelSize: SentinelTheme.fontBody
@@ -1035,7 +1078,7 @@ ShellPanel {
                                 ToolTip.text: qsTr("Add or Actions")
                                 onClicked: homeAttachMenu.open()
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     text: homeAttachButton.text
                                     color: SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
@@ -1182,7 +1225,7 @@ ShellPanel {
                                     }
                                 }
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     text: homeMicButton.recordingActive ? "🔴" : "🎤"
                                     font.pixelSize: 16 * homeChat.resolutionScale
                                     horizontalAlignment: Text.AlignHCenter
@@ -1258,7 +1301,7 @@ ShellPanel {
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.availableModes[currentIndex] : qsTr("Mode")
 
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: homeModeSelector.displayText
                                 color: homeModeSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1308,7 +1351,7 @@ ShellPanel {
                                 highlighted: homeModeSelector.highlightedIndex === index
                                 hoverEnabled: true
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     text: modelData
                                     color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1345,7 +1388,7 @@ ShellPanel {
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.selectableRuntimeProviderLabels[currentIndex] : homeChat.viewModel.activeRuntimeProviderLabel
 
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: homeProviderSelector.displayText
                                 color: homeProviderSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1394,7 +1437,7 @@ ShellPanel {
                                 highlighted: homeProviderSelector.highlightedIndex === index
                                 hoverEnabled: true
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     text: modelData
                                     color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1444,7 +1487,7 @@ ShellPanel {
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.ollamaModelNames[currentIndex] : (homeChat.viewModel.selectedLocalModel !== "" ? homeChat.viewModel.selectedLocalModel : qsTr("No model"))
 
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: homeModelSelector.displayText
                                 color: (homeModelSelector.currentIndex >= 0 || homeChat.viewModel.selectedLocalModel !== "") ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1493,7 +1536,7 @@ ShellPanel {
                                 highlighted: homeModelSelector.highlightedIndex === index
                                 hoverEnabled: true
 
-                                contentItem: Text {
+                                contentItem: Label {
                                     text: modelData + " (" + homeChat.localProviderLabel + ")"
                                     color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
@@ -1563,6 +1606,9 @@ ShellPanel {
             boundsMovement: Flickable.StopAtBounds
             maximumFlickVelocity: 2200
             flickDeceleration: 5200
+            activeFocusOnTab: true
+            keyNavigationWraps: true
+            focusPolicy: Qt.StrongFocus
             bottomMargin: SentinelTheme.spaceXl + SentinelTheme.spaceMd
             ScrollBar.vertical: ScrollBar {
                 id: recentMessagesScrollBar
@@ -1623,12 +1669,27 @@ ShellPanel {
                                                       messageRole === "user" ? 0.13 : 0.07)
                 opacity: 1.0
                 scale: 1.0
+                layer.enabled: msgArea.containsMouse
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                    shadowVerticalOffset: 1
+                    shadowBlur: 0.08
+                    shadowOpacity: 1.0
+                }
 
                 Behavior on color {
                     ColorAnimation {
                         duration: MotionTokens.normal
                         easing.type: MotionTokens.standard
                     }
+                }
+
+                MouseArea {
+                    id: msgArea
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    acceptedButtons: Qt.NoButton
                 }
 
                 Rectangle {
@@ -1676,7 +1737,7 @@ ShellPanel {
                                 messageBody.deselect()
                             }
 
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: copyButton.text
                                 color: copyButton.enabled ? SentinelTheme.textMuted : SentinelTheme.textPlaceholder
                                 font.pixelSize: SentinelTheme.fontTiny
@@ -1705,7 +1766,7 @@ ShellPanel {
                             focusPolicy: Qt.StrongFocus
                             onClicked: messageMenu.popup()
 
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: messageMenuButton.text
                                 color: SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontSmall
@@ -1848,6 +1909,14 @@ ShellPanel {
             border.color: InteractionTokens.borderColor(promptInput.activeFocus, composerMouse.containsMouse,
                                                          false, homeChat.modeAccent)
             implicitHeight: Math.max(76 * homeChat.resolutionScale, composerMainLayout.implicitHeight + SentinelTheme.spaceSm * homeChat.resolutionScale)
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                shadowVerticalOffset: 1
+                shadowBlur: 0.08
+                shadowOpacity: 1.0
+            }
 
             MouseArea {
                 id: composerMouse
@@ -1904,7 +1973,7 @@ ShellPanel {
                             hoverEnabled: true
                             onClicked: homeChat.viewModel.clearAttachments()
                             background: Rectangle { color: "transparent" }
-                            contentItem: Text {
+                            contentItem: Label {
                                 text: "×"
                                 color: removeAttachmentBtn.hovered ? SentinelTheme.error : SentinelTheme.textMuted
                                 font.pixelSize: SentinelTheme.fontBody
@@ -1930,7 +1999,7 @@ ShellPanel {
                     ToolTip.text: qsTr("Add or Actions")
                     onClicked: attachMenu.open()
 
-                    contentItem: Text {
+                    contentItem: Label {
                         text: attachButton.text
                         color: SentinelTheme.textPrimary
                         font.pixelSize: SentinelTheme.fontControl * homeChat.resolutionScale
@@ -2104,7 +2173,7 @@ ShellPanel {
                         }
                     }
 
-                    contentItem: Text {
+                    contentItem: Label {
                         text: micButton.recordingActive ? "🔴" : "🎤"
                         font.pixelSize: 16 * homeChat.resolutionScale
                         horizontalAlignment: Text.AlignHCenter
@@ -2203,6 +2272,14 @@ ShellPanel {
             radius: SentinelTheme.radiusLg
             color: SentinelTheme.backgroundRaised
             border.color: SentinelTheme.withAlpha(SentinelTheme.warning, 0.35)
+            layer.enabled: true
+            layer.effect: MultiEffect {
+                shadowEnabled: true
+                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+                shadowVerticalOffset: 2
+                shadowBlur: 0.10
+                shadowOpacity: 1.0
+            }
         }
 
         contentItem: ColumnLayout {
@@ -2286,7 +2363,7 @@ ShellPanel {
                         hoverEnabled: true
                         onClicked: deleteConfirmDialog.close()
 
-                        contentItem: Text {
+                        contentItem: Label {
                             text: deleteCancelBtn.text
                             color: SentinelTheme.textPrimary
                             font.pixelSize: SentinelTheme.fontSmall
@@ -2315,7 +2392,7 @@ ShellPanel {
                             homeChat.pendingDeleteConversationTitle = ""
                         }
 
-                        contentItem: Text {
+                        contentItem: Label {
                             text: deleteConfirmBtn.text
                             color: SentinelTheme.warning
                             font.pixelSize: SentinelTheme.fontSmall

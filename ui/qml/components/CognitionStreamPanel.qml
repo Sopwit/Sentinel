@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Controls.Basic
+import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -22,7 +23,7 @@ ShellPanel {
             Layout.fillWidth: true
 
             Label {
-                text: "COGNITION STREAM"
+                text: qsTr("COGNITION STREAM")
                 color: SentinelTheme.textMuted
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 2.4
@@ -33,7 +34,7 @@ ShellPanel {
             }
 
             Label {
-                text: "LIVE / " + stream.viewModel.agentActivityCount
+                text: qsTr("LIVE / %1").arg(stream.viewModel.agentActivityCount)
                 color: SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.72)
                 font.pixelSize: SentinelTheme.fontTiny
                 font.letterSpacing: 1.8
@@ -54,6 +55,18 @@ ShellPanel {
                 required property string modelData
                 Layout.fillWidth: true
                 spacing: SentinelTheme.spaceMd
+
+                HoverHandler { id: evHover }
+
+                layer.enabled: evHover.hovered
+                layer.effect: MultiEffect {
+                    shadowEnabled: true
+                    shadowColor: "#000000"
+                    shadowOpacity: 0.10
+                    shadowBlur: 0.06
+                    shadowHorizontalOffset: 1
+                    shadowVerticalOffset: 1
+                }
 
                 Label {
                     Layout.preferredWidth: 58
