@@ -184,12 +184,12 @@ int main(int argc, char* argv[]) {
     parser.addVersionOption();
 
     QCommandLineOption verboseOption(
-        {QStringLiteral("v"), QStringLiteral("verbose")},
+        {QStringLiteral("verbose")},
         QCoreApplication::translate("main", "Enable verbose diagnostic logging in terminal."));
     parser.addOption(verboseOption);
 
     QCommandLineOption quietOption(
-        {QStringLiteral("q"), QStringLiteral("quiet")},
+        {QStringLiteral("quiet")},
         QCoreApplication::translate("main", "Suppress diagnostic terminal output."));
     parser.addOption(quietOption);
 
