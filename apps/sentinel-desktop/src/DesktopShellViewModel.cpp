@@ -5720,7 +5720,24 @@ QStringList DesktopShellViewModel::mutedChannelNames() const {
 }
 
 void DesktopShellViewModel::playNotificationSound() {
+#if defined(Q_OS_LINUX)
+    if (QFile::exists(QStringLiteral("/usr/share/sounds/freedesktop/stereo/message-new-instant.oga")))
+        QProcess::startDetached(QStringLiteral("canberra-gtk-play"),
+                                {QStringLiteral("--file"),
+                                 QStringLiteral("/usr/share/sounds/freedesktop/stereo/message-new-instant.oga")});
+    else
+        QApplication::beep();
+#elif defined(Q_OS_MACOS)
+    if (QFile::exists(QStringLiteral("/System/Library/Sounds/Pop.aiff")))
+        QProcess::startDetached(QStringLiteral("afplay"),
+                                {QStringLiteral("/System/Library/Sounds/Pop.aiff")});
+    else
+        QApplication::beep();
+#elif defined(Q_OS_WIN)
     QApplication::beep();
+#else
+    QApplication::beep();
+#endif
 }
 
 QVariantMap DesktopShellViewModel::cursorScreenGeometry() {
