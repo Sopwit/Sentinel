@@ -3989,6 +3989,14 @@ void DesktopShellViewModel::setUpdateCheckPolicy(const QString& policy) {
     settings_.setUpdateCheckPolicy(policy);
 }
 
+QString DesktopShellViewModel::updateCheckUrl() const {
+    return settings_.updateCheckUrl();
+}
+
+void DesktopShellViewModel::setUpdateCheckUrl(const QString& url) {
+    settings_.setUpdateCheckUrl(url);
+}
+
 void DesktopShellViewModel::setupBackgroundUpdateCheck() {
     if (!updateCheckTimer_) {
         updateCheckTimer_ = new QTimer(this);
@@ -5394,8 +5402,7 @@ bool DesktopShellViewModel::checkForUpdates() {
     }
 
     const QString userAgent = QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version());
-    QNetworkRequest request(
-        QUrl(QStringLiteral("https://api.github.com/repos/Sopwit/Sentinel/releases/latest")));
+    QNetworkRequest request(QUrl(settings_.updateCheckUrl()));
     request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
 
     QNetworkReply* reply = networkManager_->get(request);

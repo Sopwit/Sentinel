@@ -3851,6 +3851,13 @@ Item {
                             Layout.fillWidth: true
                         }
 
+                        InfoRow {
+                            compact: true
+                            label: qsTr("Status")
+                            value: settingsPage.viewModel.updateWorkflowState
+                            Layout.fillWidth: true
+                        }
+
                         RowLayout {
                             Layout.fillWidth: true
                             spacing: SentinelTheme.spaceMd
@@ -3950,13 +3957,23 @@ Item {
                             }
 
                             SentinelButton {
-                                text: qsTr("Check for Updates")
-                                enabled: true
+                                text: settingsPage.viewModel.updateWorkflowState.startsWith("Checking")
+                                      ? qsTr("Checking...")
+                                      : settingsPage.viewModel.updateWorkflowState.startsWith("Available")
+                                        ? qsTr("Download")
+                                        : qsTr("Check for Updates")
+                                enabled: !settingsPage.viewModel.updateWorkflowState.startsWith("Checking")
                                 Layout.preferredWidth: 160
                                 onClicked: {
-                                    settingsPage.viewModel.checkForUpdates()
-                                    if (typeof root !== "undefined" && root.openUpdateModal) {
-                                        root.openUpdateModal()
+                                    if (settingsPage.viewModel.updateWorkflowState.startsWith("Available")) {
+                                        if (typeof root !== "undefined" && root.openUpdateModal) {
+                                            root.openUpdateModal()
+                                        }
+                                    } else {
+                                        settingsPage.viewModel.checkForUpdates()
+                                        if (typeof root !== "undefined" && root.openUpdateModal) {
+                                            root.openUpdateModal()
+                                        }
                                     }
                                 }
                             }
@@ -4215,12 +4232,46 @@ Item {
                             }
                         }
                     }
+                            }
+                        }
+
+                        // Update URL (advanced)
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceXs
+                            visible: settingsPage.viewModel.developerModeEnabled
+
+                            Label {
+                                text: qsTr("Update URL (advanced)")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                font.bold: true
+                            }
+
+                            Rectangle {
+                                Layout.fillWidth: true
+                                implicitHeight: 36
+                                radius: SentinelTheme.radiusMd
+                                color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
+
+                                TextInput {
+                                    anchors.fill: parent
+                                    anchors.leftMargin: SentinelTheme.spaceMd
+                                    anchors.rightMargin: SentinelTheme.spaceMd
+                                    verticalAlignment: Text.AlignVCenter
+                                    text: settingsPage.viewModel.updateCheckUrl
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    selectByMouse: true
+                                    clip: true
+                                    onEditingFinished: settingsPage.viewModel.updateCheckUrl = text
+                                }
+                            }
+                        }
+
+                    }
                 }
-
-            }
-        }
-    }
-
     SentinelOverlayModal {
         id: clearMemoryDialog
 
