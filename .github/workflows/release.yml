@@ -44,6 +44,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev clang-format fonts-noto-core rpm
 
+      - name: Install Windows dependencies
+        if: matrix.os == 'windows-2022'
+        run: choco install ninja
+
       - name: Set up Developer Command Prompt (Windows)
         if: matrix.os == 'windows-2022'
         shell: pwsh
@@ -70,6 +74,7 @@ jobs:
         with:
           version: '6.7.*'
           arch: ${{ matrix.qt-arch }}
+          modules: 'qtmultimedia'
           cache: true
 
       - name: Configure CMake
