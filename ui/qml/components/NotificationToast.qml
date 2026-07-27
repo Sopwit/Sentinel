@@ -78,34 +78,6 @@ Item {
 
             if (viewModel && viewModel.dndEnabled) return
             if (viewModel && viewModel.isChannelMuted && viewModel.isChannelMuted(latest.category)) return
-
-            // Skip if this notification ID has already been shown
-            if (shownIds[latest.id]) return
-
-            for (let i = 0; i < toastQueue.count; ++i) {
-                if (toastQueue.get(i).id === latest.id) return
-            }
-
-            shownIds[latest.id] = true
-            trimShownIds()
-
-            if (toastQueue.count >= maxVisible) {
-                toastQueue.remove(toastQueue.count - 1, 1)
-            }
-
-            toastQueue.insert(0, {
-                id: latest.id,
-                category: latest.category,
-                title: latest.title,
-                body: latest.body,
-                priority: latest.priority || "Normal",
-                timestamp: latest.timestamp || 0
-            })
-
-            if (viewModel && viewModel.playNotificationSound) {
-                viewModel.playNotificationSound()
-            }
-            dismissTimer.start()
         }
     }
 

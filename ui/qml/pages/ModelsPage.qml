@@ -1028,17 +1028,11 @@ Item {
                                               : searchField.hovered
                                                 ? SentinelTheme.withAlpha(modelsPage.modeAccent, 0.24)
                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                                border.width: 1
-
-                                layer.enabled: searchField.activeFocus || searchField.hovered
-                                layer.effect: MultiEffect {
-                                    shadowEnabled: true
-                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
-                                    shadowVerticalOffset: 1
-                                    shadowBlur: 0.08
-                                    shadowOpacity: 1.0
-                                }
-                            }
+                                 border.width: 1
+                                 Behavior on border.color {
+                                     ColorAnimation { duration: 120; easing.type: Easing.InOutQuad }
+                                 }
+                             }
                         }
 
                         // Sort controls / Refresh button / count chips
@@ -1176,15 +1170,6 @@ Item {
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.25)
                                 border.width: 1
 
-                                layer.enabled: true
-                                layer.effect: MultiEffect {
-                                    shadowEnabled: true
-                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                                    shadowVerticalOffset: 1
-                                    shadowBlur: 0.04
-                                    shadowOpacity: 1.0
-                                }
-
                                 Label {
                                     id: installedCountLbl
                                     anchors.verticalCenter: parent.verticalCenter
@@ -1206,15 +1191,6 @@ Item {
                                 color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.22)
                                 border.width: 1
-
-                                layer.enabled: true
-                                layer.effect: MultiEffect {
-                                    shadowEnabled: true
-                                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                                    shadowVerticalOffset: 1
-                                    shadowBlur: 0.04
-                                    shadowOpacity: 1.0
-                                }
 
                                 Label {
                                     id: countLabel
@@ -1459,7 +1435,7 @@ Item {
                         }
                         radius: SentinelTheme.radiusXl
 
-                        color: SentinelTheme.backgroundBase
+                        color: SentinelTheme.backgroundRaised
 
                         border.color: modelDelegate.effectivelyInstalled
                                     ? SentinelTheme.withAlpha(SentinelTheme.success, cardArea.containsMouse ? 0.45 : 0.28)
@@ -1470,29 +1446,11 @@ Item {
                                           : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)))
                         border.width: 1
 
-                        layer.enabled: cardArea.containsMouse
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: SentinelTheme.lightTheme
-                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.14)
-                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.35)
-                            shadowVerticalOffset: SentinelTheme.lightTheme ? 2 : 4
-                            shadowBlur: 0.15
-                            shadowOpacity: 1.0
-                        }
-
                         Behavior on color {
                             ColorAnimation { duration: 140; easing.type: Easing.InOutQuad }
                         }
                         Behavior on border.color {
                             ColorAnimation { duration: 140; easing.type: Easing.InOutQuad }
-                        }
-
-                        // Frosted inner layer
-                        Rectangle {
-                            anchors.fill: parent; anchors.margins: 1
-                            radius: parent.radius - 1
-                            color: SentinelTheme.withAlpha(SentinelTheme.panel, 0.40)
                         }
 
                         MouseArea {
@@ -1515,7 +1473,7 @@ Item {
                                 Layout.fillWidth: true
                                 spacing: SentinelTheme.spaceSm
 
-                                Rectangle {
+                                 Rectangle {
                                     visible: !modelDelegate.effectivelyInstalled
                                     implicitHeight: 20
                                     implicitWidth: badgeLbl.implicitWidth + 12
@@ -1524,15 +1482,6 @@ Item {
                                     border.color: SentinelTheme.withAlpha(badgeColorValue, 0.32)
                                     border.width: 1
                                     readonly property color badgeColorValue: modelDelegate.modelData.badgeColor
-
-                                    layer.enabled: true
-                                    layer.effect: MultiEffect {
-                                        shadowEnabled: true
-                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                                        shadowVerticalOffset: 1
-                                        shadowBlur: 0.04
-                                        shadowOpacity: 1.0
-                                    }
 
                                     Label {
                                         id: badgeLbl
@@ -1552,15 +1501,6 @@ Item {
                                     color: SentinelTheme.withAlpha(SentinelTheme.success, 0.14)
                                     border.color: SentinelTheme.withAlpha(SentinelTheme.success, 0.30)
                                     border.width: 1
-
-                                    layer.enabled: true
-                                    layer.effect: MultiEffect {
-                                        shadowEnabled: true
-                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                                        shadowVerticalOffset: 1
-                                        shadowBlur: 0.04
-                                        shadowOpacity: 1.0
-                                    }
 
                                     RowLayout {
                                         anchors.centerIn: parent

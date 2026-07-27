@@ -367,35 +367,6 @@ ApplicationWindow {
         enabled: !root.viewModel.dndEnabled
     }
 
-    // Prevent replaying sound for the same notification on every keystroke
-    property var notifSoundShownIds: ({})
-
-    Connections {
-        target: root.viewModel
-        function onNativeExperienceChanged() {
-            var lastNotif = root.viewModel.notificationFilteredSummaries
-            if (!lastNotif || lastNotif.length === 0) return
-            try {
-                var parsed = JSON.parse(lastNotif[0])
-                if (!parsed) return
-                if (notifSoundShownIds[parsed.id]) return
-                notifSoundShownIds[parsed.id] = true
-                // Trim to 200 entries to prevent unbounded growth
-                var keys = Object.keys(notifSoundShownIds)
-                if (keys.length > 200)
-                    notifSoundShownIds = ({})
-
-                if (parsed.priority === "Critical") {
-                    soundManager.playError()
-                } else if (parsed.category === "Updates") {
-                    soundManager.playSuccess()
-                } else {
-                    soundManager.playNotification()
-                }
-            } catch(e) {}
-        }
-    }
-
     SplashScreen {
         id: splashScreen
         modeName: root.viewModel.currentModeName
@@ -493,14 +464,6 @@ ApplicationWindow {
         }
     }
 
-    // ── Notification Toast Layer ──────────────────────────────────────────────
-    NotificationToast {
-        id: notifToast
-        anchors.fill: parent
-        viewModel: root.viewModel
-        z: 9998
-    }
-
     // ── Notification Center Panel ─────────────────────────────────────────────
     Popup {
         id: notifCenterPopup
@@ -578,6 +541,7 @@ ApplicationWindow {
             root.lastPrimaryPage = root.viewModel.currentPage
         }
         function onUpdateCheckCompleted(available, version, releaseNotes, downloadUrl, assetSize) {
+            if (!available) return
             updateModal.availableVersion = version
             if (releaseNotes && releaseNotes.length > 0) {
                 updateModal.releaseNotesText = releaseNotes
@@ -586,13 +550,8 @@ ApplicationWindow {
                 var sizeMB = (assetSize / (1024 * 1024)).toFixed(1)
                 updateModal.packageSizeText = sizeMB + " MB"
             }
-            if (available) {
-                updateModal.updateState = "available"
-                updateModal.open()
-            } else {
-                updateModal.updateState = "upToDate"
-                updateModal.open()
-            }
+            updateModal.updateState = "available"
+            updateModal.open()
         }
         function onUpdateDownloadProgressChanged(bytesReceived, bytesTotal, speedBytesPerSec) {
             updateModal.updateState = "downloading"

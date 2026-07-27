@@ -317,7 +317,7 @@ SentinelOverlayModal {
                                         font.family: SentinelTheme.fontFamily
                                         color: SentinelTheme.textPrimary
                                         wrapMode: Text.WordWrap
-                                        textFormat: TextEdit.Markdown
+                                        textFormat: Text.MarkdownText
                                         Layout.fillWidth: true
                                     }
 

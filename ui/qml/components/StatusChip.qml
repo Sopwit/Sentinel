@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Effects
+import Sentinel.Desktop
 
 Rectangle {
     id: statusChip

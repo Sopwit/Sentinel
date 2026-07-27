@@ -40,7 +40,21 @@ ShellPanel {
     property string pendingDeleteConversationTitle: ""   // "recent" | "pinned" | "archived"
     readonly property real resolutionScale: Math.max(0.7, Math.min(1.4, homeChat.height / 860.0))
     property bool showSuggestions: true
+    property bool _suggestionsDismissed: false
     property var activeGreeting: ({ title: qsTr("Merhaba, Operator"), subtitle: isCloud ? qsTr("Sentinel bulut yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?") : qsTr("Sentinel tüm yerel yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?") })
+
+    Timer {
+        id: dismissSuggestionsTimer
+        interval: 5000
+        running: showSuggestions && !_suggestionsDismissed
+        onTriggered: homeChat.showSuggestions = false
+    }
+
+    onShowSuggestionsChanged: {
+        if (showSuggestions) {
+            _suggestionsDismissed = false
+        }
+    }
 
     radius: SentinelTheme.radiusPanel
     color: "transparent"
@@ -237,6 +251,7 @@ ShellPanel {
             conversationSidebarOpen = false
         }
         selectRandomGreeting();
+        suggestionGrid.shuffleSuggestions();
     }
 
     RowLayout {
@@ -280,7 +295,7 @@ ShellPanel {
                     ToolTip.text: qsTr("New Chat")
                     onClicked: {
                         homeChat.viewModel.createConversation(qsTr("New Chat"))
-                        homeChat.inChatMode = true
+                        homeChat.forceChatView = true
                         promptInput.clear()
                         homePromptInput.clear()
                         if (homeChat.compact)
@@ -346,7 +361,7 @@ ShellPanel {
                         ToolTip.text: qsTr("New Chat")
                         onClicked: {
                             homeChat.viewModel.createConversation(qsTr("New Chat"))
-                            homeChat.inChatMode = true
+                            homeChat.forceChatView = true
                             homeChat.conversationSidebarOpen = !homeChat.compact
                             promptInput.clear()
                             homePromptInput.clear()
@@ -595,7 +610,7 @@ ShellPanel {
                             hoverEnabled: true
                             onClicked: {
                                 homeChat.viewModel.switchConversation(convItem.convId)
-                                homeChat.inChatMode = true
+                                homeChat.forceChatView = true
                                 if (homeChat.compact)
                                     homeChat.conversationSidebarOpen = false
                                 homeChat.scrollToLatest(true)
@@ -784,6 +799,8 @@ ShellPanel {
                             hoverEnabled: true
                             cursorShape: Qt.PointingHandCursor
                             onClicked: {
+                                homeChat._suggestionsDismissed = true;
+                                dismissSuggestionsTimer.stop();
                                 homeChat.showSuggestions = !homeChat.showSuggestions;
                                 if (homeChat.showSuggestions) {
                                     suggestionGrid.shuffleSuggestions();
@@ -975,18 +992,17 @@ ShellPanel {
                         Layout.alignment: Qt.AlignHCenter
                         radius: SentinelTheme.radiusMd * homeChat.resolutionScale
                         color: homePromptInput.activeFocus
-                               ? SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.82)
-                               : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.68)
+                               ? SentinelTheme.backgroundRaised
+                               : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.95)
                         border.color: InteractionTokens.borderColor(homePromptInput.activeFocus, homeComposerMouse.containsMouse,
                                                                      false, homeChat.modeAccent)
                         implicitHeight: Math.max(76 * homeChat.resolutionScale, homeComposerMainLayout.implicitHeight + SentinelTheme.spaceSm * homeChat.resolutionScale)
-                        layer.enabled: true
-                        layer.effect: MultiEffect {
-                            shadowEnabled: true
-                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                            shadowVerticalOffset: 1
-                            shadowBlur: 0.08
-                            shadowOpacity: 1.0
+
+                        Behavior on color {
+                            ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard }
+                        }
+                        Behavior on border.color {
+                            ColorAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.standard }
                         }
 
                         MouseArea {
@@ -1892,18 +1908,17 @@ ShellPanel {
             Layout.alignment: Qt.AlignHCenter
             radius: SentinelTheme.radiusMd * homeChat.resolutionScale
             color: promptInput.activeFocus
-                   ? SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.82)
-                   : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.68)
+                   ? SentinelTheme.backgroundRaised
+                   : SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.95)
             border.color: InteractionTokens.borderColor(promptInput.activeFocus, composerMouse.containsMouse,
                                                          false, homeChat.modeAccent)
             implicitHeight: Math.max(76 * homeChat.resolutionScale, composerMainLayout.implicitHeight + SentinelTheme.spaceSm * homeChat.resolutionScale)
-            layer.enabled: true
-            layer.effect: MultiEffect {
-                shadowEnabled: true
-                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                shadowVerticalOffset: 1
-                shadowBlur: 0.08
-                shadowOpacity: 1.0
+
+            Behavior on color {
+                ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard }
+            }
+            Behavior on border.color {
+                ColorAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.standard }
             }
 
             MouseArea {

@@ -1261,6 +1261,10 @@ public:
     QString credentialExecutionStatus() const;
     QString ollamaEndpoint() const;
     void setOllamaEndpoint(const QString& endpoint);
+    QString lmStudioEndpoint() const;
+    void setLmStudioEndpoint(const QString& endpoint);
+    QString llamaCppEndpoint() const;
+    void setLlamaCppEndpoint(const QString& endpoint);
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
@@ -2155,6 +2159,8 @@ private:
     QList<OllamaModelSummary> cachedOllamaModels_;
     QList<OllamaModelSummary> cachedLMStudioModels_;
     QList<OllamaModelSummary> cachedLlamaCppModels_;
+    QString lmStudioEndpoint_;
+    QString llamaCppEndpoint_;
     QList<OllamaModelSummary> cachedOpenAiCompatibleLocalModels_;
     QList<OllamaModelSummary> cachedCloudProviderModels_;
     QString cachedCloudProviderOriginId_;

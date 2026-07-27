@@ -3,6 +3,7 @@ import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts
 import QtQuick.Window
+import Sentinel.Desktop
 
 Item {
     id: root

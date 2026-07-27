@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts
+import Sentinel.Desktop
 
 Item {
     id: root
@@ -35,7 +36,7 @@ Item {
 
     Behavior on implicitHeight {
         NumberAnimation {
-            duration: MotionTokens.duration(MotionTokens.medium, root.modeName)
+            duration: MotionTokens.duration(MotionTokens.normal, root.modeName)
             easing.type: MotionTokens.enter
         }
     }

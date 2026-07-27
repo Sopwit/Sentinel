@@ -312,7 +312,7 @@ ShellPanel {
                         property bool muted: viewModel ? viewModel.isChannelMuted(modelData) : false
                         text: root.categoryIcon(modelData) + " " + modelData + (muted ? " \uD83D\uDD07" : "")
                         flat: true
-                        font.pixelSize: SentinelTheme.fontExtraSmall
+                        font.pixelSize: SentinelTheme.fontTiny
                         highlighted: !muted
                         Accessible.name: modelData + " channel, " + (muted ? "muted" : "active")
                         onClicked: {
@@ -409,7 +409,7 @@ ShellPanel {
                     Text {
                         anchors.centerIn: parent
                         text: model.groupCount
-                        font.pixelSize: SentinelTheme.fontExtraSmall
+                        font.pixelSize: SentinelTheme.fontTiny
                         font.bold: true
                         color: SentinelTheme.accent
                     }

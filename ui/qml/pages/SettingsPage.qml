@@ -9,11 +9,12 @@ import Sentinel.Desktop
 Item {
     id: settingsPage
     required property var viewModel
+    property var soundManager: null
     readonly property bool compact: width < 820
     readonly property int panelPadding: SentinelTheme.spaceLg
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property string uiSelfCheck: "modal-ready rail-scroll-sync voice-path-wrap agent-runtime bottom-safe-scroll"
-    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey"]
+    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "Solarized Light", "Nord Frost", "Dracula", "Tokyo Night"]
     readonly property var notificationPolicies: ["Disabled", "Important Only", "All", "Custom"]
     readonly property var updatePolicies: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
@@ -22,7 +23,7 @@ Item {
         { "key": "AI", "title": qsTr("AI Settings"), "keywords": ["ai", "models", "chat", "voice", "profiles", "provider", "temperature", "tokens", "streaming", "tts", "kokoro", "piper"] },
         { "key": "Memory", "title": qsTr("Memory & Knowledge"), "keywords": ["brain", "workspace", "memory", "recall", "context", "rag", "knowledge", "files"] },
         { "key": "Security", "title": qsTr("Security & Agents"), "keywords": ["permissions", "tools", "agents", "boundary", "policy", "gateway", "sandbox"] },
-        { "key": "System", "title": qsTr("System"), "keywords": ["notifications", "updates", "policy", "version"] }
+        { "key": "System", "title": qsTr("System"), "keywords": ["notifications", "updates", "policy", "version", "sound", "audio"] }
     ]
     property string activeCategory: "Interface"
     property string searchQuery: ""
@@ -677,17 +678,6 @@ Item {
                                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
                                         border.width: themeCard.isSelected ? 2 : 1
 
-                                        layer.enabled: themeCard.isSelected || themeCard.hovered
-                                        layer.effect: MultiEffect {
-                                            shadowEnabled: true
-                                            shadowColor: themeCard.isSelected
-                                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.18)
-                                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                            shadowVerticalOffset: themeCard.isSelected ? 3 : 1
-                                            shadowBlur: 0.12
-                                            shadowOpacity: 1.0
-                                        }
-
                                         Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
                                         Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
 
@@ -1019,24 +1009,17 @@ Item {
                                 implicitHeight: 36
                                 hoverEnabled: true
 
-                                // Prepend "Cloud API" to the viewModel list
-                                readonly property var cloudApiLabel: qsTr("Cloud API")
-                                readonly property var cloudApiId: "cloud-api"
-                                readonly property var combinedLabels: [cloudApiLabel].concat(
-                                    settingsPage.viewModel.selectableRuntimeProviderLabels)
-                                readonly property var combinedIds: [cloudApiId].concat(
-                                    settingsPage.viewModel.selectableRuntimeProviderIds)
-
-                                model: combinedLabels
+                                model: settingsPage.viewModel.selectableRuntimeProviderLabels
 
                                 currentIndex: {
                                     var sel = settingsPage.viewModel.selectedRuntimeProvider
-                                    var idx = combinedIds.indexOf(sel)
+                                    var ids = settingsPage.viewModel.selectableRuntimeProviderIds
+                                    var idx = ids.indexOf(sel)
                                     // Cloud-API variants (openai, claude, gemini, …) all map to Cloud API
                                     if (idx < 0 && (sel === "openai" || sel === "claude" ||
                                                     sel === "gemini" || sel === "deepseek" ||
                                                     sel === "groq"   || sel === "mistral")) {
-                                        idx = 0
+                                        idx = ids.indexOf("cloud-api")
                                     }
                                     return idx >= 0 ? idx : 0
                                 }
@@ -1045,8 +1028,9 @@ Item {
                                                                : settingsPage.viewModel.activeRuntimeProviderLabel
 
                                 onActivated: (index) => {
-                                    if (index >= 0 && index < combinedIds.length) {
-                                        var providerId = combinedIds[index]
+                                    var ids = settingsPage.viewModel.selectableRuntimeProviderIds
+                                    if (index >= 0 && index < ids.length) {
+                                        var providerId = ids[index]
                                         settingsPage.viewModel.selectedRuntimeProvider = providerId
 
                                         // Update endpoint to default for the selected provider
@@ -1286,11 +1270,144 @@ Item {
                                              opacity: autonomousSwitchInline.hovered ? 0.90 : 0.74
                                              Behavior on x { NumberAnimation { duration: MotionTokens.duration(MotionTokens.fast, settingsPage.viewModel.currentModeName) } }
                                          }
-                                     }
-                                 }
-                             }
+                }
+            }
+        }
 
-                             Item {
+        Item {
+            id: soundSection
+            width: parent.width
+            visible: settingsPage.activeCategory === "System"
+            height: implicitHeight
+            implicitHeight: visible ? settingsPage.sectionHeight(soundContent) : 0
+
+            ColumnLayout {
+                id: soundContent
+                x: settingsPage.panelPadding
+                y: settingsPage.panelPadding
+                width: parent.width - settingsPage.panelPadding * 2
+                spacing: SentinelTheme.spaceSm
+
+                SectionTitle {
+                    title: qsTr("Sound")
+                    subtitle: qsTr("Control application sound effects for notifications, errors, and success events.")
+                    Layout.fillWidth: true
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Enable Sound Effects")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                    }
+                    Switch {
+                        checked: settingsPage.soundManager ? settingsPage.soundManager.enabled : true
+                        onToggled: {
+                            if (settingsPage.soundManager)
+                                settingsPage.soundManager.enabled = checked
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Layout.topMargin: SentinelTheme.spaceXs
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Notification Volume")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                    }
+                    Label {
+                        text: settingsPage.soundManager
+                              ? Math.round(settingsPage.soundManager.notificationSound.volume * 100) + "%"
+                              : "40%"
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        horizontalAlignment: Text.AlignRight
+                        Layout.preferredWidth: 40
+                    }
+                    Slider {
+                        id: notifVolumeSlider
+                        Layout.preferredWidth: 120
+                        from: 0
+                        to: 100
+                        value: settingsPage.soundManager
+                               ? settingsPage.soundManager.notificationSound.volume * 100 : 40
+                        onMoved: {
+                            if (settingsPage.soundManager)
+                                settingsPage.soundManager.notificationSound.volume = value / 100
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Error Volume")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                    }
+                    Label {
+                        text: settingsPage.soundManager
+                              ? Math.round(settingsPage.soundManager.errorSound.volume * 100) + "%"
+                              : "50%"
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        horizontalAlignment: Text.AlignRight
+                        Layout.preferredWidth: 40
+                    }
+                    Slider {
+                        id: errorVolumeSlider
+                        Layout.preferredWidth: 120
+                        from: 0
+                        to: 100
+                        value: settingsPage.soundManager
+                               ? settingsPage.soundManager.errorSound.volume * 100 : 50
+                        onMoved: {
+                            if (settingsPage.soundManager)
+                                settingsPage.soundManager.errorSound.volume = value / 100
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        Layout.fillWidth: true
+                        text: qsTr("Success Volume")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                    }
+                    Label {
+                        text: settingsPage.soundManager
+                              ? Math.round(settingsPage.soundManager.successSound.volume * 100) + "%"
+                              : "30%"
+                        color: SentinelTheme.textMuted
+                        font.pixelSize: SentinelTheme.fontSmall
+                        horizontalAlignment: Text.AlignRight
+                        Layout.preferredWidth: 40
+                    }
+                    Slider {
+                        id: successVolumeSlider
+                        Layout.preferredWidth: 120
+                        from: 0
+                        to: 100
+                        value: settingsPage.soundManager
+                               ? settingsPage.soundManager.successSound.volume * 100 : 30
+                        onMoved: {
+                            if (settingsPage.soundManager)
+                                settingsPage.soundManager.successSound.volume = value / 100
+                        }
+                    }
+                }
+            }
+        }
+
+        Item {
                                  Layout.fillWidth: true
                              }
                          }
@@ -1836,25 +1953,11 @@ Item {
                                     font.pixelSize: SentinelTheme.fontBody
                                     font.bold: true
                                 }
-
-                                Item { Layout.fillWidth: true }
-
-                                StatusChip {
-                                    readonly property string activeKey: settingsPage.viewModel.selectedCloudProvider === "claude" ? settingsPage.viewModel.claudeApiKey :
-                                                                        settingsPage.viewModel.selectedCloudProvider === "gemini" ? settingsPage.viewModel.geminiApiKey :
-                                                                        settingsPage.viewModel.selectedCloudProvider === "deepseek" ? settingsPage.viewModel.deepseekApiKey :
-                                                                        settingsPage.viewModel.selectedCloudProvider === "groq" ? settingsPage.viewModel.groqApiKey :
-                                                                        settingsPage.viewModel.selectedCloudProvider === "mistral" ? settingsPage.viewModel.mistralApiKey :
-                                                                        settingsPage.viewModel.openAiApiKey
-                                    value: activeKey ? qsTr("Configured") : qsTr("Not Set")
-                                    accent: activeKey ? SentinelTheme.success : SentinelTheme.textMuted
-                                    selected: true
-                                }
                             }
 
                             Rectangle {
                                 Layout.fillWidth: true
-                                implicitHeight: 38
+                                implicitHeight: 36
                                 radius: SentinelTheme.radiusMd
                                 color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
                                 border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
