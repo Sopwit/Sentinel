@@ -1210,8 +1210,8 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
     QCOMPARE(controller->activeRuntimeLocalOnlySummary(), QStringLiteral("Local Only"));
     QVERIFY(controller->activeRuntimeModelLabel().contains(QStringLiteral("llama3.2")));
     QCOMPARE(controller->selectableRuntimeProviderIds(),
-             QStringList({QStringLiteral("ollama"), QStringLiteral("lm-studio"),
-                          QStringLiteral("llama-cpp-server"), QStringLiteral("cloud-api")}));
+             QStringList({QStringLiteral("ollama"),
+                          QStringLiteral("lm-studio"), QStringLiteral("llama-cpp-server"), QStringLiteral("cloud-api")}));
     QCOMPARE(controller->runtimeProviderCardSummaries().size(), 5);
     QVERIFY(controller->runtimeProviderCardSummaries()
                 .join(QStringLiteral("\n"))

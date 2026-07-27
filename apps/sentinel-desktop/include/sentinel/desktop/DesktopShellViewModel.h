@@ -11,9 +11,9 @@
 #include "sentinel/core/WorkspaceService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 
+#include <QObject>
 #include <QElapsedTimer>
 #include <QHash>
-#include <QObject>
 #include <QSet>
 #include <QString>
 #include <QStringList>
@@ -937,8 +937,8 @@ class DesktopShellViewModel final : public QObject {
                    setLocalInferenceTimeoutMs NOTIFY localInferenceChanged)
     Q_PROPERTY(double localInferenceTemperature READ localInferenceTemperature WRITE
                    setLocalInferenceTemperature NOTIFY localInferenceChanged)
-    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE setLocalInferenceTopP NOTIFY
-                   localInferenceChanged)
+    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE
+                   setLocalInferenceTopP NOTIFY localInferenceChanged)
     Q_PROPERTY(int localInferenceMaxTokens READ localInferenceMaxTokens WRITE
                    setLocalInferenceMaxTokens NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
@@ -1239,19 +1239,13 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY nativeExperienceChanged)
     Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY
                    nativeExperienceChanged)
-    Q_PROPERTY(
-        QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(
-        QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(
-        QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(QString deepseekApiKey READ deepseekApiKey WRITE setDeepseekApiKey NOTIFY
-                   cloudApiKeysChanged)
+    Q_PROPERTY(QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString deepseekApiKey READ deepseekApiKey WRITE setDeepseekApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(QString groqApiKey READ groqApiKey WRITE setGroqApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(
-        QString mistralApiKey READ mistralApiKey WRITE setMistralApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(QString selectedCloudProvider READ selectedCloudProvider WRITE
-                   setSelectedCloudProvider NOTIFY selectedCloudProviderChanged)
+    Q_PROPERTY(QString mistralApiKey READ mistralApiKey WRITE setMistralApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString selectedCloudProvider READ selectedCloudProvider WRITE setSelectedCloudProvider NOTIFY selectedCloudProviderChanged)
     Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationCenterSummaries READ notificationCenterSummaries NOTIFY
@@ -1262,14 +1256,13 @@ class DesktopShellViewModel final : public QObject {
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationFilteredSummaries READ notificationFilteredSummaries NOTIFY
                    nativeExperienceChanged)
-    Q_PROPERTY(
-        int unreadNotificationCount READ unreadNotificationCount NOTIFY nativeExperienceChanged)
+    Q_PROPERTY(int unreadNotificationCount READ unreadNotificationCount NOTIFY
+                   nativeExperienceChanged)
     Q_PROPERTY(QString notificationSearchQuery READ notificationSearchQuery WRITE
                    setNotificationSearchQuery NOTIFY nativeExperienceChanged)
     Q_PROPERTY(QString notificationCategoryFilter READ notificationCategoryFilter WRITE
                    setNotificationCategoryFilter NOTIFY nativeExperienceChanged)
-    Q_PROPERTY(bool notificationCenterVisible READ notificationCenterVisible WRITE
-                   setNotificationCenterVisible NOTIFY notificationCenterVisibleChanged)
+    Q_PROPERTY(bool notificationCenterVisible READ notificationCenterVisible WRITE setNotificationCenterVisible NOTIFY notificationCenterVisibleChanged)
     Q_PROPERTY(QString updateWorkflowState READ updateWorkflowState NOTIFY nativeExperienceChanged)
     Q_PROPERTY(QString lastAssetUrl READ lastAssetUrl NOTIFY nativeExperienceChanged)
     Q_PROPERTY(
@@ -2400,7 +2393,7 @@ public:
     Q_INVOKABLE void addNotification(const QString& category, const QString& title,
                                      const QString& body);
     Q_INVOKABLE void addNotificationWithPriority(const QString& category, const QString& title,
-                                                 const QString& body, const QString& priority);
+                                                  const QString& body, const QString& priority);
     Q_INVOKABLE bool removeNotificationById(const QString& notificationId);
     Q_INVOKABLE bool markAllNotificationsRead();
     Q_INVOKABLE void toggleNotificationCenter();
@@ -2495,10 +2488,8 @@ signals:
     void permissionPolicyChanged();
     void agentRuntimeChanged();
     void controlledAgentTasksChanged();
-    void updateCheckCompleted(bool available, const QString& version, const QString& releaseNotes,
-                              const QString& downloadUrl, qint64 assetSize = 0);
-    void updateDownloadProgressChanged(qint64 bytesReceived, qint64 bytesTotal,
-                                       double speedBytesPerSec);
+    void updateCheckCompleted(bool available, const QString& version, const QString& releaseNotes, const QString& downloadUrl, qint64 assetSize = 0);
+    void updateDownloadProgressChanged(qint64 bytesReceived, qint64 bytesTotal, double speedBytesPerSec);
     void updateDownloadFinished(bool success, const QString& filePath);
     void selectedCloudProviderChanged();
     void cloudApiKeysChanged();
