@@ -34,7 +34,7 @@ Item {
 
             Image {
                 Layout.alignment: Qt.AlignVCenter
-                source: ":/icons/dev.sentinel.Sentinel.png"
+                source: "qrc:/icons/dev.sentinel.Sentinel.png"
                 sourceSize.width: 20
                 sourceSize.height: 20
                 visible: status === Image.Ready

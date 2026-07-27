@@ -91,6 +91,11 @@ ApplicationWindow {
     }
 
     function openUpdateModal() {
+        if (updateModal.updateState !== "available"
+            && updateModal.updateState !== "downloading"
+            && updateModal.updateState !== "completed") {
+            updateModal.updateState = "checking"
+        }
         updateModal.open()
     }
 
@@ -541,17 +546,25 @@ ApplicationWindow {
             root.lastPrimaryPage = root.viewModel.currentPage
         }
         function onUpdateCheckCompleted(available, version, releaseNotes, downloadUrl, assetSize) {
-            if (!available) return
-            updateModal.availableVersion = version
-            if (releaseNotes && releaseNotes.length > 0) {
-                updateModal.releaseNotesText = releaseNotes
+            if (available) {
+                updateModal.availableVersion = version
+                if (releaseNotes && releaseNotes.length > 0) {
+                    updateModal.releaseNotesText = releaseNotes
+                }
+                if (assetSize > 0) {
+                    var sizeMB = (assetSize / (1024 * 1024)).toFixed(1)
+                    updateModal.packageSizeText = sizeMB + " MB"
+                }
+                updateModal.updateState = "available"
+            } else {
+                var wf = root.viewModel.updateWorkflowState
+                if (wf && wf.startsWith("Update check failed")) {
+                    updateModal.updateState = "error"
+                    updateModal.errorMessage = wf
+                } else {
+                    updateModal.updateState = "upToDate"
+                }
             }
-            if (assetSize > 0) {
-                var sizeMB = (assetSize / (1024 * 1024)).toFixed(1)
-                updateModal.packageSizeText = sizeMB + " MB"
-            }
-            updateModal.updateState = "available"
-            updateModal.open()
         }
         function onUpdateDownloadProgressChanged(bytesReceived, bytesTotal, speedBytesPerSec) {
             updateModal.updateState = "downloading"

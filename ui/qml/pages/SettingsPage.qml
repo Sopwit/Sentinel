@@ -1080,10 +1080,12 @@ Item {
 
                                 delegate: ItemDelegate {
                                     id: runtimeProviderOption
-                                    text: runtimeProviderCombo.combinedLabels[index] ?? modelData
+                                    required property string modelData
+                                    required property int index
+                                    text: runtimeProviderOption.modelData
                                     width: runtimeProviderCombo.width
                                     implicitHeight: 36
-                                    highlighted: runtimeProviderCombo.highlightedIndex === index
+                                    highlighted: runtimeProviderCombo.highlightedIndex === runtimeProviderOption.index
                                     hoverEnabled: true
 
                                     contentItem: RowLayout {
@@ -3299,9 +3301,11 @@ Item {
 
                                 delegate: ItemDelegate {
                                     id: permissionStateOption
+                                    required property string modelData
+                                    required property int index
                                     width: permissionStateCombo.width
-                                    text: modelData
-                                    highlighted: permissionStateCombo.highlightedIndex === index
+                                    text: permissionStateOption.modelData
+                                    highlighted: permissionStateCombo.highlightedIndex === permissionStateOption.index
 
                                     contentItem: Text {
                                         text: permissionStateOption.text
@@ -3432,9 +3436,11 @@ Item {
 
                                 delegate: ItemDelegate {
                                     id: profileOption
+                                    required property string modelData
+                                    required property int index
                                     width: profileCombo.width
-                                    text: modelData
-                                    highlighted: profileCombo.highlightedIndex === index
+                                    text: profileOption.modelData
+                                    highlighted: profileCombo.highlightedIndex === profileOption.index
 
                                     contentItem: Text {
                                         text: profileOption.text

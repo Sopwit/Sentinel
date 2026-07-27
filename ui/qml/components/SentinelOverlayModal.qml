@@ -1,6 +1,5 @@
 import QtQuick
 import QtQuick.Controls.Basic
-import QtQuick.Effects
 import Sentinel.Desktop
 
 Popup {
@@ -85,43 +84,7 @@ Popup {
         id: bgRec
         radius: SentinelTheme.radiusXl
         color: SentinelTheme.backgroundBase
-        border.color: SentinelTheme.lightTheme
-                    ? SentinelTheme.withAlpha(modal.accent, 0.25)
-                    : SentinelTheme.withAlpha(modal.accent, 0.25)
+        border.color: SentinelTheme.withAlpha(modal.accent, 0.25)
         border.width: 1
-
-        layer.enabled: true
-        layer.smooth: false
-        layer.effect: MultiEffect {
-            shadowEnabled: true
-            shadowColor: SentinelTheme.lightTheme
-                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.22)
-                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.65)
-            shadowVerticalOffset: SentinelTheme.lightTheme ? 4 : 8
-            shadowBlur: SentinelTheme.shadowBlurModal * 0.025
-            shadowOpacity: 1.0
-        }
-
-        Rectangle {
-            anchors.fill: parent
-            radius: parent.radius
-            opacity: 0.05
-            gradient: Gradient {
-                GradientStop { position: 0.0; color: modal.accent }
-                GradientStop { position: 1.0; color: "transparent" }
-            }
-        }
-
-        Rectangle {
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.topMargin: 1
-            anchors.leftMargin: SentinelTheme.radiusXl
-            anchors.rightMargin: SentinelTheme.radiusXl
-            height: 1
-            color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.95)
-            radius: 1
-        }
     }
 }

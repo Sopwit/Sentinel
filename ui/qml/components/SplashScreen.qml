@@ -47,7 +47,7 @@ Window {
 
             Image {
                 Layout.alignment: Qt.AlignHCenter
-                source: ":/icons/dev.sentinel.Sentinel.png"
+                source: "qrc:/icons/dev.sentinel.Sentinel.png"
                 sourceSize.width: 64
                 sourceSize.height: 64
                 visible: status === Image.Ready
