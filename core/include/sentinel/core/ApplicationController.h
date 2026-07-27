@@ -806,8 +806,8 @@ class ApplicationController final : public QObject {
                    setLocalInferenceTimeoutMs NOTIFY localInferenceChanged)
     Q_PROPERTY(double localInferenceTemperature READ localInferenceTemperature WRITE
                    setLocalInferenceTemperature NOTIFY localInferenceChanged)
-    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE
-                   setLocalInferenceTopP NOTIFY localInferenceChanged)
+    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE setLocalInferenceTopP NOTIFY
+                   localInferenceChanged)
     Q_PROPERTY(int localInferenceMaxTokens READ localInferenceMaxTokens WRITE
                    setLocalInferenceMaxTokens NOTIFY localInferenceChanged)
     Q_PROPERTY(bool localInferenceBusy READ localInferenceBusy NOTIFY localInferenceChanged)
