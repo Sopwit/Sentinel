@@ -17,7 +17,7 @@ jobs:
       - name: Install build tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev clang-format fonts-noto-core
+          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
@@ -40,5 +40,6 @@ jobs:
 
       - name: Format check
         run: |
+          pip3 install clang-format==18.1.8
           find apps core tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
             | xargs -0 clang-format --dry-run --Werror

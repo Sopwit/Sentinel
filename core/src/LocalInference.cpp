@@ -1070,8 +1070,8 @@ LocalInferenceResponse LMStudioLocalInferenceClient::infer(const LocalInferenceR
         if (!modelAvailable && !models.isEmpty()) {
             response.status = LocalInferenceStatus::ModelUnavailable;
             response.error = LocalInferenceError::ModelUnavailable;
-            response.summary =
-                QStringLiteral("Local inference request rejected: model is not loaded in LM Studio.");
+            response.summary = QStringLiteral(
+                "Local inference request rejected: model is not loaded in LM Studio.");
             response.traces.append(trace(2, QStringLiteral("Model Discovery"),
                                          QStringLiteral("Unavailable"), response.summary));
             return response;
@@ -1153,10 +1153,13 @@ QString LMStudioLocalInferenceClient::statusSummary() const {
 QUrl LMStudioLocalInferenceClient::endpointUrl(const QString& path) const {
     QUrl url = config_.endpoint;
     QString basePath = url.path();
-    if (basePath == QStringLiteral("/")) basePath.clear();
-    if (basePath.endsWith(QLatin1Char('/'))) basePath.chop(1);
+    if (basePath == QStringLiteral("/"))
+        basePath.clear();
+    if (basePath.endsWith(QLatin1Char('/')))
+        basePath.chop(1);
     QString addPath = path;
-    if (!addPath.startsWith(QLatin1Char('/'))) addPath.prepend(QLatin1Char('/'));
+    if (!addPath.startsWith(QLatin1Char('/')))
+        addPath.prepend(QLatin1Char('/'));
     url.setPath(basePath + addPath);
     url.setQuery(QString());
     url.setFragment(QString());
@@ -1193,15 +1196,21 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
             modelName = QStringLiteral("deepseek-chat");
         }
     } else if (providerHost.contains(QLatin1String("groq.com"))) {
-        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("llama")) && !modelName.startsWith(QLatin1String("mixtral")) && !modelName.startsWith(QLatin1String("deepseek")))) {
+        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("llama")) &&
+                                    !modelName.startsWith(QLatin1String("mixtral")) &&
+                                    !modelName.startsWith(QLatin1String("deepseek")))) {
             modelName = QStringLiteral("llama-3.3-70b-versatile");
         }
     } else if (providerHost.contains(QLatin1String("mistral.ai"))) {
-        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("mistral")) && !modelName.startsWith(QLatin1String("pixtral")) && !modelName.startsWith(QLatin1String("codestral")))) {
+        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("mistral")) &&
+                                    !modelName.startsWith(QLatin1String("pixtral")) &&
+                                    !modelName.startsWith(QLatin1String("codestral")))) {
             modelName = QStringLiteral("mistral-large-latest");
         }
     } else if (providerHost.contains(QLatin1String("openai.com"))) {
-        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("gpt-")) && !modelName.startsWith(QLatin1String("o1")) && !modelName.startsWith(QLatin1String("o3")))) {
+        if (modelName.isEmpty() || (!modelName.startsWith(QLatin1String("gpt-")) &&
+                                    !modelName.startsWith(QLatin1String("o1")) &&
+                                    !modelName.startsWith(QLatin1String("o3")))) {
             modelName = QStringLiteral("gpt-4o");
         }
     }
@@ -1213,7 +1222,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     result.traces.append(
         trace(1, QStringLiteral("Request"), QStringLiteral("Received"),
               QStringLiteral("%1 streaming request reached boundary with %2 ms timeout metadata.")
-                  .arg(config_.providerDisplayName()).arg(result.timeoutMs)));
+                  .arg(config_.providerDisplayName())
+                  .arg(result.timeoutMs)));
 
     if (request.prompt.trimmed().isEmpty()) {
         result.status = LocalInferenceStreamStatus::Refused;
@@ -1237,10 +1247,12 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     if (!endpointAllowed()) {
         result.status = LocalInferenceStreamStatus::Refused;
         result.error = LocalInferenceError::EndpointBlocked;
-        result.summary = config_.isCloud()
-            ? QStringLiteral("%1 streaming blocked: API key is missing or endpoint is not allowed.")
-                  .arg(config_.providerDisplayName())
-            : QStringLiteral("Local streaming blocked: endpoint must be local loopback HTTP.");
+        result.summary =
+            config_.isCloud()
+                ? QStringLiteral(
+                      "%1 streaming blocked: API key is missing or endpoint is not allowed.")
+                      .arg(config_.providerDisplayName())
+                : QStringLiteral("Local streaming blocked: endpoint must be local loopback HTTP.");
         result.traces.append(
             trace(2, QStringLiteral("Endpoint"), QStringLiteral("Blocked"), result.summary));
         return result;
@@ -1271,9 +1283,12 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         body.insert(QStringLiteral("max_tokens"), 2048);
         body.insert(QStringLiteral("stream"), true);
     } else if (isGemini) {
-        const QString modelId = result.model.isEmpty() ? QStringLiteral("gemini-2.0-flash") : result.model;
-        networkRequest.setUrl(QUrl(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/%1:streamGenerateContent?key=%2&alt=sse")
-                                  .arg(modelId, config_.apiKey)));
+        const QString modelId =
+            result.model.isEmpty() ? QStringLiteral("gemini-2.0-flash") : result.model;
+        networkRequest.setUrl(
+            QUrl(QStringLiteral("https://generativelanguage.googleapis.com/v1beta/models/"
+                                "%1:streamGenerateContent?key=%2&alt=sse")
+                     .arg(modelId, config_.apiKey)));
 
         QJsonObject partObj;
         partObj.insert(QStringLiteral("text"), request.prompt.trimmed());
@@ -1298,7 +1313,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
                                               ? QStringLiteral("/chat/completions")
                                               : QStringLiteral("/v1/chat/completions")));
         if (!config_.apiKey.isEmpty()) {
-            networkRequest.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
+            networkRequest.setRawHeader("Authorization",
+                                        QStringLiteral("Bearer %1").arg(config_.apiKey).toUtf8());
         }
 
         QJsonObject messageObj;
@@ -1383,7 +1399,8 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
             }
         }
         // Anthropic Claude format
-        else if (object.contains(QStringLiteral("delta")) || object.value(QStringLiteral("type")).toString() == QLatin1String("message_stop")) {
+        else if (object.contains(QStringLiteral("delta")) ||
+                 object.value(QStringLiteral("type")).toString() == QLatin1String("message_stop")) {
             const auto delta = object.value(QStringLiteral("delta")).toObject();
             text = delta.value(QStringLiteral("text")).toString();
             const auto msgType = object.value(QStringLiteral("type")).toString();
@@ -1406,7 +1423,7 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
                 const auto finishReason = candObj.value(QStringLiteral("finishReason")).toString();
                 if (!finishReason.isEmpty()) {
                     isFinal = true;
-                    done = true;  // Gemini does not send [DONE]; finishReason signals completion
+                    done = true; // Gemini does not send [DONE]; finishReason signals completion
                 }
             }
         }
@@ -1497,10 +1514,11 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
     if (hasRedirectStatus(reply)) {
         result.status = LocalInferenceStreamStatus::Error;
         result.error = LocalInferenceError::EndpointBlocked;
-        result.summary = config_.isCloud()
-            ? QStringLiteral("%1 streaming blocked: unexpected redirect from API endpoint.")
-                  .arg(config_.providerDisplayName())
-            : QStringLiteral("Local LM Studio streaming blocked: redirects are not allowed.");
+        result.summary =
+            config_.isCloud()
+                ? QStringLiteral("%1 streaming blocked: unexpected redirect from API endpoint.")
+                      .arg(config_.providerDisplayName())
+                : QStringLiteral("Local LM Studio streaming blocked: redirects are not allowed.");
         reply->deleteLater();
         return result;
     }
@@ -1529,36 +1547,51 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
 
         if (!apiErrorMsg.isEmpty()) {
             result.summary = QStringLiteral("%1 error (HTTP %2): %3")
-                                 .arg(providerLabel).arg(httpStatus).arg(apiErrorMsg.trimmed());
+                                 .arg(providerLabel)
+                                 .arg(httpStatus)
+                                 .arg(apiErrorMsg.trimmed());
         } else if (httpStatus == 404) {
-            result.summary = QStringLiteral("%1 error: Model '%2' was not found (HTTP 404). Check model selection in Settings.")
+            result.summary = QStringLiteral("%1 error: Model '%2' was not found (HTTP 404). Check "
+                                            "model selection in Settings.")
                                  .arg(providerLabel, result.model);
         } else if (httpStatus == 400) {
-            result.summary = QStringLiteral("%1 error: Bad request or invalid API key (HTTP 400). Check API Key and model in Settings.")
+            result.summary = QStringLiteral("%1 error: Bad request or invalid API key (HTTP 400). "
+                                            "Check API Key and model in Settings.")
                                  .arg(providerLabel);
         } else if (httpStatus == 401 || httpStatus == 403) {
-            result.summary = QStringLiteral("%1 error: API Key is missing or unauthorized (HTTP %2). Check API Key in Settings.")
-                                 .arg(providerLabel).arg(httpStatus);
+            result.summary = QStringLiteral("%1 error: API Key is missing or unauthorized (HTTP "
+                                            "%2). Check API Key in Settings.")
+                                 .arg(providerLabel)
+                                 .arg(httpStatus);
         } else if (httpStatus == 429) {
-            result.summary = QStringLiteral("%1 error: Rate limit exceeded (HTTP 429). Please wait and try again later.")
-                                 .arg(providerLabel);
+            result.summary =
+                QStringLiteral(
+                    "%1 error: Rate limit exceeded (HTTP 429). Please wait and try again later.")
+                    .arg(providerLabel);
         } else if (httpStatus == 500 || httpStatus == 503) {
-            result.summary = QStringLiteral("%1 error: Service temporarily unavailable (HTTP %2). Please try again later.")
-                                 .arg(providerLabel).arg(httpStatus);
+            result.summary =
+                QStringLiteral(
+                    "%1 error: Service temporarily unavailable (HTTP %2). Please try again later.")
+                    .arg(providerLabel)
+                    .arg(httpStatus);
         } else if (reply->error() != QNetworkReply::NoError) {
             const auto netError = reply->errorString();
             const JsonReply failedReply{false, false, {}, netError, reply->error()};
             result.error = networkErrorCategory(failedReply);
             if (config_.isCloud()) {
-                result.summary = QStringLiteral("%1 streaming failed: %2")
-                    .arg(providerLabel, netError.isEmpty() ? QStringLiteral("network error") : netError);
+                result.summary =
+                    QStringLiteral("%1 streaming failed: %2")
+                        .arg(providerLabel,
+                             netError.isEmpty() ? QStringLiteral("network error") : netError);
             } else {
                 result.summary = safeNetworkFailureSummary(
-                    failedReply, QStringLiteral("%1 streaming generation").arg(providerLabel), timeoutMs);
+                    failedReply, QStringLiteral("%1 streaming generation").arg(providerLabel),
+                    timeoutMs);
             }
         } else {
             result.summary = QStringLiteral("%1 error: Request failed (HTTP %2).")
-                                 .arg(providerLabel).arg(httpStatus);
+                                 .arg(providerLabel)
+                                 .arg(httpStatus);
         }
         reply->deleteLater();
         return result;
@@ -1578,10 +1611,12 @@ LocalInferenceStreamResult LMStudioLocalInferenceStreamClient::startStream(
         result.status = LocalInferenceStreamStatus::Error;
         result.error =
             done ? LocalInferenceError::InvalidResponse : LocalInferenceError::StreamInterrupted;
-        result.summary = config_.isCloud()
-            ? QStringLiteral("%1 streaming response did not contain any text.")
-                  .arg(config_.providerDisplayName())
-            : QStringLiteral("Local LM Studio streaming response did not complete with assistant text.");
+        result.summary =
+            config_.isCloud()
+                ? QStringLiteral("%1 streaming response did not contain any text.")
+                      .arg(config_.providerDisplayName())
+                : QStringLiteral(
+                      "Local LM Studio streaming response did not complete with assistant text.");
         return result;
     }
 
@@ -1617,10 +1652,13 @@ bool LMStudioLocalInferenceStreamClient::isAvailable() const {
 QUrl LMStudioLocalInferenceStreamClient::endpointUrl(const QString& path) const {
     QUrl url = config_.endpoint;
     QString basePath = url.path();
-    if (basePath == QStringLiteral("/")) basePath.clear();
-    if (basePath.endsWith(QLatin1Char('/'))) basePath.chop(1);
+    if (basePath == QStringLiteral("/"))
+        basePath.clear();
+    if (basePath.endsWith(QLatin1Char('/')))
+        basePath.chop(1);
     QString addPath = path;
-    if (!addPath.startsWith(QLatin1Char('/'))) addPath.prepend(QLatin1Char('/'));
+    if (!addPath.startsWith(QLatin1Char('/')))
+        addPath.prepend(QLatin1Char('/'));
     url.setPath(basePath + addPath);
     url.setQuery(QString());
     url.setFragment(QString());
