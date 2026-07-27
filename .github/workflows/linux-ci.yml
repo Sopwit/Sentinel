@@ -24,6 +24,7 @@ jobs:
         with:
           version: '6.7.*'
           arch: 'linux_gcc_64'
+          modules: 'qtmultimedia'
           cache: true
 
       - name: Configure
