@@ -1214,6 +1214,8 @@ class DesktopShellViewModel final : public QObject {
                    agentAutonomousModeChanged)
     Q_PROPERTY(QString updateCheckPolicy READ updateCheckPolicy WRITE setUpdateCheckPolicy NOTIFY
                    nativeExperienceChanged)
+    Q_PROPERTY(QString updateCheckUrl READ updateCheckUrl WRITE setUpdateCheckUrl NOTIFY
+                   nativeExperienceChanged)
     Q_PROPERTY(QString notificationPolicy READ notificationPolicy WRITE setNotificationPolicy NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(bool onboardingComplete READ onboardingComplete WRITE setOnboardingComplete NOTIFY
@@ -2180,6 +2182,8 @@ public:
     void setAgentAutonomousMode(bool enabled);
     QString updateCheckPolicy() const;
     void setUpdateCheckPolicy(const QString& policy);
+    QString updateCheckUrl() const;
+    void setUpdateCheckUrl(const QString& url);
     QString notificationPolicy() const;
     void setNotificationPolicy(const QString& policy);
     bool onboardingComplete() const;

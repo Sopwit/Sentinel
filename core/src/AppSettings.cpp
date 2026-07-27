@@ -1074,6 +1074,17 @@ void AppSettings::setUpdateCheckPolicy(const QString& policy) {
     emit updateCheckPolicyChanged();
 }
 
+QString AppSettings::updateCheckUrl() const {
+    const auto defaultUrl = QStringLiteral("https://api.github.com/repos/Sopwit/Sentinel/releases/latest");
+    return store_ ? store_->value(QString::fromLatin1(updateCheckUrlKey), defaultUrl) : defaultUrl;
+}
+
+void AppSettings::setUpdateCheckUrl(const QString& url) {
+    if (url == updateCheckUrl() || !store_) return;
+    store_->setValue(QString::fromLatin1(updateCheckUrlKey), url);
+    emit updateCheckUrlChanged();
+}
+
 QString AppSettings::notificationPolicy() const {
     const auto fallback = QString::fromLatin1(defaultNotificationPolicy);
     const auto stored =

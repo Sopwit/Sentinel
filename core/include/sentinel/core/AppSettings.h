@@ -101,6 +101,8 @@ class AppSettings final : public QObject {
                    setDefaultPermissionPolicyState NOTIFY defaultPermissionPolicyStateChanged)
     Q_PROPERTY(QString updateCheckPolicy READ updateCheckPolicy WRITE setUpdateCheckPolicy NOTIFY
                    updateCheckPolicyChanged)
+    Q_PROPERTY(QString updateCheckUrl READ updateCheckUrl WRITE setUpdateCheckUrl NOTIFY
+                   updateCheckUrlChanged)
     Q_PROPERTY(QString notificationPolicy READ notificationPolicy WRITE setNotificationPolicy NOTIFY
                    notificationPolicyChanged)
     Q_PROPERTY(bool onboardingComplete READ onboardingComplete WRITE setOnboardingComplete NOTIFY
@@ -246,6 +248,8 @@ public:
     void setDefaultPermissionPolicyState(const QString& state);
     QString updateCheckPolicy() const;
     void setUpdateCheckPolicy(const QString& policy);
+    QString updateCheckUrl() const;
+    void setUpdateCheckUrl(const QString& url);
     QString notificationPolicy() const;
     void setNotificationPolicy(const QString& policy);
     bool onboardingComplete() const;
@@ -335,6 +339,7 @@ signals:
     void selectedSkillProfileChanged();
     void defaultPermissionPolicyStateChanged();
     void updateCheckPolicyChanged();
+    void updateCheckUrlChanged();
     void notificationPolicyChanged();
     void onboardingCompleteChanged();
     void onboardingUseCaseChanged();
@@ -392,6 +397,7 @@ private:
     static constexpr auto selectedSkillProfileKey = "selectedSkillProfile";
     static constexpr auto defaultPermissionPolicyStateKey = "defaultPermissionPolicyState";
     static constexpr auto updateCheckPolicyKey = "updateCheckPolicy";
+    static constexpr auto updateCheckUrlKey = "updateCheckUrl";
     static constexpr auto notificationPolicyKey = "notificationPolicy";
     static constexpr auto onboardingCompleteKey = "onboardingComplete";
     static constexpr auto onboardingUseCaseKey = "onboardingUseCase";
