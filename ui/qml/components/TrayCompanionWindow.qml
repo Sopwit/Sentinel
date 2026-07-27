@@ -30,9 +30,6 @@ Window {
     }
     color: "transparent"
 
-    Accessible.role: Accessible.Dialog
-    Accessible.name: "Sentinel Companion Chat"
-
     function positionNearTray() {
         var g = viewModel ? viewModel.cursorScreenGeometry() : null
         if (!g || g.x === undefined) {
@@ -144,7 +141,7 @@ Window {
         anchors.fill: parent
         radius: 12
         color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.96)
-        border.color: Qt.alpha(
+        border.color: SentinelTheme.withAlpha(
             SentinelTheme.modeAccent(viewModel ? viewModel.currentModeName : "Sentinel"), 0.25)
         border.width: 1
 
@@ -522,14 +519,14 @@ Window {
                                                     visible: !isUser
                                                 }
                                             }
+                                        }
 
-                                            MouseArea {
-                                                id: mouseInBubble
-                                                anchors.fill: parent
-                                                hoverEnabled: true
-                                                acceptedButtons: Qt.NoButton
-                                                cursorShape: Qt.ArrowCursor
-                                            }
+                                        MouseArea {
+                                            id: mouseInBubble
+                                            anchors.fill: parent
+                                            hoverEnabled: true
+                                            acceptedButtons: Qt.NoButton
+                                            cursorShape: Qt.ArrowCursor
                                         }
                                     }
                                 }

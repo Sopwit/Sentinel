@@ -1928,6 +1928,28 @@ void ApplicationController::setOllamaEndpoint(const QString& endpoint) {
     emit ollamaStatusChanged();
 }
 
+QString ApplicationController::lmStudioEndpoint() const {
+    return lmStudioEndpoint_.isEmpty() ? QStringLiteral("http://127.0.0.1:1234") : lmStudioEndpoint_;
+}
+
+void ApplicationController::setLmStudioEndpoint(const QString& endpoint) {
+    if (lmStudioEndpoint_ == endpoint) return;
+    lmStudioEndpoint_ = endpoint;
+    pollOllama();
+    emit ollamaStatusChanged();
+}
+
+QString ApplicationController::llamaCppEndpoint() const {
+    return llamaCppEndpoint_.isEmpty() ? QStringLiteral("http://127.0.0.1:8080") : llamaCppEndpoint_;
+}
+
+void ApplicationController::setLlamaCppEndpoint(const QString& endpoint) {
+    if (llamaCppEndpoint_ == endpoint) return;
+    llamaCppEndpoint_ = endpoint;
+    pollOllama();
+    emit ollamaStatusChanged();
+}
+
 QString ApplicationController::ollamaConnectionStatus() const {
     return ollamaConnectionStatusName(currentOllamaHealthCheck().connectionStatus);
 }
@@ -9130,6 +9152,12 @@ void ApplicationController::pollOllama() {
         return;
     }
 
+    if (dynamic_cast<NullOllamaRuntimeClient*>(ollamaRuntimeClient_.get())) {
+        const auto endpoint = OllamaEndpoint::defaultEndpoint().toString();
+        const auto config = OllamaConfig::fromEndpoint(endpoint);
+        ollamaRuntimeClient_ = std::make_unique<OllamaHttpRuntimeClient>(config);
+    }
+
     ollamaCheckThread_ = QThread::create([this]() {
         OllamaHealthCheckResult health;
         QList<OllamaModelSummary> ollamaModels;
@@ -9148,11 +9176,15 @@ void ApplicationController::pollOllama() {
 
         const auto provider = selectedRuntimeProvider_;
         if (provider == QStringLiteral("lm-studio")) {
-            lmStudioModels = fetchOpenAiCompatibleModels(
-                QUrl(QStringLiteral("http://127.0.0.1:1234/v1/models")), 1000);
+            const auto lmUrl = lmStudioEndpoint_.isEmpty()
+                ? QStringLiteral("http://127.0.0.1:1234/v1/models")
+                : lmStudioEndpoint_ + QStringLiteral("/v1/models");
+            lmStudioModels = fetchOpenAiCompatibleModels(QUrl(lmUrl), 1000);
         } else if (provider == QStringLiteral("llama-cpp-server")) {
-            llamaCppModels = fetchOpenAiCompatibleModels(
-                QUrl(QStringLiteral("http://127.0.0.1:8080/v1/models")), 1000);
+            const auto llamaUrl = llamaCppEndpoint_.isEmpty()
+                ? QStringLiteral("http://127.0.0.1:8080/v1/models")
+                : llamaCppEndpoint_ + QStringLiteral("/v1/models");
+            llamaCppModels = fetchOpenAiCompatibleModels(QUrl(llamaUrl), 1000);
         } else if (provider == QStringLiteral("openai-compatible-local")) {
             openAiModels = fetchOpenAiCompatibleModels(
                 QUrl(QStringLiteral("http://127.0.0.1:8000/v1/models")), 1000);

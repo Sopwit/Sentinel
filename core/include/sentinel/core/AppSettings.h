@@ -20,6 +20,12 @@ class AppSettings final : public QObject {
                    routingModeNameChanged)
     Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint WRITE setOllamaEndpoint NOTIFY
                    ollamaEndpointChanged)
+    Q_PROPERTY(QString lmStudioEndpoint READ lmStudioEndpoint WRITE setLmStudioEndpoint NOTIFY
+                   lmStudioEndpointChanged)
+    Q_PROPERTY(QString llamaCppEndpoint READ llamaCppEndpoint WRITE setLlamaCppEndpoint NOTIFY
+                   llamaCppEndpointChanged)
+    Q_PROPERTY(QString cloudApiEndpoint READ cloudApiEndpoint WRITE setCloudApiEndpoint NOTIFY
+                   cloudApiEndpointChanged)
     Q_PROPERTY(QString selectedRuntimeProvider READ selectedRuntimeProvider WRITE
                    setSelectedRuntimeProvider NOTIFY selectedRuntimeProviderChanged)
     Q_PROPERTY(QString selectedCloudProvider READ selectedCloudProvider WRITE
@@ -152,6 +158,12 @@ public:
 
     QString ollamaEndpoint() const;
     void setOllamaEndpoint(const QString& endpoint);
+    QString lmStudioEndpoint() const;
+    void setLmStudioEndpoint(const QString& endpoint);
+    QString llamaCppEndpoint() const;
+    void setLlamaCppEndpoint(const QString& endpoint);
+    QString cloudApiEndpoint() const;
+    void setCloudApiEndpoint(const QString& endpoint);
     QString selectedRuntimeProvider() const;
     void setSelectedRuntimeProvider(const QString& providerId);
     QString selectedCloudProvider() const;
@@ -290,6 +302,9 @@ signals:
     void appLanguageChanged();
     void routingModeNameChanged();
     void ollamaEndpointChanged();
+    void lmStudioEndpointChanged();
+    void llamaCppEndpointChanged();
+    void cloudApiEndpointChanged();
     void selectedRuntimeProviderChanged();
     void selectedCloudProviderChanged();
     void selectedLocalModelChanged();
@@ -334,6 +349,9 @@ private:
     static constexpr auto appLanguageKey = "appLanguage";
     static constexpr auto routingModeKey = "routingMode";
     static constexpr auto ollamaEndpointKey = "ollamaEndpoint";
+    static constexpr auto lmStudioEndpointKey = "lmStudioEndpoint";
+    static constexpr auto llamaCppEndpointKey = "llamaCppEndpoint";
+    static constexpr auto cloudApiEndpointKey = "cloudApiEndpoint";
     static constexpr auto selectedRuntimeProviderKey = "selectedRuntimeProvider";
     static constexpr auto selectedCloudProviderKey = "selectedCloudProvider";
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";

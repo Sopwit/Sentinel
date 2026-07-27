@@ -83,10 +83,14 @@ Item {
         { id: "Coding",            tag: qsTr("Build & create"),   desc: qsTr("Write, plan, and solve problems with a private copilot.") },
         { id: "Study",             tag: qsTr("Learn & explore"),  desc: qsTr("Summarize, explain, and remember what matters to you.") },
         { id: "Writing",           tag: qsTr("Draft & express"),  desc: qsTr("Letters, reports, stories, and everyday writing.") },
-        { id: "General Assistant", tag: qsTr("Daily companion"),  desc: qsTr("A helpful partner for whatever life or work brings.") }
+        { id: "General Assistant", tag: qsTr("Daily companion"),  desc: qsTr("A helpful partner for whatever life or work brings.") },
+        { id: "Research",          tag: qsTr("Discover & analyze"), desc: qsTr("Deep research, cross-reference sources, and synthesize findings.") },
+        { id: "Creative",          tag: qsTr("Imagine & design"),   desc: qsTr("Brainstorm ideas, generate art concepts, and explore creative projects.") },
+        { id: "Business",          tag: qsTr("Manage & decide"),    desc: qsTr("Draft emails, prepare reports, and organize workflows.") },
+        { id: "Personal Assistant",tag: qsTr("Plan & organize"),    desc: qsTr("Manage schedules, set reminders, and keep track of tasks.") }
     ]
 
-    readonly property var themes: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey"]
+    readonly property var themes: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "Solarized Light", "Nord Frost", "Dracula", "Tokyo Night"]
 
     readonly property var providers: [
         { id: "Ollama",                   note: qsTr("Popular local runtime, easy to start.") },
@@ -96,16 +100,31 @@ Item {
     ]
 
     readonly property var privacyPoints: [
-        { t: qsTr("Local-first"), d: qsTr("Your settings, memory, chats, notes, and history stay on your own device.") },
-        { t: qsTr("No tracking"), d: qsTr("Nothing is sent to us. No analytics, no ads, no hidden uploads.") },
-        { t: qsTr("You stay in control"), d: qsTr("Updates, exports, and sensitive actions always ask for your permission first.") }
+        { t: qsTr("Local-first architecture"), d: qsTr("Your settings, memory, chats, notes, and history stay on your own device. No cloud dependency required."), detail: qsTr("Sentinel stores everything locally on your machine using SQLite databases for memory and chat history, and JSON files for settings. There are no cloud servers involved. Your data never leaves your device unless you explicitly choose to share it. This means you can use Sentinel fully offline, and your private conversations remain truly private.") },
+        { t: qsTr("No telemetry or tracking"), d: qsTr("Nothing is sent to us. No analytics, no ads, no hidden uploads, no fingerprinting."), detail: qsTr("Sentinel does not include any analytics SDK, telemetry framework, or tracking code. We do not collect usage statistics, crash reports, or any personally identifiable information. There are no 'phone home' mechanisms. The application checks for updates by querying a static manifest — no unique identifiers are transmitted.") },
+        { t: qsTr("You stay in control"), d: qsTr("Updates, exports, tool execution, and sensitive actions always ask for your permission first."), detail: qsTr("Every sensitive operation in Sentinel requires your explicit consent. Tool execution goes through a permission gateway where you approve or deny each action. Updates are opt-in and you control the policy. Memory operations are transparent and you can view, edit, or delete anything. The permission policy service ensures no action happens without your awareness.") },
+        { t: qsTr("Open and auditable"), d: qsTr("Built with open-source components. You can inspect, modify, and verify everything."), detail: qsTr("Sentinel is built on open standards and open-source components including Qt 6, CMake, and SQLite. The application architecture is modular and transparent. You can inspect the source code, build from source, audit dependencies, and verify there are no hidden behaviors. The AGENTS.md file documents all architecture decisions.") },
+        { t: qsTr("Encrypted where it counts"), d: qsTr("API keys and credentials are stored encrypted. Your data belongs to you."), detail: qsTr("Sensitive data such as API keys for cloud providers (OpenAI, Claude, Gemini, etc.) and credentials are stored using encrypted storage via the CredentialStore interface. The credential store uses platform-native secure storage where available. Local SQLite databases for memory and chat history are stored with file-level permissions restricted to your user account.") }
     ]
 
+    readonly property var capabilityDetails: ({
+        "Brain & Memory": qsTr("The Brain is Sentinel's long-term memory system. It automatically extracts key information from your conversations, creates summaries, and indexes them for fast retrieval. When you ask a question, Sentinel searches its memory for relevant context and appends it to the prompt, so you don't have to repeat yourself. Memory can be viewed, searched, edited, or deleted at any time through the Memory panel."),
+        "Workspaces": qsTr("Workspaces let you create isolated environments for different areas of your life — Home, Work, Study, Creative Projects, and more. Each workspace has its own memory store, chat history, and settings. Switch between them with a single click. This keeps your work conversations separate from personal ones, and your study notes don't mix with your business emails."),
+        "Task Planning": qsTr("The task planning system can break down complex requests into step-by-step plans. Before executing any step that affects your system (like creating files, running commands, or accessing data), Sentinel asks for your permission. You can approve, modify, or reject each step. This controlled execution model ensures you remain in charge of what happens on your computer."),
+        "Notifications": qsTr("The in-app notification center keeps you informed about what Sentinel is doing. It shows real-time activity, completed tasks, errors, and system updates. Notifications are grouped by type and can be dismissed individually or all at once. You can configure which notifications you want to see through the Settings panel."),
+        "Voice & Speech": qsTr("Sentinel supports local Text-to-Speech and Speech-to-Text without cloud dependencies. TTS options include Piper (fast, lightweight ONNX-based) and Kokoro (ultra-realistic). For STT, Whisper (via whisper-cpp) provides accurate transcription. All audio processing stays on your device. Configure voice paths and select your preferred engine in the Voice Setup section."),
+        "Multi-Provider": qsTr("Sentinel is provider-agnostic. You can use Ollama for fully local inference, connect to LM Studio or llama.cpp server for other local runtimes, or use cloud APIs from OpenAI, Anthropic Claude, Google Gemini, DeepSeek, Groq, and Mistral. Switch between providers at any time. Each provider has its own endpoint configuration and model selection."),
+        "Tool Integration": qsTr("Extend Sentinel's capabilities through a permission-based tool system. Tools are registered in the Tool Registry and executed through the Tool Execution Gateway, which enforces your permission policies. Skills provide specialized workflows. Agents combine tools and skills for autonomous task completion — all behind a safety boundary you control.")
+    })
+
     readonly property var capabilityPoints: [
-        { t: qsTr("Brain"), d: qsTr("Your personal memory: recall, context, summaries, and insights.") },
-        { t: qsTr("Workspaces"), d: qsTr("Separate spaces for home, work, study, writing, and more.") },
-        { t: qsTr("Tasks"), d: qsTr("Step-by-step plans that check with you before acting.") },
-        { t: qsTr("Notifications"), d: qsTr("A tidy in-app center for reminders and updates.") }
+        { t: qsTr("Brain & Memory"), d: qsTr("Personal memory system that recalls context, summaries, and insights from your past conversations.") },
+        { t: qsTr("Workspaces"), d: qsTr("Separate spaces for home, work, study, writing, and more. Each with its own memory and context.") },
+        { t: qsTr("Task Planning"), d: qsTr("Step-by-step plans that check with you before acting. Controlled, transparent, and safe.") },
+        { t: qsTr("Notifications"), d: qsTr("A tidy in-app center for reminders, updates, and system alerts.") },
+        { t: qsTr("Voice & Speech"), d: qsTr("Local text-to-speech and speech-to-text. Piper, Kokoro, and Whisper support.") },
+        { t: qsTr("Multi-Provider"), d: qsTr("Switch between Ollama, LM Studio, llama.cpp, Cloud APIs, and more.") },
+        { t: qsTr("Tool Integration"), d: qsTr("Extend Sentinel with tools, skills, and custom agents through a permission-based gateway.") }
     ]
 
     readonly property var themePalette: ({
@@ -114,10 +133,69 @@ Item {
         "Sentinel Classic":   { bg: "#0d1117", raised: "#18242d", accent: "#7eb8ff", text: "#eef8ff", muted: "#94abb8" },
         "Midnight Blue":      { bg: "#0a0f1e", raised: "#111a31", accent: "#8fb4ff", text: "#f0f5ff", muted: "#98a9c8" },
         "Aurora Teal":        { bg: "#0f1a1c", raised: "#1b2a2d", accent: "#7de0b9", text: "#effbf7", muted: "#9fb8b4" },
-        "Graphite Grey":      { bg: "#121416", raised: "#202326", accent: "#d0d7dc", text: "#f2f4f4", muted: "#a7adaf" }
+        "Graphite Grey":      { bg: "#121416", raised: "#202326", accent: "#d0d7dc", text: "#f2f4f4", muted: "#a7adaf" },
+        "Solarized Light":    { bg: "#fdf6e3", raised: "#eee8d5", accent: "#268bd2", text: "#073642", muted: "#839496" },
+        "Nord Frost":         { bg: "#2e3440", raised: "#3b4252", accent: "#88c0d0", text: "#e5e9f0", muted: "#81a1c1" },
+        "Dracula":            { bg: "#1e1f2e", raised: "#282a3a", accent: "#bd93f9", text: "#f8f8f2", muted: "#6272a4" },
+        "Tokyo Night":        { bg: "#0f1419", raised: "#1a1f2b", accent: "#7aa2f7", text: "#c0caf5", muted: "#565f89" }
     })
 
     function paletteFor(name) { return onboarding.themePalette[name] || onboarding.themePalette["Liquid Glass Light"] }
+
+    // ── Detail Popup for Privacy & Capabilities ──
+    Popup {
+        id: detailPopup
+        modal: true
+        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
+        anchors.centerIn: Overlay.overlay
+        width: Math.min(stack.width * 0.7, 420)
+        height: popupContent.implicitHeight + SentinelTheme.space3Xl * 2
+        padding: SentinelTheme.space3Xl
+
+        background: Rectangle {
+            radius: SentinelTheme.radiusXl
+            color: SentinelTheme.backgroundRaised
+            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+            border.width: 1
+        }
+
+        property string popupTitle: ""
+        property string popupDetail: ""
+
+        ColumnLayout {
+            id: popupContent
+            spacing: SentinelTheme.spaceLg
+            width: parent.width
+
+            Label {
+                text: detailPopup.popupTitle
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontCard
+                font.bold: true
+                wrapMode: Text.WordWrap
+            }
+
+            Label {
+                Layout.fillWidth: true
+                text: detailPopup.popupDetail
+                color: SentinelTheme.textMuted
+                font.pixelSize: SentinelTheme.fontBody
+                wrapMode: Text.WordWrap
+                lineHeight: 1.5
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.topMargin: SentinelTheme.spaceSm
+                Item { Layout.fillWidth: true }
+                SentinelButton {
+                    text: qsTr("Got it")
+                    highlighted: true
+                    onClicked: detailPopup.close()
+                }
+            }
+        }
+    }
 
     FileDialog {
         id: voiceFileDialog
@@ -177,24 +255,22 @@ Item {
         }
     }
 
+    // ── Full-screen event blocker ──
+    MouseArea {
+        anchors.fill: parent
+        enabled: active
+        hoverEnabled: false
+        acceptedButtons: Qt.AllButtons
+        scrollGestureEnabled: false
+        onWheel: (wheel) => wheel.accepted = true
+    }
+
     // ── Background ──────────────────────────────────────────────────────────
     Rectangle {
         anchors.fill: parent
         color: SentinelTheme.backgroundBase
         Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
     }
-    GlowSurface {
-        anchors.horizontalCenter: parent.left
-        anchors.verticalCenter: parent.verticalCenter
-        width: parent.height * 1.1
-        height: width
-        accent: onboarding.brandAccent
-        secondaryAccent: SentinelTheme.modeSecondaryAccent(viewModel.currentModeName)
-        active: true
-        reducedMotion: onboarding.reducedMotion
-        opacity: 0.7
-    }
-
     RowLayout {
         anchors.fill: parent
         anchors.margins: SentinelTheme.space2Xl
@@ -207,26 +283,11 @@ Item {
             Layout.fillHeight: true
             spacing: SentinelTheme.spaceLg
 
-            RowLayout {
-                spacing: SentinelTheme.spaceSm
-                Rectangle {
-                    Layout.preferredWidth: 30; Layout.preferredHeight: 30; radius: 9
-                    color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.16)
-                    border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.5)
-                    border.width: 1
-                    StatusPulse {
-                        anchors.centerIn: parent
-                        size: 8
-                        accent: onboarding.brandAccent
-                        active: true
-                    }
-                }
-                Label {
-                    text: qsTr("Sentinel")
-                    color: SentinelTheme.textPrimary
-                    font.pixelSize: SentinelTheme.fontBrand
-                    font.bold: true
-                }
+            Label {
+                text: qsTr("Sentinel")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBrand
+                font.bold: true
             }
 
             Label {
@@ -240,57 +301,74 @@ Item {
             Item { Layout.fillHeight: true }
 
             ColumnLayout {
-                spacing: SentinelTheme.spaceLg
+                spacing: 0
                 Repeater {
                     model: onboarding.stepMeta
-                    RowLayout {
+                    ColumnLayout {
                         required property int index
                         required property var modelData
-                        spacing: SentinelTheme.spaceMd
+                        spacing: SentinelTheme.spaceSm
+                        Layout.fillWidth: true
 
-                        Rectangle {
-                            id: stepIndicator
-                            Layout.preferredWidth: 26; Layout.preferredHeight: 26; radius: 13
-                            color: index < onboarding.step ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.18)
-                                 : index === onboarding.step ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.24)
-                                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
-                            border.color: index <= onboarding.step ? onboarding.brandAccent
-                                 : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
-                            border.width: 1
-                            Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
-                            Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
-                            layer.enabled: index <= onboarding.step
-                            layer.effect: MultiEffect {
-                                shadowEnabled: true
-                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.12)
-                                shadowVerticalOffset: 1
-                                shadowBlur: 0.08
-                                shadowOpacity: 1.0
+                        RowLayout {
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+                            Layout.leftMargin: 4
+
+                            Rectangle {
+                                id: stepIndicator
+                                Layout.preferredWidth: 28; Layout.preferredHeight: 28; radius: 14
+                                color: index < onboarding.step ? onboarding.brandAccent
+                                     : index === onboarding.step ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.20)
+                                     : "transparent"
+                                border.color: index <= onboarding.step ? onboarding.brandAccent
+                                     : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
+                                border.width: index === onboarding.step ? 2 : 1
+                                Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
+                                Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
+                                Behavior on border.width { NumberAnimation { duration: MotionTokens.fast } }
+
+                                Label {
+                                    anchors.centerIn: parent
+                                    text: index < onboarding.step ? "✓" : (index + 1).toString()
+                                    color: index < onboarding.step ? SentinelTheme.textOnAccent
+                                         : index === onboarding.step ? onboarding.brandAccent
+                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.30)
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    font.bold: true
+                                }
                             }
-                            Label {
-                                anchors.centerIn: parent
-                                text: index < onboarding.step ? "✓" : (index + 1).toString()
-                                color: index <= onboarding.step ? onboarding.brandAccent : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall
-                                font.bold: true
+                            ColumnLayout {
+                                spacing: 1
+                                Label {
+                                    text: modelData.title
+                                    color: index <= onboarding.step ? SentinelTheme.textPrimary
+                                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
+                                    font.pixelSize: SentinelTheme.fontControl
+                                    font.bold: index <= onboarding.step
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: modelData.caption
+                                    color: index === onboarding.step
+                                           ? SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.85)
+                                           : SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.35)
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                    wrapMode: Text.WordWrap
+                                }
                             }
                         }
-                        ColumnLayout {
-                            spacing: 2
-                            Label {
-                                text: modelData.title
-                                color: index === onboarding.step ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontControl
-                                font.bold: index === onboarding.step
-                            }
-                            Label {
-                                Layout.fillWidth: true
-                                text: modelData.caption
-                                visible: index === onboarding.step
-                                color: SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontTiny
-                                wrapMode: Text.WordWrap
-                            }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.preferredHeight: 1
+                            Layout.leftMargin: 4
+                            Layout.rightMargin: 4
+                            visible: index < onboarding.stepMeta.length - 1
+                            color: index < onboarding.step
+                                   ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.25)
+                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                            Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                         }
                     }
                 }
@@ -357,25 +435,18 @@ Item {
                                     required property var modelData
                                     readonly property bool chosen: viewModel.onboardingUseCase === modelData.id
                                     Layout.fillWidth: true
+                                    Layout.minimumHeight: 120
+                                    Layout.maximumHeight: 200
                                     radius: SentinelTheme.radiusLg
                                     color: chosen ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
                                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.034)
                                     border.color: chosen ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.5)
                                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
                                     border.width: chosen ? 1.5 : 1
-                                    implicitHeight: ucRow.implicitHeight + SentinelTheme.spaceLg * 2
                                     scale: ucHover.hovered && !chosen ? 1.012 : 1.0
                                     Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                     Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                     Behavior on scale { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.enter } }
-                                    layer.enabled: ucHover.hovered
-                                    layer.effect: MultiEffect {
-                                        shadowEnabled: true
-                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
-                                        shadowVerticalOffset: 2
-                                        shadowBlur: 0.12
-                                        shadowOpacity: 1.0
-                                    }
                                     ColumnLayout {
                                         id: ucRow
                                         anchors.fill: parent
@@ -460,29 +531,11 @@ Item {
                                     border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
                                     border.width: 1
                                     implicitHeight: pvRow.implicitHeight + SentinelTheme.spaceLg * 2
-                                    layer.enabled: privHover.hovered
-                                    layer.effect: MultiEffect {
-                                        shadowEnabled: true
-                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
-                                        shadowVerticalOffset: 2
-                                        shadowBlur: 0.12
-                                        shadowOpacity: 1.0
-                                    }
                                     RowLayout {
                                         id: pvRow
                                         anchors.fill: parent
                                         anchors.margins: SentinelTheme.spaceLg
                                         spacing: SentinelTheme.spaceMd
-                                        Rectangle {
-                                            Layout.preferredWidth: 36; Layout.preferredHeight: 36; radius: 11
-                                            color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.14)
-                                            StatusPulse {
-                                                anchors.centerIn: parent
-                                                size: 9
-                                                accent: onboarding.brandAccent
-                                                active: true
-                                            }
-                                        }
                                         ColumnLayout {
                                             spacing: SentinelTheme.spaceXs
                                             Label {
@@ -501,6 +554,16 @@ Item {
                                         }
                                     }
                                     HoverHandler { id: privHover }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            detailPopup.popupTitle = modelData.t
+                                            detailPopup.popupDetail = modelData.detail
+
+                                            detailPopup.open()
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -549,14 +612,6 @@ Item {
                                     scale: themeHover.hovered && !chosen ? 1.015 : 1.0
                                     Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                     Behavior on scale { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.enter } }
-                                    layer.enabled: themeHover.hovered
-                                    layer.effect: MultiEffect {
-                                        shadowEnabled: true
-                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
-                                        shadowVerticalOffset: 2
-                                        shadowBlur: 0.12
-                                        shadowOpacity: 1.0
-                                    }
 
                                     // Mini preview mock
                                     Rectangle {
@@ -718,14 +773,6 @@ Item {
                                     implicitHeight: prRow.implicitHeight + SentinelTheme.spaceLg * 2
                                     Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                     Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
-                                    layer.enabled: provHover.hovered
-                                    layer.effect: MultiEffect {
-                                        shadowEnabled: true
-                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
-                                        shadowVerticalOffset: 2
-                                        shadowBlur: 0.12
-                                        shadowOpacity: 1.0
-                                    }
                                     RowLayout {
                                         id: prRow
                                         anchors.fill: parent
@@ -769,18 +816,131 @@ Item {
                                             viewModel.onboardingAiProvider = modelData.id
                                             if (modelData.id === "Ollama") {
                                                 viewModel.selectedRuntimeProvider = "ollama"
+                                                viewModel.selectedCloudProvider = ""
                                             } else if (modelData.id === "LM Studio") {
                                                 viewModel.selectedRuntimeProvider = "lm-studio"
+                                                viewModel.selectedCloudProvider = ""
                                             } else if (modelData.id === "Cloud API") {
                                                 viewModel.selectedRuntimeProvider = "cloud-api"
+                                                viewModel.selectedCloudProvider = ""
                                             } else if (modelData.id === "llama.cpp server") {
                                                 viewModel.selectedRuntimeProvider = "llama-cpp-server"
+                                                viewModel.selectedCloudProvider = ""
                                             }
                                         }
                                     }
                                 }
                             }
                         }
+                        // ── Provider endpoint configuration ──
+                        ColumnLayout {
+                            Layout.fillWidth: true
+                            Layout.topMargin: SentinelTheme.spaceLg
+                            spacing: SentinelTheme.spaceSm
+
+                            Label {
+                                text: qsTr("Endpoint Configuration")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: SentinelTheme.fontCard
+                                font.bold: true
+                            }
+
+                            // Ollama endpoint
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                visible: viewModel.selectedRuntimeProvider === "ollama"
+                                spacing: SentinelTheme.spaceXs
+                                Label {
+                                    text: qsTr("Ollama Server URL")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: SentinelTheme.spaceSm
+                                    SentinelTextField {
+                                        Layout.fillWidth: true
+                                        text: viewModel.ollamaEndpoint
+                                        placeholderText: "http://127.0.0.1:11434"
+                                        onEditingFinished: viewModel.ollamaEndpoint = text
+                                    }
+                                }
+                            }
+
+                            // LM Studio endpoint
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                visible: viewModel.selectedRuntimeProvider === "lm-studio"
+                                spacing: SentinelTheme.spaceXs
+                                Label {
+                                    text: qsTr("LM Studio Server URL")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: SentinelTheme.spaceSm
+                                    SentinelTextField {
+                                        Layout.fillWidth: true
+                                        text: viewModel.lmStudioEndpoint || "http://127.0.0.1:1234"
+                                        placeholderText: "http://127.0.0.1:1234"
+                                        onEditingFinished: viewModel.lmStudioEndpoint = text
+                                    }
+                                }
+                            }
+
+                            // llama.cpp endpoint
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                visible: viewModel.selectedRuntimeProvider === "llama-cpp-server"
+                                spacing: SentinelTheme.spaceXs
+                                Label {
+                                    text: qsTr("llama.cpp Server URL")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: SentinelTheme.spaceSm
+                                    SentinelTextField {
+                                        Layout.fillWidth: true
+                                        text: viewModel.llamaCppEndpoint || "http://127.0.0.1:8080"
+                                        placeholderText: "http://127.0.0.1:8080"
+                                        onEditingFinished: viewModel.llamaCppEndpoint = text
+                                    }
+                                }
+                            }
+
+                            // Cloud API - custom endpoint
+                            ColumnLayout {
+                                Layout.fillWidth: true
+                                visible: viewModel.selectedRuntimeProvider === "cloud-api"
+                                spacing: SentinelTheme.spaceXs
+                                Label {
+                                    text: qsTr("Custom API Base URL (optional)")
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    spacing: SentinelTheme.spaceSm
+                                    SentinelTextField {
+                                        Layout.fillWidth: true
+                                        text: viewModel.cloudApiEndpoint || ""
+                                        placeholderText: qsTr("Override default API endpoint (e.g. self-hosted proxy)")
+                                        onEditingFinished: viewModel.cloudApiEndpoint = text
+                                    }
+                                }
+                            }
+                        }
+
+                        Rectangle {
+                            Layout.fillWidth: true
+                            Layout.topMargin: SentinelTheme.spaceMd
+                            height: 1
+                            color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                        }
+
                         Item { Layout.fillHeight: true }
                     }
                 }
@@ -798,10 +958,52 @@ Item {
                         }
                         Label {
                             Layout.fillWidth: true
-                            text: qsTr("Sentinel requires an AI model to generate responses. Below are the recommended models for your selected provider.")
+                            text: qsTr("Sentinel requires an AI model to generate responses. Below are the recommended models for your selected provider. These are real Ollama models that can be downloaded and run locally.")
                             color: SentinelTheme.textMuted
                             font.pixelSize: SentinelTheme.fontBody
                             wrapMode: Text.WordWrap
+                        }
+
+                        Label {
+                            Layout.fillWidth: true
+                            Layout.topMargin: SentinelTheme.spaceSm
+                            text: qsTr("Tip: For systems with 8 GB RAM or less, we recommend 7B-8B parameter models. For 16 GB+ RAM, 14B+ models will perform well.")
+                            color: SentinelTheme.withAlpha(SentinelTheme.textMuted, 0.7)
+                            font.pixelSize: SentinelTheme.fontSmall
+                            wrapMode: Text.WordWrap
+                        }
+
+                        // ── Health status indicator ──
+                        Rectangle {
+                            Layout.fillWidth: true
+                            visible: viewModel.selectedRuntimeProvider === "ollama"
+                            radius: SentinelTheme.radiusMd
+                            color: viewModel.ollamaHealthStatus === "Healthy"
+                                   ? SentinelTheme.withAlpha(SentinelTheme.success, 0.10)
+                                   : SentinelTheme.withAlpha(SentinelTheme.warning, 0.10)
+                            border.color: viewModel.ollamaHealthStatus === "Healthy"
+                                          ? SentinelTheme.withAlpha(SentinelTheme.success, 0.25)
+                                          : SentinelTheme.withAlpha(SentinelTheme.warning, 0.25)
+                            border.width: 1
+                            implicitHeight: statusRow.implicitHeight + SentinelTheme.spaceSm * 2
+                            RowLayout {
+                                id: statusRow
+                                anchors.fill: parent
+                                anchors.margins: SentinelTheme.spaceSm
+                                spacing: SentinelTheme.spaceSm
+                                Text {
+                                    text: viewModel.ollamaHealthStatus === "Healthy" ? "●" : "○"
+                                    color: viewModel.ollamaHealthStatus === "Healthy" ? SentinelTheme.success : SentinelTheme.warning
+                                    font.pixelSize: SentinelTheme.fontBody
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: viewModel.ollamaHealthSummary
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                    wrapMode: Text.WordWrap
+                                }
+                            }
                         }
 
                         // Ollama Specific Model Selection & Installation
@@ -832,14 +1034,6 @@ Item {
                                         implicitHeight: mCardCol.implicitHeight + SentinelTheme.spaceLg * 2
                                         Behavior on color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
                                         Behavior on border.color { ColorAnimation { duration: MotionTokens.normal; easing.type: MotionTokens.standard } }
-                                        layer.enabled: modelHover.hovered
-                                        layer.effect: MultiEffect {
-                                            shadowEnabled: true
-                                            shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.15)
-                                            shadowVerticalOffset: 2
-                                            shadowBlur: 0.12
-                                            shadowOpacity: 1.0
-                                        }
 
                                         ColumnLayout {
                                             id: mCardCol
@@ -954,14 +1148,6 @@ Item {
                                                     height: 4
                                                     radius: 2
                                                     color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                                                    layer.enabled: true
-                                                    layer.effect: MultiEffect {
-                                                        shadowEnabled: true
-                                                        shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                                        shadowVerticalOffset: 1
-                                                        shadowBlur: 0.06
-                                                        shadowOpacity: 1.0
-                                                    }
                                                     Rectangle {
                                                         width: parent.width * ollamaPuller.progress
                                                         height: parent.height
@@ -985,20 +1171,21 @@ Item {
                                 }
                             }
 
-                            RowLayout {
+                            ColumnLayout {
                                 Layout.topMargin: SentinelTheme.spaceMd
                                 Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceMd
+                                spacing: SentinelTheme.spaceSm
                                 Label {
-                                    text: qsTr("Or select an already installed model:")
+                                    text: qsTr("Installed Models")
                                     color: SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontBody
                                     font.bold: true
-                                    Layout.fillWidth: true
                                 }
                                 ComboBox {
                                     id: modelSelectCombo
-                                    Layout.preferredWidth: 280
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 38
+                                    hoverEnabled: true
                                     model: viewModel.installedOllamaModelNames.length > 0 ? viewModel.installedOllamaModelNames : [qsTr("No models found")]
                                     currentIndex: viewModel.installedOllamaModelNames.indexOf(viewModel.selectedLocalModel)
                                     enabled: viewModel.installedOllamaModelNames.length > 0
@@ -1006,6 +1193,77 @@ Item {
                                         if (currentText !== qsTr("No models found")) {
                                             viewModel.selectedLocalModel = currentText
                                         }
+                                    }
+                                    contentItem: Text {
+                                        leftPadding: SentinelTheme.spaceMd
+                                        rightPadding: SentinelTheme.space2Xl
+                                        text: modelSelectCombo.currentIndex >= 0 ? modelSelectCombo.currentText : qsTr("Select a model...")
+                                        color: modelSelectCombo.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
+                                    background: Rectangle {
+                                        implicitHeight: 38
+                                        radius: SentinelTheme.radiusMd
+                                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                        border.color: modelSelectCombo.activeFocus || modelSelectCombo.popup.visible
+                                                      ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.46)
+                                                      : modelSelectCombo.hovered
+                                                        ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.24)
+                                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                        Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                    indicator: Text {
+                                        x: parent.width - width - SentinelTheme.spaceMd
+                                        y: parent.height / 2 - height / 2
+                                        text: "\u2039\u203a"
+                                        rotation: 90
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                    }
+                                    delegate: ItemDelegate {
+                                        id: modelSelectDelegate
+                                        width: modelSelectCombo.width
+                                        implicitHeight: 36
+                                        highlighted: modelSelectCombo.highlightedIndex === index
+                                        hoverEnabled: true
+                                        contentItem: RowLayout {
+                                            spacing: SentinelTheme.spaceSm
+                                            anchors.fill: parent
+                                            anchors.leftMargin: SentinelTheme.spaceMd
+                                            anchors.rightMargin: SentinelTheme.spaceMd
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: modelData === qsTr("No models found") ? modelData : modelData
+                                                color: modelSelectDelegate.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                                font.pixelSize: SentinelTheme.fontBody
+                                                font.bold: modelSelectDelegate.highlighted
+                                                verticalAlignment: Text.AlignVCenter
+                                                elide: Text.ElideRight
+                                            }
+                                            Text {
+                                                visible: modelSelectCombo.currentIndex === index
+                                                text: "\u2713"
+                                                color: onboarding.brandAccent
+                                                font.pixelSize: SentinelTheme.fontSmall
+                                            }
+                                        }
+                                        background: Rectangle {
+                                            color: modelSelectDelegate.highlighted
+                                                   ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
+                                                   : modelSelectDelegate.hovered
+                                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                                     : "transparent"
+                                            radius: SentinelTheme.radiusSm
+                                            Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                        }
+                                    }
+                                    popup.background: Rectangle {
+                                        radius: SentinelTheme.radiusLg
+                                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                        border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.20)
+                                        border.width: 1
                                     }
                                 }
                             }
@@ -1030,27 +1288,100 @@ Item {
                                 font.pixelSize: SentinelTheme.fontBody
                                 wrapMode: Text.WordWrap
                             }
-                            RowLayout {
+                            ColumnLayout {
                                 Layout.topMargin: SentinelTheme.spaceMd
                                 Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceMd
+                                spacing: SentinelTheme.spaceSm
                                 Label {
-                                    text: qsTr("Active LM Studio Model:")
+                                    text: qsTr("Active LM Studio Model")
                                     color: SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontBody
                                     font.bold: true
-                                    Layout.fillWidth: true
                                 }
                                 ComboBox {
                                     id: lmStudioModelCombo
-                                    Layout.preferredWidth: 280
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 38
+                                    hoverEnabled: true
                                     model: viewModel.loadedLMStudioModelNames.length > 0 ? viewModel.loadedLMStudioModelNames : [qsTr("No models loaded")]
                                     currentIndex: viewModel.loadedLMStudioModelNames.indexOf(viewModel.selectedLocalModel)
                                     enabled: viewModel.loadedLMStudioModelNames.length > 0
+                                    displayText: currentIndex >= 0 ? currentText : qsTr("Select a loaded model...")
                                     onActivated: (index) => {
                                         if (currentText !== qsTr("No models loaded")) {
                                             viewModel.selectedLocalModel = currentText
                                         }
+                                    }
+                                    contentItem: Text {
+                                        leftPadding: SentinelTheme.spaceMd
+                                        rightPadding: SentinelTheme.space2Xl
+                                        text: lmStudioModelCombo.displayText
+                                        color: lmStudioModelCombo.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
+                                    background: Rectangle {
+                                        implicitHeight: 38
+                                        radius: SentinelTheme.radiusMd
+                                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                        border.color: lmStudioModelCombo.activeFocus || lmStudioModelCombo.popup.visible
+                                                      ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.46)
+                                                      : lmStudioModelCombo.hovered
+                                                        ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.24)
+                                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                        Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                    indicator: Text {
+                                        x: parent.width - width - SentinelTheme.spaceMd
+                                        y: parent.height / 2 - height / 2
+                                        text: "\u2039\u203a"
+                                        rotation: 90
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                    }
+                                    delegate: ItemDelegate {
+                                        id: lmStudioDelegate
+                                        width: lmStudioModelCombo.width
+                                        implicitHeight: 36
+                                        highlighted: lmStudioModelCombo.highlightedIndex === index
+                                        hoverEnabled: true
+                                        contentItem: RowLayout {
+                                            spacing: SentinelTheme.spaceSm
+                                            anchors.fill: parent
+                                            anchors.leftMargin: SentinelTheme.spaceMd
+                                            anchors.rightMargin: SentinelTheme.spaceMd
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: modelData === qsTr("No models loaded") ? modelData : modelData
+                                                color: lmStudioDelegate.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                                font.pixelSize: SentinelTheme.fontBody
+                                                font.bold: lmStudioDelegate.highlighted
+                                                verticalAlignment: Text.AlignVCenter
+                                                elide: Text.ElideRight
+                                            }
+                                            Text {
+                                                visible: lmStudioModelCombo.currentIndex === index
+                                                text: "\u2713"
+                                                color: onboarding.brandAccent
+                                                font.pixelSize: SentinelTheme.fontSmall
+                                            }
+                                        }
+                                        background: Rectangle {
+                                            color: lmStudioDelegate.highlighted
+                                                   ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
+                                                   : lmStudioDelegate.hovered
+                                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                                     : "transparent"
+                                            radius: SentinelTheme.radiusSm
+                                            Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                        }
+                                    }
+                                    popup.background: Rectangle {
+                                        radius: SentinelTheme.radiusLg
+                                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                        border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.20)
+                                        border.width: 1
                                     }
                                 }
                             }
@@ -1124,82 +1455,132 @@ Item {
                                 wrapMode: Text.WordWrap
                             }
 
-                            // Sub-Provider Selection Buttons
-                            GridLayout {
+                            // Sub-Provider Selection Combo
+                            ColumnLayout {
                                 Layout.fillWidth: true
-                                columns: width < 700 ? 3 : 6
-                                rowSpacing: SentinelTheme.spaceSm
-                                columnSpacing: SentinelTheme.spaceSm
+                                spacing: SentinelTheme.spaceXs
 
-                                SentinelButton {
-                                    text: "OpenAI (ChatGPT)"
-                                    Layout.fillWidth: true
-                                    highlighted: viewModel.selectedCloudProvider === "openai"
-                                    onClicked: {
-                                        viewModel.selectedCloudProvider = "openai"
-                                        if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("gpt") && !viewModel.selectedLocalModel.startsWith("o1") && !viewModel.selectedLocalModel.startsWith("o3")) {
-                                            viewModel.selectedLocalModel = "gpt-4o"
-                                        }
-                                    }
+                                Label {
+                                    text: qsTr("Cloud Provider")
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    font.bold: true
                                 }
 
-                                SentinelButton {
-                                    text: "Anthropic Claude"
+                                ComboBox {
+                                    id: cloudProvCombo
                                     Layout.fillWidth: true
-                                    highlighted: viewModel.selectedCloudProvider === "claude"
-                                    onClicked: {
-                                        viewModel.selectedCloudProvider = "claude"
-                                        if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("claude")) {
-                                            viewModel.selectedLocalModel = "claude-3-5-sonnet-20241022"
+                                    Layout.preferredHeight: 38
+                                    hoverEnabled: true
+                                    model: [
+                                        { text: "OpenAI (ChatGPT)",  id: "openai" },
+                                        { text: "Anthropic Claude",  id: "claude" },
+                                        { text: "Google Gemini",     id: "gemini" },
+                                        { text: "DeepSeek API",      id: "deepseek" },
+                                        { text: "Groq Cloud",        id: "groq" },
+                                        { text: "Mistral AI",        id: "mistral" }
+                                    ]
+                                    textRole: "text"
+                                    valueRole: "id"
+                                    currentIndex: {
+                                        var idx = 0;
+                                        for (var i = 0; i < cloudProvCombo.model.length; i++) {
+                                            if (cloudProvCombo.model[i].id === viewModel.selectedCloudProvider) {
+                                                idx = i;
+                                                break;
+                                            }
+                                        }
+                                        return idx;
+                                    }
+                                    displayText: currentIndex >= 0 ? currentText : qsTr("Select a cloud provider...")
+                                    onActivated: (idx) => {
+                                        var prov = model[idx]
+                                        viewModel.selectedCloudProvider = prov.id
+                                        var defaults = {
+                                            openai: "gpt-4o",
+                                            claude: "claude-3-5-sonnet-20241022",
+                                            gemini: "gemini-2.0-flash",
+                                            deepseek: "deepseek-chat",
+                                            groq: "llama-3.3-70b-versatile",
+                                            mistral: "mistral-large-latest"
+                                        }
+                                        if (!viewModel.selectedLocalModel ||
+                                            !viewModel.selectedLocalModel.startsWith(prov.id === "openai" ? "gpt" : prov.id) &&
+                                            !viewModel.selectedLocalModel.startsWith("o1") &&
+                                            !viewModel.selectedLocalModel.startsWith("o3")) {
+                                            viewModel.selectedLocalModel = defaults[prov.id] || prov.id
                                         }
                                     }
-                                }
-
-                                SentinelButton {
-                                    text: "Google Gemini"
-                                    Layout.fillWidth: true
-                                    highlighted: viewModel.selectedCloudProvider === "gemini"
-                                    onClicked: {
-                                        viewModel.selectedCloudProvider = "gemini"
-                                        if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("gemini")) {
-                                            viewModel.selectedLocalModel = "gemini-2.0-flash"
+                                    contentItem: Text {
+                                        leftPadding: SentinelTheme.spaceMd
+                                        rightPadding: SentinelTheme.space2Xl
+                                        text: cloudProvCombo.displayText
+                                        color: cloudProvCombo.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
+                                    background: Rectangle {
+                                        implicitHeight: 38
+                                        radius: SentinelTheme.radiusMd
+                                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                        border.color: cloudProvCombo.activeFocus || cloudProvCombo.popup.visible
+                                                      ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.46)
+                                                      : cloudProvCombo.hovered
+                                                        ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.24)
+                                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                        Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                    indicator: Text {
+                                        x: parent.width - width - SentinelTheme.spaceMd
+                                        y: parent.height / 2 - height / 2
+                                        text: "\u2039\u203a"
+                                        rotation: 90
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                    }
+                                    delegate: ItemDelegate {
+                                        id: cloudProvDelegate
+                                        width: cloudProvCombo.width
+                                        implicitHeight: 36
+                                        highlighted: cloudProvCombo.highlightedIndex === index
+                                        hoverEnabled: true
+                                        contentItem: RowLayout {
+                                            spacing: SentinelTheme.spaceSm
+                                            anchors.fill: parent
+                                            anchors.leftMargin: SentinelTheme.spaceMd
+                                            anchors.rightMargin: SentinelTheme.spaceMd
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: modelData.text
+                                                color: cloudProvDelegate.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                                font.pixelSize: SentinelTheme.fontBody
+                                                font.bold: cloudProvDelegate.highlighted
+                                                verticalAlignment: Text.AlignVCenter
+                                                elide: Text.ElideRight
+                                            }
+                                            Text {
+                                                visible: cloudProvCombo.currentIndex === index
+                                                text: "\u2713"
+                                                color: onboarding.brandAccent
+                                                font.pixelSize: SentinelTheme.fontSmall
+                                            }
+                                        }
+                                        background: Rectangle {
+                                            color: cloudProvDelegate.highlighted
+                                                   ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
+                                                   : cloudProvDelegate.hovered
+                                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                                     : "transparent"
+                                            radius: SentinelTheme.radiusSm
+                                            Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
                                         }
                                     }
-                                }
-
-                                SentinelButton {
-                                    text: "DeepSeek API"
-                                    Layout.fillWidth: true
-                                    highlighted: viewModel.selectedCloudProvider === "deepseek"
-                                    onClicked: {
-                                        viewModel.selectedCloudProvider = "deepseek"
-                                        if (!viewModel.selectedLocalModel || !viewModel.selectedLocalModel.startsWith("deepseek")) {
-                                            viewModel.selectedLocalModel = "deepseek-chat"
-                                        }
-                                    }
-                                }
-
-                                SentinelButton {
-                                    text: "Groq Cloud"
-                                    Layout.fillWidth: true
-                                    highlighted: viewModel.selectedCloudProvider === "groq"
-                                    onClicked: {
-                                        viewModel.selectedCloudProvider = "groq"
-                                        if (!viewModel.selectedLocalModel || (!viewModel.selectedLocalModel.startsWith("llama") && !viewModel.selectedLocalModel.startsWith("mixtral"))) {
-                                            viewModel.selectedLocalModel = "llama-3.3-70b-versatile"
-                                        }
-                                    }
-                                }
-
-                                SentinelButton {
-                                    text: "Mistral AI"
-                                    Layout.fillWidth: true
-                                    highlighted: viewModel.selectedCloudProvider === "mistral"
-                                    onClicked: {
-                                        viewModel.selectedCloudProvider = "mistral"
-                                        if (!viewModel.selectedLocalModel || (!viewModel.selectedLocalModel.startsWith("mistral") && !viewModel.selectedLocalModel.startsWith("pixtral") && !viewModel.selectedLocalModel.startsWith("codestral"))) {
-                                            viewModel.selectedLocalModel = "mistral-large-latest"
-                                        }
+                                    popup.background: Rectangle {
+                                        radius: SentinelTheme.radiusLg
+                                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                        border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.20)
+                                        border.width: 1
                                     }
                                 }
                             }
@@ -1268,39 +1649,111 @@ Item {
                             }
 
                             // Cloud Model Selection
-                            RowLayout {
+                            ColumnLayout {
                                 Layout.topMargin: SentinelTheme.spaceSm
                                 Layout.fillWidth: true
-                                spacing: SentinelTheme.spaceMd
+                                spacing: SentinelTheme.spaceXs
 
                                 Label {
-                                    text: qsTr("Cloud Model:")
+                                    text: qsTr("Cloud Model")
                                     color: SentinelTheme.textPrimary
                                     font.pixelSize: SentinelTheme.fontBody
                                     font.bold: true
-                                    Layout.fillWidth: true
                                 }
 
                                 ComboBox {
-                                    Layout.preferredWidth: 320
-                                    model: {
-                                        const names = viewModel.ollamaModelNames
-                                        return names.length > 0 ? names :
-                                            viewModel.selectedCloudProvider === "claude" ?
-                                            ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"] :
-                                            viewModel.selectedCloudProvider === "gemini" ?
-                                             ["gemini-2.0-flash", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.5-flash-8b"] :
-                                            viewModel.selectedCloudProvider === "deepseek" ?
-                                            ["deepseek-chat", "deepseek-reasoner"] :
-                                            viewModel.selectedCloudProvider === "groq" ?
-                                            ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "deepseek-r1-distill-llama-70b"] :
-                                            viewModel.selectedCloudProvider === "mistral" ?
-                                            ["mistral-large-latest", "pixtral-large-latest", "codestral-latest", "mistral-small-latest"] :
-                                            ["gpt-4o", "gpt-4o-mini", "o1", "o1-preview", "o1-mini", "o3-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"]
-                                    }
+                                    id: cloudModelCombo
+                                    Layout.fillWidth: true
+                                    Layout.preferredHeight: 38
+                                    hoverEnabled: true
+                                    model: viewModel.selectedCloudProvider === "claude" ?
+                                        ["claude-3-5-sonnet-20241022", "claude-3-5-haiku-20241022", "claude-3-opus-20240229", "claude-3-sonnet-20240229", "claude-3-haiku-20240307"] :
+                                        viewModel.selectedCloudProvider === "gemini" ?
+                                         ["gemini-2.0-flash", "gemini-2.5-pro", "gemini-2.5-flash", "gemini-2.0-flash-lite", "gemini-1.5-pro", "gemini-1.5-flash", "gemini-1.5-flash-8b"] :
+                                        viewModel.selectedCloudProvider === "deepseek" ?
+                                        ["deepseek-chat", "deepseek-reasoner"] :
+                                        viewModel.selectedCloudProvider === "groq" ?
+                                        ["llama-3.3-70b-versatile", "llama-3.1-8b-instant", "mixtral-8x7b-32768", "deepseek-r1-distill-llama-70b"] :
+                                        viewModel.selectedCloudProvider === "mistral" ?
+                                        ["mistral-large-latest", "pixtral-large-latest", "codestral-latest", "mistral-small-latest"] :
+                                        viewModel.selectedCloudProvider === "openai" ?
+                                        ["gpt-4o", "gpt-4o-mini", "o1", "o1-preview", "o1-mini", "o3-mini", "gpt-4-turbo", "gpt-4", "gpt-3.5-turbo"] :
+                                        [qsTr("Select a cloud provider first")]
                                     currentIndex: Math.max(0, model.indexOf(viewModel.selectedLocalModel))
+                                    displayText: currentIndex >= 0 ? currentText : qsTr("Select a model...")
                                     onActivated: (idx) => {
                                         viewModel.selectedLocalModel = model[idx]
+                                    }
+                                    contentItem: Text {
+                                        leftPadding: SentinelTheme.spaceMd
+                                        rightPadding: SentinelTheme.space2Xl
+                                        text: cloudModelCombo.displayText
+                                        color: cloudModelCombo.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        verticalAlignment: Text.AlignVCenter
+                                        elide: Text.ElideRight
+                                    }
+                                    background: Rectangle {
+                                        implicitHeight: 38
+                                        radius: SentinelTheme.radiusMd
+                                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                        border.color: cloudModelCombo.activeFocus || cloudModelCombo.popup.visible
+                                                      ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.46)
+                                                      : cloudModelCombo.hovered
+                                                        ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.24)
+                                                        : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                        Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                    indicator: Text {
+                                        x: parent.width - width - SentinelTheme.spaceMd
+                                        y: parent.height / 2 - height / 2
+                                        text: "\u2039\u203a"
+                                        rotation: 90
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontSmall
+                                    }
+                                    delegate: ItemDelegate {
+                                        id: cloudModelDelegate
+                                        width: cloudModelCombo.width
+                                        implicitHeight: 36
+                                        highlighted: cloudModelCombo.highlightedIndex === index
+                                        hoverEnabled: true
+                                        contentItem: RowLayout {
+                                            spacing: SentinelTheme.spaceSm
+                                            anchors.fill: parent
+                                            anchors.leftMargin: SentinelTheme.spaceMd
+                                            anchors.rightMargin: SentinelTheme.spaceMd
+                                            Text {
+                                                Layout.fillWidth: true
+                                                text: modelData
+                                                color: cloudModelDelegate.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                                font.pixelSize: SentinelTheme.fontBody
+                                                font.bold: cloudModelDelegate.highlighted
+                                                verticalAlignment: Text.AlignVCenter
+                                                elide: Text.ElideRight
+                                            }
+                                            Text {
+                                                visible: cloudModelCombo.currentIndex === index
+                                                text: "\u2713"
+                                                color: onboarding.brandAccent
+                                                font.pixelSize: SentinelTheme.fontSmall
+                                            }
+                                        }
+                                        background: Rectangle {
+                                            color: cloudModelDelegate.highlighted
+                                                   ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
+                                                   : cloudModelDelegate.hovered
+                                                     ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                                     : "transparent"
+                                            radius: SentinelTheme.radiusSm
+                                            Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                        }
+                                    }
+                                    popup.background: Rectangle {
+                                        radius: SentinelTheme.radiusLg
+                                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                        border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.20)
+                                        border.width: 1
                                     }
                                 }
                             }
@@ -1330,30 +1783,58 @@ Item {
                         }
 
                         // Local Context toggle
-                        RowLayout {
+                        ColumnLayout {
                             Layout.fillWidth: true
                             Layout.topMargin: SentinelTheme.spaceMd
-                            spacing: SentinelTheme.spaceMd
-                            ColumnLayout {
-                                spacing: 2
+                            spacing: SentinelTheme.spaceSm
+                            RowLayout {
                                 Layout.fillWidth: true
-                                Label {
-                                    text: qsTr("Use local memory/context in chat")
-                                    color: SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontCard
-                                    font.bold: true
-                                }
-                                Label {
+                                spacing: SentinelTheme.spaceMd
+                                ColumnLayout {
+                                    spacing: 2
                                     Layout.fillWidth: true
-                                    text: qsTr("Automatically retrieves and appends relevant memory notes and recent chat history to the prompt context.")
-                                    color: SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    wrapMode: Text.WordWrap
+                                    Label {
+                                        text: qsTr("Use local memory/context in chat")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontCard
+                                        font.bold: true
+                                    }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Automatically retrieves and appends relevant memory notes and recent chat history to the prompt context.")
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        wrapMode: Text.WordWrap
+                                    }
                                 }
-                            }
-                            Switch {
-                                checked: viewModel.promptContextInjectionEnabled
-                                onToggled: viewModel.promptContextInjectionEnabled = checked
+                                Switch {
+                                    id: contextSwitch
+                                    checked: viewModel.promptContextInjectionEnabled
+                                    onToggled: viewModel.promptContextInjectionEnabled = checked
+                                    indicator: Rectangle {
+                                        implicitWidth: 46
+                                        implicitHeight: 24
+                                        x: contextSwitch.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: height / 2
+                                        color: contextSwitch.checked
+                                               ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.18)
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                        border.color: contextSwitch.checked
+                                                      ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.44)
+                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                        Rectangle {
+                                            x: contextSwitch.checked ? parent.width - width - 2 : 2
+                                            y: 2
+                                            width: 20
+                                            height: 20
+                                            radius: 10
+                                            color: contextSwitch.checked ? onboarding.brandAccent : SentinelTheme.textPrimary
+                                            opacity: contextSwitch.hovered ? 0.90 : 0.74
+                                            Behavior on x { NumberAnimation { duration: MotionTokens.fast } }
+                                        }
+                                    }
+                                }
                             }
                         }
 
@@ -1440,58 +1921,167 @@ Item {
                         }
 
                         // Reduced Motion
-                        RowLayout {
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceMd
-                            ColumnLayout {
-                                spacing: 2
+                            spacing: SentinelTheme.spaceSm
+                            RowLayout {
                                 Layout.fillWidth: true
-                                Label {
-                                    text: qsTr("Reduced Motion (Animations)")
-                                    color: SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontCard
-                                    font.bold: true
-                                }
-                                Label {
+                                spacing: SentinelTheme.spaceMd
+                                ColumnLayout {
+                                    spacing: 2
                                     Layout.fillWidth: true
-                                    text: qsTr("Disables sliding pages, glass drifts, and high-motion transitions to save power.")
-                                    color: SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    wrapMode: Text.WordWrap
+                                    Label {
+                                        text: qsTr("Reduced Motion (Animations)")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontCard
+                                        font.bold: true
+                                    }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Disables sliding pages, glass drifts, and high-motion transitions to save power.")
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        wrapMode: Text.WordWrap
+                                    }
                                 }
-                            }
-                            Switch {
-                                checked: viewModel.reducedMotionEnabled
-                                onToggled: viewModel.reducedMotionEnabled = checked
+                                Switch {
+                                    id: reducedMotionSwitch
+                                    checked: viewModel.reducedMotionEnabled
+                                    onToggled: viewModel.reducedMotionEnabled = checked
+                                    indicator: Rectangle {
+                                        implicitWidth: 46
+                                        implicitHeight: 24
+                                        x: reducedMotionSwitch.leftPadding
+                                        y: parent.height / 2 - height / 2
+                                        radius: height / 2
+                                        color: reducedMotionSwitch.checked
+                                               ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.18)
+                                               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
+                                        border.color: reducedMotionSwitch.checked
+                                                      ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.44)
+                                                      : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                        Rectangle {
+                                            x: reducedMotionSwitch.checked ? parent.width - width - 2 : 2
+                                            y: 2
+                                            width: 20
+                                            height: 20
+                                            radius: 10
+                                            color: reducedMotionSwitch.checked ? onboarding.brandAccent : SentinelTheme.textPrimary
+                                            opacity: reducedMotionSwitch.hovered ? 0.90 : 0.74
+                                            Behavior on x { NumberAnimation { duration: MotionTokens.fast } }
+                                        }
+                                    }
+                                }
                             }
                         }
 
                         // Check updates
-                        RowLayout {
+                        ColumnLayout {
                             Layout.fillWidth: true
-                            spacing: SentinelTheme.spaceMd
-                            ColumnLayout {
-                                spacing: 2
+                            spacing: SentinelTheme.spaceSm
+                            RowLayout {
                                 Layout.fillWidth: true
-                                Label {
-                                    text: qsTr("Check for Updates")
-                                    color: SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontCard
-                                    font.bold: true
-                                }
-                                Label {
+                                spacing: SentinelTheme.spaceMd
+                                ColumnLayout {
+                                    spacing: 2
                                     Layout.fillWidth: true
-                                    text: qsTr("Choose how often Sentinel checks for updates. Checked locally without sharing logs.")
-                                    color: SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    wrapMode: Text.WordWrap
+                                    Label {
+                                        text: qsTr("Check for Updates")
+                                        color: SentinelTheme.textPrimary
+                                        font.pixelSize: SentinelTheme.fontCard
+                                        font.bold: true
+                                    }
+                                    Label {
+                                        Layout.fillWidth: true
+                                        text: qsTr("Choose how often Sentinel checks for updates. Checked locally without sharing logs.")
+                                        color: SentinelTheme.textMuted
+                                        font.pixelSize: SentinelTheme.fontBody
+                                        wrapMode: Text.WordWrap
+                                    }
                                 }
                             }
                             ComboBox {
+                                id: updatePolicyCombo
+                                Layout.preferredWidth: 280
+                                Layout.alignment: Qt.AlignLeft
+                                Layout.preferredHeight: 38
+                                hoverEnabled: true
                                 model: ["Never", "Ask Before Checking", "Weekly", "On Startup"]
-                                currentIndex: model.indexOf(viewModel.updateCheckPolicy)
+                                currentIndex: Math.max(0, model.indexOf(viewModel.updateCheckPolicy))
+                                displayText: currentIndex >= 0 ? currentText : qsTr("Select policy...")
                                 onActivated: (index) => {
                                     viewModel.updateCheckPolicy = currentText
+                                }
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: updatePolicyCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+                                background: Rectangle {
+                                    implicitHeight: 38
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: updatePolicyCombo.activeFocus || updatePolicyCombo.popup.visible
+                                                  ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.46)
+                                                  : updatePolicyCombo.hovered
+                                                    ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.24)
+                                                    : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                }
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                delegate: ItemDelegate {
+                                    id: updatePolicyDelegate
+                                    width: updatePolicyCombo.width
+                                    implicitHeight: 36
+                                    highlighted: updatePolicyCombo.highlightedIndex === index
+                                    hoverEnabled: true
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: modelData
+                                            color: updatePolicyDelegate.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: updatePolicyDelegate.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                            elide: Text.ElideRight
+                                        }
+                                        Text {
+                                            visible: updatePolicyCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: onboarding.brandAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
+                                    }
+                                    background: Rectangle {
+                                        color: updatePolicyDelegate.highlighted
+                                               ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
+                                               : updatePolicyDelegate.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                                 : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                }
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.20)
+                                    border.width: 1
                                 }
                             }
                         }
@@ -1533,21 +2123,87 @@ Item {
                                 font.bold: true
                             }
 
-                            RowLayout {
-                                spacing: SentinelTheme.spaceMd
-                                Layout.fillWidth: true
-                                Label {
-                                    text: qsTr("Engine:")
-                                    color: SentinelTheme.textMuted
-                                    Layout.preferredWidth: 60
+                            ComboBox {
+                                id: ttsEngineCombo
+                                Layout.preferredWidth: 280
+                                Layout.preferredHeight: 38
+                                hoverEnabled: true
+                                model: ["Piper", "Kokoro"]
+                                currentIndex: Math.max(0, model.indexOf(viewModel.selectedTtsEngine))
+                                displayText: currentIndex >= 0 ? currentText : qsTr("Select engine...")
+                                onActivated: {
+                                    viewModel.selectedTtsEngine = currentText
                                 }
-                                ComboBox {
-                                    id: ttsEngineCombo
-                                    model: ["Piper", "Kokoro"]
-                                    currentIndex: model.indexOf(viewModel.selectedTtsEngine)
-                                    onActivated: {
-                                        viewModel.selectedTtsEngine = currentText
+                                contentItem: Text {
+                                    leftPadding: SentinelTheme.spaceMd
+                                    rightPadding: SentinelTheme.space2Xl
+                                    text: ttsEngineCombo.displayText
+                                    color: SentinelTheme.textPrimary
+                                    font.pixelSize: SentinelTheme.fontBody
+                                    verticalAlignment: Text.AlignVCenter
+                                    elide: Text.ElideRight
+                                }
+                                background: Rectangle {
+                                    implicitHeight: 38
+                                    radius: SentinelTheme.radiusMd
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
+                                    border.color: ttsEngineCombo.activeFocus || ttsEngineCombo.popup.visible
+                                                  ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.46)
+                                                  : ttsEngineCombo.hovered
+                                                    ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.24)
+                                                    : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
+                                    Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                }
+                                indicator: Text {
+                                    x: parent.width - width - SentinelTheme.spaceMd
+                                    y: parent.height / 2 - height / 2
+                                    text: "\u2039\u203a"
+                                    rotation: 90
+                                    color: SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                }
+                                delegate: ItemDelegate {
+                                    id: ttsDelegate
+                                    width: ttsEngineCombo.width
+                                    implicitHeight: 36
+                                    highlighted: ttsEngineCombo.highlightedIndex === index
+                                    hoverEnabled: true
+                                    contentItem: RowLayout {
+                                        spacing: SentinelTheme.spaceSm
+                                        anchors.fill: parent
+                                        anchors.leftMargin: SentinelTheme.spaceMd
+                                        anchors.rightMargin: SentinelTheme.spaceMd
+                                        Text {
+                                            Layout.fillWidth: true
+                                            text: modelData
+                                            color: ttsDelegate.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                            font.pixelSize: SentinelTheme.fontBody
+                                            font.bold: ttsDelegate.highlighted
+                                            verticalAlignment: Text.AlignVCenter
+                                            elide: Text.ElideRight
+                                        }
+                                        Text {
+                                            visible: ttsEngineCombo.currentIndex === index
+                                            text: "\u2713"
+                                            color: onboarding.brandAccent
+                                            font.pixelSize: SentinelTheme.fontSmall
+                                        }
                                     }
+                                    background: Rectangle {
+                                        color: ttsDelegate.highlighted
+                                               ? SentinelTheme.withAlpha(onboarding.brandAccent, 0.12)
+                                               : ttsDelegate.hovered
+                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                                 : "transparent"
+                                        radius: SentinelTheme.radiusSm
+                                        Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                                    }
+                                }
+                                popup.background: Rectangle {
+                                    radius: SentinelTheme.radiusLg
+                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
+                                    border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.20)
+                                    border.width: 1
                                 }
                             }
                         }
@@ -1666,6 +2322,15 @@ Item {
                                     }
                                 }
                                 Label {
+                                    id: kokoroDetectLabel
+                                    Layout.fillWidth: true
+                                    text: kokoroModelField.text !== ""
+                                          ? qsTr("✓ Path set") : qsTr("✗ Not yet configured")
+                                    color: kokoroModelField.text !== "" ? SentinelTheme.success : SentinelTheme.warning
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                    font.bold: true
+                                }
+                                Label {
                                     Layout.fillWidth: true
                                     text: qsTr("Recommended: kokoro.onnx (ONNX weights with Python runner)")
                                     color: SentinelTheme.textMuted
@@ -1687,6 +2352,14 @@ Item {
                                     text: viewModel.kokoroVoice
                                     placeholderText: qsTr("Enter voice name (e.g. af_sky)")
                                     onEditingFinished: viewModel.kokoroVoice = text
+                                }
+                                Label {
+                                    Layout.fillWidth: true
+                                    text: viewModel.kokoroVoice !== ""
+                                          ? qsTr("✓ Voice selected") : qsTr("✗ No voice selected")
+                                    color: viewModel.kokoroVoice !== "" ? SentinelTheme.success : SentinelTheme.warning
+                                    font.pixelSize: SentinelTheme.fontTiny
+                                    font.bold: true
                                 }
                             }
                         }
@@ -1795,6 +2468,7 @@ Item {
                             Repeater {
                                 model: onboarding.capabilityPoints
                                 Rectangle {
+                                    id: capCard
                                     required property var modelData
                                     Layout.fillWidth: true
                                     radius: SentinelTheme.radiusLg
@@ -1802,21 +2476,13 @@ Item {
                                     border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
                                     border.width: 1
                                     implicitHeight: capRow.implicitHeight + SentinelTheme.spaceLg * 2
+                                    scale: capHover.hovered ? 1.008 : 1.0
+                                    Behavior on scale { NumberAnimation { duration: MotionTokens.fast; easing.type: MotionTokens.enter } }
                                     RowLayout {
                                         id: capRow
                                         anchors.fill: parent
                                         anchors.margins: SentinelTheme.spaceLg
                                         spacing: SentinelTheme.spaceMd
-                                        Rectangle {
-                                            Layout.preferredWidth: 36; Layout.preferredHeight: 36; radius: 11
-                                            color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.14)
-                                            Label {
-                                                anchors.centerIn: parent
-                                                text: "◆"
-                                                color: onboarding.brandAccent
-                                                font.pixelSize: SentinelTheme.fontCard
-                                            }
-                                        }
                                         ColumnLayout {
                                             spacing: SentinelTheme.spaceXs
                                             Label {
@@ -1834,6 +2500,17 @@ Item {
                                             }
                                         }
                                     }
+                                    HoverHandler { id: capHover }
+                                    MouseArea {
+                                        anchors.fill: parent
+                                        cursorShape: Qt.PointingHandCursor
+                                        onClicked: {
+                                            detailPopup.popupTitle = modelData.t
+                                            detailPopup.popupDetail = onboarding.capabilityDetails[modelData.t] || modelData.d
+
+                                            detailPopup.open()
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -1846,63 +2523,63 @@ Item {
                     contentData: ColumnLayout {
                         spacing: SentinelTheme.spaceMd
                         width: stack.width
-                        Rectangle {
-                            Layout.preferredWidth: 64; Layout.preferredHeight: 64; radius: 20
-                            color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.16)
-                            border.color: SentinelTheme.withAlpha(onboarding.brandAccent, 0.5)
-                            border.width: 1
-                            StatusPulse {
-                                anchors.centerIn: parent
-                                size: 12
-                                accent: onboarding.brandAccent
-                                active: true
-                            }
-                        }
-                        Label {
-                            Layout.topMargin: SentinelTheme.spaceMd
-                            text: qsTr("You're all set")
-                            color: SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontDisplay
-                            font.bold: true
-                        }
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("Here's your setup. You can revisit everything later from Settings.")
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontBody
-                            wrapMode: Text.WordWrap
-                        }
-                        Rectangle {
-                            Layout.fillWidth: true
-                            Layout.topMargin: SentinelTheme.spaceLg
-                            radius: SentinelTheme.radiusMd
-                            color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.5)
-                            border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
-                            implicitHeight: infoRows.implicitHeight + SentinelTheme.spaceLg
 
-                            layer.enabled: true
-                            layer.effect: MultiEffect {
-                                shadowEnabled: true
-                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                shadowVerticalOffset: 2
-                                shadowBlur: 0.12
-                                shadowOpacity: 1.0
+                        Item { Layout.preferredHeight: Math.max(0, (stack.height - contentImplicit.implicitHeight) / 3) }
+
+                        ColumnLayout {
+                            id: contentImplicit
+                            Layout.fillWidth: true
+                            spacing: SentinelTheme.spaceMd
+                            Layout.maximumWidth: Math.min(stack.width * 0.88, 580)
+                            Layout.alignment: Qt.AlignHCenter
+
+                            Label {
+                                Layout.alignment: Qt.AlignHCenter
+                                text: qsTr("You're all set")
+                                color: SentinelTheme.textPrimary
+                                font.pixelSize: Math.max(SentinelTheme.fontTitle, Math.min(SentinelTheme.fontHero, stack.width * 0.04))
+                                font.bold: true
                             }
 
-                            ColumnLayout {
-                                id: infoRows
-                                anchors.fill: parent
-                                anchors.margins: SentinelTheme.spaceMd
-                                spacing: SentinelTheme.spaceSm
-                                InfoRow { label: qsTr("Use Case"); value: viewModel.onboardingUseCase; Layout.fillWidth: true }
-                                InfoRow { label: qsTr("Theme"); value: viewModel.themeName; Layout.fillWidth: true }
-                                InfoRow { label: qsTr("AI Provider"); value: viewModel.onboardingAiProvider; Layout.fillWidth: true }
-                                InfoRow { label: qsTr("Selected Model"); value: viewModel.selectedLocalModel ? viewModel.selectedLocalModel : qsTr("None selected"); Layout.fillWidth: true }
-                                InfoRow { label: qsTr("Memory Context"); value: viewModel.promptContextInjectionEnabled ? qsTr("Enabled") : qsTr("Disabled"); Layout.fillWidth: true }
-                                InfoRow { label: qsTr("TTS Engine"); value: viewModel.selectedTtsEngine; Layout.fillWidth: true }
-                                InfoRow { label: qsTr("System Updates"); value: viewModel.updateCheckPolicy; Layout.fillWidth: true }
+                            Label {
+                                Layout.alignment: Qt.AlignHCenter
+                                horizontalAlignment: Text.AlignHCenter
+                                text: qsTr("Here's your setup. You can revisit everything later from Settings.")
+                                color: SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontBody
+                                wrapMode: Text.WordWrap
+                                Layout.maximumWidth: parent.width * 0.85
+                            }
+
+                            // ── Summary card ──
+                            Rectangle {
+                                Layout.fillWidth: true
+                                Layout.topMargin: SentinelTheme.spaceLg
+                                Layout.alignment: Qt.AlignHCenter
+                                radius: SentinelTheme.radiusXl
+
+                                color: SentinelTheme.backgroundRaised
+                                border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
+                                border.width: 1
+
+                                implicitHeight: summaryRows.implicitHeight + SentinelTheme.spaceLg * 2
+
+                                ColumnLayout {
+                                    id: summaryRows
+                                    anchors.fill: parent
+                                    anchors.margins: SentinelTheme.spaceLg
+                                    spacing: SentinelTheme.spaceSm
+                                    InfoRow { label: qsTr("Use Case"); value: viewModel.onboardingUseCase; Layout.fillWidth: true }
+                                    InfoRow { label: qsTr("Theme"); value: viewModel.themeName; Layout.fillWidth: true }
+                                    InfoRow { label: qsTr("AI Provider"); value: viewModel.onboardingAiProvider; Layout.fillWidth: true }
+                                    InfoRow { label: qsTr("Selected Model"); value: viewModel.selectedLocalModel ? viewModel.selectedLocalModel : qsTr("None selected"); Layout.fillWidth: true }
+                                    InfoRow { label: qsTr("Memory Context"); value: viewModel.promptContextInjectionEnabled ? qsTr("Enabled") : qsTr("Disabled"); Layout.fillWidth: true }
+                                    InfoRow { label: qsTr("TTS Engine"); value: viewModel.selectedTtsEngine; Layout.fillWidth: true }
+                                    InfoRow { label: qsTr("System Updates"); value: viewModel.updateCheckPolicy; Layout.fillWidth: true }
+                                }
                             }
                         }
+
                         Item { Layout.fillHeight: true }
                     }
                 }
@@ -1917,14 +2594,6 @@ Item {
                 border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
                 border.width: 1
                 implicitHeight: footerRow.implicitHeight + SentinelTheme.spaceMd * 2
-                layer.enabled: true
-                layer.effect: MultiEffect {
-                    shadowEnabled: true
-                    shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                    shadowVerticalOffset: -1
-                    shadowBlur: 0.08
-                    shadowOpacity: 1.0
-                }
                 RowLayout {
                     id: footerRow
                     anchors.fill: parent
@@ -1948,6 +2617,7 @@ Item {
                     SentinelButton {
                         text: onboarding.step < onboarding.totalSteps - 1 ? qsTr("Continue") : qsTr("Start using Sentinel")
                         highlighted: true
+                        enabled: onboarding.step !== 0 || viewModel.onboardingUseCase !== ""
                         onClicked: {
                             if (onboarding.step === 6) {
                                 viewModel.applyVoiceConfigurationPaths(

@@ -6,7 +6,6 @@
 #include "sentinel/core/ModeManager.h"
 #include "sentinel/core/ModelRegistry.h"
 
-#include <QApplication>
 #include <QCryptographicHash>
 #include <QCursor>
 #include <QDateTime>
@@ -31,6 +30,7 @@
 #include <QScreen>
 #include <QStandardPaths>
 #include <QSystemTrayIcon>
+#include <QTimer>
 #include <QUrl>
 
 #include <algorithm>
@@ -381,8 +381,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::agentAutonomousModeChanged);
     connect(&settings_, &core::AppSettings::selectedSystemModeChanged, this,
             &DesktopShellViewModel::currentModeChanged);
-    connect(&settings_, &core::AppSettings::updateCheckPolicyChanged, this,
-            &DesktopShellViewModel::nativeExperienceChanged);
+    connect(&settings_, &core::AppSettings::updateCheckPolicyChanged, this, [this]() {
+        emit nativeExperienceChanged();
+        setupBackgroundUpdateCheck();
+    });
     connect(&settings_, &core::AppSettings::notificationPolicyChanged, this,
             &DesktopShellViewModel::nativeExperienceChanged);
     connect(&settings_, &core::AppSettings::onboardingCompleteChanged, this,
@@ -541,7 +543,13 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                     }
 
                     const qint64 now = QDateTime::currentMSecsSinceEpoch();
-                    if (category == lastNotifiedCategory_ && (now - lastNotificationTime_) < 1500) {
+                    if (category == lastNotifiedCategory_ && (now - lastNotificationTime_) < 5000) {
+                        continue;
+                    }
+
+                    // Skip Low-priority notifications from system tray
+                    const QString priority = item.value(QStringLiteral("priority")).toString();
+                    if (priority == QLatin1String("Low")) {
                         continue;
                     }
                     lastNotifiedCategory_ = category;
@@ -565,12 +573,13 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                             emit requestWindowActive(page);
                         });
                     }
-                    trayIcon_->showMessage(title, body, QSystemTrayIcon::NoIcon, 6000);
-                    QApplication::beep();
+                    trayIcon_->showMessage(title, body, QSystemTrayIcon::NoIcon, 10000);
                 }
             }
         }
     });
+
+    setupBackgroundUpdateCheck();
 }
 
 QString DesktopShellViewModel::providerName() const {
@@ -1288,6 +1297,38 @@ void DesktopShellViewModel::setOllamaEndpoint(const QString& endpoint) {
     if (controller_.ollamaEndpoint() != endpoint) {
         settings_.setOllamaEndpoint(endpoint);
         controller_.setOllamaEndpoint(endpoint);
+    }
+}
+
+QString DesktopShellViewModel::lmStudioEndpoint() const {
+    return settings_.lmStudioEndpoint();
+}
+
+void DesktopShellViewModel::setLmStudioEndpoint(const QString& endpoint) {
+    if (settings_.lmStudioEndpoint() != endpoint) {
+        settings_.setLmStudioEndpoint(endpoint);
+        controller_.setLmStudioEndpoint(endpoint);
+    }
+}
+
+QString DesktopShellViewModel::llamaCppEndpoint() const {
+    return settings_.llamaCppEndpoint();
+}
+
+void DesktopShellViewModel::setLlamaCppEndpoint(const QString& endpoint) {
+    if (settings_.llamaCppEndpoint() != endpoint) {
+        settings_.setLlamaCppEndpoint(endpoint);
+        controller_.setLlamaCppEndpoint(endpoint);
+    }
+}
+
+QString DesktopShellViewModel::cloudApiEndpoint() const {
+    return settings_.cloudApiEndpoint();
+}
+
+void DesktopShellViewModel::setCloudApiEndpoint(const QString& endpoint) {
+    if (settings_.cloudApiEndpoint() != endpoint) {
+        settings_.setCloudApiEndpoint(endpoint);
     }
 }
 
@@ -3948,6 +3989,25 @@ void DesktopShellViewModel::setUpdateCheckPolicy(const QString& policy) {
     settings_.setUpdateCheckPolicy(policy);
 }
 
+void DesktopShellViewModel::setupBackgroundUpdateCheck() {
+    if (!updateCheckTimer_) {
+        updateCheckTimer_ = new QTimer(this);
+        connect(updateCheckTimer_, &QTimer::timeout, this, [this]() {
+            if (settings_.updateCheckPolicy() != QStringLiteral("Never")) {
+                checkForUpdates();
+            }
+        });
+    }
+    updateCheckTimer_->stop();
+    const auto policy = settings_.updateCheckPolicy();
+    if (policy == QStringLiteral("Weekly")) {
+        updateCheckTimer_->start(7 * 24 * 60 * 60 * 1000);
+        checkForUpdates();
+    } else if (policy == QStringLiteral("On Startup")) {
+        QTimer::singleShot(3000, this, [this]() { checkForUpdates(); });
+    }
+}
+
 QString DesktopShellViewModel::notificationPolicy() const {
     return settings_.notificationPolicy();
 }
@@ -5635,7 +5695,7 @@ void DesktopShellViewModel::addNotificationWithPriority(const QString& category,
                                                         const QString& body,
                                                         const QString& priority) {
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
-    constexpr qint64 cooldownMs = 3000;
+    constexpr qint64 cooldownMs = 8000;
 
     const QString json = settings_.notificationCenterJson();
     QJsonDocument doc = QJsonDocument::fromJson(json.toUtf8());
@@ -5778,27 +5838,6 @@ QStringList DesktopShellViewModel::mutedChannelNames() const {
         result.append(v.toString());
     }
     return result;
-}
-
-void DesktopShellViewModel::playNotificationSound() {
-#if defined(Q_OS_LINUX)
-    if (QFile::exists(QStringLiteral("/usr/share/sounds/freedesktop/stereo/message-new-instant.oga")))
-        QProcess::startDetached(QStringLiteral("canberra-gtk-play"),
-                                {QStringLiteral("--file"),
-                                 QStringLiteral("/usr/share/sounds/freedesktop/stereo/message-new-instant.oga")});
-    else
-        QApplication::beep();
-#elif defined(Q_OS_MACOS)
-    if (QFile::exists(QStringLiteral("/System/Library/Sounds/Pop.aiff")))
-        QProcess::startDetached(QStringLiteral("afplay"),
-                                {QStringLiteral("/System/Library/Sounds/Pop.aiff")});
-    else
-        QApplication::beep();
-#elif defined(Q_OS_WIN)
-    QApplication::beep();
-#else
-    QApplication::beep();
-#endif
 }
 
 QVariantMap DesktopShellViewModel::cursorScreenGeometry() {

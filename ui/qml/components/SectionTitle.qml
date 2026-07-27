@@ -2,6 +2,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts
+import Sentinel.Desktop
 
 ColumnLayout {
     property string title: ""

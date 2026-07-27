@@ -91,6 +91,18 @@ QString normalizedOnboardingUseCase(const QString& useCase) {
     if (normalized == QStringLiteral("writing")) {
         return QStringLiteral("Writing");
     }
+    if (normalized == QStringLiteral("research")) {
+        return QStringLiteral("Research");
+    }
+    if (normalized == QStringLiteral("creative")) {
+        return QStringLiteral("Creative");
+    }
+    if (normalized == QStringLiteral("business")) {
+        return QStringLiteral("Business");
+    }
+    if (normalized == QStringLiteral("personal assistant")) {
+        return QStringLiteral("Personal Assistant");
+    }
     return QStringLiteral("General Assistant");
 }
 
@@ -106,6 +118,10 @@ QString normalizedOnboardingAiProvider(const QString& provider) {
     if (normalized == QStringLiteral("openai-compatible local endpoint") ||
         normalized == QStringLiteral("openai-compatible-local")) {
         return QStringLiteral("OpenAI-compatible local endpoint");
+    }
+    if (normalized == QStringLiteral("cloud api") ||
+        normalized == QStringLiteral("cloud-api")) {
+        return QStringLiteral("Cloud API");
     }
     return QStringLiteral("Ollama");
 }
@@ -270,6 +286,39 @@ void AppSettings::setOllamaEndpoint(const QString& endpoint) {
 
     store_->setValue(QString::fromLatin1(ollamaEndpointKey), normalized);
     emit ollamaEndpointChanged();
+}
+
+QString AppSettings::lmStudioEndpoint() const {
+    if (!store_) return QStringLiteral("http://127.0.0.1:1234");
+    return store_->value(QString::fromLatin1(lmStudioEndpointKey), QStringLiteral("http://127.0.0.1:1234"));
+}
+
+void AppSettings::setLmStudioEndpoint(const QString& endpoint) {
+    if (endpoint == lmStudioEndpoint() || !store_) return;
+    store_->setValue(QString::fromLatin1(lmStudioEndpointKey), endpoint);
+    emit lmStudioEndpointChanged();
+}
+
+QString AppSettings::llamaCppEndpoint() const {
+    if (!store_) return QStringLiteral("http://127.0.0.1:8080");
+    return store_->value(QString::fromLatin1(llamaCppEndpointKey), QStringLiteral("http://127.0.0.1:8080"));
+}
+
+void AppSettings::setLlamaCppEndpoint(const QString& endpoint) {
+    if (endpoint == llamaCppEndpoint() || !store_) return;
+    store_->setValue(QString::fromLatin1(llamaCppEndpointKey), endpoint);
+    emit llamaCppEndpointChanged();
+}
+
+QString AppSettings::cloudApiEndpoint() const {
+    if (!store_) return {};
+    return store_->value(QString::fromLatin1(cloudApiEndpointKey), {});
+}
+
+void AppSettings::setCloudApiEndpoint(const QString& endpoint) {
+    if (endpoint == cloudApiEndpoint() || !store_) return;
+    store_->setValue(QString::fromLatin1(cloudApiEndpointKey), endpoint);
+    emit cloudApiEndpointChanged();
 }
 
 QString AppSettings::selectedRuntimeProvider() const {

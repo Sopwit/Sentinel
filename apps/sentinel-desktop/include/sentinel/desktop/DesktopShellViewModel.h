@@ -22,6 +22,7 @@
 class QFile;
 class QProcess;
 class QSystemTrayIcon;
+class QTimer;
 class QNetworkAccessManager;
 class QNetworkReply;
 
@@ -283,6 +284,12 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(QString credentialExecutionStatus READ credentialExecutionStatus NOTIFY
                    runtimeProviderRegistryChanged)
     Q_PROPERTY(QString ollamaEndpoint READ ollamaEndpoint WRITE setOllamaEndpoint NOTIFY
+                   ollamaStatusChanged)
+    Q_PROPERTY(QString lmStudioEndpoint READ lmStudioEndpoint WRITE setLmStudioEndpoint NOTIFY
+                   ollamaStatusChanged)
+    Q_PROPERTY(QString llamaCppEndpoint READ llamaCppEndpoint WRITE setLlamaCppEndpoint NOTIFY
+                   ollamaStatusChanged)
+    Q_PROPERTY(QString cloudApiEndpoint READ cloudApiEndpoint WRITE setCloudApiEndpoint NOTIFY
                    ollamaStatusChanged)
     Q_PROPERTY(
         QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
@@ -1605,6 +1612,12 @@ public:
     QString credentialExecutionStatus() const;
     QString ollamaEndpoint() const;
     void setOllamaEndpoint(const QString& endpoint);
+    QString lmStudioEndpoint() const;
+    void setLmStudioEndpoint(const QString& endpoint);
+    QString llamaCppEndpoint() const;
+    void setLlamaCppEndpoint(const QString& endpoint);
+    QString cloudApiEndpoint() const;
+    void setCloudApiEndpoint(const QString& endpoint);
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
@@ -2399,7 +2412,6 @@ public:
     Q_INVOKABLE bool isChannelMuted(const QString& category) const;
     Q_INVOKABLE void setChannelMuted(const QString& category, bool muted);
     Q_INVOKABLE QStringList mutedChannelNames() const;
-    Q_INVOKABLE void playNotificationSound();
     Q_INVOKABLE QVariantMap cursorScreenGeometry();
     bool notificationCenterVisible() const;
     void setNotificationCenterVisible(bool visible);
@@ -2500,6 +2512,7 @@ private:
     QString notificationSearchQuery_;
     QString notificationCategoryFilter_ = QStringLiteral("All");
     bool notificationCenterVisible_ = false;
+    void setupBackgroundUpdateCheck();
     bool dndEnabled_ = false;
     QString exportPreviewSource_ = QStringLiteral("conversations");
     QString exportPreviewFormat_ = QStringLiteral("Markdown");
@@ -2516,6 +2529,7 @@ private:
     QString lastRecordingError_;
 
     QSystemTrayIcon* trayIcon_ = nullptr;
+    QTimer* updateCheckTimer_ = nullptr;
     QNetworkAccessManager* networkManager_ = nullptr;
     QString lastReleaseUrl_;
     QString lastAssetUrl_;
