@@ -35,7 +35,8 @@ NativeCompanionAdapter::NativeCompanionAdapter(DesktopShellViewModel& viewModel,
 NativeCompanionAdapter::~NativeCompanionAdapter() = default;
 
 void NativeCompanionAdapter::applyMenuStylesheet() {
-    if (!menu_) return;
+    if (!menu_)
+        return;
 
     const QString theme = settings_.themeName();
     const bool isLight = theme.contains(QStringLiteral("Light"), Qt::CaseInsensitive);
@@ -157,20 +158,17 @@ void NativeCompanionAdapter::initialize() {
 #endif
     trayIcon_ = std::make_unique<QSystemTrayIcon>(trayIcon);
     trayIcon_->setContextMenu(menu_.get());
-    trayIcon_->setToolTip(sentinel::core::AppMetadata::displayName() + QStringLiteral(" Companion"));
+    trayIcon_->setToolTip(sentinel::core::AppMetadata::displayName() +
+                          QStringLiteral(" Companion"));
 
     connect(openAction_, &QAction::triggered, this, &NativeCompanionAdapter::openSentinel);
-    connect(quickChatAction_, &QAction::triggered, this, [this]() {
-        viewModel_.toggleCompanionChat();
-    });
+    connect(quickChatAction_, &QAction::triggered, this,
+            [this]() { viewModel_.toggleCompanionChat(); });
     connect(newConversationAction_, &QAction::triggered, this,
             &NativeCompanionAdapter::newConversation);
-    connect(quickNoteAction_, &QAction::triggered, this, [this]() {
-        viewModel_.toggleCompanionChat();
-    });
-    connect(clearChatAction_, &QAction::triggered, this, [this]() {
-        viewModel_.clearChat();
-    });
+    connect(quickNoteAction_, &QAction::triggered, this,
+            [this]() { viewModel_.toggleCompanionChat(); });
+    connect(clearChatAction_, &QAction::triggered, this, [this]() { viewModel_.clearChat(); });
     connect(pauseAction_, &QAction::triggered, this, &NativeCompanionAdapter::togglePaused);
     connect(settingsAction_, &QAction::triggered, this, &NativeCompanionAdapter::openSettings);
     connect(updateAction_, &QAction::triggered, this, &NativeCompanionAdapter::checkUpdates);
@@ -252,8 +250,9 @@ void NativeCompanionAdapter::refreshActions() {
         quitAction_->setEnabled(enabled);
     }
     if (trayIcon_) {
-        trayIcon_->setToolTip(paused ? QStringLiteral("Sentinel Companion (Paused)")
-                                     : QStringLiteral("Sentinel Companion (Active • Local Ollama)"));
+        trayIcon_->setToolTip(paused
+                                  ? QStringLiteral("Sentinel Companion (Paused)")
+                                  : QStringLiteral("Sentinel Companion (Active • Local Ollama)"));
     }
 }
 

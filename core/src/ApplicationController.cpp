@@ -1,9 +1,9 @@
 #include "sentinel/core/ApplicationController.h"
 
 #include "sentinel/core/AppSettings.h"
-#include "sentinel/core/JsonSettingsStore.h"
 #include "sentinel/core/InMemoryConversationStore.h"
 #include "sentinel/core/InMemoryMemoryCandidateStore.h"
+#include "sentinel/core/JsonSettingsStore.h"
 #include "sentinel/core/LocalRuntime.h"
 #include "sentinel/core/NullToolExecutor.h"
 #include "sentinel/core/StaticAgentRegistry.h"
@@ -115,9 +115,11 @@ QString localInferenceChatFailureMessage(const LocalInferenceResponse& response)
         if (!response.summary.trimmed().isEmpty()) {
             const QString sum = response.summary.trimmed();
             if (sum.contains(QLatin1String("API")) || sum.startsWith(QLatin1String("Google")) ||
-                sum.startsWith(QLatin1String("Anthropic")) || sum.startsWith(QLatin1String("OpenAI")) ||
-                sum.startsWith(QLatin1String("DeepSeek")) || sum.startsWith(QLatin1String("Groq")) ||
-                sum.startsWith(QLatin1String("Mistral")) || sum.startsWith(QLatin1String("Cloud"))) {
+                sum.startsWith(QLatin1String("Anthropic")) ||
+                sum.startsWith(QLatin1String("OpenAI")) ||
+                sum.startsWith(QLatin1String("DeepSeek")) ||
+                sum.startsWith(QLatin1String("Groq")) || sum.startsWith(QLatin1String("Mistral")) ||
+                sum.startsWith(QLatin1String("Cloud"))) {
                 return sum;
             }
             return QStringLiteral("Local inference failed: %1").arg(sum);
@@ -1771,12 +1773,10 @@ void ApplicationController::setSelectedRuntimeProvider(const QString& providerId
          normalized == QStringLiteral("lm-studio") ||
          normalized == QStringLiteral("llama-cpp-server") ||
          normalized == QStringLiteral("openai-compatible") ||
-         normalized == QStringLiteral("cloud-api") ||
-         normalized == QStringLiteral("openai") ||
-         normalized == QStringLiteral("deepseek") ||
-         normalized == QStringLiteral("groq") ||
-         normalized == QStringLiteral("mistral") ||
-         normalized == QStringLiteral("claude") || normalized == QStringLiteral("gemini"))
+         normalized == QStringLiteral("cloud-api") || normalized == QStringLiteral("openai") ||
+         normalized == QStringLiteral("deepseek") || normalized == QStringLiteral("groq") ||
+         normalized == QStringLiteral("mistral") || normalized == QStringLiteral("claude") ||
+         normalized == QStringLiteral("gemini"))
             ? normalized
             : QStringLiteral("ollama");
     if (selected == selectedRuntimeProvider_) {
@@ -1929,22 +1929,26 @@ void ApplicationController::setOllamaEndpoint(const QString& endpoint) {
 }
 
 QString ApplicationController::lmStudioEndpoint() const {
-    return lmStudioEndpoint_.isEmpty() ? QStringLiteral("http://127.0.0.1:1234") : lmStudioEndpoint_;
+    return lmStudioEndpoint_.isEmpty() ? QStringLiteral("http://127.0.0.1:1234")
+                                       : lmStudioEndpoint_;
 }
 
 void ApplicationController::setLmStudioEndpoint(const QString& endpoint) {
-    if (lmStudioEndpoint_ == endpoint) return;
+    if (lmStudioEndpoint_ == endpoint)
+        return;
     lmStudioEndpoint_ = endpoint;
     pollOllama();
     emit ollamaStatusChanged();
 }
 
 QString ApplicationController::llamaCppEndpoint() const {
-    return llamaCppEndpoint_.isEmpty() ? QStringLiteral("http://127.0.0.1:8080") : llamaCppEndpoint_;
+    return llamaCppEndpoint_.isEmpty() ? QStringLiteral("http://127.0.0.1:8080")
+                                       : llamaCppEndpoint_;
 }
 
 void ApplicationController::setLlamaCppEndpoint(const QString& endpoint) {
-    if (llamaCppEndpoint_ == endpoint) return;
+    if (llamaCppEndpoint_ == endpoint)
+        return;
     llamaCppEndpoint_ = endpoint;
     pollOllama();
     emit ollamaStatusChanged();
@@ -3174,8 +3178,8 @@ QString ApplicationController::localChatInferenceSummary() const {
     }
     // For cloud and LM Studio we read the display name from config; Ollama uses its own label.
     const auto providerLabel = isLMStudioProvider()
-        ? currentCloudOrLMStudioConfig().providerDisplayName()
-        : QStringLiteral("Ollama");
+                                   ? currentCloudOrLMStudioConfig().providerDisplayName()
+                                   : QStringLiteral("Ollama");
     if (!localChatInferenceEnabled_) {
         return QString::fromUtf8("Local chat inference is disabled; chat stays on the local safe "
                                  "provider path and no %1 prompt is sent.")
@@ -3252,27 +3256,30 @@ QString ApplicationController::localChatSendAvailabilitySummary() const {
     }
     // For cloud and LM Studio we read the display name from config; Ollama uses its own label.
     const auto providerLabel = isLMStudioProvider()
-        ? currentCloudOrLMStudioConfig().providerDisplayName()
-        : QStringLiteral("Ollama");
+                                   ? currentCloudOrLMStudioConfig().providerDisplayName()
+                                   : QStringLiteral("Ollama");
     if (!localChatInferenceEnabled_) {
         return isLMStudioProvider()
-            ? QString::fromUtf8("Enable chat inference in Settings to send with %1.").arg(providerLabel)
-            : QStringLiteral("Enable Local chat inference in Settings to send with Ollama.");
+                   ? QString::fromUtf8("Enable chat inference in Settings to send with %1.")
+                         .arg(providerLabel)
+                   : QStringLiteral("Enable Local chat inference in Settings to send with Ollama.");
     }
     if (localInferenceBusy_) {
         return QStringLiteral("Sentinel is responding. Wait for the current request to finish.");
     }
     if (!localInferenceEndpointAllowed()) {
         return isLMStudioProvider()
-            ? QString::fromUtf8("%1 API key is missing or endpoint is not allowed.").arg(providerLabel)
-            : QStringLiteral("Ollama must use a local loopback HTTP endpoint.");
+                   ? QString::fromUtf8("%1 API key is missing or endpoint is not allowed.")
+                         .arg(providerLabel)
+                   : QStringLiteral("Ollama must use a local loopback HTTP endpoint.");
     }
 
     const auto selected = selectedLocalModel_.trimmed();
     if (selected.isEmpty()) {
         return isLMStudioProvider()
-            ? QString::fromUtf8("Select a model for %1 in Settings before sending.").arg(providerLabel)
-            : QStringLiteral("Select an installed Ollama model in Settings before sending.");
+                   ? QString::fromUtf8("Select a model for %1 in Settings before sending.")
+                         .arg(providerLabel)
+                   : QStringLiteral("Select an installed Ollama model in Settings before sending.");
     }
 
     // Cloud and LM Studio providers do not use Ollama model discovery.
@@ -8958,12 +8965,14 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
          selectedRuntimeProvider_ == QStringLiteral("gemini") ||
          selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
          selectedRuntimeProvider_ == QStringLiteral("groq") ||
-         selectedRuntimeProvider_ == QStringLiteral("mistral")) ? selectedLocalModel_
-                                                                : QString()};
+         selectedRuntimeProvider_ == QStringLiteral("mistral"))
+            ? selectedLocalModel_
+            : QString()};
 
     return RuntimeProviderRegistry{
         {ollamaProvider.descriptor(), openAiCompatibleLocalProvider.descriptor(),
-         lmStudioProvider.descriptor(), llamaCppProvider.descriptor(), cloudApiProvider.descriptor()},
+         lmStudioProvider.descriptor(), llamaCppProvider.descriptor(),
+         cloudApiProvider.descriptor()},
         selectedRuntimeProvider_,
     };
 }
@@ -9058,13 +9067,18 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
             QStringLiteral("/settings.json");
         AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
         const QString cloudProv = settings.selectedCloudProvider();
-        const bool isClaude = cloudProv == QStringLiteral("claude") || selectedRuntimeProvider_ == QStringLiteral("claude");
-        const bool isGemini = cloudProv == QStringLiteral("gemini") || selectedRuntimeProvider_ == QStringLiteral("gemini");
-        const bool isDeepSeek = cloudProv == QStringLiteral("deepseek") || selectedRuntimeProvider_ == QStringLiteral("deepseek");
-        const bool isGroq = cloudProv == QStringLiteral("groq") || selectedRuntimeProvider_ == QStringLiteral("groq");
-        const bool isMistral = cloudProv == QStringLiteral("mistral") || selectedRuntimeProvider_ == QStringLiteral("mistral");
+        const bool isClaude = cloudProv == QStringLiteral("claude") ||
+                              selectedRuntimeProvider_ == QStringLiteral("claude");
+        const bool isGemini = cloudProv == QStringLiteral("gemini") ||
+                              selectedRuntimeProvider_ == QStringLiteral("gemini");
+        const bool isDeepSeek = cloudProv == QStringLiteral("deepseek") ||
+                                selectedRuntimeProvider_ == QStringLiteral("deepseek");
+        const bool isGroq = cloudProv == QStringLiteral("groq") ||
+                            selectedRuntimeProvider_ == QStringLiteral("groq");
+        const bool isMistral = cloudProv == QStringLiteral("mistral") ||
+                               selectedRuntimeProvider_ == QStringLiteral("mistral");
         const bool isOpenAi = (!isClaude && !isGemini && !isDeepSeek && !isGroq && !isMistral) ||
-                             selectedRuntimeProvider_ == QStringLiteral("openai");
+                              selectedRuntimeProvider_ == QStringLiteral("openai");
 
         // Use dynamically fetched models when cache matches the current provider
         if (!cachedCloudProviderModels_.isEmpty() && !cachedCloudProviderOriginId_.isEmpty()) {
@@ -9080,54 +9094,68 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
 
         // Fall back to hardcoded model lists
         if (isClaude) {
-            return {
-                OllamaModelSummary{QStringLiteral("claude-3-5-sonnet-20241022"), QStringLiteral("Anthropic Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("claude-3-5-haiku-20241022"), QStringLiteral("Anthropic Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("claude-3-opus-20240229"), QStringLiteral("Anthropic Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("claude-3-sonnet-20240229"), QStringLiteral("Anthropic Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("claude-3-haiku-20240307"), QStringLiteral("Anthropic Cloud"), 0}
-            };
+            return {OllamaModelSummary{QStringLiteral("claude-3-5-sonnet-20241022"),
+                                       QStringLiteral("Anthropic Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("claude-3-5-haiku-20241022"),
+                                       QStringLiteral("Anthropic Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("claude-3-opus-20240229"),
+                                       QStringLiteral("Anthropic Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("claude-3-sonnet-20240229"),
+                                       QStringLiteral("Anthropic Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("claude-3-haiku-20240307"),
+                                       QStringLiteral("Anthropic Cloud"), 0}};
         } else if (isGemini) {
-            return {
-                OllamaModelSummary{QStringLiteral("gemini-2.0-flash"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-2.5-flash"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-2.5-pro"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-2.0-flash-lite"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-1.5-flash"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-1.5-pro"), QStringLiteral("Google Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"), QStringLiteral("Google Cloud"), 0}
-            };
+            return {OllamaModelSummary{QStringLiteral("gemini-2.0-flash"),
+                                       QStringLiteral("Google Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("gemini-2.5-flash"),
+                                       QStringLiteral("Google Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("gemini-2.5-pro"),
+                                       QStringLiteral("Google Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("gemini-2.0-flash-lite"),
+                                       QStringLiteral("Google Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("gemini-1.5-flash"),
+                                       QStringLiteral("Google Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("gemini-1.5-pro"),
+                                       QStringLiteral("Google Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"),
+                                       QStringLiteral("Google Cloud"), 0}};
         } else if (isDeepSeek) {
-            return {
-                OllamaModelSummary{QStringLiteral("deepseek-chat"), QStringLiteral("DeepSeek Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("deepseek-reasoner"), QStringLiteral("DeepSeek Cloud"), 0}
-            };
+            return {OllamaModelSummary{QStringLiteral("deepseek-chat"),
+                                       QStringLiteral("DeepSeek Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("deepseek-reasoner"),
+                                       QStringLiteral("DeepSeek Cloud"), 0}};
         } else if (isGroq) {
-            return {
-                OllamaModelSummary{QStringLiteral("llama-3.3-70b-versatile"), QStringLiteral("Groq Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("llama-3.1-8b-instant"), QStringLiteral("Groq Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("mixtral-8x7b-32768"), QStringLiteral("Groq Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("deepseek-r1-distill-llama-70b"), QStringLiteral("Groq Cloud"), 0}
-            };
+            return {OllamaModelSummary{QStringLiteral("llama-3.3-70b-versatile"),
+                                       QStringLiteral("Groq Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("llama-3.1-8b-instant"),
+                                       QStringLiteral("Groq Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("mixtral-8x7b-32768"),
+                                       QStringLiteral("Groq Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("deepseek-r1-distill-llama-70b"),
+                                       QStringLiteral("Groq Cloud"), 0}};
         } else if (isMistral) {
-            return {
-                OllamaModelSummary{QStringLiteral("mistral-large-latest"), QStringLiteral("Mistral Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("pixtral-large-latest"), QStringLiteral("Mistral Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("codestral-latest"), QStringLiteral("Mistral Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("mistral-small-latest"), QStringLiteral("Mistral Cloud"), 0}
-            };
+            return {OllamaModelSummary{QStringLiteral("mistral-large-latest"),
+                                       QStringLiteral("Mistral Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("pixtral-large-latest"),
+                                       QStringLiteral("Mistral Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("codestral-latest"),
+                                       QStringLiteral("Mistral Cloud"), 0},
+                    OllamaModelSummary{QStringLiteral("mistral-small-latest"),
+                                       QStringLiteral("Mistral Cloud"), 0}};
         } else {
             return {
                 OllamaModelSummary{QStringLiteral("gpt-4o"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gpt-4o-mini"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gpt-4o-mini"), QStringLiteral("OpenAI Cloud"),
+                                   0},
                 OllamaModelSummary{QStringLiteral("o1"), QStringLiteral("OpenAI Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("o1-preview"), QStringLiteral("OpenAI Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("o1-mini"), QStringLiteral("OpenAI Cloud"), 0},
                 OllamaModelSummary{QStringLiteral("o3-mini"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gpt-4-turbo"), QStringLiteral("OpenAI Cloud"), 0},
+                OllamaModelSummary{QStringLiteral("gpt-4-turbo"), QStringLiteral("OpenAI Cloud"),
+                                   0},
                 OllamaModelSummary{QStringLiteral("gpt-4"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gpt-3.5-turbo"), QStringLiteral("OpenAI Cloud"), 0}
-            };
+                OllamaModelSummary{QStringLiteral("gpt-3.5-turbo"), QStringLiteral("OpenAI Cloud"),
+                                   0}};
         }
     }
     return cachedOllamaModels_;
@@ -9177,39 +9205,45 @@ void ApplicationController::pollOllama() {
         const auto provider = selectedRuntimeProvider_;
         if (provider == QStringLiteral("lm-studio")) {
             const auto lmUrl = lmStudioEndpoint_.isEmpty()
-                ? QStringLiteral("http://127.0.0.1:1234/v1/models")
-                : lmStudioEndpoint_ + QStringLiteral("/v1/models");
+                                   ? QStringLiteral("http://127.0.0.1:1234/v1/models")
+                                   : lmStudioEndpoint_ + QStringLiteral("/v1/models");
             lmStudioModels = fetchOpenAiCompatibleModels(QUrl(lmUrl), 1000);
         } else if (provider == QStringLiteral("llama-cpp-server")) {
             const auto llamaUrl = llamaCppEndpoint_.isEmpty()
-                ? QStringLiteral("http://127.0.0.1:8080/v1/models")
-                : llamaCppEndpoint_ + QStringLiteral("/v1/models");
+                                      ? QStringLiteral("http://127.0.0.1:8080/v1/models")
+                                      : llamaCppEndpoint_ + QStringLiteral("/v1/models");
             llamaCppModels = fetchOpenAiCompatibleModels(QUrl(llamaUrl), 1000);
         } else if (provider == QStringLiteral("openai-compatible-local")) {
             openAiModels = fetchOpenAiCompatibleModels(
                 QUrl(QStringLiteral("http://127.0.0.1:8000/v1/models")), 1000);
-        } else if (provider == QStringLiteral("cloud-api") || provider == QStringLiteral("openai") ||
-                   provider == QStringLiteral("claude") || provider == QStringLiteral("gemini") ||
-                   provider == QStringLiteral("deepseek") || provider == QStringLiteral("groq") ||
-                   provider == QStringLiteral("mistral")) {
+        } else if (provider == QStringLiteral("cloud-api") ||
+                   provider == QStringLiteral("openai") || provider == QStringLiteral("claude") ||
+                   provider == QStringLiteral("gemini") || provider == QStringLiteral("deepseek") ||
+                   provider == QStringLiteral("groq") || provider == QStringLiteral("mistral")) {
             const QString settingsPath =
                 QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
                 QStringLiteral("/settings.json");
             AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
             const QString cloudProv = settings.selectedCloudProvider();
 
-            const bool isGemini = provider == QStringLiteral("gemini") ||
-                                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("gemini"));
-            const bool isClaude = provider == QStringLiteral("claude") ||
-                                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("claude"));
+            const bool isGemini =
+                provider == QStringLiteral("gemini") ||
+                (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("gemini"));
+            const bool isClaude =
+                provider == QStringLiteral("claude") ||
+                (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("claude"));
             const bool isDeepSeek = provider == QStringLiteral("deepseek") ||
-                                   (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("deepseek"));
-            const bool isGroq = provider == QStringLiteral("groq") ||
-                               (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("groq"));
-            const bool isMistral = provider == QStringLiteral("mistral") ||
-                                  (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("mistral"));
-            const bool isOpenAi = provider == QStringLiteral("openai") ||
-                                 (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("openai"));
+                                    (provider == QStringLiteral("cloud-api") &&
+                                     cloudProv == QStringLiteral("deepseek"));
+            const bool isGroq =
+                provider == QStringLiteral("groq") ||
+                (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("groq"));
+            const bool isMistral =
+                provider == QStringLiteral("mistral") ||
+                (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("mistral"));
+            const bool isOpenAi =
+                provider == QStringLiteral("openai") ||
+                (provider == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("openai"));
 
             if (isGemini) {
                 cloudModels = fetchGeminiCloudModels(settings.geminiApiKey(), 4000);
@@ -9228,14 +9262,14 @@ void ApplicationController::pollOllama() {
                     settings.groqApiKey(), 4000);
                 cloudOriginId = QStringLiteral("groq");
             } else if (isMistral) {
-                cloudModels = fetchOpenAiCloudModels(
-                    QUrl(QStringLiteral("https://api.mistral.ai/v1/models")),
-                    settings.mistralApiKey(), 4000);
+                cloudModels =
+                    fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.mistral.ai/v1/models")),
+                                           settings.mistralApiKey(), 4000);
                 cloudOriginId = QStringLiteral("mistral");
             } else if (isOpenAi) {
-                cloudModels = fetchOpenAiCloudModels(
-                    QUrl(QStringLiteral("https://api.openai.com/v1/models")),
-                    settings.openAiApiKey(), 4000);
+                cloudModels =
+                    fetchOpenAiCloudModels(QUrl(QStringLiteral("https://api.openai.com/v1/models")),
+                                           settings.openAiApiKey(), 4000);
                 cloudOriginId = QStringLiteral("openai");
             }
         }
@@ -9394,32 +9428,42 @@ LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
         cloudProv = QStringLiteral("claude");
     } else if (modelLower.startsWith(QLatin1String("deepseek"))) {
         cloudProv = QStringLiteral("deepseek");
-    } else if (modelLower.startsWith(QLatin1String("llama")) || modelLower.startsWith(QLatin1String("mixtral"))) {
+    } else if (modelLower.startsWith(QLatin1String("llama")) ||
+               modelLower.startsWith(QLatin1String("mixtral"))) {
         cloudProv = QStringLiteral("groq");
-    } else if (modelLower.startsWith(QLatin1String("mistral")) || modelLower.startsWith(QLatin1String("pixtral")) || modelLower.startsWith(QLatin1String("codestral"))) {
+    } else if (modelLower.startsWith(QLatin1String("mistral")) ||
+               modelLower.startsWith(QLatin1String("pixtral")) ||
+               modelLower.startsWith(QLatin1String("codestral"))) {
         cloudProv = QStringLiteral("mistral");
-    } else if (modelLower.startsWith(QLatin1String("gpt")) || modelLower.startsWith(QLatin1String("o1")) || modelLower.startsWith(QLatin1String("o3"))) {
+    } else if (modelLower.startsWith(QLatin1String("gpt")) ||
+               modelLower.startsWith(QLatin1String("o1")) ||
+               modelLower.startsWith(QLatin1String("o3"))) {
         cloudProv = QStringLiteral("openai");
     }
 
     if (selectedRuntimeProvider_ == QStringLiteral("claude") ||
-        (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("claude"))) {
+        (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
+         cloudProv == QStringLiteral("claude"))) {
         config.endpoint = QUrl(QStringLiteral("https://api.anthropic.com"));
         config.apiKey = settings.claudeApiKey();
     } else if (selectedRuntimeProvider_ == QStringLiteral("gemini") ||
-               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("gemini"))) {
+               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
+                cloudProv == QStringLiteral("gemini"))) {
         config.endpoint = QUrl(QStringLiteral("https://generativelanguage.googleapis.com"));
         config.apiKey = settings.geminiApiKey();
     } else if (selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
-               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("deepseek"))) {
+               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
+                cloudProv == QStringLiteral("deepseek"))) {
         config.endpoint = QUrl(QStringLiteral("https://api.deepseek.com"));
         config.apiKey = settings.deepseekApiKey();
     } else if (selectedRuntimeProvider_ == QStringLiteral("groq") ||
-               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("groq"))) {
+               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
+                cloudProv == QStringLiteral("groq"))) {
         config.endpoint = QUrl(QStringLiteral("https://api.groq.com/openai"));
         config.apiKey = settings.groqApiKey();
     } else if (selectedRuntimeProvider_ == QStringLiteral("mistral") ||
-               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") && cloudProv == QStringLiteral("mistral"))) {
+               (selectedRuntimeProvider_ == QStringLiteral("cloud-api") &&
+                cloudProv == QStringLiteral("mistral"))) {
         config.endpoint = QUrl(QStringLiteral("https://api.mistral.ai"));
         config.apiKey = settings.mistralApiKey();
     } else if (selectedRuntimeProvider_ == QStringLiteral("openai") ||
