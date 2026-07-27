@@ -25,28 +25,23 @@ QString StandardPathProvider::settingsFilePath() const {
 }
 
 QString StandardPathProvider::memoryDatabasePath() const {
-    return sentinelDocumentsPath() +
-           QStringLiteral("/memory.sqlite3");
+    return sentinelDocumentsPath() + QStringLiteral("/memory.sqlite3");
 }
 
 QString StandardPathProvider::chatHistoryDatabasePath() const {
-    return sentinelDocumentsPath() +
-           QStringLiteral("/chat_history.sqlite3");
+    return sentinelDocumentsPath() + QStringLiteral("/chat_history.sqlite3");
 }
 
 QString StandardPathProvider::conversationDatabasePath() const {
-    return sentinelDocumentsPath() +
-           QStringLiteral("/conversations.sqlite3");
+    return sentinelDocumentsPath() + QStringLiteral("/conversations.sqlite3");
 }
 
 QString StandardPathProvider::conversationExportDirectoryPath() const {
-    return sentinelDocumentsPath() +
-           QStringLiteral("/exports");
+    return sentinelDocumentsPath() + QStringLiteral("/exports");
 }
 
 QString StandardPathProvider::localRagDatabasePath() const {
-    return sentinelDocumentsPath() +
-           QStringLiteral("/local_rag.sqlite3");
+    return sentinelDocumentsPath() + QStringLiteral("/local_rag.sqlite3");
 }
 
 } // namespace sentinel::core

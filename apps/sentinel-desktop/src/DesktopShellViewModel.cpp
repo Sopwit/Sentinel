@@ -68,8 +68,10 @@ bool isNewerVersion(const QString& current, const QString& latest) {
     for (int i = 0; i < maxLen; ++i) {
         const int curNum = i < curParts.size() ? curParts[i].toInt() : 0;
         const int latNum = i < latParts.size() ? latParts[i].toInt() : 0;
-        if (latNum > curNum) return true;
-        if (latNum < curNum) return false;
+        if (latNum > curNum)
+            return true;
+        if (latNum < curNum)
+            return false;
     }
     return false;
 }
@@ -155,31 +157,52 @@ QJsonArray defaultNotifications() {
         item.insert(QStringLiteral("read"), false);
         notifications.append(item);
     };
-    add(QStringLiteral("updates-manual"), QCoreApplication::translate("DesktopShellViewModel", "Updates"),
+    add(QStringLiteral("updates-manual"),
+        QCoreApplication::translate("DesktopShellViewModel", "Updates"),
         QCoreApplication::translate("DesktopShellViewModel", "Manual updates only"),
-        QCoreApplication::translate("DesktopShellViewModel", "Sentinel checks for updates only after explicit user action."), true);
-    add(QStringLiteral("security-privacy"), QCoreApplication::translate("DesktopShellViewModel", "Security"),
-        QCoreApplication::translate("DesktopShellViewModel", "Privacy guarantees active"),
-        QCoreApplication::translate("DesktopShellViewModel", "No telemetry, hidden uploads, silent updates, or hidden cloud activation."),
+        QCoreApplication::translate("DesktopShellViewModel",
+                                    "Sentinel checks for updates only after explicit user action."),
         true);
-    add(QStringLiteral("tasks-controlled"), QCoreApplication::translate("DesktopShellViewModel", "Tasks"),
+    add(QStringLiteral("security-privacy"),
+        QCoreApplication::translate("DesktopShellViewModel", "Security"),
+        QCoreApplication::translate("DesktopShellViewModel", "Privacy guarantees active"),
+        QCoreApplication::translate(
+            "DesktopShellViewModel",
+            "No telemetry, hidden uploads, silent updates, or hidden cloud activation."),
+        true);
+    add(QStringLiteral("tasks-controlled"),
+        QCoreApplication::translate("DesktopShellViewModel", "Tasks"),
         QCoreApplication::translate("DesktopShellViewModel", "Controlled tasks require approval"),
-        QCoreApplication::translate("DesktopShellViewModel", "Task execution advances only through visible user actions."), false);
-    add(QStringLiteral("brain-local"), QCoreApplication::translate("DesktopShellViewModel", "Brain"),
+        QCoreApplication::translate("DesktopShellViewModel",
+                                    "Task execution advances only through visible user actions."),
+        false);
+    add(QStringLiteral("brain-local"),
+        QCoreApplication::translate("DesktopShellViewModel", "Brain"),
         QCoreApplication::translate("DesktopShellViewModel", "Brain data stays local"),
-        QCoreApplication::translate("DesktopShellViewModel", "Memory, chat history, Local RAG metadata, and diagnostics remain local."),
+        QCoreApplication::translate(
+            "DesktopShellViewModel",
+            "Memory, chat history, Local RAG metadata, and diagnostics remain local."),
         false);
-    add(QStringLiteral("workspace-active"), QCoreApplication::translate("DesktopShellViewModel", "Workspace"),
+    add(QStringLiteral("workspace-active"),
+        QCoreApplication::translate("DesktopShellViewModel", "Workspace"),
         QCoreApplication::translate("DesktopShellViewModel", "Workspace scope selected"),
-        QCoreApplication::translate("DesktopShellViewModel", "Workspace metadata does not grant folder scans or filesystem authority."),
+        QCoreApplication::translate(
+            "DesktopShellViewModel",
+            "Workspace metadata does not grant folder scans or filesystem authority."),
         false);
-    add(QStringLiteral("models-local"), QCoreApplication::translate("DesktopShellViewModel", "Models"),
+    add(QStringLiteral("models-local"),
+        QCoreApplication::translate("DesktopShellViewModel", "Models"),
         QCoreApplication::translate("DesktopShellViewModel", "Local provider selected"),
-        QCoreApplication::translate("DesktopShellViewModel", "Ollama can execute foreground local chat; other local endpoints require configuration."),
+        QCoreApplication::translate("DesktopShellViewModel",
+                                    "Ollama can execute foreground local chat; other local "
+                                    "endpoints require configuration."),
         false);
-    add(QStringLiteral("models-role"), QCoreApplication::translate("DesktopShellViewModel", "Models"),
+    add(QStringLiteral("models-role"),
+        QCoreApplication::translate("DesktopShellViewModel", "Models"),
         QCoreApplication::translate("DesktopShellViewModel", "Model Role Changed"),
-        QCoreApplication::translate("DesktopShellViewModel", "Shown when the user changes local model-role metadata."), false);
+        QCoreApplication::translate("DesktopShellViewModel",
+                                    "Shown when the user changes local model-role metadata."),
+        false);
     return notifications;
 }
 
@@ -198,9 +221,9 @@ QString notificationsToJson(const QJsonArray& notifications) {
 QString notificationSummary(const QJsonObject& item) {
     const auto state = item.value(QStringLiteral("archived")).toBool() ? QStringLiteral("Archived")
                        : item.value(QStringLiteral("read")).toBool()   ? QStringLiteral("Read")
-                                                                        : QStringLiteral("Unread");
+                                                                       : QStringLiteral("Unread");
     const auto pin = item.value(QStringLiteral("pinned")).toBool() ? QStringLiteral("Pinned")
-                                                                    : QStringLiteral("Unpinned");
+                                                                   : QStringLiteral("Unpinned");
     return QStringLiteral("%1 - %2 - %3 - %4")
         .arg(item.value(QStringLiteral("category")).toString(),
              item.value(QStringLiteral("title")).toString(), state, pin);
@@ -212,8 +235,11 @@ QJsonObject notificationJsonObject(const QJsonObject& item) {
     obj.insert(QStringLiteral("category"), item.value(QStringLiteral("category")).toString());
     obj.insert(QStringLiteral("title"), item.value(QStringLiteral("title")).toString());
     obj.insert(QStringLiteral("body"), item.value(QStringLiteral("body")).toString());
-    obj.insert(QStringLiteral("priority"), item.value(QStringLiteral("priority")).toString(QStringLiteral("Normal")));
-    obj.insert(QStringLiteral("timestamp"), item.value(QStringLiteral("timestamp")).toDouble(QDateTime::currentMSecsSinceEpoch()));
+    obj.insert(QStringLiteral("priority"),
+               item.value(QStringLiteral("priority")).toString(QStringLiteral("Normal")));
+    obj.insert(
+        QStringLiteral("timestamp"),
+        item.value(QStringLiteral("timestamp")).toDouble(QDateTime::currentMSecsSinceEpoch()));
     obj.insert(QStringLiteral("pinned"), item.value(QStringLiteral("pinned")).toBool());
     obj.insert(QStringLiteral("archived"), item.value(QStringLiteral("archived")).toBool());
     obj.insert(QStringLiteral("read"), item.value(QStringLiteral("read")).toBool());
@@ -440,9 +466,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::localInferenceTemperatureChanged, this, [this]() {
         controller_.setLocalInferenceTemperature(settings_.localInferenceTemperature());
     });
-    connect(&settings_, &core::AppSettings::localInferenceTopPChanged, this, [this]() {
-        controller_.setLocalInferenceTopP(settings_.localInferenceTopP());
-    });
+    connect(&settings_, &core::AppSettings::localInferenceTopPChanged, this,
+            [this]() { controller_.setLocalInferenceTopP(settings_.localInferenceTopP()); });
     connect(&settings_, &core::AppSettings::localInferenceMaxTokensChanged, this, [this]() {
         controller_.setLocalInferenceMaxTokens(settings_.localInferenceMaxTokens());
     });
@@ -4126,7 +4151,8 @@ int DesktopShellViewModel::unreadNotificationCount() const {
     const auto notifications = notificationsFromJson(settings_.notificationCenterJson());
     for (const auto& value : notifications) {
         const auto item = value.toObject();
-        if (!item.value(QStringLiteral("read")).toBool() && !item.value(QStringLiteral("archived")).toBool()) {
+        if (!item.value(QStringLiteral("read")).toBool() &&
+            !item.value(QStringLiteral("archived")).toBool()) {
             ++count;
         }
     }
@@ -4149,7 +4175,8 @@ QStringList DesktopShellViewModel::notificationFilteredSummaries() const {
             !item.value(QStringLiteral("body")).toString().toLower().contains(query)) {
             continue;
         }
-        summaries.append(QString::fromUtf8(QJsonDocument(notificationJsonObject(item)).toJson(QJsonDocument::Compact)));
+        summaries.append(QString::fromUtf8(
+            QJsonDocument(notificationJsonObject(item)).toJson(QJsonDocument::Compact)));
     }
     return summaries;
 }
@@ -5401,7 +5428,8 @@ bool DesktopShellViewModel::checkForUpdates() {
         networkManager_ = new QNetworkAccessManager(this);
     }
 
-    const QString userAgent = QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version());
+    const QString userAgent =
+        QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version());
     QNetworkRequest request(QUrl(settings_.updateCheckUrl()));
     request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
 
@@ -5410,7 +5438,8 @@ bool DesktopShellViewModel::checkForUpdates() {
         reply->deleteLater();
 
         if (reply->error() != QNetworkReply::NoError) {
-            settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: %1").arg(reply->errorString()));
+            settings_.setUpdateWorkflowState(
+                QStringLiteral("Update check failed: %1").arg(reply->errorString()));
             emit nativeExperienceChanged();
             emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
             return;
@@ -5420,7 +5449,8 @@ bool DesktopShellViewModel::checkForUpdates() {
         QJsonParseError parseError;
         const QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
         if (parseError.error != QJsonParseError::NoError) {
-            settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: invalid response"));
+            settings_.setUpdateWorkflowState(
+                QStringLiteral("Update check failed: invalid response"));
             emit nativeExperienceChanged();
             emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
             return;
@@ -5430,7 +5460,8 @@ bool DesktopShellViewModel::checkForUpdates() {
         if (doc.isArray()) {
             const QJsonArray arr = doc.array();
             if (arr.isEmpty()) {
-                settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: empty response"));
+                settings_.setUpdateWorkflowState(
+                    QStringLiteral("Update check failed: empty response"));
                 emit nativeExperienceChanged();
                 emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
                 return;
@@ -5439,7 +5470,8 @@ bool DesktopShellViewModel::checkForUpdates() {
         } else if (doc.isObject()) {
             root = doc.object();
         } else {
-            settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: invalid response"));
+            settings_.setUpdateWorkflowState(
+                QStringLiteral("Update check failed: invalid response"));
             emit nativeExperienceChanged();
             emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
             return;
@@ -5546,9 +5578,8 @@ bool DesktopShellViewModel::startDownload(const QString& assetUrl) {
     const QString downloadsDir = QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
     QDir().mkpath(downloadsDir);
 
-    const QString fileName = lastAssetName_.isEmpty()
-        ? QStringLiteral("Sentinel-Update")
-        : lastAssetName_;
+    const QString fileName =
+        lastAssetName_.isEmpty() ? QStringLiteral("Sentinel-Update") : lastAssetName_;
 
     downloadPath_ = downloadsDir + QStringLiteral("/") + fileName;
 
@@ -5584,12 +5615,12 @@ bool DesktopShellViewModel::startDownload(const QString& assetUrl) {
 
     connect(downloadReply_, &QNetworkReply::downloadProgress, this,
             [this](qint64 bytesReceived, qint64 bytesTotal) {
-                if (bytesTotal <= 0) return;
+                if (bytesTotal <= 0)
+                    return;
 
                 const qint64 elapsed = downloadElapsed_.elapsed();
-                const double speed = elapsed > 0
-                    ? (bytesReceived - lastBytesReceived_) / (elapsed / 1000.0)
-                    : 0.0;
+                const double speed =
+                    elapsed > 0 ? (bytesReceived - lastBytesReceived_) / (elapsed / 1000.0) : 0.0;
                 if (elapsed >= 500) {
                     lastBytesReceived_ = bytesReceived;
                     downloadElapsed_.start();
@@ -5616,12 +5647,11 @@ bool DesktopShellViewModel::startDownload(const QString& assetUrl) {
             downloadFile_ = nullptr;
         }
 
-        const bool success = QFileInfo::exists(downloadPath_) && QFileInfo(downloadPath_).size() > 0;
+        const bool success =
+            QFileInfo::exists(downloadPath_) && QFileInfo(downloadPath_).size() > 0;
         if (success) {
-            settings_.setUpdateWorkflowState(
-                QStringLiteral("Downloaded: %1").arg(downloadPath_));
-            QDesktopServices::openUrl(QUrl::fromLocalFile(
-                QFileInfo(downloadPath_).absolutePath()));
+            settings_.setUpdateWorkflowState(QStringLiteral("Downloaded: %1").arg(downloadPath_));
+            QDesktopServices::openUrl(QUrl::fromLocalFile(QFileInfo(downloadPath_).absolutePath()));
         } else {
             settings_.setUpdateWorkflowState(QStringLiteral("Download failed"));
             if (QFileInfo::exists(downloadPath_)) {
@@ -5698,7 +5728,8 @@ void DesktopShellViewModel::setGlobalError(const QString& message, const QString
 }
 
 void DesktopShellViewModel::dismissGlobalError() {
-    if (!globalErrorVisible_) return;
+    if (!globalErrorVisible_)
+        return;
     globalErrorVisible_ = false;
     globalErrorMessage_.clear();
     emit globalErrorChanged();
@@ -5715,8 +5746,7 @@ void DesktopShellViewModel::addNotification(const QString& category, const QStri
 }
 
 void DesktopShellViewModel::addNotificationWithPriority(const QString& category,
-                                                        const QString& title,
-                                                        const QString& body,
+                                                        const QString& title, const QString& body,
                                                         const QString& priority) {
     const qint64 now = QDateTime::currentMSecsSinceEpoch();
     constexpr qint64 cooldownMs = 8000;
@@ -5744,9 +5774,8 @@ void DesktopShellViewModel::addNotificationWithPriority(const QString& category,
                     }
                 }
             }
-            const QString prefix = sameCount > 1
-                ? QStringLiteral("[%1x] ").arg(sameCount)
-                : QString();
+            const QString prefix =
+                sameCount > 1 ? QStringLiteral("[%1x] ").arg(sameCount) : QString();
             item.insert(QStringLiteral("body"), prefix + body);
             item.insert(QStringLiteral("timestamp"), now);
             arr.replace(i, item);
@@ -5766,9 +5795,7 @@ void DesktopShellViewModel::addNotificationWithPriority(const QString& category,
     notificationCooldowns_[category] = now;
 
     QJsonObject item;
-    const QString newId = QStringLiteral("notif-%1-%2")
-                              .arg(now)
-                              .arg(qHash(title) % 10000);
+    const QString newId = QStringLiteral("notif-%1-%2").arg(now).arg(qHash(title) % 10000);
     item.insert(QStringLiteral("id"), newId);
     item.insert(QStringLiteral("category"), category);
     item.insert(QStringLiteral("title"), title);
@@ -5792,13 +5819,15 @@ bool DesktopShellViewModel::dndEnabled() const {
 }
 
 void DesktopShellViewModel::setDndEnabled(bool enabled) {
-    if (enabled == dndEnabled_) return;
+    if (enabled == dndEnabled_)
+        return;
     dndEnabled_ = enabled;
     emit dndEnabledChanged();
 }
 
 bool DesktopShellViewModel::snoozeNotification(const QString& notificationId, int minutes) {
-    const qint64 snoozeUntil = QDateTime::currentMSecsSinceEpoch() + static_cast<qint64>(minutes) * 60000;
+    const qint64 snoozeUntil =
+        QDateTime::currentMSecsSinceEpoch() + static_cast<qint64>(minutes) * 60000;
     QString updatedJson;
     if (!updateNotification(
             settings_.notificationCenterJson(), notificationId,
@@ -5837,7 +5866,8 @@ bool DesktopShellViewModel::isChannelMuted(const QString& category) const {
 void DesktopShellViewModel::setChannelMuted(const QString& category, bool muted) {
     auto channels = mutedChannelNames();
     if (muted) {
-        if (!channels.contains(category)) channels.append(category);
+        if (!channels.contains(category))
+            channels.append(category);
     } else {
         channels.removeAll(category);
     }
@@ -5967,7 +5997,8 @@ bool DesktopShellViewModel::removeNotificationById(const QString& notificationId
         }
         kept.append(item);
     }
-    if (!found) return false;
+    if (!found)
+        return false;
     settings_.setNotificationCenterJson(notificationsToJson(kept));
     emit nativeExperienceChanged();
     return true;
@@ -5985,7 +6016,8 @@ bool DesktopShellViewModel::markAllNotificationsRead() {
         }
         updated.append(item);
     }
-    if (!changed) return false;
+    if (!changed)
+        return false;
     settings_.setNotificationCenterJson(notificationsToJson(updated));
     emit nativeExperienceChanged();
     return true;
@@ -6242,7 +6274,8 @@ bool DesktopShellViewModel::notificationCenterVisible() const {
 }
 
 void DesktopShellViewModel::setNotificationCenterVisible(bool visible) {
-    if (visible == notificationCenterVisible_) return;
+    if (visible == notificationCenterVisible_)
+        return;
     notificationCenterVisible_ = visible;
     emit notificationCenterVisibleChanged();
 }

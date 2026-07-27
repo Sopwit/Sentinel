@@ -267,7 +267,8 @@ struct LMStudioConfig {
     QString apiKey;
 
     bool isAllowedEndpoint() const {
-        if (isLoopbackHttp()) return true;
+        if (isLoopbackHttp())
+            return true;
         if (isCloud()) {
             return !apiKey.trimmed().isEmpty();
         }
@@ -286,13 +287,20 @@ struct LMStudioConfig {
 
     QString providerDisplayName() const {
         const auto host = endpoint.host().toLower();
-        if (host.contains(QLatin1String("googleapis.com"))) return QStringLiteral("Google Gemini API");
-        if (host.contains(QLatin1String("anthropic.com"))) return QStringLiteral("Anthropic Claude API");
-        if (host.contains(QLatin1String("openai.com"))) return QStringLiteral("OpenAI API");
-        if (host.contains(QLatin1String("deepseek.com"))) return QStringLiteral("DeepSeek API");
-        if (host.contains(QLatin1String("groq.com"))) return QStringLiteral("Groq Cloud API");
-        if (host.contains(QLatin1String("mistral.ai"))) return QStringLiteral("Mistral AI API");
-        if (isLoopbackHttp()) return QStringLiteral("LM Studio / Local Server");
+        if (host.contains(QLatin1String("googleapis.com")))
+            return QStringLiteral("Google Gemini API");
+        if (host.contains(QLatin1String("anthropic.com")))
+            return QStringLiteral("Anthropic Claude API");
+        if (host.contains(QLatin1String("openai.com")))
+            return QStringLiteral("OpenAI API");
+        if (host.contains(QLatin1String("deepseek.com")))
+            return QStringLiteral("DeepSeek API");
+        if (host.contains(QLatin1String("groq.com")))
+            return QStringLiteral("Groq Cloud API");
+        if (host.contains(QLatin1String("mistral.ai")))
+            return QStringLiteral("Mistral AI API");
+        if (isLoopbackHttp())
+            return QStringLiteral("LM Studio / Local Server");
         return QStringLiteral("Cloud API");
     }
 
