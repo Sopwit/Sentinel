@@ -5419,14 +5419,31 @@ bool DesktopShellViewModel::checkForUpdates() {
         const QByteArray data = reply->readAll();
         QJsonParseError parseError;
         const QJsonDocument doc = QJsonDocument::fromJson(data, &parseError);
-        if (parseError.error != QJsonParseError::NoError || !doc.isObject()) {
+        if (parseError.error != QJsonParseError::NoError) {
             settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: invalid response"));
             emit nativeExperienceChanged();
             emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
             return;
         }
 
-        const QJsonObject root = doc.object();
+        QJsonObject root;
+        if (doc.isArray()) {
+            const QJsonArray arr = doc.array();
+            if (arr.isEmpty()) {
+                settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: empty response"));
+                emit nativeExperienceChanged();
+                emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
+                return;
+            }
+            root = arr.first().toObject();
+        } else if (doc.isObject()) {
+            root = doc.object();
+        } else {
+            settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: invalid response"));
+            emit nativeExperienceChanged();
+            emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
+            return;
+        }
         const QString latestTag = root.value(QStringLiteral("tag_name")).toString();
         const QString htmlUrl = root.value(QStringLiteral("html_url")).toString();
         const QString bodyText = root.value(QStringLiteral("body")).toString();
