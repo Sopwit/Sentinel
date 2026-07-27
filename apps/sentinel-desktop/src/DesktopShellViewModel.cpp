@@ -28,6 +28,7 @@
 #include <QRegularExpression>
 #include <QSaveFile>
 #include <QScreen>
+#include <QSslSocket>
 #include <QStandardPaths>
 #include <QSystemTrayIcon>
 #include <QTimer>
@@ -5424,6 +5425,14 @@ bool DesktopShellViewModel::checkForUpdates() {
     settings_.setUpdateWorkflowState(QStringLiteral("Checking for updates..."));
     emit nativeExperienceChanged();
 
+    if (!QSslSocket::supportsSsl()) {
+        settings_.setUpdateWorkflowState(
+            QStringLiteral("Update check failed: SSL/TLS is not available on this system"));
+        emit nativeExperienceChanged();
+        emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
+        return false;
+    }
+
     if (!networkManager_) {
         networkManager_ = new QNetworkAccessManager(this);
     }
@@ -5434,6 +5443,11 @@ bool DesktopShellViewModel::checkForUpdates() {
     request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
 
     QNetworkReply* reply = networkManager_->get(request);
+    connect(reply, &QNetworkReply::sslErrors, this,
+            [](const QList<QSslError>& errors) {
+                for (const auto& err : errors)
+                    qWarning() << "SSL error:" << err.errorString();
+            });
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
 
