@@ -46,6 +46,11 @@ find_package(Qt6 6.5 REQUIRED COMPONENTS Core Gui Quick Qml Sql Test Network Wid
 
 qt_standard_project_setup(REQUIRES 6.5)
 
+# Bundle MSVC runtime DLLs on Windows (msvcp140.dll, msvcp140_1.dll, vcruntime140.dll, etc.)
+if(WIN32 AND MSVC)
+    include(InstallRequiredSystemLibraries)
+endif()
+
 add_subdirectory(core)
 add_subdirectory(apps/sentinel-desktop)
 

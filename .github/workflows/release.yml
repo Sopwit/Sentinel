@@ -147,7 +147,10 @@ jobs:
         if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
-          # 1. Zip portable files (windeployqt ran automatically during target install)
+          # 1. Deploy Qt and MSVC runtime DLLs
+          windeployqt --qmldir ui/qml dist/bin/sentinel-desktop.exe
+
+          # 2. Zip portable files
           Compress-Archive -Path dist/* -DestinationPath Sentinel-Desktop-Windows-${env:APP_VERSION}.zip
  
           # 2. Build MSI and EXE installers using CPack
