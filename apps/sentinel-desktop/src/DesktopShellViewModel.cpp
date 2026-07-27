@@ -5443,11 +5443,10 @@ bool DesktopShellViewModel::checkForUpdates() {
     request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
 
     QNetworkReply* reply = networkManager_->get(request);
-    connect(reply, &QNetworkReply::sslErrors, this,
-            [](const QList<QSslError>& errors) {
-                for (const auto& err : errors)
-                    qWarning() << "SSL error:" << err.errorString();
-            });
+    connect(reply, &QNetworkReply::sslErrors, this, [](const QList<QSslError>& errors) {
+        for (const auto& err : errors)
+            qWarning() << "SSL error:" << err.errorString();
+    });
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
 
