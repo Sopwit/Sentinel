@@ -4,8 +4,8 @@
 #include "sentinel/core/ModelRouting.h"
 #include "sentinel/core/OllamaRuntime.h"
 
-#include <QFile>
 #include <QLocale>
+#include <QFile>
 #include <algorithm>
 
 namespace sentinel::core {
@@ -18,10 +18,12 @@ bool isKnownRuntimeProviderId(const QString& providerId) {
            providerId == QStringLiteral("lm-studio") ||
            providerId == QStringLiteral("llama-cpp-server") ||
            providerId == QStringLiteral("openai-compatible") ||
-           providerId == QStringLiteral("cloud-api") || providerId == QStringLiteral("openai") ||
-           providerId == QStringLiteral("deepseek") || providerId == QStringLiteral("groq") ||
-           providerId == QStringLiteral("mistral") || providerId == QStringLiteral("claude") ||
-           providerId == QStringLiteral("gemini");
+           providerId == QStringLiteral("cloud-api") ||
+           providerId == QStringLiteral("openai") ||
+           providerId == QStringLiteral("deepseek") ||
+           providerId == QStringLiteral("groq") ||
+           providerId == QStringLiteral("mistral") ||
+           providerId == QStringLiteral("claude") || providerId == QStringLiteral("gemini");
 }
 
 bool isKnownSkillProfileId(const QString& profileId) {
@@ -117,7 +119,8 @@ QString normalizedOnboardingAiProvider(const QString& provider) {
         normalized == QStringLiteral("openai-compatible-local")) {
         return QStringLiteral("OpenAI-compatible local endpoint");
     }
-    if (normalized == QStringLiteral("cloud api") || normalized == QStringLiteral("cloud-api")) {
+    if (normalized == QStringLiteral("cloud api") ||
+        normalized == QStringLiteral("cloud-api")) {
         return QStringLiteral("Cloud API");
     }
     return QStringLiteral("Ollama");
@@ -286,42 +289,34 @@ void AppSettings::setOllamaEndpoint(const QString& endpoint) {
 }
 
 QString AppSettings::lmStudioEndpoint() const {
-    if (!store_)
-        return QStringLiteral("http://127.0.0.1:1234");
-    return store_->value(QString::fromLatin1(lmStudioEndpointKey),
-                         QStringLiteral("http://127.0.0.1:1234"));
+    if (!store_) return QStringLiteral("http://127.0.0.1:1234");
+    return store_->value(QString::fromLatin1(lmStudioEndpointKey), QStringLiteral("http://127.0.0.1:1234"));
 }
 
 void AppSettings::setLmStudioEndpoint(const QString& endpoint) {
-    if (endpoint == lmStudioEndpoint() || !store_)
-        return;
+    if (endpoint == lmStudioEndpoint() || !store_) return;
     store_->setValue(QString::fromLatin1(lmStudioEndpointKey), endpoint);
     emit lmStudioEndpointChanged();
 }
 
 QString AppSettings::llamaCppEndpoint() const {
-    if (!store_)
-        return QStringLiteral("http://127.0.0.1:8080");
-    return store_->value(QString::fromLatin1(llamaCppEndpointKey),
-                         QStringLiteral("http://127.0.0.1:8080"));
+    if (!store_) return QStringLiteral("http://127.0.0.1:8080");
+    return store_->value(QString::fromLatin1(llamaCppEndpointKey), QStringLiteral("http://127.0.0.1:8080"));
 }
 
 void AppSettings::setLlamaCppEndpoint(const QString& endpoint) {
-    if (endpoint == llamaCppEndpoint() || !store_)
-        return;
+    if (endpoint == llamaCppEndpoint() || !store_) return;
     store_->setValue(QString::fromLatin1(llamaCppEndpointKey), endpoint);
     emit llamaCppEndpointChanged();
 }
 
 QString AppSettings::cloudApiEndpoint() const {
-    if (!store_)
-        return {};
+    if (!store_) return {};
     return store_->value(QString::fromLatin1(cloudApiEndpointKey), {});
 }
 
 void AppSettings::setCloudApiEndpoint(const QString& endpoint) {
-    if (endpoint == cloudApiEndpoint() || !store_)
-        return;
+    if (endpoint == cloudApiEndpoint() || !store_) return;
     store_->setValue(QString::fromLatin1(cloudApiEndpointKey), endpoint);
     emit cloudApiEndpointChanged();
 }
@@ -355,10 +350,7 @@ QString AppSettings::selectedCloudProvider() const {
     if (!store_) {
         return QStringLiteral("openai");
     }
-    const auto stored =
-        store_->value(QString::fromLatin1(selectedCloudProviderKey), QStringLiteral("openai"))
-            .trimmed()
-            .toLower();
+    const auto stored = store_->value(QString::fromLatin1(selectedCloudProviderKey), QStringLiteral("openai")).trimmed().toLower();
     if (stored == QStringLiteral("claude") || stored == QStringLiteral("gemini") ||
         stored == QStringLiteral("deepseek") || stored == QStringLiteral("groq") ||
         stored == QStringLiteral("mistral")) {
@@ -369,12 +361,9 @@ QString AppSettings::selectedCloudProvider() const {
 
 void AppSettings::setSelectedCloudProvider(const QString& providerId) {
     const auto normalized = providerId.trimmed().toLower();
-    const auto selected =
-        (normalized == QStringLiteral("claude") || normalized == QStringLiteral("gemini") ||
-         normalized == QStringLiteral("deepseek") || normalized == QStringLiteral("groq") ||
-         normalized == QStringLiteral("mistral"))
-            ? normalized
-            : QStringLiteral("openai");
+    const auto selected = (normalized == QStringLiteral("claude") || normalized == QStringLiteral("gemini") ||
+                            normalized == QStringLiteral("deepseek") || normalized == QStringLiteral("groq") ||
+                            normalized == QStringLiteral("mistral")) ? normalized : QStringLiteral("openai");
     if (selected == selectedCloudProvider() || !store_) {
         return;
     }
@@ -524,8 +513,7 @@ double AppSettings::localInferenceTemperature() const {
     const auto fallback = QString::number(defaultLocalInferenceTemperature);
     bool ok = false;
     const auto value =
-        store_ ? store_->value(QString::fromLatin1(localInferenceTemperatureKey), fallback)
-                     .toDouble(&ok)
+        store_ ? store_->value(QString::fromLatin1(localInferenceTemperatureKey), fallback).toDouble(&ok)
                : defaultLocalInferenceTemperature;
     if (!ok) {
         return defaultLocalInferenceTemperature;
@@ -539,8 +527,7 @@ void AppSettings::setLocalInferenceTemperature(double temperature) {
         return;
     }
 
-    store_->setValue(QString::fromLatin1(localInferenceTemperatureKey),
-                     QString::number(normalized, 'f', 2));
+    store_->setValue(QString::fromLatin1(localInferenceTemperatureKey), QString::number(normalized, 'f', 2));
     emit localInferenceTemperatureChanged();
 }
 
@@ -562,8 +549,7 @@ void AppSettings::setLocalInferenceTopP(double topP) {
         return;
     }
 
-    store_->setValue(QString::fromLatin1(localInferenceTopPKey),
-                     QString::number(normalized, 'f', 2));
+    store_->setValue(QString::fromLatin1(localInferenceTopPKey), QString::number(normalized, 'f', 2));
     emit localInferenceTopPChanged();
 }
 
@@ -686,12 +672,15 @@ void AppSettings::setAgentAutonomousMode(bool enabled) {
 }
 
 QString AppSettings::piperBinaryPath() const {
-    QString path =
-        store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed() : QString();
+    QString path = store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed()
+                          : QString();
     if (path.isEmpty()) {
         const QStringList candidates{
-            QStringLiteral("/opt/homebrew/bin/piper"), QStringLiteral("/usr/local/bin/piper"),
-            QStringLiteral("/usr/bin/piper"), QStringLiteral("/bin/piper")};
+            QStringLiteral("/opt/homebrew/bin/piper"),
+            QStringLiteral("/usr/local/bin/piper"),
+            QStringLiteral("/usr/bin/piper"),
+            QStringLiteral("/bin/piper")
+        };
         for (const auto& c : candidates) {
             if (QFile::exists(c)) {
                 return c;
@@ -775,16 +764,18 @@ void AppSettings::setKokoroVoice(const QString& voice) {
 }
 
 QString AppSettings::whisperBinaryPath() const {
-    QString path =
-        store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed() : QString();
+    QString path = store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed()
+                          : QString();
     if (path.isEmpty()) {
-        const QStringList candidates{QStringLiteral("/opt/homebrew/bin/whisper"),
-                                     QStringLiteral("/usr/local/bin/whisper"),
-                                     QStringLiteral("/usr/bin/whisper"),
-                                     QStringLiteral("/bin/whisper"),
-                                     QStringLiteral("/opt/homebrew/bin/whisper-cpp"),
-                                     QStringLiteral("/usr/local/bin/whisper-cpp"),
-                                     QStringLiteral("/usr/bin/whisper-cpp")};
+        const QStringList candidates{
+            QStringLiteral("/opt/homebrew/bin/whisper"),
+            QStringLiteral("/usr/local/bin/whisper"),
+            QStringLiteral("/usr/bin/whisper"),
+            QStringLiteral("/bin/whisper"),
+            QStringLiteral("/opt/homebrew/bin/whisper-cpp"),
+            QStringLiteral("/usr/local/bin/whisper-cpp"),
+            QStringLiteral("/usr/bin/whisper-cpp")
+        };
         for (const auto& c : candidates) {
             if (QFile::exists(c)) {
                 return c;
@@ -1084,14 +1075,12 @@ void AppSettings::setUpdateCheckPolicy(const QString& policy) {
 }
 
 QString AppSettings::updateCheckUrl() const {
-    const auto defaultUrl =
-        QStringLiteral("https://api.github.com/repos/Sopwit/Sentinel/releases?per_page=1");
+    const auto defaultUrl = QStringLiteral("https://api.github.com/repos/Sopwit/Sentinel/releases?per_page=1");
     return store_ ? store_->value(QString::fromLatin1(updateCheckUrlKey), defaultUrl) : defaultUrl;
 }
 
 void AppSettings::setUpdateCheckUrl(const QString& url) {
-    if (url == updateCheckUrl() || !store_)
-        return;
+    if (url == updateCheckUrl() || !store_) return;
     store_->setValue(QString::fromLatin1(updateCheckUrlKey), url);
     emit updateCheckUrlChanged();
 }

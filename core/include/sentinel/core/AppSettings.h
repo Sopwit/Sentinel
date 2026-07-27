@@ -40,8 +40,8 @@ class AppSettings final : public QObject {
                    setLocalInferenceTimeoutMs NOTIFY localInferenceTimeoutMsChanged)
     Q_PROPERTY(double localInferenceTemperature READ localInferenceTemperature WRITE
                    setLocalInferenceTemperature NOTIFY localInferenceTemperatureChanged)
-    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE setLocalInferenceTopP NOTIFY
-                   localInferenceTopPChanged)
+    Q_PROPERTY(double localInferenceTopP READ localInferenceTopP WRITE
+                   setLocalInferenceTopP NOTIFY localInferenceTopPChanged)
     Q_PROPERTY(int localInferenceMaxTokens READ localInferenceMaxTokens WRITE
                    setLocalInferenceMaxTokens NOTIFY localInferenceMaxTokensChanged)
     Q_PROPERTY(bool promptContextInjectionEnabled READ promptContextInjectionEnabled WRITE
@@ -136,12 +136,9 @@ class AppSettings final : public QObject {
                    NOTIFY productExperienceChanged)
     Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY
                    productExperienceChanged)
-    Q_PROPERTY(
-        QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(
-        QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
-    Q_PROPERTY(
-        QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);

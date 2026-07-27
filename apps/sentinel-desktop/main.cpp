@@ -41,21 +41,22 @@ namespace {
 
 void configureLogging(bool verbose, bool quiet) {
     if (quiet) {
-        QLoggingCategory::setFilterRules(
-            QStringLiteral("*.debug=false\n*.info=false\n*.warning=false"));
+        QLoggingCategory::setFilterRules(QStringLiteral("*.debug=false\n*.info=false\n*.warning=false"));
         return;
     }
 
     if (!verbose && qgetenv("QT_LOGGING_RULES").isEmpty()) {
-        QLoggingCategory::setFilterRules(QStringLiteral("*.debug=false\n"
-                                                        "*.info=false\n"
-                                                        "qt.*=false\n"
-                                                        "qt.qml.*=false\n"
-                                                        "qt.scenegraph.*=false\n"
-                                                        "qt.rhi.*=false\n"
-                                                        "qt.pointer.*=false\n"
-                                                        "qt.accessibility.*=false\n"
-                                                        "qt.qpa.*=false"));
+        QLoggingCategory::setFilterRules(QStringLiteral(
+            "*.debug=false\n"
+            "*.info=false\n"
+            "qt.*=false\n"
+            "qt.qml.*=false\n"
+            "qt.scenegraph.*=false\n"
+            "qt.rhi.*=false\n"
+            "qt.pointer.*=false\n"
+            "qt.accessibility.*=false\n"
+            "qt.qpa.*=false"
+        ));
     }
 }
 
