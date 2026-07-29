@@ -910,7 +910,7 @@
 
 **Durum:** ✅ Var
 **Risk:** Düşük
-**Açıklama:** 82+ CTest testi. `sentinel_core` için kapsamlı test. CMake test presets ile düzenli.
+**Açıklama:** 59 CTest testi. `sentinel_core` için kapsamlı test. CMake test presets ile düzenli. `test_upgrade` ile settings ve schema migration testleri eklendi.
 **Puan:** 7/10
 
 ### Integration Tests
@@ -933,9 +933,9 @@
 
 ### Upgrade Tests
 
-**Durum:** ❌ Yok
-**Risk:** Yüksek
-**Açıklama:** Eski versiyondan yeniye yükseltme testi yok. Veri migrasyonu, settings uyumluluğu test edilmemiş. Major upgrade test case yok.
+**Durum:** ✅ Var
+**Risk:** Düşük
+**Açıklama:** Settings backward/forward compatibility testi (JsonSettingsStore + DpapiEncryptedSettingsStore ile eski düz metin ve yeni $dpapi$ formatları arasında okuma/yazma). SQLite schema migration testi (eski şemadaki chat_messages tablosuna yeni kolonların otomatik eklenmesi). `test_upgrade` ile 3 test case çalışıyor.
 
 ### Windows 10
 
@@ -1060,7 +1060,7 @@
 | Release Quality | 6/10 | 7/10 |
 | Compliance | 4/10 | 4/10 |
 | Monitoring | 1/10 | 1/10 |
-| Testing | 4/10 | 5/10 |
+| Testing | 4/10 | 6/10 |
 | Packaging | 6/10 | 6/10 |
 
 ---
@@ -1102,7 +1102,7 @@ Maintainability Score:   65/100 → 65/100
 14. ~~**Proxy Support**~~ ✅ — `QNetworkProxy` kullanımı.
 15. ~~**Offline Mode**~~ ✅ — Network yokken anlamlı UX.
 16. ~~**Checksums**~~ ✅ — SHA256 checksum dosyası CI'da üretiliyor.
-17. **Upgrade Test** ❌ — Major upgrade test suite.
+17. ~~**Upgrade Test**~~ ✅ — Settings backward/forward compat + SQLite schema migration.
 18. ~~**ARM64 Build**~~ ✅ — CMake preset + CI cross-compilation.
 19. **MSIX** ❌ — Microsoft Store için MSIX package.
 20. ~~**AppUserModelID**~~ ✅ — `SetCurrentProcessExplicitAppUserModelID` aktif.
@@ -1113,7 +1113,7 @@ Maintainability Score:   65/100 → 65/100
 
 Sentinel, mimari olarak sağlam bir temele sahip (temiz C++20/Qt6, modüler monolit, 58 test, CI/CD). **Phase 9.3 Windows Native iyileştirmeleri ile skor 32/100 → 69/100'e yükseldi.**
 
-**Düzeltilen kritik eksikler (18/20):**
+**Düzeltilen kritik eksikler (19/20):**
 1. ✅ Multi-resolution ICO (7 boyut)
 2. ✅ DPI Awareness (PerMonitorV2 manifest)
 3. ✅ Accessibility (qt.accessibility.*=false kaldırıldı)
@@ -1132,13 +1132,12 @@ Sentinel, mimari olarak sağlam bir temele sahip (temiz C++20/Qt6, modüler mono
 16. ✅ Proxy Support (HTTP/SOCKS5 via QNetworkProxy)
 17. ✅ Offline Mode (QNetworkInformation + StatusBar indicator)
 18. ✅ ARM64 Build (CMake preset + CI cross-compilation)
+19. ✅ Upgrade Test Suite (Settings backward/forward compat + SQLite schema migration)
 
-**Hala eksik olan kritikler (2/20):**
-- Upgrade Test Suite
+**Hala eksik olan kritikler (1/20):**
 - MSIX Package
 
-**Deploy hazırlığı: KISMEN HAZIR.** 18/20 kritik eksik düzeltildi. EV sertifikası alındığında deploy edilebilir hale gelecek.
+**Deploy hazırlığı: KISMEN HAZIR.** 19/20 kritik eksik düzeltildi. EV sertifikası alındığında deploy edilebilir hale gelecek.
 
 **Phase 9.3 Sonrası Öncelikli yol haritası:**
 1. MSIX + Windows Store
-2. Upgrade Test Suite
