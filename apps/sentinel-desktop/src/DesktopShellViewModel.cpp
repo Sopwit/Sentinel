@@ -22,6 +22,7 @@
 #include <QJsonObject>
 #include <QLibraryInfo>
 #include <QNetworkAccessManager>
+#include <QNetworkInformation>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProcess>
@@ -95,7 +96,7 @@ QString appDataPath() {
 }
 
 QString localRagPath() {
-    return appDataPath() + QStringLiteral("/local_rag.sqlite3");
+    return QDir(appDataPath()).filePath(QStringLiteral("local_rag.sqlite3"));
 }
 
 QString attachmentId(const QString& workspaceId, const QString& name, qint64 size) {
@@ -299,9 +300,21 @@ QList<FfmpegConfig> getFfmpegConfigs() {
 
 DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& controller,
                                              core::ModeManager& modeManager,
-                                             core::AppSettings& settings, QObject* parent)
+                                             core::AppSettings& settings,
+                                             core::WinTaskbarIntegration* taskbar,
+                                             QObject* parent)
     : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings),
-      chatMessages_(this), localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())) {
+      taskbar_(taskbar), chatMessages_(this),
+      localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())) {
+    // ── Network connectivity monitoring ────────────────────────────────────
+    if (!QNetworkInformation::instance()) {
+        QNetworkInformation::loadDefaultBackend();
+    }
+    if (auto* ni = QNetworkInformation::instance()) {
+        QObject::connect(ni, &QNetworkInformation::reachabilityChanged, this,
+                         [this]() { emit onlineChanged(); });
+    }
+
     lastAgentStatus_ = controller_.agentStatus();
     const QString savedMode = settings_.selectedSystemMode();
     if (!savedMode.isEmpty()) {
@@ -1374,6 +1387,11 @@ int DesktopShellViewModel::ollamaModelCount() const {
     return controller_.ollamaModelCount();
 }
 
+bool DesktopShellViewModel::isOnline() const {
+    const auto* ni = QNetworkInformation::instance();
+    return !ni || ni->reachability() == QNetworkInformation::Reachability::Online;
+}
+
 QStringList DesktopShellViewModel::ollamaModelNames() const {
     return controller_.ollamaModelNames();
 }
@@ -2019,6 +2037,23 @@ void DesktopShellViewModel::startVoiceCapture() {
         return;
     }
 
+#if defined(Q_OS_WIN)
+    QString ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg.exe"));
+    if (ffmpegPath.isEmpty()) {
+        ffmpegPath = QStandardPaths::findExecutable(
+            QStringLiteral("ffmpeg.exe"),
+            {QStringLiteral("C:\\ffmpeg\\bin"), QStringLiteral("C:\\tools\\ffmpeg\\bin"),
+             QStringLiteral("C:\\Program Files\\ffmpeg\\bin"),
+             QStringLiteral("C:\\Program Files (x86)\\ffmpeg\\bin")});
+    }
+    QString recPath = QStandardPaths::findExecutable(QStringLiteral("rec.exe"));
+    if (recPath.isEmpty()) {
+        recPath = QStandardPaths::findExecutable(
+            QStringLiteral("rec.exe"),
+            {QStringLiteral("C:\\Program Files (x86)\\sox-*"),
+             QStringLiteral("C:\\tools\\sox")});
+    }
+#else
     QString ffmpegPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
     if (ffmpegPath.isEmpty()) {
         ffmpegPath = QStandardPaths::findExecutable(
@@ -2031,8 +2066,9 @@ void DesktopShellViewModel::startVoiceCapture() {
             QStringLiteral("rec"),
             {QStringLiteral("/opt/homebrew/bin"), QStringLiteral("/usr/local/bin")});
     }
+#endif
 
-    voiceRecordingFile_ = QDir::tempPath() + QStringLiteral("/sentinel_voice.wav");
+    voiceRecordingFile_ = QDir(QDir::tempPath()).filePath(QStringLiteral("sentinel_voice.wav"));
     QFile::remove(voiceRecordingFile_);
 
     auto configs = getFfmpegConfigs();
@@ -2116,15 +2152,16 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
                             voiceRecordingActive_ = false;
                             emit voiceRecordingActiveChanged();
 
-                            emit voiceTranscriptionCompleted(
-                                QStringLiteral("Hata: Ses kayıt işlemi (rec) beklenmedik şekilde "
-                                               "durdu.\nDetay: ") +
-                                errorMsg);
+            emit voiceTranscriptionCompleted(
+                QCoreApplication::translate("DesktopShellViewModel",
+                                            "Error: Audio recording (rec) stopped "
+                                            "unexpectedly.\nDetail: ") +
+                errorMsg);
 
-                            recordingProcess_->deleteLater();
-                            recordingProcess_ = nullptr;
-                        }
-                    });
+            recordingProcess_->deleteLater();
+            recordingProcess_ = nullptr;
+        }
+    });
 
             recordingProcess_->start(recPath, {QStringLiteral("-r"), QStringLiteral("16000"),
                                                QStringLiteral("-c"), QStringLiteral("1"),
@@ -2135,7 +2172,8 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
                 voiceRecordingActive_ = false;
                 emit voiceRecordingActiveChanged();
                 emit voiceTranscriptionCompleted(
-                    QStringLiteral("Hata: Ses kayıt işlemi (rec) başlatılamadı."));
+                    QCoreApplication::translate("DesktopShellViewModel",
+                                                "Error: Audio recording (rec) could not be started."));
                 recordingProcess_->deleteLater();
                 recordingProcess_ = nullptr;
             }
@@ -2144,18 +2182,30 @@ void DesktopShellViewModel::tryNextVoiceCaptureConfig(const QString& ffmpegPath,
             voiceRecordingActive_ = false;
             emit voiceRecordingActiveChanged();
 
-            QString errorMsg = QStringLiteral("Hata: Ses kaydı başlatılamadı. ");
+            QString errorMsg = QCoreApplication::translate("DesktopShellViewModel",
+                                                           "Error: Could not start audio recording. ");
             if (hasFfmpeg) {
                 errorMsg +=
-                    QStringLiteral("Sistemdeki ses giriş aygıtları açılamadı. Lütfen mikrofon "
-                                   "izinlerini ve varsayılan ses giriş aygıtını kontrol edin.");
+                    QCoreApplication::translate("DesktopShellViewModel",
+                                                "Could not open audio input devices on this system. "
+                                                "Please check microphone permissions and default "
+                                                "audio input device.");
                 if (!lastRecordingError_.isEmpty()) {
-                    errorMsg += QStringLiteral("\nDetay: ") + lastRecordingError_;
+                    errorMsg += QCoreApplication::translate("DesktopShellViewModel",
+                                                            "\nDetail: ") + lastRecordingError_;
                 }
             } else {
-                errorMsg += QStringLiteral(
-                    "Sisteminizde 'ffmpeg' veya 'sox' (rec) bulunamadı. Lütfen 'brew install "
-                    "ffmpeg' (macOS) veya paket yöneticinizden ffmpeg yükleyin.");
+#if defined(Q_OS_WIN)
+                errorMsg += QCoreApplication::translate(
+                    "DesktopShellViewModel",
+                    "'ffmpeg' was not found on this system. Please download ffmpeg from the "
+                    "official site and add it to PATH.");
+#else
+                errorMsg += QCoreApplication::translate(
+                    "DesktopShellViewModel",
+                    "'ffmpeg' or 'sox' (rec) was not found on this system. Please install ffmpeg "
+                    "using 'brew install ffmpeg' (macOS) or your package manager.");
+#endif
             }
             emit voiceTranscriptionCompleted(errorMsg);
         }
@@ -3836,8 +3886,13 @@ bool DesktopShellViewModel::checkRuntimeInstalled(const QString& runtimeId) cons
                QFileInfo::exists(QStringLiteral("/usr/bin/ollama"));
 #elif defined(Q_OS_WIN)
         const QString localAppData =
-            QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/AppData/Local"));
-        return QFileInfo::exists(localAppData + QStringLiteral("/Programs/Ollama/ollama.exe"));
+            QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+        return QFileInfo::exists(
+                   QDir(localAppData).filePath(QStringLiteral("Programs/Ollama/ollama.exe"))) ||
+               QFileInfo::exists(QStringLiteral("C:\\Program Files\\Ollama\\ollama.exe")) ||
+               QFileInfo::exists(
+                   QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation))
+                       .filePath(QStringLiteral("AppData/Local/Programs/Ollama/ollama.exe")));
 #else
         return QFileInfo::exists(QStringLiteral("/usr/local/bin/ollama")) ||
                QFileInfo::exists(QStringLiteral("/usr/bin/ollama")) ||
@@ -3848,9 +3903,15 @@ bool DesktopShellViewModel::checkRuntimeInstalled(const QString& runtimeId) cons
         return QFileInfo::exists(QStringLiteral("/Applications/LM Studio.app"));
 #elif defined(Q_OS_WIN)
         const QString localAppData =
-            QDir::toNativeSeparators(QDir::homePath() + QStringLiteral("/AppData/Local"));
-        return QFileInfo::exists(localAppData +
-                                 QStringLiteral("/Programs/lm-studio/LM Studio.exe"));
+            QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+        return QFileInfo::exists(
+                   QDir(localAppData).filePath(QStringLiteral("Programs/lm-studio/LM Studio.exe"))) ||
+               QFileInfo::exists(
+                   QStringLiteral("C:\\Program Files\\LM Studio\\LM Studio.exe")) ||
+               QFileInfo::exists(
+                   QDir(QStandardPaths::writableLocation(QStandardPaths::HomeLocation))
+                       .filePath(
+                           QStringLiteral("AppData/Local/Programs/lm-studio/LM Studio.exe")));
 #else
         return QFileInfo::exists(QStringLiteral("/usr/local/bin/lm-studio")) ||
                QFileInfo::exists(QDir::homePath() + QStringLiteral("/.local/share/lm-studio"));
@@ -3887,6 +3948,12 @@ void DesktopShellViewModel::setCompanionChatVisible(bool visible) {
     }
     companionChatVisible_ = visible;
     emit companionChatVisibleChanged();
+}
+
+void DesktopShellViewModel::registerMainWindow(quintptr winId) {
+    if (taskbar_) {
+        taskbar_->setWindowHandle(winId);
+    }
 }
 
 void DesktopShellViewModel::toggleCompanionChat() {
@@ -5366,7 +5433,7 @@ bool DesktopShellViewModel::exportControlledAgentTask(const QString& taskId,
     if (task.id.isEmpty()) {
         return false;
     }
-    QDir directory(appDataPath() + QStringLiteral("/exports"));
+    QDir directory(QDir(appDataPath()).filePath(QStringLiteral("exports")));
     if (!directory.exists() && !directory.mkpath(QStringLiteral("."))) {
         return false;
     }
@@ -5594,7 +5661,7 @@ bool DesktopShellViewModel::startDownload(const QString& assetUrl) {
     const QString fileName =
         lastAssetName_.isEmpty() ? QStringLiteral("Sentinel-Update") : lastAssetName_;
 
-    downloadPath_ = downloadsDir + QStringLiteral("/") + fileName;
+    downloadPath_ = QDir(downloadsDir).filePath(fileName);
 
     if (downloadFile_) {
         downloadFile_->close();
@@ -6054,7 +6121,7 @@ bool DesktopShellViewModel::exportDiagnostics(const QString& format) {
     const auto extension = format.trimmed().toLower() == QStringLiteral("json")
                                ? QStringLiteral("json")
                                : QStringLiteral("txt");
-    QDir directory(appDataPath() + QStringLiteral("/exports"));
+    QDir directory(QDir(appDataPath()).filePath(QStringLiteral("exports")));
     if (!directory.exists() && !directory.mkpath(QStringLiteral("."))) {
         return false;
     }

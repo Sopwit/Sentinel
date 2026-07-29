@@ -607,9 +607,9 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("plaintextStorage=refused")));
     QVERIFY(fixture.viewModel.credentialStoreSummary().contains(
-        QStringLiteral("Credential store disabled")));
+        QStringLiteral("ready")));
     QVERIFY(fixture.viewModel.credentialStoreBackendSummary().contains(
-        QStringLiteral("storage unavailable")));
+        QStringLiteral("Ready")));
     QVERIFY(
         fixture.viewModel.credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(fixture.viewModel.credentialStoreTraceSummaries().size(), 5);

@@ -2,6 +2,7 @@
 
 #include "sentinel/core/AgentRuntimeService.h"
 #include "sentinel/core/CompanionService.h"
+#include "sentinel/core/WinTaskbarIntegration.h"
 #include "sentinel/core/ControlledAgentTasks.h"
 #include "sentinel/core/LocalRagStore.h"
 #include "sentinel/core/PermissionPolicyService.h"
@@ -295,6 +296,7 @@ class DesktopShellViewModel final : public QObject {
         QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(bool isOnline READ isOnline NOTIFY onlineChanged)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList installedOllamaModelNames READ installedOllamaModelNames NOTIFY
@@ -1444,7 +1446,9 @@ class DesktopShellViewModel final : public QObject {
 
 public:
     DesktopShellViewModel(core::ApplicationController& controller, core::ModeManager& modeManager,
-                          core::AppSettings& settings, QObject* parent = nullptr);
+                          core::AppSettings& settings,
+                          core::WinTaskbarIntegration* taskbar = nullptr,
+                          QObject* parent = nullptr);
 
     QString providerName() const;
     QString providerStatus() const;
@@ -1631,6 +1635,7 @@ public:
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
     int ollamaModelCount() const;
+    bool isOnline() const;
     QStringList ollamaModelNames() const;
     QStringList installedOllamaModelNames() const;
     QStringList loadedLMStudioModelNames() const;
@@ -2168,6 +2173,7 @@ public:
     bool companionPaused() const;
     bool companionChatVisible() const;
     void setCompanionChatVisible(bool visible);
+    Q_INVOKABLE void registerMainWindow(quintptr winId);
     Q_INVOKABLE void toggleCompanionChat();
     Q_INVOKABLE void openCompanionChat();
     Q_INVOKABLE void hideCompanionChat();
@@ -2484,6 +2490,7 @@ signals:
     void runtimeProviderRegistryChanged();
     void localModelSelectionChanged();
     void ollamaStatusChanged();
+    void onlineChanged();
     void modelRoleChanged();
     void localChatInferenceRoutingChanged();
     void localInferenceChanged();
@@ -2541,6 +2548,7 @@ private:
     int currentFfmpegConfigIndex_ = 0;
     QString lastRecordingError_;
 
+    core::WinTaskbarIntegration* taskbar_ = nullptr;
     QSystemTrayIcon* trayIcon_ = nullptr;
     QTimer* updateCheckTimer_ = nullptr;
     QNetworkAccessManager* networkManager_ = nullptr;

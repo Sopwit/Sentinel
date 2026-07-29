@@ -14,6 +14,8 @@ QtObject {
             if (status === FontLoader.Ready) {
                 root.family = name
                 root.loaded = true
+            } else if (status === FontLoader.Error) {
+                root.loaded = false
             }
         }
     }
@@ -21,5 +23,10 @@ QtObject {
     readonly property var monospace: FontLoader {
         id: monoLoader
         source: "qrc:/fonts/IBM_Plex_Mono/IBMPlexMono-Regular.ttf"
+        onStatusChanged: {
+            if (status === FontLoader.Error) {
+                console.warn("IBM Plex Mono font not found, using system monospace fallback")
+            }
+        }
     }
 }

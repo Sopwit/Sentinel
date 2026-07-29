@@ -23,7 +23,15 @@ bool unsafeLocalPath(const QString& path) {
 
 bool existingExecutableFile(const QString& path) {
     const QFileInfo info(path);
-    return info.exists() && info.isFile() && info.isExecutable();
+    if (info.exists() && info.isFile()) {
+#if defined(Q_OS_WIN)
+        return info.isExecutable() ||
+               QFileInfo(path + QStringLiteral(".exe")).exists();
+#else
+        return info.isExecutable();
+#endif
+    }
+    return false;
 }
 
 bool existingReadableModelPath(const QString& path) {

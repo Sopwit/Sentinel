@@ -12,6 +12,8 @@ public:
     QString conversationDatabasePath() const override;
     QString conversationExportDirectoryPath() const override;
     QString localRagDatabasePath() const;
+    QString logDirectoryPath() const;
+    QString crashDumpDirectoryPath() const;
 };
 
 } // namespace sentinel::core

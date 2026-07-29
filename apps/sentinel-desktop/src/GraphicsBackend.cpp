@@ -40,4 +40,18 @@ linuxDefaultGraphicsApi(const QByteArray& qsgRhiBackend, const QByteArray& qtQui
     return QSGRendererInterface::OpenGL;
 }
 
+QSGRendererInterface::GraphicsApi defaultGraphicsApiForPlatform() {
+#if defined(Q_OS_MACOS)
+    return QSGRendererInterface::Metal;
+#elif defined(Q_OS_WIN)
+    return QSGRendererInterface::Direct3D11;
+#elif defined(Q_OS_LINUX)
+    const auto api = linuxDefaultGraphicsApi(
+        qgetenv("QSG_RHI_BACKEND"), qgetenv("QT_QUICK_BACKEND"));
+    return api.value_or(QSGRendererInterface::OpenGL);
+#else
+    return QSGRendererInterface::OpenGL;
+#endif
+}
+
 } // namespace sentinel::desktop

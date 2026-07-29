@@ -302,8 +302,23 @@ public:
     QString mistralApiKey() const;
     void setMistralApiKey(const QString& key);
 
+    // ── Proxy ─────────────────────────────────────────────────────────────
+    bool proxyEnabled() const;
+    void setProxyEnabled(bool enabled);
+    QString proxyType() const;
+    void setProxyType(const QString& type);
+    QString proxyHost() const;
+    void setProxyHost(const QString& host);
+    quint16 proxyPort() const;
+    void setProxyPort(quint16 port);
+    QString proxyUser() const;
+    void setProxyUser(const QString& user);
+    QString proxyPassword() const;
+    void setProxyPassword(const QString& password);
+
 signals:
     void cloudApiKeysChanged();
+    void proxySettingsChanged();
     void themeNameChanged();
     void configurationProfileChanged();
     void appLanguageChanged();
@@ -424,6 +439,12 @@ private:
     static constexpr auto deepseekApiKeyKey = "deepseekApiKey";
     static constexpr auto groqApiKeyKey = "groqApiKey";
     static constexpr auto mistralApiKeyKey = "mistralApiKey";
+    static constexpr auto proxyEnabledKey = "proxyEnabled";
+    static constexpr auto proxyTypeKey = "proxyType";
+    static constexpr auto proxyHostKey = "proxyHost";
+    static constexpr auto proxyPortKey = "proxyPort";
+    static constexpr auto proxyUserKey = "proxyUser";
+    static constexpr auto proxyPasswordKey = "proxyPassword";
     static constexpr auto defaultThemeName = "Liquid Glass Light";
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";

@@ -227,7 +227,7 @@ ConversationExportFormat conversationExportFormatFromName(const QString& format)
 QString defaultConversationExportDirectory() {
     const auto appDataPath = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     const auto basePath = appDataPath.isEmpty() ? QDir::currentPath() : appDataPath;
-    return basePath + QStringLiteral("/exports");
+    return QDir(basePath).filePath(QStringLiteral("exports"));
 }
 
 QString sanitizedExportFileStem(QString stem) {
@@ -2836,12 +2836,22 @@ QStringList ApplicationController::voiceConfigurationStatusBadges() const {
 
 QStringList ApplicationController::voiceConfigurationHintSummaries() const {
     const QStringList piperBinaryKnownPaths{
+#if defined(Q_OS_WIN)
+        QStringLiteral("C:\\Program Files\\Piper\\piper.exe"),
+        QStringLiteral("C:\\tools\\piper\\piper.exe"),
+#else
         QStringLiteral("/opt/homebrew/bin/piper"),
         QStringLiteral("/usr/local/bin/piper"),
+#endif
     };
     const QStringList whisperBinaryKnownPaths{
+#if defined(Q_OS_WIN)
+        QStringLiteral("C:\\Program Files\\Whisper\\whisper.exe"),
+        QStringLiteral("C:\\tools\\whisper\\whisper.exe"),
+#else
         QStringLiteral("/opt/homebrew/bin/whisper"),
         QStringLiteral("/usr/local/bin/whisper"),
+#endif
     };
 
     return {
@@ -8982,7 +8992,7 @@ ProviderCredentialRegistry ApplicationController::currentProviderCredentialRegis
 }
 
 CredentialStore ApplicationController::currentCredentialStore() const {
-    return defaultCredentialStore();
+    return platformCredentialStore();
 }
 
 ModelRegistry ApplicationController::currentModelRegistry() const {
@@ -9063,8 +9073,8 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
                selectedRuntimeProvider_ == QStringLiteral("groq") ||
                selectedRuntimeProvider_ == QStringLiteral("mistral")) {
         const QString settingsPath =
-            QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
-            QStringLiteral("/settings.json");
+            QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
+                QStringLiteral("settings.json"));
         AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
         const QString cloudProv = settings.selectedCloudProvider();
         const bool isClaude = cloudProv == QStringLiteral("claude") ||
@@ -9221,8 +9231,8 @@ void ApplicationController::pollOllama() {
                    provider == QStringLiteral("gemini") || provider == QStringLiteral("deepseek") ||
                    provider == QStringLiteral("groq") || provider == QStringLiteral("mistral")) {
             const QString settingsPath =
-                QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
-                QStringLiteral("/settings.json");
+                QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
+                    QStringLiteral("settings.json"));
             AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
             const QString cloudProv = settings.selectedCloudProvider();
 
@@ -9414,8 +9424,8 @@ bool ApplicationController::discoveredModelNamesContain(
 
 LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
     const QString settingsPath =
-        QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) +
-        QStringLiteral("/settings.json");
+        QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
+            QStringLiteral("settings.json"));
     AppSettings settings(std::make_unique<JsonSettingsStore>(settingsPath));
     LMStudioConfig config;
     QString cloudProv = settings.selectedCloudProvider();

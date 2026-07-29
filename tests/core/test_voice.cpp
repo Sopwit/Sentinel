@@ -199,16 +199,18 @@ PiperTtsConfig configuredPiperConfig(QTemporaryDir& dir) {
 #endif
     const auto modelPath = QDir(dir.path()).filePath(QStringLiteral("voice.onnx"));
     const auto outputDir = QDir(dir.path()).filePath(QStringLiteral("tts-cache"));
-    const bool binaryWritten = writeFile(binaryPath, "#!/bin/sh\nexit 0\n");
-    const bool permissionsSet = QFile::setPermissions(
-        binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+    const bool binaryWritten = writeFile(binaryPath, QByteArray());
     const bool modelWritten = writeFile(modelPath, "model");
     if (!binaryWritten) {
         qFatal("Failed to write mock binary to %s", qPrintable(binaryPath));
     }
-    if (!permissionsSet) {
+#if !defined(Q_OS_WIN)
+    if (!QFile::setPermissions(binaryPath,
+                               QFileDevice::ReadOwner | QFileDevice::WriteOwner |
+                                   QFileDevice::ExeOwner)) {
         qFatal("Failed to set executable permissions on %s", qPrintable(binaryPath));
     }
+#endif
     if (!modelWritten) {
         qFatal("Failed to write mock model to %s", qPrintable(modelPath));
     }
@@ -740,9 +742,11 @@ void VoiceTest::localWhisperTranscriptionRefusesMissingUnsafeAndNonLocalInput() 
 #endif
     const auto modelPath = dir.filePath(QStringLiteral("model.bin"));
     const auto audioPath = dir.filePath(QStringLiteral("audio.wav"));
-    QVERIFY(writeFile(binaryPath, "#!/bin/sh\nexit 0\n"));
+    QVERIFY(writeFile(binaryPath, QByteArray()));
+#if !defined(Q_OS_WIN)
     QVERIFY(QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
                                                   QFileDevice::ExeOwner));
+#endif
     QVERIFY(writeFile(modelPath, "model"));
     config = configuredWhisperTranscriptionConfig(binaryPath, modelPath);
 
@@ -782,9 +786,11 @@ void VoiceTest::localWhisperTranscriptionReportsTimeoutFallbackWithoutExecution(
 #endif
     const auto modelPath = dir.filePath(QStringLiteral("model.bin"));
     const auto audioPath = dir.filePath(QStringLiteral("audio.wav"));
-    QVERIFY(writeFile(binaryPath, "#!/bin/sh\nexit 0\n"));
+    QVERIFY(writeFile(binaryPath, QByteArray()));
+#if !defined(Q_OS_WIN)
     QVERIFY(QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
                                                   QFileDevice::ExeOwner));
+#endif
     QVERIFY(writeFile(modelPath, "model"));
     QVERIFY(writeFile(audioPath, "audio"));
 
@@ -838,9 +844,11 @@ void VoiceTest::localPiperSynthesisRefusesMissingUnsafeAndNonLocalInput() {
     const auto binaryPath = dir.filePath(QStringLiteral("piper"));
 #endif
     const auto modelPath = dir.filePath(QStringLiteral("voice.onnx"));
-    QVERIFY(writeFile(binaryPath, "#!/bin/sh\nexit 0\n"));
+    QVERIFY(writeFile(binaryPath, QByteArray()));
+#if !defined(Q_OS_WIN)
     QVERIFY(QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
                                                   QFileDevice::ExeOwner));
+#endif
     config = configuredPiperSynthesisConfig(binaryPath, modelPath);
     result = client.synthesize(PiperSynthesisRequest{QStringLiteral("hello")}, config);
     QCOMPARE(result.status, PiperSynthesisStatus::MissingModel);
@@ -873,11 +881,17 @@ void VoiceTest::localPiperSynthesisRefusesMissingUnsafeAndNonLocalInput() {
 void VoiceTest::localPiperSynthesisReportsTimeoutFallbackWithoutExecution() {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
+#ifdef Q_OS_WIN
+    const auto binaryPath = dir.filePath(QStringLiteral("piper.exe"));
+#else
     const auto binaryPath = dir.filePath(QStringLiteral("piper"));
+#endif
     const auto modelPath = dir.filePath(QStringLiteral("voice.onnx"));
-    QVERIFY(writeFile(binaryPath, "#!/bin/sh\nexit 0\n"));
+    QVERIFY(writeFile(binaryPath, QByteArray()));
+#if !defined(Q_OS_WIN)
     QVERIFY(QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
                                                   QFileDevice::ExeOwner));
+#endif
     QVERIFY(writeFile(modelPath, "model"));
 
     LocalPiperSynthesisClient client;
@@ -932,9 +946,11 @@ void VoiceTest::piperTextToSpeechProviderRefusesMissingBinaryAndModel() {
 #else
     const auto binaryPath = QDir(dir.path()).filePath(QStringLiteral("piper"));
 #endif
-    QVERIFY(writeFile(binaryPath, "#!/bin/sh\nexit 0\n"));
+    QVERIFY(writeFile(binaryPath, QByteArray()));
+#if !defined(Q_OS_WIN)
     QVERIFY(QFile::setPermissions(binaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner |
                                                   QFileDevice::ExeOwner));
+#endif
     config.binary.status = VoiceBinaryStatus::PresentMetadata;
     config.binary.expectedPath = binaryPath;
     config.voiceModel.expectedPath = QDir(dir.path()).filePath(QStringLiteral("missing.onnx"));
