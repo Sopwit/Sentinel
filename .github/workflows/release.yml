@@ -26,6 +26,11 @@ jobs:
           - os: windows-2022
             qt-arch: win64_msvc2019_64
             artifact-name: sentinel-desktop-windows-x64.zip
+          - os: windows-2022
+            qt-arch: win64_msvc2019_arm64
+            artifact-name: sentinel-desktop-windows-arm64.zip
+            cmake-preset: windows-arm64
+            vcvars-arch: amd64_arm64
 
     steps:
       - name: Checkout code
@@ -53,7 +58,9 @@ jobs:
         shell: pwsh
         run: |
           $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
-          $devCmd = Join-Path $vsPath "VC\Auxiliary\Build\vcvars64.bat"
+          $arch = "${{ matrix.vcvars-arch }}"
+          if (-not $arch) { $arch = "x64" }
+          $devCmd = Join-Path $vsPath "VC\Auxiliary\Build\vcvars$arch.bat"
           cmd.exe /c "call `"$devCmd`" && set" | ForEach-Object {
               if ($_ -match "^(INCLUDE|LIB|LIBPATH|WindowsSDK.*|UniversalCRTSdkDir|UCRTVersion|VCTools.*|VCINSTALLDIR|VSINSTALLDIR|ExtensionSdkDir|Framework.*|NETFXSDKDir)=") {
                   $v = $_.Split("=", 2)
@@ -79,11 +86,17 @@ jobs:
 
       - name: Configure CMake
         run: |
-          cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=dist
+          PRESET="${{ matrix.cmake-preset }}"
+          if [ -n "$PRESET" ]; then
+            cmake --preset "$PRESET" -DCMAKE_INSTALL_PREFIX=dist
+          else
+            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=dist
+          fi
 
       - name: Build and Install
         run: |
-          cmake --build build --target install
+          BUILD_DIR="${{ matrix.cmake-preset && 'build/arm64' || 'build' }}"
+          cmake --build "$BUILD_DIR" --target install
 
       - name: Bundle and Package (Linux)
         if: matrix.os == 'ubuntu-22.04'
@@ -156,16 +169,20 @@ jobs:
         if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
+          $isArm64 = "${{ matrix.vcvars-arch }}" -eq "amd64_arm64"
+          $buildDir = if ($isArm64) { "build/arm64" } else { "build" }
+
           # 1. Deploy Qt and MSVC runtime DLLs
           windeployqt --qmldir ui/qml dist/bin/sentinel-desktop.exe
 
           # 2. Zip portable files
-          Compress-Archive -Path dist/* -DestinationPath Sentinel-Desktop-Windows-${env:APP_VERSION}.zip
- 
+          $suffix = if ($isArm64) { "ARM64" } else { "x64" }
+          Compress-Archive -Path dist/* -DestinationPath "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.zip"
+  
           # 3. Build MSI and EXE installers using CPack
-          cpack --config build/CPackConfig.cmake
-          Get-ChildItem Sentinel-Desktop-*.exe | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.exe" -ErrorAction SilentlyContinue
-          Get-ChildItem sentinel-desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
+          cpack --config "${buildDir}/CPackConfig.cmake"
+          Get-ChildItem Sentinel-Desktop-*.exe | Rename-Item -NewName "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.exe" -ErrorAction SilentlyContinue
+          Get-ChildItem sentinel-desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
 
       - name: Sign Windows Binaries
         if: matrix.os == 'windows-2022' && secrets.WIN_CERT_BASE64 != ''
