@@ -951,9 +951,9 @@
 
 ### ARM64
 
-**Durum:** ❌ Yok
-**Risk:** Yüksek
-**Açıklama:** ARM64 build yok. Windows ARM (Surface Pro X, Snapdragon X Elite) desteklenmiyor. x86-64 emülasyonunda çalışabilir ama native ARM64 build gerekli.
+**Durum:** ✅ CI Hazır
+**Risk:** Orta
+**Açıklama:** CMake preset (`windows-arm64`) tanımlandı. GitHub Actions matrix'ine ARM64 build eklendi (`win64_msvc2019_arm64` Qt arch, `vcvarsamd64_arm64` cross-compiler). CI'da `windows-2022` runner üzerinden ARM64 cross-compile yapılır. Native ARM64 runner olmadan test edilemez. Qt ARM64 binary'leri Qt online installer'dan temin edilir.
 
 ### x64
 
@@ -1060,7 +1060,7 @@
 | Release Quality | 6/10 | 7/10 |
 | Compliance | 4/10 | 4/10 |
 | Monitoring | 1/10 | 1/10 |
-| Testing | 4/10 | 4/10 |
+| Testing | 4/10 | 5/10 |
 | Packaging | 6/10 | 6/10 |
 
 ---
@@ -1070,7 +1070,7 @@
 ```
 ========================================
 Toplam Puan (Önce):       32/100
-Toplam Puan (Şimdi):      68/100
+Toplam Puan (Şimdi):      69/100
 ========================================
 Deploy Hazırlığı:        DEPLOY EDİLEMEZ (gelişme var)
 Enterprise Readiness:    20/100 → 50/100
@@ -1103,7 +1103,7 @@ Maintainability Score:   65/100 → 65/100
 15. ~~**Offline Mode**~~ ✅ — Network yokken anlamlı UX.
 16. ~~**Checksums**~~ ✅ — SHA256 checksum dosyası CI'da üretiliyor.
 17. **Upgrade Test** ❌ — Major upgrade test suite.
-18. **ARM64 Build** ❌ — Native ARM64 build.
+18. ~~**ARM64 Build**~~ ✅ — CMake preset + CI cross-compilation.
 19. **MSIX** ❌ — Microsoft Store için MSIX package.
 20. ~~**AppUserModelID**~~ ✅ — `SetCurrentProcessExplicitAppUserModelID` aktif.
 
@@ -1111,9 +1111,9 @@ Maintainability Score:   65/100 → 65/100
 
 ## # SONUÇ
 
-Sentinel, mimari olarak sağlam bir temele sahip (temiz C++20/Qt6, modüler monolit, 58 test, CI/CD). **Phase 9.3 Windows Native iyileştirmeleri ile skor 32/100 → 68/100'e yükseldi.**
+Sentinel, mimari olarak sağlam bir temele sahip (temiz C++20/Qt6, modüler monolit, 58 test, CI/CD). **Phase 9.3 Windows Native iyileştirmeleri ile skor 32/100 → 69/100'e yükseldi.**
 
-**Düzeltilen kritik eksikler (17/20):**
+**Düzeltilen kritik eksikler (18/20):**
 1. ✅ Multi-resolution ICO (7 boyut)
 2. ✅ DPI Awareness (PerMonitorV2 manifest)
 3. ✅ Accessibility (qt.accessibility.*=false kaldırıldı)
@@ -1131,15 +1131,14 @@ Sentinel, mimari olarak sağlam bir temele sahip (temiz C++20/Qt6, modüler mono
 15. ✅ Protocol Handler (sentinel:// URL scheme + IPC forwarding)
 16. ✅ Proxy Support (HTTP/SOCKS5 via QNetworkProxy)
 17. ✅ Offline Mode (QNetworkInformation + StatusBar indicator)
+18. ✅ ARM64 Build (CMake preset + CI cross-compilation)
 
-**Hala eksik olan kritikler (3/20):**
+**Hala eksik olan kritikler (2/20):**
 - Upgrade Test Suite
-- ARM64 Build
 - MSIX Package
 
-**Deploy hazırlığı: KISMEN HAZIR.** 17/20 kritik eksik düzeltildi. EV sertifikası alındığında deploy edilebilir hale gelecek.
+**Deploy hazırlığı: KISMEN HAZIR.** 18/20 kritik eksik düzeltildi. EV sertifikası alındığında deploy edilebilir hale gelecek.
 
 **Phase 9.3 Sonrası Öncelikli yol haritası:**
 1. MSIX + Windows Store
-2. ARM64 Build
-3. Upgrade Test Suite
+2. Upgrade Test Suite
