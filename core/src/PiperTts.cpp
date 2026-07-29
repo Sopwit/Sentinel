@@ -30,7 +30,15 @@ QString normalizedAbsolutePath(const QString& path) {
 
 bool isExistingExecutableFile(const QString& path) {
     const QFileInfo info(path);
-    return info.exists() && info.isFile() && info.isExecutable();
+    if (info.exists() && info.isFile()) {
+#if defined(Q_OS_WIN)
+        return info.isExecutable() ||
+               QFileInfo(path + QStringLiteral(".exe")).exists();
+#else
+        return info.isExecutable();
+#endif
+    }
+    return false;
 }
 
 bool isExistingReadableFile(const QString& path) {
@@ -55,8 +63,8 @@ bool isControlledOutputPath(const QString& outputPath, const QString& outputDire
 
     const auto output = normalizedAbsolutePath(outputPath);
     const auto directory = normalizedAbsolutePath(outputDirectory);
-    return output == directory + QStringLiteral("/sentinel-piper-tts.wav") ||
-           output.startsWith(directory + QStringLiteral("/"));
+    const auto expectedFile = QDir(directory).filePath(QStringLiteral("sentinel-piper-tts.wav"));
+    return output == expectedFile || output.startsWith(directory + QStringLiteral("/"));
 }
 
 QString defaultControlledOutputDirectory() {

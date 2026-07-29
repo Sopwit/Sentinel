@@ -1,0 +1,28 @@
+# Auto-detect text files and normalize line endings
+* text=auto
+
+# Source code files - LF line endings (consistent across platforms)
+*.cpp text eol=lf
+*.h text eol=lf
+*.hpp text eol=lf
+*.qml text eol=lf
+*.cmake text eol=lf
+*.cmake.in text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.sh text eol=lf
+*.ts text eol=lf
+*.svg text eol=lf
+
+# Windows-specific files - CRLF line endings
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.rc text eol=crlf
+*.rc.in text eol=crlf
+*.ico binary
+*.icns binary
+*.png binary
+*.bmp binary
+*.wav binary

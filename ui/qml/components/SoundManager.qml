@@ -24,6 +24,14 @@ QtObject {
             }
             return linuxSounds[name] || ""
         }
+        if (Qt.platform.os === "windows") {
+            var winSounds = {
+                "notification": "file:///C:/Windows/Media/Windows Notify System Generic.wav",
+                "error": "file:///C:/Windows/Media/Windows Critical Stop.wav",
+                "success": "file:///C:/Windows/Media/Windows Ding.wav"
+            }
+            return winSounds[name] || ""
+        }
         return ""
     }
 

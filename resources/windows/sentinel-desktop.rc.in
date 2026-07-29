@@ -1,5 +1,8 @@
 IDI_ICON1 ICON "@SENTINEL_APP_ICON_ICO@"
 
+// Windows manifest with dpiAwareness=PerMonitorV2, longPathAware, and Common Controls v6
+1 RT_MANIFEST "@SENTINEL_WINDOWS_MANIFEST@"
+
 #include <winver.h>
 
 VS_VERSION_INFO VERSIONINFO

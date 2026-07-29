@@ -13,4 +13,6 @@ QString graphicsApiName(QSGRendererInterface::GraphicsApi api);
 std::optional<QSGRendererInterface::GraphicsApi>
 linuxDefaultGraphicsApi(const QByteArray& qsgRhiBackend, const QByteArray& qtQuickBackend);
 
+QSGRendererInterface::GraphicsApi defaultGraphicsApiForPlatform();
+
 } // namespace sentinel::desktop

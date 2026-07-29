@@ -32,9 +32,21 @@ ShellPanel {
         anchors.rightMargin: SentinelTheme.spaceLg
         spacing: SentinelTheme.spaceMd
 
+        Rectangle {
+            id: offlineDot
+            width: 8; height: 8
+            radius: 4
+            visible: !statusBar.viewModel.isOnline
+            color: "#e74c3c"
+            Layout.alignment: Qt.AlignVCenter
+        }
         Label {
-            text: statusBar.viewModel.ollamaHealthStatus
-            color: SentinelTheme.textPrimary
+            text: statusBar.viewModel.isOnline
+                   ? statusBar.viewModel.ollamaHealthStatus
+                   : qsTr("Offline")
+            color: statusBar.viewModel.isOnline
+                   ? SentinelTheme.textPrimary
+                   : "#e74c3c"
             font.pixelSize: SentinelTheme.fontSmall
             maximumLineCount: 1
             elide: Text.ElideRight

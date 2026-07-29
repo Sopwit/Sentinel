@@ -58,10 +58,7 @@
       "name": "no-ccache",
       "displayName": "Debug without ccache wrapper",
       "inherits": "debug",
-      "binaryDir": "${sourceDir}/build/no-ccache",
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/usr/bin/c++"
-      }
+      "binaryDir": "${sourceDir}/build/no-ccache"
     }
   ],
   "buildPresets": [

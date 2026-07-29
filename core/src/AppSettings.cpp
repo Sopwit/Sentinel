@@ -689,9 +689,17 @@ QString AppSettings::piperBinaryPath() const {
     QString path =
         store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed() : QString();
     if (path.isEmpty()) {
+#if defined(Q_OS_WIN)
+        const QStringList candidates{
+            QStringLiteral("C:\\Program Files\\Piper\\piper.exe"),
+            QStringLiteral("C:\\Program Files (x86)\\Piper\\piper.exe"),
+            QStringLiteral("C:\\tools\\piper\\piper.exe"),
+        };
+#else
         const QStringList candidates{
             QStringLiteral("/opt/homebrew/bin/piper"), QStringLiteral("/usr/local/bin/piper"),
             QStringLiteral("/usr/bin/piper"), QStringLiteral("/bin/piper")};
+#endif
         for (const auto& c : candidates) {
             if (QFile::exists(c)) {
                 return c;
@@ -778,6 +786,15 @@ QString AppSettings::whisperBinaryPath() const {
     QString path =
         store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed() : QString();
     if (path.isEmpty()) {
+#if defined(Q_OS_WIN)
+        const QStringList candidates{
+            QStringLiteral("C:\\Program Files\\Whisper\\whisper.exe"),
+            QStringLiteral("C:\\Program Files\\Whisper\\whisper-cpp.exe"),
+            QStringLiteral("C:\\Program Files (x86)\\Whisper\\whisper.exe"),
+            QStringLiteral("C:\\tools\\whisper\\whisper.exe"),
+            QStringLiteral("C:\\tools\\whisper\\whisper-cpp.exe"),
+        };
+#else
         const QStringList candidates{QStringLiteral("/opt/homebrew/bin/whisper"),
                                      QStringLiteral("/usr/local/bin/whisper"),
                                      QStringLiteral("/usr/bin/whisper"),
@@ -785,6 +802,7 @@ QString AppSettings::whisperBinaryPath() const {
                                      QStringLiteral("/opt/homebrew/bin/whisper-cpp"),
                                      QStringLiteral("/usr/local/bin/whisper-cpp"),
                                      QStringLiteral("/usr/bin/whisper-cpp")};
+#endif
         for (const auto& c : candidates) {
             if (QFile::exists(c)) {
                 return c;
@@ -1438,6 +1456,71 @@ void AppSettings::setMistralApiKey(const QString& key) {
     }
     store_->setValue(QString::fromLatin1(mistralApiKeyKey), trimmed);
     emit cloudApiKeysChanged();
+}
+
+// ── Proxy ─────────────────────────────────────────────────────────────────
+
+bool AppSettings::proxyEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(proxyEnabledKey), QStringLiteral("false")) == QStringLiteral("true") : false;
+}
+
+void AppSettings::setProxyEnabled(bool enabled) {
+    if (!store_) return;
+    store_->setValue(QString::fromLatin1(proxyEnabledKey), enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit proxySettingsChanged();
+}
+
+QString AppSettings::proxyType() const {
+    return store_ ? store_->value(QString::fromLatin1(proxyTypeKey), QStringLiteral("http")) : QStringLiteral("http");
+}
+
+void AppSettings::setProxyType(const QString& type) {
+    if (!store_) return;
+    store_->setValue(QString::fromLatin1(proxyTypeKey), type);
+    emit proxySettingsChanged();
+}
+
+QString AppSettings::proxyHost() const {
+    return store_ ? store_->value(QString::fromLatin1(proxyHostKey)) : QString();
+}
+
+void AppSettings::setProxyHost(const QString& host) {
+    if (!store_) return;
+    store_->setValue(QString::fromLatin1(proxyHostKey), host);
+    emit proxySettingsChanged();
+}
+
+quint16 AppSettings::proxyPort() const {
+    if (!store_) return 8080;
+    bool ok = false;
+    quint16 val = static_cast<quint16>(store_->value(QString::fromLatin1(proxyPortKey), QStringLiteral("8080")).toUShort(&ok));
+    return ok ? val : 8080;
+}
+
+void AppSettings::setProxyPort(quint16 port) {
+    if (!store_) return;
+    store_->setValue(QString::fromLatin1(proxyPortKey), QString::number(port));
+    emit proxySettingsChanged();
+}
+
+QString AppSettings::proxyUser() const {
+    return store_ ? store_->value(QString::fromLatin1(proxyUserKey)) : QString();
+}
+
+void AppSettings::setProxyUser(const QString& user) {
+    if (!store_) return;
+    store_->setValue(QString::fromLatin1(proxyUserKey), user);
+    emit proxySettingsChanged();
+}
+
+QString AppSettings::proxyPassword() const {
+    return store_ ? store_->value(QString::fromLatin1(proxyPasswordKey)) : QString();
+}
+
+void AppSettings::setProxyPassword(const QString& password) {
+    if (!store_) return;
+    store_->setValue(QString::fromLatin1(proxyPasswordKey), password);
+    emit proxySettingsChanged();
 }
 
 } // namespace sentinel::core

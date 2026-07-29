@@ -25,6 +25,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ControlledAgentTasks.h
     include/sentinel/core/CredentialStore.h
     include/sentinel/core/ExecutionLifecycle.h
+    include/sentinel/core/FileLogger.h
     include/sentinel/core/IAgentRuntime.h
     include/sentinel/core/IAgentRegistry.h
     include/sentinel/core/IChatHistoryStore.h
@@ -53,6 +54,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/InMemoryMemoryCandidateStore.h
     include/sentinel/core/InMemorySettingsStore.h
     include/sentinel/core/InMemoryConversationStore.h
+    include/sentinel/core/DpapiEncryptedSettingsStore.h
     include/sentinel/core/JsonSettingsStore.h
     include/sentinel/core/LocalEchoProvider.h
     include/sentinel/core/LocalInference.h
@@ -104,6 +106,9 @@ add_library(sentinel_core STATIC
     include/sentinel/core/ToolSandbox.h
     include/sentinel/core/Voice.h
     include/sentinel/core/WhisperTranscription.h
+    include/sentinel/core/WinCrashHandler.h
+    include/sentinel/core/WinProtocolHandler.h
+    include/sentinel/core/WinTaskbarIntegration.h
     include/sentinel/core/WorkspaceService.h
     src/AppMetadata.cpp
     src/AppSettings.cpp
@@ -121,6 +126,7 @@ add_library(sentinel_core STATIC
     src/ControlledAgentTasks.cpp
     src/CredentialStore.cpp
     src/ExecutionLifecycle.cpp
+    src/FileLogger.cpp
     src/IClock.cpp
     src/IContextEngine.cpp
     src/InMemoryConversationStore.cpp
@@ -128,6 +134,7 @@ add_library(sentinel_core STATIC
     src/InMemoryMemoryCandidateStore.cpp
     src/InMemorySettingsStore.cpp
     src/InMemoryToolRegistry.cpp
+    src/DpapiEncryptedSettingsStore.cpp
     src/JsonSettingsStore.cpp
     src/LocalEchoProvider.cpp
     src/LocalInference.cpp
@@ -167,6 +174,9 @@ add_library(sentinel_core STATIC
     src/StaticSandboxPolicy.cpp
     src/StaticTaskPlanner.cpp
     src/Voice.cpp
+    src/WinCrashHandler.cpp
+    src/WinProtocolHandler.cpp
+    src/WinTaskbarIntegration.cpp
     src/ToolExecutionGateway.cpp
     src/WhisperTranscription.cpp
     src/WorkspaceService.cpp
@@ -185,4 +195,12 @@ target_link_libraries(sentinel_core
         Qt6::Sql
 )
 
+if(WIN32)
+    target_link_libraries(sentinel_core PRIVATE dbghelp crypt32)
+endif()
+
 target_compile_features(sentinel_core PUBLIC cxx_std_20)
+
+if(MINGW)
+    target_compile_options(sentinel_core PRIVATE "-Wa,-mbig-obj")
+endif()

@@ -173,7 +173,12 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 continue;
             }
             QProcess process;
-            process.start(QStringLiteral("/opt/homebrew/bin/whisper-cli"), {path});
+#if defined(Q_OS_WIN)
+            const QString whisperBinary = QStringLiteral("whisper.exe");
+#else
+            const QString whisperBinary = QStringLiteral("whisper");
+#endif
+            process.start(whisperBinary, {path});
             if (!process.waitForFinished(15000)) {
                 logs.append(
                     QStringLiteral("voice-transcribe: Whisper timed out for '%1'").arg(path));
@@ -190,18 +195,24 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 continue;
             }
             QProcess process;
-            process.start(QStringLiteral("piper"),
+#if defined(Q_OS_WIN)
+            const QString piperBinary = QStringLiteral("piper.exe");
+#else
+            const QString piperBinary = QStringLiteral("piper");
+#endif
+            const QString ttsOutput =
+                QDir(QDir::tempPath()).filePath(QStringLiteral("sentinel_tts.wav"));
+            process.start(piperBinary,
                           {QStringLiteral("--model"), QStringLiteral("en_US-lessac-medium.onnx"),
-                           QStringLiteral("--output_file"),
-                           QDir::tempPath() + QStringLiteral("/sentinel_tts.wav")});
+                           QStringLiteral("--output_file"), ttsOutput});
             process.write(text.toUtf8());
             process.closeWriteChannel();
             if (!process.waitForFinished(10000)) {
                 logs.append(QStringLiteral("voice-speak: Piper TTS timed out."));
                 continue;
             }
-            logs.append(QStringLiteral("voice-speak: TTS synthesis OK → %1/sentinel_tts.wav")
-                            .arg(QDir::tempPath()));
+            logs.append(QStringLiteral("voice-speak: TTS synthesis OK → %1")
+                            .arg(ttsOutput));
         }
         // 6. web-search
         else if (invocation.toolId == QLatin1String("web-search")) {

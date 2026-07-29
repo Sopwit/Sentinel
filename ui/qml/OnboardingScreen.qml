@@ -2235,7 +2235,9 @@ Item {
                                         id: piperBinaryField
                                         Layout.fillWidth: true
                                         text: viewModel.piperBinaryPath
-                                        placeholderText: qsTr("Enter path or browse (e.g. /usr/local/bin/piper)")
+                                        placeholderText: Qt.platform.os === "windows"
+                                            ? qsTr("Enter path or browse (e.g. C:\\Program Files\\Piper\\piper.exe)")
+                                            : qsTr("Enter path or browse (e.g. /usr/local/bin/piper)")
                                         onEditingFinished: viewModel.piperBinaryPath = text
                                     }
                                     SentinelButton {
@@ -2390,7 +2392,9 @@ Item {
                                         id: whisperBinaryField
                                         Layout.fillWidth: true
                                         text: viewModel.whisperBinaryPath
-                                        placeholderText: qsTr("Enter path or browse (e.g. /usr/local/bin/whisper-cpp)")
+                                        placeholderText: Qt.platform.os === "windows"
+                                            ? qsTr("Enter path or browse (e.g. C:\\Program Files\\Whisper\\whisper.exe)")
+                                            : qsTr("Enter path or browse (e.g. /usr/local/bin/whisper-cpp)")
                                         onEditingFinished: viewModel.whisperBinaryPath = text
                                     }
                                     SentinelButton {

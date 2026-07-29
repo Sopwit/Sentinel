@@ -143,6 +143,15 @@ jobs:
             "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg" \
             "dist/"
 
+      - name: Install Windows Code Signing Certificate
+        if: matrix.os == 'windows-2022' && secrets.WIN_CERT_BASE64 != ''
+        shell: pwsh
+        run: |
+          $certBase64 = "${{ secrets.WIN_CERT_BASE64 }}"
+          $certPath = "$env:RUNNER_TEMP\cert.pfx"
+          [System.IO.File]::WriteAllBytes($certPath, [System.Convert]::FromBase64String($certBase64))
+          Write-Host "Certificate saved to $certPath"
+
       - name: Bundle and Package (Windows)
         if: matrix.os == 'windows-2022'
         shell: pwsh
@@ -153,13 +162,42 @@ jobs:
           # 2. Zip portable files
           Compress-Archive -Path dist/* -DestinationPath Sentinel-Desktop-Windows-${env:APP_VERSION}.zip
  
-          # 2. Build MSI and EXE installers using CPack
+          # 3. Build MSI and EXE installers using CPack
           cpack --config build/CPackConfig.cmake
           Get-ChildItem Sentinel-Desktop-*.exe | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.exe" -ErrorAction SilentlyContinue
           Get-ChildItem sentinel-desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
-          
-          # Note: To enable Windows Code Signing, sign the built binaries using signtool:
-          # signtool sign /f cert.pfx /p "${{ secrets.WIN_CERT_PASSWORD }}" /tr http://timestamp.digicert.com /td sha256 build/Sentinel-Desktop-*.exe
+
+      - name: Sign Windows Binaries
+        if: matrix.os == 'windows-2022' && secrets.WIN_CERT_BASE64 != ''
+        shell: pwsh
+        run: |
+          $certPath = "$env:RUNNER_TEMP\cert.pfx"
+          $certPassword = "${{ secrets.WIN_CERT_PASSWORD }}"
+          $timestampUrl = "http://timestamp.digicert.com"
+
+          # Sign the main executable
+          & signtool sign /fd SHA256 /f $certPath /p $certPassword /tr $timestampUrl /td SHA256 dist/bin/sentinel-desktop.exe
+
+          # Sign the installers
+          Get-ChildItem -Path . -Filter "Sentinel-Desktop-Windows-*.exe" | ForEach-Object {
+            & signtool sign /fd SHA256 /f $certPath /p $certPassword /tr $timestampUrl /td SHA256 $_.FullName
+          }
+          Get-ChildItem -Path . -Filter "Sentinel-Desktop-Windows-*.msi" | ForEach-Object {
+            & signtool sign /fd SHA256 /f $certPath /p $certPassword /tr $timestampUrl /td SHA256 $_.FullName
+          }
+
+          # Sign the portable ZIP (by re-signing the exe inside, but ZIP signature is not standard)
+          Write-Host "Executable and installers signed successfully."
+
+      - name: Generate SHA256 Checksums
+        shell: bash
+        run: |
+          for f in Sentinel-Desktop-* sentinel-desktop-*; do
+            if [ -f "$f" ]; then
+              sha256sum "$f" >> checksums.txt
+            fi
+          done
+          cat checksums.txt
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v6
@@ -168,6 +206,7 @@ jobs:
           path: |
             Sentinel-Desktop-*
             sentinel-desktop-*
+            checksums.txt
           if-no-files-found: error
 
   create-release:

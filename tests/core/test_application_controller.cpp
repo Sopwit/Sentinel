@@ -832,10 +832,11 @@ static void configureReadyPiperPaths(ApplicationController& controller, QTempora
 
     QFile piperBinary{piperBinaryPath};
     QVERIFY(piperBinary.open(QIODevice::WriteOnly));
-    piperBinary.write("#!/bin/sh\nexit 0\n");
     piperBinary.close();
+#if !defined(Q_OS_WIN)
     QVERIFY(QFile::setPermissions(
         piperBinaryPath, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
+#endif
 
     QFile piperModel{piperModelPath};
     QVERIFY(piperModel.open(QIODevice::WriteOnly));
@@ -1231,9 +1232,9 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
     QVERIFY(controller->providerCredentialRegistrySummary().contains(
         QStringLiteral("API key values are not stored")));
     QVERIFY(
-        controller->credentialStoreSummary().contains(QStringLiteral("Credential store disabled")));
-    QVERIFY(controller->credentialStoreBackendSummary().contains(
-        QStringLiteral("storage unavailable")));
+        controller->credentialStoreSummary().contains(QStringLiteral("ready")));
+    QVERIFY(
+        controller->credentialStoreBackendSummary().contains(QStringLiteral("Ready")));
     QVERIFY(controller->credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(controller->credentialStoreTraceSummaries().size(), 5);
     QVERIFY(controller->credentialActionReadiness().contains(QStringLiteral("disabled")));
@@ -1505,23 +1506,27 @@ void ApplicationControllerTest::validatesConfiguredVoicePathsAsMetadataOnly() {
     const auto piperBinaryPath = dir.filePath(QStringLiteral("piper"));
 #endif
     const auto piperModelPath = dir.filePath(QStringLiteral("voice.onnx"));
-    const auto whisperBinaryPath = dir.filePath(QStringLiteral("whisper"));
     const auto whisperModelPath = dir.filePath(QStringLiteral("whisper-models"));
     const auto missingPath = dir.filePath(QStringLiteral("missing-piper"));
 
     QFile piperBinary{piperBinaryPath};
     QVERIFY(piperBinary.open(QIODevice::WriteOnly));
     piperBinary.close();
+#if !defined(Q_OS_WIN)
     QVERIFY(QFile::setPermissions(piperBinaryPath, QFile::ReadOwner | QFile::ExeOwner));
+#endif
 
     QFile piperModel{piperModelPath};
     QVERIFY(piperModel.open(QIODevice::WriteOnly));
     piperModel.close();
 
+    const auto whisperBinaryPath = dir.filePath(QStringLiteral("whisper"));
     QFile whisperBinary{whisperBinaryPath};
     QVERIFY(whisperBinary.open(QIODevice::WriteOnly));
     whisperBinary.close();
+#if !defined(Q_OS_WIN)
     QVERIFY(QFile::setPermissions(whisperBinaryPath, QFile::ReadOwner));
+#endif
 
     QVERIFY(QDir{}.mkpath(whisperModelPath));
 

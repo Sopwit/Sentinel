@@ -53,6 +53,7 @@ set(SENTINEL_APP_ICON_PNG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Senti
 set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.svg)
 set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.icns)
 set(SENTINEL_APP_ICON_ICO ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.ico)
+set(SENTINEL_WINDOWS_MANIFEST ${CMAKE_SOURCE_DIR}/resources/windows/sentinel-desktop.exe.manifest)
 set(SENTINEL_WINDOWS_RESOURCE ${CMAKE_CURRENT_BINARY_DIR}/sentinel-desktop.rc)
 set(SENTINEL_MACOS_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/macos/Info.plist.in)
 
@@ -73,6 +74,15 @@ set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/sounds/success.wav
         QT_RESOURCE_ALIAS sounds/success.wav
 )
 
+set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/fonts/InterVariable.ttf
+    PROPERTIES
+        QT_RESOURCE_ALIAS fonts/Inter/Inter-Variable.ttf
+)
+set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/fonts/IBMPlexMono-Regular.ttf
+    PROPERTIES
+        QT_RESOURCE_ALIAS fonts/IBM_Plex_Mono/IBMPlexMono-Regular.ttf
+)
+
 qt_add_resources(sentinel-desktop sentinel_desktop_assets
     PREFIX /
     FILES
@@ -80,6 +90,8 @@ qt_add_resources(sentinel-desktop sentinel_desktop_assets
         ${CMAKE_SOURCE_DIR}/resources/sounds/notification.wav
         ${CMAKE_SOURCE_DIR}/resources/sounds/error.wav
         ${CMAKE_SOURCE_DIR}/resources/sounds/success.wav
+        ${CMAKE_SOURCE_DIR}/resources/fonts/InterVariable.ttf
+        ${CMAKE_SOURCE_DIR}/resources/fonts/IBMPlexMono-Regular.ttf
 )
 
 if(APPLE)
@@ -226,6 +238,10 @@ set_target_properties(sentinel-desktop PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+if(MINGW)
+    target_compile_options(sentinel-desktop PRIVATE "-Wa,-mbig-obj")
+endif()
+
 include(GNUInstallDirs)
 
 set(SENTINEL_INSTALL_DIR "${CMAKE_INSTALL_BINDIR}")
@@ -264,6 +280,18 @@ if(WIN32)
     else()
         message(WARNING "windeployqt executable not found!")
     endif()
+
+    # Bundle MinGW runtime DLLs (libstdc++-6.dll, libgcc_s_seh-1.dll, libwinpthread-1.dll)
+    # These are required on systems without MinGW installed
+    get_filename_component(_mingw_bin_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    set(_mingw_runtime_dlls
+        "${_mingw_bin_dir}/libstdc++-6.dll"
+        "${_mingw_bin_dir}/libgcc_s_seh-1.dll"
+        "${_mingw_bin_dir}/libwinpthread-1.dll"
+    )
+    install(FILES ${_mingw_runtime_dlls}
+        DESTINATION ${SENTINEL_INSTALL_DIR}
+    )
 endif()
 
 if(UNIX AND NOT APPLE)

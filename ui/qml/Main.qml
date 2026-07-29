@@ -21,7 +21,7 @@ ApplicationWindow {
     readonly property bool wideLayout: root.width >= SentinelTheme.breakpointWide
     readonly property int shellEntranceOffset: root.shellReady || MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 8
     readonly property int pageMotionOffset: MotionTokens.reduced(root.viewModel.currentModeName) ? 0 : 10
-    readonly property bool nativeTitlebar: Qt.platform.os === "osx" || Qt.platform.os === "macos"
+    readonly property bool nativeTitlebar: true
 
     Component.onCompleted: Qt.callLater(function() {
         SentinelTheme.activeTheme = root.viewModel.themeName
@@ -31,6 +31,7 @@ ApplicationWindow {
         MotionTokens.reducedMotion = root.viewModel.reducedMotionEnabled
         root.shellReady = true
         splashScreen.close()
+        root.viewModel.registerMainWindow(root.winId)
         if (!root.viewModel.onboardingComplete)
             onboardingScreen.active = true
         else if (root.viewModel.recoveryDraftText.length > 0)
@@ -110,33 +111,11 @@ ApplicationWindow {
         modeName: root.viewModel.currentModeName
     }
 
-    TitleBar {
-        id: titleBar
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        z: 200
-        frameless: !root.nativeTitlebar
-        title: root.title
-        modeName: root.viewModel.currentModeName
-        compact: root.compactLayout
-        maximized: root.visibility === Window.Maximized
-        onMinimizeRequested: root.showMinimized()
-        onMaximizeRequested: {
-            if (root.visibility === Window.Maximized)
-                root.showNormal()
-            else
-                root.showMaximized()
-        }
-        onCloseRequested: root.close()
-    }
-
     ColumnLayout {
         anchors.fill: parent
         anchors.leftMargin: SentinelTheme.pageMargin(root.width)
         anchors.rightMargin: SentinelTheme.pageMargin(root.width)
-        anchors.topMargin: (root.nativeTitlebar ? 0 : titleBar.height + SentinelTheme.spaceSm)
-                           + (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
+        anchors.topMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
                            + root.shellEntranceOffset
         anchors.bottomMargin: (root.compactLayout ? SentinelTheme.spaceMd : SentinelTheme.spaceXl)
                                + 72 + SentinelTheme.spaceMd
