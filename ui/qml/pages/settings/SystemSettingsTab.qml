@@ -45,14 +45,14 @@ Item {
                 InfoRow {
                     compact: root.compact
                     label: qsTr("Version")
-                    value: root.viewModel.appVersion
+                    value: Qt.application.version || qsTr("1.0.0-rc.1")
                     Layout.fillWidth: true
                 }
 
                 InfoRow {
                     compact: root.compact
                     label: qsTr("Platform")
-                    value: root.viewModel.platformName
+                    value: Qt.platform.os
                     Layout.fillWidth: true
                 }
 

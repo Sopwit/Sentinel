@@ -144,7 +144,7 @@ QStringList literalContextTokens(const QString& text) {
     return tokens;
 }
 
-bool hasLiteralContextOverlap(const QString& prompt, const QString& key, const QString& value) {
+[[maybe_unused]] bool hasLiteralContextOverlap(const QString& prompt, const QString& key, const QString& value) {
     const auto promptTokens = literalContextTokens(prompt);
     if (promptTokens.isEmpty()) {
         return false;
@@ -4778,7 +4778,7 @@ QString ApplicationController::chatHistoryStatus() const {
 QList<ConversationRecord> ApplicationController::conversationRecords() const {
     auto records =
         conversationStore_ ? conversationStore_->listConversations() : QList<ConversationRecord>{};
-    std::stable_sort(records.begin(), records.end(), [this](const auto& lhs, const auto& rhs) {
+    std::stable_sort(records.begin(), records.end(), [](const auto& lhs, const auto& rhs) {
         const auto rank = [](const ConversationRecord& record) {
             if (record.archived) {
                 return 2;

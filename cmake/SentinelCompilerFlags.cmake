@@ -27,6 +27,9 @@ function(sentinel_apply_compiler_flags target_name)
             -Wcast-align
             -Wunused
             -Woverloaded-virtual
+            -Wno-missing-field-initializers
+            -Wno-unused-parameter
+            -Wno-unused-lambda-capture
             $<$<BOOL:${SENTINEL_ENABLE_WERROR}>:-Werror>
         )
     endif()

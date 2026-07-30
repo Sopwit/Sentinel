@@ -465,7 +465,7 @@ bool LocalInferenceWorker::startStream(const LocalInferenceRequest& request,
     if (!threadedStream_) {
         auto result = streamClient_->startStream(
             requestWithToken,
-            [this, &requestWithToken, &onChunk](const LocalInferenceStreamChunk& chunk) {
+            [&requestWithToken, &onChunk](const LocalInferenceStreamChunk& chunk) {
                 if (onChunk) {
                     onChunk(requestWithToken.id, chunk);
                 }

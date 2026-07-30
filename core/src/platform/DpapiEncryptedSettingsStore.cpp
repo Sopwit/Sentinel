@@ -177,7 +177,7 @@ QByteArray DpapiEncryptedSettingsStore::encrypt(const QString& plainText) {
 
     const QByteArray utf8 = plainText.toUtf8();
     QByteArray iv(kCCBlockSizeAES128, 0);
-    SecRandomCopyBytes(kSecRandomDefault, iv.size(), reinterpret_cast<uint8_t*>(iv.data()));
+    (void)SecRandomCopyBytes(kSecRandomDefault, iv.size(), reinterpret_cast<uint8_t*>(iv.data()));
 
     size_t outLen = 0;
     QByteArray cipherText(utf8.size() + kCCBlockSizeAES128, 0);
