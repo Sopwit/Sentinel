@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "sentinel/core/memory/SQLiteMemoryStore.h"
 
 #include <QDir>
@@ -101,9 +105,17 @@ void SQLiteMemoryStore::clear() {
         return;
     }
 
+    if (!database_.transaction()) {
+        setLastError(QStringLiteral("SQLite memory database failed to begin transaction."));
+        return;
+    }
+
     QSqlQuery query(database_);
     if (!query.exec(QStringLiteral("DELETE FROM memory_entries"))) {
+        database_.rollback();
         setLastError(query.lastError().text());
+    } else if (!database_.commit()) {
+        setLastError(QStringLiteral("SQLite memory database failed to commit clear transaction."));
     } else {
         setLastError({});
     }

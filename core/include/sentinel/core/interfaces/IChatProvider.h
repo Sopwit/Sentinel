@@ -1,6 +1,11 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
 #include <QString>
+#include <QtGlobal>
 
 namespace sentinel::core {
 
@@ -31,6 +36,8 @@ inline QString chatProviderStatusName(ChatProviderStatus status) {
 
 class IChatProvider {
 public:
+    Q_DISABLE_COPY(IChatProvider)
+    IChatProvider() = default;
     virtual ~IChatProvider() = default;
 
     virtual QString name() const = 0;

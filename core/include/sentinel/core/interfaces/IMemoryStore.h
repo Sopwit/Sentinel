@@ -1,7 +1,12 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
 #include <QList>
 #include <QString>
+#include <QtGlobal>
 #include <utility>
 
 namespace sentinel::core {
@@ -11,6 +16,8 @@ using MemoryEntries = QList<MemoryEntry>;
 
 class IMemoryStore {
 public:
+    Q_DISABLE_COPY(IMemoryStore)
+    IMemoryStore() = default;
     virtual ~IMemoryStore() = default;
 
     virtual void put(QString key, QString value) = 0;

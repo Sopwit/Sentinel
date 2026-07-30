@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef SENTINEL_CLI_CHATCOMMAND_H
 #define SENTINEL_CLI_CHATCOMMAND_H
 

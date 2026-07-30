@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
 #include "sentinel/core/chat/ChatMessage.h"
@@ -5,6 +9,7 @@
 #include <QDateTime>
 #include <QList>
 #include <QString>
+#include <QtGlobal>
 
 namespace sentinel::core {
 
@@ -82,6 +87,8 @@ struct ConversationSummaryMetadataRecord {
 
 class IConversationStore {
 public:
+    Q_DISABLE_COPY(IConversationStore)
+    IConversationStore() = default;
     virtual ~IConversationStore() = default;
 
     virtual ConversationRecord createConversation(const QString& title) = 0;
