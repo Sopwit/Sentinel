@@ -1,5 +1,5 @@
-#include "sentinel/core/OrchestrationDiagnostics.h"
-#include "sentinel/core/StaticProviderCatalog.h"
+#include "sentinel/core/app/OrchestrationDiagnostics.h"
+#include "sentinel/core/model/StaticProviderCatalog.h"
 
 #include <QtTest>
 

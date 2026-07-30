@@ -1,6 +1,6 @@
-#include "sentinel/core/AppSettings.h"
-#include "sentinel/core/InMemorySettingsStore.h"
-#include "sentinel/core/JsonSettingsStore.h"
+#include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/memory/InMemorySettingsStore.h"
+#include "sentinel/core/memory/JsonSettingsStore.h"
 
 #include <QFile>
 #include <QSignalSpy>

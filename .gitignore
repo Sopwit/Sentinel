@@ -5,8 +5,15 @@
 /build-noccache/
 /cmake-build-*/
 /Testing/
+/CMakeFiles/
+/dist/
+/release-downloads/
 /CMakeUserPresets.json
 /compile_commands.json
+*.qm
+# Log & Test outputs
+/*.txt
+!/CMakeLists.txt
 
 # Tool caches
 /.cache/

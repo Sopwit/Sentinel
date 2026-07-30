@@ -1,4 +1,4 @@
-#include "sentinel/core/InMemoryStore.h"
+#include "sentinel/core/memory/InMemoryStore.h"
 
 #include <QtTest>
 

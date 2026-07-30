@@ -1,4 +1,4 @@
-#include "sentinel/core/OllamaRuntime.h"
+#include "sentinel/core/runtime/OllamaRuntime.h"
 
 #include <QtTest>
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <QString>
+#include "sentinel/core/plugin/ISentinelPlugin.h"
 
 namespace sentinel::core {
 

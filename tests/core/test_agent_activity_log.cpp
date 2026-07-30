@@ -1,4 +1,4 @@
-#include "sentinel/core/AgentActivityLog.h"
+#include "sentinel/core/agent/AgentActivityLog.h"
 
 #include <QtTest>
 

@@ -1,0 +1,50 @@
+name: CodeQL Static Security Analysis
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  schedule:
+    - cron: '0 3 * * 1'
+
+jobs:
+  analyze:
+    name: CodeQL Analyze (C++)
+    runs-on: ubuntu-22.04
+    permissions:
+      security-events: write
+      actions: read
+      contents: read
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+
+      - name: Install build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ libgl1-mesa-dev libvulkan-dev fonts-noto-core
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          arch: 'linux_gcc_64'
+          modules: 'qtmultimedia'
+          cache: true
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: cpp
+
+      - name: Configure and Build
+        run: |
+          cmake --preset tests
+          cmake --build --preset tests
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3

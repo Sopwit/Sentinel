@@ -1,6 +1,6 @@
-#include "sentinel/core/JsonSettingsStore.h"
-#include "sentinel/core/DpapiEncryptedSettingsStore.h"
-#include "sentinel/core/SQLiteChatHistoryStore.h"
+#include "sentinel/core/memory/JsonSettingsStore.h"
+#include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
+#include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 
 #include <QDir>
 #include <QFile>

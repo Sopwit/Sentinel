@@ -1,4 +1,4 @@
-#include "sentinel/core/ProviderCredentials.h"
+#include "sentinel/core/security/ProviderCredentials.h"
 
 #include <QtTest>
 

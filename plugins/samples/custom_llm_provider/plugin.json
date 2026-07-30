@@ -1,0 +1,17 @@
+{
+  "id": "dev.sentinel.plugin.ollama-extended",
+  "name": "Ollama Extended Provider",
+  "version": "1.0.0",
+  "api_version": "1.0",
+  "vendor": "Sopwit Community",
+  "description": "Adds support for custom Ollama model parameters and Vision embeddings.",
+  "category": "Provider",
+  "entry_point": "ollama_extended_plugin",
+  "permissions": [
+    "network.loopback.read_write",
+    "model.config.read"
+  ],
+  "dependencies": {
+    "dev.sentinel.core": ">=1.0.0"
+  }
+}

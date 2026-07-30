@@ -1,5 +1,5 @@
-#include "sentinel/core/IPathProvider.h"
-#include "sentinel/core/StandardPathProvider.h"
+#include "sentinel/core/platform/IPathProvider.h"
+#include "sentinel/core/platform/StandardPathProvider.h"
 
 #include <QDir>
 #include <QStandardPaths>
@@ -15,6 +15,7 @@ class StandardPathProviderTest final : public QObject {
 
 private slots:
     void returnsExpectedFileNamesInStandardLocations();
+    void returnsExpectedPathsInPortableMode();
 };
 
 void StandardPathProviderTest::returnsExpectedFileNamesInStandardLocations() {
@@ -22,18 +23,19 @@ void StandardPathProviderTest::returnsExpectedFileNamesInStandardLocations() {
     QCoreApplication::setOrganizationName(QStringLiteral("SentinelTests"));
     QCoreApplication::setApplicationName(QStringLiteral("SentinelDesktop"));
 
-    std::unique_ptr<IPathProvider> provider = std::make_unique<StandardPathProvider>();
+    StandardPathProvider provider(false);
+    QCOMPARE(provider.isPortable(), false);
 
     const auto configDir = QDir::fromNativeSeparators(
         QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation));
     const auto dataDir = QDir::fromNativeSeparators(
         QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation) +
         QStringLiteral("/Sentinel"));
-    const auto settingsPath = QDir::fromNativeSeparators(provider->settingsFilePath());
-    const auto memoryPath = QDir::fromNativeSeparators(provider->memoryDatabasePath());
-    const auto chatPath = QDir::fromNativeSeparators(provider->chatHistoryDatabasePath());
-    const auto conversationPath = QDir::fromNativeSeparators(provider->conversationDatabasePath());
-    const auto exportPath = QDir::fromNativeSeparators(provider->conversationExportDirectoryPath());
+    const auto settingsPath = QDir::fromNativeSeparators(provider.settingsFilePath());
+    const auto memoryPath = QDir::fromNativeSeparators(provider.memoryDatabasePath());
+    const auto chatPath = QDir::fromNativeSeparators(provider.chatHistoryDatabasePath());
+    const auto conversationPath = QDir::fromNativeSeparators(provider.conversationDatabasePath());
+    const auto exportPath = QDir::fromNativeSeparators(provider.conversationExportDirectoryPath());
 
     QVERIFY(settingsPath.startsWith(configDir));
     QVERIFY(memoryPath.startsWith(dataDir));
@@ -45,6 +47,29 @@ void StandardPathProviderTest::returnsExpectedFileNamesInStandardLocations() {
     QVERIFY(chatPath.endsWith(QStringLiteral("/chat_history.sqlite3")));
     QVERIFY(conversationPath.endsWith(QStringLiteral("/conversations.sqlite3")));
     QVERIFY(exportPath.endsWith(QStringLiteral("/exports")));
+}
+
+void StandardPathProviderTest::returnsExpectedPathsInPortableMode() {
+    StandardPathProvider provider(true);
+    QCOMPARE(provider.isPortable(), true);
+
+    const auto settingsPath = QDir::fromNativeSeparators(provider.settingsFilePath());
+    const auto memoryPath = QDir::fromNativeSeparators(provider.memoryDatabasePath());
+    const auto chatPath = QDir::fromNativeSeparators(provider.chatHistoryDatabasePath());
+    const auto conversationPath = QDir::fromNativeSeparators(provider.conversationDatabasePath());
+    const auto exportPath = QDir::fromNativeSeparators(provider.conversationExportDirectoryPath());
+    const auto ragPath = QDir::fromNativeSeparators(provider.localRagDatabasePath());
+    const auto logPath = QDir::fromNativeSeparators(provider.logDirectoryPath());
+    const auto crashPath = QDir::fromNativeSeparators(provider.crashDumpDirectoryPath());
+
+    QVERIFY(settingsPath.endsWith(QStringLiteral("/settings.json")));
+    QVERIFY(memoryPath.endsWith(QStringLiteral("/memory.sqlite3")));
+    QVERIFY(chatPath.endsWith(QStringLiteral("/chat_history.sqlite3")));
+    QVERIFY(conversationPath.endsWith(QStringLiteral("/conversations.sqlite3")));
+    QVERIFY(exportPath.endsWith(QStringLiteral("/exports")));
+    QVERIFY(ragPath.endsWith(QStringLiteral("/local_rag.sqlite3")));
+    QVERIFY(logPath.endsWith(QStringLiteral("/Logs")));
+    QVERIFY(crashPath.endsWith(QStringLiteral("/Crashes")));
 }
 
 QTEST_MAIN(StandardPathProviderTest)

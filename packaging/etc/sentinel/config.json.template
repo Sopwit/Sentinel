@@ -1,0 +1,18 @@
+{
+  "system_defaults": {
+    "organization": "Sopwit",
+    "app_id": "dev.sentinel.Sentinel",
+    "telemetry_enabled": false,
+    "automatic_updates_enabled": false,
+    "default_provider": "ollama",
+    "ollama": {
+      "host": "http://127.0.0.1:11434",
+      "timeout_ms": 30000
+    },
+    "security": {
+      "enforce_sandbox": true,
+      "require_explicit_tool_approval": true,
+      "credential_storage_backend": "auto"
+    }
+  }
+}

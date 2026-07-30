@@ -1,6 +1,6 @@
 #pragma once
 
-#include "sentinel/core/ChatMessage.h"
+#include "sentinel/core/chat/ChatMessage.h"
 
 #include <QAbstractListModel>
 #include <QList>

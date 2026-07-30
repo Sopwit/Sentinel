@@ -1,0 +1,39 @@
+{
+  "app-id": "dev.sentinel.Sentinel",
+  "runtime": "org.kde.Platform",
+  "runtime-version": "6.7",
+  "sdk": "org.kde.Sdk",
+  "command": "sentinel-desktop",
+  "rename-desktop-file": "dev.sentinel.Sentinel.desktop",
+  "rename-icon": "dev.sentinel.Sentinel",
+  "finish-args": [
+    "--socket=wayland",
+    "--socket=fallback-x11",
+    "--share=ipc",
+    "--share=network",
+    "--device=dri",
+    "--filesystem=xdg-config/Sentinel:create",
+    "--filesystem=xdg-data/Sentinel:create",
+    "--filesystem=xdg-documents/Sentinel:create",
+    "--talk-name=org.freedesktop.Notifications",
+    "--talk-name=org.kde.StatusNotifierWatcher",
+    "--talk-name=org.freedesktop.secrets"
+  ],
+  "modules": [
+    {
+      "name": "sentinel-desktop",
+      "buildsystem": "cmake-ninja",
+      "builddir": true,
+      "config-opts": [
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DSENTINEL_APP_ID=dev.sentinel.Sentinel"
+      ],
+      "sources": [
+        {
+          "type": "dir",
+          "path": "../.."
+        }
+      ]
+    }
+  ]
+}

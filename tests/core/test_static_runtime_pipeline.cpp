@@ -1,4 +1,4 @@
-#include "sentinel/core/RuntimePipeline.h"
+#include "sentinel/core/runtime/RuntimePipeline.h"
 
 #include <QtTest>
 

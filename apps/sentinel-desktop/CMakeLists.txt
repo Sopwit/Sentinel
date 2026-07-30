@@ -1,8 +1,18 @@
 add_library(sentinel_desktop_viewmodels STATIC
     include/sentinel/desktop/ChatMessageListModel.h
     include/sentinel/desktop/DesktopShellViewModel.h
+    include/sentinel/desktop/viewmodels/ChatViewModel.h
+    include/sentinel/desktop/viewmodels/SettingsViewModel.h
+    include/sentinel/desktop/viewmodels/RagViewModel.h
+    include/sentinel/desktop/viewmodels/AgentViewModel.h
+    include/sentinel/desktop/viewmodels/NotificationViewModel.h
     src/ChatMessageListModel.cpp
     src/DesktopShellViewModel.cpp
+    src/viewmodels/ChatViewModel.cpp
+    src/viewmodels/SettingsViewModel.cpp
+    src/viewmodels/RagViewModel.cpp
+    src/viewmodels/AgentViewModel.cpp
+    src/viewmodels/NotificationViewModel.cpp
 )
 
 add_library(sentinel_desktop_startup STATIC
@@ -36,6 +46,16 @@ target_link_libraries(sentinel_desktop_viewmodels
 
 qt_add_executable(sentinel-desktop
     include/sentinel/desktop/NativeCompanionAdapter.h
+    bootstrap/ApplicationBootstrapper.h
+    bootstrap/ApplicationBootstrapper.cpp
+    bootstrap/GraphicsInitializer.h
+    bootstrap/GraphicsInitializer.cpp
+    bootstrap/LoggingInitializer.h
+    bootstrap/LoggingInitializer.cpp
+    bootstrap/PlatformInitializer.h
+    bootstrap/PlatformInitializer.cpp
+    bootstrap/SingleInstanceGuard.h
+    bootstrap/SingleInstanceGuard.cpp
     main.cpp
     src/NativeCompanionAdapter.cpp
 )
@@ -43,19 +63,31 @@ qt_add_executable(sentinel-desktop
 set(SENTINEL_TRANSLATION_SOURCES
     ${CMAKE_SOURCE_DIR}/translations/sentinel_en.ts
     ${CMAKE_SOURCE_DIR}/translations/sentinel_tr.ts
+    ${CMAKE_SOURCE_DIR}/translations/sentinel_de.ts
+    ${CMAKE_SOURCE_DIR}/translations/sentinel_es.ts
+    ${CMAKE_SOURCE_DIR}/translations/sentinel_fr.ts
+    ${CMAKE_SOURCE_DIR}/translations/sentinel_zh.ts
+    ${CMAKE_SOURCE_DIR}/translations/sentinel_ja.ts
+    ${CMAKE_SOURCE_DIR}/translations/sentinel_ar.ts
 )
 
 qt_add_translations(sentinel-desktop
     TS_FILES ${SENTINEL_TRANSLATION_SOURCES}
 )
 
-set(SENTINEL_APP_ICON_PNG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.png)
-set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.svg)
-set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.icns)
-set(SENTINEL_APP_ICON_ICO ${CMAKE_SOURCE_DIR}/resources/icons/dev.sentinel.Sentinel.ico)
-set(SENTINEL_WINDOWS_MANIFEST ${CMAKE_SOURCE_DIR}/resources/windows/sentinel-desktop.exe.manifest)
+add_custom_target(update_translations
+    COMMAND Qt6::lupdate ${CMAKE_SOURCE_DIR}/apps/sentinel-desktop ${CMAKE_SOURCE_DIR}/ui/qml -ts ${SENTINEL_TRANSLATION_SOURCES}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    COMMENT "Updating translation .ts files with Qt lupdate"
+)
+
+set(SENTINEL_APP_ICON_PNG ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.png)
+set(SENTINEL_APP_ICON_SVG ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.svg)
+set(SENTINEL_APP_ICON_ICNS ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.icns)
+set(SENTINEL_APP_ICON_ICO ${CMAKE_SOURCE_DIR}/resources/app-icons/dev.sentinel.Sentinel.ico)
+set(SENTINEL_WINDOWS_MANIFEST ${CMAKE_SOURCE_DIR}/resources/platform/windows/sentinel-desktop.exe.manifest)
 set(SENTINEL_WINDOWS_RESOURCE ${CMAKE_CURRENT_BINARY_DIR}/sentinel-desktop.rc)
-set(SENTINEL_MACOS_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/macos/Info.plist.in)
+set(SENTINEL_MACOS_INFO_PLIST ${CMAKE_SOURCE_DIR}/resources/platform/macos/Info.plist.in)
 
 set_source_files_properties(${SENTINEL_APP_ICON_PNG}
     PROPERTIES
@@ -104,7 +136,7 @@ endif()
 
 if(WIN32)
     configure_file(
-        ${CMAKE_SOURCE_DIR}/resources/windows/sentinel-desktop.rc.in
+        ${CMAKE_SOURCE_DIR}/resources/platform/windows/sentinel-desktop.rc.in
         ${SENTINEL_WINDOWS_RESOURCE}
         @ONLY
     )
@@ -115,97 +147,84 @@ endif()
 
 set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/Main.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/Atmosphere.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/ActiveAgentsPanel.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/BottomDock.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/CommandPalette.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStreamPanel.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/EmptyState.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/ErrorBanner.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/GlowSurface.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/ModelDetailPopup.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationCenterPanel.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationItemDelegate.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationToast.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeDetailPopup.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/HomeChatSurface.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeBadge.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SoundManager.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/ShimmerEffect.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOverlayModal.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/UpdateProgressModal.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusChip.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusPulse.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/TitleBar.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/TitleBarButton.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/SplashScreen.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/TrayCompanionWindow.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/Fonts.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/MotionTokens.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/InteractionTokens.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/Atmosphere.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/EmptyState.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/ErrorBanner.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/GlowSurface.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/InfoRow.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/RuntimeBadge.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SectionTitle.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelButton.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelOrb.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelTelemetry.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelTextField.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/ShimmerEffect.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SoundManager.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/StatusChip.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/StatusPulse.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/HomeChatSurface.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/ActiveAgentsPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/CognitionStreamPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/ModelDetailPopup.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/RuntimeDetailPopup.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/SentinelOverlayModal.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/SplashScreen.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/TrayCompanionWindow.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/UpdateProgressModal.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/BottomDock.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/CommandPalette.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/HeaderBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/ShellPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/StatusBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/TitleBar.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/TitleBarButton.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/WorkspacePresence.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/notifications/NotificationCenterPanel.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/notifications/NotificationItemDelegate.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/notifications/NotificationToast.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/pages/ModelsPage.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/pages/SettingsPage.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/OnboardingScreen.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/ModelsPage.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/LocalModelsTab.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/models/OnlineRegistryTab.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SettingsPage.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/AppearanceSettingsTab.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/ModelSettingsTab.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/WorkspaceSettingsTab.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SecuritySettingsTab.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SystemSettingsTab.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/OnboardingScreen.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/WelcomeStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/PrivacyConsentStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/AppearanceStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/ProviderSetupStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/ModelSetupStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/PreferencesStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/VoiceSetupStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/CapabilitiesStep.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/FinishStep.qml
 )
 
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/Atmosphere.qml PROPERTIES QT_RESOURCE_ALIAS Atmosphere.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ActiveAgentsPanel.qml PROPERTIES QT_RESOURCE_ALIAS ActiveAgentsPanel.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/CommandPalette.qml PROPERTIES QT_RESOURCE_ALIAS CommandPalette.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/CognitionStreamPanel.qml PROPERTIES QT_RESOURCE_ALIAS CognitionStreamPanel.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/GlowSurface.qml PROPERTIES QT_RESOURCE_ALIAS GlowSurface.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HeaderBar.qml PROPERTIES QT_RESOURCE_ALIAS HeaderBar.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ModelDetailPopup.qml PROPERTIES QT_RESOURCE_ALIAS ModelDetailPopup.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationCenterPanel.qml PROPERTIES QT_RESOURCE_ALIAS NotificationCenterPanel.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationItemDelegate.qml PROPERTIES QT_RESOURCE_ALIAS NotificationItemDelegate.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/NotificationToast.qml PROPERTIES QT_RESOURCE_ALIAS NotificationToast.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeDetailPopup.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeDetailPopup.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/HomeChatSurface.qml PROPERTIES QT_RESOURCE_ALIAS HomeChatSurface.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/InfoRow.qml PROPERTIES QT_RESOURCE_ALIAS InfoRow.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/RuntimeBadge.qml PROPERTIES QT_RESOURCE_ALIAS RuntimeBadge.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SectionTitle.qml PROPERTIES QT_RESOURCE_ALIAS SectionTitle.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelButton.qml PROPERTIES QT_RESOURCE_ALIAS SentinelButton.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShimmerEffect.qml PROPERTIES QT_RESOURCE_ALIAS ShimmerEffect.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ErrorBanner.qml PROPERTIES QT_RESOURCE_ALIAS ErrorBanner.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SoundManager.qml PROPERTIES QT_RESOURCE_ALIAS SoundManager.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/EmptyState.qml PROPERTIES QT_RESOURCE_ALIAS EmptyState.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOverlayModal.qml PROPERTIES QT_RESOURCE_ALIAS SentinelOverlayModal.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/UpdateProgressModal.qml PROPERTIES QT_RESOURCE_ALIAS UpdateProgressModal.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelOrb.qml PROPERTIES QT_RESOURCE_ALIAS SentinelOrb.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTelemetry.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTelemetry.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SentinelTextField.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTextField.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/ShellPanel.qml PROPERTIES QT_RESOURCE_ALIAS ShellPanel.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusChip.qml PROPERTIES QT_RESOURCE_ALIAS StatusChip.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusPulse.qml PROPERTIES QT_RESOURCE_ALIAS StatusPulse.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/StatusBar.qml PROPERTIES QT_RESOURCE_ALIAS StatusBar.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/TitleBar.qml PROPERTIES QT_RESOURCE_ALIAS TitleBar.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/TitleBarButton.qml PROPERTIES QT_RESOURCE_ALIAS TitleBarButton.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/SplashScreen.qml PROPERTIES QT_RESOURCE_ALIAS SplashScreen.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/TrayCompanionWindow.qml PROPERTIES QT_RESOURCE_ALIAS TrayCompanionWindow.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/WorkspacePresence.qml PROPERTIES QT_RESOURCE_ALIAS WorkspacePresence.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/Fonts.qml PROPERTIES QT_RESOURCE_ALIAS Fonts.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml PROPERTIES QT_RESOURCE_ALIAS SentinelTheme.qml QT_QML_SINGLETON_TYPE TRUE)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/MotionTokens.qml PROPERTIES QT_RESOURCE_ALIAS MotionTokens.qml QT_QML_SINGLETON_TYPE TRUE)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/theme/InteractionTokens.qml PROPERTIES QT_RESOURCE_ALIAS InteractionTokens.qml QT_QML_SINGLETON_TYPE TRUE)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/components/BottomDock.qml PROPERTIES QT_RESOURCE_ALIAS BottomDock.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/ChatPanel.qml PROPERTIES QT_RESOURCE_ALIAS ChatPanel.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/DashboardPage.qml PROPERTIES QT_RESOURCE_ALIAS DashboardPage.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/ModelsPage.qml PROPERTIES QT_RESOURCE_ALIAS ModelsPage.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/pages/SettingsPage.qml PROPERTIES QT_RESOURCE_ALIAS SettingsPage.qml)
-set_source_files_properties(${CMAKE_SOURCE_DIR}/ui/qml/OnboardingScreen.qml PROPERTIES QT_RESOURCE_ALIAS OnboardingScreen.qml)
+sentinel_register_qml_files(
+    FILES
+        ${SENTINEL_DESKTOP_QML_FILES}
+    SINGLETONS
+        SentinelTheme.qml
+        MotionTokens.qml
+        InteractionTokens.qml
+)
+
+sentinel_apply_compiler_flags(sentinel_desktop_viewmodels)
+sentinel_apply_compiler_flags(sentinel_desktop_startup)
+sentinel_apply_compiler_flags(sentinel-desktop)
+
+sentinel_enable_pch(sentinel_desktop_viewmodels)
+sentinel_enable_pch(sentinel-desktop)
+
 
 qt_add_qml_module(sentinel-desktop
     URI Sentinel.Desktop
@@ -237,6 +256,32 @@ set_target_properties(sentinel-desktop PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${SENTINEL_BUILD_NUMBER}
     WIN32_EXECUTABLE TRUE
 )
+
+if(APPLE)
+    set(SENTINEL_MACOS_RESOURCES
+        ${SENTINEL_APP_ICON_ICNS}
+        ${CMAKE_SOURCE_DIR}/resources/platform/macos/PrivacyInfo.xcprivacy
+        ${CMAKE_SOURCE_DIR}/resources/platform/macos/Sentinel.sdef
+        ${CMAKE_SOURCE_DIR}/packaging/macos/uninstall.sh
+    )
+    set_source_files_properties(${SENTINEL_MACOS_RESOURCES} PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources"
+    )
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/platform/macos/en.lproj/InfoPlist.strings PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources/en.lproj"
+    )
+    set_source_files_properties(${CMAKE_SOURCE_DIR}/resources/platform/macos/tr.lproj/InfoPlist.strings PROPERTIES
+        MACOSX_PACKAGE_LOCATION "Resources/tr.lproj"
+    )
+    target_sources(sentinel-desktop PRIVATE
+        ${SENTINEL_MACOS_RESOURCES}
+        ${CMAKE_SOURCE_DIR}/resources/platform/macos/en.lproj/InfoPlist.strings
+        ${CMAKE_SOURCE_DIR}/resources/platform/macos/tr.lproj/InfoPlist.strings
+    )
+    set_target_properties(sentinel-desktop PROPERTIES
+        XCODE_ATTRIBUTE_CODE_SIGN_ENTITLEMENTS "${CMAKE_SOURCE_DIR}/resources/platform/macos/sentinel.entitlements"
+    )
+endif()
 
 if(MINGW)
     target_compile_options(sentinel-desktop PRIVATE "-Wa,-mbig-obj")
@@ -311,4 +356,25 @@ if(UNIX AND NOT APPLE)
     install(FILES ${CMAKE_SOURCE_DIR}/packaging/linux/dev.sentinel.Sentinel.metainfo.xml
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/metainfo
     )
+
+    install(FILES ${CMAKE_SOURCE_DIR}/LICENSE
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    )
+
+    install(FILES ${CMAKE_SOURCE_DIR}/README.md
+        DESTINATION ${CMAKE_INSTALL_DOCDIR}
+    )
+
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/etc/sentinel/config.json.template
+        DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/sentinel
+    )
+
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/systemd/sentinel-desktop.service
+        DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/systemd/user
+    )
+
+    install(FILES ${CMAKE_SOURCE_DIR}/packaging/dbus/dev.sentinel.Sentinel.service
+        DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dbus-1/services
+    )
 endif()
+

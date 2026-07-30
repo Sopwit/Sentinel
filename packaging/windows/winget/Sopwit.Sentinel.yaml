@@ -1,0 +1,38 @@
+# Windows Package Manager (Winget) Manifest
+# Package: Sentinel Desktop
+PackageIdentifier: Sopwit.Sentinel
+PackageVersion: 1.0.0
+PackageName: Sentinel Desktop
+Publisher: Sopwit
+PublisherUrl: https://sentinel.dev
+PublisherSupportUrl: https://sentinel.dev/support
+Author: Sopwit / Sentinel Maintainers
+License: Apache-2.0
+LicenseUrl: https://github.com/sentinel/sentinel/blob/main/LICENSE
+Copyright: © 2026 Sopwit. All rights reserved.
+ShortDescription: Local-first AI desktop assistant optimized for speed, security, and privacy.
+Description: |
+  Sentinel is a cross-platform, local-first AI desktop companion application built with C++20 and Qt 6.
+  It features local Ollama discovery and health boundary integration, structured transcript persistence,
+  key-value memory management, and explicit user execution controls.
+Moniker: sentinel
+Tags:
+  - ai
+  - assistant
+  - qt6
+  - desktop
+  - ollama
+  - local-first
+Installers:
+  - Architecture: x64
+    InstallerType: nullsoft
+    InstallerUrl: https://github.com/sentinel/sentinel/releases/download/v1.0.0/Sentinel-Desktop-Windows-1.0.0-x64.exe
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
+    Scope: user
+  - Architecture: x64
+    InstallerType: wix
+    InstallerUrl: https://github.com/sentinel/sentinel/releases/download/v1.0.0/Sentinel-Desktop-Windows-1.0.0-x64.msi
+    InstallerSha256: 0000000000000000000000000000000000000000000000000000000000000000
+    Scope: machine
+ManifestType: singleton
+ManifestVersion: 1.6.0

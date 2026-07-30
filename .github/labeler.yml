@@ -1,0 +1,22 @@
+'component: core':
+  - changed-files:
+      - any-glob-to-any-file: 'core/**/*'
+
+'component: ui':
+  - changed-files:
+      - any-glob-to-any-file: 'apps/sentinel-desktop/**/*'
+      - any-glob-to-any-file: 'ui/**/*'
+
+'component: packaging':
+  - changed-files:
+      - any-glob-to-any-file: 'packaging/**/*'
+
+'area: devops':
+  - changed-files:
+      - any-glob-to-any-file: '.github/**/*'
+
+'area: build':
+  - changed-files:
+      - any-glob-to-any-file: 'CMakeLists.txt'
+      - any-glob-to-any-file: 'CMakePresets.json'
+      - any-glob-to-any-file: 'cmake/**/*'

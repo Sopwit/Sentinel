@@ -1,4 +1,4 @@
-#include "sentinel/core/ToolExecutionGateway.h"
+#include "sentinel/core/runtime/ToolExecutionGateway.h"
 
 #include <QtTest>
 

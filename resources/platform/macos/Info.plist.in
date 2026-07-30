@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "https://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+    <key>CFBundleDisplayName</key>
+    <string>@SENTINEL_DISPLAY_NAME@</string>
+    <key>CFBundleExecutable</key>
+    <string>sentinel-desktop</string>
+    <key>CFBundleIconFile</key>
+    <string>dev.sentinel.Sentinel.icns</string>
+    <key>CFBundleIdentifier</key>
+    <string>@SENTINEL_APP_ID@</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>@SENTINEL_DISPLAY_NAME@</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>@PROJECT_VERSION@</string>
+    <key>CFBundleVersion</key>
+    <string>@SENTINEL_BUILD_NUMBER@</string>
+    <key>LSApplicationCategoryType</key>
+    <string>@SENTINEL_MACOS_CATEGORY@</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>@SENTINEL_MACOS_MIN_VERSION@</string>
+    <key>NSHumanReadableCopyright</key>
+    <string>@SENTINEL_COPYRIGHT@</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSSupportsAutomaticGraphicsSwitching</key>
+    <true/>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Sentinel needs microphone access to capture voice commands and transcribe them.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Sentinel uses speech recognition to convert spoken commands into text.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Sentinel requires camera access for vision and image input processing.</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>CFBundleURLName</key>
+            <string>dev.sentinel.Sentinel</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>sentinel</string>
+            </array>
+        </dict>
+    </array>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <false/>
+        <key>NSAllowsLocalNetworking</key>
+        <true/>
+    </dict>
+    <key>ITSAppUsesNonExemptEncryption</key>
+    <false/>
+    <key>SUFeedURL</key>
+    <string>https://releases.sentinel.dev/appcast.xml</string>
+    <key>OSAScriptingDefinition</key>
+    <string>Sentinel.sdef</string>
+    <key>NSAppleScriptEnabled</key>
+    <true/>
+    <key>LSApplicationQueriesSchemes</key>
+    <array>
+        <string>http</string>
+        <string>https</string>
+    </array>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Sentinel Workspace Document</string>
+            <key>CFBundleTypeRole</key>
+            <string>Editor</string>
+            <key>LSHandlerRank</key>
+            <string>Owner</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>dev.sentinel.workspace</string>
+            </array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>dev.sentinel.workspace</string>
+            <key>UTTypeDescription</key>
+            <string>Sentinel Workspace Document</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.json</string>
+                <string>public.data</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>sentinel</string>
+                </array>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>

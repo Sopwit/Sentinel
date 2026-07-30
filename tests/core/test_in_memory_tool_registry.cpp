@@ -1,4 +1,4 @@
-#include "sentinel/core/InMemoryToolRegistry.h"
+#include "sentinel/core/runtime/InMemoryToolRegistry.h"
 
 #include <QtTest>
 

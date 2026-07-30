@@ -1,7 +1,7 @@
-#include "sentinel/core/StaticAgentRegistry.h"
-#include "sentinel/core/StaticMemoryCatalog.h"
-#include "sentinel/core/StaticProviderCatalog.h"
-#include "sentinel/core/StaticTaskPlanner.h"
+#include "sentinel/core/agent/StaticAgentRegistry.h"
+#include "sentinel/core/memory/StaticMemoryCatalog.h"
+#include "sentinel/core/model/StaticProviderCatalog.h"
+#include "sentinel/core/app/StaticTaskPlanner.h"
 
 #include <QtTest>
 

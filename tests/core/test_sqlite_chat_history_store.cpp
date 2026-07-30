@@ -1,4 +1,4 @@
-#include "sentinel/core/SQLiteChatHistoryStore.h"
+#include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 
 #include <QFile>
 #include <QTemporaryDir>

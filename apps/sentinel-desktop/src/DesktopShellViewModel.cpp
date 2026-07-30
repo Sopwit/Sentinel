@@ -1,10 +1,10 @@
 #include "sentinel/desktop/DesktopShellViewModel.h"
 
-#include "sentinel/core/AppMetadata.h"
-#include "sentinel/core/AppSettings.h"
-#include "sentinel/core/ApplicationController.h"
-#include "sentinel/core/ModeManager.h"
-#include "sentinel/core/ModelRegistry.h"
+#include "sentinel/core/app/AppMetadata.h"
+#include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/app/ApplicationController.h"
+#include "sentinel/core/app/ModeManager.h"
+#include "sentinel/core/model/ModelRegistry.h"
 
 #include <QCryptographicHash>
 #include <QCursor>
@@ -4301,7 +4301,7 @@ QStringList DesktopShellViewModel::aboutSentinelSummaries() const {
     summaries.append(
         QStringLiteral("License: project license and third-party notices in local docs"));
     summaries.append(QStringLiteral(
-        "Docs: docs/PRIVACY.md, docs/SECURITY.md, docs/UPDATES.md, docs/DIAGNOSTICS.md"));
+        "Docs: docs/legal/PRIVACY.md, docs/SECURITY.md, docs/UPDATES.md, docs/DIAGNOSTICS.md"));
     return summaries;
 }
 

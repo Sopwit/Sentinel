@@ -1,5 +1,5 @@
-#include "sentinel/core/SQLiteChatHistoryStore.h"
-#include "sentinel/core/SQLiteConversationStore.h"
+#include "sentinel/core/chat/SQLiteChatHistoryStore.h"
+#include "sentinel/core/chat/SQLiteConversationStore.h"
 
 #include <QFile>
 #include <QSqlDatabase>

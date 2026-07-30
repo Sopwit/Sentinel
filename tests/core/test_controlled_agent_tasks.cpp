@@ -1,4 +1,4 @@
-#include "sentinel/core/ControlledAgentTasks.h"
+#include "sentinel/core/agent/ControlledAgentTasks.h"
 
 #include <QtTest/QtTest>
 

@@ -1,7 +1,7 @@
-#include "sentinel/core/AudioFileSession.h"
-#include "sentinel/core/PiperTts.h"
-#include "sentinel/core/Voice.h"
-#include "sentinel/core/WhisperTranscription.h"
+#include "sentinel/core/chat/AudioFileSession.h"
+#include "sentinel/core/voice/PiperTts.h"
+#include "sentinel/core/voice/Voice.h"
+#include "sentinel/core/voice/WhisperTranscription.h"
 
 #include <QDir>
 #include <QFile>

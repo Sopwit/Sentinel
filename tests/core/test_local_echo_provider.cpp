@@ -1,4 +1,4 @@
-#include "sentinel/core/LocalEchoProvider.h"
+#include "sentinel/core/chat/LocalEchoProvider.h"
 
 #include <QtTest>
 

@@ -1,4 +1,4 @@
-#include "sentinel/core/StaticAgentRegistry.h"
+#include "sentinel/core/agent/StaticAgentRegistry.h"
 
 #include <QSet>
 #include <QtTest>

@@ -5,37 +5,73 @@ singleton MotionTokens 1.0 theme/MotionTokens.qml
 singleton InteractionTokens 1.0 theme/InteractionTokens.qml
 
 Main 1.0 Main.qml
-OnboardingScreen 1.0 OnboardingScreen.qml
 
-ActiveAgentsPanel 1.0 components/ActiveAgentsPanel.qml
-Atmosphere 1.0 components/Atmosphere.qml
-BottomDock 1.0 components/BottomDock.qml
-CommandPalette 1.0 components/CommandPalette.qml
-CognitionStreamPanel 1.0 components/CognitionStreamPanel.qml
-GlowSurface 1.0 components/GlowSurface.qml
-HeaderBar 1.0 components/HeaderBar.qml
-ModelDetailPopup 1.0 components/ModelDetailPopup.qml
-RuntimeDetailPopup 1.0 components/RuntimeDetailPopup.qml
-HomeChatSurface 1.0 components/HomeChatSurface.qml
-InfoRow 1.0 components/InfoRow.qml
-NotificationCenterPanel 1.0 components/NotificationCenterPanel.qml
-NotificationItemDelegate 1.0 components/NotificationItemDelegate.qml
-NotificationToast 1.0 components/NotificationToast.qml
-RuntimeBadge 1.0 components/RuntimeBadge.qml
-SectionTitle 1.0 components/SectionTitle.qml
-SentinelButton 1.0 components/SentinelButton.qml
-SentinelOverlayModal 1.0 components/SentinelOverlayModal.qml
-SentinelOrb 1.0 components/SentinelOrb.qml
-SentinelTelemetry 1.0 components/SentinelTelemetry.qml
-SentinelTextField 1.0 components/SentinelTextField.qml
-ShellPanel 1.0 components/ShellPanel.qml
-StatusChip 1.0 components/StatusChip.qml
-StatusPulse 1.0 components/StatusPulse.qml
-StatusBar 1.0 components/StatusBar.qml
-UpdateProgressModal 1.0 components/UpdateProgressModal.qml
-WorkspacePresence 1.0 components/WorkspacePresence.qml
+# Base Components
+Atmosphere 1.0 components/base/Atmosphere.qml
+EmptyState 1.0 components/base/EmptyState.qml
+ErrorBanner 1.0 components/base/ErrorBanner.qml
+GlowSurface 1.0 components/base/GlowSurface.qml
+InfoRow 1.0 components/base/InfoRow.qml
+RuntimeBadge 1.0 components/base/RuntimeBadge.qml
+SectionTitle 1.0 components/base/SectionTitle.qml
+SentinelButton 1.0 components/base/SentinelButton.qml
+SentinelOrb 1.0 components/base/SentinelOrb.qml
+SentinelTelemetry 1.0 components/base/SentinelTelemetry.qml
+SentinelTextField 1.0 components/base/SentinelTextField.qml
+ShimmerEffect 1.0 components/base/ShimmerEffect.qml
+SoundManager 1.0 components/base/SoundManager.qml
+StatusChip 1.0 components/base/StatusChip.qml
+StatusPulse 1.0 components/base/StatusPulse.qml
 
+# Chat Components
+HomeChatSurface 1.0 components/chat/HomeChatSurface.qml
+ActiveAgentsPanel 1.0 components/chat/ActiveAgentsPanel.qml
+CognitionStreamPanel 1.0 components/chat/CognitionStreamPanel.qml
+
+# Dialog Components
+ModelDetailPopup 1.0 components/dialogs/ModelDetailPopup.qml
+RuntimeDetailPopup 1.0 components/dialogs/RuntimeDetailPopup.qml
+SentinelOverlayModal 1.0 components/dialogs/SentinelOverlayModal.qml
+SplashScreen 1.0 components/dialogs/SplashScreen.qml
+TrayCompanionWindow 1.0 components/dialogs/TrayCompanionWindow.qml
+UpdateProgressModal 1.0 components/dialogs/UpdateProgressModal.qml
+
+# Navigation Components
+BottomDock 1.0 components/navigation/BottomDock.qml
+CommandPalette 1.0 components/navigation/CommandPalette.qml
+HeaderBar 1.0 components/navigation/HeaderBar.qml
+ShellPanel 1.0 components/navigation/ShellPanel.qml
+StatusBar 1.0 components/navigation/StatusBar.qml
+TitleBar 1.0 components/navigation/TitleBar.qml
+TitleBarButton 1.0 components/navigation/TitleBarButton.qml
+WorkspacePresence 1.0 components/navigation/WorkspacePresence.qml
+
+# Notification Components
+NotificationCenterPanel 1.0 components/notifications/NotificationCenterPanel.qml
+NotificationItemDelegate 1.0 components/notifications/NotificationItemDelegate.qml
+NotificationToast 1.0 components/notifications/NotificationToast.qml
+
+# Pages
 ChatPanel 1.0 pages/ChatPanel.qml
 DashboardPage 1.0 pages/DashboardPage.qml
-ModelsPage 1.0 pages/ModelsPage.qml
-SettingsPage 1.0 pages/SettingsPage.qml
+ModelsPage 1.0 pages/models/ModelsPage.qml
+LocalModelsTab 1.0 pages/models/LocalModelsTab.qml
+OnlineRegistryTab 1.0 pages/models/OnlineRegistryTab.qml
+SettingsPage 1.0 pages/settings/SettingsPage.qml
+AppearanceSettingsTab 1.0 pages/settings/AppearanceSettingsTab.qml
+ModelSettingsTab 1.0 pages/settings/ModelSettingsTab.qml
+WorkspaceSettingsTab 1.0 pages/settings/WorkspaceSettingsTab.qml
+SecuritySettingsTab 1.0 pages/settings/SecuritySettingsTab.qml
+SystemSettingsTab 1.0 pages/settings/SystemSettingsTab.qml
+
+# Onboarding
+OnboardingScreen 1.0 onboarding/OnboardingScreen.qml
+WelcomeStep 1.0 onboarding/WelcomeStep.qml
+PrivacyConsentStep 1.0 onboarding/PrivacyConsentStep.qml
+AppearanceStep 1.0 onboarding/AppearanceStep.qml
+ProviderSetupStep 1.0 onboarding/ProviderSetupStep.qml
+ModelSetupStep 1.0 onboarding/ModelSetupStep.qml
+PreferencesStep 1.0 onboarding/PreferencesStep.qml
+VoiceSetupStep 1.0 onboarding/VoiceSetupStep.qml
+CapabilitiesStep 1.0 onboarding/CapabilitiesStep.qml
+FinishStep 1.0 onboarding/FinishStep.qml

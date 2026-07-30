@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>Sentinel Desktop Updates</title>
+        <link>https://releases.sentinel.dev/appcast.xml</link>
+        <description>Most recent updates to Sentinel Desktop</description>
+        <language>en</language>
+        <item>
+            <title>Sentinel Desktop 1.0.0</title>
+            <dc:date>2026-07-30T00:00:00+00:00</dc:date>
+            <sparkle:releaseNotesLink>https://releases.sentinel.dev/releasenotes/1.0.0.html</sparkle:releaseNotesLink>
+            <sparkle:minimumSystemVersion>12.0</sparkle:minimumSystemVersion>
+            <enclosure url="https://github.com/sopwit/sentinel/releases/download/v1.0.0/Sentinel-Desktop-macOS-1.0.0.dmg"
+                       sparkle:version="1.0.0"
+                       sparkle:shortVersionString="1.0.0"
+                       sparkle:edSignature="Ed25519SignaturePlaceholderValueStringLength64CharStandardHexOrBase64Format="
+                       type="application/octet-stream" />
+        </item>
+    </channel>
+</rss>

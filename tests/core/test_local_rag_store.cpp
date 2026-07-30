@@ -1,4 +1,4 @@
-#include "sentinel/core/LocalRagStore.h"
+#include "sentinel/core/memory/LocalRagStore.h"
 
 #include <QTemporaryDir>
 #include <QtTest>

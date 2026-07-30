@@ -1,5 +1,5 @@
-#include "sentinel/core/StaticModelRouter.h"
-#include "sentinel/core/StaticProviderCatalog.h"
+#include "sentinel/core/model/StaticModelRouter.h"
+#include "sentinel/core/model/StaticProviderCatalog.h"
 
 #include <QtTest>
 

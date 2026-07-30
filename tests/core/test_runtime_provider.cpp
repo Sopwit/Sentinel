@@ -1,4 +1,4 @@
-#include "sentinel/core/RuntimeProvider.h"
+#include "sentinel/core/runtime/RuntimeProvider.h"
 
 #include <QtTest/QtTest>
 

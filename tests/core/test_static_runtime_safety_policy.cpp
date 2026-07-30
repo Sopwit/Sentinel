@@ -1,4 +1,4 @@
-#include "sentinel/core/RuntimeSafety.h"
+#include "sentinel/core/runtime/RuntimeSafety.h"
 
 #include <QtTest>
 

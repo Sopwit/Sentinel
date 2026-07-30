@@ -1,4 +1,4 @@
-#include "sentinel/core/PermissionPolicyService.h"
+#include "sentinel/core/security/PermissionPolicyService.h"
 
 #include <QtTest>
 

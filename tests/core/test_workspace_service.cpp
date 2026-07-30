@@ -1,4 +1,4 @@
-#include "sentinel/core/WorkspaceService.h"
+#include "sentinel/core/app/WorkspaceService.h"
 
 #include <QtTest>
 

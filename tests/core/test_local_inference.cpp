@@ -1,4 +1,4 @@
-#include "sentinel/core/LocalInference.h"
+#include "sentinel/core/runtime/LocalInference.h"
 
 #include <QtTest>
 

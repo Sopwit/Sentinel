@@ -1,4 +1,4 @@
-#include "sentinel/core/RuntimeIntegration.h"
+#include "sentinel/core/runtime/RuntimeIntegration.h"
 
 #include <QtTest>
 

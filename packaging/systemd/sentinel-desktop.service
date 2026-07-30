@@ -1,0 +1,15 @@
+[Unit]
+Description=Sentinel Local AI Assistant Service
+Documentation=https://sentinel.dev
+After=graphical-session.target network.target
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/sentinel-desktop --background
+Restart=on-failure
+RestartSec=5s
+Slice=app.slice
+Environment=QT_QPA_PLATFORM=wayland;xcb
+
+[Install]
+WantedBy=graphical-session.target

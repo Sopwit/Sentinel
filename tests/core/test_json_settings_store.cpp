@@ -1,4 +1,4 @@
-#include "sentinel/core/JsonSettingsStore.h"
+#include "sentinel/core/memory/JsonSettingsStore.h"
 
 #include <QDir>
 #include <QFile>

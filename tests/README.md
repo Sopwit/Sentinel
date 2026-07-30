@@ -1,41 +1,36 @@
-# Tests
+# Sentinel Automated Test Suite Architecture
 
-Sentinel uses Qt Test for isolated C++ core tests.
+Sentinel utilizes QtTest and QtQuickTest frameworks across a 5-tier modular testing hierarchy:
 
-Current test targets:
+## Test Architecture Layout
 
-- `test_mode_manager`
-- `test_chat_session`
-- `test_in_memory_store`
-- `test_sqlite_chat_history_store`
-- `test_sqlite_memory_store`
-- `test_in_memory_tool_registry`
-- `test_agent_activity_log`
-- `test_agent_pipeline_result`
-- `test_agent_runtime_context`
-- `test_static_approval_policy`
-- `test_static_sandbox_policy`
-- `test_static_model_router`
-- `test_static_provider_catalog`
-- `test_static_agent_registry`
-- `test_static_task_planner`
-- `test_null_tool_executor`
-- `test_standard_path_provider`
-- `test_application_controller`
-- `test_app_settings`
-- `test_json_settings_store`
-- `test_local_echo_provider`
-- `test_null_agent_runtime`
-- `test_desktop_shell_view_model`
-
-Run from the repository root:
-
-```bash
-cmake -S . -B build -G Ninja
-cmake --build build
-ctest --test-dir build --output-on-failure
+```
+tests/
+├── unit/                 # C++ unit tests (ModeManager, Stores, RAG, Ollama, Runtime)
+├── integration/          # End-to-end integration tests (RAG pipeline, ViewModel sync)
+├── gui/                  # QtQuickTest QML component & UI navigation tests
+├── performance/          # Performance & load verification (Startup time, Memory limits)
+└── benchmarks/           # Micro-performance latency benchmarks (QBENCHMARK)
 ```
 
-The tests link against `sentinel_core` and do not launch the QML desktop UI.
+## Running Tests
 
-See `docs/TESTING.md` for the full testing workflow.
+### 1. Run Complete Test Suite
+```bash
+cmake --preset tests
+cmake --build --preset tests
+ctest --preset tests
+```
+
+### 2. Run Specific Test Subsuites
+```bash
+# Integration Tests
+ctest --test-dir build -R test_rag_e2e_pipeline --output-on-failure
+
+# Benchmarks (Semantic Search & Context Compression Latency)
+ctest --test-dir build -R bench_ --output-on-failure
+
+# Cold Startup Performance Verification
+ctest --test-dir build -R test_startup_time --output-on-failure
+```
+

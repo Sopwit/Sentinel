@@ -1,7 +1,7 @@
 #include "sentinel/desktop/NativeCompanionAdapter.h"
 
-#include "sentinel/core/AppMetadata.h"
-#include "sentinel/core/AppSettings.h"
+#include "sentinel/core/app/AppMetadata.h"
+#include "sentinel/core/app/AppSettings.h"
 #include "sentinel/desktop/DesktopShellViewModel.h"
 
 #include <QAction>

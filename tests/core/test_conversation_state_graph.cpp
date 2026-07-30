@@ -1,4 +1,4 @@
-#include "sentinel/core/ConversationStateGraph.h"
+#include "sentinel/core/chat/ConversationStateGraph.h"
 
 #include <QtTest>
 

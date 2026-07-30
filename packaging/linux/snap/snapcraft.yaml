@@ -1,0 +1,52 @@
+name: sentinel-desktop
+base: core24
+version: '1.0.0'
+summary: Local-first AI desktop assistant
+description: |
+  Sentinel is a cross-platform, local-first AI desktop assistant application
+  built with C++20 and Qt 6. Optimized for Fedora KDE Plasma and Linux desktop environments,
+  Sentinel provides local model health discovery, structured memory persistence, and privacy controls.
+
+grade: stable
+confinement: strict
+
+apps:
+  sentinel-desktop:
+    command: bin/sentinel-desktop
+    desktop: usr/share/applications/dev.sentinel.Sentinel.desktop
+    plugs:
+      - wayland
+      - x11
+      - desktop
+      - desktop-legacy
+      - network
+      - network-bind
+      - audio-playback
+      - home
+
+parts:
+  sentinel:
+    plugin: cmake
+    source: .
+    cmake-parameters:
+      - -DCMAKE_BUILD_TYPE=Release
+      - -DSENTINEL_APP_VERSION=1.0.0
+    build-packages:
+      - cmake
+      - ninja-build
+      - g++
+      - qt6-base-dev
+      - qt6-declarative-dev
+      - qt6-tools-dev
+      - libqt6sql6-sqlite
+      - libqt6multimedia6-dev
+    stage-packages:
+      - libqt6core6
+      - libqt6gui6
+      - libqt6qml6
+      - libqt6quick6
+      - libqt6widgets6
+      - libqt6network6
+      - libqt6sql6
+      - libqt6sql6-sqlite
+      - libqt6multimedia6
