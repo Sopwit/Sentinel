@@ -1,14 +1,14 @@
 #include "sentinel/desktop/DesktopShellViewModel.h"
 
-#include "sentinel/core/AppSettings.h"
-#include "sentinel/core/ApplicationController.h"
-#include "sentinel/core/IChatHistoryStore.h"
-#include "sentinel/core/InMemorySettingsStore.h"
-#include "sentinel/core/InMemoryStore.h"
-#include "sentinel/core/LocalEchoProvider.h"
-#include "sentinel/core/ModeManager.h"
-#include "sentinel/core/NullAgentRuntime.h"
-#include "sentinel/core/OllamaRuntime.h"
+#include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/app/ApplicationController.h"
+#include "sentinel/core/chat/IChatHistoryStore.h"
+#include "sentinel/core/memory/InMemorySettingsStore.h"
+#include "sentinel/core/memory/InMemoryStore.h"
+#include "sentinel/core/chat/LocalEchoProvider.h"
+#include "sentinel/core/app/ModeManager.h"
+#include "sentinel/core/agent/NullAgentRuntime.h"
+#include "sentinel/core/runtime/OllamaRuntime.h"
 
 #include <QDir>
 #include <QFile>

@@ -1,4 +1,4 @@
-#include "sentinel/core/StaticMemoryCatalog.h"
+#include "sentinel/core/memory/StaticMemoryCatalog.h"
 
 #include <QSet>
 #include <QtTest>

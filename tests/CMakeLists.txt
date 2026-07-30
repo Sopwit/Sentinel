@@ -78,6 +78,7 @@ add_sentinel_core_test(test_json_settings_store core/test_json_settings_store.cp
 add_sentinel_core_test(test_upgrade core/test_upgrade.cpp)
 add_sentinel_core_test(test_local_echo_provider core/test_local_echo_provider.cpp)
 add_sentinel_core_test(test_null_agent_runtime core/test_null_agent_runtime.cpp)
+add_sentinel_core_test(test_plugin_manager core/test_plugin_manager.cpp)
 add_sentinel_core_test(test_desktop_shell_view_model desktop/test_desktop_shell_view_model.cpp)
 
 qt_add_executable(test_graphics_backend
@@ -96,3 +97,25 @@ target_link_libraries(test_desktop_shell_view_model
     PRIVATE
         sentinel_desktop_viewmodels
 )
+
+# ── Integration, Performance, Benchmark & GUI Test Targets ───────────────────
+add_sentinel_core_test(test_rag_e2e_pipeline integration/test_rag_e2e_pipeline.cpp)
+add_sentinel_core_test(test_startup_time performance/test_startup_time.cpp)
+add_sentinel_core_test(bench_semantic_search benchmarks/bench_semantic_search.cpp)
+add_sentinel_core_test(bench_context_compression benchmarks/bench_context_compression.cpp)
+
+find_package(Qt6 COMPONENTS QuickTest QUIET)
+if(Qt6QuickTest_FOUND AND TARGET Qt6::QuickTest)
+    qt_add_executable(test_gui_components
+        gui/tst_main.cpp
+    )
+    target_link_libraries(test_gui_components
+        PRIVATE
+            Qt6::QuickTest
+            Qt6::Quick
+            Qt6::Test
+    )
+    add_test(NAME test_gui_components COMMAND $<TARGET_FILE:test_gui_components> -input "${CMAKE_CURRENT_SOURCE_DIR}/gui")
+endif()
+
+

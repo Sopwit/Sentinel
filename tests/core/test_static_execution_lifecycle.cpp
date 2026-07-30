@@ -1,4 +1,4 @@
-#include "sentinel/core/ExecutionLifecycle.h"
+#include "sentinel/core/runtime/ExecutionLifecycle.h"
 
 #include <QtTest>
 

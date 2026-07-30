@@ -1,4 +1,4 @@
-#include "sentinel/core/SkillProfileService.h"
+#include "sentinel/core/app/SkillProfileService.h"
 
 #include <QtTest>
 

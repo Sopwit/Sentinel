@@ -16,11 +16,15 @@ authority boundaries remain unchanged:
 
 Release-candidate references:
 
-- [Packaging and distribution](docs/PACKAGING.md)
-- [Release checklist](docs/RELEASE_CHECKLIST.md)
-- [Release QA plan](docs/QA_PLAN.md)
-- [Release notes](RELEASE_NOTES.md)
-- [Changelog](CHANGELOG.md)
+- **[Documentation Index & Sitemap](docs/INDEX.md)**
+- **[User Guide](docs/user-guide/README.md)**
+- **[Developer Portal](docs/dev/README.md)**
+- **[Architecture Guide](docs/architecture/overview.md)**
+- **[Packaging and distribution](docs/release/packaging.md)**
+- **[Release checklist](docs/release/release-checklist.md)**
+- **[Release QA plan](docs/release/qa-plan.md)**
+- **[Release notes](docs/release/release-notes/v1.0.0-rc1.md)**
+- **[Changelog](CHANGELOG.md)**
 
 ## Desktop Foundation
 
@@ -163,7 +167,7 @@ cmake --build --preset tests
 ctest --preset tests
 ```
 
-Development workflow details are in [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md). Test details are in [docs/TESTING.md](docs/TESTING.md).
+Development workflow details are in [docs/dev/setup.md](docs/dev/setup.md). Test details are in [docs/dev/testing.md](docs/dev/testing.md).
 
 ## Release Builds
 
@@ -199,7 +203,7 @@ Open the repository root in CLion. CLion should detect the top-level `CMakeLists
 Open the repository root directly. Configure the `no-ccache` CMake preset once so clangd can use
 the checked-in `.clangd` compilation database path. For Qt QML module resolution, set
 `QML_IMPORT_PATH` and `QML2_IMPORT_PATH` to your Qt `qml` directory (examples are in
-`docs/DEVELOPMENT.md`).
+`docs/dev/setup.md`).
  
 ## Intentionally Not Included Yet
  
@@ -213,7 +217,7 @@ the checked-in `.clangd` compilation database path. For Qt QML module resolution
 - Fully automated semantic indexing (Local RAG is manual-only, semantic prompt authority is disabled by default).
 - Chat history encryption or automated pruning (local export is supported).
  
-See [docs/ROADMAP.md](docs/ROADMAP.md) for planned phases.
+See [docs/archive/ROADMAP.md](docs/archive/ROADMAP.md) for planned phases.
 
 ## License
 

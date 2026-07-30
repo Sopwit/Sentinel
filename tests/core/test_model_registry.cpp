@@ -1,4 +1,4 @@
-#include "sentinel/core/ModelRegistry.h"
+#include "sentinel/core/model/ModelRegistry.h"
 
 #include <QtTest/QtTest>
 

@@ -2,7 +2,7 @@
   "version": 6,
   "cmakeMinimumRequired": {
     "major": 3,
-    "minor": 24,
+    "minor": 27,
     "patch": 0
   },
   "configurePresets": [
@@ -61,6 +61,24 @@
       "binaryDir": "${sourceDir}/build/no-ccache"
     },
     {
+      "name": "asan",
+      "displayName": "Debug with AddressSanitizer",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/asan",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS_DEBUG": "-g -O1 -fsanitize=address -fno-omit-frame-pointer"
+      }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Debug with Code Coverage",
+      "inherits": "debug",
+      "binaryDir": "${sourceDir}/build/coverage",
+      "cacheVariables": {
+        "CMAKE_CXX_FLAGS_DEBUG": "-g -O0 --coverage"
+      }
+    },
+    {
       "name": "windows-arm64",
       "displayName": "Windows ARM64 Release",
       "generator": "Ninja",
@@ -102,9 +120,15 @@
       "configurePreset": "no-ccache"
     },
     {
+      "name": "asan",
+      "configurePreset": "asan"
+    },
+    {
       "name": "windows-arm64",
       "configurePreset": "windows-arm64",
-      "targets": ["sentinel-desktop"]
+      "targets": [
+        "sentinel-desktop"
+      ]
     }
   ],
   "testPresets": [
@@ -121,6 +145,61 @@
       "output": {
         "outputOnFailure": true
       }
+    },
+    {
+      "name": "asan",
+      "configurePreset": "asan",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ],
+  "packagePresets": [
+    {
+      "name": "release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "package-ready",
+      "configurePreset": "package-ready"
+    }
+  ],
+  "workflowPresets": [
+    {
+      "name": "ci-test",
+      "displayName": "CI Test Workflow",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "tests"
+        },
+        {
+          "type": "build",
+          "name": "tests"
+        },
+        {
+          "type": "test",
+          "name": "tests"
+        }
+      ]
+    },
+    {
+      "name": "ci-package",
+      "displayName": "CI Package Workflow",
+      "steps": [
+        {
+          "type": "configure",
+          "name": "package-ready"
+        },
+        {
+          "type": "build",
+          "name": "package-ready"
+        },
+        {
+          "type": "package",
+          "name": "package-ready"
+        }
+      ]
     }
   ]
 }

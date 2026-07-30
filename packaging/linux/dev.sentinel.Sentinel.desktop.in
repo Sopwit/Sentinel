@@ -1,11 +1,18 @@
 [Desktop Entry]
 Type=Application
-Version=1.0
+Version=1.5
 Name=Sentinel Desktop
-Comment=Local-first AI desktop assistant
-Exec=sentinel-desktop
+GenericName=Local AI Assistant
+GenericName[tr]=Yerel Yapay Zeka Asistanı
+Comment=Local-first AI desktop assistant optimized for Fedora KDE Plasma
+Comment[tr]=Fedora KDE Plasma için optimize edilmiş yerel öncelikli yapay zeka masaüstü asistanı
+Exec=sentinel-desktop %U
 Icon=dev.sentinel.Sentinel
 Terminal=false
-Categories=Utility;Office;Qt;
-Keywords=AI;Assistant;Local;Privacy;Qt;
+Categories=Utility;Development;ArtificialIntelligence;Qt;KDE;
+Keywords=AI;Assistant;Local;Privacy;LLM;Qt;KDE;Sentinel;Ollama;
 StartupWMClass=dev.sentinel.Sentinel
+DBusActivatable=true
+SingleMainWindow=true
+MimeType=x-scheme-handler/sentinel;
+

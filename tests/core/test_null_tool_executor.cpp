@@ -1,4 +1,4 @@
-#include "sentinel/core/NullToolExecutor.h"
+#include "sentinel/core/runtime/NullToolExecutor.h"
 
 #include <QtTest>
 

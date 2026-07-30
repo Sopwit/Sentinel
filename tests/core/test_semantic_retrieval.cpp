@@ -1,4 +1,4 @@
-#include "sentinel/core/SemanticRetrieval.h"
+#include "sentinel/core/memory/SemanticRetrieval.h"
 
 #include <QtTest>
 

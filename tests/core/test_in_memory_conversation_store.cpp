@@ -1,4 +1,4 @@
-#include "sentinel/core/InMemoryConversationStore.h"
+#include "sentinel/core/chat/InMemoryConversationStore.h"
 
 #include <QtTest>
 

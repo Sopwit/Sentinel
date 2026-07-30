@@ -1,4 +1,4 @@
-#include "sentinel/core/CompanionService.h"
+#include "sentinel/core/app/CompanionService.h"
 
 #include <QtTest>
 

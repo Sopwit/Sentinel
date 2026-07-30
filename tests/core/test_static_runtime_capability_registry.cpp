@@ -1,4 +1,4 @@
-#include "sentinel/core/RuntimeCapabilities.h"
+#include "sentinel/core/runtime/RuntimeCapabilities.h"
 
 #include <QSet>
 #include <QtTest>

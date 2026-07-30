@@ -1,4 +1,4 @@
-#include "sentinel/core/LocalRuntimeSession.h"
+#include "sentinel/core/runtime/LocalRuntimeSession.h"
 
 #include <QtTest>
 

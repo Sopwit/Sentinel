@@ -1,4 +1,4 @@
-#include "sentinel/core/SQLiteMemoryStore.h"
+#include "sentinel/core/memory/SQLiteMemoryStore.h"
 
 #include <QFile>
 #include <QTemporaryDir>

@@ -1,4 +1,4 @@
-#include "sentinel/core/AgentPipelineResult.h"
+#include "sentinel/core/agent/AgentPipelineResult.h"
 
 #include <QtTest>
 

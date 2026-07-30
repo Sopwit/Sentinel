@@ -1,4 +1,4 @@
-#include "sentinel/core/ConversationSession.h"
+#include "sentinel/core/chat/ConversationSession.h"
 
 #include <QtTest>
 

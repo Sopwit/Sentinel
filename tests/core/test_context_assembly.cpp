@@ -1,4 +1,4 @@
-#include "sentinel/core/ContextAssembly.h"
+#include "sentinel/core/app/ContextAssembly.h"
 
 #include <QtTest>
 

@@ -1,4 +1,4 @@
-#include "sentinel/core/StaticApprovalPolicy.h"
+#include "sentinel/core/security/StaticApprovalPolicy.h"
 
 #include <QtTest>
 

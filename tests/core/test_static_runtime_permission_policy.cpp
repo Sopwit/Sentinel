@@ -1,4 +1,4 @@
-#include "sentinel/core/RuntimePermissions.h"
+#include "sentinel/core/runtime/RuntimePermissions.h"
 
 #include <QtTest>
 

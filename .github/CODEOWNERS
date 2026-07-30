@@ -1,0 +1,10 @@
+# Sentinel Code Owners Definition
+*                   @Sopwit/core-team
+
+# Core Architecture & Security Boundaries
+/core/              @Sopwit/security-leads
+/CMakeLists.txt     @Sopwit/build-engineers
+/.github/           @Sopwit/devops-team
+
+# Platform Packaging & Deploy
+/packaging/         @Sopwit/release-engineers

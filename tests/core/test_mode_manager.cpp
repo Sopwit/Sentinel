@@ -1,4 +1,4 @@
-#include "sentinel/core/ModeManager.h"
+#include "sentinel/core/app/ModeManager.h"
 
 #include <QSignalSpy>
 #include <QtTest>

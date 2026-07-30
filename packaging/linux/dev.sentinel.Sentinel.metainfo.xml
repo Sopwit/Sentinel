@@ -2,33 +2,50 @@
 <component type="desktop-application">
   <id>dev.sentinel.Sentinel</id>
   <metadata_license>CC0-1.0</metadata_license>
-  <project_license>GPL-3.0-or-later</project_license>
+  <project_license>Apache-2.0</project_license>
   <name>Sentinel Desktop</name>
   <summary>Local-first AI desktop assistant</summary>
+  <developer id="dev.sentinel">
+    <name>Sopwit / Sentinel Team</name>
+  </developer>
   <description>
     <p>
-      Sentinel is a native Qt desktop assistant focused on local-first operation, explicit user
+      Sentinel is a native Qt/QML desktop assistant focused on local-first operation, explicit user
       authority, and visible privacy boundaries.
     </p>
     <p>
-      The 1.0 release-candidate packaging metadata does not enable telemetry, silent update checks,
-      hidden cloud calls, autonomous tools, or background indexing.
+      Optimized for Fedora KDE Plasma 6, Sentinel supports local Ollama model discovery and health checking,
+      key-value memory management, structured transcript persistence, and secure execution boundaries.
     </p>
   </description>
   <launchable type="desktop-id">dev.sentinel.Sentinel.desktop</launchable>
+  <url type="homepage">https://sentinel.dev</url>
+  <url type="bugtracker">https://github.com/sentinel/sentinel/issues</url>
+  <url type="vcs-browser">https://github.com/sentinel/sentinel</url>
+  <branding>
+    <color type="primary" scheme_preference="dark">#0F172A</color>
+  </branding>
+  <kudos>
+    <kudo>ModernToolkit</kudo>
+    <kudo>HiDpiGpuAcceleration</kudo>
+  </kudos>
   <releases>
-    <release version="1.0.0-rc.1" date="2026-06-14">
+    <release version="1.0.0" date="2026-07-30">
       <description>
-        <p>Release-candidate packaging, metadata, QA checklist, and distribution readiness pass.</p>
+        <p>Enterprise release pass featuring full Fedora KDE Plasma integration, systemd user service, D-Bus session activation, and native RPM &amp; Flatpak packaging metadata.</p>
       </description>
     </release>
   </releases>
   <categories>
     <category>Utility</category>
-    <category>Office</category>
+    <category>Development</category>
   </categories>
   <content_rating type="oars-1.1" />
+  <requires>
+    <display_length compare="ge">600</display_length>
+  </requires>
   <provides>
     <binary>sentinel-desktop</binary>
   </provides>
 </component>
+

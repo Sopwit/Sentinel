@@ -1,4 +1,4 @@
-#include "sentinel/core/OrchestrationSnapshot.h"
+#include "sentinel/core/app/OrchestrationSnapshot.h"
 
 #include <QtTest>
 

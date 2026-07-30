@@ -1,4 +1,4 @@
-#include "sentinel/core/StaticSandboxPolicy.h"
+#include "sentinel/core/security/StaticSandboxPolicy.h"
 
 #include <QtTest>
 

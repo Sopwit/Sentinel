@@ -1,15 +1,15 @@
 #pragma once
 
-#include "sentinel/core/AgentRuntimeService.h"
-#include "sentinel/core/CompanionService.h"
-#include "sentinel/core/WinTaskbarIntegration.h"
-#include "sentinel/core/ControlledAgentTasks.h"
-#include "sentinel/core/LocalRagStore.h"
-#include "sentinel/core/PermissionPolicyService.h"
-#include "sentinel/core/SemanticRetrieval.h"
-#include "sentinel/core/SkillProfileService.h"
-#include "sentinel/core/ToolExecutionGateway.h"
-#include "sentinel/core/WorkspaceService.h"
+#include "sentinel/core/agent/AgentRuntimeService.h"
+#include "sentinel/core/app/CompanionService.h"
+#include "sentinel/core/platform/WinTaskbarIntegration.h"
+#include "sentinel/core/agent/ControlledAgentTasks.h"
+#include "sentinel/core/memory/LocalRagStore.h"
+#include "sentinel/core/security/PermissionPolicyService.h"
+#include "sentinel/core/memory/SemanticRetrieval.h"
+#include "sentinel/core/app/SkillProfileService.h"
+#include "sentinel/core/runtime/ToolExecutionGateway.h"
+#include "sentinel/core/app/WorkspaceService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 
 #include <QElapsedTimer>

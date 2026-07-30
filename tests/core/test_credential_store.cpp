@@ -1,4 +1,4 @@
-#include "sentinel/core/CredentialStore.h"
+#include "sentinel/core/security/CredentialStore.h"
 
 #include <QtTest>
 #include <memory>

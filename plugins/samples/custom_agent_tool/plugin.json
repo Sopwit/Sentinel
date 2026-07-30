@@ -1,0 +1,17 @@
+{
+  "id": "dev.sentinel.plugin.custom-tool",
+  "name": "Custom Agent Tool",
+  "version": "1.0.0",
+  "api_version": "1.0",
+  "vendor": "Sopwit Community",
+  "description": "Provides specialized agent tool capability.",
+  "category": "Tool",
+  "entry_point": "custom_agent_tool_plugin",
+  "permissions": [
+    "tool.execute",
+    "filesystem.read"
+  ],
+  "dependencies": {
+    "dev.sentinel.core": ">=1.0.0"
+  }
+}

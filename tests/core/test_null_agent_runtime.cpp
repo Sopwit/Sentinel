@@ -1,4 +1,4 @@
-#include "sentinel/core/NullAgentRuntime.h"
+#include "sentinel/core/agent/NullAgentRuntime.h"
 
 #include <QtTest>
 

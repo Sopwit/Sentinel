@@ -1,0 +1,7 @@
+/* English InfoPlist.strings */
+"CFBundleDisplayName" = "Sentinel Desktop";
+"CFBundleName" = "Sentinel Desktop";
+"NSHumanReadableCopyright" = "© 2026 Sopwit. All rights reserved.";
+"NSMicrophoneUsageDescription" = "Sentinel needs microphone access to capture voice commands and transcribe them.";
+"NSSpeechRecognitionUsageDescription" = "Sentinel uses speech recognition to convert spoken commands into text.";
+"NSCameraUsageDescription" = "Sentinel requires camera access for vision and image input processing.";

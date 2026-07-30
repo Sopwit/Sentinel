@@ -1,0 +1,38 @@
+name: macOS CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-test-macos:
+    name: Build & Test (macOS)
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Ninja
+        run: brew install ninja
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          arch: 'clang_64'
+          modules: 'qtmultimedia'
+          cache: true
+
+      - name: Configure CMake
+        run: cmake --preset tests
+
+      - name: Build
+        run: cmake --build --preset tests
+
+      - name: Run Tests
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: ctest --preset tests

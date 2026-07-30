@@ -133,20 +133,47 @@ jobs:
 
       - name: Bundle and Package (macOS)
         if: matrix.os == 'macos-14'
+        env:
+          APPLE_CERT_BASE64: ${{ secrets.APPLE_DEVELOPER_CERT_BASE64 }}
+          APPLE_CERT_PASS: ${{ secrets.APPLE_DEVELOPER_CERT_PASS }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_APP_PASS: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
         run: |
           # 1. Rename to user-friendly name
           mv dist/sentinel-desktop.app "dist/Sentinel Desktop.app"
 
-          # 2. Run macdeployqt (without -dmg, but with -codesign=- to do ad-hoc signing)
-          macdeployqt "dist/Sentinel Desktop.app" -qmldir=ui/qml -codesign=-
+          # 2. Setup Keychain for Developer ID signing if secret is present
+          SIGNING_IDENTITY="-"
+          if [ -n "${APPLE_CERT_BASE64:-}" ]; then
+            echo "Importing Apple Developer ID Certificate..."
+            KEYCHAIN_PATH=$RUNNER_TEMP/build.keychain
+            KEYCHAIN_PASS=$(openssl rand -base64 12)
+            security create-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+            security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+            security unlock-keychain -p "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
 
-          # 3. Install create-dmg tool via brew
+            CERT_PATH=$RUNNER_TEMP/cert.p12
+            echo "$APPLE_CERT_BASE64" | base64 --decode > "$CERT_PATH"
+            security import "$CERT_PATH" -k "$KEYCHAIN_PATH" -P "$APPLE_CERT_PASS" -T /usr/bin/codesign
+            security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASS" "$KEYCHAIN_PATH"
+
+            SIGNING_IDENTITY=$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | grep "Developer ID Application" | head -n 1 | awk -F '"' '{print $2}')
+          fi
+
+          # 3. Run macdeployqt
+          macdeployqt "dist/Sentinel Desktop.app" -qmldir=ui/qml -codesign="$SIGNING_IDENTITY"
+
+          # 4. Sign app bundle with entitlements
+          if [ "$SIGNING_IDENTITY" != "-" ]; then
+            codesign --force --deep --options runtime --entitlements resources/platform/macos/sentinel.entitlements --sign "$SIGNING_IDENTITY" "dist/Sentinel Desktop.app"
+          fi
+
+          # 5. Build DMG
           brew install create-dmg
-
-          # 4. Build a beautiful, stylized drag-and-drop DMG
           create-dmg \
             --volname "Sentinel Desktop Installer" \
-            --volicon "resources/icons/dev.sentinel.Sentinel.icns" \
+            --volicon "resources/app-icons/dev.sentinel.Sentinel.icns" \
             --window-pos 200 120 \
             --window-size 600 300 \
             --icon-size 100 \
@@ -155,6 +182,21 @@ jobs:
             --app-drop-link 425 120 \
             "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg" \
             "dist/"
+
+          # 6. Build PKG
+          chmod +x packaging/macos/build_pkg.sh
+          ./packaging/macos/build_pkg.sh "dist/Sentinel Desktop.app" "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.pkg" ""
+
+          # 7. Notarize and Staple if Apple ID credentials are provided
+          if [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_APP_PASS:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
+            echo "Submitting DMG for Apple Notarization..."
+            xcrun notarytool submit "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg" \
+              --apple-id "$APPLE_ID" \
+              --password "$APPLE_APP_PASS" \
+              --team-id "$APPLE_TEAM_ID" \
+              --wait
+            xcrun stapler staple "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg"
+          fi
 
       - name: Install Windows Code Signing Certificate
         if: matrix.os == 'windows-2022' && secrets.WIN_CERT_BASE64 != ''

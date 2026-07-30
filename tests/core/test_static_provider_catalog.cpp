@@ -1,4 +1,4 @@
-#include "sentinel/core/StaticProviderCatalog.h"
+#include "sentinel/core/model/StaticProviderCatalog.h"
 
 #include <QtTest>
 
