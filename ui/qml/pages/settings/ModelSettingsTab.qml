@@ -99,7 +99,7 @@ Item {
                 InfoRow {
                     compact: root.compact
                     label: qsTr("Active Model")
-                    value: root.viewModel.activeLocalModelName.length > 0 ? root.viewModel.activeLocalModelName : qsTr("None selected")
+                    value: root.viewModel.activeLocalModelName ? root.viewModel.activeLocalModelName : qsTr("None selected")
                     Layout.fillWidth: true
                 }
             }

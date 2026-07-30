@@ -72,7 +72,7 @@ Item {
                 InfoRow {
                     compact: root.compact
                     label: qsTr("Tool Execution Gateway")
-                    value: root.viewModel.toolExecutionGatewayStatusSummary
+                    value: root.viewModel.toolGatewayStatus || qsTr("Inactive")
                     Layout.fillWidth: true
                 }
             }

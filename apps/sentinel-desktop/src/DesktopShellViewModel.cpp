@@ -304,8 +304,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                                              core::WinTaskbarIntegration* taskbar,
                                              QObject* parent)
     : QObject(parent), controller_(controller), modeManager_(modeManager), settings_(settings),
-      taskbar_(taskbar), chatMessages_(this),
-      localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())) {
+      localRagStore_(std::make_unique<core::LocalRagStore>(localRagPath())),
+      chatMessages_(this), taskbar_(taskbar) {
     // ── Network connectivity monitoring ────────────────────────────────────
     if (!QNetworkInformation::instance()) {
         QNetworkInformation::loadDefaultBackend();
@@ -559,7 +559,6 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                 if (policy != QLatin1String("None") && policy != QLatin1String("Disabled") &&
                     QSystemTrayIcon::isSystemTrayAvailable()) {
                     const QString category = item.value(QStringLiteral("category")).toString();
-                    const QString title = item.value(QStringLiteral("title")).toString();
 
                     // Custom policy filtering
                     if (policy == QLatin1String("Custom")) {

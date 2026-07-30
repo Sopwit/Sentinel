@@ -18,7 +18,7 @@ Item {
     Accessible.description: qsTr("Sentinel application preferences and settings interface")
 
     Shortcut {
-        sequence: StandardKey.Preferences
+        sequences: [StandardKey.Preferences]
         onActivated: {
             console.log("Native Preferences shortcut triggered")
         }

@@ -54,7 +54,7 @@ QString safeAudioPathSummary(const QString& path) {
     return QStringLiteral("Local audio file metadata accepted without exposing raw path.");
 }
 
-WhisperTranscriptionTrace trace(const QString& stage, WhisperTranscriptionStatus status,
+[[maybe_unused]] WhisperTranscriptionTrace trace(const QString& stage, WhisperTranscriptionStatus status,
                                 const QString& summary) {
     return WhisperTranscriptionTrace{stage, status, false, summary};
 }

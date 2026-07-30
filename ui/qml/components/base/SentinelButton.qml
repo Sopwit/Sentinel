@@ -8,6 +8,7 @@ Button {
 
     property string tooltipText: ""
     property bool premium: false
+    property color accent: SentinelTheme.calmAccent
 
     ToolTip.visible: control.hovered && control.tooltipText.length > 0
     ToolTip.text: control.tooltipText
@@ -40,8 +41,8 @@ Button {
     background: Rectangle {
         id: bg
         radius: SentinelTheme.radiusMd
-        color: InteractionTokens.surfaceColor(control.hovered, control.down, false, SentinelTheme.calmAccent)
-        border.color: InteractionTokens.borderColor(control.activeFocus, control.hovered, false, SentinelTheme.calmAccent)
+        color: InteractionTokens.surfaceColor(control.hovered, control.down, false, control.accent)
+        border.color: InteractionTokens.borderColor(control.activeFocus, control.hovered, false, control.accent)
         border.width: 1
 
         layer.enabled: control.enabled && (control.premium || control.highlighted)
