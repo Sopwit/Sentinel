@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef SENTINEL_DAEMON_DAEMONSERVICE_H
 #define SENTINEL_DAEMON_DAEMONSERVICE_H
 

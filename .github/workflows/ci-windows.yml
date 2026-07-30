@@ -52,7 +52,63 @@ jobs:
       - name: Build
         run: cmake --build --preset tests
 
+      - name: Format Check
+        run: |
+          pip3 install clang-format==18.1.8
+          find apps core tests -type f \( -name '*.cpp' -o -name '*.h' \) -print0 \
+            | xargs -0 clang-format --dry-run --Werror
+
+      - name: QML Lint Check
+        shell: pwsh
+        run: |
+          Get-ChildItem -Path ui/qml -Recurse -Filter *.qml | ForEach-Object { qmllint --Werror $_.FullName }
+
       - name: Run Tests
         env:
           QT_QPA_PLATFORM: offscreen
         run: ctest --preset tests
+
+  build-test-windows-arm64:
+    name: Build & Test (Windows ARM64)
+    runs-on: windows-2022
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Install Ninja
+        run: choco install ninja
+
+      - name: Set up ARM64 Developer Command Prompt
+        shell: pwsh
+        run: |
+          $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
+          $devCmd = Join-Path $vsPath "VC\Auxiliary\Build\vcvarsamd64_arm64.bat"
+          cmd.exe /c "call `"$devCmd`" && set" | ForEach-Object {
+              if ($_ -match "^(INCLUDE|LIB|LIBPATH|WindowsSDK.*|UniversalCRTSdkDir|UCRTVersion|VCTools.*|VCINSTALLDIR|VSINSTALLDIR|ExtensionSdkDir|Framework.*|NETFXSDKDir)=") {
+                  $v = $_.Split("=", 2)
+                  echo "$($v[0])=$($v[1])" >> $env:GITHUB_ENV
+              }
+              if ($_ -match "^Path=(.*)" -or $_ -match "^PATH=(.*)") {
+                  $paths = $Matches[1].Split(";")
+                  foreach ($p in $paths) {
+                      if ($p -and (Test-Path $p)) {
+                          echo $p >> $env:GITHUB_PATH
+                      }
+                  }
+              }
+          }
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: '6.7.*'
+          arch: 'win64_msvc2019_arm64'
+          modules: 'qtmultimedia'
+          cache: true
+
+      - name: Configure CMake
+        run: cmake --preset windows-arm64
+
+      - name: Build
+        run: cmake --build --preset windows-arm64

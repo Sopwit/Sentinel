@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "sentinel/core/chat/SQLiteConversationStore.h"
 
 #include <QDir>
@@ -36,7 +40,15 @@ QString boolText(bool value) {
     return value ? QStringLiteral("1") : QStringLiteral("0");
 }
 
+static const QStringList kKnownTables = {
+    QStringLiteral("conversations"),
+    QStringLiteral("conversation_messages"),
+};
+
 bool tableHasColumn(const QSqlDatabase& database, const QString& table, const QString& column) {
+    if (!kKnownTables.contains(table)) {
+        return false;
+    }
     QSqlQuery query(database);
     if (!query.exec(QStringLiteral("PRAGMA table_info(%1)").arg(table))) {
         return false;

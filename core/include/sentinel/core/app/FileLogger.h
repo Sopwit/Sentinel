@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
 #include <QDir>
@@ -6,6 +10,7 @@
 #include <QMutex>
 #include <QTextStream>
 #include <memory>
+#include <QtGlobal>
 
 namespace sentinel::core {
 
@@ -18,6 +23,7 @@ public:
     QString currentLogFilePath() const;
 
 private:
+    Q_DISABLE_COPY(FileLogger)
     FileLogger() = default;
     ~FileLogger();
     void rotateLog();

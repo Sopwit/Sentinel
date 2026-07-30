@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
 #include <QList>
@@ -275,7 +279,7 @@ struct AgentTaskQueue {
 struct AgentTaskRuntimeStatus {
     AgentTaskRuntimeState state = AgentTaskRuntimeState::Ready;
     QString activeTaskId;
-    int taskCount = 0;
+    qsizetype taskCount = 0;
     QString summary;
     AgentTaskSafetyPolicy safetyPolicy;
 };

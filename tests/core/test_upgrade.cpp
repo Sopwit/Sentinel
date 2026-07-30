@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/platform/DpapiEncryptedSettingsStore.h"
 #include "sentinel/core/chat/SQLiteChatHistoryStore.h"

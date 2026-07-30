@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #ifndef SENTINEL_DESKTOP_VIEWMODELS_SETTINGSVIEWMODEL_H
 #define SENTINEL_DESKTOP_VIEWMODELS_SETTINGSVIEWMODEL_H
 

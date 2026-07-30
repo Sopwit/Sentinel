@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "sentinel/core/plugin/PluginSandbox.h"
 
 namespace sentinel::core::plugin {

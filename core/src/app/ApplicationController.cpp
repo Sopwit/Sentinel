@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "sentinel/core/app/ApplicationController.h"
 
 #include "sentinel/core/app/AppSettings.h"
@@ -9050,14 +9054,14 @@ ModelRegistry ApplicationController::currentModelRegistry() const {
 
 OllamaHealthCheckResult ApplicationController::currentOllamaHealthCheck() const {
     if (!ollamaCacheInitialized_) {
-        const_cast<ApplicationController*>(this)->initializeOllamaCache();
+        initializeOllamaCache();
     }
     return cachedOllamaHealthCheck_;
 }
 
 QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
     if (!ollamaCacheInitialized_) {
-        const_cast<ApplicationController*>(this)->initializeOllamaCache();
+        initializeOllamaCache();
     }
     if (selectedRuntimeProvider_ == QStringLiteral("lm-studio")) {
         return cachedLMStudioModels_;
@@ -9171,7 +9175,7 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
     return cachedOllamaModels_;
 }
 
-void ApplicationController::initializeOllamaCache() {
+void ApplicationController::initializeOllamaCache() const {
     if (ollamaCacheInitialized_) {
         return;
     }
@@ -9492,7 +9496,7 @@ LMStudioConfig ApplicationController::currentCloudOrLMStudioConfig() const {
 ILocalInferenceWorker* ApplicationController::activeLocalInferenceWorker() const {
     if (isLMStudioProvider()) {
         const auto config = currentCloudOrLMStudioConfig();
-        const_cast<ApplicationController*>(this)->lmStudioInferenceWorker_ =
+        lmStudioInferenceWorker_ =
             std::make_unique<LocalInferenceWorker>(
                 std::make_unique<LMStudioLocalInferenceClient>(config),
                 std::make_unique<LMStudioLocalInferenceStreamClient>(config),

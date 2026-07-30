@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #pragma once
 
 #include "sentinel/core/agent/AgentActivityLog.h"
@@ -2024,7 +2028,7 @@ private:
     std::unique_ptr<StaticRuntimeIntegrationReadiness> runtimeIntegrationReadiness_;
     std::unique_ptr<IOllamaRuntimeClient> ollamaRuntimeClient_;
     std::unique_ptr<ILocalInferenceWorker> localInferenceWorker_;
-    std::unique_ptr<ILocalInferenceWorker> lmStudioInferenceWorker_;
+    mutable std::unique_ptr<ILocalInferenceWorker> lmStudioInferenceWorker_;
     bool localInferenceClientIsRealOllama_ = false;
     bool localInferenceStreamClientIsRealOllama_ = false;
 
@@ -2155,19 +2159,19 @@ private:
 
     QTimer* ollamaPollTimer_ = nullptr;
     QThread* ollamaCheckThread_ = nullptr;
-    OllamaHealthCheckResult cachedOllamaHealthCheck_;
-    QList<OllamaModelSummary> cachedOllamaModels_;
-    QList<OllamaModelSummary> cachedLMStudioModels_;
-    QList<OllamaModelSummary> cachedLlamaCppModels_;
-    QString lmStudioEndpoint_;
-    QString llamaCppEndpoint_;
-    QList<OllamaModelSummary> cachedOpenAiCompatibleLocalModels_;
-    QList<OllamaModelSummary> cachedCloudProviderModels_;
-    QString cachedCloudProviderOriginId_;
-    bool ollamaCacheInitialized_ = false;
+    mutable OllamaHealthCheckResult cachedOllamaHealthCheck_;
+    mutable QList<OllamaModelSummary> cachedOllamaModels_;
+    mutable QList<OllamaModelSummary> cachedLMStudioModels_;
+    mutable QList<OllamaModelSummary> cachedLlamaCppModels_;
+    mutable QString lmStudioEndpoint_;
+    mutable QString llamaCppEndpoint_;
+    mutable QList<OllamaModelSummary> cachedOpenAiCompatibleLocalModels_;
+    mutable QList<OllamaModelSummary> cachedCloudProviderModels_;
+    mutable QString cachedCloudProviderOriginId_;
+    mutable bool ollamaCacheInitialized_ = false;
 
     void pollOllama();
-    void initializeOllamaCache();
+    void initializeOllamaCache() const;
 };
 
 } // namespace sentinel::core

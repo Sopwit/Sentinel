@@ -29,7 +29,7 @@ fi
 
 if command -v qmllint >/dev/null 2>&1; then
   echo "== qmllint check =="
-  qmllint ui/qml/Main.qml ui/qml/pages/*.qml ui/qml/components/*.qml ui/qml/theme/*.qml
+  find ui/qml -name "*.qml" -print0 | xargs -0 qmllint --Werror
 else
   echo "== qmllint unavailable; skipping optional check =="
 fi

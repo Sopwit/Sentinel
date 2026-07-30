@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 
 #include <QDir>
@@ -31,7 +35,14 @@ ChatMessageStatus statusFromName(const QString& status) {
     return ChatMessageStatus::Received;
 }
 
+static const QStringList kKnownTables = {
+    QStringLiteral("chat_messages"),
+};
+
 bool tableHasColumn(const QSqlDatabase& database, const QString& table, const QString& column) {
+    if (!kKnownTables.contains(table)) {
+        return false;
+    }
     QSqlQuery query(database);
     if (!query.exec(QStringLiteral("PRAGMA table_info(%1)").arg(table))) {
         return false;
@@ -233,7 +244,15 @@ void SQLiteChatHistoryStore::initializeSchema() {
         {QStringLiteral("first_token_latency_ms"), QStringLiteral("INTEGER")},
         {QStringLiteral("approx_tokens_per_second"), QStringLiteral("REAL")},
     };
+    const QStringList knownColumnNames = {
+        QStringLiteral("provider_used"), QStringLiteral("model_used"),
+        QStringLiteral("role_used"), QStringLiteral("response_duration_ms"),
+        QStringLiteral("first_token_latency_ms"), QStringLiteral("approx_tokens_per_second"),
+    };
     for (const auto& column : columns) {
+        if (!knownColumnNames.contains(column.first)) {
+            continue;
+        }
         if (!tableHasColumn(database_, QStringLiteral("chat_messages"), column.first) &&
             !query.exec(QStringLiteral("ALTER TABLE chat_messages ADD COLUMN %1 %2")
                             .arg(column.first, column.second))) {

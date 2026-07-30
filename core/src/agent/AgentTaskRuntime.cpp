@@ -1,3 +1,7 @@
+// SPDX-FileCopyrightText: 2026 Sopwit <support@sentinel.dev>
+//
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 #include "sentinel/core/agent/AgentTaskRuntime.h"
 
 #include <algorithm>
@@ -644,7 +648,7 @@ AgentTaskRuntimeStatus StaticAgentTaskRuntime::runtimeStatus() const {
     return AgentTaskRuntimeStatus{
         AgentTaskRuntimeState::RefusingExecution,
         tasks_.isEmpty() ? QString() : tasks_.last().id.value,
-        static_cast<int>(tasks_.size()),
+        qsizetype(tasks_.size()),
         QStringLiteral("Agent task runtime is ready for deterministic metadata planning and "
                        "refuses execution."),
         AgentTaskSafetyPolicy{},
