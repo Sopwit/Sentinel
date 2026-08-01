@@ -199,10 +199,14 @@ jobs:
           fi
 
       - name: Install Windows Code Signing Certificate
-        if: matrix.os == 'windows-2022' && secrets.WIN_CERT_BASE64 != ''
+        if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
           $certBase64 = "${{ secrets.WIN_CERT_BASE64 }}"
+          if (-not $certBase64) {
+              Write-Host "No signing certificate configured; skipping."
+              exit 0
+          }
           $certPath = "$env:RUNNER_TEMP\cert.pfx"
           [System.IO.File]::WriteAllBytes($certPath, [System.Convert]::FromBase64String($certBase64))
           Write-Host "Certificate saved to $certPath"
@@ -227,9 +231,14 @@ jobs:
           Get-ChildItem sentinel-desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
 
       - name: Sign Windows Binaries
-        if: matrix.os == 'windows-2022' && secrets.WIN_CERT_BASE64 != ''
+        if: matrix.os == 'windows-2022'
         shell: pwsh
         run: |
+          $certBase64 = "${{ secrets.WIN_CERT_BASE64 }}"
+          if (-not $certBase64) {
+              Write-Host "No signing certificate configured; skipping."
+              exit 0
+          }
           $certPath = "$env:RUNNER_TEMP\cert.pfx"
           $certPassword = "${{ secrets.WIN_CERT_PASSWORD }}"
           $timestampUrl = "http://timestamp.digicert.com"
