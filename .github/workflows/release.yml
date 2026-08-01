@@ -26,11 +26,6 @@ jobs:
           - os: windows-2022
             qt-arch: win64_msvc2019_64
             artifact-name: sentinel-desktop-windows-x64.zip
-          - os: windows-2022
-            qt-arch: win64_msvc2019_arm64
-            artifact-name: sentinel-desktop-windows-arm64.zip
-            cmake-preset: windows-arm64
-            vcvars-arch: amd64_arm64
 
     steps:
       - name: Checkout code
@@ -190,9 +185,14 @@ jobs:
             "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.dmg" \
             "dist/"
 
-          # 6. Build PKG
+          # 6. Build PKG (best-effort: pkgbuild can crash on unsigned bundles; DMG is the primary macOS artifact)
           chmod +x packaging/macos/build_pkg.sh
-          ./packaging/macos/build_pkg.sh "dist/Sentinel Desktop.app" "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.pkg" ""
+          if ./packaging/macos/build_pkg.sh "dist/Sentinel Desktop.app" "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.pkg" ""; then
+            echo "PKG created successfully."
+          else
+            echo "Warning: PKG creation failed; continuing with DMG-only release."
+            rm -f "Sentinel-Desktop-macOS-${{ env.APP_VERSION }}.pkg"
+          fi
 
           # 7. Notarize and Staple if Apple ID credentials are provided
           if [ -n "${APPLE_ID:-}" ] && [ -n "${APPLE_APP_PASS:-}" ] && [ -n "${APPLE_TEAM_ID:-}" ]; then
@@ -226,7 +226,7 @@ jobs:
           $buildDir = if ($isArm64) { "build/arm64" } else { "build" }
 
           # 1. Deploy Qt and MSVC runtime DLLs
-          windeployqt --qmldir ui/qml dist/bin/sentinel-desktop.exe
+          windeployqt --qmldir ui/qml dist/sentinel-desktop.exe
 
           # 2. Zip portable files
           $suffix = if ($isArm64) { "ARM64" } else { "x64" }
@@ -234,6 +234,11 @@ jobs:
   
           # 3. Build MSI and EXE installers using CPack
           cpack --config "${buildDir}/CPackConfig.cmake"
+          if ($LASTEXITCODE -ne 0) {
+              Get-Content "_CPack_Packages/win64/NSIS/NSISOutput.log" -ErrorAction SilentlyContinue
+              Get-Content "_CPack_Packages/win64/WIX/heatOutput.txt" -ErrorAction SilentlyContinue
+              exit $LASTEXITCODE
+          }
           Get-ChildItem Sentinel-Desktop-*.exe | Rename-Item -NewName "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.exe" -ErrorAction SilentlyContinue
           Get-ChildItem sentinel-desktop-*.msi | Rename-Item -NewName "Sentinel-Desktop-Windows-${suffix}-${env:APP_VERSION}.msi" -ErrorAction SilentlyContinue
 
@@ -251,7 +256,7 @@ jobs:
           $timestampUrl = "http://timestamp.digicert.com"
 
           # Sign the main executable
-          & signtool sign /fd SHA256 /f $certPath /p $certPassword /tr $timestampUrl /td SHA256 dist/bin/sentinel-desktop.exe
+          & signtool sign /fd SHA256 /f $certPath /p $certPassword /tr $timestampUrl /td SHA256 dist/sentinel-desktop.exe
 
           # Sign the installers
           Get-ChildItem -Path . -Filter "Sentinel-Desktop-Windows-*.exe" | ForEach-Object {
