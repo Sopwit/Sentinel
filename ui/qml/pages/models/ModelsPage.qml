@@ -525,7 +525,7 @@ Item {
                 provider: "Ollama",
                 size: sizeStr,
                 description: qsTr("Custom model installed locally via Ollama."),
-                badge: "Installed",
+                badge: qsTr("Installed"),
                 badgeColor: "#10b981",
                 tags: ["Local", "Ollama"],
                 downloadable: false
@@ -569,7 +569,7 @@ Item {
                 provider: "LM Studio",
                 size: sizeStr,
                 description: qsTr("Custom model loaded locally in LM Studio."),
-                badge: "Loaded",
+                badge: qsTr("Loaded"),
                 badgeColor: "#4f8ef7",
                 tags: ["Local", "LM Studio"],
                 downloadable: false

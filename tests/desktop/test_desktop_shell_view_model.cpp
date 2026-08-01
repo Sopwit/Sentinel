@@ -246,7 +246,9 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.configurationProfile(), QStringLiteral("Desktop Alpha"));
     QVERIFY(fixture.viewModel.availableLanguages().contains(fixture.viewModel.appLanguage()));
     QCOMPARE(fixture.viewModel.availableLanguages(),
-             QStringList({QStringLiteral("en"), QStringLiteral("tr")}));
+             QStringList({QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"),
+                          QStringLiteral("es"), QStringLiteral("fr"), QStringLiteral("zh"),
+                          QStringLiteral("ja"), QStringLiteral("ar")}));
     QVERIFY(!fixture.viewModel.developerModeEnabled());
     QCOMPARE(fixture.viewModel.updateCheckPolicy(), QStringLiteral("Ask Before Checking"));
     QCOMPARE(fixture.viewModel.notificationPolicy(), QStringLiteral("Important Only"));

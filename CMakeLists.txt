@@ -9,7 +9,7 @@ project(Sentinel
 set(SENTINEL_APP_ID "dev.sentinel.Sentinel" CACHE STRING "Reverse-DNS application id")
 set(SENTINEL_DISPLAY_NAME "Sentinel Desktop" CACHE STRING "User-visible application name")
 set(SENTINEL_ORGANIZATION_NAME "Sopwit" CACHE STRING "Application organization name")
-set(SENTINEL_APP_VERSION "1.0.0-rc.1" CACHE STRING "User-visible application version")
+set(SENTINEL_APP_VERSION "1.0.0-rc.7" CACHE STRING "User-visible application version")
 set(SENTINEL_BUILD_NUMBER "0" CACHE STRING "Release build number")
 set(SENTINEL_COPYRIGHT "© 2026 Sopwit. All rights reserved." CACHE STRING "Application copyright")
 set(SENTINEL_MACOS_CATEGORY "public.app-category.productivity" CACHE STRING "macOS App Store category")

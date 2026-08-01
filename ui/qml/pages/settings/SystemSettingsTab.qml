@@ -17,54 +17,107 @@ Item {
     readonly property int panelPadding: SentinelTheme.spaceLg
 
     height: implicitHeight
-    implicitHeight: visible ? systemSection.implicitHeight : 0
+    implicitHeight: visible ? systemContent.implicitHeight + panelPadding * 2 : 0
 
-    function sectionHeight(content) {
-        return content.implicitHeight + panelPadding * 2
-    }
+    ColumnLayout {
+        id: systemContent
+        anchors.fill: parent
+        anchors.margins: root.panelPadding
+        spacing: SentinelTheme.spaceSm
 
-    Column {
-        width: parent.width
-        spacing: 0
+        SectionTitle {
+            title: qsTr("System & Diagnostic Tools")
+            subtitle: qsTr("System integration, notifications, updates, and audio feedback.")
+            Layout.fillWidth: true
+        }
 
-        Item {
-            id: systemSection
-            width: parent.width
-            height: implicitHeight
-            implicitHeight: root.sectionHeight(systemContent)
+        InfoRow {
+            compact: root.compact
+            label: qsTr("Version")
+            value: Qt.application.version || qsTr("1.0.0-rc.7")
+            Layout.fillWidth: true
+        }
 
-            ColumnLayout {
-                id: systemContent
-                x: root.panelPadding
-                y: root.panelPadding
-                width: parent.width - root.panelPadding * 2
-                spacing: SentinelTheme.spaceSm
+        InfoRow {
+            compact: root.compact
+            label: qsTr("Platform")
+            value: Qt.platform.os
+            Layout.fillWidth: true
+        }
 
-                SectionTitle {
-                    title: qsTr("System & Diagnostic Tools")
-                    subtitle: qsTr("System integration, notifications, updates, and audio feedback.")
-                    Layout.fillWidth: true
+        InfoRow {
+            compact: root.compact
+            label: qsTr("Audio System")
+            value: root.soundManager && root.soundManager.soundEffectsAvailable ? qsTr("Sound effects active") : qsTr("Muted or system audio disabled")
+            Layout.fillWidth: true
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("Enable Sound Effects")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.fillWidth: true
+            }
+            Switch {
+                checked: root.soundManager ? root.soundManager.enabled : true
+                onCheckedChanged: {
+                    if (root.soundManager) {
+                        root.soundManager.enabled = checked
+                    }
                 }
+            }
+        }
 
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Version")
-                    value: Qt.application.version || qsTr("1.0.0-rc.1")
-                    Layout.fillWidth: true
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("Enable Companion Service")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.fillWidth: true
+            }
+            Switch {
+                checked: root.viewModel.companionEnabled
+                onCheckedChanged: root.viewModel.companionEnabled = checked
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("Developer Diagnostics Mode")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.fillWidth: true
+            }
+            Switch {
+                checked: root.viewModel.developerModeEnabled
+                onCheckedChanged: root.viewModel.developerModeEnabled = checked
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("Update Policy")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 150
+            }
+            ComboBox {
+                Layout.fillWidth: true
+                model: [qsTr("Ask Before Checking"), qsTr("Automatic Background Checks"), qsTr("Disabled")]
+                currentIndex: {
+                    var pol = root.viewModel.updateCheckPolicy
+                    if (pol === "Automatic") return 1
+                    if (pol === "Disabled") return 2
+                    return 0
                 }
-
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Platform")
-                    value: Qt.platform.os
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Audio System")
-                    value: root.soundManager && root.soundManager.soundEffectsAvailable ? qsTr("Sound effects active") : qsTr("Muted or system audio disabled")
-                    Layout.fillWidth: true
+                onActivated: (index) => {
+                    var policies = ["Ask Before Checking", "Automatic", "Disabled"]
+                    root.viewModel.updateCheckPolicy = policies[index]
                 }
             }
         }

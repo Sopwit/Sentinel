@@ -3,6 +3,7 @@ module Sentinel.Desktop
 singleton SentinelTheme 1.0 theme/SentinelTheme.qml
 singleton MotionTokens 1.0 theme/MotionTokens.qml
 singleton InteractionTokens 1.0 theme/InteractionTokens.qml
+singleton Fonts 1.0 theme/Fonts.qml
 
 Main 1.0 Main.qml
 

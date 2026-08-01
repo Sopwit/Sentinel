@@ -131,8 +131,8 @@ ShellPanel {
                     flat: true
                     text: "\uD83D\uDD07"
                     font.pixelSize: 12
-                    tooltipText: "Do Not Disturb is on. Click to disable."
-                    Accessible.name: "Disable do not disturb"
+                    tooltipText: qsTr("Do Not Disturb is on. Click to disable.")
+                    Accessible.name: qsTr("Disable do not disturb")
                     onClicked: {
                         if (headerBar.viewModel) headerBar.viewModel.dndEnabled = false
                     }

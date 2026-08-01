@@ -46,7 +46,8 @@ docs/
 │   ├── qa-plan.md               # Quality Assurance Framework & Testing Matrix
 │   ├── ui-qa-checklist.md       # Visual Styling & Interaction Verification Checklist
 │   └── release-notes/           # Version Release Notes
-│       └── v1.0.0-rc1.md        # Sentinel 1.0.0-rc.1 Release Notes
+│       ├── v1.0.0-rc1.md        # Sentinel 1.0.0-rc.1 Release Notes
+│       └── v1.0.0-rc7.md        # Sentinel 1.0.0-rc.7 Release Notes
 │
 └── archive/                     # Arşiv ve Faz Geçmişi (Archive & Phase History)
     ├── ROADMAP.md               # Complete Project Roadmap

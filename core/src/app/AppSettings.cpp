@@ -239,13 +239,33 @@ void AppSettings::setAppLanguage(const QString& language) {
 }
 
 QStringList AppSettings::availableLanguages() const {
-    return {QStringLiteral("en"), QStringLiteral("tr")};
+    return {QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"),
+            QStringLiteral("es"), QStringLiteral("fr"), QStringLiteral("zh"),
+            QStringLiteral("ja"), QStringLiteral("ar")};
 }
 
 QString AppSettings::languageDisplayName(const QString& language) const {
     const auto normalized = language.trimmed().toLower();
     if (normalized == QStringLiteral("tr")) {
         return tr("Türkçe");
+    }
+    if (normalized == QStringLiteral("de")) {
+        return tr("Deutsch");
+    }
+    if (normalized == QStringLiteral("es")) {
+        return tr("Español");
+    }
+    if (normalized == QStringLiteral("fr")) {
+        return tr("Français");
+    }
+    if (normalized == QStringLiteral("zh")) {
+        return tr("中文");
+    }
+    if (normalized == QStringLiteral("ja")) {
+        return tr("日本語");
+    }
+    if (normalized == QStringLiteral("ar")) {
+        return tr("العربية");
     }
     return tr("English");
 }

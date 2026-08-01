@@ -69,10 +69,15 @@ void configureDefaultUiFont() {
 QString effectiveLanguageCode(const sentinel::core::AppSettings& settings) {
     const auto configured = settings.appLanguage();
     const auto systemLanguage = QLocale::system().name().left(2).toLower();
-    if (configured == QStringLiteral("tr") || configured == QStringLiteral("en")) {
+    const QStringList supported = {
+        QStringLiteral("en"), QStringLiteral("tr"), QStringLiteral("de"),
+        QStringLiteral("es"), QStringLiteral("fr"), QStringLiteral("zh"),
+        QStringLiteral("ja"), QStringLiteral("ar")
+    };
+    if (supported.contains(configured)) {
         return configured;
     }
-    return systemLanguage == QStringLiteral("tr") ? QStringLiteral("tr") : QStringLiteral("en");
+    return supported.contains(systemLanguage) ? systemLanguage : QStringLiteral("en");
 }
 
 void installTranslator(QGuiApplication& app, QTranslator& translator, const QString& language) {

@@ -139,9 +139,9 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                          const QString active = ollamaPuller->activeModel();
                          if (ollamaPuller->pulling() && !active.isEmpty()) {
                              m_shellViewModel->addNotification(
-                                 QStringLiteral("Models"), QStringLiteral("Downloading Model"),
-                                 QStringLiteral("Retrieving '%1' from registry. You can monitor "
-                                                "progress in the modelfiles panel.")
+                                 tr("Models"), tr("Downloading Model"),
+                                 tr("Retrieving '%1' from registry. You can monitor "
+                                    "progress in the modelfiles panel.")
                                      .arg(active));
                          }
                      });
@@ -151,15 +151,15 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
             if (success) {
                 m_controller->refreshOllamaStatus();
                 m_shellViewModel->addNotification(
-                    QStringLiteral("Models"), QStringLiteral("Model Installed"),
-                    QStringLiteral(
+                    tr("Models"), tr("Model Installed"),
+                    tr(
                         "'%1' has been successfully downloaded and is ready for local inference.")
                         .arg(modelId));
             } else {
                 m_shellViewModel->addNotification(
-                    QStringLiteral("Models"), QStringLiteral("Installation Failed"),
-                    QStringLiteral("Could not retrieve '%1'. Please ensure your server is active "
-                                   "and try again.")
+                    tr("Models"), tr("Installation Failed"),
+                    tr("Could not retrieve '%1'. Please ensure your server is active "
+                       "and try again.")
                         .arg(modelId));
             }
         });
@@ -169,8 +169,8 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
             if (success) {
                 m_controller->refreshOllamaStatus();
                 m_shellViewModel->addNotification(
-                    QStringLiteral("Models"), QStringLiteral("Model Removed"),
-                    QStringLiteral("'%1' has been deleted. Disk space has been reclaimed.")
+                    tr("Models"), tr("Model Removed"),
+                    tr("'%1' has been deleted. Disk space has been reclaimed.")
                         .arg(modelId));
             }
         });

@@ -17,6 +17,31 @@ Item {
     readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "Solarized Light", "Nord Frost", "Dracula", "Tokyo Night"]
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
 
+    function localizedThemeName(key) {
+        switch (key) {
+        case "Liquid Glass Light": return qsTr("Liquid Glass Light")
+        case "Liquid Glass Dark": return qsTr("Liquid Glass Dark")
+        case "Sentinel Classic": return qsTr("Sentinel Classic")
+        case "Midnight Blue": return qsTr("Midnight Blue")
+        case "Aurora Teal": return qsTr("Aurora Teal")
+        case "Graphite Grey": return qsTr("Graphite Grey")
+        case "Solarized Light": return qsTr("Solarized Light")
+        case "Nord Frost": return qsTr("Nord Frost")
+        case "Dracula": return qsTr("Dracula")
+        case "Tokyo Night": return qsTr("Tokyo Night")
+        default: return key ? key : ""
+        }
+    }
+
+    function localizedDensityName(key) {
+        switch (key) {
+        case "Compact": return qsTr("Compact")
+        case "Comfortable": return qsTr("Comfortable")
+        case "Large": return qsTr("Large")
+        default: return key ? key : ""
+        }
+    }
+
     height: implicitHeight
     implicitHeight: visible ? generalSection.implicitHeight + appearanceSection.implicitHeight + accessibilitySection.implicitHeight : 0
 
@@ -148,8 +173,8 @@ Item {
                         hoverEnabled: true
                         model: root.themeChoices
                         currentIndex: root.themeChoices.indexOf(root.viewModel.themeName)
-                        displayText: currentIndex >= 0 ? currentText : root.viewModel.themeName
-                        onActivated: root.viewModel.themeName = currentText
+                        displayText: root.localizedThemeName(currentIndex >= 0 ? model[currentIndex] : root.viewModel.themeName)
+                        onActivated: (index) => root.viewModel.themeName = model[index]
 
                         contentItem: Text {
                             leftPadding: SentinelTheme.spaceMd
@@ -189,7 +214,7 @@ Item {
                             required property int index
                             width: themeCombo.width
                             implicitHeight: 36
-                            text: modelData
+                            text: root.localizedThemeName(modelData)
                             highlighted: themeCombo.highlightedIndex === index
                             hoverEnabled: true
 
@@ -345,7 +370,7 @@ Item {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     anchors.margins: SentinelTheme.spaceSm
-                                    text: modelData
+                                    text: root.localizedThemeName(modelData)
                                     color: themeCard.isSelected ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                     font.pixelSize: SentinelTheme.fontSmall
                                     font.bold: themeCard.isSelected
@@ -544,7 +569,7 @@ Item {
                                     focusPolicy: Qt.NoFocus
 
                                     contentItem: Text {
-                                        text: densityBtn.modelData
+                                        text: root.localizedDensityName(densityBtn.modelData)
                                         color: (root.viewModel.uiDensity === densityBtn.modelData)
                                                ? SentinelTheme.textPrimary
                                                : SentinelTheme.textMuted

@@ -107,16 +107,16 @@ ShellPanel {
                 spacing: SentinelTheme.spaceSm
 
                 RuntimeBadge {
-                    label: "RETRIEVAL"
-                    value: presence.retrievalActive ? "deterministic authority" : "standing by"
+                    label: qsTr("RETRIEVAL")
+                    value: presence.retrievalActive ? qsTr("deterministic authority") : qsTr("standing by")
                     accent: SentinelTheme.success
                     active: presence.retrievalActive
                     visible: false
                 }
 
                 RuntimeBadge {
-                    label: "CONTEXT"
-                    value: presence.contextActive ? presence.viewModel.contextAssemblyAvailableSourceCount + " sources" : "not assembled"
+                    label: qsTr("CONTEXT")
+                    value: presence.contextActive ? qsTr("%1 sources").arg(presence.viewModel.contextAssemblyAvailableSourceCount) : qsTr("not assembled")
                     accent: SentinelTheme.accentTertiary
                     active: presence.contextActive
                     muted: !presence.contextActive
@@ -124,24 +124,24 @@ ShellPanel {
                 }
 
                 RuntimeBadge {
-                    label: "SEMANTIC"
-                    value: "disabled by policy"
+                    label: qsTr("SEMANTIC")
+                    value: qsTr("disabled by policy")
                     accent: SentinelTheme.warning
                     muted: true
                     visible: false
                 }
 
                 RuntimeBadge {
-                    label: "RUNTIME"
-                    value: presence.runtimeReady ? "local ready" : "local unavailable"
+                    label: qsTr("RUNTIME")
+                    value: presence.runtimeReady ? qsTr("local ready") : qsTr("local unavailable")
                     accent: presence.runtimeReady ? SentinelTheme.accent : SentinelTheme.textMuted
                     active: presence.runtimeReady
                     muted: !presence.runtimeReady
                 }
 
                 RuntimeBadge {
-                    label: "STREAM"
-                    value: presence.streamingActive ? "active" : "inactive"
+                    label: qsTr("STREAM")
+                    value: presence.streamingActive ? qsTr("active") : qsTr("inactive")
                     accent: SentinelTheme.accentSecondary
                     active: presence.streamingActive
                     muted: !presence.streamingActive
