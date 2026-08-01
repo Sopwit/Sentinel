@@ -32,17 +32,11 @@ if(WIN32)
     set(CPACK_NSIS_BRANDING_TEXT "Sentinel Desktop Installer")
     set(CPACK_NSIS_MUI_FINISHPAGE_RUN "sentinel-desktop.exe")
 
-    # NSIS Shortcuts & Links
+    # NSIS Shortcuts & Links (start menu entry created by CPack via CPACK_PACKAGE_EXECUTABLES)
     set(CPACK_NSIS_MENU_LINKS
         "sentinel-desktop.exe" "Sentinel Desktop"
         "https://sentinel.dev" "Sentinel Desktop Website"
     )
-    set(CPACK_NSIS_CREATE_ICONS_EXTRA "
-        CreateShortCut \\\"\$DESKTOP\\Sentinel Desktop.lnk\\\" \\\"\$INSTDIR\\sentinel-desktop.exe\\\"
-    ")
-    set(CPACK_NSIS_DELETE_ICONS_EXTRA "
-        Delete \\\"\$DESKTOP\\Sentinel Desktop.lnk\\\"
-    ")
 
     # WiX (MSI) Settings with Parametric GUIDs
     # WARNING: These GUIDs must be regenerated for each release.

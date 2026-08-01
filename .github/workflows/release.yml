@@ -272,9 +272,14 @@ jobs:
       - name: Generate SHA256 Checksums
         shell: bash
         run: |
+          if command -v sha256sum >/dev/null 2>&1; then
+            HASHA=sha256sum
+          else
+            HASHA="shasum -a 256"
+          fi
           for f in Sentinel-Desktop-* sentinel-desktop-*; do
             if [ -f "$f" ]; then
-              sha256sum "$f" >> checksums.txt
+              $HASHA "$f" >> checksums.txt
             fi
           done
           cat checksums.txt
