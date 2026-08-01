@@ -300,6 +300,8 @@ class DesktopShellViewModel final : public QObject {
         QString ollamaConnectionStatus READ ollamaConnectionStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthStatus READ ollamaHealthStatus NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QString ollamaHealthSummary READ ollamaHealthSummary NOTIFY ollamaStatusChanged)
+    Q_PROPERTY(
+        QString localInferenceHealthSummary READ localInferenceHealthSummary NOTIFY ollamaStatusChanged)
     Q_PROPERTY(bool isOnline READ isOnline NOTIFY onlineChanged)
     Q_PROPERTY(int ollamaModelCount READ ollamaModelCount NOTIFY ollamaStatusChanged)
     Q_PROPERTY(QStringList ollamaModelNames READ ollamaModelNames NOTIFY ollamaStatusChanged)
@@ -312,6 +314,18 @@ class DesktopShellViewModel final : public QObject {
 
     Q_PROPERTY(QString selectedLocalModel READ selectedLocalModel WRITE setSelectedLocalModel NOTIFY
                    localModelSelectionChanged)
+    Q_PROPERTY(
+        QString selectedOllamaModel READ selectedOllamaModel WRITE setSelectedOllamaModel NOTIFY
+            localModelSelectionChanged)
+    Q_PROPERTY(
+        QString activeLocalModelName READ activeLocalModelName NOTIFY localModelSelectionChanged)
+    Q_PROPERTY(bool proxyEnabled READ proxyEnabled WRITE setProxyEnabled NOTIFY proxySettingsChanged)
+    Q_PROPERTY(QString proxyType READ proxyType WRITE setProxyType NOTIFY proxySettingsChanged)
+    Q_PROPERTY(QString proxyHost READ proxyHost WRITE setProxyHost NOTIFY proxySettingsChanged)
+    Q_PROPERTY(int proxyPort READ proxyPort WRITE setProxyPort NOTIFY proxySettingsChanged)
+    Q_PROPERTY(QString proxyUser READ proxyUser WRITE setProxyUser NOTIFY proxySettingsChanged)
+    Q_PROPERTY(
+        QString proxyPassword READ proxyPassword WRITE setProxyPassword NOTIFY proxySettingsChanged)
     Q_PROPERTY(QString selectedLocalModelStatus READ selectedLocalModelStatus NOTIFY
                    localModelSelectionChanged)
     Q_PROPERTY(QString selectedLocalModelSummary READ selectedLocalModelSummary NOTIFY
@@ -1638,6 +1652,25 @@ public:
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
+    QString localInferenceHealthSummary() const;
+    QString activeLocalModelName() const;
+    QString selectedOllamaModel() const;
+    void setSelectedOllamaModel(const QString& modelName);
+    Q_INVOKABLE void deleteOllamaModel(const QString& modelName);
+    Q_INVOKABLE void pullOllamaModel(const QString& modelName);
+
+    bool proxyEnabled() const;
+    void setProxyEnabled(bool enabled);
+    QString proxyType() const;
+    void setProxyType(const QString& type);
+    QString proxyHost() const;
+    void setProxyHost(const QString& host);
+    int proxyPort() const;
+    void setProxyPort(int port);
+    QString proxyUser() const;
+    void setProxyUser(const QString& user);
+    QString proxyPassword() const;
+    void setProxyPassword(const QString& password);
     int ollamaModelCount() const;
     bool isOnline() const;
     QStringList ollamaModelNames() const;
@@ -2494,6 +2527,7 @@ signals:
     void runtimeProviderRegistryChanged();
     void localModelSelectionChanged();
     void ollamaStatusChanged();
+    void proxySettingsChanged();
     void onlineChanged();
     void modelRoleChanged();
     void localChatInferenceRoutingChanged();

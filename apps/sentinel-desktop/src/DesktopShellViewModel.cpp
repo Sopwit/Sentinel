@@ -341,8 +341,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             const QString response = controller_.lastAgentResponse();
             if (!response.isEmpty()) {
                 addNotification(
-                    QStringLiteral("Agent"), QStringLiteral("Sentinel Assistant"),
-                    QStringLiteral("New response received: \"%1\"")
+                    tr("Agent"), tr("Sentinel Assistant"),
+                    tr("New response received: \"%1\"")
                         .arg(response.left(120) + (response.length() > 120 ? QStringLiteral("...")
                                                                            : QStringLiteral(""))));
             }
@@ -403,6 +403,8 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::localInferenceChanged);
     connect(&settings_, &core::AppSettings::cloudApiKeysChanged, this,
             &DesktopShellViewModel::cloudApiKeysChanged);
+    connect(&settings_, &core::AppSettings::proxySettingsChanged, this,
+            &DesktopShellViewModel::proxySettingsChanged);
     connect(&settings_, &core::AppSettings::selectedCloudProviderChanged, this,
             &DesktopShellViewModel::selectedCloudProviderChanged);
     connect(&controller_, &core::ApplicationController::promptContextInjectionChanged, this,
@@ -1384,6 +1386,79 @@ QString DesktopShellViewModel::ollamaHealthStatus() const {
 
 QString DesktopShellViewModel::ollamaHealthSummary() const {
     return controller_.ollamaHealthSummary();
+}
+
+QString DesktopShellViewModel::localInferenceHealthSummary() const {
+    return ollamaHealthSummary();
+}
+
+QString DesktopShellViewModel::activeLocalModelName() const {
+    const auto selected = selectedLocalModel();
+    return !selected.isEmpty() ? selected : activeRuntimeModelLabel();
+}
+
+QString DesktopShellViewModel::selectedOllamaModel() const {
+    return selectedLocalModel();
+}
+
+void DesktopShellViewModel::setSelectedOllamaModel(const QString& modelName) {
+    setSelectedLocalModel(modelName);
+}
+
+void DesktopShellViewModel::deleteOllamaModel(const QString& modelName) {
+    Q_UNUSED(modelName);
+}
+
+void DesktopShellViewModel::pullOllamaModel(const QString& modelName) {
+    Q_UNUSED(modelName);
+}
+
+bool DesktopShellViewModel::proxyEnabled() const {
+    return settings_.proxyEnabled();
+}
+
+void DesktopShellViewModel::setProxyEnabled(bool enabled) {
+    settings_.setProxyEnabled(enabled);
+}
+
+QString DesktopShellViewModel::proxyType() const {
+    return settings_.proxyType();
+}
+
+void DesktopShellViewModel::setProxyType(const QString& type) {
+    settings_.setProxyType(type);
+}
+
+QString DesktopShellViewModel::proxyHost() const {
+    return settings_.proxyHost();
+}
+
+void DesktopShellViewModel::setProxyHost(const QString& host) {
+    settings_.setProxyHost(host);
+}
+
+int DesktopShellViewModel::proxyPort() const {
+    return static_cast<int>(settings_.proxyPort());
+}
+
+void DesktopShellViewModel::setProxyPort(int port) {
+    settings_.setProxyPort(static_cast<quint16>(qMax(0, port)));
+}
+
+QString DesktopShellViewModel::proxyUser() const {
+    return settings_.proxyUser();
+}
+
+void DesktopShellViewModel::setProxyUser(const QString& user) {
+    settings_.setProxyUser(user);
+}
+
+QString DesktopShellViewModel::proxyPassword() const {
+    return settings_.proxyPassword();
+}
+
+void DesktopShellViewModel::setProxyPassword(const QString& password) {
+    settings_.setProxyPassword(password);
 }
 
 int DesktopShellViewModel::ollamaModelCount() const {

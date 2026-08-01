@@ -223,9 +223,9 @@ Rectangle {
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
-                tooltipText: "Mark read"
+                tooltipText: qsTr("Mark read")
                 visible: notifData && !notifData.read && !notifData.archived
-                Accessible.name: "Mark notification as read"
+                Accessible.name: qsTr("Mark notification as read")
                 onClicked: {
                     if (notifData && viewModel) {
                         viewModel.markNotificationRead(notifData.id)
@@ -239,8 +239,8 @@ Rectangle {
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
-                tooltipText: "Snooze"
-                Accessible.name: "Snooze notification"
+                tooltipText: qsTr("Snooze")
+                Accessible.name: qsTr("Snooze notification")
                 visible: notifData && !notifData.archived
                 onClicked: snoozeMenu.open()
 
@@ -249,31 +249,31 @@ Rectangle {
                     y: -snoozeMenu.height
 
                     MenuItem {
-                        text: "5 minutes"
+                        text: qsTr("5 minutes")
                         onTriggered: {
                             if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 5)
                         }
                     }
                     MenuItem {
-                        text: "15 minutes"
+                        text: qsTr("15 minutes")
                         onTriggered: {
                             if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 15)
                         }
                     }
                     MenuItem {
-                        text: "1 hour"
+                        text: qsTr("1 hour")
                         onTriggered: {
                             if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 60)
                         }
                     }
                     MenuItem {
-                        text: "4 hours"
+                        text: qsTr("4 hours")
                         onTriggered: {
                             if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 240)
                         }
                     }
                     MenuItem {
-                        text: "Until tomorrow"
+                        text: qsTr("Until tomorrow")
                         onTriggered: {
                             if (notifData && viewModel) viewModel.snoozeNotification(notifData.id, 1440)
                         }
@@ -286,8 +286,8 @@ Rectangle {
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
-                tooltipText: notifData && notifData.archived ? "Unarchive" : "Archive"
-                Accessible.name: notifData && notifData.archived ? "Unarchive notification" : "Archive notification"
+                tooltipText: notifData && notifData.archived ? qsTr("Unarchive") : qsTr("Archive")
+                Accessible.name: notifData && notifData.archived ? qsTr("Unarchive notification") : qsTr("Archive notification")
                 onClicked: {
                     if (notifData && viewModel) {
                         if (notifData.archived) {
@@ -304,8 +304,8 @@ Rectangle {
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
-                tooltipText: "Remove"
-                Accessible.name: "Remove notification"
+                tooltipText: qsTr("Remove")
+                Accessible.name: qsTr("Remove notification")
                 onClicked: {
                     if (notifData && viewModel) {
                         viewModel.removeNotificationById(notifData.id)

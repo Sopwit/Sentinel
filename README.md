@@ -23,12 +23,12 @@ Release-candidate references:
 - **[Packaging and distribution](docs/release/packaging.md)**
 - **[Release checklist](docs/release/release-checklist.md)**
 - **[Release QA plan](docs/release/qa-plan.md)**
-- **[Release notes](docs/release/release-notes/v1.0.0-rc1.md)**
+- **[Release notes](docs/release/release-notes/v1.0.0-rc7.md)**
 - **[Changelog](CHANGELOG.md)**
 
 ## Desktop Foundation
 
-Sentinel 1.0-RC1 includes a comprehensive desktop companion core and native UI shell:
+Sentinel 1.0-RC7 includes a comprehensive desktop companion core and native UI shell:
 
 - **CMake & Ninja Build**: Standard cross-platform desktop build framework.
 - **Qt 6 & QML Desktop Shell**: Optimised for Fedora KDE Plasma, with native window controls, layout adaptations, and custom glass styling.

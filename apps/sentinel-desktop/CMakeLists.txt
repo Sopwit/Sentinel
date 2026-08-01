@@ -76,7 +76,7 @@ qt_add_translations(sentinel-desktop
 )
 
 add_custom_target(update_translations
-    COMMAND Qt6::lupdate ${CMAKE_SOURCE_DIR}/apps/sentinel-desktop ${CMAKE_SOURCE_DIR}/ui/qml -ts ${SENTINEL_TRANSLATION_SOURCES}
+    COMMAND Qt6::lupdate ${CMAKE_SOURCE_DIR}/core ${CMAKE_SOURCE_DIR}/apps/sentinel-desktop ${CMAKE_SOURCE_DIR}/ui/qml -ts ${SENTINEL_TRANSLATION_SOURCES}
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     COMMENT "Updating translation .ts files with Qt lupdate"
 )

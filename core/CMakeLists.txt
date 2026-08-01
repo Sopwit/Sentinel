@@ -71,6 +71,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/model/ProviderCatalog.h
     include/sentinel/core/model/StaticModelRouter.h
     include/sentinel/core/model/StaticProviderCatalog.h
+    include/sentinel/core/platform/DefaultPlatformService.h
     include/sentinel/core/platform/DpapiEncryptedSettingsStore.h
     include/sentinel/core/platform/INotificationService.h
     include/sentinel/core/platform/IPathProvider.h
@@ -160,6 +161,7 @@ add_library(sentinel_core STATIC
     src/memory/SemanticRetrieval.cpp
     src/memory/SQLiteMemoryStore.cpp
     src/memory/StaticMemoryCatalog.cpp
+    src/platform/DefaultPlatformService.cpp
     src/model/ModelManagement.cpp
     src/model/ModelRegistry.cpp
     src/model/StaticModelRouter.cpp

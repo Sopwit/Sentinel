@@ -170,8 +170,8 @@ ShellPanel {
             SentinelTextField {
                 id: searchField
                 Layout.fillWidth: true
-                placeholderText: "Search notifications..."
-                Accessible.name: "Search notifications"
+                placeholderText: qsTr("Search notifications...")
+                Accessible.name: qsTr("Search notifications")
                 onTextChanged: {
                     root.searchQuery = text
                     if (viewModel) viewModel.notificationSearchQuery = text
@@ -182,7 +182,7 @@ ShellPanel {
                 model: viewModel ? viewModel.notificationCategories : ["All"]
 
                 delegate: SentinelButton {
-                    text: modelData === "All" ? "All" : root.categoryIcon(modelData) + " " + modelData
+                    text: modelData === "All" ? qsTr("All") : root.categoryIcon(modelData) + " " + modelData
                     flat: true
                     font.pixelSize: SentinelTheme.fontSmall
                     font.bold: root.activeFilter === modelData

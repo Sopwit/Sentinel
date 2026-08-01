@@ -79,6 +79,11 @@ ShellPanel {
                 homeChat.forceChatView = false;
             }
         }
+        function onAppLanguageChanged() {
+            homeChat.selectRandomGreeting();
+            if (typeof suggestionGrid !== "undefined" && suggestionGrid)
+                suggestionGrid.updateSuggestions();
+        }
     }
     border.color: "transparent"
 
@@ -873,35 +878,37 @@ ShellPanel {
 
                             property var suggestions: []
 
-                            readonly property var allSuggestions: [
-                                { icon: "📚", title: qsTr("Özet Çıkarma"), prompt: qsTr("Eklediğim PDF belgesinin yönetici özetini ve ana hatlarını çıkar") },
-                                { icon: "📊", title: qsTr("Excel Formül Asistanı"), prompt: qsTr("İki farklı sütundaki verileri karşılaştırıp eşleşmeyenleri bulan bir Excel formülü yaz") },
-                                { icon: "📝", title: qsTr("İş E-postası"), prompt: qsTr("Müşteriye veya yöneticiye durumu açıklayan kibar ve profesyonel bir e-posta taslağı yaz") },
-                                { icon: "💡", title: qsTr("İçerik Fikirleri"), prompt: qsTr("Sosyal medya veya blog için ilgi çekici 5 içerik fikri ve başlığı bul") },
-                                { icon: "🧠", title: qsTr("Basitçe Açıkla"), prompt: qsTr("Karmaşık bir kavramı veya teoriyi 10 yaşındaki birine anlatır gibi sade ve anlaşılır biçimde açıkla") },
-                                { icon: "🌐", title: qsTr("Dil Öğrenimi"), prompt: qsTr("Verilen bir metni İngilizceye doğal ve akıcı bir şekilde çevir ve kullanılan önemli kalıpları göster") },
-                                { icon: "📅", title: qsTr("Haftalık Yemek Planı"), prompt: qsTr("Sağlıklı, pratik ve bütçe dostu 5 günlük akşam yemeği menüsü ve alışveriş listesi oluştur") },
-                                { icon: "✈️", title: qsTr("Seyahat Rotası"), prompt: qsTr("3 günlük bir şehir gezisi (örneğin Kapadokya veya Roma) için ayrıntılı ve optimize edilmiş bir rota planla") },
-                                { icon: "🎁", title: qsTr("Hediye Önerileri"), prompt: qsTr("Belirli bir bütçeye ve ilgi alanlarına göre arkadaşım/ailem için 5 özgün hediye önerisi sun") },
-                                { icon: "⏱️", title: qsTr("Zaman Yönetimi"), prompt: qsTr("Günün yoğun temposunu yönetmek ve ertelemeyi önlemek için Pomodoro tabanlı bir günlük plan hazırlamamda yardımcı ol") },
-                                { icon: "📋", title: qsTr("Toplantı Tutanakları"), prompt: qsTr("Toplantıda karışık olarak aldığım notları maddeler halinde düzenli bir toplantı özetine dönüştür") },
-                                { icon: "🛠️", title: qsTr("Temel Otomasyon"), prompt: qsTr("Bilgisayardaki dosya adlarını topluca değiştiren veya düzenleyen basit bir betik veya komut satırı kodu yaz") },
-                                { icon: "🔍", title: qsTr("Metin Düzenleme"), prompt: qsTr("Yazdığım bu metni dil bilgisi, imla ve anlatım bozuklukları açısından inceleyip daha profesyonel hale getir") },
-                                { icon: "🎯", title: qsTr("Hedef Planlama"), prompt: qsTr("Kişisel hedeflerimi veya bir projenin çeyreklik hedeflerini (OKR) belirlemek için bir çerçeve öner") },
-                                { icon: "📈", title: qsTr("Veri Analizi"), prompt: qsTr("Bir tablo veya veri setindeki önemli eğilimleri, desenleri ve anomalileri özetleyen bir rapor taslağı hazırla") },
-                                { icon: "🤝", title: qsTr("Diplomatik Yanıt"), prompt: qsTr("Müşteri veya iş ortağından gelen beklenmedik bir talebe ya da gecikmeye karşı profesyonel ve yapıcı bir yanıt yaz") },
-                                { icon: "📓", title: qsTr("Yaratıcı Yazarlık"), prompt: qsTr("Belirli bir tema etrafında ilgi çekici bir kısa hikaye başlangıcı veya yaratıcı yazı taslağı oluştur") },
-                                { icon: "📣", title: qsTr("Bülten Hazırlama"), prompt: qsTr("Aylık güncellemelerimizi veya ürün lansmanımızı duyuran ilgi çekici bir e-bülten taslağı yaz") },
-                                { icon: "💻", title: qsTr("Python CSV İşleme"), prompt: qsTr("İki CSV dosyasını birleştiren ve filtreleyen basit bir Python betiği yaz") },
-                                { icon: "📐", title: qsTr("Sunum Taslağı"), prompt: qsTr("Belirli bir konuda etkileyici ve akıcı bir sunum slayt yapısı ve konuşma notları tasarla") },
-                                { icon: "⚡", title: qsTr("Klavye Kısayolları"), prompt: qsTr("İşletim sisteminde veya sık kullanılan bir uygulamada iş akışını hızlandıracak en pratik kısayolları listele") },
-                                { icon: "🏫", title: qsTr("Öğrenme Planı"), prompt: qsTr("Yeni bir konuyu sıfırdan öğrenmek için (örneğin temel finans veya temel fotoğrafçılık) 4 haftalık adım adım çalışma planı hazırla") },
-                                { icon: "🩺", title: qsTr("Sağlıklı Yaşam"), prompt: qsTr("Masa başında çalışanlar için gün içinde yapılabilecek esneme egzersizleri ve duruş düzeltme önerileri listele") },
-                                { icon: "✍️", title: qsTr("Blog Yazısı Taslağı"), prompt: qsTr("Belirli bir konuda SEO uyumlu, alt başlıkları ve giriş paragrafı hazır olan detaylı bir blog yazısı şablonu oluştur") }
-                            ]
+                            function getAllSuggestions() {
+                                return [
+                                    { icon: "📚", title: qsTr("Özet Çıkarma"), prompt: qsTr("Eklediğim PDF belgesinin yönetici özetini ve ana hatlarını çıkar") },
+                                    { icon: "📊", title: qsTr("Excel Formül Asistanı"), prompt: qsTr("İki farklı sütundaki verileri karşılaştırıp eşleşmeyenleri bulan bir Excel formülü yaz") },
+                                    { icon: "📝", title: qsTr("İş E-postası"), prompt: qsTr("Müşteriye veya yöneticiye durumu açıklayan kibar ve profesyonel bir e-posta taslağı yaz") },
+                                    { icon: "💡", title: qsTr("İçerik Fikirleri"), prompt: qsTr("Sosyal medya veya blog için ilgi çekici 5 içerik fikri ve başlığı bul") },
+                                    { icon: "🧠", title: qsTr("Basitçe Açıkla"), prompt: qsTr("Karmaşık bir kavramı veya teoriyi 10 yaşındaki birine anlatır gibi sade ve anlaşılır biçimde açıkla") },
+                                    { icon: "🌐", title: qsTr("Dil Öğrenimi"), prompt: qsTr("Verilen bir metni İngilizceye doğal ve akıcı bir şekilde çevir ve kullanılan önemli kalıpları göster") },
+                                    { icon: "📅", title: qsTr("Haftalık Yemek Planı"), prompt: qsTr("Sağlıklı, pratik ve bütçe dostu 5 günlük akşam yemeği menüsü ve alışveriş listesi oluştur") },
+                                    { icon: "✈️", title: qsTr("Seyahat Rotası"), prompt: qsTr("3 günlük bir şehir gezisi (örneğin Kapadokya veya Roma) için ayrıntılı ve optimize edilmiş bir rota planla") },
+                                    { icon: "🎁", title: qsTr("Hediye Önerileri"), prompt: qsTr("Belirli bir bütçeye ve ilgi alanlarına göre arkadaşım/ailem için 5 özgün hediye önerisi sun") },
+                                    { icon: "⏱️", title: qsTr("Zaman Yönetimi"), prompt: qsTr("Günün yoğun temposunu yönetmek ve ertelemeyi önlemek için Pomodoro tabanlı bir günlük plan hazırlamamda yardımcı ol") },
+                                    { icon: "📋", title: qsTr("Toplantı Tutanakları"), prompt: qsTr("Toplantıda karışık olarak aldığım notları maddeler halinde düzenli bir toplantı özetine dönüştür") },
+                                    { icon: "🛠️", title: qsTr("Temel Otomasyon"), prompt: qsTr("Bilgisayardaki dosya adlarını topluca değiştiren veya düzenleyen basit bir betik veya komut satırı kodu yaz") },
+                                    { icon: "🔍", title: qsTr("Metin Düzenleme"), prompt: qsTr("Yazdığım bu metni dil bilgisi, imla ve anlatım bozuklukları açısından inceleyip daha profesyonel hale getir") },
+                                    { icon: "🎯", title: qsTr("Hedef Planlama"), prompt: qsTr("Kişisel hedeflerimi veya bir projenin çeyreklik hedeflerini (OKR) belirlemek için bir çerçeve öner") },
+                                    { icon: "📈", title: qsTr("Veri Analizi"), prompt: qsTr("Bir tablo veya veri setindeki önemli eğilimleri, desenleri ve anomalileri özetleyen bir rapor taslağı hazırla") },
+                                    { icon: "🤝", title: qsTr("Diplomatik Yanıt"), prompt: qsTr("Müşteri veya iş ortağından gelen beklenmedik bir talebe ya da gecikmeye karşı profesyonel ve yapıcı bir yanıt yaz") },
+                                    { icon: "📓", title: qsTr("Yaratıcı Yazarlık"), prompt: qsTr("Belirli bir tema etrafında ilgi çekici bir kısa hikaye başlangıcı veya yaratıcı yazı taslağı oluştur") },
+                                    { icon: "📣", title: qsTr("Bülten Hazırlama"), prompt: qsTr("Aylık güncellemelerimizi veya ürün lansmanımızı duyuran ilgi çekici bir e-bülten taslağı yaz") },
+                                    { icon: "💻", title: qsTr("Python CSV İşleme"), prompt: qsTr("İki CSV dosyasını birleştiren ve filtreleyen basit bir Python betiği yaz") },
+                                    { icon: "📐", title: qsTr("Sunum Taslağı"), prompt: qsTr("Belirli bir konuda etkileyici ve akıcı bir sunum slayt yapısı ve konuşma notları tasarla") },
+                                    { icon: "⚡", title: qsTr("Klavye Kısayolları"), prompt: qsTr("İşletim sisteminde veya sık kullanılan bir uygulamada iş akışını hızlandıracak en pratik kısayolları listele") },
+                                    { icon: "🏫", title: qsTr("Öğrenme Planı"), prompt: qsTr("Yeni bir konuyu sıfırdan öğrenmek için (örneğin temel finans veya temel fotoğrafçılık) 4 haftalık adım adım çalışma planı hazırla") },
+                                    { icon: "🩺", title: qsTr("Sağlıklı Yaşam"), prompt: qsTr("Masa başında çalışanlar için gün içinde yapılabilecek esneme egzersizleri ve duruş düzeltme önerileri listele") },
+                                    { icon: "✍️", title: qsTr("Blog Yazısı Taslağı"), prompt: qsTr("Belirli bir konuda SEO uyumlu, alt başlıkları ve giriş paragrafı hazır olan detaylı bir blog yazısı şablonu oluştur") }
+                                ];
+                            }
 
                             function shuffleSuggestions() {
-                                var temp = allSuggestions.slice();
+                                var temp = getAllSuggestions().slice();
                                 var result = [];
                                 for (var i = 0; i < 4; i++) {
                                     if (temp.length === 0) break;
@@ -910,6 +917,10 @@ ShellPanel {
                                     temp.splice(randIdx, 1);
                                 }
                                 suggestions = result;
+                            }
+
+                            function updateSuggestions() {
+                                shuffleSuggestions();
                             }
 
                             Component.onCompleted: {

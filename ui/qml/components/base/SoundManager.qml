@@ -10,6 +10,7 @@ QtObject {
     id: root
 
     property bool enabled: true
+    readonly property bool soundEffectsAvailable: root.enabled
 
     function systemSoundPath(name) {
         if (Qt.platform.os === "osx" || Qt.platform.os === "macos") {

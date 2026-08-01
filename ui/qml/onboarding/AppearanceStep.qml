@@ -20,7 +20,7 @@ Item {
         spacing: SentinelTheme.spaceMd
 
         Label {
-            text: qsTr("Choose your look")
+            text: qsTr("Language & Appearance")
             color: SentinelTheme.textPrimary
             font.pixelSize: SentinelTheme.fontDisplay
             font.bold: true
@@ -28,10 +28,58 @@ Item {
 
         Label {
             Layout.fillWidth: true
-            text: qsTr("Pick a visual theme preset to customize Sentinel's appearance.")
+            text: qsTr("Choose your preferred display language and theme preset.")
             color: SentinelTheme.textMuted
             font.pixelSize: SentinelTheme.fontBody
             wrapMode: Text.WordWrap
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Language")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 100
+            }
+
+            ComboBox {
+                id: langCombo
+                Layout.fillWidth: true
+                model: root.viewModel.availableLanguages
+                currentIndex: {
+                    var idx = root.viewModel.availableLanguages.indexOf(root.viewModel.appLanguage)
+                    return idx >= 0 ? idx : 0
+                }
+                displayText: root.viewModel.languageDisplayName(model[currentIndex] || root.viewModel.appLanguage)
+                onActivated: (index) => {
+                    var langs = root.viewModel.availableLanguages
+                    if (index >= 0 && index < langs.length) {
+                        root.viewModel.appLanguage = langs[index]
+                    }
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Theme")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 100
+            }
+
+            ComboBox {
+                id: themeCombo
+                Layout.fillWidth: true
+                model: [qsTr("Dark (Default)"), qsTr("Light"), qsTr("System")]
+                currentIndex: 0
+            }
         }
     }
 }

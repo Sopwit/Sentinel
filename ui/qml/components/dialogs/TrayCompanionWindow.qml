@@ -104,7 +104,7 @@ Window {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
         anchors.topMargin: 80
-        text: "Copied!"
+        text: qsTr("Copied!")
         font.pixelSize: SentinelTheme.fontSmall
         color: SentinelTheme.success
         padding: 8
@@ -309,8 +309,8 @@ Window {
                         text: "\u2197"
                         font.pixelSize: 13
                         font.bold: true
-                        tooltipText: "Open full app"
-                        Accessible.name: "Open full Sentinel application"
+                        tooltipText: qsTr("Open full app")
+                        Accessible.name: qsTr("Open full Sentinel application")
                         onClicked: {
                             companionWin.hide()
                             if (viewModel) {
@@ -326,8 +326,8 @@ Window {
                         flat: true
                         text: "\u2715"
                         font.pixelSize: 12
-                        tooltipText: "Close"
-                        Accessible.name: "Close companion window"
+                        tooltipText: qsTr("Close")
+                        Accessible.name: qsTr("Close companion window")
                         onClicked: {
                             companionWin.hide()
                             if (viewModel) viewModel.companionChatVisible = false
@@ -507,8 +507,8 @@ Window {
                                                     flat: true
                                                     text: "\uD83D\uDCCB"
                                                     font.pixelSize: 10
-                                                    tooltipText: "Copy"
-                                                    Accessible.name: "Copy message"
+                                                    tooltipText: qsTr("Copy")
+                                                    Accessible.name: qsTr("Copy message")
                                                     onClicked: companionWin.copyMessage(msgContent)
                                                 }
 
@@ -518,8 +518,8 @@ Window {
                                                     flat: true
                                                     text: "\uD83D\uDD04"
                                                     font.pixelSize: 10
-                                                    tooltipText: "Retry"
-                                                    Accessible.name: "Retry message"
+                                                    tooltipText: qsTr("Retry")
+                                                    Accessible.name: qsTr("Retry message")
                                                     visible: !isUser
                                                 }
                                             }
@@ -709,11 +709,11 @@ Window {
 
                         Repeater {
                             model: [
-                                { label: "\u26A1 Summarize", prompt: "Please summarize this:" },
-                                { label: "\uD83D\uDCA1 Explain", prompt: "Explain in simple terms:" },
-                                { label: "\uD83D\uDEE0\uFE0F Fix Code", prompt: "Review and fix this code:" },
-                                { label: "\uD83D\uDCDD Note", prompt: "Note down:" },
-                                { label: "\uD83D\uDD0D Search", prompt: "Search for information on:" }
+                                { label: "\u26A1 " + qsTr("Summarize"), prompt: "Please summarize this:" },
+                                { label: "\uD83D\uDCA1 " + qsTr("Explain"), prompt: "Explain in simple terms:" },
+                                { label: "\uD83D\uDEE0\uFE0F " + qsTr("Fix Code"), prompt: "Review and fix this code:" },
+                                { label: "\uD83D\uDCDD " + qsTr("Note"), prompt: "Note down:" },
+                                { label: "\uD83D\uDD0D " + qsTr("Search"), prompt: "Search for information on:" }
                             ]
 
                             delegate: Rectangle {

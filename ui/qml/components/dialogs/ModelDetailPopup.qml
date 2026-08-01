@@ -107,16 +107,16 @@ SentinelOverlayModal {
         if (modelInfo && modelInfo.id) {
             var idLower = modelInfo.id.toLowerCase()
             if (idLower.indexOf("llava") !== -1 || modelInfo.category === "Vision" || (modelInfo.tags && modelInfo.tags.indexOf("vision") !== -1)) {
-                return "Text / Image"
+                return qsTr("Text / Image")
             }
             if (modelInfo.category === "STT") {
-                return "Audio"
+                return qsTr("Audio")
             }
             if (modelInfo.category === "Runtime") {
                 return "—"
             }
         }
-        return "Text"
+        return qsTr("Text")
     }
 
     readonly property string ollamaPullCmd: {

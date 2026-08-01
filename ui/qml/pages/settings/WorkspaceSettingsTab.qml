@@ -121,6 +121,58 @@ Item {
                         }
                     }
                 }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("Export Format")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                        Layout.preferredWidth: 150
+                    }
+                    ComboBox {
+                        Layout.fillWidth: true
+                        model: [qsTr("Markdown"), qsTr("JSON"), qsTr("Plain Text")]
+                        currentIndex: {
+                            var fmt = root.viewModel.exportDefaultFormat
+                            if (fmt === "JSON") return 1
+                            if (fmt === "Plain Text") return 2
+                            return 0
+                        }
+                        onActivated: (index) => {
+                            var fmts = ["Markdown", "JSON", "Plain Text"]
+                            root.viewModel.exportDefaultFormat = fmts[index]
+                        }
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("Include Timestamps in Export")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                        Layout.fillWidth: true
+                    }
+                    Switch {
+                        checked: root.viewModel.exportIncludeTimestamps
+                        onCheckedChanged: root.viewModel.exportIncludeTimestamps = checked
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("Include Citations in Export")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                        Layout.fillWidth: true
+                    }
+                    Switch {
+                        checked: root.viewModel.exportIncludeCitations
+                        onCheckedChanged: root.viewModel.exportIncludeCitations = checked
+                    }
+                }
             }
         }
     }

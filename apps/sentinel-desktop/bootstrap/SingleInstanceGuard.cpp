@@ -59,8 +59,8 @@ void SingleInstanceGuard::bindShellViewModel(DesktopShellViewModel* shellViewMod
             if (!url.isEmpty() && m_shellViewModel) {
                 qInfo().noquote() << "Deep link received:" << url;
                 m_shellViewModel->addNotification(
-                    QStringLiteral("System"), QStringLiteral("Deep Link"),
-                    QStringLiteral("Received: %1").arg(url));
+                    tr("System"), tr("Deep Link"),
+                    tr("Received: %1").arg(url));
             }
             socket->deleteLater();
         }
