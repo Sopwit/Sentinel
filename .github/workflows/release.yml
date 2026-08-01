@@ -89,10 +89,14 @@ jobs:
         shell: bash
         run: |
           PRESET="${{ matrix.cmake-preset }}"
+          COMPILER_ARGS=""
+          if [ "${{ matrix.os }}" = "windows-2022" ]; then
+            COMPILER_ARGS="-DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl"
+          fi
           if [ -n "$PRESET" ]; then
-            cmake --preset "$PRESET" -DCMAKE_INSTALL_PREFIX=dist
+            cmake --preset "$PRESET" -DCMAKE_INSTALL_PREFIX=dist $COMPILER_ARGS
           else
-            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=dist
+            cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=dist $COMPILER_ARGS
           fi
 
       - name: Build and Install
