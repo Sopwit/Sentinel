@@ -13,7 +13,7 @@ set(SENTINEL_APP_VERSION "1.0.0-rc.7" CACHE STRING "User-visible application ver
 set(SENTINEL_BUILD_NUMBER "0" CACHE STRING "Release build number")
 set(SENTINEL_COPYRIGHT "© 2026 Sopwit. All rights reserved." CACHE STRING "Application copyright")
 set(SENTINEL_MACOS_CATEGORY "public.app-category.productivity" CACHE STRING "macOS App Store category")
-set(SENTINEL_MACOS_MIN_VERSION "12.0" CACHE STRING "Minimum supported macOS version for release bundles")
+set(SENTINEL_MACOS_MIN_VERSION "13.0" CACHE STRING "Minimum supported macOS version for release bundles")
 set(SENTINEL_CONFIGURED_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 if(NOT SENTINEL_CONFIGURED_BUILD_TYPE)
     set(SENTINEL_CONFIGURED_BUILD_TYPE "unknown")

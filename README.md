@@ -89,7 +89,7 @@ cmake --build build
 ```
 *Common path examples:*
 - macOS (Homebrew): `-DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt`
-- Linux (Qt Installer default): `-DCMAKE_PREFIX_PATH=$HOME/Qt/6.7.0/gcc_64`
+- Linux (Qt Installer default): `-DCMAKE_PREFIX_PATH=$HOME/Qt/6.11.0/gcc_64`
 
 To run:
 - **Linux:** `./build/apps/sentinel-desktop/sentinel-desktop`
