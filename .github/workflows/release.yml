@@ -24,7 +24,7 @@ jobs:
             qt-arch: clang_64
             artifact-name: sentinel-desktop-macos-arm64.dmg
           - os: windows-2022
-            qt-arch: win64_msvc2019_64
+            qt-arch: win64_msvc2022_64
             artifact-name: sentinel-desktop-windows-x64.zip
 
     steps:
@@ -75,7 +75,7 @@ jobs:
       - name: Install Qt
         uses: jurplel/install-qt-action@v4
         with:
-          version: '6.7.*'
+          version: '6.11.*'
           arch: ${{ matrix.qt-arch }}
           modules: 'qtmultimedia'
           cache: true
