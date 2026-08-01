@@ -42,25 +42,26 @@ Item {
     }
 
     // ── Drop shadow for the dock pill ─────────────────────────────────────────
-    RectangularShadow {
-        id: dockShadow
-        anchors.fill: dockPill
-        offset: Qt.vector2d(0, SentinelTheme.lightTheme ? 3 : 6)
-        color: SentinelTheme.lightTheme
-               ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.20)
-               : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.55)
-        blur: 4.0
-        radius: dockPill.radius
-        spread: 0.0
-    }
-
-    // ── Pill container (Liquid Glass surface) ────────────────────────────────
+    // Pill container (Liquid Glass surface)
     Rectangle {
         id: dockPill
         anchors.centerIn: parent
         width: dockRow.implicitWidth + 24
         height: 60
         radius: height / 2
+
+        // Drop shadow (MultiEffect shadow, available since Qt 6.5)
+        layer.enabled: true
+        layer.effect: MultiEffect {
+            shadowEnabled: true
+            shadowColor: SentinelTheme.lightTheme
+                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.20)
+                         : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.55)
+            shadowBlur: 0.55
+            shadowHorizontalOffset: 0
+            shadowVerticalOffset: SentinelTheme.lightTheme ? 3 : 6
+            shadowOpacity: 1.0
+        }
 
         // Layered glass effect
         color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.82)
