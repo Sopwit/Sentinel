@@ -20,12 +20,15 @@ jobs:
           - os: ubuntu-22.04
             qt-arch: linux_gcc_64
             artifact-name: sentinel-desktop-linux-x64.tar.gz
+            aqt-source: ''
           - os: macos-14
             qt-arch: clang_64
             artifact-name: sentinel-desktop-macos-arm64.dmg
+            aqt-source: ''
           - os: windows-2022
             qt-arch: win64_msvc2022_64
             artifact-name: sentinel-desktop-windows-x64.zip
+            aqt-source: 'git+https://github.com/miurahr/aqtinstall.git@8c3695d4a4e1ceabf6a74dc6c79681656dc6b74b'
 
     steps:
       - name: Checkout code
@@ -77,6 +80,7 @@ jobs:
         with:
           version: '6.11.*'
           arch: ${{ matrix.qt-arch }}
+          aqtsource: ${{ matrix.aqt-source }}
           modules: 'qtmultimedia'
           cache: true
 
