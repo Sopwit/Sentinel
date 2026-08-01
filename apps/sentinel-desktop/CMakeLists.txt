@@ -328,15 +328,17 @@ if(WIN32)
 
     # Bundle MinGW runtime DLLs (libstdc++-6.dll, libgcc_s_seh-1.dll, libwinpthread-1.dll)
     # These are required on systems without MinGW installed
-    get_filename_component(_mingw_bin_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
-    set(_mingw_runtime_dlls
-        "${_mingw_bin_dir}/libstdc++-6.dll"
-        "${_mingw_bin_dir}/libgcc_s_seh-1.dll"
-        "${_mingw_bin_dir}/libwinpthread-1.dll"
-    )
-    install(FILES ${_mingw_runtime_dlls}
-        DESTINATION ${SENTINEL_INSTALL_DIR}
-    )
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+        get_filename_component(_mingw_bin_dir "${CMAKE_CXX_COMPILER}" DIRECTORY)
+        set(_mingw_runtime_dlls
+            "${_mingw_bin_dir}/libstdc++-6.dll"
+            "${_mingw_bin_dir}/libgcc_s_seh-1.dll"
+            "${_mingw_bin_dir}/libwinpthread-1.dll"
+        )
+        install(FILES ${_mingw_runtime_dlls}
+            DESTINATION ${SENTINEL_INSTALL_DIR}
+        )
+    endif()
 endif()
 
 if(UNIX AND NOT APPLE)

@@ -25,15 +25,24 @@ COMPONENT_PLIST="${TEMP_PKG_DIR}/component.plist"
 
 # 1. Build component PKG targeting /Applications
 cat > "${COMPONENT_PLIST}" <<'EOF'
-[
-  {
-    "RootRelativeBundlePath": "",
-    "BundleIsRelocatable": false,
-    "BundleIsVersionChecked": true,
-    "BundleHasStrictIdentifier": true,
-    "BundleOverwriteAction": "upgrade"
-  }
-]
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<array>
+    <dict>
+        <key>RootRelativeBundlePath</key>
+        <string></string>
+        <key>BundleIsRelocatable</key>
+        <false/>
+        <key>BundleIsVersionChecked</key>
+        <true/>
+        <key>BundleHasStrictIdentifier</key>
+        <true/>
+        <key>BundleOverwriteAction</key>
+        <string>upgrade</string>
+    </dict>
+</array>
+</plist>
 EOF
 
 pkgbuild \
