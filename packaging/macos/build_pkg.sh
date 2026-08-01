@@ -21,12 +21,10 @@ TEMP_PKG_DIR=$(mktemp -d /tmp/sentinel_pkg.XXXXXX)
 trap 'rm -rf "${TEMP_PKG_DIR}"' EXIT
 
 COMPONENT_PKG="${TEMP_PKG_DIR}/component.pkg"
+COMPONENT_PLIST="${TEMP_PKG_DIR}/component.plist"
 
 # 1. Build component PKG targeting /Applications
-pkgbuild \
-    --root "${APP_PATH}" \
-    --install-location "/Applications/Sentinel Desktop.app" \
-    --component-plist <(cat <<EOF
+cat > "${COMPONENT_PLIST}" <<'EOF'
 [
   {
     "RootRelativeBundlePath": "",
@@ -37,7 +35,11 @@ pkgbuild \
   }
 ]
 EOF
-) \
+
+pkgbuild \
+    --root "${APP_PATH}" \
+    --install-location "/Applications/Sentinel Desktop.app" \
+    --component-plist "${COMPONENT_PLIST}" \
     "${COMPONENT_PKG}"
 
 # 2. Build final distribution PKG

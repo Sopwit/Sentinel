@@ -60,7 +60,8 @@ jobs:
           $vsPath = & "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe" -latest -property installationPath
           $arch = "${{ matrix.vcvars-arch }}"
           if (-not $arch) { $arch = "x64" }
-          $devCmd = Join-Path $vsPath "VC\Auxiliary\Build\vcvars$arch.bat"
+          if ($arch -eq "x64") { $vcvars = "vcvars64.bat" } else { $vcvars = "vcvars$arch.bat" }
+          $devCmd = Join-Path $vsPath "VC\Auxiliary\Build\$vcvars"
           cmd.exe /c "call `"$devCmd`" && set" | ForEach-Object {
               if ($_ -match "^(INCLUDE|LIB|LIBPATH|WindowsSDK.*|UniversalCRTSdkDir|UCRTVersion|VCTools.*|VCINSTALLDIR|VSINSTALLDIR|ExtensionSdkDir|Framework.*|NETFXSDKDir)=") {
                   $v = $_.Split("=", 2)
@@ -85,6 +86,7 @@ jobs:
           cache: true
 
       - name: Configure CMake
+        shell: bash
         run: |
           PRESET="${{ matrix.cmake-preset }}"
           if [ -n "$PRESET" ]; then
@@ -94,6 +96,7 @@ jobs:
           fi
 
       - name: Build and Install
+        shell: bash
         run: |
           BUILD_DIR="${{ matrix.cmake-preset && 'build/arm64' || 'build' }}"
           cmake --build "$BUILD_DIR" --target install
