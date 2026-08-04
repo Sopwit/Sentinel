@@ -6,126 +6,183 @@
     <message>
         <location filename="../ui/qml/components/chat/ActiveAgentsPanel.qml" line="26"/>
         <source>AGENT METADATA</source>
-        <translation>AGENT METADATA</translation>
+        <translation>智能体元数据</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/chat/ActiveAgentsPanel.qml" line="95"/>
         <source>metadata</source>
-        <translation>metadata</translation>
+        <translation>元数据</translation>
     </message>
 </context>
 <context>
     <name>AppSettings</name>
     <message>
-        <location filename="../core/src/app/AppSettings.cpp" line="250"/>
         <source>Türkçe</source>
-        <translation>土耳其语</translation>
+        <translation type="vanished">土耳其语</translation>
     </message>
     <message>
-        <location filename="../core/src/app/AppSettings.cpp" line="253"/>
         <source>Deutsch</source>
-        <translation>德语</translation>
+        <translation type="vanished">德语</translation>
     </message>
     <message>
-        <location filename="../core/src/app/AppSettings.cpp" line="256"/>
         <source>Español</source>
-        <translation>西班牙语</translation>
+        <translation type="vanished">西班牙语</translation>
     </message>
     <message>
-        <location filename="../core/src/app/AppSettings.cpp" line="259"/>
         <source>Français</source>
-        <translation>法语</translation>
+        <translation type="vanished">法语</translation>
     </message>
     <message>
-        <location filename="../core/src/app/AppSettings.cpp" line="262"/>
         <source>中文</source>
-        <translation>中文</translation>
+        <translation type="vanished">中文</translation>
     </message>
     <message>
-        <location filename="../core/src/app/AppSettings.cpp" line="265"/>
         <source>日本語</source>
-        <translation>日语</translation>
+        <translation type="vanished">日语</translation>
     </message>
     <message>
-        <location filename="../core/src/app/AppSettings.cpp" line="268"/>
         <source>العربية</source>
-        <translation>阿拉伯语</translation>
+        <translation type="vanished">阿拉伯语</translation>
     </message>
     <message>
-        <location filename="../core/src/app/AppSettings.cpp" line="270"/>
         <source>English</source>
-        <translation>英语</translation>
+        <translation type="vanished">英语</translation>
     </message>
 </context>
 <context>
     <name>AppearanceSettingsTab</name>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="45"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="22"/>
+        <source>Liquid Glass Light</source>
+        <translation>液态玻璃浅色</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="23"/>
+        <source>Liquid Glass Dark</source>
+        <translation>液态玻璃深色</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="24"/>
+        <source>Sentinel Classic</source>
+        <translation>Sentinel 经典</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="25"/>
+        <source>Midnight Blue</source>
+        <translation>午夜蓝</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="26"/>
+        <source>Aurora Teal</source>
+        <translation>极光青</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="27"/>
+        <source>Graphite Grey</source>
+        <translation>石墨灰</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="28"/>
+        <source>Solarized Light</source>
+        <translation>Solarized 浅色</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="29"/>
+        <source>Nord Frost</source>
+        <translation>Nord 霜色</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="30"/>
+        <source>Dracula</source>
+        <translation>德古拉</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="31"/>
+        <source>Tokyo Night</source>
+        <translation>东京之夜</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="38"/>
+        <source>Compact</source>
+        <translation>紧凑</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="39"/>
+        <source>Comfortable</source>
+        <translation>舒适</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="40"/>
+        <source>Large</source>
+        <translation>大</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="70"/>
         <source>General</source>
         <translation>常规</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="46"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="71"/>
         <source>Desktop shell preferences.</source>
-        <translation>Desktop shell preferences.</translation>
+        <translation>桌面外壳偏好设置。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="57"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="82"/>
         <source>Language</source>
         <translation>语言</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="125"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="150"/>
         <source>Appearance</source>
         <translation>外观</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="126"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="151"/>
         <source>Theme foundation for a calm native desktop UI.</source>
-        <translation>Theme foundation for a calm native desktop UI.</translation>
+        <translation>为沉静、原生的桌面界面打造的简约主题基础。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="137"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="162"/>
         <source>Theme</source>
         <translation>主题</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="252"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="277"/>
         <source>Visual Theme Presets</source>
         <translation>视觉主题预设</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="377"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="402"/>
         <source>Accessibility</source>
         <translation>辅助功能</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="378"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="403"/>
         <source>Comfort, motion, contrast, and density preferences. Changes take effect immediately.</source>
-        <translation>Comfort, motion, contrast, and density preferences. Changes take effect immediately.</translation>
+        <translation>舒适度、动画、对比度和密度的偏好设置。更改会立即生效。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="394"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="419"/>
         <source>Reduced Motion</source>
         <translation>减少动画</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="402"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="427"/>
         <source>Disables all animations and transitions throughout the UI.</source>
-        <translation>Disables all animations and transitions throughout the UI.</translation>
+        <translation>禁用界面中所有动画与过渡效果。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="457"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="482"/>
         <source>High Contrast</source>
         <translation>高对比度</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="465"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="490"/>
         <source>Increases text and border contrast for better readability.</source>
-        <translation>Increases text and border contrast for better readability.</translation>
+        <translation>提高文字与边框的对比度，以获得更好的可读性。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="515"/>
+        <location filename="../ui/qml/pages/settings/AppearanceSettingsTab.qml" line="540"/>
         <source>UI Density</source>
         <translation>界面密度</translation>
     </message>
@@ -140,7 +197,7 @@
     <message>
         <location filename="../ui/qml/onboarding/AppearanceStep.qml" line="31"/>
         <source>Choose your preferred display language and theme preset.</source>
-        <translation>Choose your preferred display language and theme preset.</translation>
+        <translation>选择您偏好的界面语言和主题预设。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/AppearanceStep.qml" line="42"/>
@@ -165,7 +222,7 @@
     <message>
         <location filename="../ui/qml/onboarding/AppearanceStep.qml" line="80"/>
         <source>System</source>
-        <translation>System</translation>
+        <translation>系统</translation>
     </message>
 </context>
 <context>
@@ -173,12 +230,12 @@
     <message>
         <location filename="../ui/qml/components/navigation/BottomDock.qml" line="20"/>
         <source>Home</source>
-        <translation>Home</translation>
+        <translation>首页</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/BottomDock.qml" line="21"/>
         <source>Models</source>
-        <translation>Models</translation>
+        <translation>模型</translation>
     </message>
 </context>
 <context>
@@ -186,12 +243,12 @@
     <message>
         <location filename="../ui/qml/onboarding/CapabilitiesStep.qml" line="23"/>
         <source>Capabilities</source>
-        <translation>Capabilities</translation>
+        <translation>能力</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/CapabilitiesStep.qml" line="31"/>
         <source>Overview of local tools, document RAG, and agent capabilities.</source>
-        <translation>Overview of local tools, document RAG, and agent capabilities.</translation>
+        <translation>本地工具、文档 RAG 与智能体能力的概览。</translation>
     </message>
 </context>
 <context>
@@ -199,87 +256,87 @@
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="134"/>
         <source>AI BRIDGE</source>
-        <translation>AI BRIDGE</translation>
+        <translation>AI 桥梁</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="155"/>
         <source>Provider</source>
-        <translation>Provider</translation>
+        <translation>提供者</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="162"/>
         <source>Model</source>
-        <translation>Model</translation>
+        <translation>模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="165"/>
         <source>No model</source>
-        <translation>No model</translation>
+        <translation>无模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="171"/>
         <source>Runtime</source>
-        <translation>Runtime</translation>
+        <translation>运行时</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="178"/>
         <source>Restored</source>
-        <translation>Restored</translation>
+        <translation>已恢复</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="195"/>
         <source>Conversations</source>
-        <translation>Conversations</translation>
+        <translation>对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="202"/>
         <source>%1 active / %2 archived</source>
-        <translation>%1 active / %2 archived</translation>
+        <translation>%1 个活跃 / %2 个已归档</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="210"/>
         <source>New</source>
-        <translation>New</translation>
+        <translation>新建</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="214"/>
         <source>Conversation </source>
-        <translation>Conversation </translation>
+        <translation>对话 </translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="215"/>
         <source>New conversation created.</source>
-        <translation>New conversation created.</translation>
+        <translation>已创建新对话。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="215"/>
         <source>New conversation unavailable.</source>
-        <translation>New conversation unavailable.</translation>
+        <translation>无法创建新对话。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="224"/>
         <source>Filter conversations locally</source>
-        <translation>Filter conversations locally</translation>
+        <translation>在本地筛选对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="242"/>
         <source>All</source>
-        <translation>All</translation>
+        <translation>全部</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="243"/>
         <source>Pinned</source>
-        <translation>Pinned</translation>
+        <translation>已置顶</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="244"/>
         <source>Recent</source>
-        <translation>Recent</translation>
+        <translation>最近</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="245"/>
         <source>Archived</source>
-        <translation>Archived</translation>
+        <translation>已归档</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="297"/>
@@ -320,97 +377,97 @@
         <location filename="../ui/qml/pages/ChatPanel.qml" line="559"/>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="684"/>
         <source>Rename</source>
-        <translation>Rename</translation>
+        <translation>重命名</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="570"/>
         <source>Unpin</source>
-        <translation>Unpin</translation>
+        <translation>取消置顶</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="570"/>
         <source>Pin</source>
-        <translation>Pin</translation>
+        <translation>置顶</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="576"/>
         <source>Conversation unpinned.</source>
-        <translation>Conversation unpinned.</translation>
+        <translation>对话已取消置顶。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="576"/>
         <source>Conversation pinned.</source>
-        <translation>Conversation pinned.</translation>
+        <translation>对话已置顶。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="577"/>
         <source>Conversation pin update refused.</source>
-        <translation>Conversation pin update refused.</translation>
+        <translation>对话置顶更新被拒绝。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="582"/>
         <source>Unarchive</source>
-        <translation>Unarchive</translation>
+        <translation>取消归档</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="582"/>
         <source>Archive</source>
-        <translation>Archive</translation>
+        <translation>归档</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="588"/>
         <source>Conversation unarchived.</source>
-        <translation>Conversation unarchived.</translation>
+        <translation>对话已取消归档。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="588"/>
         <source>Conversation archived.</source>
-        <translation>Conversation archived.</translation>
+        <translation>对话已归档。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="589"/>
         <source>Conversation update refused.</source>
-        <translation>Conversation update refused.</translation>
+        <translation>对话更新被拒绝。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="596"/>
         <source>Duplicate</source>
-        <translation>Duplicate</translation>
+        <translation>复制</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="602"/>
         <source>Conversation duplicate refused.</source>
-        <translation>Conversation duplicate refused.</translation>
+        <translation>拒绝复制对话。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="608"/>
         <source>Permanent delete is not enabled yet. Archive is available.</source>
-        <translation>Permanent delete is not enabled yet. Archive is available.</translation>
+        <translation>永久删除功能尚未启用。当前可使用归档。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="649"/>
         <source>Current</source>
-        <translation>Current</translation>
+        <translation>当前</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="656"/>
         <source>Continuity</source>
-        <translation>Continuity</translation>
+        <translation>连续性</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="670"/>
         <source>Rename current conversation</source>
-        <translation>Rename current conversation</translation>
+        <translation>重命名当前对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="691"/>
         <source>Rename saved.</source>
-        <translation>Rename saved.</translation>
+        <translation>重命名已保存。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/ChatPanel.qml" line="691"/>
         <source>Rename refused.</source>
-        <translation>Rename refused.</translation>
+        <translation>重命名被拒绝。</translation>
     </message>
 </context>
 <context>
@@ -418,12 +475,12 @@
     <message>
         <location filename="../ui/qml/components/chat/CognitionStreamPanel.qml" line="30"/>
         <source>COGNITION STREAM</source>
-        <translation>COGNITION STREAM</translation>
+        <translation>认知流</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/chat/CognitionStreamPanel.qml" line="41"/>
         <source>LIVE / %1</source>
-        <translation>LIVE / %1</translation>
+        <translation>实时 / %1</translation>
     </message>
 </context>
 <context>
@@ -431,39 +488,39 @@
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="23"/>
         <source>Ask Sentinel</source>
-        <translation>Ask Sentinel</translation>
+        <translation>向 Sentinel 提问</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="23"/>
         <source>Focus the fixed chat composer</source>
-        <translation>Focus the fixed chat composer</translation>
+        <translation>聚焦固定的对话输入框</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="23"/>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="24"/>
         <source>Chat</source>
-        <translation>Chat</translation>
+        <translation>对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="24"/>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="73"/>
         <source>New Chat</source>
-        <translation>New Chat</translation>
+        <translation>新对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="24"/>
         <source>Create a local conversation</source>
-        <translation>Create a local conversation</translation>
+        <translation>创建本地对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="25"/>
         <source>Search Chats</source>
-        <translation>Search Chats</translation>
+        <translation>搜索对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="25"/>
         <source>Filter conversations by title or id</source>
-        <translation>Filter conversations by title or id</translation>
+        <translation>按标题或 ID 筛选对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="25"/>
@@ -474,109 +531,109 @@
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="26"/>
         <source>Open Workspace</source>
-        <translation>Open Workspace</translation>
+        <translation>打开工作区</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="26"/>
         <source>Open workspace controls in Settings</source>
-        <translation>Open workspace controls in Settings</translation>
+        <translation>在设置中打开工作区控制</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="26"/>
         <source>Workspace</source>
-        <translation>Workspace</translation>
+        <translation>工作区</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="27"/>
         <source>Open Settings</source>
-        <translation>Open Settings</translation>
+        <translation>打开设置</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="27"/>
         <source>Open floating preferences</source>
-        <translation>Open floating preferences</translation>
+        <translation>打开浮动偏好设置</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="27"/>
         <source>Modal</source>
-        <translation>Modal</translation>
+        <translation>模态窗口</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="28"/>
         <source>Check Updates</source>
-        <translation>Check Updates</translation>
+        <translation>检查更新</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="28"/>
         <source>Check release boundary and open update installer modal</source>
-        <translation>Check release boundary and open update installer modal</translation>
+        <translation>检查版本边界并打开更新安装器窗口</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="28"/>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="29"/>
         <source>Updates</source>
-        <translation>Updates</translation>
+        <translation>更新</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="29"/>
         <source>Open Updates</source>
-        <translation>Open Updates</translation>
+        <translation>打开更新</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="29"/>
         <source>Open manual update and release notes surfaces</source>
-        <translation>Open manual update and release notes surfaces</translation>
+        <translation>打开手动更新与版本说明界面</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="30"/>
         <source>Open Notifications</source>
-        <translation>Open Notifications</translation>
+        <translation>打开通知</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="30"/>
         <source>Open notification center controls</source>
-        <translation>Open notification center controls</translation>
+        <translation>打开通知中心控制</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="30"/>
         <source>Notifications</source>
-        <translation>Notifications</translation>
+        <translation>通知</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="31"/>
         <source>Export Current Chat</source>
-        <translation>Export Current Chat</translation>
+        <translation>导出当前对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="31"/>
         <source>Save Markdown in the controlled export directory</source>
-        <translation>Save Markdown in the controlled export directory</translation>
+        <translation>将 Markdown 保存到受控的导出目录</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="31"/>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="32"/>
         <source>Export</source>
-        <translation>Export</translation>
+        <translation>导出</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="32"/>
         <source>Export Data</source>
-        <translation>Export Data</translation>
+        <translation>导出数据</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="32"/>
         <source>Prepare export preview for local data</source>
-        <translation>Prepare export preview for local data</translation>
+        <translation>为本地数据准备导出预览</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="33"/>
         <source>Change Theme</source>
-        <translation>Change Theme</translation>
+        <translation>更换主题</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="33"/>
         <source>Cycle through available Light, Dark, Glass, and Adaptive themes</source>
-        <translation>Cycle through available Light, Dark, Glass, and Adaptive themes</translation>
+        <translation>在可用的浅色、深色、玻璃和自适应主题之间循环切换</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="33"/>
@@ -586,57 +643,57 @@
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="34"/>
         <source>Switch Model</source>
-        <translation>Switch Model</translation>
+        <translation>切换模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="34"/>
         <source>Open Models settings</source>
-        <translation>Open Models settings</translation>
+        <translation>打开模型设置</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="34"/>
         <source>Models</source>
-        <translation>Models</translation>
+        <translation>模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="35"/>
         <source>Universal Search</source>
-        <translation>Universal Search</translation>
+        <translation>全局搜索</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="35"/>
         <source>Search chats, settings, models, and profiles</source>
-        <translation>Search chats, settings, models, and profiles</translation>
+        <translation>搜索对话、设置、模型和个人资料</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="55"/>
         <source>Select an action or search commands.</source>
-        <translation>Select an action or search commands.</translation>
+        <translation>选择一个操作或搜索命令。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="92"/>
         <source>Theme changed to %1.</source>
-        <translation>Theme changed to %1.</translation>
+        <translation>主题已切换为 %1。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="94"/>
         <source>Type to search commands, chats, settings, models, and profiles.</source>
-        <translation>Type to search commands, chats, settings, models, and profiles.</translation>
+        <translation>输入以搜索命令、对话、设置、模型和个人资料。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="96"/>
         <source>%1 is unavailable.</source>
-        <translation>%1 is unavailable.</translation>
+        <translation>%1 不可用。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="125"/>
         <source>Command Palette</source>
-        <translation>Command Palette</translation>
+        <translation>命令面板</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/CommandPalette.qml" line="152"/>
         <source>Search local commands</source>
-        <translation>Search local commands</translation>
+        <translation>搜索本地命令</translation>
     </message>
 </context>
 <context>
@@ -644,142 +701,142 @@
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="167"/>
         <source>Updates</source>
-        <translation>Updates</translation>
+        <translation>更新</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="168"/>
         <source>Manual updates only</source>
-        <translation>Manual updates only</translation>
+        <translation>仅手动更新</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="169"/>
         <source>Sentinel checks for updates only after explicit user action.</source>
-        <translation>Sentinel checks for updates only after explicit user action.</translation>
+        <translation>Sentinel 只在您明确操作后才会检查更新。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="173"/>
         <source>Security</source>
-        <translation>Security</translation>
+        <translation>安全</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="174"/>
         <source>Privacy guarantees active</source>
-        <translation>Privacy guarantees active</translation>
+        <translation>隐私保障已启用</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="175"/>
         <source>No telemetry, hidden uploads, silent updates, or hidden cloud activation.</source>
-        <translation>No telemetry, hidden uploads, silent updates, or hidden cloud activation.</translation>
+        <translation>没有遥测、隐藏上传、静默更新或隐藏的云端激活。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="180"/>
         <source>Tasks</source>
-        <translation>Tasks</translation>
+        <translation>任务</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="181"/>
         <source>Controlled tasks require approval</source>
-        <translation>Controlled tasks require approval</translation>
+        <translation>受控任务需要审批</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="182"/>
         <source>Task execution advances only through visible user actions.</source>
-        <translation>Task execution advances only through visible user actions.</translation>
+        <translation>任务执行只能通过可见的用户操作向前推进。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="186"/>
         <source>Brain</source>
-        <translation>Brain</translation>
+        <translation>大脑</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="187"/>
         <source>Brain data stays local</source>
-        <translation>Brain data stays local</translation>
+        <translation>大脑数据始终保存在本地</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="188"/>
         <source>Memory, chat history, Local RAG metadata, and diagnostics remain local.</source>
-        <translation>Memory, chat history, Local RAG metadata, and diagnostics remain local.</translation>
+        <translation>记忆、对话历史、本地 RAG 元数据与诊断信息都保留在本地。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="193"/>
         <source>Workspace</source>
-        <translation>Workspace</translation>
+        <translation>工作区</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="194"/>
         <source>Workspace scope selected</source>
-        <translation>Workspace scope selected</translation>
+        <translation>已选择工作区范围</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="195"/>
         <source>Workspace metadata does not grant folder scans or filesystem authority.</source>
-        <translation>Workspace metadata does not grant folder scans or filesystem authority.</translation>
+        <translation>工作区元数据并不授予文件夹扫描或文件系统权限。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="200"/>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="207"/>
         <source>Models</source>
-        <translation>Models</translation>
+        <translation>模型</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="201"/>
         <source>Local provider selected</source>
-        <translation>Local provider selected</translation>
+        <translation>已选择本地提供者</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="202"/>
         <source>Ollama can execute foreground local chat; other local endpoints require configuration.</source>
-        <translation>Ollama can execute foreground local chat; other local endpoints require configuration.</translation>
+        <translation>Ollama 可以执行前台本地对话；其他本地端点需要自行配置。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="208"/>
         <source>Model Role Changed</source>
-        <translation>Model Role Changed</translation>
+        <translation>模型角色已更改</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="209"/>
         <source>Shown when the user changes local model-role metadata.</source>
-        <translation>Shown when the user changes local model-role metadata.</translation>
+        <translation>当用户更改本地模型角色元数据时显示。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="2234"/>
         <source>Error: Audio recording (rec) stopped unexpectedly.
 Detail: </source>
-        <translation>Error: Audio recording (rec) stopped unexpectedly.
-Detail: </translation>
+        <translation>错误：音频录制 (rec) 意外停止。
+详情：</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="2253"/>
         <source>Error: Audio recording (rec) could not be started.</source>
-        <translation>Error: Audio recording (rec) could not be started.</translation>
+        <translation>错误：无法开始音频录音 (rec)。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="2263"/>
         <source>Error: Could not start audio recording. </source>
-        <translation>Error: Could not start audio recording. </translation>
+        <translation>错误：无法开始音频录制。 </translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="2267"/>
         <source>Could not open audio input devices on this system. Please check microphone permissions and default audio input device.</source>
-        <translation>Could not open audio input devices on this system. Please check microphone permissions and default audio input device.</translation>
+        <translation>无法打开此系统上的音频输入设备。请检查麦克风权限和默认音频输入设备。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="2272"/>
         <source>
 Detail: </source>
         <translation>
-Detail: </translation>
+详情：</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="2277"/>
         <source>&apos;ffmpeg&apos; was not found on this system. Please download ffmpeg from the official site and add it to PATH.</source>
-        <translation>&apos;ffmpeg&apos; was not found on this system. Please download ffmpeg from the official site and add it to PATH.</translation>
+        <translation>系统中未找到 'ffmpeg'。请从官网下载 ffmpeg 并将其添加到 PATH。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="2282"/>
         <source>&apos;ffmpeg&apos; or &apos;sox&apos; (rec) was not found on this system. Please install ffmpeg using &apos;brew install ffmpeg&apos; (macOS) or your package manager.</source>
-        <translation>&apos;ffmpeg&apos; or &apos;sox&apos; (rec) was not found on this system. Please install ffmpeg using &apos;brew install ffmpeg&apos; (macOS) or your package manager.</translation>
+        <translation>系统中未找到 'ffmpeg' 或 'sox' (rec)。请使用 'brew install ffmpeg'（macOS）或您的包管理器安装 ffmpeg。</translation>
     </message>
 </context>
 <context>
@@ -808,27 +865,27 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="17"/>
         <source>Chat through configured local providers.</source>
-        <translation>Chat through configured local providers.</translation>
+        <translation>通过已配置的本地提供者进行对话。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="19"/>
         <source>Floating local preferences and readiness controls.</source>
-        <translation>Floating local preferences and readiness controls.</translation>
+        <translation>浮动本地偏好与就绪状态控制。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="25"/>
         <source>Good morning, Operator.</source>
-        <translation>Good morning, Operator.</translation>
+        <translation>早上好，操作员。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="27"/>
         <source>Good afternoon, Operator.</source>
-        <translation>Good afternoon, Operator.</translation>
+        <translation>下午好，操作员。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="28"/>
         <source>Good evening, Operator.</source>
-        <translation>Good evening, Operator.</translation>
+        <translation>晚上好，操作员。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="73"/>
@@ -838,17 +895,17 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="111"/>
         <source>Toggle System Tray Companion Chat</source>
-        <translation>Toggle System Tray Companion Chat</translation>
+        <translation>切换系统托盘伴侣对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="134"/>
         <source>Do Not Disturb is on. Click to disable.</source>
-        <translation type="unfinished"></translation>
+        <translation>勿扰模式已开启。点击可关闭。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/HeaderBar.qml" line="135"/>
         <source>Disable do not disturb</source>
-        <translation type="unfinished">Disable do not disturb</translation>
+        <translation>关闭勿扰模式</translation>
     </message>
 </context>
 <context>
@@ -856,769 +913,769 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="48"/>
         <source>Merhaba, Operator</source>
-        <translation>Merhaba, Operator</translation>
+        <translation>你好，操作员</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="48"/>
         <source>Sentinel bulut yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?</source>
-        <translation>Sentinel bulut yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?</translation>
+        <translation>Sentinel 以云端 AI 之力为您服务。有什么可以帮您？</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="48"/>
         <source>Sentinel tüm yerel yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?</source>
-        <translation>Sentinel tüm yerel yapay zeka gücüyle hizmetinizde. Nasıl yardımcı olabilirim?</translation>
+        <translation>Sentinel 以全部本地 AI 之力为您服务。有什么可以帮您？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="88"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="93"/>
         <source>Günaydın, Operator</source>
-        <translation>Günaydın, Operator</translation>
+        <translation>早安，操作员</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="88"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="93"/>
         <source>Bugün yeni projeler üretmek ve hedeflerine ulaşmak için harika bir gün. Nasıl yardımcı olabilirim?</source>
-        <translation>Bugün yeni projeler üretmek ve hedeflerine ulaşmak için harika bir gün. Nasıl yardımcı olabilirim?</translation>
+        <translation>今天是开启新项目、达成目标的好日子。我能为您做些什么？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="89"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="94"/>
         <source>Güzel Bir Sabah</source>
-        <translation>Güzel Bir Sabah</translation>
+        <translation>美好清晨</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="89"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="94"/>
         <source>Zihnini taze tut, üretkenlik senin elinde. Bugün birlikte ne inşa edelim?</source>
-        <translation>Zihnini taze tut, üretkenlik senin elinde. Bugün birlikte ne inşa edelim?</translation>
+        <translation>保持头脑清醒，效率掌握在你自己手中。今天我们一起来建造些什么？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="90"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="95"/>
         <source>Günaydın, Sentinel Hazır</source>
-        <translation>Günaydın, Sentinel Hazır</translation>
+        <translation>早安，Sentinel 已就绪</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="90"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="95"/>
         <source>Yeni bir güne başlarken tüm yerel arama, analiz ve yapay zeka araçlarınla yanındayım.</source>
-        <translation>Yeni bir güne başlarken tüm yerel arama, analiz ve yapay zeka araçlarınla yanındayım.</translation>
+        <translation>迎接新的一天时，我会用你所有的本地搜索、分析和 AI 工具陪伴在你身边。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="91"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="96"/>
         <source>Sabah Odaklanması Başladı</source>
-        <translation>Sabah Odaklanması Başladı</translation>
+        <translation>晨间专注已开启</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="91"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="96"/>
         <source>Taze bir zihinle günlük planları yapmaya, işleri organize etmeye veya yeni araştırmalara başlamaya hazırız.</source>
-        <translation>Taze bir zihinle günlük planları yapmaya, işleri organize etmeye veya yeni araştırmalara başlamaya hazırız.</translation>
+        <translation>让我们以清醒的头脑制定每日计划、整理事务，或开启新的研究。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="92"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="97"/>
         <source>Günaydın! Yeni Hedefler</source>
-        <translation>Günaydın! Yeni Hedefler</translation>
+        <translation>早安！新目标</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="92"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="97"/>
         <source>Günün ilk saatlerinde zihnindeki o parlak fikri birlikte hayata geçirelim mi?</source>
-        <translation>Günün ilk saatlerinde zihnindeki o parlak fikri birlikte hayata geçirelim mi?</translation>
+        <translation>趁着一天刚开始，让我们把你脑中那个闪亮的想法一起变成现实，好吗？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="93"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="98"/>
         <source>Harika Bir Sabah Başlangıcı</source>
-        <translation>Harika Bir Sabah Başlangıcı</translation>
+        <translation>元气满满的早晨</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="93"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="98"/>
         <source>Günün üretkenliğini tetikleyecek en iyi çözümleri, yerel zekamızla harmanlayalım.</source>
-        <translation>Günün üretkenliğini tetikleyecek en iyi çözümleri, yerel zekamızla harmanlayalım.</translation>
+        <translation>让我们结合本地智能，融合出能激发当天效率的最佳方案。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="96"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="101"/>
         <source>İyi Günler, Operator</source>
-        <translation>İyi Günler, Operator</translation>
+        <translation>日安，操作员</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="96"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="101"/>
         <source>İş akışını hızlandırmak ve operasyonlarını yönetmek için hazır mıyım? Nasıl destek olabilirim?</source>
-        <translation>İş akışını hızlandırmak ve operasyonlarını yönetmek için hazır mıyım? Nasıl destek olabilirim?</translation>
+        <translation>我已准备好加速你的工作流并管理各项操作。我能如何提供帮助？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="97"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="102"/>
         <source>Tünaydın! Üretkenliğe Devam</source>
-        <translation>Tünaydın! Üretkenliğe Devam</translation>
+        <translation>下午好！继续高效前进</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="97"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="102"/>
         <source>Günün en verimli saatindeyiz. Projelerindeki tıkanıklıkları birlikte çözelim mi?</source>
-        <translation>Günün en verimli saatindeyiz. Projelerindeki tıkanıklıkları birlikte çözelim mi?</translation>
+        <translation>我们正处在一整天中最有效率的时候。让我们一起解决你项目中的瓶颈，好吗？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="98"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="103"/>
         <source>Verimli Bir Gün</source>
-        <translation>Verimli Bir Gün</translation>
+        <translation>高效的一天</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="98"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="103"/>
         <source>Kişisel ve profesyonel hedeflerini gerçekleştirelim. Yazılarında, planlarında veya analizlerinde yardım etmeye hazırım.</source>
-        <translation>Kişisel ve profesyonel hedeflerini gerçekleştirelim. Yazılarında, planlarında veya analizlerinde yardım etmeye hazırım.</translation>
+        <translation>让我们一起实现你的个人与职业目标。我随时准备在你的写作、计划或分析中提供帮助。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="99"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="104"/>
         <source>Tünaydın! Odaklanma Zamanı</source>
-        <translation>Tünaydın! Odaklanma Zamanı</translation>
+        <translation>下午好！专注时刻</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="99"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="104"/>
         <source>Hız kesmeden projelere devam ediyoruz. Metin yazma, araştırma yapma veya analiz süreçlerinde yanındayım.</source>
-        <translation>Hız kesmeden projelere devam ediyoruz. Metin yazma, araştırma yapma veya analiz süreçlerinde yanındayım.</translation>
+        <translation>我们继续马不停蹄地推进项目。在写作、研究或分析的过程中，我一直陪在你身边。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="100"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="105"/>
         <source>Tünaydın! Sentinel Göreve Hazır</source>
-        <translation>Tünaydın! Sentinel Göreve Hazır</translation>
+        <translation>下午好！Sentinel 已准备就绪</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="100"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="105"/>
         <source>Günün temposunu yakalamışken, yerel yapay zeka gücüyle iş akışını bir üst seviyeye taşıyalım.</source>
-        <translation>Günün temposunu yakalamışken, yerel yapay zeka gücüyle iş akışını bir üst seviyeye taşıyalım.</translation>
+        <translation>趁热打铁，让我们用本地 AI 的力量把工作流提升到一个新高度。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="101"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="106"/>
         <source>Öğleden Sonra Sinerjisi</source>
-        <translation>Öğleden Sonra Sinerjisi</translation>
+        <translation>午后协同</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="101"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="106"/>
         <source>Yaratıcı fikirleri, raporları ve doküman analizlerini birlikte çözmenin tam vakti.</source>
-        <translation>Yaratıcı fikirleri, raporları ve doküman analizlerini birlikte çözmenin tam vakti.</translation>
+        <translation>正是我们一起攻克创意点子、报告与文档分析的最佳时机。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="104"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="109"/>
         <source>İyi Akşamlar, Operator</source>
-        <translation>İyi Akşamlar, Operator</translation>
+        <translation>晚上好，操作员</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="104"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="109"/>
         <source>Günün geri kalanını başarılı ve verimli bir şekilde kapatmana nasıl yardımcı olabilirim?</source>
-        <translation>Günün geri kalanını başarılı ve verimli bir şekilde kapatmana nasıl yardımcı olabilirim?</translation>
+        <translation>我怎样才能帮你顺利、高效地结束今天剩下的时间？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="105"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="110"/>
         <source>Keyifli Bir Akşam Seansı</source>
-        <translation>Keyifli Bir Akşam Seansı</translation>
+        <translation>愉快的晚间时段</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="105"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="110"/>
         <source>Günün yorgunluğunu hafifletelim. Sentinel tüm yerel zekasıyla seni destekliyor.</source>
-        <translation>Günün yorgunluğunu hafifletelim. Sentinel tüm yerel zekasıyla seni destekliyor.</translation>
+        <translation>让我们缓解一天的疲惫。Sentinel 会用全部本地智能支持你。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="106"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="111"/>
         <source>İyi Akşamlar! Fikirler Canlansın</source>
-        <translation>İyi Akşamlar! Fikirler Canlansın</translation>
+        <translation>晚上好！让灵感迸发</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="106"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="111"/>
         <source>Günün hedeflerini tamamlayalım. Akşam sessizliğinde üretkenliği zirveye çıkarabiliriz.</source>
-        <translation>Günün hedeflerini tamamlayalım. Akşam sessizliğinde üretkenliği zirveye çıkarabiliriz.</translation>
+        <translation>让我们完成今天的目标。在夜晚的静谧中，我们可以把效率推向高峰。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="107"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="112"/>
         <source>Akşam Saatleri ve Odaklanma</source>
-        <translation>Akşam Saatleri ve Odaklanma</translation>
+        <translation>晚间时段与专注</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="107"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="112"/>
         <source>Günün raporlarını gözden geçirelim, yarım kalan işleri toparlayalım veya yeni fikirleri hayata geçirelim.</source>
-        <translation>Günün raporlarını gözden geçirelim, yarım kalan işleri toparlayalım veya yeni fikirleri hayata geçirelim.</translation>
+        <translation>让我们一起回顾今天的报告、收尾未完成的工作，或把新想法付诸实践。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="108"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="113"/>
         <source>İyi Akşamlar! Sentinel Yanında</source>
-        <translation>İyi Akşamlar! Sentinel Yanında</translation>
+        <translation>晚上好！Sentinel 与你同在</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="108"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="113"/>
         <source>Sakin bir akşam seansında, en karmaşık problemleri adım adım analiz etmek için buradayım.</source>
-        <translation>Sakin bir akşam seansında, en karmaşık problemleri adım adım analiz etmek için buradayım.</translation>
+        <translation>在这个平静的晚间时段，我会一步步帮你分析最复杂的问题。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="109"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="114"/>
         <source>Akşam Üretkenliği</source>
-        <translation>Akşam Üretkenliği</translation>
+        <translation>晚间高效时光</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="109"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="114"/>
         <source>Günün son adımlarını atarken yerel arama gücüyle en kritik belgelere ve bilgilere ulaş.</source>
-        <translation>Günün son adımlarını atarken yerel arama gücüyle en kritik belgelere ve bilgilere ulaş.</translation>
+        <translation>在一天的最后几步，借助本地搜索的力量触达最关键的文件和信息。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="112"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="117"/>
         <source>İyi Geceler, Operator</source>
-        <translation>İyi Geceler, Operator</translation>
+        <translation>晚安，操作员</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="112"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="117"/>
         <source>Son detayları gözden geçirmek, planlarını hazırlamak veya yaratıcı yazılar yazmak için burayım.</source>
-        <translation>Son detayları gözden geçirmek, planlarını hazırlamak veya yaratıcı yazılar yazmak için burayım.</translation>
+        <translation>我在这里，陪你检查最后的细节、制定计划，或进行创意写作。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="113"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="118"/>
         <source>Gece Sessizliği ve Odaklanma</source>
-        <translation>Gece Sessizliği ve Odaklanma</translation>
+        <translation>夜深静谧与专注</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="113"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="118"/>
         <source>Sessiz ve odaklanmış bir çalışma seansı için hazırım. Zihnindeki fikirleri hayata geçirelim mi?</source>
-        <translation>Sessiz ve odaklanmış bir çalışma seansı için hazırım. Zihnindeki fikirleri hayata geçirelim mi?</translation>
+        <translation>我已准备好开启一段安静而专注的工作时段。让我们把你脑海中的想法变为现实，好吗？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="114"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="119"/>
         <source>İyi Geceler! Sentinel Aktif</source>
-        <translation>İyi Geceler! Sentinel Aktif</translation>
+        <translation>晚安！Sentinel 已就绪</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="114"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="119"/>
         <source>Günü kapatmadan önce yarım kalan işleri veya yarına dair planları organize edebiliriz.</source>
-        <translation>Günü kapatmadan önce yarım kalan işleri veya yarına dair planları organize edebiliriz.</translation>
+        <translation>在结束今天之前，我们可以一起整理未完成的工作，或为明天做计划。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="115"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="120"/>
         <source>Gece Boyu Üretkenlik</source>
-        <translation>Gece Boyu Üretkenlik</translation>
+        <translation>整夜高效</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="115"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="120"/>
         <source>Gece sessizliğinin getirdiği o benzersiz odakla, en karmaşık soruları ve projeleri birlikte analiz edelim.</source>
-        <translation>Gece sessizliğinin getirdiği o benzersiz odakla, en karmaşık soruları ve projeleri birlikte analiz edelim.</translation>
+        <translation>趁着夜晚静谧带来的那份独特专注，让我们一起分析最复杂的问题和项目。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="116"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="121"/>
         <source>İyi Geceler! Gece Seansı Başladı</source>
-        <translation>İyi Geceler! Gece Seansı Başladı</translation>
+        <translation>晚安！夜间模式已开启</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="116"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="121"/>
         <source>Uykudan önce son bir okuma mı? Yoksa yarına dair hedeflerin yapılandırılması mı?</source>
-        <translation>Uykudan önce son bir okuma mı? Yoksa yarına dair hedeflerin yapılandırılması mı?</translation>
+        <translation>睡前还想再读点什么？还是为明天规划目标？</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="117"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="122"/>
         <source>Gece Yarısı Yaratıcılığı</source>
-        <translation>Gece Yarısı Yaratıcılığı</translation>
+        <translation>午夜创意时刻</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="117"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="122"/>
         <source>Herkes uyurken yeni projelerin temellerini yerel yapay zeka asistanınla güvenle at.</source>
-        <translation>Herkes uyurken yeni projelerin temellerini yerel yapay zeka asistanınla güvenle at.</translation>
+        <translation>趁大家都在熟睡，用你的本地 AI 助手安心地为新项目打下基础。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="299"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="301"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="365"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="367"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="304"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="306"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="370"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="372"/>
         <source>New Chat</source>
-        <translation>New Chat</translation>
+        <translation>新对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="329"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="334"/>
         <source>Show sidebar</source>
-        <translation>Show sidebar</translation>
+        <translation>显示侧边栏</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="425"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="443"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="430"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="448"/>
         <source>Search</source>
         <translation>搜索</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="467"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="472"/>
         <source>Hide sidebar</source>
-        <translation>Hide sidebar</translation>
+        <translation>隐藏侧边栏</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="495"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="500"/>
         <source>Recent chats</source>
-        <translation>Recent chats</translation>
+        <translation>最近的对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="498"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="503"/>
         <source>Recent</source>
-        <translation>Recent</translation>
+        <translation>最近</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="522"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="527"/>
         <source>Pinned chats</source>
-        <translation>Pinned chats</translation>
+        <translation>置顶的对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="548"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="553"/>
         <source>Archived chats</source>
-        <translation>Archived chats</translation>
+        <translation>已归档的对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="697"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="702"/>
         <source>Unpin</source>
-        <translation>Unpin</translation>
+        <translation>取消置顶</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="697"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="702"/>
         <source>Pin</source>
-        <translation>Pin</translation>
+        <translation>置顶</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="708"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="713"/>
         <source>Unarchive</source>
-        <translation>Unarchive</translation>
+        <translation>取消归档</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="708"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="713"/>
         <source>Archive</source>
-        <translation>Archive</translation>
+        <translation>归档</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="721"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2392"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="726"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2403"/>
         <source>Delete</source>
         <translation>删除</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="752"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="757"/>
         <source>No pinned chats</source>
-        <translation>No pinned chats</translation>
+        <translation>没有置顶的对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="753"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="758"/>
         <source>No archived chats</source>
-        <translation>No archived chats</translation>
+        <translation>没有已归档的对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="754"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="759"/>
         <source>No chats yet</source>
-        <translation>No chats yet</translation>
+        <translation>还没有对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="877"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="883"/>
         <source>Özet Çıkarma</source>
-        <translation>Özet Çıkarma</translation>
+        <translation>提取摘要</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="877"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="883"/>
         <source>Eklediğim PDF belgesinin yönetici özetini ve ana hatlarını çıkar</source>
-        <translation>Eklediğim PDF belgesinin yönetici özetini ve ana hatlarını çıkar</translation>
+        <translation>提取我上传的 PDF 文档的管理层摘要与要点大纲</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="878"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="884"/>
         <source>Excel Formül Asistanı</source>
-        <translation>Excel Formül Asistanı</translation>
+        <translation>Excel 公式助手</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="878"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="884"/>
         <source>İki farklı sütundaki verileri karşılaştırıp eşleşmeyenleri bulan bir Excel formülü yaz</source>
-        <translation>İki farklı sütundaki verileri karşılaştırıp eşleşmeyenleri bulan bir Excel formülü yaz</translation>
+        <translation>编写一个 Excel 公式，用于比较两列中的数据并找出不匹配项</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="879"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="885"/>
         <source>İş E-postası</source>
-        <translation>İş E-postası</translation>
+        <translation>工作邮件</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="879"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="885"/>
         <source>Müşteriye veya yöneticiye durumu açıklayan kibar ve profesyonel bir e-posta taslağı yaz</source>
-        <translation>Müşteriye veya yöneticiye durumu açıklayan kibar ve profesyonel bir e-posta taslağı yaz</translation>
+        <translation>写一封礼貌而专业的电子邮件草稿，向客户或上级说明情况</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="880"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="886"/>
         <source>İçerik Fikirleri</source>
-        <translation>İçerik Fikirleri</translation>
+        <translation>内容创意</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="880"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="886"/>
         <source>Sosyal medya veya blog için ilgi çekici 5 içerik fikri ve başlığı bul</source>
-        <translation>Sosyal medya veya blog için ilgi çekici 5 içerik fikri ve başlığı bul</translation>
+        <translation>为社交媒体或博客想出 5 个吸引人的内容创意和标题</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="881"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="887"/>
         <source>Basitçe Açıkla</source>
-        <translation>Basitçe Açıkla</translation>
+        <translation>简单解释</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="881"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="887"/>
         <source>Karmaşık bir kavramı veya teoriyi 10 yaşındaki birine anlatır gibi sade ve anlaşılır biçimde açıkla</source>
-        <translation>Karmaşık bir kavramı veya teoriyi 10 yaşındaki birine anlatır gibi sade ve anlaşılır biçimde açıkla</translation>
+        <translation>用给 10 岁孩子讲道理那样简单易懂的方式，解释一个复杂的概念或理论</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="882"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="888"/>
         <source>Dil Öğrenimi</source>
-        <translation>Dil Öğrenimi</translation>
+        <translation>语言学习</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="882"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="888"/>
         <source>Verilen bir metni İngilizceye doğal ve akıcı bir şekilde çevir ve kullanılan önemli kalıpları göster</source>
-        <translation>Verilen bir metni İngilizceye doğal ve akıcı bir şekilde çevir ve kullanılan önemli kalıpları göster</translation>
+        <translation>把给定的文本自然地翻译成英语，并指出其中用到的重要表达</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="883"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="889"/>
         <source>Haftalık Yemek Planı</source>
-        <translation>Haftalık Yemek Planı</translation>
+        <translation>一周食谱计划</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="883"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="889"/>
         <source>Sağlıklı, pratik ve bütçe dostu 5 günlük akşam yemeği menüsü ve alışveriş listesi oluştur</source>
-        <translation>Sağlıklı, pratik ve bütçe dostu 5 günlük akşam yemeği menüsü ve alışveriş listesi oluştur</translation>
+        <translation>制定一份健康、实用且经济实惠的 5 天晚餐菜单和购物清单</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="884"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="890"/>
         <source>Seyahat Rotası</source>
-        <translation>Seyahat Rotası</translation>
+        <translation>旅行路线</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="884"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="890"/>
         <source>3 günlük bir şehir gezisi (örneğin Kapadokya veya Roma) için ayrıntılı ve optimize edilmiş bir rota planla</source>
-        <translation>3 günlük bir şehir gezisi (örneğin Kapadokya veya Roma) için ayrıntılı ve optimize edilmiş bir rota planla</translation>
+        <translation>为一次 3 天的城市之旅（例如卡帕多奇亚或罗马）制定一份详细且优化的行程计划</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="885"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="891"/>
         <source>Hediye Önerileri</source>
-        <translation>Hediye Önerileri</translation>
+        <translation>礼物建议</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="885"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="891"/>
         <source>Belirli bir bütçeye ve ilgi alanlarına göre arkadaşım/ailem için 5 özgün hediye önerisi sun</source>
-        <translation>Belirli bir bütçeye ve ilgi alanlarına göre arkadaşım/ailem için 5 özgün hediye önerisi sun</translation>
+        <translation>根据特定预算和兴趣，为我的朋友/家人提供 5 个独特的礼物建议</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="886"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="892"/>
         <source>Zaman Yönetimi</source>
-        <translation>Zaman Yönetimi</translation>
+        <translation>时间管理</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="886"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="892"/>
         <source>Günün yoğun temposunu yönetmek ve ertelemeyi önlemek için Pomodoro tabanlı bir günlük plan hazırlamamda yardımcı ol</source>
-        <translation>Günün yoğun temposunu yönetmek ve ertelemeyi önlemek için Pomodoro tabanlı bir günlük plan hazırlamamda yardımcı ol</translation>
+        <translation>帮我制定一份基于番茄工作法的每日计划，以应对繁忙的节奏并避免拖延</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="887"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="893"/>
         <source>Toplantı Tutanakları</source>
-        <translation>Toplantı Tutanakları</translation>
+        <translation>会议纪要</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="887"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="893"/>
         <source>Toplantıda karışık olarak aldığım notları maddeler halinde düzenli bir toplantı özetine dönüştür</source>
-        <translation>Toplantıda karışık olarak aldığım notları maddeler halinde düzenli bir toplantı özetine dönüştür</translation>
+        <translation>把我会议中随手记下的凌乱笔记整理成条目清晰的会议纪要</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="888"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="894"/>
         <source>Temel Otomasyon</source>
-        <translation>Temel Otomasyon</translation>
+        <translation>基础自动化</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="888"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="894"/>
         <source>Bilgisayardaki dosya adlarını topluca değiştiren veya düzenleyen basit bir betik veya komut satırı kodu yaz</source>
-        <translation>Bilgisayardaki dosya adlarını topluca değiştiren veya düzenleyen basit bir betik veya komut satırı kodu yaz</translation>
+        <translation>编写一个简单的脚本或命令行代码，用于批量重命名或整理电脑上的文件</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="889"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="895"/>
         <source>Metin Düzenleme</source>
-        <translation>Metin Düzenleme</translation>
+        <translation>文本润色</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="889"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="895"/>
         <source>Yazdığım bu metni dil bilgisi, imla ve anlatım bozuklukları açısından inceleyip daha profesyonel hale getir</source>
-        <translation>Yazdığım bu metni dil bilgisi, imla ve anlatım bozuklukları açısından inceleyip daha profesyonel hale getir</translation>
+        <translation>检查我写的这段文字中的语法、拼写和表达问题，并让它更专业</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="890"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="896"/>
         <source>Hedef Planlama</source>
-        <translation>Hedef Planlama</translation>
+        <translation>目标规划</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="890"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="896"/>
         <source>Kişisel hedeflerimi veya bir projenin çeyreklik hedeflerini (OKR) belirlemek için bir çerçeve öner</source>
-        <translation>Kişisel hedeflerimi veya bir projenin çeyreklik hedeflerini (OKR) belirlemek için bir çerçeve öner</translation>
+        <translation>为设定个人目标或一个项目的季度目标 (OKR) 提出一套框架</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="891"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="897"/>
         <source>Veri Analizi</source>
-        <translation>Veri Analizi</translation>
+        <translation>数据分析</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="891"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="897"/>
         <source>Bir tablo veya veri setindeki önemli eğilimleri, desenleri ve anomalileri özetleyen bir rapor taslağı hazırla</source>
-        <translation>Bir tablo veya veri setindeki önemli eğilimleri, desenleri ve anomalileri özetleyen bir rapor taslağı hazırla</translation>
+        <translation>起草一份报告，总结表格或数据集中重要的趋势、模式与异常</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="892"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="898"/>
         <source>Diplomatik Yanıt</source>
-        <translation>Diplomatik Yanıt</translation>
+        <translation>得体的回复</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="892"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="898"/>
         <source>Müşteri veya iş ortağından gelen beklenmedik bir talebe ya da gecikmeye karşı profesyonel ve yapıcı bir yanıt yaz</source>
-        <translation>Müşteri veya iş ortağından gelen beklenmedik bir talebe ya da gecikmeye karşı profesyonel ve yapıcı bir yanıt yaz</translation>
+        <translation>针对客户或合作伙伴提出的意外要求或延误，写一份专业而建设性的回复</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="893"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="899"/>
         <source>Yaratıcı Yazarlık</source>
-        <translation>Yaratıcı Yazarlık</translation>
+        <translation>创意写作</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="893"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="899"/>
         <source>Belirli bir tema etrafında ilgi çekici bir kısa hikaye başlangıcı veya yaratıcı yazı taslağı oluştur</source>
-        <translation>Belirli bir tema etrafında ilgi çekici bir kısa hikaye başlangıcı veya yaratıcı yazı taslağı oluştur</translation>
+        <translation>围绕特定主题，创作一个引人入胜的短篇故事开头或创意写作草稿</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="894"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="900"/>
         <source>Bülten Hazırlama</source>
-        <translation>Bülten Hazırlama</translation>
+        <translation>新闻稿撰写</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="894"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="900"/>
         <source>Aylık güncellemelerimizi veya ürün lansmanımızı duyuran ilgi çekici bir e-bülten taslağı yaz</source>
-        <translation>Aylık güncellemelerimizi veya ürün lansmanımızı duyuran ilgi çekici bir e-bülten taslağı yaz</translation>
+        <translation>为我们的月度更新或产品发布撰写一份吸引人的电子报草稿</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="895"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="901"/>
         <source>Python CSV İşleme</source>
-        <translation>Python CSV İşleme</translation>
+        <translation>Python CSV 处理</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="895"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="901"/>
         <source>İki CSV dosyasını birleştiren ve filtreleyen basit bir Python betiği yaz</source>
-        <translation>İki CSV dosyasını birleştiren ve filtreleyen basit bir Python betiği yaz</translation>
+        <translation>编写一个简单的 Python 脚本，用于合并和筛选两个 CSV 文件</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="896"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="902"/>
         <source>Sunum Taslağı</source>
-        <translation>Sunum Taslağı</translation>
+        <translation>演示文稿草稿</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="896"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="902"/>
         <source>Belirli bir konuda etkileyici ve akıcı bir sunum slayt yapısı ve konuşma notları tasarla</source>
-        <translation>Belirli bir konuda etkileyici ve akıcı bir sunum slayt yapısı ve konuşma notları tasarla</translation>
+        <translation>针对特定主题，设计一套令人印象深刻且流畅的演示文稿幻灯片结构与演讲备注</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="897"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="903"/>
         <source>Klavye Kısayolları</source>
-        <translation>Klavye Kısayolları</translation>
+        <translation>键盘快捷键</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="897"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="903"/>
         <source>İşletim sisteminde veya sık kullanılan bir uygulamada iş akışını hızlandıracak en pratik kısayolları listele</source>
-        <translation>İşletim sisteminde veya sık kullanılan bir uygulamada iş akışını hızlandıracak en pratik kısayolları listele</translation>
+        <translation>列出在操作系统或常用应用中提升工作流效率的最实用快捷键</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="898"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="904"/>
         <source>Öğrenme Planı</source>
-        <translation>Öğrenme Planı</translation>
+        <translation>学习计划</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="898"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="904"/>
         <source>Yeni bir konuyu sıfırdan öğrenmek için (örneğin temel finans veya temel fotoğrafçılık) 4 haftalık adım adım çalışma planı hazırla</source>
-        <translation>Yeni bir konuyu sıfırdan öğrenmek için (örneğin temel finans veya temel fotoğrafçılık) 4 haftalık adım adım çalışma planı hazırla</translation>
+        <translation>为从零开始学习一个新主题（例如基础理财或基础摄影）制定一份为期 4 周的循序渐进学习计划</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="899"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="905"/>
         <source>Sağlıklı Yaşam</source>
-        <translation>Sağlıklı Yaşam</translation>
+        <translation>健康生活</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="899"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="905"/>
         <source>Masa başında çalışanlar için gün içinde yapılabilecek esneme egzersizleri ve duruş düzeltme önerileri listele</source>
-        <translation>Masa başında çalışanlar için gün içinde yapılabilecek esneme egzersizleri ve duruş düzeltme önerileri listele</translation>
+        <translation>为久坐办公的人列出一天中可做的伸展运动与改善姿势的建议</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="900"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="906"/>
         <source>Blog Yazısı Taslağı</source>
-        <translation>Blog Yazısı Taslağı</translation>
+        <translation>博客文章草稿</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="900"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="906"/>
         <source>Belirli bir konuda SEO uyumlu, alt başlıkları ve giriş paragrafı hazır olan detaylı bir blog yazısı şablonu oluştur</source>
-        <translation>Belirli bir konuda SEO uyumlu, alt başlıkları ve giriş paragrafı hazır olan detaylı bir blog yazısı şablonu oluştur</translation>
+        <translation>针对特定主题，创建一篇含小标题和引言段落、符合 SEO 的详细博客文章模板</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1090"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2006"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1101"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2017"/>
         <source>Add or Actions</source>
-        <translation>Add or Actions</translation>
+        <translation>添加或操作</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1150"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2066"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2248"/>
-        <source>Upload Image</source>
-        <translation>Upload Image</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1176"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2092"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1161"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2077"/>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2259"/>
+        <source>Upload Image</source>
+        <translation>上传图片</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1187"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2103"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2270"/>
         <source>Upload File</source>
-        <translation>Upload File</translation>
+        <translation>上传文件</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1191"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2138"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1202"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2149"/>
         <source>Sentinel is responding</source>
-        <translation>Sentinel is responding</translation>
+        <translation>Sentinel 正在回复</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1191"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2138"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1202"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2149"/>
         <source>Ask Sentinel</source>
-        <translation>Ask Sentinel</translation>
+        <translation>向 Sentinel 提问</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1228"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2171"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1239"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2182"/>
         <source>Stop Recording</source>
-        <translation>Stop Recording</translation>
+        <translation>停止录音</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1228"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2171"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1239"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2182"/>
         <source>Voice Input</source>
-        <translation>Voice Input</translation>
+        <translation>语音输入</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1272"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2216"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1283"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2227"/>
         <source>Stop</source>
-        <translation>Stop</translation>
+        <translation>停止</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1272"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2216"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1283"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2227"/>
         <source>Send</source>
-        <translation>Send</translation>
+        <translation>发送</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1299"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1314"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1310"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1325"/>
         <source>Mode</source>
-        <translation>Mode</translation>
+        <translation>模式</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1386"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1397"/>
         <source>Provider</source>
-        <translation>Provider</translation>
+        <translation>提供者</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1478"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1489"/>
         <source>Model</source>
-        <translation>Model</translation>
+        <translation>模型</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1500"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1511"/>
         <source>No model</source>
-        <translation>No model</translation>
+        <translation>无模型</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1726"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1737"/>
         <source>You</source>
-        <translation>You</translation>
+        <translation>您</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1726"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1737"/>
         <source>Sentinel</source>
         <translation>Sentinel</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1738"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1749"/>
         <source>Copy</source>
-        <translation>Copy</translation>
+        <translation>复制</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1809"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1820"/>
         <source>Edit</source>
         <translation>编辑</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1817"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1828"/>
         <source>Regenerate</source>
-        <translation>Regenerate</translation>
+        <translation>重新生成</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1819"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1830"/>
         <source>Regenerate the previous response.</source>
-        <translation>Regenerate the previous response.</translation>
+        <translation>重新生成上一条回复。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1823"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1834"/>
         <source>Copy Text</source>
-        <translation>Copy Text</translation>
+        <translation>复制文本</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1839"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1850"/>
         <source>Unpin conversation</source>
-        <translation>Unpin conversation</translation>
+        <translation>取消置顶对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1839"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1850"/>
         <source>Pin conversation</source>
-        <translation>Pin conversation</translation>
+        <translation>置顶对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1855"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1866"/>
         <source>Unarchive conversation</source>
-        <translation>Unarchive conversation</translation>
+        <translation>取消归档对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1855"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1866"/>
         <source>Archive conversation</source>
-        <translation>Archive conversation</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1867"/>
-        <source>Export Markdown</source>
-        <translation>Export Markdown</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1871"/>
-        <source>Export TXT</source>
-        <translation>Export TXT</translation>
+        <translation>归档对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1878"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2319"/>
+        <source>Export Markdown</source>
+        <translation>导出为 Markdown</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1882"/>
+        <source>Export TXT</source>
+        <translation>导出为 TXT</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="1889"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2330"/>
         <source>Delete conversation</source>
-        <translation>Delete conversation</translation>
+        <translation>删除对话</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2122"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2133"/>
         <source>Özet Oluştur</source>
-        <translation>Özet Oluştur</translation>
+        <translation>生成摘要</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2237"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2248"/>
         <source> Local %1 only. No cloud provider active.</source>
-        <translation> Local %1 only. No cloud provider active.</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2251"/>
-        <source>Images (*.png *.jpg *.jpeg *.webp *.gif *.bmp)</source>
-        <translation>Images (*.png *.jpg *.jpeg *.webp *.gif *.bmp)</translation>
-    </message>
-    <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2252"/>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2264"/>
-        <source>All files (*)</source>
-        <translation>All files (*)</translation>
+        <translation> 仅本地 %1。没有活动的云提供商。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2262"/>
-        <source>Documents (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)</source>
-        <translation>Documents (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)</translation>
+        <source>Images (*.png *.jpg *.jpeg *.webp *.gif *.bmp)</source>
+        <translation>图片 (*.png *.jpg *.jpeg *.webp *.gif *.bmp)</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2263"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2275"/>
+        <source>All files (*)</source>
+        <translation>所有文件 (*)</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2273"/>
+        <source>Documents (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)</source>
+        <translation>文档 (*.pdf *.txt *.md *.markdown *.docx *.csv *.json)</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2274"/>
         <source>Source code files (*.cpp *.h *.hpp *.qml *.js *.ts *.py *.java *.cs *.go *.rs *.swift)</source>
-        <translation>Source code files (*.cpp *.h *.hpp *.qml *.js *.ts *.py *.java *.cs *.go *.rs *.swift)</translation>
+        <translation>源代码文件 (*.cpp *.h *.hpp *.qml *.js *.ts *.py *.java *.cs *.go *.rs *.swift)</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2353"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2364"/>
         <source>This action cannot be undone. The conversation will be permanently removed.</source>
-        <translation>This action cannot be undone. The conversation will be permanently removed.</translation>
+        <translation>此操作无法撤销，对话将被永久删除。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2369"/>
+        <location filename="../ui/qml/components/chat/HomeChatSurface.qml" line="2380"/>
         <source>Cancel</source>
         <translation>取消</translation>
     </message>
@@ -1638,7 +1695,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/models/LocalModelsTab.qml" line="94"/>
         <source>Select</source>
-        <translation>Select</translation>
+        <translation>选择</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/LocalModelsTab.qml" line="100"/>
@@ -1656,27 +1713,27 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/Main.qml" line="419"/>
         <source>Restore previous session?</source>
-        <translation>Restore previous session?</translation>
+        <translation>恢复上一个会话？</translation>
     </message>
     <message>
         <location filename="../ui/qml/Main.qml" line="428"/>
         <source>Sentinel saved your last draft locally. Restore it into the composer or discard it.</source>
-        <translation>Sentinel saved your last draft locally. Restore it into the composer or discard it.</translation>
+        <translation>Sentinel 已将您的最后一份草稿保存在本地。您可以将其恢复到输入框，也可以放弃它。</translation>
     </message>
     <message>
         <location filename="../ui/qml/Main.qml" line="436"/>
         <source>Discard</source>
-        <translation>Discard</translation>
+        <translation>放弃</translation>
     </message>
     <message>
         <location filename="../ui/qml/Main.qml" line="444"/>
         <source>Restore</source>
-        <translation>Restore</translation>
+        <translation>恢复</translation>
     </message>
     <message>
         <location filename="../ui/qml/Main.qml" line="578"/>
         <source>Download failed. Please check your network connection and try again.</source>
-        <translation>Download failed. Please check your network connection and try again.</translation>
+        <translation>下载失败。请检查您的网络连接后重试。</translation>
     </message>
 </context>
 <context>
@@ -1684,52 +1741,52 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="110"/>
         <source>Text / Image</source>
-        <translation type="unfinished"></translation>
+        <translation>文本 / 图像</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="113"/>
         <source>Audio</source>
-        <translation type="unfinished"></translation>
+        <translation>音频</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="119"/>
         <source>Text</source>
-        <translation type="unfinished"></translation>
+        <translation>文本</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="216"/>
         <source>by %1</source>
-        <translation>by %1</translation>
+        <translation>由 %1 提供</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="275"/>
         <source>INTERFACE</source>
-        <translation>INTERFACE</translation>
+        <translation>界面</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="275"/>
         <source>CONTEXT</source>
-        <translation>CONTEXT</translation>
+        <translation>上下文</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="283"/>
         <source>%1 tokens</source>
-        <translation>%1 tokens</translation>
+        <translation>%1 个 tokens</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="302"/>
         <source>DEFAULT PORT</source>
-        <translation>DEFAULT PORT</translation>
+        <translation>默认端口</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="302"/>
         <source>INPUT TYPE</source>
-        <translation>INPUT TYPE</translation>
+        <translation>输入类型</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="341"/>
         <source>Downloading model…</source>
-        <translation>Downloading model…</translation>
+        <translation>正在下载模型…</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="400"/>
@@ -1739,22 +1796,22 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="464"/>
         <source>Remove Model</source>
-        <translation>Remove Model</translation>
+        <translation>移除模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="465"/>
         <source>Downloading…</source>
-        <translation>Downloading…</translation>
+        <translation>正在下载…</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="466"/>
         <source>Install Model</source>
-        <translation>Install Model</translation>
+        <translation>安装模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/ModelDetailPopup.qml" line="516"/>
         <source>Visit provider website ↗</source>
-        <translation>Visit provider website ↗</translation>
+        <translation>访问提供者网站 ↗</translation>
     </message>
 </context>
 <context>
@@ -1772,7 +1829,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/settings/ModelSettingsTab.qml" line="41"/>
         <source>Provider</source>
-        <translation>Provider</translation>
+        <translation>提供者</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/ModelSettingsTab.qml" line="77"/>
@@ -1787,7 +1844,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/settings/ModelSettingsTab.qml" line="85"/>
         <source>None selected</source>
-        <translation>None selected</translation>
+        <translation>未选择</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/ModelSettingsTab.qml" line="92"/>
@@ -1828,512 +1885,512 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="27"/>
         <source>High-capacity multilingual open-weight model. Strong at reasoning, coding, and long-context tasks.</source>
-        <translation>High-capacity multilingual open-weight model. Strong at reasoning, coding, and long-context tasks.</translation>
+        <translation>高容量多语言开源权重模型，擅长推理、编程与长上下文任务。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="28"/>
         <source>Complex reasoning, developer workflows, and multi-turn agents.</source>
-        <translation>Complex reasoning, developer workflows, and multi-turn agents.</translation>
+        <translation>复杂推理、开发者工作流与多轮智能体。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="38"/>
         <source>Lightweight on-device model ideal for edge inference and fast response.</source>
-        <translation>Lightweight on-device model ideal for edge inference and fast response.</translation>
+        <translation>轻量级设备端模型，非常适合边缘推理与快速响应。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="39"/>
         <source>Fast local chat, low-overhead agent automation, and daily assistance.</source>
-        <translation>Fast local chat, low-overhead agent automation, and daily assistance.</translation>
+        <translation>快速的本地对话、低开销的智能体自动化与日常协助。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="49"/>
         <source>Ultra-compact model designed for low-latency Edge devices and mobile usage.</source>
-        <translation>Ultra-compact model designed for low-latency Edge devices and mobile usage.</translation>
+        <translation>为低延迟边缘设备和移动端设计的超紧凑模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="50"/>
         <source>Ultra-fast autocomplete and resource-constrained edge computing.</source>
-        <translation>Ultra-fast autocomplete and resource-constrained edge computing.</translation>
+        <translation>超快自动补全与资源受限的边缘计算。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="60"/>
         <source>Meta Llama 3.1 8B Instruct. Highly capable multilingual model with expanded context window.</source>
-        <translation>Meta Llama 3.1 8B Instruct. Highly capable multilingual model with expanded context window.</translation>
+        <translation>Meta Llama 3.1 8B Instruct，能力出众的多语言模型，拥有扩展的上下文窗口。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="61"/>
         <source>General-purpose agent workflows, daily coding assistance, and tool use.</source>
-        <translation>General-purpose agent workflows, daily coding assistance, and tool use.</translation>
+        <translation>通用智能体工作流、日常编程辅助与工具调用。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="71"/>
         <source>Balanced multilingual model with strong math and code capabilities.</source>
-        <translation>Balanced multilingual model with strong math and code capabilities.</translation>
+        <translation>均衡的多语言模型，具备强大的数学与编程能力。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="72"/>
         <source>Structured JSON formatting, multilingual writing, and mathematical queries.</source>
-        <translation>Structured JSON formatting, multilingual writing, and mathematical queries.</translation>
+        <translation>结构化 JSON 格式、多语言写作与数学查询。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="82"/>
         <source>Large multilingual model with exceptional coding, math and translation capabilities.</source>
-        <translation>Large multilingual model with exceptional coding, math and translation capabilities.</translation>
+        <translation>大型多语言模型，具备出色的编程、数学与翻译能力。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="83"/>
         <source>Professional coding, advanced text reasoning, and complex translation.</source>
-        <translation>Professional coding, advanced text reasoning, and complex translation.</translation>
+        <translation>专业编程、高级文本推理与复杂翻译。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="93"/>
         <source>State-of-the-art coding specialist with broad programming language support and chat usability.</source>
-        <translation>State-of-the-art coding specialist with broad programming language support and chat usability.</translation>
+        <translation>一流编程专家模型，支持广泛的编程语言并具备出色的对话体验。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="94"/>
         <source>Inline code completion, refactoring, unit test generation, and debugging.</source>
-        <translation>Inline code completion, refactoring, unit test generation, and debugging.</translation>
+        <translation>内联代码补全、重构、单元测试生成与调试。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="104"/>
         <source>Google&apos;s highly efficient open-weight model, delivering high quality and safety features.</source>
-        <translation>Google&apos;s highly efficient open-weight model, delivering high quality and safety features.</translation>
+        <translation>谷歌高效的开源权重模型，兼具高质量与安全特性。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="105"/>
         <source>Analytical text processing, summarization, and safe content generation.</source>
-        <translation>Analytical text processing, summarization, and safe content generation.</translation>
+        <translation>分析性文本处理、摘要生成与安全的内容创作。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="115"/>
         <source>Efficient 7B instruction-tuned model with sliding window attention.</source>
-        <translation>Efficient 7B instruction-tuned model with sliding window attention.</translation>
+        <translation>高效 7B 指令微调模型，采用滑动窗口注意力机制。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="116"/>
         <source>General text editing, summarization, and context-aware chat.</source>
-        <translation>General text editing, summarization, and context-aware chat.</translation>
+        <translation>通用文本编辑、摘要生成与感知上下文的对话。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="126"/>
         <source>State-of-the-art 12B model built in collaboration with NVIDIA. Very large token dictionary.</source>
-        <translation>State-of-the-art 12B model built in collaboration with NVIDIA. Very large token dictionary.</translation>
+        <translation>与 NVIDIA 合作打造的一流 12B 模型，词元字典极为庞大。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="127"/>
         <source>Multilingual translation, conversational AI, and precise general writing.</source>
-        <translation>Multilingual translation, conversational AI, and precise general writing.</translation>
+        <translation>多语言翻译、对话式 AI 与精准的通用写作。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="138"/>
         <source>Highly capable reasoning model distilled from DeepSeek R1 into Qwen 32B. Elite logical output.</source>
-        <translation>Highly capable reasoning model distilled from DeepSeek R1 into Qwen 32B. Elite logical output.</translation>
+        <translation>从 DeepSeek R1 蒸馏到 Qwen 32B 的高性能推理模型，逻辑输出出色。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="139"/>
         <source>Scientific analysis, advanced competitive coding, and complex mathematical proofs.</source>
-        <translation>Scientific analysis, advanced competitive coding, and complex mathematical proofs.</translation>
+        <translation>科学分析、高级竞技编程与复杂数学证明。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="149"/>
         <source>Chain-of-thought reasoning model trained with reinforcement learning.</source>
-        <translation>Chain-of-thought reasoning model trained with reinforcement learning.</translation>
+        <translation>通过强化学习训练的思维链推理模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="150"/>
         <source>Deep mathematical problem solving, code logic verification, and complex logic.</source>
-        <translation>Deep mathematical problem solving, code logic verification, and complex logic.</translation>
+        <translation>深度数学问题求解、代码逻辑验证与复杂逻辑。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="160"/>
         <source>Reasoning model distilled from DeepSeek R1 into Qwen 8B. Excellent logic.</source>
-        <translation>Reasoning model distilled from DeepSeek R1 into Qwen 8B. Excellent logic.</translation>
+        <translation>从 DeepSeek R1 蒸馏到 Qwen 8B 的推理模型，逻辑能力出色。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="161"/>
         <source>Distilled step-by-step thinking, fast reasoning, and task planning.</source>
-        <translation>Distilled step-by-step thinking, fast reasoning, and task planning.</translation>
+        <translation>蒸馏式逐步思考、快速推理与任务规划。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="171"/>
         <source>Ultra-lightweight reasoning model distilled from DeepSeek R1. Fast reasoning on any device.</source>
-        <translation>Ultra-lightweight reasoning model distilled from DeepSeek R1. Fast reasoning on any device.</translation>
+        <translation>从 DeepSeek R1 蒸馏的超轻量推理模型，可在任何设备上快速推理。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="172"/>
         <source>Low-overhead logical tasks, edge reasoning, and instant math/logic answers.</source>
-        <translation>Low-overhead logical tasks, edge reasoning, and instant math/logic answers.</translation>
+        <translation>低开销的逻辑任务、边缘推理与即时数学/逻辑解答。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="182"/>
         <source>Small model with strong STEM reasoning. Punches well above its weight class.</source>
-        <translation>Small model with strong STEM reasoning. Punches well above its weight class.</translation>
+        <translation>小型模型却拥有强大的 STEM 推理能力，实力远超其体积。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="183"/>
         <source>STEM reasoning, scientific logic, and quick logic puzzles.</source>
-        <translation>STEM reasoning, scientific logic, and quick logic puzzles.</translation>
+        <translation>STEM 推理、科学逻辑与快速逻辑谜题。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="194"/>
         <source>Apple Silicon optimized Llama 3.2 3B Instruct model using Apple&apos;s MLX framework.</source>
-        <translation>Apple Silicon optimized Llama 3.2 3B Instruct model using Apple&apos;s MLX framework.</translation>
+        <translation>基于 Apple MLX 框架、针对 Apple Silicon 优化的 Llama 3.2 3B Instruct 模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="195"/>
         <source>Mac-native low-latency chat and light task orchestration.</source>
-        <translation>Mac-native low-latency chat and light task orchestration.</translation>
+        <translation>Mac 原生低延迟对话与轻量任务编排。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="205"/>
         <source>Apple Silicon optimized DeepSeek R1 8B reasoning model using Apple&apos;s MLX framework.</source>
-        <translation>Apple Silicon optimized DeepSeek R1 8B reasoning model using Apple&apos;s MLX framework.</translation>
+        <translation>基于 Apple MLX 框架、针对 Apple Silicon 优化的 DeepSeek R1 8B 推理模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="206"/>
         <source>Apple Silicon accelerated logical reasoning and step-by-step thinking.</source>
-        <translation>Apple Silicon accelerated logical reasoning and step-by-step thinking.</translation>
+        <translation>由 Apple Silicon 加速的逻辑推理与逐步思考。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="216"/>
         <source>Apple Silicon optimized Qwen 2.5 Coder 7B coding model using Apple&apos;s MLX framework.</source>
-        <translation>Apple Silicon optimized Qwen 2.5 Coder 7B coding model using Apple&apos;s MLX framework.</translation>
+        <translation>基于 Apple MLX 框架、针对 Apple Silicon 优化的 Qwen 2.5 Coder 7B 编程模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="217"/>
         <source>Mac-optimized code completion, scripting, and developer tools integration.</source>
-        <translation>Mac-optimized code completion, scripting, and developer tools integration.</translation>
+        <translation>针对 Mac 优化的代码补全、脚本编写与开发者工具集成。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="227"/>
         <source>Apple Silicon optimized Gemma 2 9B instruction model using Apple&apos;s MLX framework.</source>
-        <translation>Apple Silicon optimized Gemma 2 9B instruction model using Apple&apos;s MLX framework.</translation>
+        <translation>基于 Apple MLX 框架、针对 Apple Silicon 优化的 Gemma 2 9B 指令模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="228"/>
         <source>Efficient Google-grade conversational queries on Apple Silicon.</source>
-        <translation>Efficient Google-grade conversational queries on Apple Silicon.</translation>
+        <translation>在 Apple Silicon 上实现高效、谷歌水准的对话查询。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="238"/>
         <source>Apple Silicon optimized Phi-4 STEM reasoning model using Apple&apos;s MLX framework.</source>
-        <translation>Apple Silicon optimized Phi-4 STEM reasoning model using Apple&apos;s MLX framework.</translation>
+        <translation>基于 Apple MLX 框架、针对 Apple Silicon 优化的 Phi-4 STEM 推理模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="239"/>
         <source>Mac-accelerated STEM logical problem solving and mathematical proofs.</source>
-        <translation>Mac-accelerated STEM logical problem solving and mathematical proofs.</translation>
+        <translation>由 Mac 加速的 STEM 逻辑问题求解与数学证明。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="250"/>
         <source>HuggingFace community model Llama 3 8B. General-purpose instruction tuned model. (Downloads via Ollama)</source>
-        <translation>HuggingFace community model Llama 3 8B. General-purpose instruction tuned model. (Downloads via Ollama)</translation>
+        <translation>HuggingFace 社区模型 Llama 3 8B，通用指令微调模型。（通过 Ollama 下载）</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="251"/>
         <source>Community-led fine-tunes, generic text generation, and roleplay.</source>
-        <translation>Community-led fine-tunes, generic text generation, and roleplay.</translation>
+        <translation>社区主导的微调、通用文本生成与角色扮演。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="261"/>
         <source>HuggingFace community model Gemma 2 2B. Highly efficient and lightweight model. (Downloads via Ollama)</source>
-        <translation>HuggingFace community model Gemma 2 2B. Highly efficient and lightweight model. (Downloads via Ollama)</translation>
+        <translation>HuggingFace 社区模型 Gemma 2 2B，高效轻量。（通过 Ollama 下载）</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="262"/>
         <source>Lightweight local task orchestration and edge device prototyping.</source>
-        <translation>Lightweight local task orchestration and edge device prototyping.</translation>
+        <translation>轻量级本地任务编排与边缘设备原型开发。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="272"/>
         <source>HuggingFace community model Phi 3.5. Lightweight 3.8B model with strong reasoning. (Downloads via Ollama)</source>
-        <translation>HuggingFace community model Phi 3.5. Lightweight 3.8B model with strong reasoning. (Downloads via Ollama)</translation>
+        <translation>HuggingFace 社区模型 Phi 3.5，轻量 3.8B 模型，推理能力强。（通过 Ollama 下载）</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="273"/>
         <source>Long context text analysis, document summarization, and logical reasoning.</source>
-        <translation>Long context text analysis, document summarization, and logical reasoning.</translation>
+        <translation>长上下文文本分析、文档摘要与逻辑推理。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="284"/>
         <source>Text-to-image generation with high fidelity and prompt adherence.</source>
-        <translation>Text-to-image generation with high fidelity and prompt adherence.</translation>
+        <translation>高保真、忠实遵循提示词的文生图。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="285"/>
         <source>Creative artwork, graphic design, and precise text rendering in images.</source>
-        <translation>Creative artwork, graphic design, and precise text rendering in images.</translation>
+        <translation>创意美术、平面设计以及图像中精确的文字渲染。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="295"/>
         <source>High-resolution photo-realistic image generation model. Base + Refiner system.</source>
-        <translation>High-resolution photo-realistic image generation model. Base + Refiner system.</translation>
+        <translation>高分辨率照片级真实感图像生成模型，采用 Base + Refiner 系统。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="296"/>
         <source>Detailed art, photo-realism, textures, and digital painting generation.</source>
-        <translation>Detailed art, photo-realism, textures, and digital painting generation.</translation>
+        <translation>细致美术、照片级真实感、纹理与数字绘画生成。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="306"/>
         <source>Ultra-fast 12B transformer model for high-quality image synthesis.</source>
-        <translation>Ultra-fast 12B transformer model for high-quality image synthesis.</translation>
+        <translation>用于高品质图像合成的超快 12B transformer 模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="307"/>
         <source>Photorealistic image synthesis, fast high-quality art generation.</source>
-        <translation>Photorealistic image synthesis, fast high-quality art generation.</translation>
+        <translation>照片级真实感图像合成，快速的高质量艺术创作。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="317"/>
         <source>Apple Silicon optimized FLUX.1 Schnell for rapid on-device image generation using MLX.</source>
-        <translation>Apple Silicon optimized FLUX.1 Schnell for rapid on-device image generation using MLX.</translation>
+        <translation>基于 MLX、针对 Apple Silicon 优化的 FLUX.1 Schnell，用于快速设备端图像生成。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="318"/>
         <source>Apple Silicon hardware-accelerated instant local text-to-image creation.</source>
-        <translation>Apple Silicon hardware-accelerated instant local text-to-image creation.</translation>
+        <translation>由 Apple Silicon 硬件加速的即时本地文生图创作。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="328"/>
         <source>Open-source text-to-video generation model with high quality physics and prompt following.</source>
-        <translation>Open-source text-to-video generation model with high quality physics and prompt following.</translation>
+        <translation>开源文生视频模型，物理效果出众，且遵循提示词的能力强。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="329"/>
         <source>High-fidelity physics-guided video generation and clip creation.</source>
-        <translation>High-fidelity physics-guided video generation and clip creation.</translation>
+        <translation>高保真、物理引导的视频生成与短片创作。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="339"/>
         <source>Highly efficient real-time local text-to-video generation model.</source>
-        <translation>Highly efficient real-time local text-to-video generation model.</translation>
+        <translation>高效的实时本地文生视频模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="340"/>
         <source>Real-time local text-to-video prototyping and fast animations.</source>
-        <translation>Real-time local text-to-video prototyping and fast animations.</translation>
+        <translation>实时的本地文生视频原型与快速动画生成。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="350"/>
         <source>Highly efficient text-to-video generation model with high quality video output.</source>
-        <translation>Highly efficient text-to-video generation model with high quality video output.</translation>
+        <translation>高效文生视频模型，输出高品质视频。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="351"/>
         <source>Local high-quality cinematic video and animation production.</source>
-        <translation>Local high-quality cinematic video and animation production.</translation>
+        <translation>本地高品质的电影级视频与动画制作。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="361"/>
         <source>Multimodal LLM that can answer questions about images and visual content.</source>
-        <translation>Multimodal LLM that can answer questions about images and visual content.</translation>
+        <translation>可回答关于图像与视觉内容问题的多模态 LLM。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="362"/>
         <source>Describing images, analyzing graphs, and solving visual queries.</source>
-        <translation>Describing images, analyzing graphs, and solving visual queries.</translation>
+        <translation>描述图像、分析图表与解决视觉问题。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="372"/>
         <source>Multimodal model from Meta. Understands visual inputs, charts, images, and text.</source>
-        <translation>Multimodal model from Meta. Understands visual inputs, charts, images, and text.</translation>
+        <translation>来自 Meta 的多模态模型，能够理解视觉输入、图表、图像和文本。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="373"/>
         <source>Visual reasoning, document understanding, optical character recognition (OCR), and visual QA.</source>
-        <translation>Visual reasoning, document understanding, optical character recognition (OCR), and visual QA.</translation>
+        <translation>视觉推理、文档理解、光学字符识别 (OCR) 与视觉问答。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="384"/>
         <source>State-of-the-art multilingual speech recognition model.</source>
-        <translation>State-of-the-art multilingual speech recognition model.</translation>
+        <translation>一流的多语言语音识别模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="385"/>
         <source>State-of-the-art multilingual voice transcription and dictation.</source>
-        <translation>State-of-the-art multilingual voice transcription and dictation.</translation>
+        <translation>一流的多语言语音转录与听写。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="395"/>
         <source>Compact speech recognition for real-time transcription on-device.</source>
-        <translation>Compact speech recognition for real-time transcription on-device.</translation>
+        <translation>紧凑型语音识别，支持设备端实时转录。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="396"/>
         <source>Real-time low-latency English dictation and voice commands.</source>
-        <translation>Real-time low-latency English dictation and voice commands.</translation>
+        <translation>实时、低延迟的英语听写与语音命令。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="407"/>
         <source>High-quality neural text-to-speech with multiple voice styles.</source>
-        <translation>High-quality neural text-to-speech with multiple voice styles.</translation>
+        <translation>高品质神经文本转语音，支持多种声音风格。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="408"/>
         <source>Studio-quality natural text-to-speech voicing for screen readers.</source>
-        <translation>Studio-quality natural text-to-speech voicing for screen readers.</translation>
+        <translation>面向屏幕阅读器的录音室级自然文本转语音。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="418"/>
         <source>Fast local TTS with natural-sounding voices. Low latency.</source>
-        <translation>Fast local TTS with natural-sounding voices. Low latency.</translation>
+        <translation>快速的本地 TTS，语音自然流畅，延迟低。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="419"/>
         <source>Ultra-low-latency real-time voice synthesis and speech feedback.</source>
-        <translation>Ultra-low-latency real-time voice synthesis and speech feedback.</translation>
+        <translation>超低延迟的实时语音合成与语音反馈。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="430"/>
         <source>Local model runner with OpenAI-compatible API. Supports Llama, Mistral, Qwen and more.</source>
-        <translation>Local model runner with OpenAI-compatible API. Supports Llama, Mistral, Qwen and more.</translation>
+        <translation>提供兼容 OpenAI API 的本地模型运行器，支持 Llama、Mistral、Qwen 等。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="431"/>
         <source>Hosting local models, hosting APIs, and orchestrating edge runtimes.</source>
-        <translation>Hosting local models, hosting APIs, and orchestrating edge runtimes.</translation>
+        <translation>托管本地模型与 API，并编排边缘运行时。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="441"/>
         <source>Desktop app for local inference. GUI model browser and OpenAI endpoint.</source>
-        <translation>Desktop app for local inference. GUI model browser and OpenAI endpoint.</translation>
+        <translation>用于本地推理的桌面应用，提供 GUI 模型浏览器与 OpenAI 端点。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="442"/>
         <source>Exploring Hugging Face models, GUI playground, and running local endpoints.</source>
-        <translation>Exploring Hugging Face models, GUI playground, and running local endpoints.</translation>
+        <translation>探索 Hugging Face 模型、GUI 试验场，并运行本地端点。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="527"/>
         <source>Custom model installed locally via Ollama.</source>
-        <translation>Custom model installed locally via Ollama.</translation>
+        <translation>通过 Ollama 在本地安装的自定义模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="571"/>
         <source>Custom model loaded locally in LM Studio.</source>
-        <translation>Custom model loaded locally in LM Studio.</translation>
+        <translation>在 LM Studio 中本地加载的自定义模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="572"/>
         <source>Loaded</source>
-        <translation type="unfinished"></translation>
+        <translation>已加载</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="764"/>
         <source>All Models</source>
-        <translation>All Models</translation>
+        <translation>所有模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="765"/>
         <source>Text Models</source>
-        <translation>Text Models</translation>
+        <translation>文本模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="766"/>
         <source>Reasoning Models</source>
-        <translation>Reasoning Models</translation>
+        <translation>推理模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="767"/>
         <source>Vision Models</source>
-        <translation>Vision Models</translation>
+        <translation>视觉模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="768"/>
         <source>Image Generation</source>
-        <translation>Image Generation</translation>
+        <translation>图像生成</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="769"/>
         <source>Video Generation</source>
-        <translation>Video Generation</translation>
+        <translation>视频生成</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="770"/>
         <source>Speech to Text</source>
-        <translation>Speech to Text</translation>
+        <translation>语音转文字</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="771"/>
         <source>Text to Speech</source>
-        <translation>Text to Speech</translation>
+        <translation>文本转语音</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="772"/>
         <source>Local Runtimes</source>
-        <translation>Local Runtimes</translation>
+        <translation>本地运行时</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="806"/>
         <source>Models</source>
-        <translation>Models</translation>
+        <translation>模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="847"/>
         <source>Expand Sidebar</source>
-        <translation>Expand Sidebar</translation>
+        <translation>展开侧边栏</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="847"/>
         <source>Collapse Sidebar</source>
-        <translation>Collapse Sidebar</translation>
+        <translation>折叠侧边栏</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1016"/>
         <source>🔍 Search models…</source>
-        <translation>🔍 Search models…</translation>
+        <translation>🔍 搜索模型…</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1061"/>
         <source>Fetching…</source>
-        <translation>Fetching…</translation>
+        <translation>正在获取…</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1081"/>
         <source>Popular</source>
-        <translation>Popular</translation>
+        <translation>热门</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1113"/>
         <source>Newest</source>
-        <translation>Newest</translation>
+        <translation>最新</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1143"/>
         <source>Refresh</source>
-        <translation>Refresh</translation>
+        <translation>刷新</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1183"/>
         <source> loaded</source>
-        <translation> loaded</translation>
+        <translation> 已加载</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1183"/>
         <source> installed</source>
-        <translation> installed</translation>
+        <translation> 已安装</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1202"/>
         <source>models</source>
-        <translation>models</translation>
+        <translation>模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1215"/>
         <source>Manage local AI models. Models must be downloaded and loaded inside the LM Studio application. Loaded models are listed below.</source>
-        <translation>Manage local AI models. Models must be downloaded and loaded inside the LM Studio application. Loaded models are listed below.</translation>
+        <translation>管理本地 AI 模型。模型必须在 LM Studio 应用内下载并加载。已加载的模型如下所列。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1216"/>
         <source>Download and manage local AI models. Click a card to see details and install via Ollama.</source>
-        <translation>Download and manage local AI models. Click a card to see details and install via Ollama.</translation>
+        <translation>下载并管理本地 AI 模型。点击卡片查看详情并通过 Ollama 安装。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1266"/>
         <source>Retry</source>
-        <translation>Retry</translation>
+        <translation>重试</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1301"/>
@@ -2369,27 +2426,27 @@ Detail: </translation>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="528"/>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1515"/>
         <source>Installed</source>
-        <translation>Installed</translation>
+        <translation>已安装</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1607"/>
         <source>↓ Download</source>
-        <translation>↓ Download</translation>
+        <translation>↓ 下载</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1607"/>
         <source>External ↗</source>
-        <translation>External ↗</translation>
+        <translation>外部 ↗</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1638"/>
         <source>Pulling via Ollama… %1%</source>
-        <translation>Pulling via Ollama… %1%</translation>
+        <translation>正在通过 Ollama 拉取… %1%</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/ModelsPage.qml" line="1687"/>
         <source>Details</source>
-        <translation>Details</translation>
+        <translation>详情</translation>
     </message>
 </context>
 <context>
@@ -2398,82 +2455,82 @@ Detail: </translation>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="88"/>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="94"/>
         <source>Notifications</source>
-        <translation>Notifications</translation>
+        <translation>通知</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="100"/>
         <source>(%1 unread)</source>
-        <translation>(%1 unread)</translation>
+        <translation>(%1 条未读)</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="115"/>
         <source>Do Not Disturb is on</source>
-        <translation>Do Not Disturb is on</translation>
+        <translation>勿扰模式已开启</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="115"/>
         <source>Do Not Disturb is off</source>
-        <translation>Do Not Disturb is off</translation>
+        <translation>勿扰模式已关闭</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="116"/>
         <source>Disable do not disturb</source>
-        <translation>Disable do not disturb</translation>
+        <translation>关闭勿扰模式</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="116"/>
         <source>Enable do not disturb</source>
-        <translation>Enable do not disturb</translation>
+        <translation>开启勿扰模式</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="124"/>
         <source>Mark all read</source>
-        <translation>Mark all read</translation>
+        <translation>全部标为已读</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="127"/>
         <source>Mark all notifications as read</source>
-        <translation>Mark all notifications as read</translation>
+        <translation>将所有通知标记为已读</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="134"/>
         <source>Clear archived</source>
-        <translation>Clear archived</translation>
+        <translation>清除已归档</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="137"/>
         <source>Clear all archived notifications</source>
-        <translation>Clear all archived notifications</translation>
+        <translation>清除所有已归档通知</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="149"/>
         <source>Close notification center</source>
-        <translation>Close notification center</translation>
+        <translation>关闭通知中心</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="173"/>
         <source>Search notifications...</source>
-        <translation type="unfinished"></translation>
+        <translation>搜索通知...</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="174"/>
         <source>Search notifications</source>
-        <translation type="unfinished"></translation>
+        <translation>搜索通知</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="185"/>
         <source>All</source>
-        <translation type="unfinished">All</translation>
+        <translation>全部</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="305"/>
         <source>Channels:</source>
-        <translation>Channels:</translation>
+        <translation>频道：</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="309"/>
         <source>Notification channels</source>
-        <translation>Notification channels</translation>
+        <translation>通知频道</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="350"/>
@@ -2483,7 +2540,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationCenterPanel.qml" line="353"/>
         <source>Open notification settings</source>
-        <translation>Open notification settings</translation>
+        <translation>打开通知设置</translation>
     </message>
 </context>
 <context>
@@ -2491,77 +2548,77 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="226"/>
         <source>Mark read</source>
-        <translation type="unfinished"></translation>
+        <translation>标记为已读</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="228"/>
         <source>Mark notification as read</source>
-        <translation type="unfinished"></translation>
+        <translation>将通知标记为已读</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="242"/>
         <source>Snooze</source>
-        <translation type="unfinished"></translation>
+        <translation>稍后提醒</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="243"/>
         <source>Snooze notification</source>
-        <translation type="unfinished"></translation>
+        <translation>稍后提醒通知</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="252"/>
         <source>5 minutes</source>
-        <translation type="unfinished"></translation>
+        <translation>5 分钟</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="258"/>
         <source>15 minutes</source>
-        <translation type="unfinished"></translation>
+        <translation>15 分钟</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="264"/>
         <source>1 hour</source>
-        <translation type="unfinished"></translation>
+        <translation>1 小时</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="270"/>
         <source>4 hours</source>
-        <translation type="unfinished"></translation>
+        <translation>4 小时</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="276"/>
         <source>Until tomorrow</source>
-        <translation type="unfinished"></translation>
+        <translation>直到明天</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="289"/>
         <source>Unarchive</source>
-        <translation type="unfinished">Unarchive</translation>
+        <translation>取消归档</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="289"/>
         <source>Archive</source>
-        <translation type="unfinished">Archive</translation>
+        <translation>归档</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="290"/>
         <source>Unarchive notification</source>
-        <translation type="unfinished"></translation>
+        <translation>取消归档通知</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="290"/>
         <source>Archive notification</source>
-        <translation type="unfinished"></translation>
+        <translation>归档通知</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="307"/>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
+        <translation>移除</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/notifications/NotificationItemDelegate.qml" line="308"/>
         <source>Remove notification</source>
-        <translation type="unfinished"></translation>
+        <translation>移除通知</translation>
     </message>
 </context>
 <context>
@@ -2569,22 +2626,22 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="29"/>
         <source>Welcome</source>
-        <translation>Welcome</translation>
+        <translation>欢迎</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="29"/>
         <source>A calm assistant built around you.</source>
-        <translation>A calm assistant built around you.</translation>
+        <translation>一个围绕您打造、沉静安稳的助手。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="30"/>
         <source>Privacy</source>
-        <translation>Privacy</translation>
+        <translation>隐私</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="30"/>
         <source>Your data stays on your device.</source>
-        <translation>Your data stays on your device.</translation>
+        <translation>您的数据始终保存在您的设备上。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="31"/>
@@ -2594,81 +2651,96 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="31"/>
         <source>Make Sentinel feel like home.</source>
-        <translation>Make Sentinel feel like home.</translation>
+        <translation>让 Sentinel 变得像家一样舒适。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="32"/>
         <source>AI Provider</source>
-        <translation>AI Provider</translation>
+        <translation>AI 提供者</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="32"/>
         <source>Connect to models, your way.</source>
-        <translation>Connect to models, your way.</translation>
+        <translation>以您的方式连接模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="33"/>
         <source>AI Model</source>
-        <translation>AI Model</translation>
+        <translation>AI 模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="33"/>
         <source>Choose and download a model.</source>
-        <translation>Choose and download a model.</translation>
+        <translation>选择并下载一个模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="34"/>
         <source>Preferences</source>
-        <translation>Preferences</translation>
+        <translation>偏好设置</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="34"/>
         <source>Fine-tune your local assistant.</source>
-        <translation>Fine-tune your local assistant.</translation>
+        <translation>微调您的本地助手。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="35"/>
         <source>Voice Setup</source>
-        <translation>Voice Setup</translation>
+        <translation>语音设置</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="35"/>
         <source>Configure voice engines and models.</source>
-        <translation>Configure voice engines and models.</translation>
+        <translation>配置语音引擎和模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="36"/>
         <source>Capabilities</source>
-        <translation>Capabilities</translation>
+        <translation>能力</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="36"/>
         <source>Everything Sentinel can do.</source>
-        <translation>Everything Sentinel can do.</translation>
+        <translation>Sentinel 能做到的一切。</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="37"/>
-        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="126"/>
+        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="292"/>
         <source>Finish</source>
-        <translation>Finish</translation>
+        <translation>完成</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="37"/>
         <source>You&apos;re ready to begin.</source>
-        <translation>You&apos;re ready to begin.</translation>
+        <translation>您已准备好开始。</translation>
     </message>
     <message>
-        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="55"/>
+        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="146"/>
+        <source>S</source>
+        <translation>S</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="156"/>
+        <source>Sentinel</source>
+        <translation>Sentinel</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="162"/>
+        <source>Welcome &amp; Setup</source>
+        <translation>欢迎与设置</translation>
+    </message>
+    <message>
+        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="171"/>
         <source>Step %1 of %2</source>
         <translation>第 %1 步，共 %2 步</translation>
     </message>
     <message>
-        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="118"/>
+        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="284"/>
         <source>Back</source>
-        <translation>Back</translation>
+        <translation>返回</translation>
     </message>
     <message>
-        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="126"/>
+        <location filename="../ui/qml/onboarding/OnboardingScreen.qml" line="292"/>
         <source>Next</source>
         <translation>下一步</translation>
     </message>
@@ -2683,7 +2755,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/models/OnlineRegistryTab.qml" line="100"/>
         <source>Details</source>
-        <translation>Details</translation>
+        <translation>详情</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/models/OnlineRegistryTab.qml" line="105"/>
@@ -2696,7 +2768,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/onboarding/PreferencesStep.qml" line="23"/>
         <source>Preferences</source>
-        <translation>Preferences</translation>
+        <translation>偏好设置</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/PreferencesStep.qml" line="31"/>
@@ -2709,7 +2781,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/onboarding/PrivacyConsentStep.qml" line="23"/>
         <source>Private by design</source>
-        <translation>Private by design</translation>
+        <translation>默认即私密</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/PrivacyConsentStep.qml" line="31"/>
@@ -2735,38 +2807,38 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="32"/>
         <source>Run local AI models through a lightweight background runtime with an OpenAI-compatible API.</source>
-        <translation>Run local AI models through a lightweight background runtime with an OpenAI-compatible API.</translation>
+        <translation>通过提供兼容 OpenAI API 的轻量级后台运行时来运行本地 AI 模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="33"/>
         <source>Desktop app for local inference. GUI model browser, playground, and OpenAI-compatible local server.</source>
-        <translation>Desktop app for local inference. GUI model browser, playground, and OpenAI-compatible local server.</translation>
+        <translation>用于本地推理的桌面应用，提供 GUI 模型浏览器、试验场和兼容 OpenAI 的本地服务器。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="35"/>
         <source>Background Service (Daemon)</source>
-        <translation>Background Service (Daemon)</translation>
+        <translation>后台服务（守护进程）</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="35"/>
         <source>Desktop Application</source>
-        <translation>Desktop Application</translation>
+        <translation>桌面应用</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="37"/>
         <source>Yes</source>
-        <translation>Yes</translation>
+        <translation>是</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="37"/>
         <source>No</source>
-        <translation>No</translation>
+        <translation>否</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="43"/>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="52"/>
         <source>Run Local Models</source>
-        <translation>Run Local Models</translation>
+        <translation>运行本地模型</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="44"/>
@@ -2778,7 +2850,7 @@ Detail: </translation>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="45"/>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="54"/>
         <source>Streaming</source>
-        <translation>Streaming</translation>
+        <translation>流式传输</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="46"/>
@@ -2790,18 +2862,18 @@ Detail: </translation>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="47"/>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="56"/>
         <source>Tool Calling</source>
-        <translation>Tool Calling</translation>
+        <translation>工具调用</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="48"/>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="57"/>
         <source>GPU Acceleration</source>
-        <translation>GPU Acceleration</translation>
+        <translation>GPU 加速</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="49"/>
         <source>Background Service</source>
-        <translation>Background Service</translation>
+        <translation>后台服务</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="50"/>
@@ -2811,77 +2883,77 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="58"/>
         <source>GUI Model Browser</source>
-        <translation>GUI Model Browser</translation>
+        <translation>GUI 模型浏览器</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="59"/>
         <source>Local Playground</source>
-        <translation>Local Playground</translation>
+        <translation>本地试验场</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="60"/>
         <source>Multi-Model Server</source>
-        <translation>Multi-Model Server</translation>
+        <translation>多模型服务器</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="61"/>
         <source>Server Logs</source>
-        <translation>Server Logs</translation>
+        <translation>服务器日志</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="75"/>
         <source>Running local models for coding assistants, AI agents, automation workflows, backend services and developer tools.</source>
-        <translation>Running local models for coding assistants, AI agents, automation workflows, backend services and developer tools.</translation>
+        <translation>为编程助手、AI 智能体、自动化工作流、后端服务和开发者工具运行本地模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="76"/>
         <source>Visual model exploration, testing different quantization levels in a GUI playground, and zero-config local server setup.</source>
-        <translation>Visual model exploration, testing different quantization levels in a GUI playground, and zero-config local server setup.</translation>
+        <translation>可视化探索模型、在 GUI 试验场测试不同量化级别，以及零配置搭建本地服务器。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="185"/>
         <source>Verified Runtime</source>
-        <translation>Verified Runtime</translation>
+        <translation>已验证的运行时</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="206"/>
         <source>by %1</source>
-        <translation>by %1</translation>
+        <translation>由 %1 提供</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="238"/>
         <source>OVERVIEW</source>
-        <translation>OVERVIEW</translation>
+        <translation>概述</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="252"/>
         <source>Category</source>
-        <translation>Category</translation>
+        <translation>类别</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="253"/>
         <source>Runtime</source>
-        <translation>Runtime</translation>
+        <translation>运行时</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="255"/>
         <source>Type</source>
-        <translation>Type</translation>
+        <translation>类型</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="258"/>
         <source>License</source>
-        <translation>License</translation>
+        <translation>许可证</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="261"/>
         <source>Open Source</source>
-        <translation>Open Source</translation>
+        <translation>开源</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="264"/>
         <source>Platforms</source>
-        <translation>Platforms</translation>
+        <translation>平台</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="267"/>
@@ -2891,27 +2963,27 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="270"/>
         <source>Default Port</source>
-        <translation>Default Port</translation>
+        <translation>默认端口</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="288"/>
         <source>WHAT CAN IT DO?</source>
-        <translation>WHAT CAN IT DO?</translation>
+        <translation>它能做什么？</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="336"/>
         <source>WORKS WITH</source>
-        <translation>WORKS WITH</translation>
+        <translation>兼容</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="371"/>
         <source>Supports most GGUF-based language models.</source>
-        <translation>Supports most GGUF-based language models.</translation>
+        <translation>支持大多数基于 GGUF 的语言模型。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="394"/>
         <source>INSTALLATION</source>
-        <translation>INSTALLATION</translation>
+        <translation>安装</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="427"/>
@@ -2921,32 +2993,32 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="439"/>
         <source>Running</source>
-        <translation>Running</translation>
+        <translation>运行中</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="440"/>
         <source>Installed (Stopped)</source>
-        <translation>Installed (Stopped)</translation>
+        <translation>已安装（已停止）</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="440"/>
         <source>Not Installed</source>
-        <translation>Not Installed</translation>
+        <translation>未安装</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="449"/>
         <source>Version</source>
-        <translation>Version</translation>
+        <translation>版本</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="452"/>
         <source>Auto Update</source>
-        <translation>Auto Update</translation>
+        <translation>自动更新</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="453"/>
         <source>Supported</source>
-        <translation>Supported</translation>
+        <translation>支持</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="498"/>
@@ -2956,12 +3028,12 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="550"/>
         <source>Documentation</source>
-        <translation>Documentation</translation>
+        <translation>文档</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/RuntimeDetailPopup.qml" line="601"/>
         <source>Website</source>
-        <translation>Website</translation>
+        <translation>网站</translation>
     </message>
 </context>
 <context>
@@ -3037,27 +3109,27 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/settings/SettingsPage.qml" line="34"/>
         <source>Interface</source>
-        <translation>Interface</translation>
+        <translation>界面</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/SettingsPage.qml" line="35"/>
         <source>AI Settings</source>
-        <translation>AI Settings</translation>
+        <translation>AI 设置</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/SettingsPage.qml" line="36"/>
         <source>Memory &amp; Knowledge</source>
-        <translation>Memory &amp; Knowledge</translation>
+        <translation>记忆与知识</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/SettingsPage.qml" line="37"/>
         <source>Security &amp; Agents</source>
-        <translation>Security &amp; Agents</translation>
+        <translation>安全与智能体</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/SettingsPage.qml" line="38"/>
         <source>System</source>
-        <translation>System</translation>
+        <translation>系统</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/SettingsPage.qml" line="88"/>
@@ -3098,22 +3170,22 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/navigation/StatusBar.qml" line="60"/>
         <source>Model: %1</source>
-        <translation>Model: %1</translation>
+        <translation>模型：%1</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/StatusBar.qml" line="68"/>
         <source>Chat: %1</source>
-        <translation>Chat: %1</translation>
+        <translation>对话：%1</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/StatusBar.qml" line="77"/>
         <source>Stream: %1</source>
-        <translation>Stream: %1</translation>
+        <translation>流式：%1</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/StatusBar.qml" line="86"/>
         <source>Voice: %1</source>
-        <translation>Voice: %1</translation>
+        <translation>语音：%1</translation>
     </message>
 </context>
 <context>
@@ -3131,7 +3203,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/settings/SystemSettingsTab.qml" line="36"/>
         <source>Version</source>
-        <translation>Version</translation>
+        <translation>版本</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/SystemSettingsTab.qml" line="37"/>
@@ -3191,7 +3263,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/settings/SystemSettingsTab.qml" line="111"/>
         <source>Disabled</source>
-        <translation>Disabled</translation>
+        <translation>已禁用</translation>
     </message>
 </context>
 <context>
@@ -3209,7 +3281,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/navigation/TitleBar.qml" line="65"/>
         <source>Restore</source>
-        <translation>Restore</translation>
+        <translation>恢复</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/TitleBar.qml" line="65"/>
@@ -3227,157 +3299,157 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="23"/>
         <source>Sentinel Companion</source>
-        <translation>Sentinel Companion</translation>
+        <translation>Sentinel 伴侣</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="107"/>
         <source>Copied!</source>
-        <translation type="unfinished"></translation>
+        <translation>已复制！</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="245"/>
         <source>COMPANION</source>
-        <translation>COMPANION</translation>
+        <translation>伴侣</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="312"/>
         <source>Open full app</source>
-        <translation type="unfinished"></translation>
+        <translation>打开完整应用</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="313"/>
         <source>Open full Sentinel application</source>
-        <translation type="unfinished"></translation>
+        <translation>打开完整的 Sentinel 应用</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="329"/>
         <source>Close</source>
-        <translation type="unfinished">关闭</translation>
+        <translation>关闭</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="330"/>
         <source>Close companion window</source>
-        <translation type="unfinished"></translation>
+        <translation>关闭伴侣窗口</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="510"/>
         <source>Copy</source>
-        <translation type="unfinished">Copy</translation>
+        <translation>复制</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="511"/>
         <source>Copy message</source>
-        <translation type="unfinished"></translation>
+        <translation>复制消息</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="521"/>
         <source>Retry</source>
-        <translation type="unfinished">Retry</translation>
+        <translation>重试</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="522"/>
         <source>Retry message</source>
-        <translation type="unfinished"></translation>
+        <translation>重试消息</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="568"/>
         <source>Sentinel Quick Companion</source>
-        <translation>Sentinel Quick Companion</translation>
+        <translation>Sentinel 快捷伴侣</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="577"/>
         <source>Ask anything or pick a quick action below.</source>
-        <translation>Ask anything or pick a quick action below.</translation>
+        <translation>随便问点什么，或在下方选择一个快捷操作。</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="712"/>
         <source>Summarize</source>
-        <translation type="unfinished"></translation>
+        <translation>总结</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="713"/>
         <source>Explain</source>
-        <translation type="unfinished"></translation>
+        <translation>解释</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="714"/>
         <source>Fix Code</source>
-        <translation type="unfinished"></translation>
+        <translation>修复代码</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="715"/>
         <source>Note</source>
-        <translation type="unfinished"></translation>
+        <translation>笔记</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="716"/>
         <source>Search</source>
-        <translation type="unfinished">搜索</translation>
+        <translation>搜索</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="817"/>
         <source>Sentinel Companion AI</source>
-        <translation>Sentinel Companion AI</translation>
+        <translation>Sentinel 伴侣 AI</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="824"/>
         <source>● Companion Paused</source>
-        <translation>● Companion Paused</translation>
+        <translation>● 伴侣已暂停</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="824"/>
         <source>● Active • Local Execution</source>
-        <translation>● Active • Local Execution</translation>
+        <translation>● 活跃 • 本地执行</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="850"/>
         <source>Assistant &amp; Chat</source>
-        <translation>Assistant &amp; Chat</translation>
+        <translation>助手与对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="859"/>
         <source>Quick Prompt</source>
-        <translation>Quick Prompt</translation>
+        <translation>快捷提示</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="860"/>
         <source>New Conversation</source>
-        <translation>New Conversation</translation>
+        <translation>新对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="861"/>
         <source>Clear Current Chat</source>
-        <translation>Clear Current Chat</translation>
+        <translation>清空当前对话</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="942"/>
         <source>Window &amp; Behavior</source>
-        <translation>Window &amp; Behavior</translation>
+        <translation>窗口与行为</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="953"/>
         <source>Always On Top</source>
-        <translation>Always On Top</translation>
+        <translation>窗口置顶</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="957"/>
         <source>Resume Companion</source>
-        <translation>Resume Companion</translation>
+        <translation>恢复伴侣</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="957"/>
         <source>Pause Companion</source>
-        <translation>Pause Companion</translation>
+        <translation>暂停伴侣</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="1039"/>
         <source>Application &amp; System</source>
-        <translation>Application &amp; System</translation>
+        <translation>应用与系统</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="1049"/>
         <source>Open Full App</source>
-        <translation>Open Full App</translation>
+        <translation>打开完整应用</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="1050"/>
@@ -3387,27 +3459,27 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="1051"/>
         <source>Check Updates</source>
-        <translation>Check Updates</translation>
+        <translation>检查更新</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="1052"/>
         <source>Quit Sentinel</source>
-        <translation>Quit Sentinel</translation>
+        <translation>退出 Sentinel</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="1212"/>
         <source>Ask Sentinel...</source>
-        <translation>Ask Sentinel...</translation>
+        <translation>向 Sentinel 提问...</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="1258"/>
         <source>Tray Active</source>
-        <translation>Tray Active</translation>
+        <translation>托盘已激活</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/TrayCompanionWindow.qml" line="1278"/>
         <source>Enter to send</source>
-        <translation>Enter to send</translation>
+        <translation>按回车发送</translation>
     </message>
 </context>
 <context>
@@ -3510,22 +3582,22 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/dialogs/UpdateProgressModal.qml" line="512"/>
         <source>Open Downloads Folder</source>
-        <translation>Open Downloads Folder</translation>
+        <translation>打开下载文件夹</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/UpdateProgressModal.qml" line="513"/>
         <source>Check Again</source>
-        <translation>Check Again</translation>
+        <translation>重新检查</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/UpdateProgressModal.qml" line="514"/>
         <source>Try Again</source>
-        <translation>Try Again</translation>
+        <translation>再试一次</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/UpdateProgressModal.qml" line="515"/>
         <source>Update</source>
-        <translation>Update</translation>
+        <translation>更新</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/dialogs/UpdateProgressModal.qml" line="516"/>
@@ -3538,7 +3610,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/onboarding/VoiceSetupStep.qml" line="23"/>
         <source>Voice Setup</source>
-        <translation>Voice Setup</translation>
+        <translation>语音设置</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/VoiceSetupStep.qml" line="31"/>
@@ -3551,7 +3623,7 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/onboarding/WelcomeStep.qml" line="23"/>
         <source>Welcome to Sentinel</source>
-        <translation>Welcome to Sentinel</translation>
+        <translation>欢迎使用 Sentinel</translation>
     </message>
     <message>
         <location filename="../ui/qml/onboarding/WelcomeStep.qml" line="31"/>
@@ -3564,72 +3636,72 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="110"/>
         <source>RETRIEVAL</source>
-        <translation type="unfinished"></translation>
+        <translation>检索</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="111"/>
         <source>deterministic authority</source>
-        <translation type="unfinished"></translation>
+        <translation>确定性权限</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="111"/>
         <source>standing by</source>
-        <translation type="unfinished"></translation>
+        <translation>待命</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="118"/>
         <source>CONTEXT</source>
-        <translation type="unfinished">CONTEXT</translation>
+        <translation>上下文</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="119"/>
         <source>%1 sources</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 个来源</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="119"/>
         <source>not assembled</source>
-        <translation type="unfinished"></translation>
+        <translation>尚未组装</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="127"/>
         <source>SEMANTIC</source>
-        <translation type="unfinished"></translation>
+        <translation>语义</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="128"/>
         <source>disabled by policy</source>
-        <translation type="unfinished"></translation>
+        <translation>因策略被禁用</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="135"/>
         <source>RUNTIME</source>
-        <translation type="unfinished"></translation>
+        <translation>运行时</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="136"/>
         <source>local ready</source>
-        <translation type="unfinished"></translation>
+        <translation>本地就绪</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="136"/>
         <source>local unavailable</source>
-        <translation type="unfinished"></translation>
+        <translation>本地不可用</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="143"/>
         <source>STREAM</source>
-        <translation type="unfinished"></translation>
+        <translation>流式</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="144"/>
         <source>active</source>
-        <translation type="unfinished"></translation>
+        <translation>活跃</translation>
     </message>
     <message>
         <location filename="../ui/qml/components/navigation/WorkspacePresence.qml" line="144"/>
         <source>inactive</source>
-        <translation type="unfinished"></translation>
+        <translation>不活跃</translation>
     </message>
 </context>
 <context>
@@ -3642,22 +3714,22 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/settings/WorkspaceSettingsTab.qml" line="44"/>
         <source>Memory, recall, context, summaries, and continuity remain local and explicit.</source>
-        <translation>Memory, recall, context, summaries, and continuity remain local and explicit.</translation>
+        <translation>记忆、回忆、上下文、摘要与连续性均保留在本地，且清晰明确。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/WorkspaceSettingsTab.qml" line="50"/>
         <source>Memory</source>
-        <translation>Memory</translation>
+        <translation>记忆</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/WorkspaceSettingsTab.qml" line="57"/>
         <source>Continuity</source>
-        <translation>Continuity</translation>
+        <translation>连续性</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/WorkspaceSettingsTab.qml" line="65"/>
         <source>Chat History</source>
-        <translation>Chat History</translation>
+        <translation>对话历史</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/WorkspaceSettingsTab.qml" line="86"/>
@@ -3667,12 +3739,12 @@ Detail: </translation>
     <message>
         <location filename="../ui/qml/pages/settings/WorkspaceSettingsTab.qml" line="87"/>
         <source>Workspace scope for chat context, Brain summaries, attachments, and optional local knowledge.</source>
-        <translation>Workspace scope for chat context, Brain summaries, attachments, and optional local knowledge.</translation>
+        <translation>对话上下文、大脑摘要、附件与可选本地知识的工作区范围。</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/WorkspaceSettingsTab.qml" line="111"/>
         <source>Local Knowledge Base</source>
-        <translation>Local Knowledge Base</translation>
+        <translation>本地知识库</translation>
     </message>
     <message>
         <location filename="../ui/qml/pages/settings/WorkspaceSettingsTab.qml" line="128"/>
@@ -3743,7 +3815,7 @@ Detail: </translation>
     </message>
     <message>
         <source>中文</source>
-        <translation type="obsolete">中文</translation>
+        <translation>中文</translation>
     </message>
     <message>
         <source>日本語</source>
@@ -3766,47 +3838,47 @@ Detail: </translation>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="160"/>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="172"/>
         <source>Models</source>
-        <translation type="unfinished">Models</translation>
+        <translation>模型</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="142"/>
         <source>Downloading Model</source>
-        <translation type="unfinished"></translation>
+        <translation>正在下载模型</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="143"/>
         <source>Retrieving &apos;%1&apos; from registry. You can monitor progress in the modelfiles panel.</source>
-        <translation type="unfinished"></translation>
+        <translation>正在从注册表获取“%1”。您可以在 modelfiles 面板中查看进度。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="154"/>
         <source>Model Installed</source>
-        <translation type="unfinished"></translation>
+        <translation>模型已安装</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="155"/>
         <source>&apos;%1&apos; has been successfully downloaded and is ready for local inference.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” 已成功下载，可用于本地推理。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="160"/>
         <source>Installation Failed</source>
-        <translation type="unfinished"></translation>
+        <translation>安装失败</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="161"/>
         <source>Could not retrieve &apos;%1&apos;. Please ensure your server is active and try again.</source>
-        <translation type="unfinished"></translation>
+        <translation>无法获取“%1”。请确保您的服务器已启动，然后重试。</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="172"/>
         <source>Model Removed</source>
-        <translation type="unfinished"></translation>
+        <translation>模型已移除</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/ApplicationBootstrapper.cpp" line="173"/>
         <source>&apos;%1&apos; has been deleted. Disk space has been reclaimed.</source>
-        <translation type="unfinished"></translation>
+        <translation>“%1” 已删除。磁盘空间已回收。</translation>
     </message>
 </context>
 <context>
@@ -3814,17 +3886,17 @@ Detail: </translation>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="344"/>
         <source>Agent</source>
-        <translation type="unfinished"></translation>
+        <translation>智能体</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="344"/>
         <source>Sentinel Assistant</source>
-        <translation type="unfinished"></translation>
+        <translation>Sentinel 助手</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="345"/>
         <source>New response received: &quot;%1&quot;</source>
-        <translation type="unfinished"></translation>
+        <translation>收到新回复：“%1”</translation>
     </message>
 </context>
 <context>
@@ -3832,17 +3904,17 @@ Detail: </translation>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/SingleInstanceGuard.cpp" line="62"/>
         <source>System</source>
-        <translation type="unfinished">System</translation>
+        <translation>系统</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/SingleInstanceGuard.cpp" line="62"/>
         <source>Deep Link</source>
-        <translation type="unfinished"></translation>
+        <translation>深度链接</translation>
     </message>
     <message>
         <location filename="../apps/sentinel-desktop/bootstrap/SingleInstanceGuard.cpp" line="63"/>
         <source>Received: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>收到：%1</translation>
     </message>
 </context>
 </TS>
