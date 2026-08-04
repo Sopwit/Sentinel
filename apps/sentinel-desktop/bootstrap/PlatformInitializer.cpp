@@ -82,9 +82,8 @@ QString effectiveLanguageCode(const sentinel::core::AppSettings& settings) {
 
 void installTranslator(QGuiApplication& app, QTranslator& translator, const QString& language) {
     app.removeTranslator(&translator);
-    if (language == QStringLiteral("en")) {
-        return;
-    }
+    // English also installs sentinel_en.qm so that non-English source strings
+    // (e.g. HomeChatSurface greeting/example chips) render in English.
     if (translator.load(QStringLiteral(":/i18n/sentinel_%1.qm").arg(language))) {
         app.installTranslator(&translator);
     }
