@@ -86,48 +86,16 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                     }
 
-                    ComboBox {
+                    SentinelComboBox {
                         id: languageCombo
+                        accent: root.modeAccent
                         Layout.fillWidth: true
                         implicitHeight: 36
-                        hoverEnabled: true
                         model: root.viewModel.availableLanguages
                         currentIndex: root.viewModel.availableLanguages.indexOf(root.viewModel.appLanguage)
                         textRole: ""
                         displayText: root.viewModel.languageDisplayName(currentValue)
                         onActivated: root.viewModel.appLanguage = currentValue
-
-                        contentItem: Text {
-                            leftPadding: SentinelTheme.spaceMd
-                            rightPadding: SentinelTheme.space2Xl
-                            text: languageCombo.displayText
-                            color: SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontBody
-                            verticalAlignment: Text.AlignVCenter
-                            maximumLineCount: 1
-                            elide: Text.ElideRight
-                        }
-
-                        background: Rectangle {
-                            implicitHeight: 36
-                            radius: SentinelTheme.radiusMd
-                            color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                            border.color: languageCombo.activeFocus
-                                          ? SentinelTheme.withAlpha(root.modeAccent, 0.46)
-                                          : languageCombo.hovered || languageCombo.popup.visible
-                                            ? SentinelTheme.withAlpha(root.modeAccent, 0.24)
-                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                            Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
-                        }
-
-                        indicator: Text {
-                            x: parent.width - width - SentinelTheme.spaceMd
-                            y: parent.height / 2 - height / 2
-                            text: "\u2039\u203a"
-                            rotation: 90
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontSmall
-                        }
                     }
                 }
             }
@@ -166,110 +134,16 @@ Item {
                         verticalAlignment: Text.AlignVCenter
                     }
 
-                    ComboBox {
+                    SentinelComboBox {
                         id: themeCombo
+                        accent: root.modeAccent
                         Layout.fillWidth: true
                         implicitHeight: 36
-                        hoverEnabled: true
                         model: root.themeChoices
                         currentIndex: root.themeChoices.indexOf(root.viewModel.themeName)
                         displayText: root.localizedThemeName(currentIndex >= 0 ? model[currentIndex] : root.viewModel.themeName)
+                        delegateTextResolver: (label) => root.localizedThemeName(label)
                         onActivated: (index) => root.viewModel.themeName = model[index]
-
-                        contentItem: Text {
-                            leftPadding: SentinelTheme.spaceMd
-                            rightPadding: SentinelTheme.space2Xl
-                            text: themeCombo.displayText
-                            color: SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontBody
-                            verticalAlignment: Text.AlignVCenter
-                            maximumLineCount: 1
-                            elide: Text.ElideRight
-                        }
-
-                        background: Rectangle {
-                            implicitHeight: 36
-                            radius: SentinelTheme.radiusMd
-                            color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.72)
-                            border.color: themeCombo.activeFocus
-                                          ? SentinelTheme.withAlpha(root.modeAccent, 0.46)
-                                          : themeCombo.hovered || themeCombo.popup.visible
-                                            ? SentinelTheme.withAlpha(root.modeAccent, 0.24)
-                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                            Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
-                        }
-
-                        indicator: Text {
-                            x: parent.width - width - SentinelTheme.spaceMd
-                            y: parent.height / 2 - height / 2
-                            text: "\u2039\u203a"
-                            rotation: 90
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontSmall
-                        }
-
-                        delegate: ItemDelegate {
-                            id: themeOption
-                            required property string modelData
-                            required property int index
-                            width: themeCombo.width
-                            implicitHeight: 36
-                            text: root.localizedThemeName(modelData)
-                            highlighted: themeCombo.highlightedIndex === index
-                            hoverEnabled: true
-
-                            contentItem: RowLayout {
-                                spacing: SentinelTheme.spaceSm
-                                anchors.fill: parent
-                                anchors.leftMargin: SentinelTheme.spaceMd
-                                anchors.rightMargin: SentinelTheme.spaceMd
-
-                                Text {
-                                    Layout.fillWidth: true
-                                    text: themeOption.text
-                                    color: themeOption.highlighted ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                    font.pixelSize: SentinelTheme.fontBody
-                                    font.bold: themeOption.highlighted
-                                    verticalAlignment: Text.AlignVCenter
-                                    maximumLineCount: 1
-                                    elide: Text.ElideRight
-                                }
-
-                                Text {
-                                    visible: themeCombo.currentIndex === index
-                                    text: "\u2713"
-                                    color: root.modeAccent
-                                    font.pixelSize: SentinelTheme.fontSmall
-                                }
-                            }
-
-                            background: Rectangle {
-                                color: themeOption.highlighted
-                                       ? SentinelTheme.withAlpha(root.modeAccent, 0.12)
-                                       : themeOption.hovered
-                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                                       : "transparent"
-                                radius: SentinelTheme.radiusSm
-                                Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
-                            }
-                        }
-
-                        popup.background: Rectangle {
-                            id: comboPopupBg
-                            radius: SentinelTheme.radiusLg
-                            color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.98)
-                            border.color: SentinelTheme.withAlpha(root.modeAccent, 0.20)
-                            border.width: 1
-
-                            layer.enabled: true
-                            layer.effect: MultiEffect {
-                                shadowEnabled: true
-                                shadowColor: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.20)
-                                shadowVerticalOffset: 4
-                                shadowBlur: 0.20
-                                shadowOpacity: 1.0
-                            }
-                        }
                     }
                 }
 

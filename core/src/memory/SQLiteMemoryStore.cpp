@@ -4,6 +4,8 @@
 
 #include "sentinel/core/memory/SQLiteMemoryStore.h"
 
+#include "sentinel/core/memory/SqlitePragmas.h"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QSqlError>
@@ -160,6 +162,7 @@ void SQLiteMemoryStore::open() {
     if (!database_.open()) {
         setLastError(database_.lastError().text());
     } else {
+        applySqlitePerformancePragmas(database_);
         setLastError({});
     }
 }

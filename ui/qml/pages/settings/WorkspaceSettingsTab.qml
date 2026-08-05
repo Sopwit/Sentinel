@@ -130,7 +130,8 @@ Item {
                         font.pixelSize: SentinelTheme.fontBody
                         Layout.preferredWidth: 150
                     }
-                    ComboBox {
+                    SentinelComboBox {
+                        accent: root.modeAccent
                         Layout.fillWidth: true
                         model: [qsTr("Markdown"), qsTr("JSON"), qsTr("Plain Text")]
                         currentIndex: {

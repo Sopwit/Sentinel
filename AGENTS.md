@@ -2,7 +2,7 @@
 
 ## Project Summary
 
-Sentinel is a cross-platform Qt/QML-based personal AI assistant desktop application, optimized first for Linux/Fedora KDE Plasma. The current repository contains the Desktop Alpha foundation, not the full long-term product.
+Sentinel is a cross-platform Qt/QML-based personal AI assistant desktop application, optimized first for Linux/Fedora KDE Plasma. The repository contains the desktop full-version product in active development.
 
 Primary optimization target: Fedora KDE Plasma.
 
@@ -10,12 +10,14 @@ Compatibility target: keep Windows and macOS possible through portable Qt/C++ ar
 
 ## Current Phase
 
-Phase 9.2 is complete.
+The desktop prototype/alpha is complete. Sentinel is now in full-version development.
 
-Most recent work: Phase 9.0-9.2, Ollama Local Health And Discovery Boundary.
+Most recent work: Phase 10.0, full execution enablement (removing the prototype's
+metadata-only / execution-disabled boundaries).
 
-Current planning focus: Phase 9.3 readiness while keeping real prompt/model execution
-non-operational unless a later phase explicitly scopes it.
+Current focus: real local model inference, real tool/agent execution, real cloud provider
+clients, real TTS/STT, and real semantic retrieval, while preserving the separation boundaries
+described below.
 
 ## Stack
 
@@ -100,11 +102,18 @@ Run focused tests when changes are narrow. Run the full suite before broad or sh
 
 ## Current Priority
 
-Maintain provider/agent/tool/sandbox/execution-boundary separation and keep real tool execution
-out of scope until explicitly approved.
+Real model inference and real tool/agent execution are now in scope and approved:
 
-Keep model/provider routing, catalog, task planning, agent registry, memory taxonomy,
-orchestration snapshots/diagnostics, conversation session context, conversation state graph, and
-local runtime boundary/session/capability/permission/safety/pipeline/execution lifecycle metadata-only
-until an explicit later provider/model/agent/memory/runtime execution phase. Ollama health checking and
-discovery are operational, but model prompt execution/generation remains disabled/out of scope.
+- Local model prompt execution (Ollama / LM Studio / llama.cpp endpoints) is operational and
+  enabled by default where a healthy local runtime is detected.
+- Cloud provider clients (OpenAI, Claude, Gemini, DeepSeek, Groq, Mistral) are real
+  REST/SSE implementations, gated by user-provided API credentials.
+- Tool execution runs behind the existing approval/sandbox gates; agents execute real tasks
+  through the approved tool gateway.
+- TTS/STT (Piper, Whisper) execute via local subprocesses when binaries are configured.
+- Semantic retrieval uses real local embeddings (Ollama embedding models by default).
+
+Execution boundaries remain: every execution path still flows through
+provider/agent/tool/sandbox gates, permissions, and explicit user approval where the policy
+requires it. Replace placeholder/fake data with real behavior as the full version is built out;
+remove dead code that no longer serves the product.

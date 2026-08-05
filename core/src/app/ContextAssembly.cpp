@@ -4,7 +4,6 @@
 
 #include "sentinel/core/app/ContextAssembly.h"
 
-#include <QRegularExpression>
 #include <QSet>
 #include <algorithm>
 
@@ -18,13 +17,25 @@ int toInt(qsizetype value) {
 
 QStringList literalTokens(const QString& text) {
     QStringList tokens;
-    const auto parts = text.toCaseFolded().split(QRegularExpression(QStringLiteral("[^a-z0-9]+")),
-                                                 Qt::SkipEmptyParts);
-    for (const auto& part : parts) {
-        if (part.size() >= 3 && !tokens.contains(part)) {
-            tokens.append(part);
+    const auto folded = text.toCaseFolded();
+    QString current;
+    current.reserve(16);
+    const auto flush = [&tokens, &current]() {
+        if (current.size() >= 3 && !tokens.contains(current)) {
+            tokens.append(current);
+        }
+        current.clear();
+    };
+    for (const QChar ch : folded) {
+        const bool keep = (ch >= QLatin1Char('a') && ch <= QLatin1Char('z')) ||
+                          (ch >= QLatin1Char('0') && ch <= QLatin1Char('9'));
+        if (keep) {
+            current.append(ch);
+        } else {
+            flush();
         }
     }
+    flush();
     return tokens;
 }
 

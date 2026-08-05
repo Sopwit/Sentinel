@@ -44,7 +44,7 @@ Değerlendirme aşağıdaki Linux standartları ve Fedora politikaları %100 esa
 ------------------------------------
 ### RPM Dependency Management
 **Durum:** ✅ Var / Düzeltildi  
-**Açıklama:** `BuildRequires` (qt6-qtbase-devel, qt6-qtdeclarative-devel, qt6-qtsql-devel, qt6-qtmultimedia-devel, desktop-file-utils, libappstream-glib) ve `Requires` (qt6-qtsql-sqlite, hicolor-icon-theme) tam deklare edilmiştir.  
+**Açıklama:** `BuildRequires` (qt6-qtbase-devel, qt6-qtdeclarative-devel, qt6-qtsql-devel, qt6-qtmultimedia-devel, desktop-file-utils, libappstream-glib) ve `Requires` (qt6-qtbase, qt6-qtdeclarative, qt6-qtsql, qt6-qtmultimedia, hicolor-icon-theme) tam deklare edilmiştir.  
 **Puan:** 10/10  
 
 ------------------------------------

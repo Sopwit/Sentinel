@@ -180,6 +180,15 @@ ShellPanel {
             Qt.callLater(recentMessages.positionViewAtEnd)
     }
 
+    // Coalesces conversation model refreshes: a single data change updates all
+    // conversation arrays, so rebuild the ListView model at most once per event
+    // loop iteration instead of once per changed array.
+    function refreshConversationList() {
+        Qt.callLater(function() {
+            conversationList.model = filteredConversationIndexes(sidebarView)
+        })
+    }
+
     function focusComposer() {
         promptInput.forceActiveFocus()
     }
@@ -591,10 +600,10 @@ ShellPanel {
                     // Force refresh when underlying data changes
                     Connections {
                         target: homeChat.viewModel
-                        function onConversationIdsChanged() { conversationList.model = homeChat.filteredConversationIndexes(homeChat.sidebarView) }
-                        function onConversationTitlesChanged() { conversationList.model = homeChat.filteredConversationIndexes(homeChat.sidebarView) }
-                        function onConversationPinnedSummariesChanged() { conversationList.model = homeChat.filteredConversationIndexes(homeChat.sidebarView) }
-                        function onConversationArchivedSummariesChanged() { conversationList.model = homeChat.filteredConversationIndexes(homeChat.sidebarView) }
+                        function onConversationIdsChanged() { homeChat.refreshConversationList() }
+                        function onConversationTitlesChanged() { homeChat.refreshConversationList() }
+                        function onConversationPinnedSummariesChanged() { homeChat.refreshConversationList() }
+                        function onConversationArchivedSummariesChanged() { homeChat.refreshConversationList() }
                     }
 
                     delegate: Item {
@@ -1312,10 +1321,12 @@ ShellPanel {
                             font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                         }
 
-                        ComboBox {
+                        SentinelComboBox {
                             id: homeModeSelector
+                            accent: homeChat.modeAccent
                             Layout.preferredWidth: Math.min(140, 110 * homeChat.resolutionScale)
                             Layout.preferredHeight: 32 * homeChat.resolutionScale
+                            font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                             model: homeChat.viewModel.availableModes
                             currentIndex: homeChat.viewModel.availableModes.indexOf(homeChat.viewModel.currentModeName)
                             onActivated: function(index) {
@@ -1323,74 +1334,6 @@ ShellPanel {
                                     homeChat.viewModel.currentModeName = homeChat.viewModel.availableModes[index]
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.availableModes[currentIndex] : qsTr("Mode")
-
-                            contentItem: Text {
-                                text: homeModeSelector.displayText
-                                color: homeModeSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
-                                verticalAlignment: Text.AlignVCenter
-                                leftPadding: SentinelTheme.spaceSm
-                                rightPadding: SentinelTheme.spaceSm
-                                elide: Text.ElideRight
-                            }
-
-                            background: Rectangle {
-                                radius: SentinelTheme.radiusMd * homeChat.resolutionScale
-                                color: homeModeSelector.hovered
-                                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
-                                       : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
-                                border.color: homeModeSelector.activeFocus
-                                              ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.62)
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                            }
-
-                            popup: Popup {
-                                id: homeModePopup
-                                y: homeModeSelector.height + 4
-                                width: homeModeSelector.width
-                                implicitHeight: Math.min(contentItem.implicitHeight + 2 * padding, 280)
-                                padding: SentinelTheme.spaceXs
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd * homeChat.resolutionScale
-                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
-                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                }
-
-                                contentItem: ListView {
-                                    clip: true
-                                    implicitHeight: contentHeight
-                                    model: homeModeSelector.popup.visible ? homeModeSelector.delegateModel : null
-                                    currentIndex: homeModeSelector.highlightedIndex
-                                    ScrollBar.vertical: ScrollBar {
-                                        policy: ScrollBar.AsNeeded
-                                    }
-                                }
-                            }
-
-                            delegate: ItemDelegate {
-                                width: homeModeSelector.width - SentinelTheme.spaceXs * 2
-                                height: 32 * homeChat.resolutionScale
-                                highlighted: homeModeSelector.highlightedIndex === index
-                                hoverEnabled: true
-
-                                contentItem: Text {
-                                    text: modelData
-                                    color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
-                                    font.bold: homeChat.viewModel.availableModes[index] === homeChat.viewModel.currentModeName
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                    leftPadding: SentinelTheme.spaceSm
-                                }
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusSm
-                                    color: highlighted || hovered
-                                           ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
-                                           : "transparent"
-                                }
-                            }
                         }
 
                         Text {
@@ -1399,10 +1342,12 @@ ShellPanel {
                             font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                         }
 
-                        ComboBox {
+                        SentinelComboBox {
                             id: homeProviderSelector
+                            accent: homeChat.modeAccent
                             Layout.preferredWidth: Math.min(200, 160 * homeChat.resolutionScale)
                             Layout.preferredHeight: 32 * homeChat.resolutionScale
+                            font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                             model: homeChat.viewModel.selectableRuntimeProviderLabels
                             currentIndex: homeChat.viewModel.selectableRuntimeProviderIds.indexOf(homeChat.viewModel.selectedRuntimeProvider)
                             onActivated: function(index) {
@@ -1410,73 +1355,6 @@ ShellPanel {
                                     homeChat.viewModel.selectedRuntimeProvider = homeChat.viewModel.selectableRuntimeProviderIds[index]
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.selectableRuntimeProviderLabels[currentIndex] : homeChat.viewModel.activeRuntimeProviderLabel
-
-                            contentItem: Text {
-                                text: homeProviderSelector.displayText
-                                color: homeProviderSelector.currentIndex >= 0 ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
-                                verticalAlignment: Text.AlignVCenter
-                                leftPadding: SentinelTheme.spaceSm
-                                rightPadding: SentinelTheme.spaceSm
-                                elide: Text.ElideRight
-                            }
-
-                            background: Rectangle {
-                                radius: SentinelTheme.radiusMd * homeChat.resolutionScale
-                                color: homeProviderSelector.hovered
-                                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
-                                       : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
-                                border.color: homeProviderSelector.activeFocus
-                                              ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.62)
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                            }
-
-                            popup: Popup {
-                                y: homeProviderSelector.height + 4
-                                width: homeProviderSelector.width
-                                implicitHeight: Math.min(contentItem.implicitHeight + 2 * padding, 280)
-                                padding: SentinelTheme.spaceXs
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
-                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                }
-
-                                contentItem: ListView {
-                                    clip: true
-                                    implicitHeight: contentHeight
-                                    model: homeProviderSelector.delegateModel
-                                    currentIndex: homeProviderSelector.highlightedIndex
-                                    ScrollBar.vertical: ScrollBar {
-                                        policy: ScrollBar.AsNeeded
-                                    }
-                                }
-                            }
-
-                            delegate: ItemDelegate {
-                                width: homeProviderSelector.width - SentinelTheme.spaceXs * 2
-                                height: 32 * homeChat.resolutionScale
-                                highlighted: homeProviderSelector.highlightedIndex === index
-                                hoverEnabled: true
-
-                                contentItem: Text {
-                                    text: modelData
-                                    color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
-                                    font.bold: homeChat.viewModel.selectableRuntimeProviderIds[index] === homeChat.viewModel.selectedRuntimeProvider
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                    leftPadding: SentinelTheme.spaceSm
-                                }
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusSm
-                                    color: highlighted || hovered
-                                           ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
-                                           : "transparent"
-                                }
-                            }
                         }
 
                         Rectangle {
@@ -1491,10 +1369,12 @@ ShellPanel {
                             font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                         }
 
-                        ComboBox {
+                        SentinelComboBox {
                             id: homeModelSelector
+                            accent: homeChat.modeAccent
                             Layout.preferredWidth: Math.min(280, 220 * homeChat.resolutionScale)
                             Layout.preferredHeight: 32 * homeChat.resolutionScale
+                            font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
                             model: homeChat.viewModel.ollamaModelNames
                             currentIndex: {
                                 var names = homeChat.viewModel.ollamaModelNames
@@ -1509,73 +1389,7 @@ ShellPanel {
                                     homeChat.viewModel.selectedLocalModel = homeChat.viewModel.ollamaModelNames[index]
                             }
                             displayText: currentIndex >= 0 ? homeChat.viewModel.ollamaModelNames[currentIndex] : (homeChat.viewModel.selectedLocalModel !== "" ? homeChat.viewModel.selectedLocalModel : qsTr("No model"))
-
-                            contentItem: Text {
-                                text: homeModelSelector.displayText
-                                color: (homeModelSelector.currentIndex >= 0 || homeChat.viewModel.selectedLocalModel !== "") ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
-                                verticalAlignment: Text.AlignVCenter
-                                leftPadding: SentinelTheme.spaceSm
-                                rightPadding: SentinelTheme.spaceSm
-                                elide: Text.ElideRight
-                            }
-
-                            background: Rectangle {
-                                radius: SentinelTheme.radiusMd * homeChat.resolutionScale
-                                color: homeModelSelector.hovered
-                                       ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
-                                       : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
-                                border.color: homeModelSelector.activeFocus
-                                              ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.62)
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                            }
-
-                            popup: Popup {
-                                y: homeModelSelector.height + 4
-                                width: homeModelSelector.width
-                                implicitHeight: Math.min(contentItem.implicitHeight + 2 * padding, 280)
-                                padding: SentinelTheme.spaceXs
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusMd
-                                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundRaised, 0.96)
-                                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-                                }
-
-                                contentItem: ListView {
-                                    clip: true
-                                    implicitHeight: contentHeight
-                                    model: homeModelSelector.delegateModel
-                                    currentIndex: homeModelSelector.highlightedIndex
-                                    ScrollBar.vertical: ScrollBar {
-                                        policy: ScrollBar.AsNeeded
-                                    }
-                                }
-                            }
-
-                            delegate: ItemDelegate {
-                                width: homeModelSelector.width - SentinelTheme.spaceXs * 2
-                                height: 32 * homeChat.resolutionScale
-                                highlighted: homeModelSelector.highlightedIndex === index
-                                hoverEnabled: true
-
-                                contentItem: Text {
-                                    text: modelData + " (" + homeChat.localProviderLabel + ")"
-                                    color: highlighted ? homeChat.modeAccent : SentinelTheme.textPrimary
-                                    font.pixelSize: SentinelTheme.fontSmall * homeChat.resolutionScale
-                                    font.bold: modelData === homeChat.viewModel.selectedLocalModel
-                                    verticalAlignment: Text.AlignVCenter
-                                    elide: Text.ElideRight
-                                    leftPadding: SentinelTheme.spaceSm
-                                }
-
-                                background: Rectangle {
-                                    radius: SentinelTheme.radiusSm
-                                    color: highlighted || hovered
-                                           ? SentinelTheme.withAlpha(homeChat.modeAccent, 0.10)
-                                           : "transparent"
-                                }
-                            }
+                            delegateSuffix: " (" + homeChat.localProviderLabel + ")"
                         }
                     }
                 }
@@ -1623,6 +1437,7 @@ ShellPanel {
             Layout.minimumHeight: homeChat.inChatMode ? 210 : 0
             visible: homeChat.inChatMode
             clip: true
+            cacheBuffer: 800
             spacing: homeChat.compact ? SentinelTheme.spaceSm : SentinelTheme.spaceMd
             model: homeChat.viewModel.chatMessages
             boundsBehavior: Flickable.StopAtBounds

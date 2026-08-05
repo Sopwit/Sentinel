@@ -44,11 +44,11 @@ Item {
                 elide: Text.ElideRight
             }
 
-            ComboBox {
+            SentinelComboBox {
                 id: runtimeProviderCombo
+                accent: root.modeAccent
                 Layout.fillWidth: true
                 implicitHeight: 36
-                hoverEnabled: true
                 model: root.viewModel.selectableRuntimeProviderLabels
                 currentIndex: {
                     var sel = root.viewModel.selectedRuntimeProvider
