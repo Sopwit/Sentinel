@@ -4,6 +4,8 @@
 
 #include "sentinel/core/chat/SQLiteChatHistoryStore.h"
 
+#include "sentinel/core/memory/SqlitePragmas.h"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QSqlError>
@@ -63,8 +65,6 @@ SQLiteChatHistoryStore::SQLiteChatHistoryStore(QString databasePath)
           QStringLiteral("sentinel_chat_%1").arg(QUuid::createUuid().toString(QUuid::Id128))) {
     open();
     initializeSchema();
-    QSqlQuery vacuumQuery(database_);
-    vacuumQuery.exec(QStringLiteral("VACUUM;"));
 }
 
 SQLiteChatHistoryStore::~SQLiteChatHistoryStore() {
@@ -209,6 +209,7 @@ void SQLiteChatHistoryStore::open() {
     if (!database_.open()) {
         setLastError(database_.lastError().text());
     } else {
+        applySqlitePerformancePragmas(database_);
         setLastError({});
     }
 }

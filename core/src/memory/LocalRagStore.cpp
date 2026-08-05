@@ -4,6 +4,8 @@
 
 #include "sentinel/core/memory/LocalRagStore.h"
 
+#include "sentinel/core/memory/SqlitePragmas.h"
+
 #include <QCryptographicHash>
 #include <QDateTime>
 #include <QDir>
@@ -43,6 +45,9 @@ QSqlDatabase openDatabase(const QString& connectionName, const QString& database
     auto db = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), connectionName);
     db.setDatabaseName(databasePath);
     db.open();
+    if (db.isOpen()) {
+        applySqlitePerformancePragmas(db);
+    }
     return db;
 }
 
@@ -220,6 +225,9 @@ RagStoreResult LocalRagStore::recordRetrieval(const RagRetrievalRecord& record) 
 }
 
 bool LocalRagStore::ensureSchema() const {
+    if (schemaReady_) {
+        return true;
+    }
     auto db = openDatabase(connectionName(), databasePath_);
     if (!db.isOpen()) {
         return false;
@@ -236,6 +244,9 @@ bool LocalRagStore::ensureSchema() const {
         "id TEXT PRIMARY KEY, workspace_id TEXT NOT NULL, document_id TEXT NOT NULL, "
         "chunk_reference TEXT NOT NULL, relevance REAL NOT NULL, summary TEXT NOT NULL, "
         "created_at TEXT NOT NULL)"));
+    if (docs && retrievals) {
+        schemaReady_ = true;
+    }
     return docs && retrievals;
 }
 

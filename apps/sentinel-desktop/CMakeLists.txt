@@ -159,6 +159,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/RuntimeBadge.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SectionTitle.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelButton.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelComboBox.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelOrb.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelTelemetry.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelTextField.qml
@@ -198,6 +199,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SecuritySettingsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SystemSettingsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/OnboardingScreen.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/OnboardingToggle.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/WelcomeStep.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/PrivacyConsentStep.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/onboarding/AppearanceStep.qml

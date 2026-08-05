@@ -4,6 +4,8 @@
 
 #include "sentinel/core/chat/SQLiteConversationStore.h"
 
+#include "sentinel/core/memory/SqlitePragmas.h"
+
 #include <QDir>
 #include <QFileInfo>
 #include <QSqlError>
@@ -488,6 +490,7 @@ void SQLiteConversationStore::open() {
     if (!database_.open()) {
         setLastError(ConversationStoreErrorCode::Unavailable, database_.lastError().text());
     } else {
+        applySqlitePerformancePragmas(database_);
         setLastError(ConversationStoreErrorCode::None, {});
     }
 }

@@ -104,6 +104,7 @@ add_sentinel_core_test(test_rag_e2e_pipeline integration/test_rag_e2e_pipeline.c
 add_sentinel_core_test(test_startup_time performance/test_startup_time.cpp)
 add_sentinel_core_test(bench_semantic_search benchmarks/bench_semantic_search.cpp)
 add_sentinel_core_test(bench_context_compression benchmarks/bench_context_compression.cpp)
+add_sentinel_core_test(bench_sqlite_store benchmarks/bench_sqlite_store.cpp)
 
 find_package(Qt6 COMPONENTS QuickTest QUIET)
 if(Qt6QuickTest_FOUND AND TARGET Qt6::QuickTest)

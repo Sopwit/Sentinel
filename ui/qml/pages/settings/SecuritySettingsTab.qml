@@ -42,10 +42,10 @@ Item {
                 elide: Text.ElideRight
             }
 
-            ComboBox {
+            SentinelComboBox {
                 id: permissionStateCombo
+                accent: root.modeAccent
                 Layout.fillWidth: true
-                hoverEnabled: true
                 model: root.viewModel.permissionPolicyStateLabels
                 currentIndex: root.viewModel.permissionPolicyStateLabels.indexOf(root.viewModel.defaultPermissionPolicyState)
                 displayText: currentIndex >= 0 ? currentText : root.viewModel.defaultPermissionPolicyState
@@ -109,7 +109,8 @@ Item {
                 Layout.preferredWidth: 100
             }
 
-            ComboBox {
+            SentinelComboBox {
+                accent: root.modeAccent
                 Layout.fillWidth: true
                 model: ["HTTP", "SOCKS5"]
                 currentIndex: root.viewModel.proxyType === "SOCKS5" ? 1 : 0

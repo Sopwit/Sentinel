@@ -27,7 +27,6 @@
 namespace sentinel::desktop {
 
 QString preferredUiFontFamily() {
-    const QStringList availableFamilies = QFontDatabase::families();
 #if defined(Q_OS_WIN)
     const QStringList preferredFamilies = {
         QStringLiteral("Segoe UI Variable"), QStringLiteral("Segoe UI"), QStringLiteral("Arial"),
@@ -43,7 +42,7 @@ QString preferredUiFontFamily() {
 #endif
 
     for (const QString& family : preferredFamilies) {
-        if (availableFamilies.contains(family, Qt::CaseInsensitive)) {
+        if (QFontDatabase::hasFamily(family)) {
             return family;
         }
     }

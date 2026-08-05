@@ -62,6 +62,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/memory/MemoryRecall.h
     include/sentinel/core/memory/SemanticRetrieval.h
     include/sentinel/core/memory/SQLiteMemoryStore.h
+    include/sentinel/core/memory/SqlitePragmas.h
     include/sentinel/core/memory/StaticMemoryCatalog.h
     include/sentinel/core/model/IModelRouter.h
     include/sentinel/core/model/IProviderCatalog.h
@@ -160,6 +161,7 @@ add_library(sentinel_core STATIC
     src/memory/MemoryRecall.cpp
     src/memory/SemanticRetrieval.cpp
     src/memory/SQLiteMemoryStore.cpp
+    src/memory/SqlitePragmas.cpp
     src/memory/StaticMemoryCatalog.cpp
     src/platform/DefaultPlatformService.cpp
     src/model/ModelManagement.cpp

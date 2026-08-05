@@ -104,7 +104,6 @@ void FileLogger::handleMessage(QtMsgType type, const QMessageLogContext& ctx, co
     // Write to file
     if (logFile_.isOpen()) {
         logStream_ << line << Qt::endl;
-        logStream_.flush();
     }
 
 #if defined(Q_OS_MACOS) || defined(__APPLE__)

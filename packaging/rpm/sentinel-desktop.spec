@@ -22,7 +22,6 @@ Requires:       qt6-qtbase >= 6.5.0
 Requires:       qt6-qtdeclarative >= 6.5.0
 Requires:       qt6-qtsql >= 6.5.0
 Requires:       qt6-qtmultimedia >= 6.5.0
-Requires:       qt6-qtsql-sqlite >= 6.5.0
 Requires:       hicolor-icon-theme
 
 %description

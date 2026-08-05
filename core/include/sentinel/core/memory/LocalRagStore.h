@@ -53,6 +53,7 @@ private:
     bool ensureSchema() const;
     QString connectionName() const;
     QString databasePath_;
+    mutable bool schemaReady_ = false;
 };
 
 QString ragDocumentSummary(const RagDocumentRecord& record);
