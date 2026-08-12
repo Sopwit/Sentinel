@@ -15,6 +15,7 @@ Item {
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     property var voiceFileDialog: null
     property var soundManager: null
+    property string autoDetectStatus: ""
     readonly property int panelPadding: SentinelTheme.spaceLg
 
     height: implicitHeight
@@ -32,6 +33,27 @@ Item {
             title: qsTr("Voice & Audio Settings")
             subtitle: qsTr("Configure local speech-to-text (Whisper) and text-to-speech (Piper, Kokoro) runtimes and paths.")
             Layout.fillWidth: true
+        }
+
+        SettingCard {
+            title: qsTr("Auto Detection")
+
+            SettingControlRow {
+                title: qsTr("Auto-Detect Voice Engines")
+                subtitle: root.autoDetectStatus.length > 0 ? root.autoDetectStatus : qsTr("Automatically scan system PATH and model directories for Piper, Whisper, and Kokoro.")
+                accent: root.modeAccent
+                compact: root.compact
+                controlWidth: root.compact ? 160 : 200
+
+                SentinelButton {
+                    accent: root.modeAccent
+                    anchors.fill: parent
+                    text: qsTr("Otomatik Tespit Et")
+                    onClicked: {
+                        root.autoDetectStatus = root.viewModel.autoDetectVoicePaths()
+                    }
+                }
+            }
         }
 
         SettingCard {

@@ -680,6 +680,9 @@ void AppSettingsTest::persistsVoiceConfigurationPaths() {
     QCOMPARE(ttsEngineSpy.count(), 1);
     QCOMPARE(kokoroModelSpy.count(), 1);
     QCOMPARE(kokoroVoiceSpy.count(), 1);
+
+    const auto autoDetectResult = settings->autoDetectVoicePaths();
+    QVERIFY(!autoDetectResult.isEmpty());
 }
 
 void AppSettingsTest::persistsPiperFileOutputExecutionOptIn() {
