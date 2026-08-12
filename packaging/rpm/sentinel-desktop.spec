@@ -77,6 +77,6 @@ fi
 %config(noreplace) %{_sysconfdir}/sentinel/config.json.template
 
 %changelog
-* Thu Aug 06 2026 Sentinel Maintainers <support@sentinel.dev> - 1.0.0-1
+* Thu Aug 06 2026 Sentinel Maintainers <sopwith.osdev@gmail.com> - 1.0.0-1
 - Ship sentinel-daemon and sentinel-cli alongside the desktop app
 - systemd user unit now launches the headless sentinel-daemon binary
