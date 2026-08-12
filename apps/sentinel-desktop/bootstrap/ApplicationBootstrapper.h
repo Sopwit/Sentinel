@@ -34,9 +34,12 @@ public:
     bool setupQmlEngine(QApplication& app);
 
 private:
+    void ensureBackgroundDaemon();
+
     int m_argc;
     char** m_argv;
     QCommandLineParser m_parser;
+    std::unique_ptr<QProcess> m_daemonProcess;
 
     bool m_verbose{false};
     bool m_quiet{false};

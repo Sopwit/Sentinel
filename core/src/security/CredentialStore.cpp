@@ -4,7 +4,6 @@
 
 #include "sentinel/core/security/CredentialStore.h"
 
-#include <QCoreApplication>
 #include <QProcess>
 #include <QtGlobal>
 
@@ -59,17 +58,17 @@ CredentialStoreTrace traceForBackend(CredentialStoreBackend backend) {
     const auto testOnly = backend == CredentialStoreBackend::InMemoryTest;
     const auto readiness = fallback   ? CredentialStoreReadiness::DisabledFallback
                            : testOnly ? CredentialStoreReadiness::TestOnlyReady
-                                      : CredentialStoreReadiness::RequiresFutureImplementation;
-    const auto available = testOnly;
+                                      : CredentialStoreReadiness::Ready;
+    const auto available = currentPlatform || testOnly;
     return CredentialStoreTrace{
         backend,
         readiness,
-        currentPlatform && !testOnly,
+        currentPlatform,
         available,
-        QStringLiteral("%1: %2 / %3 / non-persistent readiness metadata only")
+        QStringLiteral("%1: %2 / %3 / persistent secret storage")
             .arg(backendDisplayName(backend), credentialStoreReadinessName(readiness),
-                 currentPlatform && !testOnly ? QStringLiteral("current platform")
-                                              : QStringLiteral("not current platform")),
+                 currentPlatform ? QStringLiteral("current platform")
+                                 : QStringLiteral("available on another platform")),
     };
 }
 
@@ -168,8 +167,8 @@ QString credentialStoreReadinessName(CredentialStoreReadiness readiness) {
     switch (readiness) {
     case CredentialStoreReadiness::Placeholder:
         return QStringLiteral("placeholder");
-    case CredentialStoreReadiness::RequiresFutureImplementation:
-        return QStringLiteral("requiresFutureImplementation");
+    case CredentialStoreReadiness::Ready:
+        return QStringLiteral("ready");
     case CredentialStoreReadiness::TestOnlyReady:
         return QStringLiteral("testOnlyReady");
     case CredentialStoreReadiness::DisabledFallback:
@@ -250,15 +249,13 @@ CredentialStoreBackend DisabledCredentialBackend::backend() const {
 
 CredentialStoreSummary DisabledCredentialBackend::summary() const {
     const auto preferredBackend = preferredBackendForPlatform();
-    const auto readiness = preferredBackend == CredentialStoreBackend::LocalUnavailableFallback
-                               ? CredentialStoreReadiness::DisabledFallback
-                               : CredentialStoreReadiness::RequiresFutureImplementation;
     return summaryForBackend(
-        preferredBackend, CredentialStoreStatus::Disabled, readiness, false,
+        preferredBackend, CredentialStoreStatus::Disabled, CredentialStoreReadiness::DisabledFallback,
+        false,
         QStringLiteral("Credential store disabled: no API key storage is active, no plaintext "
                        "persistence is allowed, and provider execution remains disabled."),
-        QStringLiteral("%1 preferred / %2 / storage unavailable until a future implementation.")
-            .arg(backendDisplayName(preferredBackend), credentialStoreReadinessName(readiness)));
+        QStringLiteral("%1 preferred / disabledFallback / storage unavailable on this platform.")
+            .arg(backendDisplayName(preferredBackend)));
 }
 
 CredentialBackendResult DisabledCredentialBackend::storeCredential(const CredentialKey& key,
@@ -289,53 +286,6 @@ DisabledCredentialBackend::containsCredential(const CredentialKey& key) const {
     return refusedBackendResult(
         CredentialBackendOperation::Contains, backend(), key,
         QStringLiteral("contains refused: disabled credential backend is not configured."));
-}
-
-PlaceholderCredentialBackend::PlaceholderCredentialBackend(CredentialStoreBackend backend)
-    : backend_(backend) {}
-
-CredentialStoreBackend PlaceholderCredentialBackend::backend() const {
-    return backend_;
-}
-
-CredentialStoreSummary PlaceholderCredentialBackend::summary() const {
-    return summaryForBackend(
-        backend_, CredentialStoreStatus::Unavailable,
-        CredentialStoreReadiness::RequiresFutureImplementation, false,
-        QStringLiteral("%1 placeholder unavailable: OS secret-store integration is not active.")
-            .arg(backendDisplayName(backend_)),
-        QStringLiteral("%1 / requiresFutureImplementation / no OS credential calls are made.")
-            .arg(backendDisplayName(backend_)));
-}
-
-CredentialBackendResult PlaceholderCredentialBackend::storeCredential(const CredentialKey& key,
-                                                                      const QString& secret) {
-    Q_UNUSED(secret)
-    return refusedBackendResult(
-        CredentialBackendOperation::Store, backend_, key,
-        QStringLiteral("store refused: OS credential backend is a non-executing placeholder."));
-}
-
-CredentialReadResult PlaceholderCredentialBackend::readCredential(const CredentialKey& key) const {
-    return CredentialReadResult{
-        refusedBackendResult(CredentialBackendOperation::Read, backend_, key,
-                             QStringLiteral("read refused: OS credential backend is a "
-                                            "non-executing placeholder.")),
-        std::nullopt,
-    };
-}
-
-CredentialBackendResult PlaceholderCredentialBackend::deleteCredential(const CredentialKey& key) {
-    return refusedBackendResult(
-        CredentialBackendOperation::Delete, backend_, key,
-        QStringLiteral("delete refused: OS credential backend is a non-executing placeholder."));
-}
-
-CredentialBackendResult
-PlaceholderCredentialBackend::containsCredential(const CredentialKey& key) const {
-    return refusedBackendResult(
-        CredentialBackendOperation::Contains, backend_, key,
-        QStringLiteral("contains refused: OS credential backend is a non-executing placeholder."));
 }
 
 CredentialStoreBackend InMemoryCredentialBackend::backend() const {
@@ -451,7 +401,7 @@ public:
     CredentialStoreSummary summary() const override {
         return summaryForBackend(
             CredentialStoreBackend::MacOSKeychain, CredentialStoreStatus::Ready,
-            CredentialStoreReadiness::TestOnlyReady, true,
+            CredentialStoreReadiness::Ready, true,
             QStringLiteral("macOS Keychain backend ready: credentials are saved securely in macOS "
                            "Keychain system."),
             QStringLiteral("macOS Keychain / Ready / secure persistent storage."));
@@ -550,7 +500,7 @@ public:
     CredentialStoreSummary summary() const override {
         return summaryForBackend(
             CredentialStoreBackend::LinuxSecretService, CredentialStoreStatus::Ready,
-            CredentialStoreReadiness::TestOnlyReady, true,
+            CredentialStoreReadiness::Ready, true,
             QStringLiteral("Linux Secret Service backend ready: credentials are saved securely in "
                            "Linux Secret Service."),
             QStringLiteral("Linux Secret Service / Ready / secure persistent storage."));
@@ -654,7 +604,7 @@ public:
     CredentialStoreSummary summary() const override {
         return summaryForBackend(
             CredentialStoreBackend::WindowsCredentialManager, CredentialStoreStatus::Ready,
-            CredentialStoreReadiness::TestOnlyReady, true,
+            CredentialStoreReadiness::Ready, true,
             QStringLiteral("Windows Credential Manager backend ready: credentials are saved "
                            "securely in Windows Credential Manager."),
             QStringLiteral("Windows Credential Manager / Ready / secure persistent storage."));
@@ -784,11 +734,7 @@ std::shared_ptr<ICredentialBackend> createPlatformCredentialBackend() {
 #endif
 }
 
-CredentialStore::CredentialStore()
-    : CredentialStore(QCoreApplication::instance() &&
-                              QCoreApplication::applicationName() == QStringLiteral("Sentinel")
-                          ? createPlatformCredentialBackend()
-                          : std::make_shared<DisabledCredentialBackend>()) {}
+CredentialStore::CredentialStore() : CredentialStore(createPlatformCredentialBackend()) {}
 
 CredentialStore::CredentialStore(std::shared_ptr<ICredentialBackend> backend)
     : backend_(std::move(backend)),
@@ -820,8 +766,8 @@ CredentialStoreSafetyReport CredentialStore::safetyReport() const {
         {
             QStringLiteral("No plaintext API-key persistence is permitted."),
             QStringLiteral("Secrets are never logged or exposed through view models."),
-            QStringLiteral("Provider calls and credential tests remain disabled."),
-            QStringLiteral("Future credentials must be provider-scoped and user-explicit."),
+            QStringLiteral("Provider calls require user-provided credentials and remain gated."),
+            QStringLiteral("Credentials are provider-scoped and user-explicit."),
         },
     };
 }
@@ -839,13 +785,16 @@ QStringList CredentialStore::traceSummaries() const {
 }
 
 QStringList CredentialStore::capabilitySummaries() const {
+    const auto ready = backend_ && backend_->summary().status == CredentialStoreStatus::Ready;
     return {
         QStringLiteral("%1: available")
             .arg(credentialStoreCapabilityName(CredentialStoreCapability::ReadinessMetadata)),
-        QStringLiteral("%1: disabled")
-            .arg(credentialStoreCapabilityName(CredentialStoreCapability::StoreSecret)),
-        QStringLiteral("%1: disabled")
-            .arg(credentialStoreCapabilityName(CredentialStoreCapability::RemoveSecret)),
+        QStringLiteral("%1: %2")
+            .arg(credentialStoreCapabilityName(CredentialStoreCapability::StoreSecret),
+                 ready ? QStringLiteral("available") : QStringLiteral("disabled")),
+        QStringLiteral("%1: %2")
+            .arg(credentialStoreCapabilityName(CredentialStoreCapability::RemoveSecret),
+                 ready ? QStringLiteral("available") : QStringLiteral("disabled")),
         QStringLiteral("%1: disabled")
             .arg(credentialStoreCapabilityName(CredentialStoreCapability::TestCredential)),
     };
@@ -857,8 +806,8 @@ CredentialStoreResult CredentialStore::performDisabledAction(CredentialStoreActi
         false,
         false,
         false,
-        QStringLiteral("%1 is disabled: credential storage, update, removal, and cloud "
-                       "execution require a future explicit implementation.")
+        QStringLiteral("%1 is disabled: API-key storage, update, removal, and cloud execution are "
+                       "not available on this platform.")
             .arg(credentialStoreActionName(action)),
     };
 }

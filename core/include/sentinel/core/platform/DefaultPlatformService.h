@@ -4,8 +4,6 @@
 
 #pragma once
 
-#include "sentinel/core/IPlugin.h"
-#include "sentinel/core/app/IIntegration.h"
 #include "sentinel/core/platform/INotificationService.h"
 #include "sentinel/core/platform/IPlatformService.h"
 #include "sentinel/core/platform/ISystemIntegrationService.h"
@@ -36,42 +34,6 @@ public:
     ~DefaultSystemIntegrationService() override = default;
 
     bool isAvailable() const override;
-};
-
-class DefaultIntegration final : public IIntegration {
-public:
-    explicit DefaultIntegration(QString id = QStringLiteral("default_integration"),
-                               QString displayName = QStringLiteral("Default Integration"),
-                               bool available = true);
-    ~DefaultIntegration() override = default;
-
-    QString id() const override;
-    QString displayName() const override;
-    bool isAvailable() const override;
-
-private:
-    QString m_id;
-    QString m_displayName;
-    bool m_available{true};
-};
-
-class DefaultPlugin final : public IPlugin {
-public:
-    explicit DefaultPlugin(QString id = QStringLiteral("default_plugin"),
-                           QString displayName = QStringLiteral("Default Core Plugin"));
-    ~DefaultPlugin() override = default;
-
-    QString id() const override;
-    QString displayName() const override;
-    void initialize() override;
-    void shutdown() override;
-
-    bool isInitialized() const;
-
-private:
-    QString m_id;
-    QString m_displayName;
-    bool m_initialized{false};
 };
 
 } // namespace sentinel::core

@@ -4,6 +4,8 @@
 
 #include "sentinel/core/runtime/NullToolExecutor.h"
 
+#include "sentinel/core/runtime/RealToolExecutor.h"
+
 namespace sentinel::core {
 
 ToolExecutionResult NullToolExecutor::execute(const ToolExecutionRequest& request) const {
@@ -40,10 +42,7 @@ ToolExecutionResult NullToolExecutor::execute(const ToolExecutionRequest& reques
         };
     }
 
-    return {
-        ToolExecutionStatus::PlaceholderSucceeded,
-        QStringLiteral("Placeholder tool execution completed without performing actions."),
-    };
+    return RealToolExecutor{}.execute(request);
 }
 
 } // namespace sentinel::core

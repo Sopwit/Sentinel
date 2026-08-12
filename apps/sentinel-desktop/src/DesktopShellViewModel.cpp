@@ -149,73 +149,9 @@ bool supportedAttachmentType(const QString& type) {
     return type != QStringLiteral("Unsupported");
 }
 
-QJsonArray defaultNotifications() {
-    QJsonArray notifications;
-    const auto add = [&notifications](const QString& id, const QString& category,
-                                      const QString& title, const QString& body, bool pinned) {
-        QJsonObject item;
-        item.insert(QStringLiteral("id"), id);
-        item.insert(QStringLiteral("category"), category);
-        item.insert(QStringLiteral("title"), title);
-        item.insert(QStringLiteral("body"), body);
-        item.insert(QStringLiteral("pinned"), pinned);
-        item.insert(QStringLiteral("archived"), false);
-        item.insert(QStringLiteral("read"), false);
-        notifications.append(item);
-    };
-    add(QStringLiteral("updates-manual"),
-        QCoreApplication::translate("DesktopShellViewModel", "Updates"),
-        QCoreApplication::translate("DesktopShellViewModel", "Manual updates only"),
-        QCoreApplication::translate("DesktopShellViewModel",
-                                    "Sentinel checks for updates only after explicit user action."),
-        true);
-    add(QStringLiteral("security-privacy"),
-        QCoreApplication::translate("DesktopShellViewModel", "Security"),
-        QCoreApplication::translate("DesktopShellViewModel", "Privacy guarantees active"),
-        QCoreApplication::translate(
-            "DesktopShellViewModel",
-            "No telemetry, hidden uploads, silent updates, or hidden cloud activation."),
-        true);
-    add(QStringLiteral("tasks-controlled"),
-        QCoreApplication::translate("DesktopShellViewModel", "Tasks"),
-        QCoreApplication::translate("DesktopShellViewModel", "Controlled tasks require approval"),
-        QCoreApplication::translate("DesktopShellViewModel",
-                                    "Task execution advances only through visible user actions."),
-        false);
-    add(QStringLiteral("brain-local"),
-        QCoreApplication::translate("DesktopShellViewModel", "Brain"),
-        QCoreApplication::translate("DesktopShellViewModel", "Brain data stays local"),
-        QCoreApplication::translate(
-            "DesktopShellViewModel",
-            "Memory, chat history, Local RAG metadata, and diagnostics remain local."),
-        false);
-    add(QStringLiteral("workspace-active"),
-        QCoreApplication::translate("DesktopShellViewModel", "Workspace"),
-        QCoreApplication::translate("DesktopShellViewModel", "Workspace scope selected"),
-        QCoreApplication::translate(
-            "DesktopShellViewModel",
-            "Workspace metadata does not grant folder scans or filesystem authority."),
-        false);
-    add(QStringLiteral("models-local"),
-        QCoreApplication::translate("DesktopShellViewModel", "Models"),
-        QCoreApplication::translate("DesktopShellViewModel", "Local provider selected"),
-        QCoreApplication::translate("DesktopShellViewModel",
-                                    "Ollama can execute foreground local chat; other local "
-                                    "endpoints require configuration."),
-        false);
-    add(QStringLiteral("models-role"),
-        QCoreApplication::translate("DesktopShellViewModel", "Models"),
-        QCoreApplication::translate("DesktopShellViewModel", "Model Role Changed"),
-        QCoreApplication::translate("DesktopShellViewModel",
-                                    "Shown when the user changes local model-role metadata."),
-        false);
-    return notifications;
-}
-
 QJsonArray notificationsFromJson(const QString& json) {
     const auto document = QJsonDocument::fromJson(json.toUtf8());
-    const auto stored = document.object().value(QStringLiteral("notifications")).toArray();
-    return stored.isEmpty() ? defaultNotifications() : stored;
+    return document.object().value(QStringLiteral("notifications")).toArray();
 }
 
 QString notificationsToJson(const QJsonArray& notifications) {
@@ -1405,14 +1341,6 @@ void DesktopShellViewModel::setSelectedOllamaModel(const QString& modelName) {
     setSelectedLocalModel(modelName);
 }
 
-void DesktopShellViewModel::deleteOllamaModel(const QString& modelName) {
-    Q_UNUSED(modelName);
-}
-
-void DesktopShellViewModel::pullOllamaModel(const QString& modelName) {
-    Q_UNUSED(modelName);
-}
-
 bool DesktopShellViewModel::proxyEnabled() const {
     return settings_.proxyEnabled();
 }
@@ -1986,8 +1914,7 @@ bool DesktopShellViewModel::piperFileOutputExecutionEnabled() const {
 }
 
 void DesktopShellViewModel::setPiperFileOutputExecutionEnabled(bool enabled) {
-    Q_UNUSED(enabled);
-    settings_.setPiperFileOutputExecutionEnabled(false);
+    settings_.setPiperFileOutputExecutionEnabled(enabled);
     if (controller_.piperFileOutputExecutionEnabled() !=
         settings_.piperFileOutputExecutionEnabled()) {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
@@ -4252,13 +4179,20 @@ void DesktopShellViewModel::setUiDensity(const QString& density) {
 }
 
 QStringList DesktopShellViewModel::activityTimelineSummaries() const {
-    QStringList lines{
-        QStringLiteral("Today - Chat Created - %1").arg(conversationListCurrentTitle()),
-        QStringLiteral("Today - Export Completed - %1").arg(conversationExportLastStatus()),
-        QStringLiteral("Today - Brain Memory Saved - %1 entries").arg(memoryEntryCount()),
-        QStringLiteral("Yesterday - Theme Changed - %1").arg(themeName()),
-        QStringLiteral("Yesterday - Settings Modified - local preferences only"),
-    };
+    QStringList lines;
+    if (!conversationListCurrentTitle().isEmpty()) {
+        lines << QStringLiteral("Chat session active - %1").arg(conversationListCurrentTitle());
+    }
+    lines << QStringLiteral("Memory entries - %1").arg(memoryEntryCount());
+    lines << QStringLiteral("Notifications unread - %1").arg(unreadNotificationCount());
+    lines << QStringLiteral("Theme - %1").arg(themeName());
+    if (!conversationExportLastStatus().isEmpty()) {
+        lines << QStringLiteral("Last export - %1").arg(conversationExportLastStatus());
+    }
+    const auto updateState = updateWorkflowState();
+    if (!updateState.isEmpty()) {
+        lines << QStringLiteral("Updates - %1").arg(updateState);
+    }
     return lines;
 }
 
@@ -4662,6 +4596,54 @@ bool DesktopShellViewModel::localKnowledgeBaseEnabled() const {
 
 void DesktopShellViewModel::setLocalKnowledgeBaseEnabled(bool enabled) {
     settings_.setLocalKnowledgeBaseEnabled(enabled);
+}
+
+QString DesktopShellViewModel::attachmentBehavior() const {
+    return settings_.attachmentBehavior();
+}
+
+void DesktopShellViewModel::setAttachmentBehavior(const QString& behavior) {
+    settings_.setAttachmentBehavior(behavior);
+}
+
+QString DesktopShellViewModel::exportDefaultFormat() const {
+    return settings_.exportDefaultFormat();
+}
+
+void DesktopShellViewModel::setExportDefaultFormat(const QString& format) {
+    settings_.setExportDefaultFormat(format);
+}
+
+bool DesktopShellViewModel::exportIncludeTimestamps() const {
+    return settings_.exportIncludeTimestamps();
+}
+
+void DesktopShellViewModel::setExportIncludeTimestamps(bool enabled) {
+    settings_.setExportIncludeTimestamps(enabled);
+}
+
+bool DesktopShellViewModel::exportIncludeCitations() const {
+    return settings_.exportIncludeCitations();
+}
+
+void DesktopShellViewModel::setExportIncludeCitations(bool enabled) {
+    settings_.setExportIncludeCitations(enabled);
+}
+
+bool DesktopShellViewModel::exportAnonymizeNames() const {
+    return settings_.exportAnonymizeNames();
+}
+
+void DesktopShellViewModel::setExportAnonymizeNames(bool enabled) {
+    settings_.setExportAnonymizeNames(enabled);
+}
+
+bool DesktopShellViewModel::exportIncludeModelMetadata() const {
+    return settings_.exportIncludeModelMetadata();
+}
+
+void DesktopShellViewModel::setExportIncludeModelMetadata(bool enabled) {
+    settings_.setExportIncludeModelMetadata(enabled);
 }
 
 QString DesktopShellViewModel::localKnowledgeBaseStatus() const {
@@ -5684,19 +5666,35 @@ bool DesktopShellViewModel::checkForUpdates() {
                       : QStringLiteral("Up to date: %1").arg(currentVersion));
 
         if (available) {
+            const QString title = QStringLiteral("Update Available");
+            const QString body = QStringLiteral("New version %1 is available! Details: %2")
+                                     .arg(latestTag)
+                                     .arg(bodyText.left(120));
             QString updatedJson;
-            if (updateNotification(
-                    settings_.notificationCenterJson(), QStringLiteral("updates-manual"),
-                    [latestTag, bodyText](QJsonObject& item) {
-                        item.insert(QStringLiteral("read"), false);
-                        item.insert(QStringLiteral("archived"), false);
-                        item.insert(QStringLiteral("title"), QStringLiteral("Update Available"));
-                        item.insert(QStringLiteral("body"),
-                                    QStringLiteral("New version %1 is available! Details: %2")
-                                        .arg(latestTag)
-                                        .arg(bodyText.left(120)));
-                    },
-                    &updatedJson)) {
+            if (!updateNotification(settings_.notificationCenterJson(),
+                                    QStringLiteral("updates-manual"),
+                                    [title, body](QJsonObject& item) {
+                                        item.insert(QStringLiteral("read"), false);
+                                        item.insert(QStringLiteral("archived"), false);
+                                        item.insert(QStringLiteral("title"), title);
+                                        item.insert(QStringLiteral("body"), body);
+                                    },
+                                    &updatedJson)) {
+                const qint64 now = QDateTime::currentMSecsSinceEpoch();
+                QJsonObject item;
+                item.insert(QStringLiteral("id"), QStringLiteral("updates-manual"));
+                item.insert(QStringLiteral("category"), QStringLiteral("Updates"));
+                item.insert(QStringLiteral("title"), title);
+                item.insert(QStringLiteral("body"), body);
+                item.insert(QStringLiteral("priority"), QStringLiteral("Normal"));
+                item.insert(QStringLiteral("timestamp"), now);
+                item.insert(QStringLiteral("pinned"), false);
+                item.insert(QStringLiteral("archived"), false);
+                item.insert(QStringLiteral("read"), false);
+                auto notifications = notificationsFromJson(settings_.notificationCenterJson());
+                notifications.prepend(item);
+                settings_.setNotificationCenterJson(notificationsToJson(notifications));
+            } else {
                 settings_.setNotificationCenterJson(updatedJson);
             }
         } else {
@@ -6117,6 +6115,14 @@ bool DesktopShellViewModel::archiveNotification(const QString& notificationId) {
     }
     settings_.setNotificationCenterJson(updatedJson);
     return true;
+}
+
+QString DesktopShellViewModel::latestNotificationId() const {
+    const auto notifications = notificationsFromJson(settings_.notificationCenterJson());
+    if (notifications.isEmpty())
+        return QString();
+    const auto first = notifications.at(0).toObject();
+    return first.value(QStringLiteral("id")).toString();
 }
 
 bool DesktopShellViewModel::markNotificationRead(const QString& notificationId) {

@@ -5,6 +5,15 @@
 #include "sentinel/core/memory/SemanticRetrieval.h"
 
 #include <QCryptographicHash>
+#include <QEventLoop>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QTimer>
+#include <QUrl>
 
 #include <algorithm>
 #include <cmath>
@@ -596,8 +605,156 @@ EmbeddingResult FakeEmbeddingProvider::embed(const EmbeddingRequest& request) co
     result.summary = QStringLiteral("Generated %1 deterministic fake %2 with %3 dimensions.")
                          .arg(result.documentCount)
                          .arg(result.documentCount == 1 ? QStringLiteral("embedding")
-                                                        : QStringLiteral("embeddings"))
+                                                         : QStringLiteral("embeddings"))
                          .arg(policy_.dimensions);
+    return result;
+}
+
+OllamaEmbeddingProvider::OllamaEmbeddingProvider(QString endpoint, QString model, int timeoutMs)
+    : endpoint_(std::move(endpoint)), model_(std::move(model)), timeoutMs_(timeoutMs) {
+    if (endpoint_.isEmpty() || model_.isEmpty()) {
+        status_ = EmbeddingProviderStatus::NotConfigured;
+        statusDetail_ = QStringLiteral("Ollama embedding provider needs a local endpoint and model.");
+        return;
+    }
+    if (!endpointAllowed()) {
+        status_ = EmbeddingProviderStatus::Disabled;
+        statusDetail_ = QStringLiteral("Ollama embedding endpoint must be local loopback HTTP.");
+        return;
+    }
+    status_ = EmbeddingProviderStatus::Ready;
+    statusDetail_ = QStringLiteral("Ollama embedding provider is ready for local model %1.")
+                        .arg(model_);
+}
+
+bool OllamaEmbeddingProvider::endpointAllowed() const {
+    const QUrl url(endpoint_);
+    if (url.scheme() != QLatin1String("http")) {
+        return false;
+    }
+    const auto host = url.host();
+    return host == QLatin1String("localhost") || host == QLatin1String("127.0.0.1") ||
+           host == QLatin1String("::1");
+}
+
+EmbeddingProviderStatus OllamaEmbeddingProvider::status() const {
+    return status_;
+}
+
+EmbeddingProviderPolicy OllamaEmbeddingProvider::policy() const {
+    EmbeddingProviderPolicy policy;
+    policy.enabled = status_ == EmbeddingProviderStatus::Ready;
+    policy.localOnly = true;
+    policy.fakeOnly = false;
+    policy.dimensions = 0;
+    policy.status = embeddingProviderStatusName(status_);
+    policy.summary = statusDetail_;
+    return policy;
+}
+
+EmbeddingVector OllamaEmbeddingProvider::embedText(const QString& text) const {
+    EmbeddingVector vector;
+    vector.modelSummary =
+        QStringLiteral("Ollama embedding via %1 model %2").arg(endpoint_, model_);
+
+    const QUrl url(endpoint_ + QStringLiteral("/api/embed"));
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    request.setTransferTimeout(timeoutMs_);
+
+    QJsonObject body;
+    body.insert(QStringLiteral("model"), model_);
+    QJsonArray input;
+    input.append(text);
+    body.insert(QStringLiteral("input"), input);
+
+    QNetworkAccessManager manager;
+    QEventLoop loop;
+    QTimer timeoutTimer;
+    timeoutTimer.setSingleShot(true);
+    QObject::connect(&timeoutTimer, &QTimer::timeout, &loop, &QEventLoop::quit);
+
+    const auto reply = manager.post(request, QJsonDocument(body).toJson(QJsonDocument::Compact));
+    QObject::connect(reply, &QNetworkReply::finished, &loop, &QEventLoop::quit);
+    timeoutTimer.start(timeoutMs_);
+    loop.exec();
+    timeoutTimer.stop();
+
+    const auto error = reply->error();
+    if (error != QNetworkReply::NoError) {
+        status_ = EmbeddingProviderStatus::Error;
+        statusDetail_ = QStringLiteral("Ollama embedding request failed: %1").arg(reply->errorString());
+        reply->deleteLater();
+        return vector;
+    }
+
+    const auto json = QJsonDocument::fromJson(reply->readAll());
+    reply->deleteLater();
+    if (!json.isObject()) {
+        status_ = EmbeddingProviderStatus::Error;
+        statusDetail_ = QStringLiteral("Ollama embedding response was not valid JSON.");
+        return vector;
+    }
+
+    const auto embeddings = json.object().value(QStringLiteral("embeddings"));
+    if (!embeddings.isArray() || embeddings.toArray().isEmpty()) {
+        status_ = EmbeddingProviderStatus::Error;
+        statusDetail_ = QStringLiteral("Ollama embedding response had no embeddings array.");
+        return vector;
+    }
+
+    const auto first = embeddings.toArray().first();
+    if (!first.isArray()) {
+        status_ = EmbeddingProviderStatus::Error;
+        statusDetail_ = QStringLiteral("Ollama embedding response had no valid embedding vector.");
+        return vector;
+    }
+
+    vector.values.reserve(first.toArray().size());
+    for (const auto& value : first.toArray()) {
+        vector.values.append(value.toDouble());
+    }
+    status_ = EmbeddingProviderStatus::Ready;
+    statusDetail_ =
+        QStringLiteral("Ollama embedding generated %1 dimensions via model %2.")
+            .arg(vector.values.size())
+            .arg(model_);
+    return vector;
+}
+
+EmbeddingResult OllamaEmbeddingProvider::embed(const EmbeddingRequest& request) const {
+    EmbeddingResult result;
+    result.policy = policy();
+    result.status = status_;
+    result.checks.append(QStringLiteral("Provider/model calls: local Ollama embedding inference"));
+    result.checks.append(QStringLiteral("Cloud/API keys: disabled"));
+    result.checks.append(QStringLiteral("Filesystem writes/downloads: disabled"));
+
+    if (status_ != EmbeddingProviderStatus::Ready) {
+        result.summary = statusDetail_;
+        return result;
+    }
+
+    result.documents.reserve(request.documents.size());
+    result.vectors.reserve(request.documents.size());
+    for (const auto& document : request.documents) {
+        if (document.id.trimmed().isEmpty() || document.text.trimmed().isEmpty()) {
+            continue;
+        }
+        const auto vector = embedText(document.text);
+        if (vector.values.isEmpty()) {
+            continue;
+        }
+        result.documents.append(document);
+        result.vectors.append(vector);
+    }
+
+    result.documentCount = toInt(result.documents.size());
+    result.summary = QStringLiteral("Generated %1 real local %2 via Ollama model %3.")
+                         .arg(result.documentCount)
+                         .arg(result.documentCount == 1 ? QStringLiteral("embedding")
+                                                         : QStringLiteral("embeddings"))
+                         .arg(model_);
     return result;
 }
 

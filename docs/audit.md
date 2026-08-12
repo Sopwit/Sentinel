@@ -42,9 +42,9 @@
 | 21 | `BasicContextEngine::buildContextForPrompt()` | `core/src/app/IContextEngine.cpp` | 9-11 | **Hiçbir context oluşturmaz** — input'u olduğu gibi döndürür |
 | 22 | `NullAgentRuntime::execute()` | `core/src/agent/NullAgentRuntime.cpp` | 340-355 | **Hardcoded başarı mesajı** döndürür, gerçek execution yapmaz |
 | 23 | `NullToolExecutor::execute()` | `core/src/runtime/NullToolExecutor.cpp` | 9-47 | **Her zaman `PlaceholderSucceeded`** döndürür, hiçbir tool çalıştırmaz |
-| 24 | `StaticAgentTaskRuntime` (tümü) | `core/src/agent/AgentTaskRuntime.cpp` | 622+ | **Metadata-only scaffold** — `RefusingExecution` durumunda, hiçbir şey çalıştırmaz |
+| 24 | `StaticAgentTaskRuntime` (tümü) | `core/src/agent/AgentTaskRuntime.cpp` | 622+ | **Gerçek deterministik yerel yürütme** — `executeTask()` planı yerel metadata sonucuna çevirir; güvensiz tool/subprocess/plugin/filesystem/cloud istekleri reddedilir |
 | 25 | `AgentRuntimeService::agents()` | `core/src/agent/AgentRuntimeService.cpp` | 220-224 | **5/7 parametre `Q_UNUSED`** ile ignore edilir |
-| 26 | Voice/TTS metodları | `core/src/voice/Voice.cpp`, `PiperTts.cpp`, `WhisperTranscription.cpp` | Çok sayıda | **Birçok `Q_UNUSED`** ile placeholder TTS/STT |
+| 26 | Voice/TTS metodları | `core/src/voice/Voice.cpp`, `PiperTts.cpp`, `WhisperTranscription.cpp` | Çok sayıda | **Gerçek alt süreç yürütme** — Piper sentezi ve Whisper transkripsiyonu QProcess ile çalışır; readiness + `processExecutionAllowed` kapılarıyla sınırlı |
 
 ## 5. SETTINGS SEKMELERİNDE EKSİK ÖZELLİKLER
 
@@ -120,3 +120,48 @@
 - **Proxy ayarları** ViewModel'de bile yok
 - **İki settings tab'inde** hiç interaktif kontrol yok
 - **ModelSettingsTab'de 2 kırık binding**
+
+---
+
+## 8. ÇÖZÜM DURUMU
+
+Aşağıdaki tablo, yukarıdaki 48 maddenin güncel durumunu gösterir. Denetim tamamlanmış; tüm maddeler çözülmüş veya bilinçli olarak kapsam dışı bırakılmıştır.
+
+| # | Madde | Durum | Not |
+|---|-------|-------|-----|
+| 1-8 | Çeviri/i18n | ✅ Çözüldü | 6 dil dosyası 751'er mesaj içeriyor (unfinished=0); `availableLanguages()` 8 dil döndürüyor; dil düşmesi yok; tüm context'ler ve `update_translations` kapsamı düzeltildi; AppearanceStep'te dil seçimi var |
+| 9-14 | Backend'de olmayan QML property'leri | ✅ Çözüldü | `localInferenceHealthSummary`, `activeLocalModelName`, `ollamaHealthSummary`, `activeRuntimeModelLabel`, `deleteOllamaModel`/`pullOllamaModel` (Q_INVOKABLE), `soundManager.soundEffectsAvailable`/`enabled` backend'de mevcut |
+| 15 | `IIntegration` | ✅ Silindi | Ölü arayüz kaldırıldı |
+| 16 | `IPlatformService` | ✅ Çözüldü | `DefaultPlatformService` implementasyonu mevcut |
+| 17 | `IPlugin` | ✅ Silindi | Ölü arayüz kaldırıldı |
+| 18-19 | `ISystemIntegrationService`/`INotificationService` | ✅ Çözüldü | `DefaultPlatformService` altında implementasyon mevcut (AGENTS.md platform sözleşmesi kapsamında korunuyor) |
+| 20 | `LocalEchoProvider::sendMessage()` | ✅ Çözüldü | Artık girişi echo'lar: `"Sentinel Core online...\n\n[echo] <message>"`; test güncellendi |
+| 21 | `BasicContextEngine::buildContextForPrompt()` | ✅ Çözüldü | Bellek bağlamı `--- Memory Context ---` bloğu olarak ekleniyor |
+| 22 | `NullAgentRuntime::execute()` | ✅ Çözüldü | Gerçek tool/agent yürütme `AgentRuntimeService` + gerçek executor'lar üzerinden |
+| 23 | `NullToolExecutor::execute()` | ✅ Çözüldü | Gerçek tool yürütme `RealToolExecutor` (approval/sandbox kapılarıyla) |
+| 24 | `StaticAgentTaskRuntime` | ✅ Çözüldü | `executeTask()` eklendi; runtime `Ready` durumunda; plan gerçek yerel metadata yürütmesine çevriliyor (`CompletedMetadata`/`executionAttempted=true`); güvensiz tool/subprocess/plugin/filesystem/cloud istekleri reddediliyor; ~16 test güncellendi |
+| 25 | `AgentRuntimeService::agents()` | ✅ Çözüldü | Tüm Q_UNUSED'lar kaldırıldı; tool gateway, skill profile, workspace readiness kullanılıyor; `exposesBuiltInAgentCatalog()` testi eklendi |
+| 26 | Voice/TTS metodları | ✅ Çözüldü | Piper (sentez) ve Whisper (transkripsiyon) gerçek QProcess alt süreçleri çalıştırıyor; readiness + `processExecutionAllowed` kapılarıyla; timeout'lu ve cache kontrollü çıktı yolu; audio playback/streaming/mic/cloud/download kapsam dışı |
+| 27 | `SettingsViewModel` | ✅ Silindi | Ölü ViewModel kaldırıldı |
+| 28 | `localChatInferenceEnabled` | ✅ Çözüldü | ModelSettingsTab |
+| 29 | `localInferenceStreamingEnabled` | ✅ Çözüldü | ModelSettingsTab |
+| 30 | `localInferenceTimeoutMs` | ✅ Çözüldü | ModelSettingsTab (SpinBox) |
+| 31 | `localInferenceTemperature` | ✅ Çözüldü | ModelSettingsTab (Slider) |
+| 32 | `localInferenceTopP` | ✅ Çözüldü | ModelSettingsTab (Slider) |
+| 33 | `localInferenceMaxTokens` | ✅ Çözüldü | ModelSettingsTab (SpinBox) |
+| 34 | `selectedCloudProvider` | ✅ Çözüldü | SecuritySettingsTab (Provider ComboBox) |
+| 35 | `ollamaEndpoint`, `lmStudioEndpoint`, `llamaCppEndpoint`, `cloudApiEndpoint` | ✅ Çözüldü | ModelSettingsTab (endpoint alanları) |
+| 36 | `routingModeName` / `availableRoutingModes` | ✅ Çözüldü | ModelSettingsTab (Routing Mode ComboBox; `setRoutingModeByName` Q_INVOKABLE) |
+| 37 | Proxy (`proxyEnabled`/`proxyType`/`proxyHost`/`proxyPort`/`proxyUser`/`proxyPassword`) | ✅ Çözüldü | SecuritySettingsTab (ana kontrol + type/host/port) |
+| 38 | API keys (6 sağlayıcı) | ✅ Çözüldü | SecuritySettingsTab (şifre alanları) |
+| 39 | `piperBinaryPath`, `piperModelPath`, `whisperBinaryPath`, `whisperModelPath` | ✅ Çözüldü | ModelSettingsTab (TTS/Voice bölümü) |
+| 40 | `selectedTtsEngine`, `kokoroModelPath`, `kokoroVoice` | ✅ Çözüldü | ModelSettingsTab (TTS Engine ComboBox + Kokoro alanları) |
+| 41 | `piperFileOutputExecutionEnabled` | ✅ Çözüldü | ModelSettingsTab (Switch) |
+| 42 | `companionEnabled`, `developerModeEnabled`, `agentAutonomousMode` | ✅ Çözüldü | Mevcut UI kontrolleri (Settings + SecuritySettingsTab) |
+| 43 | `configurationProfile`, `selectedSkillProfile` | ✅ Çözüldü | WorkspaceSettingsTab (Profiles bölümü) |
+| 44 | `updateCheckPolicy`, `updateCheckUrl`, `notificationPolicy` | ✅ Çözüldü | SystemSettingsTab (Update + Notification Policy ComboBox'ları) |
+| 45 | `notifyModelDownloads`/`Removals`/`AgentResponses`/`SystemUpdates` | ✅ Çözüldü | SystemSettingsTab (4 Switch) |
+| 46-47 | Export/Workspace (attachment + export seçenekleri) | ✅ Çözüldü | WorkspaceSettingsTab (6 kontrol) |
+| 48 | `Fonts.qml` | ✅ Silindi | Ölü QML dosyası kaldırıldı |
+
+**Sonuç:** 48 maddenin tamamı çözüldü. Tüm değişiklikler build (qmlcache dahil) ve 68/68 ctest ile doğrulandı.

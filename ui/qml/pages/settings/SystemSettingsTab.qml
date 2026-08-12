@@ -109,17 +109,106 @@ Item {
             SentinelComboBox {
                 accent: root.modeAccent
                 Layout.fillWidth: true
-                model: [qsTr("Ask Before Checking"), qsTr("Automatic Background Checks"), qsTr("Disabled")]
+                model: [qsTr("Ask Before Checking"), qsTr("Weekly"), qsTr("On Startup"), qsTr("Never")]
                 currentIndex: {
                     var pol = root.viewModel.updateCheckPolicy
-                    if (pol === "Automatic") return 1
-                    if (pol === "Disabled") return 2
+                    if (pol === "Weekly") return 1
+                    if (pol === "On Startup") return 2
+                    if (pol === "Never") return 3
                     return 0
                 }
                 onActivated: (index) => {
-                    var policies = ["Ask Before Checking", "Automatic", "Disabled"]
+                    var policies = ["Ask Before Checking", "Weekly", "On Startup", "Never"]
                     root.viewModel.updateCheckPolicy = policies[index]
                 }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("Notification Policy")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 150
+            }
+            SentinelComboBox {
+                accent: root.modeAccent
+                Layout.fillWidth: true
+                model: [qsTr("Important Only"), qsTr("All"), qsTr("Custom"), qsTr("Disabled")]
+                currentIndex: {
+                    var pol = root.viewModel.notificationPolicy
+                    if (pol === "All") return 1
+                    if (pol === "Custom") return 2
+                    if (pol === "Disabled") return 3
+                    return 0
+                }
+                onActivated: (index) => {
+                    var policies = ["Important Only", "All", "Custom", "Disabled"]
+                    root.viewModel.notificationPolicy = policies[index]
+                }
+            }
+        }
+
+        SectionTitle {
+            title: qsTr("Notifications")
+            subtitle: qsTr("Choose which events trigger in-app notifications.")
+            Layout.fillWidth: true
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("Model Downloads")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.fillWidth: true
+            }
+            Switch {
+                checked: root.viewModel.notifyModelDownloads
+                onCheckedChanged: root.viewModel.notifyModelDownloads = checked
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("Model Removals")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.fillWidth: true
+            }
+            Switch {
+                checked: root.viewModel.notifyModelRemovals
+                onCheckedChanged: root.viewModel.notifyModelRemovals = checked
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("Agent Responses")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.fillWidth: true
+            }
+            Switch {
+                checked: root.viewModel.notifyAgentResponses
+                onCheckedChanged: root.viewModel.notifyAgentResponses = checked
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            Label {
+                text: qsTr("System Updates")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.fillWidth: true
+            }
+            Switch {
+                checked: root.viewModel.notifySystemUpdates
+                onCheckedChanged: root.viewModel.notifySystemUpdates = checked
             }
         }
     }

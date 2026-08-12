@@ -4,7 +4,11 @@
 
 #include "sentinel/core/memory/SemanticRetrieval.h"
 
+#include <QTcpServer>
+#include <QTcpSocket>
 #include <QtTest>
+
+using sentinel::core::EmbeddingProviderStatus;
 
 using sentinel::core::assembleSemanticSupplements;
 using sentinel::core::ContextAssemblySourceKind;
@@ -14,6 +18,7 @@ using sentinel::core::EmbeddingGenerationReadiness;
 using sentinel::core::EmbeddingGenerationResult;
 using sentinel::core::EmbeddingIsolationPolicy;
 using sentinel::core::EmbeddingRequest;
+using sentinel::core::EmbeddingResult;
 using sentinel::core::EmbeddingRuntimeHealth;
 using sentinel::core::embeddingRuntimePlan;
 using sentinel::core::EmbeddingRuntimeReadiness;
@@ -32,6 +37,7 @@ using sentinel::core::HybridRetrievalStatus;
 using sentinel::core::includeSemanticPromptSupplements;
 using sentinel::core::LocalVectorPersistenceIndex;
 using sentinel::core::orchestrateSemanticCandidates;
+using sentinel::core::OllamaEmbeddingProvider;
 using sentinel::core::planRetrieval;
 using sentinel::core::RetrievalCandidate;
 using sentinel::core::RetrievalPlanningPolicy;
@@ -80,6 +86,8 @@ class SemanticRetrievalTest final : public QObject {
 private slots:
     void fakeEmbeddingGenerationIsDeterministic();
     void fakeEmbeddingUsesStableVectorsForSameInput();
+    void ollamaEmbeddingProviderGeneratesRealLocalEmbeddings();
+    void ollamaEmbeddingProviderRefusesRemoteEndpoints();
     void fakeVectorIndexInsertSearchRemoveIsDeterministic();
     void fakeVectorIndexUsesStableScoringOrder();
     void candidateOrchestrationOrdersAndBudgetsDeterministically();
@@ -226,6 +234,56 @@ void SemanticRetrievalTest::fakeEmbeddingUsesStableVectorsForSameInput() {
 
     QCOMPARE(result.vectors.at(0).values, result.vectors.at(1).values);
     QVERIFY(result.vectors.at(0).values != result.vectors.at(2).values);
+}
+
+void SemanticRetrievalTest::ollamaEmbeddingProviderGeneratesRealLocalEmbeddings() {
+    QTcpServer server;
+    QVERIFY(server.listen(QHostAddress::LocalHost, 0));
+    const auto port = server.serverPort();
+
+    QObject::connect(&server, &QTcpServer::newConnection, [&server]() {
+        auto* socket = server.nextPendingConnection();
+        QObject::connect(socket, &QTcpSocket::readyRead, [socket]() {
+            socket->readAll();
+            const QByteArray body =
+                R"({"embeddings":[[0.1,0.2,0.3],[0.4,0.5,0.6]],"model":"nomic-embed-text"})";
+            socket->write("HTTP/1.1 200 OK\r\nContent-Type: application/json\r\n"
+                          "Content-Length: " +
+                          QByteArray::number(body.size()) + "\r\nConnection: close\r\n\r\n" +
+                          body);
+            socket->disconnectFromHost();
+        });
+    });
+
+    OllamaEmbeddingProvider provider(
+        QStringLiteral("http://127.0.0.1:%1").arg(port), QStringLiteral("nomic-embed-text"));
+    QCOMPARE(provider.status(), EmbeddingProviderStatus::Ready);
+
+    const EmbeddingRequest request{
+        QList<sentinel::core::EmbeddingDocument>{
+            {QStringLiteral("doc-a"), QStringLiteral("alpha beta"), {}, {}},
+            {QStringLiteral("doc-b"), QStringLiteral("gamma delta"), {}, {}},
+        },
+    };
+
+    const auto result = provider.embed(request);
+    QCOMPARE(result.status, EmbeddingProviderStatus::Ready);
+    QCOMPARE(result.documentCount, 2);
+    QCOMPARE(result.vectors.size(), 2);
+    QCOMPARE(result.vectors.at(0).values, QList<double>({0.1, 0.2, 0.3}));
+    QVERIFY(!result.policy.fakeOnly);
+    QVERIFY(result.checks.contains(
+        QStringLiteral("Provider/model calls: local Ollama embedding inference")));
+}
+
+void SemanticRetrievalTest::ollamaEmbeddingProviderRefusesRemoteEndpoints() {
+    OllamaEmbeddingProvider provider(QStringLiteral("https://example.com"),
+                                     QStringLiteral("nomic-embed-text"));
+    QCOMPARE(provider.status(), EmbeddingProviderStatus::Disabled);
+
+    const EmbeddingResult result = provider.embed(EmbeddingRequest{});
+    QCOMPARE(result.status, EmbeddingProviderStatus::Disabled);
+    QCOMPARE(result.documentCount, 0);
 }
 
 void SemanticRetrievalTest::fakeVectorIndexInsertSearchRemoveIsDeterministic() {

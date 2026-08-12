@@ -17,14 +17,72 @@
 #include "sentinel/core/platform/WinProtocolHandler.h"
 #include "sentinel/core/platform/WinTaskbarIntegration.h"
 #include "sentinel/desktop/NativeCompanionAdapter.h"
+#include "sentinel/desktop/DaemonClient.h"
 
 #include <QCommandLineOption>
+#include <QCoreApplication>
+#include <QFileInfo>
 #include <QIcon>
 #include <QNetworkProxy>
+#include <QProcess>
 #include <QQmlContext>
 #include <QQuickWindow>
+#include <QStandardPaths>
 
 namespace sentinel::desktop {
+
+namespace {
+
+QString discoverDaemonBinary() {
+    // Prefer a sibling binary next to the running desktop app (dev/build layout),
+    // then fall back to PATH lookup for packaged installs.
+    const QString appDir = QCoreApplication::applicationDirPath();
+    const QString sibling = appDir + QStringLiteral("/sentinel-daemon");
+    if (QFileInfo::exists(sibling)) {
+        return sibling;
+    }
+#ifdef Q_OS_WIN
+    const QString siblingExe = appDir + QStringLiteral("/sentinel-daemon.exe");
+    if (QFileInfo::exists(siblingExe)) {
+        return siblingExe;
+    }
+#endif
+    const QString byPath = QStandardPaths::findExecutable(QStringLiteral("sentinel-daemon"));
+    if (!byPath.isEmpty()) {
+        return byPath;
+    }
+    return {};
+}
+
+} // namespace
+
+void ApplicationBootstrapper::ensureBackgroundDaemon() {
+    if (m_safeMode) {
+        qInfo().noquote() << "Safe mode active: skipping background daemon launch.";
+        return;
+    }
+
+    const QString daemonBinary = discoverDaemonBinary();
+    if (daemonBinary.isEmpty()) {
+        qInfo().noquote() << "sentinel-daemon binary not found; skipping background launch.";
+        return;
+    }
+
+    m_daemonProcess = std::make_unique<QProcess>(this);
+    m_daemonProcess->setProcessChannelMode(QProcess::ForwardedChannels);
+    QObject::connect(m_daemonProcess.get(), &QProcess::started, this, []() {
+        qInfo().noquote() << "sentinel-daemon background process started.";
+    });
+    QObject::connect(m_daemonProcess.get(),
+                     &QProcess::finished, this,
+                     [this](int exitCode, QProcess::ExitStatus exitStatus) {
+                         qInfo().noquote()
+                             << "sentinel-daemon exited:" << exitCode
+                             << (exitStatus == QProcess::NormalExit ? "normal" : "crash");
+                         m_daemonProcess.release()->deleteLater();
+                     });
+    m_daemonProcess->start(daemonBinary, QStringList());
+}
 
 ApplicationBootstrapper::ApplicationBootstrapper(int argc, char* argv[], QObject* parent)
     : QObject(parent), m_argc(argc), m_argv(argv) {
@@ -179,6 +237,9 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     auto* ollamaModelDetailFetcher = new OllamaModelDetailFetcher(this);
     auto* lmStudioLibraryFetcher = new LMStudioLibraryFetcher(this);
 
+    ensureBackgroundDaemon();
+    auto* daemonClient = new DaemonClient(this);
+
     m_engine.rootContext()->setContextProperty(QStringLiteral("shellViewModel"), m_shellViewModel.get());
     m_engine.rootContext()->setContextProperty(QStringLiteral("ollamaPuller"), ollamaPuller);
     m_engine.rootContext()->setContextProperty(QStringLiteral("ollamaLibraryFetcher"),
@@ -187,6 +248,7 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                                              ollamaModelDetailFetcher);
     m_engine.rootContext()->setContextProperty(QStringLiteral("lmStudioLibraryFetcher"),
                                              lmStudioLibraryFetcher);
+    m_engine.rootContext()->setContextProperty(QStringLiteral("daemonClient"), daemonClient);
 
     QObject::connect(m_settings.get(), &sentinel::core::AppSettings::appLanguageChanged, &app,
                      [this, &app]() {

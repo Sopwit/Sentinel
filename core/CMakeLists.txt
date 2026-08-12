@@ -6,7 +6,6 @@ configure_file(
 
 add_library(sentinel_core STATIC
     include/sentinel/core/AppBuildConfig.h.in
-    include/sentinel/core/IPlugin.h
     include/sentinel/core/agent/AgentActivityLog.h
     include/sentinel/core/agent/AgentMetadata.h
     include/sentinel/core/agent/AgentPipelineResult.h
@@ -27,7 +26,6 @@ add_library(sentinel_core STATIC
     include/sentinel/core/app/FileLogger.h
     include/sentinel/core/app/IClock.h
     include/sentinel/core/app/IContextEngine.h
-    include/sentinel/core/app/IIntegration.h
     include/sentinel/core/app/ITaskPlanner.h
     include/sentinel/core/app/ModeManager.h
     include/sentinel/core/app/OrchestrationDiagnostics.h
@@ -46,6 +44,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/chat/IConversationStore.h
     include/sentinel/core/chat/InMemoryConversationStore.h
     include/sentinel/core/chat/LocalEchoProvider.h
+   include/sentinel/core/chat/OllamaChatProvider.h
     include/sentinel/core/chat/SQLiteChatHistoryStore.h
     include/sentinel/core/chat/SQLiteConversationStore.h
     include/sentinel/core/interfaces/IChatProvider.h
@@ -150,6 +149,7 @@ add_library(sentinel_core STATIC
     src/chat/ConversationStateGraph.cpp
     src/chat/InMemoryConversationStore.cpp
     src/chat/LocalEchoProvider.cpp
+   src/chat/OllamaChatProvider.cpp
     src/chat/SQLiteChatHistoryStore.cpp
     src/chat/SQLiteConversationStore.cpp
     src/memory/InMemoryMemoryCandidateStore.cpp

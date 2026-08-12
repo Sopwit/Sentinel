@@ -28,7 +28,7 @@ void CompanionServiceTest::exposesReadinessOnlyMetadata() {
     QVERIFY(summary.platformCapability.contains(QStringLiteral("native integration unavailable")));
     QVERIFY(summary.permissionPostureSummary.contains(QStringLiteral("foreground-safe shell")));
     QVERIFY(summary.safetyBoundarySummary.contains(QStringLiteral("no background daemon")));
-    QVERIFY(summary.quickCaptureSummary.contains(QStringLiteral("no note")));
+    QVERIFY(summary.quickCaptureSummary.contains(QStringLiteral("writes a short note")));
     QCOMPARE(summary.platformSummaries.size(), 3);
     QCOMPARE(summary.traceSummaries.size(), 6);
     QVERIFY(summary.traceSummaries.join(QStringLiteral("\n"))
@@ -69,9 +69,22 @@ void CompanionServiceTest::exposesNativeActionReadinessAndPausedState() {
     QCOMPARE(actions.at(0).label, QStringLiteral("Open Sentinel"));
     QVERIFY(actions.at(0).available);
     QVERIFY(actions.at(0).executionEnabled);
-    QVERIFY(!actions.at(2).available);
-    QVERIFY(!actions.at(2).executionEnabled);
+    QVERIFY(actions.at(2).available);
+    QVERIFY(actions.at(2).executionEnabled);
     QCOMPARE(actions.at(3).label, QStringLiteral("Resume Companion"));
+
+    const auto captured = service.captureQuickNote(QStringLiteral("remember this idea"), true, false);
+    QVERIFY(captured.captured);
+    QCOMPARE(captured.capturedCharacterCount, 19);
+    QVERIFY(captured.summary.contains(QStringLiteral("Quick capture succeeded")));
+
+    const auto refused = service.captureQuickNote(QStringLiteral("note while paused"), true, true);
+    QVERIFY(!refused.captured);
+    QVERIFY(refused.summary.contains(QStringLiteral("not active")));
+
+    const auto empty = service.captureQuickNote(QStringLiteral("   "), true, false);
+    QVERIFY(!empty.captured);
+    QVERIFY(empty.summary.contains(QStringLiteral("empty")));
 
     const auto pausedSummary = service.summary(true, true, true);
     QCOMPARE(pausedSummary.status, QStringLiteral("Paused"));

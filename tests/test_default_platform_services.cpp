@@ -13,8 +13,6 @@ private slots:
     void testPlatformService();
     void testNotificationService();
     void testSystemIntegrationService();
-    void testIntegration();
-    void testPlugin();
 };
 
 void TestDefaultPlatformServices::testPlatformService() {
@@ -30,26 +28,6 @@ void TestDefaultPlatformServices::testNotificationService() {
 void TestDefaultPlatformServices::testSystemIntegrationService() {
     sentinel::core::DefaultSystemIntegrationService service;
     QVERIFY(service.isAvailable());
-}
-
-void TestDefaultPlatformServices::testIntegration() {
-    sentinel::core::DefaultIntegration integration("test_id", "Test Integration", true);
-    QCOMPARE(integration.id(), QStringLiteral("test_id"));
-    QCOMPARE(integration.displayName(), QStringLiteral("Test Integration"));
-    QVERIFY(integration.isAvailable());
-}
-
-void TestDefaultPlatformServices::testPlugin() {
-    sentinel::core::DefaultPlugin plugin("test_plugin", "Test Plugin");
-    QCOMPARE(plugin.id(), QStringLiteral("test_plugin"));
-    QCOMPARE(plugin.displayName(), QStringLiteral("Test Plugin"));
-    QVERIFY(!plugin.isInitialized());
-
-    plugin.initialize();
-    QVERIFY(plugin.isInitialized());
-
-    plugin.shutdown();
-    QVERIFY(!plugin.isInitialized());
 }
 
 QTEST_MAIN(TestDefaultPlatformServices)

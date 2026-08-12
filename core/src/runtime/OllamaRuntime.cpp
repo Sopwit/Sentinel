@@ -349,6 +349,13 @@ QString OllamaModelPuller::errorText() const {
     return errorText_;
 }
 
+void OllamaModelPuller::setEndpoint(const QString& endpoint) {
+    const auto normalized = sentinel::core::OllamaConfig::fromEndpoint(endpoint).endpoint;
+    if (normalized.isLoopbackHttp()) {
+        endpoint_ = normalized.toString();
+    }
+}
+
 void OllamaModelPuller::pull(const QString& modelId) {
     if (pulling_) {
         cancel();
@@ -360,7 +367,7 @@ void OllamaModelPuller::pull(const QString& modelId) {
     }
 
     // Build request to local Ollama /api/pull
-    QUrl url(QStringLiteral("http://127.0.0.1:11434/api/pull"));
+    QUrl url(endpoint_ + QStringLiteral("/api/pull"));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QByteArrayLiteral("application/json"));
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
@@ -438,7 +445,7 @@ void OllamaModelPuller::removeModel(const QString& modelId) {
         return;
     }
 
-    QUrl url(QStringLiteral("http://127.0.0.1:11434/api/delete"));
+    QUrl url(endpoint_ + QStringLiteral("/api/delete"));
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::ContentTypeHeader, QByteArrayLiteral("application/json"));
 

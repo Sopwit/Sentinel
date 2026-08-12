@@ -217,19 +217,35 @@ QList<AgentRecord> AgentRuntimeService::agents(const QString& defaultPermissionS
                                                const QString& selectedSkillProfileId,
                                                const WorkspaceService& workspaceService,
                                                const QString& selectedWorkspaceId) const {
-    Q_UNUSED(toolGateway);
-    Q_UNUSED(skillProfileService);
-    Q_UNUSED(selectedSkillProfileId);
-    Q_UNUSED(workspaceService);
-    Q_UNUSED(selectedWorkspaceId);
-
     auto records = baseAgents();
     const auto agentPosture = permissionPostureForDomain(QStringLiteral("agent-execution"),
                                                          defaultPermissionState, permissionPolicy);
+    const auto profile = skillProfileService.selectedProfile(selectedSkillProfileId);
+    const auto workspace = workspaceService.selectedWorkspace(selectedWorkspaceId);
+    const auto workspaceReadiness = workspaceService.readiness(selectedWorkspaceId);
+
     for (auto& agent : records) {
         agent.requiredPermissionPosture = agentPosture;
         agent.readinessState = agentReadinessStateName(AgentReadinessState::DryRunReady);
         agent.refusalReason = QString::fromLatin1(kExecutionDisabledReason);
+
+        const auto toolIds = candidateToolsForGoal(agent.description, agent);
+        QStringList toolAvailabilities;
+        for (const auto& toolId : toolIds) {
+            const auto tool = metadataForTool(toolId, toolGateway);
+            toolAvailabilities.append(QStringLiteral("%1 / %2")
+                                          .arg(tool.displayName,
+                                               toolExecutionAvailabilityName(tool.availability)));
+        }
+
+        agent.capabilitySummary = QStringLiteral(
+            "%1 Tools: %2. Profile: %3 / %4. Workspace: %5 / %6.")
+                                      .arg(agent.capabilitySummary,
+                                           toolAvailabilities.isEmpty()
+                                               ? QStringLiteral("none")
+                                               : toolAvailabilities.join(QStringLiteral(", ")))
+                                      .arg(profile.name, profile.readiness)
+                                      .arg(workspace.name, workspaceReadiness.status);
     }
     return records;
 }

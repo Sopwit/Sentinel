@@ -35,8 +35,10 @@ int executeChatCommand(const QStringList& args) {
     auto controller = builder.withStandardDefaults(pathProvider, settings).build();
 
     QEventLoop loop;
+    auto responded = false;
     QObject::connect(controller.get(), &sentinel::core::ApplicationController::agentResponseChanged,
-                     &loop, [&controller, &loop]() {
+                     &loop, [&controller, &loop, &responded]() {
+                         responded = true;
                          const QString response = controller->lastAgentResponse();
                          std::cout << "\nSentinel: " << response.toStdString() << std::endl;
                          loop.quit();
@@ -45,8 +47,13 @@ int executeChatCommand(const QStringList& args) {
     std::cout << "User: " << prompt.toStdString() << std::endl;
     controller->sendMessage(prompt);
 
-    // Timeout after 5 seconds if local echo or provider hasn't responded
-    QTimer::singleShot(5000, &loop, [&loop]() {
+    // Synchronous providers emit the response before the event loop starts.
+    if (responded) {
+        return 0;
+    }
+
+    // Async providers (streaming / local inference) respond through the event loop.
+    QTimer::singleShot(30000, &loop, [&loop]() {
         std::cout << "[Timeout waiting for response]" << std::endl;
         loop.quit();
     });

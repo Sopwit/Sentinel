@@ -4,6 +4,8 @@
 
 #pragma once
 
+#include "sentinel/core/interfaces/IMemoryStore.h"
+
 #include <QString>
 #include <QtGlobal>
 
@@ -20,7 +22,12 @@ public:
 
 class BasicContextEngine final : public IContextEngine {
 public:
+    explicit BasicContextEngine(IMemoryStore* memoryStore = nullptr);
+
     QString buildContextForPrompt(const QString& prompt) const override;
+
+private:
+    IMemoryStore* memoryStore_;
 };
 
 } // namespace sentinel::core

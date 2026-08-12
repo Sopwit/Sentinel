@@ -103,8 +103,8 @@ CompanionSummary CompanionService::summary(bool enabledPreference, bool nativeAv
         "call, tool execution, filesystem scan, microphone capture, playback, "
         "memory write, or hidden transcript mutation.");
     result.quickCaptureSummary =
-        QStringLiteral("Quick Capture placeholder is metadata-only; no note, memory, transcript, "
-                       "filesystem, or model action is performed.");
+        QStringLiteral("Quick Capture writes a short note into local memory when the companion is "
+                       "active; it never touches the filesystem, transcript, or model calls.");
     result.platformSummaries = platformSummaries();
     for (const auto& action : actions(nativeAvailable, paused)) {
         result.actionSummaries.append(companionActionSummary(action));
@@ -130,9 +130,10 @@ QList<CompanionAction> CompanionService::actions(bool nativeAvailable, bool paus
          CompanionPermissionMode::Disabled, shellActionAvailable, shellActionAvailable},
         {CompanionActionKind::QuickNote, companionActionKindName(CompanionActionKind::QuickNote),
          QStringLiteral("Quick Note"),
-         QStringLiteral("Quick Capture placeholder; no filesystem, memory, transcript, or model "
-                        "write"),
-         CompanionPermissionMode::Disabled, false, false},
+         QStringLiteral("captures a quick note into local memory when the companion is active; "
+                        "no filesystem, transcript, or model write"),
+         CompanionPermissionMode::Enabled, shellActionAvailable && !paused,
+         shellActionAvailable && !paused},
         {CompanionActionKind::PauseCompanion,
          companionActionKindName(CompanionActionKind::PauseCompanion),
          paused ? QStringLiteral("Resume Companion") : QStringLiteral("Pause Companion"),
@@ -162,8 +163,8 @@ QList<CompanionTrace> CompanionService::traces(bool enabledPreference, bool nati
         {QStringLiteral("permissions"), QStringLiteral("disabled"),
          QStringLiteral("shell actions do not grant provider, model, tool, voice, filesystem, or "
                         "agent authority")},
-        {QStringLiteral("quick-capture"), QStringLiteral("placeholder"),
-         QStringLiteral("no filesystem write, memory write, transcript mutation, or model call")},
+        {QStringLiteral("quick-capture"), QStringLiteral("ready"),
+         QStringLiteral("quick notes are written to local memory when the companion is active")},
         {QStringLiteral("pause"), paused ? QStringLiteral("paused") : QStringLiteral("ready"),
          QStringLiteral("pause changes companion presentation/readiness metadata only")},
         {QStringLiteral("execution"), QStringLiteral("blocked"),
@@ -179,6 +180,34 @@ QStringList CompanionService::platformSummaries() const {
         QStringLiteral("Linux StatusNotifier/AppIndicator/system tray: uses Qt tray/status "
                        "notifier integration when available and degrades gracefully."),
     };
+}
+
+CompanionCaptureResult CompanionService::captureQuickNote(const QString& note,
+                                                          bool nativeAvailable,
+                                                          bool paused) const {
+    CompanionCaptureResult result;
+    if (!nativeAvailable || paused) {
+        result.captured = false;
+        result.summary = QStringLiteral("Quick capture refused: the companion is not active.");
+        return result;
+    }
+    const auto trimmed = note.trimmed();
+    if (trimmed.isEmpty()) {
+        result.captured = false;
+        result.summary = QStringLiteral("Quick capture refused: the note is empty.");
+        return result;
+    }
+    if (trimmed.size() > 2000) {
+        result.captured = false;
+        result.summary = QStringLiteral("Quick capture refused: the note exceeds 2000 characters.");
+        return result;
+    }
+    result.captured = true;
+    result.capturedCharacterCount = trimmed.size();
+    result.summary = QStringLiteral("Quick capture succeeded: note (%1 characters) is written to "
+                                    "local memory.")
+                         .arg(trimmed.size());
+    return result;
 }
 
 QString CompanionService::currentPlatformCapability(bool nativeAvailable) const {

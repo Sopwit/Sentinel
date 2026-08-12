@@ -796,10 +796,16 @@ ApplicationController::ApplicationController(
       modelManagementService_(modelManagementService
                                   ? std::move(modelManagementService)
                                   : std::make_unique<StaticModelManagementService>()),
-      textToSpeechProvider_(textToSpeechProvider ? std::move(textToSpeechProvider)
-                                                 : std::make_unique<NullTextToSpeechProvider>()),
-      speechToTextProvider_(speechToTextProvider ? std::move(speechToTextProvider)
-                                                 : std::make_unique<NullSpeechToTextProvider>()),
+      textToSpeechProvider_(textToSpeechProvider
+                                ? std::move(textToSpeechProvider)
+                                : std::make_unique<PiperTextToSpeechProvider>(
+                                      defaultDisabledPiperTtsConfig(),
+                                      std::make_unique<LocalPiperTtsClient>())),
+      speechToTextProvider_(speechToTextProvider
+                                ? std::move(speechToTextProvider)
+                                : std::make_unique<WhisperSpeechToTextProvider>(
+                                      defaultDisabledWhisperTranscriptionConfig(),
+                                      std::make_unique<LocalWhisperTranscriptionClient>())),
       voiceRuntimeCoordinator_(voiceRuntimeCoordinator
                                    ? std::move(voiceRuntimeCoordinator)
                                    : std::make_unique<StaticVoiceRuntimeCoordinator>()),
@@ -810,7 +816,7 @@ ApplicationController::ApplicationController(
           piperTextToSpeechProvider
               ? std::move(piperTextToSpeechProvider)
               : std::make_unique<PiperTextToSpeechProvider>(
-                    defaultDisabledPiperTtsConfig(), std::make_unique<NullPiperTtsClient>())),
+                    defaultDisabledPiperTtsConfig(), std::make_unique<LocalPiperTtsClient>())),
       piperSynthesisClient_(std::make_unique<LocalPiperSynthesisClient>()),
       whisperTranscriptionClient_(std::make_unique<LocalWhisperTranscriptionClient>()),
       memoryStore_(std::move(memoryStore)),
@@ -1905,13 +1911,18 @@ QStringList ApplicationController::credentialStoreTraceSummaries() const {
 }
 
 QString ApplicationController::credentialActionReadiness() const {
-    return QStringLiteral("Add API Key, Update API Key, and Remove API Key are disabled "
-                          "placeholders; no credential state can be mutated.");
+    const auto store = currentCredentialStore();
+    if (store.summary().status == CredentialStoreStatus::Ready) {
+        return QStringLiteral("Add API Key, Update API Key, and Remove API Key operate on the OS "
+                              "credential store.");
+    }
+    return QStringLiteral("Add API Key, Update API Key, and Remove API Key are disabled; no OS "
+                          "credential store is available on this platform.");
 }
 
 QString ApplicationController::credentialExecutionStatus() const {
-    return QStringLiteral("Execution disabled: credential storage does not enable cloud/API "
-                          "provider calls.");
+    return QStringLiteral("Cloud/API provider calls require a user-provided API key configured "
+                          "through the OS credential store.");
 }
 
 QString ApplicationController::ollamaEndpoint() const {
@@ -2757,6 +2768,110 @@ QString ApplicationController::piperBinaryPath() const {
     return piperBinaryPath_;
 }
 
+void ApplicationController::updatePiperTtsProviderConfig() {
+    if (!piperTextToSpeechProvider_) {
+        return;
+    }
+
+    auto config = defaultDisabledPiperTtsConfig();
+    const auto binaryConfigured =
+        !piperBinaryPath_.trimmed().isEmpty() &&
+        piperBinaryPath_.trimmed() != QStringLiteral("not configured");
+    const auto modelConfigured =
+        !piperModelPath_.trimmed().isEmpty() &&
+        piperModelPath_.trimmed() != QStringLiteral("not configured");
+    config.enabled = binaryConfigured || modelConfigured;
+    config.processExecutionAllowed = piperFileOutputExecutionEnabled_;
+    config.fileOutputAllowed = piperFileOutputExecutionEnabled_;
+    const auto binaryInfo = QFileInfo(piperBinaryPath_);
+    const auto modelInfo = QFileInfo(piperModelPath_);
+    const auto binaryReady = binaryConfigured && binaryInfo.exists() && binaryInfo.isFile() &&
+#if defined(Q_OS_WIN)
+                             (binaryInfo.isExecutable() ||
+                              QFileInfo(piperBinaryPath_ + QStringLiteral(".exe")).exists());
+#else
+                             binaryInfo.isExecutable();
+#endif
+    const auto modelReady = modelConfigured && modelInfo.exists() && modelInfo.isFile() &&
+                            modelInfo.isReadable();
+    config.binary.status =
+        binaryReady ? VoiceBinaryStatus::PresentMetadata : VoiceBinaryStatus::Missing;
+    config.binary.expectedPath = binaryConfigured ? piperBinaryPath_.trimmed()
+                                                  : QStringLiteral("not configured");
+    config.binary.executableAllowed = piperFileOutputExecutionEnabled_;
+    config.voiceModel.status =
+        modelReady ? VoiceModelStatus::PresentMetadata : VoiceModelStatus::Missing;
+    config.voiceModel.expectedPath =
+        modelConfigured ? piperModelPath_.trimmed() : QStringLiteral("not configured");
+    config.voiceModel.loadAllowed = piperFileOutputExecutionEnabled_;
+    config.controlledOutputDirectory =
+        binaryConfigured
+            ? QDir(QFileInfo(piperBinaryPath_).absolutePath())
+                  .filePath(QStringLiteral("piper-tts-cache"))
+            : QDir(QStandardPaths::writableLocation(QStandardPaths::CacheLocation).isEmpty()
+                       ? QDir::tempPath()
+                       : QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
+                  .filePath(QStringLiteral("piper-tts"));
+    config.timeoutMs = 15000;
+    config.summary =
+        piperFileOutputExecutionEnabled_
+            ? QStringLiteral("Piper TTS file output is configured for explicit local synthesis; "
+                             "subprocess execution and controlled file output are enabled.")
+            : QStringLiteral("Piper TTS file output exposes readiness metadata; execution is "
+                             "disabled.");
+    piperTextToSpeechProvider_->setConfig(std::move(config));
+}
+
+void ApplicationController::updateWhisperSttProviderConfig() {
+    auto* whisperProvider = dynamic_cast<WhisperSpeechToTextProvider*>(speechToTextProvider_.get());
+    if (!whisperProvider) {
+        return;
+    }
+
+    auto config = configuredWhisperTranscriptionConfig(whisperBinaryPath_, whisperModelPath_,
+                                                       whisperTranscriptionExecutionEnabled_);
+    config.policy.processExecutionAllowed = whisperTranscriptionExecutionEnabled_;
+    whisperProvider->setConfig(std::move(config));
+}
+
+bool ApplicationController::whisperTranscriptionExecutionEnabled() const {
+    return whisperTranscriptionExecutionEnabled_;
+}
+
+void ApplicationController::setWhisperTranscriptionExecutionEnabled(bool enabled) {
+    if (enabled == whisperTranscriptionExecutionEnabled_) {
+        return;
+    }
+
+    if (enabled) {
+        const auto readiness = whisperPreparationReadinessStatus();
+        if (readiness != QStringLiteral("Ready")) {
+            latestWhisperTranscriptionResult_ = WhisperTranscriptionResult{
+                WhisperTranscriptionStatus::Disabled,
+                false,
+                {},
+                {},
+                {},
+                0,
+                false,
+                WhisperTranscriptionSession{},
+                WhisperTranscriptionFallback{},
+                WhisperTranscriptionSafetyReport{},
+                QStringLiteral("Whisper transcription execution opt-in refused: Whisper paths are "
+                               "not ready. Readiness: %1.")
+                    .arg(readiness),
+                {QStringLiteral("Whisper execution opt-in refused because paths are not ready.")},
+            };
+            emit voiceConfigurationChanged();
+            return;
+        }
+    }
+
+    whisperTranscriptionExecutionEnabled_ = enabled;
+    updateWhisperSttProviderConfig();
+    emit voiceConfigurationChanged();
+}
+
 void ApplicationController::setPiperBinaryPath(const QString& path) {
     const auto normalized = path.trimmed();
     if (normalized == piperBinaryPath_) {
@@ -2764,6 +2879,7 @@ void ApplicationController::setPiperBinaryPath(const QString& path) {
     }
 
     piperBinaryPath_ = normalized;
+    updatePiperTtsProviderConfig();
     emit voiceConfigurationChanged();
 }
 
@@ -2778,6 +2894,7 @@ void ApplicationController::setPiperModelPath(const QString& path) {
     }
 
     piperModelPath_ = normalized;
+    updatePiperTtsProviderConfig();
     emit voiceConfigurationChanged();
 }
 
@@ -2792,6 +2909,7 @@ void ApplicationController::setWhisperBinaryPath(const QString& path) {
     }
 
     whisperBinaryPath_ = normalized;
+    updateWhisperSttProviderConfig();
     emit voiceConfigurationChanged();
 }
 
@@ -2806,6 +2924,7 @@ void ApplicationController::setWhisperModelPath(const QString& path) {
     }
 
     whisperModelPath_ = normalized;
+    updateWhisperSttProviderConfig();
     emit voiceConfigurationChanged();
 }
 
@@ -2815,7 +2934,8 @@ QStringList ApplicationController::voiceConfigurationSummaries() const {
 
 QString ApplicationController::voiceConfigurationReadinessSummary() const {
     return QStringLiteral("Piper file-output TTS: %1. Whisper STT preparation: %2. "
-                          "Configuration is metadata-only; Piper and Whisper are not executed.")
+                          "Execution runs only after path readiness and explicit process-execution "
+                          "opt-in; playback, microphone, and cloud calls stay gated.")
         .arg(piperFileOutputReadinessStatus(), whisperPreparationReadinessStatus());
 }
 
@@ -2916,36 +3036,58 @@ bool ApplicationController::piperFileOutputExecutionEnabled() const {
 }
 
 void ApplicationController::setPiperFileOutputExecutionEnabled(bool enabled) {
-    Q_UNUSED(enabled);
-    if (!piperFileOutputExecutionEnabled_) {
+    if (enabled == piperFileOutputExecutionEnabled_) {
         return;
     }
 
-    piperFileOutputExecutionEnabled_ = false;
-    latestPiperTtsResult_ = PiperTtsResult{
-        PiperTtsStatus::Disabled,
-        false,
-        {},
-        {},
-        0,
-        -1,
-        {},
-        QStringLiteral("Piper file-output execution is disabled in this readiness-only phase."),
-        {QStringLiteral("Piper execution opt-in was refused.")},
-    };
+    if (enabled) {
+        const auto readiness = piperFileOutputReadinessStatus();
+        if (readiness != QStringLiteral("Ready")) {
+            latestPiperTtsResult_ = PiperTtsResult{
+                PiperTtsStatus::Disabled,
+                false,
+                {},
+                {},
+                0,
+                -1,
+                {},
+                QStringLiteral("Piper file-output execution opt-in refused: Piper paths are not "
+                               "ready. Readiness: %1.")
+                    .arg(readiness),
+                {QStringLiteral("Piper execution opt-in refused because paths are not ready.")},
+            };
+            emit voiceConfigurationChanged();
+            return;
+        }
+    }
+
+    piperFileOutputExecutionEnabled_ = enabled;
+    latestPiperTtsResult_ = PiperTtsResult{};
+    updatePiperTtsProviderConfig();
     emit voiceConfigurationChanged();
 }
 
 QString ApplicationController::piperFileOutputExecutionStatus() const {
-    return QStringLiteral("Disabled");
+    if (latestPiperTtsResult_.status != PiperTtsStatus::Disabled) {
+        return piperTtsStatusName(latestPiperTtsResult_.status);
+    }
+    return piperTextToSpeechProvider_ ? piperTtsStatusName(piperTextToSpeechProvider_->status())
+                                      : QStringLiteral("Disabled");
 }
 
 QString ApplicationController::piperFileOutputExecutionSummary() const {
     if (!latestPiperTtsResult_.summary.trimmed().isEmpty()) {
         return safePiperTtsResultSummary(latestPiperTtsResult_);
     }
-    return QStringLiteral("Piper file-output execution is disabled. Phase 18 Piper TTS exposes "
-                          "readiness, safety, fallback, and trace metadata only.");
+    if (!piperFileOutputExecutionEnabled_) {
+        return QStringLiteral("Piper file-output execution is disabled. Configure executable "
+                              "Piper binary and model paths, then opt in to allow explicit local "
+                              "file-output synthesis.");
+    }
+    return piperTextToSpeechProvider_
+               ? piperTextToSpeechProvider_->fileOutputSummary()
+               : QStringLiteral("Piper file-output execution is enabled for controlled local "
+                                "synthesis.");
 }
 
 QString ApplicationController::piperFileOutputAudioPathSummary() const {
@@ -2959,21 +3101,51 @@ QString ApplicationController::piperFileOutputAudioPathSummary() const {
 }
 
 bool ApplicationController::generatePiperTtsFile(const QString& text) {
-    Q_UNUSED(text);
-    latestPiperTtsResult_ = PiperTtsResult{
-        PiperTtsStatus::Refused,
+    if (!piperFileOutputExecutionEnabled_) {
+        latestPiperTtsResult_ = PiperTtsResult{
+            PiperTtsStatus::Disabled,
+            false,
+            {},
+            {},
+            0,
+            -1,
+            {},
+            QStringLiteral("Piper file-output generation refused: explicit execution opt-in is "
+                           "disabled."),
+            {QStringLiteral("Piper file-output generation refused without side effects.")},
+        };
+        emit voiceConfigurationChanged();
+        return false;
+    }
+
+    if (!piperTextToSpeechProvider_) {
+        latestPiperTtsResult_ = PiperTtsResult{
+            PiperTtsStatus::Disabled,
+            false,
+            {},
+            {},
+            0,
+            -1,
+            {},
+            QStringLiteral("Piper file-output generation refused: no Piper TTS provider is "
+                           "available."),
+            {QStringLiteral("Piper file-output generation refused without side effects.")},
+        };
+        emit voiceConfigurationChanged();
+        return false;
+    }
+
+    latestPiperTtsResult_ = piperTextToSpeechProvider_->synthesizePiper(PiperTtsRequest{
+        text,
+        {},
+        {},
+        true,
+        true,
         false,
-        {},
-        {},
-        0,
-        -1,
-        {},
-        QStringLiteral("Piper file-output generation refused: no subprocess execution, audio "
-                       "file creation, or playback is enabled in this phase."),
-        {QStringLiteral("Piper file-output generation refused without side effects.")},
-    };
+        piperTextToSpeechProvider_->config().timeoutMs,
+    });
     emit voiceConfigurationChanged();
-    return false;
+    return latestPiperTtsResult_.success;
 }
 
 QString ApplicationController::whisperPreparationReadinessStatus() const {
@@ -3941,13 +4113,25 @@ QString ApplicationController::semanticReadiness() const {
 }
 
 QString ApplicationController::embeddingProviderReadiness() const {
-    return embeddingProviderStatusName(EmbeddingProviderStatus::NotConfigured);
+    if (!ollamaRuntimeClient_ || !semanticRetrievalPolicy_.enabled) {
+        return embeddingProviderStatusName(EmbeddingProviderStatus::NotConfigured);
+    }
+    const auto provider = sentinel::core::OllamaEmbeddingProvider(
+        ollamaRuntimeClient_->config().endpoint.toString(),
+        QStringLiteral("nomic-embed-text"), 4000);
+    return embeddingProviderStatusName(provider.status());
 }
 
 QString ApplicationController::embeddingProviderSummary() const {
-    return QStringLiteral(
-        "No runtime embedding provider is configured. Deterministic fake embeddings are available "
-        "to tests only.");
+    if (!ollamaRuntimeClient_ || !semanticRetrievalPolicy_.enabled) {
+        return QStringLiteral(
+            "No embedding provider is configured; semantic retrieval is disabled. Embeddings are "
+            "generated locally through Ollama when semantic retrieval is enabled.");
+    }
+    const auto provider = sentinel::core::OllamaEmbeddingProvider(
+        ollamaRuntimeClient_->config().endpoint.toString(),
+        QStringLiteral("nomic-embed-text"), 4000);
+    return provider.policy().summary;
 }
 
 QString ApplicationController::vectorIndexReadiness() const {
@@ -7474,6 +7658,10 @@ bool ApplicationController::sendMessage(const QString& message) {
     if (trimmed.isEmpty()) {
         setChatSendLifecycle(QStringLiteral("refused"),
                              QStringLiteral("Enter a prompt before sending."));
+        if (lastAgentResponse_ != QStringLiteral("Enter a prompt before sending.")) {
+            lastAgentResponse_ = QStringLiteral("Enter a prompt before sending.");
+            emit agentResponseChanged();
+        }
         return false;
     }
 
@@ -7482,6 +7670,10 @@ bool ApplicationController::sendMessage(const QString& message) {
 
     if (activeConversationArchived()) {
         setChatSendLifecycle(QStringLiteral("refused"), activeConversationStateSummary());
+        if (lastAgentResponse_ != activeConversationStateSummary()) {
+            lastAgentResponse_ = activeConversationStateSummary();
+            emit agentResponseChanged();
+        }
         return false;
     }
 
@@ -7503,6 +7695,10 @@ bool ApplicationController::sendMessage(const QString& message) {
                              QStringLiteral("A request is already active. Wait for it to finish."));
         emit localInferenceChanged();
         emit localChatInferenceRoutingChanged();
+        if (lastAgentResponse_ != latestLocalInferenceResponse_.summary) {
+            lastAgentResponse_ = latestLocalInferenceResponse_.summary;
+            emit agentResponseChanged();
+        }
         return false;
     }
 
@@ -7547,6 +7743,10 @@ bool ApplicationController::sendMessage(const QString& message) {
         setChatSendLifecycle(QStringLiteral("refused"), reason);
         emit localInferenceChanged();
         emit localChatInferenceRoutingChanged();
+        if (lastAgentResponse_ != reason) {
+            lastAgentResponse_ = reason;
+            emit agentResponseChanged();
+        }
         return false;
     }
 
@@ -7619,6 +7819,10 @@ bool ApplicationController::sendMessage(const QString& message) {
         refreshConversationHistorySummary();
         emit chatMessagesChanged();
         emit contextAssemblyChanged();
+        if (lastAgentResponse_ != errorMessage.content) {
+            lastAgentResponse_ = errorMessage.content;
+            emit agentResponseChanged();
+        }
         return true;
     }
 
@@ -7657,6 +7861,10 @@ bool ApplicationController::sendMessage(const QString& message) {
     refreshConversationHistorySummary();
     emit chatMessagesChanged();
     emit contextAssemblyChanged();
+    if (lastAgentResponse_ != assistantMessage.content) {
+        lastAgentResponse_ = assistantMessage.content;
+        emit agentResponseChanged();
+    }
     return true;
 }
 
@@ -8273,6 +8481,12 @@ void ApplicationController::finalizeLocalChatInference(bool succeeded) {
                                     : QStringLiteral("local chat inference metadata blocked"));
     refreshConversationHistorySummary();
     emit chatMessagesChanged();
+    const auto responseText = succeeded ? latestLocalInferenceResponse_.text
+                                        : localInferenceChatFailureMessage(latestLocalInferenceResponse_);
+    if (lastAgentResponse_ != responseText) {
+        lastAgentResponse_ = responseText;
+        emit agentResponseChanged();
+    }
 }
 
 bool ApplicationController::runAgentRequest(const QString& request) {
@@ -8556,15 +8770,24 @@ bool ApplicationController::runAgentRequest(const QString& request) {
     emit agentActivityChanged();
     emit orchestrationSnapshotChanged();
 
-    const auto response = agentRuntime_->execute(AgentRequest{trimmed});
-    const auto nextMessage =
-        response.message.isEmpty() ? QStringLiteral("No agent response.") : response.message;
+    QString nextMessage;
+    const auto executionStatus = latestAgentPipelineResult_.executionStatus();
+    if (executionStatus == ToolExecutionStatus::Succeeded) {
+        nextMessage = latestAgentPipelineResult_.execution.summary;
+    } else if (executionStatus == ToolExecutionStatus::Blocked) {
+        nextMessage =
+            QStringLiteral("Agent execution blocked: %1")
+                .arg(latestAgentPipelineResult_.execution.summary);
+    } else {
+        nextMessage = QStringLiteral("Agent execution status: %1")
+                          .arg(toolExecutionStatusName(executionStatus));
+    }
     if (lastAgentResponse_ != nextMessage) {
         lastAgentResponse_ = nextMessage;
         emit agentResponseChanged();
     }
     emit agentStatusChanged();
-    return response.success;
+    return true;
 }
 
 AgentPipelineResult

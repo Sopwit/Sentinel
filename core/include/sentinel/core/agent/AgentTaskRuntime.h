@@ -595,6 +595,7 @@ public:
                                                         const QString& summary) = 0;
     virtual AgentTaskQueueResult refuseTask(const AgentTaskId& id, const QString& reason) = 0;
     virtual AgentTaskPlan planTask(const AgentTask& task) const = 0;
+    virtual AgentTaskResult executeTask(const AgentTask& task) const = 0;
     virtual AgentTaskResult refuseExecution(const AgentTask& task) const = 0;
     virtual AgentPlanningSession planningSession() const = 0;
     virtual AgentCapabilityRegistry capabilityRegistry() const = 0;
@@ -617,6 +618,7 @@ public:
                                                 const QString& summary) override;
     AgentTaskQueueResult refuseTask(const AgentTaskId& id, const QString& reason) override;
     AgentTaskPlan planTask(const AgentTask& task) const override;
+    AgentTaskResult executeTask(const AgentTask& task) const override;
     AgentTaskResult refuseExecution(const AgentTask& task) const override;
     AgentPlanningSession planningSession() const override;
     AgentCapabilityRegistry capabilityRegistry() const override;

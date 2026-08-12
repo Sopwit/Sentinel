@@ -105,7 +105,7 @@ Item {
                                     text: qsTr("Pull Model")
                                     visible: card.modelData.downloadable === true
                                     accent: root.modeAccent
-                                    onClicked: root.viewModel.pullOllamaModel(card.modelData.ollamaId)
+                                    onClicked: ollamaPuller.pull(card.modelData.ollamaId)
                                 }
                             }
                         }

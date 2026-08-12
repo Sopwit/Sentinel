@@ -66,6 +66,8 @@ fi
 %license LICENSE
 %doc README.md
 %{_bindir}/sentinel-desktop
+%{_bindir}/sentinel-daemon
+%{_bindir}/sentinel-cli
 %{_datadir}/applications/dev.sentinel.Sentinel.desktop
 %{_datadir}/icons/hicolor/scalable/apps/dev.sentinel.Sentinel.svg
 %{_datadir}/icons/hicolor/1024x1024/apps/dev.sentinel.Sentinel.png
@@ -75,6 +77,6 @@ fi
 %config(noreplace) %{_sysconfdir}/sentinel/config.json.template
 
 %changelog
-* Thu Jul 30 2026 Sentinel Maintainers <support@sentinel.dev> - 1.0.0-1
-- Initial enterprise RPM package release for Fedora KDE Plasma
-- FHS 3.0, XDG Base Directory, D-Bus session activation and systemd user service integration
+* Thu Aug 06 2026 Sentinel Maintainers <support@sentinel.dev> - 1.0.0-1
+- Ship sentinel-daemon and sentinel-cli alongside the desktop app
+- systemd user unit now launches the headless sentinel-daemon binary

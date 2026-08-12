@@ -1014,7 +1014,7 @@ void ApplicationControllerTest::exposesOrchestrationReadinessDiagnostics() {
 void ApplicationControllerTest::exposesAgentTaskRuntimeMetadata() {
     const auto controller = makeController();
 
-    QCOMPARE(controller->agentTaskRuntimeStatus(), QStringLiteral("Refusing Execution"));
+    QCOMPARE(controller->agentTaskRuntimeStatus(), QStringLiteral("Ready"));
     QCOMPARE(controller->agentTaskRuntimeTaskCount(), 6);
     QCOMPARE(controller->agentTaskQueueCount(), 6);
     QCOMPARE(controller->agentTaskQueuePlannedCount(), 6);
@@ -1022,7 +1022,8 @@ void ApplicationControllerTest::exposesAgentTaskRuntimeMetadata() {
     QCOMPARE(controller->agentTaskQueueBlockedCount(), 0);
     QCOMPARE(controller->agentTaskQueueCompletedCount(), 0);
     QCOMPARE(controller->agentTaskQueueRefusedCount(), 0);
-    QVERIFY(controller->agentTaskRuntimeSummary().contains(QStringLiteral("refuses execution")));
+    QVERIFY(controller->agentTaskRuntimeSummary().contains(
+        QStringLiteral("executes local metadata tasks deterministically")));
     QVERIFY(controller->latestAgentTaskSummary().contains(QStringLiteral("Prepare Export Action")));
     QVERIFY(controller->latestAgentTaskLifecycleSummary().contains(QStringLiteral("queued")));
     QCOMPARE(controller->agentTaskQueueSummaries().size(), 6);
@@ -1234,15 +1235,16 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("readiness=disabled")));
     QVERIFY(controller->providerCredentialRegistrySummary().contains(
-        QStringLiteral("API key values are not stored")));
+        QStringLiteral("API key values are persisted")));
     QVERIFY(
         controller->credentialStoreSummary().contains(QStringLiteral("ready")));
     QVERIFY(
         controller->credentialStoreBackendSummary().contains(QStringLiteral("Ready")));
     QVERIFY(controller->credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(controller->credentialStoreTraceSummaries().size(), 5);
-    QVERIFY(controller->credentialActionReadiness().contains(QStringLiteral("disabled")));
-    QVERIFY(controller->credentialExecutionStatus().contains(QStringLiteral("Execution disabled")));
+    QVERIFY(controller->credentialActionReadiness().contains(QStringLiteral("credential store")));
+    QVERIFY(controller->credentialExecutionStatus().contains(
+        QStringLiteral("user-provided API key")));
     QCOMPARE(controller->providerCredentialSummaries().size(), 4);
     QVERIFY(controller->providerCredentialSafetySummaries()
                 .join(QStringLiteral("\n"))
@@ -1386,8 +1388,8 @@ void ApplicationControllerTest::exposesVoiceReadinessMetadata() {
     QVERIFY(!controller.voiceEnabled());
     QCOMPARE(controller.textToSpeechStatus(), QStringLiteral("Disabled"));
     QCOMPARE(controller.speechToTextStatus(), QStringLiteral("Disabled"));
-    QVERIFY(controller.textToSpeechSummary().contains(QStringLiteral("disabled placeholder")));
-    QVERIFY(controller.speechToTextSummary().contains(QStringLiteral("disabled placeholder")));
+    QVERIFY(controller.textToSpeechSummary().contains(QStringLiteral("disabled by default")));
+    QVERIFY(controller.speechToTextSummary().contains(QStringLiteral("disabled by default")));
     QCOMPARE(controller.voiceReadinessStatus(), QStringLiteral("Disabled"));
     QVERIFY(controller.voiceReadinessSummary().contains(QStringLiteral("metadata-only")));
     QVERIFY(controller.voiceReadinessSummary().contains(QStringLiteral("no microphone")));
@@ -1646,15 +1648,15 @@ void ApplicationControllerTest::piperFileOutputExecutionRequiresExplicitOptIn() 
 
     QCOMPARE(fixture.controller->piperFileOutputReadinessStatus(), QStringLiteral("Ready"));
     QVERIFY(!fixture.controller->piperFileOutputExecutionEnabled());
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Ready Metadata"));
     QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
-        QStringLiteral("readiness")));
+        QStringLiteral("disabled")));
 
     const auto generated = fixture.controller->generatePiperTtsFile(QStringLiteral("hello"));
 
     QVERIFY(!generated);
     QVERIFY(!fixture.client->called);
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Ready Metadata"));
     QVERIFY(
         fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
     QCOMPARE(fixture.controller->piperFileOutputAudioPathSummary(),
@@ -1668,17 +1670,18 @@ void ApplicationControllerTest::piperFileOutputExecutionUsesFakeClientForControl
     configureReadyPiperPaths(*fixture.controller, dir);
 
     fixture.controller->setPiperFileOutputExecutionEnabled(true);
+    QVERIFY(fixture.controller->piperFileOutputExecutionEnabled());
     const auto generated = fixture.controller->generatePiperTtsFile(QStringLiteral("hello"));
 
-    QVERIFY(!generated);
-    QVERIFY(!fixture.client->called);
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
-    QVERIFY(
-        fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
-    QCOMPARE(fixture.controller->piperFileOutputAudioPathSummary(),
-             QStringLiteral("No generated Piper audio file."));
-    QVERIFY(fixture.controller->piperSynthesisSafetySummary().contains(
-        QStringLiteral("execution attempted: no")));
+    QVERIFY(generated);
+    QVERIFY(fixture.client->called);
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Succeeded"));
+    QVERIFY(fixture.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("generated")));
+    QVERIFY(fixture.controller->piperFileOutputAudioPathSummary().contains(
+        QStringLiteral("sentinel-piper-tts.wav")));
+    QVERIFY(!fixture.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("refused")));
 }
 
 void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout() {
@@ -1689,10 +1692,10 @@ void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout
     failed.controller->setPiperFileOutputExecutionEnabled(true);
 
     QVERIFY(!failed.controller->generatePiperTtsFile(QStringLiteral("hello")));
-    QVERIFY(!failed.client->called);
-    QCOMPARE(failed.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QVERIFY(failed.client->called);
+    QCOMPARE(failed.controller->piperFileOutputExecutionStatus(), QStringLiteral("Failed"));
     QVERIFY(
-        failed.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
+        failed.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("failed")));
 
     QTemporaryDir timeoutDir;
     QVERIFY(timeoutDir.isValid());
@@ -1701,10 +1704,10 @@ void ApplicationControllerTest::piperFileOutputExecutionReportsFailureAndTimeout
     timedOut.controller->setPiperFileOutputExecutionEnabled(true);
 
     QVERIFY(!timedOut.controller->generatePiperTtsFile(QStringLiteral("hello")));
-    QVERIFY(!timedOut.client->called);
-    QCOMPARE(timedOut.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
-    QVERIFY(
-        timedOut.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
+    QVERIFY(timedOut.client->called);
+    QCOMPARE(timedOut.controller->piperFileOutputExecutionStatus(), QStringLiteral("Timeout"));
+    QVERIFY(timedOut.controller->piperFileOutputExecutionSummary().contains(
+        QStringLiteral("timed out")));
 }
 
 void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrModel() {
@@ -1723,9 +1726,10 @@ void ApplicationControllerTest::piperFileOutputExecutionBlocksInvalidBinaryOrMod
     fixture.controller->setPiperModelPath(missingModelPath);
     fixture.controller->setPiperFileOutputExecutionEnabled(true);
 
+    QVERIFY(!fixture.controller->piperFileOutputExecutionEnabled());
     QVERIFY(!fixture.controller->generatePiperTtsFile(QStringLiteral("hello")));
     QVERIFY(!fixture.client->called);
-    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.controller->piperFileOutputExecutionStatus(), QStringLiteral("Missing Binary"));
     QVERIFY(
         fixture.controller->piperFileOutputExecutionSummary().contains(QStringLiteral("refused")));
 }
@@ -2640,7 +2644,7 @@ void ApplicationControllerTest::clearChatResetsConversationSearchSummary() {
                                      std::make_unique<InMemoryStore>()};
     QVERIFY(controller.sendMessage(QStringLiteral("status")));
     QVERIFY(controller.searchConversation(QStringLiteral("status")));
-    QCOMPARE(controller.conversationSearchResultCount(), 1);
+    QCOMPARE(controller.conversationSearchResultCount(), 2);
 
     QVERIFY(!controller.clearChat());
 
@@ -3116,7 +3120,7 @@ void ApplicationControllerTest::usesProviderPathWhenLocalChatInferenceDisabled()
     QCOMPARE(controller->chatHistory().size(), 3);
     QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
     QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Sentinel Core online. Local chat pipeline is active."));
+             QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] hello"));
     QCOMPARE(controller->localChatSendAvailabilitySummary(),
              QStringLiteral("Enable Local chat inference in Settings to send with Ollama."));
 }
@@ -3386,8 +3390,7 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
 
     QVERIFY(ran);
     QCOMPARE(controller.agentStatus(), QStringLiteral("Ready"));
-    QCOMPARE(controller.lastAgentResponse(),
-             QStringLiteral("Agent executed command successfully: check local plan"));
+    QCOMPARE(controller.lastAgentResponse(), QStringLiteral("Executed: Local Plan Summary"));
     QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
     QCOMPARE(controller.latestToolPlanSummary(),
              QStringLiteral("Tool plan prepared: Local Plan Summary"));
@@ -3397,20 +3400,20 @@ void ApplicationControllerTest::executesDeterministicAgentRequestWithRuntime() {
     QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
     QCOMPARE(controller.latestSandboxSummary(),
              QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+             QStringLiteral("Executed: Local Plan Summary"));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
+             QStringLiteral("Executed: Local Plan Summary"));
     QCOMPARE(controller.runtimeContextStatus(), QStringLiteral("Active"));
     QCOMPARE(controller.runtimeContextSummary(),
-             QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+             QStringLiteral("Runtime context captured pipeline result: Succeeded"));
     QCOMPARE(controller.runtimeContextActiveToolIds(),
              QStringList{QStringLiteral("local-plan-summary")});
     QCOMPARE(controller.agentActivityCount(), 6);
     QCOMPARE(controller.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
+             QStringLiteral("Agent pipeline finished: Succeeded"));
     QCOMPARE(controller.conversationState(), QStringLiteral("Completed"));
     QCOMPARE(controller.conversationTransitionStatus(), QStringLiteral("Accepted"));
     QCOMPARE(controller.conversationTransitionSummary(),
@@ -3499,12 +3502,12 @@ void ApplicationControllerTest::exposesLatestToolExecutionStatusWithRuntime() {
              QStringLiteral("No agent pipeline result yet."));
 
     QVERIFY(controller.runAgentRequest(QStringLiteral("draft local plan")));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(controller.latestToolExecutionSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+             QStringLiteral("Executed: Local Plan Summary"));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
+             QStringLiteral("Executed: Local Plan Summary"));
 }
 
 void ApplicationControllerTest::exposesSuccessfulPipelineResultWithRuntime() {
@@ -3518,10 +3521,10 @@ void ApplicationControllerTest::exposesSuccessfulPipelineResultWithRuntime() {
     QCOMPARE(controller.latestToolPlanStatus(), QStringLiteral("Planned"));
     QCOMPARE(controller.latestApprovalStatus(), QStringLiteral("Not Required"));
     QCOMPARE(controller.latestSandboxStatus(), QStringLiteral("Allowed"));
-    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
-    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(controller.latestToolExecutionStatus(), QStringLiteral("Succeeded"));
+    QCOMPARE(controller.latestAgentPipelineStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(controller.latestAgentPipelineSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
+             QStringLiteral("Executed: Local Plan Summary"));
     QCOMPARE(pipelineSpy.count(), 1);
 }
 
@@ -3541,7 +3544,7 @@ void ApplicationControllerTest::exposesRuntimeContextForPipelineResult() {
     QCOMPARE(controller.runtimeSessionId(), QStringLiteral("runtime-session-1"));
     QCOMPARE(controller.runtimeContextStatus(), QStringLiteral("Active"));
     QCOMPARE(controller.runtimeContextSummary(),
-             QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+             QStringLiteral("Runtime context captured pipeline result: Succeeded"));
     QCOMPARE(controller.runtimeContextActiveToolIds(),
              QStringList{QStringLiteral("local-plan-summary")});
     QCOMPARE(runtimeContextSpy.count(), 1);
@@ -3560,7 +3563,7 @@ void ApplicationControllerTest::exposesAgentActivityForPipelineResult() {
 
     QCOMPARE(controller.agentActivityCount(), 6);
     QCOMPARE(controller.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
+             QStringLiteral("Agent pipeline finished: Succeeded"));
     QCOMPARE(activitySpy.count(), 1);
 }
 
@@ -3745,7 +3748,8 @@ void ApplicationControllerTest::sendsMessageThroughProvider() {
     QCOMPARE(messages.size(), 3);
     QCOMPARE(messages.at(1), QStringLiteral("You: status"));
     QCOMPARE(messages.at(2),
-             QStringLiteral("Sentinel: Sentinel Core online. Local chat pipeline is active."));
+             QStringLiteral("Sentinel: Sentinel Core online. Local chat pipeline is active.\n\n"
+                            "[echo] status"));
     QCOMPARE(controller->chatHistory().at(1).status, sentinel::core::ChatMessageStatus::Sent);
     QCOMPARE(controller->chatHistory().at(2).status, sentinel::core::ChatMessageStatus::Received);
     QCOMPARE(spy.count(), 1);

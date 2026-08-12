@@ -82,6 +82,19 @@ add_sentinel_core_test(test_plugin_manager core/test_plugin_manager.cpp)
 add_sentinel_core_test(test_default_platform_services test_default_platform_services.cpp)
 add_sentinel_core_test(test_desktop_shell_view_model desktop/test_desktop_shell_view_model.cpp)
 
+qt_add_executable(test_daemon_ipc
+    core/test_daemon_ipc.cpp
+)
+
+target_link_libraries(test_daemon_ipc
+    PRIVATE
+        sentinel_daemon_service
+        sentinel_core
+        Qt6::Test
+)
+
+add_test(NAME test_daemon_ipc COMMAND $<TARGET_FILE:test_daemon_ipc>)
+
 qt_add_executable(test_graphics_backend
     desktop/test_graphics_backend.cpp
 )

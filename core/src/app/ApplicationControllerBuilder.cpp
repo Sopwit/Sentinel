@@ -5,6 +5,7 @@
 #include "sentinel/core/app/ApplicationControllerBuilder.h"
 
 #include "sentinel/core/chat/LocalEchoProvider.h"
+#include "sentinel/core/chat/OllamaChatProvider.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
@@ -23,7 +24,7 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withStandardDefaults
     const StandardPathProvider& pathProvider, const AppSettings& settings) {
     const auto ollamaConfig = OllamaConfig::fromEndpoint(settings.ollamaEndpoint());
 
-    m_provider = std::make_unique<LocalEchoProvider>();
+    m_provider = std::make_unique<OllamaChatProvider>(ollamaConfig);
     m_memoryStore = std::make_unique<SQLiteMemoryStore>(pathProvider.memoryDatabasePath());
     m_chatHistoryStore =
         std::make_unique<SQLiteChatHistoryStore>(pathProvider.chatHistoryDatabasePath());

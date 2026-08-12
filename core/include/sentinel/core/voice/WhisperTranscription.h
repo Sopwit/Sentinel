@@ -10,6 +10,7 @@
 #include <QStringList>
 
 #include <cstdint>
+#include <memory>
 
 namespace sentinel::core {
 
@@ -23,6 +24,8 @@ enum class WhisperTranscriptionStatus : std::uint8_t {
     SafetyBlocked,
     Refused,
     ReadyMetadata,
+    Succeeded,
+    Failed,
     Timeout,
 };
 
@@ -143,7 +146,9 @@ QString safeWhisperTranscriptionResultSummary(const WhisperTranscriptionResult& 
 QStringList whisperTranscriptionTraceSummaries(const QList<WhisperTranscriptionTrace>& traces);
 WhisperTranscriptionConfig defaultDisabledWhisperTranscriptionConfig();
 WhisperTranscriptionConfig configuredWhisperTranscriptionConfig(const QString& binaryPath,
-                                                                const QString& modelPath);
+                                                                const QString& modelPath,
+                                                                bool processExecutionAllowed =
+                                                                    false);
 WhisperTranscriptionReadiness
 whisperTranscriptionReadiness(const WhisperTranscriptionConfig& config,
                               const WhisperTranscriptionRequest& request);
@@ -174,6 +179,30 @@ public:
     QString statusSummary() const override;
     WhisperTranscriptionResult transcribe(const WhisperTranscriptionRequest& request,
                                           const WhisperTranscriptionConfig& config) override;
+};
+
+class WhisperSpeechToTextProvider final : public ISpeechToTextProvider {
+public:
+    WhisperSpeechToTextProvider();
+    WhisperSpeechToTextProvider(WhisperTranscriptionConfig config,
+                                std::unique_ptr<IWhisperTranscriptionClient> client);
+
+    VoiceProviderDescriptor descriptor() const override;
+    VoiceResponse transcribe(const VoiceRequest& request) override;
+    QString statusSummary() const override;
+
+    WhisperTranscriptionStatus status() const;
+    QString whisperStatusSummary() const;
+    QStringList readinessChecks() const;
+    WhisperTranscriptionResult transcribeWhisper(const WhisperTranscriptionRequest& request);
+    const WhisperTranscriptionConfig& config() const;
+    void setConfig(WhisperTranscriptionConfig config);
+
+private:
+    WhisperTranscriptionStatus evaluateStatus() const;
+
+    WhisperTranscriptionConfig config_;
+    std::unique_ptr<IWhisperTranscriptionClient> client_;
 };
 
 } // namespace sentinel::core

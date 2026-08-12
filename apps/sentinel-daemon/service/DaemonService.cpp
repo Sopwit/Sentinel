@@ -27,6 +27,7 @@ bool DaemonService::initialize() {
 
     sentinel::core::ApplicationControllerBuilder builder;
     m_controller = builder.withStandardDefaults(m_pathProvider, *m_settings).build();
+    m_ipcServer.setController(m_controller.get());
 
     if (!m_ipcServer.startServer()) {
         qWarning().noquote() << "Failed to start Daemon IPC server.";
