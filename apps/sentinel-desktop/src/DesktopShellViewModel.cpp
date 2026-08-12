@@ -2057,6 +2057,16 @@ void DesktopShellViewModel::applyVoiceConfigurationPaths(const QString& piperBin
     setWhisperModelPath(whisperModelPath);
 }
 
+QString DesktopShellViewModel::autoDetectVoicePaths() {
+    const QString result = settings_.autoDetectVoicePaths();
+    controller_.setPiperBinaryPath(settings_.piperBinaryPath());
+    controller_.setPiperModelPath(settings_.piperModelPath());
+    controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
+    controller_.setWhisperModelPath(settings_.whisperModelPath());
+    emit voiceConfigurationChanged();
+    return result;
+}
+
 void DesktopShellViewModel::startVoiceCapture() {
     if (voiceRecordingActive_) {
         return;

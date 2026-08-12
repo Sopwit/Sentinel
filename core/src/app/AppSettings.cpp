@@ -8,8 +8,10 @@
 #include "sentinel/core/model/ModelRouting.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
+#include <QDir>
 #include <QFile>
 #include <QLocale>
+#include <QStandardPaths>
 #include <algorithm>
 
 namespace sentinel::core {
@@ -709,28 +711,158 @@ void AppSettings::setAgentAutonomousMode(bool enabled) {
     emit agentAutonomousModeChanged();
 }
 
-QString AppSettings::piperBinaryPath() const {
-    QString path =
-        store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed() : QString();
-    if (path.isEmpty()) {
+namespace {
+
+QString findPiperBinaryCandidate() {
 #if defined(Q_OS_WIN)
-        const QStringList candidates{
-            QStringLiteral("C:\\Program Files\\Piper\\piper.exe"),
-            QStringLiteral("C:\\Program Files (x86)\\Piper\\piper.exe"),
-            QStringLiteral("C:\\tools\\piper\\piper.exe"),
-        };
+    QString exe = QStandardPaths::findExecutable(QStringLiteral("piper.exe"));
 #else
-        const QStringList candidates{
-            QStringLiteral("/opt/homebrew/bin/piper"), QStringLiteral("/usr/local/bin/piper"),
-            QStringLiteral("/usr/bin/piper"), QStringLiteral("/bin/piper")};
+    QString exe = QStandardPaths::findExecutable(QStringLiteral("piper"));
 #endif
-        for (const auto& c : candidates) {
-            if (QFile::exists(c)) {
-                return c;
+    if (!exe.isEmpty()) {
+        return exe;
+    }
+#if defined(Q_OS_WIN)
+    const QStringList candidates{
+        QStringLiteral("C:\\Program Files\\Piper\\piper.exe"),
+        QStringLiteral("C:\\Program Files (x86)\\Piper\\piper.exe"),
+        QStringLiteral("C:\\tools\\piper\\piper.exe"),
+        QDir::homePath() + QStringLiteral("\\piper\\piper.exe"),
+    };
+#else
+    const QStringList candidates{
+        QStringLiteral("/opt/homebrew/bin/piper"), QStringLiteral("/usr/local/bin/piper"),
+        QStringLiteral("/usr/bin/piper"),          QStringLiteral("/bin/piper"),
+        QDir::homePath() + QStringLiteral("/.local/bin/piper"),
+        QDir::homePath() + QStringLiteral("/piper/piper"),
+    };
+#endif
+    for (const auto& c : candidates) {
+        if (QFile::exists(c)) {
+            return c;
+        }
+    }
+    return {};
+}
+
+QString findWhisperBinaryCandidate() {
+#if defined(Q_OS_WIN)
+    QString exe = QStandardPaths::findExecutable(QStringLiteral("whisper.exe"));
+    if (exe.isEmpty()) {
+        exe = QStandardPaths::findExecutable(QStringLiteral("whisper-cpp.exe"));
+    }
+    if (exe.isEmpty()) {
+        exe = QStandardPaths::findExecutable(QStringLiteral("main.exe"));
+    }
+#else
+    QString exe = QStandardPaths::findExecutable(QStringLiteral("whisper"));
+    if (exe.isEmpty()) {
+        exe = QStandardPaths::findExecutable(QStringLiteral("whisper-cpp"));
+    }
+    if (exe.isEmpty()) {
+        exe = QStandardPaths::findExecutable(QStringLiteral("main"));
+    }
+#endif
+    if (!exe.isEmpty()) {
+        return exe;
+    }
+#if defined(Q_OS_WIN)
+    const QStringList candidates{
+        QStringLiteral("C:\\Program Files\\Whisper\\whisper.exe"),
+        QStringLiteral("C:\\Program Files\\Whisper\\whisper-cpp.exe"),
+        QStringLiteral("C:\\Program Files (x86)\\Whisper\\whisper.exe"),
+        QStringLiteral("C:\\tools\\whisper\\whisper.exe"),
+        QStringLiteral("C:\\tools\\whisper\\whisper-cpp.exe"),
+    };
+#else
+    const QStringList candidates{
+        QStringLiteral("/opt/homebrew/bin/whisper"),
+        QStringLiteral("/usr/local/bin/whisper"),
+        QStringLiteral("/usr/bin/whisper"),
+        QStringLiteral("/bin/whisper"),
+        QStringLiteral("/opt/homebrew/bin/whisper-cpp"),
+        QStringLiteral("/usr/local/bin/whisper-cpp"),
+        QStringLiteral("/usr/bin/whisper-cpp"),
+        QDir::homePath() + QStringLiteral("/.local/bin/whisper"),
+        QDir::homePath() + QStringLiteral("/.local/bin/whisper-cpp"),
+    };
+#endif
+    for (const auto& c : candidates) {
+        if (QFile::exists(c)) {
+            return c;
+        }
+    }
+    return {};
+}
+
+QString findModelInDirectories(const QStringList& dirs, const QStringList& filters) {
+    for (const auto& dirPath : dirs) {
+        QDir dir(dirPath);
+        if (!dir.exists()) {
+            continue;
+        }
+        for (const auto& filter : filters) {
+            const QStringList files = dir.entryList({filter}, QDir::Files, QDir::Name);
+            if (!files.isEmpty()) {
+                return dir.filePath(files.first());
             }
         }
     }
-    return path;
+    return {};
+}
+
+QString findPiperModelCandidate() {
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QString home = QDir::homePath();
+    const QStringList dirs{
+        appData + QStringLiteral("/models/piper"),
+        appData + QStringLiteral("/piper"),
+        home + QStringLiteral("/.local/share/piper"),
+        home + QStringLiteral("/.cache/piper"),
+        home + QStringLiteral("/models/piper"),
+        home + QStringLiteral("/piper/models"),
+        home + QStringLiteral("/piper"),
+        QStringLiteral("/usr/share/piper"),
+        QStringLiteral("/usr/share/sound/piper"),
+    };
+    return findModelInDirectories(dirs, {QStringLiteral("*.onnx")});
+}
+
+QString findWhisperModelCandidate() {
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QString home = QDir::homePath();
+    const QStringList dirs{
+        appData + QStringLiteral("/models/whisper"),
+        appData + QStringLiteral("/whisper"),
+        home + QStringLiteral("/.local/share/whisper"),
+        home + QStringLiteral("/.cache/whisper"),
+        home + QStringLiteral("/models/whisper"),
+        home + QStringLiteral("/whisper/models"),
+        home + QStringLiteral("/whisper"),
+        QStringLiteral("/usr/share/whisper"),
+    };
+    return findModelInDirectories(dirs, {QStringLiteral("*.bin"), QStringLiteral("*.gguf")});
+}
+
+QString findKokoroModelCandidate() {
+    const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    const QString home = QDir::homePath();
+    const QStringList dirs{
+        appData + QStringLiteral("/models/kokoro"),
+        appData + QStringLiteral("/kokoro"),
+        home + QStringLiteral("/.local/share/kokoro"),
+        home + QStringLiteral("/.cache/kokoro"),
+        home + QStringLiteral("/models/kokoro"),
+        home + QStringLiteral("/.kokoro"),
+        home + QStringLiteral("/kokoro"),
+    };
+    return findModelInDirectories(dirs, {QStringLiteral("*.onnx"), QStringLiteral("*.pt"), QStringLiteral("*.pth"), QStringLiteral("*.bin"), QStringLiteral("*.safetensors")});
+}
+
+} // namespace
+
+QString AppSettings::piperBinaryPath() const {
+    return store_ ? store_->value(QString::fromLatin1(piperBinaryPathKey), {}).trimmed() : QString();
 }
 
 void AppSettings::setPiperBinaryPath(const QString& path) {
@@ -807,33 +939,7 @@ void AppSettings::setKokoroVoice(const QString& voice) {
 }
 
 QString AppSettings::whisperBinaryPath() const {
-    QString path =
-        store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed() : QString();
-    if (path.isEmpty()) {
-#if defined(Q_OS_WIN)
-        const QStringList candidates{
-            QStringLiteral("C:\\Program Files\\Whisper\\whisper.exe"),
-            QStringLiteral("C:\\Program Files\\Whisper\\whisper-cpp.exe"),
-            QStringLiteral("C:\\Program Files (x86)\\Whisper\\whisper.exe"),
-            QStringLiteral("C:\\tools\\whisper\\whisper.exe"),
-            QStringLiteral("C:\\tools\\whisper\\whisper-cpp.exe"),
-        };
-#else
-        const QStringList candidates{QStringLiteral("/opt/homebrew/bin/whisper"),
-                                     QStringLiteral("/usr/local/bin/whisper"),
-                                     QStringLiteral("/usr/bin/whisper"),
-                                     QStringLiteral("/bin/whisper"),
-                                     QStringLiteral("/opt/homebrew/bin/whisper-cpp"),
-                                     QStringLiteral("/usr/local/bin/whisper-cpp"),
-                                     QStringLiteral("/usr/bin/whisper-cpp")};
-#endif
-        for (const auto& c : candidates) {
-            if (QFile::exists(c)) {
-                return c;
-            }
-        }
-    }
-    return path;
+    return store_ ? store_->value(QString::fromLatin1(whisperBinaryPathKey), {}).trimmed() : QString();
 }
 
 void AppSettings::setWhisperBinaryPath(const QString& path) {
@@ -859,6 +965,45 @@ void AppSettings::setWhisperModelPath(const QString& path) {
 
     store_->setValue(QString::fromLatin1(whisperModelPathKey), normalized);
     emit whisperModelPathChanged();
+}
+
+QString AppSettings::autoDetectVoicePaths() {
+    QStringList detected;
+
+    const QString piperBin = findPiperBinaryCandidate();
+    if (!piperBin.isEmpty()) {
+        setPiperBinaryPath(piperBin);
+        detected.append(QStringLiteral("Piper Binary: %1").arg(piperBin));
+    }
+
+    const QString piperMod = findPiperModelCandidate();
+    if (!piperMod.isEmpty()) {
+        setPiperModelPath(piperMod);
+        detected.append(QStringLiteral("Piper Model: %1").arg(piperMod));
+    }
+
+    const QString whisperBin = findWhisperBinaryCandidate();
+    if (!whisperBin.isEmpty()) {
+        setWhisperBinaryPath(whisperBin);
+        detected.append(QStringLiteral("Whisper Binary: %1").arg(whisperBin));
+    }
+
+    const QString whisperMod = findWhisperModelCandidate();
+    if (!whisperMod.isEmpty()) {
+        setWhisperModelPath(whisperMod);
+        detected.append(QStringLiteral("Whisper Model: %1").arg(whisperMod));
+    }
+
+    const QString kokoroMod = findKokoroModelCandidate();
+    if (!kokoroMod.isEmpty()) {
+        setKokoroModelPath(kokoroMod);
+        detected.append(QStringLiteral("Kokoro Model: %1").arg(kokoroMod));
+    }
+
+    if (detected.isEmpty()) {
+        return QStringLiteral("No local voice binaries or model files were detected automatically.");
+    }
+    return QStringLiteral("Auto-detected voice paths:\n- ") + detected.join(QStringLiteral("\n- "));
 }
 
 bool AppSettings::piperFileOutputExecutionEnabled() const {

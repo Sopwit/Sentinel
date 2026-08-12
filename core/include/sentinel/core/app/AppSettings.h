@@ -233,6 +233,7 @@ public:
     void setKokoroModelPath(const QString& path);
     QString kokoroVoice() const;
     void setKokoroVoice(const QString& voice);
+    QString autoDetectVoicePaths();
     QString activeConversationId() const;
     void setActiveConversationId(const QString& conversationId);
     QString selectedWorkspaceId() const;

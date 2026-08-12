@@ -2505,6 +2505,7 @@ public:
                                                   const QString& piperModelPath,
                                                   const QString& whisperBinaryPath,
                                                   const QString& whisperModelPath);
+    Q_INVOKABLE QString autoDetectVoicePaths();
     Q_INVOKABLE void startVoiceCapture();
     Q_INVOKABLE void stopVoiceCapture();
     QString selectedCloudProvider() const;

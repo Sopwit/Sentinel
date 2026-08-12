@@ -1082,6 +1082,9 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
                                          "non-executable")));
     QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
         QStringLiteral("Piper file-output TTS: Ready")));
+
+    const auto autoDetectMsg = fixture.viewModel.autoDetectVoicePaths();
+    QVERIFY(!autoDetectMsg.isEmpty());
     QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
         QStringLiteral("Piper binary: Ready")));
     QVERIFY(fixture.viewModel.voiceConfigurationStatusBadges().contains(
