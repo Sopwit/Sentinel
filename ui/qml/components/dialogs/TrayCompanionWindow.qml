@@ -1151,7 +1151,7 @@ Window {
                                                 companionWin.hide()
                                                 if (viewModel) {
                                                     viewModel.companionChatVisible = false
-                                                    viewModel.checkForUpdates()
+                                                    viewModel.openUpdateModal()
                                                 }
                                                 break
                                             case "quit":

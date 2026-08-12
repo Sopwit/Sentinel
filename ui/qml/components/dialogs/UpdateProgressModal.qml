@@ -47,6 +47,67 @@ SentinelOverlayModal {
         }
     }
 
+    onVisibleChanged: {
+        if (visible && viewModel) {
+            var wf = viewModel.updateWorkflowState
+            if (wf && wf.startsWith("Available:")) {
+                updateState = "available"
+            } else if (wf && wf.startsWith("Up to date:")) {
+                updateState = "upToDate"
+            } else if (wf && wf.startsWith("Update check failed:")) {
+                updateState = "error"
+                errorMessage = wf
+            }
+        }
+    }
+
+    Connections {
+        target: updateModal.viewModel
+        ignoreUnknownSignals: true
+        function onUpdateCheckCompleted(available, version, releaseNotes, downloadUrl, assetSize) {
+            if (available) {
+                updateModal.availableVersion = version
+                if (releaseNotes && releaseNotes.length > 0) {
+                    updateModal.releaseNotesText = releaseNotes
+                }
+                if (assetSize > 0) {
+                    var sizeMB = (assetSize / (1024 * 1024)).toFixed(1)
+                    updateModal.packageSizeText = sizeMB + " MB"
+                }
+                updateModal.updateState = "available"
+            } else {
+                updateModal.availableVersion = version || Qt.application.version
+                var wf = updateModal.viewModel ? updateModal.viewModel.updateWorkflowState : ""
+                if (wf && wf.startsWith("Update check failed")) {
+                    updateModal.updateState = "error"
+                    updateModal.errorMessage = wf
+                } else {
+                    updateModal.updateState = "upToDate"
+                }
+            }
+        }
+        function onUpdateDownloadProgressChanged(bytesReceived, bytesTotal, speedBytesPerSec) {
+            updateModal.updateState = "downloading"
+            updateModal.downloadProgress = bytesTotal > 0 ? bytesReceived / bytesTotal : 0.0
+            var receivedMB = (bytesReceived / (1024 * 1024)).toFixed(1)
+            var totalMB = (bytesTotal / (1024 * 1024)).toFixed(1)
+            updateModal.downloadedBytesText = receivedMB + " MB / " + totalMB + " MB"
+            if (speedBytesPerSec > 0) {
+                var speedText = (speedBytesPerSec / (1024 * 1024)).toFixed(1) + " MB/s"
+                updateModal.downloadSpeedText = speedText
+            }
+        }
+        function onUpdateDownloadFinished(success, filePath) {
+            if (success) {
+                updateModal.updateState = "completed"
+                updateModal.downloadProgress = 1.0
+            } else {
+                updateModal.updateState = "error"
+                updateModal.errorMessage = qsTr("Download failed. Please check your network connection and try again.")
+            }
+        }
+    }
+
     function cancelUpdate() {
         if (updateState === "downloading") {
             if (typeof viewModel !== "undefined" && viewModel)
@@ -386,6 +447,22 @@ SentinelOverlayModal {
 
                     Item { Layout.fillHeight: true }
 
+                    Rectangle {
+                        Layout.preferredWidth: 64
+                        Layout.preferredHeight: 64
+                        Layout.alignment: Qt.AlignHCenter
+                        radius: 32
+                        color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: "✓"
+                            font.pixelSize: 28
+                            font.bold: true
+                            color: SentinelTheme.accent
+                        }
+                    }
+
                     Label {
                         text: qsTr("You're up to date.")
                         font.pixelSize: SentinelTheme.fontCard
@@ -396,11 +473,16 @@ SentinelOverlayModal {
                     }
 
                     Label {
-                        text: qsTr("No new updates available.")
+                        text: updateModal.currentVersion.length > 0
+                            ? qsTr("Sentinel v%1 is currently the latest version available.").arg(updateModal.currentVersion)
+                            : qsTr("No new updates available.")
                         font.pixelSize: SentinelTheme.fontBody
                         color: SentinelTheme.textMuted
                         horizontalAlignment: Text.AlignHCenter
+                        wrapMode: Text.WordWrap
                         Layout.fillWidth: true
+                        Layout.maximumWidth: 420
+                        Layout.alignment: Qt.AlignHCenter
                     }
 
                     Item { Layout.fillHeight: true }
@@ -414,6 +496,22 @@ SentinelOverlayModal {
 
                     Item { Layout.fillHeight: true }
 
+                    Rectangle {
+                        Layout.preferredWidth: 64
+                        Layout.preferredHeight: 64
+                        Layout.alignment: Qt.AlignHCenter
+                        radius: 32
+                        color: SentinelTheme.withAlpha(SentinelTheme.accent, 0.12)
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: "✓"
+                            font.pixelSize: 28
+                            font.bold: true
+                            color: SentinelTheme.accent
+                        }
+                    }
+
                     Label {
                         text: qsTr("Download complete!")
                         font.pixelSize: SentinelTheme.fontCard
@@ -424,7 +522,7 @@ SentinelOverlayModal {
                     }
 
                     Label {
-                        text: qsTr("The update package has been downloaded.")
+                        text: qsTr("The update package has been downloaded successfully.")
                         font.pixelSize: SentinelTheme.fontBody
                         color: SentinelTheme.textMuted
                         horizontalAlignment: Text.AlignHCenter
@@ -445,6 +543,22 @@ SentinelOverlayModal {
 
                     Item { Layout.fillHeight: true }
 
+                    Rectangle {
+                        Layout.preferredWidth: 64
+                        Layout.preferredHeight: 64
+                        Layout.alignment: Qt.AlignHCenter
+                        radius: 32
+                        color: SentinelTheme.withAlpha(SentinelTheme.warning, 0.15)
+
+                        Label {
+                            anchors.centerIn: parent
+                            text: "!"
+                            font.pixelSize: 28
+                            font.bold: true
+                            color: SentinelTheme.warning
+                        }
+                    }
+
                     Label {
                         text: qsTr("Update check failed.")
                         font.pixelSize: SentinelTheme.fontCard
@@ -463,7 +577,7 @@ SentinelOverlayModal {
                         horizontalAlignment: Text.AlignHCenter
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
-                        Layout.maximumWidth: 400
+                        Layout.maximumWidth: 420
                         Layout.alignment: Qt.AlignHCenter
                     }
 

@@ -231,9 +231,9 @@ Item {
 
                     Repeater {
                         model: [
-                            { "name": qsTr("🎯 Precise"), "temp": 0.20, "topP": 0.80 },
-                            { "name": qsTr("⚖️ Balanced"), "temp": 0.70, "topP": 0.90 },
-                            { "name": qsTr("🎨 Creative"), "temp": 1.10, "topP": 0.95 }
+                            { "name": qsTr("Precise"), "temp": 0.20, "topP": 0.80 },
+                            { "name": qsTr("Balanced"), "temp": 0.70, "topP": 0.90 },
+                            { "name": qsTr("Creative"), "temp": 1.10, "topP": 0.95 }
                         ]
 
                         delegate: Button {

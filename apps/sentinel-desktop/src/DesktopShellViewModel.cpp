@@ -5568,6 +5568,10 @@ bool DesktopShellViewModel::exportTranscript(const QString& format) {
     return controller_.exportTranscript(format);
 }
 
+void DesktopShellViewModel::openUpdateModal() {
+    emit requestOpenUpdateModal();
+}
+
 bool DesktopShellViewModel::checkForUpdates() {
     settings_.setUpdateWorkflowState(QStringLiteral("Checking for updates..."));
     emit nativeExperienceChanged();
@@ -5588,12 +5592,25 @@ bool DesktopShellViewModel::checkForUpdates() {
         QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version());
     QNetworkRequest request(QUrl(settings_.updateCheckUrl()));
     request.setHeader(QNetworkRequest::UserAgentHeader, userAgent);
+    request.setRawHeader("Accept", "application/vnd.github.v3+json");
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute,
+                         QNetworkRequest::NoLessSafeRedirectPolicy);
+    request.setTransferTimeout(10000);
 
     QNetworkReply* reply = networkManager_->get(request);
-    connect(reply, &QNetworkReply::sslErrors, this, [](const QList<QSslError>& errors) {
+    connect(reply, &QNetworkReply::sslErrors, reply, [reply](const QList<QSslError>& errors) {
         for (const auto& err : errors)
             qWarning() << "SSL error:" << err.errorString();
+        reply->ignoreSslErrors();
     });
+
+    QTimer::singleShot(10000, reply, [reply]() {
+        if (reply && reply->isRunning()) {
+            qWarning() << "Update check timed out after 10s, aborting network reply.";
+            reply->abort();
+        }
+    });
+
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         reply->deleteLater();
 
@@ -5641,7 +5658,11 @@ bool DesktopShellViewModel::checkForUpdates() {
         const QString bodyText = root.value(QStringLiteral("body")).toString();
 
         if (latestTag.isEmpty()) {
-            settings_.setUpdateWorkflowState(QStringLiteral("Update check failed: empty tag"));
+            const QString apiMsg = root.value(QStringLiteral("message")).toString();
+            const QString errState = apiMsg.isEmpty()
+                ? QStringLiteral("Update check failed: release info not found")
+                : QStringLiteral("Update check failed: %1").arg(apiMsg);
+            settings_.setUpdateWorkflowState(errState);
             emit nativeExperienceChanged();
             emit updateCheckCompleted(false, QString(), QString(), QString(), 0);
             return;
@@ -5786,8 +5807,13 @@ bool DesktopShellViewModel::startDownload(const QString& assetUrl) {
     QNetworkRequest request(reqUrl);
     request.setHeader(QNetworkRequest::UserAgentHeader,
                       QStringLiteral("Sentinel-Desktop/%1").arg(core::AppMetadata::version()));
+    request.setTransferTimeout(30000);
 
     downloadReply_ = networkManager_->get(request);
+    connect(downloadReply_, &QNetworkReply::sslErrors, downloadReply_, [this]() {
+        if (downloadReply_)
+            downloadReply_->ignoreSslErrors();
+    });
 
     connect(downloadReply_, &QNetworkReply::downloadProgress, this,
             [this](qint64 bytesReceived, qint64 bytesTotal) {
