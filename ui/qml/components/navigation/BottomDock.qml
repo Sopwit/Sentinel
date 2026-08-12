@@ -16,10 +16,19 @@ Item {
     implicitHeight: 72
     implicitWidth: 260
 
-    readonly property var dockItems: [
-        { id: "Dashboard", label: qsTr("Home"),    icon: "⌂" },
-        { id: "Models",    label: qsTr("Models"),  icon: "◈" }
-    ]
+    property var dockItems: buildDockItems()
+
+    function buildDockItems() {
+        return [
+            { id: "Dashboard", label: qsTr("Home"),   icon: "⌂" },
+            { id: "Models",    label: qsTr("Models"), icon: "◈" }
+        ]
+    }
+
+    Connections {
+        target: shellViewModel
+        function onAppLanguageChanged() { dock.dockItems = dock.buildDockItems() }
+    }
 
     // ── Outer glow halo ──────────────────────────────────────────────────────
     Rectangle {

@@ -154,8 +154,12 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelButton.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelComboBox.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelOrb.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelSwitch.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelTelemetry.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelTextField.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SettingCard.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SettingControlRow.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SettingToggleRow.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/ShimmerEffect.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SoundManager.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/StatusChip.qml
@@ -187,6 +191,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SettingsPage.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/AppearanceSettingsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/ModelSettingsTab.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/VoiceSettingsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/WorkspaceSettingsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SecuritySettingsTab.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/pages/settings/SystemSettingsTab.qml

@@ -301,8 +301,8 @@ Window {
                         text: companionWin.menuOpen ? "\uD83D\uDCAC" : "\u2699\uFE0F"
                         font.pixelSize: 12
                         highlighted: companionWin.menuOpen
-                        tooltipText: companionWin.menuOpen ? "Chat" : "Menu"
-                        Accessible.name: companionWin.menuOpen ? "Show chat view" : "Show options menu"
+                        tooltipText: companionWin.menuOpen ? qsTr("Chat") : qsTr("Menu")
+                        Accessible.name: companionWin.menuOpen ? qsTr("Show chat view") : qsTr("Show options menu")
                         onClicked: companionWin.menuOpen = !companionWin.menuOpen
                     }
 
@@ -312,8 +312,8 @@ Window {
                         flat: true
                         text: companionWin.alwaysOnTop ? "\uD83D\uDCCC" : "\uD83D\uDCCD"
                         font.pixelSize: 12
-                        tooltipText: companionWin.alwaysOnTop ? "Unpin from top" : "Keep on top"
-                        Accessible.name: companionWin.alwaysOnTop ? "Disable always on top" : "Enable always on top"
+                        tooltipText: companionWin.alwaysOnTop ? qsTr("Unpin from top") : qsTr("Keep on top")
+                        Accessible.name: companionWin.alwaysOnTop ? qsTr("Disable always on top") : qsTr("Enable always on top")
                         onClicked: companionWin.alwaysOnTop = !companionWin.alwaysOnTop
                     }
 

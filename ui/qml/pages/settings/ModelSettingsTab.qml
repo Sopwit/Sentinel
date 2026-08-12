@@ -32,426 +32,250 @@ Item {
             Layout.fillWidth: true
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
+        SettingCard {
+            title: qsTr("Active Runtime Status")
 
-            Label {
-                Layout.preferredWidth: root.compact ? 88 : 132
-                text: qsTr("Provider")
-                color: SentinelTheme.textMuted
-                font.pixelSize: SentinelTheme.fontSmall
-                elide: Text.ElideRight
-            }
-
-            SentinelComboBox {
-                id: runtimeProviderCombo
+            SettingControlRow {
+                title: qsTr("Provider")
+                subtitle: qsTr("Active LLM engine backend.")
                 accent: root.modeAccent
-                Layout.fillWidth: true
-                implicitHeight: 36
-                model: root.viewModel.selectableRuntimeProviderLabels
-                currentIndex: {
-                    var sel = root.viewModel.selectedRuntimeProvider
-                    var ids = root.viewModel.selectableRuntimeProviderIds
-                    var idx = ids.indexOf(sel)
-                    if (idx < 0 && (sel === "openai" || sel === "claude" ||
-                                    sel === "gemini" || sel === "deepseek" ||
-                                    sel === "groq"   || sel === "mistral")) {
-                        idx = ids.indexOf("cloud-api")
+                compact: root.compact
+                showDivider: true
+
+                SentinelComboBox {
+                    id: runtimeProviderCombo
+                    accent: root.modeAccent
+                    anchors.fill: parent
+                    implicitHeight: 36
+                    model: root.viewModel.selectableRuntimeProviderLabels
+                    currentIndex: {
+                        var sel = root.viewModel.selectedRuntimeProvider
+                        var ids = root.viewModel.selectableRuntimeProviderIds
+                        var idx = ids.indexOf(sel)
+                        if (idx < 0 && (sel === "openai" || sel === "claude" ||
+                                        sel === "gemini" || sel === "deepseek" ||
+                                        sel === "groq"   || sel === "mistral")) {
+                            idx = ids.indexOf("cloud-api")
+                        }
+                        return idx >= 0 ? idx : 0
                     }
-                    return idx >= 0 ? idx : 0
+                    displayText: currentIndex >= 0 ? currentText : root.viewModel.activeRuntimeProviderLabel
+                    onActivated: (index) => {
+                        var ids = root.viewModel.selectableRuntimeProviderIds
+                        if (index >= 0 && index < ids.length) {
+                            var providerId = ids[index]
+                            root.viewModel.selectedRuntimeProvider = providerId
+                        }
+                    }
                 }
-                displayText: currentIndex >= 0 ? currentText : root.viewModel.activeRuntimeProviderLabel
-                onActivated: (index) => {
-                    var ids = root.viewModel.selectableRuntimeProviderIds
-                    if (index >= 0 && index < ids.length) {
-                        var providerId = ids[index]
-                        root.viewModel.selectedRuntimeProvider = providerId
-                    }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                Layout.topMargin: SentinelTheme.spaceSm
+                Layout.bottomMargin: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceSm
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Runtime Status")
+                    value: root.viewModel.localInferenceRuntimeState + " (" + root.viewModel.localInferenceHealthSummary + ")"
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Active Model")
+                    value: root.viewModel.activeLocalModelName ? root.viewModel.activeLocalModelName : qsTr("None selected")
+                    Layout.fillWidth: true
                 }
             }
         }
 
-        InfoRow {
-            compact: root.compact
-            label: qsTr("Runtime Status")
-            value: root.viewModel.localInferenceRuntimeState + " (" + root.viewModel.localInferenceHealthSummary + ")"
-            Layout.fillWidth: true
-        }
+        SettingCard {
+            title: qsTr("Inference Features")
 
-        InfoRow {
-            compact: root.compact
-            label: qsTr("Active Model")
-            value: root.viewModel.activeLocalModelName ? root.viewModel.activeLocalModelName : qsTr("None selected")
-            Layout.fillWidth: true
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            Label {
-                text: qsTr("Enable Local Chat Inference")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.fillWidth: true
-            }
-            Switch {
+            SettingToggleRow {
+                title: qsTr("Enable Local Chat Inference")
+                subtitle: qsTr("Allow conversations to be processed locally via Ollama, LM Studio, or llama.cpp.")
                 checked: root.viewModel.localChatInferenceEnabled
-                onCheckedChanged: root.viewModel.localChatInferenceEnabled = checked
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            Label {
-                text: qsTr("Enable Token Streaming")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.fillWidth: true
-            }
-            Switch {
-                checked: root.viewModel.localInferenceStreamingEnabled
-                onCheckedChanged: root.viewModel.localInferenceStreamingEnabled = checked
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Temperature (%1)").arg(root.viewModel.localInferenceTemperature.toFixed(2))
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            Slider {
-                Layout.fillWidth: true
-                from: 0.0
-                to: 1.5
-                stepSize: 0.05
-                value: root.viewModel.localInferenceTemperature
-                onValueChanged: root.viewModel.localInferenceTemperature = value
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Ollama Endpoint")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "http://127.0.0.1:11434"
-                text: root.viewModel.ollamaEndpoint
-                onEditingFinished: root.viewModel.ollamaEndpoint = text
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Routing Mode")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SentinelComboBox {
-                id: routingModeCombo
                 accent: root.modeAccent
-                Layout.fillWidth: true
-                implicitHeight: 36
-                model: root.viewModel.availableRoutingModes
-                currentIndex: root.viewModel.availableRoutingModes.indexOf(root.viewModel.currentRoutingMode)
-                displayText: currentIndex >= 0 ? currentText : root.viewModel.currentRoutingMode
-                onActivated: (index) => {
-                    if (index >= 0 && index < root.viewModel.availableRoutingModes.length)
-                        root.viewModel.setRoutingModeByName(root.viewModel.availableRoutingModes[index])
+                compact: root.compact
+                showDivider: true
+                onToggled: (checked) => root.viewModel.localChatInferenceEnabled = checked
+            }
+
+            SettingToggleRow {
+                title: qsTr("Enable Token Streaming")
+                subtitle: qsTr("Stream response tokens in real-time as they are produced by the inference engine.")
+                checked: root.viewModel.localInferenceStreamingEnabled
+                accent: root.modeAccent
+                compact: root.compact
+                onToggled: (checked) => root.viewModel.localInferenceStreamingEnabled = checked
+            }
+        }
+
+        SettingCard {
+            title: qsTr("Endpoints & Routing")
+            subtitle: qsTr("Configure server URLs and provider routing logic.")
+
+            SettingControlRow {
+                title: qsTr("Routing Mode")
+                subtitle: qsTr("Strategy for selecting between local models and cloud providers.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+
+                SentinelComboBox {
+                    id: routingModeCombo
+                    accent: root.modeAccent
+                    anchors.fill: parent
+                    implicitHeight: 36
+                    model: root.viewModel.availableRoutingModes
+                    currentIndex: root.viewModel.availableRoutingModes.indexOf(root.viewModel.currentRoutingMode)
+                    displayText: currentIndex >= 0 ? currentText : root.viewModel.currentRoutingMode
+                    onActivated: (index) => {
+                        if (index >= 0 && index < root.viewModel.availableRoutingModes.length)
+                            root.viewModel.setRoutingModeByName(root.viewModel.availableRoutingModes[index])
+                    }
+                }
+            }
+
+            SettingControlRow {
+                title: qsTr("Ollama Endpoint")
+                subtitle: qsTr("Local REST endpoint for Ollama daemon.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+
+                SentinelTextField {
+                    anchors.fill: parent
+                    placeholderText: "http://127.0.0.1:11434"
+                    text: root.viewModel.ollamaEndpoint
+                    onEditingFinished: root.viewModel.ollamaEndpoint = text
+                }
+            }
+
+            SettingControlRow {
+                title: qsTr("LM Studio Endpoint")
+                subtitle: qsTr("Local REST endpoint for LM Studio server.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+
+                SentinelTextField {
+                    anchors.fill: parent
+                    placeholderText: "http://127.0.0.1:1234"
+                    text: root.viewModel.lmStudioEndpoint
+                    onEditingFinished: root.viewModel.lmStudioEndpoint = text
+                }
+            }
+
+            SettingControlRow {
+                title: qsTr("llama.cpp Endpoint")
+                subtitle: qsTr("Local REST endpoint for llama-server process.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+
+                SentinelTextField {
+                    anchors.fill: parent
+                    placeholderText: "http://127.0.0.1:8080"
+                    text: root.viewModel.llamaCppEndpoint
+                    onEditingFinished: root.viewModel.llamaCppEndpoint = text
+                }
+            }
+
+            SettingControlRow {
+                title: qsTr("Cloud API Endpoint")
+                subtitle: qsTr("Custom OpenAI-compatible cloud gateway endpoint.")
+                accent: root.modeAccent
+                compact: root.compact
+
+                SentinelTextField {
+                    anchors.fill: parent
+                    placeholderText: "https://api.openai.com/v1"
+                    text: root.viewModel.cloudApiEndpoint
+                    onEditingFinished: root.viewModel.cloudApiEndpoint = text
                 }
             }
         }
 
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
+        SettingCard {
+            title: qsTr("Inference Parameters")
+            subtitle: qsTr("Fine-tune sampling temperature, top-p nucleus sampling, and context boundaries.")
 
-            Label {
-                text: qsTr("LM Studio Endpoint")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "http://127.0.0.1:1234"
-                text: root.viewModel.lmStudioEndpoint
-                onEditingFinished: root.viewModel.lmStudioEndpoint = text
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("llama.cpp Endpoint")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "http://127.0.0.1:8080"
-                text: root.viewModel.llamaCppEndpoint
-                onEditingFinished: root.viewModel.llamaCppEndpoint = text
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Cloud API Endpoint")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "https://api.openai.com/v1"
-                text: root.viewModel.cloudApiEndpoint
-                onEditingFinished: root.viewModel.cloudApiEndpoint = text
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Timeout (ms)")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SpinBox {
-                Layout.fillWidth: true
-                from: 1000
-                to: 300000
-                stepSize: 1000
-                value: root.viewModel.localInferenceTimeoutMs
-                onValueModified: root.viewModel.localInferenceTimeoutMs = value
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Top-P (%1)").arg(root.viewModel.localInferenceTopP.toFixed(2))
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            Slider {
-                Layout.fillWidth: true
-                from: 0.1
-                to: 1.0
-                stepSize: 0.05
-                value: root.viewModel.localInferenceTopP
-                onValueChanged: root.viewModel.localInferenceTopP = value
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Max Tokens")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SpinBox {
-                Layout.fillWidth: true
-                from: 64
-                to: 32768
-                stepSize: 64
-                value: root.viewModel.localInferenceMaxTokens
-                onValueModified: root.viewModel.localInferenceMaxTokens = value
-            }
-        }
-
-        SectionTitle {
-            title: qsTr("Voice & Text To Speech")
-            subtitle: qsTr("Configure local Piper and Whisper runtime paths for TTS and transcription.")
-            Layout.fillWidth: true
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            Label {
-                text: qsTr("TTS Engine")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-            SentinelComboBox {
+            SettingControlRow {
+                title: qsTr("Temperature (%1)").arg(root.viewModel.localInferenceTemperature.toFixed(2))
+                subtitle: qsTr("Higher values produce more creative responses, lower values make output more deterministic.")
                 accent: root.modeAccent
-                Layout.fillWidth: true
-                model: ["Piper", "Kokoro"]
-                currentIndex: root.viewModel.selectedTtsEngine === "Kokoro" ? 1 : 0
-                onActivated: (index) => root.viewModel.selectedTtsEngine = (index === 1 ? "Kokoro" : "Piper")
-            }
-        }
+                compact: root.compact
+                showDivider: true
+                controlWidth: root.compact ? 140 : 180
 
-        RowLayout {
-            Layout.fillWidth: true
-            visible: root.viewModel.selectedTtsEngine === "Kokoro"
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Kokoro Model Path")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
+                Slider {
+                    anchors.fill: parent
+                    from: 0.0
+                    to: 1.5
+                    stepSize: 0.05
+                    value: root.viewModel.localInferenceTemperature
+                    onValueChanged: root.viewModel.localInferenceTemperature = value
+                }
             }
 
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "/path/to/kokoro.onnx"
-                text: root.viewModel.kokoroModelPath
-                onEditingFinished: root.viewModel.kokoroModelPath = text
-            }
-        }
+            SettingControlRow {
+                title: qsTr("Top-P (%1)").arg(root.viewModel.localInferenceTopP.toFixed(2))
+                subtitle: qsTr("Nucleus sampling cumulative probability threshold.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+                controlWidth: root.compact ? 140 : 180
 
-        RowLayout {
-            Layout.fillWidth: true
-            visible: root.viewModel.selectedTtsEngine === "Kokoro"
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Kokoro Voice")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
+                Slider {
+                    anchors.fill: parent
+                    from: 0.1
+                    to: 1.0
+                    stepSize: 0.05
+                    value: root.viewModel.localInferenceTopP
+                    onValueChanged: root.viewModel.localInferenceTopP = value
+                }
             }
 
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "af_bella"
-                text: root.viewModel.kokoroVoice
-                onEditingFinished: root.viewModel.kokoroVoice = text
-            }
-        }
+            SettingControlRow {
+                title: qsTr("Max Tokens")
+                subtitle: qsTr("Maximum token generation length per response.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+                controlWidth: root.compact ? 140 : 180
 
-        RowLayout {
-            Layout.fillWidth: true
-            visible: root.viewModel.selectedTtsEngine === "Piper"
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Piper Binary Path")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
+                SpinBox {
+                    anchors.fill: parent
+                    from: 64
+                    to: 32768
+                    stepSize: 64
+                    value: root.viewModel.localInferenceMaxTokens
+                    onValueModified: root.viewModel.localInferenceMaxTokens = value
+                }
             }
 
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "/path/to/piper"
-                text: root.viewModel.piperBinaryPath
-                onEditingFinished: root.viewModel.piperBinaryPath = text
-            }
-        }
+            SettingControlRow {
+                title: qsTr("Timeout (ms)")
+                subtitle: qsTr("Maximum waiting time before timing out requests.")
+                accent: root.modeAccent
+                compact: root.compact
+                controlWidth: root.compact ? 140 : 180
 
-        RowLayout {
-            Layout.fillWidth: true
-            visible: root.viewModel.selectedTtsEngine === "Piper"
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Piper Model Path")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "/path/to/voice.onnx"
-                text: root.viewModel.piperModelPath
-                onEditingFinished: root.viewModel.piperModelPath = text
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Whisper Binary Path")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "/path/to/whisper"
-                text: root.viewModel.whisperBinaryPath
-                onEditingFinished: root.viewModel.whisperBinaryPath = text
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            spacing: SentinelTheme.spaceMd
-
-            Label {
-                text: qsTr("Whisper Model Path")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.preferredWidth: 132
-            }
-
-            SentinelTextField {
-                Layout.fillWidth: true
-                placeholderText: "/path/to/model.bin"
-                text: root.viewModel.whisperModelPath
-                onEditingFinished: root.viewModel.whisperModelPath = text
-            }
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            Label {
-                text: qsTr("Enable Piper File Output")
-                color: SentinelTheme.textPrimary
-                font.pixelSize: SentinelTheme.fontBody
-                Layout.fillWidth: true
-            }
-            Switch {
-                checked: root.viewModel.piperFileOutputExecutionEnabled
-                onCheckedChanged: root.viewModel.piperFileOutputExecutionEnabled = checked
+                SpinBox {
+                    anchors.fill: parent
+                    from: 1000
+                    to: 300000
+                    stepSize: 1000
+                    value: root.viewModel.localInferenceTimeoutMs
+                    onValueModified: root.viewModel.localInferenceTimeoutMs = value
+                }
             }
         }
     }

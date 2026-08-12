@@ -658,7 +658,7 @@ void DesktopShellViewModelTest::exposesCompanionReadinessMetadata() {
         QStringLiteral("foreground-safe shell")));
     QVERIFY(fixture.viewModel.companionSafetyBoundary().contains(
         QStringLiteral("no background daemon")));
-    QVERIFY(fixture.viewModel.companionQuickCaptureSummary().contains(QStringLiteral("no note")));
+    QVERIFY(fixture.viewModel.companionQuickCaptureSummary().contains(QStringLiteral("short note")));
     QCOMPARE(fixture.viewModel.companionActionSummaries().size(), 6);
     QCOMPARE(fixture.viewModel.companionPlatformSummaries().size(), 3);
     QCOMPARE(fixture.viewModel.companionTraceSummaries().size(), 6);
