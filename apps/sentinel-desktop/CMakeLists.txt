@@ -2,17 +2,9 @@ add_library(sentinel_desktop_viewmodels STATIC
     include/sentinel/desktop/ChatMessageListModel.h
     include/sentinel/desktop/DesktopShellViewModel.h
     include/sentinel/desktop/viewmodels/ChatViewModel.h
-    include/sentinel/desktop/viewmodels/SettingsViewModel.h
-    include/sentinel/desktop/viewmodels/RagViewModel.h
-    include/sentinel/desktop/viewmodels/AgentViewModel.h
-    include/sentinel/desktop/viewmodels/NotificationViewModel.h
     src/ChatMessageListModel.cpp
     src/DesktopShellViewModel.cpp
     src/viewmodels/ChatViewModel.cpp
-    src/viewmodels/SettingsViewModel.cpp
-    src/viewmodels/RagViewModel.cpp
-    src/viewmodels/AgentViewModel.cpp
-    src/viewmodels/NotificationViewModel.cpp
 )
 
 add_library(sentinel_desktop_startup STATIC
@@ -46,6 +38,7 @@ target_link_libraries(sentinel_desktop_viewmodels
 
 qt_add_executable(sentinel-desktop
     include/sentinel/desktop/NativeCompanionAdapter.h
+    include/sentinel/desktop/DaemonClient.h
     bootstrap/ApplicationBootstrapper.h
     bootstrap/ApplicationBootstrapper.cpp
     bootstrap/GraphicsInitializer.h
@@ -58,6 +51,7 @@ qt_add_executable(sentinel-desktop
     bootstrap/SingleInstanceGuard.cpp
     main.cpp
     src/NativeCompanionAdapter.cpp
+    src/DaemonClient.cpp
 )
 
 set(SENTINEL_TRANSLATION_SOURCES
@@ -147,7 +141,6 @@ endif()
 
 set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/Main.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/theme/Fonts.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/SentinelTheme.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/MotionTokens.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/theme/InteractionTokens.qml
@@ -183,7 +176,6 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/StatusBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/TitleBar.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/TitleBarButton.qml
-    ${CMAKE_SOURCE_DIR}/ui/qml/components/navigation/WorkspacePresence.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/notifications/NotificationCenterPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/notifications/NotificationItemDelegate.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/notifications/NotificationToast.qml

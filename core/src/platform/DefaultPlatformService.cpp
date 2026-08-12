@@ -5,7 +5,6 @@
 #include "sentinel/core/platform/DefaultPlatformService.h"
 
 #include <QSysInfo>
-#include <utility>
 
 namespace sentinel::core {
 
@@ -27,44 +26,6 @@ bool DefaultNotificationService::isAvailable() const {
 
 bool DefaultSystemIntegrationService::isAvailable() const {
     return true;
-}
-
-DefaultIntegration::DefaultIntegration(QString id, QString displayName, bool available)
-    : m_id(std::move(id)), m_displayName(std::move(displayName)), m_available(available) {}
-
-QString DefaultIntegration::id() const {
-    return m_id;
-}
-
-QString DefaultIntegration::displayName() const {
-    return m_displayName;
-}
-
-bool DefaultIntegration::isAvailable() const {
-    return m_available;
-}
-
-DefaultPlugin::DefaultPlugin(QString id, QString displayName)
-    : m_id(std::move(id)), m_displayName(std::move(displayName)) {}
-
-QString DefaultPlugin::id() const {
-    return m_id;
-}
-
-QString DefaultPlugin::displayName() const {
-    return m_displayName;
-}
-
-void DefaultPlugin::initialize() {
-    m_initialized = true;
-}
-
-void DefaultPlugin::shutdown() {
-    m_initialized = false;
-}
-
-bool DefaultPlugin::isInitialized() const {
-    return m_initialized;
 }
 
 } // namespace sentinel::core

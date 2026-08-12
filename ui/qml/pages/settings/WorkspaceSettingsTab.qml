@@ -131,18 +131,41 @@ Item {
                         Layout.preferredWidth: 150
                     }
                     SentinelComboBox {
+                        id: exportFormatCombo
                         accent: root.modeAccent
                         Layout.fillWidth: true
-                        model: [qsTr("Markdown"), qsTr("JSON"), qsTr("Plain Text")]
+                        model: ["Markdown", "JSON", "TXT", "DOCX", "PDF"]
                         currentIndex: {
                             var fmt = root.viewModel.exportDefaultFormat
-                            if (fmt === "JSON") return 1
-                            if (fmt === "Plain Text") return 2
+                            var idx = model.indexOf(fmt)
+                            return idx >= 0 ? idx : 0
+                        }
+                        onActivated: (index) => root.viewModel.exportDefaultFormat = model[index]
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("Attachment Behavior")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                        Layout.preferredWidth: 150
+                    }
+                    SentinelComboBox {
+                        id: attachmentBehaviorCombo
+                        accent: root.modeAccent
+                        Layout.fillWidth: true
+                        model: [qsTr("Manual Attachments Only"), qsTr("Replace Existing Attachment"), qsTr("Paste Attachment Enabled")]
+                        currentIndex: {
+                            var behavior = root.viewModel.attachmentBehavior
+                            if (behavior === "Replace Existing Attachment") return 1
+                            if (behavior === "Paste Attachment Enabled") return 2
                             return 0
                         }
                         onActivated: (index) => {
-                            var fmts = ["Markdown", "JSON", "Plain Text"]
-                            root.viewModel.exportDefaultFormat = fmts[index]
+                            var behaviors = ["Manual Attachments Only", "Replace Existing Attachment", "Paste Attachment Enabled"]
+                            root.viewModel.attachmentBehavior = behaviors[index]
                         }
                     }
                 }
@@ -173,6 +196,83 @@ Item {
                         checked: root.viewModel.exportIncludeCitations
                         onCheckedChanged: root.viewModel.exportIncludeCitations = checked
                     }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("Anonymize Names in Export")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                        Layout.fillWidth: true
+                    }
+                    Switch {
+                        checked: root.viewModel.exportAnonymizeNames
+                        onCheckedChanged: root.viewModel.exportAnonymizeNames = checked
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("Include Model Metadata in Export")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                        Layout.fillWidth: true
+                    }
+                    Switch {
+                        checked: root.viewModel.exportIncludeModelMetadata
+                        onCheckedChanged: root.viewModel.exportIncludeModelMetadata = checked
+                    }
+                }
+                SectionTitle {
+                    title: qsTr("Profiles")
+                    subtitle: qsTr("Name your configuration and choose the active skill profile for agent behavior.")
+                    Layout.fillWidth: true
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("Configuration Profile")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                        Layout.preferredWidth: 150
+                    }
+                    SentinelTextField {
+                        Layout.fillWidth: true
+                        placeholderText: "Desktop Alpha"
+                        text: root.viewModel.configurationProfile
+                        onEditingFinished: root.viewModel.configurationProfile = text
+                    }
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    Label {
+                        text: qsTr("Skill Profile")
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontBody
+                        Layout.preferredWidth: 150
+                    }
+                    SentinelComboBox {
+                        accent: root.modeAccent
+                        Layout.fillWidth: true
+                        model: root.viewModel.skillProfileNames
+                        currentIndex: root.viewModel.skillProfileNames.indexOf(root.viewModel.selectedSkillProfileName)
+                        displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedSkillProfileName
+                        onActivated: (index) => {
+                            if (index >= 0 && index < root.viewModel.skillProfileNames.length)
+                                root.viewModel.selectedSkillProfile = root.viewModel.skillProfileNames[index]
+                        }
+                    }
+                }
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Skill Profile Readiness")
+                    value: root.viewModel.selectedSkillProfileReadiness
+                    Layout.fillWidth: true
                 }
             }
         }

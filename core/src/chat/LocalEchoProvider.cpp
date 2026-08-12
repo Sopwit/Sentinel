@@ -15,10 +15,10 @@ ChatProviderStatus LocalEchoProvider::status() const {
 }
 
 ChatProviderReply LocalEchoProvider::sendMessage(const QString& message) {
-    Q_UNUSED(message);
     return {
         true,
-        QStringLiteral("Sentinel Core online. Local chat pipeline is active."),
+        QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] %1")
+            .arg(message.trimmed()),
         {},
     };
 }

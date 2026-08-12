@@ -29,6 +29,7 @@ class AgentTaskRuntimeTest final : public QObject {
 
 private slots:
     void createsDeterministicMetadataTasks();
+    void executesLocalTasksDeterministically();
     void ordersQueueByPriorityTimeAndId();
     void recordsLifecycleTransitions();
     void refusesExecutionWithoutSideEffects();
@@ -50,7 +51,7 @@ void AgentTaskRuntimeTest::createsDeterministicMetadataTasks() {
 
     QCOMPARE(runtime.name(), QStringLiteral("StaticAgentTaskRuntime"));
     QCOMPARE(agentTaskRuntimeStateName(runtime.runtimeStatus().state),
-             QStringLiteral("Refusing Execution"));
+             QStringLiteral("Ready"));
     QCOMPARE(runtime.runtimeStatus().taskCount, 6);
 
     const auto task = runtime.createTask(
@@ -59,11 +60,37 @@ void AgentTaskRuntimeTest::createsDeterministicMetadataTasks() {
     QCOMPARE(task.id.value, QStringLiteral("agent-task-7"));
     QCOMPARE(agentTaskStatusName(task.plan.status), QStringLiteral("Planned"));
     QCOMPARE(task.plan.steps.size(), 3);
+    QVERIFY(task.plan.summary.contains(QStringLiteral("Local execution plan")));
     QCOMPARE(task.result.executionAttempted, false);
     QCOMPARE(runtime.runtimeStatus().taskCount, 7);
     QCOMPARE(runtime.queue().summary.totalCount, 7);
     QCOMPARE(runtime.queue().summary.plannedCount, 7);
     QCOMPARE(runtime.queue().summary.activeCount, 0);
+}
+
+void AgentTaskRuntimeTest::executesLocalTasksDeterministically() {
+    StaticAgentTaskRuntime runtime;
+    const auto beforeCount = runtime.runtimeStatus().taskCount;
+
+    const auto task = runtime.createTask(
+        AgentTaskType::PlanResponse, AgentTaskSource::DesktopReadiness, AgentTaskPriority::High,
+        QStringLiteral("Plan a concise response to the desktop readiness state."));
+    const auto result = runtime.executeTask(task);
+
+    QCOMPARE(result.status, AgentTaskStatus::CompletedMetadata);
+    QCOMPARE(result.executionAttempted, true);
+    QVERIFY(result.summary.contains(QStringLiteral("executed locally")));
+    QVERIFY(result.summary.contains(agentTaskTypeName(task.type)));
+
+    const auto unsafeTask = runtime.createTask(
+        AgentTaskType::PlanResponse, AgentTaskSource::DesktopReadiness, AgentTaskPriority::High,
+        QStringLiteral("Attempt shell execution with a tool plugin."));
+    const auto refused = runtime.executeTask(unsafeTask);
+
+    QCOMPARE(refused.status, AgentTaskStatus::Refused);
+    QCOMPARE(refused.executionAttempted, false);
+    QVERIFY(refused.summary.contains(QStringLiteral("refused execution")));
+    QCOMPARE(runtime.runtimeStatus().taskCount, beforeCount + 2);
 }
 
 void AgentTaskRuntimeTest::ordersQueueByPriorityTimeAndId() {

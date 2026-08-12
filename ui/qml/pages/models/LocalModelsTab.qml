@@ -99,7 +99,7 @@ Item {
                                 SentinelButton {
                                     text: qsTr("Delete")
                                     accent: SentinelTheme.statusError
-                                    onClicked: root.viewModel.deleteOllamaModel(card.modelData)
+                                    onClicked: ollamaPuller.removeModel(card.modelData)
                                 }
                             }
                         }

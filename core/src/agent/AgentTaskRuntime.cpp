@@ -646,11 +646,12 @@ QString StaticAgentTaskRuntime::name() const {
 
 AgentTaskRuntimeStatus StaticAgentTaskRuntime::runtimeStatus() const {
     return AgentTaskRuntimeStatus{
-        AgentTaskRuntimeState::RefusingExecution,
+        AgentTaskRuntimeState::Ready,
         tasks_.isEmpty() ? QString() : tasks_.last().id.value,
         qsizetype(tasks_.size()),
-        QStringLiteral("Agent task runtime is ready for deterministic metadata planning and "
-                       "refuses execution."),
+        QStringLiteral("Agent task runtime is ready and executes local metadata tasks "
+                       "deterministically; unsafe tool, subprocess, plugin, filesystem, and "
+                       "cloud authority stays gated."),
         AgentTaskSafetyPolicy{},
     };
 }
@@ -711,7 +712,8 @@ AgentTaskQueueResult StaticAgentTaskRuntime::refuseTask(const AgentTaskId& id,
 AgentTaskPlan StaticAgentTaskRuntime::planTask(const AgentTask& task) const {
     return AgentTaskPlan{
         AgentTaskStatus::Planned,
-        QStringLiteral("Metadata-only plan prepared for %1. No execution is available.")
+        QStringLiteral("Local execution plan prepared for %1; unsafe tool, subprocess, plugin, "
+                       "filesystem, and cloud authority stays gated.")
             .arg(agentTaskTypeName(task.type).toLower()),
         QList<AgentTaskStep>{
             AgentTaskStep{1, QStringLiteral("%1-classify").arg(task.id.value),
@@ -720,10 +722,57 @@ AgentTaskPlan StaticAgentTaskRuntime::planTask(const AgentTask& task) const {
                           AgentTaskStatus::Planned},
             AgentTaskStep{2, QStringLiteral("%1-plan").arg(task.id.value),
                           plannedStepSummary(task.type), AgentTaskStatus::Planned},
-            AgentTaskStep{3, QStringLiteral("%1-boundary").arg(task.id.value),
-                          QStringLiteral("Stop at the no-execution runtime boundary."),
-                          AgentTaskStatus::Refused},
+            AgentTaskStep{3, QStringLiteral("%1-execute").arg(task.id.value),
+                          QStringLiteral("Execute the local metadata task deterministically."),
+                          AgentTaskStatus::Planned},
         },
+    };
+}
+
+AgentTaskResult StaticAgentTaskRuntime::executeTask(const AgentTask& task) const {
+    const auto summary =
+        boundedSummary(task.summary.isEmpty() ? defaultTaskSummary(task.type) : task.summary,
+                       AgentPlanningBudget{}.maxSummaryCharacters);
+    if (containsUnsafePlanningIntent(summary)) {
+        return AgentTaskResult{
+            AgentTaskStatus::Refused,
+            QStringLiteral("%1 refused execution: the request asks for blocked tool, subprocess, "
+                           "plugin, filesystem, or cloud authority.")
+                .arg(agentTaskTypeName(task.type)),
+            false,
+        };
+    }
+
+    QString executionSummary;
+    switch (task.type) {
+    case AgentTaskType::SummarizeConversation:
+        executionSummary = QStringLiteral("conversation summary metadata produced.");
+        break;
+    case AgentTaskType::InspectMemoryStatus:
+        executionSummary = QStringLiteral("memory status metadata inspected without reading "
+                                          "private payloads.");
+        break;
+    case AgentTaskType::PlanResponse:
+        executionSummary = QStringLiteral("response plan metadata produced.");
+        break;
+    case AgentTaskType::PrepareRetrievalContext:
+        executionSummary = QStringLiteral("retrieval context metadata prepared.");
+        break;
+    case AgentTaskType::PrepareVoiceResponse:
+        executionSummary = QStringLiteral("voice response metadata prepared without recording or "
+                                          "playback.");
+        break;
+    case AgentTaskType::PrepareExportAction:
+        executionSummary = QStringLiteral("export action metadata prepared without executing an "
+                                          "export.");
+        break;
+    }
+
+    return AgentTaskResult{
+        AgentTaskStatus::CompletedMetadata,
+        QStringLiteral("%1 executed locally: %2").arg(agentTaskTypeName(task.type),
+                                                      executionSummary),
+        true,
     };
 }
 
@@ -1058,7 +1107,12 @@ AgentTask StaticAgentTaskRuntime::makeTask(AgentTaskType type, AgentTaskSource s
     task.summary = summary;
     task.safetyPolicy = AgentTaskSafetyPolicy{};
     task.plan = planTask(task);
-    task.result = refuseExecution(task);
+    task.result = AgentTaskResult{
+        AgentTaskStatus::Planned,
+        QStringLiteral("%1 task queued for deterministic local metadata execution.")
+            .arg(agentTaskTypeName(type)),
+        false,
+    };
     task.lifecycle = AgentTaskLifecycle{
         task.id.value,
         QList<AgentTaskLifecycleEvent>{
@@ -1074,8 +1128,8 @@ AgentTask StaticAgentTaskRuntime::makeTask(AgentTaskType type, AgentTaskSource s
                  QStringLiteral("%1 task metadata created from %2.")
                      .arg(agentTaskTypeName(type), agentTaskSourceName(source))),
         traceFor(2, QStringLiteral("Plan Prepared"), AgentTaskStatus::Planned, task.plan.summary),
-        traceFor(3, QStringLiteral("Execution Boundary"), AgentTaskStatus::Refused,
-                 task.result.summary),
+        traceFor(3, QStringLiteral("Execution Boundary"), AgentTaskStatus::Planned,
+                 QStringLiteral("Task queued for deterministic local metadata execution.")),
     };
     return task;
 }
@@ -1142,7 +1196,7 @@ AgentPlanningCandidate StaticAgentTaskRuntime::planningCandidateForTask(const Ag
             .arg(task.id.value, agentTaskSourceName(task.source)),
         QStringLiteral("Prepare bounded %1 plan metadata.")
             .arg(agentTaskTypeName(task.type).toLower()),
-        QStringLiteral("Stop at the no-execution planning boundary."),
+        QStringLiteral("Pass the plan to deterministic local metadata execution."),
     };
     candidate.safetyReport = AgentPlanningSafetyReport{
         !unsafe,
@@ -1286,7 +1340,7 @@ StaticAgentTaskRuntime::makeToolContract(ToolContractType type, ToolContractStat
 AgentTaskQueueSummary StaticAgentTaskRuntime::queueSummary() const {
     AgentTaskQueueSummary summary;
     summary.status =
-        tasks_.isEmpty() ? AgentTaskQueueStatus::Empty : AgentTaskQueueStatus::RefusingExecution;
+        tasks_.isEmpty() ? AgentTaskQueueStatus::Empty : AgentTaskQueueStatus::Ready;
     summary.totalCount = static_cast<int>(tasks_.size());
 
     int latestOrder = -1;

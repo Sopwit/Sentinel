@@ -1391,6 +1391,8 @@ public:
     QString piperFileOutputReadinessSummary() const;
     bool piperFileOutputExecutionEnabled() const;
     void setPiperFileOutputExecutionEnabled(bool enabled);
+    bool whisperTranscriptionExecutionEnabled() const;
+    void setWhisperTranscriptionExecutionEnabled(bool enabled);
     QString piperFileOutputExecutionStatus() const;
     QString piperFileOutputExecutionSummary() const;
     QString piperFileOutputAudioPathSummary() const;
@@ -2059,6 +2061,8 @@ private:
     }
     LMStudioConfig currentCloudOrLMStudioConfig() const;
     ILocalInferenceWorker* activeLocalInferenceWorker() const;
+    void updatePiperTtsProviderConfig();
+    void updateWhisperSttProviderConfig();
     std::unique_ptr<IModelManagementService> modelManagementService_;
     std::unique_ptr<ITextToSpeechProvider> textToSpeechProvider_;
     std::unique_ptr<ISpeechToTextProvider> speechToTextProvider_;
@@ -2149,6 +2153,7 @@ private:
     LocalInferenceResponse latestLocalInferenceResponse_;
     LocalInferenceStreamResult latestLocalInferenceStreamResult_;
     bool piperFileOutputExecutionEnabled_ = false;
+    bool whisperTranscriptionExecutionEnabled_ = false;
     PiperTtsResult latestPiperTtsResult_;
     PiperSynthesisResult latestPiperSynthesisResult_;
     WhisperTranscriptionResult latestWhisperTranscriptionResult_;

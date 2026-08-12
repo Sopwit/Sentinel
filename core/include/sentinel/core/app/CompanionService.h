@@ -55,6 +55,12 @@ struct CompanionTrace {
     QString summary;
 };
 
+struct CompanionCaptureResult {
+    bool captured = false;
+    int capturedCharacterCount = 0;
+    QString summary;
+};
+
 struct CompanionSummary {
     bool available = false;
     bool enabledPreference = false;
@@ -85,6 +91,8 @@ public:
                                  bool paused = false) const;
     QStringList platformSummaries() const;
     QString currentPlatformCapability(bool nativeAvailable = false) const;
+    CompanionCaptureResult captureQuickNote(const QString& note, bool nativeAvailable = false,
+                                            bool paused = false) const;
 };
 
 CompanionService defaultCompanionService();

@@ -144,5 +144,207 @@ Item {
                 onEditingFinished: root.viewModel.proxyPort = parseInt(text) || 0
             }
         }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.proxyEnabled
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Proxy Username")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 100
+            }
+
+            SentinelTextField {
+                Layout.fillWidth: true
+                placeholderText: "user"
+                text: root.viewModel.proxyUser
+                onEditingFinished: root.viewModel.proxyUser = text
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.proxyEnabled
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Proxy Password")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 100
+            }
+
+            SentinelTextField {
+                Layout.fillWidth: true
+                echoMode: TextInput.Password
+                placeholderText: "••••••••"
+                text: root.viewModel.proxyPassword
+                onEditingFinished: root.viewModel.proxyPassword = text
+            }
+        }
+
+        SectionTitle {
+            title: qsTr("Cloud Providers")
+            subtitle: qsTr("Select a cloud provider and configure its API credential. Keys are stored in your local settings.")
+            Layout.fillWidth: true
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Provider")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 132
+            }
+
+            SentinelComboBox {
+                id: cloudProviderCombo
+                accent: root.modeAccent
+                Layout.fillWidth: true
+                model: ["OpenAI", "Claude", "Gemini", "DeepSeek", "Groq", "Mistral"]
+                currentIndex: root.viewModel.selectedCloudProvider === "OpenAI" ? 0
+                    : root.viewModel.selectedCloudProvider === "Claude" ? 1
+                    : root.viewModel.selectedCloudProvider === "Gemini" ? 2
+                    : root.viewModel.selectedCloudProvider === "DeepSeek" ? 3
+                    : root.viewModel.selectedCloudProvider === "Groq" ? 4
+                    : root.viewModel.selectedCloudProvider === "Mistral" ? 5 : 0
+                onActivated: (index) => {
+                    var providers = ["OpenAI", "Claude", "Gemini", "DeepSeek", "Groq", "Mistral"]
+                    root.viewModel.selectedCloudProvider = providers[index]
+                }
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.selectedCloudProvider === "OpenAI"
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("OpenAI API Key")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 132
+            }
+
+            SentinelTextField {
+                Layout.fillWidth: true
+                echoMode: TextInput.Password
+                placeholderText: "sk-..."
+                text: root.viewModel.openAiApiKey
+                onEditingFinished: root.viewModel.openAiApiKey = text
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.selectedCloudProvider === "Claude"
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Claude API Key")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 132
+            }
+
+            SentinelTextField {
+                Layout.fillWidth: true
+                echoMode: TextInput.Password
+                placeholderText: "sk-ant-..."
+                text: root.viewModel.claudeApiKey
+                onEditingFinished: root.viewModel.claudeApiKey = text
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.selectedCloudProvider === "Gemini"
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Gemini API Key")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 132
+            }
+
+            SentinelTextField {
+                Layout.fillWidth: true
+                echoMode: TextInput.Password
+                placeholderText: "AIza..."
+                text: root.viewModel.geminiApiKey
+                onEditingFinished: root.viewModel.geminiApiKey = text
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.selectedCloudProvider === "DeepSeek"
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("DeepSeek API Key")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 132
+            }
+
+            SentinelTextField {
+                Layout.fillWidth: true
+                echoMode: TextInput.Password
+                placeholderText: "sk-..."
+                text: root.viewModel.deepseekApiKey
+                onEditingFinished: root.viewModel.deepseekApiKey = text
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.selectedCloudProvider === "Groq"
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Groq API Key")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 132
+            }
+
+            SentinelTextField {
+                Layout.fillWidth: true
+                echoMode: TextInput.Password
+                placeholderText: "gsk_..."
+                text: root.viewModel.groqApiKey
+                onEditingFinished: root.viewModel.groqApiKey = text
+            }
+        }
+
+        RowLayout {
+            Layout.fillWidth: true
+            visible: root.viewModel.selectedCloudProvider === "Mistral"
+            spacing: SentinelTheme.spaceMd
+
+            Label {
+                text: qsTr("Mistral API Key")
+                color: SentinelTheme.textPrimary
+                font.pixelSize: SentinelTheme.fontBody
+                Layout.preferredWidth: 132
+            }
+
+            SentinelTextField {
+                Layout.fillWidth: true
+                echoMode: TextInput.Password
+                placeholderText: "sk-..."
+                text: root.viewModel.mistralApiKey
+                onEditingFinished: root.viewModel.mistralApiKey = text
+            }
+        }
     }
 }

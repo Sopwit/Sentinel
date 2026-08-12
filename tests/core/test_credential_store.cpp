@@ -14,33 +14,39 @@ using sentinel::core::CredentialStoreBackend;
 using sentinel::core::CredentialStoreReadiness;
 using sentinel::core::CredentialStoreStatus;
 using sentinel::core::defaultCredentialStore;
+using sentinel::core::DisabledCredentialBackend;
 using sentinel::core::inMemoryTestCredentialStore;
-using sentinel::core::PlaceholderCredentialBackend;
 
 class CredentialStoreTest final : public QObject {
     Q_OBJECT
 
 private slots:
-    void defaultStateIsDisabledAndNonPersistent();
+    void defaultStateUsesPlatformBackend();
     void backendReadinessSummaryIsDeterministic();
     void disabledActionsDoNotMutateOrExecute();
     void disabledBackendRefusesPersistence();
     void inMemoryBackendStoresReadsAndDeletesForTestsOnly();
-    void placeholderBackendsDoNotExecute();
     void resultSummariesDoNotExposeRawSecrets();
     void safetyPolicyRefusesSecretExposure();
     void testPlatformCredentialBackend();
 };
 
-void CredentialStoreTest::defaultStateIsDisabledAndNonPersistent() {
+void CredentialStoreTest::defaultStateUsesPlatformBackend() {
     const auto store = defaultCredentialStore();
     const auto summary = store.summary();
 
-    QCOMPARE(summary.status, CredentialStoreStatus::Disabled);
-    QVERIFY(!summary.secretPersistenceEnabled);
-    QVERIFY(!summary.plaintextPersistenceAllowed);
-    QVERIFY(!summary.providerExecutionEnabled);
-    QVERIFY(summary.summary.contains(QStringLiteral("no API key storage is active")));
+    if (summary.status == CredentialStoreStatus::Ready) {
+        QVERIFY(summary.secretPersistenceEnabled);
+        QCOMPARE(summary.readiness, CredentialStoreReadiness::Ready);
+        QVERIFY(summary.preferredBackend == CredentialStoreBackend::MacOSKeychain ||
+                summary.preferredBackend == CredentialStoreBackend::WindowsCredentialManager ||
+                summary.preferredBackend == CredentialStoreBackend::LinuxSecretService);
+        QVERIFY(!summary.summary.contains(QStringLiteral("no API key storage is active")));
+        QVERIFY(!summary.backendSummary.contains(QStringLiteral("requiresFutureImplementation")));
+    } else {
+        QCOMPARE(summary.status, CredentialStoreStatus::Disabled);
+        QVERIFY(!summary.secretPersistenceEnabled);
+    }
 }
 
 void CredentialStoreTest::backendReadinessSummaryIsDeterministic() {
@@ -48,12 +54,18 @@ void CredentialStoreTest::backendReadinessSummaryIsDeterministic() {
 
     QCOMPARE(store.traces().size(), 5);
     QCOMPARE(store.traceSummaries().size(), 5);
-    QVERIFY(store.summary().backendSummary.contains(QStringLiteral("storage unavailable")));
+    QVERIFY(store.summary().backendSummary.contains(QStringLiteral("Keychain")) ||
+            store.summary().backendSummary.contains(QStringLiteral("Credential Manager")) ||
+            store.summary().backendSummary.contains(QStringLiteral("Secret Service")) ||
+            store.summary().backendSummary.contains(QStringLiteral("storage unavailable")));
     QVERIFY(store.traceSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("localUnavailableFallback")));
     QVERIFY(
         store.traceSummaries().join(QStringLiteral("\n")).contains(QStringLiteral("inMemoryTest")));
+    QVERIFY(!store.traceSummaries()
+                 .join(QStringLiteral("\n"))
+                 .contains(QStringLiteral("requiresFutureImplementation")));
 }
 
 void CredentialStoreTest::disabledActionsDoNotMutateOrExecute() {
@@ -70,7 +82,7 @@ void CredentialStoreTest::disabledActionsDoNotMutateOrExecute() {
 }
 
 void CredentialStoreTest::disabledBackendRefusesPersistence() {
-    auto store = defaultCredentialStore();
+    auto store = CredentialStore{std::make_shared<DisabledCredentialBackend>()};
     const CredentialKey key{QStringLiteral("openai-compatible"), QStringLiteral("apiKey")};
 
     const auto stored = store.storeCredential(key, QStringLiteral("sk-test-secret"));
@@ -118,18 +130,6 @@ void CredentialStoreTest::inMemoryBackendStoresReadsAndDeletesForTestsOnly() {
     QVERIFY(removed.succeeded);
     QVERIFY(removed.mutatedState);
     QVERIFY(!store.containsCredential(key).succeeded);
-}
-
-void CredentialStoreTest::placeholderBackendsDoNotExecute() {
-    CredentialStore store{
-        std::make_shared<PlaceholderCredentialBackend>(CredentialStoreBackend::LinuxSecretService)};
-    const CredentialKey key{QStringLiteral("claude"), QStringLiteral("apiKey")};
-
-    QCOMPARE(store.summary().status, CredentialStoreStatus::Unavailable);
-    QVERIFY(store.summary().backendSummary.contains(QStringLiteral("no OS credential calls")));
-    QVERIFY(!store.storeCredential(key, QStringLiteral("secret")).succeeded);
-    QVERIFY(!store.readCredential(key).secret.has_value());
-    QVERIFY(!store.deleteCredential(key).mutatedState);
 }
 
 void CredentialStoreTest::resultSummariesDoNotExposeRawSecrets() {

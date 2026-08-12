@@ -27,7 +27,7 @@ void ProviderCredentialsTest::exposesMetadataOnlyDefaults() {
     QCOMPARE(registry.requirements().size(), 4);
     QCOMPARE(registry.requirementForProvider(QStringLiteral("ollama")).status,
              ProviderCredentialStatus::NotRequired);
-    QVERIFY(registry.summary().summary.contains(QStringLiteral("API key values are not stored")));
+    QVERIFY(registry.summary().summary.contains(QStringLiteral("API key values are persisted")));
 }
 
 void ProviderCredentialsTest::keepsCloudProvidersMissingAndDisabled() {
@@ -40,20 +40,23 @@ void ProviderCredentialsTest::keepsCloudProvidersMissingAndDisabled() {
         QVERIFY(readiness.placeholderReady);
         QVERIFY(!readiness.executionAllowed);
         QVERIFY(readiness.summary.contains(QStringLiteral("not configured")));
-        QVERIFY(readiness.backendSummary.contains(QStringLiteral("storage unavailable")));
+        QVERIFY(!readiness.backendSummary.contains(QStringLiteral("storage unavailable")));
     }
 }
 
 void ProviderCredentialsTest::includesCredentialStoreReadiness() {
     const auto registry = defaultProviderCredentialRegistry();
 
-    QVERIFY(registry.summary().summary.contains(QStringLiteral("credential store is disabled")));
+    QVERIFY(registry.summary().summary.contains(QStringLiteral("API key values are persisted")));
     QVERIFY(registry.requirementSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("requiresFutureImplementation")) ||
+                .contains(QStringLiteral("ready")) ||
             registry.requirementSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("disabledFallback")));
+    QVERIFY(!registry.requirementSummaries()
+                 .join(QStringLiteral("\n"))
+                 .contains(QStringLiteral("requiresFutureImplementation")));
 }
 
 void ProviderCredentialsTest::providerReadinessRemainsDisabledWithoutExplicitKeyConfiguration() {

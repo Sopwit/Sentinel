@@ -6,6 +6,7 @@
 
 #include <QtTest>
 
+using sentinel::core::AgentRecord;
 using sentinel::core::AgentRuntimeService;
 using sentinel::core::PermissionPolicyService;
 using sentinel::core::SkillProfileService;
@@ -40,6 +41,25 @@ void AgentRuntimeServiceTest::exposesBuiltInAgentCatalog() {
     QVERIFY(summary.agentSummaries.join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Coding Assistant")));
     QVERIFY(summary.summary.contains(QStringLiteral("cannot execute tools")));
+
+    const auto records =
+        runtime.agents(QStringLiteral("Disabled"), permissions, tools, profiles,
+                       QStringLiteral("developer"), workspaces, QStringLiteral("personal"));
+    for (const auto& record : records) {
+        QVERIFY(record.capabilitySummary.contains(QStringLiteral("Profile: Developer")));
+        QVERIFY(record.capabilitySummary.contains(QStringLiteral("Workspace: Personal")));
+        QVERIFY(record.capabilitySummary.contains(QStringLiteral("Tools:")));
+    }
+    const auto codingAssistant = [&records]() {
+        for (const auto& record : records) {
+            if (record.agentId == QStringLiteral("coding-assistant")) {
+                return record;
+            }
+        }
+        return AgentRecord{};
+    }();
+    QVERIFY(codingAssistant.capabilitySummary.contains(QStringLiteral("Run Command")));
+    QVERIFY(codingAssistant.capabilitySummary.contains(QStringLiteral("Read File")));
 }
 
 void AgentRuntimeServiceTest::producesDryRunPlanWithoutExecutionGrant() {

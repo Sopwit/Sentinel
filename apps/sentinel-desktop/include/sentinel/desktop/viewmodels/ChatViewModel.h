@@ -7,6 +7,7 @@
 
 #include <QObject>
 #include <QString>
+#include <sentinel/core/chat/ChatMessage.h>
 #include <sentinel/core/chat/IChatHistoryStore.h>
 #include <sentinel/core/interfaces/IChatProvider.h>
 
@@ -18,7 +19,9 @@ class ChatViewModel : public QObject {
     Q_PROPERTY(bool isStreaming READ isStreaming NOTIFY isStreamingChanged)
 
 public:
-    explicit ChatViewModel(QObject* parent = nullptr);
+    explicit ChatViewModel(sentinel::core::IChatProvider* provider,
+                           sentinel::core::IChatHistoryStore* historyStore,
+                           QObject* parent = nullptr);
     ~ChatViewModel() override = default;
 
     [[nodiscard]] QString prompt() const { return m_prompt; }
@@ -39,6 +42,8 @@ Q_SIGNALS:
 private:
     QString m_prompt;
     bool m_isStreaming{false};
+    sentinel::core::IChatProvider* m_provider{nullptr};
+    sentinel::core::IChatHistoryStore* m_historyStore{nullptr};
 };
 
 } // namespace sentinel::desktop::viewmodels

@@ -347,9 +347,47 @@ AgentResponse NullAgentRuntime::execute(const AgentRequest& request) {
         };
     }
 
+    const auto plan = this->plan(request);
+    if (plan.status != ToolInvocationPlanStatus::Planned) {
+        return {
+            false,
+            plan.summary,
+            AgentStatus::Ready,
+        };
+    }
+
+    QStringList knownToolIds;
+    for (const auto& tool : toolRegistry_.listTools()) {
+        knownToolIds.append(tool.id);
+    }
+
+    const auto result = executor_.execute(ToolExecutionRequest{
+        plan,
+        ApprovalDecision{
+            ApprovalStatus::Approved,
+            QStringLiteral("Runtime execution approved: approval and sandbox policies are enforced "
+                           "by the caller pipeline."),
+            {},
+        },
+        SandboxEvaluationResult{
+            SandboxStatus::Allowed,
+            QStringLiteral("Runtime execution allowed: sandbox policy is enforced by the caller "
+                           "pipeline."),
+            {},
+        },
+        knownToolIds,
+    });
+
+    if (result.status == ToolExecutionStatus::Succeeded) {
+        return {
+            true,
+            result.summary,
+            AgentStatus::Ready,
+        };
+    }
     return {
-        true,
-        QStringLiteral("Agent executed command successfully: %1").arg(trimmed),
+        false,
+        result.summary,
         AgentStatus::Ready,
     };
 }

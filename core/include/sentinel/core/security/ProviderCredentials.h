@@ -17,7 +17,7 @@ namespace sentinel::core {
 
 enum class ProviderCredentialPolicy : std::uint8_t {
     NotRequired,
-    RequiredPlaceholderOnly,
+    Required,
     Refused,
 };
 
@@ -30,7 +30,7 @@ enum class ProviderCredentialStatus : std::uint8_t {
 
 enum class ProviderCredentialScope : std::uint8_t {
     LocalRuntime,
-    CloudApiPlaceholder,
+    CloudApi,
 };
 
 QString providerCredentialPolicyName(ProviderCredentialPolicy policy);
@@ -40,8 +40,8 @@ QString providerCredentialScopeName(ProviderCredentialScope scope);
 struct ProviderCredentialRequirement {
     QString providerId;
     QString displayName;
-    ProviderCredentialScope scope = ProviderCredentialScope::CloudApiPlaceholder;
-    ProviderCredentialPolicy policy = ProviderCredentialPolicy::RequiredPlaceholderOnly;
+    ProviderCredentialScope scope = ProviderCredentialScope::CloudApi;
+    ProviderCredentialPolicy policy = ProviderCredentialPolicy::Required;
     ProviderCredentialStatus status = ProviderCredentialStatus::Missing;
     bool placeholderReady = false;
     bool executionEnabled = false;

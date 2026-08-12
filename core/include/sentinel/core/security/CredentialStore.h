@@ -31,7 +31,7 @@ enum class CredentialStoreBackend : std::uint8_t {
 
 enum class CredentialStoreReadiness : std::uint8_t {
     Placeholder,
-    RequiresFutureImplementation,
+    Ready,
     TestOnlyReady,
     DisabledFallback,
 };
@@ -155,22 +155,6 @@ public:
     CredentialReadResult readCredential(const CredentialKey& key) const override;
     CredentialBackendResult deleteCredential(const CredentialKey& key) override;
     CredentialBackendResult containsCredential(const CredentialKey& key) const override;
-};
-
-class PlaceholderCredentialBackend final : public ICredentialBackend {
-public:
-    explicit PlaceholderCredentialBackend(CredentialStoreBackend backend);
-
-    CredentialStoreBackend backend() const override;
-    CredentialStoreSummary summary() const override;
-    CredentialBackendResult storeCredential(const CredentialKey& key,
-                                            const QString& secret) override;
-    CredentialReadResult readCredential(const CredentialKey& key) const override;
-    CredentialBackendResult deleteCredential(const CredentialKey& key) override;
-    CredentialBackendResult containsCredential(const CredentialKey& key) const override;
-
-private:
-    CredentialStoreBackend backend_ = CredentialStoreBackend::LocalUnavailableFallback;
 };
 
 class InMemoryCredentialBackend final : public ICredentialBackend {

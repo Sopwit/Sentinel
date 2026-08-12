@@ -261,10 +261,14 @@ void DesktopShellViewModelTest::exposesInitialShellState() {
     QCOMPARE(fixture.viewModel.uiDensity(), QStringLiteral("Comfortable"));
     QVERIFY(fixture.viewModel.activityTimelineSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Chat Created")));
+                .contains(QStringLiteral("Memory entries -")));
+    QVERIFY(fixture.viewModel.notificationCenterSummaries().isEmpty());
+    fixture.viewModel.addNotification(QStringLiteral("Brain"),
+                                     QStringLiteral("Memory snapshot saved"),
+                                     QStringLiteral("Snapshot persisted locally."));
     QVERIFY(fixture.viewModel.notificationCenterSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Manual updates only")));
+                .contains(QStringLiteral("Memory snapshot saved")));
     QVERIFY(fixture.viewModel.notificationCategories().contains(QStringLiteral("Security")));
     QVERIFY(fixture.viewModel.aboutSentinelSummaries()
                 .join(QStringLiteral("\n"))
@@ -401,7 +405,7 @@ void DesktopShellViewModelTest::exposesAgentTaskRuntimeMetadata() {
     ViewModelFixture fixture;
     const auto metaObject = fixture.viewModel.metaObject();
 
-    QCOMPARE(fixture.viewModel.agentTaskRuntimeStatus(), QStringLiteral("Refusing Execution"));
+    QCOMPARE(fixture.viewModel.agentTaskRuntimeStatus(), QStringLiteral("Ready"));
     QCOMPARE(fixture.viewModel.agentTaskRuntimeTaskCount(), 6);
     QCOMPARE(fixture.viewModel.agentTaskQueueCount(), 6);
     QCOMPARE(fixture.viewModel.agentTaskQueuePlannedCount(), 6);
@@ -409,8 +413,8 @@ void DesktopShellViewModelTest::exposesAgentTaskRuntimeMetadata() {
     QCOMPARE(fixture.viewModel.agentTaskQueueBlockedCount(), 0);
     QCOMPARE(fixture.viewModel.agentTaskQueueCompletedCount(), 0);
     QCOMPARE(fixture.viewModel.agentTaskQueueRefusedCount(), 0);
-    QVERIFY(
-        fixture.viewModel.agentTaskRuntimeSummary().contains(QStringLiteral("metadata planning")));
+    QVERIFY(fixture.viewModel.agentTaskRuntimeSummary().contains(
+        QStringLiteral("executes local metadata tasks deterministically")));
     QVERIFY(fixture.viewModel.latestAgentTaskSummary().contains(
         QStringLiteral("Prepare Export Action")));
     QVERIFY(fixture.viewModel.latestAgentTaskLifecycleSummary().contains(QStringLiteral("queued")));
@@ -604,7 +608,7 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
                 .contains(QStringLiteral("readiness=disabled")));
     QCOMPARE(fixture.viewModel.providerCredentialRegistryStatus(), QStringLiteral("missing"));
     QVERIFY(fixture.viewModel.providerCredentialRegistrySummary().contains(
-        QStringLiteral("API key values are not stored")));
+        QStringLiteral("API key values are persisted")));
     QCOMPARE(fixture.viewModel.providerCredentialSummaries().size(), 4);
     QVERIFY(fixture.viewModel.providerCredentialReadinessSummaries()
                 .join(QStringLiteral("\n"))
@@ -619,9 +623,10 @@ void DesktopShellViewModelTest::exposesRuntimeProviderRegistryMetadata() {
     QVERIFY(
         fixture.viewModel.credentialStoreSafetySummary().contains(QStringLiteral("no plaintext")));
     QCOMPARE(fixture.viewModel.credentialStoreTraceSummaries().size(), 5);
-    QVERIFY(fixture.viewModel.credentialActionReadiness().contains(QStringLiteral("disabled")));
+    QVERIFY(
+        fixture.viewModel.credentialActionReadiness().contains(QStringLiteral("credential store")));
     QVERIFY(fixture.viewModel.credentialExecutionStatus().contains(
-        QStringLiteral("Execution disabled")));
+        QStringLiteral("user-provided API key")));
     const auto exposedCredentialText =
         fixture.viewModel.credentialStoreSummary() +
         fixture.viewModel.credentialStoreBackendSummary() +
@@ -890,9 +895,7 @@ void DesktopShellViewModelTest::exposesLocalAiEcosystemFoundationMetadata() {
     QVERIFY(viewModel.benchmarkHubSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("tokens/sec")));
-    QVERIFY(viewModel.notificationCenterSummaries()
-                .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Model Role Changed")));
+    QVERIFY(viewModel.notificationCenterSummaries().isEmpty());
 }
 
 void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
@@ -905,9 +908,9 @@ void DesktopShellViewModelTest::exposesVoiceReadinessMetadata() {
     QCOMPARE(fixture.viewModel.textToSpeechStatus(), QStringLiteral("Disabled"));
     QCOMPARE(fixture.viewModel.speechToTextStatus(), QStringLiteral("Disabled"));
     QVERIFY(
-        fixture.viewModel.textToSpeechSummary().contains(QStringLiteral("disabled placeholder")));
+        fixture.viewModel.textToSpeechSummary().contains(QStringLiteral("disabled by default")));
     QVERIFY(
-        fixture.viewModel.speechToTextSummary().contains(QStringLiteral("disabled placeholder")));
+        fixture.viewModel.speechToTextSummary().contains(QStringLiteral("disabled by default")));
     QCOMPARE(fixture.viewModel.voiceCapabilitySummaries().size(), 2);
     QVERIFY(fixture.viewModel.voiceCapabilitySummaries()
                 .join(QStringLiteral(" "))
@@ -1101,17 +1104,17 @@ void DesktopShellViewModelTest::exposesVoiceConfigurationMetadata() {
     QVERIFY(fixture.viewModel.piperFileOutputReadinessSummary().contains(
         QStringLiteral("Ready for a later controlled file-output TTS phase")));
     QVERIFY(!fixture.viewModel.piperFileOutputExecutionEnabled());
-    QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Ready Metadata"));
     QVERIFY(
-        fixture.viewModel.piperFileOutputExecutionSummary().contains(QStringLiteral("readiness")));
+        fixture.viewModel.piperFileOutputExecutionSummary().contains(QStringLiteral("disabled")));
 
     fixture.viewModel.setPiperFileOutputExecutionEnabled(true);
 
-    QVERIFY(!fixture.settings.piperFileOutputExecutionEnabled());
-    QVERIFY(!fixture.viewModel.piperFileOutputExecutionEnabled());
-    QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.settings.piperFileOutputExecutionEnabled());
+    QVERIFY(fixture.viewModel.piperFileOutputExecutionEnabled());
+    QCOMPARE(fixture.viewModel.piperFileOutputExecutionStatus(), QStringLiteral("Configured"));
     QVERIFY(
-        fixture.viewModel.piperFileOutputExecutionSummary().contains(QStringLiteral("readiness")));
+        fixture.viewModel.piperFileOutputExecutionSummary().contains(QStringLiteral("enabled")));
     QCOMPARE(fixture.viewModel.piperFileOutputAudioPathSummary(),
              QStringLiteral("No generated Piper audio file."));
     QCOMPARE(fixture.viewModel.whisperPreparationReadinessStatus(), QStringLiteral("Blocked"));
@@ -1337,12 +1340,12 @@ void DesktopShellViewModelTest::exposesLatestToolExecutionStatus() {
              QStringLiteral("No agent pipeline result yet."));
 
     QVERIFY(viewModel.runAgentRequest(QStringLiteral("draft local plan")));
-    QCOMPARE(viewModel.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(viewModel.latestToolExecutionStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(viewModel.latestToolExecutionSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
-    QCOMPARE(viewModel.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+             QStringLiteral("Executed: Local Plan Summary"));
+    QCOMPARE(viewModel.latestAgentPipelineStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(viewModel.latestAgentPipelineSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
+             QStringLiteral("Executed: Local Plan Summary"));
     QCOMPARE(executionSpy.count(), 1);
 }
 
@@ -1365,7 +1368,7 @@ void DesktopShellViewModelTest::exposesRuntimeContextStatus() {
     QCOMPARE(viewModel.runtimeSessionId(), QStringLiteral("runtime-session-1"));
     QCOMPARE(viewModel.runtimeContextStatus(), QStringLiteral("Active"));
     QCOMPARE(viewModel.runtimeContextSummary(),
-             QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+             QStringLiteral("Runtime context captured pipeline result: Succeeded"));
     QCOMPARE(viewModel.runtimeContextActiveToolIds(),
              QStringList{QStringLiteral("local-plan-summary")});
     QCOMPARE(runtimeContextSpy.count(), 1);
@@ -1387,7 +1390,7 @@ void DesktopShellViewModelTest::exposesAgentActivityStatus() {
 
     QCOMPARE(viewModel.agentActivityCount(), 6);
     QCOMPARE(viewModel.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
+             QStringLiteral("Agent pipeline finished: Succeeded"));
     QCOMPARE(activitySpy.count(), 1);
 }
 
@@ -2313,7 +2316,7 @@ void DesktopShellViewModelTest::exposesConversationSearchAndExportMetadata() {
 
     QCOMPARE(fixture.viewModel.conversationSearchQueryText(), QStringLiteral("token"));
     QCOMPARE(fixture.viewModel.conversationSearchStatus(), QStringLiteral("Completed"));
-    QCOMPARE(fixture.viewModel.conversationSearchResultCount(), 1);
+    QCOMPARE(fixture.viewModel.conversationSearchResultCount(), 2);
     QVERIFY(fixture.viewModel.conversationSearchResultSummaries()
                 .join(QStringLiteral(" "))
                 .contains(QStringLiteral("user #2")));
@@ -2590,7 +2593,8 @@ void DesktopShellViewModelTest::exposesSemanticVectorReadinessMetadata() {
     QCOMPARE(fixture.viewModel.embeddingProviderReadiness(), QStringLiteral("Not Configured"));
     QCOMPARE(fixture.viewModel.vectorIndexReadiness(), QStringLiteral("Not Configured"));
     QCOMPARE(fixture.viewModel.vectorIndexedItemCount(), 0);
-    QVERIFY(fixture.viewModel.embeddingProviderSummary().contains(QStringLiteral("tests only")));
+    QVERIFY(fixture.viewModel.embeddingProviderSummary().contains(
+        QStringLiteral("No embedding provider is configured")));
     QVERIFY(fixture.viewModel.vectorIndexSummary().contains(QStringLiteral("Indexed items: 0")));
     QVERIFY(fixture.viewModel.semanticRetrievalReadinessChecks().contains(
         QStringLiteral("Raw vectors exposed to QML: no")));
@@ -2898,7 +2902,7 @@ void DesktopShellViewModelTest::forwardsChatActions() {
     QCOMPARE(fixture.viewModel.chatMessages()->rowCount(), 3);
     const auto lastIndex = fixture.viewModel.chatMessages()->index(2, 0);
     QCOMPARE(fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::ContentRole),
-             QStringLiteral("Sentinel Core online. Local chat pipeline is active."));
+             QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] status"));
     QCOMPARE(fixture.viewModel.chatMessages()->data(lastIndex, ChatMessageListModel::StatusRole),
              QStringLiteral("received"));
     QCOMPARE(fixture.viewModel.conversationState(), QStringLiteral("Completed"));
@@ -2932,8 +2936,7 @@ void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
 
     QVERIFY(ran);
     QCOMPARE(viewModel.agentStatus(), QStringLiteral("Ready"));
-    QCOMPARE(viewModel.lastAgentResponse(),
-             QStringLiteral("Agent executed command successfully: draft local action"));
+    QCOMPARE(viewModel.lastAgentResponse(), QStringLiteral("Executed: Local Plan Summary"));
     QCOMPARE(viewModel.latestToolPlanStatus(), QStringLiteral("Planned"));
     QCOMPARE(viewModel.latestToolPlanSummary(),
              QStringLiteral("Tool plan prepared: Local Plan Summary"));
@@ -2943,20 +2946,20 @@ void DesktopShellViewModelTest::forwardsDeterministicAgentRequest() {
     QCOMPARE(viewModel.latestSandboxStatus(), QStringLiteral("Allowed"));
     QCOMPARE(viewModel.latestSandboxSummary(),
              QStringLiteral("Planned tool capabilities are allowed by sandbox metadata policy."));
-    QCOMPARE(viewModel.latestToolExecutionStatus(), QStringLiteral("Placeholder Succeeded"));
+    QCOMPARE(viewModel.latestToolExecutionStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(viewModel.latestToolExecutionSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
-    QCOMPARE(viewModel.latestAgentPipelineStatus(), QStringLiteral("Placeholder Succeeded"));
+             QStringLiteral("Executed: Local Plan Summary"));
+    QCOMPARE(viewModel.latestAgentPipelineStatus(), QStringLiteral("Succeeded"));
     QCOMPARE(viewModel.latestAgentPipelineSummary(),
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
+             QStringLiteral("Executed: Local Plan Summary"));
     QCOMPARE(viewModel.runtimeContextStatus(), QStringLiteral("Active"));
     QCOMPARE(viewModel.runtimeContextSummary(),
-             QStringLiteral("Runtime context captured pipeline result: Placeholder Succeeded"));
+             QStringLiteral("Runtime context captured pipeline result: Succeeded"));
     QCOMPARE(viewModel.runtimeContextActiveToolIds(),
              QStringList{QStringLiteral("local-plan-summary")});
     QCOMPARE(viewModel.agentActivityCount(), 6);
     QCOMPARE(viewModel.latestAgentActivitySummary(),
-             QStringLiteral("Agent pipeline finished: Placeholder Succeeded"));
+             QStringLiteral("Agent pipeline finished: Succeeded"));
     QCOMPARE(viewModel.conversationState(), QStringLiteral("Completed"));
     QCOMPARE(viewModel.conversationTransitionStatus(), QStringLiteral("Accepted"));
     QCOMPARE(viewModel.conversationTransitionSummary(),
@@ -3397,13 +3400,20 @@ void DesktopShellViewModelTest::exposesProductExcellenceWorkflow() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Reduced motion: Enabled")));
 
-    fixture.viewModel.setNotificationSearchQuery(QStringLiteral("privacy"));
+    fixture.viewModel.addNotificationWithPriority(QStringLiteral("Security"),
+                                                  QStringLiteral("Test security notice"),
+                                                  QStringLiteral("A real local-only notification."),
+                                                  QStringLiteral("High"));
+    QVERIFY(fixture.viewModel.notificationFilteredSummaries()
+                .join(QStringLiteral("\n"))
+                .contains(QStringLiteral("Test security notice")));
+    fixture.viewModel.setNotificationSearchQuery(QStringLiteral("Test security notice"));
     fixture.viewModel.setNotificationCategoryFilter(QStringLiteral("Security"));
     QVERIFY(fixture.viewModel.notificationFilteredSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Privacy guarantees active")));
-    QVERIFY(fixture.viewModel.markNotificationRead(QStringLiteral("security-privacy")));
-    QVERIFY(fixture.viewModel.archiveNotification(QStringLiteral("workspace-active")));
+                .contains(QStringLiteral("Test security notice")));
+    QVERIFY(fixture.viewModel.markAllNotificationsRead());
+    QVERIFY(fixture.viewModel.archiveNotification(fixture.viewModel.latestNotificationId()));
     QVERIFY(fixture.viewModel.clearArchivedNotifications());
     QVERIFY(fixture.viewModel.notificationLifecycleSummaries()
                 .join(QStringLiteral("\n"))

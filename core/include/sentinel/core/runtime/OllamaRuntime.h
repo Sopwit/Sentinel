@@ -171,6 +171,7 @@ public:
     Q_INVOKABLE void pull(const QString& modelId);
     Q_INVOKABLE void cancel();
     Q_INVOKABLE void removeModel(const QString& modelId);
+    Q_INVOKABLE void setEndpoint(const QString& endpoint);
 
 signals:
     void pullingChanged();
@@ -191,6 +192,7 @@ private:
     qreal progress_ = 0.0;
     QString statusText_;
     QString errorText_;
+    QString endpoint_ = QStringLiteral("http://127.0.0.1:11434");
     class QNetworkAccessManager* nam_ = nullptr;
     class QNetworkReply* reply_ = nullptr;
     QElapsedTimer pullTimer_;

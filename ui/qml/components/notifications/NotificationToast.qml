@@ -71,17 +71,40 @@ Item {
         }
     }
 
+    function enqueueToast(notification) {
+        if (!notification || !notification.id) return
+        if (shownIds[notification.id]) return
+        if (viewModel && viewModel.dndEnabled) return
+        if (viewModel && viewModel.isChannelMuted && viewModel.isChannelMuted(notification.category)) return
+
+        trimShownIds()
+        shownIds[notification.id] = true
+
+        while (toastQueue.count >= root.maxVisible) {
+            toastQueue.remove(toastQueue.count - 1, 1)
+        }
+        toastQueue.insert(0, {
+            id: notification.id,
+            category: notification.category || "General",
+            title: notification.title || "",
+            body: notification.body || "",
+            priority: notification.priority || "Normal",
+            timestamp: notification.timestamp || new Date().toISOString()
+        })
+        dismissTimer.restart()
+    }
+
     Connections {
         target: viewModel
         function onNativeExperienceChanged() {
             const summaries = viewModel.notificationFilteredSummaries
             if (summaries.length === 0) return
 
-            const latest = parseNotification(summaries[0])
-            if (!latest || latest.archived || latest.read || latest.snoozed) return
-
-            if (viewModel && viewModel.dndEnabled) return
-            if (viewModel && viewModel.isChannelMuted && viewModel.isChannelMuted(latest.category)) return
+            for (let i = 0; i < summaries.length; ++i) {
+                const latest = parseNotification(summaries[i])
+                if (!latest || latest.archived || latest.read || latest.snoozed) continue
+                enqueueToast(latest)
+            }
         }
     }
 

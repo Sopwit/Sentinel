@@ -95,6 +95,7 @@ Item {
                         currentIndex: root.viewModel.availableLanguages.indexOf(root.viewModel.appLanguage)
                         textRole: ""
                         displayText: root.viewModel.languageDisplayName(currentValue)
+                        delegateTextResolver: (code) => root.viewModel.languageDisplayName(code)
                         onActivated: root.viewModel.appLanguage = currentValue
                     }
                 }
@@ -205,7 +206,8 @@ Item {
 
                                     color: {
                                         if (modelData === "Liquid Glass Light") return "#f4f6f9"
-                                        if (modelData === "Liquid Glass Dark" || modelData === "Sentinel Classic") return "#0d1117"
+                                        if (modelData === "Liquid Glass Dark") return "#0d1117"
+                                        if (modelData === "Sentinel Classic") return "#1b1f24"
                                         if (modelData === "Midnight Blue") return "#0a0f1e"
                                         if (modelData === "Aurora Teal") return "#0f1a1c"
                                         if (modelData === "Graphite Grey") return "#121416"
@@ -221,7 +223,8 @@ Item {
                                         anchors.margins: 6
                                         color: {
                                             if (modelData === "Liquid Glass Light") return "#4f8ef7"
-                                            if (modelData === "Liquid Glass Dark" || modelData === "Sentinel Classic") return "#7eb8ff"
+                                            if (modelData === "Liquid Glass Dark") return "#7eb8ff"
+                                            if (modelData === "Sentinel Classic") return "#2f81f7"
                                             if (modelData === "Midnight Blue") return "#8fb4ff"
                                             if (modelData === "Aurora Teal") return "#7de0b9"
                                             if (modelData === "Graphite Grey") return "#d0d7dc"

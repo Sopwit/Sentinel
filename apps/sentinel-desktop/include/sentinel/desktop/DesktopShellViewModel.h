@@ -1367,6 +1367,21 @@ class DesktopShellViewModel final : public QObject {
     Q_PROPERTY(bool localKnowledgeBaseEnabled READ localKnowledgeBaseEnabled WRITE
                    setLocalKnowledgeBaseEnabled NOTIFY workspaceChanged)
     Q_PROPERTY(
+        QString attachmentBehavior READ attachmentBehavior WRITE setAttachmentBehavior NOTIFY
+            workspaceChanged)
+    Q_PROPERTY(
+        QString exportDefaultFormat READ exportDefaultFormat WRITE setExportDefaultFormat NOTIFY
+            workspaceChanged)
+    Q_PROPERTY(bool exportIncludeTimestamps READ exportIncludeTimestamps WRITE
+                   setExportIncludeTimestamps NOTIFY workspaceChanged)
+    Q_PROPERTY(bool exportIncludeCitations READ exportIncludeCitations WRITE setExportIncludeCitations
+                   NOTIFY workspaceChanged)
+    Q_PROPERTY(
+        bool exportAnonymizeNames READ exportAnonymizeNames WRITE setExportAnonymizeNames NOTIFY
+            workspaceChanged)
+    Q_PROPERTY(bool exportIncludeModelMetadata READ exportIncludeModelMetadata WRITE
+                   setExportIncludeModelMetadata NOTIFY workspaceChanged)
+    Q_PROPERTY(
         QString localKnowledgeBaseStatus READ localKnowledgeBaseStatus NOTIFY workspaceChanged)
     Q_PROPERTY(QStringList knowledgeBaseDocumentSummaries READ knowledgeBaseDocumentSummaries NOTIFY
                    workspaceChanged)
@@ -1506,7 +1521,7 @@ public:
     int agentActivityCount() const;
     QString latestAgentActivitySummary() const;
     QString currentRoutingMode() const;
-    void setRoutingModeByName(const QString& routingModeName);
+    Q_INVOKABLE void setRoutingModeByName(const QString& routingModeName);
     QStringList availableRoutingModes() const;
     QString modelRoutingStatus() const;
     QString selectedModelProviderSummary() const;
@@ -1656,9 +1671,6 @@ public:
     QString activeLocalModelName() const;
     QString selectedOllamaModel() const;
     void setSelectedOllamaModel(const QString& modelName);
-    Q_INVOKABLE void deleteOllamaModel(const QString& modelName);
-    Q_INVOKABLE void pullOllamaModel(const QString& modelName);
-
     bool proxyEnabled() const;
     void setProxyEnabled(bool enabled);
     QString proxyType() const;
@@ -2316,6 +2328,18 @@ public:
     QStringList fileChatActionSummaries() const;
     bool localKnowledgeBaseEnabled() const;
     void setLocalKnowledgeBaseEnabled(bool enabled);
+    QString attachmentBehavior() const;
+    void setAttachmentBehavior(const QString& behavior);
+    QString exportDefaultFormat() const;
+    void setExportDefaultFormat(const QString& format);
+    bool exportIncludeTimestamps() const;
+    void setExportIncludeTimestamps(bool enabled);
+    bool exportIncludeCitations() const;
+    void setExportIncludeCitations(bool enabled);
+    bool exportAnonymizeNames() const;
+    void setExportAnonymizeNames(bool enabled);
+    bool exportIncludeModelMetadata() const;
+    void setExportIncludeModelMetadata(bool enabled);
     QString localKnowledgeBaseStatus() const;
     QStringList knowledgeBaseDocumentSummaries() const;
     QStringList recentRetrievalSummaries() const;
@@ -2390,6 +2414,7 @@ public:
     Q_INVOKABLE bool pinNotification(const QString& notificationId);
     Q_INVOKABLE bool archiveNotification(const QString& notificationId);
     Q_INVOKABLE bool markNotificationRead(const QString& notificationId);
+    Q_INVOKABLE QString latestNotificationId() const;
     Q_INVOKABLE bool clearArchivedNotifications();
     Q_INVOKABLE bool prepareExportPreview(const QString& source, const QString& format);
     Q_INVOKABLE bool exportDiagnostics(const QString& format);

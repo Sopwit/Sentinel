@@ -24,7 +24,7 @@ class NullToolExecutorTest final : public QObject {
     Q_OBJECT
 
 private slots:
-    void returnsPlaceholderSuccessForApprovedSandboxAllowedPlan();
+    void executesApprovedSandboxAllowedPlan();
     void blocksWhenApprovalIsRequired();
     void blocksWhenSandboxDenied();
     void handlesEmptyPlan();
@@ -69,7 +69,7 @@ static SandboxEvaluationResult sandboxAllowed() {
     };
 }
 
-void NullToolExecutorTest::returnsPlaceholderSuccessForApprovedSandboxAllowedPlan() {
+void NullToolExecutorTest::executesApprovedSandboxAllowedPlan() {
     NullToolExecutor executor;
 
     const auto result = executor.execute(ToolExecutionRequest{
@@ -79,10 +79,9 @@ void NullToolExecutorTest::returnsPlaceholderSuccessForApprovedSandboxAllowedPla
         {QStringLiteral("safe-tool")},
     });
 
-    QCOMPARE(result.status, ToolExecutionStatus::PlaceholderSucceeded);
-    QCOMPARE(toolExecutionStatusName(result.status), QStringLiteral("Placeholder Succeeded"));
-    QCOMPARE(result.summary,
-             QStringLiteral("Placeholder tool execution completed without performing actions."));
+    QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+    QCOMPARE(toolExecutionStatusName(result.status), QStringLiteral("Succeeded"));
+    QCOMPARE(result.summary, QStringLiteral("Executed: Tool safe-tool"));
 }
 
 void NullToolExecutorTest::blocksWhenApprovalIsRequired() {

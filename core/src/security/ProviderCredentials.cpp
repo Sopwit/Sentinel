@@ -13,7 +13,7 @@ ProviderCredentialRequirement unknownRequirement(const QString& providerId) {
     return ProviderCredentialRequirement{
         normalized.isEmpty() ? QStringLiteral("unknown-provider") : normalized,
         QStringLiteral("Unknown Provider"),
-        ProviderCredentialScope::CloudApiPlaceholder,
+        ProviderCredentialScope::CloudApi,
         ProviderCredentialPolicy::Refused,
         ProviderCredentialStatus::Refused,
         false,
@@ -33,14 +33,15 @@ safetyReportForRequirement(const ProviderCredentialRequirement& requirement) {
         false,
         false,
         false,
-        QStringLiteral("%1 credential safety: no plaintext storage, no secret logging, no cloud "
-                       "requests, no fallback routing, and no background discovery.")
+        QStringLiteral("%1 credential safety: no plaintext storage, no secret logging, no "
+                       "automatic cloud requests, no fallback routing, and no background "
+                       "discovery.")
             .arg(requirement.displayName),
         {
-            QStringLiteral("API key values are not stored by this phase."),
+            QStringLiteral("API key values are stored only in the OS credential store."),
             QStringLiteral("Credential metadata exposes only configured, missing, or refused "
                            "state."),
-            QStringLiteral("Cloud/API requests remain disabled."),
+            QStringLiteral("Cloud/API requests require a user-provided configured API key."),
             QStringLiteral("No provider fallback routing or autonomous provider switching."),
         },
     };
@@ -52,8 +53,8 @@ QString providerCredentialPolicyName(ProviderCredentialPolicy policy) {
     switch (policy) {
     case ProviderCredentialPolicy::NotRequired:
         return QStringLiteral("notRequired");
-    case ProviderCredentialPolicy::RequiredPlaceholderOnly:
-        return QStringLiteral("requiredPlaceholderOnly");
+    case ProviderCredentialPolicy::Required:
+        return QStringLiteral("required");
     case ProviderCredentialPolicy::Refused:
         return QStringLiteral("refused");
     }
@@ -78,14 +79,15 @@ QString providerCredentialScopeName(ProviderCredentialScope scope) {
     switch (scope) {
     case ProviderCredentialScope::LocalRuntime:
         return QStringLiteral("localRuntime");
-    case ProviderCredentialScope::CloudApiPlaceholder:
-        return QStringLiteral("cloudApiPlaceholder");
+    case ProviderCredentialScope::CloudApi:
+        return QStringLiteral("cloudApi");
     }
-    return QStringLiteral("cloudApiPlaceholder");
+    return QStringLiteral("cloudApi");
 }
 
 QString providerCredentialRequirementSummary(const ProviderCredentialRequirement& requirement) {
-    return QStringLiteral("%1 (%2): %3 / %4 / %5 / %6 / API keys not stored")
+    return QStringLiteral("%1 (%2): %3 / %4 / %5 / %6 / API keys stored in the OS credential "
+                          "store when configured")
         .arg(requirement.displayName, requirement.providerId,
              providerCredentialScopeName(requirement.scope),
              providerCredentialStatusName(requirement.status),
@@ -107,7 +109,7 @@ QString providerCredentialSafetySummary(const ProviderCredentialSafetyReport& re
 }
 
 QString providerCredentialReadinessSummary(const ProviderCredentialReadiness& readiness) {
-    return QStringLiteral("%1: %2 / %3 / %4 / API key values not stored")
+    return QStringLiteral("%1: %2 / %3 / %4 / API key values stored in the OS credential store")
         .arg(readiness.displayName, providerCredentialStatusName(readiness.status),
              readiness.executionAllowed ? QStringLiteral("execution allowed")
                                         : QStringLiteral("execution disabled"),
@@ -185,13 +187,16 @@ ProviderCredentialSummary ProviderCredentialRegistry::summary() const {
     }
     result.status = result.missingCount > 0 ? ProviderCredentialStatus::Missing
                                             : ProviderCredentialStatus::Configured;
+    const auto storeReady = credentialStoreSummary_.status == CredentialStoreStatus::Ready;
     result.summary =
         QStringLiteral("%1 provider credential records: %2 configured/not-required, %3 missing, "
-                       "%4 refused. API key values are not stored; credential store is disabled.")
+                       "%4 refused. API key values are persisted %5.")
             .arg(result.providerCount)
             .arg(result.configuredCount)
             .arg(result.missingCount)
-            .arg(result.refusedCount);
+            .arg(result.refusedCount)
+            .arg(storeReady ? QStringLiteral("in the OS credential store")
+                            : QStringLiteral("only when the OS credential store is available"));
     return result;
 }
 
@@ -241,42 +246,41 @@ defaultProviderCredentialRegistry(CredentialStoreSummary credentialStoreSummary)
             ProviderCredentialRequirement{
                 QStringLiteral("openai-compatible"),
                 QStringLiteral("OpenAI-Compatible API"),
-                ProviderCredentialScope::CloudApiPlaceholder,
-                ProviderCredentialPolicy::RequiredPlaceholderOnly,
+                ProviderCredentialScope::CloudApi,
+                ProviderCredentialPolicy::Required,
                 ProviderCredentialStatus::Missing,
                 true,
                 false,
                 storeReadiness,
                 backendSummary,
                 QStringLiteral("OpenAI-compatible credentials are not configured; API key values "
-                               "are not stored; storage requires future OS secret-store "
-                               "implementation."),
+                               "are stored securely in the OS credential store when configured."),
             },
             ProviderCredentialRequirement{
                 QStringLiteral("claude"),
                 QStringLiteral("Claude API"),
-                ProviderCredentialScope::CloudApiPlaceholder,
-                ProviderCredentialPolicy::RequiredPlaceholderOnly,
+                ProviderCredentialScope::CloudApi,
+                ProviderCredentialPolicy::Required,
                 ProviderCredentialStatus::Missing,
                 true,
                 false,
                 storeReadiness,
                 backendSummary,
-                QStringLiteral("Claude credentials are not configured; API key values are not "
-                               "stored; storage requires future OS secret-store implementation."),
+                QStringLiteral("Claude credentials are not configured; API key values are stored "
+                               "securely in the OS credential store when configured."),
             },
             ProviderCredentialRequirement{
                 QStringLiteral("gemini"),
                 QStringLiteral("Gemini API"),
-                ProviderCredentialScope::CloudApiPlaceholder,
-                ProviderCredentialPolicy::RequiredPlaceholderOnly,
+                ProviderCredentialScope::CloudApi,
+                ProviderCredentialPolicy::Required,
                 ProviderCredentialStatus::Missing,
                 true,
                 false,
                 storeReadiness,
                 backendSummary,
-                QStringLiteral("Gemini credentials are not configured; API key values are not "
-                               "stored; storage requires future OS secret-store implementation."),
+                QStringLiteral("Gemini credentials are not configured; API key values are stored "
+                               "securely in the OS credential store when configured."),
             },
         },
         credentialStoreSummary,

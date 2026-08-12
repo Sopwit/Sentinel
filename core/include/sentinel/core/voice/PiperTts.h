@@ -41,6 +41,8 @@ enum class PiperSynthesisStatus : std::uint8_t {
     SafetyBlocked,
     Refused,
     ReadyMetadata,
+    Succeeded,
+    Failed,
     Timeout,
 };
 
@@ -159,7 +161,8 @@ QString safePiperSynthesisResultSummary(const PiperSynthesisResult& result);
 QStringList piperSynthesisTraceSummaries(const QList<PiperSynthesisTrace>& traces);
 PiperSynthesisConfig defaultDisabledPiperSynthesisConfig();
 PiperSynthesisConfig configuredPiperSynthesisConfig(const QString& binaryPath,
-                                                    const QString& modelPath);
+                                                    const QString& modelPath,
+                                                    bool processExecutionAllowed = false);
 PiperSynthesisReadiness piperSynthesisReadiness(const PiperSynthesisConfig& config,
                                                 const PiperSynthesisRequest& request);
 PiperSynthesisSafetyReport piperSynthesisSafetyReport(const PiperSynthesisPolicy& policy);
@@ -252,6 +255,14 @@ public:
 };
 
 class NullPiperTtsClient final : public IPiperTtsClient {
+public:
+    PiperTtsStatus status() const override;
+    QString statusSummary() const override;
+    PiperTtsResult synthesize(const PiperTtsRequest& request,
+                              const PiperTtsConfig& config) override;
+};
+
+class LocalPiperTtsClient final : public IPiperTtsClient {
 public:
     PiperTtsStatus status() const override;
     QString statusSummary() const override;

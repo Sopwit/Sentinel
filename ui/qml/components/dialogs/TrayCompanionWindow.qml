@@ -77,6 +77,21 @@ Window {
         })
     }
 
+    function retryMessage(index) {
+        var model = viewModel ? viewModel.chatMessages : null
+        if (!model) return
+        for (var i = index - 1; i >= 0; i--) {
+            var role = model.data(model.index(i, 0), model.roleNames()["messageRole"])
+            if (role === "user") {
+                var prompt = model.data(model.index(i, 0), model.roleNames()["content"])
+                if (prompt && prompt.trim().length > 0) {
+                    sendPrompt(prompt)
+                }
+                return
+            }
+        }
+    }
+
     function copyMessage(text) {
         if (text.length > 0) {
             var field = textEditDummy
@@ -521,6 +536,7 @@ Window {
                                                     tooltipText: qsTr("Retry")
                                                     Accessible.name: qsTr("Retry message")
                                                     visible: !isUser
+                                                    onClicked: companionWin.retryMessage(model.index)
                                                 }
                                             }
                                         }
@@ -836,7 +852,7 @@ Window {
                                     Label {
                                         id: verLabel
                                         anchors.centerIn: parent
-                                        text: "v1.0.0"
+                                        text: Qt.application.version.length > 0 ? "v" + Qt.application.version : "dev"
                                         font.pixelSize: SentinelTheme.fontTiny
                                         font.bold: true
                                         color: SentinelTheme.textMuted

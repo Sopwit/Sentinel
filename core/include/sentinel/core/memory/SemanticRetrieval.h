@@ -275,8 +275,9 @@ struct EmbeddingProviderPolicy {
     bool fakeOnly = false;
     int dimensions = 8;
     QString status = QStringLiteral("Disabled");
-    QString summary = QStringLiteral(
-        "Embedding provider execution is disabled until a later explicit semantic phase.");
+    QString summary =
+        QStringLiteral("Embedding provider is disabled until a local runtime embedding model is "
+                       "configured.");
 };
 
 struct EmbeddingRequest {
@@ -301,7 +302,8 @@ struct VectorIndexPolicy {
     int dimensions = 8;
     QString status = QStringLiteral("Disabled");
     QString summary =
-        QStringLiteral("Vector indexing is disabled until a later explicit semantic phase.");
+        QStringLiteral("Vector indexing is disabled until a local embedding runtime is "
+                       "configured.");
 };
 
 struct VectorSearchQuery {
@@ -332,9 +334,9 @@ struct SemanticRetrievalPolicy {
     bool promptInjectionEnabled = false;
     bool exposeRawVectorsToQml = false;
     QString status = QStringLiteral("Disabled");
-    QString summary = QStringLiteral(
-        "Semantic retrieval is disabled; embedding and vector abstractions are readiness metadata "
-        "only.");
+    QString summary =
+        QStringLiteral("Semantic retrieval is disabled; embeddings and vector search are available "
+                       "through a configured local runtime.");
 };
 
 struct SemanticCandidatePolicy {
@@ -346,10 +348,10 @@ struct SemanticCandidatePolicy {
     bool preserveSourceIsolation = true;
     bool preserveChronology = true;
     int maxCharacters = 3200;
-    QString status = QStringLiteral("Metadata Only");
+    QString status = QStringLiteral("Deterministic Only");
     QString summary = QStringLiteral(
-        "Semantic candidate orchestration is deterministic metadata only; semantic retrieval is "
-        "disabled.");
+        "Semantic candidate orchestration is deterministic; semantic retrieval ranking is "
+        "disabled until a local embedding runtime is configured.");
 };
 
 struct SemanticCandidateBudget {
@@ -1262,6 +1264,25 @@ private:
     EmbeddingVector embedText(const QString& text) const;
 
     EmbeddingProviderPolicy policy_;
+};
+
+class OllamaEmbeddingProvider final : public IEmbeddingProvider {
+public:
+    OllamaEmbeddingProvider(QString endpoint, QString model, int timeoutMs = 8000);
+
+    EmbeddingProviderStatus status() const override;
+    EmbeddingProviderPolicy policy() const override;
+    EmbeddingResult embed(const EmbeddingRequest& request) const override;
+
+private:
+    EmbeddingVector embedText(const QString& text) const;
+    bool endpointAllowed() const;
+
+    QString endpoint_;
+    QString model_;
+    int timeoutMs_ = 8000;
+    mutable EmbeddingProviderStatus status_ = EmbeddingProviderStatus::NotConfigured;
+    mutable QString statusDetail_ = QStringLiteral("Ollama embedding provider is not configured.");
 };
 
 class FakeVectorIndex final : public IVectorIndex {

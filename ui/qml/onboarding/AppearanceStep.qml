@@ -73,6 +73,7 @@ Item {
                 currentIndex: root.viewModel.availableLanguages.indexOf(root.viewModel.appLanguage)
                 textRole: ""
                 displayText: root.viewModel.languageDisplayName(currentValue)
+                delegateTextResolver: (code) => root.viewModel.languageDisplayName(code)
                 onActivated: root.viewModel.appLanguage = currentValue
             }
         }
