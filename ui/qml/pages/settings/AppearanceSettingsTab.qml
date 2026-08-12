@@ -43,124 +43,88 @@ Item {
     }
 
     height: implicitHeight
-    implicitHeight: visible ? generalSection.implicitHeight + appearanceSection.implicitHeight + accessibilitySection.implicitHeight : 0
+    implicitHeight: visible ? mainLayout.implicitHeight + panelPadding * 2 : 0
 
-    function sectionHeight(content) {
-        return content.implicitHeight + panelPadding * 2
-    }
+    ColumnLayout {
+        id: mainLayout
+        anchors.fill: parent
+        anchors.margins: root.panelPadding
+        spacing: SentinelTheme.spaceMd
 
-    Column {
-        width: parent.width
-        spacing: 0
+        SectionTitle {
+            title: qsTr("General")
+            subtitle: qsTr("Desktop shell and localization preferences.")
+            Layout.fillWidth: true
+        }
 
-        Item {
-            id: generalSection
-            width: parent.width
-            height: implicitHeight
-            implicitHeight: root.sectionHeight(generalContent)
+        SettingCard {
+            SettingControlRow {
+                title: qsTr("Language")
+                subtitle: qsTr("Application interface display language.")
+                accent: root.modeAccent
+                compact: root.compact
 
-            ColumnLayout {
-                id: generalContent
-                x: root.panelPadding
-                y: root.panelPadding
-                width: parent.width - root.panelPadding * 2
-                spacing: SentinelTheme.spaceSm
-
-                SectionTitle {
-                    title: qsTr("General")
-                    subtitle: qsTr("Desktop shell preferences.")
-                    Layout.fillWidth: true
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceMd
-
-                    Label {
-                        Layout.preferredWidth: root.compact ? 88 : 132
-                        Layout.alignment: Qt.AlignVCenter
-                        text: qsTr("Language")
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontSmall
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    SentinelComboBox {
-                        id: languageCombo
-                        accent: root.modeAccent
-                        Layout.fillWidth: true
-                        implicitHeight: 36
-                        model: root.viewModel.availableLanguages
-                        currentIndex: root.viewModel.availableLanguages.indexOf(root.viewModel.appLanguage)
-                        textRole: ""
-                        displayText: root.viewModel.languageDisplayName(currentValue)
-                        delegateTextResolver: (code) => root.viewModel.languageDisplayName(code)
-                        onActivated: root.viewModel.appLanguage = currentValue
-                    }
+                SentinelComboBox {
+                    id: languageCombo
+                    accent: root.modeAccent
+                    anchors.fill: parent
+                    implicitHeight: 36
+                    model: root.viewModel.availableLanguages
+                    currentIndex: root.viewModel.availableLanguages.indexOf(root.viewModel.appLanguage)
+                    textRole: ""
+                    displayText: root.viewModel.languageDisplayName(currentValue)
+                    delegateTextResolver: (code) => root.viewModel.languageDisplayName(code)
+                    onActivated: root.viewModel.appLanguage = currentValue
                 }
             }
         }
 
-        Item {
-            id: appearanceSection
-            width: parent.width
-            height: implicitHeight
-            implicitHeight: root.sectionHeight(appearanceContent)
+        SectionTitle {
+            title: qsTr("Appearance")
+            subtitle: qsTr("Theme foundation and visual presets for desktop UI.")
+            Layout.fillWidth: true
+            Layout.topMargin: SentinelTheme.spaceMd
+        }
+
+        SettingCard {
+            SettingControlRow {
+                title: qsTr("Active Theme")
+                subtitle: qsTr("Primary color theme palette.")
+                accent: root.modeAccent
+                compact: root.compact
+
+                SentinelComboBox {
+                    id: themeCombo
+                    accent: root.modeAccent
+                    anchors.fill: parent
+                    implicitHeight: 36
+                    model: root.themeChoices
+                    currentIndex: root.themeChoices.indexOf(root.viewModel.themeName)
+                    displayText: root.localizedThemeName(currentIndex >= 0 ? model[currentIndex] : root.viewModel.themeName)
+                    delegateTextResolver: (label) => root.localizedThemeName(label)
+                    onActivated: (index) => root.viewModel.themeName = model[index]
+                }
+            }
 
             ColumnLayout {
-                id: appearanceContent
-                x: root.panelPadding
-                y: root.panelPadding
-                width: parent.width - root.panelPadding * 2
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                Layout.topMargin: SentinelTheme.spaceSm
+                Layout.bottomMargin: SentinelTheme.spaceSm
                 spacing: SentinelTheme.spaceSm
-
-                SectionTitle {
-                    title: qsTr("Appearance")
-                    subtitle: qsTr("Theme foundation for a calm native desktop UI.")
-                    Layout.fillWidth: true
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceMd
-
-                    Label {
-                        Layout.preferredWidth: root.compact ? 88 : 132
-                        Layout.alignment: Qt.AlignVCenter
-                        text: qsTr("Theme")
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontSmall
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    SentinelComboBox {
-                        id: themeCombo
-                        accent: root.modeAccent
-                        Layout.fillWidth: true
-                        implicitHeight: 36
-                        model: root.themeChoices
-                        currentIndex: root.themeChoices.indexOf(root.viewModel.themeName)
-                        displayText: root.localizedThemeName(currentIndex >= 0 ? model[currentIndex] : root.viewModel.themeName)
-                        delegateTextResolver: (label) => root.localizedThemeName(label)
-                        onActivated: (index) => root.viewModel.themeName = model[index]
-                    }
-                }
 
                 Label {
                     text: qsTr("Visual Theme Presets")
                     color: SentinelTheme.textPrimary
                     font.pixelSize: SentinelTheme.fontBody
-                    font.bold: true
+                    font.weight: Font.Medium
                     Layout.fillWidth: true
-                    Layout.topMargin: SentinelTheme.spaceMd
                 }
 
                 Flow {
                     Layout.fillWidth: true
                     spacing: SentinelTheme.spaceMd
-                    Layout.bottomMargin: SentinelTheme.spaceMd
 
                     Repeater {
                         model: root.themeChoices
@@ -171,7 +135,7 @@ Item {
                             readonly property bool isSelected: root.viewModel.themeName === modelData
 
                             implicitWidth: root.compact ? 130 : 160
-                            implicitHeight: 90
+                            implicitHeight: 88
                             hoverEnabled: true
 
                             onClicked: root.viewModel.themeName = modelData
@@ -180,9 +144,9 @@ Item {
                                 id: themeCardBg
                                 radius: SentinelTheme.radiusLg
                                 color: themeCard.isSelected
-                                       ? SentinelTheme.withAlpha(root.modeAccent, 0.12)
+                                       ? SentinelTheme.withAlpha(root.modeAccent, 0.14)
                                        : themeCard.hovered
-                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
+                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
                                          : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
                                 border.color: themeCard.isSelected
                                                ? root.modeAccent
@@ -200,7 +164,7 @@ Item {
                                     anchors.left: parent.left
                                     anchors.right: parent.right
                                     anchors.margins: SentinelTheme.spaceSm
-                                    height: 40
+                                    height: 38
                                     radius: SentinelTheme.radiusMd
                                     clip: true
 
@@ -250,7 +214,7 @@ Item {
                                     text: root.localizedThemeName(modelData)
                                     color: themeCard.isSelected ? SentinelTheme.textPrimary : SentinelTheme.textMuted
                                     font.pixelSize: SentinelTheme.fontSmall
-                                    font.bold: themeCard.isSelected
+                                    font.weight: themeCard.isSelected ? Font.DemiBold : Font.Normal
                                     horizontalAlignment: Text.AlignHCenter
                                     elide: Text.ElideRight
                                     maximumLineCount: 1
@@ -262,214 +226,89 @@ Item {
             }
         }
 
-        Item {
-            id: accessibilitySection
-            width: parent.width
-            height: implicitHeight
-            implicitHeight: root.sectionHeight(accessibilityContent)
+        SectionTitle {
+            title: qsTr("Accessibility")
+            subtitle: qsTr("Comfort, motion, contrast, and density preferences.")
+            Layout.fillWidth: true
+            Layout.topMargin: SentinelTheme.spaceMd
+        }
 
-            ColumnLayout {
-                id: accessibilityContent
-                x: root.panelPadding
-                y: root.panelPadding
-                width: parent.width - root.panelPadding * 2
-                spacing: SentinelTheme.spaceSm
+        SettingCard {
+            SettingToggleRow {
+                title: qsTr("Reduced Motion")
+                subtitle: qsTr("Disables all animations and transitions throughout the UI.")
+                checked: root.viewModel.reducedMotionEnabled
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+                onToggled: (checked) => root.viewModel.reducedMotionEnabled = checked
+            }
 
-                SectionTitle {
-                    title: qsTr("Accessibility")
-                    subtitle: qsTr("Comfort, motion, contrast, and density preferences. Changes take effect immediately.")
-                    Layout.fillWidth: true
-                }
+            SettingToggleRow {
+                title: qsTr("High Contrast")
+                subtitle: qsTr("Increases text and border contrast for better readability.")
+                checked: root.viewModel.highContrastEnabled
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+                onToggled: (checked) => root.viewModel.highContrastEnabled = checked
+            }
 
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceSm
-                    Layout.topMargin: SentinelTheme.spaceXs
-                    Layout.bottomMargin: SentinelTheme.spaceXs
+            SettingControlRow {
+                title: qsTr("UI Density")
+                subtitle: qsTr("Scale layout density for compact or spacious controls.")
+                accent: root.modeAccent
+                compact: root.compact
+                controlWidth: root.compact ? 180 : 260
 
-                    ColumnLayout {
-                        Layout.fillWidth: true
+                Rectangle {
+                    anchors.fill: parent
+                    implicitHeight: 34
+                    radius: SentinelTheme.radiusMd
+                    color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.60)
+                    border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.margins: 2
                         spacing: 2
 
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("Reduced Motion")
-                            color: SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontBody
-                            font.bold: true
-                        }
+                        Repeater {
+                            model: root.densityChoices
 
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("Disables all animations and transitions throughout the UI.")
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontSmall
-                            wrapMode: Text.WordWrap
-                        }
-                    }
+                            Button {
+                                id: densityBtn
+                                required property string modelData
+                                required property int index
+                                Layout.fillWidth: true
+                                Layout.fillHeight: true
+                                hoverEnabled: true
+                                focusPolicy: Qt.NoFocus
 
-                    Switch {
-                        id: reducedMotionSwitch
-                        checked: root.viewModel.reducedMotionEnabled
-                        hoverEnabled: true
-                        onToggled: root.viewModel.reducedMotionEnabled = checked
-
-                        indicator: Rectangle {
-                            implicitWidth: 46
-                            implicitHeight: 24
-                            x: reducedMotionSwitch.leftPadding
-                            y: parent.height / 2 - height / 2
-                            radius: height / 2
-                            color: reducedMotionSwitch.checked
-                                   ? SentinelTheme.withAlpha(root.modeAccent, 0.18)
-                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
-                            border.color: reducedMotionSwitch.activeFocus
-                                          ? SentinelTheme.withAlpha(root.modeAccent, 0.46)
-                                          : reducedMotionSwitch.hovered
-                                            ? SentinelTheme.withAlpha(root.modeAccent, 0.24)
-                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                            Rectangle {
-                                x: reducedMotionSwitch.checked ? parent.width - width - 3 : 3
-                                y: parent.height / 2 - height / 2
-                                width: 18; height: 18
-                                radius: height / 2
-                                color: reducedMotionSwitch.checked
-                                       ? root.modeAccent
-                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
-                            }
-                        }
-
-                        background: Item {}
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceSm
-                    Layout.topMargin: SentinelTheme.spaceXs
-                    Layout.bottomMargin: SentinelTheme.spaceXs
-
-                    ColumnLayout {
-                        Layout.fillWidth: true
-                        spacing: 2
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("High Contrast")
-                            color: SentinelTheme.textPrimary
-                            font.pixelSize: SentinelTheme.fontBody
-                            font.bold: true
-                        }
-
-                        Label {
-                            Layout.fillWidth: true
-                            text: qsTr("Increases text and border contrast for better readability.")
-                            color: SentinelTheme.textMuted
-                            font.pixelSize: SentinelTheme.fontSmall
-                            wrapMode: Text.WordWrap
-                        }
-                    }
-
-                    Switch {
-                        id: highContrastSwitch
-                        checked: root.viewModel.highContrastEnabled
-                        hoverEnabled: true
-                        onToggled: root.viewModel.highContrastEnabled = checked
-
-                        indicator: Rectangle {
-                            implicitWidth: 46
-                            implicitHeight: 24
-                            x: highContrastSwitch.leftPadding
-                            y: parent.height / 2 - height / 2
-                            radius: height / 2
-                            color: highContrastSwitch.checked
-                                   ? SentinelTheme.withAlpha(root.modeAccent, 0.18)
-                                   : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.060)
-                            border.color: highContrastSwitch.activeFocus
-                                          ? SentinelTheme.withAlpha(root.modeAccent, 0.46)
-                                          : highContrastSwitch.hovered
-                                            ? SentinelTheme.withAlpha(root.modeAccent, 0.24)
-                                          : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.10)
-
-                            Rectangle {
-                                x: highContrastSwitch.checked ? parent.width - width - 3 : 3
-                                y: parent.height / 2 - height / 2
-                                width: 18; height: 18
-                                radius: height / 2
-                                color: highContrastSwitch.checked
-                                       ? root.modeAccent
-                                       : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.40)
-                            }
-                        }
-
-                        background: Item {}
-                    }
-                }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceMd
-
-                    Label {
-                        Layout.preferredWidth: root.compact ? 88 : 132
-                        Layout.alignment: Qt.AlignVCenter
-                        text: qsTr("UI Density")
-                        color: SentinelTheme.textMuted
-                        font.pixelSize: SentinelTheme.fontSmall
-                        elide: Text.ElideRight
-                        verticalAlignment: Text.AlignVCenter
-                    }
-
-                    Rectangle {
-                        Layout.fillWidth: true
-                        implicitHeight: 36
-                        radius: SentinelTheme.radiusMd
-                        color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.48)
-                        border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-
-                        RowLayout {
-                            anchors.fill: parent
-                            anchors.margins: 2
-                            spacing: 2
-
-                            Repeater {
-                                model: root.densityChoices
-
-                                Button {
-                                    id: densityBtn
-                                    required property string modelData
-                                    required property int index
-                                    Layout.fillWidth: true
-                                    Layout.fillHeight: true
-                                    hoverEnabled: true
-                                    focusPolicy: Qt.NoFocus
-
-                                    contentItem: Text {
-                                        text: root.localizedDensityName(densityBtn.modelData)
-                                        color: (root.viewModel.uiDensity === densityBtn.modelData)
-                                               ? SentinelTheme.textPrimary
-                                               : SentinelTheme.textMuted
-                                        font.pixelSize: SentinelTheme.fontSmall
-                                        font.bold: (root.viewModel.uiDensity === densityBtn.modelData)
-                                        horizontalAlignment: Text.AlignHCenter
-                                        verticalAlignment: Text.AlignVCenter
-                                    }
-
-                                    background: Rectangle {
-                                        radius: SentinelTheme.radiusSm
-                                        color: (root.viewModel.uiDensity === densityBtn.modelData)
-                                               ? SentinelTheme.withAlpha(root.modeAccent, 0.16)
-                                               : densityBtn.hovered
-                                                 ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                                                 : "transparent"
-                                        border.color: (root.viewModel.uiDensity === densityBtn.modelData)
-                                                      ? SentinelTheme.withAlpha(root.modeAccent, 0.36)
-                                                      : "transparent"
-                                    }
-
-                                    onClicked: root.viewModel.uiDensity = densityBtn.modelData
+                                contentItem: Text {
+                                    text: root.localizedDensityName(densityBtn.modelData)
+                                    color: (root.viewModel.uiDensity === densityBtn.modelData)
+                                           ? SentinelTheme.textPrimary
+                                           : SentinelTheme.textMuted
+                                    font.pixelSize: SentinelTheme.fontSmall
+                                    font.weight: (root.viewModel.uiDensity === densityBtn.modelData) ? Font.DemiBold : Font.Normal
+                                    horizontalAlignment: Text.AlignHCenter
+                                    verticalAlignment: Text.AlignVCenter
                                 }
+
+                                background: Rectangle {
+                                    radius: SentinelTheme.radiusSm
+                                    color: (root.viewModel.uiDensity === densityBtn.modelData)
+                                           ? SentinelTheme.withAlpha(root.modeAccent, 0.20)
+                                           : densityBtn.hovered
+                                             ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                             : "transparent"
+                                    border.color: (root.viewModel.uiDensity === densityBtn.modelData)
+                                                  ? SentinelTheme.withAlpha(root.modeAccent, 0.40)
+                                                  : "transparent"
+                                }
+
+                                onClicked: root.viewModel.uiDensity = densityBtn.modelData
                             }
                         }
                     }

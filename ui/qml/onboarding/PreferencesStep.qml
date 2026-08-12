@@ -12,22 +12,43 @@ Item {
     required property var viewModel
     property color brandAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
 
-    readonly property var useCases: [
-        { id: "Coding", label: qsTr("Coding") },
-        { id: "Study", label: qsTr("Study") },
-        { id: "Writing", label: qsTr("Writing") },
-        { id: "Research", label: qsTr("Research") },
-        { id: "Creative", label: qsTr("Creative") },
-        { id: "Business", label: qsTr("Business") },
-        { id: "Personal Assistant", label: qsTr("Personal Assistant") },
-        { id: "General Assistant", label: qsTr("General Assistant") }
-    ]
+    function buildUseCases() {
+        return [
+            { id: "Coding", label: qsTr("Coding") },
+            { id: "Study", label: qsTr("Study") },
+            { id: "Writing", label: qsTr("Writing") },
+            { id: "Research", label: qsTr("Research") },
+            { id: "Creative", label: qsTr("Creative") },
+            { id: "Business", label: qsTr("Business") },
+            { id: "Personal Assistant", label: qsTr("Personal Assistant") },
+            { id: "General Assistant", label: qsTr("General Assistant") }
+        ]
+    }
 
-    readonly property var updatePolicies: [qsTr("Ask Before Checking"), qsTr("Never"), qsTr("Weekly"), qsTr("On Startup")]
+    function buildUpdatePolicies() {
+        return [qsTr("Ask Before Checking"), qsTr("Never"), qsTr("Weekly"), qsTr("On Startup")]
+    }
+
+    function buildNotificationPolicies() {
+        return [qsTr("Disabled"), qsTr("All"), qsTr("Custom"), qsTr("Important Only")]
+    }
+
+    property var useCases: buildUseCases()
+
+    property var updatePolicies: buildUpdatePolicies()
     readonly property var updatePolicyIds: ["Ask Before Checking", "Never", "Weekly", "On Startup"]
 
-    readonly property var notificationPolicies: [qsTr("Disabled"), qsTr("All"), qsTr("Custom"), qsTr("Important Only")]
+    property var notificationPolicies: buildNotificationPolicies()
     readonly property var notificationPolicyIds: ["Disabled", "All", "Custom", "Important Only"]
+
+    Connections {
+        target: shellViewModel
+        function onAppLanguageChanged() {
+            root.useCases = root.buildUseCases()
+            root.updatePolicies = root.buildUpdatePolicies()
+            root.notificationPolicies = root.buildNotificationPolicies()
+        }
+    }
 
     function selectUseCase(id) {
         root.viewModel.onboardingUseCase = id

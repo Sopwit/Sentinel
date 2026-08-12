@@ -71,6 +71,13 @@ ShellPanel {
         return 2
     }
 
+    function localizedSection(section) {
+        if (section === "Pinned") return qsTr("PINNED")
+        if (section === "Recent") return qsTr("RECENT")
+        if (section === "Archived") return qsTr("ARCHIVED")
+        return section
+    }
+
     function rebuildConversationRows() {
         var rows = []
         for (var i = 0; i < viewModel.conversationIds.length; ++i) {
@@ -354,7 +361,7 @@ ShellPanel {
                     width: parent.width
                     visible: conversationDelegate.showHeader
                     height: visible ? implicitHeight + SentinelTheme.spaceXs : 0
-                    text: conversationDelegate.section
+                    text: chatPanel.localizedSection(conversationDelegate.section)
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontTiny
                     font.letterSpacing: 1.4

@@ -30,15 +30,25 @@ Item {
     readonly property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property string uiSelfCheck: "modal-ready rail-scroll-sync voice-path-wrap agent-runtime bottom-safe-scroll"
 
-    readonly property var sidebarItems: [
-        { "key": "Interface", "title": qsTr("Interface"), "keywords": ["general", "appearance", "accessibility", "theme", "language", "density", "motion", "contrast"] },
-        { "key": "AI", "title": qsTr("AI Settings"), "keywords": ["ai", "models", "chat", "voice", "profiles", "provider", "temperature", "tokens", "streaming", "tts", "kokoro", "piper"] },
-        { "key": "Memory", "title": qsTr("Memory & Knowledge"), "keywords": ["brain", "workspace", "memory", "recall", "context", "rag", "knowledge", "files"] },
-        { "key": "Security", "title": qsTr("Security & Agents"), "keywords": ["permissions", "tools", "agents", "boundary", "policy", "gateway", "sandbox"] },
-        { "key": "System", "title": qsTr("System"), "keywords": ["notifications", "updates", "policy", "version", "sound", "audio"] }
-    ]
+    function buildSidebarItems() {
+        return [
+            { "key": "Interface", "title": qsTr("Interface"), "keywords": ["general", "appearance", "accessibility", "theme", "language", "density", "motion", "contrast"] },
+            { "key": "AI", "title": qsTr("AI Settings"), "keywords": ["ai", "models", "chat", "profiles", "provider", "temperature", "tokens", "streaming"] },
+            { "key": "Voice", "title": qsTr("Voice & Audio"), "keywords": ["voice", "audio", "speech", "tts", "stt", "kokoro", "piper", "whisper", "transcription"] },
+            { "key": "Memory", "title": qsTr("Memory & Knowledge"), "keywords": ["brain", "workspace", "memory", "recall", "context", "rag", "knowledge", "files"] },
+            { "key": "Security", "title": qsTr("Security & Agents"), "keywords": ["permissions", "tools", "agents", "boundary", "policy", "gateway", "sandbox"] },
+            { "key": "System", "title": qsTr("System"), "keywords": ["notifications", "updates", "policy", "version", "sound", "audio"] }
+        ]
+    }
+
+    property var sidebarItems: buildSidebarItems()
     property string activeCategory: "Interface"
     property string searchQuery: ""
+
+    Connections {
+        target: shellViewModel
+        function onAppLanguageChanged() { settingsPage.sidebarItems = settingsPage.buildSidebarItems() }
+    }
 
     readonly property var filteredSidebarItems: {
         if (searchQuery.trim() === "")
@@ -177,6 +187,15 @@ Item {
                 ModelSettingsTab {
                     width: parent.width
                     visible: settingsPage.activeCategory === "AI"
+                    viewModel: settingsPage.viewModel
+                    compact: settingsPage.compact
+                    modeAccent: settingsPage.modeAccent
+                    soundManager: settingsPage.soundManager
+                }
+
+                VoiceSettingsTab {
+                    width: parent.width
+                    visible: settingsPage.activeCategory === "Voice"
                     viewModel: settingsPage.viewModel
                     compact: settingsPage.compact
                     modeAccent: settingsPage.modeAccent

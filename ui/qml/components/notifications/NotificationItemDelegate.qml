@@ -209,8 +209,8 @@ Rectangle {
                 implicitWidth: 28
                 implicitHeight: 28
                 flat: true
-                tooltipText: notifData && notifData.pinned ? "Unpin" : "Pin"
-                Accessible.name: notifData && notifData.pinned ? "Unpin notification" : "Pin notification"
+                tooltipText: notifData && notifData.pinned ? qsTr("Unpin") : qsTr("Pin")
+                Accessible.name: notifData && notifData.pinned ? qsTr("Unpin notification") : qsTr("Pin notification")
                 onClicked: {
                     if (notifData && viewModel) {
                         viewModel.pinNotification(notifData.id)

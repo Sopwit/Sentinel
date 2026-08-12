@@ -152,6 +152,13 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
 
     installStartupTranslator(app, *m_settings, m_translator);
 
+    QObject::connect(m_settings.get(), &sentinel::core::AppSettings::appLanguageChanged, &app,
+                     [this, &app]() {
+                         const auto lang = effectiveLanguageCode(*m_settings);
+                         installTranslator(app, m_translator, lang);
+                         m_engine.retranslate();
+                     });
+
     if (m_settings->proxyEnabled()) {
         QNetworkProxy proxy;
         const QString type = m_settings->proxyType().toLower();
@@ -250,12 +257,6 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                                              lmStudioLibraryFetcher);
     m_engine.rootContext()->setContextProperty(QStringLiteral("daemonClient"), daemonClient);
 
-    QObject::connect(m_settings.get(), &sentinel::core::AppSettings::appLanguageChanged, &app,
-                     [this, &app]() {
-                         const auto lang = effectiveLanguageCode(*m_settings);
-                         installTranslator(app, m_translator, lang);
-                         m_engine.retranslate();
-                     });
 
     QObject::connect(
         &m_engine, &QQmlApplicationEngine::objectCreationFailed, &app,

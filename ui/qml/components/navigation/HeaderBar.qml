@@ -155,8 +155,8 @@ ShellPanel {
                         return "\uD83D\uDD14"
                     }
                     font.pixelSize: 16
-                    tooltipText: headerBar.viewModel && headerBar.viewModel.dndEnabled ? "Do Not Disturb is on" : "Open notifications"
-                    Accessible.name: headerBar.viewModel && headerBar.viewModel.dndEnabled ? "Do not disturb is on, click to toggle" : "Open notifications"
+                    tooltipText: headerBar.viewModel && headerBar.viewModel.dndEnabled ? qsTr("Do Not Disturb is on") : qsTr("Open notifications")
+                    Accessible.name: headerBar.viewModel && headerBar.viewModel.dndEnabled ? qsTr("Do not disturb is on, click to toggle") : qsTr("Open notifications")
                     onClicked: {
                         if (headerBar.viewModel) {
                             if (headerBar.viewModel.dndEnabled) {

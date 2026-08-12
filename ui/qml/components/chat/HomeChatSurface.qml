@@ -936,6 +936,11 @@ ShellPanel {
                                 shuffleSuggestions();
                             }
 
+                            Connections {
+                                target: shellViewModel
+                                function onAppLanguageChanged() { suggestionGrid.shuffleSuggestions() }
+                            }
+
                             Repeater {
                                 model: suggestionGrid.suggestions
                                 delegate: Rectangle {

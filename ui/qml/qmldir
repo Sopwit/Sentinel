@@ -17,8 +17,12 @@ RuntimeBadge 1.0 components/base/RuntimeBadge.qml
 SectionTitle 1.0 components/base/SectionTitle.qml
 SentinelButton 1.0 components/base/SentinelButton.qml
 SentinelOrb 1.0 components/base/SentinelOrb.qml
+SentinelSwitch 1.0 components/base/SentinelSwitch.qml
 SentinelTelemetry 1.0 components/base/SentinelTelemetry.qml
 SentinelTextField 1.0 components/base/SentinelTextField.qml
+SettingCard 1.0 components/base/SettingCard.qml
+SettingControlRow 1.0 components/base/SettingControlRow.qml
+SettingToggleRow 1.0 components/base/SettingToggleRow.qml
 ShimmerEffect 1.0 components/base/ShimmerEffect.qml
 SoundManager 1.0 components/base/SoundManager.qml
 StatusChip 1.0 components/base/StatusChip.qml
@@ -61,6 +65,7 @@ OnlineRegistryTab 1.0 pages/models/OnlineRegistryTab.qml
 SettingsPage 1.0 pages/settings/SettingsPage.qml
 AppearanceSettingsTab 1.0 pages/settings/AppearanceSettingsTab.qml
 ModelSettingsTab 1.0 pages/settings/ModelSettingsTab.qml
+VoiceSettingsTab 1.0 pages/settings/VoiceSettingsTab.qml
 WorkspaceSettingsTab 1.0 pages/settings/WorkspaceSettingsTab.qml
 SecuritySettingsTab 1.0 pages/settings/SecuritySettingsTab.qml
 SystemSettingsTab 1.0 pages/settings/SystemSettingsTab.qml

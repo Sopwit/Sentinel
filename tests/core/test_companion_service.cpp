@@ -65,17 +65,21 @@ void CompanionServiceTest::exposesNativeActionReadinessAndPausedState() {
     QCOMPARE(summary.availability, QStringLiteral("Native Available"));
     QVERIFY(summary.platformCapability.contains(QStringLiteral("native integration available")));
 
-    const auto actions = service.actions(true, true);
-    QCOMPARE(actions.at(0).label, QStringLiteral("Open Sentinel"));
-    QVERIFY(actions.at(0).available);
-    QVERIFY(actions.at(0).executionEnabled);
-    QVERIFY(actions.at(2).available);
-    QVERIFY(actions.at(2).executionEnabled);
-    QCOMPARE(actions.at(3).label, QStringLiteral("Resume Companion"));
+    const auto activeActions = service.actions(true, false);
+    QCOMPARE(activeActions.at(0).label, QStringLiteral("Open Sentinel"));
+    QVERIFY(activeActions.at(0).available);
+    QVERIFY(activeActions.at(0).executionEnabled);
+    QVERIFY(activeActions.at(2).available);
+    QVERIFY(activeActions.at(2).executionEnabled);
+    QCOMPARE(activeActions.at(3).label, QStringLiteral("Pause Companion"));
+
+    const auto pausedActions = service.actions(true, true);
+    QVERIFY(!pausedActions.at(2).available);
+    QCOMPARE(pausedActions.at(3).label, QStringLiteral("Resume Companion"));
 
     const auto captured = service.captureQuickNote(QStringLiteral("remember this idea"), true, false);
     QVERIFY(captured.captured);
-    QCOMPARE(captured.capturedCharacterCount, 19);
+    QCOMPARE(captured.capturedCharacterCount, 18);
     QVERIFY(captured.summary.contains(QStringLiteral("Quick capture succeeded")));
 
     const auto refused = service.captureQuickNote(QStringLiteral("note while paused"), true, true);
