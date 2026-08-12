@@ -16,6 +16,8 @@ Item {
     property var soundManager: null
     readonly property int panelPadding: SentinelTheme.spaceLg
 
+    signal openUpdateRequested()
+
     height: implicitHeight
     implicitHeight: visible ? systemContent.implicitHeight + panelPadding * 2 : 0
 
@@ -34,6 +36,25 @@ Item {
         }
 
         SettingCard {
+            title: qsTr("Software Updates & System Info")
+            subtitle: qsTr("Check for application updates, release notes, and system runtime status.")
+
+            SettingControlRow {
+                title: qsTr("Check for Updates")
+                subtitle: qsTr("Current version: v%1 (%2)").arg(Qt.application.version || "1.0.0-rc.7").arg(Qt.platform.os)
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+                controlWidth: root.compact ? 160 : 200
+
+                SentinelButton {
+                    accent: root.modeAccent
+                    anchors.fill: parent
+                    text: qsTr("Check Updates")
+                    onClicked: root.openUpdateRequested()
+                }
+            }
+
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: SentinelTheme.spaceMd

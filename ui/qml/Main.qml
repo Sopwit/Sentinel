@@ -99,9 +99,11 @@ ApplicationWindow {
         if (updateModal.updateState !== "available"
             && updateModal.updateState !== "downloading"
             && updateModal.updateState !== "completed") {
-            updateModal.updateState = "checking"
+            updateModal.open()
+            updateModal.startCheckAndDownload()
+        } else {
+            updateModal.open()
         }
-        updateModal.open()
     }
 
     function focusChatComposer() {
@@ -515,11 +517,18 @@ ApplicationWindow {
             soundManager: soundManager
             width: settingsModal.width
             height: settingsModal.height
+            onOpenUpdateRequested: {
+                settingsModal.close()
+                root.openUpdateModal()
+            }
         }
     }
 
     Connections {
         target: root.viewModel
+        function onRequestOpenUpdateModal() {
+            root.openUpdateModal()
+        }
         function onCurrentPageChanged() {
             if (root.viewModel.currentPage === "Settings") {
                 root.openSettings()

@@ -17,6 +17,8 @@ Item {
     readonly property bool compact: width < 820
     readonly property int panelPadding: SentinelTheme.spaceLg
 
+    signal openUpdateRequested()
+
     Accessible.name: qsTr("Settings Page")
     Accessible.role: Accessible.Pane
     Accessible.description: qsTr("Sentinel application preferences and settings interface")
@@ -225,6 +227,7 @@ Item {
                     compact: settingsPage.compact
                     modeAccent: settingsPage.modeAccent
                     soundManager: settingsPage.soundManager
+                    onOpenUpdateRequested: settingsPage.openUpdateRequested()
                 }
             }
         }

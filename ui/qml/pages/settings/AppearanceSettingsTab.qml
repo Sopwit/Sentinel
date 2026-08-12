@@ -14,7 +14,7 @@ Item {
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
-    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "Solarized Light", "Nord Frost", "Dracula", "Tokyo Night"]
+    readonly property var themeChoices: ["Liquid Glass Light", "Liquid Glass Dark", "Sentinel Classic", "Midnight Blue", "Aurora Teal", "Graphite Grey", "Nord Frost", "Dracula"]
     readonly property var densityChoices: ["Compact", "Comfortable", "Large"]
 
     function localizedThemeName(key) {
@@ -124,9 +124,11 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                Flow {
+                GridLayout {
                     Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceMd
+                    columns: root.compact ? 2 : 4
+                    columnSpacing: SentinelTheme.spaceMd
+                    rowSpacing: SentinelTheme.spaceMd
 
                     Repeater {
                         model: root.themeChoices
@@ -136,7 +138,7 @@ Item {
                             required property string modelData
                             readonly property bool isSelected: root.viewModel.themeName === modelData
 
-                            implicitWidth: root.compact ? 130 : 160
+                            Layout.fillWidth: true
                             implicitHeight: 88
                             hoverEnabled: true
 

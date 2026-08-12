@@ -2408,6 +2408,7 @@ public:
     Q_INVOKABLE bool searchConversation(const QString& query);
     Q_INVOKABLE void clearConversationSearch();
     Q_INVOKABLE bool exportTranscript(const QString& format);
+    Q_INVOKABLE void openUpdateModal();
     Q_INVOKABLE bool checkForUpdates();
     Q_INVOKABLE bool startDownload(const QString& assetUrl);
     Q_INVOKABLE void cancelDownload();
@@ -2571,6 +2572,7 @@ signals:
     void controlledAgentTasksChanged();
     void updateCheckCompleted(bool available, const QString& version, const QString& releaseNotes,
                               const QString& downloadUrl, qint64 assetSize = 0);
+    void requestOpenUpdateModal();
     void updateDownloadProgressChanged(qint64 bytesReceived, qint64 bytesTotal,
                                        double speedBytesPerSec);
     void updateDownloadFinished(bool success, const QString& filePath);
