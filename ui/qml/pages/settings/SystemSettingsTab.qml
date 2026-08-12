@@ -21,7 +21,9 @@ Item {
 
     ColumnLayout {
         id: systemContent
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: root.panelPadding
         spacing: SentinelTheme.spaceMd
 
@@ -71,15 +73,11 @@ Item {
             SettingToggleRow {
                 title: qsTr("Enable Sound Effects")
                 subtitle: qsTr("Play subtle audio cues for completions, notifications, and key interactions.")
-                checked: root.soundManager ? root.soundManager.enabled : true
+                checked: root.viewModel.soundEffectsEnabled
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
-                onToggled: (checked) => {
-                    if (root.soundManager) {
-                        root.soundManager.enabled = checked
-                    }
-                }
+                onToggled: (checked) => root.viewModel.soundEffectsEnabled = checked
             }
 
             SettingToggleRow {

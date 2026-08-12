@@ -16,7 +16,7 @@ Rectangle {
     default property alias cardContent: cardColumn.children
 
     Layout.fillWidth: true
-    implicitHeight: mainLayout.implicitHeight + (root.title.length > 0 ? SentinelTheme.spaceMd : SentinelTheme.spaceSm)
+    implicitHeight: visible ? (mainLayout.implicitHeight + SentinelTheme.spaceXs * 2) : 0
     radius: SentinelTheme.radiusLg
     color: SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.45)
     border.color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.06)
@@ -24,7 +24,9 @@ Rectangle {
 
     ColumnLayout {
         id: mainLayout
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: SentinelTheme.spaceXs
         spacing: 0
 

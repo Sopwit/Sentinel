@@ -154,6 +154,8 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelButton.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelComboBox.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelOrb.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelSlider.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelSpinBox.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelSwitch.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelTelemetry.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/SentinelTextField.qml

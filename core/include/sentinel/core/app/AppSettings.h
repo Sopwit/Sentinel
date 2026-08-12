@@ -146,6 +146,14 @@ class AppSettings final : public QObject {
         QString claudeApiKey READ claudeApiKey WRITE setClaudeApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(
         QString geminiApiKey READ geminiApiKey WRITE setGeminiApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(
+        QString deepseekApiKey READ deepseekApiKey WRITE setDeepseekApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(
+        QString groqApiKey READ groqApiKey WRITE setGroqApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(
+        QString mistralApiKey READ mistralApiKey WRITE setMistralApiKey NOTIFY cloudApiKeysChanged)
+    Q_PROPERTY(bool soundEffectsEnabled READ soundEffectsEnabled WRITE setSoundEffectsEnabled NOTIFY
+                   soundEffectsEnabledChanged)
 
 public:
     explicit AppSettings(std::unique_ptr<ISettingsStore> store, QObject* parent = nullptr);
@@ -293,6 +301,9 @@ public:
     bool notifySystemUpdates() const;
     void setNotifySystemUpdates(bool enabled);
 
+    bool soundEffectsEnabled() const;
+    void setSoundEffectsEnabled(bool enabled);
+
     QString openAiApiKey() const;
     void setOpenAiApiKey(const QString& key);
     QString claudeApiKey() const;
@@ -321,6 +332,7 @@ public:
     void setProxyPassword(const QString& password);
 
 signals:
+    void soundEffectsEnabledChanged();
     void cloudApiKeysChanged();
     void proxySettingsChanged();
     void themeNameChanged();
@@ -437,6 +449,7 @@ private:
     static constexpr auto notifyModelRemovalsKey = "notifyModelRemovals";
     static constexpr auto notifyAgentResponsesKey = "notifyAgentResponses";
     static constexpr auto notifySystemUpdatesKey = "notifySystemUpdates";
+    static constexpr auto soundEffectsEnabledKey = "soundEffectsEnabled";
     static constexpr auto openAiApiKeyKey = "openAiApiKey";
     static constexpr auto claudeApiKeyKey = "claudeApiKey";
     static constexpr auto geminiApiKeyKey = "geminiApiKey";

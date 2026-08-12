@@ -1547,4 +1547,19 @@ void AppSettings::setProxyPassword(const QString& password) {
     emit proxySettingsChanged();
 }
 
+bool AppSettings::soundEffectsEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(soundEffectsEnabledKey),
+                                  QStringLiteral("true")) == QStringLiteral("true")
+                  : true;
+}
+
+void AppSettings::setSoundEffectsEnabled(bool enabled) {
+    if (enabled == soundEffectsEnabled() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(soundEffectsEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit soundEffectsEnabledChanged();
+}
+
 } // namespace sentinel::core

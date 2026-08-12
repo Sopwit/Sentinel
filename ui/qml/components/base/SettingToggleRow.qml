@@ -21,7 +21,7 @@ Rectangle {
     signal toggled(bool checked)
 
     Layout.fillWidth: true
-    implicitHeight: Math.max(50, contentLayout.implicitHeight + SentinelTheme.spaceSm * 2)
+    implicitHeight: visible ? Math.max(50, contentLayout.implicitHeight + SentinelTheme.spaceSm * 2) : 0
     radius: SentinelTheme.radiusMd
     color: cardArea.containsMouse
            ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
@@ -43,11 +43,12 @@ Rectangle {
 
     RowLayout {
         id: contentLayout
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.leftMargin: SentinelTheme.spaceMd
         anchors.rightMargin: SentinelTheme.spaceMd
         anchors.topMargin: SentinelTheme.spaceSm
-        anchors.bottomMargin: SentinelTheme.spaceSm
         spacing: SentinelTheme.spaceMd
 
         ColumnLayout {
@@ -87,7 +88,7 @@ Rectangle {
     }
 
     Rectangle {
-        visible: root.showDivider
+        visible: root.showDivider && root.visible
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom

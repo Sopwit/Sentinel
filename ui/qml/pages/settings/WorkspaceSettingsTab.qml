@@ -20,7 +20,9 @@ Item {
 
     ColumnLayout {
         id: mainLayout
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: root.panelPadding
         spacing: SentinelTheme.spaceMd
 
@@ -212,8 +214,9 @@ Item {
                     currentIndex: root.viewModel.skillProfileNames.indexOf(root.viewModel.selectedSkillProfileName)
                     displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedSkillProfileName
                     onActivated: (index) => {
-                        if (index >= 0 && index < root.viewModel.skillProfileNames.length)
-                            root.viewModel.selectedSkillProfile = root.viewModel.skillProfileNames[index]
+                        var ids = root.viewModel.skillProfileIds
+                        if (index >= 0 && index < ids.length)
+                            root.viewModel.selectedSkillProfile = ids[index]
                     }
                 }
             }

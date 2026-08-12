@@ -47,7 +47,9 @@ Item {
 
     ColumnLayout {
         id: mainLayout
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: root.panelPadding
         spacing: SentinelTheme.spaceMd
 
@@ -72,9 +74,9 @@ Item {
                     model: root.viewModel.availableLanguages
                     currentIndex: root.viewModel.availableLanguages.indexOf(root.viewModel.appLanguage)
                     textRole: ""
-                    displayText: root.viewModel.languageDisplayName(currentValue)
+                    displayText: root.viewModel.languageDisplayName(currentIndex >= 0 ? model[currentIndex] : root.viewModel.appLanguage)
                     delegateTextResolver: (code) => root.viewModel.languageDisplayName(code)
-                    onActivated: root.viewModel.appLanguage = currentValue
+                    onActivated: (index) => root.viewModel.appLanguage = model[index]
                 }
             }
         }

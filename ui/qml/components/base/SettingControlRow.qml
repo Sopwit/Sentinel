@@ -19,7 +19,7 @@ Rectangle {
     default property alias controlContent: controlContainer.children
 
     Layout.fillWidth: true
-    implicitHeight: Math.max(50, contentLayout.implicitHeight + SentinelTheme.spaceSm * 2)
+    implicitHeight: visible ? Math.max(54, contentLayout.implicitHeight + SentinelTheme.spaceSm * 2) : 0
     radius: SentinelTheme.radiusMd
     color: cardArea.hovered
            ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.03)
@@ -33,11 +33,12 @@ Rectangle {
 
     RowLayout {
         id: contentLayout
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.leftMargin: SentinelTheme.spaceMd
         anchors.rightMargin: SentinelTheme.spaceMd
         anchors.topMargin: SentinelTheme.spaceSm
-        anchors.bottomMargin: SentinelTheme.spaceSm
         spacing: SentinelTheme.spaceMd
 
         ColumnLayout {
@@ -68,12 +69,14 @@ Rectangle {
             id: controlContainer
             Layout.preferredWidth: root.controlWidth
             Layout.alignment: Qt.AlignVCenter | Qt.AlignRight
-            implicitHeight: childrenRect.height
+            implicitWidth: root.controlWidth
+            implicitHeight: Math.max(36, childrenRect.height)
+            height: implicitHeight
         }
     }
 
     Rectangle {
-        visible: root.showDivider
+        visible: root.showDivider && root.visible
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: parent.bottom
