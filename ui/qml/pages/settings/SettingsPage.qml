@@ -173,7 +173,7 @@ Item {
             clip: true
 
             Column {
-                width: settingsFlick.width
+                width: settingsFlick.availableWidth
                 spacing: SentinelTheme.spaceLg
 
                 AppearanceSettingsTab {

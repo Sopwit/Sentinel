@@ -1259,6 +1259,8 @@ class DesktopShellViewModel final : public QObject {
                    NOTIFY nativeExperienceChanged)
     Q_PROPERTY(bool notifySystemUpdates READ notifySystemUpdates WRITE setNotifySystemUpdates NOTIFY
                    nativeExperienceChanged)
+    Q_PROPERTY(bool soundEffectsEnabled READ soundEffectsEnabled WRITE setSoundEffectsEnabled NOTIFY
+                   soundEffectsEnabledChanged)
     Q_PROPERTY(
         QString openAiApiKey READ openAiApiKey WRITE setOpenAiApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(
@@ -2270,6 +2272,8 @@ public:
     void setNotifyAgentResponses(bool enabled);
     bool notifySystemUpdates() const;
     void setNotifySystemUpdates(bool enabled);
+    bool soundEffectsEnabled() const;
+    void setSoundEffectsEnabled(bool enabled);
     QStringList activityTimelineSummaries() const;
     QStringList notificationCenterSummaries() const;
     QStringList notificationCategories() const;
@@ -2572,6 +2576,7 @@ signals:
     void updateDownloadFinished(bool success, const QString& filePath);
     void selectedCloudProviderChanged();
     void cloudApiKeysChanged();
+    void soundEffectsEnabledChanged();
     void globalErrorChanged();
 
 private:

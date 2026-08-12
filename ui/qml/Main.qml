@@ -352,7 +352,7 @@ ApplicationWindow {
 
     SoundManager {
         id: soundManager
-        enabled: !root.viewModel.dndEnabled
+        enabled: !root.viewModel.dndEnabled && root.viewModel.soundEffectsEnabled
     }
 
     SplashScreen {

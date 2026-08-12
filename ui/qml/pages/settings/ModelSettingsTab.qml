@@ -22,7 +22,9 @@ Item {
 
     ColumnLayout {
         id: mainLayout
-        anchors.fill: parent
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.top: parent.top
         anchors.margins: root.panelPadding
         spacing: SentinelTheme.spaceMd
 
@@ -207,15 +209,93 @@ Item {
             title: qsTr("Inference Parameters")
             subtitle: qsTr("Fine-tune sampling temperature, top-p nucleus sampling, and context boundaries.")
 
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                Layout.topMargin: SentinelTheme.spaceSm
+                Layout.bottomMargin: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceSm
+
+                Label {
+                    text: qsTr("Inference Presets")
+                    color: SentinelTheme.textPrimary
+                    font.pixelSize: SentinelTheme.fontBody
+                    font.weight: Font.Medium
+                    Layout.fillWidth: true
+                }
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm
+
+                    Repeater {
+                        model: [
+                            { "name": qsTr("🎯 Precise"), "temp": 0.20, "topP": 0.80 },
+                            { "name": qsTr("⚖️ Balanced"), "temp": 0.70, "topP": 0.90 },
+                            { "name": qsTr("🎨 Creative"), "temp": 1.10, "topP": 0.95 }
+                        ]
+
+                        delegate: Button {
+                            id: presetBtn
+                            required property var modelData
+                            Layout.fillWidth: true
+                            implicitHeight: 34
+                            hoverEnabled: true
+                            focusPolicy: Qt.NoFocus
+
+                            readonly property bool isSelected: Math.abs(root.viewModel.localInferenceTemperature - modelData.temp) < 0.08
+
+                            onClicked: {
+                                root.viewModel.localInferenceTemperature = modelData.temp
+                                root.viewModel.localInferenceTopP = modelData.topP
+                            }
+
+                            contentItem: Text {
+                                text: presetBtn.modelData.name
+                                color: presetBtn.isSelected ? SentinelTheme.textPrimary : SentinelTheme.textMuted
+                                font.pixelSize: SentinelTheme.fontSmall
+                                font.weight: presetBtn.isSelected ? Font.DemiBold : Font.Normal
+                                horizontalAlignment: Text.AlignHCenter
+                                verticalAlignment: Text.AlignVCenter
+                            }
+
+                            background: Rectangle {
+                                radius: SentinelTheme.radiusMd
+                                color: presetBtn.isSelected
+                                       ? SentinelTheme.withAlpha(root.modeAccent, 0.20)
+                                       : presetBtn.hovered
+                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
+                                         : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
+                                border.color: presetBtn.isSelected
+                                              ? root.modeAccent
+                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
+                                border.width: presetBtn.isSelected ? 1.5 : 1
+
+                                Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
+                                Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Rectangle {
+                Layout.fillWidth: true
+                height: 1
+                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
+            }
+
             SettingControlRow {
                 title: qsTr("Temperature (%1)").arg(root.viewModel.localInferenceTemperature.toFixed(2))
                 subtitle: qsTr("Higher values produce more creative responses, lower values make output more deterministic.")
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
-                controlWidth: root.compact ? 140 : 180
+                controlWidth: root.compact ? 150 : 200
 
-                Slider {
+                SentinelSlider {
+                    accent: root.modeAccent
                     anchors.fill: parent
                     from: 0.0
                     to: 1.5
@@ -231,9 +311,10 @@ Item {
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
-                controlWidth: root.compact ? 140 : 180
+                controlWidth: root.compact ? 150 : 200
 
-                Slider {
+                SentinelSlider {
+                    accent: root.modeAccent
                     anchors.fill: parent
                     from: 0.1
                     to: 1.0
@@ -249,9 +330,10 @@ Item {
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
-                controlWidth: root.compact ? 140 : 180
+                controlWidth: root.compact ? 150 : 200
 
-                SpinBox {
+                SentinelSpinBox {
+                    accent: root.modeAccent
                     anchors.fill: parent
                     from: 64
                     to: 32768
@@ -266,9 +348,10 @@ Item {
                 subtitle: qsTr("Maximum waiting time before timing out requests.")
                 accent: root.modeAccent
                 compact: root.compact
-                controlWidth: root.compact ? 140 : 180
+                controlWidth: root.compact ? 150 : 200
 
-                SpinBox {
+                SentinelSpinBox {
+                    accent: root.modeAccent
                     anchors.fill: parent
                     from: 1000
                     to: 300000

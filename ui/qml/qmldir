@@ -17,6 +17,8 @@ RuntimeBadge 1.0 components/base/RuntimeBadge.qml
 SectionTitle 1.0 components/base/SectionTitle.qml
 SentinelButton 1.0 components/base/SentinelButton.qml
 SentinelOrb 1.0 components/base/SentinelOrb.qml
+SentinelSlider 1.0 components/base/SentinelSlider.qml
+SentinelSpinBox 1.0 components/base/SentinelSpinBox.qml
 SentinelSwitch 1.0 components/base/SentinelSwitch.qml
 SentinelTelemetry 1.0 components/base/SentinelTelemetry.qml
 SentinelTextField 1.0 components/base/SentinelTextField.qml

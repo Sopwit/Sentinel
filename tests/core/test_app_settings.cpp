@@ -52,6 +52,7 @@ private slots:
     void persistsNativeExperiencePreferences();
     void persistsVoiceConfigurationPaths();
     void persistsPiperFileOutputExecutionOptIn();
+    void persistsSoundEffectsEnabledPreference();
     void persistsLocalAiRuntimeSettingsThroughJsonStore();
 };
 
@@ -697,6 +698,21 @@ void AppSettingsTest::persistsPiperFileOutputExecutionOptIn() {
 
     settings->setPiperFileOutputExecutionEnabled(false);
     QVERIFY(!settings->piperFileOutputExecutionEnabled());
+    QCOMPARE(spy.count(), 2);
+}
+
+void AppSettingsTest::persistsSoundEffectsEnabledPreference() {
+    const auto settings = makeSettings();
+    QSignalSpy spy(settings.get(), &AppSettings::soundEffectsEnabledChanged);
+
+    QVERIFY(settings->soundEffectsEnabled());
+
+    settings->setSoundEffectsEnabled(false);
+    QVERIFY(!settings->soundEffectsEnabled());
+    QCOMPARE(spy.count(), 1);
+
+    settings->setSoundEffectsEnabled(true);
+    QVERIFY(settings->soundEffectsEnabled());
     QCOMPARE(spy.count(), 2);
 }
 

@@ -399,6 +399,14 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::chatMessagesChanged);
     connect(&settings_, &core::AppSettings::routingModeNameChanged, this,
             &DesktopShellViewModel::modelRoutingChanged);
+    connect(&settings_, &core::AppSettings::ollamaEndpointChanged, this,
+            &DesktopShellViewModel::ollamaStatusChanged);
+    connect(&settings_, &core::AppSettings::lmStudioEndpointChanged, this,
+            &DesktopShellViewModel::ollamaStatusChanged);
+    connect(&settings_, &core::AppSettings::llamaCppEndpointChanged, this,
+            &DesktopShellViewModel::ollamaStatusChanged);
+    connect(&settings_, &core::AppSettings::cloudApiEndpointChanged, this,
+            &DesktopShellViewModel::ollamaStatusChanged);
     connect(&settings_, &core::AppSettings::selectedLocalModelChanged, this, [this]() {
         controller_.setSelectedLocalModel(
             settings_.selectedModelForProvider(settings_.selectedRuntimeProvider()));
@@ -433,17 +441,32 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::semanticPromptInclusionEnabledChanged, this, [this]() {
         controller_.setSemanticPromptInclusionEnabled(settings_.semanticPromptInclusionEnabled());
     });
-    connect(&settings_, &core::AppSettings::piperBinaryPathChanged, this,
-            [this]() { controller_.setPiperBinaryPath(settings_.piperBinaryPath()); });
-    connect(&settings_, &core::AppSettings::piperModelPathChanged, this,
-            [this]() { controller_.setPiperModelPath(settings_.piperModelPath()); });
-    connect(&settings_, &core::AppSettings::whisperBinaryPathChanged, this,
-            [this]() { controller_.setWhisperBinaryPath(settings_.whisperBinaryPath()); });
-    connect(&settings_, &core::AppSettings::whisperModelPathChanged, this,
-            [this]() { controller_.setWhisperModelPath(settings_.whisperModelPath()); });
+    connect(&settings_, &core::AppSettings::piperBinaryPathChanged, this, [this]() {
+        controller_.setPiperBinaryPath(settings_.piperBinaryPath());
+    });
+    connect(&settings_, &core::AppSettings::piperModelPathChanged, this, [this]() {
+        controller_.setPiperModelPath(settings_.piperModelPath());
+    });
+    connect(&settings_, &core::AppSettings::selectedTtsEngineChanged, this, [this]() {
+        emit voiceConfigurationChanged();
+    });
+    connect(&settings_, &core::AppSettings::kokoroModelPathChanged, this, [this]() {
+        emit voiceConfigurationChanged();
+    });
+    connect(&settings_, &core::AppSettings::kokoroVoiceChanged, this, [this]() {
+        emit voiceConfigurationChanged();
+    });
+    connect(&settings_, &core::AppSettings::whisperBinaryPathChanged, this, [this]() {
+        controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
+    });
+    connect(&settings_, &core::AppSettings::whisperModelPathChanged, this, [this]() {
+        controller_.setWhisperModelPath(settings_.whisperModelPath());
+    });
     connect(&settings_, &core::AppSettings::piperFileOutputExecutionEnabledChanged, this, [this]() {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     });
+    connect(&settings_, &core::AppSettings::soundEffectsEnabledChanged, this,
+            &DesktopShellViewModel::soundEffectsEnabledChanged);
     connect(&settings_, &core::AppSettings::agentAutonomousModeChanged, this,
             [this]() { controller_.setAgentAutonomousMode(settings_.agentAutonomousMode()); });
     controller_.setSelectedRuntimeProvider(settings_.selectedRuntimeProvider());
@@ -715,14 +738,11 @@ QString DesktopShellViewModel::currentRoutingMode() const {
 }
 
 void DesktopShellViewModel::setRoutingModeByName(const QString& routingModeName) {
-    const auto before = controller_.currentRoutingMode();
     settings_.setRoutingModeName(routingModeName);
     controller_.setRoutingModeByName(settings_.routingModeName());
-    if (before == controller_.currentRoutingMode()) {
-        emit modelRoutingChanged();
-        emit conversationSessionChanged();
-        emit orchestrationSnapshotChanged();
-    }
+    emit modelRoutingChanged();
+    emit conversationSessionChanged();
+    emit orchestrationSnapshotChanged();
 }
 
 QStringList DesktopShellViewModel::availableRoutingModes() const {
@@ -6383,6 +6403,14 @@ bool DesktopShellViewModel::notifySystemUpdates() const {
 
 void DesktopShellViewModel::setNotifySystemUpdates(bool enabled) {
     settings_.setNotifySystemUpdates(enabled);
+}
+
+bool DesktopShellViewModel::soundEffectsEnabled() const {
+    return settings_.soundEffectsEnabled();
+}
+
+void DesktopShellViewModel::setSoundEffectsEnabled(bool enabled) {
+    settings_.setSoundEffectsEnabled(enabled);
 }
 
 QString DesktopShellViewModel::openAiApiKey() const {

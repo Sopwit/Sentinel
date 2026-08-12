@@ -161,7 +161,7 @@ QStringList SkillProfileService::profileSummaries() const {
 QString SkillProfileService::normalizedProfileId(const QString& profileId) const {
     const auto normalized = profileId.trimmed().toLower();
     for (const auto& profile : availableProfiles()) {
-        if (profile.id == normalized) {
+        if (profile.id == normalized || profile.name.trimmed().toLower() == normalized) {
             return profile.id;
         }
     }
