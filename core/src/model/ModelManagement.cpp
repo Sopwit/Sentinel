@@ -29,6 +29,8 @@ QString modelManagementStatusName(ModelManagementStatus status) {
     switch (status) {
     case ModelManagementStatus::MetadataOnly:
         return QStringLiteral("Metadata Only");
+    case ModelManagementStatus::Available:
+        return QStringLiteral("Available");
     case ModelManagementStatus::Unavailable:
         return QStringLiteral("Unavailable");
     case ModelManagementStatus::NotImplemented:
@@ -103,15 +105,16 @@ QList<ModelRequirementSummary> staticRequirements() {
 } // namespace
 
 ModelManagementStatus StaticModelManagementService::status() const {
-    return ModelManagementStatus::MetadataOnly;
+    return ModelManagementStatus::Available;
 }
 
 QString StaticModelManagementService::statusSummary(int installedModelCount,
                                                     const QString& selectedModel) const {
     const auto selected =
         selectedModel.trimmed().isEmpty() ? QStringLiteral("none") : selectedModel.trimmed();
-    return QStringLiteral("Model management readiness is metadata-only: %1 installed local "
-                          "models reported, selected model %2, actions unavailable.")
+    return QStringLiteral("Live Ollama model management is available: %1 installed local "
+                          "models reported, selected model %2. Pull/delete are handled by the "
+                          "Ollama model manager.")
         .arg(installedModelCount)
         .arg(selected);
 }
@@ -158,14 +161,18 @@ StaticModelManagementService::evaluate(const ModelManagementRequest& request) co
     const auto modelName = request.modelName.trimmed().isEmpty()
                                ? QStringLiteral("unspecified model")
                                : request.modelName.trimmed();
+    const bool liveAction = request.action == ModelManagementAction::Pull ||
+                            request.action == ModelManagementAction::Delete;
     return ModelManagementResult{
-        ModelManagementStatus::NotImplemented,
+        liveAction ? ModelManagementStatus::Available : ModelManagementStatus::Unavailable,
         request.action,
         modelName,
-        false,
-        QStringLiteral("%1 for %2 is unavailable: model management is metadata-only and real "
-                       "pull, delete, install, refresh, import, or export work is future scoped.")
-            .arg(modelManagementActionName(request.action), modelName),
+        liveAction,
+        liveAction
+            ? QStringLiteral("%1 for %2 is available through the live Ollama model manager.")
+                  .arg(modelManagementActionName(request.action), modelName)
+            : QStringLiteral("%1 for %2 is unavailable: no configured model management backend.")
+                  .arg(modelManagementActionName(request.action), modelName),
     };
 }
 

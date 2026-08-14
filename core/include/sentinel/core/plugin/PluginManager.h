@@ -15,6 +15,13 @@
 #include "sentinel/core/plugin/PluginSandbox.h"
 #include "sentinel/core/plugin/PluginState.h"
 #include "sentinel/core/plugin/PluginContext.h"
+#include "sentinel/core/plugin/PluginHotReloader.h"
+
+namespace sentinel::core {
+class IToolRegistry;
+class IMemoryStore;
+class IProviderCatalog;
+}
 
 namespace sentinel::core::plugin {
 
@@ -42,6 +49,11 @@ public:
     PluginSandbox& sandbox();
     const PluginSandbox& sandbox() const;
 
+    // Core service setters (for plugin context injection)
+    void setToolRegistry(IToolRegistry* registry);
+    void setMemoryStore(IMemoryStore* store);
+    void setProviderCatalog(IProviderCatalog* catalog);
+
     // Discovery & Lifecycle Operations
     int discoverPlugins(const QString& searchDir);
     bool loadPlugin(const QString& pluginId);
@@ -49,6 +61,13 @@ public:
     bool startPlugin(const QString& pluginId);
     bool stopPlugin(const QString& pluginId);
     bool unloadPlugin(const QString& pluginId);
+
+    // Hot-reload operations
+    bool reloadPlugin(const QString& pluginId);
+    void enableHotReload(bool enabled);
+    bool isHotReloadEnabled() const;
+    void setHotReloadConfig(const HotReloadConfig& config);
+    HotReloadConfig hotReloadConfig() const;
 
     // Batch operations with dependency sorting
     bool initializeAll();
@@ -68,15 +87,30 @@ signals:
     void pluginUnloaded(const QString& pluginId);
     void pluginStateChanged(const QString& pluginId, PluginState newState);
     void pluginError(const QString& pluginId, const QString& error);
+    void pluginReloaded(const QString& pluginId);
+    void pluginReloadFailed(const QString& pluginId, const QString& error);
+
+private slots:
+    void onHotReloadRequested(const QString& pluginId);
 
 private:
     void updateState(PluginDescriptor& desc, PluginState newState);
+    void injectCoreServices(PluginContext* context);
 
     QString m_coreVersion;
     QString m_pluginStorageDir;
     PluginSandbox m_sandbox;
     QMap<QString, PluginDescriptor> m_plugins;
     QList<QString> m_orderedIds;
+
+    // Core service pointers (non-owning)
+    IToolRegistry* m_toolRegistry{nullptr};
+    IMemoryStore* m_memoryStore{nullptr};
+    IProviderCatalog* m_providerCatalog{nullptr};
+
+    // Hot-reload support
+    std::unique_ptr<PluginHotReloader> m_hotReloader;
+    bool m_hotReloadEnabled{false};
 };
 
 } // namespace sentinel::core::plugin

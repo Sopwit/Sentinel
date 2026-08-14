@@ -67,6 +67,7 @@ private slots:
     void exposesVoiceReadinessMetadata();
     void exposesVoiceConfigurationMetadata();
     void exposesLocalInferenceBoundaryMetadata();
+    void exposesFrontendRuntimeStateContract();
     void forwardsBlockedLocalInferenceRequest();
     void exposesConversationSessionMetadata();
     void exposesConversationStateMetadata();
@@ -319,19 +320,18 @@ void DesktopShellViewModelTest::exposesModelRoutingMetadata() {
     ViewModelFixture fixture;
 
     QCOMPARE(fixture.viewModel.currentRoutingMode(), QStringLiteral("Local Only"));
-    QCOMPARE(fixture.viewModel.modelRoutingStatus(), QStringLiteral("Routed"));
+    QCOMPARE(fixture.viewModel.modelRoutingStatus(), QStringLiteral("No Available Model"));
     QCOMPARE(fixture.viewModel.selectedModelProviderSummary(),
-             QStringLiteral("Local Only -> Local Metadata Provider / Sentinel Local Placeholder"));
+             QStringLiteral("No configured model route is available."));
 }
 
 void DesktopShellViewModelTest::exposesTaskPlanMetadata() {
     ViewModelFixture fixture;
 
-    QCOMPARE(fixture.viewModel.latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
-    QCOMPARE(fixture.viewModel.plannedTaskStepCount(), 2);
+    QCOMPARE(fixture.viewModel.latestTaskPlanStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(fixture.viewModel.plannedTaskStepCount(), 0);
     QCOMPARE(fixture.viewModel.latestTaskPlanSummary(),
-             QStringLiteral("Unknown task uses safe local metadata fallback: Local Metadata "
-                            "Provider / Sentinel Local Placeholder."));
+             QStringLiteral("No available local metadata capability can satisfy this task."));
     QCOMPARE(fixture.viewModel.currentMemoryAffinitySummary(),
              QStringLiteral("Ambient (Available, Public Metadata, Session)"));
 }
@@ -355,7 +355,7 @@ void DesktopShellViewModelTest::exposesProviderCatalogMetadata() {
     QCOMPARE(fixture.viewModel.providerCatalogCount(), 4);
     QCOMPARE(fixture.viewModel.providerCatalogSummaries().size(), 4);
     QVERIFY(fixture.viewModel.providerCatalogSummaries().contains(
-        QStringLiteral("Local Metadata Provider (Local, Available)")));
+         QStringLiteral("Ollama Local (Local, Not Configured)")));
     QVERIFY(fixture.viewModel.providerCatalogSummaries().contains(
         QStringLiteral("Anthropic Cloud (Cloud, Not Configured)")));
 }
@@ -376,11 +376,11 @@ void DesktopShellViewModelTest::exposesMemoryCatalogMetadata() {
 void DesktopShellViewModelTest::exposesOrchestrationSnapshotMetadata() {
     ViewModelFixture fixture;
 
-    QCOMPARE(fixture.viewModel.orchestrationSnapshotStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.orchestrationSnapshotStatus(), QStringLiteral("Degraded"));
     QVERIFY(fixture.viewModel.orchestrationSnapshotSummary().contains(
         QStringLiteral("4 provider entries, 6 agents, 5 memory categories")));
     QVERIFY(fixture.viewModel.orchestrationSignals().contains(
-        QStringLiteral("Routing: Local Only / Routed")));
+         QStringLiteral("Routing: Local Only / No Available Model")));
     QVERIFY(fixture.viewModel.orchestrationSignals().contains(
         QStringLiteral("Agent: Atlas (Coordinator, Available, Local)")));
     QVERIFY(fixture.viewModel.orchestrationSignals().contains(
@@ -390,9 +390,9 @@ void DesktopShellViewModelTest::exposesOrchestrationSnapshotMetadata() {
 void DesktopShellViewModelTest::exposesOrchestrationReadinessDiagnostics() {
     ViewModelFixture fixture;
 
-    QCOMPARE(fixture.viewModel.orchestrationReadinessStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.orchestrationReadinessStatus(), QStringLiteral("Blocked"));
     QCOMPARE(fixture.viewModel.orchestrationReadinessSummary(),
-             QStringLiteral("Ready orchestration readiness: 10 deterministic metadata checks, 10 "
+             QStringLiteral("Blocked orchestration readiness: 10 deterministic metadata checks, 10 "
                             "diagnostic entries."));
     QCOMPARE(fixture.viewModel.orchestrationDiagnostics().size(), 10);
     QVERIFY(fixture.viewModel.orchestrationDiagnostics().contains(
@@ -820,12 +820,12 @@ void DesktopShellViewModelTest::exposesModelManagementReadinessMetadata() {
     AppSettings settings{std::make_unique<InMemorySettingsStore>()};
     DesktopShellViewModel viewModel{controller, modeManager, settings};
 
-    QCOMPARE(viewModel.modelManagementStatus(), QStringLiteral("Metadata Only"));
+    QCOMPARE(viewModel.modelManagementStatus(), QStringLiteral("Available"));
     QCOMPARE(viewModel.modelManagementSummary(),
-             QStringLiteral("Model management readiness is metadata-only: 1 installed local "
-                            "models reported, selected model llama3.2, actions unavailable."));
+             QStringLiteral("Live Ollama model management is available: 1 installed model(s); "
+                            "pull and delete use /api/pull and /api/delete."));
     QVERIFY(viewModel.modelManagementActionAvailability().contains(
-        QStringLiteral("Pull for llama3.2 is unavailable")));
+        QStringLiteral("Pull available via Ollama /api/pull")));
     QCOMPARE(viewModel.modelRecommendationSummaries().size(), 3);
     QCOMPARE(viewModel.modelRequirementSummaries().size(), 3);
     QVERIFY(
@@ -874,9 +874,9 @@ void DesktopShellViewModelTest::exposesLocalAiEcosystemFoundationMetadata() {
     QVERIFY(viewModel.modelLibraryInstalledSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("qwen2.5-coder:7b")));
-    QVERIFY(viewModel.modelLibraryAvailableSummaries()
-                .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("LM Studio")));
+    QVERIFY(!viewModel.modelLibraryAvailableSummaries()
+                 .join(QStringLiteral("\n"))
+                 .contains(QStringLiteral("LM Studio")));
     QVERIFY(viewModel.providerDiscoverySummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("llama.cpp server")));
@@ -891,10 +891,10 @@ void DesktopShellViewModelTest::exposesLocalAiEcosystemFoundationMetadata() {
                 .contains(QStringLiteral("cloud-only")));
     QVERIFY(viewModel.downloadsCenterSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Execution Disabled")));
+                .contains(QStringLiteral("foreground model manager")));
     QVERIFY(viewModel.benchmarkHubSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("tokens/sec")));
+                .contains(QStringLiteral("no benchmark result recorded")));
     QVERIFY(viewModel.notificationCenterSummaries().isEmpty());
 }
 
@@ -1169,6 +1169,34 @@ void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
     QVERIFY(fixture.viewModel.localInferenceTraceSummaries().isEmpty());
 }
 
+void DesktopShellViewModelTest::exposesFrontendRuntimeStateContract() {
+    ViewModelFixture fixture;
+    const auto metaObject = fixture.viewModel.metaObject();
+
+    const auto propertyNames = QStringList{
+        QStringLiteral("activeRuntimeProviderLabel"),
+        QStringLiteral("activeRuntimeReadinessState"),
+        QStringLiteral("conversationRuntimeStreaming"),
+        QStringLiteral("localInferenceBusy"),
+        QStringLiteral("localInferenceStreamStatus"),
+        QStringLiteral("latestToolExecutionStatus"),
+        QStringLiteral("latestToolExecutionSummary"),
+        QStringLiteral("globalErrorVisible"),
+        QStringLiteral("globalErrorMessage"),
+    };
+
+    for (const auto& name : propertyNames)
+        QVERIFY2(metaObject->indexOfProperty(name.toLatin1().constData()) >= 0,
+                 qPrintable(QStringLiteral("Missing QML runtime property: %1").arg(name)));
+
+    QVERIFY(!fixture.viewModel.activeRuntimeProviderLabel().isEmpty());
+    QVERIFY(!fixture.viewModel.activeRuntimeReadinessState().isEmpty());
+    QVERIFY(!fixture.viewModel.localInferenceStreamStatus().isEmpty());
+    QVERIFY(!fixture.viewModel.latestToolExecutionStatus().isEmpty());
+    QVERIFY(!fixture.viewModel.latestToolExecutionSummary().isEmpty());
+    QVERIFY(!fixture.viewModel.globalErrorVisible());
+}
+
 void DesktopShellViewModelTest::forwardsBlockedLocalInferenceRequest() {
     ViewModelFixture fixture;
     QSignalSpy spy(&fixture.viewModel, &DesktopShellViewModel::localInferenceChanged);
@@ -1238,16 +1266,16 @@ void DesktopShellViewModelTest::updatesAndPersistsRoutingModeMetadata() {
     fixture.viewModel.setRoutingModeByName(QStringLiteral("Quality"));
 
     QCOMPARE(fixture.viewModel.currentRoutingMode(), QStringLiteral("Quality"));
-    QCOMPARE(fixture.viewModel.modelRoutingStatus(), QStringLiteral("Routed"));
+    QCOMPARE(fixture.viewModel.modelRoutingStatus(), QStringLiteral("No Available Model"));
     QCOMPARE(fixture.viewModel.selectedModelProviderSummary(),
-             QStringLiteral("Quality -> Local Metadata Provider / Sentinel Local Placeholder"));
+             QStringLiteral("No configured model route is available."));
     QCOMPARE(fixture.settings.routingModeName(), QStringLiteral("Quality"));
     QVERIFY(spy.count() >= 1);
-    QCOMPARE(fixture.viewModel.latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
+    QCOMPARE(fixture.viewModel.latestTaskPlanStatus(), QStringLiteral("Blocked"));
     QVERIFY(taskPlanSpy.count() >= 1);
-    QCOMPARE(fixture.viewModel.orchestrationSnapshotStatus(), QStringLiteral("Ready"));
+    QCOMPARE(fixture.viewModel.orchestrationSnapshotStatus(), QStringLiteral("Degraded"));
     QVERIFY(fixture.viewModel.orchestrationSignals().contains(
-        QStringLiteral("Routing: Quality / Routed")));
+        QStringLiteral("Routing: Quality / No Available Model")));
     QVERIFY(fixture.viewModel.contextWindowSummary().contains(QStringLiteral("Quality route")));
     QVERIFY(conversationSpy.count() >= 1);
     QVERIFY(snapshotSpy.count() >= 1);
@@ -3288,32 +3316,34 @@ void DesktopShellViewModelTest::exposesAgentRuntimeMetadata() {
     ViewModelFixture fixture;
     QSignalSpy runtimeSpy(&fixture.viewModel, &DesktopShellViewModel::agentRuntimeChanged);
 
-    QCOMPARE(fixture.viewModel.agentRuntimeStatus(), QStringLiteral("Dry-run planning only"));
+    QCOMPARE(fixture.viewModel.agentRuntimeStatus(),
+             QStringLiteral("Ready for approved execution"));
     QCOMPARE(fixture.viewModel.agentRuntimeApprovalPosture(),
-             QStringLiteral("Approval cannot enable execution"));
+             QStringLiteral("Approval and sandbox gates enforced"));
     QCOMPARE(fixture.viewModel.agentRuntimeAgentCount(), 5);
     QCOMPARE(fixture.viewModel.agentRuntimeReadyAgentCount(), 5);
     QCOMPARE(fixture.viewModel.agentRuntimeRefusedAgentCount(), 0);
-    QVERIFY(
-        fixture.viewModel.agentRuntimeSummary().contains(QStringLiteral("cannot execute tools")));
+    QVERIFY(fixture.viewModel.agentRuntimeSummary().contains(
+        QStringLiteral("executes tools only after approval")));
     QVERIFY(fixture.viewModel.agentRuntimeAgentSummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Voice Assistant")));
     QVERIFY(fixture.viewModel.agentRuntimeReadinessSummaries()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Dry-run ready / Disabled")));
+                .contains(QStringLiteral("Ready for approved execution / Disabled")));
     QVERIFY(fixture.viewModel.agentRuntimeDeveloperDiagnostics()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Runtime execution grant: none")));
+                .contains(QStringLiteral(
+                    "Runtime execution grant: approval and sandbox policy required")));
 
-    QCOMPARE(fixture.viewModel.agentPlanId(), QStringLiteral("dry-run-general-assistant"));
+    QCOMPARE(fixture.viewModel.agentPlanId(), QStringLiteral("agent-plan-general-assistant"));
     QCOMPARE(fixture.viewModel.agentPlanEstimatedRisk(), QStringLiteral("Low"));
     QCOMPARE(fixture.viewModel.agentPlanApprovalState(),
-             QStringLiteral("Approval disabled / dry-run only"));
+             QStringLiteral("Approval required before execution"));
     QVERIFY(fixture.viewModel.agentPlanGoalSummary().contains(QStringLiteral("safe next steps")));
     QVERIFY(fixture.viewModel.agentPlanSteps()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("without reading files")));
+                .contains(QStringLiteral("identify the tools required")));
     QVERIFY(fixture.viewModel.agentPlanRequiredTools()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Summarize Current Conversation")));
@@ -3321,15 +3351,16 @@ void DesktopShellViewModelTest::exposesAgentRuntimeMetadata() {
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("agent-execution / Disabled")));
     QVERIFY(fixture.viewModel.agentPlanRefusalReason().contains(
-        QStringLiteral("execution is disabled")));
+        QStringLiteral("available through the approval")));
     QVERIFY(fixture.viewModel.agentPlanDiagnostics()
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Execution grant: none")));
+                .contains(QStringLiteral(
+                    "Execution grant: approval and sandbox policy required")));
 
     fixture.viewModel.setDefaultPermissionPolicyState(QStringLiteral("Trusted"));
     QCOMPARE(fixture.viewModel.agentRuntimeReadinessSummaries()
                  .join(QStringLiteral("\n"))
-                 .contains(QStringLiteral("Dry-run ready / Trusted")),
+                 .contains(QStringLiteral("Ready for approved execution / Trusted")),
              true);
     QCOMPARE(runtimeSpy.count(), 1);
 

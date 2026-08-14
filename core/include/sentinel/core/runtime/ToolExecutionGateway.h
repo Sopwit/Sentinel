@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/security/PermissionPolicyService.h"
+#include "sentinel/core/runtime/IToolExecutor.h"
 
 #include <QList>
 #include <QString>
@@ -78,6 +79,9 @@ public:
     ToolGatewayRegistrySummary
     registrySummary(const QString& defaultPermissionState,
                     const PermissionPolicyService& permissionPolicy) const;
+
+    ToolExecutionResult execute(const ToolExecutionRequest& request,
+                                const IToolExecutor& executor) const;
 };
 
 QString toolGatewayRiskLevelName(ToolGatewayRiskLevel riskLevel);

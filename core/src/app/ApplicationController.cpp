@@ -2191,15 +2191,24 @@ QStringList ApplicationController::selectedModelCapabilityLabels() const {
 }
 
 QString ApplicationController::modelManagementStatus() const {
-    return modelManagementService_ ? modelManagementStatusName(modelManagementService_->status())
-                                   : modelManagementStatusName(ModelManagementStatus::Unavailable);
+    const auto health = currentOllamaHealthCheck();
+    return modelManagementStatusName(
+        health.healthStatus == OllamaHealthStatus::Healthy ? ModelManagementStatus::Available
+                                                           : ModelManagementStatus::Unavailable);
 }
 
 QString ApplicationController::modelManagementSummary() const {
     if (!modelManagementService_) {
         return QStringLiteral("No model management readiness metadata available.");
     }
-    return modelManagementService_->statusSummary(ollamaModelCount(), effectiveLocalModel({}));
+    const auto health = currentOllamaHealthCheck();
+    if (health.healthStatus != OllamaHealthStatus::Healthy) {
+        return QStringLiteral("Ollama model management is unavailable: %1")
+            .arg(safeOllamaHealthSummary(health));
+    }
+    return QStringLiteral("Live Ollama model management is available: %1 installed model(s); "
+                          "pull and delete use /api/pull and /api/delete.")
+        .arg(ollamaModelCount());
 }
 
 QString ApplicationController::modelManagementActionAvailability() const {
@@ -2207,23 +2216,12 @@ QString ApplicationController::modelManagementActionAvailability() const {
         return QStringLiteral("Model management actions are unavailable.");
     }
 
-    const auto model =
-        effectiveLocalModel({}).isEmpty() ? QStringLiteral("local model") : effectiveLocalModel({});
-    const QStringList summaries{
-        safeModelManagementResultSummary(modelManagementService_->evaluate(
-            ModelManagementRequest{ModelManagementAction::Pull, model})),
-        safeModelManagementResultSummary(modelManagementService_->evaluate(
-            ModelManagementRequest{ModelManagementAction::Delete, model})),
-        safeModelManagementResultSummary(modelManagementService_->evaluate(
-            ModelManagementRequest{ModelManagementAction::Install, model})),
-        safeModelManagementResultSummary(modelManagementService_->evaluate(
-            ModelManagementRequest{ModelManagementAction::Refresh, model})),
-        safeModelManagementResultSummary(modelManagementService_->evaluate(
-            ModelManagementRequest{ModelManagementAction::Import, model})),
-        safeModelManagementResultSummary(modelManagementService_->evaluate(
-            ModelManagementRequest{ModelManagementAction::Export, model})),
-    };
-    return summaries.join(QStringLiteral(" "));
+    const auto health = currentOllamaHealthCheck();
+    if (health.healthStatus != OllamaHealthStatus::Healthy) {
+        return QStringLiteral("Pull/Delete unavailable: %1").arg(safeOllamaHealthSummary(health));
+    }
+    return QStringLiteral("Pull available via Ollama /api/pull; Delete available via "
+                          "Ollama /api/delete; Import/Export are not configured.");
 }
 
 QStringList ApplicationController::modelRecommendationSummaries() const {
@@ -8807,7 +8805,8 @@ ApplicationController::buildAgentPipelineResult(const AgentRequest& request) con
 
     result.sandbox = sandboxPolicy_->evaluate(result.plan, result.approval);
 
-    if (!agentAutonomousMode_ && result.approval.status == ApprovalStatus::RequiresApproval) {
+    if (!agentAutonomousMode_ &&
+        result.approval.status == ApprovalStatus::RequiresApproval) {
         result.execution.status = ToolExecutionStatus::Blocked;
         result.execution.summary =
             QStringLiteral("Execution paused: pending user approval in chat.");
@@ -9193,23 +9192,67 @@ RuntimeProviderRegistry ApplicationController::currentRuntimeProviderRegistry() 
         QStringLiteral("OpenAI-compatible loopback endpoint not configured"),
         selectedRuntimeProvider_ == QStringLiteral("llama-cpp-server") ? selectedLocalModel_
                                                                        : QString()};
-    const OpenAICompatibleLocalRuntimeProvider cloudApiProvider{
-        QStringLiteral("cloud-api"), QStringLiteral("Cloud API"),
-        QStringLiteral("Cloud API endpoint"),
-        (selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
-         selectedRuntimeProvider_ == QStringLiteral("openai") ||
-         selectedRuntimeProvider_ == QStringLiteral("claude") ||
-         selectedRuntimeProvider_ == QStringLiteral("gemini") ||
-         selectedRuntimeProvider_ == QStringLiteral("deepseek") ||
-         selectedRuntimeProvider_ == QStringLiteral("groq") ||
-         selectedRuntimeProvider_ == QStringLiteral("mistral"))
-            ? selectedLocalModel_
-            : QString()};
+    const QString settingsPath =
+        QDir(QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation)).filePath(
+            QStringLiteral("settings.json"));
+    AppSettings cloudSettings(std::make_unique<JsonSettingsStore>(settingsPath));
+    const auto cloudProvider = cloudSettings.selectedCloudProvider();
+    const auto cloudModels = currentOllamaModels();
+    const bool cloudSelected = selectedRuntimeProvider_ == QStringLiteral("cloud-api") ||
+                               selectedRuntimeProvider_ == cloudProvider;
+    const bool hasCloudKey = [&]() {
+        if (cloudProvider == QStringLiteral("claude"))
+            return !cloudSettings.claudeApiKey().trimmed().isEmpty();
+        if (cloudProvider == QStringLiteral("gemini"))
+            return !cloudSettings.geminiApiKey().trimmed().isEmpty();
+        if (cloudProvider == QStringLiteral("deepseek"))
+            return !cloudSettings.deepseekApiKey().trimmed().isEmpty();
+        if (cloudProvider == QStringLiteral("groq"))
+            return !cloudSettings.groqApiKey().trimmed().isEmpty();
+        if (cloudProvider == QStringLiteral("mistral"))
+            return !cloudSettings.mistralApiKey().trimmed().isEmpty();
+        return !cloudSettings.openAiApiKey().trimmed().isEmpty();
+    }();
+    const auto cloudReadiness = !cloudSelected
+                                    ? RuntimeReadinessState::Unavailable
+                                    : !hasCloudKey ? RuntimeReadinessState::Unauthorized
+                                                   : cloudModels.isEmpty()
+                                                       ? RuntimeReadinessState::Unavailable
+                                                       : RuntimeReadinessState::Ready;
+    const auto cloudReason = !cloudSelected
+                                 ? QStringLiteral("Cloud provider is not selected.")
+                                 : !hasCloudKey
+                                     ? QStringLiteral("An API key is required for cloud inference.")
+                                     : cloudModels.isEmpty()
+                                         ? QStringLiteral("No models were returned by the provider API.")
+                                         : QStringLiteral("Provider API is configured and returned models.");
+    const RuntimeProviderDescriptor cloudApiDescriptor{
+        QStringLiteral("cloud-api"),
+        QStringLiteral("Cloud API (%1)").arg(cloudProvider),
+        hasCloudKey ? QStringLiteral("configured") : QStringLiteral("credentials-required"),
+        cloudReadiness,
+        hasCloudKey ? QStringLiteral("API key configured") : QStringLiteral("API key missing"),
+        QStringLiteral("Provider-specific HTTPS endpoint"),
+        cloudModels.isEmpty() ? QStringLiteral("No API model metadata")
+                              : QStringLiteral("%1 model(s) discovered").arg(cloudModels.size()),
+        cloudReason,
+        RuntimeCapabilitySet{false, true, false, true, true, true, true, true, true, true, true,
+                             false},
+        [&]() {
+            QStringList names;
+            for (const auto& model : cloudModels)
+                names.append(model.name);
+            return names;
+        }(),
+        !cloudModels.isEmpty(),
+        hasCloudKey,
+        true,
+    };
 
     return RuntimeProviderRegistry{
         {ollamaProvider.descriptor(), openAiCompatibleLocalProvider.descriptor(),
          lmStudioProvider.descriptor(), llamaCppProvider.descriptor(),
-         cloudApiProvider.descriptor()},
+          cloudApiDescriptor},
         selectedRuntimeProvider_,
     };
 }
@@ -9249,28 +9292,6 @@ ModelRegistry ApplicationController::currentModelRegistry() const {
     }();
 
     auto models = modelSummariesFromOllama(currentOllamaModels(), activeMeta.id, activeMeta.label);
-    models.append(disabledProviderModelPlaceholder(QStringLiteral("openai-compatible"),
-                                                   QStringLiteral("OpenAI-Compatible API")));
-    // Only append a disabled placeholder for providers that are NOT the active one.
-    if (activeMeta.id != QStringLiteral("lm-studio")) {
-        models.append(disabledProviderModelPlaceholder(QStringLiteral("lm-studio"),
-                                                       QStringLiteral("LM Studio")));
-    }
-    if (activeMeta.id != QStringLiteral("llama-cpp-server")) {
-        models.append(disabledProviderModelPlaceholder(QStringLiteral("llama-cpp-server"),
-                                                       QStringLiteral("llama.cpp server")));
-    }
-    if (activeMeta.id != QStringLiteral("openai-compatible-local")) {
-        models.append(
-            disabledProviderModelPlaceholder(QStringLiteral("openai-compatible-local"),
-                                             QStringLiteral("OpenAI-compatible local endpoint")));
-    }
-    models.append(disabledProviderModelPlaceholder(
-        QStringLiteral("huggingface-catalog"), QStringLiteral("Hugging Face metadata catalog")));
-    models.append(disabledProviderModelPlaceholder(QStringLiteral("mlx-catalog"),
-                                                   QStringLiteral("MLX local/community catalog")));
-    models.append(disabledProviderModelPlaceholder(QStringLiteral("custom-catalog"),
-                                                   QStringLiteral("Future custom catalogs")));
     const auto selectedModel = isLocalChatProvider() ? selectedLocalModel_ : QString();
     return ModelRegistry{models, selectedRuntimeProvider_, selectedModel};
 }
@@ -9329,71 +9350,8 @@ QList<OllamaModelSummary> ApplicationController::currentOllamaModels() const {
             }
         }
 
-        // Fall back to hardcoded model lists
-        if (isClaude) {
-            return {OllamaModelSummary{QStringLiteral("claude-3-5-sonnet-20241022"),
-                                       QStringLiteral("Anthropic Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("claude-3-5-haiku-20241022"),
-                                       QStringLiteral("Anthropic Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("claude-3-opus-20240229"),
-                                       QStringLiteral("Anthropic Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("claude-3-sonnet-20240229"),
-                                       QStringLiteral("Anthropic Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("claude-3-haiku-20240307"),
-                                       QStringLiteral("Anthropic Cloud"), 0}};
-        } else if (isGemini) {
-            return {OllamaModelSummary{QStringLiteral("gemini-2.0-flash"),
-                                       QStringLiteral("Google Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("gemini-2.5-flash"),
-                                       QStringLiteral("Google Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("gemini-2.5-pro"),
-                                       QStringLiteral("Google Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("gemini-2.0-flash-lite"),
-                                       QStringLiteral("Google Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("gemini-1.5-flash"),
-                                       QStringLiteral("Google Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("gemini-1.5-pro"),
-                                       QStringLiteral("Google Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("gemini-1.5-flash-8b"),
-                                       QStringLiteral("Google Cloud"), 0}};
-        } else if (isDeepSeek) {
-            return {OllamaModelSummary{QStringLiteral("deepseek-chat"),
-                                       QStringLiteral("DeepSeek Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("deepseek-reasoner"),
-                                       QStringLiteral("DeepSeek Cloud"), 0}};
-        } else if (isGroq) {
-            return {OllamaModelSummary{QStringLiteral("llama-3.3-70b-versatile"),
-                                       QStringLiteral("Groq Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("llama-3.1-8b-instant"),
-                                       QStringLiteral("Groq Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("mixtral-8x7b-32768"),
-                                       QStringLiteral("Groq Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("deepseek-r1-distill-llama-70b"),
-                                       QStringLiteral("Groq Cloud"), 0}};
-        } else if (isMistral) {
-            return {OllamaModelSummary{QStringLiteral("mistral-large-latest"),
-                                       QStringLiteral("Mistral Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("pixtral-large-latest"),
-                                       QStringLiteral("Mistral Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("codestral-latest"),
-                                       QStringLiteral("Mistral Cloud"), 0},
-                    OllamaModelSummary{QStringLiteral("mistral-small-latest"),
-                                       QStringLiteral("Mistral Cloud"), 0}};
-        } else {
-            return {
-                OllamaModelSummary{QStringLiteral("gpt-4o"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gpt-4o-mini"), QStringLiteral("OpenAI Cloud"),
-                                   0},
-                OllamaModelSummary{QStringLiteral("o1"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("o1-preview"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("o1-mini"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("o3-mini"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gpt-4-turbo"), QStringLiteral("OpenAI Cloud"),
-                                   0},
-                OllamaModelSummary{QStringLiteral("gpt-4"), QStringLiteral("OpenAI Cloud"), 0},
-                OllamaModelSummary{QStringLiteral("gpt-3.5-turbo"), QStringLiteral("OpenAI Cloud"),
-                                   0}};
-        }
+        // Do not advertise models that were not returned by the provider API.
+        return {};
     }
     return cachedOllamaModels_;
 }

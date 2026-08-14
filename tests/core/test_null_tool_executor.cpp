@@ -73,15 +73,16 @@ void NullToolExecutorTest::executesApprovedSandboxAllowedPlan() {
     NullToolExecutor executor;
 
     const auto result = executor.execute(ToolExecutionRequest{
-        makePlan(QStringLiteral("safe-tool")),
+        makePlan(QStringLiteral("summarize-current-conversation")),
         approved(),
         sandboxAllowed(),
-        {QStringLiteral("safe-tool")},
+        {QStringLiteral("summarize-current-conversation")},
     });
 
     QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
     QCOMPARE(toolExecutionStatusName(result.status), QStringLiteral("Succeeded"));
-    QCOMPARE(result.summary, QStringLiteral("Executed: Tool safe-tool"));
+    QCOMPARE(result.summary,
+             QStringLiteral("summarize-current-conversation: Summary compiled."));
 }
 
 void NullToolExecutorTest::blocksWhenApprovalIsRequired() {

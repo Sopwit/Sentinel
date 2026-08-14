@@ -167,6 +167,7 @@ set(SENTINEL_DESKTOP_QML_FILES
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/StatusChip.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/base/StatusPulse.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/HomeChatSurface.qml
+    ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/RuntimeStateStrip.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/ActiveAgentsPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/chat/CognitionStreamPanel.qml
     ${CMAKE_SOURCE_DIR}/ui/qml/components/dialogs/ModelDetailPopup.qml
@@ -380,4 +381,3 @@ if(UNIX AND NOT APPLE)
         DESTINATION ${CMAKE_INSTALL_DATAROOTDIR}/dbus-1/services
     )
 endif()
-

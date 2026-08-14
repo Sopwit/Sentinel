@@ -10,6 +10,8 @@
 
 #include <cstdint>
 
+#include "sentinel/core/runtime/OllamaRuntime.h"
+
 namespace sentinel::core {
 
 enum class LocalRuntimeStatus : std::uint8_t {
@@ -96,6 +98,16 @@ class NullLocalRuntime final : public ILocalRuntime {
 public:
     LocalRuntimeDescriptor descriptor() const override;
     LocalRuntimeResponse evaluate(const LocalRuntimeRequest& request) const override;
+};
+
+class OllamaLocalRuntime final : public ILocalRuntime {
+public:
+    explicit OllamaLocalRuntime(OllamaConfig config = OllamaConfig{});
+    LocalRuntimeDescriptor descriptor() const override;
+    LocalRuntimeResponse evaluate(const LocalRuntimeRequest& request) const override;
+
+private:
+    OllamaConfig config_;
 };
 
 } // namespace sentinel::core

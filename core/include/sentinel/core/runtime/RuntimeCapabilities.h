@@ -10,6 +10,8 @@
 
 #include <cstdint>
 
+#include "sentinel/core/runtime/OllamaRuntime.h"
+
 namespace sentinel::core {
 
 enum class RuntimeCapabilityState : std::uint8_t {
@@ -105,6 +107,16 @@ public:
 
 private:
     QList<RuntimeCapabilityDescriptor> capabilities_;
+};
+
+class OllamaRuntimeCapabilityRegistry final : public IRuntimeCapabilityRegistry {
+public:
+    explicit OllamaRuntimeCapabilityRegistry(OllamaConfig config = OllamaConfig{});
+    QList<RuntimeCapabilityDescriptor> capabilities() const override;
+    RuntimeNegotiationResult negotiate() const override;
+
+private:
+    OllamaConfig config_;
 };
 
 } // namespace sentinel::core

@@ -25,6 +25,11 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withStandardDefaults
     const auto ollamaConfig = OllamaConfig::fromEndpoint(settings.ollamaEndpoint());
 
     m_provider = std::make_unique<OllamaChatProvider>(ollamaConfig);
+    m_localRuntime = std::make_unique<OllamaLocalRuntime>(ollamaConfig);
+    m_runtimeCapabilities = std::make_unique<OllamaRuntimeCapabilityRegistry>(ollamaConfig);
+    m_localRuntimeSessions = std::make_unique<OllamaRuntimeSessionManager>(ollamaConfig);
+    m_localRuntimeAdapter = std::make_unique<OllamaLocalRuntimeAdapter>(ollamaConfig);
+    m_providerRuntimeBridge = std::make_unique<OllamaProviderRuntimeBridge>(ollamaConfig);
     m_memoryStore = std::make_unique<SQLiteMemoryStore>(pathProvider.memoryDatabasePath());
     m_chatHistoryStore =
         std::make_unique<SQLiteChatHistoryStore>(pathProvider.chatHistoryDatabasePath());

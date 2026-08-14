@@ -9,6 +9,8 @@
 
 #include <QtTest>
 
+#include <algorithm>
+
 using sentinel::core::CatalogAvailability;
 using sentinel::core::CatalogPrivacyLevel;
 using sentinel::core::ProviderCapabilityProfile;
@@ -43,7 +45,18 @@ private slots:
 };
 
 static QList<ProviderCatalogEntry> defaultCatalogEntries() {
-    return StaticProviderCatalog{}.entries();
+    auto entries = StaticProviderCatalog{}.entries();
+    auto local = std::find_if(entries.begin(), entries.end(), [](const auto& entry) {
+        return entry.descriptor.kind == ProviderKind::Local;
+    });
+    if (local != entries.end()) {
+        local->availability = CatalogAvailability::Available;
+        if (!local->models.isEmpty()) {
+            local->models.first().availability = CatalogAvailability::Available;
+            local->models.first().descriptor.installed = true;
+        }
+    }
+    return entries;
 }
 
 static QList<sentinel::core::AgentDescriptor> defaultAgents() {
@@ -101,13 +114,13 @@ void StaticTaskPlannerTest::createsDeterministicLocalPlan() {
     QCOMPARE(plan.routingMode, RoutingMode::LocalOnly);
     QCOMPARE(plan.capabilityGraph.nodes.size(), 4);
     QCOMPARE(plan.steps.size(), 2);
-    QCOMPARE(plan.steps.last().providerId, QStringLiteral("local-placeholder"));
+    QCOMPARE(plan.steps.last().providerId, QStringLiteral("ollama-local"));
     QCOMPARE(plan.steps.last().modelId, QStringLiteral("sentinel-local-placeholder"));
     QVERIFY(!plan.networkRequired);
     QVERIFY(!plan.modelExecutionAllowed);
     QCOMPARE(plan.summary,
-             QStringLiteral("Task plan uses local metadata route: Local Metadata Provider / "
-                            "Sentinel Local Placeholder."));
+             QStringLiteral("Task plan uses local metadata route: Ollama Local Provider / "
+                            "Ollama Local (not configured)."));
 }
 
 void StaticTaskPlannerTest::sensitiveTaskStaysLocal() {
@@ -121,7 +134,7 @@ void StaticTaskPlannerTest::sensitiveTaskStaysLocal() {
 
     QCOMPARE(plan.status, TaskPlanStatus::Planned);
     QCOMPARE(plan.steps.last().providerKind, ProviderKind::Local);
-    QCOMPARE(plan.steps.last().providerId, QStringLiteral("local-placeholder"));
+    QCOMPARE(plan.steps.last().providerId, QStringLiteral("ollama-local"));
     QVERIFY(plan.steps.last().localOnly);
     QVERIFY(!plan.networkRequired);
 }
@@ -150,7 +163,7 @@ void StaticTaskPlannerTest::unknownTaskUsesSafeLocalFallback() {
     });
 
     QCOMPARE(plan.status, TaskPlanStatus::FallbackPlanned);
-    QCOMPARE(plan.steps.last().providerId, QStringLiteral("local-placeholder"));
+    QCOMPARE(plan.steps.last().providerId, QStringLiteral("ollama-local"));
     QVERIFY(plan.summary.startsWith(QStringLiteral("Unknown task uses safe local metadata")));
 }
 

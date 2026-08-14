@@ -7,6 +7,8 @@
 
 namespace sentinel::core::plugin {
 
+QMap<QString, void*> PluginContext::s_serviceRegistry;
+
 PluginContext::PluginContext(QString pluginId,
                              QString coreVersion,
                              QString dataDir,
@@ -44,6 +46,42 @@ void PluginContext::logMessage(const QString& level, const QString& message) {
 
 QJsonObject PluginContext::pluginConfig() const {
     return m_config;
+}
+
+IToolRegistry* PluginContext::toolRegistry() const {
+    return m_toolRegistry;
+}
+
+IMemoryStore* PluginContext::memoryStore() const {
+    return m_memoryStore;
+}
+
+IProviderCatalog* PluginContext::providerCatalog() const {
+    return m_providerCatalog;
+}
+
+void PluginContext::registerService(const QString& serviceName, void* servicePtr) {
+    if (s_serviceRegistry.contains(serviceName)) {
+        qWarning() << QStringLiteral("Plugin '%1' overwriting service '%2'").arg(m_pluginId, serviceName);
+    }
+    s_serviceRegistry[serviceName] = servicePtr;
+    qDebug() << QStringLiteral("Plugin '%1' registered service '%2'").arg(m_pluginId, serviceName);
+}
+
+void* PluginContext::lookupService(const QString& serviceName) const {
+    return s_serviceRegistry.value(serviceName, nullptr);
+}
+
+void PluginContext::setToolRegistry(IToolRegistry* registry) {
+    m_toolRegistry = registry;
+}
+
+void PluginContext::setMemoryStore(IMemoryStore* store) {
+    m_memoryStore = store;
+}
+
+void PluginContext::setProviderCatalog(IProviderCatalog* catalog) {
+    m_providerCatalog = catalog;
 }
 
 } // namespace sentinel::core::plugin

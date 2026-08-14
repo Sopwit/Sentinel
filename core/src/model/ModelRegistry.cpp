@@ -586,9 +586,6 @@ QStringList ModelRegistry::availableModelLibrarySummaries() const {
     for (const auto& model : models_) {
         summaries.append(modelLibrarySummaryLine(model));
     }
-    for (const auto& model : localAiCatalogPlaceholders()) {
-        summaries.append(modelLibrarySummaryLine(model));
-    }
     return summaries;
 }
 
@@ -619,9 +616,6 @@ QStringList ModelRegistry::recommendedModelLibrarySummaries() const {
 QStringList ModelRegistry::modelDetailSummaries() const {
     QStringList summaries;
     for (const auto& model : models_) {
-        summaries.append(modelDetailSummaryLine(model));
-    }
-    for (const auto& model : localAiCatalogPlaceholders()) {
         summaries.append(modelDetailSummaryLine(model));
     }
     return summaries;
@@ -740,31 +734,26 @@ QStringList deterministicModelAdvisorAvoidList(const ModelAdvisorInput& input) {
 
 QStringList downloadCenterPlaceholderSummaries(const QList<ModelSummary>& models) {
     QStringList summaries;
-    summaries.append(QStringLiteral("Downloads Center: %1 / actions disabled / no background "
-                                    "workers / no ollama pull / no subprocess.")
-                         .arg(modelDownloadStateName(ModelDownloadState::ExecutionDisabled)));
+    summaries.append(QStringLiteral("Downloads Center: live Ollama pull/delete controls are "
+                                    "available in the foreground model manager."));
     for (const auto& model : models) {
-        summaries.append(QStringLiteral("%1 - %2 - progress 0% - size %3 - status %4 - actions "
-                                        "unavailable")
-                             .arg(model.displayName, model.runtimeBadge.providerLabel,
-                                  model.approximateDiskSizeLabel,
-                                  modelDownloadStateName(ModelDownloadState::ExecutionDisabled)));
+        summaries.append(QStringLiteral("%1 - installed model - size %2 - foreground pull/delete "
+                                        "actions available")
+                             .arg(model.displayName, model.approximateDiskSizeLabel));
     }
     if (models.isEmpty()) {
-        summaries.append(QStringLiteral("No queued downloads. Not Started, Queued, Downloading, "
-                                        "Paused, Completed, Failed, Cancelled, and Execution "
-                                        "Disabled are metadata states only."));
+        summaries.append(QStringLiteral("No installed models. Start a foreground pull from the "
+                                        "model manager after configuring Ollama."));
     }
     return summaries;
 }
 
 QStringList benchmarkHubPlaceholderSummaries(const QList<ModelSummary>& models) {
     QStringList summaries;
-    summaries.append(QStringLiteral("Benchmark Hub: previous/manual metrics only; benchmark "
-                                    "execution is disabled."));
+    summaries.append(QStringLiteral("Benchmark Hub: no benchmark run has been requested; results "
+                                    "are never synthesized."));
     for (const auto& model : models) {
-        summaries.append(QStringLiteral("%1 - tokens/sec manual unknown - first token latency "
-                                        "unknown - average response unknown - RAM %2 - class %3")
+        summaries.append(QStringLiteral("%1 - no benchmark result recorded - RAM %2 - class %3")
                              .arg(model.displayName, model.approximateRamClass,
                                   model.sizeClass == QStringLiteral("3B")
                                       ? QStringLiteral("battery-friendly")

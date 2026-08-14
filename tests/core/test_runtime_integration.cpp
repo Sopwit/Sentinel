@@ -94,12 +94,12 @@ void RuntimeIntegrationTest::reportsReadinessInStableOrder() {
     QCOMPARE(report.checks[3].id, QStringLiteral("runtime-integration.provider-bridge"));
     QCOMPARE(report.checks[4].id, QStringLiteral("runtime-integration.execution"));
     QCOMPARE(safeRuntimeIntegrationReportSummary(report),
-             QStringLiteral("Runtime integration readiness is blocked: adapter is metadata-only, "
-                            "bridge is not connected, and execution remains disabled."));
+             QStringLiteral("Runtime integration is not ready: Ollama health and model "
+                            "availability must pass."));
     QVERIFY(runtimeIntegrationCheckSummaries(report.checks)
                 .contains(QStringLiteral(
-                    "Blocked: Model Discovery - Model discovery is not implemented and no "
-                    "filesystem or runtime scan is performed.")));
+                    "Blocked: Model Discovery - Installed models are discovered through Ollama "
+                    "/api/tags.")));
 }
 
 QTEST_MAIN(RuntimeIntegrationTest)

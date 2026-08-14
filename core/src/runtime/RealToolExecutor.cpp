@@ -3,12 +3,19 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 #include "sentinel/core/runtime/RealToolExecutor.h"
+#include "sentinel/core/security/PathGuard.h"
 
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
 #include <QProcess>
 #include <QProcessEnvironment>
+#include <QEventLoop>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QNetworkRequest>
+#include <QRegularExpression>
+#include <QUrlQuery>
 
 namespace sentinel::core {
 
@@ -44,10 +51,13 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
         }
     }
 
-    if (request.approval.status == ApprovalStatus::Denied) {
+    if (request.approval.status == ApprovalStatus::Denied ||
+        request.approval.status == ApprovalStatus::RequiresApproval) {
         return {
             ToolExecutionStatus::Blocked,
-            QStringLiteral("Execution boundary blocked: approval denied."),
+            request.approval.status == ApprovalStatus::RequiresApproval
+                ? QStringLiteral("Execution boundary blocked: explicit user approval is required.")
+                : QStringLiteral("Execution boundary blocked: approval denied."),
         };
     }
 
@@ -63,8 +73,14 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
     QString currentWorkingDirectory = QDir::currentPath();
 
     for (const auto& invocation : request.plan.invocations) {
-        // 1. read-file
-        if (invocation.toolId == QLatin1String("read-file")) {
+        // 1. Build a local plan summary from the supplied request metadata.
+        if (invocation.toolId == QLatin1String("local-plan-summary")) {
+            const auto topic = getArgument(invocation, QStringLiteral("topic"));
+            Q_UNUSED(topic);
+            logs.append(QStringLiteral("Executed: Local Plan Summary"));
+        }
+        // 2. read-file
+        else if (invocation.toolId == QLatin1String("read-file")) {
             QString path = getArgument(invocation, QStringLiteral("path"));
             if (path.isEmpty()) {
                 path = getArgument(invocation, QStringLiteral("topic"));
@@ -77,6 +93,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             if (fileInfo.isRelative()) {
                 path = QDir(currentWorkingDirectory).absoluteFilePath(path);
             }
+            path = PathGuard::safePath(currentWorkingDirectory, path);
+            if (path.isEmpty()) {
+                logs.append(QStringLiteral("read-file: Path is outside the approved workspace."));
+                continue;
+            }
             QFile file(path);
             if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
                 logs.append(QStringLiteral("read-file: Failed to open '%1': %2")
@@ -88,7 +109,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                             .arg(path)
                             .arg(content.size()));
         }
-        // 2. write-file
+        // 3. write-file
         else if (invocation.toolId == QLatin1String("write-file")) {
             QString path = getArgument(invocation, QStringLiteral("path"));
             const QString content = getArgument(invocation, QStringLiteral("content"));
@@ -100,6 +121,11 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             if (fileInfo.isRelative()) {
                 path = QDir(currentWorkingDirectory).absoluteFilePath(path);
             }
+            path = PathGuard::safePath(currentWorkingDirectory, path);
+            if (path.isEmpty()) {
+                logs.append(QStringLiteral("write-file: Path is outside the approved workspace."));
+                continue;
+            }
             QFile file(path);
             if (!file.open(QIODevice::WriteOnly | QIODevice::Text)) {
                 logs.append(QStringLiteral("write-file: Failed to open '%1': %2")
@@ -110,7 +136,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             logs.append(QStringLiteral("write-file: Successfully wrote %1 bytes to '%2'")
                             .arg(QString::number(content.toUtf8().size()), path));
         }
-        // 3. run-command
+        // 4. run-command
         else if (invocation.toolId == QLatin1String("run-command")) {
             const QString command = getArgument(invocation, QStringLiteral("command"));
             if (command.isEmpty()) {
@@ -169,7 +195,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                         .arg(QString::number(exitCode), stdoutContent, stderrContent));
             }
         }
-        // 4. voice-transcribe
+        // 5. voice-transcribe
         else if (invocation.toolId == QLatin1String("voice-transcribe")) {
             const QString path = getArgument(invocation, QStringLiteral("path"));
             if (path.isEmpty()) {
@@ -191,7 +217,7 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             const QString transcript = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
             logs.append(QStringLiteral("voice-transcribe: OK\n%1").arg(transcript));
         }
-        // 5. voice-speak
+        // 6. voice-speak
         else if (invocation.toolId == QLatin1String("voice-speak")) {
             const QString text = getArgument(invocation, QStringLiteral("text"));
             if (text.isEmpty()) {
@@ -218,34 +244,95 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
             logs.append(QStringLiteral("voice-speak: TTS synthesis OK → %1")
                             .arg(ttsOutput));
         }
-        // 6. web-search
+        // 7. Do not simulate external search results.
         else if (invocation.toolId == QLatin1String("web-search")) {
-            const QString query = getArgument(invocation, QStringLiteral("query"));
-            logs.append(QStringLiteral("web-search: Query dispatched → '%1'").arg(query));
+            const auto query = getArgument(invocation, QStringLiteral("query"));
+            if (query.trimmed().isEmpty()) {
+                logs.append(QStringLiteral("web-search: No query argument provided."));
+                continue;
+            }
+
+            QUrl url(QStringLiteral("https://html.duckduckgo.com/html/"));
+            QUrlQuery queryParams;
+            queryParams.addQueryItem(QStringLiteral("q"), query.trimmed());
+            url.setQuery(queryParams);
+            QNetworkRequest networkRequest(url);
+            networkRequest.setHeader(QNetworkRequest::UserAgentHeader,
+                                     QStringLiteral("Sentinel/1.0 (local assistant)"));
+            QNetworkAccessManager networkManager;
+            QNetworkReply* reply = networkManager.get(networkRequest);
+            QEventLoop eventLoop;
+            QObject::connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
+            eventLoop.exec();
+
+            if (reply->error() != QNetworkReply::NoError) {
+                logs.append(QStringLiteral("web-search: Request failed: %1")
+                                .arg(reply->errorString()));
+                reply->deleteLater();
+                continue;
+            }
+
+            const auto html = QString::fromUtf8(reply->readAll());
+            reply->deleteLater();
+            const QRegularExpression resultPattern(
+                QStringLiteral("<a[^>]+class=\\\"result__a\\\"[^>]+href=\\\"([^\\\"]+)\\\"[^>]*>(.*?)</a>"),
+                QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption);
+            auto match = resultPattern.globalMatch(html);
+            int resultCount = 0;
+            while (match.hasNext() && resultCount < 5) {
+                const auto result = match.next();
+                auto resultUrl = QUrl::fromEncoded(result.captured(1).toUtf8());
+                const auto title = result.captured(2).remove(QRegularExpression(QStringLiteral("<[^>]*>"))).trimmed();
+                if (resultUrl.isValid() && !title.isEmpty()) {
+                    logs.append(QStringLiteral("%1. %2\n%3")
+                                    .arg(++resultCount)
+                                    .arg(title)
+                                    .arg(resultUrl.toString()));
+                }
+            }
+            if (resultCount == 0) {
+                logs.append(QStringLiteral("web-search: No results found for '%1'.").arg(query));
+            }
         }
-        // 7. open-workspace
+        // 8. open-workspace
         else if (invocation.toolId == QLatin1String("open-workspace")) {
             const QString path = getArgument(invocation, QStringLiteral("path"));
-            if (!path.isEmpty()) {
-                currentWorkingDirectory = path;
+            const auto workspacePath = QDir(path).absolutePath();
+            if (path.isEmpty() || !QDir(workspacePath).exists()) {
+                return {
+                    ToolExecutionStatus::Blocked,
+                    QStringLiteral("open-workspace: requested workspace does not exist."),
+                };
             }
-            logs.append(QStringLiteral("open-workspace: Workspace context set → '%1'").arg(path));
+            currentWorkingDirectory = workspacePath;
+            logs.append(QStringLiteral("open-workspace: Workspace context set → '%1'")
+                            .arg(currentWorkingDirectory));
         }
-        // 8. summarize-current-conversation
+        // 9. summarize-current-conversation
         else if (invocation.toolId == QLatin1String("summarize-current-conversation")) {
             logs.append(QStringLiteral("summarize-current-conversation: Summary compiled."));
         }
-        // 9. provider-test-call
+        // 10. provider-test-call
         else if (invocation.toolId == QLatin1String("provider-test-call")) {
-            logs.append(QStringLiteral("provider-test-call: Connectivity check passed."));
+            return {
+                ToolExecutionStatus::Blocked,
+                QStringLiteral("provider-test-call is unavailable: no provider test executor is configured."),
+            };
         }
-        // 10. export-conversation
+        // 11. export-conversation
         else if (invocation.toolId == QLatin1String("export-conversation")) {
-            logs.append(QStringLiteral("export-conversation: Transcript exported."));
+            return {
+                ToolExecutionStatus::Blocked,
+                QStringLiteral("export-conversation is unavailable: use the conversation export service."),
+            };
         }
-        // Fallback — still execute via placeholder path
+        // Never report an unknown implementation as a successful execution.
         else {
-            logs.append(QStringLiteral("Executed: %1").arg(invocation.toolName));
+            return {
+                ToolExecutionStatus::UnknownTool,
+                QStringLiteral("Execution boundary rejected unimplemented tool: %1")
+                    .arg(invocation.toolId),
+            };
         }
     }
 

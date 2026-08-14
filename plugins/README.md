@@ -1,7 +1,11 @@
 # Plugins
 
-Placeholder for the future Sentinel plugin surface.
+Sentinel plugins are discovered and lifecycle-managed by the core `PluginManager`.
 
-The first alpha defines `IPlugin` only. Runtime plugin loading is intentionally not implemented yet.
+Plugins provide a manifest and a Qt loadable module implementing `ISentinelPlugin`. The manager
+validates compatibility, resolves dependencies, enforces declared permissions, loads the module,
+and manages initialization and shutdown.
 
-Future plugins should be lifecycle-managed through the core plugin boundary before they are exposed to UI or automation surfaces. The alpha does not load dynamic libraries or run external plugin code.
+Plugins remain behind the core plugin boundary before they are exposed to UI or automation
+surfaces. Dynamic libraries are loaded only from the configured plugin storage directory and
+remain subject to the plugin permission sandbox.
