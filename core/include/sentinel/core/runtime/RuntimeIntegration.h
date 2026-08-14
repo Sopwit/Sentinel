@@ -10,12 +10,15 @@
 
 #include <cstdint>
 
+#include "sentinel/core/runtime/OllamaRuntime.h"
+
 namespace sentinel::core {
 
 enum class LocalRuntimeAdapterStatus : std::uint8_t {
     Placeholder,
     NotConfigured,
     Unavailable,
+    Ready,
 };
 
 inline QString localRuntimeAdapterStatusName(LocalRuntimeAdapterStatus status) {
@@ -26,6 +29,8 @@ inline QString localRuntimeAdapterStatusName(LocalRuntimeAdapterStatus status) {
         return QStringLiteral("Not Configured");
     case LocalRuntimeAdapterStatus::Unavailable:
         return QStringLiteral("Unavailable");
+    case LocalRuntimeAdapterStatus::Ready:
+        return QStringLiteral("Ready");
     }
 
     return QStringLiteral("Unavailable");
@@ -35,6 +40,7 @@ enum class LocalRuntimeAdapterHealth : std::uint8_t {
     MetadataOnly,
     NotConnected,
     NotExecutable,
+    Ready,
 };
 
 inline QString localRuntimeAdapterHealthName(LocalRuntimeAdapterHealth health) {
@@ -45,6 +51,8 @@ inline QString localRuntimeAdapterHealthName(LocalRuntimeAdapterHealth health) {
         return QStringLiteral("Not Connected");
     case LocalRuntimeAdapterHealth::NotExecutable:
         return QStringLiteral("Not Executable");
+    case LocalRuntimeAdapterHealth::Ready:
+        return QStringLiteral("Ready");
     }
 
     return QStringLiteral("Not Executable");
@@ -86,10 +94,20 @@ public:
     LocalRuntimeAdapterDescriptor descriptor() const override;
 };
 
+class OllamaLocalRuntimeAdapter final : public ILocalRuntimeAdapter {
+public:
+    explicit OllamaLocalRuntimeAdapter(OllamaConfig config = OllamaConfig{});
+    LocalRuntimeAdapterDescriptor descriptor() const override;
+
+private:
+    OllamaConfig config_;
+};
+
 enum class ProviderRuntimeBridgeStatus : std::uint8_t {
     NotConnected,
     NotExecutable,
     Unavailable,
+    Connected,
 };
 
 inline QString providerRuntimeBridgeStatusName(ProviderRuntimeBridgeStatus status) {
@@ -100,6 +118,8 @@ inline QString providerRuntimeBridgeStatusName(ProviderRuntimeBridgeStatus statu
         return QStringLiteral("Not Executable");
     case ProviderRuntimeBridgeStatus::Unavailable:
         return QStringLiteral("Unavailable");
+    case ProviderRuntimeBridgeStatus::Connected:
+        return QStringLiteral("Connected");
     }
 
     return QStringLiteral("Unavailable");
@@ -148,10 +168,22 @@ public:
     evaluate(const ProviderRuntimeBridgeRequest& request) const override;
 };
 
+class OllamaProviderRuntimeBridge final : public IProviderRuntimeBridge {
+public:
+    explicit OllamaProviderRuntimeBridge(OllamaConfig config = OllamaConfig{});
+    ProviderRuntimeBridgeSummary summary() const override;
+    ProviderRuntimeBridgeResponse
+    evaluate(const ProviderRuntimeBridgeRequest& request) const override;
+
+private:
+    OllamaConfig config_;
+};
+
 enum class RuntimeIntegrationReadiness : std::uint8_t {
     NotReady,
     Blocked,
     ReadyPlaceholder,
+    Ready,
 };
 
 inline QString runtimeIntegrationReadinessName(RuntimeIntegrationReadiness readiness) {
@@ -162,6 +194,8 @@ inline QString runtimeIntegrationReadinessName(RuntimeIntegrationReadiness readi
         return QStringLiteral("Blocked");
     case RuntimeIntegrationReadiness::ReadyPlaceholder:
         return QStringLiteral("Ready Placeholder");
+    case RuntimeIntegrationReadiness::Ready:
+        return QStringLiteral("Ready");
     }
 
     return QStringLiteral("Not Ready");

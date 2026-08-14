@@ -44,6 +44,18 @@ const PluginSandbox& PluginManager::sandbox() const {
     return m_sandbox;
 }
 
+void PluginManager::setToolRegistry(IToolRegistry* registry) {
+    m_toolRegistry = registry;
+}
+
+void PluginManager::setMemoryStore(IMemoryStore* store) {
+    m_memoryStore = store;
+}
+
+void PluginManager::setProviderCatalog(IProviderCatalog* catalog) {
+    m_providerCatalog = catalog;
+}
+
 int PluginManager::discoverPlugins(const QString& searchDir) {
     QString targetDir = searchDir.isEmpty() ? m_pluginStorageDir : searchDir;
     QDir dir(targetDir);
@@ -234,6 +246,9 @@ bool PluginManager::initializePlugin(const QString& pluginId) {
         desc.manifest.permissions
     );
 
+    // Inject core services into plugin context
+    injectCoreServices(context.get());
+
     desc.context = context;
     if (!desc.instance->initialize(context)) {
         desc.errorString = QStringLiteral("Plugin initialize() returned false");
@@ -321,6 +336,101 @@ bool PluginManager::unloadPlugin(const QString& pluginId) {
     return true;
 }
 
+bool PluginManager::reloadPlugin(const QString& pluginId) {
+    if (!m_plugins.contains(pluginId)) {
+        qWarning() << QStringLiteral("PluginManager::reloadPlugin: Plugin '%1' not found").arg(pluginId);
+        return false;
+    }
+
+    auto& desc = m_plugins[pluginId];
+    PluginState previousState = desc.state;
+
+    qDebug() << QStringLiteral("PluginManager::reloadPlugin: Reloading plugin '%1' (previous state: %2)")
+                    .arg(pluginId)
+                    .arg(static_cast<int>(previousState));
+
+    // Unload the plugin completely
+    if (!unloadPlugin(pluginId)) {
+        emit pluginReloadFailed(pluginId, QStringLiteral("Failed to unload plugin"));
+        return false;
+    }
+
+    // Re-discover the plugin (in case manifest changed)
+    QString pluginDir = QFileInfo(desc.pluginFilePath).absoluteDir().absolutePath();
+    discoverPlugins(pluginDir);
+
+    // Reload and restore previous state
+    if (!loadPlugin(pluginId)) {
+        emit pluginReloadFailed(pluginId, QStringLiteral("Failed to load plugin after unload"));
+        return false;
+    }
+
+    // Restore to the previous state
+    if (previousState >= PluginState::Initialized) {
+        if (!initializePlugin(pluginId)) {
+            emit pluginReloadFailed(pluginId, QStringLiteral("Failed to initialize plugin after reload"));
+            return false;
+        }
+    }
+
+    if (previousState >= PluginState::Active) {
+        if (!startPlugin(pluginId)) {
+            emit pluginReloadFailed(pluginId, QStringLiteral("Failed to start plugin after reload"));
+            return false;
+        }
+    }
+
+    qDebug() << QStringLiteral("PluginManager::reloadPlugin: Successfully reloaded plugin '%1'").arg(pluginId);
+    emit pluginReloaded(pluginId);
+    return true;
+}
+
+void PluginManager::enableHotReload(bool enabled) {
+    if (enabled == m_hotReloadEnabled) {
+        return;
+    }
+
+    m_hotReloadEnabled = enabled;
+
+    if (enabled) {
+        if (!m_hotReloader) {
+            m_hotReloader = std::make_unique<PluginHotReloader>(this, this);
+            connect(m_hotReloader.get(), &PluginHotReloader::reloadRequested,
+                    this, &PluginManager::onHotReloadRequested);
+        }
+
+        HotReloadConfig config;
+        config.enabled = true;
+        config.watchedDirs << m_pluginStorageDir;
+        m_hotReloader->setConfig(config);
+        m_hotReloader->startWatching();
+
+        qDebug() << "PluginManager: Hot-reload enabled";
+    } else {
+        if (m_hotReloader) {
+            m_hotReloader->stopWatching();
+        }
+        qDebug() << "PluginManager: Hot-reload disabled";
+    }
+}
+
+bool PluginManager::isHotReloadEnabled() const {
+    return m_hotReloadEnabled;
+}
+
+void PluginManager::setHotReloadConfig(const HotReloadConfig& config) {
+    if (m_hotReloader) {
+        m_hotReloader->setConfig(config);
+    }
+}
+
+HotReloadConfig PluginManager::hotReloadConfig() const {
+    if (m_hotReloader) {
+        return m_hotReloader->config();
+    }
+    return {};
+}
+
 bool PluginManager::initializeAll() {
     bool allSuccess = true;
     for (const QString& id : m_orderedIds) {
@@ -391,11 +501,26 @@ ISentinelPlugin* PluginManager::pluginInstance(const QString& pluginId) const {
     return m_plugins.value(pluginId).instance;
 }
 
+void PluginManager::onHotReloadRequested(const QString& pluginId) {
+    qDebug() << QStringLiteral("PluginManager: Hot-reload requested for plugin '%1'").arg(pluginId);
+    reloadPlugin(pluginId);
+}
+
 void PluginManager::updateState(PluginDescriptor& desc, PluginState newState) {
     if (desc.state != newState) {
         desc.state = newState;
         emit pluginStateChanged(desc.manifest.id, newState);
     }
+}
+
+void PluginManager::injectCoreServices(PluginContext* context) {
+    if (!context) {
+        return;
+    }
+
+    context->setToolRegistry(m_toolRegistry);
+    context->setMemoryStore(m_memoryStore);
+    context->setProviderCatalog(m_providerCatalog);
 }
 
 } // namespace sentinel::core::plugin

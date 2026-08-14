@@ -377,6 +377,7 @@ void OllamaModelPuller::pull(const QString& modelId) {
     const QByteArray payload = QJsonDocument(body).toJson(QJsonDocument::Compact);
 
     pullTimer_.start();
+    pullBuffer_.clear();
     setState(true, trimmed, 0.0, QStringLiteral("Starting pull…"), QString());
 
     reply_ = nam_->post(request, payload);
@@ -385,13 +386,13 @@ void OllamaModelPuller::pull(const QString& modelId) {
     QObject::connect(reply_, &QNetworkReply::readyRead, this, [this]() {
         if (!reply_)
             return;
-        const QByteArray data = reply_->readAll();
-        // Ollama sends newline-delimited JSON — split and process each line
-        const auto lines = data.split('\n');
-        for (const auto& line : lines) {
-            const auto trimmedLine = line.trimmed();
-            if (!trimmedLine.isEmpty()) {
-                processChunk(trimmedLine);
+        pullBuffer_.append(reply_->readAll());
+        for (auto newline = pullBuffer_.indexOf('\n'); newline >= 0;
+             newline = pullBuffer_.indexOf('\n')) {
+            const auto line = pullBuffer_.left(newline).trimmed();
+            pullBuffer_.remove(0, newline + 1);
+            if (!line.isEmpty()) {
+                processChunk(line);
             }
         }
     });
@@ -413,6 +414,11 @@ void OllamaModelPuller::pull(const QString& modelId) {
             emit pullFinished(model, false);
             return;
         }
+
+        if (!pullBuffer_.trimmed().isEmpty()) {
+            processChunk(pullBuffer_.trimmed());
+        }
+        pullBuffer_.clear();
 
         if (networkError) {
             setState(false, model, 0.0, QString(),
@@ -456,6 +462,10 @@ void OllamaModelPuller::removeModel(const QString& modelId) {
 
     QObject::connect(reply, &QNetworkReply::finished, this, [this, reply, trimmed]() {
         const bool success = (reply->error() == QNetworkReply::NoError);
+        if (!success) {
+            setState(false, trimmed, 0.0, QString(),
+                     QStringLiteral("Delete failed: Ollama is not running or rejected the request."));
+        }
         reply->deleteLater();
         emit removeFinished(trimmed, success);
     });

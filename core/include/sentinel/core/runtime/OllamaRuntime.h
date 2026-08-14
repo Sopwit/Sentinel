@@ -196,6 +196,7 @@ private:
     class QNetworkAccessManager* nam_ = nullptr;
     class QNetworkReply* reply_ = nullptr;
     QElapsedTimer pullTimer_;
+    QByteArray pullBuffer_;
 };
 
 // ── OllamaLibraryFetcher ──────────────────────────────────────────────────────

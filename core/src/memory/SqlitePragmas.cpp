@@ -19,6 +19,9 @@ void applySqlitePerformancePragmas(QSqlDatabase& database) {
     query.exec(QStringLiteral("PRAGMA busy_timeout = 5000"));
     query.exec(QStringLiteral("PRAGMA cache_size = -16384"));
     query.exec(QStringLiteral("PRAGMA temp_store = MEMORY"));
+    query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
+    query.exec(QStringLiteral("PRAGMA wal_autocheckpoint = 1000"));
+    query.exec(QStringLiteral("PRAGMA wal_checkpoint(PASSIVE)"));
 }
 
 } // namespace sentinel::core

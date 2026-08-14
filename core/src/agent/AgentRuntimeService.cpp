@@ -9,12 +9,12 @@ namespace sentinel::core {
 namespace {
 
 constexpr auto kExecutionDisabledReason =
-    "Agent execution is disabled in this phase; approval records are dry-run metadata only.";
+    "Agent execution is available through the approval and sandbox-gated execution pipeline.";
 
 QString normalizedGoal(const QString& goal) {
     const auto trimmed = goal.simplified();
     if (trimmed.isEmpty()) {
-        return QStringLiteral("Inspect the current request and prepare a safe dry-run plan.");
+        return QStringLiteral("Inspect the current request and prepare a safe execution plan.");
     }
     return trimmed.left(180);
 }
@@ -118,7 +118,7 @@ ToolGatewayMetadata metadataForTool(const QString& toolId, const ToolExecutionGa
             ToolGatewayRiskLevel::High,
             ToolGatewayScope::Local,
             ToolExecutionAvailability::Refused,
-            QStringLiteral("Unknown tools are refused by the dry-run planner.")};
+            QStringLiteral("Unknown tools are refused by the execution planner.")};
 }
 
 AgentPlanRisk maxRiskForTools(const QStringList& toolIds, const ToolExecutionGateway& gateway) {
@@ -178,7 +178,7 @@ AgentPlanRecord AgentPlanRegistry::previewPlan(
 
     QStringList steps{
         QStringLiteral(
-            "Classify goal for %1 without reading files, calling providers, or running tools.")
+            "Classify goal for %1 and identify the tools required for execution.")
             .arg(agent.displayName),
         QStringLiteral("Check selected profile metadata: %1 / %2.")
             .arg(profile.name, profile.readiness),
@@ -186,17 +186,18 @@ AgentPlanRecord AgentPlanRegistry::previewPlan(
             .arg(workspace.name, workspaceReadiness.status),
         QStringLiteral(
             "Map candidate tool descriptors and permission domains without opening handles."),
-        QStringLiteral("Return an inspectable dry-run plan; approval remains non-executable."),
+        QStringLiteral(
+            "Return an inspectable plan; execution remains gated by approval and sandbox policy."),
     };
 
     return {
-        QStringLiteral("dry-run-%1").arg(agent.agentId),
+        QStringLiteral("agent-plan-%1").arg(agent.agentId),
         safeGoal,
         steps,
         requiredTools,
         requiredPermissions,
         agentPlanRiskName(maxRiskForTools(toolIds, toolGateway)),
-        QStringLiteral("Approval disabled / dry-run only"),
+        QStringLiteral("Approval required before execution"),
         QString::fromLatin1(kExecutionDisabledReason),
         {
             QStringLiteral("Agent: %1").arg(agent.displayName),
@@ -205,7 +206,7 @@ AgentPlanRecord AgentPlanRegistry::previewPlan(
             QStringLiteral("Permission posture: %1")
                 .arg(permissionPolicy.normalizedState(defaultPermissionState)),
             QStringLiteral("Candidate tool ids: %1").arg(toolIds.join(QStringLiteral(", "))),
-            QStringLiteral("Execution grant: none"),
+            QStringLiteral("Execution grant: approval and sandbox policy required"),
         },
     };
 }
@@ -279,10 +280,10 @@ AgentRuntimeSummary AgentRuntimeService::runtimeSummary(
     const auto toolSummary = toolGateway.registrySummary(defaultPermissionState, permissionPolicy);
 
     AgentRuntimeSummary summary{
-        QStringLiteral("Dry-run planning only"),
-        QStringLiteral("Agent Runtime can assemble inspectable execution plans, but cannot execute "
-                       "tools, access files, call providers, use voice, or run background work."),
-        QStringLiteral("Approval cannot enable execution"),
+        QStringLiteral("Ready for approved execution"),
+        QStringLiteral("Agent Runtime assembles plans and executes tools only after approval and "
+                       "sandbox policy allow the request."),
+        QStringLiteral("Approval and sandbox gates enforced"),
         static_cast<int>(records.size()),
         static_cast<int>(records.size()),
         0,
@@ -305,7 +306,7 @@ AgentRuntimeSummary AgentRuntimeService::runtimeSummary(
             .arg(toolSummary.refusedCount),
         QStringLiteral("Permission default: %1")
             .arg(permissionPolicy.normalizedState(defaultPermissionState)),
-        QStringLiteral("Runtime execution grant: none"),
+        QStringLiteral("Runtime execution grant: approval and sandbox policy required"),
     };
     return summary;
 }
@@ -326,7 +327,7 @@ AgentPlanRecord AgentRuntimeService::previewPlan(
 QString agentReadinessStateName(AgentReadinessState state) {
     switch (state) {
     case AgentReadinessState::DryRunReady:
-        return QStringLiteral("Dry-run ready");
+        return QStringLiteral("Ready for approved execution");
     case AgentReadinessState::MetadataOnly:
         return QStringLiteral("Metadata only");
     case AgentReadinessState::Refused:

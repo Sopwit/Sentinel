@@ -631,7 +631,7 @@ private slots:
     void exposesOllamaRuntimeBoundaryMetadata();
     void exposesLocalInferenceBoundaryMetadata();
     void exposesSelectedModelDefaultAndFallback();
-    void modelManagementRecommendationsAreDeterministicAndActionsUnavailable();
+    void modelManagementRecommendationsAreDeterministicAndActionsAvailable();
     void exposesModelManagementReadinessMetadata();
     void exposesVoiceReadinessMetadata();
     void validatesConfiguredVoicePathsAsMetadataOnly();
@@ -916,19 +916,18 @@ void ApplicationControllerTest::exposesModelRoutingMetadata() {
     const auto controller = makeController();
 
     QCOMPARE(controller->currentRoutingMode(), QStringLiteral("Local Only"));
-    QCOMPARE(controller->modelRoutingStatus(), QStringLiteral("Routed"));
+    QCOMPARE(controller->modelRoutingStatus(), QStringLiteral("No Available Model"));
     QCOMPARE(controller->selectedModelProviderSummary(),
-             QStringLiteral("Local Only -> Local Metadata Provider / Sentinel Local Placeholder"));
+             QStringLiteral("No configured model route is available."));
 }
 
 void ApplicationControllerTest::exposesTaskPlanMetadata() {
     const auto controller = makeController();
 
-    QCOMPARE(controller->latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
-    QCOMPARE(controller->plannedTaskStepCount(), 2);
+    QCOMPARE(controller->latestTaskPlanStatus(), QStringLiteral("Blocked"));
+    QCOMPARE(controller->plannedTaskStepCount(), 0);
     QCOMPARE(controller->latestTaskPlanSummary(),
-             QStringLiteral("Unknown task uses safe local metadata fallback: Local Metadata "
-                            "Provider / Sentinel Local Placeholder."));
+             QStringLiteral("No available local metadata capability can satisfy this task."));
     QCOMPARE(controller->currentMemoryAffinitySummary(),
              QStringLiteral("Ambient (Available, Public Metadata, Session)"));
 }
@@ -952,7 +951,7 @@ void ApplicationControllerTest::exposesProviderCatalogMetadata() {
     QCOMPARE(controller->providerCatalogCount(), 4);
     QCOMPARE(controller->providerCatalogSummaries().size(), 4);
     QVERIFY(controller->providerCatalogSummaries().contains(
-        QStringLiteral("Local Metadata Provider (Local, Available)")));
+         QStringLiteral("Ollama Local (Local, Not Configured)")));
     QVERIFY(controller->providerCatalogSummaries().contains(
         QStringLiteral("OpenAI Cloud (Cloud, Not Configured)")));
 }
@@ -974,10 +973,10 @@ void ApplicationControllerTest::exposesOrchestrationSnapshotMetadata() {
     const auto controller = makeController();
     const auto snapshot = controller->currentOrchestrationSnapshot();
 
-    QCOMPARE(snapshot.healthStatus, sentinel::core::OrchestrationHealthStatus::Ready);
+    QCOMPARE(snapshot.healthStatus, sentinel::core::OrchestrationHealthStatus::Degraded);
     QCOMPARE(snapshot.workspace.routingMode, QStringLiteral("Local Only"));
-    QCOMPARE(snapshot.workspace.routingStatus, QStringLiteral("Routed"));
-    QCOMPARE(snapshot.workspace.taskPlanStatus, QStringLiteral("Fallback Planned"));
+    QCOMPARE(snapshot.workspace.routingStatus, QStringLiteral("No Available Model"));
+    QCOMPARE(snapshot.workspace.taskPlanStatus, QStringLiteral("Blocked"));
     QCOMPARE(snapshot.workspace.providerCatalogCount, 4);
     QCOMPARE(snapshot.workspace.registeredAgentCount, 6);
     QCOMPARE(snapshot.workspace.memoryCatalogCount, 5);
@@ -986,7 +985,7 @@ void ApplicationControllerTest::exposesOrchestrationSnapshotMetadata() {
     QCOMPARE(snapshot.workspace.memoryAffinitySummary,
              QStringLiteral("Ambient (Available, Public Metadata, Session)"));
     QVERIFY(!snapshot.executionEnabled);
-    QCOMPARE(controller->orchestrationSnapshotStatus(), QStringLiteral("Ready"));
+    QCOMPARE(controller->orchestrationSnapshotStatus(), QStringLiteral("Degraded"));
     QVERIFY(controller->orchestrationSnapshotSummary().contains(
         QStringLiteral("4 provider entries, 6 agents, 5 memory categories")));
     QVERIFY(controller->orchestrationSignals().contains(
@@ -997,11 +996,11 @@ void ApplicationControllerTest::exposesOrchestrationReadinessDiagnostics() {
     const auto controller = makeController();
     const auto report = controller->currentOrchestrationReadinessReport();
 
-    QCOMPARE(report.status, QStringLiteral("Ready"));
+    QCOMPARE(report.status, QStringLiteral("Blocked"));
     QCOMPARE(report.checks.size(), 10);
-    QCOMPARE(controller->orchestrationReadinessStatus(), QStringLiteral("Ready"));
+    QCOMPARE(controller->orchestrationReadinessStatus(), QStringLiteral("Blocked"));
     QCOMPARE(controller->orchestrationReadinessSummary(),
-             QStringLiteral("Ready orchestration readiness: 10 deterministic metadata checks, 10 "
+             QStringLiteral("Blocked orchestration readiness: 10 deterministic metadata checks, 10 "
                             "diagnostic entries."));
     QVERIFY(controller->orchestrationDiagnostics().contains(
         QStringLiteral("Info: Routing Mode - Local Only routing mode is set.")));
@@ -1193,8 +1192,8 @@ void ApplicationControllerTest::exposesLocalRuntimeMetadata() {
         QStringLiteral("Pass: Model Discovery - Installed model discovery boundary is available "
                        "for read-only local metadata.")));
     QVERIFY(controller->runtimeIntegrationReadinessChecks().contains(
-        QStringLiteral("Blocked: Execution Permission - Execution lifecycle, runtime permission, "
-                       "safety, and pipeline boundaries still block execution.")));
+        QStringLiteral("Blocked: Execution Permission - Execution is blocked until runtime "
+                       "readiness passes.")));
 }
 
 void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
@@ -1249,7 +1248,7 @@ void ApplicationControllerTest::exposesRuntimeProviderRegistryMetadata() {
     QVERIFY(controller->providerCredentialSafetySummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("cloudRequests=refused")));
-    QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 4);
+    QCOMPARE(controller->availableLocalRuntimeSummaries().size(), 3);
 }
 
 void ApplicationControllerTest::disabledRuntimeProviderSelectionFallsBackToLocalOllama() {
@@ -1331,10 +1330,10 @@ void ApplicationControllerTest::exposesSelectedModelDefaultAndFallback() {
 }
 
 void ApplicationControllerTest::
-    modelManagementRecommendationsAreDeterministicAndActionsUnavailable() {
+    modelManagementRecommendationsAreDeterministicAndActionsAvailable() {
     StaticModelManagementService service;
 
-    QCOMPARE(modelManagementStatusName(service.status()), QStringLiteral("Metadata Only"));
+    QCOMPARE(modelManagementStatusName(service.status()), QStringLiteral("Available"));
     const auto recommendations = service.recommendations();
     QCOMPARE(recommendations.size(), 3);
     QCOMPARE(recommendations.at(0).modelName, QStringLiteral("llama3.2:3b"));
@@ -1348,9 +1347,9 @@ void ApplicationControllerTest::
 
     const auto result = service.evaluate(
         ModelManagementRequest{ModelManagementAction::Pull, QStringLiteral("llama3.2:3b")});
-    QVERIFY(!result.available);
-    QCOMPARE(modelManagementStatusName(result.status), QStringLiteral("Not Implemented"));
-    QVERIFY(result.summary.contains(QStringLiteral("future scoped")));
+    QVERIFY(result.available);
+    QCOMPARE(modelManagementStatusName(result.status), QStringLiteral("Available"));
+    QVERIFY(result.summary.contains(QStringLiteral("live Ollama model manager")));
     QCOMPARE(service.recommendations().at(0).modelName, recommendations.at(0).modelName);
     QCOMPARE(service.requirementSummaries().at(0).summary, requirements.at(0).summary);
 }
@@ -1364,16 +1363,16 @@ void ApplicationControllerTest::exposesModelManagementReadinessMetadata() {
             QList<OllamaModelSummary>{{QStringLiteral("llama3.2"), {}, 10}}),
         nullptr);
 
-    QCOMPARE(controller->modelManagementStatus(), QStringLiteral("Metadata Only"));
+    QCOMPARE(controller->modelManagementStatus(), QStringLiteral("Available"));
     QCOMPARE(controller->modelManagementSummary(),
-             QStringLiteral("Model management readiness is metadata-only: 1 installed local "
-                            "models reported, selected model llama3.2, actions unavailable."));
+             QStringLiteral("Live Ollama model management is available: 1 installed model(s); "
+                            "pull and delete use /api/pull and /api/delete."));
     QVERIFY(controller->modelManagementActionAvailability().contains(
-        QStringLiteral("Pull for llama3.2 is unavailable")));
+        QStringLiteral("Pull available via Ollama /api/pull")));
     QVERIFY(controller->modelManagementActionAvailability().contains(
-        QStringLiteral("Delete for llama3.2 is unavailable")));
+        QStringLiteral("Delete available via Ollama /api/delete")));
     QVERIFY(controller->modelManagementActionAvailability().contains(
-        QStringLiteral("Install for llama3.2 is unavailable")));
+        QStringLiteral("Import/Export are not configured")));
     QCOMPARE(controller->modelRecommendationSummaries().size(), 3);
     QCOMPARE(controller->modelRequirementSummaries().size(), 3);
     QVERIFY(controller->modelRequirementSummaries().first().contains(
@@ -3328,12 +3327,12 @@ void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
     controller->setRoutingModeByName(QStringLiteral("Balanced"));
 
     QCOMPARE(controller->currentRoutingMode(), QStringLiteral("Balanced"));
-    QCOMPARE(controller->modelRoutingStatus(), QStringLiteral("Routed"));
+    QCOMPARE(controller->modelRoutingStatus(), QStringLiteral("No Available Model"));
     QCOMPARE(controller->selectedModelProviderSummary(),
-             QStringLiteral("Balanced -> Local Metadata Provider / Sentinel Local Placeholder"));
+             QStringLiteral("No configured model route is available."));
     QCOMPARE(spy.count(), 1);
     QCOMPARE(taskPlanSpy.count(), 1);
-    QCOMPARE(controller->latestTaskPlanStatus(), QStringLiteral("Fallback Planned"));
+    QCOMPARE(controller->latestTaskPlanStatus(), QStringLiteral("Blocked"));
     QCOMPARE(controller->currentOrchestrationSnapshot().workspace.routingMode,
              QStringLiteral("Balanced"));
     QCOMPARE(controller->currentConversationSession().revision, 2);
@@ -3341,7 +3340,7 @@ void ApplicationControllerTest::updatesModelRoutingModeMetadata() {
              QStringLiteral("Balanced"));
     QVERIFY(controller->contextWindowSummary().contains(QStringLiteral("Balanced route")));
     QCOMPARE(conversationSpy.count(), 1);
-    QCOMPARE(controller->orchestrationSnapshotStatus(), QStringLiteral("Ready"));
+    QCOMPARE(controller->orchestrationSnapshotStatus(), QStringLiteral("Degraded"));
     QCOMPARE(snapshotSpy.count(), 1);
 
     controller->setRoutingModeByName(QStringLiteral("unknown"));

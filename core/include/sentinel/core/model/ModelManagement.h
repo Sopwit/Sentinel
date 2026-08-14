@@ -25,6 +25,7 @@ QString modelManagementActionName(ModelManagementAction action);
 
 enum class ModelManagementStatus : std::uint8_t {
     MetadataOnly,
+    Available,
     Unavailable,
     NotImplemented,
 };

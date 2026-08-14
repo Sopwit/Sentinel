@@ -49,6 +49,9 @@ struct AgentPipelineResult {
     }
 
     ToolExecutionStatus executionStatus() const {
+        if (plan.summary.contains(QStringLiteral("No tool metadata"), Qt::CaseInsensitive)) {
+            return ToolExecutionStatus::EmptyPlan;
+        }
         return execution.status;
     }
 };

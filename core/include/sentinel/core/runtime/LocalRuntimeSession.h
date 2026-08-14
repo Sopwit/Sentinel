@@ -10,6 +10,8 @@
 
 #include <cstdint>
 
+#include "sentinel/core/runtime/OllamaRuntime.h"
+
 namespace sentinel::core {
 
 struct LocalRuntimeSessionId {
@@ -101,6 +103,16 @@ class NullLocalRuntimeSessionManager final : public ILocalRuntimeSessionManager 
 public:
     QList<LocalRuntimeSession> sessions() const override;
     LocalRuntimeSession currentSession() const override;
+};
+
+class OllamaRuntimeSessionManager final : public ILocalRuntimeSessionManager {
+public:
+    explicit OllamaRuntimeSessionManager(OllamaConfig config = OllamaConfig{});
+    QList<LocalRuntimeSession> sessions() const override;
+    LocalRuntimeSession currentSession() const override;
+
+private:
+    OllamaConfig config_;
 };
 
 } // namespace sentinel::core

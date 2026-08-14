@@ -12,7 +12,7 @@ authority boundaries remain unchanged:
 - No hidden cloud calls.
 - No silent update checks.
 - No automatic downloads or installs.
-- No autonomous tool or agent execution.
+- No autonomous tool or agent execution without the configured approval policy.
 
 Release-candidate references:
 
@@ -42,8 +42,8 @@ Sentinel 1.0-RC7 includes a comprehensive desktop companion core and native UI s
 - **Command Palette**: Universal keyboard shortcut (`Ctrl/Cmd+K`) for quick navigation, mode toggles, and chat history export actions.
 - **Native Companion Integration**: Native system tray and menu bar adapter backed by `QSystemTrayIcon` for quick access.
 - **Theme & Accessibility**: Curated styles (Liquid Glass Light - default, Liquid Glass Dark, Sentinel Classic, Midnight Blue, Aurora Teal, Graphite Grey) with transparency, reduced motion, high contrast, and UI density controls.
-- **Security & Privacy Boundaries**: No telemetry, no silent updates, no automatic downloads, and no external cloud calls.
-- **Localization (i18n)**: Translation frameworks and catalog preparation for English and Turkish locales.
+- **Security & Privacy Boundaries**: No telemetry, no hidden cloud calls, no silent updates, and no automatic downloads. Cloud inference is explicit and requires a user-provided API key.
+- **Localization (i18n)**: Translation frameworks and catalogs for the supported application locales.
 - **Persistence separation**: Safe local SQLite databases for Chat History, Brain Memories, and Local RAG metadata, separated from settings JSON.
 
 ## Build & Run

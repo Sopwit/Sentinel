@@ -1398,6 +1398,13 @@ ShellPanel {
                         }
                     }
                 }
+
+                RuntimeStateStrip {
+                    Layout.fillWidth: true
+                    visible: homeChat.inChatMode
+                    viewModel: homeChat.viewModel
+                    accent: homeChat.modeAccent
+                }
             }
 
             RowLayout {

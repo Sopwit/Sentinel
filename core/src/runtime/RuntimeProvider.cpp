@@ -27,12 +27,12 @@ RuntimeProviderDescriptor disabledCloudProviderDescriptor(const QString& provide
     return RuntimeProviderDescriptor{
         providerId,
         displayName,
-        QStringLiteral("disabled-placeholder-ready"),
+        QStringLiteral("credentials-required"),
         RuntimeReadinessState::Disabled,
-        QStringLiteral("Disabled placeholder only; no API key storage or cloud execution exists."),
-        QStringLiteral("No endpoint configured"),
-        QStringLiteral("No model metadata"),
-        QStringLiteral("%1 is placeholder-ready for future configuration metadata only.")
+        QStringLiteral("Provider is unavailable until a user API key is configured."),
+        QStringLiteral("Provider-specific HTTPS endpoint"),
+        QStringLiteral("No provider model metadata"),
+        QStringLiteral("%1 requires credentials and a successful provider API health/model check.")
             .arg(displayName),
         RuntimeCapabilitySet{
             false,
@@ -113,7 +113,7 @@ QString runtimeProviderCardSummary(const RuntimeProviderDescriptor& provider) {
     return QStringLiteral("%1 - %2 - %3 - %4")
         .arg(provider.displayName, runtimeReadinessStateName(provider.readiness),
              provider.capabilities.localOnly ? QStringLiteral("Local Only")
-                                             : QStringLiteral("External/API placeholder"),
+                                              : QStringLiteral("External/API"),
              runtimeCapabilitySummary(provider.capabilities));
 }
 

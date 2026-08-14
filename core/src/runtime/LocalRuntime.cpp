@@ -4,6 +4,8 @@
 
 #include "sentinel/core/runtime/LocalRuntime.h"
 
+#include <utility>
+
 namespace sentinel::core {
 
 QString localRuntimeCapabilitySummary(const LocalRuntimeCapability& capability) {
@@ -80,6 +82,47 @@ LocalRuntimeResponse NullLocalRuntime::evaluate(const LocalRuntimeRequest& reque
         QStringLiteral("Refused"),
         QStringLiteral("Local runtime boundary is metadata-only; execution is disabled."),
     };
+}
+
+OllamaLocalRuntime::OllamaLocalRuntime(OllamaConfig config) : config_(std::move(config)) {}
+
+LocalRuntimeDescriptor OllamaLocalRuntime::descriptor() const {
+    const OllamaHttpRuntimeClient client(config_, config_.healthCheckTimeoutMs);
+    const auto health = client.healthCheck();
+    const auto models = client.installedModels();
+    const bool ready = health.healthStatus == OllamaHealthStatus::Healthy && !models.isEmpty();
+    return {
+        QStringLiteral("ollama-local-runtime"),
+        QStringLiteral("Ollama Local Runtime"),
+        ready ? QStringLiteral("Ollama is ready with %1 installed model(s).")
+                    .arg(models.size())
+              : safeOllamaHealthSummary(health),
+        ready ? LocalRuntimeStatus::Active : LocalRuntimeStatus::Unavailable,
+        ready ? LocalRuntimeHealth::Ready : LocalRuntimeHealth::Unavailable,
+        {
+            {QStringLiteral("local-runtime.metadata"), QStringLiteral("Runtime Metadata"),
+             QStringLiteral("Live Ollama health and model metadata."), true},
+            {QStringLiteral("local-runtime.inference"), QStringLiteral("Local Inference"),
+             ready ? QStringLiteral("Inference is available through Ollama.")
+                   : QStringLiteral("Ollama health and at least one installed model are required."),
+             ready},
+            {QStringLiteral("local-runtime.streaming"), QStringLiteral("Streaming"),
+             ready ? QStringLiteral("Streaming is available through the Ollama stream endpoint.")
+                   : QStringLiteral("Streaming is unavailable until Ollama is ready."),
+             ready},
+        },
+    };
+}
+
+LocalRuntimeResponse OllamaLocalRuntime::evaluate(const LocalRuntimeRequest& request) const {
+    if (request.prompt.trimmed().isEmpty()) {
+        return {false, QStringLiteral("Invalid Request"), QStringLiteral("Prompt is blank.")};
+    }
+    const auto state = descriptor();
+    return {state.health == LocalRuntimeHealth::Ready,
+            state.health == LocalRuntimeHealth::Ready ? QStringLiteral("Ready")
+                                                       : QStringLiteral("Unavailable"),
+            state.summary};
 }
 
 } // namespace sentinel::core

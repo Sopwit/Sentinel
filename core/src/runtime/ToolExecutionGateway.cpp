@@ -168,6 +168,29 @@ ToolExecutionGateway::registrySummary(const QString& defaultPermissionState,
     return registry;
 }
 
+ToolExecutionResult ToolExecutionGateway::execute(const ToolExecutionRequest& request,
+                                                  const IToolExecutor& executor) const {
+    QStringList knownToolIds;
+    for (const ToolGatewayMetadata& metadata : toolMetadata()) {
+        knownToolIds.append(metadata.toolId);
+    }
+
+    ToolExecutionRequest gatedRequest = request;
+    if (gatedRequest.knownToolIds.isEmpty()) {
+        gatedRequest.knownToolIds = knownToolIds;
+    }
+    if (gatedRequest.plan.status != ToolInvocationPlanStatus::Planned ||
+        gatedRequest.plan.invocations.isEmpty()) {
+        return executor.execute(gatedRequest);
+    }
+    if (gatedRequest.approval.status != ApprovalStatus::Approved &&
+        gatedRequest.approval.status != ApprovalStatus::NotRequired) {
+        return {ToolExecutionStatus::Blocked,
+                QStringLiteral("Tool gateway blocked execution until explicit approval is granted.")};
+    }
+    return executor.execute(gatedRequest);
+}
+
 QString toolGatewayRiskLevelName(ToolGatewayRiskLevel riskLevel) {
     switch (riskLevel) {
     case ToolGatewayRiskLevel::Low:

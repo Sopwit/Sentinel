@@ -32,6 +32,7 @@ StatusPulse 1.0 components/base/StatusPulse.qml
 
 # Chat Components
 HomeChatSurface 1.0 components/chat/HomeChatSurface.qml
+RuntimeStateStrip 1.0 components/chat/RuntimeStateStrip.qml
 ActiveAgentsPanel 1.0 components/chat/ActiveAgentsPanel.qml
 CognitionStreamPanel 1.0 components/chat/CognitionStreamPanel.qml
 

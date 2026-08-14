@@ -38,8 +38,8 @@ AgentStatus NullAgentRuntime::status() const {
 QList<AgentCapabilityDescriptor> NullAgentRuntime::capabilities() const {
     return {
         {
-            QStringLiteral("placeholder-local-response"),
-            QStringLiteral("Deterministic local placeholder response with no tool execution."),
+            QStringLiteral("local-plan-execution"),
+            QStringLiteral("Executes approved local planning tools through the tool gateway."),
             true,
         },
     };

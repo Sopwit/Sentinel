@@ -18,7 +18,7 @@ class StaticProviderCatalogTest final : public QObject {
 
 private slots:
     void namesCatalogMetadata();
-    void exposesDeterministicPlaceholderEntries();
+    void exposesDeterministicUnavailableEntries();
     void classifiesLocalAndCloudMetadata();
     void keepsCloudPlaceholdersNotConfigured();
     void exposesOnlyAvailableProviderAndModelDescriptors();
@@ -32,18 +32,18 @@ void StaticProviderCatalogTest::namesCatalogMetadata() {
              QStringLiteral("Cloud Metadata Only"));
 }
 
-void StaticProviderCatalogTest::exposesDeterministicPlaceholderEntries() {
+void StaticProviderCatalogTest::exposesDeterministicUnavailableEntries() {
     const StaticProviderCatalog catalog;
     const auto entries = catalog.entries();
 
     QCOMPARE(entries.size(), 4);
     QCOMPARE(entries.at(0).descriptor.id, QStringLiteral("anthropic-cloud"));
-    QCOMPARE(entries.at(1).descriptor.id, QStringLiteral("local-placeholder"));
+    QCOMPARE(entries.at(1).descriptor.id, QStringLiteral("ollama-local"));
     QCOMPARE(entries.at(2).descriptor.id, QStringLiteral("ollama-local"));
     QCOMPARE(entries.at(3).descriptor.id, QStringLiteral("openai-cloud"));
-    QCOMPARE(entries.at(1).descriptor.name, QStringLiteral("Local Metadata Provider"));
+    QCOMPARE(entries.at(1).descriptor.name, QStringLiteral("Ollama Local Provider"));
     QCOMPARE(entries.at(1).models.first().descriptor.name,
-             QStringLiteral("Sentinel Local Placeholder"));
+             QStringLiteral("Ollama Local (not configured)"));
 }
 
 void StaticProviderCatalogTest::classifiesLocalAndCloudMetadata() {
@@ -84,10 +84,8 @@ void StaticProviderCatalogTest::exposesOnlyAvailableProviderAndModelDescriptors(
     const auto providers = catalog.availableProviders();
     const auto models = catalog.availableModels();
 
-    QCOMPARE(providers.size(), 1);
-    QCOMPARE(models.size(), 1);
-    QCOMPARE(providers.first().id, QStringLiteral("local-placeholder"));
-    QCOMPARE(models.first().id, QStringLiteral("sentinel-local-placeholder"));
+    QCOMPARE(providers.size(), 0);
+    QCOMPARE(models.size(), 0);
     QCOMPARE(catalog.providerSummaries().size(), 4);
 }
 

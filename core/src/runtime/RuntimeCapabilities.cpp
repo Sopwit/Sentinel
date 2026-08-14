@@ -189,6 +189,44 @@ StaticRuntimeCapabilityRegistry::StaticRuntimeCapabilityRegistry(
     sortCapabilities(capabilities_);
 }
 
+OllamaRuntimeCapabilityRegistry::OllamaRuntimeCapabilityRegistry(OllamaConfig config)
+    : config_(std::move(config)) {}
+
+QList<RuntimeCapabilityDescriptor> OllamaRuntimeCapabilityRegistry::capabilities() const {
+    const OllamaHttpRuntimeClient client(config_, config_.healthCheckTimeoutMs);
+    const auto health = client.healthCheck();
+    const auto models = client.installedModels();
+    const bool ready = health.healthStatus == OllamaHealthStatus::Healthy && !models.isEmpty();
+    const auto state = ready ? RuntimeCapabilityState::Enabled : RuntimeCapabilityState::Unavailable;
+    return {
+        {QStringLiteral("local-inference"), QStringLiteral("Local Inference"),
+         RuntimeCapabilityGroup::Inference, state,
+         ready ? QStringLiteral("Ollama inference is available.")
+               : QStringLiteral("Ollama health and an installed model are required.")},
+        {QStringLiteral("streaming"), QStringLiteral("Streaming"),
+         RuntimeCapabilityGroup::Inference, state,
+         ready ? QStringLiteral("Ollama streaming endpoint is available.")
+               : QStringLiteral("Streaming is unavailable until Ollama is ready.")},
+        {QStringLiteral("memory-binding"), QStringLiteral("Memory Binding"),
+         RuntimeCapabilityGroup::Memory, RuntimeCapabilityState::Enabled,
+         QStringLiteral("Local memory stores are available independently of model health.")},
+        {QStringLiteral("local-only-enforcement"), QStringLiteral("Local-Only Enforcement"),
+         RuntimeCapabilityGroup::Security, RuntimeCapabilityState::Enabled,
+         QStringLiteral("Local endpoint policy is enforced.")},
+    };
+}
+
+RuntimeNegotiationResult OllamaRuntimeCapabilityRegistry::negotiate() const {
+    const auto negotiated = capabilities();
+    return {
+        {QStringLiteral("ollama-runtime-negotiation"), QStringLiteral("Ollama Runtime Negotiation"),
+         true, QStringLiteral("Live Ollama capabilities were health-checked and negotiated.")},
+        negotiated,
+        QStringLiteral("Live Ollama runtime negotiation: %1 capability(ies) enabled.")
+            .arg(enabledRuntimeCapabilitySummaries(negotiated).size()),
+    };
+}
+
 QList<RuntimeCapabilityDescriptor> StaticRuntimeCapabilityRegistry::capabilities() const {
     return capabilities_;
 }

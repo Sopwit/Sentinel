@@ -32,6 +32,7 @@ docs/
 │   ├── data-persistence.md      # SQLite vs JSON Storage Architecture
 │   ├── security-boundaries.md   # Explicit Authority, Tool Boundaries & Sandbox Security
 │   ├── ui-ux-design.md          # QML Shell, Liquid Glass Theme & UI System
+│   ├── opencode-feature-integration.md # OpenCode Analizi & Ajan/Bellek Entegrasyon Planı
 │   └── decisions/               # Architecture Decision Records (ADR)
 │       └── index.md             # ADR Summary & Decision Log Index
 │

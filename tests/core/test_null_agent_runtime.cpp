@@ -21,7 +21,7 @@ class NullAgentRuntimeTest final : public QObject {
 
 private slots:
     void exposesDeterministicIdentityAndStatus();
-    void exposesPlaceholderCapability();
+    void exposesLocalExecutionCapability();
     void exposesMetadataTools();
     void returnsDeterministicMetadataOnlyPlan();
     void reportsEmptyPlanRequest();
@@ -54,12 +54,12 @@ void NullAgentRuntimeTest::exposesDeterministicIdentityAndStatus() {
     QCOMPARE(agentStatusName(runtime.status()), QStringLiteral("Ready"));
 }
 
-void NullAgentRuntimeTest::exposesPlaceholderCapability() {
+void NullAgentRuntimeTest::exposesLocalExecutionCapability() {
     NullAgentRuntime runtime;
     const auto capabilities = runtime.capabilities();
 
     QCOMPARE(capabilities.size(), 1);
-    QCOMPARE(capabilities.first().id, QStringLiteral("placeholder-local-response"));
+    QCOMPARE(capabilities.first().id, QStringLiteral("local-plan-execution"));
     QVERIFY(capabilities.first().enabled);
 }
 

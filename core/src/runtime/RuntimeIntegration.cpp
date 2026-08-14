@@ -4,6 +4,8 @@
 
 #include "sentinel/core/runtime/RuntimeIntegration.h"
 
+#include <utility>
+
 namespace sentinel::core {
 
 QString
@@ -69,6 +71,40 @@ LocalRuntimeAdapterDescriptor StaticLocalRuntimeAdapter::descriptor() const {
     };
 }
 
+OllamaLocalRuntimeAdapter::OllamaLocalRuntimeAdapter(OllamaConfig config)
+    : config_(std::move(config)) {}
+
+LocalRuntimeAdapterDescriptor OllamaLocalRuntimeAdapter::descriptor() const {
+    const OllamaHttpRuntimeClient client(config_, config_.healthCheckTimeoutMs);
+    const auto health = client.healthCheck();
+    const auto models = client.installedModels();
+    const bool connected = health.healthStatus == OllamaHealthStatus::Healthy;
+    const bool executable = connected && !models.isEmpty();
+    return {
+        QStringLiteral("ollama-local-runtime-adapter"),
+        QStringLiteral("Ollama Local Runtime Adapter"),
+        connected ? LocalRuntimeAdapterStatus::Ready : LocalRuntimeAdapterStatus::Unavailable,
+        executable ? LocalRuntimeAdapterHealth::Ready
+                   : (connected ? LocalRuntimeAdapterHealth::NotExecutable
+                                : LocalRuntimeAdapterHealth::NotConnected),
+        executable
+            ? QStringLiteral("Ollama is connected and %1 local model(s) are available.")
+                  .arg(models.size())
+            : safeOllamaHealthSummary(health),
+        {
+            {QStringLiteral("adapter.endpoint-configuration"), QStringLiteral("Endpoint Configuration"),
+             health.endpoint, connected, connected},
+            {QStringLiteral("adapter.model-discovery"), QStringLiteral("Model Discovery"),
+             QStringLiteral("%1 installed model(s) discovered.").arg(models.size()), connected,
+             executable},
+            {QStringLiteral("adapter.inference-execution"), QStringLiteral("Inference Execution"),
+             executable ? QStringLiteral("Local inference is available.")
+                        : QStringLiteral("An installed Ollama model is required."),
+             executable, executable},
+        },
+    };
+}
+
 QString safeProviderRuntimeBridgeSummary(const ProviderRuntimeBridgeSummary& summary) {
     if (!summary.summary.isEmpty()) {
         return summary.summary;
@@ -110,6 +146,30 @@ StaticProviderRuntimeBridge::evaluate(const ProviderRuntimeBridgeRequest& reques
     };
 }
 
+OllamaProviderRuntimeBridge::OllamaProviderRuntimeBridge(OllamaConfig config)
+    : config_(std::move(config)) {}
+
+ProviderRuntimeBridgeSummary OllamaProviderRuntimeBridge::summary() const {
+    const OllamaHttpRuntimeClient client(config_, config_.healthCheckTimeoutMs);
+    const auto health = client.healthCheck();
+    const bool connected = health.healthStatus == OllamaHealthStatus::Healthy;
+    return {
+        QStringLiteral("ollama-provider-runtime-bridge"),
+        connected ? ProviderRuntimeBridgeStatus::Connected
+                  : ProviderRuntimeBridgeStatus::Unavailable,
+        connected ? QStringLiteral("Ollama provider bridge is connected and executable.")
+                  : safeOllamaHealthSummary(health),
+        connected,
+        connected,
+    };
+}
+
+ProviderRuntimeBridgeResponse
+OllamaProviderRuntimeBridge::evaluate(const ProviderRuntimeBridgeRequest& request) const {
+    const auto bridge = summary();
+    return {request, bridge.status, bridge.summary, bridge.connected, bridge.executable};
+}
+
 QString runtimeIntegrationCheckSummary(const RuntimeIntegrationCheck& check) {
     const auto status = check.passed ? QStringLiteral("Pass") : QStringLiteral("Blocked");
     return QStringLiteral("%1: %2 - %3").arg(status, check.name, check.summary);
@@ -137,44 +197,48 @@ RuntimeIntegrationReport
 StaticRuntimeIntegrationReadiness::evaluate(const LocalRuntimeAdapterDescriptor& adapter,
                                             const ProviderRuntimeBridgeSummary& bridge) const {
     RuntimeIntegrationReport report;
-    report.readiness = RuntimeIntegrationReadiness::Blocked;
-    report.executable = false;
-    report.summary = QStringLiteral("Runtime integration readiness is blocked: adapter is "
-                                    "metadata-only, bridge is not connected, and execution "
-                                    "remains disabled.");
+    const bool adapterReady = adapter.status == LocalRuntimeAdapterStatus::Ready &&
+                              adapter.health == LocalRuntimeAdapterHealth::Ready;
+    const bool bridgeReady = bridge.status == ProviderRuntimeBridgeStatus::Connected &&
+                             bridge.connected && bridge.executable;
+    report.readiness = adapterReady && bridgeReady ? RuntimeIntegrationReadiness::Ready
+                                                   : RuntimeIntegrationReadiness::Blocked;
+    report.executable = adapterReady && bridgeReady;
+    report.summary = report.executable
+                         ? QStringLiteral("Ollama runtime integration is connected and executable.")
+                         : QStringLiteral("Runtime integration is not ready: Ollama health and model "
+                                          "availability must pass.");
     report.checks = {
         RuntimeIntegrationCheck{
             QStringLiteral("runtime-integration.adapter-contract"),
             QStringLiteral("Adapter Contract"),
-            adapter.status == LocalRuntimeAdapterStatus::Placeholder,
-            QStringLiteral("Local runtime adapter contract exists as deterministic metadata."),
+            adapterReady,
+            safeLocalRuntimeAdapterSummary(adapter),
         },
         RuntimeIntegrationCheck{
             QStringLiteral("runtime-integration.endpoint"),
             QStringLiteral("Endpoint Configuration"),
-            false,
-            QStringLiteral("No Ollama endpoint, process, or connection configuration exists."),
+            adapter.status != LocalRuntimeAdapterStatus::NotConfigured,
+            QStringLiteral("Ollama endpoint is configured and health-checked."),
         },
         RuntimeIntegrationCheck{
             QStringLiteral("runtime-integration.model-discovery"),
             QStringLiteral("Model Discovery"),
-            false,
-            QStringLiteral("Model discovery is not implemented and no filesystem or runtime scan "
-                           "is performed."),
+            adapter.capabilities.size() > 1 && adapter.capabilities.at(1).available,
+            QStringLiteral("Installed models are discovered through Ollama /api/tags."),
         },
         RuntimeIntegrationCheck{
             QStringLiteral("runtime-integration.provider-bridge"),
             QStringLiteral("Provider Runtime Bridge"),
-            bridge.status == ProviderRuntimeBridgeStatus::NotConnected && !bridge.connected,
-            QStringLiteral("Provider bridge boundary exists but is not connected to a provider or "
-                           "runtime."),
+            bridgeReady,
+            safeProviderRuntimeBridgeSummary(bridge),
         },
         RuntimeIntegrationCheck{
             QStringLiteral("runtime-integration.execution"),
             QStringLiteral("Execution Permission"),
-            false,
-            QStringLiteral("Execution lifecycle, runtime permission, safety, and pipeline "
-                           "boundaries still block execution."),
+            report.executable,
+            report.executable ? QStringLiteral("Execution is available behind policy gates.")
+                              : QStringLiteral("Execution is blocked until runtime readiness passes."),
         },
     };
     return report;

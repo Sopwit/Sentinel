@@ -95,9 +95,9 @@ void ModelRegistryTest::exposesLocalAiEcosystemFoundationMetadata() {
     QVERIFY(registry.installedModelLibrarySummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Installed")));
-    QVERIFY(registry.availableModelLibrarySummaries()
-                .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("LM Studio")));
+    QVERIFY(!registry.availableModelLibrarySummaries()
+                 .join(QStringLiteral("\n"))
+                 .contains(QStringLiteral("LM Studio")));
     QVERIFY(registry.recommendedModelLibrarySummaries()
                 .join(QStringLiteral("\n"))
                 .contains(QStringLiteral("coding")));
@@ -113,10 +113,10 @@ void ModelRegistryTest::exposesLocalAiEcosystemFoundationMetadata() {
     QVERIFY(advisor.join(QStringLiteral("\n")).contains(QStringLiteral("qwen2.5-coder:7b")));
     QVERIFY(sentinel::core::downloadCenterPlaceholderSummaries(registry.models())
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("Execution Disabled")));
+                .contains(QStringLiteral("foreground model manager")));
     QVERIFY(sentinel::core::benchmarkHubPlaceholderSummaries(registry.models())
                 .join(QStringLiteral("\n"))
-                .contains(QStringLiteral("tokens/sec")));
+                .contains(QStringLiteral("no benchmark result recorded")));
 }
 
 QTEST_MAIN(ModelRegistryTest)

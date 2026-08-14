@@ -11,14 +11,14 @@ namespace sentinel::core {
 
 namespace {
 
-ModelCatalogEntry localPlaceholderModel() {
+ModelCatalogEntry unconfiguredLocalModel() {
     return ModelCatalogEntry{
         ModelDescriptor{
             QStringLiteral("sentinel-local-placeholder"),
-            QStringLiteral("Sentinel Local Placeholder"),
-            QStringLiteral("local-placeholder"),
-            true,
-            true,
+            QStringLiteral("Ollama Local (not configured)"),
+             QStringLiteral("ollama-local-not-configured"),
+             true,
+             false,
             8192,
             QStringLiteral("metadata"),
             QStringLiteral("low"),
@@ -30,19 +30,19 @@ ModelCatalogEntry localPlaceholderModel() {
                 taskTypeName(TaskType::Unknown),
             },
         },
-        CatalogAvailability::Available,
+        CatalogAvailability::NotConfigured,
         CatalogPrivacyLevel::LocalOnly,
         2048,
         0,
-        QStringLiteral("Available local metadata placeholder. No model execution."),
+        QStringLiteral("Ollama is not configured; live health and model discovery are required."),
     };
 }
 
-ProviderCatalogEntry localMetadataProvider() {
+ProviderCatalogEntry unconfiguredLocalProvider() {
     return ProviderCatalogEntry{
         ProviderDescriptor{
-            QStringLiteral("local-placeholder"),
-            QStringLiteral("Local Metadata Provider"),
+             QStringLiteral("ollama-local"),
+         QStringLiteral("Ollama Local Provider"),
             ProviderKind::Local,
             ProviderCapabilityProfile{
                 true,
@@ -63,12 +63,12 @@ ProviderCatalogEntry localMetadataProvider() {
                 },
             },
         },
-        CatalogAvailability::Available,
+         CatalogAvailability::NotConfigured,
         CatalogPrivacyLevel::LocalOnly,
         2048,
         0,
-        QStringLiteral("Local Metadata Provider (Local, Available)"),
-        {localPlaceholderModel()},
+         QStringLiteral("Ollama Local (Local, Not Configured)"),
+         {unconfiguredLocalModel()},
     };
 }
 
@@ -94,7 +94,7 @@ ModelCatalogEntry unavailableModel(QString id, QString name, QString providerId,
     };
 }
 
-ProviderCatalogEntry ollamaPlaceholder() {
+ProviderCatalogEntry unconfiguredOllamaProvider() {
     return ProviderCatalogEntry{
         ProviderDescriptor{
             QStringLiteral("ollama-local"),
@@ -125,8 +125,8 @@ ProviderCatalogEntry ollamaPlaceholder() {
     };
 }
 
-ProviderCatalogEntry cloudPlaceholder(QString id, QString name, QString modelId,
-                                      QString modelName) {
+ProviderCatalogEntry unconfiguredCloudProvider(QString id, QString name, QString modelId,
+                                               QString modelName) {
     const auto providerId = id;
     const auto providerName = name;
     return ProviderCatalogEntry{
@@ -165,12 +165,12 @@ ProviderCatalogEntry cloudPlaceholder(QString id, QString name, QString modelId,
 
 QList<ProviderCatalogEntry> defaultEntries() {
     return {
-        localMetadataProvider(),
-        ollamaPlaceholder(),
-        cloudPlaceholder(QStringLiteral("anthropic-cloud"), QStringLiteral("Anthropic Cloud"),
+        unconfiguredLocalProvider(),
+        unconfiguredOllamaProvider(),
+        unconfiguredCloudProvider(QStringLiteral("anthropic-cloud"), QStringLiteral("Anthropic Cloud"),
                          QStringLiteral("anthropic-cloud-placeholder"),
                          QStringLiteral("Anthropic Cloud Placeholder")),
-        cloudPlaceholder(QStringLiteral("openai-cloud"), QStringLiteral("OpenAI Cloud"),
+        unconfiguredCloudProvider(QStringLiteral("openai-cloud"), QStringLiteral("OpenAI Cloud"),
                          QStringLiteral("openai-cloud-placeholder"),
                          QStringLiteral("OpenAI Cloud Placeholder")),
     };

@@ -119,7 +119,7 @@ ModelRoute StaticModelRouter::route(const TaskClassification& task) const {
         task,
         {},
         {},
-        QStringLiteral("No metadata-only model route is available."),
+        QStringLiteral("No configured model route is available."),
         false,
         false,
     };

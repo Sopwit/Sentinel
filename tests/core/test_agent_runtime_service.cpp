@@ -18,7 +18,7 @@ class AgentRuntimeServiceTest final : public QObject {
 
 private slots:
     void exposesBuiltInAgentCatalog();
-    void producesDryRunPlanWithoutExecutionGrant();
+    void producesPlanWithApprovalGate();
     void consultsPermissionToolProfileAndWorkspaceMetadata();
 };
 
@@ -33,14 +33,14 @@ void AgentRuntimeServiceTest::exposesBuiltInAgentCatalog() {
         runtime.runtimeSummary(QStringLiteral("Disabled"), permissions, tools, profiles,
                                QStringLiteral("developer"), workspaces, QStringLiteral("personal"));
 
-    QCOMPARE(summary.status, QStringLiteral("Dry-run planning only"));
+    QCOMPARE(summary.status, QStringLiteral("Ready for approved execution"));
     QCOMPARE(summary.agentCount, 5);
     QCOMPARE(summary.readyAgentCount, 5);
     QCOMPARE(summary.refusedAgentCount, 0);
-    QCOMPARE(summary.approvalPosture, QStringLiteral("Approval cannot enable execution"));
+    QCOMPARE(summary.approvalPosture, QStringLiteral("Approval and sandbox gates enforced"));
     QVERIFY(summary.agentSummaries.join(QStringLiteral("\n"))
                 .contains(QStringLiteral("Coding Assistant")));
-    QVERIFY(summary.summary.contains(QStringLiteral("cannot execute tools")));
+    QVERIFY(summary.summary.contains(QStringLiteral("executes tools only after approval")));
 
     const auto records =
         runtime.agents(QStringLiteral("Disabled"), permissions, tools, profiles,
@@ -62,7 +62,7 @@ void AgentRuntimeServiceTest::exposesBuiltInAgentCatalog() {
     QVERIFY(codingAssistant.capabilitySummary.contains(QStringLiteral("Read File")));
 }
 
-void AgentRuntimeServiceTest::producesDryRunPlanWithoutExecutionGrant() {
+void AgentRuntimeServiceTest::producesPlanWithApprovalGate() {
     const AgentRuntimeService runtime;
     const PermissionPolicyService permissions;
     const ToolExecutionGateway tools;
@@ -74,14 +74,15 @@ void AgentRuntimeServiceTest::producesDryRunPlanWithoutExecutionGrant() {
         QStringLiteral("Enabled"), permissions, tools, profiles, QStringLiteral("developer"),
         workspaces, QStringLiteral("personal"));
 
-    QCOMPARE(plan.planId, QStringLiteral("dry-run-coding-assistant"));
+    QCOMPARE(plan.planId, QStringLiteral("agent-plan-coding-assistant"));
     QCOMPARE(plan.estimatedRisk, QStringLiteral("Critical"));
-    QCOMPARE(plan.approvalState, QStringLiteral("Approval disabled / dry-run only"));
-    QVERIFY(plan.refusalReason.contains(QStringLiteral("execution is disabled")));
+    QCOMPARE(plan.approvalState, QStringLiteral("Approval required before execution"));
+    QVERIFY(plan.refusalReason.contains(QStringLiteral("available through the approval")));
     QVERIFY(plan.requiredTools.join(QStringLiteral("\n")).contains(QStringLiteral("Run Command")));
     QVERIFY(plan.requiredPermissions.join(QStringLiteral("\n"))
                 .contains(QStringLiteral("subprocess-execution / Enabled")));
-    QVERIFY(plan.diagnostics.contains(QStringLiteral("Execution grant: none")));
+    QVERIFY(plan.diagnostics.contains(
+        QStringLiteral("Execution grant: approval and sandbox policy required")));
 }
 
 void AgentRuntimeServiceTest::consultsPermissionToolProfileAndWorkspaceMetadata() {

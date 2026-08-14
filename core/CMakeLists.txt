@@ -13,6 +13,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/agent/AgentRuntimeService.h
     include/sentinel/core/agent/AgentTaskRuntime.h
     include/sentinel/core/agent/ControlledAgentTasks.h
+    include/sentinel/core/agent/DynamicAgentRegistry.h
     include/sentinel/core/agent/IAgentRegistry.h
     include/sentinel/core/agent/IAgentRuntime.h
     include/sentinel/core/agent/NullAgentRuntime.h
@@ -42,14 +43,51 @@ add_library(sentinel_core STATIC
     include/sentinel/core/chat/ConversationStateGraph.h
     include/sentinel/core/chat/IChatHistoryStore.h
     include/sentinel/core/chat/IConversationStore.h
+    include/sentinel/core/chat/IQuestionService.h
     include/sentinel/core/chat/InMemoryConversationStore.h
     include/sentinel/core/chat/LocalEchoProvider.h
-   include/sentinel/core/chat/OllamaChatProvider.h
+    include/sentinel/core/chat/OllamaChatProvider.h
+    include/sentinel/core/chat/QuestionService.h
     include/sentinel/core/chat/SQLiteChatHistoryStore.h
     include/sentinel/core/chat/SQLiteConversationStore.h
+    include/sentinel/core/session/CompactionPrompt.h
+    include/sentinel/core/session/CompactionService.h
+    include/sentinel/core/session/ICompactionService.h
+    include/sentinel/core/session/ITodoService.h
+    include/sentinel/core/session/TodoService.h
+    include/sentinel/core/session/IPromptTemplateService.h
+    include/sentinel/core/session/PromptTemplateService.h
+    include/sentinel/core/session/IInstructionService.h
+    include/sentinel/core/session/InstructionService.h
+    include/sentinel/core/session/ISessionExportService.h
+    include/sentinel/core/session/SessionExportService.h
+    include/sentinel/core/session/ISessionStatusService.h
+    include/sentinel/core/session/SessionStatusService.h
+    include/sentinel/core/session/IUsageStatsService.h
+    include/sentinel/core/session/UsageStatsService.h
+     include/sentinel/core/session/IWorktreeService.h
+    include/sentinel/core/session/WorktreeService.h
+    include/sentinel/core/session/IAutoUpdateService.h
+    include/sentinel/core/session/AutoUpdateService.h
+    include/sentinel/core/session/IStashService.h
+    include/sentinel/core/session/StashService.h
+    include/sentinel/core/session/IMdnsService.h
+    include/sentinel/core/session/MdnsServiceImpl.h
+    include/sentinel/core/session/IWorkspaceManagerService.h
+    include/sentinel/core/session/WorkspaceManagerService.h
     include/sentinel/core/interfaces/IChatProvider.h
     include/sentinel/core/interfaces/IMemoryStore.h
     include/sentinel/core/interfaces/ISettingsStore.h
+    include/sentinel/core/interfaces/IRetryPolicy.h
+    include/sentinel/core/agent/ISubagentService.h
+    include/sentinel/core/agent/SubagentService.h
+    include/sentinel/core/lsp/ILspService.h
+    include/sentinel/core/lsp/LspClient.h
+    include/sentinel/core/lsp/LspService.h
+    include/sentinel/core/mcp/IMcpService.h
+    include/sentinel/core/mcp/McpClient.h
+    include/sentinel/core/mcp/McpService.h
+    include/sentinel/core/mcp/McpToolCatalog.h
     include/sentinel/core/memory/IMemoryCatalog.h
     include/sentinel/core/memory/InMemoryMemoryCandidateStore.h
     include/sentinel/core/memory/InMemorySettingsStore.h
@@ -71,6 +109,12 @@ add_library(sentinel_core STATIC
     include/sentinel/core/model/ProviderCatalog.h
     include/sentinel/core/model/StaticModelRouter.h
     include/sentinel/core/model/StaticProviderCatalog.h
+    include/sentinel/core/observability/IObservabilityService.h
+    include/sentinel/core/observability/ObservabilityService.h
+    include/sentinel/core/job/BackgroundJobService.h
+    include/sentinel/core/job/IJobService.h
+    include/sentinel/core/sharing/ISharingService.h
+    include/sentinel/core/sharing/SharingService.h
     include/sentinel/core/platform/DefaultPlatformService.h
     include/sentinel/core/platform/DpapiEncryptedSettingsStore.h
     include/sentinel/core/platform/INotificationService.h
@@ -85,11 +129,15 @@ add_library(sentinel_core STATIC
     include/sentinel/core/plugin/ISentinelPlugin.h
     include/sentinel/core/plugin/PluginContext.h
     include/sentinel/core/plugin/PluginDependencyResolver.h
+    include/sentinel/core/plugin/PluginHotReloader.h
     include/sentinel/core/plugin/PluginManager.h
     include/sentinel/core/plugin/PluginManifest.h
     include/sentinel/core/plugin/PluginPermissions.h
     include/sentinel/core/plugin/PluginSandbox.h
     include/sentinel/core/plugin/PluginState.h
+    include/sentinel/core/reference/IReferenceService.h
+    include/sentinel/core/reference/Reference.h
+    include/sentinel/core/reference/ReferenceService.h
     include/sentinel/core/runtime/ExecutionLifecycle.h
     include/sentinel/core/runtime/InMemoryToolRegistry.h
     include/sentinel/core/runtime/IToolExecutor.h
@@ -112,23 +160,135 @@ add_library(sentinel_core STATIC
     include/sentinel/core/runtime/ToolExecutionGateway.h
     include/sentinel/core/runtime/ToolInvocationPlan.h
     include/sentinel/core/runtime/ToolSandbox.h
+    include/sentinel/core/runtime/tools/HtmlToMarkdown.h
+    include/sentinel/core/runtime/tools/WebFetchTool.h
+    include/sentinel/core/runtime/tools/WebSearchTool.h
+    include/sentinel/core/runtime/IFormatService.h
+    include/sentinel/core/runtime/FormatService.h
+    include/sentinel/core/runtime/ToolOutputTruncator.h
     include/sentinel/core/security/CredentialStore.h
     include/sentinel/core/security/IApprovalPolicy.h
+    include/sentinel/core/security/IPermissionService.h
     include/sentinel/core/security/ISandboxPolicy.h
     include/sentinel/core/security/PermissionPolicyService.h
+    include/sentinel/core/security/PermissionService.h
     include/sentinel/core/security/ProviderCredentials.h
     include/sentinel/core/security/StaticApprovalPolicy.h
     include/sentinel/core/security/StaticSandboxPolicy.h
+    include/sentinel/core/skill/ISkillService.h
+    include/sentinel/core/skill/Skill.h
+    include/sentinel/core/skill/SkillService.h
+    include/sentinel/core/snapshot/ISnapshotService.h
+    include/sentinel/core/snapshot/SnapshotService.h
     include/sentinel/core/voice/PiperTts.h
     include/sentinel/core/voice/Voice.h
     include/sentinel/core/voice/WhisperTranscription.h
+    include/sentinel/core/notification/IAttentionService.h
+    include/sentinel/core/notification/AttentionService.h
+    include/sentinel/core/notification/IThemeService.h
+    include/sentinel/core/notification/ThemeService.h
+    include/sentinel/core/notification/IShortcutService.h
+    include/sentinel/core/notification/ShortcutService.h
+    include/sentinel/core/notification/IClipboardService.h
+    include/sentinel/core/notification/ClipboardService.h
+    include/sentinel/core/notification/IExternalEditorService.h
+    include/sentinel/core/notification/ExternalEditorService.h
+    include/sentinel/core/patch/PatchParser.h
+    include/sentinel/core/snapshot/IDiffViewerService.h
+    include/sentinel/core/snapshot/DiffViewerService.h
+    include/sentinel/core/auth/IAuthService.h
+    include/sentinel/core/auth/AuthService.h
+    include/sentinel/core/command/ICommandService.h
+    include/sentinel/core/command/CommandService.h
+    include/sentinel/core/image/ImageProcessor.h
+    include/sentinel/core/editor/FuzzyEditor.h
+    include/sentinel/core/compaction/StructuredCompactionSummary.h
+    include/sentinel/core/session/AutoTitleGenerator.h
+    include/sentinel/core/config/ConfigVariableSubstitutor.h
+    include/sentinel/core/shell/ShellAnalyzer.h
+    include/sentinel/core/ide/IdeIntegrationService.h
+    include/sentinel/core/codemode/CodeModeInterpreter.h
+    include/sentinel/core/mcp/McpOAuthService.h
+    include/sentinel/core/model/ModelLifecycleService.h
+    include/sentinel/core/runtime/IFileChangeService.h
+    include/sentinel/core/security/ExternalDirectoryGate.h
+    include/sentinel/core/acp/IAcpService.h
+    include/sentinel/core/acp/AcpService.h
+    include/sentinel/core/cache/IPromptCacheService.h
+    include/sentinel/core/cache/PromptCacheService.h
+    include/sentinel/core/provider/ProviderMessageNormalizer.h
+    include/sentinel/core/provider/ProviderErrorClassifier.h
+    include/sentinel/core/doomloop/DoomLoopDetector.h
+    include/sentinel/core/mcp/IMcpResourceService.h
+    include/sentinel/core/mcp/McpResourceService.h
+    include/sentinel/core/wildcard/WildcardMatcher.h
+    include/sentinel/core/schema/ToolJsonSchemaNormalizer.h
+    include/sentinel/core/enterprise/IRemoteConfigService.h
+    include/sentinel/core/enterprise/RemoteConfigService.h
+    include/sentinel/core/enterprise/IEnterpriseConfigService.h
+    include/sentinel/core/enterprise/EnterpriseConfigService.h
+    include/sentinel/core/reminder/IReminderService.h
+    include/sentinel/core/reminder/ReminderService.h
+    include/sentinel/core/agent/SubagentPermissionDeriver.h
+    include/sentinel/core/bom/BomHandler.h
+    include/sentinel/core/mimetype/MimeSniffer.h
+    include/sentinel/core/proxy/ProxyResolver.h
+    include/sentinel/core/asyncqueue/AsyncQueue.h
+    include/sentinel/core/webui/IWebUiService.h
+    include/sentinel/core/webui/WebUiService.h
+    include/sentinel/core/config/JsoncParser.h
+    include/sentinel/core/surrogate/SurrogateSanitizer.h
+    include/sentinel/core/session/SessionIdGenerator.h
+    include/sentinel/core/runtime/IToolHookService.h
+    include/sentinel/core/runtime/ToolHookService.h
+    include/sentinel/core/interfaces/TransientRetryPolicy.h
+    include/sentinel/core/memory/DeferredDisposable.h
+    include/sentinel/core/memory/LazyValue.h
+    include/sentinel/core/memory/LocalContext.h
+    include/sentinel/core/output/StructuredOutputTool.h
+    include/sentinel/core/copilot/CopilotProvider.h
+    include/sentinel/core/plugin/PluginConfigPatcher.h
+    include/sentinel/core/lifecycle/IInstanceStateService.h
+    include/sentinel/core/lifecycle/InstanceStateService.h
+    include/sentinel/core/auth/WellKnownAuthService.h
+    include/sentinel/core/auth/IAccountService.h
+    include/sentinel/core/auth/AccountService.h
+    include/sentinel/core/session/PtyTicketService.h
+    include/sentinel/core/eventfence/EventSequenceFence.h
+    include/sentinel/core/processstream/ProcessStreamCollector.h
+    include/sentinel/core/flock/FlockFileLock.h
+    include/sentinel/core/app/LocationServiceMap.h
+    include/sentinel/core/config/RuntimeFeatureFlags.h
+    include/sentinel/core/config/ConfigResolver.h
+    include/sentinel/core/observability/HealthService.h
+    include/sentinel/core/schema/JsonSchemaValidator.h
+    include/sentinel/core/runtime/ToolNameValidator.h
+    include/sentinel/core/plugin/PluginHookRegistry.h
+    include/sentinel/core/security/PolicyEvaluator.h
+    include/sentinel/core/security/PathGuard.h
+    include/sentinel/core/util/Base64Url.h
+    include/sentinel/core/event/DurableEventLog.h
+    include/sentinel/core/session/ProviderPromptTemplates.h
+    include/sentinel/core/session/ContextEpoch.h
+    include/sentinel/core/session/SessionInputQueue.h
+    include/sentinel/core/session/SessionRunnerState.h
+    include/sentinel/core/session/SessionProjector.h
+    include/sentinel/core/sync/KeyedMutex.h
+    include/sentinel/core/state/ScopedTransform.h
+    include/sentinel/core/util/TokenEstimator.h
+    include/sentinel/core/util/FnvHash.h
+    include/sentinel/core/util/SampledChecksum.h
+    include/sentinel/core/util/Lazy.h
+    include/sentinel/core/util/MemoMap.h
     src/agent/AgentActivityLog.cpp
     src/agent/AgentRuntimeContext.cpp
     src/agent/AgentRuntimeService.cpp
     src/agent/AgentTaskRuntime.cpp
     src/agent/ControlledAgentTasks.cpp
+    src/agent/DynamicAgentRegistry.cpp
     src/agent/NullAgentRuntime.cpp
     src/agent/StaticAgentRegistry.cpp
+    src/agent/SubagentService.cpp
     src/app/ApplicationController.cpp
     src/app/ApplicationControllerBuilder.cpp
     src/app/AppMetadata.cpp
@@ -149,11 +309,30 @@ add_library(sentinel_core STATIC
     src/chat/ConversationStateGraph.cpp
     src/chat/InMemoryConversationStore.cpp
     src/chat/LocalEchoProvider.cpp
-   src/chat/OllamaChatProvider.cpp
+    src/chat/OllamaChatProvider.cpp
     src/chat/SQLiteChatHistoryStore.cpp
     src/chat/SQLiteConversationStore.cpp
+    src/chat/QuestionService.cpp
+    src/session/CompactionPrompt.cpp
+    src/session/CompactionService.cpp
+    src/session/TodoService.cpp
+    src/session/PromptTemplateService.cpp
+    src/session/InstructionService.cpp
+    src/session/SessionExportService.cpp
+    src/session/SessionStatusService.cpp
+    src/session/UsageStatsService.cpp
+    src/session/WorktreeService.cpp
+    src/session/AutoUpdateService.cpp
+    src/session/StashService.cpp
+    src/session/MdnsServiceImpl.cpp
+    src/session/WorkspaceManagerService.cpp
     src/memory/InMemoryMemoryCandidateStore.cpp
     src/memory/InMemorySettingsStore.cpp
+    src/mcp/McpClient.cpp
+    src/mcp/McpService.cpp
+    src/mcp/McpToolCatalog.cpp
+    src/lsp/LspClient.cpp
+    src/lsp/LspService.cpp
     src/memory/InMemoryStore.cpp
     src/memory/JsonSettingsStore.cpp
     src/memory/LocalRagStore.cpp
@@ -175,10 +354,79 @@ add_library(sentinel_core STATIC
     src/platform/WinTaskbarIntegration.cpp
     src/plugin/PluginContext.cpp
     src/plugin/PluginDependencyResolver.cpp
+    src/plugin/PluginHotReloader.cpp
     src/plugin/PluginManager.cpp
     src/plugin/PluginManifest.cpp
     src/plugin/PluginPermissions.cpp
     src/plugin/PluginSandbox.cpp
+    src/reference/ReferenceService.cpp
+    src/observability/ObservabilityService.cpp
+    src/job/BackgroundJobService.cpp
+    src/sharing/SharingService.cpp
+    src/notification/AttentionService.cpp
+    src/notification/ThemeService.cpp
+    src/notification/ShortcutService.cpp
+    src/notification/ClipboardService.cpp
+    src/notification/ExternalEditorService.cpp
+    src/patch/PatchParser.cpp
+    src/snapshot/DiffViewerService.cpp
+    src/auth/AuthService.cpp
+    src/command/CommandService.cpp
+    src/image/ImageProcessor.cpp
+    src/interfaces/RetryPolicy.cpp
+    src/editor/FuzzyEditor.cpp
+    src/compaction/StructuredCompactionSummary.cpp
+    src/session/AutoTitleGenerator.cpp
+    src/config/ConfigVariableSubstitutor.cpp
+    src/shell/ShellAnalyzer.cpp
+    src/ide/IdeIntegrationService.cpp
+    src/codemode/CodeModeInterpreter.cpp
+    src/mcp/McpOAuthService.cpp
+    src/model/ModelLifecycleService.cpp
+    src/security/ExternalDirectoryGate.cpp
+    src/acp/AcpService.cpp
+    src/cache/PromptCacheService.cpp
+    src/provider/ProviderMessageNormalizer.cpp
+    src/provider/ProviderErrorClassifier.cpp
+    src/doomloop/DoomLoopDetector.cpp
+    src/mcp/McpResourceService.cpp
+    src/wildcard/WildcardMatcher.cpp
+    src/schema/ToolJsonSchemaNormalizer.cpp
+    src/enterprise/RemoteConfigService.cpp
+    src/enterprise/EnterpriseConfigService.cpp
+    src/reminder/ReminderService.cpp
+    src/agent/SubagentPermissionDeriver.cpp
+    src/bom/BomHandler.cpp
+    src/mimetype/MimeSniffer.cpp
+    src/proxy/ProxyResolver.cpp
+    src/asyncqueue/AsyncQueue.cpp
+    src/webui/WebUiService.cpp
+    src/config/JsoncParser.cpp
+    src/surrogate/SurrogateSanitizer.cpp
+    src/session/SessionIdGenerator.cpp
+    src/runtime/ToolHookService.cpp
+    src/interfaces/TransientRetryPolicy.cpp
+    src/output/StructuredOutputTool.cpp
+    src/copilot/CopilotProvider.cpp
+    src/plugin/PluginConfigPatcher.cpp
+    src/lifecycle/InstanceStateService.cpp
+    src/auth/WellKnownAuthService.cpp
+    src/auth/AccountService.cpp
+    src/session/PtyTicketService.cpp
+    src/eventfence/EventSequenceFence.cpp
+    src/processstream/ProcessStreamCollector.cpp
+    src/flock/FlockFileLock.cpp
+    src/config/RuntimeFeatureFlags.cpp
+    src/config/ConfigResolver.cpp
+    src/observability/HealthService.cpp
+    src/schema/JsonSchemaValidator.cpp
+    src/plugin/PluginHookRegistry.cpp
+    src/security/PolicyEvaluator.cpp
+    src/event/DurableEventLog.cpp
+    src/session/ProviderPromptTemplates.cpp
+    src/memory/LocalContext.cpp
+    src/runtime/FormatService.cpp
+    src/runtime/ToolOutputTruncator.cpp
     src/runtime/ExecutionLifecycle.cpp
     src/runtime/InMemoryToolRegistry.cpp
     src/runtime/LocalInference.cpp
@@ -194,11 +442,17 @@ add_library(sentinel_core STATIC
     src/runtime/RuntimeProvider.cpp
     src/runtime/RuntimeSafety.cpp
     src/runtime/ToolExecutionGateway.cpp
+    src/runtime/tools/HtmlToMarkdown.cpp
+    src/runtime/tools/WebFetchTool.cpp
+    src/runtime/tools/WebSearchTool.cpp
     src/security/CredentialStore.cpp
     src/security/PermissionPolicyService.cpp
+    src/security/PermissionService.cpp
     src/security/ProviderCredentials.cpp
     src/security/StaticApprovalPolicy.cpp
     src/security/StaticSandboxPolicy.cpp
+    src/skill/SkillService.cpp
+    src/snapshot/SnapshotService.cpp
     src/voice/PiperTts.cpp
     src/voice/Voice.cpp
     src/voice/WhisperTranscription.cpp
@@ -213,8 +467,11 @@ target_include_directories(sentinel_core
 target_link_libraries(sentinel_core
     PUBLIC
         Qt6::Core
+        Qt6::Gui
         Qt6::Network
         Qt6::Sql
+        Qt6::Concurrent
+        Qt6::Multimedia
 )
 
 if(WIN32)

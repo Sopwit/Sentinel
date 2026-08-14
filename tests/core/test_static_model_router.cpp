@@ -78,14 +78,14 @@ void StaticModelRouterTest::defaultRouterSelectsLocalPlaceholderDeterministicall
     const auto route = router.route(TaskClassification{TaskType::Chat});
 
     QCOMPARE(router.routingMode(), RoutingMode::LocalOnly);
-    QCOMPARE(route.status, ModelRoutingStatus::Routed);
+    QCOMPARE(route.status, ModelRoutingStatus::NoAvailableModel);
     QCOMPARE(route.routingMode, RoutingMode::LocalOnly);
-    QCOMPARE(route.provider.id, QStringLiteral("local-placeholder"));
-    QCOMPARE(route.model.id, QStringLiteral("sentinel-local-placeholder"));
+    QVERIFY(route.provider.id.isEmpty());
+    QVERIFY(route.model.id.isEmpty());
     QVERIFY(!route.networkRequired);
     QVERIFY(!route.modelExecutionAllowed);
     QCOMPARE(safeModelRouteSummary(route),
-             QStringLiteral("Local Only -> Local Metadata Provider / Sentinel Local Placeholder"));
+             QStringLiteral("No configured model route is available."));
 }
 
 void StaticModelRouterTest::unknownTaskFallsBackToLocalPlaceholder() {
@@ -93,9 +93,9 @@ void StaticModelRouterTest::unknownTaskFallsBackToLocalPlaceholder() {
 
     const auto route = router.route(TaskClassification{TaskType::Unknown});
 
-    QCOMPARE(route.status, ModelRoutingStatus::Routed);
+    QCOMPARE(route.status, ModelRoutingStatus::NoAvailableModel);
     QCOMPARE(route.task.type, TaskType::Unknown);
-    QCOMPARE(route.model.id, QStringLiteral("sentinel-local-placeholder"));
+    QVERIFY(route.model.id.isEmpty());
 }
 
 void StaticModelRouterTest::localOnlyRoutingRejectsCloudOnlyModels() {
@@ -144,11 +144,10 @@ void StaticModelRouterTest::staticCatalogKeepsCloudPlaceholdersOutOfRoutes() {
 
     const auto route = router.route(TaskClassification{TaskType::Chat});
 
-    QCOMPARE(route.status, ModelRoutingStatus::Routed);
+    QCOMPARE(route.status, ModelRoutingStatus::NoAvailableModel);
     QCOMPARE(route.routingMode, RoutingMode::CloudAllowed);
-    QCOMPARE(route.provider.kind, ProviderKind::Local);
-    QCOMPARE(route.provider.id, QStringLiteral("local-placeholder"));
-    QCOMPARE(route.model.id, QStringLiteral("sentinel-local-placeholder"));
+    QVERIFY(route.provider.id.isEmpty());
+    QVERIFY(route.model.id.isEmpty());
     QVERIFY(!route.networkRequired);
     QVERIFY(!route.modelExecutionAllowed);
 }

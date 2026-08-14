@@ -199,6 +199,7 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
     }
 
     auto* ollamaPuller = new OllamaModelPuller(this);
+    ollamaPuller->setEndpoint(m_settings->ollamaEndpoint());
     QObject::connect(ollamaPuller, &OllamaModelPuller::activeModelChanged, m_shellViewModel.get(),
                      [ollamaPuller, this]() {
                          const QString active = ollamaPuller->activeModel();
@@ -235,7 +236,13 @@ bool ApplicationBootstrapper::setupQmlEngine(QApplication& app) {
                 m_controller->refreshOllamaStatus();
                 m_shellViewModel->addNotification(
                     tr("Models"), tr("Model Removed"),
-                    tr("'%1' has been deleted. Disk space has been reclaimed.")
+                     tr("'%1' has been deleted. Disk space has been reclaimed.")
+                         .arg(modelId));
+            } else {
+                m_shellViewModel->addNotification(
+                    tr("Models"), tr("Model Removal Failed"),
+                    tr("Could not delete '%1'. Please ensure the Ollama server is active and "
+                       "try again.")
                         .arg(modelId));
             }
         });
