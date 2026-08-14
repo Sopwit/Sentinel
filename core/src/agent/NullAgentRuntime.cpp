@@ -8,6 +8,32 @@
 
 namespace sentinel::core {
 
+namespace {
+
+bool isAutomaticWebSearchIntent(const QString& prompt) {
+    const auto normalized = prompt.toLower().simplified();
+    static const QStringList intentPhrases{
+        QStringLiteral("en son"), QStringLiteral("en güncel"), QStringLiteral("en guncel"),
+        QStringLiteral("bugün"), QStringLiteral("bugun"), QStringLiteral("son dakika"),
+        QStringLiteral("hava durumu"), QStringLiteral("hava nasıl"), QStringLiteral("hava nasil"),
+        QStringLiteral("weather"), QStringLiteral("forecast"), QStringLiteral("temperature"),
+        QStringLiteral("haber"), QStringLiteral("internette"), QStringLiteral("webde"),
+        QStringLiteral("web'de"), QStringLiteral("araştır"), QStringLiteral("arastir"),
+        QStringLiteral("online araştır"), QStringLiteral("online arastir"),
+        QStringLiteral("latest"), QStringLiteral("current"), QStringLiteral("today"),
+        QStringLiteral("breaking news"), QStringLiteral("news"), QStringLiteral("recent"),
+        QStringLiteral("research online"), QStringLiteral("search online"),
+        QStringLiteral("look up"), QStringLiteral("on the web")};
+    for (const auto& phrase : intentPhrases) {
+        if (normalized.contains(phrase)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+} // namespace
+
 NullAgentRuntime::NullAgentRuntime()
     : NullAgentRuntime(QList<ToolDescriptor>{ToolDescriptor{
           QStringLiteral("local-plan-summary"),
@@ -260,6 +286,10 @@ ToolInvocationPlan NullAgentRuntime::plan(const AgentRequest& request) const {
                 query = query.mid(4).trimmed();
             }
             arguments.append(ToolInvocationArgument{QStringLiteral("query"), query});
+        } else if (isAutomaticWebSearchIntent(trimmed) &&
+                   toolRegistry_.findToolById(QStringLiteral("web-search")).has_value()) {
+            selectedToolId = QStringLiteral("web-search");
+            arguments.append(ToolInvocationArgument{QStringLiteral("query"), trimmed});
         } else if (trimmed.startsWith(QStringLiteral("speak ")) ||
                    trimmed.startsWith(QStringLiteral("say "))) {
             selectedToolId = QStringLiteral("voice-speak");

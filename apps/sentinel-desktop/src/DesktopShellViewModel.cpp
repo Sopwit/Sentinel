@@ -343,6 +343,16 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
             &DesktopShellViewModel::proxySettingsChanged);
     connect(&settings_, &core::AppSettings::selectedCloudProviderChanged, this,
             &DesktopShellViewModel::selectedCloudProviderChanged);
+    connect(&settings_, &core::AppSettings::webSearchSettingsChanged, this, [this]() {
+        controller_.configureWebSearch(settings_.webSearchProvider(), settings_.webSearchApiKey(),
+                                       settings_.webSearchMaxResults());
+        emit webSearchSettingsChanged();
+    });
+    connect(&settings_, &core::AppSettings::semanticSettingsChanged, this, [this]() {
+        controller_.setSemanticProvider(settings_.semanticProvider(), settings_.semanticEmbeddingModel());
+        emit semanticSettingsChanged();
+        emit contextAssemblyChanged();
+    });
     connect(&controller_, &core::ApplicationController::promptContextInjectionChanged, this,
             &DesktopShellViewModel::promptContextInjectionChanged);
     connect(&controller_, &core::ApplicationController::voiceConfigurationChanged, this,
@@ -465,6 +475,11 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     connect(&settings_, &core::AppSettings::piperFileOutputExecutionEnabledChanged, this, [this]() {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     });
+    connect(&settings_, &core::AppSettings::whisperTranscriptionExecutionEnabledChanged, this,
+            [this]() {
+                controller_.setWhisperTranscriptionExecutionEnabled(
+                    settings_.whisperTranscriptionExecutionEnabled());
+            });
     connect(&settings_, &core::AppSettings::soundEffectsEnabledChanged, this,
             &DesktopShellViewModel::soundEffectsEnabledChanged);
     connect(&settings_, &core::AppSettings::agentAutonomousModeChanged, this,
@@ -484,11 +499,13 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.setPiperModelPath(settings_.piperModelPath());
     controller_.setWhisperBinaryPath(settings_.whisperBinaryPath());
     controller_.setWhisperModelPath(settings_.whisperModelPath());
-    if (settings_.piperFileOutputExecutionEnabled()) {
-        settings_.setPiperFileOutputExecutionEnabled(false);
-    }
-    controller_.setPiperFileOutputExecutionEnabled(false);
+    controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
+    controller_.setWhisperTranscriptionExecutionEnabled(
+        settings_.whisperTranscriptionExecutionEnabled());
     controller_.setAgentAutonomousMode(settings_.agentAutonomousMode());
+    controller_.configureWebSearch(settings_.webSearchProvider(), settings_.webSearchApiKey(),
+                                   settings_.webSearchMaxResults());
+    controller_.setSemanticProvider(settings_.semanticProvider(), settings_.semanticEmbeddingModel());
     if (controller_.activeConversationId() != QStringLiteral("single-transcript")) {
         settings_.setActiveConversationId(controller_.activeConversationId());
     }
@@ -1939,6 +1956,16 @@ void DesktopShellViewModel::setPiperFileOutputExecutionEnabled(bool enabled) {
         settings_.piperFileOutputExecutionEnabled()) {
         controller_.setPiperFileOutputExecutionEnabled(settings_.piperFileOutputExecutionEnabled());
     }
+}
+
+bool DesktopShellViewModel::whisperTranscriptionExecutionEnabled() const {
+    return controller_.whisperTranscriptionExecutionEnabled();
+}
+
+void DesktopShellViewModel::setWhisperTranscriptionExecutionEnabled(bool enabled) {
+    settings_.setWhisperTranscriptionExecutionEnabled(enabled);
+    controller_.setWhisperTranscriptionExecutionEnabled(
+        settings_.whisperTranscriptionExecutionEnabled());
 }
 
 QString DesktopShellViewModel::piperFileOutputExecutionStatus() const {
@@ -3826,6 +3853,50 @@ QString DesktopShellViewModel::selectedCloudProvider() const {
 void DesktopShellViewModel::setSelectedCloudProvider(const QString& provider) {
     settings_.setSelectedCloudProvider(provider);
     controller_.refreshOllamaStatus();
+}
+
+QString DesktopShellViewModel::webSearchProvider() const {
+    return settings_.webSearchProvider();
+}
+
+void DesktopShellViewModel::setWebSearchProvider(const QString& provider) {
+    settings_.setWebSearchProvider(provider);
+}
+
+QString DesktopShellViewModel::webSearchApiKey() const {
+    return settings_.webSearchApiKey();
+}
+
+void DesktopShellViewModel::setWebSearchApiKey(const QString& key) {
+    settings_.setWebSearchApiKey(key);
+}
+
+int DesktopShellViewModel::webSearchMaxResults() const {
+    return settings_.webSearchMaxResults();
+}
+
+void DesktopShellViewModel::setWebSearchMaxResults(int maxResults) {
+    settings_.setWebSearchMaxResults(maxResults);
+}
+
+QString DesktopShellViewModel::semanticProvider() const {
+    return settings_.semanticProvider();
+}
+
+void DesktopShellViewModel::setSemanticProvider(const QString& provider) {
+    settings_.setSemanticProvider(provider);
+    if (settings_.semanticProvider() == QStringLiteral("ollama")) {
+        settings_.setPromptContextInjectionEnabled(true);
+        settings_.setSemanticPromptInclusionEnabled(true);
+    }
+}
+
+QString DesktopShellViewModel::semanticEmbeddingModel() const {
+    return settings_.semanticEmbeddingModel();
+}
+
+void DesktopShellViewModel::setSemanticEmbeddingModel(const QString& model) {
+    settings_.setSemanticEmbeddingModel(model);
 }
 
 QString DesktopShellViewModel::currentPage() const {

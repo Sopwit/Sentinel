@@ -1269,6 +1269,8 @@ public:
     void setLmStudioEndpoint(const QString& endpoint);
     QString llamaCppEndpoint() const;
     void setLlamaCppEndpoint(const QString& endpoint);
+    void configureWebSearch(const QString& provider, const QString& apiKey, int maxResults);
+    void setSemanticProvider(const QString& provider, const QString& embeddingModel);
     QString ollamaConnectionStatus() const;
     QString ollamaHealthStatus() const;
     QString ollamaHealthSummary() const;
@@ -2096,6 +2098,9 @@ private:
     SemanticPromptInclusionPolicy semanticPromptInclusionPolicy_;
     SemanticProviderPolicy semanticProviderPolicy_;
     SemanticProviderMode selectedSemanticProviderMode_ = SemanticProviderMode::Disabled;
+    QString semanticEmbeddingModel_ = QStringLiteral("nomic-embed-text");
+    EmbeddingProviderStatus semanticEmbeddingStatus_ = EmbeddingProviderStatus::NotConfigured;
+    QString semanticEmbeddingSummary_ = QStringLiteral("Semantic embedding provider is not configured.");
     SemanticCandidatePolicy semanticCandidatePolicy_;
     HybridRetrievalPolicy hybridRetrievalPolicy_;
     SemanticArbitrationPolicy semanticArbitrationPolicy_;

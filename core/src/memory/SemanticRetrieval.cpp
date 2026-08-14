@@ -1835,7 +1835,7 @@ assembleSemanticSupplements(const SemanticAcceptanceResult& acceptanceResult,
                                 "behavior unchanged."));
         return result;
     }
-    if (!policy.allowTestOnlyAssembly || policy.includeInLivePrompt ||
+    if ((!policy.allowTestOnlyAssembly && !policy.includeInLivePrompt) ||
         !policy.deterministicRetrievalAuthoritative || !policy.semanticSupplementsOnly ||
         !policy.separateFromDeterministicContext || policy.promptContextMutationEnabled ||
         policy.retrievalPlanningMutationEnabled || policy.deterministicContextReplacementEnabled ||
@@ -2137,7 +2137,7 @@ evaluateSemanticPromptAuthority(const SemanticSupplementAssemblyResult& assembly
              QStringLiteral("Refused semantic state ignored; deterministic-only fallback active."));
         return result;
     }
-    if (!policy.allowTestOnlyWouldIncludeMetadata || policy.includeInLivePrompt ||
+    if ((!policy.allowTestOnlyWouldIncludeMetadata && !policy.includeInLivePrompt) ||
         !policy.promptInjectionExplicitlyEnabled || !policy.semanticPromptAuthorityAllowed ||
         !policy.deterministicRetrievalAuthoritative || !policy.semanticSupplementsOnly ||
         !policy.semanticSearchLocalOnly || !policy.clearlyDelimitedSupplements ||
@@ -2173,13 +2173,16 @@ evaluateSemanticPromptAuthority(const SemanticSupplementAssemblyResult& assembly
     result.decision = SemanticPromptAuthorityDecision::WouldIncludeMetadataOnly;
     result.allowed = true;
     result.wouldInclude = true;
-    result.livePromptMutationAllowed = false;
+    result.livePromptMutationAllowed = policy.includeInLivePrompt;
     result.failureReason.clear();
     result.readiness.status = result.status;
     result.readiness.ready = true;
-    result.readiness.summary =
-        QStringLiteral("Semantic prompt authority is ready only for test-only would-include "
-                       "metadata; live prompt inclusion remains blocked.");
+    result.readiness.summary = policy.includeInLivePrompt
+                                   ? QStringLiteral("Semantic prompt authority allows bounded live "
+                                                    "supplement inclusion.")
+                                   : QStringLiteral("Semantic prompt authority is ready only for "
+                                                    "test-only would-include metadata; live prompt "
+                                                    "inclusion remains blocked.");
     result.fallback.state = QStringLiteral("Deterministic Only");
     result.fallback.summary =
         QStringLiteral("Deterministic fallback remains available and authoritative.");
@@ -2188,10 +2191,14 @@ evaluateSemanticPromptAuthority(const SemanticSupplementAssemblyResult& assembly
         QStringLiteral("Semantic supplements remain supplemental and delimited."),
         QStringLiteral("Default prompt assembly is unchanged."),
     };
-    result.audit.decisionSummary =
-        QStringLiteral("Would include %1 semantic supplement metadata blocks in a test-only "
-                       "decision; live prompt mutation is blocked.")
-            .arg(result.wouldIncludeBlockCount);
+    result.audit.decisionSummary = policy.includeInLivePrompt
+                                       ? QStringLiteral("Include %1 bounded semantic supplement "
+                                                        "blocks in the live prompt.")
+                                             .arg(result.wouldIncludeBlockCount)
+                                       : QStringLiteral("Would include %1 semantic supplement "
+                                                        "metadata blocks in a test-only decision; "
+                                                        "live prompt mutation is blocked.")
+                                             .arg(result.wouldIncludeBlockCount);
     result.audit.denialReason.clear();
     result.audit.readinessSummary = result.readiness.summary;
     result.audit.safetySummary = result.safety.summary;
@@ -3139,16 +3146,16 @@ plannedSemanticProviderDescriptors(const SemanticProviderPolicy& policy) {
     descriptors.append(makeDescriptor(
         SemanticProviderMode::LocalOllamaEmbeddings,
         QStringLiteral("Local Ollama embeddings provider"),
-        QStringLiteral("Planned local Ollama embeddings provider; no embedding requests are made."),
+         QStringLiteral("Local Ollama embeddings provider using the configured embedding model."),
         policy.allowLocalOllamaEmbeddingsProvider ? SemanticProviderReadiness::ReadyMetadataOnly
                                                   : SemanticProviderReadiness::Planned,
         {SemanticProviderCapability::LocalOnly, SemanticProviderCapability::EmbeddingGeneration,
          SemanticProviderCapability::MetadataOnlyHealth,
          SemanticProviderCapability::PromptMutationBlocked,
          SemanticProviderCapability::VectorWritesBlocked},
-        {QStringLiteral("Add an explicit local embedding model selection gate."),
-         QStringLiteral("Add loopback-only embedding request tests."),
-         QStringLiteral("Keep semantic prompt injection disabled until separately approved.")}));
+         {QStringLiteral("Add an explicit local embedding model selection gate."),
+          QStringLiteral("Select a local Ollama embedding model."),
+          QStringLiteral("Keep semantic prompt injection disabled until separately approved.")}));
     descriptors.append(makeDescriptor(
         SemanticProviderMode::LocalFileVectorIndex, QStringLiteral("Local file/vector index"),
         QStringLiteral("Planned local vector index boundary; no vector database writes are made."),
@@ -3241,14 +3248,20 @@ SemanticActivationReadiness semanticActivationReadiness(const SemanticProviderSe
 
     readiness.ready = !policy.disabledByDefault &&
                       selection.readiness == SemanticProviderReadiness::ReadyMetadataOnly &&
-                      selection.mode == SemanticProviderMode::FakeInMemory &&
-                      policy.allowFakeInMemoryProvider && !policy.allowSemanticPromptInjection;
+                      ((selection.mode == SemanticProviderMode::FakeInMemory &&
+                        policy.allowFakeInMemoryProvider) ||
+                       (selection.mode == SemanticProviderMode::LocalOllamaEmbeddings &&
+                        policy.allowLocalOllamaEmbeddingsProvider && policy.allowRealEmbeddingCalls)) &&
+                      !policy.allowSemanticPromptInjection;
     readiness.status =
         readiness.ready ? QStringLiteral("Metadata Ready") : QStringLiteral("Refused");
     readiness.summary =
         readiness.ready
-            ? QStringLiteral("Semantic provider metadata is ready for isolated fake tests only; "
-                             "semantic ranking and prompt injection remain disabled.")
+            ? (selection.mode == SemanticProviderMode::FakeInMemory
+                   ? QStringLiteral("Semantic provider metadata is ready for isolated fake tests only; "
+                                    "semantic ranking and prompt injection remain disabled.")
+                   : QStringLiteral("Semantic provider is ready for isolated local embedding calls; "
+                                    "prompt injection remains disabled."))
             : QStringLiteral("Semantic activation refused: %1").arg(selection.disabledReason);
     return readiness;
 }

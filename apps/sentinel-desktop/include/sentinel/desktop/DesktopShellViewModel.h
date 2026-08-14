@@ -499,6 +499,8 @@ class DesktopShellViewModel final : public QObject {
                    voiceConfigurationChanged)
     Q_PROPERTY(bool piperFileOutputExecutionEnabled READ piperFileOutputExecutionEnabled WRITE
                    setPiperFileOutputExecutionEnabled NOTIFY voiceConfigurationChanged)
+    Q_PROPERTY(bool whisperTranscriptionExecutionEnabled READ whisperTranscriptionExecutionEnabled WRITE
+                   setWhisperTranscriptionExecutionEnabled NOTIFY voiceConfigurationChanged)
     Q_PROPERTY(QString piperFileOutputExecutionStatus READ piperFileOutputExecutionStatus NOTIFY
                    voiceConfigurationChanged)
     Q_PROPERTY(QString piperFileOutputExecutionSummary READ piperFileOutputExecutionSummary NOTIFY
@@ -1274,6 +1276,16 @@ class DesktopShellViewModel final : public QObject {
         QString mistralApiKey READ mistralApiKey WRITE setMistralApiKey NOTIFY cloudApiKeysChanged)
     Q_PROPERTY(QString selectedCloudProvider READ selectedCloudProvider WRITE
                    setSelectedCloudProvider NOTIFY selectedCloudProviderChanged)
+    Q_PROPERTY(QString webSearchProvider READ webSearchProvider WRITE setWebSearchProvider NOTIFY
+                   webSearchSettingsChanged)
+    Q_PROPERTY(QString webSearchApiKey READ webSearchApiKey WRITE setWebSearchApiKey NOTIFY
+                   webSearchSettingsChanged)
+    Q_PROPERTY(int webSearchMaxResults READ webSearchMaxResults WRITE setWebSearchMaxResults NOTIFY
+                   webSearchSettingsChanged)
+    Q_PROPERTY(QString semanticProvider READ semanticProvider WRITE setSemanticProvider NOTIFY
+                   semanticSettingsChanged)
+    Q_PROPERTY(QString semanticEmbeddingModel READ semanticEmbeddingModel WRITE
+                   setSemanticEmbeddingModel NOTIFY semanticSettingsChanged)
     Q_PROPERTY(QStringList activityTimelineSummaries READ activityTimelineSummaries NOTIFY
                    nativeExperienceChanged)
     Q_PROPERTY(QStringList notificationCenterSummaries READ notificationCenterSummaries NOTIFY
@@ -1809,6 +1821,8 @@ public:
     QString piperFileOutputReadinessSummary() const;
     bool piperFileOutputExecutionEnabled() const;
     void setPiperFileOutputExecutionEnabled(bool enabled);
+    bool whisperTranscriptionExecutionEnabled() const;
+    void setWhisperTranscriptionExecutionEnabled(bool enabled);
     QString piperFileOutputExecutionStatus() const;
     QString piperFileOutputExecutionSummary() const;
     QString piperFileOutputAudioPathSummary() const;
@@ -2510,6 +2524,16 @@ public:
     Q_INVOKABLE void stopVoiceCapture();
     QString selectedCloudProvider() const;
     void setSelectedCloudProvider(const QString& provider);
+    QString webSearchProvider() const;
+    void setWebSearchProvider(const QString& provider);
+    QString webSearchApiKey() const;
+    void setWebSearchApiKey(const QString& key);
+    int webSearchMaxResults() const;
+    void setWebSearchMaxResults(int maxResults);
+    QString semanticProvider() const;
+    void setSemanticProvider(const QString& provider);
+    QString semanticEmbeddingModel() const;
+    void setSemanticEmbeddingModel(const QString& model);
 
 signals:
     void currentModeChanged();
@@ -2578,6 +2602,8 @@ signals:
                                        double speedBytesPerSec);
     void updateDownloadFinished(bool success, const QString& filePath);
     void selectedCloudProviderChanged();
+    void webSearchSettingsChanged();
+    void semanticSettingsChanged();
     void cloudApiKeysChanged();
     void soundEffectsEnabledChanged();
     void globalErrorChanged();

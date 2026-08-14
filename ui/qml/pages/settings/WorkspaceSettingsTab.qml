@@ -6,6 +6,7 @@ import QtQuick
 import QtQuick.Controls.Basic
 import QtQuick.Effects
 import QtQuick.Layouts
+import QtQuick.Dialogs
 import Sentinel.Desktop
 
 Item {
@@ -81,6 +82,91 @@ Item {
                 compact: root.compact
                 showDivider: true
                 onToggled: (checked) => root.viewModel.localKnowledgeBaseEnabled = checked
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                spacing: SentinelTheme.spaceSm
+
+                SentinelButton {
+                    text: qsTr("Add Document")
+                    accent: root.modeAccent
+                    enabled: root.viewModel.localKnowledgeBaseEnabled
+                    onClicked: knowledgeFileDialog.open()
+                }
+                SentinelButton {
+                    text: qsTr("Reindex")
+                    accent: root.modeAccent
+                    enabled: root.viewModel.localKnowledgeBaseEnabled
+                    onClicked: root.viewModel.reindexKnowledgeBase()
+                }
+                SentinelButton {
+                    text: qsTr("Clear Index")
+                    accent: SentinelTheme.warning
+                    enabled: root.viewModel.localKnowledgeBaseEnabled
+                    onClicked: root.viewModel.clearKnowledgeBase()
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                spacing: SentinelTheme.spaceXs
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Index")
+                    value: root.viewModel.localKnowledgeBaseStatus
+                    Layout.fillWidth: true
+                }
+                SettingControlRow {
+                    title: qsTr("Semantic Provider")
+                    subtitle: qsTr("Use the selected local Ollama embedding model for semantic indexing.")
+                    accent: root.modeAccent
+                    compact: root.compact
+                    showDivider: true
+                    SentinelComboBox {
+                        anchors.fill: parent
+                        accent: root.modeAccent
+                        model: ["Ollama", "Disabled"]
+                        currentIndex: root.viewModel.semanticProvider === "ollama" ? 0 : 1
+                        onActivated: (index) => root.viewModel.semanticProvider = index === 0 ? "ollama" : "disabled"
+                    }
+                }
+                SettingControlRow {
+                    title: qsTr("Embedding Model")
+                    subtitle: qsTr("Model name installed in the local Ollama runtime.")
+                    accent: root.modeAccent
+                    compact: root.compact
+                    SentinelTextField {
+                        anchors.fill: parent
+                        text: root.viewModel.semanticEmbeddingModel
+                        onEditingFinished: root.viewModel.semanticEmbeddingModel = text
+                    }
+                }
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Semantic Provider")
+                    value: root.viewModel.selectedSemanticProviderName + " / " + root.viewModel.semanticProviderReadiness
+                    Layout.fillWidth: true
+                }
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Retrieval")
+                    value: root.viewModel.semanticRetrievalStatus + " / " + root.viewModel.vectorIndexedItemCount
+                    Layout.fillWidth: true
+                }
+                Label {
+                    Layout.fillWidth: true
+                    text: root.viewModel.knowledgeBaseDocumentSummaries.join("\n")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                    visible: text.length > 0
+                }
             }
 
             SettingControlRow {
@@ -235,6 +321,16 @@ Item {
                     Layout.fillWidth: true
                 }
             }
+        }
+    }
+
+    FileDialog {
+        id: knowledgeFileDialog
+        title: qsTr("Select a knowledge-base document")
+        fileMode: FileDialog.OpenFile
+        onAccepted: {
+            if (selectedFile)
+                root.viewModel.addKnowledgeBaseDocument(selectedFile.toString().replace("file://", ""))
         }
     }
 }
