@@ -185,6 +185,15 @@ Item {
                     onEditingFinished: root.viewModel.whisperModelPath = text
                 }
             }
+
+            SettingToggleRow {
+                title: qsTr("Enable Whisper Transcription")
+                subtitle: qsTr("Allow the configured local Whisper process to transcribe selected audio files.")
+                checked: root.viewModel.whisperTranscriptionExecutionEnabled
+                accent: root.modeAccent
+                compact: root.compact
+                onToggled: (checked) => root.viewModel.whisperTranscriptionExecutionEnabled = checked
+            }
         }
     }
 }

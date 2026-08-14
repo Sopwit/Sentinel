@@ -83,6 +83,76 @@ Item {
                 compact: root.compact
                 onToggled: (checked) => root.viewModel.agentAutonomousMode = checked
             }
+
+            SettingControlRow {
+                title: qsTr("Controlled Agent Goal")
+                subtitle: qsTr("Create an explicit plan before any tool or agent step runs.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+
+                SentinelTextField {
+                    id: controlledGoal
+                    anchors.fill: parent
+                    placeholderText: qsTr("Describe the task Sentinel should plan")
+                }
+            }
+
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                spacing: SentinelTheme.spaceSm
+
+                SentinelButton {
+                    text: qsTr("Plan")
+                    accent: root.modeAccent
+                    enabled: controlledGoal.text.trim().length > 0
+                    onClicked: root.viewModel.planControlledAgentTask(controlledGoal.text.trim())
+                }
+                SentinelButton {
+                    text: qsTr("Approve")
+                    accent: SentinelTheme.success
+                    enabled: root.viewModel.agentPlanId.length > 0
+                    onClicked: root.viewModel.approveControlledAgentTask(root.viewModel.agentPlanId, "approve")
+                }
+                SentinelButton {
+                    text: qsTr("Start")
+                    accent: root.modeAccent
+                    enabled: root.viewModel.agentPlanId.length > 0
+                    onClicked: root.viewModel.startControlledAgentTask(root.viewModel.agentPlanId)
+                }
+            }
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                spacing: SentinelTheme.spaceXs
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Plan")
+                    value: root.viewModel.agentPlanApprovalState + " / " + root.viewModel.agentPlanEstimatedRisk
+                    Layout.fillWidth: true
+                }
+                Label {
+                    Layout.fillWidth: true
+                    text: root.viewModel.agentPlanSteps.join("\n")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                    visible: text.length > 0
+                }
+                Label {
+                    Layout.fillWidth: true
+                    text: root.viewModel.latestApprovalSummary + "\n" + root.viewModel.latestSandboxSummary
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                    visible: root.viewModel.latestApprovalSummary.length > 0 || root.viewModel.latestSandboxSummary.length > 0
+                }
+            }
         }
 
         SectionTitle {
@@ -186,6 +256,42 @@ Item {
             subtitle: qsTr("Select a cloud provider and configure its API credentials. Keys are saved to local settings.")
             Layout.fillWidth: true
             Layout.topMargin: SentinelTheme.spaceMd
+        }
+
+        SectionTitle {
+            title: qsTr("Web Search")
+            subtitle: qsTr("Configure the provider used by the approved web-search tool.")
+            Layout.fillWidth: true
+            Layout.topMargin: SentinelTheme.spaceMd
+        }
+
+        SettingCard {
+            SettingControlRow {
+                title: qsTr("Search Provider")
+                subtitle: qsTr("API-backed search provider for agent web searches.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+                SentinelComboBox {
+                    anchors.fill: parent
+                    accent: root.modeAccent
+                    model: ["Exa", "Parallel"]
+                    currentIndex: root.viewModel.webSearchProvider === "parallel" ? 1 : 0
+                    onActivated: (index) => root.viewModel.webSearchProvider = index === 1 ? "parallel" : "exa"
+                }
+            }
+            SettingControlRow {
+                title: qsTr("Search API Key")
+                subtitle: qsTr("Credential sent only to the selected search provider.")
+                accent: root.modeAccent
+                compact: root.compact
+                SentinelTextField {
+                    anchors.fill: parent
+                    echoMode: TextInput.Password
+                    text: root.viewModel.webSearchApiKey
+                    onEditingFinished: root.viewModel.webSearchApiKey = text
+                }
+            }
         }
 
         SettingCard {

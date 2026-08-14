@@ -19,6 +19,17 @@
 
 namespace sentinel::core {
 
+void RealToolExecutor::configureWebSearch(const QString& provider, const QString& apiKey,
+                                          int maxResults) {
+    webSearchTool_.setSearchProvider(provider);
+    webSearchTool_.setApiKey(apiKey);
+    webSearchTool_.setMaxResults(maxResults);
+}
+
+WebSearchResponse RealToolExecutor::searchWeb(const QString& query) const {
+    return webSearchTool_.search(query);
+}
+
 namespace {
 
 QString getArgument(const PlannedToolInvocation& invocation, const QString& argId) {
@@ -252,45 +263,17 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 continue;
             }
 
-            QUrl url(QStringLiteral("https://html.duckduckgo.com/html/"));
-            QUrlQuery queryParams;
-            queryParams.addQueryItem(QStringLiteral("q"), query.trimmed());
-            url.setQuery(queryParams);
-            QNetworkRequest networkRequest(url);
-            networkRequest.setHeader(QNetworkRequest::UserAgentHeader,
-                                     QStringLiteral("Sentinel/1.0 (local assistant)"));
-            QNetworkAccessManager networkManager;
-            QNetworkReply* reply = networkManager.get(networkRequest);
-            QEventLoop eventLoop;
-            QObject::connect(reply, &QNetworkReply::finished, &eventLoop, &QEventLoop::quit);
-            eventLoop.exec();
-
-            if (reply->error() != QNetworkReply::NoError) {
-                logs.append(QStringLiteral("web-search: Request failed: %1")
-                                .arg(reply->errorString()));
-                reply->deleteLater();
+            const auto response = webSearchTool_.search(query.trimmed());
+            if (!response.success) {
+                logs.append(QStringLiteral("web-search: Request failed: %1").arg(response.errorString));
                 continue;
             }
-
-            const auto html = QString::fromUtf8(reply->readAll());
-            reply->deleteLater();
-            const QRegularExpression resultPattern(
-                QStringLiteral("<a[^>]+class=\\\"result__a\\\"[^>]+href=\\\"([^\\\"]+)\\\"[^>]*>(.*?)</a>"),
-                QRegularExpression::CaseInsensitiveOption | QRegularExpression::DotMatchesEverythingOption);
-            auto match = resultPattern.globalMatch(html);
-            int resultCount = 0;
-            while (match.hasNext() && resultCount < 5) {
-                const auto result = match.next();
-                auto resultUrl = QUrl::fromEncoded(result.captured(1).toUtf8());
-                const auto title = result.captured(2).remove(QRegularExpression(QStringLiteral("<[^>]*>"))).trimmed();
-                if (resultUrl.isValid() && !title.isEmpty()) {
-                    logs.append(QStringLiteral("%1. %2\n%3")
-                                    .arg(++resultCount)
-                                    .arg(title)
-                                    .arg(resultUrl.toString()));
-                }
+            for (int i = 0; i < response.results.size(); ++i) {
+                const auto& result = response.results.at(i);
+                logs.append(QStringLiteral("%1. %2\n%3\n%4")
+                                .arg(i + 1).arg(result.title).arg(result.url).arg(result.snippet));
             }
-            if (resultCount == 0) {
+            if (response.results.isEmpty()) {
                 logs.append(QStringLiteral("web-search: No results found for '%1'.").arg(query));
             }
         }

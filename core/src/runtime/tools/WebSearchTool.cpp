@@ -59,11 +59,10 @@ WebSearchResponse WebSearchTool::search(const QString& query, int numResults) {
     QNetworkRequest request{url};
     request.setRawHeader("User-Agent", m_userAgent.toUtf8());
 
-    if (!m_apiKey.isEmpty()) {
-        request.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(m_apiKey).toUtf8());
-    }
-
-    QNetworkReply* reply = m_networkManager.get(request);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    request.setRawHeader("x-api-key", m_apiKey.toUtf8());
+    QNetworkReply* reply = m_networkManager.post(
+        request, QJsonDocument(buildSearchRequest(query, numResults)).toJson(QJsonDocument::Compact));
     connect(reply, &QNetworkReply::finished, this, [this, reply]() {
         onSearchReply(reply);
     });
@@ -113,11 +112,10 @@ void WebSearchTool::searchAsync(const QString& query, int numResults,
     QNetworkRequest request(url);
     request.setRawHeader("User-Agent", m_userAgent.toUtf8());
 
-    if (!m_apiKey.isEmpty()) {
-        request.setRawHeader("Authorization", QStringLiteral("Bearer %1").arg(m_apiKey).toUtf8());
-    }
-
-    QNetworkReply* reply = m_networkManager.get(request);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, QStringLiteral("application/json"));
+    request.setRawHeader("x-api-key", m_apiKey.toUtf8());
+    QNetworkReply* reply = m_networkManager.post(
+        request, QJsonDocument(buildSearchRequest(query, numResults)).toJson(QJsonDocument::Compact));
     connect(reply, &QNetworkReply::finished, this, [this, reply, callback]() {
         WebSearchResponse response = parseSearchResponse(reply->readAll());
         if (reply->error() != QNetworkReply::NoError) {
@@ -178,6 +176,9 @@ WebSearchResponse WebSearchTool::parseSearchResponse(const QByteArray& responseD
             result.title = resultObj["title"].toString();
             result.url = resultObj["url"].toString();
             result.snippet = resultObj["snippet"].toString();
+            if (result.snippet.isEmpty()) {
+                result.snippet = resultObj["text"].toString();
+            }
             result.score = resultObj["score"].toDouble();
             response.results.append(result);
         }

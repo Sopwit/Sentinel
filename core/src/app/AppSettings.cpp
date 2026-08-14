@@ -352,6 +352,89 @@ void AppSettings::setCloudApiEndpoint(const QString& endpoint) {
     emit cloudApiEndpointChanged();
 }
 
+QString AppSettings::webSearchProvider() const {
+    const auto fallback = QString::fromLatin1(defaultWebSearchProvider);
+    const auto value = store_ ? store_->value(QString::fromLatin1(webSearchProviderKey), fallback)
+                              : fallback;
+    const auto normalized = value.trimmed().toLower();
+    return (normalized == QStringLiteral("exa") || normalized == QStringLiteral("parallel"))
+               ? normalized
+               : fallback;
+}
+
+void AppSettings::setWebSearchProvider(const QString& provider) {
+    const auto normalized = provider.trimmed().toLower();
+    const auto selected = (normalized == QStringLiteral("parallel")) ? normalized
+                                                                        : QString::fromLatin1(defaultWebSearchProvider);
+    if (selected == webSearchProvider() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(webSearchProviderKey), selected);
+    emit webSearchSettingsChanged();
+}
+
+QString AppSettings::webSearchApiKey() const {
+    return store_ ? store_->value(QString::fromLatin1(webSearchApiKeyKey), QString()) : QString();
+}
+
+void AppSettings::setWebSearchApiKey(const QString& key) {
+    const auto normalized = key.trimmed();
+    if (normalized == webSearchApiKey() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(webSearchApiKeyKey), normalized);
+    emit webSearchSettingsChanged();
+}
+
+int AppSettings::webSearchMaxResults() const {
+    bool ok = false;
+    const auto value = store_ ? store_->value(QString::fromLatin1(webSearchMaxResultsKey), QStringLiteral("5")).toInt(&ok) : 5;
+    return ok ? std::clamp(value, 1, 20) : 5;
+}
+
+void AppSettings::setWebSearchMaxResults(int maxResults) {
+    const auto normalized = std::clamp(maxResults, 1, 20);
+    if (normalized == webSearchMaxResults() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(webSearchMaxResultsKey), QString::number(normalized));
+    emit webSearchSettingsChanged();
+}
+
+QString AppSettings::semanticProvider() const {
+    const auto fallback = QString::fromLatin1(defaultSemanticProvider);
+    const auto value = store_ ? store_->value(QString::fromLatin1(semanticProviderKey), fallback)
+                              : fallback;
+    return value.trimmed().toLower() == QStringLiteral("ollama") ? QStringLiteral("ollama")
+                                                                  : QStringLiteral("disabled");
+}
+
+void AppSettings::setSemanticProvider(const QString& provider) {
+    const auto selected = provider.trimmed().toLower() == QStringLiteral("ollama")
+                              ? QStringLiteral("ollama")
+                              : QStringLiteral("disabled");
+    if (selected == semanticProvider() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(semanticProviderKey), selected);
+    emit semanticSettingsChanged();
+}
+
+QString AppSettings::semanticEmbeddingModel() const {
+    const auto fallback = QString::fromLatin1(defaultSemanticEmbeddingModel);
+    return store_ ? store_->value(QString::fromLatin1(semanticEmbeddingModelKey), fallback).trimmed()
+                  : fallback;
+}
+
+void AppSettings::setSemanticEmbeddingModel(const QString& model) {
+    const auto normalized = model.trimmed();
+    if (normalized.isEmpty() || normalized == semanticEmbeddingModel() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(semanticEmbeddingModelKey), normalized);
+    emit semanticSettingsChanged();
+}
+
 QString AppSettings::selectedRuntimeProvider() const {
     const auto fallback = QString::fromLatin1(defaultSelectedRuntimeProvider);
     const auto stored =
@@ -1020,6 +1103,21 @@ void AppSettings::setPiperFileOutputExecutionEnabled(bool enabled) {
     store_->setValue(QString::fromLatin1(piperFileOutputExecutionEnabledKey),
                      enabled ? QStringLiteral("true") : QStringLiteral("false"));
     emit piperFileOutputExecutionEnabledChanged();
+}
+
+bool AppSettings::whisperTranscriptionExecutionEnabled() const {
+    return store_ ? store_->value(QString::fromLatin1(whisperTranscriptionExecutionEnabledKey),
+                                  QStringLiteral("false")) == QStringLiteral("true")
+                  : false;
+}
+
+void AppSettings::setWhisperTranscriptionExecutionEnabled(bool enabled) {
+    if (enabled == whisperTranscriptionExecutionEnabled() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(whisperTranscriptionExecutionEnabledKey),
+                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+    emit whisperTranscriptionExecutionEnabledChanged();
 }
 
 QString AppSettings::activeConversationId() const {

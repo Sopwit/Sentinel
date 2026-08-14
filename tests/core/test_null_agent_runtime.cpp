@@ -30,6 +30,10 @@ private slots:
     void preservesPlanMetadata();
     void handlesEmptyRequests();
     void returnsDeterministicLocalResponse();
+    void detectsTurkishWebSearchIntent();
+    void detectsEnglishWebSearchIntent();
+    void detectsWeatherWebSearchIntent();
+    void keepsOrdinaryPromptsLocal();
 };
 
 static ToolDescriptor makeTool(const QString& id, const QString& name, ToolRiskLevel riskLevel) {
@@ -165,6 +169,45 @@ void NullAgentRuntimeTest::returnsDeterministicLocalResponse() {
     QCOMPARE(second.status, AgentStatus::Ready);
     QCOMPARE(first.message, second.message);
     QCOMPARE(first.message, QStringLiteral("Executed: Local Plan Summary"));
+}
+
+void NullAgentRuntimeTest::detectsTurkishWebSearchIntent() {
+    NullAgentRuntime runtime(NullAgentRuntime::standardTools());
+
+    const auto plan = runtime.plan(AgentRequest{QStringLiteral("Bugünün en son teknoloji haberleri neler?")});
+
+    QCOMPARE(plan.status, ToolInvocationPlanStatus::Planned);
+    QCOMPARE(plan.invocations.size(), 1);
+    QCOMPARE(plan.invocations.first().toolId, QStringLiteral("web-search"));
+    QCOMPARE(plan.invocations.first().arguments.first().value,
+             QStringLiteral("Bugünün en son teknoloji haberleri neler?"));
+}
+
+void NullAgentRuntimeTest::detectsEnglishWebSearchIntent() {
+    NullAgentRuntime runtime(NullAgentRuntime::standardTools());
+
+    const auto plan = runtime.plan(AgentRequest{QStringLiteral("What is the latest Qt release?")});
+
+    QCOMPARE(plan.status, ToolInvocationPlanStatus::Planned);
+    QCOMPARE(plan.invocations.first().toolId, QStringLiteral("web-search"));
+}
+
+void NullAgentRuntimeTest::detectsWeatherWebSearchIntent() {
+    NullAgentRuntime runtime(NullAgentRuntime::standardTools());
+
+    const auto plan = runtime.plan(AgentRequest{QStringLiteral("İstanbul'da bugün hava durumu nasıl?")});
+
+    QCOMPARE(plan.status, ToolInvocationPlanStatus::Planned);
+    QCOMPARE(plan.invocations.first().toolId, QStringLiteral("web-search"));
+}
+
+void NullAgentRuntimeTest::keepsOrdinaryPromptsLocal() {
+    NullAgentRuntime runtime(NullAgentRuntime::standardTools());
+
+    const auto plan = runtime.plan(AgentRequest{QStringLiteral("Write a short welcome message.")});
+
+    QCOMPARE(plan.status, ToolInvocationPlanStatus::Planned);
+    QCOMPARE(plan.invocations.first().toolId, QStringLiteral("run-command"));
 }
 
 QTEST_MAIN(NullAgentRuntimeTest)

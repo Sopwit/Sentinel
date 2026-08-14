@@ -10,6 +10,7 @@
 #include "sentinel/core/memory/JsonSettingsStore.h"
 #include "sentinel/core/runtime/LocalRuntime.h"
 #include "sentinel/core/runtime/NullToolExecutor.h"
+#include "sentinel/core/runtime/RealToolExecutor.h"
 #include "sentinel/core/agent/StaticAgentRegistry.h"
 #include "sentinel/core/security/StaticApprovalPolicy.h"
 #include "sentinel/core/memory/StaticMemoryCatalog.h"
@@ -43,6 +44,32 @@ namespace {
 
 int toInt(qsizetype value) {
     return static_cast<int>(value);
+}
+
+bool requiresLiveWebSearch(const QString& prompt) {
+    const auto normalized = prompt.toLower().simplified();
+    static const QStringList livePhrases{
+        QStringLiteral("hava durumu"), QStringLiteral("hava nasıl"), QStringLiteral("hava nasil"),
+        QStringLiteral("weather"), QStringLiteral("forecast"), QStringLiteral("temperature"),
+        QStringLiteral("en son"), QStringLiteral("güncel"), QStringLiteral("guncel"),
+        QStringLiteral("bugün"), QStringLiteral("bugun"), QStringLiteral("son dakika"),
+        QStringLiteral("latest"), QStringLiteral("current"), QStringLiteral("today"),
+        QStringLiteral("breaking news")};
+    for (const auto& phrase : livePhrases) {
+        if (normalized.contains(phrase)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool isWeatherPrompt(const QString& prompt) {
+    const auto normalized = prompt.toLower().simplified();
+    return normalized.contains(QStringLiteral("hava durumu")) ||
+           normalized.contains(QStringLiteral("hava nasıl")) ||
+           normalized.contains(QStringLiteral("hava nasil")) ||
+           normalized.contains(QStringLiteral("weather")) ||
+           normalized.contains(QStringLiteral("forecast"));
 }
 
 AgentActivityStatus planActivityStatus(ToolInvocationPlanStatus status) {
@@ -1969,6 +1996,53 @@ void ApplicationController::setLlamaCppEndpoint(const QString& endpoint) {
     emit ollamaStatusChanged();
 }
 
+void ApplicationController::configureWebSearch(const QString& provider, const QString& apiKey,
+                                               int maxResults) {
+    if (auto* executor = dynamic_cast<RealToolExecutor*>(toolExecutor_.get())) {
+        executor->configureWebSearch(provider, apiKey, maxResults);
+    }
+}
+
+void ApplicationController::setSemanticProvider(const QString& provider, const QString& embeddingModel) {
+    semanticEmbeddingModel_ = embeddingModel.trimmed().isEmpty()
+                                  ? QStringLiteral("nomic-embed-text")
+                                  : embeddingModel.trimmed();
+    const bool ollama = provider.trimmed().toLower() == QStringLiteral("ollama");
+    selectedSemanticProviderMode_ = ollama ? SemanticProviderMode::LocalOllamaEmbeddings
+                                           : SemanticProviderMode::Disabled;
+    semanticProviderPolicy_.disabledByDefault = !ollama;
+    semanticProviderPolicy_.allowLocalOllamaEmbeddingsProvider = ollama;
+    semanticProviderPolicy_.allowRealEmbeddingCalls = ollama;
+    semanticRetrievalPolicy_.enabled = ollama;
+    semanticRetrievalPolicy_.semanticRankingEnabled = ollama;
+    const bool allowLiveSemanticSupplements =
+        ollama && semanticPromptInclusionPolicy_.enabled && promptContextInjectionEnabled_;
+    semanticSupplementAssemblyPolicy_.enabled = allowLiveSemanticSupplements;
+    semanticSupplementAssemblyPolicy_.allowTestOnlyAssembly = false;
+    semanticSupplementAssemblyPolicy_.includeInLivePrompt = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.enabled = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.allowTestOnlyWouldIncludeMetadata = false;
+    semanticPromptAuthorityPolicy_.promptInjectionExplicitlyEnabled = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.semanticPromptAuthorityAllowed = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.includeInLivePrompt = allowLiveSemanticSupplements;
+    semanticProviderPolicy_.allowSemanticPromptInjection = allowLiveSemanticSupplements;
+    if (ollama && ollamaRuntimeClient_) {
+        const OllamaEmbeddingProvider embeddingProvider(ollamaRuntimeClient_->config().endpoint.toString(),
+                                                        semanticEmbeddingModel_, 4000);
+        const auto result = embeddingProvider.embed(EmbeddingRequest{
+            {EmbeddingDocument{QStringLiteral("sentinel-provider-probe"),
+                               QStringLiteral("semantic provider activation probe"),
+                               QStringLiteral("runtime"), QStringLiteral("provider probe")}},
+            embeddingProvider.policy()});
+        semanticEmbeddingStatus_ = result.status;
+        semanticEmbeddingSummary_ = result.summary;
+    } else {
+        semanticEmbeddingStatus_ = EmbeddingProviderStatus::NotConfigured;
+        semanticEmbeddingSummary_ = QStringLiteral("Semantic embedding provider is not configured.");
+    }
+    emit contextAssemblyChanged();
+}
+
 QString ApplicationController::ollamaConnectionStatus() const {
     return ollamaConnectionStatusName(currentOllamaHealthCheck().connectionStatus);
 }
@@ -3508,6 +3582,18 @@ void ApplicationController::setPromptContextInjectionEnabled(bool enabled) {
     promptContextInjectionEnabled_ = enabled;
     promptContextInjectionPolicy_.enabled = enabled;
     semanticPromptInclusionPolicy_.contextInjectionEnabled = enabled;
+    const bool allowLiveSemanticSupplements =
+        enabled && semanticPromptInclusionPolicy_.enabled &&
+        selectedSemanticProviderMode_ == SemanticProviderMode::LocalOllamaEmbeddings;
+    semanticSupplementAssemblyPolicy_.enabled = allowLiveSemanticSupplements;
+    semanticSupplementAssemblyPolicy_.allowTestOnlyAssembly = false;
+    semanticSupplementAssemblyPolicy_.includeInLivePrompt = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.enabled = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.allowTestOnlyWouldIncludeMetadata = false;
+    semanticPromptAuthorityPolicy_.promptInjectionExplicitlyEnabled = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.semanticPromptAuthorityAllowed = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.includeInLivePrompt = allowLiveSemanticSupplements;
+    semanticProviderPolicy_.allowSemanticPromptInjection = allowLiveSemanticSupplements;
     promptContextInjectionPolicy_.status =
         enabled ? QStringLiteral("Enabled") : QStringLiteral("Disabled");
     promptContextInjectionPolicy_.summary =
@@ -3548,6 +3634,18 @@ void ApplicationController::setSemanticPromptInclusionEnabled(bool enabled) {
 
     semanticPromptInclusionPolicy_.enabled = enabled;
     semanticPromptInclusionPolicy_.contextInjectionEnabled = promptContextInjectionEnabled_;
+    const bool allowLiveSemanticSupplements =
+        enabled && promptContextInjectionEnabled_ &&
+        selectedSemanticProviderMode_ == SemanticProviderMode::LocalOllamaEmbeddings;
+    semanticSupplementAssemblyPolicy_.enabled = allowLiveSemanticSupplements;
+    semanticSupplementAssemblyPolicy_.allowTestOnlyAssembly = false;
+    semanticSupplementAssemblyPolicy_.includeInLivePrompt = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.enabled = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.allowTestOnlyWouldIncludeMetadata = false;
+    semanticPromptAuthorityPolicy_.promptInjectionExplicitlyEnabled = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.semanticPromptAuthorityAllowed = allowLiveSemanticSupplements;
+    semanticPromptAuthorityPolicy_.includeInLivePrompt = allowLiveSemanticSupplements;
+    semanticProviderPolicy_.allowSemanticPromptInjection = allowLiveSemanticSupplements;
     latestSemanticPromptInclusionResult_ = sentinel::core::includeSemanticPromptSupplements(
         latestPromptContextInjectionResult_, semanticSupplementAssemblyResult(),
         semanticPromptAuthorityResult(), semanticPromptInclusionPolicy());
@@ -4114,10 +4212,7 @@ QString ApplicationController::embeddingProviderReadiness() const {
     if (!ollamaRuntimeClient_ || !semanticRetrievalPolicy_.enabled) {
         return embeddingProviderStatusName(EmbeddingProviderStatus::NotConfigured);
     }
-    const auto provider = sentinel::core::OllamaEmbeddingProvider(
-        ollamaRuntimeClient_->config().endpoint.toString(),
-        QStringLiteral("nomic-embed-text"), 4000);
-    return embeddingProviderStatusName(provider.status());
+    return embeddingProviderStatusName(semanticEmbeddingStatus_);
 }
 
 QString ApplicationController::embeddingProviderSummary() const {
@@ -4126,10 +4221,7 @@ QString ApplicationController::embeddingProviderSummary() const {
             "No embedding provider is configured; semantic retrieval is disabled. Embeddings are "
             "generated locally through Ollama when semantic retrieval is enabled.");
     }
-    const auto provider = sentinel::core::OllamaEmbeddingProvider(
-        ollamaRuntimeClient_->config().endpoint.toString(),
-        QStringLiteral("nomic-embed-text"), 4000);
-    return provider.policy().summary;
+    return semanticEmbeddingSummary_;
 }
 
 QString ApplicationController::vectorIndexReadiness() const {
@@ -7771,6 +7863,47 @@ bool ApplicationController::sendMessage(const QString& message) {
             QStringLiteral("Runtime-only transcript; persistence unavailable.");
     }
 
+    QString effectivePrompt = trimmed;
+    if (requiresLiveWebSearch(trimmed)) {
+        const auto* executor = dynamic_cast<const RealToolExecutor*>(toolExecutor_.get());
+        const auto searchQuery = isWeatherPrompt(trimmed)
+                                     ? QStringLiteral("%1 current weather today").arg(trimmed)
+                                     : trimmed;
+        const auto liveSearch = executor ? executor->searchWeb(searchQuery) : WebSearchResponse{};
+        if (!liveSearch.success || liveSearch.results.isEmpty()) {
+            const auto reason = liveSearch.errorString.trimmed().isEmpty()
+                                    ? QStringLiteral("No current web results were available.")
+                                    : QStringLiteral("Live web search failed: %1")
+                                          .arg(liveSearch.errorString);
+            const auto assistantMessage = chatSession_->appendAssistantMessage(
+                QStringLiteral("Güncel bilgi veremiyorum: %1 Eski veya doğrulanmamış bilgi "
+                               "kullanmayacağım.")
+                    .arg(reason),
+                ChatMessageStatus::Error);
+            persistActiveConversationMessage(assistantMessage);
+            if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
+                chatHistoryStore_->appendMessage(assistantMessage);
+            }
+            setChatSendLifecycle(QStringLiteral("failed"), reason);
+            lastAgentResponse_ = assistantMessage.content;
+            refreshConversationHistorySummary();
+            emit chatMessagesChanged();
+            emit agentResponseChanged();
+            return true;
+        }
+
+        QStringList resultLines;
+        for (const auto& result : liveSearch.results) {
+            resultLines.append(QStringLiteral("- %1 | %2 | %3")
+                                   .arg(result.title, result.url, result.snippet));
+        }
+        effectivePrompt = QStringLiteral(
+                              "Answer the user's request using only the following live web search "
+                              "results. Do not invent current facts, and state when the results "
+                              "are insufficient.\n\nUser request: %1\n\nLive web results:\n%2")
+                              .arg(trimmed, resultLines.join(QStringLiteral("\n")));
+    }
+
     if (localChatInferenceEnabled_) {
         transitionConversationState(ConversationState::ReadyToRespond,
                                     QStringLiteral("local chat inference metadata ready"));
@@ -7782,8 +7915,8 @@ bool ApplicationController::sendMessage(const QString& message) {
         emit contextAssemblyChanged();
         activeLocalInferenceIsChatRequest_ = true;
         const auto startedLocalInference = localInferenceStreamingAvailable()
-                                               ? runLocalInferenceStream(trimmed, {})
-                                               : runLocalInference(trimmed, {});
+                                                ? runLocalInferenceStream(effectivePrompt, {})
+                                                : runLocalInference(effectivePrompt, {});
         if (startedLocalInference || !activeLocalInferenceIsChatRequest_) {
             return true;
         }
@@ -7828,7 +7961,7 @@ bool ApplicationController::sendMessage(const QString& message) {
                                 QStringLiteral("chat response metadata ready"));
     transitionConversationState(ConversationState::Responding,
                                 QStringLiteral("chat response metadata active"));
-    const auto reply = provider_->sendMessage(trimmed);
+    const auto reply = provider_->sendMessage(effectivePrompt);
     if (!reply.success) {
         transitionConversationState(ConversationState::Error,
                                     QStringLiteral("chat provider returned error metadata"));

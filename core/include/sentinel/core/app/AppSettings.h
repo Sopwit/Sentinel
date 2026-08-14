@@ -30,6 +30,16 @@ class AppSettings final : public QObject {
                    llamaCppEndpointChanged)
     Q_PROPERTY(QString cloudApiEndpoint READ cloudApiEndpoint WRITE setCloudApiEndpoint NOTIFY
                    cloudApiEndpointChanged)
+    Q_PROPERTY(QString webSearchProvider READ webSearchProvider WRITE setWebSearchProvider NOTIFY
+                   webSearchSettingsChanged)
+    Q_PROPERTY(QString webSearchApiKey READ webSearchApiKey WRITE setWebSearchApiKey NOTIFY
+                   webSearchSettingsChanged)
+    Q_PROPERTY(int webSearchMaxResults READ webSearchMaxResults WRITE setWebSearchMaxResults NOTIFY
+                   webSearchSettingsChanged)
+    Q_PROPERTY(QString semanticProvider READ semanticProvider WRITE setSemanticProvider NOTIFY
+                   semanticSettingsChanged)
+    Q_PROPERTY(QString semanticEmbeddingModel READ semanticEmbeddingModel WRITE
+                   setSemanticEmbeddingModel NOTIFY semanticSettingsChanged)
     Q_PROPERTY(QString selectedRuntimeProvider READ selectedRuntimeProvider WRITE
                    setSelectedRuntimeProvider NOTIFY selectedRuntimeProviderChanged)
     Q_PROPERTY(QString selectedCloudProvider READ selectedCloudProvider WRITE
@@ -70,6 +80,8 @@ class AppSettings final : public QObject {
                    whisperModelPathChanged)
     Q_PROPERTY(bool piperFileOutputExecutionEnabled READ piperFileOutputExecutionEnabled WRITE
                    setPiperFileOutputExecutionEnabled NOTIFY piperFileOutputExecutionEnabledChanged)
+    Q_PROPERTY(bool whisperTranscriptionExecutionEnabled READ whisperTranscriptionExecutionEnabled WRITE
+                   setWhisperTranscriptionExecutionEnabled NOTIFY whisperTranscriptionExecutionEnabledChanged)
     Q_PROPERTY(QString selectedTtsEngine READ selectedTtsEngine WRITE setSelectedTtsEngine NOTIFY
                    selectedTtsEngineChanged)
     Q_PROPERTY(QString kokoroModelPath READ kokoroModelPath WRITE setKokoroModelPath NOTIFY
@@ -181,6 +193,16 @@ public:
     void setLlamaCppEndpoint(const QString& endpoint);
     QString cloudApiEndpoint() const;
     void setCloudApiEndpoint(const QString& endpoint);
+    QString webSearchProvider() const;
+    void setWebSearchProvider(const QString& provider);
+    QString webSearchApiKey() const;
+    void setWebSearchApiKey(const QString& key);
+    int webSearchMaxResults() const;
+    void setWebSearchMaxResults(int maxResults);
+    QString semanticProvider() const;
+    void setSemanticProvider(const QString& provider);
+    QString semanticEmbeddingModel() const;
+    void setSemanticEmbeddingModel(const QString& model);
     QString selectedRuntimeProvider() const;
     void setSelectedRuntimeProvider(const QString& providerId);
     QString selectedCloudProvider() const;
@@ -227,6 +249,8 @@ public:
     void setWhisperModelPath(const QString& path);
     bool piperFileOutputExecutionEnabled() const;
     void setPiperFileOutputExecutionEnabled(bool enabled);
+    bool whisperTranscriptionExecutionEnabled() const;
+    void setWhisperTranscriptionExecutionEnabled(bool enabled);
     QString selectedTtsEngine() const;
     void setSelectedTtsEngine(const QString& engine);
     QString kokoroModelPath() const;
@@ -344,6 +368,8 @@ signals:
     void lmStudioEndpointChanged();
     void llamaCppEndpointChanged();
     void cloudApiEndpointChanged();
+    void webSearchSettingsChanged();
+    void semanticSettingsChanged();
     void selectedRuntimeProviderChanged();
     void selectedCloudProviderChanged();
     void selectedLocalModelChanged();
@@ -365,6 +391,7 @@ signals:
     void whisperBinaryPathChanged();
     void whisperModelPathChanged();
     void piperFileOutputExecutionEnabledChanged();
+    void whisperTranscriptionExecutionEnabledChanged();
     void selectedTtsEngineChanged();
     void kokoroModelPathChanged();
     void kokoroVoiceChanged();
@@ -392,6 +419,11 @@ private:
     static constexpr auto lmStudioEndpointKey = "lmStudioEndpoint";
     static constexpr auto llamaCppEndpointKey = "llamaCppEndpoint";
     static constexpr auto cloudApiEndpointKey = "cloudApiEndpoint";
+    static constexpr auto webSearchProviderKey = "webSearchProvider";
+    static constexpr auto webSearchApiKeyKey = "webSearchApiKey";
+    static constexpr auto webSearchMaxResultsKey = "webSearchMaxResults";
+    static constexpr auto semanticProviderKey = "semanticProvider";
+    static constexpr auto semanticEmbeddingModelKey = "semanticEmbeddingModel";
     static constexpr auto selectedRuntimeProviderKey = "selectedRuntimeProvider";
     static constexpr auto selectedCloudProviderKey = "selectedCloudProvider";
     static constexpr auto selectedLocalModelKey = "selectedLocalModel";
@@ -414,6 +446,7 @@ private:
     static constexpr auto whisperBinaryPathKey = "whisperBinaryPath";
     static constexpr auto whisperModelPathKey = "whisperModelPath";
     static constexpr auto piperFileOutputExecutionEnabledKey = "piperFileOutputExecutionEnabled";
+    static constexpr auto whisperTranscriptionExecutionEnabledKey = "whisperTranscriptionExecutionEnabled";
     static constexpr auto selectedTtsEngineKey = "selectedTtsEngine";
     static constexpr auto kokoroModelPathKey = "kokoroModelPath";
     static constexpr auto kokoroVoiceKey = "kokoroVoice";
@@ -467,6 +500,9 @@ private:
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";
     static constexpr auto defaultSelectedRuntimeProvider = "ollama";
+    static constexpr auto defaultWebSearchProvider = "exa";
+    static constexpr auto defaultSemanticProvider = "disabled";
+    static constexpr auto defaultSemanticEmbeddingModel = "nomic-embed-text";
     static constexpr auto defaultSelectedWorkspaceId = "personal";
     static constexpr auto defaultAttachmentBehavior = "Manual Attachments Only";
     static constexpr auto defaultExportFormat = "Markdown";
