@@ -454,57 +454,6 @@ ApplicationWindow {
         }
     }
 
-    // ── Notification Center Panel ─────────────────────────────────────────────
-    Popup {
-        id: notifCenterPopup
-        x: Math.max(16, root.width - 520 - SentinelTheme.pageMargin(root.width))
-        y: 72
-        width: 500
-        height: Math.min(600, root.height - 120)
-        modal: true
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutside
-        visible: root.viewModel ? root.viewModel.notificationCenterVisible : false
-
-        onClosed: {
-            if (root.viewModel) root.viewModel.notificationCenterVisible = false
-        }
-
-        background: Rectangle {
-            color: "transparent"
-        }
-
-        contentItem: NotificationCenterPanel {
-            viewModel: root.viewModel
-            width: parent.width
-            height: parent.height
-            onCloseRequested: {
-                notifCenterPopup.close()
-            }
-        }
-
-        enter: Transition {
-            NumberAnimation { property: "opacity"; from: 0; to: 1; duration: MotionTokens.normal; easing.type: Easing.OutCubic }
-            NumberAnimation { property: "y"; from: 56; to: 72; duration: MotionTokens.normal; easing.type: Easing.OutCubic }
-        }
-
-        exit: Transition {
-            NumberAnimation { property: "opacity"; from: 1; to: 0; duration: MotionTokens.fast; easing.type: Easing.InCubic }
-            NumberAnimation { property: "y"; from: 72; to: 56; duration: MotionTokens.fast; easing.type: Easing.InCubic }
-        }
-    }
-
-    Connections {
-        target: root.viewModel
-        function onNotificationCenterVisibleChanged() {
-            if (root.viewModel.notificationCenterVisible) {
-                notifCenterPopup.open()
-            } else {
-                notifCenterPopup.close()
-            }
-        }
-    }
-
     SentinelOverlayModal {
         id: settingsModal
         accent: SentinelTheme.modeAccent(root.viewModel.currentModeName)

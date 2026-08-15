@@ -9,6 +9,7 @@
 #include "sentinel/core/runtime/OllamaRuntime.h"
 
 #include <QDir>
+#include <QDirIterator>
 #include <QFile>
 #include <QLocale>
 #include <QStandardPaths>
@@ -913,6 +914,16 @@ QString findModelInDirectories(const QStringList& dirs, const QStringList& filte
     return {};
 }
 
+QString findModelInExternalDirectories(const QStringList& roots, const QStringList& filters) {
+    for (const auto& root : roots) {
+        QDirIterator iterator(root, filters, QDir::Files, QDirIterator::Subdirectories);
+        if (iterator.hasNext()) {
+            return iterator.next();
+        }
+    }
+    return {};
+}
+
 QString findPiperModelCandidate() {
     const QString appData = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     const QString home = QDir::homePath();
@@ -958,7 +969,17 @@ QString findKokoroModelCandidate() {
         home + QStringLiteral("/.kokoro"),
         home + QStringLiteral("/kokoro"),
     };
-    return findModelInDirectories(dirs, {QStringLiteral("*.onnx"), QStringLiteral("*.pt"), QStringLiteral("*.pth"), QStringLiteral("*.bin"), QStringLiteral("*.safetensors")});
+    const QStringList filters{QStringLiteral("*.onnx"), QStringLiteral("*.pt"),
+                              QStringLiteral("*.pth"), QStringLiteral("*.bin"),
+                              QStringLiteral("*.safetensors")};
+    const auto localCandidate = findModelInDirectories(dirs, filters);
+    if (!localCandidate.isEmpty()) {
+        return localCandidate;
+    }
+
+    // Large TTS models are often stored on mounted volumes outside the home directory.
+    return findModelInExternalDirectories(
+        {QStringLiteral("/Volumes"), QStringLiteral("/mnt"), QStringLiteral("/media")}, filters);
 }
 
 } // namespace

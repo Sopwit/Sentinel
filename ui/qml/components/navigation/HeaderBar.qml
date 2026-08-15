@@ -139,61 +139,6 @@ ShellPanel {
                 }
             }
 
-            Item {
-                id: notifBellArea
-                Layout.preferredWidth: 36
-                Layout.preferredHeight: 36
-
-                SentinelButton {
-                    id: notifBellButton
-                    anchors.centerIn: parent
-                    implicitWidth: 32
-                    implicitHeight: 32
-                    flat: true
-                    text: {
-                        if (headerBar.viewModel && headerBar.viewModel.dndEnabled) return "\uD83D\uDD07"
-                        return "\uD83D\uDD14"
-                    }
-                    font.pixelSize: 16
-                    tooltipText: headerBar.viewModel && headerBar.viewModel.dndEnabled ? qsTr("Do Not Disturb is on") : qsTr("Open notifications")
-                    Accessible.name: headerBar.viewModel && headerBar.viewModel.dndEnabled ? qsTr("Do not disturb is on, click to toggle") : qsTr("Open notifications")
-                    onClicked: {
-                        if (headerBar.viewModel) {
-                            if (headerBar.viewModel.dndEnabled) {
-                                headerBar.viewModel.dndEnabled = false
-                            } else {
-                                headerBar.viewModel.toggleNotificationCenter()
-                            }
-                        }
-                    }
-                }
-
-                Rectangle {
-                    id: notifBadge
-                    anchors.top: parent.top
-                    anchors.topMargin: 2
-                    anchors.right: parent.right
-                    anchors.rightMargin: 2
-                    width: 16
-                    height: 16
-                    radius: 8
-                    color: "#e74c3c"
-                    visible: count > 0
-
-                    property int count: headerBar.viewModel ? headerBar.viewModel.unreadNotificationCount : 0
-
-                    Text {
-                        anchors.centerIn: parent
-                        text: parent.count > 99 ? "99+" : parent.count.toString()
-                        font.pixelSize: 9
-                        font.bold: true
-                        color: "white"
-                        horizontalAlignment: Text.AlignHCenter
-                        verticalAlignment: Text.AlignVCenter
-                    }
-                }
-            }
-
             Rectangle {
                 visible: !headerBar.compact
                 Layout.preferredWidth: 104

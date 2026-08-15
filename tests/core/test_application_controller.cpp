@@ -698,7 +698,7 @@ private slots:
     void blocksLocalInferenceByDefaultPermission();
     void blocksLocalInferenceWhenSafetyPolicyBlocks();
     void runsInjectedLocalInferenceWhenPermissionAllows();
-    void usesProviderPathWhenLocalChatInferenceDisabled();
+    void localChatInferenceRequiresASelectedModel();
     void enabledLocalChatInferenceWithoutValidModelFailsSafely();
     void enabledLocalChatInferenceWithInvalidModelShowsSafeSummary();
     void disabledProviderSelectionRefusesBeforeTranscriptMutation();
@@ -1764,12 +1764,14 @@ void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetad
 
 void ApplicationControllerTest::exposesStreamingEnabledByDefaultMetadata() {
     const auto controller = makeController();
+    controller->setLocalInferenceStreamingEnabled(true);
 
-    QVERIFY(!controller->localInferenceStreamingAvailable());
+    QVERIFY(controller->localInferenceStreamingAvailable());
     QVERIFY(controller->localInferenceStreamingEnabled());
     QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Disabled"));
     QCOMPARE(controller->localInferenceStreamSummary(),
-             QStringLiteral("Local inference streaming client is unavailable."));
+             QStringLiteral("Ollama local streaming boundary is configured for loopback-only "
+                            "/api/generate."));
     QVERIFY(controller->localInferenceStreamingText().isEmpty());
 }
 
@@ -3097,7 +3099,7 @@ void ApplicationControllerTest::runsInjectedLocalInferenceWhenPermissionAllows()
                        "and no-execution posture is enforced with deterministic metadata rules.")));
 }
 
-void ApplicationControllerTest::usesProviderPathWhenLocalChatInferenceDisabled() {
+void ApplicationControllerTest::localChatInferenceRequiresASelectedModel() {
     auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
     auto* fakeClientPtr = fakeClient.get();
     auto controller = std::make_unique<ApplicationController>(
@@ -3111,16 +3113,13 @@ void ApplicationControllerTest::usesProviderPathWhenLocalChatInferenceDisabled()
 
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
-    QVERIFY(sent);
+    QVERIFY(!sent);
     QVERIFY(!fakeClientPtr->called);
-    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Disabled"));
-    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("completed"));
-    QCOMPARE(controller->chatHistory().size(), 3);
-    QCOMPARE(controller->chatHistory().at(1).content, QStringLiteral("hello"));
-    QCOMPARE(controller->chatHistory().at(2).content,
-             QStringLiteral("Sentinel Core online. Local chat pipeline is active.\n\n[echo] hello"));
+    QCOMPARE(controller->localChatInferenceStatus(), QStringLiteral("Missing Model"));
+    QCOMPARE(controller->chatSendLifecycleState(), QStringLiteral("refused"));
+    QCOMPARE(controller->chatHistory().size(), 1);
     QCOMPARE(controller->localChatSendAvailabilitySummary(),
-             QStringLiteral("Enable Local chat inference in Settings to send with Ollama."));
+             QStringLiteral("Select an installed Ollama model in Settings before sending."));
 }
 
 void ApplicationControllerTest::enabledLocalChatInferenceWithoutValidModelFailsSafely() {

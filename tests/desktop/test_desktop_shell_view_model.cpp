@@ -1148,23 +1148,22 @@ void DesktopShellViewModelTest::exposesLocalInferenceBoundaryMetadata() {
              QStringLiteral("No local model metadata available."));
     QCOMPARE(fixture.viewModel.activeLocalRuntimeBadge(),
              QStringLiteral("Ollama Local / No Model"));
-    QVERIFY(!fixture.viewModel.localChatInferenceEnabled());
-    QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Disabled"));
+    QVERIFY(fixture.viewModel.localChatInferenceEnabled());
+    QCOMPARE(fixture.viewModel.localChatInferenceStatus(), QStringLiteral("Missing Model"));
     QCOMPARE(fixture.viewModel.localChatInferenceSummary(),
-             QStringLiteral("Local chat inference is disabled; chat stays on the local safe "
-                            "provider path and no Ollama prompt is sent."));
+             QStringLiteral("Select a model for Ollama in Settings before sending."));
     QVERIFY(!fixture.viewModel.localChatSendAvailable());
     QCOMPARE(fixture.viewModel.localChatSendAvailabilitySummary(),
-             QStringLiteral("Enable Local chat inference in Settings to send with Ollama."));
+             QStringLiteral("Select an installed Ollama model in Settings before sending."));
     QCOMPARE(fixture.viewModel.localInferenceRuntimeState(), QStringLiteral("Unavailable"));
     QCOMPARE(fixture.viewModel.localInferenceLatencySummary(),
              QStringLiteral("No local inference latency recorded."));
-    QVERIFY(!fixture.viewModel.localInferenceStreamingAvailable());
-    QVERIFY(!fixture.viewModel.localInferenceStreamingEnabled());
+    QVERIFY(fixture.viewModel.localInferenceStreamingAvailable());
+    QVERIFY(fixture.viewModel.localInferenceStreamingEnabled());
     QCOMPARE(fixture.viewModel.localInferenceStreamStatus(), QStringLiteral("Disabled"));
     QCOMPARE(fixture.viewModel.localInferenceStreamSummary(),
-             QStringLiteral("Local inference streaming is disabled; responses finalize through "
-                            "normal chat history."));
+             QStringLiteral("Ollama local streaming boundary is configured for loopback-only "
+                            "/api/generate."));
     QVERIFY(fixture.viewModel.localInferenceStreamingText().isEmpty());
     QVERIFY(fixture.viewModel.localInferenceTraceSummaries().isEmpty());
 }

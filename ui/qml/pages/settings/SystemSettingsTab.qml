@@ -77,12 +77,6 @@ Item {
                     Layout.fillWidth: true
                 }
 
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Audio System")
-                    value: root.soundManager && root.soundManager.soundEffectsAvailable ? qsTr("Sound effects active") : qsTr("Muted or system audio disabled")
-                    Layout.fillWidth: true
-                }
             }
 
             Rectangle {
@@ -113,12 +107,29 @@ Item {
 
             SettingToggleRow {
                 title: qsTr("Developer Diagnostics Mode")
-                subtitle: qsTr("Display telemetry metrics, debug execution logs, and detailed diagnostic counters.")
+                subtitle: qsTr("Show read-only permission, tool, agent, notification, and task diagnostics. This does not change execution permissions.")
                 checked: root.viewModel.developerModeEnabled
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
                 onToggled: (checked) => root.viewModel.developerModeEnabled = checked
+            }
+
+            SettingCard {
+                visible: root.viewModel.developerModeEnabled
+                title: qsTr("Developer Diagnostics")
+                subtitle: qsTr("Read-only runtime details for troubleshooting.")
+
+                Label {
+                    Layout.fillWidth: true
+                    text: root.viewModel.diagnosticsCenterSummaries.join("\n")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                    wrapMode: Text.WordWrap
+                    leftPadding: SentinelTheme.spaceMd
+                    rightPadding: SentinelTheme.spaceMd
+                    bottomPadding: SentinelTheme.spaceSm
+                }
             }
 
             SettingControlRow {
@@ -218,5 +229,6 @@ Item {
                 onToggled: (checked) => root.viewModel.notifySystemUpdates = checked
             }
         }
+
     }
 }

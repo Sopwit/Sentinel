@@ -28,14 +28,17 @@ Item {
 
         SectionTitle {
             title: qsTr("Security & Agent Boundaries")
-            subtitle: qsTr("Configure system-level permission policies, proxy settings, and sandbox boundaries.")
+            subtitle: qsTr("Set the safety rules for tools and agents. Start with the policy, then review agent tasks before they run.")
             Layout.fillWidth: true
         }
 
         SettingCard {
+            title: qsTr("Execution Safety")
+            subtitle: qsTr("These controls apply to every tool and agent action.")
+
             SettingControlRow {
                 title: qsTr("Default Policy")
-                subtitle: qsTr("Global permission policy baseline for tool execution and desktop integration.")
+                subtitle: qsTr("Choose how much permission is granted by default.")
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
@@ -63,7 +66,7 @@ Item {
 
                 InfoRow {
                     compact: root.compact
-                    label: qsTr("Tool Execution Gateway")
+                    label: qsTr("Tool Gateway")
                     value: root.viewModel.toolGatewayStatus || qsTr("Inactive")
                     Layout.fillWidth: true
                 }
@@ -77,16 +80,28 @@ Item {
 
             SettingToggleRow {
                 title: qsTr("Agent Autonomous Mode")
-                subtitle: qsTr("Allow AI agents to execute approved tool pipelines without requiring manual approval per step.")
+                subtitle: qsTr("Let approved plans continue without asking at every step.")
                 checked: root.viewModel.agentAutonomousMode
                 accent: root.modeAccent
                 compact: root.compact
                 onToggled: (checked) => root.viewModel.agentAutonomousMode = checked
             }
+        }
+
+        SectionTitle {
+            title: qsTr("Controlled Agent Tasks")
+            subtitle: qsTr("Describe a task, review the plan, then approve and start it.")
+            Layout.fillWidth: true
+            Layout.topMargin: SentinelTheme.spaceMd
+        }
+
+        SettingCard {
+            title: qsTr("Review Before Running")
+            subtitle: qsTr("Nothing starts until you approve the generated plan.")
 
             SettingControlRow {
-                title: qsTr("Controlled Agent Goal")
-                subtitle: qsTr("Create an explicit plan before any tool or agent step runs.")
+                title: qsTr("Task Description")
+                subtitle: qsTr("Describe one bounded task for the agent.")
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
@@ -94,7 +109,7 @@ Item {
                 SentinelTextField {
                     id: controlledGoal
                     anchors.fill: parent
-                    placeholderText: qsTr("Describe the task Sentinel should plan")
+                    placeholderText: qsTr("Example: summarize the selected workspace files")
                 }
             }
 
@@ -105,7 +120,7 @@ Item {
                 spacing: SentinelTheme.spaceSm
 
                 SentinelButton {
-                    text: qsTr("Plan")
+                    text: qsTr("Create Plan")
                     accent: root.modeAccent
                     enabled: controlledGoal.text.trim().length > 0
                     onClicked: root.viewModel.planControlledAgentTask(controlledGoal.text.trim())
@@ -132,8 +147,14 @@ Item {
 
                 InfoRow {
                     compact: root.compact
-                    label: qsTr("Plan")
+                    label: qsTr("Plan Status")
                     value: root.viewModel.agentPlanApprovalState + " / " + root.viewModel.agentPlanEstimatedRisk
+                    Layout.fillWidth: true
+                }
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Permissions")
+                    value: root.viewModel.agentPlanRequiredPermissions.join(", ") || qsTr("None declared")
                     Layout.fillWidth: true
                 }
                 Label {
@@ -290,6 +311,19 @@ Item {
                     echoMode: TextInput.Password
                     text: root.viewModel.webSearchApiKey
                     onEditingFinished: root.viewModel.webSearchApiKey = text
+                }
+            }
+            SettingControlRow {
+                title: qsTr("Maximum Results")
+                subtitle: qsTr("Limit the number of search results supplied to an approved request.")
+                accent: root.modeAccent
+                compact: root.compact
+                SentinelSpinBox {
+                    anchors.fill: parent
+                    from: 1
+                    to: 20
+                    value: root.viewModel.webSearchMaxResults
+                    onValueModified: root.viewModel.webSearchMaxResults = value
                 }
             }
         }
