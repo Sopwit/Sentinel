@@ -3882,6 +3882,189 @@ Detay: </translation>
     </message>
 </context>
 <context>
+    <name>VoiceSettingsTab</name>
+    <message>
+        <source>Voice &amp; Audio Settings</source>
+        <translation>Ses ve Ses Ayarları</translation>
+    </message>
+    <message>
+        <source>Configure local speech-to-text (Whisper) and text-to-speech (Piper, Kokoro) runtimes and paths.</source>
+        <translation>Yerel konuşmadan metne (Whisper) ve metinden konuşmaya (Piper, Kokoro) çalışma ortamlarını ve yollarını yapılandırın.</translation>
+    </message>
+    <message>
+        <source>Auto Detection</source>
+        <translation>Otomatik Tespit</translation>
+    </message>
+    <message>
+        <source>Auto-Detect Voice Engines</source>
+        <translation>Ses Motorlarını Otomatik Tespit Et</translation>
+    </message>
+    <message>
+        <source>Automatically scan system PATH and model directories for Piper, Whisper, and Kokoro.</source>
+        <translation>Piper, Whisper ve Kokoro için sistem PATH değerini ve model dizinlerini otomatik tara.</translation>
+    </message>
+    <message>
+        <source>Auto Detect</source>
+        <translation>Otomatik Tespit Et</translation>
+    </message>
+    <message>
+        <source>No local Piper, Whisper, or Kokoro binaries or model files were detected automatically.</source>
+        <translation>Yerel Piper, Whisper veya Kokoro ikili dosyası ya da model dosyası otomatik olarak tespit edilmedi.</translation>
+    </message>
+    <message>
+        <source>Auto-detected voice paths:</source>
+        <translation>Otomatik tespit edilen ses yolları:</translation>
+    </message>
+    <message>
+        <source>Piper binary: %1</source>
+        <translation>Piper ikili dosyası: %1</translation>
+    </message>
+    <message>
+        <source>Piper model: %1</source>
+        <translation>Piper modeli: %1</translation>
+    </message>
+    <message>
+        <source>Kokoro model: %1</source>
+        <translation>Kokoro modeli: %1</translation>
+    </message>
+    <message>
+        <source>Whisper binary: %1</source>
+        <translation>Whisper ikili dosyası: %1</translation>
+    </message>
+    <message>
+        <source>Whisper model: %1</source>
+        <translation>Whisper modeli: %1</translation>
+    </message>
+    <message>
+        <source>Text-to-Speech Engine</source>
+        <translation>Metinden Konuşmaya Motoru</translation>
+    </message>
+    <message>
+        <source>TTS Engine</source>
+        <translation>TTS Motoru</translation>
+    </message>
+    <message>
+        <source>Primary local text-to-speech synthesis backend.</source>
+        <translation>Birincil yerel metinden konuşmaya sentez arka ucu.</translation>
+    </message>
+    <message>
+        <source>Kokoro Model Path</source>
+        <translation>Kokoro Model Yolu</translation>
+    </message>
+    <message>
+        <source>Path to Kokoro ONNX model file.</source>
+        <translation>Kokoro ONNX model dosyasının yolu.</translation>
+    </message>
+    <message>
+        <source>Kokoro Voice</source>
+        <translation>Kokoro Sesi</translation>
+    </message>
+    <message>
+        <source>Voice ID preset for Kokoro TTS.</source>
+        <translation>Kokoro TTS için ses kimliği ön ayarı.</translation>
+    </message>
+    <message>
+        <source>Piper Binary Path</source>
+        <translation>Piper İkili Dosya Yolu</translation>
+    </message>
+    <message>
+        <source>Path to local Piper executable.</source>
+        <translation>Yerel Piper çalıştırılabilir dosyasının yolu.</translation>
+    </message>
+    <message>
+        <source>Piper Model Path</source>
+        <translation>Piper Model Yolu</translation>
+    </message>
+    <message>
+        <source>Path to Piper voice ONNX model file.</source>
+        <translation>Piper ses ONNX model dosyasının yolu.</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Gözat</translation>
+    </message>
+    <message>
+        <source>Select Kokoro model file</source>
+        <translation>Kokoro model dosyası seç</translation>
+    </message>
+    <message>
+        <source>Model files (*.onnx *.pt *.pth *.bin *.safetensors)</source>
+        <translation>Model dosyaları (*.onnx *.pt *.pth *.bin *.safetensors)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>Tüm dosyalar (*)</translation>
+    </message>
+    <message>
+        <source>Select Piper executable</source>
+        <translation>Piper çalıştırılabilir dosyasını seç</translation>
+    </message>
+    <message>
+        <source>Executables (*)</source>
+        <translation>Çalıştırılabilir dosyalar (*)</translation>
+    </message>
+    <message>
+        <source>Select Piper model file</source>
+        <translation>Piper model dosyası seç</translation>
+    </message>
+    <message>
+        <source>ONNX model files (*.onnx)</source>
+        <translation>ONNX model dosyaları (*.onnx)</translation>
+    </message>
+    <message>
+        <source>Enable Piper File Output</source>
+        <translation>Piper Dosya Çıktısını Etkinleştir</translation>
+    </message>
+    <message>
+        <source>Save synthesized audio responses to local WAV output files for review.</source>
+        <translation>Sentezlenen ses yanıtlarını inceleme için yerel WAV çıktı dosyalarına kaydet.</translation>
+    </message>
+    <message>
+        <source>Speech-to-Text</source>
+        <translation>Konuşmadan Metne</translation>
+    </message>
+    <message>
+        <source>Local speech recognition settings (Whisper).</source>
+        <translation>Yerel konuşma tanıma ayarları (Whisper).</translation>
+    </message>
+    <message>
+        <source>Whisper Binary Path</source>
+        <translation>Whisper İkili Dosya Yolu</translation>
+    </message>
+    <message>
+        <source>Path to local whisper.cpp executable.</source>
+        <translation>Yerel whisper.cpp çalıştırılabilir dosyasının yolu.</translation>
+    </message>
+    <message>
+        <source>Whisper Model Path</source>
+        <translation>Whisper Model Yolu</translation>
+    </message>
+    <message>
+        <source>Path to whisper model binary file (e.g. ggml-base.en.bin).</source>
+        <translation>Whisper model ikili dosyasının yolu (örn. ggml-base.en.bin).</translation>
+    </message>
+    <message>
+        <source>Select Whisper executable</source>
+        <translation>Whisper çalıştırılabilir dosyasını seç</translation>
+    </message>
+    <message>
+        <source>Select Whisper model file</source>
+        <translation>Whisper model dosyası seç</translation>
+    </message>
+    <message>
+        <source>Whisper model files (*.bin *.gguf)</source>
+        <translation>Whisper model dosyaları (*.bin *.gguf)</translation>
+    </message>
+    <message>
+        <source>Enable Whisper Transcription</source>
+        <translation>Whisper Transkripsiyonunu Etkinleştir</translation>
+    </message>
+    <message>
+        <source>Allow the configured local Whisper process to transcribe selected audio files.</source>
+        <translation>Yapılandırılan yerel Whisper sürecinin seçili ses dosyalarını yazıya dökmesine izin ver.</translation>
+    </message>
+</context>
+<context>
     <name>sentinel::desktop::DesktopShellViewModel</name>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="344"/>

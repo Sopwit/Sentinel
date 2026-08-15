@@ -2094,6 +2094,29 @@ QString DesktopShellViewModel::autoDetectVoicePaths() {
     return result;
 }
 
+QVariantMap DesktopShellViewModel::autoDetectVoicePathStatus() {
+    const QString summary = autoDetectVoicePaths();
+
+    QVariantMap paths;
+    auto addConfiguredPath = [&paths](const QString& key, const QString& current) {
+        if (!current.isEmpty()) {
+            paths.insert(key, current);
+        }
+    };
+    addConfiguredPath(QStringLiteral("piperBinary"), settings_.piperBinaryPath());
+    addConfiguredPath(QStringLiteral("piperModel"), settings_.piperModelPath());
+    addConfiguredPath(QStringLiteral("kokoroModel"), settings_.kokoroModelPath());
+    addConfiguredPath(QStringLiteral("whisperBinary"), settings_.whisperBinaryPath());
+    addConfiguredPath(QStringLiteral("whisperModel"), settings_.whisperModelPath());
+
+    QVariantMap result;
+    result.insert(QStringLiteral("summary"), summary);
+    result.insert(QStringLiteral("detected"),
+                  !summary.startsWith(QStringLiteral("No local voice binaries")));
+    result.insert(QStringLiteral("paths"), paths);
+    return result;
+}
+
 void DesktopShellViewModel::startVoiceCapture() {
     if (voiceRecordingActive_) {
         return;

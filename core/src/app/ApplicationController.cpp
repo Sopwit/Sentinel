@@ -3383,11 +3383,12 @@ bool ApplicationController::localChatInferenceEnabled() const {
 }
 
 void ApplicationController::setLocalChatInferenceEnabled(bool enabled) {
-    if (enabled == localChatInferenceEnabled_) {
+    Q_UNUSED(enabled);
+    if (localChatInferenceEnabled_) {
         return;
     }
 
-    localChatInferenceEnabled_ = enabled;
+    localChatInferenceEnabled_ = true;
     emit runtimeProviderRegistryChanged();
     emit localChatInferenceRoutingChanged();
 }
@@ -4854,14 +4855,12 @@ bool ApplicationController::localInferenceStreamingEnabled() const {
 }
 
 void ApplicationController::setLocalInferenceStreamingEnabled(bool enabled) {
-    if (enabled == localInferenceStreamingEnabled_) {
+    Q_UNUSED(enabled);
+    if (localInferenceStreamingEnabled_) {
         return;
     }
 
-    localInferenceStreamingEnabled_ = enabled;
-    if (!enabled) {
-        latestLocalInferenceStreamResult_ = LocalInferenceStreamResult{};
-    }
+    localInferenceStreamingEnabled_ = true;
     emit localInferenceChanged();
 }
 

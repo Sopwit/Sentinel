@@ -38,8 +38,8 @@ private slots:
     void persistsSelectedLocalModel();
     void persistsSelectedModelPerProvider();
     void persistsSelectedModelRoles();
-    void persistsLocalChatInferenceOptIn();
-    void persistsLocalInferenceStreamingOptIn();
+    void keepsLocalChatInferenceAlwaysEnabled();
+    void keepsLocalInferenceStreamingAlwaysEnabled();
     void persistsPromptContextInjectionOptIn();
     void persistsSemanticPromptInclusionOptIn();
     void persistsContextExplainabilityVisibility();
@@ -72,8 +72,8 @@ void AppSettingsTest::exposesDefaults() {
                           QStringLiteral("ja"), QStringLiteral("ar")}));
     QVERIFY(settings->selectedLocalModel().isEmpty());
     QCOMPARE(settings->selectedRuntimeProvider(), QStringLiteral("ollama"));
-    QVERIFY(!settings->localChatInferenceEnabled());
-    QVERIFY(!settings->localInferenceStreamingEnabled());
+    QVERIFY(settings->localChatInferenceEnabled());
+    QVERIFY(settings->localInferenceStreamingEnabled());
     QVERIFY(!settings->promptContextInjectionEnabled());
     QVERIFY(!settings->semanticPromptInclusionEnabled());
     QVERIFY(settings->contextExplainabilityVisible());
@@ -358,42 +358,40 @@ void AppSettingsTest::persistsSelectedModelRoles() {
     QCOMPARE(spy.count(), 1);
 }
 
-void AppSettingsTest::persistsLocalChatInferenceOptIn() {
+void AppSettingsTest::keepsLocalChatInferenceAlwaysEnabled() {
     const auto settings = makeSettings();
     QSignalSpy spy(settings.get(), &AppSettings::localChatInferenceEnabledChanged);
 
-    QVERIFY(!settings->localChatInferenceEnabled());
-
-    settings->setLocalChatInferenceEnabled(true);
-
     QVERIFY(settings->localChatInferenceEnabled());
-    QCOMPARE(spy.count(), 1);
-
-    settings->setLocalChatInferenceEnabled(true);
-    QCOMPARE(spy.count(), 1);
 
     settings->setLocalChatInferenceEnabled(false);
-    QVERIFY(!settings->localChatInferenceEnabled());
-    QCOMPARE(spy.count(), 2);
+    QVERIFY(settings->localChatInferenceEnabled());
+    QCOMPARE(spy.count(), 0);
+
+    settings->setLocalChatInferenceEnabled(true);
+    QVERIFY(settings->localChatInferenceEnabled());
+    QCOMPARE(spy.count(), 0);
+
+    settings->setLocalChatInferenceEnabled(true);
+    QCOMPARE(spy.count(), 0);
 }
 
-void AppSettingsTest::persistsLocalInferenceStreamingOptIn() {
+void AppSettingsTest::keepsLocalInferenceStreamingAlwaysEnabled() {
     const auto settings = makeSettings();
     QSignalSpy spy(settings.get(), &AppSettings::localInferenceStreamingEnabledChanged);
 
-    QVERIFY(!settings->localInferenceStreamingEnabled());
-
-    settings->setLocalInferenceStreamingEnabled(true);
-
     QVERIFY(settings->localInferenceStreamingEnabled());
-    QCOMPARE(spy.count(), 1);
-
-    settings->setLocalInferenceStreamingEnabled(true);
-    QCOMPARE(spy.count(), 1);
 
     settings->setLocalInferenceStreamingEnabled(false);
-    QVERIFY(!settings->localInferenceStreamingEnabled());
-    QCOMPARE(spy.count(), 2);
+    QVERIFY(settings->localInferenceStreamingEnabled());
+    QCOMPARE(spy.count(), 0);
+
+    settings->setLocalInferenceStreamingEnabled(true);
+    QVERIFY(settings->localInferenceStreamingEnabled());
+    QCOMPARE(spy.count(), 0);
+
+    settings->setLocalInferenceStreamingEnabled(true);
+    QCOMPARE(spy.count(), 0);
 }
 
 void AppSettingsTest::persistsPromptContextInjectionOptIn() {

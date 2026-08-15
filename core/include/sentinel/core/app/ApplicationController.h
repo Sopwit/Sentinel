@@ -2121,11 +2121,11 @@ private:
     AgentActivityLog agentActivityLog_;
     QString selectedLocalModel_;
     QString selectedRuntimeProvider_ = QStringLiteral("ollama");
-    bool localChatInferenceEnabled_ = false;
+    bool localChatInferenceEnabled_ = true;
     bool agentAutonomousMode_ = false;
     QString pendingCommand_;
     bool promptContextInjectionEnabled_ = false;
-    bool localInferenceStreamingEnabled_ = false;
+    bool localInferenceStreamingEnabled_ = true;
     int localInferenceTimeoutMs_ = 30000;
     double localInferenceTemperature_ = 0.7;
     double localInferenceTopP_ = 0.9;

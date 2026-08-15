@@ -22,6 +22,7 @@
 #include <QSet>
 #include <QString>
 #include <QStringList>
+#include <QVariantMap>
 #include <memory>
 
 class QFile;
@@ -2520,6 +2521,7 @@ public:
                                                   const QString& whisperBinaryPath,
                                                   const QString& whisperModelPath);
     Q_INVOKABLE QString autoDetectVoicePaths();
+    Q_INVOKABLE QVariantMap autoDetectVoicePathStatus();
     Q_INVOKABLE void startVoiceCapture();
     Q_INVOKABLE void stopVoiceCapture();
     QString selectedCloudProvider() const;

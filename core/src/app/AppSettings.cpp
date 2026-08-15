@@ -576,34 +576,40 @@ void AppSettings::setSelectedModelForRole(const QString& roleId, const QString& 
 }
 
 bool AppSettings::localChatInferenceEnabled() const {
-    return store_ ? store_->value(QString::fromLatin1(localChatInferenceEnabledKey),
-                                  QStringLiteral("false")) == QStringLiteral("true")
-                  : false;
+    return true;
 }
 
 void AppSettings::setLocalChatInferenceEnabled(bool enabled) {
-    if (enabled == localChatInferenceEnabled() || !store_) {
+    if (!enabled || !store_) {
+        return;
+    }
+
+    if (store_->value(QString::fromLatin1(localChatInferenceEnabledKey), QStringLiteral("true")) ==
+        QStringLiteral("true")) {
         return;
     }
 
     store_->setValue(QString::fromLatin1(localChatInferenceEnabledKey),
-                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+                     QStringLiteral("true"));
     emit localChatInferenceEnabledChanged();
 }
 
 bool AppSettings::localInferenceStreamingEnabled() const {
-    return store_ ? store_->value(QString::fromLatin1(localInferenceStreamingEnabledKey),
-                                  QStringLiteral("false")) == QStringLiteral("true")
-                  : false;
+    return true;
 }
 
 void AppSettings::setLocalInferenceStreamingEnabled(bool enabled) {
-    if (enabled == localInferenceStreamingEnabled() || !store_) {
+    if (!enabled || !store_) {
+        return;
+    }
+
+    if (store_->value(QString::fromLatin1(localInferenceStreamingEnabledKey),
+                      QStringLiteral("true")) == QStringLiteral("true")) {
         return;
     }
 
     store_->setValue(QString::fromLatin1(localInferenceStreamingEnabledKey),
-                     enabled ? QStringLiteral("true") : QStringLiteral("false"));
+                     QStringLiteral("true"));
     emit localInferenceStreamingEnabledChanged();
 }
 
@@ -832,6 +838,9 @@ QString findWhisperBinaryCandidate() {
 #if defined(Q_OS_WIN)
     QString exe = QStandardPaths::findExecutable(QStringLiteral("whisper.exe"));
     if (exe.isEmpty()) {
+        exe = QStandardPaths::findExecutable(QStringLiteral("whisper-cli.exe"));
+    }
+    if (exe.isEmpty()) {
         exe = QStandardPaths::findExecutable(QStringLiteral("whisper-cpp.exe"));
     }
     if (exe.isEmpty()) {
@@ -839,6 +848,9 @@ QString findWhisperBinaryCandidate() {
     }
 #else
     QString exe = QStandardPaths::findExecutable(QStringLiteral("whisper"));
+    if (exe.isEmpty()) {
+        exe = QStandardPaths::findExecutable(QStringLiteral("whisper-cli"));
+    }
     if (exe.isEmpty()) {
         exe = QStandardPaths::findExecutable(QStringLiteral("whisper-cpp"));
     }
@@ -852,9 +864,12 @@ QString findWhisperBinaryCandidate() {
 #if defined(Q_OS_WIN)
     const QStringList candidates{
         QStringLiteral("C:\\Program Files\\Whisper\\whisper.exe"),
+        QStringLiteral("C:\\Program Files\\Whisper\\whisper-cli.exe"),
         QStringLiteral("C:\\Program Files\\Whisper\\whisper-cpp.exe"),
         QStringLiteral("C:\\Program Files (x86)\\Whisper\\whisper.exe"),
+        QStringLiteral("C:\\Program Files (x86)\\Whisper\\whisper-cli.exe"),
         QStringLiteral("C:\\tools\\whisper\\whisper.exe"),
+        QStringLiteral("C:\\tools\\whisper\\whisper-cli.exe"),
         QStringLiteral("C:\\tools\\whisper\\whisper-cpp.exe"),
     };
 #else
@@ -863,10 +878,14 @@ QString findWhisperBinaryCandidate() {
         QStringLiteral("/usr/local/bin/whisper"),
         QStringLiteral("/usr/bin/whisper"),
         QStringLiteral("/bin/whisper"),
+        QStringLiteral("/opt/homebrew/bin/whisper-cli"),
+        QStringLiteral("/usr/local/bin/whisper-cli"),
+        QStringLiteral("/usr/bin/whisper-cli"),
         QStringLiteral("/opt/homebrew/bin/whisper-cpp"),
         QStringLiteral("/usr/local/bin/whisper-cpp"),
         QStringLiteral("/usr/bin/whisper-cpp"),
         QDir::homePath() + QStringLiteral("/.local/bin/whisper"),
+        QDir::homePath() + QStringLiteral("/.local/bin/whisper-cli"),
         QDir::homePath() + QStringLiteral("/.local/bin/whisper-cpp"),
     };
 #endif
