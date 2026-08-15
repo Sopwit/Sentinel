@@ -14,9 +14,18 @@ Item {
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
+    readonly property var cloudProviderNames: ["OpenAI", "Claude", "Gemini", "DeepSeek", "Groq", "Mistral"]
+    property string activeTaskId: ""
 
     height: implicitHeight
     implicitHeight: visible ? mainLayout.implicitHeight + panelPadding * 2 : 0
+
+    function createControlledPlan() {
+        const goal = controlledGoal.text.trim()
+        if (goal.length === 0)
+            return
+        root.activeTaskId = root.viewModel.planControlledAgentTask(goal)
+    }
 
     ColumnLayout {
         id: mainLayout
@@ -26,19 +35,23 @@ Item {
         anchors.margins: root.panelPadding
         spacing: SentinelTheme.spaceMd
 
+        // ------------------------------------------------------------------
+        // 1. Permissions and safety
+        // ------------------------------------------------------------------
+
         SectionTitle {
-            title: qsTr("Security & Agent Boundaries")
-            subtitle: qsTr("Set the safety rules for tools and agents. Start with the policy, then review agent tasks before they run.")
+            title: qsTr("Permissions & Safety")
+            subtitle: qsTr("Set the safety rules that govern every tool and agent action.")
             Layout.fillWidth: true
         }
 
         SettingCard {
             title: qsTr("Execution Safety")
-            subtitle: qsTr("These controls apply to every tool and agent action.")
+            subtitle: qsTr("Start with the default policy, then decide how much freedom approved agents get.")
 
             SettingControlRow {
                 title: qsTr("Default Policy")
-                subtitle: qsTr("Choose how much permission is granted by default.")
+                subtitle: qsTr("How much permission tools and agents are granted by default.")
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
@@ -88,97 +101,180 @@ Item {
             }
         }
 
+        // ------------------------------------------------------------------
+        // 2. Controlled agent tasks
+        // ------------------------------------------------------------------
+
         SectionTitle {
             title: qsTr("Controlled Agent Tasks")
-            subtitle: qsTr("Describe a task, review the plan, then approve and start it.")
+            subtitle: qsTr("Three steps: describe the task, review its plan, then approve and run it.")
             Layout.fillWidth: true
             Layout.topMargin: SentinelTheme.spaceMd
         }
 
         SettingCard {
-            title: qsTr("Review Before Running")
-            subtitle: qsTr("Nothing starts until you approve the generated plan.")
-
-            SettingControlRow {
-                title: qsTr("Task Description")
-                subtitle: qsTr("Describe one bounded task for the agent.")
-                accent: root.modeAccent
-                compact: root.compact
-                showDivider: true
-
-                SentinelTextField {
-                    id: controlledGoal
-                    anchors.fill: parent
-                    placeholderText: qsTr("Example: summarize the selected workspace files")
-                }
-            }
-
-            RowLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: SentinelTheme.spaceMd
-                Layout.rightMargin: SentinelTheme.spaceMd
-                spacing: SentinelTheme.spaceSm
-
-                SentinelButton {
-                    text: qsTr("Create Plan")
-                    accent: root.modeAccent
-                    enabled: controlledGoal.text.trim().length > 0
-                    onClicked: root.viewModel.planControlledAgentTask(controlledGoal.text.trim())
-                }
-                SentinelButton {
-                    text: qsTr("Approve")
-                    accent: SentinelTheme.success
-                    enabled: root.viewModel.agentPlanId.length > 0
-                    onClicked: root.viewModel.approveControlledAgentTask(root.viewModel.agentPlanId, "approve")
-                }
-                SentinelButton {
-                    text: qsTr("Start")
-                    accent: root.modeAccent
-                    enabled: root.viewModel.agentPlanId.length > 0
-                    onClicked: root.viewModel.startControlledAgentTask(root.viewModel.agentPlanId)
-                }
-            }
+            title: qsTr("1. Describe the Task")
+            subtitle: qsTr("The plan is generated from your description.")
 
             ColumnLayout {
                 Layout.fillWidth: true
                 Layout.leftMargin: SentinelTheme.spaceMd
                 Layout.rightMargin: SentinelTheme.spaceMd
-                spacing: SentinelTheme.spaceXs
+                Layout.topMargin: SentinelTheme.spaceSm
+                Layout.bottomMargin: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceSm
 
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Plan Status")
-                    value: root.viewModel.agentPlanApprovalState + " / " + root.viewModel.agentPlanEstimatedRisk
+                RowLayout {
                     Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm
+
+                    SentinelTextField {
+                        id: controlledGoal
+                        Layout.fillWidth: true
+                        placeholderText: qsTr("Example: summarize the selected workspace files")
+                        onAccepted: root.createControlledPlan()
+                    }
+
+                    SentinelButton {
+                        text: qsTr("Create Plan")
+                        accent: root.modeAccent
+                        enabled: controlledGoal.text.trim().length > 0
+                        onClicked: root.createControlledPlan()
+                    }
                 }
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Permissions")
-                    value: root.viewModel.agentPlanRequiredPermissions.join(", ") || qsTr("None declared")
-                    Layout.fillWidth: true
-                }
+
                 Label {
                     Layout.fillWidth: true
-                    text: root.viewModel.agentPlanSteps.join("\n")
+                    visible: root.activeTaskId.length === 0
+                    text: qsTr("The generated plan appears in the next two steps once created.")
                     color: SentinelTheme.textMuted
                     font.pixelSize: SentinelTheme.fontSmall
                     wrapMode: Text.WordWrap
-                    visible: text.length > 0
-                }
-                Label {
-                    Layout.fillWidth: true
-                    text: root.viewModel.latestApprovalSummary + "\n" + root.viewModel.latestSandboxSummary
-                    color: SentinelTheme.textMuted
-                    font.pixelSize: SentinelTheme.fontSmall
-                    wrapMode: Text.WordWrap
-                    visible: root.viewModel.latestApprovalSummary.length > 0 || root.viewModel.latestSandboxSummary.length > 0
                 }
             }
         }
 
+        SettingCard {
+            visible: root.activeTaskId.length > 0
+            title: qsTr("2. Review the Plan")
+            subtitle: qsTr("Check what the agent will do before approving it.")
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                Layout.topMargin: SentinelTheme.spaceSm
+                Layout.bottomMargin: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceXs
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Status")
+                    value: root.viewModel.controlledTaskActiveSummary
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Current Step")
+                    value: root.viewModel.controlledTaskCurrentStep
+                    visible: root.viewModel.controlledTaskCurrentStep.indexOf("No visible step") !== 0
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Progress")
+                    value: root.viewModel.controlledTaskProgressSummary
+                    visible: root.viewModel.controlledTaskProgressSummary.indexOf("No running") !== 0
+                    Layout.fillWidth: true
+                }
+
+                Rectangle {
+                    Layout.fillWidth: true
+                    Layout.topMargin: SentinelTheme.spaceXs
+                    height: 1
+                    color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
+                }
+
+                Label {
+                    Layout.fillWidth: true
+                    text: qsTr("Plan Steps")
+                    color: SentinelTheme.textMuted
+                    font.pixelSize: SentinelTheme.fontSmall
+                }
+
+                Repeater {
+                    model: root.viewModel.controlledTaskPlanSteps
+
+                    Label {
+                        required property string modelData
+                        Layout.fillWidth: true
+                        Layout.leftMargin: SentinelTheme.spaceSm
+                        text: modelData
+                        color: SentinelTheme.textPrimary
+                        font.pixelSize: SentinelTheme.fontSmall
+                        wrapMode: Text.WordWrap
+                    }
+                }
+            }
+        }
+
+        SettingCard {
+            visible: root.activeTaskId.length > 0
+            title: qsTr("3. Approve & Run")
+            subtitle: qsTr("Approve the plan first, then start it. Execution stays gated by the sandbox.")
+
+            ColumnLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: SentinelTheme.spaceMd
+                Layout.rightMargin: SentinelTheme.spaceMd
+                Layout.topMargin: SentinelTheme.spaceSm
+                Layout.bottomMargin: SentinelTheme.spaceSm
+                spacing: SentinelTheme.spaceSm
+
+                RowLayout {
+                    Layout.fillWidth: true
+                    spacing: SentinelTheme.spaceSm
+
+                    SentinelButton {
+                        text: qsTr("Approve")
+                        accent: SentinelTheme.success
+                        onClicked: root.viewModel.approveControlledAgentTask(root.activeTaskId, "approve")
+                    }
+
+                    SentinelButton {
+                        text: qsTr("Start")
+                        accent: root.modeAccent
+                        onClicked: root.viewModel.startControlledAgentTask(root.activeTaskId)
+                    }
+                }
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Approval")
+                    value: root.viewModel.latestApprovalSummary
+                    visible: root.viewModel.latestApprovalSummary.length > 0
+                    Layout.fillWidth: true
+                }
+
+                InfoRow {
+                    compact: root.compact
+                    label: qsTr("Sandbox")
+                    value: root.viewModel.latestSandboxSummary
+                    visible: root.viewModel.latestSandboxSummary.length > 0
+                    Layout.fillWidth: true
+                }
+            }
+        }
+
+        // ------------------------------------------------------------------
+        // 3. Connections
+        // ------------------------------------------------------------------
+
         SectionTitle {
-            title: qsTr("Network & Proxy Settings")
-            subtitle: qsTr("Configure HTTP/SOCKS proxy for remote endpoints and model APIs.")
+            title: qsTr("Network & Proxy")
+            subtitle: qsTr("Route remote endpoints and model APIs through an HTTP/SOCKS proxy.")
             Layout.fillWidth: true
             Layout.topMargin: SentinelTheme.spaceMd
         }
@@ -279,55 +375,6 @@ Item {
             Layout.topMargin: SentinelTheme.spaceMd
         }
 
-        SectionTitle {
-            title: qsTr("Web Search")
-            subtitle: qsTr("Configure the provider used by the approved web-search tool.")
-            Layout.fillWidth: true
-            Layout.topMargin: SentinelTheme.spaceMd
-        }
-
-        SettingCard {
-            SettingControlRow {
-                title: qsTr("Search Provider")
-                subtitle: qsTr("API-backed search provider for agent web searches.")
-                accent: root.modeAccent
-                compact: root.compact
-                showDivider: true
-                SentinelComboBox {
-                    anchors.fill: parent
-                    accent: root.modeAccent
-                    model: ["Exa", "Parallel"]
-                    currentIndex: root.viewModel.webSearchProvider === "parallel" ? 1 : 0
-                    onActivated: (index) => root.viewModel.webSearchProvider = index === 1 ? "parallel" : "exa"
-                }
-            }
-            SettingControlRow {
-                title: qsTr("Search API Key")
-                subtitle: qsTr("Credential sent only to the selected search provider.")
-                accent: root.modeAccent
-                compact: root.compact
-                SentinelTextField {
-                    anchors.fill: parent
-                    echoMode: TextInput.Password
-                    text: root.viewModel.webSearchApiKey
-                    onEditingFinished: root.viewModel.webSearchApiKey = text
-                }
-            }
-            SettingControlRow {
-                title: qsTr("Maximum Results")
-                subtitle: qsTr("Limit the number of search results supplied to an approved request.")
-                accent: root.modeAccent
-                compact: root.compact
-                SentinelSpinBox {
-                    anchors.fill: parent
-                    from: 1
-                    to: 20
-                    value: root.viewModel.webSearchMaxResults
-                    onValueModified: root.viewModel.webSearchMaxResults = value
-                }
-            }
-        }
-
         SettingCard {
             SettingControlRow {
                 title: qsTr("Active Cloud Provider")
@@ -340,16 +387,12 @@ Item {
                     id: cloudProviderCombo
                     accent: root.modeAccent
                     anchors.fill: parent
-                    model: ["OpenAI", "Claude", "Gemini", "DeepSeek", "Groq", "Mistral"]
-                    currentIndex: root.viewModel.selectedCloudProvider === "OpenAI" ? 0
-                        : root.viewModel.selectedCloudProvider === "Claude" ? 1
-                        : root.viewModel.selectedCloudProvider === "Gemini" ? 2
-                        : root.viewModel.selectedCloudProvider === "DeepSeek" ? 3
-                        : root.viewModel.selectedCloudProvider === "Groq" ? 4
-                        : root.viewModel.selectedCloudProvider === "Mistral" ? 5 : 0
+                    model: root.cloudProviderNames
+                    currentIndex: Math.max(0, root.cloudProviderNames.indexOf(root.viewModel.selectedCloudProvider))
+                    displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedCloudProvider
                     onActivated: (index) => {
-                        var providers = ["OpenAI", "Claude", "Gemini", "DeepSeek", "Groq", "Mistral"]
-                        root.viewModel.selectedCloudProvider = providers[index]
+                        if (index >= 0 && index < root.cloudProviderNames.length)
+                            root.viewModel.selectedCloudProvider = root.cloudProviderNames[index]
                     }
                 }
             }
@@ -447,6 +490,61 @@ Item {
                     placeholderText: "sk-..."
                     text: root.viewModel.mistralApiKey
                     onEditingFinished: root.viewModel.mistralApiKey = text
+                }
+            }
+        }
+
+        SectionTitle {
+            title: qsTr("Web Search")
+            subtitle: qsTr("Configure the provider used by the approved web-search tool.")
+            Layout.fillWidth: true
+            Layout.topMargin: SentinelTheme.spaceMd
+        }
+
+        SettingCard {
+            SettingControlRow {
+                title: qsTr("Search Provider")
+                subtitle: qsTr("API-backed search provider for agent web searches.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+
+                SentinelComboBox {
+                    anchors.fill: parent
+                    accent: root.modeAccent
+                    model: ["Exa", "Parallel"]
+                    currentIndex: root.viewModel.webSearchProvider === "parallel" ? 1 : 0
+                    onActivated: (index) => root.viewModel.webSearchProvider = index === 1 ? "parallel" : "exa"
+                }
+            }
+
+            SettingControlRow {
+                title: qsTr("Search API Key")
+                subtitle: qsTr("Credential sent only to the selected search provider.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
+
+                SentinelTextField {
+                    anchors.fill: parent
+                    echoMode: TextInput.Password
+                    text: root.viewModel.webSearchApiKey
+                    onEditingFinished: root.viewModel.webSearchApiKey = text
+                }
+            }
+
+            SettingControlRow {
+                title: qsTr("Maximum Results")
+                subtitle: qsTr("Limit the number of search results supplied to an approved request.")
+                accent: root.modeAccent
+                compact: root.compact
+
+                SentinelSpinBox {
+                    anchors.fill: parent
+                    from: 1
+                    to: 20
+                    value: root.viewModel.webSearchMaxResults
+                    onValueModified: root.viewModel.webSearchMaxResults = value
                 }
             }
         }
