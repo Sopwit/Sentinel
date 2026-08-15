@@ -87,24 +87,6 @@ Item {
             Layout.fillWidth: true
         }
 
-        OnboardingToggle {
-            Layout.fillWidth: true
-            accent: root.brandAccent
-            label: qsTr("Enable Local Chat Inference")
-            caption: qsTr("Allows local runtimes to generate chat responses.")
-            checked: root.viewModel.localChatInferenceEnabled
-            onToggled: (on) => root.viewModel.localChatInferenceEnabled = on
-        }
-
-        OnboardingToggle {
-            Layout.fillWidth: true
-            accent: root.brandAccent
-            label: qsTr("Enable Token Streaming")
-            caption: qsTr("Streams tokens as they are generated for a faster feel.")
-            checked: root.viewModel.localInferenceStreamingEnabled
-            onToggled: (on) => root.viewModel.localInferenceStreamingEnabled = on
-        }
-
         RowLayout {
             Layout.fillWidth: true
             spacing: SentinelTheme.spaceMd

@@ -3882,6 +3882,189 @@ Detail: </translation>
     </message>
 </context>
 <context>
+    <name>VoiceSettingsTab</name>
+    <message>
+        <source>Voice &amp; Audio Settings</source>
+        <translation>Voice &amp; Audio Settings</translation>
+    </message>
+    <message>
+        <source>Configure local speech-to-text (Whisper) and text-to-speech (Piper, Kokoro) runtimes and paths.</source>
+        <translation>Configure local speech-to-text (Whisper) and text-to-speech (Piper, Kokoro) runtimes and paths.</translation>
+    </message>
+    <message>
+        <source>Auto Detection</source>
+        <translation>Auto Detection</translation>
+    </message>
+    <message>
+        <source>Auto-Detect Voice Engines</source>
+        <translation>Auto-Detect Voice Engines</translation>
+    </message>
+    <message>
+        <source>Automatically scan system PATH and model directories for Piper, Whisper, and Kokoro.</source>
+        <translation>Automatically scan system PATH and model directories for Piper, Whisper, and Kokoro.</translation>
+    </message>
+    <message>
+        <source>Auto Detect</source>
+        <translation>Auto Detect</translation>
+    </message>
+    <message>
+        <source>No local Piper, Whisper, or Kokoro binaries or model files were detected automatically.</source>
+        <translation>No local Piper, Whisper, or Kokoro binaries or model files were detected automatically.</translation>
+    </message>
+    <message>
+        <source>Auto-detected voice paths:</source>
+        <translation>Auto-detected voice paths:</translation>
+    </message>
+    <message>
+        <source>Piper binary: %1</source>
+        <translation>Piper binary: %1</translation>
+    </message>
+    <message>
+        <source>Piper model: %1</source>
+        <translation>Piper model: %1</translation>
+    </message>
+    <message>
+        <source>Kokoro model: %1</source>
+        <translation>Kokoro model: %1</translation>
+    </message>
+    <message>
+        <source>Whisper binary: %1</source>
+        <translation>Whisper binary: %1</translation>
+    </message>
+    <message>
+        <source>Whisper model: %1</source>
+        <translation>Whisper model: %1</translation>
+    </message>
+    <message>
+        <source>Text-to-Speech Engine</source>
+        <translation>Text-to-Speech Engine</translation>
+    </message>
+    <message>
+        <source>TTS Engine</source>
+        <translation>TTS Engine</translation>
+    </message>
+    <message>
+        <source>Primary local text-to-speech synthesis backend.</source>
+        <translation>Primary local text-to-speech synthesis backend.</translation>
+    </message>
+    <message>
+        <source>Kokoro Model Path</source>
+        <translation>Kokoro Model Path</translation>
+    </message>
+    <message>
+        <source>Path to Kokoro ONNX model file.</source>
+        <translation>Path to Kokoro ONNX model file.</translation>
+    </message>
+    <message>
+        <source>Kokoro Voice</source>
+        <translation>Kokoro Voice</translation>
+    </message>
+    <message>
+        <source>Voice ID preset for Kokoro TTS.</source>
+        <translation>Voice ID preset for Kokoro TTS.</translation>
+    </message>
+    <message>
+        <source>Piper Binary Path</source>
+        <translation>Piper Binary Path</translation>
+    </message>
+    <message>
+        <source>Path to local Piper executable.</source>
+        <translation>Path to local Piper executable.</translation>
+    </message>
+    <message>
+        <source>Piper Model Path</source>
+        <translation>Piper Model Path</translation>
+    </message>
+    <message>
+        <source>Path to Piper voice ONNX model file.</source>
+        <translation>Path to Piper voice ONNX model file.</translation>
+    </message>
+    <message>
+        <source>Browse</source>
+        <translation>Browse</translation>
+    </message>
+    <message>
+        <source>Select Kokoro model file</source>
+        <translation>Select Kokoro model file</translation>
+    </message>
+    <message>
+        <source>Model files (*.onnx *.pt *.pth *.bin *.safetensors)</source>
+        <translation>Model files (*.onnx *.pt *.pth *.bin *.safetensors)</translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation>All files (*)</translation>
+    </message>
+    <message>
+        <source>Select Piper executable</source>
+        <translation>Select Piper executable</translation>
+    </message>
+    <message>
+        <source>Executables (*)</source>
+        <translation>Executables (*)</translation>
+    </message>
+    <message>
+        <source>Select Piper model file</source>
+        <translation>Select Piper model file</translation>
+    </message>
+    <message>
+        <source>ONNX model files (*.onnx)</source>
+        <translation>ONNX model files (*.onnx)</translation>
+    </message>
+    <message>
+        <source>Enable Piper File Output</source>
+        <translation>Enable Piper File Output</translation>
+    </message>
+    <message>
+        <source>Save synthesized audio responses to local WAV output files for review.</source>
+        <translation>Save synthesized audio responses to local WAV output files for review.</translation>
+    </message>
+    <message>
+        <source>Speech-to-Text</source>
+        <translation>Speech-to-Text</translation>
+    </message>
+    <message>
+        <source>Local speech recognition settings (Whisper).</source>
+        <translation>Local speech recognition settings (Whisper).</translation>
+    </message>
+    <message>
+        <source>Whisper Binary Path</source>
+        <translation>Whisper Binary Path</translation>
+    </message>
+    <message>
+        <source>Path to local whisper.cpp executable.</source>
+        <translation>Path to local whisper.cpp executable.</translation>
+    </message>
+    <message>
+        <source>Whisper Model Path</source>
+        <translation>Whisper Model Path</translation>
+    </message>
+    <message>
+        <source>Path to whisper model binary file (e.g. ggml-base.en.bin).</source>
+        <translation>Path to whisper model binary file (e.g. ggml-base.en.bin).</translation>
+    </message>
+    <message>
+        <source>Select Whisper executable</source>
+        <translation>Select Whisper executable</translation>
+    </message>
+    <message>
+        <source>Select Whisper model file</source>
+        <translation>Select Whisper model file</translation>
+    </message>
+    <message>
+        <source>Whisper model files (*.bin *.gguf)</source>
+        <translation>Whisper model files (*.bin *.gguf)</translation>
+    </message>
+    <message>
+        <source>Enable Whisper Transcription</source>
+        <translation>Enable Whisper Transcription</translation>
+    </message>
+    <message>
+        <source>Allow the configured local Whisper process to transcribe selected audio files.</source>
+        <translation>Allow the configured local Whisper process to transcribe selected audio files.</translation>
+    </message>
+</context>
+<context>
     <name>sentinel::desktop::DesktopShellViewModel</name>
     <message>
         <location filename="../apps/sentinel-desktop/src/DesktopShellViewModel.cpp" line="344"/>

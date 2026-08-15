@@ -640,8 +640,8 @@ private slots:
     void piperFileOutputExecutionReportsFailureAndTimeout();
     void piperFileOutputExecutionBlocksInvalidBinaryOrModel();
     void rejectsInvalidSelectedModelAgainstDiscoveryMetadata();
-    void exposesStreamingSkeletonDisabledMetadata();
-    void streamDisabledByDefaultFallsBackToNonStreaming();
+    void exposesStreamingEnabledByDefaultMetadata();
+    void streamsByDefault();
     void enabledLocalChatStreamingAppendsOrderedChunksOnce();
     void streamingPreviewClearsAfterFinalResponseIsPersisted();
     void enabledLocalChatStreamingHandlesMalformedChunk();
@@ -1762,19 +1762,18 @@ void ApplicationControllerTest::rejectsInvalidSelectedModelAgainstDiscoveryMetad
              QStringLiteral("Local inference request rejected: selected model is not installed."));
 }
 
-void ApplicationControllerTest::exposesStreamingSkeletonDisabledMetadata() {
+void ApplicationControllerTest::exposesStreamingEnabledByDefaultMetadata() {
     const auto controller = makeController();
 
     QVERIFY(!controller->localInferenceStreamingAvailable());
-    QVERIFY(!controller->localInferenceStreamingEnabled());
+    QVERIFY(controller->localInferenceStreamingEnabled());
     QCOMPARE(controller->localInferenceStreamStatus(), QStringLiteral("Disabled"));
     QCOMPARE(controller->localInferenceStreamSummary(),
-             QStringLiteral("Local inference streaming is disabled; responses finalize through "
-                            "normal chat history."));
+             QStringLiteral("Local inference streaming client is unavailable."));
     QVERIFY(controller->localInferenceStreamingText().isEmpty());
 }
 
-void ApplicationControllerTest::streamDisabledByDefaultFallsBackToNonStreaming() {
+void ApplicationControllerTest::streamsByDefault() {
     auto fakeClient = std::make_unique<FakeLocalInferenceClient>();
     auto* fakeClientPtr = fakeClient.get();
     auto streamClient = std::make_unique<FakeLocalInferenceStreamClient>(
@@ -1799,9 +1798,9 @@ void ApplicationControllerTest::streamDisabledByDefaultFallsBackToNonStreaming()
     const auto sent = controller->sendMessage(QStringLiteral("hello"));
 
     QVERIFY(sent);
-    QVERIFY(fakeClientPtr->called);
-    QVERIFY(!streamClientPtr->called);
-    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("fake local completion"));
+    QVERIFY(!fakeClientPtr->called);
+    QVERIFY(streamClientPtr->called);
+    QCOMPARE(controller->chatHistory().at(2).content, QStringLiteral("stream"));
 }
 
 void ApplicationControllerTest::enabledLocalChatStreamingAppendsOrderedChunksOnce() {

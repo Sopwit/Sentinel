@@ -3,8 +3,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import QtQuick
-import QtQuick.Controls.Basic
-import QtQuick.Effects
 import QtQuick.Layouts
 import Sentinel.Desktop
 
@@ -16,9 +14,52 @@ Item {
     property var voiceFileDialog: null
     property var soundManager: null
     readonly property int panelPadding: SentinelTheme.spaceLg
+    readonly property string currentProvider: root.viewModel.selectedRuntimeProvider
+    readonly property var modelList: {
+        if (root.currentProvider === "ollama") return root.viewModel.ollamaModelNames
+        if (root.currentProvider === "lm-studio") return root.viewModel.loadedLMStudioModelNames
+        return []
+    }
+    readonly property var inferencePresetModel: [
+        { "name": qsTr("Precise"), "temp": 0.20, "topP": 0.80 },
+        { "name": qsTr("Balanced"), "temp": 0.70, "topP": 0.90 },
+        { "name": qsTr("Creative"), "temp": 1.10, "topP": 0.95 }
+    ]
+    readonly property var inferencePresetLabels: [
+        qsTr("Precise"),
+        qsTr("Balanced"),
+        qsTr("Creative")
+    ]
 
     height: implicitHeight
     implicitHeight: visible ? mainLayout.implicitHeight + panelPadding * 2 : 0
+
+    function hasSelectableModels() {
+        return root.modelList.length > 0
+    }
+
+    function inferencePresetIndex() {
+        var bestIndex = 0
+        var bestDistance = 999
+        for (var i = 0; i < root.inferencePresetModel.length; ++i) {
+            var preset = root.inferencePresetModel[i]
+            var distance = Math.abs(root.viewModel.localInferenceTemperature - preset.temp)
+                         + Math.abs(root.viewModel.localInferenceTopP - preset.topP)
+            if (distance < bestDistance) {
+                bestDistance = distance
+                bestIndex = i
+            }
+        }
+        return bestDistance < 0.18 ? bestIndex : -1
+    }
+
+    function applyInferencePreset(index) {
+        if (index < 0 || index >= root.inferencePresetModel.length)
+            return
+        var preset = root.inferencePresetModel[index]
+        root.viewModel.localInferenceTemperature = preset.temp
+        root.viewModel.localInferenceTopP = preset.topP
+    }
 
     ColumnLayout {
         id: mainLayout
@@ -72,50 +113,57 @@ Item {
                 }
             }
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: SentinelTheme.spaceMd
-                Layout.rightMargin: SentinelTheme.spaceMd
-                Layout.topMargin: SentinelTheme.spaceSm
-                Layout.bottomMargin: SentinelTheme.spaceSm
-                spacing: SentinelTheme.spaceSm
-
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Runtime Status")
-                    value: root.viewModel.localInferenceRuntimeState + " (" + root.viewModel.localInferenceHealthSummary + ")"
-                    Layout.fillWidth: true
-                }
-
-                InfoRow {
-                    compact: root.compact
-                    label: qsTr("Active Model")
-                    value: root.viewModel.activeLocalModelName ? root.viewModel.activeLocalModelName : qsTr("None selected")
-                    Layout.fillWidth: true
-                }
-            }
-        }
-
-        SettingCard {
-            title: qsTr("Inference Features")
-
-            SettingToggleRow {
-                title: qsTr("Enable Local Chat Inference")
-                subtitle: qsTr("Allow conversations to be processed locally via Ollama, LM Studio, or llama.cpp.")
-                checked: root.viewModel.localChatInferenceEnabled
+            SettingControlRow {
+                title: qsTr("Runtime Status")
+                subtitle: root.viewModel.localInferenceHealthSummary
                 accent: root.modeAccent
                 compact: root.compact
                 showDivider: true
-                onToggled: (checked) => root.viewModel.localChatInferenceEnabled = checked
+
+                StatusChip {
+                    anchors.verticalCenter: parent.verticalCenter
+                    anchors.right: parent.right
+                    width: parent.width
+                    value: root.viewModel.localInferenceRuntimeState.length > 0
+                           ? root.viewModel.localInferenceRuntimeState
+                           : qsTr("Unknown")
+                    accent: root.modeAccent
+                    active: root.viewModel.localInferenceRuntimeState.toLowerCase().indexOf("ready") >= 0
+                         || root.viewModel.localInferenceRuntimeState.toLowerCase().indexOf("healthy") >= 0
+                    muted: root.viewModel.localInferenceRuntimeState.length === 0
+                }
             }
 
-            SettingToggleRow {
-                title: qsTr("Enable Token Streaming")
-                subtitle: qsTr("Stream response tokens in real-time as they are produced by the inference engine.")
-                checked: root.viewModel.localInferenceStreamingEnabled
+            SettingControlRow {
+                title: qsTr("Active Model")
+                subtitle: root.hasSelectableModels()
+                          ? root.viewModel.selectedLocalModelSummary
+                          : qsTr("Model selection is available after the active local runtime reports models.")
                 accent: root.modeAccent
                 compact: root.compact
-                onToggled: (checked) => root.viewModel.localInferenceStreamingEnabled = checked
+
+                SentinelComboBox {
+                    id: activeModelCombo
+                    accent: root.modeAccent
+                    anchors.fill: parent
+                    implicitHeight: 36
+                    enabled: root.hasSelectableModels()
+                    model: root.hasSelectableModels() ? root.modelList : [qsTr("None selected")]
+                    currentIndex: root.hasSelectableModels()
+                                  ? root.modelList.indexOf(root.viewModel.selectedLocalModel)
+                                  : 0
+                    displayText: {
+                        if (root.hasSelectableModels())
+                            return currentIndex >= 0 ? currentText : root.viewModel.activeLocalModelName
+                        return root.viewModel.activeLocalModelName
+                               ? root.viewModel.activeLocalModelName
+                               : qsTr("None selected")
+                    }
+                    onActivated: (index) => {
+                        if (index >= 0 && index < root.modelList.length)
+                            root.viewModel.selectedLocalModel = root.modelList[index]
+                    }
+                }
             }
         }
 
@@ -209,81 +257,23 @@ Item {
             title: qsTr("Inference Parameters")
             subtitle: qsTr("Fine-tune sampling temperature, top-p nucleus sampling, and context boundaries.")
 
-            ColumnLayout {
-                Layout.fillWidth: true
-                Layout.leftMargin: SentinelTheme.spaceMd
-                Layout.rightMargin: SentinelTheme.spaceMd
-                Layout.topMargin: SentinelTheme.spaceSm
-                Layout.bottomMargin: SentinelTheme.spaceSm
-                spacing: SentinelTheme.spaceSm
+            SettingControlRow {
+                title: qsTr("Inference Presets")
+                subtitle: qsTr("Quickly apply paired temperature and top-p values.")
+                accent: root.modeAccent
+                compact: root.compact
+                showDivider: true
 
-                Label {
-                    text: qsTr("Inference Presets")
-                    color: SentinelTheme.textPrimary
-                    font.pixelSize: SentinelTheme.fontBody
-                    font.weight: Font.Medium
-                    Layout.fillWidth: true
+                SentinelComboBox {
+                    id: inferencePresetCombo
+                    accent: root.modeAccent
+                    anchors.fill: parent
+                    implicitHeight: 36
+                    model: root.inferencePresetLabels
+                    currentIndex: root.inferencePresetIndex()
+                    displayText: currentIndex >= 0 ? currentText : qsTr("Custom")
+                    onActivated: (index) => root.applyInferencePreset(index)
                 }
-
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: SentinelTheme.spaceSm
-
-                    Repeater {
-                        model: [
-                            { "name": qsTr("Precise"), "temp": 0.20, "topP": 0.80 },
-                            { "name": qsTr("Balanced"), "temp": 0.70, "topP": 0.90 },
-                            { "name": qsTr("Creative"), "temp": 1.10, "topP": 0.95 }
-                        ]
-
-                        delegate: Button {
-                            id: presetBtn
-                            required property var modelData
-                            Layout.fillWidth: true
-                            implicitHeight: 34
-                            hoverEnabled: true
-                            focusPolicy: Qt.NoFocus
-
-                            readonly property bool isSelected: Math.abs(root.viewModel.localInferenceTemperature - modelData.temp) < 0.08
-
-                            onClicked: {
-                                root.viewModel.localInferenceTemperature = modelData.temp
-                                root.viewModel.localInferenceTopP = modelData.topP
-                            }
-
-                            contentItem: Text {
-                                text: presetBtn.modelData.name
-                                color: presetBtn.isSelected ? SentinelTheme.textPrimary : SentinelTheme.textMuted
-                                font.pixelSize: SentinelTheme.fontSmall
-                                font.weight: presetBtn.isSelected ? Font.DemiBold : Font.Normal
-                                horizontalAlignment: Text.AlignHCenter
-                                verticalAlignment: Text.AlignVCenter
-                            }
-
-                            background: Rectangle {
-                                radius: SentinelTheme.radiusMd
-                                color: presetBtn.isSelected
-                                       ? SentinelTheme.withAlpha(root.modeAccent, 0.20)
-                                       : presetBtn.hovered
-                                         ? SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.04)
-                                         : SentinelTheme.withAlpha(SentinelTheme.backgroundBase, 0.40)
-                                border.color: presetBtn.isSelected
-                                              ? root.modeAccent
-                                              : SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.08)
-                                border.width: presetBtn.isSelected ? 1.5 : 1
-
-                                Behavior on border.color { ColorAnimation { duration: MotionTokens.fast } }
-                                Behavior on color { ColorAnimation { duration: MotionTokens.fast } }
-                            }
-                        }
-                    }
-                }
-            }
-
-            Rectangle {
-                Layout.fillWidth: true
-                height: 1
-                color: SentinelTheme.withAlpha(SentinelTheme.textPrimary, 0.05)
             }
 
             SettingControlRow {
