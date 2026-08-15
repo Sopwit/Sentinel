@@ -5,6 +5,7 @@
 #pragma once
 
 #include "sentinel/core/agent/AgentActivityLog.h"
+#include "sentinel/core/agent/AgentLoop.h"
 #include "sentinel/core/agent/AgentPipelineResult.h"
 #include "sentinel/core/agent/AgentRuntimeContext.h"
 #include "sentinel/core/agent/AgentTaskRuntime.h"
@@ -18,6 +19,7 @@
 #include "sentinel/core/runtime/ExecutionLifecycle.h"
 #include "sentinel/core/agent/IAgentRegistry.h"
 #include "sentinel/core/agent/IAgentRuntime.h"
+#include "sentinel/core/agent/IAgentStepPlanner.h"
 #include "sentinel/core/security/IApprovalPolicy.h"
 #include "sentinel/core/chat/IChatHistoryStore.h"
 #include "sentinel/core/interfaces/IChatProvider.h"
@@ -53,7 +55,9 @@
 
 #include <QObject>
 #include <QStringList>
+#include <atomic>
 #include <memory>
+#include <thread>
 
 class QTimer;
 class QThread;
@@ -1085,7 +1089,8 @@ public:
         std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider = nullptr,
         std::unique_ptr<ILocalInferenceWorker> localInferenceWorker = nullptr,
         std::unique_ptr<IConversationStore> conversationStore = nullptr,
-        std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime = nullptr, QObject* parent = nullptr);
+        std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime = nullptr,
+        std::unique_ptr<IAgentStepPlanner> agentStepPlanner = nullptr, QObject* parent = nullptr);
     ~ApplicationController() override;
 
     QString providerName() const;
@@ -1861,8 +1866,12 @@ public:
     Q_INVOKABLE bool recallLocalMemory(const QString& query);
     Q_INVOKABLE void clearLocalMemoryRecall();
     Q_INVOKABLE bool runAgentRequest(const QString& request);
+    Q_INVOKABLE bool cancelAgentRun();
+    Q_INVOKABLE bool agentLoopActive() const;
     Q_INVOKABLE bool agentAutonomousMode() const;
     Q_INVOKABLE void setAgentAutonomousMode(bool enabled);
+    QStringList planAgentStepsForGoal(const QString& goal) const;
+    AgentPipelineResult executeApprovedAgentGoal(const QString& goal);
     Q_INVOKABLE bool clearMemory();
     Q_INVOKABLE bool clearChat();
     Q_INVOKABLE void remember(const QString& key, const QString& value);
@@ -1905,6 +1914,15 @@ signals:
 private:
     AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request) const;
     void appendPipelineActivity(const AgentPipelineResult& result);
+    void startAgentLoopRun(const QString& goal);
+    void resumeAgentLoopWithApproval(bool approved);
+    void spawnAgentLoopThread(AgentLoopState seed, bool resume, bool approved);
+    void onAgentStepRecord(const AgentStepRecord& record);
+    void onAgentLoopStatus(const QString& status);
+    void onAgentLoopFinished(const AgentLoopState& state);
+    void finishAgentLoopRun();
+    void appendAgentLoopChatMessage(const QString& text);
+    QString agentApprovalRequestText(const AgentLoopState& state) const;
     void resetCompletedConversationState();
     void transitionConversationState(ConversationState nextState, const QString& reason);
     void refreshLatestTaskPlan();
@@ -2010,6 +2028,7 @@ private:
 
     std::unique_ptr<IChatProvider> provider_;
     std::unique_ptr<IAgentRuntime> agentRuntime_;
+    std::unique_ptr<IAgentStepPlanner> agentStepPlanner_;
     std::unique_ptr<IApprovalPolicy> approvalPolicy_;
     std::unique_ptr<ISandboxPolicy> sandboxPolicy_;
     std::unique_ptr<IToolExecutor> toolExecutor_;
@@ -2124,6 +2143,10 @@ private:
     bool localChatInferenceEnabled_ = true;
     bool agentAutonomousMode_ = false;
     QString pendingCommand_;
+    AgentLoopState activeAgentSession_;
+    std::atomic<bool> agentLoopCancelRequested_{false};
+    std::atomic<bool> agentLoopThreadRunning_{false};
+    std::thread agentLoopThread_;
     bool promptContextInjectionEnabled_ = false;
     bool localInferenceStreamingEnabled_ = true;
     int localInferenceTimeoutMs_ = 30000;

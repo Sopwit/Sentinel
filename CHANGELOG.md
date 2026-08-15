@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased
+
+- Added autonomous multi-step agent execution: `AgentLoop` runs a ReAct-style
+  plan-execute-observe cycle with LLM-driven step planning (`LlmAgentRuntime`),
+  context handoff between steps, self-correction after tool failures, an
+  iteration limit (12 steps), doom-loop detection, and mid-run cancellation.
+- Agent tool execution now routes through the `ToolExecutionGateway` with
+  per-step approval and sandbox gates; risky steps pause the loop until the
+  user approves (`onayla`/`iptal`) in chat, and Autonomous Mode bypasses
+  per-step approval as before.
+- Large tool observations are truncated (preview + full output on disk) before
+  being fed back to the planner and the chat transcript.
+- The agent loop runs on a background thread with step/final messages streamed
+  into the chat transcript; the existing stop control cancels the active run.
+- `LlmAgentRuntime` falls back to deterministic heuristic planning whenever
+  the chat provider is unavailable or returns unparseable JSON.
+- Existing single-shot agent pipeline behavior is preserved for callers that
+  do not configure a step planner (all existing tests unchanged).
+
 ## 1.0.0-rc.7 - 2026-08-01
 
 - Added full 8-language support (English, Turkish, German, Spanish, French, Chinese, Japanese, Arabic)

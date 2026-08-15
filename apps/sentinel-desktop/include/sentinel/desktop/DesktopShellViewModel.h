@@ -13,6 +13,7 @@
 #include "sentinel/core/memory/SemanticRetrieval.h"
 #include "sentinel/core/app/SkillProfileService.h"
 #include "sentinel/core/runtime/ToolExecutionGateway.h"
+#include "sentinel/core/runtime/ToolExecution.h"
 #include "sentinel/core/app/WorkspaceService.h"
 #include "sentinel/desktop/ChatMessageListModel.h"
 

@@ -99,6 +99,8 @@ public:
     ControlledAgentTask start(ControlledAgentTask task,
                               const QList<ControlledAgentTask>& allTasks) const;
     ControlledAgentTask executeCurrentStep(ControlledAgentTask task) const;
+    ControlledAgentTask executeCurrentStep(ControlledAgentTask task, const QString& outcome,
+                                           bool succeeded) const;
     ControlledAgentTask skipCurrentStep(ControlledAgentTask task) const;
     ControlledAgentTask retryCurrentStep(ControlledAgentTask task) const;
     QList<ControlledAgentTask> reorderQueue(QList<ControlledAgentTask> tasks, const QString& taskId,
