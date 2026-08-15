@@ -210,7 +210,7 @@ the checked-in `.clangd` compilation database path. For Qt QML module resolution
 - Cloud-based AI API calls (external network connections).
 - External network requests (only local loopback connections are used).
 - Voice processing execution (Whisper STT and Piper TTS remain metadata-only/readiness boundaries).
-- Autonomous or unsupervised agent execution (tasks require step-by-step foreground approval).
+- Autonomous or unsupervised agent execution (multi-step agent runs exist but every risky step still flows through the approval policy; Autonomous Mode is an explicit user opt-in that bypasses per-step approval).
 - Cloud sync or remote backup.
 - Dynamic runtime plugin loading.
 - Wearable or IoT hardware support.

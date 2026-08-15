@@ -5389,7 +5389,8 @@ QString DesktopShellViewModel::controlledTaskProgressSummary() const {
         int completed = 0;
         for (const auto& step : task.steps) {
             if (step.state == core::ControlledTaskState::Completed ||
-                step.state == core::ControlledTaskState::Cancelled) {
+                step.state == core::ControlledTaskState::Cancelled ||
+                step.state == core::ControlledTaskState::Failed) {
                 ++completed;
             }
         }
@@ -5474,9 +5475,13 @@ QString DesktopShellViewModel::planControlledAgentTask(const QString& goal) {
             resources.append(attachment.fileName);
         }
     }
-    const auto task = controlledAgentTaskService_.createPlan(
+    auto task = controlledAgentTaskService_.createPlan(
         goal, selectedWorkspaceId(), controller_.activeRuntimeProviderLabel(),
         controller_.activeRuntimeModelLabel(), resources, tasks);
+    const auto plannedSteps = controller_.planAgentStepsForGoal(goal);
+    if (!plannedSteps.isEmpty()) {
+        task = controlledAgentTaskService_.setSteps(task, plannedSteps);
+    }
     tasks = controlledAgentTaskService_.upsertTask(tasks, task);
     settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
     emit controlledAgentTasksChanged();
@@ -5543,7 +5548,15 @@ bool DesktopShellViewModel::executeControlledAgentStep(const QString& taskId) {
     if (task.id.isEmpty()) {
         return false;
     }
-    task = controlledAgentTaskService_.executeCurrentStep(task);
+    const auto pipelineResult = controller_.executeApprovedAgentGoal(task.description);
+    const bool succeeded =
+        pipelineResult.execution.status == core::ToolExecutionStatus::Succeeded ||
+        pipelineResult.execution.status == core::ToolExecutionStatus::PlaceholderSucceeded;
+    const auto outcome =
+        QStringLiteral("%1: %2")
+            .arg(core::toolExecutionStatusName(pipelineResult.execution.status),
+                 pipelineResult.execution.summary);
+    task = controlledAgentTaskService_.executeCurrentStep(task, outcome, succeeded);
     tasks = controlledAgentTaskService_.upsertTask(tasks, task);
     settings_.setControlledAgentTasksJson(controlledAgentTaskService_.tasksToJson(tasks));
     emit controlledAgentTasksChanged();

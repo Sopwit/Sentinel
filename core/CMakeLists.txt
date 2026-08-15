@@ -7,6 +7,7 @@ configure_file(
 add_library(sentinel_core STATIC
     include/sentinel/core/AppBuildConfig.h.in
     include/sentinel/core/agent/AgentActivityLog.h
+    include/sentinel/core/agent/AgentLoop.h
     include/sentinel/core/agent/AgentMetadata.h
     include/sentinel/core/agent/AgentPipelineResult.h
     include/sentinel/core/agent/AgentRuntimeContext.h
@@ -16,6 +17,8 @@ add_library(sentinel_core STATIC
     include/sentinel/core/agent/DynamicAgentRegistry.h
     include/sentinel/core/agent/IAgentRegistry.h
     include/sentinel/core/agent/IAgentRuntime.h
+    include/sentinel/core/agent/IAgentStepPlanner.h
+    include/sentinel/core/agent/LlmAgentRuntime.h
     include/sentinel/core/agent/NullAgentRuntime.h
     include/sentinel/core/agent/StaticAgentRegistry.h
     include/sentinel/core/app/ApplicationController.h
@@ -281,11 +284,13 @@ add_library(sentinel_core STATIC
     include/sentinel/core/util/Lazy.h
     include/sentinel/core/util/MemoMap.h
     src/agent/AgentActivityLog.cpp
+    src/agent/AgentLoop.cpp
     src/agent/AgentRuntimeContext.cpp
     src/agent/AgentRuntimeService.cpp
     src/agent/AgentTaskRuntime.cpp
     src/agent/ControlledAgentTasks.cpp
     src/agent/DynamicAgentRegistry.cpp
+    src/agent/LlmAgentRuntime.cpp
     src/agent/NullAgentRuntime.cpp
     src/agent/StaticAgentRegistry.cpp
     src/agent/SubagentService.cpp

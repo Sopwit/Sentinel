@@ -35,10 +35,10 @@ Item {
     function buildSidebarItems() {
         return [
             { "key": "Interface", "title": qsTr("Interface"), "keywords": ["general", "appearance", "accessibility", "theme", "language", "density", "motion", "contrast"] },
-            { "key": "AI", "title": qsTr("AI Settings"), "keywords": ["ai", "models", "chat", "profiles", "provider", "temperature", "tokens", "streaming"] },
+            { "key": "AI", "title": qsTr("AI Settings"), "keywords": ["ai", "models", "chat", "profiles", "provider", "temperature", "tokens", "streaming", "cloud", "api key"] },
             { "key": "Voice", "title": qsTr("Voice & Audio"), "keywords": ["voice", "audio", "speech", "tts", "stt", "kokoro", "piper", "whisper", "transcription"] },
             { "key": "Memory", "title": qsTr("Memory & Knowledge"), "keywords": ["brain", "workspace", "memory", "recall", "context", "rag", "knowledge", "files"] },
-            { "key": "Security", "title": qsTr("Security & Agents"), "keywords": ["permissions", "tools", "agents", "boundary", "policy", "gateway", "sandbox", "proxy", "cloud", "api", "web search"] },
+            { "key": "Security", "title": qsTr("Security & Agents"), "keywords": ["permissions", "tools", "agents", "boundary", "policy", "gateway", "sandbox", "proxy", "web search"] },
             { "key": "System", "title": qsTr("System"), "keywords": ["notifications", "updates", "policy", "version", "sound", "audio"] }
         ]
     }

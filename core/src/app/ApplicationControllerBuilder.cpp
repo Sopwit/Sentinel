@@ -6,6 +6,7 @@
 
 #include "sentinel/core/chat/LocalEchoProvider.h"
 #include "sentinel/core/chat/OllamaChatProvider.h"
+#include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
@@ -52,6 +53,7 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withStandardDefaults
 ApplicationControllerBuilder& ApplicationControllerBuilder::withProvider(
     std::unique_ptr<IChatProvider> provider) {
     m_provider = std::move(provider);
+    m_agentStepPlanner.reset();
     return *this;
 }
 
@@ -76,6 +78,12 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withChatHistoryStore
 ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentRuntime(
     std::unique_ptr<IAgentRuntime> agentRuntime) {
     m_agentRuntime = std::move(agentRuntime);
+    return *this;
+}
+
+ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentStepPlanner(
+    std::unique_ptr<IAgentStepPlanner> agentStepPlanner) {
+    m_agentStepPlanner = std::move(agentStepPlanner);
     return *this;
 }
 
@@ -266,6 +274,11 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withAgentTaskRuntime
 }
 
 std::unique_ptr<ApplicationController> ApplicationControllerBuilder::build() {
+    if (!m_agentStepPlanner && m_provider) {
+        m_agentStepPlanner = std::make_unique<LlmAgentRuntime>(NullAgentRuntime::standardTools(),
+                                                               m_provider.get());
+    }
+
     return std::make_unique<ApplicationController>(
         std::move(m_provider), std::move(m_memoryStore), std::move(m_chatSession),
         std::move(m_chatHistoryStore), std::move(m_agentRuntime), std::move(m_approvalPolicy),
@@ -282,7 +295,7 @@ std::unique_ptr<ApplicationController> ApplicationControllerBuilder::build() {
         std::move(m_speechToTextProvider), std::move(m_voiceRuntimeCoordinator),
         std::move(m_voiceRuntimeEnvironment), std::move(m_piperTextToSpeechProvider),
         std::move(m_localInferenceWorker), std::move(m_conversationStore),
-        std::move(m_agentTaskRuntime));
+        std::move(m_agentTaskRuntime), std::move(m_agentStepPlanner));
 }
 
 } // namespace sentinel::core

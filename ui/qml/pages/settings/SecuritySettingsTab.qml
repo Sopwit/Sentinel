@@ -14,8 +14,8 @@ Item {
     property bool compact: false
     property color modeAccent: SentinelTheme.modeAccent(viewModel.currentModeName)
     readonly property int panelPadding: SentinelTheme.spaceLg
-    readonly property var cloudProviderNames: ["OpenAI", "Claude", "Gemini", "DeepSeek", "Groq", "Mistral"]
     property string activeTaskId: ""
+    readonly property bool taskRunning: root.viewModel.controlledTaskActiveSummary.indexOf("[Running]") >= 0
 
     height: implicitHeight
     implicitHeight: visible ? mainLayout.implicitHeight + panelPadding * 2 : 0
@@ -223,7 +223,7 @@ Item {
         SettingCard {
             visible: root.activeTaskId.length > 0
             title: qsTr("3. Approve & Run")
-            subtitle: qsTr("Approve the plan first, then start it. Execution stays gated by the sandbox.")
+            subtitle: qsTr("Approve the plan, start the task, then run each step. Every step executes for real through the sandbox.")
 
             ColumnLayout {
                 Layout.fillWidth: true
@@ -238,15 +238,32 @@ Item {
                     spacing: SentinelTheme.spaceSm
 
                     SentinelButton {
+                        visible: !root.taskRunning
                         text: qsTr("Approve")
                         accent: SentinelTheme.success
                         onClicked: root.viewModel.approveControlledAgentTask(root.activeTaskId, "approve")
                     }
 
                     SentinelButton {
+                        visible: !root.taskRunning
+                        text: qsTr("Deny")
+                        accent: SentinelTheme.warning
+                        onClicked: root.viewModel.denyControlledAgentTask(root.activeTaskId)
+                    }
+
+                    SentinelButton {
+                        visible: !root.taskRunning
                         text: qsTr("Start")
                         accent: root.modeAccent
                         onClicked: root.viewModel.startControlledAgentTask(root.activeTaskId)
+                    }
+
+                    SentinelButton {
+                        visible: root.taskRunning
+                        Layout.fillWidth: true
+                        text: qsTr("Run Current Step")
+                        accent: root.modeAccent
+                        onClicked: root.viewModel.executeControlledAgentStep(root.activeTaskId)
                     }
                 }
 
@@ -364,132 +381,6 @@ Item {
                     placeholderText: "••••••••"
                     text: root.viewModel.proxyPassword
                     onEditingFinished: root.viewModel.proxyPassword = text
-                }
-            }
-        }
-
-        SectionTitle {
-            title: qsTr("Cloud Providers")
-            subtitle: qsTr("Select a cloud provider and configure its API credentials. Keys are saved to local settings.")
-            Layout.fillWidth: true
-            Layout.topMargin: SentinelTheme.spaceMd
-        }
-
-        SettingCard {
-            SettingControlRow {
-                title: qsTr("Active Cloud Provider")
-                subtitle: qsTr("Primary provider for cloud LLM inference.")
-                accent: root.modeAccent
-                compact: root.compact
-                showDivider: true
-
-                SentinelComboBox {
-                    id: cloudProviderCombo
-                    accent: root.modeAccent
-                    anchors.fill: parent
-                    model: root.cloudProviderNames
-                    currentIndex: Math.max(0, root.cloudProviderNames.indexOf(root.viewModel.selectedCloudProvider))
-                    displayText: currentIndex >= 0 ? currentText : root.viewModel.selectedCloudProvider
-                    onActivated: (index) => {
-                        if (index >= 0 && index < root.cloudProviderNames.length)
-                            root.viewModel.selectedCloudProvider = root.cloudProviderNames[index]
-                    }
-                }
-            }
-
-            SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "OpenAI"
-                title: qsTr("OpenAI API Key")
-                subtitle: qsTr("Authentication key for GPT-4, GPT-4o, and OpenAI endpoints.")
-                accent: root.modeAccent
-                compact: root.compact
-
-                SentinelTextField {
-                    anchors.fill: parent
-                    echoMode: TextInput.Password
-                    placeholderText: "sk-..."
-                    text: root.viewModel.openAiApiKey
-                    onEditingFinished: root.viewModel.openAiApiKey = text
-                }
-            }
-
-            SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "Claude"
-                title: qsTr("Claude API Key")
-                subtitle: qsTr("Authentication key for Anthropic Claude 3.5 Sonnet and Opus models.")
-                accent: root.modeAccent
-                compact: root.compact
-
-                SentinelTextField {
-                    anchors.fill: parent
-                    echoMode: TextInput.Password
-                    placeholderText: "sk-ant-..."
-                    text: root.viewModel.claudeApiKey
-                    onEditingFinished: root.viewModel.claudeApiKey = text
-                }
-            }
-
-            SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "Gemini"
-                title: qsTr("Gemini API Key")
-                subtitle: qsTr("Authentication key for Google Gemini Pro and Flash models.")
-                accent: root.modeAccent
-                compact: root.compact
-
-                SentinelTextField {
-                    anchors.fill: parent
-                    echoMode: TextInput.Password
-                    placeholderText: "AIza..."
-                    text: root.viewModel.geminiApiKey
-                    onEditingFinished: root.viewModel.geminiApiKey = text
-                }
-            }
-
-            SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "DeepSeek"
-                title: qsTr("DeepSeek API Key")
-                subtitle: qsTr("Authentication key for DeepSeek V3 and DeepSeek R1 reasoning endpoints.")
-                accent: root.modeAccent
-                compact: root.compact
-
-                SentinelTextField {
-                    anchors.fill: parent
-                    echoMode: TextInput.Password
-                    placeholderText: "sk-..."
-                    text: root.viewModel.deepseekApiKey
-                    onEditingFinished: root.viewModel.deepseekApiKey = text
-                }
-            }
-
-            SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "Groq"
-                title: qsTr("Groq API Key")
-                subtitle: qsTr("Authentication key for ultra-fast Groq LPU inference.")
-                accent: root.modeAccent
-                compact: root.compact
-
-                SentinelTextField {
-                    anchors.fill: parent
-                    echoMode: TextInput.Password
-                    placeholderText: "gsk_..."
-                    text: root.viewModel.groqApiKey
-                    onEditingFinished: root.viewModel.groqApiKey = text
-                }
-            }
-
-            SettingControlRow {
-                visible: root.viewModel.selectedCloudProvider === "Mistral"
-                title: qsTr("Mistral API Key")
-                subtitle: qsTr("Authentication key for Mistral Large, Codestral, and NeMo endpoints.")
-                accent: root.modeAccent
-                compact: root.compact
-
-                SentinelTextField {
-                    anchors.fill: parent
-                    echoMode: TextInput.Password
-                    placeholderText: "sk-..."
-                    text: root.viewModel.mistralApiKey
-                    onEditingFinished: root.viewModel.mistralApiKey = text
                 }
             }
         }

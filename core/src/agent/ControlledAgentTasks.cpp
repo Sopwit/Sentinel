@@ -460,25 +460,42 @@ ControlledAgentTaskService::start(ControlledAgentTask task,
 }
 
 ControlledAgentTask ControlledAgentTaskService::executeCurrentStep(ControlledAgentTask task) const {
+    return executeCurrentStep(
+        std::move(task),
+        QStringLiteral("Completed as a visible controlled metadata step. No hidden tools ran."),
+        true);
+}
+
+ControlledAgentTask ControlledAgentTaskService::executeCurrentStep(ControlledAgentTask task,
+                                                                   const QString& outcome,
+                                                                   bool succeeded) const {
     if (task.state != ControlledTaskState::Running || task.currentStepIndex < 0 ||
         task.currentStepIndex >= task.steps.size()) {
         task.resultSummary = QStringLiteral("No visible running step is available.");
         return task;
     }
     auto& step = task.steps[task.currentStepIndex];
-    step.state = ControlledTaskState::Completed;
-    step.outcome =
-        QStringLiteral("Completed as a visible controlled metadata step. No hidden tools ran.");
+    step.state = succeeded ? ControlledTaskState::Completed : ControlledTaskState::Failed;
+    step.outcome = outcome;
     const auto nextIndex = task.currentStepIndex + 1;
     if (nextIndex >= task.steps.size()) {
-        task.state = ControlledTaskState::Completed;
+        const bool anyFailed = std::any_of(task.steps.cbegin(), task.steps.cend(),
+                                           [](const ControlledAgentStep& completedStep) {
+                                               return completedStep.state ==
+                                                      ControlledTaskState::Failed;
+                                           });
+        task.state = anyFailed ? ControlledTaskState::Failed : ControlledTaskState::Completed;
         task.currentStepIndex = -1;
         task.completedAtUtc = timestampUtc();
-        task.resultSummary = QStringLiteral("Task completed after visible approved steps.");
+        task.resultSummary =
+            anyFailed ? QStringLiteral("Task finished with failed steps.")
+                      : QStringLiteral("Task completed after visible approved steps.");
     } else {
         task.currentStepIndex = nextIndex;
         task.steps[nextIndex].state = ControlledTaskState::Running;
-        task.resultSummary = QStringLiteral("Step completed. Next step is visible and waiting.");
+        task.resultSummary = succeeded
+                                 ? QStringLiteral("Step completed. Next step is visible and waiting.")
+                                 : QStringLiteral("Step failed. Next step is visible and waiting.");
     }
     return task;
 }
@@ -635,12 +652,12 @@ QStringList ControlledAgentTaskService::exportCenterSummaries() const {
 
 QStringList ControlledAgentTaskService::safetyGuarantees() const {
     return {QStringLiteral("No autonomous execution."),
-            QStringLiteral("No hidden tools."),
+            QStringLiteral("Tools run only after explicit approval."),
+            QStringLiteral("Every execution passes the sandbox policy."),
             QStringLiteral("No background approvals."),
             QStringLiteral("No self-modifying tasks."),
             QStringLiteral("No recursive task generation."),
-            QStringLiteral("No automatic retries without approval."),
-            QStringLiteral("No cloud activation.")};
+            QStringLiteral("No automatic retries without approval.")};
 }
 
 ControlledAgentDiagnostics

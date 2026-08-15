@@ -21,6 +21,7 @@
 
 #include <QCoreApplication>
 #include <QDateTime>
+#include <QDebug>
 #include <QDir>
 #include <QElapsedTimer>
 #include <QFileInfo>
@@ -774,8 +775,10 @@ ApplicationController::ApplicationController(
     std::unique_ptr<PiperTextToSpeechProvider> piperTextToSpeechProvider,
     std::unique_ptr<ILocalInferenceWorker> localInferenceWorker,
     std::unique_ptr<IConversationStore> conversationStore,
-    std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime, QObject* parent)
+    std::unique_ptr<IAgentTaskRuntime> agentTaskRuntime,
+    std::unique_ptr<IAgentStepPlanner> agentStepPlanner, QObject* parent)
     : QObject(parent), provider_(std::move(provider)), agentRuntime_(std::move(agentRuntime)),
+      agentStepPlanner_(std::move(agentStepPlanner)),
       approvalPolicy_(approvalPolicy ? std::move(approvalPolicy)
                                      : std::make_unique<StaticApprovalPolicy>()),
       sandboxPolicy_(sandboxPolicy ? std::move(sandboxPolicy)
@@ -924,6 +927,8 @@ ApplicationController::ApplicationController(
 }
 
 ApplicationController::~ApplicationController() {
+    agentLoopCancelRequested_ = true;
+    finishAgentLoopRun();
     if (ollamaCheckThread_) {
         ollamaCheckThread_->wait();
         ollamaCheckThread_->deleteLater();
@@ -8189,6 +8194,10 @@ bool ApplicationController::runLocalInference(const QString& prompt, const QStri
 }
 
 bool ApplicationController::cancelLocalInference() {
+    if (agentLoopThreadRunning_.load()) {
+        return cancelAgentRun();
+    }
+
     if (!localInferenceBusy_ || activeLocalInferenceRequestId_.isEmpty()) {
         return false;
     }
@@ -8629,6 +8638,44 @@ bool ApplicationController::runAgentRequest(const QString& request) {
         return false;
     }
 
+    if (activeAgentSession_.phase == AgentLoopPhase::AwaitingApproval &&
+        !agentLoopThreadRunning_.load()) {
+        const auto lowerRequest = trimmed.toLower();
+        const bool wantsApproval = lowerRequest == QStringLiteral("onayla") ||
+                                   lowerRequest == QStringLiteral("approve") ||
+                                   lowerRequest == QStringLiteral("y");
+        const bool wantsCancel = lowerRequest == QStringLiteral("iptal") ||
+                                 lowerRequest == QStringLiteral("cancel") ||
+                                 lowerRequest == QStringLiteral("n");
+        if (wantsApproval || wantsCancel) {
+            const auto userMessage = chatSession_->appendUserMessage(trimmed);
+            persistActiveConversationMessage(userMessage);
+            if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
+                chatHistoryStore_->appendMessage(userMessage);
+            }
+            refreshConversationHistorySummary();
+            emit chatMessagesChanged();
+            resumeAgentLoopWithApproval(wantsApproval);
+            return true;
+        }
+        activeAgentSession_ = AgentLoopState{};
+    }
+
+    if (agentLoopThreadRunning_.load()) {
+        const auto lowerRequest = trimmed.toLower();
+        if (lowerRequest == QStringLiteral("iptal") || lowerRequest == QStringLiteral("cancel") ||
+            lowerRequest == QStringLiteral("n") || lowerRequest == QStringLiteral("durdur") ||
+            lowerRequest == QStringLiteral("stop")) {
+            agentLoopCancelRequested_ = true;
+            return true;
+        }
+        appendAgentLoopChatMessage(
+            QStringLiteral("⏳ **Ajan Çalışıyor / Agent Busy**\n\n"
+                           "Ajan şu anda bir görevi üzerinde çalışıyor. Beklemek için **durdur** "
+                           "(veya **cancel**) yazın."));
+        return true;
+    }
+
     if (!pendingCommand_.isEmpty()) {
         const auto lowerRequest = trimmed.toLower();
         if (lowerRequest == QStringLiteral("onayla") || lowerRequest == QStringLiteral("approve") ||
@@ -8759,6 +8806,10 @@ bool ApplicationController::runAgentRequest(const QString& request) {
 
     transitionConversationState(ConversationState::Routing,
                                 QStringLiteral("agent route metadata selected"));
+    if (agentStepPlanner_ && toolExecutor_ && approvalPolicy_ && sandboxPolicy_) {
+        startAgentLoopRun(trimmed);
+        return true;
+    }
     latestAgentPipelineResult_ = buildAgentPipelineResult(AgentRequest{trimmed});
     appendPipelineActivity(latestAgentPipelineResult_);
     runtimeSession_.attachPipelineResult(latestAgentPipelineResult_);
@@ -8920,6 +8971,236 @@ bool ApplicationController::runAgentRequest(const QString& request) {
     return true;
 }
 
+bool ApplicationController::cancelAgentRun() {
+    if (!agentLoopThreadRunning_.load() && activeAgentSession_.phase != AgentLoopPhase::Running) {
+        return false;
+    }
+    agentLoopCancelRequested_ = true;
+    agentActivityLog_.append(AgentActivityType::RequestReceived, AgentActivityStatus::Recorded,
+                             QStringLiteral("Agent loop cancellation requested by user."));
+    emit agentActivityChanged();
+    return true;
+}
+
+bool ApplicationController::agentLoopActive() const {
+    return agentLoopThreadRunning_.load() ||
+           activeAgentSession_.phase == AgentLoopPhase::Running ||
+           activeAgentSession_.phase == AgentLoopPhase::AwaitingApproval;
+}
+
+void ApplicationController::startAgentLoopRun(const QString& goal) {
+    AgentLoopState seed;
+    seed.goal = goal;
+    spawnAgentLoopThread(seed, false, false);
+}
+
+void ApplicationController::resumeAgentLoopWithApproval(bool approved) {
+    if (activeAgentSession_.phase != AgentLoopPhase::AwaitingApproval ||
+        agentLoopThreadRunning_.load()) {
+        return;
+    }
+    auto seed = activeAgentSession_;
+    activeAgentSession_.phase = AgentLoopPhase::Running;
+    spawnAgentLoopThread(seed, true, approved);
+}
+
+void ApplicationController::spawnAgentLoopThread(AgentLoopState seed, bool resume, bool approved) {
+    finishAgentLoopRun();
+    agentLoopCancelRequested_ = false;
+
+    const bool autonomous = agentAutonomousMode_;
+    const QStringList toolIds = availableToolIds();
+
+    transitionConversationState(ConversationState::Planning,
+                                QStringLiteral("agent loop planning started"));
+    agentActivityLog_.append(AgentActivityType::RequestReceived, AgentActivityStatus::Recorded,
+                             QStringLiteral("Agent loop request received (autonomous=%1).")
+                                 .arg(autonomous ? QStringLiteral("true")
+                                                 : QStringLiteral("false")));
+    emit agentActivityChanged();
+
+    agentLoopThreadRunning_ = true;
+    agentLoopThread_ = std::thread([this, seed = std::move(seed), resume, approved, autonomous,
+                                    toolIds]() mutable {
+        AgentLoop::Config config;
+        config.autonomousMode = autonomous;
+
+        AgentLoop loop(*agentStepPlanner_, *toolExecutor_, *approvalPolicy_, *sandboxPolicy_,
+                       toolIds, config);
+        loop.setCancelQuery([this] { return agentLoopCancelRequested_.load(); });
+        loop.setStepCallback([this](const AgentStepRecord& record) {
+            QMetaObject::invokeMethod(
+                this, [this, record] { onAgentStepRecord(record); }, Qt::QueuedConnection);
+        });
+        loop.setStatusCallback([this](const QString& status) {
+            QMetaObject::invokeMethod(
+                this, [this, status] { onAgentLoopStatus(status); }, Qt::QueuedConnection);
+        });
+
+        AgentLoopState result =
+            resume ? loop.resume(seed, approved) : loop.run(seed.goal, seed.sessionId);
+
+        QMetaObject::invokeMethod(
+            this, [this, result] { onAgentLoopFinished(result); }, Qt::QueuedConnection);
+    });
+}
+
+void ApplicationController::onAgentStepRecord(const AgentStepRecord& record) {
+    QStringList argumentParts;
+    for (const auto& argument : record.arguments) {
+        argumentParts.append(QStringLiteral("`%1=%2`")
+                                 .arg(argument.id,
+                                      argument.value.size() > 300
+                                          ? argument.value.left(300) + QStringLiteral("…")
+                                          : argument.value));
+    }
+
+    const QString text =
+        QStringLiteral("🔧 **Adım %1 — %2 / Step %1: %2**\n\n"
+                       "%3\n\n"
+                       "**Girdiler / Inputs:** %4\n\n"
+                       "**Durum / Status:** `%5`\n\n"
+                       "**Gözlem / Observation:**\n"
+                       "```text\n%6\n```")
+            .arg(QString::number(record.index), record.toolName,
+                 record.thought.isEmpty() ? QString() : QStringLiteral("**Düşünce / Thought:** %1\n")
+                                                     .arg(record.thought),
+                 argumentParts.isEmpty() ? QStringLiteral("—")
+                                         : argumentParts.join(QStringLiteral(" · ")),
+                 record.statusText, record.observation);
+
+    appendAgentLoopChatMessage(text);
+    agentActivityLog_.append(AgentActivityType::PlanCreated,
+                             record.succeeded ? AgentActivityStatus::Recorded
+                                              : AgentActivityStatus::Blocked,
+                             QStringLiteral("Agent loop step %1 (%2): %3")
+                                 .arg(QString::number(record.index), record.toolName,
+                                      record.statusText));
+    emit agentActivityChanged();
+}
+
+void ApplicationController::onAgentLoopStatus(const QString& status) {
+    qInfo() << "[AgentLoop]" << status;
+}
+
+QString ApplicationController::agentApprovalRequestText(const AgentLoopState& state) const {
+    QStringList lines;
+    if (!state.pendingApprovalPlan.invocations.isEmpty()) {
+        const auto& invocation = state.pendingApprovalPlan.invocations.first();
+        QStringList argumentParts;
+        for (const auto& argument : invocation.arguments) {
+            argumentParts.append(
+                QStringLiteral("`%1=%2`").arg(argument.id, argument.value.left(500)));
+        }
+        lines.append(QStringLiteral("**Araç / Tool:** `%1` (%2)")
+                         .arg(invocation.toolId,
+                              argumentParts.isEmpty() ? QStringLiteral("no arguments")
+                                                      : argumentParts.join(QStringLiteral(" · "))));
+    }
+    if (!state.pendingApprovalThought.isEmpty()) {
+        lines.append(QStringLiteral("**Ajan Gerekçesi / Rationale:** %1")
+                         .arg(state.pendingApprovalThought));
+    }
+
+    return QStringLiteral("⚠️ **Onay Bekliyor / Approval Required (Adım %1 / Step %1)**\n\n"
+                          "%2\n\n"
+                          "Devam etmek için **onayla** (veya **approve**), reddetmek için "
+                          "**iptal** (veya **cancel**) yazın.")
+        .arg(QString::number(state.steps.size() + 1), lines.join(QStringLiteral("\n\n")));
+}
+
+void ApplicationController::onAgentLoopFinished(const AgentLoopState& state) {
+    finishAgentLoopRun();
+    activeAgentSession_ = state;
+
+    QString finalText;
+    switch (state.phase) {
+    case AgentLoopPhase::AwaitingApproval:
+        finalText = agentApprovalRequestText(state);
+        transitionConversationState(ConversationState::WaitingForApproval,
+                                    QStringLiteral("agent loop awaiting user approval"));
+        break;
+    case AgentLoopPhase::Completed:
+        finalText = QStringLiteral("✅ **Ajan Görevi Tamamlandı / Agent Task Completed**\n\n%1\n\n"
+                                   "*%2 adım çalıştırıldı / %2 steps executed.*")
+                        .arg(state.finalAnswer, QString::number(state.steps.size()));
+        transitionConversationState(ConversationState::ReadyToRespond,
+                                    QStringLiteral("agent loop response ready"));
+        transitionConversationState(ConversationState::Responding,
+                                    QStringLiteral("agent loop response active"));
+        transitionConversationState(ConversationState::Completed,
+                                    QStringLiteral("agent loop completed"));
+        break;
+    case AgentLoopPhase::Cancelled:
+        finalText = QStringLiteral("⛔ **Ajan İptal Edildi / Agent Run Cancelled**\n\n%1\n\n"
+                                   "*%2 adım çalıştırılmıştı / %2 steps executed.*")
+                        .arg(state.abortReason, QString::number(state.steps.size()));
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("agent loop cancelled"));
+        break;
+    case AgentLoopPhase::Stuck:
+        finalText = QStringLiteral("🔁 **Ajan Döngüye Takıldı / Doom Loop Detected**\n\n%1\n\n"
+                                   "*%2 adım çalıştırıldı / %2 steps executed.*")
+                        .arg(state.abortReason, QString::number(state.steps.size()));
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("agent loop stuck"));
+        break;
+    case AgentLoopPhase::Failed:
+        finalText = QStringLiteral("🔴 **Ajan Görevi Başarısız / Agent Task Failed**\n\n%1\n\n"
+                                   "*%2 adım çalıştırıldı / %2 steps executed.*")
+                        .arg(state.abortReason, QString::number(state.steps.size()));
+        transitionConversationState(ConversationState::Error,
+                                    QStringLiteral("agent loop failed"));
+        break;
+    case AgentLoopPhase::Running:
+    case AgentLoopPhase::Idle:
+        break;
+    }
+
+    if (!finalText.isEmpty()) {
+        appendAgentLoopChatMessage(finalText);
+    }
+
+    const auto summaryText = QStringLiteral("Agent loop finished: %1 (%2 steps)")
+                                 .arg(agentLoopPhaseName(state.phase),
+                                      QString::number(state.steps.size()));
+    agentActivityLog_.append(AgentActivityType::PipelineCompleted,
+                             state.phase == AgentLoopPhase::Completed ? AgentActivityStatus::Recorded
+                                                                      : AgentActivityStatus::Blocked,
+                             summaryText);
+    if (lastAgentResponse_ != summaryText) {
+        lastAgentResponse_ = summaryText;
+        emit agentResponseChanged();
+    }
+
+    refreshConversationSession();
+    emit chatMessagesChanged();
+    emit agentStatusChanged();
+    emit agentActivityChanged();
+    emit conversationSessionChanged();
+    emit orchestrationSnapshotChanged();
+}
+
+void ApplicationController::finishAgentLoopRun() {
+    if (agentLoopThread_.joinable()) {
+        agentLoopThread_.join();
+    }
+    agentLoopThreadRunning_ = false;
+}
+
+void ApplicationController::appendAgentLoopChatMessage(const QString& text) {
+    auto assistantMsg = chatSession_->appendAssistantMessage(text, ChatMessageStatus::Received);
+    assistantMsg.providerUsed = QStringLiteral("AgentLoop");
+    assistantMsg.roleUsed = QStringLiteral("agent");
+    persistActiveConversationMessage(assistantMsg);
+    if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
+        chatHistoryStore_->appendMessage(assistantMsg);
+    }
+    refreshConversationHistorySummary();
+    emit chatMessagesChanged();
+}
+
+
 AgentPipelineResult
 ApplicationController::buildAgentPipelineResult(const AgentRequest& request) const {
     AgentPipelineResult result;
@@ -8952,6 +9233,65 @@ ApplicationController::buildAgentPipelineResult(const AgentRequest& request) con
     }
 
     result.summary = safeToolExecutionSummary(result.execution);
+    return result;
+}
+
+QStringList ApplicationController::planAgentStepsForGoal(const QString& goal) const {
+    const auto trimmed = goal.trimmed();
+    if (!agentRuntime_ || trimmed.isEmpty()) {
+        return {};
+    }
+    const auto plan = agentRuntime_->plan(AgentRequest{trimmed, QString()});
+    if (plan.status != ToolInvocationPlanStatus::Planned || plan.invocations.isEmpty()) {
+        return {};
+    }
+    QStringList steps;
+    for (const auto& invocation : plan.invocations) {
+        QStringList argumentParts;
+        for (const auto& argument : invocation.arguments) {
+            argumentParts.append(QStringLiteral("%1: %2").arg(argument.id, argument.value));
+        }
+        steps.append(QStringLiteral("%1 - %2 (%3)")
+                         .arg(invocation.toolName,
+                              invocation.summary.isEmpty() ? invocation.rationale
+                                                           : invocation.summary,
+                              argumentParts.join(QStringLiteral(", "))));
+    }
+    return steps;
+}
+
+AgentPipelineResult ApplicationController::executeApprovedAgentGoal(const QString& goal) {
+    AgentPipelineResult result;
+    const auto trimmed = goal.trimmed();
+    if (trimmed.isEmpty()) {
+        result.summary = QStringLiteral("Agent request was empty.");
+        return result;
+    }
+
+    if (agentRuntime_) {
+        result.plan = agentRuntime_->plan(AgentRequest{trimmed, QString()});
+    } else {
+        result.plan.status = ToolInvocationPlanStatus::NoToolsAvailable;
+        result.plan.summary = QStringLiteral("No agent runtime is available for planning.");
+    }
+
+    result.approval = ApprovalDecision{
+        ApprovalStatus::Approved,
+        QStringLiteral("User approved this controlled task explicitly in Security settings."),
+        {},
+    };
+    result.sandbox = sandboxPolicy_->evaluate(result.plan, result.approval);
+    result.execution = toolExecutor_->execute(ToolExecutionRequest{
+        result.plan,
+        result.approval,
+        result.sandbox,
+        availableToolIds(),
+    });
+    result.summary = safeToolExecutionSummary(result.execution);
+
+    latestAgentPipelineResult_ = result;
+    appendPipelineActivity(result);
+    emit agentPipelineChanged();
     return result;
 }
 

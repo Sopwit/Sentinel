@@ -26,6 +26,8 @@ public:
     ApplicationControllerBuilder& withChatSession(std::unique_ptr<ChatSession> chatSession);
     ApplicationControllerBuilder& withChatHistoryStore(std::unique_ptr<IChatHistoryStore> chatHistoryStore);
     ApplicationControllerBuilder& withAgentRuntime(std::unique_ptr<IAgentRuntime> agentRuntime);
+    ApplicationControllerBuilder& withAgentStepPlanner(
+        std::unique_ptr<IAgentStepPlanner> agentStepPlanner);
     ApplicationControllerBuilder& withApprovalPolicy(std::unique_ptr<IApprovalPolicy> approvalPolicy);
     ApplicationControllerBuilder& withSandboxPolicy(std::unique_ptr<ISandboxPolicy> sandboxPolicy);
     ApplicationControllerBuilder& withToolExecutor(std::unique_ptr<IToolExecutor> toolExecutor);
@@ -88,6 +90,7 @@ private:
     std::unique_ptr<ChatSession> m_chatSession;
     std::unique_ptr<IChatHistoryStore> m_chatHistoryStore;
     std::unique_ptr<IAgentRuntime> m_agentRuntime;
+    std::unique_ptr<IAgentStepPlanner> m_agentStepPlanner;
     std::unique_ptr<IApprovalPolicy> m_approvalPolicy;
     std::unique_ptr<ISandboxPolicy> m_sandboxPolicy;
     std::unique_ptr<IToolExecutor> m_toolExecutor;
