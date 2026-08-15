@@ -184,12 +184,15 @@ Item {
 
         SectionTitle {
             title: qsTr("Notifications")
-            subtitle: qsTr("Choose which background events trigger desktop and toast notifications.")
+            subtitle: qsTr("Turn each notification type on or off. New notification types can be added here without changing the rest of Settings.")
             Layout.fillWidth: true
             Layout.topMargin: SentinelTheme.spaceMd
         }
 
         SettingCard {
+            title: qsTr("Notification Types")
+            subtitle: qsTr("Only the events you enable will notify you.")
+
             SettingToggleRow {
                 title: qsTr("Model Downloads")
                 subtitle: qsTr("Notify when local LLM downloads or weight verifications complete.")
