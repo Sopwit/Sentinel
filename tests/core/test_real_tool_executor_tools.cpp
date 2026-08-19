@@ -12,9 +12,88 @@
 #include "sentinel/core/runtime/AlarmStore.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
 
-using namespace sentinel::core;
+using namespace sentinel::core;namespace {
 
-namespace {
+class FakeMcpService final : public IMcpService {
+public:
+    bool addServer(const McpServerConfig& config) override {
+        servers_.append(config);
+        return true;
+    }
+    bool removeServer(const QString& serverName) override {
+        for (int i = 0; i < servers_.size(); ++i) {
+            if (servers_.at(i).name == serverName) {
+                servers_.removeAt(i);
+                return true;
+            }
+        }
+        return false;
+    }
+    QList<McpServerConfig> servers() const override { return servers_; }
+    McpServerConfig serverConfig(const QString& serverName) const override {
+        for (const auto& server : servers_) {
+            if (server.name == serverName) {
+                return server;
+            }
+        }
+        return {};
+    }
+    bool connectToServer(const QString& serverName) override { return hasServer(serverName); }
+    bool disconnectFromServer(const QString& serverName) override {
+        Q_UNUSED(serverName)
+        return true;
+    }
+    McpConnectionState connectionState(const QString& serverName) const override {
+        return hasServer(serverName) ? McpConnectionState::Connected
+                                     : McpConnectionState::Disconnected;
+    }
+    QList<McpToolDefinition> tools(const QString& serverName) const override {
+        QList<McpToolDefinition> result;
+        if (serverName.isEmpty() || serverName == QStringLiteral("weather")) {
+            result.append(McpToolDefinition{
+                QStringLiteral("get_forecast"),
+                QStringLiteral("Returns the weather forecast for a city."),
+                QStringLiteral("weather"),
+                QJsonObject(),
+            });
+        }
+        return result;
+    }
+    QJsonObject callTool(const QString& serverName, const QString& toolName,
+                         const QJsonObject& arguments) override {
+        lastServer = serverName;
+        lastTool = toolName;
+        lastArguments = arguments;
+        if (toolName == QStringLiteral("boom")) {
+            return QJsonObject{{"error", QJsonObject{{"message", "server exploded"}}}};
+        }
+        QJsonObject contentItem{{"type", "text"}, {"text", "sunny, 24C"}};
+        return QJsonObject{{"result", QJsonObject{{"content", QJsonArray{contentItem}}}}};
+    }
+    bool connectToAll() override { return true; }
+    void disconnectFromAll() override {}
+
+    // IMcpService declares its notification hooks as pure virtual "signals";
+    // the test double keeps them as no-ops.
+    void serverConnected(const QString&) override {}
+    void serverDisconnected(const QString&) override {}
+    void serverError(const QString&, const QString&) override {}
+    void toolsUpdated(const QString&) override {}
+
+    bool hasServer(const QString& name) const {
+        for (const auto& server : servers_) {
+            if (server.name == name) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    QList<McpServerConfig> servers_;
+    QString lastServer;
+    QString lastTool;
+    QJsonObject lastArguments;
+};
 
 ToolInvocationPlan approvedPlan(const QString& toolId,
                                 const QList<ToolInvocationArgument>& arguments,
@@ -570,6 +649,372 @@ private slots:
         QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
         QVERIFY(result.summary.contains(QStringLiteral("is a website address")));
         QVERIFY(result.summary.contains(QStringLiteral("open-url")));
+    }
+
+    void applyPatchUpdatesExistingFile() {
+        QTemporaryDir dir;
+        QFile file(dir.filePath(QStringLiteral("app.txt")));
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        file.write("alpha\nbeta\ngamma\n");
+        file.close();
+
+        const auto oldCwd = QDir::currentPath();
+        QVERIFY(QDir::setCurrent(dir.path()));
+
+        const QString patch = QStringLiteral("--- a/app.txt\n"
+                                             "+++ b/app.txt\n"
+                                             "@@ -1,3 +1,3 @@\n"
+                                             " alpha\n"
+                                             "-beta\n"
+                                             "+BETA\n"
+                                             " gamma\n");
+
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("apply-patch"),
+            {ToolInvocationArgument{QStringLiteral("patch"), patch}}, allToolIds());
+
+        QVERIFY(QDir::setCurrent(oldCwd));
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("updated")));
+        QVERIFY(result.summary.contains(QStringLiteral("1 hunk")));
+
+        QFile updated(dir.filePath(QStringLiteral("app.txt")));
+        QVERIFY(updated.open(QIODevice::ReadOnly));
+        QCOMPARE(QString::fromUtf8(updated.readAll()), QStringLiteral("alpha\nBETA\ngamma"));
+    }
+
+    void applyPatchAddsAndDeletesFiles() {
+        QTemporaryDir dir;
+        QVERIFY(QFile(dir.filePath(QStringLiteral("old.txt"))).open(QIODevice::WriteOnly));
+
+        const auto oldCwd = QDir::currentPath();
+        QVERIFY(QDir::setCurrent(dir.path()));
+
+        const QString patch = QStringLiteral(
+            "--- /dev/null\n"
+            "+++ b/new.txt\n"
+            "@@ -0,0 +1,2 @@\n"
+            "+first\n"
+            "+second\n"
+            "--- a/old.txt\n"
+            "+++ /dev/null\n"
+            "@@ -1 +0,0 @@\n"
+            "-content\n");
+
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("apply-patch"),
+            {ToolInvocationArgument{QStringLiteral("patch"), patch}}, allToolIds());
+
+        QVERIFY(QDir::setCurrent(oldCwd));
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("added")));
+        QVERIFY(result.summary.contains(QStringLiteral("deleted")));
+        QVERIFY(!QFile::exists(dir.filePath(QStringLiteral("old.txt"))));
+
+        QFile created(dir.filePath(QStringLiteral("new.txt")));
+        QVERIFY(created.open(QIODevice::ReadOnly));
+        QCOMPARE(QString::fromUtf8(created.readAll()), QStringLiteral("first\nsecond"));
+    }
+
+    void applyPatchReportsContextMismatch() {
+        QTemporaryDir dir;
+        QFile file(dir.filePath(QStringLiteral("app.txt")));
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        file.write("one\ntwo\nthree\n");
+        file.close();
+
+        const auto oldCwd = QDir::currentPath();
+        QVERIFY(QDir::setCurrent(dir.path()));
+
+        const QString patch = QStringLiteral("--- a/app.txt\n"
+                                             "+++ b/app.txt\n"
+                                             "@@ -1,3 +1,3 @@\n"
+                                             " wrong-context\n"
+                                             "-two\n"
+                                             "+TWO\n"
+                                             " three\n");
+
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("apply-patch"),
+            {ToolInvocationArgument{QStringLiteral("patch"), patch}}, allToolIds());
+
+        QVERIFY(QDir::setCurrent(oldCwd));
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("did not match")));
+
+        // The file must remain untouched.
+        QFile unchanged(dir.filePath(QStringLiteral("app.txt")));
+        QVERIFY(unchanged.open(QIODevice::ReadOnly));
+        QCOMPARE(QString::fromUtf8(unchanged.readAll()), QStringLiteral("one\ntwo\nthree\n"));
+    }
+
+    void applyPatchRejectsInvalidPatchText() {
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("apply-patch"),
+            {ToolInvocationArgument{QStringLiteral("patch"),
+                                    QStringLiteral("this is not a patch")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("No file sections found")));
+    }
+
+    void listCodeDefinitionsExtractsSymbols() {
+        QTemporaryDir dir;
+        QFile file(dir.filePath(QStringLiteral("sample.py")));
+        QVERIFY(file.open(QIODevice::WriteOnly | QIODevice::Text));
+        file.write("class Greeter:\n"
+                   "    def greet(self):\n"
+                   "        return 1\n"
+                   "\n"
+                   "def main():\n"
+                   "    pass\n");
+        file.close();
+
+        const auto oldCwd = QDir::currentPath();
+        QVERIFY(QDir::setCurrent(dir.path()));
+
+        RealToolExecutor executor;
+        const auto result =
+            runTool(executor, QStringLiteral("list-code-definitions"),
+                    {ToolInvocationArgument{QStringLiteral("path"), QStringLiteral("sample.py")}},
+                    allToolIds());
+
+        QVERIFY(QDir::setCurrent(oldCwd));
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("class Greeter")));
+        QVERIFY(result.summary.contains(QStringLiteral("def greet")));
+        QVERIFY(result.summary.contains(QStringLiteral("def main")));
+    }
+
+    void historySearchFindsSnapshotEntries() {
+        RealToolExecutor executor;
+        executor.setHistorySnapshot({QStringLiteral("[user] bisiklet tamir etmem lazım"),
+                                     QStringLiteral("[assistant] hangi parça sorunlu?")});
+
+        const auto result = runTool(
+            executor, QStringLiteral("history-search"),
+            {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("bisiklet")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("1 match(es) for 'bisiklet'")));
+        QVERIFY(result.summary.contains(QStringLiteral("[user] bisiklet")));
+
+        const auto missing =
+            runTool(executor, QStringLiteral("history-search"),
+                    {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("xyzzy")}},
+                    allToolIds());
+        QVERIFY(missing.summary.contains(QStringLiteral("No history entries match 'xyzzy'")));
+    }
+
+    void historySearchWithoutSnapshotIsGraceful() {
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("history-search"),
+            {ToolInvocationArgument{QStringLiteral("query"), QStringLiteral("anything")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(
+            result.summary.contains(QStringLiteral("No chat history is available")));
+    }
+
+    void askQuestionReturnsGuidanceToFinishRun() {
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("ask-question"),
+            {ToolInvocationArgument{QStringLiteral("question"),
+                                    QStringLiteral("Hangi dosyayı düzenleyelim?")},
+             ToolInvocationArgument{QStringLiteral("options"),
+                                    QStringLiteral("config.json\nsettings.ini")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("Hangi dosyayı düzenleyelim?")));
+        QVERIFY(result.summary.contains(QStringLiteral("1. config.json")));
+        QVERIFY(result.summary.contains(QStringLiteral("final answer")));
+    }
+
+    void mcpToolsWithoutServiceAreGraceful() {
+        RealToolExecutor executor;
+        const auto listResult = runTool(executor, QStringLiteral("mcp-list"), {}, allToolIds());
+        QCOMPARE(listResult.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(listResult.summary.contains(QStringLiteral("No MCP servers are configured")));
+
+        const auto callResult = runTool(
+            executor, QStringLiteral("mcp-call"),
+            {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
+             ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")}},
+            allToolIds());
+        QCOMPARE(callResult.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(callResult.summary.contains(QStringLiteral("No MCP servers are configured")));
+    }
+
+    void mcpListShowsServersAndTools() {
+        RealToolExecutor executor;
+        auto service = std::make_shared<FakeMcpService>();
+        McpServerConfig config;
+        config.name = QStringLiteral("weather");
+        config.type = QStringLiteral("local");
+        config.command = QStringLiteral("weather-mcp");
+        service->addServer(config);
+        executor.setMcpService(service);
+
+        const auto result = runTool(executor, QStringLiteral("mcp-list"), {}, allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("weather (local, connected)")));
+        QVERIFY(result.summary.contains(QStringLiteral("get_forecast")));
+    }
+
+    void mcpCallInvokesServerTool() {
+        RealToolExecutor executor;
+        auto service = std::make_shared<FakeMcpService>();
+        executor.setMcpService(service);
+
+        const auto result = runTool(
+            executor, QStringLiteral("mcp-call"),
+            {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
+             ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")},
+             ToolInvocationArgument{QStringLiteral("arguments"),
+                                    QStringLiteral("{\"city\": \"Ankara\"}")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(QStringLiteral("weather/get_forecast result:")));
+        QVERIFY(result.summary.contains(QStringLiteral("sunny, 24C")));
+        QCOMPARE(service->lastServer, QStringLiteral("weather"));
+        QCOMPARE(service->lastTool, QStringLiteral("get_forecast"));
+        QCOMPARE(service->lastArguments.value(QStringLiteral("city")).toString(),
+                 QStringLiteral("Ankara"));
+    }
+
+    void mcpCallReportsServerErrorAndBadArguments() {
+        RealToolExecutor executor;
+        auto service = std::make_shared<FakeMcpService>();
+        executor.setMcpService(service);
+
+        const auto errorResult = runTool(
+            executor, QStringLiteral("mcp-call"),
+            {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
+             ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("boom")}},
+            allToolIds());
+        QVERIFY(errorResult.summary.contains(QStringLiteral("server exploded")));
+
+        const auto badArgs = runTool(
+            executor, QStringLiteral("mcp-call"),
+            {ToolInvocationArgument{QStringLiteral("server"), QStringLiteral("weather")},
+             ToolInvocationArgument{QStringLiteral("tool"), QStringLiteral("get_forecast")},
+             ToolInvocationArgument{QStringLiteral("arguments"), QStringLiteral("not json")}},
+            allToolIds());
+        QVERIFY(badArgs.summary.contains(QStringLiteral("must be a JSON object")));
+    }
+
+    void spawnAgentRunsInjectedSubagent() {
+        RealToolExecutor executor;
+        QStringList receivedTasks;
+        executor.setSubagentRunner([&receivedTasks](const QString& task) {
+            receivedTasks.append(task);
+            return QStringLiteral("subagent answer for: %1").arg(task);
+        });
+
+        const auto result = runTool(
+            executor, QStringLiteral("spawn-agent"),
+            {ToolInvocationArgument{QStringLiteral("task"),
+                                    QStringLiteral("count the TODOs")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QCOMPARE(receivedTasks.size(), 1);
+        QCOMPARE(receivedTasks.first(), QStringLiteral("count the TODOs"));
+        QVERIFY(result.summary.contains(QStringLiteral("subagent finished")));
+        QVERIFY(result.summary.contains(QStringLiteral("subagent answer for: count the TODOs")));
+    }
+
+    void spawnAgentWithoutRunnerIsGraceful() {
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("spawn-agent"),
+            {ToolInvocationArgument{QStringLiteral("task"), QStringLiteral("anything")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(
+            QStringLiteral("No subagent runner is configured")));
+    }
+
+    void spawnAgentRequiresTask() {
+        RealToolExecutor executor;
+        const auto result =
+            runTool(executor, QStringLiteral("spawn-agent"), {}, allToolIds());
+        QVERIFY(result.summary.contains(QStringLiteral("No task argument provided")));
+    }
+
+    void runCommandDockerSandboxReportsMissingDocker() {
+        // On machines without docker the tool must degrade to clear guidance
+        // instead of failing the whole plan. (Docker installs run the same
+        // code path with a real container.)
+        const bool hasDocker =
+            QProcess::execute(QStringLiteral("docker"),
+                              {QStringLiteral("--version")}) == 0;
+        if (hasDocker) {
+            QSKIP("docker is installed on this machine; the missing-docker branch cannot run.");
+        }
+
+        RealToolExecutor executor;
+        const auto result = runTool(
+            executor, QStringLiteral("run-command"),
+            {ToolInvocationArgument{QStringLiteral("command"), QStringLiteral("ls")},
+             ToolInvocationArgument{QStringLiteral("sandbox"), QStringLiteral("docker")}},
+            allToolIds());
+
+        QCOMPARE(result.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(result.summary.contains(
+            QStringLiteral("docker CLI is not available")));
+    }
+
+    void browserToolsReportMissingNodeGracefully() {
+        // Playwright tools require Node.js (npx). Without it they must return
+        // install guidance rather than crash.
+        const bool hasNode =
+            QProcess::execute(QStringLiteral("npx"), {QStringLiteral("--version")}) == 0;
+        if (hasNode) {
+            QSKIP("npx is installed on this machine; the missing-node branch cannot run.");
+        }
+
+        RealToolExecutor executor;
+        const auto screenshot = runTool(
+            executor, QStringLiteral("browser-screenshot"),
+            {ToolInvocationArgument{QStringLiteral("url"), QStringLiteral("https://example.com")}},
+            allToolIds());
+        QCOMPARE(screenshot.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(screenshot.summary.contains(QStringLiteral("Node.js")));
+
+        const auto pdf = runTool(
+            executor, QStringLiteral("browser-pdf"),
+            {ToolInvocationArgument{QStringLiteral("url"), QStringLiteral("https://example.com")}},
+            allToolIds());
+        QCOMPARE(pdf.status, ToolExecutionStatus::Succeeded);
+        QVERIFY(pdf.summary.contains(QStringLiteral("Node.js")));
+    }
+
+    void browserToolsRequireUrl() {
+        RealToolExecutor executor;
+        const auto screenshot =
+            runTool(executor, QStringLiteral("browser-screenshot"), {}, allToolIds());
+        QVERIFY(screenshot.summary.contains(QStringLiteral("No url argument provided")));
+
+        const auto pdf = runTool(executor, QStringLiteral("browser-pdf"), {}, allToolIds());
+        QVERIFY(pdf.summary.contains(QStringLiteral("No url argument provided")));
     }
 };
 

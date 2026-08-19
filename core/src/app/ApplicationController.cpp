@@ -37,6 +37,7 @@
 #include <QTextStream>
 #include <QThread>
 #include <QTimer>
+#include <QUuid>
 
 #include <algorithm>
 #include <cstdint>
@@ -2007,6 +2008,69 @@ void ApplicationController::configureWebSearch(const QString& provider, const QS
                                                int maxResults) {
     if (auto* executor = dynamic_cast<RealToolExecutor*>(toolExecutor_.get())) {
         executor->configureWebSearch(provider, apiKey, maxResults);
+    }
+}
+
+void ApplicationController::configureMcpServers(const QString& serversJson) {
+    if (serversJson.trimmed().isEmpty()) {
+        return;
+    }
+    const auto document = QJsonDocument::fromJson(serversJson.toUtf8());
+    QJsonObject root;
+    if (document.isObject()) {
+        root = document.object();
+    }
+    const auto servers = root.contains(QStringLiteral("mcpServers"))
+                             ? root.value(QStringLiteral("mcpServers")).toObject()
+                             : root;
+
+    QList<McpServerConfig> configs;
+    for (auto it = servers.begin(); it != servers.end(); ++it) {
+        const auto object = it.value().toObject();
+        if (object.isEmpty()) {
+            continue;
+        }
+        McpServerConfig config;
+        config.name = it.key();
+        // Remote servers are identified by a URL; everything else is local.
+        config.url = object.value(QStringLiteral("url")).toString().trimmed();
+        config.type = config.url.isEmpty() ? QStringLiteral("local")
+                                          : QStringLiteral("remote");
+        if (config.type == QLatin1String("local")) {
+            config.command = object.value(QStringLiteral("command")).toString();
+            if (config.command.isEmpty()) {
+                // Fall back to the opencode-style command array form.
+                const auto commandArray = object.value(QStringLiteral("command")).toArray();
+                if (!commandArray.isEmpty()) {
+                    config.command = commandArray.first().toString();
+                    for (int i = 1; i < commandArray.size(); ++i) {
+                        config.arguments.append(commandArray.at(i).toString());
+                    }
+                }
+            }
+            const auto args = object.value(QStringLiteral("args")).toArray();
+            if (!args.isEmpty()) {
+                config.arguments.clear();
+                for (const auto& arg : args) {
+                    config.arguments.append(arg.toString());
+                }
+            }
+        } else {
+            const auto headers = object.value(QStringLiteral("headers")).toObject();
+            for (auto headerIt = headers.begin(); headerIt != headers.end(); ++headerIt) {
+                config.headers.insert(headerIt.key(), headerIt.value().toString());
+            }
+        }
+        config.enabled = !object.value(QStringLiteral("disabled")).toBool() &&
+                         object.value(QStringLiteral("enabled")).toBool(true);
+        if (!config.name.trimmed().isEmpty() &&
+            (config.type == QLatin1String("remote") || !config.command.isEmpty())) {
+            configs.append(config);
+        }
+    }
+
+    if (auto* executor = dynamic_cast<RealToolExecutor*>(toolExecutor_.get())) {
+        executor->configureMcpServers(configs);
     }
 }
 
@@ -9024,6 +9088,70 @@ void ApplicationController::spawnAgentLoopThread(AgentLoopState seed, bool resum
         executor->setMemorySnapshot(memoryStore_ && memoryStore_->isAvailable()
                                         ? memoryStore_->entries()
                                         : MemoryEntries{});
+
+        // Snapshot recent chat history for the history-search tool (bounded so
+        // long transcripts do not bloat the executor).
+        QStringList historyLines;
+        if (chatHistoryStore_ && chatHistoryStore_->isAvailable()) {
+            const auto messages = chatHistoryStore_->loadMessages();
+            const int newest = static_cast<int>(messages.size());
+            const int first = qMax(0, newest - 200);
+            for (int i = first; i < newest; ++i) {
+                const auto& message = messages.at(i);
+                QString role = QStringLiteral("user");
+                if (message.role == ChatRole::Assistant) {
+                    role = QStringLiteral("assistant");
+                } else if (message.role == ChatRole::System) {
+                    role = QStringLiteral("system");
+                }
+                const QString content = message.content.simplified();
+                if (!content.isEmpty()) {
+                    historyLines.append(
+                        QStringLiteral("[%1] %2").arg(role, content.left(1000)));
+                }
+            }
+        }
+        executor->setHistorySnapshot(std::move(historyLines));
+
+        // Bounded read-only subagent runner for the spawn-agent tool. Runs on
+        // the same agent thread (the outer loop is blocked while a tool
+        // executes), so sharing the planner and executor here is safe.
+        executor->setSubagentRunner([this](const QString& task) {
+            AgentLoop::Config config;
+            config.autonomousMode = true;
+            config.maxIterations = 6;
+            // Subagents only get read-only tools; mutating tools stay gated
+            // behind the main loop's approval flow.
+            QStringList readOnlyToolIds;
+            static const QSet<QString> kSubagentTools{
+                QStringLiteral("read-file"),     QStringLiteral("grep"),
+                QStringLiteral("glob"),          QStringLiteral("list-code-definitions"),
+                QStringLiteral("web-search"),    QStringLiteral("web-fetch"),
+                QStringLiteral("memory-search"), QStringLiteral("history-search"),
+                QStringLiteral("current-time"),  QStringLiteral("system-info"),
+                QStringLiteral("mcp-list"),
+            };
+            for (const auto& id : availableToolIds()) {
+                if (kSubagentTools.contains(id)) {
+                    readOnlyToolIds.append(id);
+                }
+            }
+
+            AgentLoop loop(*agentStepPlanner_, *toolExecutor_, *approvalPolicy_,
+                           *sandboxPolicy_, readOnlyToolIds, config);
+            const auto state = loop.run(
+                task, QStringLiteral("subagent-%1").arg(QUuid::createUuid().toString(
+                                                      QUuid::WithoutBraces)));
+            if (state.phase == AgentLoopPhase::Completed) {
+                return state.finalAnswer;
+            }
+            if (state.phase == AgentLoopPhase::Cancelled) {
+                return QStringLiteral("Subagent run was cancelled.");
+            }
+            return QStringLiteral("Subagent could not finish: %1")
+                .arg(state.abortReason.isEmpty() ? QStringLiteral("unknown reason")
+                                                 : state.abortReason);
+        });
     }
 
     const bool autonomous = agentAutonomousMode_;

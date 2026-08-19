@@ -36,6 +36,8 @@ class AppSettings final : public QObject {
                    webSearchSettingsChanged)
     Q_PROPERTY(int webSearchMaxResults READ webSearchMaxResults WRITE setWebSearchMaxResults NOTIFY
                    webSearchSettingsChanged)
+    Q_PROPERTY(QString mcpServersJson READ mcpServersJson WRITE setMcpServersJson NOTIFY
+                   mcpServersChanged)
     Q_PROPERTY(QString semanticProvider READ semanticProvider WRITE setSemanticProvider NOTIFY
                    semanticSettingsChanged)
     Q_PROPERTY(QString semanticEmbeddingModel READ semanticEmbeddingModel WRITE
@@ -197,6 +199,9 @@ public:
     void setWebSearchProvider(const QString& provider);
     QString webSearchApiKey() const;
     void setWebSearchApiKey(const QString& key);
+    // Raw JSON in the cline-compatible {"mcpServers":{name:{...}}} shape.
+    QString mcpServersJson() const;
+    void setMcpServersJson(const QString& json);
     int webSearchMaxResults() const;
     void setWebSearchMaxResults(int maxResults);
     QString semanticProvider() const;
@@ -369,6 +374,7 @@ signals:
     void llamaCppEndpointChanged();
     void cloudApiEndpointChanged();
     void webSearchSettingsChanged();
+    void mcpServersChanged();
     void semanticSettingsChanged();
     void selectedRuntimeProviderChanged();
     void selectedCloudProviderChanged();
@@ -421,6 +427,7 @@ private:
     static constexpr auto cloudApiEndpointKey = "cloudApiEndpoint";
     static constexpr auto webSearchProviderKey = "webSearchProvider";
     static constexpr auto webSearchApiKeyKey = "webSearchApiKey";
+    static constexpr auto mcpServersJsonKey = "mcpServersJson";
     static constexpr auto webSearchMaxResultsKey = "webSearchMaxResults";
     static constexpr auto semanticProviderKey = "semanticProvider";
     static constexpr auto semanticEmbeddingModelKey = "semanticEmbeddingModel";

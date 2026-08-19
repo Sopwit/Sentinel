@@ -2606,6 +2606,7 @@ signals:
     void updateDownloadFinished(bool success, const QString& filePath);
     void selectedCloudProviderChanged();
     void webSearchSettingsChanged();
+    void mcpServersChanged();
     void semanticSettingsChanged();
     void cloudApiKeysChanged();
     void soundEffectsEnabledChanged();

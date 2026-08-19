@@ -4,6 +4,7 @@
 
 #include "sentinel/core/runtime/RealToolExecutor.h"
 #include "sentinel/core/editor/FuzzyEditor.h"
+#include "sentinel/core/mcp/McpService.h"
 #include "sentinel/core/security/PathGuard.h"
 
 #include <QClipboard>
@@ -23,6 +24,7 @@
 #include <QSysInfo>
 #include <QUrl>
 
+#include <functional>
 #include <optional>
 
 #if defined(Q_OS_UNIX)
@@ -45,6 +47,30 @@ void RealToolExecutor::setAlarmStore(std::shared_ptr<AlarmStore> alarmStore) {
 
 void RealToolExecutor::setMemorySnapshot(MemoryEntries entries) {
     memorySnapshot_ = std::move(entries);
+}
+
+void RealToolExecutor::setHistorySnapshot(QStringList entries) {
+    historySnapshot_ = std::move(entries);
+}
+
+void RealToolExecutor::configureMcpServers(const QList<McpServerConfig>& configs) {
+    auto service = std::make_shared<McpService>();
+    for (const auto& config : configs) {
+        if (config.name.trimmed().isEmpty()) {
+            continue;
+        }
+        service->addServer(config);
+    }
+    service->connectToAll();
+    mcpService_ = std::move(service);
+}
+
+void RealToolExecutor::setMcpService(std::shared_ptr<IMcpService> service) {
+    mcpService_ = std::move(service);
+}
+
+void RealToolExecutor::setSubagentRunner(std::function<QString(const QString& task)> runner) {
+    subagentRunner_ = std::move(runner);
 }
 
 void RealToolExecutor::configureWebSearch(const QString& provider, const QString& apiKey,
@@ -379,6 +405,452 @@ bool looksLikeDomainName(const QString& text) {
         }
     }
     return true;
+}
+
+struct PatchHunk {
+    int oldStart{0};
+    int oldCount{0};
+    QStringList oldLines;
+    QStringList newLines;
+};
+
+struct PatchFile {
+    QString action; // "update", "add", "delete"
+    QString path;
+    QList<PatchHunk> hunks;
+    QString addContent;
+};
+
+// Strips the a/ or b/ prefix used by git-style diffs.
+QString stripDiffPrefix(const QString& path) {
+    if (path.startsWith(QStringLiteral("a/")) || path.startsWith(QStringLiteral("b/"))) {
+        return path.mid(2);
+    }
+    return path;
+}
+
+// Parses a unified diff into per-file hunks. Supports git-style Update
+// (--- a/f / +++ b/f), Add (--- /dev/null), and Delete (+++ /dev/null).
+bool parseUnifiedDiff(const QString& patch, QList<PatchFile>& files, QString& error) {
+    const QStringList lines = patch.split(QLatin1Char('\n'));
+    PatchFile current;
+    PatchHunk hunk;
+    bool inHunk = false;
+
+    auto finishHunk = [&]() {
+        if (!hunk.oldLines.isEmpty() || !hunk.newLines.isEmpty()) {
+            current.hunks.append(hunk);
+        }
+        hunk = PatchHunk{};
+    };
+    auto finishFile = [&]() {
+        finishHunk();
+        inHunk = false;
+        if (!current.path.isEmpty()) {
+            files.append(current);
+        }
+        current = PatchFile{};
+    };
+
+    static const QRegularExpression hunkHeader(
+        QStringLiteral("^@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@"));
+
+    for (int i = 0; i < lines.size(); ++i) {
+        const QString& line = lines.at(i);
+        if (line.startsWith(QStringLiteral("--- "))) {
+            finishFile();
+            const QString oldPath = stripDiffPrefix(line.mid(4).trimmed());
+            current.action = oldPath == QStringLiteral("/dev/null")
+                                ? QStringLiteral("add")
+                                : QStringLiteral("update");
+            current.path = oldPath;
+            continue;
+        }
+        if (line.startsWith(QStringLiteral("+++ "))) {
+            const QString newPath = stripDiffPrefix(line.mid(4).trimmed());
+            if (newPath == QStringLiteral("/dev/null")) {
+                current.action = QStringLiteral("delete");
+            } else if (current.path.isEmpty() || current.path == QStringLiteral("/dev/null")) {
+                current.path = newPath;
+            }
+            continue;
+        }
+        const auto match = hunkHeader.match(line);
+        if (match.hasMatch()) {
+            finishHunk();
+            hunk.oldStart = match.captured(1).toInt();
+            hunk.oldCount = match.captured(2).isEmpty() ? 1 : match.captured(2).toInt();
+            inHunk = true;
+            continue;
+        }
+        if (!inHunk) {
+            continue;
+        }
+        if (line.startsWith(QLatin1Char('+'))) {
+            hunk.newLines.append(line.mid(1));
+        } else if (line.startsWith(QLatin1Char('-'))) {
+            hunk.oldLines.append(line.mid(1));
+        } else if (line.startsWith(QLatin1Char(' '))) {
+            hunk.oldLines.append(line.mid(1));
+            hunk.newLines.append(line.mid(1));
+        } else if (line.trimmed().isEmpty() && i + 1 < lines.size()) {
+            // Tolerate missing leading space on empty context lines.
+            hunk.oldLines.append(QString());
+            hunk.newLines.append(QString());
+        }
+    }
+    finishFile();
+
+    if (files.isEmpty()) {
+        error = QStringLiteral(
+            "No file sections found. The patch must use unified diff headers "
+            "(--- a/file, +++ b/file, @@ ... @@).");
+        return false;
+    }
+    return true;
+}
+
+// Applies one hunk at the given 0-based position with exact context matching.
+bool applyHunkAt(QStringList& fileLines, int position, const PatchHunk& hunk) {
+    for (int i = 0; i < hunk.oldLines.size(); ++i) {
+        const int target = position + i;
+        if (target >= fileLines.size() || fileLines.at(target) != hunk.oldLines.at(i)) {
+            return false;
+        }
+    }
+    for (int i = 0; i < hunk.oldLines.size(); ++i) {
+        fileLines.removeAt(position);
+    }
+    for (int i = 0; i < hunk.newLines.size(); ++i) {
+        fileLines.insert(position + i, hunk.newLines.at(i));
+    }
+    return true;
+}
+
+// Applies a hunk searching from the claimed line downward then upward (fuzz),
+// mirroring how patch tools tolerate offset drift.
+bool applyHunkWithFuzz(QStringList& fileLines, int claimedStart, const PatchHunk& hunk,
+                       int& appliedAt) {
+    const int claimed = claimedStart - 1;
+    const int maxOffset = fileLines.size();
+    for (int offset = 0; offset <= maxOffset; ++offset) {
+        const int down = claimed + offset;
+        if (down + hunk.oldLines.size() <= fileLines.size() &&
+            applyHunkAt(fileLines, down, hunk)) {
+            appliedAt = down;
+            return true;
+        }
+        if (offset > 0) {
+            const int up = claimed - offset;
+            if (up >= 0 && up + hunk.oldLines.size() <= fileLines.size() &&
+                applyHunkAt(fileLines, up, hunk)) {
+                appliedAt = up;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+// True when the docker CLI is available (checked with a fast --version call).
+bool dockerAvailable() {
+    return !runSynchronousProcess(QStringLiteral("docker"),
+                                   {QStringLiteral("--version")}, QString(), 5000)
+                .isEmpty();
+}
+
+// Runs a shell command inside a throwaway docker container with the workspace
+// mounted read-write at /workspace. Ported from openclaw's Docker sandbox
+// pattern; degrades to a clear error when docker is missing.
+QString runCommandInDocker(const QString& command, const QString& workspace,
+                           int timeoutMs) {
+    if (!dockerAvailable()) {
+        return QStringLiteral(
+            "run-command: docker sandbox requested but the docker CLI is not available. "
+            "Install Docker or retry without sandbox=docker.");
+    }
+    const QString image = QStringLiteral("alpine:3.20");
+    QStringList args{QStringLiteral("run"),      QStringLiteral("--rm"),
+                     QStringLiteral("--network"), QStringLiteral("none"),
+                     QStringLiteral("--memory"),  QStringLiteral("2g"),
+                     QStringLiteral("--cpus"),    QStringLiteral("2"),
+                     QStringLiteral("-v"),
+                     QStringLiteral("%1:/workspace").arg(workspace),
+                     QStringLiteral("-w"), QStringLiteral("/workspace")};
+    if (timeoutMs > 60000) {
+        // Leave time for image pulls on first use.
+        timeoutMs += 120000;
+    }
+    args.append(image);
+    args.append(QStringLiteral("sh"));
+    args.append(QStringLiteral("-c"));
+    args.append(command);
+
+    QProcess process;
+    process.start(QStringLiteral("docker"), args);
+    if (!process.waitForStarted(10000)) {
+        return QStringLiteral("run-command: failed to start docker (%1).").arg(command);
+    }
+    if (!process.waitForFinished(timeoutMs)) {
+        process.kill();
+        process.waitForFinished(3000);
+        return QStringLiteral(
+                    "run-command: docker sandbox terminated command after timeout %1 ms.")
+                    .arg(QString::number(timeoutMs));
+    }
+    const QString out = QString::fromUtf8(process.readAllStandardOutput()).trimmed();
+    const QString err = QString::fromUtf8(process.readAllStandardError()).trimmed();
+    if (process.exitCode() == 0) {
+        return out.isEmpty() && err.isEmpty()
+                   ? QStringLiteral("Command executed in docker sandbox. (exit=0)")
+                   : QStringLiteral("Command executed in docker sandbox. (exit=0)\n\n[STDOUT]:\n%1")
+                         .arg(out);
+    }
+    if (err.contains(QStringLiteral("failed to connect to the docker API")) ||
+        err.contains(QStringLiteral("Is the docker daemon running"))) {
+        return QStringLiteral(
+                    "run-command: the docker CLI is installed but the daemon is not running. "
+                    "Start Docker (or OrbStack) and retry, or run without sandbox=docker.\n"
+                    "Details: %1")
+            .arg(err);
+    }
+    return QStringLiteral("Docker sandbox command failed. (exit=%1)\n\n[STDOUT]:\n%2\n\n[STDERR]:\n%3")
+        .arg(QString::number(process.exitCode()), out, err);
+}
+
+// Runs `npx playwright <mode>` for browser-screenshot / browser-pdf. Real
+// Playwright CLI integration (ported from SWE-agent's browser bundle idea);
+// requires Node.js and npx on PATH, fails gracefully otherwise.
+QString runPlaywrightCli(const QString& mode, const QString& url, const QString& outputPath,
+                         const QString& extraWait) {
+    if (runSynchronousProcess(QStringLiteral("npx"), {QStringLiteral("--version")}, QString(),
+                              5000)
+            .isEmpty()) {
+        return QStringLiteral(
+            "browser-%1: Node.js (npx) is required for Playwright browser tools. Install "
+            "Node.js and run 'npx playwright install chromium' once.")
+            .arg(mode);
+    }
+
+    QStringList args{QStringLiteral("-y"), QStringLiteral("playwright"), mode};
+    if (!extraWait.isEmpty()) {
+        args.append(QStringLiteral("--wait-for-timeout"));
+        args.append(extraWait);
+    }
+    args.append(url);
+    args.append(outputPath);
+
+    QProcess process;
+    process.start(QStringLiteral("npx"), args);
+    if (!process.waitForStarted(10000)) {
+        return QStringLiteral("browser-%1: failed to start npx.").arg(mode);
+    }
+    // npx may fetch the playwright package on first use; allow extra time.
+    if (!process.waitForFinished(300000)) {
+        process.kill();
+        process.waitForFinished(3000);
+        return QStringLiteral("browser-%1: Playwright timed out after 300 s.").arg(mode);
+    }
+    const QString err = QString::fromUtf8(process.readAllStandardError()).trimmed();
+    if (process.exitCode() != 0 || !QFile::exists(outputPath)) {
+        return QStringLiteral("browser-%1: Playwright failed: %2").arg(
+            mode, err.isEmpty() ? QStringLiteral("no output file was produced") : err);
+    }
+    return QStringLiteral("browser-%1: saved '%2'.").arg(mode, outputPath);
+}
+
+QString applyPatchReport(const QString& patch, const QString& workingDirectory,
+                         const std::function<QString(const QString&)>& scopePath) {    QList<PatchFile> files;
+    QString parseError;
+    if (!parseUnifiedDiff(patch, files, parseError)) {
+        return QStringLiteral("apply-patch: %1").arg(parseError);
+    }
+
+    QStringList applied;
+    QStringList failures;
+
+    for (const auto& file : files) {
+        const QString scoped = scopePath(file.path);
+        if (scoped.isEmpty()) {
+            failures.append(QStringLiteral("%1: outside the approved workspace").arg(file.path));
+            continue;
+        }
+
+        if (file.action == QStringLiteral("add")) {
+            QFile out(scoped);
+            if (QFile::exists(scoped)) {
+                failures.append(QStringLiteral("%1: file already exists").arg(scoped));
+                continue;
+            }
+            QDir().mkpath(QFileInfo(scoped).absolutePath());
+            QStringList contentLines;
+            for (const auto& hunk : file.hunks) {
+                contentLines.append(hunk.newLines);
+            }
+            if (!out.open(QIODevice::WriteOnly | QIODevice::Text)) {
+                failures.append(
+                    QStringLiteral("%1: %2").arg(scoped, out.errorString()));
+                continue;
+            }
+            out.write(contentLines.join(QLatin1Char('\n')).toUtf8());
+            applied.append(QStringLiteral("added %1 (%2 lines)").arg(
+                scoped, QString::number(contentLines.size())));
+            continue;
+        }
+
+        if (file.action == QStringLiteral("delete")) {
+            if (!QFile::exists(scoped)) {
+                failures.append(QStringLiteral("%1: file not found").arg(scoped));
+                continue;
+            }
+            if (QFile::remove(scoped)) {
+                applied.append(QStringLiteral("deleted %1").arg(scoped));
+            } else {
+                failures.append(QStringLiteral("%1: delete failed").arg(scoped));
+            }
+            continue;
+        }
+
+        // Update
+        QFile in(scoped);
+        if (!in.open(QIODevice::ReadOnly | QIODevice::Text)) {
+            failures.append(QStringLiteral("%1: file not found").arg(scoped));
+            continue;
+        }
+        QString content = QString::fromUtf8(in.readAll());
+        in.close();
+        QStringList fileLines = content.split(QLatin1Char('\n'));
+        if (fileLines.size() > 1 && fileLines.last().isEmpty()) {
+            fileLines.removeLast();
+        }
+
+        bool fileOk = true;
+        int hunksApplied = 0;
+        for (const auto& hunk : file.hunks) {
+            int appliedAt = -1;
+            if (!applyHunkWithFuzz(fileLines, hunk.oldStart, hunk, appliedAt)) {
+                failures.append(QStringLiteral("%1: hunk at line %2 did not match the file "
+                                               "context")
+                                    .arg(scoped, QString::number(hunk.oldStart)));
+                fileOk = false;
+                break;
+            }
+            ++hunksApplied;
+        }
+        if (!fileOk) {
+            continue;
+        }
+
+        QFile out(scoped);
+        if (!out.open(QIODevice::WriteOnly | QIODevice::Text)) {
+            failures.append(QStringLiteral("%1: %2").arg(scoped, out.errorString()));
+            continue;
+        }
+        out.write(fileLines.join(QLatin1Char('\n')).toUtf8());
+        applied.append(QStringLiteral("updated %1 (%2 hunk(s))")
+                           .arg(scoped, QString::number(hunksApplied)));
+    }
+
+    QStringList report;
+    if (!applied.isEmpty()) {
+        report.append(QStringLiteral("apply-patch: applied to %1 file(s):")
+                          .arg(QString::number(applied.size())));
+        report.append(applied);
+    }
+    if (!failures.isEmpty()) {
+        report.append(QStringLiteral("apply-patch: %1 failure(s):")
+                          .arg(QString::number(failures.size())));
+        report.append(failures);
+    }
+    if (report.isEmpty()) {
+        report.append(QStringLiteral("apply-patch: nothing to apply."));
+    }
+    return report.join(QLatin1Char('\n'));
+}
+
+// Extracts code symbols (classes, functions, methods) with line numbers for
+// common language families. Ported concept from Cline's
+// list_code_definition_names tool.
+QStringList extractCodeDefinitions(const QString& path) {
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return {};
+    }
+    const QString content = QString::fromUtf8(file.readAll());
+    const QStringList lines = content.split(QLatin1Char('\n'));
+    const QString suffix = QFileInfo(path).suffix().toLower();
+
+    static const QRegularExpression cxxPattern(
+        QStringLiteral(
+            "^\\s*(?:template\\s*<[^>]*>\\s*)?(?:class|struct|enum\\s+class|enum|namespace)\\s+"
+            "([A-Za-z_]\\w*)"));
+    static const QRegularExpression cxxFunction(
+        QStringLiteral("^\\s*(?:[A-Za-z_][\\w:<>,\\*\\&\\s]*)\\s+([A-Za-z_]\\w*)\\s*\\("));
+    static const QRegularExpression pythonPattern(
+        QStringLiteral("^\\s*(?:async\\s+)?def\\s+([A-Za-z_]\\w*)|^\\s*class\\s+([A-Za-z_]\\w*)"));
+    static const QRegularExpression jsPattern(
+        QStringLiteral("^\\s*(?:export\\s+)?(?:default\\s+)?(?:async\\s+)?(?:function\\*?|class|"
+                       "interface|type|enum)\\s+([A-Za-z_$][\\w$]*)"));
+    static const QRegularExpression rustPattern(
+        QStringLiteral(
+            "^\\s*(?:pub(?:\\(\\w+\\))?\\s+)?(?:async\\s+)?(?:fn|struct|enum|trait|mod)\\s+"
+            "([A-Za-z_]\\w*)"));
+
+    const bool isPython = suffix == QStringLiteral("py");
+    const bool isJsLike = suffix == QStringLiteral("js") || suffix == QStringLiteral("jsx") ||
+                          suffix == QStringLiteral("ts") || suffix == QStringLiteral("tsx") ||
+                          suffix == QStringLiteral("mjs");
+    const bool isRust = suffix == QStringLiteral("rs");
+    const bool isCxx = suffix == QStringLiteral("c") || suffix == QStringLiteral("cc") ||
+                       suffix == QStringLiteral("cpp") || suffix == QStringLiteral("cxx") ||
+                       suffix == QStringLiteral("h") || suffix == QStringLiteral("hpp") ||
+                       suffix == QStringLiteral("java") || suffix == QStringLiteral("cs");
+
+    QStringList definitions;
+    for (int i = 0; i < lines.size(); ++i) {
+        const QString& line = lines.at(i);
+        auto add = [&](const QString& kind, const QString& name) {
+            definitions.append(QStringLiteral("%1:%2 %3 %4")
+                                    .arg(QString::number(i + 1), kind, name));
+        };
+        if (isPython) {
+            const auto m = pythonPattern.match(line);
+            if (m.hasMatch()) {
+                if (!m.captured(1).isEmpty()) {
+                    add(QStringLiteral("def"), m.captured(1));
+                } else {
+                    add(QStringLiteral("class"), m.captured(2));
+                }
+            }
+        } else if (isJsLike) {
+            const auto m = jsPattern.match(line);
+            if (m.hasMatch()) {
+                add(QStringLiteral("symbol"), m.captured(1));
+            }
+        } else if (isRust) {
+            const auto m = rustPattern.match(line);
+            if (m.hasMatch()) {
+                add(QStringLiteral("item"), m.captured(1));
+            }
+        } else if (isCxx) {
+            const auto m = cxxPattern.match(line);
+            if (m.hasMatch()) {
+                add(QStringLiteral("type"), m.captured(1));
+                continue;
+            }
+            const auto f = cxxFunction.match(line);
+            if (f.hasMatch() && f.captured(1) != QStringLiteral("return") &&
+                f.captured(1) != QStringLiteral("if") && f.captured(1) != QStringLiteral("for") &&
+                f.captured(1) != QStringLiteral("while") && f.captured(1) != QStringLiteral("switch")) {
+                add(QStringLiteral("function"), f.captured(1));
+            }
+        }
+        if (definitions.size() >= 100) {
+            definitions.append(QStringLiteral("(truncated at 100 definitions)"));
+            break;
+        }
+    }
+    return definitions;
 }
 
 QDateTime parseAlarmTime(const QString& raw) {
@@ -742,9 +1214,50 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 logs.append(QStringLiteral("move-file: Moved '%1' to '%2'.")
                                 .arg(source, destination));
             } else {
-                logs.append(
-                    QStringLiteral("move-file: Failed to move '%1' to '%2'.").arg(source, destination));
+            logs.append(
+                QStringLiteral("move-file: Failed to move '%1' to '%2'.").arg(source, destination));
             }
+        }
+        // 4d. apply-patch (unified diff; ported from cline/openclaw/opencode)
+        else if (invocation.toolId == QLatin1String("apply-patch")) {
+            const QString patch = getArgument(invocation, QStringLiteral("patch"));
+            if (patch.trimmed().isEmpty()) {
+                logs.append(QStringLiteral("apply-patch: No patch argument provided."));
+                continue;
+            }
+            logs.append(applyPatchReport(
+                patch, currentWorkingDirectory, [&currentWorkingDirectory](const QString& p) {
+                    return scopedPath(currentWorkingDirectory, p);
+                }));
+        }
+        // 4e. list-code-definitions (ported from cline)
+        else if (invocation.toolId == QLatin1String("list-code-definitions")) {
+            QString path = getArgument(invocation, QStringLiteral("path"));
+            if (path.isEmpty()) {
+                logs.append(
+                    QStringLiteral("list-code-definitions: No path argument provided."));
+                continue;
+            }
+            const QString scoped = scopedPath(currentWorkingDirectory, path);
+            if (scoped.isEmpty()) {
+                logs.append(QStringLiteral(
+                    "list-code-definitions: Path is outside the approved workspace."));
+                continue;
+            }
+            if (!QFile::exists(scoped)) {
+                logs.append(QStringLiteral("list-code-definitions: File not found: %1")
+                                .arg(scoped));
+                continue;
+            }
+            const auto definitions = extractCodeDefinitions(scoped);
+            logs.append(definitions.isEmpty()
+                            ? QStringLiteral(
+                                  "list-code-definitions: No definitions found in '%1'.")
+                                  .arg(scoped)
+                            : QStringLiteral(
+                                  "list-code-definitions: %1 definition(s) in '%2':\n%3")
+                                  .arg(QString::number(definitions.size()), scoped,
+                                       definitions.join(QLatin1Char('\n'))));
         }
         // 5. grep
         else if (invocation.toolId == QLatin1String("grep")) {
@@ -908,6 +1421,14 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                 } else if (QDir(workdirArg).exists()) {
                     workingDirectory = workdirArg;
                 }
+            }
+
+            const QString sandbox = getArgument(invocation, QStringLiteral("sandbox"))
+                                        .trimmed()
+                                        .toLower();
+            if (sandbox == QStringLiteral("docker")) {
+                logs.append(runCommandInDocker(command, workingDirectory, timeoutMs));
+                continue;
             }
 
             QProcess process;
@@ -1105,6 +1626,185 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                             : QStringLiteral("open-url: Failed to open '%1' in the default "
                                              "browser.")
                                   .arg(parsed.toString()));
+        }
+        // 9c. mcp-list (discover configured MCP servers and their tools)
+        else if (invocation.toolId == QLatin1String("mcp-list")) {
+            if (!mcpService_) {
+                logs.append(QStringLiteral(
+                    "mcp-list: No MCP servers are configured. Add servers in Settings to "
+                    "extend the toolset."));
+                continue;
+            }
+            const auto servers = mcpService_->servers();
+            if (servers.isEmpty()) {
+                logs.append(QStringLiteral("mcp-list: No MCP servers are configured."));
+                continue;
+            }
+            QStringList lines;
+            for (const auto& server : servers) {
+                const QString stateName = [this, &server]() {
+                    switch (mcpService_->connectionState(server.name)) {
+                    case McpConnectionState::Connected:
+                        return QStringLiteral("connected");
+                    case McpConnectionState::Connecting:
+                        return QStringLiteral("connecting");
+                    case McpConnectionState::Error:
+                        return QStringLiteral("error");
+                    case McpConnectionState::Disconnected:
+                        return QStringLiteral("disconnected");
+                    }
+                    return QStringLiteral("unknown");
+                }();
+                lines.append(QStringLiteral("%1 (%2, %3)").arg(server.name, server.type, stateName));
+                for (const auto& tool : mcpService_->tools(server.name)) {
+                    lines.append(QStringLiteral("  - %1: %2")
+                                     .arg(tool.name,
+                                          tool.description.simplified().left(200)));
+                }
+            }
+            logs.append(QStringLiteral("mcp-list: %1 server(s):\n%2")
+                            .arg(QString::number(servers.size()),
+                                 lines.join(QLatin1Char('\n'))));
+        }
+        // 9d. mcp-call (invoke a tool on a configured MCP server; ported from
+        // cline's use_mcp_tool pattern)
+        else if (invocation.toolId == QLatin1String("mcp-call")) {
+            if (!mcpService_) {
+                logs.append(QStringLiteral(
+                    "mcp-call: No MCP servers are configured. Use mcp-list after configuring "
+                    "servers in Settings."));
+                continue;
+            }
+            const QString server = getArgument(invocation, QStringLiteral("server")).trimmed();
+            const QString tool = getArgument(invocation, QStringLiteral("tool")).trimmed();
+            if (server.isEmpty() || tool.isEmpty()) {
+                logs.append(
+                    QStringLiteral("mcp-call: Both server and tool arguments are required."));
+                continue;
+            }
+            const QString argumentsRaw = getArgument(invocation, QStringLiteral("arguments"));
+            QJsonObject arguments;
+            if (!argumentsRaw.trimmed().isEmpty()) {
+                const auto document = QJsonDocument::fromJson(argumentsRaw.toUtf8());
+                if (!document.isObject()) {
+                    logs.append(QStringLiteral(
+                                    "mcp-call: 'arguments' must be a JSON object, e.g. "
+                                    "{\"key\": \"value\"}. Rewrite the input."));
+                    continue;
+                }
+                arguments = document.object();
+            }
+
+            const auto result = mcpService_->callTool(server, tool, arguments);
+            if (result.contains(QStringLiteral("error"))) {
+                logs.append(QStringLiteral("mcp-call: %1/%2 failed: %3")
+                                .arg(server, tool,
+                                     result.value(QStringLiteral("error"))
+                                         .toObject()
+                                         .value(QStringLiteral("message"))
+                                         .toString()));
+                continue;
+            }
+
+            QStringList contentParts;
+            const auto content = result.value(QStringLiteral("result"))
+                                     .toObject()
+                                     .value(QStringLiteral("content"))
+                                     .toArray();
+            for (const auto& item : content) {
+                const auto object = item.toObject();
+                if (object.value(QStringLiteral("type")).toString() ==
+                    QStringLiteral("text")) {
+                    contentParts.append(object.value(QStringLiteral("text")).toString());
+                }
+            }
+            if (contentParts.isEmpty()) {
+                contentParts.append(
+                    QString::fromUtf8(QJsonDocument(result).toJson(QJsonDocument::Compact)));
+            }
+            const bool isError = result.value(QStringLiteral("result"))
+                                     .toObject()
+                                     .value(QStringLiteral("isError"))
+                                     .toBool();
+            logs.append(QStringLiteral("mcp-call: %1/%2 %3\n%4")
+                            .arg(server, tool,
+                                 isError ? QStringLiteral("returned an error:")
+                                         : QStringLiteral("result:"),
+                                 contentParts.join(QLatin1Char('\n'))));
+        }
+        // 9e. spawn-agent (bounded read-only subagent; ported from cline's
+        // new_task / openclaw's sessions_spawn pattern)
+        else if (invocation.toolId == QLatin1String("spawn-agent")) {
+            const QString task = getArgument(invocation, QStringLiteral("task")).trimmed();
+            if (task.isEmpty()) {
+                logs.append(QStringLiteral("spawn-agent: No task argument provided."));
+                continue;
+            }
+            if (subagentActive_) {
+                logs.append(QStringLiteral(
+                    "spawn-agent: subagents cannot spawn further subagents; finish this "
+                    "subtask directly."));
+                continue;
+            }
+            if (!subagentRunner_) {
+                logs.append(QStringLiteral(
+                    "spawn-agent: No subagent runner is configured in this session."));
+                continue;
+            }
+            subagentActive_ = true;
+            const QString answer = subagentRunner_(task);
+            subagentActive_ = false;
+            logs.append(QStringLiteral("spawn-agent: subagent finished the task '%1'.\n\n%2")
+                            .arg(task.left(200), answer));
+        }
+        // 9f. browser-screenshot (Playwright CLI; ported from SWE-agent's
+        // web_browser bundle)
+        else if (invocation.toolId == QLatin1String("browser-screenshot")) {
+            const QString url = getArgument(invocation, QStringLiteral("url")).trimmed();
+            if (url.isEmpty()) {
+                logs.append(
+                    QStringLiteral("browser-screenshot: No url argument provided."));
+                continue;
+            }
+            QString path = getArgument(invocation, QStringLiteral("path")).trimmed();
+            if (path.isEmpty()) {
+                path = QDir(QDir::tempPath())
+                           .filePath(QStringLiteral("sentinel_browser_%1.png")
+                                         .arg(QDateTime::currentMSecsSinceEpoch()));
+            } else {
+                const QString scoped = scopedPath(currentWorkingDirectory, path);
+                if (scoped.isEmpty()) {
+                    logs.append(QStringLiteral(
+                        "browser-screenshot: Path is outside the approved workspace."));
+                    continue;
+                }
+                path = scoped;
+            }
+            logs.append(runPlaywrightCli(QStringLiteral("screenshot"), url, path,
+                                         QStringLiteral("2500")));
+        }
+        // 9g. browser-pdf
+        else if (invocation.toolId == QLatin1String("browser-pdf")) {
+            const QString url = getArgument(invocation, QStringLiteral("url")).trimmed();
+            if (url.isEmpty()) {
+                logs.append(QStringLiteral("browser-pdf: No url argument provided."));
+                continue;
+            }
+            QString path = getArgument(invocation, QStringLiteral("path")).trimmed();
+            if (path.isEmpty()) {
+                path = QDir(QDir::tempPath())
+                           .filePath(QStringLiteral("sentinel_browser_%1.pdf")
+                                         .arg(QDateTime::currentMSecsSinceEpoch()));
+            } else {
+                const QString scoped = scopedPath(currentWorkingDirectory, path);
+                if (scoped.isEmpty()) {
+                    logs.append(
+                        QStringLiteral("browser-pdf: Path is outside the approved workspace."));
+                    continue;
+                }
+                path = scoped;
+            }
+            logs.append(runPlaywrightCli(QStringLiteral("pdf"), url, path, QString()));
         }
         // 10. system-notify
         else if (invocation.toolId == QLatin1String("system-notify")) {
@@ -1375,6 +2075,81 @@ ToolExecutionResult RealToolExecutor::execute(const ToolExecutionRequest& reques
                                      QString::number(matches.size()),
                                      matches.join(QLatin1Char('\n'))));
             }
+        }
+        // 14c. history-search (ported from openclaw transcripts tool)
+        else if (invocation.toolId == QLatin1String("history-search")) {
+            const QString query = getArgument(invocation, QStringLiteral("query")).trimmed();
+            if (query.isEmpty()) {
+                logs.append(QStringLiteral("history-search: No query argument provided."));
+                continue;
+            }
+            if (historySnapshot_.isEmpty()) {
+                logs.append(QStringLiteral(
+                    "history-search: No chat history is available for this session."));
+                continue;
+            }
+            const int limit =
+                qBound(1, getIntArgument(invocation, QStringLiteral("limit"), 10), 50);
+            const QString needle = query.toLower();
+
+            QStringList matches;
+            int totalMatches = 0;
+            for (const auto& entry : historySnapshot_) {
+                if (!entry.toLower().contains(needle)) {
+                    continue;
+                }
+                ++totalMatches;
+                if (matches.size() < limit) {
+                    QString preview = entry.simplified();
+                    if (preview.size() > 400) {
+                        preview = preview.left(400) + QStringLiteral("...");
+                    }
+                    matches.append(preview);
+                }
+            }
+
+            if (matches.isEmpty()) {
+                logs.append(QStringLiteral("history-search: No history entries match '%1'.")
+                                .arg(query));
+            } else {
+                logs.append(
+                    QStringLiteral("history-search: %1 match(es) for '%2' (showing %3):\n%4")
+                        .arg(QString::number(totalMatches), query,
+                             QString::number(matches.size()), matches.join(QLatin1Char('\n'))));
+            }
+        }
+        // 14d. ask-question (ported from cline ask_followup_question / opencode question)
+        else if (invocation.toolId == QLatin1String("ask-question")) {
+            const QString question =
+                getArgument(invocation, QStringLiteral("question")).trimmed();
+            if (question.isEmpty()) {
+                logs.append(QStringLiteral("ask-question: No question argument provided."));
+                continue;
+            }
+            const QString optionsRaw = getArgument(invocation, QStringLiteral("options"));
+            QStringList options;
+            for (const auto& option : optionsRaw.split(QLatin1Char('\n'))) {
+                const QString trimmed = option.trimmed();
+                if (!trimmed.isEmpty()) {
+                    options.append(trimmed);
+                }
+            }
+
+            QString formatted = question;
+            if (!options.isEmpty()) {
+                QStringList numbered;
+                for (int i = 0; i < options.size(); ++i) {
+                    numbered.append(QStringLiteral("%1. %2")
+                                        .arg(QString::number(i + 1), options.at(i)));
+                }
+                formatted += QStringLiteral("\n") + numbered.join(QLatin1Char('\n'));
+            }
+            logs.append(QStringLiteral(
+                            "ask-question: Question registered for the user:\n%1\n"
+                            "End this run now with the question above as your final answer "
+                            "(asked in the user's language). Wait for the user's reply before "
+                            "taking further steps.")
+                            .arg(formatted));
         }
         // 15. web-fetch
         else if (invocation.toolId == QLatin1String("web-fetch")) {

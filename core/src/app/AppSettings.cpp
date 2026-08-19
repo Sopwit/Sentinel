@@ -390,6 +390,20 @@ void AppSettings::setWebSearchApiKey(const QString& key) {
     emit webSearchSettingsChanged();
 }
 
+QString AppSettings::mcpServersJson() const {
+    return store_ ? store_->value(QString::fromLatin1(mcpServersJsonKey), QString())
+                  : QString();
+}
+
+void AppSettings::setMcpServersJson(const QString& json) {
+    // Accept the raw text; validity is checked where the servers are parsed.
+    if (json == mcpServersJson() || !store_) {
+        return;
+    }
+    store_->setValue(QString::fromLatin1(mcpServersJsonKey), json);
+    emit mcpServersChanged();
+}
+
 int AppSettings::webSearchMaxResults() const {
     bool ok = false;
     const auto value = store_ ? store_->value(QString::fromLatin1(webSearchMaxResultsKey), QStringLiteral("5")).toInt(&ok) : 5;

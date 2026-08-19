@@ -348,6 +348,10 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
                                        settings_.webSearchMaxResults());
         emit webSearchSettingsChanged();
     });
+    connect(&settings_, &core::AppSettings::mcpServersChanged, this, [this]() {
+        controller_.configureMcpServers(settings_.mcpServersJson());
+        emit mcpServersChanged();
+    });
     connect(&settings_, &core::AppSettings::semanticSettingsChanged, this, [this]() {
         controller_.setSemanticProvider(settings_.semanticProvider(), settings_.semanticEmbeddingModel());
         emit semanticSettingsChanged();
@@ -505,6 +509,7 @@ DesktopShellViewModel::DesktopShellViewModel(core::ApplicationController& contro
     controller_.setAgentAutonomousMode(settings_.agentAutonomousMode());
     controller_.configureWebSearch(settings_.webSearchProvider(), settings_.webSearchApiKey(),
                                    settings_.webSearchMaxResults());
+    controller_.configureMcpServers(settings_.mcpServersJson());
     controller_.setSemanticProvider(settings_.semanticProvider(), settings_.semanticEmbeddingModel());
     if (controller_.activeConversationId() != QStringLiteral("single-transcript")) {
         settings_.setActiveConversationId(controller_.activeConversationId());
