@@ -158,6 +158,16 @@ AgentLoopState AgentLoop::advance(AgentLoopState state) {
             };
         } else {
             approval = approvalPolicy_.evaluate(plan);
+            if (approval.status == ApprovalStatus::RequiresApproval &&
+                config_.sessionApprovedToolIds.contains(decision.toolId)) {
+                approval = ApprovalDecision{
+                    ApprovalStatus::Approved,
+                    QStringLiteral(
+                        "Session-level approval: the user already allowed this tool for this "
+                        "session."),
+                    {},
+                };
+            }
         }
 
         if (approval.status == ApprovalStatus::RequiresApproval) {

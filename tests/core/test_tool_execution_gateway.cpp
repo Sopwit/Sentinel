@@ -24,8 +24,8 @@ void ToolExecutionGatewayTest::exposesPlaceholderToolRegistry() {
     const auto registry = gateway.registrySummary(QStringLiteral("Disabled"), permissions);
 
     QCOMPARE(registry.status, QStringLiteral("Operational"));
-    QCOMPARE(registry.toolCount, 10);
-    QCOMPARE(registry.metadataSafeCount, 10);
+    QCOMPARE(registry.toolCount, 21);
+    QCOMPARE(registry.metadataSafeCount, 21);
     QCOMPARE(registry.unavailableCount, 0);
     QCOMPARE(registry.refusedCount, 0);
     QVERIFY(registry.summary.contains(QStringLiteral("fully operational")));
@@ -40,7 +40,7 @@ void ToolExecutionGatewayTest::consultsPermissionPolicyWithoutGrantingExecution(
     const auto enabledSummaries = gateway.toolSummaries(QStringLiteral("Enabled"), permissions);
 
     QCOMPARE(trustedRegistry.permissionPosture, QStringLiteral("Trusted"));
-    QCOMPARE(enabledSummaries.size(), 10);
+    QCOMPARE(enabledSummaries.size(), 21);
     QVERIFY(enabledSummaries.first().permissionPosture == QStringLiteral("Enabled"));
     QVERIFY(enabledSummaries.at(2).availability == QStringLiteral("Available"));
 }

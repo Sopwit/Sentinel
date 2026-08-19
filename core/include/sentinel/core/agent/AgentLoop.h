@@ -72,6 +72,7 @@ public:
         bool autonomousMode = false;
         int observationPreviewLines = 60;
         qint64 observationMaxBytes = 8192;
+        QStringList sessionApprovedToolIds;
     };
 
     using StepCallback = std::function<void(const AgentStepRecord&)>;

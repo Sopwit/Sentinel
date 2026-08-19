@@ -8,6 +8,7 @@
 #include "sentinel/core/app/ApplicationController.h"
 #include "sentinel/core/app/AppSettings.h"
 #include "sentinel/core/platform/StandardPathProvider.h"
+#include "sentinel/core/runtime/AlarmStore.h"
 
 #include <memory>
 
@@ -122,6 +123,7 @@ private:
     std::unique_ptr<ILocalInferenceWorker> m_localInferenceWorker;
     std::unique_ptr<IConversationStore> m_conversationStore;
     std::unique_ptr<IAgentTaskRuntime> m_agentTaskRuntime;
+    std::shared_ptr<AlarmStore> m_alarmStore;
 };
 
 } // namespace sentinel::core
