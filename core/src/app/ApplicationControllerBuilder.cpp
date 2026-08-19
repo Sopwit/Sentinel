@@ -4,10 +4,13 @@
 
 #include "sentinel/core/app/ApplicationControllerBuilder.h"
 
+#include <QFileInfo>
+
 #include "sentinel/core/chat/LocalEchoProvider.h"
 #include "sentinel/core/chat/OllamaChatProvider.h"
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 #include "sentinel/core/agent/NullAgentRuntime.h"
+#include "sentinel/core/runtime/AlarmStore.h"
 #include "sentinel/core/runtime/OllamaRuntime.h"
 #include "sentinel/core/runtime/RealToolExecutor.h"
 #include "sentinel/core/runtime/RuntimePermissions.h"
@@ -34,12 +37,14 @@ ApplicationControllerBuilder& ApplicationControllerBuilder::withStandardDefaults
     m_memoryStore = std::make_unique<SQLiteMemoryStore>(pathProvider.memoryDatabasePath());
     m_chatHistoryStore =
         std::make_unique<SQLiteChatHistoryStore>(pathProvider.chatHistoryDatabasePath());
+    m_alarmStore = std::make_shared<AlarmStore>(
+        QFileInfo(pathProvider.memoryDatabasePath()).absolutePath() + QStringLiteral("/alarms.json"));
     m_agentRuntime =
         std::make_unique<NullAgentRuntime>(NullAgentRuntime::standardTools());
     m_sandboxPolicy = std::make_unique<StaticSandboxPolicy>(
         QSet<QString>{QStringLiteral("tool.metadata.read"), QStringLiteral("tool.risk.medium"),
                       QStringLiteral("tool.risk.high")});
-    m_toolExecutor = std::make_unique<RealToolExecutor>();
+    m_toolExecutor = std::make_unique<RealToolExecutor>(m_alarmStore);
     m_runtimePermissionPolicy = std::make_unique<LocalOnlyRuntimePermissionPolicy>();
     m_ollamaRuntimeClient = std::make_unique<OllamaHttpRuntimeClient>(ollamaConfig);
     m_localInferenceClient = std::make_unique<OllamaLocalInferenceClient>(ollamaConfig);
@@ -278,8 +283,13 @@ std::unique_ptr<ApplicationController> ApplicationControllerBuilder::build() {
         m_agentStepPlanner = std::make_unique<LlmAgentRuntime>(NullAgentRuntime::standardTools(),
                                                                m_provider.get());
     }
+    if (m_toolExecutor && m_alarmStore) {
+        if (auto* realExecutor = dynamic_cast<RealToolExecutor*>(m_toolExecutor.get())) {
+            realExecutor->setAlarmStore(m_alarmStore);
+        }
+    }
 
-    return std::make_unique<ApplicationController>(
+    auto controller = std::make_unique<ApplicationController>(
         std::move(m_provider), std::move(m_memoryStore), std::move(m_chatSession),
         std::move(m_chatHistoryStore), std::move(m_agentRuntime), std::move(m_approvalPolicy),
         std::move(m_sandboxPolicy), std::move(m_toolExecutor), std::move(m_modelRouter),
@@ -296,6 +306,8 @@ std::unique_ptr<ApplicationController> ApplicationControllerBuilder::build() {
         std::move(m_voiceRuntimeEnvironment), std::move(m_piperTextToSpeechProvider),
         std::move(m_localInferenceWorker), std::move(m_conversationStore),
         std::move(m_agentTaskRuntime), std::move(m_agentStepPlanner));
+    controller->attachAlarmStore(m_alarmStore);
+    return controller;
 }
 
 } // namespace sentinel::core

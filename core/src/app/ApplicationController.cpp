@@ -5,6 +5,7 @@
 #include "sentinel/core/app/ApplicationController.h"
 
 #include "sentinel/core/app/AppSettings.h"
+#include "sentinel/core/runtime/AlarmStore.h"
 #include "sentinel/core/chat/InMemoryConversationStore.h"
 #include "sentinel/core/memory/InMemoryMemoryCandidateStore.h"
 #include "sentinel/core/memory/JsonSettingsStore.h"
@@ -28,6 +29,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QProcess>
 #include <QRegularExpression>
 #include <QSaveFile>
 #include <QStandardPaths>
@@ -8641,9 +8643,12 @@ bool ApplicationController::runAgentRequest(const QString& request) {
     if (activeAgentSession_.phase == AgentLoopPhase::AwaitingApproval &&
         !agentLoopThreadRunning_.load()) {
         const auto lowerRequest = trimmed.toLower();
-        const bool wantsApproval = lowerRequest == QStringLiteral("onayla") ||
-                                   lowerRequest == QStringLiteral("approve") ||
-                                   lowerRequest == QStringLiteral("y");
+        const bool wantsAlways = lowerRequest.contains(QStringLiteral("her zaman")) ||
+                                 lowerRequest.contains(QStringLiteral("herzaman")) ||
+                                 lowerRequest.contains(QStringLiteral("always"));
+        const bool wantsApproval =
+            wantsAlways || lowerRequest == QStringLiteral("onayla") ||
+            lowerRequest == QStringLiteral("approve") || lowerRequest == QStringLiteral("y");
         const bool wantsCancel = lowerRequest == QStringLiteral("iptal") ||
                                  lowerRequest == QStringLiteral("cancel") ||
                                  lowerRequest == QStringLiteral("n");
@@ -8655,7 +8660,7 @@ bool ApplicationController::runAgentRequest(const QString& request) {
             }
             refreshConversationHistorySummary();
             emit chatMessagesChanged();
-            resumeAgentLoopWithApproval(wantsApproval);
+            resumeAgentLoopWithApproval(wantsApproval, wantsAlways);
             return true;
         }
         activeAgentSession_ = AgentLoopState{};
@@ -8994,12 +8999,19 @@ void ApplicationController::startAgentLoopRun(const QString& goal) {
     spawnAgentLoopThread(seed, false, false);
 }
 
-void ApplicationController::resumeAgentLoopWithApproval(bool approved) {
+void ApplicationController::resumeAgentLoopWithApproval(bool approved, bool alwaysAllow) {
     if (activeAgentSession_.phase != AgentLoopPhase::AwaitingApproval ||
         agentLoopThreadRunning_.load()) {
         return;
     }
     auto seed = activeAgentSession_;
+    if (approved && alwaysAllow) {
+        for (const auto& invocation : seed.pendingApprovalPlan.invocations) {
+            if (!sessionApprovedToolIds_.contains(invocation.toolId)) {
+                sessionApprovedToolIds_.append(invocation.toolId);
+            }
+        }
+    }
     activeAgentSession_.phase = AgentLoopPhase::Running;
     spawnAgentLoopThread(seed, true, approved);
 }
@@ -9007,6 +9019,12 @@ void ApplicationController::resumeAgentLoopWithApproval(bool approved) {
 void ApplicationController::spawnAgentLoopThread(AgentLoopState seed, bool resume, bool approved) {
     finishAgentLoopRun();
     agentLoopCancelRequested_ = false;
+
+    if (auto* executor = dynamic_cast<RealToolExecutor*>(toolExecutor_.get())) {
+        executor->setMemorySnapshot(memoryStore_ && memoryStore_->isAvailable()
+                                        ? memoryStore_->entries()
+                                        : MemoryEntries{});
+    }
 
     const bool autonomous = agentAutonomousMode_;
     const QStringList toolIds = availableToolIds();
@@ -9024,6 +9042,7 @@ void ApplicationController::spawnAgentLoopThread(AgentLoopState seed, bool resum
                                     toolIds]() mutable {
         AgentLoop::Config config;
         config.autonomousMode = autonomous;
+        config.sessionApprovedToolIds = sessionApprovedToolIds_;
 
         AgentLoop loop(*agentStepPlanner_, *toolExecutor_, *approvalPolicy_, *sandboxPolicy_,
                        toolIds, config);
@@ -9102,10 +9121,12 @@ QString ApplicationController::agentApprovalRequestText(const AgentLoopState& st
                          .arg(state.pendingApprovalThought));
     }
 
-    return QStringLiteral("⚠️ **Onay Bekliyor / Approval Required (Adım %1 / Step %1)**\n\n"
-                          "%2\n\n"
-                          "Devam etmek için **onayla** (veya **approve**), reddetmek için "
-                          "**iptal** (veya **cancel**) yazın.")
+    return QStringLiteral(
+               "⚠️ **Onay Bekliyor / Approval Required (Adım %1 / Step %1)**\n\n"
+               "%2\n\n"
+               "Devam etmek için **onayla** (veya **approve**), bu oturum boyunca bu araca "
+               "her zaman izin vermek için **her zaman onayla** (veya **always**), reddetmek "
+               "için **iptal** (veya **cancel**) yazın.")
         .arg(QString::number(state.steps.size() + 1), lines.join(QStringLiteral("\n\n")));
 }
 
@@ -9198,6 +9219,40 @@ void ApplicationController::appendAgentLoopChatMessage(const QString& text) {
     }
     refreshConversationHistorySummary();
     emit chatMessagesChanged();
+}
+
+void ApplicationController::attachAlarmStore(std::shared_ptr<AlarmStore> alarmStore) {
+    alarmStore_ = std::move(alarmStore);
+}
+
+void ApplicationController::checkDueAlarms() {
+    if (!alarmStore_) {
+        return;
+    }
+    const auto due = alarmStore_->takeDue(QDateTime::currentDateTime());
+    for (const auto& alarm : due) {
+        appendAgentLoopChatMessage(
+            QStringLiteral("⏰ **Alarm / Reminder**\n\n**%1**\n\nPlanlanan zaman / Scheduled for: "
+                           "%2 (id: %3)")
+                .arg(alarm.label,
+                     alarm.triggerAt.toString(QStringLiteral("yyyy-MM-dd HH:mm:ss")), alarm.id));
+
+        QString notifyLabel = alarm.label;
+        notifyLabel.replace(QLatin1Char('\\'), QStringLiteral("\\\\"));
+        notifyLabel.replace(QLatin1Char('"'), QStringLiteral("\\\""));
+#if defined(Q_OS_MACOS)
+        QProcess::startDetached(
+            QStringLiteral("osascript"),
+            {QStringLiteral("-e"),
+             QStringLiteral("display notification \"%1\" with title \"Sentinel Alarm\"")
+                 .arg(notifyLabel)});
+#elif defined(Q_OS_WIN)
+        Q_UNUSED(notifyLabel)
+#else
+        QProcess::startDetached(QStringLiteral("notify-send"),
+                                {QStringLiteral("Sentinel Alarm"), alarm.label});
+#endif
+    }
 }
 
 
@@ -9843,6 +9898,8 @@ void ApplicationController::initializeOllamaCache() const {
 }
 
 void ApplicationController::pollOllama() {
+    checkDueAlarms();
+
     if (ollamaCheckThread_ && ollamaCheckThread_->isRunning()) {
         return;
     }

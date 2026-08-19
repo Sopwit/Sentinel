@@ -64,6 +64,8 @@ class QThread;
 
 namespace sentinel::core {
 
+class AlarmStore;
+
 class ApplicationController final : public QObject {
     Q_OBJECT
     Q_PROPERTY(QString providerName READ providerName CONSTANT)
@@ -1868,6 +1870,7 @@ public:
     Q_INVOKABLE bool runAgentRequest(const QString& request);
     Q_INVOKABLE bool cancelAgentRun();
     Q_INVOKABLE bool agentLoopActive() const;
+    void attachAlarmStore(std::shared_ptr<AlarmStore> alarmStore);
     Q_INVOKABLE bool agentAutonomousMode() const;
     Q_INVOKABLE void setAgentAutonomousMode(bool enabled);
     QStringList planAgentStepsForGoal(const QString& goal) const;
@@ -1915,7 +1918,7 @@ private:
     AgentPipelineResult buildAgentPipelineResult(const AgentRequest& request) const;
     void appendPipelineActivity(const AgentPipelineResult& result);
     void startAgentLoopRun(const QString& goal);
-    void resumeAgentLoopWithApproval(bool approved);
+    void resumeAgentLoopWithApproval(bool approved, bool alwaysAllow = false);
     void spawnAgentLoopThread(AgentLoopState seed, bool resume, bool approved);
     void onAgentStepRecord(const AgentStepRecord& record);
     void onAgentLoopStatus(const QString& status);
@@ -1923,6 +1926,7 @@ private:
     void finishAgentLoopRun();
     void appendAgentLoopChatMessage(const QString& text);
     QString agentApprovalRequestText(const AgentLoopState& state) const;
+    void checkDueAlarms();
     void resetCompletedConversationState();
     void transitionConversationState(ConversationState nextState, const QString& reason);
     void refreshLatestTaskPlan();
@@ -2144,6 +2148,8 @@ private:
     bool agentAutonomousMode_ = false;
     QString pendingCommand_;
     AgentLoopState activeAgentSession_;
+    QStringList sessionApprovedToolIds_;
+    std::shared_ptr<AlarmStore> alarmStore_;
     std::atomic<bool> agentLoopCancelRequested_{false};
     std::atomic<bool> agentLoopThreadRunning_{false};
     std::thread agentLoopThread_;

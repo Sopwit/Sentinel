@@ -281,6 +281,28 @@ private slots:
         QCOMPARE(state.steps.size(), 1);
     }
 
+    void sessionApprovedToolIdsBypassApprovalPause() {
+        ScriptedPlanner planner;
+        planner.decisions = {toolDecision(QStringLiteral("run-command"), QStringLiteral("build"),
+                                          ToolRiskLevel::High),
+                             toolDecision(QStringLiteral("run-command"), QStringLiteral("test"),
+                                          ToolRiskLevel::High),
+                             finalDecision(QStringLiteral("shipped"))};
+        RecordingExecutor executor;
+        StaticApprovalPolicy approval;
+        auto sandbox = permissiveSandbox();
+
+        AgentLoop::Config config;
+        config.sessionApprovedToolIds = QStringList{QStringLiteral("run-command")};
+        AgentLoop loop(planner, executor, approval, sandbox,
+                       QStringList{QStringLiteral("run-command")}, config);
+        const auto state = loop.run(QStringLiteral("ship it"));
+
+        QCOMPARE(state.phase, AgentLoopPhase::Completed);
+        QCOMPARE(state.steps.size(), 2);
+        QCOMPARE(executor.requests.size(), 2);
+    }
+
     void truncatesLargeObservations() {
         ScriptedPlanner planner;
         planner.decisions = {toolDecision(QStringLiteral("run-command")),

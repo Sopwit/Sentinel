@@ -244,6 +244,7 @@ add_library(sentinel_core STATIC
     include/sentinel/core/session/SessionIdGenerator.h
     include/sentinel/core/runtime/IToolHookService.h
     include/sentinel/core/runtime/ToolHookService.h
+    include/sentinel/core/runtime/AlarmStore.h
     include/sentinel/core/interfaces/TransientRetryPolicy.h
     include/sentinel/core/memory/DeferredDisposable.h
     include/sentinel/core/memory/LazyValue.h
@@ -431,6 +432,7 @@ add_library(sentinel_core STATIC
     src/session/ProviderPromptTemplates.cpp
     src/memory/LocalContext.cpp
     src/runtime/FormatService.cpp
+    src/runtime/AlarmStore.cpp
     src/runtime/ToolOutputTruncator.cpp
     src/runtime/ExecutionLifecycle.cpp
     src/runtime/InMemoryToolRegistry.cpp

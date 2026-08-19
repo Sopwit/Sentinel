@@ -4,9 +4,13 @@
 
 #include "sentinel/core/agent/LlmAgentRuntime.h"
 
+#include <QDateTime>
+#include <QDir>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QSysInfo>
+
 #include <utility>
 
 namespace sentinel::core {
@@ -265,10 +269,17 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                      argumentParts.join(QStringLiteral(", ")), record.statusText, observation));
     }
 
+    const QString environmentBlock =
+        QStringLiteral("PLATFORM: %1 (%2)\nWORKSPACE: %3\nNOW: %4")
+            .arg(QSysInfo::prettyProductName(), QSysInfo::currentCpuArchitecture(),
+                 QDir::currentPath(),
+                 QDateTime::currentDateTime().toString(QStringLiteral("yyyy-MM-dd HH:mm")));
+
     return QStringLiteral(
                "You are Sentinel's autonomous agent planner. Decide the SINGLE next action toward "
                "the "
                "user's goal.\n\n"
+               "ENVIRONMENT:\n%7\n\n"
                "AVAILABLE TOOLS:\n%1\n\n"
                "RULES:\n"
                "- Reply with exactly ONE JSON object and nothing else. No markdown fences, no "
@@ -287,13 +298,27 @@ QString LlmAgentRuntime::buildPlannerPrompt(const QString& goal,
                "- Prefer the fewest steps. Chain tools when one step's output is needed by the "
                "next.\n"
                "- Use open-workspace before file tools when the goal refers to a specific "
-               "folder.\n\n"
+               "folder.\n"
+                "- Prefer dedicated tools over shell: read-file instead of cat, grep/glob instead "
+                "of grep/find in run-command, edit-file instead of sed. app-launch/app-quit open "
+                "and close desktop apps (e.g. 'spotify aç' -> app-launch with app=Spotify). "
+                "set-alarm schedules alarms/reminders. web-fetch reads a page after web-search.\n"
+                "- open-url opens a URL in the default browser when the user wants to see a "
+                "page. clipboard-read/clipboard-write access the system clipboard. "
+                "system-info/process-list/current-time report machine state read-only. "
+                "memory-search looks up facts already stored in long-term memory; try it "
+                "before asking the user again. delete-file/move-file reorganize workspace "
+                "files (delete is permanent).\n"
+               "- For goals with 3+ steps, start with todo-write to record the checklist, keep "
+               "exactly one item in_progress, and mark items completed only after verifying.\n"
+               "- The user speaks Turkish or English; answer in the user's language.\n\n"
                "GOAL: %2\n\n"
                "STEPS SO FAR:\n%3\n\n"
                "NEXT ACTION (one JSON object only):")
         .arg(toolLines.join(QLatin1Char('\n')), goal,
              historyLines.isEmpty() ? QStringLiteral("(none yet)")
-                                    : historyLines.join(QLatin1Char('\n')));
+                                    : historyLines.join(QLatin1Char('\n')),
+             environmentBlock);
 }
 
 ToolInvocationPlan LlmAgentRuntime::plan(const AgentRequest& request) const {
