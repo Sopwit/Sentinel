@@ -500,7 +500,7 @@ private:
     static constexpr auto defaultConfigurationProfile = "Desktop Alpha";
     static constexpr auto defaultAppLanguage = "en";
     static constexpr auto defaultSelectedRuntimeProvider = "ollama";
-    static constexpr auto defaultWebSearchProvider = "exa";
+    static constexpr auto defaultWebSearchProvider = "duckduckgo";
     static constexpr auto defaultSemanticProvider = "disabled";
     static constexpr auto defaultSemanticEmbeddingModel = "nomic-embed-text";
     static constexpr auto defaultSelectedWorkspaceId = "personal";

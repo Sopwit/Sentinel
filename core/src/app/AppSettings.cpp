@@ -358,15 +358,18 @@ QString AppSettings::webSearchProvider() const {
     const auto value = store_ ? store_->value(QString::fromLatin1(webSearchProviderKey), fallback)
                               : fallback;
     const auto normalized = value.trimmed().toLower();
-    return (normalized == QStringLiteral("exa") || normalized == QStringLiteral("parallel"))
+    return (normalized == QStringLiteral("exa") || normalized == QStringLiteral("parallel") ||
+            normalized == QStringLiteral("duckduckgo"))
                ? normalized
                : fallback;
 }
 
 void AppSettings::setWebSearchProvider(const QString& provider) {
     const auto normalized = provider.trimmed().toLower();
-    const auto selected = (normalized == QStringLiteral("parallel")) ? normalized
-                                                                        : QString::fromLatin1(defaultWebSearchProvider);
+    const auto selected =
+        (normalized == QStringLiteral("parallel") || normalized == QStringLiteral("duckduckgo"))
+            ? normalized
+            : QString::fromLatin1(defaultWebSearchProvider);
     if (selected == webSearchProvider() || !store_) {
         return;
     }

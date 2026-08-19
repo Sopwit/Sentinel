@@ -43,7 +43,8 @@ public:
     void searchAsync(const QString& query, int numResults,
                      std::function<void(WebSearchResponse)> callback);
 
-    // Supported providers
+    // Supported providers. "duckduckgo" needs no API key; "exa" and "parallel"
+    // require one and fall back to DuckDuckGo when the key is missing.
     static QStringList supportedProviders();
 
 signals:
@@ -57,8 +58,17 @@ private:
     QJsonObject buildSearchRequest(const QString& query, int numResults) const;
     WebSearchResponse parseSearchResponse(const QByteArray& responseData) const;
     QUrl buildSearchUrl(const QString& query, int numResults) const;
+    WebSearchResponse searchDuckDuckGo(const QString& query, int numResults);
 
-    QString m_searchProvider{"exa"};
+public:
+    // Exposed for tests: parses the DuckDuckGo HTML endpoint response.
+    static WebSearchResponse parseDuckDuckGoResponse(const QByteArray& responseData,
+                                                     int numResults);
+
+private:
+    bool apiKeyConfigured() const;
+
+    QString m_searchProvider{"duckduckgo"};
     QString m_apiKey;
     QString m_userAgent{"Sentinel/1.0"};
     int m_maxResults{5};
